@@ -51,7 +51,7 @@ type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
  * Контекст обробки одного шоу: кеші, конфіг та агрегації.
  *
  * @example
- * const ctx = { /* див. приклад вище */ };
+ * const ctx = {};
  */
 export type ProcessShowContext = {
   monthly: MonthlyMaps;
