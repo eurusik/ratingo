@@ -27,7 +27,7 @@ export class TraktClient {
    */
   private async fetch<T>(endpoint: string): Promise<T> {
     const url = `${TRAKT_BASE_URL}${endpoint}`;
-    
+
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -80,7 +80,11 @@ export class TraktClient {
    * @example
    * const m = await trakt.getWatchedShows('monthly', '2025-11-01', 200);
    */
-  async getWatchedShows(period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly', startDate?: string, limit: number = 100): Promise<any[]> {
+  async getWatchedShows(
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly',
+    startDate?: string,
+    limit: number = 100
+  ): Promise<any[]> {
     const start = startDate ? `/${startDate}` : '';
     return this.fetch<any[]>(`/shows/watched/${period}${start}?limit=${limit}`);
   }
@@ -91,7 +95,7 @@ export class TraktClient {
   async findShowByTmdbId(tmdbId: number): Promise<TraktTrendingShow | null> {
     try {
       const trendingShows = await this.getTrendingShows(100);
-      const show = trendingShows.find(item => item.show.ids.tmdb === tmdbId);
+      const show = trendingShows.find((item) => item.show.ids.tmdb === tmdbId);
       return show || null;
     } catch (error) {
       console.error(`Error finding Trakt show for TMDB ID ${tmdbId}:`, error);
@@ -119,9 +123,13 @@ export class TraktClient {
    * @example
    * const r = await trakt.getShowRatings('game-of-thrones');
    */
-  async getShowRatings(idOrSlug: string | number): Promise<{ rating: number; votes: number; distribution?: Record<string, number> }> {
+  async getShowRatings(
+    idOrSlug: string | number
+  ): Promise<{ rating: number; votes: number; distribution?: Record<string, number> }> {
     const endpoint = `/shows/${idOrSlug}/ratings`;
-    return this.fetch<{ rating: number; votes: number; distribution?: Record<string, number> }>(endpoint);
+    return this.fetch<{ rating: number; votes: number; distribution?: Record<string, number> }>(
+      endpoint
+    );
   }
 
   async getRelatedShows(idOrSlug: string | number, limit: number = 12): Promise<any[]> {

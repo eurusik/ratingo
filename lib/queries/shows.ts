@@ -62,18 +62,17 @@ export async function getShows({
   const updatedAfter = days > 0 ? new Date(Date.now() - days * 24 * 60 * 60 * 1000) : null;
   const useWindowDelta = sort === 'delta' && days > 0;
 
-  const signClause =
-    useWindowDelta
-      ? sql`TRUE`
-      : sort === 'delta'
-      ? (order === 'asc'
-          ? sql`COALESCE("shows"."watchers_delta", 0) < 0`
-          : sql`COALESCE("shows"."watchers_delta", 0) > 0`)
+  const signClause = useWindowDelta
+    ? sql`TRUE`
+    : sort === 'delta'
+      ? order === 'asc'
+        ? sql`COALESCE("shows"."watchers_delta", 0) < 0`
+        : sql`COALESCE("shows"."watchers_delta", 0) > 0`
       : sort === 'delta3m'
-      ? (order === 'asc'
+        ? order === 'asc'
           ? sql`COALESCE("shows"."delta_3m", 0) < 0`
-          : sql`COALESCE("shows"."delta_3m", 0) > 0`)
-      : sql`TRUE`;
+          : sql`COALESCE("shows"."delta_3m", 0) > 0`
+        : sql`TRUE`;
 
   const recencyClause = updatedAfter ? gt(shows.trendingUpdatedAt, updatedAfter) : sql`TRUE`;
 
@@ -86,12 +85,7 @@ export async function getShows({
         signClause,
         sql`EXISTS (SELECT 1 FROM "show_watch_providers" swp WHERE swp.show_id = "shows"."id" AND swp.region = ${region} ${provider ? sql`AND lower(swp.provider_name) LIKE ${'%' + String(provider).toLowerCase() + '%'}` : sql``} ${category ? sql`AND swp.category = ${category}` : sql``})`
       )
-    : and(
-        isNotNull(shows.trendingScore),
-        isNotNull(shows.ratingTrakt),
-        recencyClause,
-        signClause
-      );
+    : and(isNotNull(shows.trendingScore), isNotNull(shows.ratingTrakt), recencyClause, signClause);
 
   const poolLimit = Math.max(limit * 10, 100);
   const trendingShows: Show[] = await timeAsync('getShows.base', async () =>
@@ -101,12 +95,20 @@ export async function getShows({
         useWindowDelta
           ? sql`"shows"."rating_trakt" DESC`
           : sort === 'watchers'
-          ? (order === 'asc' ? sql`"shows"."rating_trakt" ASC` : sql`"shows"."rating_trakt" DESC`)
-          : sort === 'delta'
-          ? (order === 'asc' ? sql`COALESCE("shows"."watchers_delta", 0) ASC` : sql`COALESCE("shows"."watchers_delta", 0) DESC`)
-          : sort === 'delta3m'
-          ? (order === 'asc' ? sql`COALESCE("shows"."delta_3m", 0) ASC` : sql`COALESCE("shows"."delta_3m", 0) DESC`)
-          : (order === 'asc' ? sql`"shows"."trending_score" ASC` : sql`"shows"."trending_score" DESC`)
+            ? order === 'asc'
+              ? sql`"shows"."rating_trakt" ASC`
+              : sql`"shows"."rating_trakt" DESC`
+            : sort === 'delta'
+              ? order === 'asc'
+                ? sql`COALESCE("shows"."watchers_delta", 0) ASC`
+                : sql`COALESCE("shows"."watchers_delta", 0) DESC`
+              : sort === 'delta3m'
+                ? order === 'asc'
+                  ? sql`COALESCE("shows"."delta_3m", 0) ASC`
+                  : sql`COALESCE("shows"."delta_3m", 0) DESC`
+                : order === 'asc'
+                  ? sql`"shows"."trending_score" ASC`
+                  : sql`"shows"."trending_score" DESC`
       )
       .limit(useWindowDelta ? poolLimit : limit)
       .offset(useWindowDelta ? 0 : offset)
@@ -120,16 +122,21 @@ export async function getShows({
     watchersSparkline: number[];
   };
   const tmdbIds = trendingShows.map((s) => s.tmdbId).filter((v) => typeof v === 'number');
-  const sparkRows = tmdbIds.length > 0
-    ? await timeAsync('getShows.sparkRows', async () =>
-        db
-          .select({ tmdbId: showWatchersSnapshots.tmdbId, watchers: showWatchersSnapshots.watchers, createdAt: showWatchersSnapshots.createdAt })
-          .from(showWatchersSnapshots)
-          .where(inArray(showWatchersSnapshots.tmdbId, tmdbIds))
-          .orderBy(desc(showWatchersSnapshots.createdAt))
-          .limit(Math.max(10 * tmdbIds.length, 10))
-      )
-    : [];
+  const sparkRows =
+    tmdbIds.length > 0
+      ? await timeAsync('getShows.sparkRows', async () =>
+          db
+            .select({
+              tmdbId: showWatchersSnapshots.tmdbId,
+              watchers: showWatchersSnapshots.watchers,
+              createdAt: showWatchersSnapshots.createdAt,
+            })
+            .from(showWatchersSnapshots)
+            .where(inArray(showWatchersSnapshots.tmdbId, tmdbIds))
+            .orderBy(desc(showWatchersSnapshots.createdAt))
+            .limit(Math.max(10 * tmdbIds.length, 10))
+        )
+      : [];
   const sparkMap = new Map<number, number[]>();
   for (const r of sparkRows as Array<{ tmdbId: number; watchers: number; createdAt: Date }>) {
     const arr = sparkMap.get(r.tmdbId) || [];
@@ -141,13 +148,19 @@ export async function getShows({
   if (useWindowDelta && updatedAfter && tmdbIds.length > 0) {
     const windowRows = await timeAsync('getShows.windowRows', async () =>
       db
-        .select({ tmdbId: showWatchersSnapshots.tmdbId, watchers: showWatchersSnapshots.watchers, createdAt: showWatchersSnapshots.createdAt })
+        .select({
+          tmdbId: showWatchersSnapshots.tmdbId,
+          watchers: showWatchersSnapshots.watchers,
+          createdAt: showWatchersSnapshots.createdAt,
+        })
         .from(showWatchersSnapshots)
-        .where(and(
-          inArray(showWatchersSnapshots.tmdbId, tmdbIds),
-          gte(showWatchersSnapshots.createdAt, updatedAfter!),
-          lte(showWatchersSnapshots.createdAt, now)
-        ))
+        .where(
+          and(
+            inArray(showWatchersSnapshots.tmdbId, tmdbIds),
+            gte(showWatchersSnapshots.createdAt, updatedAfter!),
+            lte(showWatchersSnapshots.createdAt, now)
+          )
+        )
         .orderBy(asc(showWatchersSnapshots.createdAt))
     );
     for (const r of windowRows as Array<{ tmdbId: number; watchers: number; createdAt: Date }>) {
@@ -272,16 +285,25 @@ export async function getAirings({
       return {
         ...a,
         airDateTs,
-        show: s ? {
-          id: s.id,
-          tmdbId: s.tmdbId,
-          title: s.titleUk || s.title,
-          poster: s.posterUk || s.poster,
-        } : null,
+        show: s
+          ? {
+              id: s.id,
+              tmdbId: s.tmdbId,
+              title: s.titleUk || s.title,
+              poster: s.posterUk || s.poster,
+            }
+          : null,
       };
     })
-    .filter((r: AiringWithTs) => r.show && topIds.has(r.show.id) && typeof r.airDateTs === 'number' && r.airDateTs >= startTs && r.airDateTs <= endTs)
-    .sort((a: AiringWithTs, b: AiringWithTs) => ((a.airDateTs ?? 0) - (b.airDateTs ?? 0)));
+    .filter(
+      (r: AiringWithTs) =>
+        r.show &&
+        topIds.has(r.show.id) &&
+        typeof r.airDateTs === 'number' &&
+        r.airDateTs >= startTs &&
+        r.airDateTs <= endTs
+    )
+    .sort((a: AiringWithTs, b: AiringWithTs) => (a.airDateTs ?? 0) - (b.airDateTs ?? 0));
 
   return windowAirings;
 }
@@ -306,11 +328,7 @@ export async function getAirings({
 export async function getShowDetails(showId: number) {
   // Fetch show from database
   const showData = await timeAsync('getShowDetails.base', async () =>
-    db
-      .select()
-      .from(shows)
-      .where(eq(shows.id, showId))
-      .limit(1)
+    db.select().from(shows).where(eq(shows.id, showId)).limit(1)
   );
 
   if (showData.length === 0) {
@@ -320,7 +338,13 @@ export async function getShowDetails(showId: number) {
   const show = showData[0];
 
   // Resolve related shows via mapping table
-  let related: Array<{ id: number; tmdbId: number; title: string; posterUrl: string | null; primaryRating: number | null }> = [];
+  let related: Array<{
+    id: number;
+    tmdbId: number;
+    title: string;
+    posterUrl: string | null;
+    primaryRating: number | null;
+  }> = [];
   try {
     const relRows = await timeAsync('getShowDetails.related', async () =>
       db
@@ -369,13 +393,10 @@ export async function getShowDetails(showId: number) {
   let videos: any[] = [];
   let cast: any[] = [];
   let providers: any[] = [];
-  let contentRatingsByRegion: Record<string, string | null> = {};
+  const contentRatingsByRegion: Record<string, string | null> = {};
   try {
     const vRows = await timeAsync('getShowDetails.videos', async () =>
-      db
-        .select()
-        .from(showVideos)
-        .where(eq(showVideos.showId, showId))
+      db.select().from(showVideos).where(eq(showVideos.showId, showId))
     );
     videos = (vRows as any[]).map((v: any) => ({
       site: v.site,
@@ -401,10 +422,7 @@ export async function getShowDetails(showId: number) {
   } catch {}
   try {
     const cRows = await timeAsync('getShowDetails.cast', async () =>
-      db
-        .select()
-        .from(showCast)
-        .where(eq(showCast.showId, showId))
+      db.select().from(showCast).where(eq(showCast.showId, showId))
     );
     cast = (cRows as any[]).map((c: any) => ({
       id: c.personId,
@@ -428,7 +446,10 @@ export async function getShowDetails(showId: number) {
           regLogo: watchProvidersRegistry.logoPath,
         })
         .from(showWatchProviders)
-        .leftJoin(watchProvidersRegistry, eq(showWatchProviders.providerId, watchProvidersRegistry.tmdbId))
+        .leftJoin(
+          watchProvidersRegistry,
+          eq(showWatchProviders.providerId, watchProvidersRegistry.tmdbId)
+        )
         .where(eq(showWatchProviders.showId, showId))
     );
     providers = (pRows as any[]).map((p: any) => ({
@@ -471,7 +492,10 @@ export async function getShowDetails(showId: number) {
     firstAirDate: (show as any).firstAirDate ?? null,
     lastAirDate: (show as any).lastAirDate ?? null,
     tagline: (show as any).tagline ?? null,
-    traktRatings: { rating: (show as any).ratingTraktAvg ?? null, votes: (show as any).ratingTraktVotes ?? null },
+    traktRatings: {
+      rating: (show as any).ratingTraktAvg ?? null,
+      votes: (show as any).ratingTraktVotes ?? null,
+    },
     ratings: {
       trakt: ratingsTrakt,
       traktDistribution,

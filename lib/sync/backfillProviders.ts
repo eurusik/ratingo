@@ -20,7 +20,8 @@ export async function backfillProviderRegistryFromJoinTable() {
   const byId = new Map<number, number>();
   for (const r of existing as any[]) byId.set(Number((r as any).tmdbId), Number((r as any).id));
 
-  let inserted = 0; let updated = 0;
+  let inserted = 0;
+  let updated = 0;
   // Fetch representative name/logo from first matching row per providerId
   for (const pid of ids) {
     const row = await db
@@ -31,14 +32,29 @@ export async function backfillProviderRegistryFromJoinTable() {
     const p = (row as any[])[0] || {};
     const name = p?.name || null;
     const logo = p?.logoPath || null;
-    const slug = (String(name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || null;
+    const slug =
+      String(name || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || null;
 
     const existingId = byId.get(pid);
     if (existingId) {
-      await db.update(watchProvidersRegistry).set({ name, logoPath: logo, slug, updatedAt: new Date() }).where(eq(watchProvidersRegistry.id, existingId));
+      await db
+        .update(watchProvidersRegistry)
+        .set({ name, logoPath: logo, slug, updatedAt: new Date() })
+        .where(eq(watchProvidersRegistry.id, existingId));
       updated++;
     } else {
-      await db.insert(watchProvidersRegistry).values({ tmdbId: pid, name, logoPath: logo, slug, createdAt: new Date(), updatedAt: new Date() });
+      await db.insert(watchProvidersRegistry).values({
+        tmdbId: pid,
+        name,
+        logoPath: logo,
+        slug,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
       inserted++;
     }
   }

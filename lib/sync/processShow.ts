@@ -97,7 +97,10 @@ export type ProcessShowResult = {
  * @example
  * const res = await processShow(traktItem, ctx);
  */
-export async function processShow(traktItem: any, ctx: ProcessShowContext): Promise<ProcessShowResult> {
+export async function processShow(
+  traktItem: any,
+  ctx: ProcessShowContext
+): Promise<ProcessShowResult> {
   const res: ProcessShowResult = {
     updated: 0,
     added: 0,
@@ -117,48 +120,114 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
     const ANIME_GENRE_ID = 16;
     const traktShow = traktItem.show;
     const tmdbId = traktShow?.ids?.tmdb;
-    if (!tmdbId) { res.skipped = true; return res; }
+    if (!tmdbId) {
+      res.skipped = true;
+      return res;
+    }
 
     // Early skip by Trakt title keyword
     const titleLower = String(traktShow.title || '').toLowerCase();
-    if (ctx.animeKeywords.some(k => titleLower.includes(k))) { res.skipped = true; return res; }
+    if (ctx.animeKeywords.some((k) => titleLower.includes(k))) {
+      res.skipped = true;
+      return res;
+    }
 
     // Fetch details and UA translation
     const onRetryDetails = ctx.onRetryLabel('tmdb.details');
     const onRetryTranslation = ctx.onRetryLabel('tmdb.translation');
     const [tmdbShowData, ukTranslation] = await Promise.all([
-      cachedWithRetry(ctx.tmdbDetailsCache, tmdbId, 'tmdb.details', () => tmdbClient.getShowDetails(tmdbId), onRetryDetails),
-      cachedWithRetry(ctx.tmdbTranslationCache, tmdbId, 'tmdb.translation', () => tmdbClient.getShowTranslation(tmdbId), onRetryTranslation),
+      cachedWithRetry(
+        ctx.tmdbDetailsCache,
+        tmdbId,
+        'tmdb.details',
+        () => tmdbClient.getShowDetails(tmdbId),
+        onRetryDetails
+      ),
+      cachedWithRetry(
+        ctx.tmdbTranslationCache,
+        tmdbId,
+        'tmdb.translation',
+        () => tmdbClient.getShowTranslation(tmdbId),
+        onRetryTranslation
+      ),
     ]);
 
     // Anime detection via TMDB genres or UA localized title
-    const isAnime = tmdbShowData.genres?.some((g: any) => g.id === ANIME_GENRE_ID) ||
-      ctx.animeKeywords.some(k => (ukTranslation?.titleUk || '').toLowerCase().includes(k));
-    if (isAnime) { res.skipped = true; return res; }
+    const isAnime =
+      tmdbShowData.genres?.some((g: any) => g.id === ANIME_GENRE_ID) ||
+      ctx.animeKeywords.some((k) => (ukTranslation?.titleUk || '').toLowerCase().includes(k));
+    if (isAnime) {
+      res.skipped = true;
+      return res;
+    }
 
     // Providers & content ratings
     const onRetryProvUA = ctx.onRetryLabel('tmdb.providers.UA');
     const onRetryProvUS = ctx.onRetryLabel('tmdb.providers.US');
     const onRetryCRUA = ctx.onRetryLabel('tmdb.content.UA');
     const onRetryCRUS = ctx.onRetryLabel('tmdb.content.US');
-    const [watchProvidersUa, watchProvidersUs, contentRatingUa, contentRatingUs] = await Promise.all([
-      cachedWithRetry(ctx.tmdbProvidersCache, `${tmdbId}|UA`, 'tmdb.providers.UA', () => tmdbClient.getWatchProvidersByRegion(tmdbId, 'UA'), onRetryProvUA),
-      cachedWithRetry(ctx.tmdbProvidersCache, `${tmdbId}|US`, 'tmdb.providers.US', () => tmdbClient.getWatchProvidersByRegion(tmdbId, 'US'), onRetryProvUS),
-      cachedWithRetry(ctx.tmdbContentRatingCache, `${tmdbId}|UA`, 'tmdb.content.UA', () => tmdbClient.getContentRatingByRegion(tmdbId, 'UA'), onRetryCRUA),
-      cachedWithRetry(ctx.tmdbContentRatingCache, `${tmdbId}|US`, 'tmdb.content.US', () => tmdbClient.getContentRatingByRegion(tmdbId, 'US'), onRetryCRUS),
-    ]);
+    const [watchProvidersUa, watchProvidersUs, contentRatingUa, contentRatingUs] =
+      await Promise.all([
+        cachedWithRetry(
+          ctx.tmdbProvidersCache,
+          `${tmdbId}|UA`,
+          'tmdb.providers.UA',
+          () => tmdbClient.getWatchProvidersByRegion(tmdbId, 'UA'),
+          onRetryProvUA
+        ),
+        cachedWithRetry(
+          ctx.tmdbProvidersCache,
+          `${tmdbId}|US`,
+          'tmdb.providers.US',
+          () => tmdbClient.getWatchProvidersByRegion(tmdbId, 'US'),
+          onRetryProvUS
+        ),
+        cachedWithRetry(
+          ctx.tmdbContentRatingCache,
+          `${tmdbId}|UA`,
+          'tmdb.content.UA',
+          () => tmdbClient.getContentRatingByRegion(tmdbId, 'UA'),
+          onRetryCRUA
+        ),
+        cachedWithRetry(
+          ctx.tmdbContentRatingCache,
+          `${tmdbId}|US`,
+          'tmdb.content.US',
+          () => tmdbClient.getContentRatingByRegion(tmdbId, 'US'),
+          onRetryCRUS
+        ),
+      ]);
 
     // Videos & Cast
     const [videosData, credits] = await Promise.allSettled([
       withRetry(() => tmdbClient.getShowVideos(tmdbId), 3, 300, ctx.onRetryLabel('tmdb.videos')),
-      withRetry(() => tmdbClient.getAggregateCredits(tmdbId), 3, 300, ctx.onRetryLabel('tmdb.credits')),
+      withRetry(
+        () => tmdbClient.getAggregateCredits(tmdbId),
+        3,
+        300,
+        ctx.onRetryLabel('tmdb.credits')
+      ),
     ]);
-    const allVideos = videosData.status === 'fulfilled' && Array.isArray(videosData.value?.results) ? videosData.value.results : [];
-    const videosFiltered = allVideos.filter((video: any) => video.site === 'YouTube' && (video.type === 'Trailer' || video.type === 'Teaser'));
-    const cast = (credits.status === 'fulfilled' && Array.isArray(credits.value?.cast) ? credits.value.cast.slice(0, 12) : []).map((c: any) => ({
+    const allVideos =
+      videosData.status === 'fulfilled' && Array.isArray(videosData.value?.results)
+        ? videosData.value.results
+        : [];
+    const videosFiltered = allVideos.filter(
+      (video: any) =>
+        video.site === 'YouTube' && (video.type === 'Trailer' || video.type === 'Teaser')
+    );
+    const cast = (
+      credits.status === 'fulfilled' && Array.isArray(credits.value?.cast)
+        ? credits.value.cast.slice(0, 12)
+        : []
+    ).map((c: any) => ({
       id: c.id,
       name: c.name,
-      roles: Array.isArray(c.roles) ? c.roles.map((r: any) => r.character || r.job).filter(Boolean) : (c.character ? [c.character] : []),
+      roles: Array.isArray(c.roles)
+        ? c.roles.map((r: any) => r.character || r.job).filter(Boolean)
+        : c.character
+          ? [c.character]
+          : [],
       profile_path: c.profile_path || null,
     }));
 
@@ -168,14 +237,39 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
     let imdbVotes: number | null = null;
     if (process.env.OMDB_API_KEY) {
       try {
-        const imdbId = traktShow.ids.imdb || (await cachedWithRetry(ctx.tmdbExternalIdsCache, tmdbId, 'tmdb.externalIds', () => tmdbClient.getShowExternalIds(tmdbId), ctx.onRetryLabel('tmdb.externalIds')))?.imdb_id || null;
+        const imdbId =
+          traktShow.ids.imdb ||
+          (
+            await cachedWithRetry(
+              ctx.tmdbExternalIdsCache,
+              tmdbId,
+              'tmdb.externalIds',
+              () => tmdbClient.getShowExternalIds(tmdbId),
+              ctx.onRetryLabel('tmdb.externalIds')
+            )
+          )?.imdb_id ||
+          null;
         if (imdbId) {
-          const agg = await withRetry(() => omdbClient.getAggregatedRatings(imdbId), 3, 300, ctx.onRetryLabel('omdb.agg'));
-          imdbRating = typeof agg.imdbRating === 'number' && Number.isFinite(agg.imdbRating) ? agg.imdbRating : null;
-          imdbVotes = typeof agg.imdbVotes === 'number' && Number.isFinite(agg.imdbVotes) ? agg.imdbVotes : null;
-          ratingMetacritic = typeof agg.metacritic === 'number' && Number.isFinite(agg.metacritic)
-            ? agg.metacritic
-            : (typeof agg.metascore === 'number' && Number.isFinite(agg.metascore) ? agg.metascore : null);
+          const agg = await withRetry(
+            () => omdbClient.getAggregatedRatings(imdbId),
+            3,
+            300,
+            ctx.onRetryLabel('omdb.agg')
+          );
+          imdbRating =
+            typeof agg.imdbRating === 'number' && Number.isFinite(agg.imdbRating)
+              ? agg.imdbRating
+              : null;
+          imdbVotes =
+            typeof agg.imdbVotes === 'number' && Number.isFinite(agg.imdbVotes)
+              ? agg.imdbVotes
+              : null;
+          ratingMetacritic =
+            typeof agg.metacritic === 'number' && Number.isFinite(agg.metacritic)
+              ? agg.metacritic
+              : typeof agg.metascore === 'number' && Number.isFinite(agg.metascore)
+                ? agg.metascore
+                : null;
         }
       } catch {}
     }
@@ -185,14 +279,24 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
     let ratingTraktVotes: number | null = null;
     let ratingDistribution: Record<string, number> | undefined;
     try {
-      const tr = await withRetry(() => traktClient.getShowRatings(traktShow.ids.slug || traktShow.ids.trakt), 3, 300, ctx.onRetryLabel('trakt.ratings'));
+      const tr = await withRetry(
+        () => traktClient.getShowRatings(traktShow.ids.slug || traktShow.ids.trakt),
+        3,
+        300,
+        ctx.onRetryLabel('trakt.ratings')
+      );
       ratingTraktAvg = typeof tr.rating === 'number' ? tr.rating : null;
       ratingTraktVotes = typeof tr.votes === 'number' ? tr.votes : null;
       ratingDistribution = tr.distribution as any;
     } catch {}
 
     // Score & deltas
-    const primaryRating = (tmdbShowData.vote_average ? Number(tmdbShowData.vote_average) : null) ?? (ratingTraktAvg ?? null) ?? (imdbRating ?? null);
+    const primaryRating =
+      (tmdbShowData.vote_average ? Number(tmdbShowData.vote_average) : null) ??
+      ratingTraktAvg ??
+      null ??
+      imdbRating ??
+      null;
     const trendingScore = calculateTrendingScore(
       tmdbShowData.vote_average || 0,
       traktItem.watchers,
@@ -201,13 +305,21 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
 
     const prevRow = await db
       .select({ ratingTraktPrev: shows.ratingTrakt })
-      .from(shows).where(eq(shows.tmdbId, tmdbId)).limit(1);
-    const deltaPrev = typeof prevRow[0]?.ratingTraktPrev === 'number' ? (traktItem.watchers - prevRow[0].ratingTraktPrev) : null;
-    const deltaMonthly = (typeof ctx.monthly.m0[tmdbId] === 'number' && typeof ctx.monthly.m1[tmdbId] === 'number')
-      ? (ctx.monthly.m0[tmdbId] - ctx.monthly.m1[tmdbId])
-      : null;
-    const sumRecent3 = (ctx.monthly.m0[tmdbId] || 0) + (ctx.monthly.m1[tmdbId] || 0) + (ctx.monthly.m2[tmdbId] || 0);
-    const sumPrev3 = (ctx.monthly.m3[tmdbId] || 0) + (ctx.monthly.m4[tmdbId] || 0) + (ctx.monthly.m5[tmdbId] || 0);
+      .from(shows)
+      .where(eq(shows.tmdbId, tmdbId))
+      .limit(1);
+    const deltaPrev =
+      typeof prevRow[0]?.ratingTraktPrev === 'number'
+        ? traktItem.watchers - prevRow[0].ratingTraktPrev
+        : null;
+    const deltaMonthly =
+      typeof ctx.monthly.m0[tmdbId] === 'number' && typeof ctx.monthly.m1[tmdbId] === 'number'
+        ? ctx.monthly.m0[tmdbId] - ctx.monthly.m1[tmdbId]
+        : null;
+    const sumRecent3 =
+      (ctx.monthly.m0[tmdbId] || 0) + (ctx.monthly.m1[tmdbId] || 0) + (ctx.monthly.m2[tmdbId] || 0);
+    const sumPrev3 =
+      (ctx.monthly.m3[tmdbId] || 0) + (ctx.monthly.m4[tmdbId] || 0) + (ctx.monthly.m5[tmdbId] || 0);
     let delta3mVal = sumRecent3 - sumPrev3;
     if (delta3mVal === 0) {
       try {
@@ -218,17 +330,24 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
           .orderBy(desc(showWatchersSnapshots.createdAt))
           .limit(6);
         if (Array.isArray(snaps) && snaps.length >= 4) {
-          const recent = snaps.slice(0, 3).reduce((sum: number, r: any) => sum + (Number(r.watchers) || 0), 0);
-          const prev3 = snaps.slice(3, 6).reduce((sum: number, r: any) => sum + (Number(r.watchers) || 0), 0);
+          const recent = snaps
+            .slice(0, 3)
+            .reduce((sum: number, r: any) => sum + (Number(r.watchers) || 0), 0);
+          const prev3 = snaps
+            .slice(3, 6)
+            .reduce((sum: number, r: any) => sum + (Number(r.watchers) || 0), 0);
           delta3mVal = recent - prev3;
         }
       } catch {}
     }
-    const watchersDelta = (deltaMonthly ?? deltaPrev ?? 0);
+    const watchersDelta = deltaMonthly ?? deltaPrev ?? 0;
 
     // Related candidates
     ctx.currentTrendingTmdbIds.add(tmdbId);
-    const { ids: relatedTmdbIds, source: relatedSource } = await getRelatedTmdbIds(tmdbId, traktShow.ids.slug || traktShow.ids.trakt);
+    const { ids: relatedTmdbIds, source: relatedSource } = await getRelatedTmdbIds(
+      tmdbId,
+      traktShow.ids.slug || traktShow.ids.trakt
+    );
     res.relatedCandidatesTotal += relatedTmdbIds.length;
     if (relatedTmdbIds.length > 0) res.relatedShowsWithCandidates += 1;
 
@@ -242,7 +361,8 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
         .sort((a: any, b: any) => (b.season_number ?? 0) - (a.season_number ?? 0));
       const latest = sortedSeasons.find((s: any) => s.season_number !== 0) || sortedSeasons[0];
       latestSeasonNumber = typeof latest?.season_number === 'number' ? latest.season_number : null;
-      latestSeasonEpisodes = typeof latest?.episode_count === 'number' ? latest.episode_count : null;
+      latestSeasonEpisodes =
+        typeof latest?.episode_count === 'number' ? latest.episode_count : null;
     }
     const lastEpisodeSeason = tmdbShowData.last_episode_to_air?.season_number ?? null;
     const lastEpisodeNumber = tmdbShowData.last_episode_to_air?.episode_number ?? null;
@@ -286,8 +406,12 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
       backdrop: tmdbShowData.backdrop_path || null,
       genres: Array.isArray(tmdbShowData.genres) ? tmdbShowData.genres : [],
       videos: videosFiltered,
-      numberOfSeasons: typeof tmdbShowData.number_of_seasons === 'number' ? tmdbShowData.number_of_seasons : null,
-      numberOfEpisodes: typeof tmdbShowData.number_of_episodes === 'number' ? tmdbShowData.number_of_episodes : null,
+      numberOfSeasons:
+        typeof tmdbShowData.number_of_seasons === 'number' ? tmdbShowData.number_of_seasons : null,
+      numberOfEpisodes:
+        typeof tmdbShowData.number_of_episodes === 'number'
+          ? tmdbShowData.number_of_episodes
+          : null,
       latestSeasonNumber,
       latestSeasonEpisodes,
       lastEpisodeSeason,
@@ -323,16 +447,38 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
       }
 
       // showId
-      const showIdRow = await tx.select({ id: shows.id }).from(shows).where(eq(shows.tmdbId, tmdbId)).limit(1);
+      const showIdRow = await tx
+        .select({ id: shows.id })
+        .from(shows)
+        .where(eq(shows.tmdbId, tmdbId))
+        .limit(1);
       const showIdVal = (showIdRow[0] as any)?.id;
 
       if (showIdVal) {
         // Ratings
-        const existingSR = await tx.select({ id: showRatings.id }).from(showRatings).where(eq(showRatings.showId, showIdVal)).limit(1);
+        const existingSR = await tx
+          .select({ id: showRatings.id })
+          .from(showRatings)
+          .where(eq(showRatings.showId, showIdVal))
+          .limit(1);
         if (existingSR.length > 0) {
-          await tx.update(showRatings).set({ source: 'trakt', avg: ratingTraktAvg ?? null, votes: ratingTraktVotes ?? null, updatedAt: new Date() }).where(eq(showRatings.id, existingSR[0].id));
+          await tx
+            .update(showRatings)
+            .set({
+              source: 'trakt',
+              avg: ratingTraktAvg ?? null,
+              votes: ratingTraktVotes ?? null,
+              updatedAt: new Date(),
+            })
+            .where(eq(showRatings.id, existingSR[0].id));
         } else {
-          await tx.insert(showRatings).values({ showId: showIdVal, source: 'trakt', avg: ratingTraktAvg ?? null, votes: ratingTraktVotes ?? null, updatedAt: new Date() });
+          await tx.insert(showRatings).values({
+            showId: showIdVal,
+            source: 'trakt',
+            avg: ratingTraktAvg ?? null,
+            votes: ratingTraktVotes ?? null,
+            updatedAt: new Date(),
+          });
         }
         res.ratingsUpdated++;
 
@@ -341,9 +487,12 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
           const existingBuckets = await tx
             .select({ id: showRatingBuckets.id, bucket: showRatingBuckets.bucket })
             .from(showRatingBuckets)
-            .where(and(eq(showRatingBuckets.showId, showIdVal), eq(showRatingBuckets.source, 'trakt')));
+            .where(
+              and(eq(showRatingBuckets.showId, showIdVal), eq(showRatingBuckets.source, 'trakt'))
+            );
           const byBucket = new Map<number, number>();
-          for (const row of existingBuckets as any[]) byBucket.set(Number((row as any).bucket), Number((row as any).id));
+          for (const row of existingBuckets as any[])
+            byBucket.set(Number((row as any).bucket), Number((row as any).id));
           const updates: { id: number; count: number }[] = [];
           const inserts: any[] = [];
           for (const [bucketStr, countVal] of Object.entries(ratingDistribution)) {
@@ -352,10 +501,24 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
             if (!Number.isFinite(bucket) || bucket < 1 || bucket > 10) continue;
             const existingId = byBucket.get(bucket);
             if (existingId) updates.push({ id: existingId, count });
-            else inserts.push({ showId: showIdVal, source: 'trakt', bucket, count, updatedAt: new Date() });
+            else
+              inserts.push({
+                showId: showIdVal,
+                source: 'trakt',
+                bucket,
+                count,
+                updatedAt: new Date(),
+              });
           }
           if (updates.length) {
-            await Promise.all(updates.map(u => tx.update(showRatingBuckets).set({ count: u.count, updatedAt: new Date() }).where(eq(showRatingBuckets.id, u.id))));
+            await Promise.all(
+              updates.map((u) =>
+                tx
+                  .update(showRatingBuckets)
+                  .set({ count: u.count, updatedAt: new Date() })
+                  .where(eq(showRatingBuckets.id, u.id))
+              )
+            );
           }
           if (inserts.length) {
             await tx.insert(showRatingBuckets).values(inserts as any[]);
@@ -375,17 +538,49 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
         const trUpdates: Array<{ id: number; payload: any }> = [];
         const trInserts: any[] = [];
         if (byLocale.has(localeUk)) {
-          trUpdates.push({ id: byLocale.get(localeUk)!, payload: { title: ukTranslation?.titleUk || null, overview: ukTranslation?.overviewUk || null, tagline: tmdbShowData.tagline || null, updatedAt: new Date() } });
+          trUpdates.push({
+            id: byLocale.get(localeUk)!,
+            payload: {
+              title: ukTranslation?.titleUk || null,
+              overview: ukTranslation?.overviewUk || null,
+              tagline: tmdbShowData.tagline || null,
+              updatedAt: new Date(),
+            },
+          });
         } else {
-          trInserts.push({ showId: showIdVal, locale: localeUk, title: ukTranslation?.titleUk || null, overview: ukTranslation?.overviewUk || null, tagline: tmdbShowData.tagline || null });
+          trInserts.push({
+            showId: showIdVal,
+            locale: localeUk,
+            title: ukTranslation?.titleUk || null,
+            overview: ukTranslation?.overviewUk || null,
+            tagline: tmdbShowData.tagline || null,
+          });
         }
         if (byLocale.has(localeEn)) {
-          trUpdates.push({ id: byLocale.get(localeEn)!, payload: { title: tmdbShowData.name || null, overview: tmdbShowData.overview || null, tagline: tmdbShowData.tagline || null, updatedAt: new Date() } });
+          trUpdates.push({
+            id: byLocale.get(localeEn)!,
+            payload: {
+              title: tmdbShowData.name || null,
+              overview: tmdbShowData.overview || null,
+              tagline: tmdbShowData.tagline || null,
+              updatedAt: new Date(),
+            },
+          });
         } else {
-          trInserts.push({ showId: showIdVal, locale: localeEn, title: tmdbShowData.name || null, overview: tmdbShowData.overview || null, tagline: tmdbShowData.tagline || null });
+          trInserts.push({
+            showId: showIdVal,
+            locale: localeEn,
+            title: tmdbShowData.name || null,
+            overview: tmdbShowData.overview || null,
+            tagline: tmdbShowData.tagline || null,
+          });
         }
         if (trUpdates.length) {
-          await Promise.all(trUpdates.map(u => tx.update(showTranslations).set(u.payload).where(eq(showTranslations.id, u.id))));
+          await Promise.all(
+            trUpdates.map((u) =>
+              tx.update(showTranslations).set(u.payload).where(eq(showTranslations.id, u.id))
+            )
+          );
         }
         if (trInserts.length) {
           await tx.insert(showTranslations).values(trInserts as any[]);
@@ -393,19 +588,40 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
 
         // Genres registry + mapping
         if (Array.isArray(tmdbShowData.genres) && tmdbShowData.genres.length > 0) {
-          const tmdbGenreIds = tmdbShowData.genres.map((g: any) => Number(g.id)).filter((id: any) => Number.isFinite(id));
-          const existingGenres = await tx.select({ id: genresTable.id, tmdbId: genresTable.tmdbId }).from(genresTable).where(inArray(genresTable.tmdbId, tmdbGenreIds));
+          const tmdbGenreIds = tmdbShowData.genres
+            .map((g: any) => Number(g.id))
+            .filter((id: any) => Number.isFinite(id));
+          const existingGenres = await tx
+            .select({ id: genresTable.id, tmdbId: genresTable.tmdbId })
+            .from(genresTable)
+            .where(inArray(genresTable.tmdbId, tmdbGenreIds));
           const existingMap = new Map<number, number>();
-          for (const g of existingGenres as any[]) existingMap.set((g as any).tmdbId, (g as any).id);
+          for (const g of existingGenres as any[])
+            existingMap.set((g as any).tmdbId, (g as any).id);
           const missing = tmdbShowData.genres.filter((g: any) => !existingMap.has(Number(g.id)));
           if (missing.length) {
-            try { await tx.insert(genresTable).values(missing.map((mg: any) => ({ tmdbId: Number(mg.id), nameEn: String(mg.name || '') || 'Unknown' })) as any[]); } catch {}
+            try {
+              await tx.insert(genresTable).values(
+                missing.map((mg: any) => ({
+                  tmdbId: Number(mg.id),
+                  nameEn: String(mg.name || '') || 'Unknown',
+                })) as any[]
+              );
+            } catch {}
           }
-          const allGenres = await tx.select({ id: genresTable.id, tmdbId: genresTable.tmdbId }).from(genresTable).where(inArray(genresTable.tmdbId, tmdbGenreIds));
+          const allGenres = await tx
+            .select({ id: genresTable.id, tmdbId: genresTable.tmdbId })
+            .from(genresTable)
+            .where(inArray(genresTable.tmdbId, tmdbGenreIds));
           const idByTmdb = new Map<number, number>();
           for (const g of allGenres as any[]) idByTmdb.set((g as any).tmdbId, (g as any).id);
-          const existingLinks = await tx.select({ genreId: showGenres.genreId }).from(showGenres).where(eq(showGenres.showId, showIdVal));
-          const existingSet = new Set<number>((existingLinks as any[]).map((x: any) => Number(x.genreId)));
+          const existingLinks = await tx
+            .select({ genreId: showGenres.genreId })
+            .from(showGenres)
+            .where(eq(showGenres.showId, showIdVal));
+          const existingSet = new Set<number>(
+            (existingLinks as any[]).map((x: any) => Number(x.genreId))
+          );
           const linkValues: any[] = [];
           for (const tmdbGid of tmdbGenreIds) {
             const gid = idByTmdb.get(tmdbGid);
@@ -419,9 +635,13 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
 
         // Videos
         if (videosFiltered.length) {
-          const existingVideos = await tx.select({ id: showVideos.id, site: showVideos.site, key: showVideos.key }).from(showVideos).where(eq(showVideos.showId, showIdVal));
+          const existingVideos = await tx
+            .select({ id: showVideos.id, site: showVideos.site, key: showVideos.key })
+            .from(showVideos)
+            .where(eq(showVideos.showId, showIdVal));
           const byKey = new Map<string, number>();
-          for (const r of existingVideos as any[]) byKey.set(`${(r as any).site}|${(r as any).key}`, (r as any).id);
+          for (const r of existingVideos as any[])
+            byKey.set(`${(r as any).site}|${(r as any).key}`, (r as any).id);
           const updOps: Array<{ id: number; payload: any }> = [];
           const insVals: any[] = [];
           for (const v of videosFiltered) {
@@ -438,9 +658,13 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
             } as any;
             const k = `${payload.site}|${payload.key}`;
             const id = byKey.get(k);
-            if (id) updOps.push({ id, payload }); else insVals.push(payload);
+            if (id) updOps.push({ id, payload });
+            else insVals.push(payload);
           }
-          if (updOps.length) await Promise.all(updOps.map(u => tx.update(showVideos).set(u.payload).where(eq(showVideos.id, u.id))));
+          if (updOps.length)
+            await Promise.all(
+              updOps.map((u) => tx.update(showVideos).set(u.payload).where(eq(showVideos.id, u.id)))
+            );
           if (insVals.length) await tx.insert(showVideos).values(insVals as any[]);
         }
 
@@ -448,17 +672,27 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
         if (watchProvidersCombined.length) {
           // Upsert canonical registry for providers
           try {
-            const providerIds = Array.from(new Set((watchProvidersCombined || []).map((p: any) => Number(p.id || 0)).filter(Boolean)));
+            const providerIds = Array.from(
+              new Set(
+                (watchProvidersCombined || []).map((p: any) => Number(p.id || 0)).filter(Boolean)
+              )
+            );
             if (providerIds.length) {
               const existingReg = await tx
                 .select({ tmdbId: watchProvidersRegistry.tmdbId, id: watchProvidersRegistry.id })
                 .from(watchProvidersRegistry)
                 .where(inArray(watchProvidersRegistry.tmdbId, providerIds));
               const byTmdbId = new Map<number, number>();
-              for (const r of existingReg as any[]) byTmdbId.set(Number((r as any).tmdbId), Number((r as any).id));
+              for (const r of existingReg as any[])
+                byTmdbId.set(Number((r as any).tmdbId), Number((r as any).id));
               const insReg: any[] = [];
               const updReg: Array<{ id: number; payload: any }> = [];
-              const toSlug = (name: string | null | undefined) => (String(name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || null;
+              const toSlug = (name: string | null | undefined) =>
+                String(name || '')
+                  .trim()
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, '-')
+                  .replace(/^-+|-+$/g, '') || null;
               for (const p of watchProvidersCombined) {
                 const tmdbId = Number(p.id || 0);
                 if (!tmdbId) continue;
@@ -478,7 +712,10 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
               }
               if (insReg.length) await tx.insert(watchProvidersRegistry).values(insReg as any[]);
               for (const u of updReg) {
-                await tx.update(watchProvidersRegistry).set(u.payload).where(eq(watchProvidersRegistry.id, u.id));
+                await tx
+                  .update(watchProvidersRegistry)
+                  .set(u.payload)
+                  .where(eq(watchProvidersRegistry.id, u.id));
               }
             }
           } catch (e) {
@@ -486,11 +723,20 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
           }
 
           const existingProviders = await tx
-            .select({ id: showWatchProviders.id, region: showWatchProviders.region, providerId: showWatchProviders.providerId, category: showWatchProviders.category })
+            .select({
+              id: showWatchProviders.id,
+              region: showWatchProviders.region,
+              providerId: showWatchProviders.providerId,
+              category: showWatchProviders.category,
+            })
             .from(showWatchProviders)
             .where(eq(showWatchProviders.showId, showIdVal));
           const byKeyProv = new Map<string, number>();
-          for (const r of existingProviders as any[]) byKeyProv.set(`${(r as any).region}|${(r as any).providerId}|${(r as any).category}`, (r as any).id);
+          for (const r of existingProviders as any[])
+            byKeyProv.set(
+              `${(r as any).region}|${(r as any).providerId}|${(r as any).category}`,
+              (r as any).id
+            );
           const updProv: Array<{ id: number; payload: any }> = [];
           const insProv: any[] = [];
           for (const p of watchProvidersCombined) {
@@ -507,16 +753,25 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
             } as any;
             const k = `${payload.region}|${payload.providerId}|${payload.category}`;
             const id = byKeyProv.get(k);
-            if (id) updProv.push({ id, payload }); else insProv.push(payload);
+            if (id) updProv.push({ id, payload });
+            else insProv.push(payload);
           }
-          if (updProv.length) await Promise.all(updProv.map(u => tx.update(showWatchProviders).set(u.payload).where(eq(showWatchProviders.id, u.id))));
+          if (updProv.length)
+            await Promise.all(
+              updProv.map((u) =>
+                tx.update(showWatchProviders).set(u.payload).where(eq(showWatchProviders.id, u.id))
+              )
+            );
           if (insProv.length) await tx.insert(showWatchProviders).values(insProv as any[]);
         }
 
         // Content ratings per region
         {
           const regions = ['UA', 'US'] as const;
-          const existingCR = await tx.select({ id: showContentRatings.id, region: showContentRatings.region }).from(showContentRatings).where(eq(showContentRatings.showId, showIdVal));
+          const existingCR = await tx
+            .select({ id: showContentRatings.id, region: showContentRatings.region })
+            .from(showContentRatings)
+            .where(eq(showContentRatings.showId, showIdVal));
           const byRegion = new Map<string, number>();
           for (const r of existingCR as any[]) byRegion.set((r as any).region, (r as any).id);
           const insVals: any[] = [];
@@ -526,27 +781,50 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
             if (!rating) continue;
             const payload = { showId: showIdVal, region, rating, updatedAt: new Date() } as any;
             const id = byRegion.get(region);
-            if (id) updOps.push({ id, payload }); else insVals.push(payload);
+            if (id) updOps.push({ id, payload });
+            else insVals.push(payload);
           }
-          if (updOps.length) await Promise.all(updOps.map(u => tx.update(showContentRatings).set(u.payload).where(eq(showContentRatings.id, u.id))));
+          if (updOps.length)
+            await Promise.all(
+              updOps.map((u) =>
+                tx.update(showContentRatings).set(u.payload).where(eq(showContentRatings.id, u.id))
+              )
+            );
           if (insVals.length) await tx.insert(showContentRatings).values(insVals as any[]);
         }
 
         // Cast
         if (cast.length) {
-          const existingCast = await tx.select({ id: showCast.id, personId: showCast.personId, character: showCast.character }).from(showCast).where(eq(showCast.showId, showIdVal));
+          const existingCast = await tx
+            .select({ id: showCast.id, personId: showCast.personId, character: showCast.character })
+            .from(showCast)
+            .where(eq(showCast.showId, showIdVal));
           const byKeyCast = new Map<string, number>();
-          for (const r of existingCast as any[]) byKeyCast.set(`${(r as any).personId}|${(r as any).character ?? ''}`, (r as any).id);
+          for (const r of existingCast as any[])
+            byKeyCast.set(`${(r as any).personId}|${(r as any).character ?? ''}`, (r as any).id);
           const updOps: Array<{ id: number; payload: any }> = [];
           const insVals: any[] = [];
           for (const c of cast) {
-            const character = Array.isArray(c.roles) && c.roles.length > 0 ? String(c.roles[0]) : null;
-            const payload = { showId: showIdVal, personId: Number(c.id || 0), name: c.name || null, character, order: null, profilePath: c.profile_path || null, updatedAt: new Date() } as any;
+            const character =
+              Array.isArray(c.roles) && c.roles.length > 0 ? String(c.roles[0]) : null;
+            const payload = {
+              showId: showIdVal,
+              personId: Number(c.id || 0),
+              name: c.name || null,
+              character,
+              order: null,
+              profilePath: c.profile_path || null,
+              updatedAt: new Date(),
+            } as any;
             const k = `${payload.personId}|${payload.character ?? ''}`;
             const id = byKeyCast.get(k);
-            if (id) updOps.push({ id, payload }); else insVals.push(payload);
+            if (id) updOps.push({ id, payload });
+            else insVals.push(payload);
           }
-          if (updOps.length) await Promise.all(updOps.map(u => tx.update(showCast).set(u.payload).where(eq(showCast.id, u.id))));
+          if (updOps.length)
+            await Promise.all(
+              updOps.map((u) => tx.update(showCast).set(u.payload).where(eq(showCast.id, u.id)))
+            );
           if (insVals.length) await tx.insert(showCast).values(insVals as any[]);
         }
 
@@ -560,7 +838,9 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
           .limit(1);
         const lastWatchersVal = lastSnapRow[0]?.watchers ?? null;
         if (lastWatchersVal === null || lastWatchersVal !== traktItem.watchers) {
-          await tx.insert(showWatchersSnapshots).values({ showId: showIdVal, tmdbId, watchers: traktItem.watchers });
+          await tx
+            .insert(showWatchersSnapshots)
+            .values({ showId: showIdVal, tmdbId, watchers: traktItem.watchers });
           res.snapshotsInserted++;
         } else {
           res.snapshotsUnchanged++;
@@ -568,9 +848,13 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
 
         // Related mappings
         if (relatedTmdbIds.length > 0) {
-          const relRows = await tx.select({ id: shows.id, tmdbId: shows.tmdbId }).from(shows).where(inArray(shows.tmdbId, relatedTmdbIds)).limit(50);
+          const relRows = await tx
+            .select({ id: shows.id, tmdbId: shows.tmdbId })
+            .from(shows)
+            .where(inArray(shows.tmdbId, relatedTmdbIds))
+            .limit(50);
           const existingSetTmdb = new Set<number>(relRows.map((r: any) => r.tmdbId));
-          const missingIds = relatedTmdbIds.filter(id => !existingSetTmdb.has(id)).slice(0, 12);
+          const missingIds = relatedTmdbIds.filter((id) => !existingSetTmdb.has(id)).slice(0, 12);
           for (const relTmdbId of missingIds) {
             try {
               const relDetails: any = await tmdbClient.getShowDetails(relTmdbId);
@@ -594,13 +878,29 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
                   const relImdbId = relExt?.imdb_id || null;
                   if (relImdbId) {
                     const agg = await omdbClient.getAggregatedRatings(relImdbId);
-                    relImdbRating = typeof agg.imdbRating === 'number' && Number.isFinite(agg.imdbRating) ? agg.imdbRating : null;
-                    relImdbVotes = typeof agg.imdbVotes === 'number' && Number.isFinite(agg.imdbVotes) ? agg.imdbVotes : null;
-                    relMetacritic = typeof agg.metacritic === 'number' && Number.isFinite(agg.metacritic) ? agg.metacritic : (typeof agg.metascore === 'number' && Number.isFinite(agg.metascore) ? agg.metascore : null);
+                    relImdbRating =
+                      typeof agg.imdbRating === 'number' && Number.isFinite(agg.imdbRating)
+                        ? agg.imdbRating
+                        : null;
+                    relImdbVotes =
+                      typeof agg.imdbVotes === 'number' && Number.isFinite(agg.imdbVotes)
+                        ? agg.imdbVotes
+                        : null;
+                    relMetacritic =
+                      typeof agg.metacritic === 'number' && Number.isFinite(agg.metacritic)
+                        ? agg.metacritic
+                        : typeof agg.metascore === 'number' && Number.isFinite(agg.metascore)
+                          ? agg.metascore
+                          : null;
                   }
                 } catch {}
               }
-              const relPrimary = (typeof relDetails?.vote_average === 'number' ? Number(relDetails.vote_average) : null) ?? (relImdbRating ?? null);
+              const relPrimary =
+                (typeof relDetails?.vote_average === 'number'
+                  ? Number(relDetails.vote_average)
+                  : null) ??
+                relImdbRating ??
+                null;
               const relData: any = {
                 tmdbId: relTmdbId,
                 title: relDetails?.name || 'Unknown',
@@ -610,9 +910,12 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
                 poster: relDetails?.poster_path || null,
                 posterUk: relUk?.posterUk || null,
                 backdrop: relDetails?.backdrop_path || null,
-                ratingTmdb: typeof relDetails?.vote_average === 'number' ? relDetails.vote_average : null,
-                ratingTmdbCount: typeof relDetails?.vote_count === 'number' ? relDetails.vote_count : null,
-                popularityTmdb: typeof relDetails?.popularity === 'number' ? relDetails.popularity : null,
+                ratingTmdb:
+                  typeof relDetails?.vote_average === 'number' ? relDetails.vote_average : null,
+                ratingTmdbCount:
+                  typeof relDetails?.vote_count === 'number' ? relDetails.vote_count : null,
+                popularityTmdb:
+                  typeof relDetails?.popularity === 'number' ? relDetails.popularity : null,
                 ratingImdb: relImdbRating,
                 imdbVotes: relImdbVotes,
                 ratingMetacritic: relMetacritic,
@@ -627,17 +930,35 @@ export async function processShow(traktItem: any, ctx: ProcessShowContext): Prom
             } catch {}
           }
           // Link relations
-          const relRows2 = await tx.select({ id: shows.id, tmdbId: shows.tmdbId }).from(shows).where(inArray(shows.tmdbId, relatedTmdbIds)).limit(50);
+          const relRows2 = await tx
+            .select({ id: shows.id, tmdbId: shows.tmdbId })
+            .from(shows)
+            .where(inArray(shows.tmdbId, relatedTmdbIds))
+            .limit(50);
           const relMap2 = new Map<number, number>();
-          for (const r of relRows2 as any[]) { relMap2.set((r as any).tmdbId, (r as any).id); }
-          const existingLinks = await tx.select({ relatedShowId: showRelated.relatedShowId }).from(showRelated).where(eq(showRelated.showId, showIdVal));
-          const existingSet = new Set<number>((existingLinks as any[]).map((x: any) => x.relatedShowId));
+          for (const r of relRows2 as any[]) {
+            relMap2.set((r as any).tmdbId, (r as any).id);
+          }
+          const existingLinks = await tx
+            .select({ relatedShowId: showRelated.relatedShowId })
+            .from(showRelated)
+            .where(eq(showRelated.showId, showIdVal));
+          const existingSet = new Set<number>(
+            (existingLinks as any[]).map((x: any) => x.relatedShowId)
+          );
           const relInsertVals: any[] = [];
           for (let i = 0; i < relatedTmdbIds.length; i++) {
             const relTmdbId = relatedTmdbIds[i];
             const relIdVal = relMap2.get(relTmdbId);
             if (!relIdVal || existingSet.has(relIdVal)) continue;
-            relInsertVals.push({ showId: showIdVal, relatedShowId: relIdVal, source: relatedSource, rank: i + 1, score: null, updatedAt: new Date() });
+            relInsertVals.push({
+              showId: showIdVal,
+              relatedShowId: relIdVal,
+              source: relatedSource,
+              rank: i + 1,
+              score: null,
+              updatedAt: new Date(),
+            });
             res.relatedLinksAdded++;
             res.relatedSourceCounts[relatedSource]++;
           }

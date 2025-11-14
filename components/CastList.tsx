@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState } from 'react';
+import Image from 'next/image';
 
 type CastItem = {
   id: number;
@@ -16,13 +16,15 @@ interface CastListProps {
   max?: number;
 }
 
-const IMG_BASE = "https://image.tmdb.org/t/p/w92";
+const IMG_BASE = 'https://image.tmdb.org/t/p/w92';
 
-export default function CastList({ title = "Актори", cast, max = 12 }: CastListProps) {
+export default function CastList({ title = 'Актори', cast, max = 12 }: CastListProps) {
   const items = Array.isArray(cast) ? cast : [];
   const [expanded, setExpanded] = useState(false);
   const initialCount = Math.min(8, items.length);
-  const visibleItems = expanded ? items.slice(0, max ?? items.length) : items.slice(0, initialCount);
+  const visibleItems = expanded
+    ? items.slice(0, max ?? items.length)
+    : items.slice(0, initialCount);
   if (items.length === 0) return null;
 
   return (
@@ -30,7 +32,10 @@ export default function CastList({ title = "Актори", cast, max = 12 }: Cas
       <h3 className="text-xl font-bold text-white mb-4">{title}</h3>
       <div className="flex flex-wrap gap-2">
         {visibleItems.map((person) => (
-          <div key={person.id} className="flex items-center gap-2 bg-zinc-800/60 hover:bg-zinc-800 rounded-lg px-2 py-1">
+          <div
+            key={person.id}
+            className="flex items-center gap-2 bg-zinc-800/60 hover:bg-zinc-800 rounded-lg px-2 py-1"
+          >
             <div className="relative w-10 h-10 rounded-full overflow-hidden bg-zinc-700">
               {person.profile_path ? (
                 <Image
@@ -41,7 +46,9 @@ export default function CastList({ title = "Актори", cast, max = 12 }: Cas
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-zinc-400">
-                  <span className="text-sm font-semibold text-zinc-300">{(person.name?.[0] || '·').toUpperCase()}</span>
+                  <span className="text-sm font-semibold text-zinc-300">
+                    {(person.name?.[0] || '·').toUpperCase()}
+                  </span>
                 </div>
               )}
             </div>
@@ -54,7 +61,9 @@ export default function CastList({ title = "Актори", cast, max = 12 }: Cas
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-blue-400 hover:text-blue-300"
-                  >IMDb</a>
+                  >
+                    IMDb
+                  </a>
                 )}
               </div>
               {person.roles && person.roles.length > 0 && (
@@ -67,7 +76,10 @@ export default function CastList({ title = "Актори", cast, max = 12 }: Cas
         ))}
       </div>
       {items.length > initialCount && (
-        <button onClick={() => setExpanded(!expanded)} className="mt-3 text-sm text-blue-400 hover:text-blue-300">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="mt-3 text-sm text-blue-400 hover:text-blue-300"
+        >
           {expanded ? 'Згорнути' : 'Показати більше'}
         </button>
       )}

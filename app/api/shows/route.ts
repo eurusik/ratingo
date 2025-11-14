@@ -31,7 +31,12 @@ import { shows, showWatchersSnapshots } from '@/db/schema';
 import type { Show } from '@/db/schema';
 import { desc, isNotNull, and, sql, gt, asc, inArray, gte, lte } from 'drizzle-orm';
 import { TMDBClient } from '@/lib/api/tmdb';
-import { getIntParam, getStringParam, getDaysWindow, getOptionalStringParam } from '@/lib/http/params';
+import {
+  getIntParam,
+  getStringParam,
+  getDaysWindow,
+  getOptionalStringParam,
+} from '@/lib/http/params';
 import { respondError, respondJson } from '@/lib/http/responses';
 import { getCachedJson, setCachedJson, makeCacheKey } from '@/lib/cache';
 
@@ -48,31 +53,40 @@ export async function GET(request: Request) {
     const sort = getStringParam(searchParams, 'sort', 'trending', { lower: true });
     const { days, updatedAfter } = getDaysWindow(searchParams, 'days', 0);
 
-    const providerParam = getOptionalStringParam(searchParams, 'provider', { trim: true, lower: true });
+    const providerParam = getOptionalStringParam(searchParams, 'provider', {
+      trim: true,
+      lower: true,
+    });
     const regionParam = getOptionalStringParam(searchParams, 'region', { trim: true, upper: true });
-    const categoryParam = getOptionalStringParam(searchParams, 'category', { trim: true, lower: true });
+    const categoryParam = getOptionalStringParam(searchParams, 'category', {
+      trim: true,
+      lower: true,
+    });
 
     const cacheKey = makeCacheKey('shows', request.url);
     {
       const cached = await getCachedJson<{ shows: any[]; count: number }>(cacheKey);
       if (cached) {
-        return respondJson(cached, { headers: { 'Cache-Control': 'public, max-age=15, s-maxage=15, stale-while-revalidate=120' } });
+        return respondJson(cached, {
+          headers: {
+            'Cache-Control': 'public, max-age=15, s-maxage=15, stale-while-revalidate=120',
+          },
+        });
       }
     }
 
     const useWindowDelta = sort === 'delta' && days > 0;
-    const signClause =
-      useWindowDelta
-        ? sql`TRUE`
-        : sort === 'delta'
-        ? (order === 'asc'
-            ? sql`COALESCE("shows"."watchers_delta", 0) < 0`
-            : sql`COALESCE("shows"."watchers_delta", 0) > 0`)
+    const signClause = useWindowDelta
+      ? sql`TRUE`
+      : sort === 'delta'
+        ? order === 'asc'
+          ? sql`COALESCE("shows"."watchers_delta", 0) < 0`
+          : sql`COALESCE("shows"."watchers_delta", 0) > 0`
         : sort === 'delta3m'
-        ? (order === 'asc'
+          ? order === 'asc'
             ? sql`COALESCE("shows"."delta_3m", 0) < 0`
-            : sql`COALESCE("shows"."delta_3m", 0) > 0`)
-        : sql`TRUE`;
+            : sql`COALESCE("shows"."delta_3m", 0) > 0`
+          : sql`TRUE`;
 
     const recencyClause = updatedAfter ? gt(shows.trendingUpdatedAt, updatedAfter) : sql`TRUE`;
 
@@ -99,25 +113,38 @@ export async function GET(request: Request) {
         useWindowDelta
           ? sql`"shows"."rating_trakt" DESC`
           : sort === 'watchers'
-          ? (order === 'asc' ? sql`"shows"."rating_trakt" ASC` : sql`"shows"."rating_trakt" DESC`)
-          : sort === 'delta'
-          ? (order === 'asc' ? sql`COALESCE("shows"."watchers_delta", 0) ASC` : sql`COALESCE("shows"."watchers_delta", 0) DESC`)
-          : sort === 'delta3m'
-          ? (order === 'asc' ? sql`COALESCE("shows"."delta_3m", 0) ASC` : sql`COALESCE("shows"."delta_3m", 0) DESC`)
-          : (order === 'asc' ? sql`"shows"."trending_score" ASC` : sql`"shows"."trending_score" DESC`)
+            ? order === 'asc'
+              ? sql`"shows"."rating_trakt" ASC`
+              : sql`"shows"."rating_trakt" DESC`
+            : sort === 'delta'
+              ? order === 'asc'
+                ? sql`COALESCE("shows"."watchers_delta", 0) ASC`
+                : sql`COALESCE("shows"."watchers_delta", 0) DESC`
+              : sort === 'delta3m'
+                ? order === 'asc'
+                  ? sql`COALESCE("shows"."delta_3m", 0) ASC`
+                  : sql`COALESCE("shows"."delta_3m", 0) DESC`
+                : order === 'asc'
+                  ? sql`"shows"."trending_score" ASC`
+                  : sql`"shows"."trending_score" DESC`
       )
       .limit(useWindowDelta ? poolLimit : limit)
       .offset(useWindowDelta ? 0 : offset);
     const tmdbIds = trendingShows.map((s) => s.tmdbId).filter((v) => typeof v === 'number');
     const now = new Date();
-    const sparkRows = tmdbIds.length > 0
-      ? await db
-          .select({ tmdbId: showWatchersSnapshots.tmdbId, watchers: showWatchersSnapshots.watchers, createdAt: showWatchersSnapshots.createdAt })
-          .from(showWatchersSnapshots)
-          .where(inArray(showWatchersSnapshots.tmdbId, tmdbIds))
-          .orderBy(desc(showWatchersSnapshots.createdAt))
-          .limit(Math.max(10 * tmdbIds.length, 10))
-      : [];
+    const sparkRows =
+      tmdbIds.length > 0
+        ? await db
+            .select({
+              tmdbId: showWatchersSnapshots.tmdbId,
+              watchers: showWatchersSnapshots.watchers,
+              createdAt: showWatchersSnapshots.createdAt,
+            })
+            .from(showWatchersSnapshots)
+            .where(inArray(showWatchersSnapshots.tmdbId, tmdbIds))
+            .orderBy(desc(showWatchersSnapshots.createdAt))
+            .limit(Math.max(10 * tmdbIds.length, 10))
+        : [];
     const sparkMap = new Map<number, number[]>();
     for (const r of sparkRows as Array<{ tmdbId: number; watchers: number; createdAt: Date }>) {
       const arr = sparkMap.get(r.tmdbId) || [];
@@ -128,20 +155,30 @@ export async function GET(request: Request) {
     const latestMap = new Map<number, number>();
     if (useWindowDelta && updatedAfter && tmdbIds.length > 0) {
       const windowRows = await db
-        .select({ tmdbId: showWatchersSnapshots.tmdbId, watchers: showWatchersSnapshots.watchers, createdAt: showWatchersSnapshots.createdAt })
+        .select({
+          tmdbId: showWatchersSnapshots.tmdbId,
+          watchers: showWatchersSnapshots.watchers,
+          createdAt: showWatchersSnapshots.createdAt,
+        })
         .from(showWatchersSnapshots)
-        .where(and(
-          inArray(showWatchersSnapshots.tmdbId, tmdbIds),
-          gte(showWatchersSnapshots.createdAt, updatedAfter!),
-          lte(showWatchersSnapshots.createdAt, now)
-        ))
+        .where(
+          and(
+            inArray(showWatchersSnapshots.tmdbId, tmdbIds),
+            gte(showWatchersSnapshots.createdAt, updatedAfter!),
+            lte(showWatchersSnapshots.createdAt, now)
+          )
+        )
         .orderBy(asc(showWatchersSnapshots.createdAt));
       for (const r of windowRows as Array<{ tmdbId: number; watchers: number; createdAt: Date }>) {
         if (!earliestMap.has(r.tmdbId)) earliestMap.set(r.tmdbId, Number(r.watchers));
         latestMap.set(r.tmdbId, Number(r.watchers));
       }
     }
-    type ShowEnriched = Show & { watchersDelta: number | null; posterUrl: string | null; watchersSparkline: number[] };
+    type ShowEnriched = Show & {
+      watchersDelta: number | null;
+      posterUrl: string | null;
+      watchersSparkline: number[];
+    };
     let finalShows: ShowEnriched[] = trendingShows.map((show: Show): ShowEnriched => {
       const spark = (sparkMap.get(show.tmdbId) || []).slice().reverse();
       let deltaWindow: number | null = null;
@@ -176,7 +213,9 @@ export async function GET(request: Request) {
     }
     const payload = { shows: finalShows, count: finalShows.length };
     await setCachedJson(cacheKey, payload, 30);
-    return respondJson(payload, { headers: { 'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=120' } });
+    return respondJson(payload, {
+      headers: { 'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=120' },
+    });
   } catch (error) {
     console.error('Error fetching shows:', error);
     return respondError('Failed to fetch shows', 500);

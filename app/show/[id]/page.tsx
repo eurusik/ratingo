@@ -3,7 +3,11 @@ import { getShowDetails } from '@/lib/queries/shows';
 import { ClientShowDetail } from './ClientShowDetail';
 import { Metadata } from 'next';
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const { id } = await params;
   const showId = parseInt(id, 10);
 
@@ -22,8 +26,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 
   const title = (show as any).titleUk || show.title;
-  const description = ((show as any).overviewUk || show.overview || 'Детальна інформація про серіал').slice(0, 160);
-  const rating = (show as any).primaryRating || show.ratingTmdb || (show as any).ratingTraktAvg || show.ratingImdb;
+  const description = (
+    (show as any).overviewUk ||
+    show.overview ||
+    'Детальна інформація про серіал'
+  ).slice(0, 160);
+  const rating =
+    (show as any).primaryRating ||
+    show.ratingTmdb ||
+    (show as any).ratingTraktAvg ||
+    show.ratingImdb;
   const ratingText = rating ? ` | ⭐ ${rating.toFixed(1)}` : '';
 
   return {
@@ -34,14 +46,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       description,
       url: `/show/${showId}`,
       type: 'video.tv_show',
-      images: show.posterUrl ? [
-        {
-          url: show.posterUrl,
-          width: 500,
-          height: 750,
-          alt: title,
-        },
-      ] : [],
+      images: show.posterUrl
+        ? [
+            {
+              url: show.posterUrl,
+              width: 500,
+              height: 750,
+              alt: title,
+            },
+          ]
+        : [],
     },
     twitter: {
       card: 'summary_large_image',

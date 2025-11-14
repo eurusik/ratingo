@@ -1,5 +1,5 @@
-import React from "react";
-import type { ShowWithUrl } from "@/lib/types";
+import React from 'react';
+import type { ShowWithUrl } from '@/lib/types';
 
 type Region = string | null;
 
@@ -33,7 +33,7 @@ export function TrendingHero({ show, region }: { show: ShowWithUrl; region?: Reg
             <div className="flex items-center space-x-2">
               <span className="text-yellow-400 text-xl">⭐</span>
               <span className="text-white text-2xl font-bold">
-                {show.ratingTmdb != null ? Number(show.ratingTmdb).toFixed(1) : "N/A"}
+                {show.ratingTmdb != null ? Number(show.ratingTmdb).toFixed(1) : 'N/A'}
               </span>
               <span className="text-gray-400">TMDB</span>
             </div>
@@ -48,7 +48,7 @@ export function TrendingHero({ show, region }: { show: ShowWithUrl; region?: Reg
             )}
           </div>
           <a
-            href={`/show/${show.id}${region ? `?region=${region}` : ""}`}
+            href={`/show/${show.id}${region ? `?region=${region}` : ''}`}
             className="inline-block px-8 py-4 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition transform hover:scale-105"
           >
             Переглянути деталі →

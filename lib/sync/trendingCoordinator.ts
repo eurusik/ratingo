@@ -21,8 +21,16 @@ import { eq } from 'drizzle-orm';
  * const res = await runTrendingCoordinator();
  * // res: { success, jobId, tasksQueued, totals }
  */
-export async function runTrendingCoordinator(): Promise<{ success: boolean; jobId: number; tasksQueued: number; totals: { trendingFetched: number } }> {
-  const job = await db.insert(syncJobs).values({ type: 'trending', status: 'running', createdAt: new Date(), updatedAt: new Date() }).returning({ id: syncJobs.id });
+export async function runTrendingCoordinator(): Promise<{
+  success: boolean;
+  jobId: number;
+  tasksQueued: number;
+  totals: { trendingFetched: number };
+}> {
+  const job = await db
+    .insert(syncJobs)
+    .values({ type: 'trending', status: 'running', createdAt: new Date(), updatedAt: new Date() })
+    .returning({ id: syncJobs.id });
   const jobId = (job[0]?.id as number) || 0;
 
   const trending = await withRetry(() => traktClient.getTrendingShows(100), 3, 300);
@@ -31,7 +39,15 @@ export async function runTrendingCoordinator(): Promise<{ success: boolean; jobI
       const tmdbId = it?.show?.ids?.tmdb;
       if (typeof tmdbId !== 'number' || !Number.isFinite(tmdbId) || tmdbId <= 0) return null;
       const payload = { watchers: it?.watchers ?? null, traktShow: it?.show ?? null };
-      return { jobId, tmdbId, payload, status: 'pending', attempts: 0, createdAt: new Date(), updatedAt: new Date() };
+      return {
+        jobId,
+        tmdbId,
+        payload,
+        status: 'pending',
+        attempts: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
     })
     .filter(Boolean) as any[];
 
@@ -52,6 +68,13 @@ export async function runTrendingCoordinator(): Promise<{ success: boolean; jobI
     }
   }
 
-  await db.update(syncJobs).set({ status: 'running', updatedAt: new Date(), stats: { trendingFetched: trending.length, tasksQueued } as any }).where(eq(syncJobs.id, jobId));
+  await db
+    .update(syncJobs)
+    .set({
+      status: 'running',
+      updatedAt: new Date(),
+      stats: { trendingFetched: trending.length, tasksQueued } as any,
+    })
+    .where(eq(syncJobs.id, jobId));
   return { success: true, jobId, tasksQueued, totals: { trendingFetched: trending.length } };
 }

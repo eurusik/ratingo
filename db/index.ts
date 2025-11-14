@@ -18,11 +18,14 @@ const globalForDb = globalThis as unknown as {
 export function getDb(): PostgresJsDatabase<typeof schema> {
   const url = process.env.DATABASE_URL;
   if (!url) {
-    return new Proxy({}, {
-      get() {
-        throw new Error('DATABASE_URL environment variable is not set');
-      },
-    }) as unknown as PostgresJsDatabase<typeof schema>;
+    return new Proxy(
+      {},
+      {
+        get() {
+          throw new Error('DATABASE_URL environment variable is not set');
+        },
+      }
+    ) as unknown as PostgresJsDatabase<typeof schema>;
   }
 
   if (!globalForDb.__pgSql__) {

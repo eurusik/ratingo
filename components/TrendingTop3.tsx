@@ -1,6 +1,6 @@
-import React from "react";
-import { ShowCard } from "@/components/ShowCard";
-import type { ShowWithUrl } from "@/lib/types";
+import React from 'react';
+import { ShowCard } from '@/components/ShowCard';
+import type { ShowWithUrl } from '@/lib/types';
 
 export function TrendingTop3({ shows, region }: { shows: ShowWithUrl[]; region?: string | null }) {
   if (!Array.isArray(shows) || shows.length < 3) return null;

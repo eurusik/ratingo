@@ -45,7 +45,6 @@ export function ClientAirings({
   useEffect(() => {
     // Refetch when global filters change
     handleDaysChange(days);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [region, category]);
 
   return (

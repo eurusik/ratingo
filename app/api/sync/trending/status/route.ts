@@ -21,23 +21,45 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
     const jobRows = await db
-      .select({ id: syncJobs.id, status: syncJobs.status, stats: syncJobs.stats, createdAt: syncJobs.createdAt, updatedAt: syncJobs.updatedAt })
+      .select({
+        id: syncJobs.id,
+        status: syncJobs.status,
+        stats: syncJobs.stats,
+        createdAt: syncJobs.createdAt,
+        updatedAt: syncJobs.updatedAt,
+      })
       .from(syncJobs)
       .where(eq(syncJobs.type, 'trending'))
       .orderBy(desc(syncJobs.createdAt))
       .limit(1);
     const job = jobRows[0] || null;
     if (!job) {
-      return NextResponse.json({ success: true, job: null, tasks: { total: 0, pending: 0, processing: 0, done: 0, error: 0 } });
+      return NextResponse.json({
+        success: true,
+        job: null,
+        tasks: { total: 0, pending: 0, processing: 0, done: 0, error: 0 },
+      });
     }
     const jobId = job.id as number;
     const q = async (status: string) => {
-      const r = await db.select({ c: sql<number>`count(*)` }).from(syncTasks).where(and(eq(syncTasks.jobId, jobId), eq(syncTasks.status, status)));
+      const r = await db
+        .select({ c: sql<number>`count(*)` })
+        .from(syncTasks)
+        .where(and(eq(syncTasks.jobId, jobId), eq(syncTasks.status, status)));
       return (r[0]?.c as number) || 0;
     };
-    const [pending, processing, done, error] = await Promise.all([q('pending'), q('processing'), q('done'), q('error')]);
+    const [pending, processing, done, error] = await Promise.all([
+      q('pending'),
+      q('processing'),
+      q('done'),
+      q('error'),
+    ]);
     const total = pending + processing + done + error;
-    return NextResponse.json({ success: true, job, tasks: { total, pending, processing, done, error } });
+    return NextResponse.json({
+      success: true,
+      job,
+      tasks: { total, pending, processing, done, error },
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ success: false, error: message }, { status: 500 });

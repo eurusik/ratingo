@@ -35,7 +35,7 @@ export function ShowCard({ show, rank, region = null }: ShowCardProps) {
               </div>
             </div>
           )}
-          
+
           {/* Rank & Trending Badges */}
           {rank && rank <= 3 && (
             <div className="absolute top-2 left-2 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-full">
@@ -48,28 +48,30 @@ export function ShowCard({ show, rank, region = null }: ShowCardProps) {
             </div>
           )}
         </div>
-        
+
         {/* Info */}
         <div className="p-3 flex-1 flex flex-col">
           <h3 className="font-semibold text-white line-clamp-2 mb-2 text-sm group-hover:text-blue-400 transition-colors min-h-[2.5rem]">
             {show.titleUk || show.title}
           </h3>
-          
+
           {/* Ratings */}
           <div className="flex items-center justify-between text-xs mb-2">
             <div className="flex items-center space-x-2">
               <div className="flex items-center space-x-1">
                 <span className="text-yellow-400">⭐</span>
                 <span className="text-white font-semibold">
-                  {(show as any).primaryRating?.toFixed(1) || show.ratingTmdb?.toFixed(1) || (show as any).ratingTraktAvg?.toFixed(1) || show.ratingImdb?.toFixed(1) || 'N/A'}
+                  {(show as any).primaryRating?.toFixed(1) ||
+                    show.ratingTmdb?.toFixed(1) ||
+                    (show as any).ratingTraktAvg?.toFixed(1) ||
+                    show.ratingImdb?.toFixed(1) ||
+                    'N/A'}
                 </span>
               </div>
               {show.ratingImdb !== null && show.ratingImdb !== undefined && (
                 <div className="flex items-center space-x-1">
                   <span className="text-yellow-300">IMDb</span>
-                  <span className="text-white font-semibold">
-                    {show.ratingImdb?.toFixed(1)}
-                  </span>
+                  <span className="text-white font-semibold">{show.ratingImdb?.toFixed(1)}</span>
                 </div>
               )}
             </div>
@@ -77,19 +79,20 @@ export function ShowCard({ show, rank, region = null }: ShowCardProps) {
               <div className="flex items-center space-x-1">
                 <span className="text-blue-400">👁</span>
                 <span className="text-gray-300">
-                  {show.ratingTrakt > 1000 
-                    ? `${(show.ratingTrakt / 1000).toFixed(1)}K` 
+                  {show.ratingTrakt > 1000
+                    ? `${(show.ratingTrakt / 1000).toFixed(1)}K`
                     : show.ratingTrakt}
                 </span>
               </div>
             )}
           </div>
-          
+
           {/* Spacer to push bottom content down */}
           <div className="flex-1" />
-          
+
           {/* Episodes Compact */}
-          {(show as any).nextEpisodeNumber !== null && (show as any).nextEpisodeNumber !== undefined ? (
+          {(show as any).nextEpisodeNumber !== null &&
+          (show as any).nextEpisodeNumber !== undefined ? (
             <div className="mb-2 text-xs text-white flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <span className="px-2 py-0.5 bg-zinc-800 rounded">
@@ -107,17 +110,21 @@ export function ShowCard({ show, rank, region = null }: ShowCardProps) {
           )}
 
           {/* Season Progress */}
-          {typeof (show as any).latestSeasonEpisodes === 'number' && typeof (show as any).lastEpisodeNumber === 'number' ? (
+          {typeof (show as any).latestSeasonEpisodes === 'number' &&
+          typeof (show as any).lastEpisodeNumber === 'number' ? (
             <div className="mb-2">
               <div className="h-1.5 bg-zinc-800 rounded">
-                <div className="h-1.5 bg-blue-500 rounded" style={{ width: `${Math.max(0, Math.min(100, Math.round((((show as any).lastEpisodeNumber)/(show as any).latestSeasonEpisodes)*100)))}%` }} />
+                <div
+                  className="h-1.5 bg-blue-500 rounded"
+                  style={{
+                    width: `${Math.max(0, Math.min(100, Math.round(((show as any).lastEpisodeNumber / (show as any).latestSeasonEpisodes) * 100)))}%`,
+                  }}
+                />
               </div>
             </div>
           ) : (
             <div className="mb-2 h-1.5" />
           )}
-
-
         </div>
       </div>
     </Link>

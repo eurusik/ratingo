@@ -1,0 +1,14 @@
+{
+  "extends": ["next/core-web-vitals", "next/typescript", "prettier"],
+  "ignorePatterns": [
+    "node_modules",
+    ".next",
+    "out",
+    "build",
+    "drizzle",
+    ".vercel",
+    ".trae",
+    ".qoder",
+    "coverage"
+  ]
+}

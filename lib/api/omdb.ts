@@ -80,8 +80,11 @@ export class OMDbClient {
   }> {
     try {
       const data = await this.getByImdbId(imdbId);
-      const imdbRating = data.imdbRating && data.imdbRating !== 'N/A' ? parseFloat(data.imdbRating) : null;
-      const imdbVotes = data.imdbVotes ? parseInt(String(data.imdbVotes).replace(/,/g, ''), 10) : null;
+      const imdbRating =
+        data.imdbRating && data.imdbRating !== 'N/A' ? parseFloat(data.imdbRating) : null;
+      const imdbVotes = data.imdbVotes
+        ? parseInt(String(data.imdbVotes).replace(/,/g, ''), 10)
+        : null;
 
       let rottenTomatoes: number | null = null;
       let metacritic: number | null = null;
@@ -99,15 +102,21 @@ export class OMDbClient {
         }
       }
 
-      const metascore = data.Metascore && data.Metascore !== 'N/A' ? parseInt(data.Metascore, 10) : null;
+      const metascore =
+        data.Metascore && data.Metascore !== 'N/A' ? parseInt(data.Metascore, 10) : null;
 
       return { imdbRating, imdbVotes, rottenTomatoes, metacritic, metascore };
     } catch (error) {
       console.warn(`Failed to get aggregated ratings for ${imdbId}:`, error);
-      return { imdbRating: null, imdbVotes: null, rottenTomatoes: null, metacritic: null, metascore: null };
+      return {
+        imdbRating: null,
+        imdbVotes: null,
+        rottenTomatoes: null,
+        metacritic: null,
+        metascore: null,
+      };
     }
   }
-
 }
 
 // Export singleton instance - lazy initialization

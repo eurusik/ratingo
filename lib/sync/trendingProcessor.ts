@@ -21,9 +21,16 @@ import { eq } from 'drizzle-orm';
  * @example
  * await runTrendingProcessor(12);
  */
-export async function runTrendingProcessor(limit: number = 10): Promise<{ success: boolean; processed: number; succeeded: number; failed: number }> {
+export async function runTrendingProcessor(
+  limit: number = 10
+): Promise<{ success: boolean; processed: number; succeeded: number; failed: number }> {
   const rows = await db
-    .select({ id: syncTasks.id, jobId: syncTasks.jobId, tmdbId: syncTasks.tmdbId, payload: syncTasks.payload })
+    .select({
+      id: syncTasks.id,
+      jobId: syncTasks.jobId,
+      tmdbId: syncTasks.tmdbId,
+      payload: syncTasks.payload,
+    })
     .from(syncTasks)
     .where(eq(syncTasks.status, 'pending'))
     .limit(Math.max(1, Math.min(50, limit)));
@@ -44,7 +51,10 @@ export async function runTrendingProcessor(limit: number = 10): Promise<{ succes
 
   await asyncPool(6, rows, async (task) => {
     try {
-      await db.update(syncTasks).set({ status: 'processing', attempts: (task as any).attempts + 1, updatedAt: new Date() }).where(eq(syncTasks.id, task.id));
+      await db
+        .update(syncTasks)
+        .set({ status: 'processing', attempts: (task as any).attempts + 1, updatedAt: new Date() })
+        .where(eq(syncTasks.id, task.id));
     } catch {}
     try {
       const traktItem = (() => {
@@ -53,7 +63,10 @@ export async function runTrendingProcessor(limit: number = 10): Promise<{ succes
         const show = p?.traktShow || { ids: { tmdb: task.tmdbId }, title: null };
         return { watchers, show };
       })();
-      const maxWatchers =  Math.max(10000, typeof (traktItem as any)?.watchers === 'number' ? (traktItem as any).watchers : 10000);
+      const maxWatchers = Math.max(
+        10000,
+        typeof (traktItem as any)?.watchers === 'number' ? (traktItem as any).watchers : 10000
+      );
       const out = await processShow(traktItem, {
         monthly,
         maxWatchers,
@@ -67,12 +80,20 @@ export async function runTrendingProcessor(limit: number = 10): Promise<{ succes
         onRetryLabel,
       });
       if (out.error) throw new Error(out.error);
-      await db.update(syncTasks).set({ status: 'done', updatedAt: new Date() }).where(eq(syncTasks.id, task.id));
+      await db
+        .update(syncTasks)
+        .set({ status: 'done', updatedAt: new Date() })
+        .where(eq(syncTasks.id, task.id));
       succeeded++;
     } catch (e: any) {
       failed++;
       const msg = e instanceof Error ? e.message : String(e);
-      try { await db.update(syncTasks).set({ status: 'error', lastError: msg, updatedAt: new Date() }).where(eq(syncTasks.id, task.id)); } catch {}
+      try {
+        await db
+          .update(syncTasks)
+          .set({ status: 'error', lastError: msg, updatedAt: new Date() })
+          .where(eq(syncTasks.id, task.id));
+      } catch {}
     }
   });
 

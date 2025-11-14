@@ -18,7 +18,9 @@ import { eq, and, isNotNull, isNull, or } from 'drizzle-orm';
  * @example
  * const res = await runCalendarSync();
  */
-export async function runCalendarSync(trendingSetArg?: Set<number>): Promise<{ processed: number; inserted: number; updated: number }> {
+export async function runCalendarSync(
+  trendingSetArg?: Set<number>
+): Promise<{ processed: number; inserted: number; updated: number }> {
   let processed = 0;
   let inserted = 0;
   let updated = 0;
@@ -31,9 +33,17 @@ export async function runCalendarSync(trendingSetArg?: Set<number>): Promise<{ p
   const daysEnv = parseInt(String(process.env.AIRINGS_CALENDAR_DAYS || '30'), 10);
   const days = Math.max(1, Math.min(30, Number.isFinite(daysEnv) ? daysEnv : 30));
 
-  const trendingSet = trendingSetArg && trendingSetArg.size > 0
-    ? trendingSetArg
-    : new Set((await db.select({ tmdbId: shows.tmdbId }).from(shows).where(and(isNotNull(shows.trendingScore), isNotNull(shows.ratingTrakt)))).map((r: any) => r.tmdbId));
+  const trendingSet =
+    trendingSetArg && trendingSetArg.size > 0
+      ? trendingSetArg
+      : new Set(
+          (
+            await db
+              .select({ tmdbId: shows.tmdbId })
+              .from(shows)
+              .where(and(isNotNull(shows.trendingScore), isNotNull(shows.ratingTrakt)))
+          ).map((r: any) => r.tmdbId)
+        );
 
   const calendar = await withRetry(() => traktClient.getCalendarShows(start, days));
   for (const item of calendar) {
@@ -49,19 +59,52 @@ export async function runCalendarSync(trendingSetArg?: Set<number>): Promise<{ p
       const traktId = showDataCal?.ids?.trakt ?? null;
       const airDate = item?.first_aired ?? null;
       const network = (showDataCal as any)?.network ?? null;
-      const existingShowRow = await db.select({ id: shows.id }).from(shows).where(eq(shows.tmdbId, tmdbId)).limit(1);
+      const existingShowRow = await db
+        .select({ id: shows.id })
+        .from(shows)
+        .where(eq(shows.tmdbId, tmdbId))
+        .limit(1);
       const showId = existingShowRow[0]?.id ?? null;
       processed++;
       const existingAiring = await db
         .select({ id: showAirings.id })
         .from(showAirings)
-        .where(and(eq(showAirings.tmdbId, tmdbId), eq(showAirings.season, season), eq(showAirings.episode, episode)))
+        .where(
+          and(
+            eq(showAirings.tmdbId, tmdbId),
+            eq(showAirings.season, season),
+            eq(showAirings.episode, episode)
+          )
+        )
         .limit(1);
       if (existingAiring.length > 0) {
-        await db.update(showAirings).set({ showId, traktId, title, episodeTitle, airDate, network, type: 'episode', updatedAt: new Date() }).where(eq(showAirings.id, existingAiring[0].id));
+        await db
+          .update(showAirings)
+          .set({
+            showId,
+            traktId,
+            title,
+            episodeTitle,
+            airDate,
+            network,
+            type: 'episode',
+            updatedAt: new Date(),
+          })
+          .where(eq(showAirings.id, existingAiring[0].id));
         updated++;
       } else {
-        await db.insert(showAirings).values({ showId, tmdbId, traktId, title, episodeTitle, season, episode, airDate, network, type: 'episode' });
+        await db.insert(showAirings).values({
+          showId,
+          tmdbId,
+          traktId,
+          title,
+          episodeTitle,
+          season,
+          episode,
+          airDate,
+          network,
+          type: 'episode',
+        });
         inserted++;
       }
     } catch {}

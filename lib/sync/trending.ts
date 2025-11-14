@@ -51,9 +51,23 @@ export async function runTrendingSync(): Promise<RunnerResult> {
   let snapshotsUnchanged = 0;
   let snapshotsProcessed = 0;
 
-  const perf = { phases: { trendingFetchMs: 0, monthlyMapsMs: 0, perShowAvgMs: 0, perShowMaxMs: 0, omdbBackfillMs: 0, metaBackfillMs: 0, calendarSyncMs: 0, pruneMs: 0 }, retries: {} as Record<string, number> };
+  const perf = {
+    phases: {
+      trendingFetchMs: 0,
+      monthlyMapsMs: 0,
+      perShowAvgMs: 0,
+      perShowMaxMs: 0,
+      omdbBackfillMs: 0,
+      metaBackfillMs: 0,
+      calendarSyncMs: 0,
+      pruneMs: 0,
+    },
+    retries: {} as Record<string, number>,
+  };
   const retryCounts: Record<string, number> = {};
-  const onRetryLabel = (label: string) => (attempt: number, _err: any) => { retryCounts[label] = (retryCounts[label] || 0) + 1; };
+  const onRetryLabel = (label: string) => (attempt: number, _err: any) => {
+    retryCounts[label] = (retryCounts[label] || 0) + 1;
+  };
   const tmdbDetailsCache = new LRUCache<number, any>(600);
   const tmdbTranslationCache = new LRUCache<number, any>(600);
   const tmdbProvidersCache = new LRUCache<string, any[]>(800);
@@ -69,13 +83,18 @@ export async function runTrendingSync(): Promise<RunnerResult> {
   let traktData: any[] = [];
   try {
     const t0 = Date.now();
-    traktData = await withRetry(() => traktClient.getTrendingShows(100), 3, 300, onRetryLabel('trakt.trending'));
+    traktData = await withRetry(
+      () => traktClient.getTrendingShows(100),
+      3,
+      300,
+      onRetryLabel('trakt.trending')
+    );
     perf.phases.trendingFetchMs = Date.now() - t0;
   } catch (error) {
     throw new Error('Trakt API unavailable - cannot fetch trending data');
   }
 
-  const maxWatchers = Math.max(...traktData.map(show => show.watchers), 10000);
+  const maxWatchers = Math.max(...traktData.map((show) => show.watchers), 10000);
 
   // 2) Monthly watchers maps for deltas
   const tMonthly = Date.now();
@@ -173,19 +192,29 @@ export async function runTrendingSync(): Promise<RunnerResult> {
     skipped,
     timestamp: new Date().toISOString(),
     totals: { trendingFetched: Array.isArray(traktData) ? traktData.length : null },
-    related: { linksAdded: relatedLinksAdded, showsInserted: relatedShowsInserted, source: relatedSourceCounts, candidatesTotal: relatedCandidatesTotal, showsWithCandidates: relatedShowsWithCandidates },
+    related: {
+      linksAdded: relatedLinksAdded,
+      showsInserted: relatedShowsInserted,
+      source: relatedSourceCounts,
+      candidatesTotal: relatedCandidatesTotal,
+      showsWithCandidates: relatedShowsWithCandidates,
+    },
     ratings: { updated: ratingsUpdated, bucketsUpserted },
     prune: { airingsDeleted: pruneDeleted },
     backfill: { omdbUpdated: omdbBackfillUpdated, metaUpdated: metaBackfillUpdated },
-    snapshots: { inserted: snapshotsInserted, unchanged: snapshotsUnchanged, processed: snapshotsProcessed },
+    snapshots: {
+      inserted: snapshotsInserted,
+      unchanged: snapshotsUnchanged,
+      processed: snapshotsProcessed,
+    },
     perf: { phases: perf.phases, retries: retryCounts },
     ...(errors.length > 0 ? { errors, errorCount: errors.length } : {}),
   };
   try {
     console.log(
       `[trending-sync] related candidates: total=${relatedCandidatesTotal}, shows_with_candidates=${relatedShowsWithCandidates}; ` +
-      `snapshots: inserted=${snapshotsInserted}, unchanged=${snapshotsUnchanged}, processed=${snapshotsProcessed}; ` +
-      `updated=${updated}, added=${added}, skipped=${skipped}`
+        `snapshots: inserted=${snapshotsInserted}, unchanged=${snapshotsUnchanged}, processed=${snapshotsProcessed}; ` +
+        `updated=${updated}, added=${added}, skipped=${skipped}`
     );
   } catch {}
   return result;

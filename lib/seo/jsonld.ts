@@ -11,13 +11,15 @@ export function generateShowJsonLd(show: any) {
     description,
     image: show.posterUrl || undefined,
     datePublished: show.firstAirDate || undefined,
-    aggregateRating: rating ? {
-      '@type': 'AggregateRating',
-      ratingValue: rating,
-      ratingCount: ratingCount || undefined,
-      bestRating: 10,
-      worstRating: 0,
-    } : undefined,
+    aggregateRating: rating
+      ? {
+          '@type': 'AggregateRating',
+          ratingValue: rating,
+          ratingCount: ratingCount || undefined,
+          bestRating: 10,
+          worstRating: 0,
+        }
+      : undefined,
     numberOfSeasons: show.numberOfSeasons || undefined,
     numberOfEpisodes: show.numberOfEpisodes || undefined,
     genre: Array.isArray(show.genres) ? show.genres.map((g: any) => g.name) : undefined,

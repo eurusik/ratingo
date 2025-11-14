@@ -16,7 +16,6 @@ export async function asyncPool<T, R>(
       const e: Promise<any> = p.then(() => executing.splice(executing.indexOf(e), 1));
       executing.push(e);
       if (executing.length >= poolLimit) {
-        // eslint-disable-next-line no-await-in-loop
         await Promise.race(executing);
       }
     }
@@ -34,13 +33,15 @@ export async function withRetry<T>(
   onRetry?: (attempt: number, err: any) => void
 ): Promise<T> {
   let attempt = 0;
-  // eslint-disable-next-line no-constant-condition
+
   while (true) {
     try {
       return await fn();
     } catch (err: any) {
       attempt++;
-      try { if (onRetry) onRetry(attempt, err); } catch {}
+      try {
+        if (onRetry) onRetry(attempt, err);
+      } catch {}
       if (attempt > retries) throw err;
       const delay = baseDelayMs * Math.pow(2, attempt - 1) + Math.floor(Math.random() * 100);
       await new Promise((r) => setTimeout(r, delay));
@@ -104,7 +105,11 @@ export function toWatchersMap(list: any[]): Record<number, number> {
 /**
  * Вимірює час виконання і логгує, якщо перевищено `thresholdMs`.
  */
-export async function timeAsync<T>(label: string, fn: () => Promise<T>, thresholdMs = 200): Promise<T> {
+export async function timeAsync<T>(
+  label: string,
+  fn: () => Promise<T>,
+  thresholdMs = 200
+): Promise<T> {
   const start = Date.now();
   try {
     return await fn();

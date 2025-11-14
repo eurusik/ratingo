@@ -12,12 +12,20 @@ const memCache = new LRUCache<string, string>(1000);
 export async function getCachedJson<T>(key: string): Promise<T | null> {
   const mem = memCache.get(key);
   if (typeof mem === 'string') {
-    try { return JSON.parse(mem) as T; } catch { return null; }
+    try {
+      return JSON.parse(mem) as T;
+    } catch {
+      return null;
+    }
   }
   const r = await redisGet(key);
   if (!r) return null;
   memCache.set(key, r);
-  try { return JSON.parse(r) as T; } catch { return null; }
+  try {
+    return JSON.parse(r) as T;
+  } catch {
+    return null;
+  }
 }
 
 /**

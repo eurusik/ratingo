@@ -28,7 +28,7 @@ export class TMDBClient {
    */
   private async fetch<T>(endpoint: string): Promise<T> {
     const url = `${TMDB_BASE_URL}${endpoint}${endpoint.includes('?') ? '&' : '?'}api_key=${this.apiKey}`;
-    
+
     const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
@@ -46,8 +46,13 @@ export class TMDBClient {
   /**
    * Трендові серіали за вікном часу (`day|week`).
    */
-  async getTrendingShows(page: number = 1, timeWindow: 'day' | 'week' = 'week'): Promise<TMDBTrendingResponse> {
-    return this.fetch<TMDBTrendingResponse>(`/trending/tv/${timeWindow}?page=${page}&language=uk-UA`);
+  async getTrendingShows(
+    page: number = 1,
+    timeWindow: 'day' | 'week' = 'week'
+  ): Promise<TMDBTrendingResponse> {
+    return this.fetch<TMDBTrendingResponse>(
+      `/trending/tv/${timeWindow}?page=${page}&language=uk-UA`
+    );
   }
 
   /**
@@ -128,7 +133,17 @@ export class TMDBClient {
   async getWatchProvidersByRegion(
     showId: number,
     region: string
-  ): Promise<Array<{ id: number; name: string; logo_path: string | null; region: string; category: string; rank: number | null; link: string | null }>> {
+  ): Promise<
+    Array<{
+      id: number;
+      name: string;
+      logo_path: string | null;
+      region: string;
+      category: string;
+      rank: number | null;
+      link: string | null;
+    }>
+  > {
     try {
       const data = await this.fetch<any>(`/tv/${showId}/watch/providers`);
       const results = data.results || {};
@@ -142,7 +157,12 @@ export class TMDBClient {
           logo_path: p.logo_path || null,
           region,
           category,
-          rank: typeof p.display_priority === 'number' ? p.display_priority : (Number.isFinite(idx) ? idx : null),
+          rank:
+            typeof p.display_priority === 'number'
+              ? p.display_priority
+              : Number.isFinite(idx)
+                ? idx
+                : null,
           link: regionLink,
         }));
       const out = [
@@ -162,11 +182,13 @@ export class TMDBClient {
   /**
    * Провайдери перегляду з регіональним fallback (UA → US → будь-який).
    */
-  async getWatchProvidersUa(showId: number): Promise<Array<{ id: number; name: string; logo_path: string | null; region: string }>> {
+  async getWatchProvidersUa(
+    showId: number
+  ): Promise<Array<{ id: number; name: string; logo_path: string | null; region: string }>> {
     try {
       const data = await this.fetch<any>(`/tv/${showId}/watch/providers`);
       const results = data.results || {};
-      const regionKey = 'UA' in results ? 'UA' : ('US' in results ? 'US' : Object.keys(results)[0]);
+      const regionKey = 'UA' in results ? 'UA' : 'US' in results ? 'US' : Object.keys(results)[0];
       if (!regionKey) return [];
       const region = results[regionKey];
       const sources = [
@@ -176,10 +198,18 @@ export class TMDBClient {
         ...(region.rent || []),
         ...(region.buy || []),
       ];
-      const byId: Record<number, { id: number; name: string; logo_path: string | null; region: string }> = {};
+      const byId: Record<
+        number,
+        { id: number; name: string; logo_path: string | null; region: string }
+      > = {};
       for (const p of sources) {
         if (!byId[p.provider_id]) {
-          byId[p.provider_id] = { id: p.provider_id, name: p.provider_name, logo_path: p.logo_path || null, region: regionKey };
+          byId[p.provider_id] = {
+            id: p.provider_id,
+            name: p.provider_name,
+            logo_path: p.logo_path || null,
+            region: regionKey,
+          };
         }
       }
       return Object.values(byId);
@@ -225,7 +255,10 @@ export class TMDBClient {
   /**
    * Повний URL постера за шляхом.
    */
-  static getPosterUrl(path: string | null, size: 'w300' | 'w500' | 'original' = 'w500'): string | null {
+  static getPosterUrl(
+    path: string | null,
+    size: 'w300' | 'w500' | 'original' = 'w500'
+  ): string | null {
     if (!path) return null;
     return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
   }
@@ -233,7 +266,10 @@ export class TMDBClient {
   /**
    * Повний URL бекдропу за шляхом.
    */
-  static getBackdropUrl(path: string | null, size: 'w780' | 'w1280' | 'original' = 'w1280'): string | null {
+  static getBackdropUrl(
+    path: string | null,
+    size: 'w780' | 'w1280' | 'original' = 'w1280'
+  ): string | null {
     if (!path) return null;
     return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
   }
@@ -264,7 +300,6 @@ export class TMDBClient {
       return {};
     }
   }
-
 }
 
 // Export singleton instance - lazy initialization

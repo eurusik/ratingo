@@ -38,8 +38,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const days = getIntParam(searchParams, 'days', 7, { min: 1, max: 30 });
     const regionParam = getOptionalStringParam(searchParams, 'region', { trim: true, upper: true });
-    const providerParam = getOptionalStringParam(searchParams, 'provider', { trim: true, lower: true });
-    const categoryParam = getOptionalStringParam(searchParams, 'category', { trim: true, lower: true });
+    const providerParam = getOptionalStringParam(searchParams, 'provider', {
+      trim: true,
+      lower: true,
+    });
+    const categoryParam = getOptionalStringParam(searchParams, 'category', {
+      trim: true,
+      lower: true,
+    });
     const topParam = getIntParam(searchParams, 'top', 20, { min: 1, max: 100 });
     const sortParam = getStringParam(searchParams, 'sort', 'watchers', { trim: true, lower: true });
 
@@ -47,7 +53,11 @@ export async function GET(request: Request) {
     {
       const cached = await getCachedJson<{ airings: any[]; count: number }>(cacheKey);
       if (cached) {
-        return respondJson(cached, { headers: { 'Cache-Control': 'public, max-age=15, s-maxage=15, stale-while-revalidate=120' } });
+        return respondJson(cached, {
+          headers: {
+            'Cache-Control': 'public, max-age=15, s-maxage=15, stale-while-revalidate=120',
+          },
+        });
       }
     }
 
@@ -62,7 +72,9 @@ export async function GET(request: Request) {
       .from(shows)
       .where(isNotNull(shows.trendingScore))
       .orderBy(
-        sortParam === 'watchers' ? sql`"shows"."rating_trakt" DESC` : sql`"shows"."trending_score" DESC`
+        sortParam === 'watchers'
+          ? sql`"shows"."rating_trakt" DESC`
+          : sql`"shows"."trending_score" DESC`
       )
       .limit(topParam);
     const topIds = new Set(topRows.map((r: any) => r.id));
@@ -89,20 +101,31 @@ export async function GET(request: Request) {
         return {
           ...a,
           airDateTs,
-          show: s ? {
-            id: s.id,
-            tmdbId: s.tmdbId,
-            title: (s as any).titleUk || s.title,
-            poster: (s as any).posterUk || s.poster,
-          } : null,
+          show: s
+            ? {
+                id: s.id,
+                tmdbId: s.tmdbId,
+                title: (s as any).titleUk || s.title,
+                poster: (s as any).posterUk || s.poster,
+              }
+            : null,
         };
       })
-      .filter((r: any) => r.show && topIds.has(r.show.id) && typeof r.airDateTs === 'number' && r.airDateTs >= startTs && r.airDateTs <= endTs)
-      .sort((a: any, b: any) => (a.airDateTs - b.airDateTs));
+      .filter(
+        (r: any) =>
+          r.show &&
+          topIds.has(r.show.id) &&
+          typeof r.airDateTs === 'number' &&
+          r.airDateTs >= startTs &&
+          r.airDateTs <= endTs
+      )
+      .sort((a: any, b: any) => a.airDateTs - b.airDateTs);
 
     const payload = { airings: windowAirings, count: windowAirings.length };
     await setCachedJson(cacheKey, payload, 30);
-    return respondJson(payload, { headers: { 'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=120' } });
+    return respondJson(payload, {
+      headers: { 'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=120' },
+    });
   } catch (error) {
     console.error('Error fetching airings:', error);
     return respondError('Failed to fetch airings', 500);

@@ -10,13 +10,13 @@ export function calculateTrendingScore(
 ): number {
   // Normalize TMDB rating from 0-10 to 0-100
   const tmdbNormalized = (tmdbRating / 10) * 100;
-  
+
   // Normalize Trakt watchers to 0-100 scale
   const traktNormalized = Math.min((traktWatchers / maxWatchers) * 100, 100);
-  
+
   // Calculate weighted average
-  const score = (tmdbNormalized * 0.4) + (traktNormalized * 0.6);
-  
+  const score = tmdbNormalized * 0.4 + traktNormalized * 0.6;
+
   return Math.round(score * 100) / 100; // Round to 2 decimal places
 }
 

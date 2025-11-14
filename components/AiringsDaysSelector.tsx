@@ -1,6 +1,14 @@
 import React from 'react';
 
-export function AiringsDaysSelector({ days, onChange, disabled }: { days: number; onChange: (d: number) => void; disabled?: boolean }) {
+export function AiringsDaysSelector({
+  days,
+  onChange,
+  disabled,
+}: {
+  days: number;
+  onChange: (d: number) => void;
+  disabled?: boolean;
+}) {
   return (
     <div className="flex items-center space-x-3">
       <select

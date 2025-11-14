@@ -24,7 +24,7 @@ export async function buildMonthlyMaps(now = new Date()): Promise<MonthlyMaps> {
     const m = String(dd.getMonth() + 1).padStart(2, '0');
     return `${y}-${m}-01`;
   };
-  const starts = [0, -1, -2, -3, -4, -5].map(o => monthStartDate(now, o));
+  const starts = [0, -1, -2, -3, -4, -5].map((o) => monthStartDate(now, o));
   const [m0Start, m1Start, m2Start, m3Start, m4Start, m5Start] = starts;
   try {
     const [m0, m1, m2, m3, m4, m5] = await Promise.all([

@@ -21,7 +21,13 @@ interface WatchProvidersProps {
   region?: string | null;
 }
 
-export function WatchProviders({ providers, showTitle, imdbId, compact = false, region = null }: WatchProvidersProps) {
+export function WatchProviders({
+  providers,
+  showTitle,
+  imdbId,
+  compact = false,
+  region = null,
+}: WatchProvidersProps) {
   if (!providers || providers.length === 0) {
     return (
       <div className="text-center py-8">
@@ -37,7 +43,8 @@ export function WatchProviders({ providers, showTitle, imdbId, compact = false, 
     const n = name.toLowerCase();
     if (n.includes('paramount')) return { key: 'paramount-plus', label: 'Paramount Plus' };
     if (n.includes('hbo max') || n === 'max') return { key: 'max', label: 'Max' };
-    if (n.includes('amazon') && (n.includes('prime') || n.includes('video'))) return { key: 'amazon-prime-video', label: 'Amazon Prime Video' };
+    if (n.includes('amazon') && (n.includes('prime') || n.includes('video')))
+      return { key: 'amazon-prime-video', label: 'Amazon Prime Video' };
     if (n.includes('apple tv')) return { key: 'apple-tv', label: 'Apple TV' };
     if (n.includes('disney')) return { key: 'disney-plus', label: 'Disney Plus' };
     if (n.includes('hulu')) return { key: 'hulu', label: 'Hulu' };
@@ -53,7 +60,7 @@ export function WatchProviders({ providers, showTitle, imdbId, compact = false, 
   };
 
   // Filter by region if provided
-  const regionFiltered = region ? providers.filter(p => p.region === region) : providers;
+  const regionFiltered = region ? providers.filter((p) => p.region === region) : providers;
 
   // Dedupe by canonical key, keeping best category and lowest rank
   const byKey = new Map<string, WatchProvider & { _label?: string }>();
@@ -72,7 +79,7 @@ export function WatchProviders({ providers, showTitle, imdbId, compact = false, 
     const existing = byKey.get(key);
     const score = catScore(p.category);
     const existingScore = existing ? catScore(existing.category) : -1;
-    const rank = (typeof p.rank === 'number' ? p.rank : 999);
+    const rank = typeof p.rank === 'number' ? p.rank : 999;
     const existingRank = existing && typeof existing.rank === 'number' ? existing.rank! : 999;
     if (!existing || score > existingScore || (score === existingScore && rank < existingRank)) {
       byKey.set(key, { ...p, name: cn.label, _label: cn.label });
@@ -84,20 +91,21 @@ export function WatchProviders({ providers, showTitle, imdbId, compact = false, 
     const country = (region || 'US').toLowerCase();
     // Generic provider home pages (region-aware where applicable), no title/search details
     const providerLinks: Record<string, string | null> = {
-      'Netflix': 'https://www.netflix.com/',
+      Netflix: 'https://www.netflix.com/',
       'Amazon Prime Video': 'https://www.primevideo.com/',
-      'Hulu': 'https://www.hulu.com/',
+      Hulu: 'https://www.hulu.com/',
       'Apple TV': `https://tv.apple.com/${country}/`,
       'Apple TV+': `https://tv.apple.com/${country}/`,
       'Apple TV Plus': `https://tv.apple.com/${country}/`,
-      'Paramount Plus': country === 'us' ? 'https://www.paramountplus.com/' : 'https://www.paramountplus.com/intl/',
-      'Max': 'https://www.max.com/',
+      'Paramount Plus':
+        country === 'us' ? 'https://www.paramountplus.com/' : 'https://www.paramountplus.com/intl/',
+      Max: 'https://www.max.com/',
       'Disney Plus': 'https://www.disneyplus.com/',
       'Google Play Movies': 'https://play.google.com/store/movies',
       'Fandango At Home': 'https://www.vudu.com/',
-      'YouTube': 'https://www.youtube.com/',
+      YouTube: 'https://www.youtube.com/',
     };
-    
+
     return (
       providerLinks[provider.name] ||
       providerLinks[provider.provider_name || ''] ||
@@ -107,10 +115,12 @@ export function WatchProviders({ providers, showTitle, imdbId, compact = false, 
   };
 
   return (
-    <div className={`grid ${compact ? 'grid-cols-3 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'} gap-2`}>
+    <div
+      className={`grid ${compact ? 'grid-cols-3 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'} gap-2`}
+    >
       {items.map((provider, idx) => {
         const link = getProviderLink(provider);
-        
+
         // If no reliable deep link, show disabled tile but avoid region spam
         if (!link) {
           return (
@@ -139,7 +149,7 @@ export function WatchProviders({ providers, showTitle, imdbId, compact = false, 
             </div>
           );
         }
-        
+
         return (
           <a
             key={`${provider.id}-${idx}`}
