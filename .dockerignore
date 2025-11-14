@@ -1,0 +1,10 @@
+.git
+.qoder
+node_modules
+.next
+.env
+dist
+tmp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

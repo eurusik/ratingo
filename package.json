@@ -1,0 +1,37 @@
+{
+  "name": "ratingo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.44.7",
+    "next": "^16.0.1",
+    "redis": "^4.6.13",
+    "postgres": "^3.4.7",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.17",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.21",
+    "drizzle-kit": "^0.31.6",
+    "eslint": "^9",
+    "eslint-config-next": "^16.0.1",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5"
+  }
+}

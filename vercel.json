@@ -1,0 +1,10 @@
+{
+  "crons": [
+    { "path": "/api/sync/trending", "schedule": "0 */6 * * *" },
+    { "path": "/api/sync/trending/process?limit=10", "schedule": "*/5 * * * *" },
+    { "path": "/api/sync/backfill/omdb", "schedule": "10 */6 * * *" },
+    { "path": "/api/sync/backfill/meta", "schedule": "15 */6 * * *" },
+    { "path": "/api/sync/calendar/sync", "schedule": "20 */6 * * *" },
+    { "path": "/api/sync/calendar/prune", "schedule": "25 */6 * * *" }
+  ]
+}
