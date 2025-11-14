@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write .",
+    "prepare": "husky",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -16,10 +19,10 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "next": "^16.0.1",
-    "redis": "^4.6.13",
     "postgres": "^3.4.7",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "redis": "^4.6.13"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
@@ -30,8 +33,21 @@
     "drizzle-kit": "^0.31.6",
     "eslint": "^9",
     "eslint-config-next": "^16.0.1",
+    "eslint-config-prettier": "^9.1.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
     "postcss": "^8.4.49",
+    "prettier": "^3.6.2",
     "tailwindcss": "^3.4.18",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "next lint --fix --file"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
   }
 }

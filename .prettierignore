@@ -1,0 +1,9 @@
+node_modules
+.next
+out
+build
+drizzle
+.vercel
+.trae
+.qoder
+coverage
