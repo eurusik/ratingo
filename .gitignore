@@ -42,3 +42,17 @@ next-env.d.ts
 .trae/documents/
 
 docs/sync-trending.md
+
+# qoder quests (local content)
+.qoder/quests/
+
+# editor configs
+.vscode/
+.idea/
+
+# generic logs
+*.log
+
+# yarn/pnpm caches
+.yarn/
+.pnpm-store/
