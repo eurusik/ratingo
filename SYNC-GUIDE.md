@@ -59,3 +59,14 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/cale
 - Координатор: `app/api/sync/trending/route.ts:11` → `lib/sync/trendingCoordinator.ts:7`
 - Процесор: `app/api/sync/trending/process/route.ts:13` → `lib/sync/trendingProcessor.ts:8`
 - Статус: `app/api/sync/trending/status/route.ts:12`
+
+Повний бутстрап (одноразово для порожньої БД)
+
+- Запустити повний синк трендів одним викликом:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" https://ratingo.top/api/sync/trending/full
+```
+
+- Що робить: створює/оновлює `shows`, рейтинги, спарклайни, OMDb/meta бекфіли, календар ефірів.
+- Коли використовувати: одноразово для старту, або як ручний catch‑up. Не запускати часто — ендпоїнт ресурсомісткий.

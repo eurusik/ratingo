@@ -26,8 +26,10 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
 .env
+.env*.local
+.env.*
+**/*.env
 
 # vercel
 .vercel
@@ -42,6 +44,9 @@ next-env.d.ts
 .trae/documents/
 
 docs/sync-trending.md
+
+# npm auth config (can contain tokens)
+.npmrc
 
 # qoder quests (local content)
 .qoder/quests/
