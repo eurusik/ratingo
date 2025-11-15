@@ -26,14 +26,14 @@ export default async function TrendingPage({ searchParams }: { searchParams?: an
 
   // Initial fetch for SSR - direct DB queries
   let showsData = await getShows({
-    limit: 20,
+    limit: 50,
     sort: 'watchers',
     days: windowDays,
     region,
     provider,
     category,
   });
-  const airingsData = await getAirings({ days: 7, region, provider, category });
+  const airingsData = await getAirings({ days: 14, region, provider, category });
   let gainersData = await getShows({
     limit: 5,
     sort: metric,
@@ -57,7 +57,7 @@ export default async function TrendingPage({ searchParams }: { searchParams?: an
   if (gainersData.length === 0 && losersData.length === 0) {
     windowDays = 90;
     showsData = await getShows({
-      limit: 20,
+      limit: 50,
       sort: 'watchers',
       days: windowDays,
       region,

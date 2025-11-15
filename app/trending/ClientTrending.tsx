@@ -52,7 +52,7 @@ export function ClientTrending({
         const categoryQS = category ? `&category=${encodeURIComponent(category)}` : '';
         const [showsRes, airingsRes, gainersRes, losersRes] = await Promise.all([
           fetch(`/api/shows?limit=50&sort=watchers&days=${windowDays}${regionQS}${categoryQS}`),
-          fetch(`/api/airings?days=7${regionQS}${categoryQS}`),
+          fetch(`/api/airings?days=14${regionQS}${categoryQS}`),
           fetch(
             `/api/shows?limit=5&sort=${metric}&order=desc&days=${windowDays}${regionQS}${categoryQS}`
           ),
@@ -62,7 +62,8 @@ export function ClientTrending({
         ]);
         if (showsRes.ok) {
           const sj = await showsRes.json();
-          setShows((sj.shows || []) as ShowWithUrl[]);
+          const list = ((sj.shows || []) as ShowWithUrl[]).slice(0, 50);
+          setShows(list);
         }
         if (airingsRes.ok) {
           const aj = await airingsRes.json();
@@ -120,7 +121,7 @@ export function ClientTrending({
         category={category || null}
       />
 
-      <TrendingAllSection shows={shows.slice(3)} region={region || null} />
+      <TrendingAllSection shows={shows.slice(3, 50)} region={region || null} />
     </div>
   );
 }

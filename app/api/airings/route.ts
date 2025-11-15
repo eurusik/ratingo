@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       trim: true,
       lower: true,
     });
-    const topParam = getIntParam(searchParams, 'top', 20, { min: 1, max: 100 });
+    const topParam = getIntParam(searchParams, 'top', 50, { min: 1, max: 100 });
     const sortParam = getStringParam(searchParams, 'sort', 'watchers', { trim: true, lower: true });
 
     const cacheKey = makeCacheKey('airings', request.url);
@@ -61,65 +61,76 @@ export async function GET(request: Request) {
       }
     }
 
-    const today = new Date();
-    const startTs = today.getTime();
-    const endTs = startTs + days * 24 * 60 * 60 * 1000;
+    async function computeWindow(d: number, regionOverride?: string | null) {
+      const today = new Date();
+      const startTs = today.getTime();
+      const endTs = startTs + d * 24 * 60 * 60 * 1000;
 
-    // Fetch airings joined with trending shows
-    // Determine top trending show IDs to restrict airings to current trends
-    const topRows = await db
-      .select({ id: shows.id })
-      .from(shows)
-      .where(isNotNull(shows.trendingScore))
-      .orderBy(
-        sortParam === 'watchers'
-          ? sql`"shows"."rating_trakt" DESC`
-          : sql`"shows"."trending_score" DESC`
-      )
-      .limit(topParam);
-    const topIds = new Set(topRows.map((r: any) => r.id));
-
-    const joined = await db
-      .select()
-      .from(showAirings)
-      .innerJoin(shows, eq(showAirings.showId, shows.id))
-      .where(
-        and(
-          isNotNull(shows.trendingScore),
-          isNotNull(shows.ratingTrakt),
-          regionParam
-            ? sql`EXISTS (SELECT 1 FROM "show_watch_providers" swp WHERE swp.show_id = "shows"."id" AND swp.region = ${regionParam} ${providerParam ? sql`AND lower(swp.provider_name) LIKE ${'%' + providerParam + '%'}` : sql``} ${categoryParam ? sql`AND swp.category = ${categoryParam}` : sql``})`
-            : sql`true`
+      const topRows = await db
+        .select({ id: shows.id })
+        .from(shows)
+        .where(isNotNull(shows.trendingScore))
+        .orderBy(
+          sortParam === 'watchers'
+            ? sql`"shows"."rating_trakt" DESC`
+            : sql`"shows"."trending_score" DESC`
         )
-      );
+        .limit(topParam);
+      const topIds = new Set(topRows.map((r: any) => r.id));
 
-    const windowAirings = (joined as any[])
-      .map((r: any) => {
-        const a = r.showAirings || r.show_airings || r;
-        const s = r.shows;
-        const airDateTs = a.airDate ? Date.parse(a.airDate) : null;
-        return {
-          ...a,
-          airDateTs,
-          show: s
-            ? {
-                id: s.id,
-                tmdbId: s.tmdbId,
-                title: (s as any).titleUk || s.title,
-                poster: (s as any).posterUk || s.poster,
-              }
-            : null,
-        };
-      })
-      .filter(
-        (r: any) =>
-          r.show &&
-          topIds.has(r.show.id) &&
-          typeof r.airDateTs === 'number' &&
-          r.airDateTs >= startTs &&
-          r.airDateTs <= endTs
-      )
-      .sort((a: any, b: any) => a.airDateTs - b.airDateTs);
+      const joined = await db
+        .select()
+        .from(showAirings)
+        .innerJoin(shows, eq(showAirings.showId, shows.id))
+        .where(
+          and(
+            isNotNull(shows.trendingScore),
+            isNotNull(shows.ratingTrakt),
+            regionOverride
+              ? sql`EXISTS (SELECT 1 FROM "show_watch_providers" swp WHERE swp.show_id = "shows"."id" AND swp.region = ${regionOverride} ${providerParam ? sql`AND lower(swp.provider_name) LIKE ${'%' + providerParam + '%'}` : sql``} ${categoryParam ? sql`AND swp.category = ${categoryParam}` : sql``})`
+              : sql`true`
+          )
+        );
+
+      const windowAirings = (joined as any[])
+        .map((r: any) => {
+          const a = r.showAirings || r.show_airings || r;
+          const s = r.shows;
+          const airDateTs = a.airDate ? Date.parse(a.airDate) : null;
+          return {
+            ...a,
+            airDateTs,
+            show: s
+              ? {
+                  id: s.id,
+                  tmdbId: s.tmdbId,
+                  title: (s as any).titleUk || s.title,
+                  poster: (s as any).posterUk || s.poster,
+                }
+              : null,
+          };
+        })
+        .filter(
+          (r: any) =>
+            r.show &&
+            topIds.has(r.show.id) &&
+            typeof r.airDateTs === 'number' &&
+            r.airDateTs >= startTs &&
+            r.airDateTs <= endTs
+        )
+        .sort((a: any, b: any) => a.airDateTs - b.airDateTs);
+
+      return windowAirings;
+    }
+
+    let windowAirings = await computeWindow(days, regionParam);
+    if (windowAirings.length === 0) {
+      const extendedDays = Math.min(days * 2, 30);
+      windowAirings = await computeWindow(extendedDays, regionParam);
+    }
+    if (windowAirings.length === 0 && regionParam) {
+      windowAirings = await computeWindow(days, null);
+    }
 
     const payload = { airings: windowAirings, count: windowAirings.length };
     await setCachedJson(cacheKey, payload, 30);

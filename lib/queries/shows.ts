@@ -223,7 +223,7 @@ export async function getAirings({
   days = 7,
   region = null,
   provider = null,
-  top = 20,
+  top = 50,
   sort = 'watchers',
   category = null,
 }: {
