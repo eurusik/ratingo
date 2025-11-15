@@ -43,10 +43,12 @@ export async function GET(request: Request) {
     const jobId = job.id as number;
     const q = async (status: string) => {
       const r = await db
-        .select({ c: sql<number>`count(*)` })
+        .select({ c: sql<any>`count(*)` })
         .from(syncTasks)
         .where(and(eq(syncTasks.jobId, jobId), eq(syncTasks.status, status)));
-      return (r[0]?.c as number) || 0;
+      const v = r[0]?.c;
+      const n = Number(typeof v === 'bigint' ? Number(v) : String(v));
+      return Number.isFinite(n) ? n : 0;
     };
     const [pending, processing, done, error] = await Promise.all([
       q('pending'),
@@ -54,7 +56,7 @@ export async function GET(request: Request) {
       q('done'),
       q('error'),
     ]);
-    const total = pending + processing + done + error;
+    const total = Number(pending) + Number(processing) + Number(done) + Number(error);
     if (pending === 0 && processing === 0 && job.status !== 'done') {
       await db
         .update(syncJobs)
