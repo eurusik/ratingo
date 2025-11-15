@@ -55,6 +55,14 @@ export async function GET(request: Request) {
       q('error'),
     ]);
     const total = pending + processing + done + error;
+    if (pending === 0 && processing === 0 && job.status !== 'done') {
+      await db
+        .update(syncJobs)
+        .set({ status: 'done', updatedAt: new Date() })
+        .where(eq(syncJobs.id, jobId));
+      job.status = 'done' as any;
+      (job as any).updatedAt = new Date();
+    }
     return NextResponse.json({
       success: true,
       job,
