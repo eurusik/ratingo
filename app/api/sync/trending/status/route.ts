@@ -41,22 +41,25 @@ export async function GET(request: Request) {
       });
     }
     const jobId = job.id as number;
-    const q = async (status: string) => {
-      const r = await db
-        .select({ c: sql<any>`count(*)` })
-        .from(syncTasks)
-        .where(and(eq(syncTasks.jobId, jobId), eq(syncTasks.status, status)));
-      const v = r[0]?.c;
-      const n = Number(typeof v === 'bigint' ? Number(v) : String(v));
+    const rows = await db
+      .select({
+        pending: sql<any>`count(*) FILTER (WHERE ${syncTasks.status} = 'pending')`,
+        processing: sql<any>`count(*) FILTER (WHERE ${syncTasks.status} = 'processing')`,
+        done: sql<any>`count(*) FILTER (WHERE ${syncTasks.status} = 'done')`,
+        error: sql<any>`count(*) FILTER (WHERE ${syncTasks.status} = 'error')`,
+      })
+      .from(syncTasks)
+      .where(eq(syncTasks.jobId, jobId));
+    const c = rows[0] || ({} as any);
+    const coerce = (v: any) => {
+      const n = Number(typeof v === 'bigint' ? Number(v) : String(v ?? '0'));
       return Number.isFinite(n) ? n : 0;
     };
-    const [pending, processing, done, error] = await Promise.all([
-      q('pending'),
-      q('processing'),
-      q('done'),
-      q('error'),
-    ]);
-    const total = Number(pending) + Number(processing) + Number(done) + Number(error);
+    const pending = coerce(c.pending);
+    const processing = coerce(c.processing);
+    const done = coerce(c.done);
+    const error = coerce(c.error);
+    const total = pending + processing + done + error;
     if (pending === 0 && processing === 0 && job.status !== 'done') {
       await db
         .update(syncJobs)
