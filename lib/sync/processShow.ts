@@ -294,7 +294,6 @@ export async function processShow(
     const primaryRating =
       (tmdbShowData.vote_average ? Number(tmdbShowData.vote_average) : null) ??
       ratingTraktAvg ??
-      null ??
       imdbRating ??
       null;
     const trendingScore = calculateTrendingScore(
