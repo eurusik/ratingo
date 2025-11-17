@@ -1,5 +1,5 @@
-# Multi-stage build for Next.js with standalone output (Node 20 Alpine)
-FROM node:20-alpine AS builder
+# Multi-stage build for Next.js with standalone output (Node 20 Debian for QEMU compatibility)
+FROM node:20-slim AS builder
 WORKDIR /app
 
 # Install all dependencies (no cache to avoid QEMU issues)
@@ -16,7 +16,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Production runtime
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 WORKDIR /app
 
 # Security: non-root user
