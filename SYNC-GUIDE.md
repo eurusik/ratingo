@@ -1,41 +1,43 @@
 # SYNC GUIDE
 
-Що це
+## Що це
 
 - Механізм швидкого наповнення бази трендовими серіалами і фільмами без довгих запитів.
-- Серіали: працює короткими HTTP викликами — координатор ставить задачі, процесор обробляє батчами, є статус.
-- Фільми: доступний повний синк трендів за один виклик.
+- **Серіали**: працює короткими HTTP викликами — координатор ставить задачі, процесор обробляє батчами, є статус.
+- **Фільми**: підтримуються координатор/процесор/статус як у серіалах, а також повний синк за один виклик.
 
-Для чого
+## Для чого
 
-- Щоб уникнути таймаутів і “вмерлих” довгих процесів для серіалів (батчі) та швидко заповнити фільми (повний синк).
+- Щоб уникнути таймаутів і "вмерлих" довгих процесів для серіалів (батчі) та швидко заповнити фільми (повний синк).
 
-Підготовка локально
+## Підготовка локально
 
 - Встанови `DATABASE_URL` і `CRON_SECRET` у `.env`.
 - Запусти `npm run dev`.
 
-Як користуватись
+## Як користуватись
 
-- Серіали — поставити задачі (координатор):
+### Серіали
+
+**Поставити задачі (координатор):**
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/trending
 ```
 
-- Серіали — обробити батч задач (процесор):
+**Обробити батч задач (процесор):**
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/sync/trending/process?limit=10"
 ```
 
-- Серіали — перевірити прогрес (статус):
+**Перевірити прогрес (статус):**
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/trending/status
 ```
 
-- Серіали — довгі етапи — окремо:
+**Довгі етапи — окремо:**
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/backfill/omdb
@@ -44,40 +46,165 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/cale
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/calendar/prune
 ```
 
-Очікування
+### Фільми
 
-- Серіали: координатор — `success: true`, `tasksQueued: 100`; процесор — `processed/succeeded/failed`; статус — `pending/processing/done/error`.
-- Фільми: повний синк — `success: true`, `totals.trendingFetched: N`, лічильники `updated/added` та статистика `ratings/snapshots`.
+**Поставити задачі (координатор):**
 
-Поради
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/movies/trending
+```
 
-- Серіали: тримай `limit` невеликим (10–20) і викликай процесор кілька разів.
+**Обробити батч задач (процесор):**
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/sync/movies/trending/process?limit=10"
+```
+
+**Перевірити прогрес (статус):**
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/movies/trending/status
+```
+
+#### Повний синк трендів (рекомендовано)
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/movies/trending/full
+```
+
+**Що робить:**
+
+1. **Trakt API**: Завантажує топ-100 трендових фільмів з актуальними показниками популярності
+2. **TMDB Enrichment**: Збагачує кожен фільм:
+   - Постери (2/3 aspect ratio) та backdrop зображення
+   - Офіційні трейлери з YouTube
+   - Топ-10 акторів та їх ролі
+   - Українські та оригінальні назви/описи
+3. **Рейтинги**: Агрегує з 4 джерел:
+   - TMDB (vote_average)
+   - IMDb (через OMDb API)
+   - Trakt (user ratings)
+   - Metacritic (critics score)
+4. **Popularity Snapshots**: Створює спарклайни (30 днів історії)
+5. **Watch Providers**: Додає легальні платформи для UA та US
+6. **Content Ratings**: Вікові обмеження (G, PG, PG-13, R, NC-17)
+
+**Очікуваний результат:**
+
+```json
+{
+  "success": true,
+  "totals": {
+    "trendingFetched": 100, // Завантажено з Trakt
+    "updated": 85, // Оновлено існуючих
+    "added": 15 // Додано нових
+  },
+  "ratings": {
+    "tmdb": 95, // Фільмів з TMDB рейтингом
+    "imdb": 88, // Фільмів з IMDb рейтингом
+    "trakt": 100 // Фільмів з Trakt рейтингом
+  },
+  "snapshots": 100, // Спарклайнів створено
+  "providers": 200, // Watch providers додано (UA+US)
+  "cast": 850, // Записів акторів (10/фільм)
+  "trailers": 92 // Трейлерів знайдено
+}
+```
+
+**Час виконання:** ~2-3 хвилини для 100 фільмів
+
+**Частота запуску:**
+
+- Production (cron): щоденно о 02:00 UTC
+- Manual: за потреби (нові тренди, оновлення метаданих)
+
+## Очікування
+
+**Серіали:**
+
+- Координатор — `success: true`, `tasksQueued: 100`
+- Процесор — `processed/succeeded/failed`
+- Статус — `pending/processing/done/error`
+
+**Фільми:**
+
+- Координатор — `success: true`, `tasksQueued: 100`
+- Процесор — `processed/succeeded/failed`
+- Статус — `pending/processing/done/error`
+- Повний синк — `success: true`, `totals.trendingFetched: 100`
+- Лічильники: `updated` (оновлені), `added` (нові)
+- Статистика рейтингів: `tmdb/imdb/trakt` (кількість фільмів з рейтингом)
+- Метадані: `snapshots` (спарклайни), `providers` (платформи), `cast` (актори), `trailers` (трейлери)
+
+## Поради
+
+- **Серіали**: тримай `limit` невеликим (10–20) і викликай процесор кілька разів.
+- **Фільми**: синк працює одним запитом, але може зайняти 2-3 хвилини для 100 фільмів.
 - Завжди додавай заголовок `Authorization: Bearer $CRON_SECRET`.
+- Для production використовуй `https://ratingo.top` замість `localhost:3000`.
 
-Де в коді
+## Де в коді
 
-- Серіали:
-  - Координатор: `app/api/sync/trending/route.ts:11` → `lib/sync/trendingCoordinator.ts:7`
-  - Процесор: `app/api/sync/trending/process/route.ts:13` → `lib/sync/trendingProcessor.ts:8`
-  - Статус: `app/api/sync/trending/status/route.ts:12`
-- Фільми:
-  - Повний синк: `app/api/sync/movies/trending/full/route.ts:1` → `lib/sync/trendingMovies.ts:1`
+**Серіали:**
 
-Повний бутстрап (одноразово для порожньої БД)
+- Координатор: `app/api/sync/trending/route.ts:11` → `lib/sync/trendingCoordinator.ts:7`
+- Процесор: `app/api/sync/trending/process/route.ts:13` → `lib/sync/trendingProcessor.ts:8`
+- Статус: `app/api/sync/trending/status/route.ts:12`
 
-- Серіали — запустити повний синк трендів одним викликом:
+**Фільми:**
+
+- Координатор: `app/api/sync/movies/trending/route.ts:1` → `lib/sync/trendingMoviesCoordinator.ts:1`
+- Процесор: `app/api/sync/movies/trending/process/route.ts:1` → `lib/sync/trendingMoviesProcessor.ts:1`
+- Статус: `app/api/sync/movies/trending/status/route.ts:1`
+- Повний синк: `app/api/sync/movies/trending/full/route.ts:1` → `lib/sync/trendingMovies.ts:1`
+
+## Повний бутстрап (одноразово для порожньої БД)
+
+### Серіали — повний синк
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" https://ratingo.top/api/sync/trending/full
 ```
 
-- Що робить (серіали): створює/оновлює `shows`, рейтинги, спарклайни, OMDb/meta бекфіли, календар ефірів.
-- Коли використовувати: одноразово для старту, або як ручний catch‑up. Не запускати часто — ендпоїнт ресурсомісткий.
+**Що робить:**
 
-Фільми — повний синк трендів:
+- Створює/оновлює `shows`
+- Рейтинги та спарклайни
+- OMDb/meta бекфіли
+- Календар ефірів
+
+**Коли використовувати:**
+
+- Одноразово для старту
+- Ручний catch‑up
+- ⚠️ Не запускати часто — ендпоїнт ресурсомісткий
+
+### Фільми — повний синк трендів
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" https://ratingo.top/api/sync/movies/trending/full
 ```
 
-- Що робить (фільми): створює/оновлює `movies`, рейтинги та дистрибуцію (Trakt), спарклайни переглядів, OMDb агрегати, провайдери, трейлери та каст.
+**Що робить (детально):**
+
+1. **Movies Table**: Створює/оновлює записи фільмів з TMDB та Trakt ID
+2. **Ratings**: Зберігає всі доступні рейтинги (TMDB, IMDb, Trakt, Metacritic)
+3. **Snapshots**: Створює щоденні знімки популярності для графіків
+4. **OMDb Enrichment**: Додає IMDb рейтинги та Metacritic scores
+5. **Watch Providers**: Платформи для перегляду (Netflix, Disney+, Amazon тощо) для UA та US
+6. **Trailers**: Офіційні трейлери з YouTube
+7. **Cast**: Топ-10 акторів з ролями та фото
+
+**Коли використовувати:**
+
+- ✅ **Щоденно**: автоматично через cron (о 02:00 UTC)
+- ✅ **Після релізів**: коли з'являються нові великі прем'єри
+- ✅ **Оновлення метаданих**: якщо змінилися постери, описи, каст
+- ✅ **Нові регіони**: після додавання підтримки нових країн
+- ⚠️ **Не частіше 1 разу на годину**: щоб не перевантажувати API
+
+**API Limits:**
+
+- TMDB: 40 requests/10 seconds
+- OMDb: 1000 requests/day
+- Trakt: обмежень немає (з API ключем)
