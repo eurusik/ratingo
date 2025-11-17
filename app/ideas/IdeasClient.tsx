@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import FilterBar from './FilterBar';
 import IdeaItem from './IdeaItem';
 import RequestModal from './RequestModal';
@@ -15,6 +15,13 @@ type FeatureItem = {
   createdAt: string;
 };
 
+/**
+ * Головний клієнтський компонент сторінки Ідей.
+ * Відповідає за:
+ * - завантаження/пагінацію списку фіч,
+ * - сортування та фільтри тегів,
+ * - відкриття модалки та показ тостів.
+ */
 export default function IdeasClient({ initialItems }: { initialItems: FeatureItem[] }) {
   const [items, setItems] = useState<FeatureItem[]>(initialItems || []);
   const [open, setOpen] = useState(false);
@@ -133,6 +140,13 @@ export default function IdeasClient({ initialItems }: { initialItems: FeatureIte
     setItems([]);
     fetchPage(true);
   }
+
+  useEffect(() => {
+    if (!initialItems?.length) {
+      fetchPage(true);
+    }
+     
+  }, []);
 
   return (
     <div>

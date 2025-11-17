@@ -1,6 +1,11 @@
 'use client';
 import { useState } from 'react';
 
+/**
+ * Панель фільтрів для сторінки Ідей.
+ * - Керує сортуванням ('votes' | 'recent')
+ * - Показує теги з компактним режимом та розгортанням
+ */
 export default function FilterBar({
   sortBy,
   onSortChange,

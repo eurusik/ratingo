@@ -12,6 +12,9 @@ type FeatureItem = {
   createdAt: string;
 };
 
+/**
+ * Компактний анімований прогрес‑бар для лічильників символів.
+ */
 function InlineProgress({
   value,
   max,
@@ -33,6 +36,9 @@ function InlineProgress({
   );
 }
 
+/**
+ * Модальне вікно створення запиту фічі з валідацією, прогрес‑барами і тегами.
+ */
 export default function RequestModal({
   open,
   onClose,
