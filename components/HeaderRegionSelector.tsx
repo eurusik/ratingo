@@ -11,12 +11,13 @@ export function HeaderRegionSelector() {
   ] as const;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" suppressHydrationWarning>
       <span className="hidden sm:inline text-sm text-gray-400">Регіон:</span>
       <div
         role="group"
         aria-label="Вибір регіону"
         className="flex items-center gap-1 rounded-lg border border-zinc-800 bg-zinc-900 p-1"
+        suppressHydrationWarning
       >
         {options.map((opt) => {
           const active = current === opt.code;

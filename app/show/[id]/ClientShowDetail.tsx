@@ -34,14 +34,14 @@ export function ClientShowDetail({ show }: { show: any }) {
 
       <div className="min-h-screen bg-zinc-950">
         {/* Hero Section with Backdrop */}
-        <div className="relative h-96 md:h-[500px]">
+        <div className="relative h-96 md:h-[500px] overflow-hidden">
           {show.backdropUrl ? (
             <div className="relative w-full h-full">
               <Image
                 src={show.backdropUrl}
                 alt={show.title}
                 fill
-                className="object-cover"
+                className="object-cover blur-sm scale-110"
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />

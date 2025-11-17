@@ -184,6 +184,75 @@ export async function getMovies({
   }
   return out;
 }
+
+/**
+ * Отримує деталі конкретного фільму з усіма зв'язаними даними
+ */
+export async function getMovieDetails(movieId: number) {
+  const [movie] = await db.select().from(movies).where(eq(movies.id, movieId)).limit(1);
+
+  if (!movie) return null;
+
+  // Get watch providers
+  const providers = await db
+    .select({
+      providerId: movieWatchProviders.providerId,
+      providerName: movieWatchProviders.providerName,
+      logoPath: movieWatchProviders.logoPath,
+      rank: movieWatchProviders.rank,
+      region: movieWatchProviders.region,
+      category: movieWatchProviders.category,
+    })
+    .from(movieWatchProviders)
+    .where(eq(movieWatchProviders.movieId, movieId))
+    .orderBy(asc(movieWatchProviders.rank));
+
+  // Get cast
+  const cast = await db
+    .select()
+    .from(movieCast)
+    .where(eq(movieCast.movieId, movieId))
+    .orderBy(asc(movieCast.order))
+    .limit(20);
+
+  // Get videos
+  const videos = await db
+    .select()
+    .from(movieVideos)
+    .where(eq(movieVideos.movieId, movieId))
+    .limit(10);
+
+  // Get content ratings
+  const contentRatings = await db
+    .select()
+    .from(movieContentRatings)
+    .where(eq(movieContentRatings.movieId, movieId));
+
+  // Get watchers sparkline
+  const sparkRows = await db
+    .select({
+      watchers: movieWatchersSnapshots.watchers,
+      createdAt: movieWatchersSnapshots.createdAt,
+    })
+    .from(movieWatchersSnapshots)
+    .where(eq(movieWatchersSnapshots.tmdbId, movie.tmdbId))
+    .orderBy(desc(movieWatchersSnapshots.createdAt))
+    .limit(30);
+
+  const watchersSparkline = sparkRows.map((r) => Number(r.watchers) || 0).reverse();
+
+  return {
+    ...movie,
+    posterUrl: TMDBClient.getPosterUrl(movie.posterUk || movie.poster),
+    backdropUrl: movie.backdrop ? TMDBClient.getBackdropUrl(movie.backdrop) : null,
+    providers,
+    cast,
+    videos,
+    contentRatings,
+    watchersSparkline,
+    primaryRating: movie.ratingTmdb || movie.ratingTrakt || movie.ratingImdb || null,
+  };
+}
 /**
  * Запити до БД для списків фільмів та деталей фільмів.
  *

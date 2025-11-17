@@ -2,12 +2,18 @@
 
 export function Logo({ className = '' }: { className?: string }) {
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} suppressHydrationWarning>
       {/* Background glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity"
+        suppressHydrationWarning
+      />
 
       {/* Logo container */}
-      <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl">
+      <div
+        className="relative bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl"
+        suppressHydrationWarning
+      >
         <svg
           className="w-6 h-6 text-white"
           viewBox="0 0 24 24"

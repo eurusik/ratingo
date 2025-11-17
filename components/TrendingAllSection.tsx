@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShowCard } from '@/components/ShowCard';
+import { Card } from '@/components/Card';
 import type { ShowWithUrl } from '@/lib/types';
 
 export function TrendingAllSection({
@@ -20,7 +20,24 @@ export function TrendingAllSection({
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
         {shows.map((show) => (
-          <ShowCard key={show.id} show={show} region={region || null} />
+          <Card
+            key={show.id}
+            id={show.id}
+            title={show.titleUk || show.title}
+            posterUrl={show.posterUrl}
+            rating={(show as any).primaryRating || show.ratingTmdb}
+            ratingImdb={show.ratingImdb}
+            watchers={show.ratingTrakt}
+            watchersDelta={show.watchersDelta}
+            href={`/show/${show.id}${region ? `?region=${region}` : ''}`}
+            type="show"
+            trendingScore={show.trendingScore}
+            nextEpisodeSeason={(show as any).nextEpisodeSeason}
+            nextEpisodeNumber={(show as any).nextEpisodeNumber}
+            nextEpisodeAirDate={(show as any).nextEpisodeAirDate}
+            latestSeasonEpisodes={(show as any).latestSeasonEpisodes}
+            lastEpisodeNumber={(show as any).lastEpisodeNumber}
+          />
         ))}
       </div>
     </div>

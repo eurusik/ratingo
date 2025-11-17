@@ -5,7 +5,7 @@ import type { ShowWithUrl } from '@/lib/types';
 import type { AiringItem } from '@/lib/types';
 import { AiringsList } from '@/components/AiringsList';
 import { TrendingHero } from '@/components/TrendingHero';
-import { TrendingTop3 } from '@/components/TrendingTop3';
+import { Top3 } from '@/components/Top3';
 import { TrendingAllSection } from '@/components/TrendingAllSection';
 import { TrendingDeltaSection } from '@/components/TrendingDeltaSection';
 import { useFilters } from '@/components/FiltersProvider';
@@ -94,7 +94,7 @@ export function ClientTrending({
     <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950">
       {shows.length > 0 && <TrendingHero show={shows[0]} region={region || null} />}
 
-      {shows.length >= 3 && <TrendingTop3 shows={shows.slice(0, 3)} region={region || null} />}
+      {shows.length >= 3 && <Top3 items={shows.slice(0, 3)} type="show" region={region || null} />}
 
       {airings.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">

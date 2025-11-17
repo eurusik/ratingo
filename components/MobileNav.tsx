@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useFilters } from './FiltersProvider';
-import { Flame, Clapperboard, Menu, X } from 'lucide-react';
+import { Flame, Clapperboard, Film, Menu, X } from 'lucide-react';
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,23 +33,32 @@ export function MobileNav() {
           <div className="fixed top-16 right-0 left-0 bg-zinc-900/95 backdrop-blur-xl border-b border-zinc-800 z-50 shadow-2xl">
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
               {/* Navigation Links */}
-              <a
+              <Link
                 href="/"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center space-x-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 transition-all duration-300"
               >
                 <Flame className="w-6 h-6 text-orange-500" />
-                <span className="text-lg font-semibold text-white">Тренди</span>
-              </a>
+                <span className="text-lg font-semibold text-white">Серіали</span>
+              </Link>
 
-              <a
+              <Link
+                href="/movies"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center space-x-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 transition-all duration-300"
+              >
+                <Film className="w-6 h-6 text-pink-400" />
+                <span className="text-lg font-semibold text-white">Фільми</span>
+              </Link>
+
+              <Link
                 href="/airings"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center space-x-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 transition-all duration-300"
               >
                 <Clapperboard className="w-6 h-6 text-purple-400" />
                 <span className="text-lg font-semibold text-white">Надходження</span>
-              </a>
+              </Link>
 
               {/* Region Selector */}
               <div className="pt-4 border-t border-zinc-800">
