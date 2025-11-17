@@ -85,7 +85,9 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
         {/* Header with gradient border */}
-        <ProgressBar />
+        <Suspense fallback={null}>
+          <ProgressBar />
+        </Suspense>
         <Suspense fallback={null}>
           <FiltersProvider>
             <div className="sticky top-0 z-50" suppressHydrationWarning>
