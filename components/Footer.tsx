@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Film, Tv, Calendar, Github, Info } from 'lucide-react';
+import { Film, Tv, Calendar, Github, Info, Lightbulb } from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -128,9 +128,9 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Project */}
           <div>
-            <h3 className="text-sm font-semibold text-white mb-4">Контакти</h3>
+            <h3 className="text-sm font-semibold text-white mb-4">Проєкт</h3>
             <ul className="space-y-2">
               <li>
                 <a
@@ -140,8 +140,17 @@ export function Footer() {
                   className="text-sm text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
                 >
                   <Github className="w-4 h-4" />
-                  <span>GitHub</span>
+                  <span>Репозиторій на GitHub</span>
                 </a>
+              </li>
+              <li>
+                <Link
+                  href="/ideas"
+                  className="text-sm text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
+                >
+                  <Lightbulb className="w-4 h-4" />
+                  <span>Ідеї розвитку</span>
+                </Link>
               </li>
             </ul>
           </div>

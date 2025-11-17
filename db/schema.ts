@@ -748,6 +748,31 @@ export const syncTasks = pgTable(
   }
 );
 
+/**
+ * Запити фіч користувачів для з підрахунком голосів.
+ */
+export const featureRequests = pgTable(
+  'feature_requests',
+  {
+    id: serial('id').primaryKey(),
+    title: text('title').notNull(),
+    brief: text('brief'),
+    description: text('description'),
+    tags: jsonb('tags'),
+    status: text('status').notNull().default('submitted'),
+    votes: integer('votes').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      statusIdx: index('feature_requests_status_idx').on(table.status),
+      votesIdx: index('feature_requests_votes_idx').on(table.votes),
+      createdIdx: index('feature_requests_created_idx').on(table.createdAt),
+    };
+  }
+);
+
 export type Show = typeof shows.$inferSelect;
 export type NewShow = typeof shows.$inferInsert;
 export type Movie = typeof movies.$inferSelect;
@@ -803,3 +828,5 @@ export type SyncJob = typeof syncJobs.$inferSelect;
 export type NewSyncJob = typeof syncJobs.$inferInsert;
 export type SyncTask = typeof syncTasks.$inferSelect;
 export type NewSyncTask = typeof syncTasks.$inferInsert;
+export type FeatureRequest = typeof featureRequests.$inferSelect;
+export type NewFeatureRequest = typeof featureRequests.$inferInsert;
