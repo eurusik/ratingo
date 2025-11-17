@@ -32,31 +32,31 @@ export function AiringsList({
         {items.map((a) => (
           <div
             key={`${a.tmdbId}-${a.season}-${a.episode}-${a.airDate}`}
-            className="flex items-center justify-between bg-zinc-900 rounded-lg px-4 py-3"
+            className="flex items-center justify-between gap-3 bg-zinc-900 rounded-lg px-4 py-3"
           >
             <a
               href={a.show?.id ? `/show/${a.show.id}` : undefined}
-              className="flex items-center space-x-3 hover:opacity-90"
+              className="flex items-center space-x-3 hover:opacity-90 flex-1 min-w-0"
             >
               {a.show?.poster && (
                 <img
                   src={`https://image.tmdb.org/t/p/w92${a.show.poster}`}
                   alt={a.show?.title || 'poster'}
-                  className="w-10 h-10 rounded"
+                  className="w-10 h-10 rounded shrink-0"
                 />
               )}
-              <div>
-                <div className="text-white font-medium">
+              <div className="min-w-0 flex-1">
+                <div className="text-white font-medium truncate">
                   {a.show?.title || a.title || 'Невідомий серіал'}
                 </div>
-                <div className="text-gray-400 text-xs">
+                <div className="text-gray-400 text-xs truncate">
                   {a.season != null && a.episode != null ? `S${a.season}E${a.episode}` : ''}
                   {a.episodeTitle ? ` · ${a.episodeTitle}` : ''}
                   {a.network ? ` · ${a.network}` : ''}
                 </div>
               </div>
             </a>
-            <div className="text-gray-300 text-sm">
+            <div className="text-gray-300 text-sm shrink-0">
               {a.airDate
                 ? new Date(a.airDate).toLocaleDateString('uk-UA', {
                     year: 'numeric',

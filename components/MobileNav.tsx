@@ -56,6 +56,19 @@ export function MobileNav() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => {
+                      setRegion('US');
+                      setIsOpen(false);
+                    }}
+                    className={`p-3 rounded-lg font-semibold transition-all duration-300 ${
+                      region === 'US'
+                        ? 'bg-blue-600 text-white ring-2 ring-blue-400'
+                        : 'bg-zinc-800/50 text-gray-300 hover:bg-zinc-700/50'
+                    }`}
+                  >
+                    🇺🇸 Глобальний
+                  </button>
+                  <button
+                    onClick={() => {
                       setRegion('UA');
                       setIsOpen(false);
                     }}
@@ -66,19 +79,6 @@ export function MobileNav() {
                     }`}
                   >
                     🇺🇦 Україна
-                  </button>
-                  <button
-                    onClick={() => {
-                      setRegion('US');
-                      setIsOpen(false);
-                    }}
-                    className={`p-3 rounded-lg font-semibold transition-all duration-300 ${
-                      region === 'US'
-                        ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-                        : 'bg-zinc-800/50 text-gray-300 hover:bg-zinc-700/50'
-                    }`}
-                  >
-                    🇺🇸 США
                   </button>
                 </div>
               </div>

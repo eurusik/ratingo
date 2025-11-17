@@ -24,24 +24,28 @@ function DeltaRow({ s, metric, region }: { s: ShowWithUrl; metric: DeltaMetric; 
       className="flex items-center gap-3 bg-zinc-900 rounded-lg p-3 hover:bg-zinc-800 transition"
     >
       {s.posterUrl && (
-        <img src={s.posterUrl} alt={displayTitle} className="w-10 h-15 object-cover rounded" />
+        <img
+          src={s.posterUrl}
+          alt={displayTitle}
+          className="w-10 h-15 object-cover rounded shrink-0"
+        />
       )}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <div className="text-white text-sm font-semibold truncate">{displayTitle}</div>
         <div className="flex items-center gap-2 text-xs text-gray-400">
-          <span>{label}</span>
+          <span className="truncate">{label}</span>
           {use3m ? (
             (() => {
               const color = v > 0 ? '#22c55e' : v < 0 ? '#ef4444' : '#71717a';
               const points = v > 0 ? '0,12 40,12 80,6' : v < 0 ? '0,6 40,12 80,12' : '0,12 80,12';
               return (
-                <svg width="80" height="16" viewBox="0 0 80 16">
+                <svg width="80" height="16" viewBox="0 0 80 16" className="shrink-0">
                   <polyline fill="none" stroke={color} strokeWidth="2" points={points} />
                 </svg>
               );
             })()
           ) : (
-            <div className="h-1 bg-zinc-700 rounded w-32">
+            <div className="h-1 bg-zinc-700 rounded w-32 shrink-0">
               <div
                 className={`h-1 rounded ${v > 0 ? 'bg-green-500' : v < 0 ? 'bg-red-500' : 'bg-zinc-600'}`}
                 style={{ width: `${Math.min(100, Math.abs(v))}%` }}

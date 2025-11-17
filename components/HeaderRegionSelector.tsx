@@ -6,8 +6,8 @@ export function HeaderRegionSelector() {
   const { region, setRegion } = useFilters();
   const current = region || 'US';
   const options = [
-    { code: 'US', label: 'US', flag: '🇺🇸', title: 'Глобальний (US)' },
-    { code: 'UA', label: 'UA', flag: '🇺🇦', title: 'Україна (UA)' },
+    { code: 'US', label: 'Глобальний', flag: '🇺🇸', title: 'Глобальний' },
+    { code: 'UA', label: 'Україна', flag: '🇺🇦', title: 'Україна' },
   ] as const;
 
   return (
