@@ -67,12 +67,15 @@ export async function GET(request: Request) {
     {
       const cached = await getCachedJson<{ shows: any[]; count: number }>(cacheKey);
       if (cached) {
+        console.log('[cache] HIT:', cacheKey);
         return respondJson(cached, {
           headers: {
             'Cache-Control': 'public, max-age=15, s-maxage=15, stale-while-revalidate=120',
+            'X-Cache': 'HIT',
           },
         });
       }
+      console.log('[cache] MISS:', cacheKey);
     }
 
     const useWindowDelta = sort === 'delta' && days > 0;
