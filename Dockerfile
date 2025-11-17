@@ -2,10 +2,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install all dependencies with cache
+# Install all dependencies (no cache to avoid QEMU issues)
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --ignore-scripts && \
+RUN npm ci --ignore-scripts && \
     npm cache clean --force
 
 # Copy source
@@ -13,9 +12,8 @@ COPY . .
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Build with Next.js cache (produces .next/standalone)
-RUN --mount=type=cache,target=/app/.next/cache \
-    npm run build
+# Build with Next.js (no cache to avoid QEMU issues)
+RUN npm run build
 
 # Production runtime
 FROM node:20-alpine AS runner
