@@ -80,7 +80,7 @@ export default function RootLayout({
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="flex justify-between items-center h-16">
                     {/* Logo */}
-                    <a href="/trending" className="flex items-center space-x-3 group">
+                    <a href="/" className="flex items-center space-x-3 group">
                       <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
                         <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl">
@@ -106,7 +106,7 @@ export default function RootLayout({
                     {/* Navigation */}
                     <div className="flex items-center space-x-3">
                       <a
-                        href="/trending"
+                        href="/"
                         className="group relative px-4 py-2 rounded-lg overflow-hidden transition-all duration-300"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />

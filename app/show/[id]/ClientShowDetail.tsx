@@ -17,7 +17,6 @@ export function ClientShowDetail({ show }: { show: any }) {
   const showJsonLd = generateShowJsonLd(show);
   const breadcrumbJsonLd = generateBreadcrumbJsonLd([
     { name: 'Головна', url: '/' },
-    { name: 'Тренди', url: '/trending' },
     { name: show.titleUk || show.title, url: `/show/${show.id}` },
   ]);
 
@@ -435,7 +434,7 @@ export function ClientShowDetail({ show }: { show: any }) {
 
               {/* Back Button */}
               <button
-                onClick={() => router.push('/trending')}
+                onClick={() => router.push('/')}
                 className="w-full px-6 py-3 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition"
               >
                 ← Назад до трендів

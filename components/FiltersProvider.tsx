@@ -32,13 +32,20 @@ export function FiltersProvider({ children }: { children: React.ReactNode }) {
       const nextCategory = spCategory || lsCategory || '' || null;
       setRegionState(nextRegion);
       setCategoryState(nextCategory === '' ? null : nextCategory);
-      // Ensure URL reflects initial values for consistency
-      const params = new URLSearchParams(searchParams.toString());
-      if (nextRegion) params.set('region', nextRegion);
-      else params.delete('region');
-      if (nextCategory) params.set('category', nextCategory);
-      else params.delete('category');
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      // Only update URL if we're not on root path (avoid redirect loop)
+      if (pathname !== '/') {
+        // Ensure URL reflects initial values for consistency
+        const params = new URLSearchParams(searchParams.toString());
+        if (nextRegion) params.set('region', nextRegion);
+        else params.delete('region');
+        if (nextCategory) params.set('category', nextCategory);
+        else params.delete('category');
+        const newUrl = `${pathname}?${params.toString()}`;
+        // Only replace if URL actually changed to avoid unnecessary rerenders
+        if (newUrl !== `${pathname}?${searchParams.toString()}`) {
+          router.replace(newUrl, { scroll: false });
+        }
+      }
     }
   }, []);
 
