@@ -26,7 +26,7 @@ export function TrendingHero({ show, region }: { show: ShowWithUrl; region?: Reg
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
             {show.titleUk || show.title}
           </h1>
-          <p className="text-gray-300 text-lg mb-6 line-clamp-3">
+          <p className="text-gray-300 text-lg mb-6 line-clamp-3 break-words">
             {show.overviewUk || show.overview}
           </p>
           <div className="flex items-center space-x-6 mb-6">
