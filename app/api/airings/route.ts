@@ -53,12 +53,15 @@ export async function GET(request: Request) {
     {
       const cached = await getCachedJson<{ airings: any[]; count: number }>(cacheKey);
       if (cached) {
+        console.log('[cache] HIT:', cacheKey);
         return respondJson(cached, {
           headers: {
             'Cache-Control': 'public, max-age=15, s-maxage=15, stale-while-revalidate=120',
+            'X-Cache': 'HIT',
           },
         });
       }
+      console.log('[cache] MISS:', cacheKey);
     }
 
     async function computeWindow(d: number, regionOverride?: string | null) {

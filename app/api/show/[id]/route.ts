@@ -43,10 +43,16 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
 
     const cacheKey = makeCacheKey('show', request.url);
     const cached = await getCachedJson<any>(cacheKey);
-    if (cached)
+    if (cached) {
+      console.log('[cache] HIT:', cacheKey);
       return respondJson(cached, {
-        headers: { 'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=300' },
+        headers: {
+          'Cache-Control': 'public, max-age=30, s-maxage=30, stale-while-revalidate=300',
+          'X-Cache': 'HIT',
+        },
       });
+    }
+    console.log('[cache] MISS:', cacheKey);
     const details = await getShowDetails(showId);
     if (!details) return respondError('Show not found', 404);
     await setCachedJson(cacheKey, details, 60);
