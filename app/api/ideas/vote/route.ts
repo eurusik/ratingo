@@ -5,6 +5,13 @@ import { respondJson, respondError } from '@/lib/http/responses';
 import { eq, sql } from 'drizzle-orm';
 import { getCachedJson, setCachedJson } from '@/lib/cache';
 
+/**
+ * API: Голосування за запит фічі.
+ * Тіло запиту: { id: number }
+ * Ліміт: один голос на фічу з одного IP протягом 24 годин (429 при повторі).
+ *
+ * Відповідь: { item: FeatureRequest }
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

@@ -4,6 +4,14 @@ import { featureRequests } from '@/db/schema';
 import { respondJson, respondError } from '@/lib/http/responses';
 import { getCachedJson, setCachedJson } from '@/lib/cache';
 
+/**
+ * API: Створення запиту фічі.
+ * Тіло запиту: { title: string, brief?: string, description?: string, tags?: string[] }
+ * Валідація: title 3..128, brief <=256, description <=2000, tags <=5 (кожен <=24).
+ * Антиспам: до 3 створень за 5 хвилин на IP (429 при перевищенні).
+ *
+ * Відповідь: { item: FeatureRequest } (201)
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

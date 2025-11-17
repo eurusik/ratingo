@@ -7,6 +7,7 @@ import IdeasClient from './IdeasClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
+  /** Метадані сторінки Ідей розвитку */
   title: 'Ідеї розвитку — Запити фіч',
   description:
     'Голосуйте за фічі, які хочете бачити, та створюйте нові запити. Ідеї розвитку Ratingo.',
@@ -17,7 +18,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RoadmapPage() {
+/**
+ * Сторінка Ідей: завантажує первинний список фіч на сервері
+ * і передає його до клієнтського компонента.
+ */
+export default async function IdeasPage() {
   let items: FeatureRequest[] = [];
   try {
     items = await db
@@ -33,7 +38,25 @@ export default async function RoadmapPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">Ідеї розвитку</h1>
       </div>
-      <IdeasClient initialItems={items} />
+      <IdeasClient
+        initialItems={items.map((feature) => ({
+          id: feature.id,
+          title: feature.title,
+          brief: feature.brief ?? null,
+          description: feature.description ?? null,
+          tags: Array.isArray(feature.tags)
+            ? feature.tags.filter((t): t is string => typeof t === 'string')
+            : null,
+          status: feature.status,
+          votes: typeof feature.votes === 'number' ? feature.votes : Number(feature.votes) || 0,
+          createdAt:
+            typeof feature.createdAt === 'string'
+              ? feature.createdAt
+              : feature.createdAt instanceof Date
+                ? feature.createdAt.toISOString()
+                : String(feature.createdAt),
+        }))}
+      />
     </section>
   );
 }
