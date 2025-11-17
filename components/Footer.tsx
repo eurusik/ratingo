@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Film, Tv, Calendar, Github } from 'lucide-react';
+import { Film, Tv, Calendar, Github, Info } from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -77,6 +77,15 @@ export function Footer() {
                 >
                   <Calendar className="w-4 h-4" />
                   <span>Надходження</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/about"
+                  className="text-sm text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
+                >
+                  <Info className="w-4 h-4" />
+                  <span>Про проєкт</span>
                 </Link>
               </li>
             </ul>
