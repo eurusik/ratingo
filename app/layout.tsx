@@ -4,6 +4,8 @@ import './globals.css';
 import { generateWebSiteJsonLd } from '@/lib/seo/jsonld';
 import { FiltersProvider } from '@/components/FiltersProvider';
 import { HeaderRegionSelector } from '@/components/HeaderRegionSelector';
+import { MobileNav } from '@/components/MobileNav';
+import { Flame, Clapperboard } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: {
@@ -80,12 +82,12 @@ export default function RootLayout({
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                   <div className="flex justify-between items-center h-16">
                     {/* Logo */}
-                    <a href="/" className="flex items-center space-x-3 group">
+                    <a href="/" className="flex items-center space-x-2 sm:space-x-3 group">
                       <div className="relative">
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
                         <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl">
                           <svg
-                            className="w-6 h-6 text-white"
+                            className="w-5 h-5 sm:w-6 sm:h-6 text-white"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >
@@ -94,26 +96,24 @@ export default function RootLayout({
                         </div>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                           Ratingo
                         </span>
-                        <span className="text-[10px] text-zinc-500 -mt-1 font-medium tracking-wide">
+                        <span className="hidden sm:block text-[10px] text-zinc-500 -mt-1 font-medium tracking-wide">
                           TRENDING SHOWS
                         </span>
                       </div>
                     </a>
 
-                    {/* Navigation */}
-                    <div className="flex items-center space-x-3">
+                    {/* Desktop Navigation */}
+                    <div className="hidden md:flex items-center space-x-3">
                       <a
                         href="/"
                         className="group relative px-4 py-2 rounded-lg overflow-hidden transition-all duration-300"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="relative flex items-center space-x-2">
-                          <span className="text-xl group-hover:scale-110 transition-transform">
-                            🔥
-                          </span>
+                          <Flame className="w-5 h-5 text-orange-500 group-hover:scale-110 transition-transform" />
                           <span className="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">
                             Тренди
                           </span>
@@ -125,9 +125,7 @@ export default function RootLayout({
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                         <div className="relative flex items-center space-x-2">
-                          <span className="text-xl group-hover:scale-110 transition-transform">
-                            🎬
-                          </span>
+                          <Clapperboard className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
                           <span className="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">
                             Надходження
                           </span>
@@ -135,6 +133,11 @@ export default function RootLayout({
                       </a>
                       {/* Region selector inline in header */}
                       <HeaderRegionSelector />
+                    </div>
+
+                    {/* Mobile Navigation */}
+                    <div className="md:hidden">
+                      <MobileNav />
                     </div>
                   </div>
                 </div>
