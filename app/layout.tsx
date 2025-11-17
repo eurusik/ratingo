@@ -1,11 +1,19 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { generateWebSiteJsonLd } from '@/lib/seo/jsonld';
 import { FiltersProvider } from '@/components/FiltersProvider';
 import { HeaderRegionSelector } from '@/components/HeaderRegionSelector';
 import { MobileNav } from '@/components/MobileNav';
+import { Logo } from '@/components/Logo';
 import { Flame, Clapperboard } from 'lucide-react';
+
+const inter = Inter({
+  subsets: ['latin', 'cyrillic'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -66,8 +74,8 @@ export default function RootLayout({
   const websiteJsonLd = generateWebSiteJsonLd();
 
   return (
-    <html lang="uk">
-      <body className="antialiased bg-zinc-950" suppressHydrationWarning>
+    <html lang="uk" className={inter.variable}>
+      <body className="antialiased bg-zinc-950 font-sans" suppressHydrationWarning>
         {/* JSON-LD for website */}
         <script
           type="application/ld+json"
@@ -83,23 +91,12 @@ export default function RootLayout({
                   <div className="flex justify-between items-center h-16">
                     {/* Logo */}
                     <a href="/" className="flex items-center space-x-2 sm:space-x-3 group">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
-                        <div className="relative bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl">
-                          <svg
-                            className="w-5 h-5 sm:w-6 sm:h-6 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm12.553 1.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-                          </svg>
-                        </div>
-                      </div>
+                      <Logo />
                       <div className="flex flex-col">
-                        <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        <span className="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                           Ratingo
                         </span>
-                        <span className="hidden sm:block text-[10px] text-zinc-500 -mt-1 font-medium tracking-wide">
+                        <span className="hidden sm:block text-[10px] text-zinc-500 -mt-1 font-semibold tracking-wider">
                           TRENDING SHOWS
                         </span>
                       </div>

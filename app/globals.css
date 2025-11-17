@@ -2,19 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #09090b;
-  --foreground: #fafafa;
-}
+@layer base {
+  :root {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
+  }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: var(--font-inter);
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Logo animation - play once on load */
+@keyframes drawLine {
+  0% {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+.animate-draw-line {
+  animation: drawLine 1.2s ease-out forwards;
 }
