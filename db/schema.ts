@@ -79,6 +79,60 @@ export const shows = pgTable(
 );
 
 /**
+ * Таблиця фільмів: TMDB/Trakt/OMDb метадані, провайдери, каст та трендові метрики.
+ */
+export const movies = pgTable(
+  'movies',
+  {
+    id: serial('id').primaryKey(),
+    tmdbId: integer('tmdb_id').notNull().unique(),
+    imdbId: text('imdb_id'),
+    title: text('title').notNull(),
+    titleUk: text('title_uk'),
+    overview: text('overview'),
+    overviewUk: text('overview_uk'),
+    poster: text('poster'),
+    posterUk: text('poster_uk'),
+    backdrop: text('backdrop'),
+    genres: jsonb('genres'),
+    videos: jsonb('videos'),
+    ratingTmdb: doublePrecision('rating_tmdb'),
+    ratingTmdbCount: integer('rating_tmdb_count'),
+    popularityTmdb: doublePrecision('popularity_tmdb'),
+    ratingImdb: doublePrecision('rating_imdb'),
+    imdbVotes: integer('imdb_votes'),
+    contentRating: text('content_rating'),
+    watchProviders: jsonb('watch_providers'),
+    cast: jsonb('cast'),
+    related: jsonb('related'),
+    ratingMetacritic: doublePrecision('rating_metacritic'),
+    ratingTraktAvg: doublePrecision('rating_trakt_avg'),
+    ratingTraktVotes: integer('rating_trakt_votes'),
+    ratingTrakt: doublePrecision('rating_trakt'),
+    watchersDelta: doublePrecision('watchers_delta'),
+    delta3m: doublePrecision('delta_3m'),
+    primaryRating: doublePrecision('primary_rating'),
+    trendingScore: doublePrecision('trending_score'),
+    releaseDate: text('release_date'),
+    runtime: integer('runtime'),
+    status: text('status'),
+    tagline: text('tagline'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    trendingUpdatedAt: timestamp('trending_updated_at'),
+  },
+  (table) => {
+    return {
+      tmdbIdIdx: uniqueIndex('movies_tmdb_id_idx').on(table.tmdbId),
+      trendingScoreIdx: index('movies_trending_score_idx').on(table.trendingScore),
+      ratingTraktIdx: index('movies_rating_trakt_idx').on(table.ratingTrakt),
+      trendingUpdatedAtIdx: index('movies_trending_updated_at_idx').on(table.trendingUpdatedAt),
+      watchersDeltaIdx: index('movies_watchers_delta_idx').on(table.watchersDelta),
+      delta3mIdx: index('movies_delta_3m_idx').on(table.delta3m),
+    };
+  }
+);
+
+/**
  * Ефіри епізодів: календарні записи для серій.
  */
 export const showAirings = pgTable(
@@ -135,6 +189,29 @@ export const showRelated = pgTable(
 );
 
 /**
+ * Зв’язки між фільмами (related) з джерелом та ранжуванням.
+ */
+export const movieRelated = pgTable(
+  'movie_related',
+  {
+    id: serial('id').primaryKey(),
+    movieId: integer('movie_id').notNull(),
+    relatedMovieId: integer('related_movie_id').notNull(),
+    source: text('source'),
+    rank: integer('rank'),
+    score: doublePrecision('score'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      uniq: uniqueIndex('movie_related_unique_idx').on(table.movieId, table.relatedMovieId),
+      movieIdIdx: index('movie_related_movie_id_idx').on(table.movieId),
+    };
+  }
+);
+
+/**
  * Рейтинги шоу (Trakt): середній та кількість голосів.
  */
 export const showRatings = pgTable(
@@ -151,6 +228,27 @@ export const showRatings = pgTable(
     return {
       uniq: uniqueIndex('show_ratings_unique_idx').on(table.showId, table.source),
       showIdIdx: index('show_ratings_show_id_idx').on(table.showId),
+    };
+  }
+);
+
+/**
+ * Рейтинги фільмів (наприклад Trakt): середній та кількість голосів.
+ */
+export const movieRatings = pgTable(
+  'movie_ratings',
+  {
+    id: serial('id').primaryKey(),
+    movieId: integer('movie_id').notNull(),
+    source: text('source').notNull(),
+    avg: doublePrecision('avg'),
+    votes: integer('votes'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      uniq: uniqueIndex('movie_ratings_unique_idx').on(table.movieId, table.source),
+      movieIdIdx: index('movie_ratings_movie_id_idx').on(table.movieId),
     };
   }
 );
@@ -181,6 +279,31 @@ export const showRatingBuckets = pgTable(
 );
 
 /**
+ * Дистрибуція рейтингів (1..10) для фільмів.
+ */
+export const movieRatingBuckets = pgTable(
+  'movie_rating_buckets',
+  {
+    id: serial('id').primaryKey(),
+    movieId: integer('movie_id').notNull(),
+    source: text('source').notNull(),
+    bucket: integer('bucket').notNull(),
+    count: integer('count').notNull(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      uniq: uniqueIndex('movie_rating_buckets_uniq_idx').on(
+        table.movieId,
+        table.source,
+        table.bucket
+      ),
+      movieIdIdx: index('movie_rating_buckets_movie_id_idx').on(table.movieId),
+    };
+  }
+);
+
+/**
  * Снапшоти числа глядачів з часом для TMDB ID.
  */
 export const showWatchersSnapshots = pgTable(
@@ -197,6 +320,27 @@ export const showWatchersSnapshots = pgTable(
       showIdIdx: index('show_watchers_snapshots_show_id_idx').on(table.showId),
       tmdbIdIdx: index('show_watchers_snapshots_tmdb_id_idx').on(table.tmdbId),
       createdIdx: index('show_watchers_snapshots_created_idx').on(table.createdAt),
+    };
+  }
+);
+
+/**
+ * Снапшоти числа глядачів з часом для TMDB ID фільму.
+ */
+export const movieWatchersSnapshots = pgTable(
+  'movie_watchers_snapshots',
+  {
+    id: serial('id').primaryKey(),
+    movieId: integer('movie_id').notNull(),
+    tmdbId: integer('tmdb_id').notNull(),
+    watchers: integer('watchers').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      movieIdIdx: index('movie_watchers_snapshots_movie_id_idx').on(table.movieId),
+      tmdbIdIdx: index('movie_watchers_snapshots_tmdb_id_idx').on(table.tmdbId),
+      createdIdx: index('movie_watchers_snapshots_created_idx').on(table.createdAt),
     };
   }
 );
@@ -223,6 +367,30 @@ export const showTranslations = pgTable(
       uniq: uniqueIndex('show_translations_unique_idx').on(table.showId, table.locale),
       showIdIdx: index('show_translations_show_id_idx').on(table.showId),
       localeIdx: index('show_translations_locale_idx').on(table.locale),
+    };
+  }
+);
+
+/**
+ * Нормалізовані переклади фільмів за локалями.
+ */
+export const movieTranslations = pgTable(
+  'movie_translations',
+  {
+    id: serial('id').primaryKey(),
+    movieId: integer('movie_id').notNull(),
+    locale: text('locale').notNull(),
+    title: text('title'),
+    overview: text('overview'),
+    tagline: text('tagline'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      uniq: uniqueIndex('movie_translations_unique_idx').on(table.movieId, table.locale),
+      movieIdIdx: index('movie_translations_movie_id_idx').on(table.movieId),
+      localeIdx: index('movie_translations_locale_idx').on(table.locale),
     };
   }
 );
@@ -268,6 +436,26 @@ export const showGenres = pgTable(
   }
 );
 
+/**
+ * Зв’язок фільм ↔ жанр.
+ */
+export const movieGenres = pgTable(
+  'movie_genres',
+  {
+    id: serial('id').primaryKey(),
+    movieId: integer('movie_id').notNull(),
+    genreId: integer('genre_id').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      uniq: uniqueIndex('movie_genres_unique_idx').on(table.movieId, table.genreId),
+      movieIdIdx: index('movie_genres_movie_id_idx').on(table.movieId),
+      genreIdIdx: index('movie_genres_genre_id_idx').on(table.genreId),
+    };
+  }
+);
+
 // Videos per show (trailers, teasers, clips)
 /**
  * Відео для шоу (трейлери/тизери).
@@ -292,6 +480,33 @@ export const showVideos = pgTable(
       uniq: uniqueIndex('show_videos_unique_idx').on(table.showId, table.site, table.key),
       showIdIdx: index('show_videos_show_id_idx').on(table.showId),
       siteIdx: index('show_videos_site_idx').on(table.site),
+    };
+  }
+);
+
+/**
+ * Відео для фільму (трейлери/тизери).
+ */
+export const movieVideos = pgTable(
+  'movie_videos',
+  {
+    id: serial('id').primaryKey(),
+    movieId: integer('movie_id').notNull(),
+    site: text('site').notNull(),
+    key: text('key').notNull(),
+    name: text('name'),
+    type: text('type'),
+    locale: text('locale'),
+    official: boolean('official'),
+    publishedAt: timestamp('published_at'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      uniq: uniqueIndex('movie_videos_unique_idx').on(table.movieId, table.site, table.key),
+      movieIdIdx: index('movie_videos_movie_id_idx').on(table.movieId),
+      siteIdx: index('movie_videos_site_idx').on(table.site),
     };
   }
 );
@@ -360,6 +575,45 @@ export const showWatchProviders = pgTable(
   }
 );
 
+/**
+ * Провайдери перегляду фільмів за регіоном та категорією.
+ */
+export const movieWatchProviders = pgTable(
+  'movie_watch_providers',
+  {
+    id: serial('id').primaryKey(),
+    movieId: integer('movie_id').notNull(),
+    region: text('region').notNull(),
+    providerId: integer('provider_id'),
+    providerName: text('provider_name'),
+    logoPath: text('logo_path'),
+    linkUrl: text('link_url'),
+    category: text('category'),
+    rank: integer('rank'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      uniq: uniqueIndex('movie_watch_providers_unique_idx').on(
+        table.movieId,
+        table.region,
+        table.providerId,
+        table.category
+      ),
+      movieIdIdx: index('movie_watch_providers_movie_id_idx').on(table.movieId),
+      regionIdx: index('movie_watch_providers_region_idx').on(table.region),
+      categoryIdx: index('movie_watch_providers_category_idx').on(table.category),
+      providerNameIdx: index('movie_watch_providers_provider_name_idx').on(table.providerName),
+      movieIdRegionCategoryIdx: index('movie_watch_providers_movie_id_region_category_idx').on(
+        table.movieId,
+        table.region,
+        table.category
+      ),
+    };
+  }
+);
+
 // Cast per show
 /**
  * Каст шоу (персони та ролі).
@@ -386,6 +640,31 @@ export const showCast = pgTable(
   }
 );
 
+/**
+ * Каст фільму (персони та ролі).
+ */
+export const movieCast = pgTable(
+  'movie_cast',
+  {
+    id: serial('id').primaryKey(),
+    movieId: integer('movie_id').notNull(),
+    personId: integer('person_id'),
+    name: text('name'),
+    character: text('character'),
+    order: integer('order'),
+    profilePath: text('profile_path'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      uniq: uniqueIndex('movie_cast_unique_idx').on(table.movieId, table.personId, table.character),
+      movieIdIdx: index('movie_cast_movie_id_idx').on(table.movieId),
+      personIdIdx: index('movie_cast_person_id_idx').on(table.personId),
+    };
+  }
+);
+
 // Content ratings per region (e.g., TV-MA)
 /**
  * Вікові рейтинги по регіонах (UA, US, ...).
@@ -405,6 +684,28 @@ export const showContentRatings = pgTable(
       uniq: uniqueIndex('show_content_ratings_unique_idx').on(table.showId, table.region),
       showIdIdx: index('show_content_ratings_show_id_idx').on(table.showId),
       regionIdx: index('show_content_ratings_region_idx').on(table.region),
+    };
+  }
+);
+
+/**
+ * Вікові рейтинги фільмів по регіонах (UA, US, ...).
+ */
+export const movieContentRatings = pgTable(
+  'movie_content_ratings',
+  {
+    id: serial('id').primaryKey(),
+    movieId: integer('movie_id').notNull(),
+    region: text('region').notNull(),
+    rating: text('rating'),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      uniq: uniqueIndex('movie_content_ratings_unique_idx').on(table.movieId, table.region),
+      movieIdIdx: index('movie_content_ratings_movie_id_idx').on(table.movieId),
+      regionIdx: index('movie_content_ratings_region_idx').on(table.region),
     };
   }
 );
@@ -449,33 +750,55 @@ export const syncTasks = pgTable(
 
 export type Show = typeof shows.$inferSelect;
 export type NewShow = typeof shows.$inferInsert;
+export type Movie = typeof movies.$inferSelect;
+export type NewMovie = typeof movies.$inferInsert;
 export type Airing = typeof showAirings.$inferSelect;
 export type NewAiring = typeof showAirings.$inferInsert;
 export type ShowRelated = typeof showRelated.$inferSelect;
 export type NewShowRelated = typeof showRelated.$inferInsert;
+export type MovieRelated = typeof movieRelated.$inferSelect;
+export type NewMovieRelated = typeof movieRelated.$inferInsert;
 export type ShowRatings = typeof showRatings.$inferSelect;
 export type NewShowRatings = typeof showRatings.$inferInsert;
+export type MovieRatings = typeof movieRatings.$inferSelect;
+export type NewMovieRatings = typeof movieRatings.$inferInsert;
 export type ShowRatingBucket = typeof showRatingBuckets.$inferSelect;
 export type NewShowRatingBucket = typeof showRatingBuckets.$inferInsert;
+export type MovieRatingBucket = typeof movieRatingBuckets.$inferSelect;
+export type NewMovieRatingBucket = typeof movieRatingBuckets.$inferInsert;
 export type ShowWatchersSnapshot = typeof showWatchersSnapshots.$inferSelect;
 export type NewShowWatchersSnapshot = typeof showWatchersSnapshots.$inferInsert;
+export type MovieWatchersSnapshot = typeof movieWatchersSnapshots.$inferSelect;
+export type NewMovieWatchersSnapshot = typeof movieWatchersSnapshots.$inferInsert;
 
 export type ShowTranslation = typeof showTranslations.$inferSelect;
 export type NewShowTranslation = typeof showTranslations.$inferInsert;
+export type MovieTranslation = typeof movieTranslations.$inferSelect;
+export type NewMovieTranslation = typeof movieTranslations.$inferInsert;
 export type Genre = typeof genres.$inferSelect;
 export type NewGenre = typeof genres.$inferInsert;
 export type ShowGenre = typeof showGenres.$inferSelect;
 export type NewShowGenre = typeof showGenres.$inferInsert;
+export type MovieGenre = typeof movieGenres.$inferSelect;
+export type NewMovieGenre = typeof movieGenres.$inferInsert;
 export type ShowVideo = typeof showVideos.$inferSelect;
 export type NewShowVideo = typeof showVideos.$inferInsert;
+export type MovieVideo = typeof movieVideos.$inferSelect;
+export type NewMovieVideo = typeof movieVideos.$inferInsert;
 export type WatchProviderRegistry = typeof watchProvidersRegistry.$inferSelect;
 export type NewWatchProviderRegistry = typeof watchProvidersRegistry.$inferInsert;
 export type ShowWatchProvider = typeof showWatchProviders.$inferSelect;
 export type NewShowWatchProvider = typeof showWatchProviders.$inferInsert;
+export type MovieWatchProvider = typeof movieWatchProviders.$inferSelect;
+export type NewMovieWatchProvider = typeof movieWatchProviders.$inferInsert;
 export type ShowCast = typeof showCast.$inferSelect;
 export type NewShowCast = typeof showCast.$inferInsert;
+export type MovieCast = typeof movieCast.$inferSelect;
+export type NewMovieCast = typeof movieCast.$inferInsert;
 export type ShowContentRating = typeof showContentRatings.$inferSelect;
 export type NewShowContentRating = typeof showContentRatings.$inferInsert;
+export type MovieContentRating = typeof movieContentRatings.$inferSelect;
+export type NewMovieContentRating = typeof movieContentRatings.$inferInsert;
 export type SyncJob = typeof syncJobs.$inferSelect;
 export type NewSyncJob = typeof syncJobs.$inferInsert;
 export type SyncTask = typeof syncTasks.$inferSelect;

@@ -55,11 +55,34 @@ export class TMDBClient {
     );
   }
 
+  async getTrendingMovies(
+    page: number = 1,
+    timeWindow: 'day' | 'week' = 'week'
+  ): Promise<TMDBTrendingResponse> {
+    /**
+     * Трендові фільми за вікном часу (`day|week`).
+     *
+     * @example
+     * const tmdb = getTMDBClient();
+     * const list = await tmdb.getTrendingMovies(1, 'week');
+     */
+    return this.fetch<TMDBTrendingResponse>(
+      `/trending/movie/${timeWindow}?page=${page}&language=uk-UA`
+    );
+  }
+
   /**
    * Популярні серіали (краще для місячних трендів).
    */
   async getPopularShows(page: number = 1): Promise<TMDBTrendingResponse> {
     return this.fetch<TMDBTrendingResponse>(`/tv/popular?page=${page}&language=uk-UA`);
+  }
+
+  async getPopularMovies(page: number = 1): Promise<TMDBTrendingResponse> {
+    /**
+     * Популярні фільми (краще для місячних трендів).
+     */
+    return this.fetch<TMDBTrendingResponse>(`/movie/popular?page=${page}&language=uk-UA`);
   }
 
   /**
@@ -92,11 +115,34 @@ export class TMDBClient {
     }
   }
 
+  async getMovieTranslation(movieId: number): Promise<any> {
+    /**
+     * Український переклад назви/опису та постер для фільму.
+     */
+    try {
+      const response = await this.fetch<any>(`/movie/${movieId}?language=uk-UA`);
+      return {
+        titleUk: response.title || null,
+        overviewUk: response.overview || null,
+        posterUk: response.poster_path || null,
+      };
+    } catch (error) {
+      return { titleUk: null, overviewUk: null, posterUk: null };
+    }
+  }
+
   /**
    * Відео (трейлери, тизери) для шоу.
    */
   async getShowVideos(showId: number): Promise<TMDBVideosResponse> {
     return this.fetch<TMDBVideosResponse>(`/tv/${showId}/videos`);
+  }
+
+  async getMovieVideos(movieId: number): Promise<TMDBVideosResponse> {
+    /**
+     * Відео (трейлери, тизери) для фільму.
+     */
+    return this.fetch<TMDBVideosResponse>(`/movie/${movieId}/videos`);
   }
 
   /**
@@ -109,6 +155,13 @@ export class TMDBClient {
     return this.fetch<TMDBShowDetails>(`/tv/${showId}`);
   }
 
+  async getMovieDetails(movieId: number): Promise<any> {
+    /**
+     * Детальна інформація про фільм.
+     */
+    return this.fetch<any>(`/movie/${movieId}`);
+  }
+
   /**
    * Рекомендації для шоу (бек-ап для пов’язаних).
    */
@@ -116,11 +169,25 @@ export class TMDBClient {
     return this.fetch<any>(`/tv/${showId}/recommendations?page=${page}&language=uk-UA`);
   }
 
+  async getMovieRecommendations(movieId: number, page: number = 1): Promise<any> {
+    /**
+     * Рекомендації для фільму.
+     */
+    return this.fetch<any>(`/movie/${movieId}/recommendations?page=${page}&language=uk-UA`);
+  }
+
   /**
    * Зовнішні ідентифікатори (включно з IMDb).
    */
   async getShowExternalIds(showId: number): Promise<any> {
     return this.fetch<any>(`/tv/${showId}/external_ids`);
+  }
+
+  async getMovieExternalIds(movieId: number): Promise<any> {
+    /**
+     * Зовнішні ідентифікатори фільму (включно з IMDb).
+     */
+    return this.fetch<any>(`/movie/${movieId}/external_ids`);
   }
 
   /**
@@ -175,6 +242,57 @@ export class TMDBClient {
       return out;
     } catch (e) {
       console.warn(`Failed to get watch providers for ${showId} region ${region}:`, e);
+      return [];
+    }
+  }
+
+  async getMovieWatchProvidersByRegion(
+    movieId: number,
+    region: string
+  ): Promise<
+    Array<{
+      id: number;
+      name: string;
+      logo_path: string | null;
+      region: string;
+      category: string;
+      rank: number | null;
+      link: string | null;
+    }>
+  > {
+    /**
+     * Провайдери перегляду фільму для регіону з категоріями та link.
+     */
+    try {
+      const data = await this.fetch<any>(`/movie/${movieId}/watch/providers`);
+      const results = data.results || {};
+      const regionData = results[region];
+      if (!regionData) return [];
+      const regionLink: string | null = regionData.link || null;
+      const make = (arr: any[] | undefined, category: string) =>
+        (arr || []).map((p: any, idx: number) => ({
+          id: p.provider_id,
+          name: p.provider_name,
+          logo_path: p.logo_path || null,
+          region,
+          category,
+          rank:
+            typeof p.display_priority === 'number'
+              ? p.display_priority
+              : Number.isFinite(idx)
+                ? idx
+                : null,
+          link: regionLink,
+        }));
+      const out = [
+        ...make(regionData.flatrate, 'flatrate'),
+        ...make(regionData.free, 'free'),
+        ...make(regionData.ads, 'ads'),
+        ...make(regionData.rent, 'rent'),
+        ...make(regionData.buy, 'buy'),
+      ];
+      return out;
+    } catch (e) {
       return [];
     }
   }
@@ -252,6 +370,23 @@ export class TMDBClient {
     }
   }
 
+  async getMovieContentRatingByRegion(movieId: number, region: string): Promise<string | null> {
+    /**
+     * Сертифікат (контент-рейтинг) фільму для конкретного регіону.
+     */
+    try {
+      const data = await this.fetch<any>(`/movie/${movieId}/release_dates`);
+      const results = data.results || [];
+      const entry = results.find((r: any) => r.iso_3166_1 === region);
+      const cert = Array.isArray(entry?.release_dates)
+        ? entry.release_dates.find((x: any) => x.certification)?.certification
+        : null;
+      return cert || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   /**
    * Повний URL постера за шляхом.
    */
@@ -279,6 +414,21 @@ export class TMDBClient {
    */
   async getAggregateCredits(showId: number): Promise<any> {
     const url = `${TMDB_BASE_URL}/tv/${showId}/aggregate_credits?api_key=${this.apiKey}`;
+    const response = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error(`TMDB API error: ${response.status} ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async getMovieCredits(movieId: number): Promise<any> {
+    /**
+     * Кредити фільму (каст).
+     */
+    const url = `${TMDB_BASE_URL}/movie/${movieId}/credits?api_key=${this.apiKey}`;
     const response = await fetch(url, {
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store',

@@ -49,6 +49,15 @@ export class OMDbClient {
   async getByImdbId(imdbId: string): Promise<any> {
     return this.fetch({ i: imdbId, type: 'series' });
   }
+  async getByImdbIdMovie(imdbId: string): Promise<any> {
+    /**
+     * Деталі фільму за IMDb ID.
+     *
+     * @example
+     * const d = await omdb.getByImdbIdMovie('tt0133093'); // The Matrix
+     */
+    return this.fetch({ i: imdbId, type: 'movie' });
+  }
 
   /**
    * IMDb-рейтинг для шоу.
@@ -108,6 +117,50 @@ export class OMDbClient {
       return { imdbRating, imdbVotes, rottenTomatoes, metacritic, metascore };
     } catch (error) {
       console.warn(`Failed to get aggregated ratings for ${imdbId}:`, error);
+      return {
+        imdbRating: null,
+        imdbVotes: null,
+        rottenTomatoes: null,
+        metacritic: null,
+        metascore: null,
+      };
+    }
+  }
+  async getAggregatedRatingsMovie(imdbId: string): Promise<{
+    imdbRating: number | null;
+    imdbVotes: number | null;
+    rottenTomatoes: number | null; // percent 0-100
+    metacritic: number | null; // 0-100
+    metascore: number | null; // 0-100
+  }> {
+    /**
+     * Агреговані рейтинги для фільму: IMDb, Rotten Tomatoes, Metacritic, голоси, metascore.
+     */
+    try {
+      const data = await this.getByImdbIdMovie(imdbId);
+      const imdbRating =
+        data.imdbRating && data.imdbRating !== 'N/A' ? parseFloat(data.imdbRating) : null;
+      const imdbVotes = data.imdbVotes
+        ? parseInt(String(data.imdbVotes).replace(/,/g, ''), 10)
+        : null;
+      let rottenTomatoes: number | null = null;
+      let metacritic: number | null = null;
+      if (Array.isArray(data.Ratings)) {
+        for (const r of data.Ratings) {
+          if (r.Source === 'Rotten Tomatoes' && typeof r.Value === 'string') {
+            const m = r.Value.match(/(\d+)%/);
+            if (m) rottenTomatoes = parseInt(m[1], 10);
+          }
+          if (r.Source === 'Metacritic' && typeof r.Value === 'string') {
+            const m = r.Value.match(/(\d+)/);
+            if (m) metacritic = parseInt(m[1], 10);
+          }
+        }
+      }
+      const metascore =
+        data.Metascore && data.Metascore !== 'N/A' ? parseInt(data.Metascore, 10) : null;
+      return { imdbRating, imdbVotes, rottenTomatoes, metacritic, metascore };
+    } catch (error) {
       return {
         imdbRating: null,
         imdbVotes: null,

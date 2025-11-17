@@ -27,20 +27,26 @@ export class TraktClient {
    */
   private async fetch<T>(endpoint: string): Promise<T> {
     const url = `${TRAKT_BASE_URL}${endpoint}`;
-
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        'trakt-api-version': '2',
-        'trakt-api-key': this.clientId,
-      },
-      next: { revalidate: 3600 }, // Cache for 1 hour
-    });
-
+    const makeReq = async () =>
+      fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'trakt-api-version': '2',
+          'trakt-api-key': this.clientId,
+          'User-Agent': process.env.APP_USER_AGENT || 'ratingo/1.0.0',
+        },
+        next: { revalidate: 3600 },
+      });
+    let response = await makeReq();
+    if (response.status === 429) {
+      const ra = response.headers.get('Retry-After');
+      const ms = Math.max(0, Math.round((parseFloat(String(ra || '10')) || 10) * 1000));
+      await new Promise((r) => setTimeout(r, ms));
+      response = await makeReq();
+    }
     if (!response.ok) {
       throw new Error(`Trakt API error: ${response.status} ${response.statusText}`);
     }
-
     return response.json();
   }
 
@@ -49,14 +55,23 @@ export class TraktClient {
    */
   private async fetchNoStore<T>(endpoint: string): Promise<T> {
     const url = `${TRAKT_BASE_URL}${endpoint}`;
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        'trakt-api-version': '2',
-        'trakt-api-key': this.clientId,
-      },
-      cache: 'no-store',
-    });
+    const makeReq = async () =>
+      fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'trakt-api-version': '2',
+          'trakt-api-key': this.clientId,
+          'User-Agent': process.env.APP_USER_AGENT || 'ratingo/1.0.0',
+        },
+        cache: 'no-store',
+      });
+    let response = await makeReq();
+    if (response.status === 429) {
+      const ra = response.headers.get('Retry-After');
+      const ms = Math.max(0, Math.round((parseFloat(String(ra || '10')) || 10) * 1000));
+      await new Promise((r) => setTimeout(r, ms));
+      response = await makeReq();
+    }
     if (!response.ok) {
       throw new Error(`Trakt API error: ${response.status} ${response.statusText}`);
     }
@@ -71,6 +86,16 @@ export class TraktClient {
    */
   async getTrendingShows(limit: number = 20): Promise<TraktTrendingShow[]> {
     return this.fetch<TraktTrendingShow[]>(`/shows/trending?limit=${limit}`);
+  }
+
+  async getTrendingMovies(limit: number = 20): Promise<any[]> {
+    /**
+     * Трендові фільми Trakt.
+     *
+     * @example
+     * const list = await trakt.getTrendingMovies(100);
+     */
+    return this.fetch<any[]>(`/movies/trending?limit=${limit}`);
   }
 
   /**
@@ -89,6 +114,19 @@ export class TraktClient {
     return this.fetch<any[]>(`/shows/watched/${period}${start}?limit=${limit}`);
   }
 
+  async getWatchedMovies(
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly',
+    startDate?: string,
+    limit: number = 100
+  ): Promise<any[]> {
+    /**
+     * Найбільш переглянуті фільми за період (`daily|weekly|monthly|yearly`).
+     * `startDate` (YYYY-MM-DD) задає початок календарного періоду.
+     */
+    const start = startDate ? `/${startDate}` : '';
+    return this.fetch<any[]>(`/movies/watched/${period}${start}?limit=${limit}`);
+  }
+
   /**
    * Пошук даних шоу Trakt за TMDB ID.
    */
@@ -99,6 +137,19 @@ export class TraktClient {
       return show || null;
     } catch (error) {
       console.error(`Error finding Trakt show for TMDB ID ${tmdbId}:`, error);
+      return null;
+    }
+  }
+
+  async findMovieByTmdbId(tmdbId: number): Promise<any | null> {
+    /**
+     * Пошук трендового фільму Trakt за TMDB ID.
+     */
+    try {
+      const trendingMovies = await this.getTrendingMovies(100);
+      const item = trendingMovies.find((it: any) => it.movie?.ids?.tmdb === tmdbId);
+      return item || null;
+    } catch (error) {
       return null;
     }
   }
@@ -127,6 +178,18 @@ export class TraktClient {
     idOrSlug: string | number
   ): Promise<{ rating: number; votes: number; distribution?: Record<string, number> }> {
     const endpoint = `/shows/${idOrSlug}/ratings`;
+    return this.fetch<{ rating: number; votes: number; distribution?: Record<string, number> }>(
+      endpoint
+    );
+  }
+
+  async getMovieRatings(
+    idOrSlug: string | number
+  ): Promise<{ rating: number; votes: number; distribution?: Record<string, number> }> {
+    /**
+     * Рейтинги фільму (середній, кількість голосів, дистрибуція 1..10).
+     */
+    const endpoint = `/movies/${idOrSlug}/ratings`;
     return this.fetch<{ rating: number; votes: number; distribution?: Record<string, number> }>(
       endpoint
     );
