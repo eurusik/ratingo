@@ -10,6 +10,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "prepare": "husky",
+    "db:pull": "drizzle-kit introspect",
+    "db:introspect": "drizzle-kit introspect",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

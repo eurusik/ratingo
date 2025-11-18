@@ -36,9 +36,12 @@ export const metadata: Metadata = {
 
 async function getMovies(region: string) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/movies?region=${region}&limit=50&sort=trending`, {
-    next: { revalidate: 30 }, // Revalidate every 30s
-  });
+  const res = await fetch(
+    `${baseUrl}/api/movies?region=${region}&limit=50&sort=watchers&order=desc`,
+    {
+      next: { revalidate: 30 },
+    }
+  );
 
   if (!res.ok) {
     return [];
