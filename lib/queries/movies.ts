@@ -2,12 +2,9 @@ import { db } from '@/db';
 import {
   movies,
   movieWatchersSnapshots,
-  movieRatings,
-  movieRatingBuckets,
   movieVideos,
   movieCast,
   movieWatchProviders,
-  watchProvidersRegistry,
   movieContentRatings,
 } from '@/db/schema';
 import { desc, isNotNull, and, sql, gt, asc, inArray, gte, lte, eq } from 'drizzle-orm';
@@ -230,23 +227,24 @@ export async function getMovieDetails(movieId: number) {
     }));
   } catch {}
   if (!Array.isArray(cast) || cast.length === 0) {
-    const raw = (movie as Record<string, unknown>).cast as unknown;
-    const arr = Array.isArray(raw) ? raw : [];
-    cast = arr
-      .filter((x) => typeof x === 'object' && x != null)
-      .map((x) => {
-        const r = x as Record<string, unknown>;
-        const idVal = r.id as number | string | undefined;
-        const nameVal = r.name as string | undefined;
-        const charVal = r.character as string | undefined;
-        const profileVal = r.profile_path as string | null | undefined;
-        return {
-          id: Number(idVal || 0),
-          name: String(nameVal || ''),
-          roles: charVal ? [String(charVal)] : [],
-          profile_path: profileVal || null,
-        };
-      });
+    type RawCastItem = {
+      id?: number | string;
+      name?: string;
+      character?: string;
+      profile_path?: string | null;
+    };
+    const rawCastUnknown = (movie as any).cast;
+    const rawCast: RawCastItem[] = Array.isArray(rawCastUnknown)
+      ? (rawCastUnknown as unknown[]).filter(
+          (item): item is RawCastItem => !!item && typeof item === 'object'
+        )
+      : [];
+    cast = rawCast.map(({ id, name, character, profile_path }) => ({
+      id: Number(id ?? 0),
+      name: String(name ?? ''),
+      roles: character ? [String(character)] : [],
+      profile_path: profile_path ?? null,
+    }));
   }
 
   // Get videos
