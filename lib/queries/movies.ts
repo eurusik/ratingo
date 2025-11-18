@@ -12,6 +12,7 @@ import {
 } from '@/db/schema';
 import { desc, isNotNull, and, sql, gt, asc, inArray, gte, lte, eq } from 'drizzle-orm';
 import { TMDBClient } from '@/lib/api/tmdb';
+import type { Movie, MovieCast } from '@/db/schema';
 
 interface MovieQueryParams {
   limit?: number;
@@ -189,7 +190,12 @@ export async function getMovies({
  * Отримує деталі конкретного фільму з усіма зв'язаними даними
  */
 export async function getMovieDetails(movieId: number) {
-  const [movie] = await db.select().from(movies).where(eq(movies.id, movieId)).limit(1);
+  const movieRows = (await db
+    .select()
+    .from(movies)
+    .where(eq(movies.id, movieId))
+    .limit(1)) as Movie[];
+  const movie = movieRows[0];
 
   if (!movie) return null;
 
@@ -207,13 +213,41 @@ export async function getMovieDetails(movieId: number) {
     .where(eq(movieWatchProviders.movieId, movieId))
     .orderBy(asc(movieWatchProviders.rank));
 
-  // Get cast
-  const cast = await db
-    .select()
-    .from(movieCast)
-    .where(eq(movieCast.movieId, movieId))
-    .orderBy(asc(movieCast.order))
-    .limit(20);
+  type CastPerson = { id: number; name: string; roles: string[]; profile_path: string | null };
+  let cast: CastPerson[] = [];
+  try {
+    const castRows = (await db
+      .select()
+      .from(movieCast)
+      .where(eq(movieCast.movieId, movieId))
+      .orderBy(asc(movieCast.order))
+      .limit(20)) as MovieCast[];
+    cast = castRows.map(({ personId, name, character, profilePath }) => ({
+      id: Number(personId),
+      name: String(name || ''),
+      roles: character ? [String(character)] : [],
+      profile_path: profilePath || null,
+    }));
+  } catch {}
+  if (!Array.isArray(cast) || cast.length === 0) {
+    const raw = (movie as Record<string, unknown>).cast as unknown;
+    const arr = Array.isArray(raw) ? raw : [];
+    cast = arr
+      .filter((x) => typeof x === 'object' && x != null)
+      .map((x) => {
+        const r = x as Record<string, unknown>;
+        const idVal = r.id as number | string | undefined;
+        const nameVal = r.name as string | undefined;
+        const charVal = r.character as string | undefined;
+        const profileVal = r.profile_path as string | null | undefined;
+        return {
+          id: Number(idVal || 0),
+          name: String(nameVal || ''),
+          roles: charVal ? [String(charVal)] : [],
+          profile_path: profileVal || null,
+        };
+      });
+  }
 
   // Get videos
   const videos = await db
