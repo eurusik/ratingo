@@ -8,6 +8,19 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
+  /**
+   * Формує метадані сторінки деталів шоу.
+   *
+   * Вхід:
+   * - `params.id` — внутрішній ідентифікатор шоу.
+   *
+   * Дані:
+   * - Завантажує деталі шоу з БД (`getShowDetails`).
+   * - Виставляє `title`, `description`, OpenGraph/Twitter.
+   * - Додає `alternates.canonical` для уникнення дублю контенту.
+   *
+   * @returns Об'єкт `Metadata` для Next.js App Router.
+   */
   const { id } = await params;
   const showId = parseInt(id, 10);
 
@@ -62,6 +75,9 @@ export async function generateMetadata({
       title: `${title}${ratingText}`,
       description,
       images: show.posterUrl ? [show.posterUrl] : [],
+    },
+    alternates: {
+      canonical: `/show/${showId}`,
     },
   };
 }

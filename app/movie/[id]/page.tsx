@@ -8,6 +8,19 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
+  /**
+   * Формує метадані сторінки деталів фільму.
+   *
+   * Вхід:
+   * - `params.id` — внутрішній ідентифікатор фільму.
+   *
+   * Дані:
+   * - Завантажує деталі фільму з БД (`getMovieDetails`).
+   * - Виставляє `title`, `description`, ключові слова, OpenGraph/Twitter.
+   * - Додає `alternates.canonical` для уникнення дублю контенту.
+   *
+   * @returns Об'єкт `Metadata` для Next.js App Router.
+   */
   const { id } = await params;
   const movieId = parseInt(id, 10);
 

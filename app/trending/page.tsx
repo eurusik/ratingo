@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     description: 'Перегляньте найпопулярніші серіали за рейтингами TMDB та Trakt',
     url: '/trending',
   },
+  alternates: {
+    canonical: '/trending',
+  },
 };
 
 export default async function TrendingPage({ searchParams }: { searchParams?: any }) {

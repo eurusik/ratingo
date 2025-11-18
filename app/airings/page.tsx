@@ -13,6 +13,9 @@ export const metadata: Metadata = {
     description: 'Розклад виходу нових епізодів трендових серіалів',
     url: '/airings',
   },
+  alternates: {
+    canonical: '/airings',
+  },
 };
 
 export default async function AiringsPage({ searchParams }: { searchParams?: any }) {

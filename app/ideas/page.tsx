@@ -16,6 +16,9 @@ export const metadata: Metadata = {
     description: 'Голосуйте за фічі, які хочете бачити, та створюйте нові запити.',
     url: '/ideas',
   },
+  alternates: {
+    canonical: '/ideas',
+  },
 };
 
 /**

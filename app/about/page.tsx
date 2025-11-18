@@ -10,6 +10,9 @@ export const metadata: Metadata = {
       'Історія та ідея Ratingo: чому ми показуємо справжні тренди, а не маркетингові рекомендації.',
     url: '/about',
   },
+  alternates: {
+    canonical: '/about',
+  },
 };
 
 export default function AboutPage() {
