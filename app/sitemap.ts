@@ -59,10 +59,10 @@ async function fetchTopMovies(): Promise<any[]> {
   }
 }
 
-function resolveBaseUrl(): string {
+async function resolveBaseUrl(): Promise<string> {
   const envBase = process.env.NEXT_PUBLIC_BASE_URL;
   if (envBase && !envBase.includes('localhost')) return envBase;
-  const hdrs = headers();
+  const hdrs = await headers();
   const host = hdrs.get('x-forwarded-host') || hdrs.get('host');
   const proto = hdrs.get('x-forwarded-proto') || 'https';
   if (host) return `${proto}://${host}`;
@@ -85,7 +85,7 @@ function resolveBaseUrl(): string {
  * @returns Масив записів Sitemap для App Router (`MetadataRoute.Sitemap`).
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = resolveBaseUrl();
+  const baseUrl = await resolveBaseUrl();
   const now = new Date();
   const cacheKey = makeCacheKey('sitemap', `${baseUrl}/sitemap.xml`);
 
