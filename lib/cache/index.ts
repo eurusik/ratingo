@@ -4,7 +4,9 @@
 import { LRUCache } from '@/lib/sync/utils';
 import { cacheGet as redisGet, cacheSet as redisSet } from './redis';
 
-const memCache = new LRUCache<string, string>(1000);
+const MEM_MAX = Math.max(0, Number(process.env.CACHE_MEM_MAX_ENTRIES ?? 300));
+const MEM_TTL_MS = Math.max(0, Number(process.env.CACHE_MEM_TTL_MS ?? 60000));
+const memCache = new LRUCache<string, string>(MEM_MAX, MEM_TTL_MS);
 
 /**
  * Дістає JSON-об’єкт за ключем з LRU/Redis; повертає `null`, якщо немає.
@@ -33,7 +35,7 @@ export async function getCachedJson<T>(key: string): Promise<T | null> {
  */
 export async function setCachedJson(key: string, obj: any, ttlSeconds: number): Promise<void> {
   const v = JSON.stringify(obj);
-  memCache.set(key, v);
+  memCache.set(key, v, ttlSeconds * 1000);
   await redisSet(key, v, ttlSeconds);
 }
 
