@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { getShows } from '@/lib/queries/shows';
 import { getMovies } from '@/lib/queries/movies';
 import { getCachedJson, setCachedJson, makeCacheKey } from '@/lib/cache/index';
+import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -58,6 +59,16 @@ async function fetchTopMovies(): Promise<any[]> {
   }
 }
 
+function resolveBaseUrl(): string {
+  const envBase = process.env.NEXT_PUBLIC_BASE_URL;
+  if (envBase && !envBase.includes('localhost')) return envBase;
+  const hdrs = headers();
+  const host = hdrs.get('x-forwarded-host') || hdrs.get('host');
+  const proto = hdrs.get('x-forwarded-proto') || 'https';
+  if (host) return `${proto}://${host}`;
+  return envBase || 'http://localhost:3000';
+}
+
 /**
  * Генератор карти сайту (sitemap.xml).
  *
@@ -74,7 +85,7 @@ async function fetchTopMovies(): Promise<any[]> {
  * @returns Масив записів Sitemap для App Router (`MetadataRoute.Sitemap`).
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = resolveBaseUrl();
   const now = new Date();
   const cacheKey = makeCacheKey('sitemap', `${baseUrl}/sitemap.xml`);
 
