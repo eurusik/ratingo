@@ -60,7 +60,7 @@ async function fetchTopMovies(): Promise<any[]> {
 }
 
 async function resolveBaseUrl(): Promise<string> {
-  const envBase = process.env.NEXT_PUBLIC_BASE_URL;
+  const envBase = process.env.NEXT_PUBLIC_SITE_URL;
   if (envBase && !envBase.includes('localhost')) return envBase;
   const hdrs = await headers();
   const host = hdrs.get('x-forwarded-host') || hdrs.get('host');

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { headers } from 'next/headers';
 
 /**
  * Генератор robots.txt для App Router.
@@ -12,8 +13,20 @@ import type { MetadataRoute } from 'next';
  *
  * @returns Об'єкт конфігурації `MetadataRoute.Robots`.
  */
-export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+export const dynamic = 'force-dynamic';
+
+async function resolveBaseUrl(): Promise<string> {
+  const envBase = process.env.NEXT_PUBLIC_SITE_URL;
+  if (envBase && !envBase.includes('localhost')) return envBase;
+  const hdrs = await headers();
+  const host = hdrs.get('x-forwarded-host') || hdrs.get('host');
+  const proto = hdrs.get('x-forwarded-proto') || 'https';
+  if (host) return `${proto}://${host}`;
+  return envBase || 'http://localhost:3000';
+}
+
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const baseUrl = await resolveBaseUrl();
   return {
     rules: [
       {
