@@ -6,6 +6,7 @@ import Image from 'next/image';
 import CastList from '@/components/CastList';
 import { WatchProviders } from '@/components/WatchProviders';
 import { generateShowJsonLd, generateBreadcrumbJsonLd } from '@/lib/seo/jsonld';
+import type { TMDBVideo } from '@/lib/types';
 
 export function ClientShowDetail({ show }: { show: any }) {
   const router = useRouter();
@@ -13,7 +14,32 @@ export function ClientShowDetail({ show }: { show: any }) {
   const searchParams = useSearchParams();
   const regionParam = searchParams.get('region');
 
-  const trailer = show.videos?.find((v: any) => v.type === 'Trailer') || show.videos?.[0];
+  const videos: TMDBVideo[] = Array.isArray(show.videos) ? (show.videos as TMDBVideo[]) : [];
+  function selectPreferredTrailer(videoList: TMDBVideo[]): TMDBVideo | undefined {
+    const officialYoutubeTrailer = videoList.find(
+      (video) => video.site === 'YouTube' && video.type === 'Trailer' && video.official
+    );
+    if (officialYoutubeTrailer) return officialYoutubeTrailer;
+    const anyYoutubeTrailer = videoList.find(
+      (video) => video.site === 'YouTube' && video.type === 'Trailer'
+    );
+    if (anyYoutubeTrailer) return anyYoutubeTrailer;
+    const officialAnyVideo = videoList.find((video) => video.official);
+    if (officialAnyVideo) return officialAnyVideo;
+    return videoList[0];
+  }
+  const trailer = selectPreferredTrailer(videos);
+  const embedSrc = (video: TMDBVideo): string | null => {
+    const site = String(video?.site || '');
+    const key = String(video?.key || '');
+    if (!key) return null;
+    if (site === 'YouTube') return `https://www.youtube.com/embed/${key}`;
+    if (site === 'Vimeo') return `https://player.vimeo.com/video/${key}`;
+    if (site === 'Dailymotion') return `https://www.dailymotion.com/embed/video/${key}`;
+    return null;
+  };
+  const trailerUrl = trailer ? embedSrc(trailer) : null;
+  const findQuery = encodeURIComponent(`${show.titleUk || show.title} трейлер`);
   const showJsonLd = generateShowJsonLd(show);
   const breadcrumbJsonLd = generateBreadcrumbJsonLd([
     { name: 'Головна', url: '/' },
@@ -64,19 +90,55 @@ export function ClientShowDetail({ show }: { show: any }) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
-              {trailer && (
+              {trailerUrl && (
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-4">Трейлер</h2>
                   <div className="aspect-video bg-zinc-900 rounded-lg overflow-hidden">
                     <iframe
                       width="100%"
                       height="100%"
-                      src={`https://www.youtube.com/embed/${trailer.key}`}
-                      title={trailer.name}
+                      src={trailerUrl as string}
+                      title={trailer?.name || 'Trailer'}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       className="w-full h-full"
                     />
+                  </div>
+                </div>
+              )}
+              {!trailerUrl && (
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-4">Трейлер</h2>
+                  <div className="aspect-video bg-zinc-900 rounded-lg overflow-hidden flex items-center justify-center">
+                    <div className="p-6 text-center">
+                      <div className="text-gray-300 mb-4">Трейлер недоступний</div>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        <a
+                          href={`https://www.youtube.com/results?search_query=${findQuery}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-zinc-800 text-white rounded hover:bg-zinc-700"
+                        >
+                          Пошук на YouTube
+                        </a>
+                        <a
+                          href={`https://vimeo.com/search?q=${findQuery}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-zinc-800 text-white rounded hover:bg-zinc-700"
+                        >
+                          Пошук на Vimeo
+                        </a>
+                        <a
+                          href={`https://www.dailymotion.com/search/${findQuery}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-zinc-800 text-white rounded hover:bg-zinc-700"
+                        >
+                          Пошук на Dailymotion
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

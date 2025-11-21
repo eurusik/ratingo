@@ -22,28 +22,29 @@
 **Поставити задачі (координатор):**
 
 ```bash
-curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/trending
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/shows/trending
 ```
 
 **Обробити батч задач (процесор):**
 
 ```bash
-curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/sync/trending/process?limit=10"
+curl -H "Authorization: Bearer $CRON_SECRET" "http://localhost:3000/api/sync/shows/trending/process?limit=10"
 ```
 
 **Перевірити прогрес (статус):**
 
 ```bash
-curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/trending/status
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/shows/trending/status
 ```
 
 **Довгі етапи — окремо:**
 
 ```bash
-curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/backfill/omdb
-curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/backfill/meta
-curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/calendar/sync
-curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/calendar/prune
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/shows/backfill/omdb
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/shows/backfill/meta
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/shows/calendar/sync
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/shows/calendar/prune
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/shows/providers
 ```
 
 ### Фільми
@@ -147,23 +148,23 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/movi
 
 **Серіали:**
 
-- Координатор: `app/api/sync/trending/route.ts:11` → `lib/sync/trendingCoordinator.ts:7`
-- Процесор: `app/api/sync/trending/process/route.ts:13` → `lib/sync/trendingProcessor.ts:8`
-- Статус: `app/api/sync/trending/status/route.ts:12`
+- Координатор: `app/api/sync/shows/trending/route.ts:11` → `lib/sync/trendingCoordinator.ts:7`
+- Процесор: `app/api/sync/shows/trending/process/route.ts:13` → `lib/sync/trendingProcessor.ts:8`
+- Статус: `app/api/sync/shows/trending/status/route.ts:12`
 
 **Фільми:**
 
-- Координатор: `app/api/sync/movies/trending/route.ts:1` → `lib/sync/trendingMoviesCoordinator.ts:1`
-- Процесор: `app/api/sync/movies/trending/process/route.ts:1` → `lib/sync/trendingMoviesProcessor.ts:1`
+- Координатор: `app/api/sync/movies/trending/route.ts:1` → `lib/sync/movies/trending/index.ts`
+- Процесор: `app/api/sync/movies/trending/process/route.ts:1` → `lib/sync/movies/trending/processor.ts`
 - Статус: `app/api/sync/movies/trending/status/route.ts:1`
-- Повний синк: `app/api/sync/movies/trending/full/route.ts:1` → `lib/sync/trendingMovies.ts:1`
+- Повний синк: `app/api/sync/movies/trending/full/route.ts:1` → `lib/sync/movies/trending/index.ts`
 
 ## Повний бутстрап (одноразово для порожньої БД)
 
 ### Серіали — повний синк
 
 ```bash
-curl -H "Authorization: Bearer $CRON_SECRET" https://ratingo.top/api/sync/trending/full
+curl -H "Authorization: Bearer $CRON_SECRET" https://ratingo.top/api/sync/shows/trending/full
 ```
 
 **Що робить:**

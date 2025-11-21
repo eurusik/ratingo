@@ -65,6 +65,7 @@ export async function GET(request: Request) {
     }
 
     async function computeWindow(d: number, regionOverride?: string | null) {
+      console.log(`[airings] computeWindow started with days: ${d}, region: ${regionOverride}`);
       const today = new Date();
       const startTs = today.getTime();
       const endTs = startTs + d * 24 * 60 * 60 * 1000;
@@ -80,6 +81,7 @@ export async function GET(request: Request) {
         )
         .limit(topParam);
       const topIds = new Set(topRows.map((r: any) => r.id));
+      console.log(`[airings] Found ${topIds.size} top shows`);
 
       const joined = await db
         .select()
@@ -94,6 +96,7 @@ export async function GET(request: Request) {
               : sql`true`
           )
         );
+      console.log(`[airings] Found ${joined.length} airings after join`);
 
       const windowAirings = (joined as any[])
         .map((r: any) => {
@@ -123,6 +126,7 @@ export async function GET(request: Request) {
         )
         .sort((a: any, b: any) => a.airDateTs - b.airDateTs);
 
+      console.log(`[airings] Found ${windowAirings.length} airings after filtering`);
       return windowAirings;
     }
 

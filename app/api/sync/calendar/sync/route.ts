@@ -1,19 +1,6 @@
-/**
- * GET /api/sync/calendar/sync
- * Захищений ендпоїнт: синхронізує календар ефірів для трендових шоу.
- *
- * @example curl -H "Authorization: Bearer $CRON_SECRET" 'http://localhost:3000/api/sync/calendar/sync'
- *
- * Shape:
- * { success: boolean; processed: number; inserted: number; updated: number }
- */
 import { NextResponse } from 'next/server';
 import { runCalendarSync } from '@/lib/sync/calendar';
 
-/**
- * Обробник GET-запиту: авторизація, запуск `runCalendarSync`,
- * повертає `{ success, processed, inserted, updated }`.
- */
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization');

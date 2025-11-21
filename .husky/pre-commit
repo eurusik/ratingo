@@ -1,1 +1,5 @@
-npx lint-staged
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Running lint-staged..."
+npx lint-staged || exit 1

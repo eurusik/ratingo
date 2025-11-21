@@ -1,4 +1,4 @@
-import { TraktTrendingShow } from '@/lib/types';
+import { TraktTrendingShow, TraktShow } from '@/lib/types';
 
 const TRAKT_BASE_URL = 'https://api.trakt.tv';
 
@@ -195,8 +195,8 @@ export class TraktClient {
     );
   }
 
-  async getRelatedShows(idOrSlug: string | number, limit: number = 12): Promise<any[]> {
-    return this.fetch<any[]>(`/shows/${idOrSlug}/related?limit=${limit}`);
+  async getRelatedShows(idOrSlug: string | number, limit: number = 12): Promise<TraktShow[]> {
+    return this.fetch<TraktShow[]>(`/shows/${idOrSlug}/related?limit=${limit}`);
   }
 }
 

@@ -2,20 +2,16 @@
  * Ініціалізація єдиного екземпляра Postgres/Drizzle для Next.js,
  * стійка до HMR: запобігає надлишковим з’єднанням.
  */
-import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import * as schema from './schema';
 
-// Ensure a single shared client/db across HMR reloads to avoid exhausting connections
 const globalForDb = globalThis as unknown as {
-  __pgSql__: ReturnType<typeof postgres> | undefined;
-  __drizzleDb__: PostgresJsDatabase<typeof schema> | undefined;
+  __pgPool__: Pool | undefined;
+  __drizzleDb__: NodePgDatabase<typeof schema> | undefined;
 };
 
-/**
- * Повертає спільний `drizzle` клієнт; кидає помилку, якщо `DATABASE_URL` відсутній.
- */
-export function getDb(): PostgresJsDatabase<typeof schema> {
+export function getDb(): NodePgDatabase<typeof schema> {
   const url = process.env.DATABASE_URL;
   if (!url) {
     return new Proxy(
@@ -25,20 +21,22 @@ export function getDb(): PostgresJsDatabase<typeof schema> {
           throw new Error('DATABASE_URL environment variable is not set');
         },
       }
-    ) as unknown as PostgresJsDatabase<typeof schema>;
+    ) as unknown as NodePgDatabase<typeof schema>;
   }
 
-  if (!globalForDb.__pgSql__) {
-    const poolMax = Number(process.env.PG_POOL_MAX ?? 5);
-    globalForDb.__pgSql__ = postgres(url, {
-      max: Number.isFinite(poolMax) && poolMax > 0 ? poolMax : 5,
-      idle_timeout: 10,
-      connect_timeout: 10,
-      keep_alive: 10,
+  if (!globalForDb.__pgPool__) {
+    const poolMax = Number(process.env.PG_POOL_MAX ?? 20);
+    const pool = new Pool({
+      connectionString: url,
+      max: Number.isFinite(poolMax) && poolMax > 0 ? poolMax : 20,
     });
+    pool.on('error', (err) => {
+      console.error('Помилка пулу з’єднань Postgres:', err);
+    });
+    globalForDb.__pgPool__ = pool;
   }
   if (!globalForDb.__drizzleDb__) {
-    globalForDb.__drizzleDb__ = drizzle(globalForDb.__pgSql__!, { schema });
+    globalForDb.__drizzleDb__ = drizzle(globalForDb.__pgPool__, { schema });
   }
   return globalForDb.__drizzleDb__!;
 }

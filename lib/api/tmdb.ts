@@ -1,4 +1,13 @@
-import { TMDBTrendingResponse, TMDBVideosResponse, TMDBShowDetails } from '@/lib/types';
+import {
+  TMDBTrendingResponse,
+  TMDBVideosResponse,
+  TMDBShowDetails,
+  TMDBMovieDetails,
+  WatchProvider,
+  TMDBMovieTranslation,
+  TMDBShowTranslation,
+  TMDBExternalIds,
+} from '@/lib/types';
 
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
@@ -101,9 +110,9 @@ export class TMDBClient {
   /**
    * Український переклад назви/опису та постер.
    */
-  async getShowTranslation(showId: number): Promise<any> {
+  async getShowTranslation(showId: number): Promise<TMDBShowTranslation> {
     try {
-      const response = await this.fetch<any>(`/tv/${showId}?language=uk-UA`);
+      const response = await this.fetch<TMDBShowDetails>(`/tv/${showId}?language=uk-UA`);
       return {
         titleUk: response.name || null,
         overviewUk: response.overview || null,
@@ -115,12 +124,12 @@ export class TMDBClient {
     }
   }
 
-  async getMovieTranslation(movieId: number): Promise<any> {
+  async getMovieTranslation(movieId: number): Promise<TMDBMovieTranslation> {
     /**
      * Український переклад назви/опису та постер для фільму.
      */
     try {
-      const response = await this.fetch<any>(`/movie/${movieId}?language=uk-UA`);
+      const response = await this.fetch<TMDBMovieDetails>(`/movie/${movieId}?language=uk-UA`);
       return {
         titleUk: response.title || null,
         overviewUk: response.overview || null,
@@ -155,18 +164,23 @@ export class TMDBClient {
     return this.fetch<TMDBShowDetails>(`/tv/${showId}`);
   }
 
-  async getMovieDetails(movieId: number): Promise<any> {
+  async getMovieDetails(movieId: number): Promise<TMDBMovieDetails> {
     /**
-     * Детальна інформація про фільм.
+     * Отримує детальну інформацію про фільм з TMDB.
+     *
+     * @param movieId TMDB ID фільму
+     * @returns Об'єкт детальних даних фільму (`TMDBMovieDetails`)
      */
-    return this.fetch<any>(`/movie/${movieId}`);
+    return this.fetch<TMDBMovieDetails>(`/movie/${movieId}`);
   }
 
   /**
    * Рекомендації для шоу (бек-ап для пов’язаних).
    */
-  async getRecommendations(showId: number, page: number = 1): Promise<any> {
-    return this.fetch<any>(`/tv/${showId}/recommendations?page=${page}&language=uk-UA`);
+  async getRecommendations(showId: number, page: number = 1): Promise<TMDBTrendingResponse> {
+    return this.fetch<TMDBTrendingResponse>(
+      `/tv/${showId}/recommendations?page=${page}&language=uk-UA`
+    );
   }
 
   async getMovieRecommendations(movieId: number, page: number = 1): Promise<any> {
@@ -179,15 +193,15 @@ export class TMDBClient {
   /**
    * Зовнішні ідентифікатори (включно з IMDb).
    */
-  async getShowExternalIds(showId: number): Promise<any> {
-    return this.fetch<any>(`/tv/${showId}/external_ids`);
+  async getShowExternalIds(showId: number): Promise<TMDBExternalIds> {
+    return this.fetch<TMDBExternalIds>(`/tv/${showId}/external_ids`);
   }
 
-  async getMovieExternalIds(movieId: number): Promise<any> {
+  async getMovieExternalIds(movieId: number): Promise<TMDBExternalIds> {
     /**
      * Зовнішні ідентифікатори фільму (включно з IMDb).
      */
-    return this.fetch<any>(`/movie/${movieId}/external_ids`);
+    return this.fetch<TMDBExternalIds>(`/movie/${movieId}/external_ids`);
   }
 
   /**
@@ -197,20 +211,7 @@ export class TMDBClient {
    * @example
    * const ua = await tmdb.getWatchProvidersByRegion(1399, 'UA');
    */
-  async getWatchProvidersByRegion(
-    showId: number,
-    region: string
-  ): Promise<
-    Array<{
-      id: number;
-      name: string;
-      logo_path: string | null;
-      region: string;
-      category: string;
-      rank: number | null;
-      link: string | null;
-    }>
-  > {
+  async getWatchProvidersByRegion(showId: number, region: string): Promise<WatchProvider[]> {
     try {
       const data = await this.fetch<any>(`/tv/${showId}/watch/providers`);
       const results = data.results || {};
@@ -246,22 +247,14 @@ export class TMDBClient {
     }
   }
 
-  async getMovieWatchProvidersByRegion(
-    movieId: number,
-    region: string
-  ): Promise<
-    Array<{
-      id: number;
-      name: string;
-      logo_path: string | null;
-      region: string;
-      category: string;
-      rank: number | null;
-      link: string | null;
-    }>
-  > {
+  async getMovieWatchProvidersByRegion(movieId: number, region: string): Promise<WatchProvider[]> {
     /**
-     * Провайдери перегляду фільму для регіону з категоріями та link.
+     * Отримує провайдерів перегляду для фільму в конкретному регіоні.
+     * Мапінг TMDB-провайдерів у структурований `WatchProvider`.
+     *
+     * @param movieId TMDB ID фільму
+     * @param region Ключ регіону (напр., 'UA' або 'US')
+     * @returns Масив провайдерів перегляду
      */
     try {
       const data = await this.fetch<any>(`/movie/${movieId}/watch/providers`);
@@ -292,6 +285,59 @@ export class TMDBClient {
         ...make(regionData.buy, 'buy'),
       ];
       return out;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async getMovieWatchProvidersAny(movieId: number): Promise<WatchProvider[]> {
+    try {
+      /**
+       * Повертає провайдерів перегляду з фолбеком по регіонах:
+       * спершу 'UA', далі 'US', інакше перший доступний регіон.
+       *
+       * @param movieId TMDB ID фільму
+       * @returns Масив нормалізованих провайдерів (`WatchProvider[]`)
+       */
+      const data = await this.fetch<any>(`/movie/${movieId}/watch/providers`);
+      const results = data.results || {};
+      const regionKey = 'UA' in results ? 'UA' : 'US' in results ? 'US' : Object.keys(results)[0];
+      if (!regionKey) return [];
+      const regionData = results[regionKey];
+      const regionLink: string | null = regionData.link || null;
+      const mapCategory = (
+        category: string,
+        entries:
+          | Array<{
+              provider_id: number;
+              provider_name: string;
+              logo_path: string | null;
+              display_priority?: number;
+            }>
+          | undefined
+      ): WatchProvider[] => {
+        if (!Array.isArray(entries)) return [];
+        return entries.map((entry, index) => {
+          const { provider_id, provider_name, logo_path, display_priority } = entry;
+          const rank = typeof display_priority === 'number' ? display_priority : index;
+          return {
+            id: provider_id,
+            name: provider_name,
+            logo_path: logo_path || null,
+            region: regionKey,
+            category,
+            rank,
+            link: regionLink,
+          };
+        });
+      };
+      return [
+        ...mapCategory('flatrate', regionData.flatrate),
+        ...mapCategory('free', regionData.free),
+        ...mapCategory('ads', regionData.ads),
+        ...mapCategory('rent', regionData.rent),
+        ...mapCategory('buy', regionData.buy),
+      ];
     } catch (e) {
       return [];
     }

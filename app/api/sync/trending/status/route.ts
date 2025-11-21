@@ -1,19 +1,8 @@
-/**
- * GET /api/sync/trending/status
- * Захищений ендпоїнт: повертає останню джобу трендів і підсумки по задачах
- * (`pending/processing/done/error`).
- *
- * @example curl -H "Authorization: Bearer $CRON_SECRET" 'http://localhost:3000/api/sync/trending/status'
- */
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { syncJobs, syncTasks } from '@/db/schema';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 
-/**
- * Обробник GET-запиту: авторизація, пошук останньої `sync_job`,
- * підрахунок задач за статусами і JSON-відповідь.
- */
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization');

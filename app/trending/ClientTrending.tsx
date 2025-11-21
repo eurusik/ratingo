@@ -21,7 +21,7 @@ export function ClientTrending({
   initialLosers,
   initialWindowDays = 30,
   initialMetric = 'delta',
-  initialRegion = 'US',
+  initialRegion = null,
   initialCategory = null,
 }: {
   initialShows: ShowWithUrl[];

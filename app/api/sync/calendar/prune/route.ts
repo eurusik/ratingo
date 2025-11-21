@@ -1,19 +1,6 @@
-/**
- * GET /api/sync/calendar/prune
- * Захищений ендпоїнт: очищає застарілі ефіри, що втратили зв’язок з трендами.
- *
- * @example curl -H "Authorization: Bearer $CRON_SECRET" 'http://localhost:3000/api/sync/calendar/prune'
- *
- * Shape:
- * { success: boolean; deleted: number }
- */
 import { NextResponse } from 'next/server';
 import { pruneStaleAirings } from '@/lib/sync/calendar';
 
-/**
- * Обробник GET-запиту: авторизація, запуск `pruneStaleAirings`,
- * повертає `{ success, deleted }`.
- */
 export async function GET(request: Request) {
   try {
     const authHeader = request.headers.get('authorization');

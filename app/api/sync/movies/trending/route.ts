@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { runTrendingMoviesCoordinator } from '@/lib/sync/trendingMoviesCoordinator';
+import { runTrendingMoviesCoordinator } from '@/lib/sync/movies/trending';
 
 export async function GET(request: Request) {
   try {

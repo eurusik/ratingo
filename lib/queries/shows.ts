@@ -74,7 +74,9 @@ export async function getShows({
           : sql`COALESCE("shows"."delta_3m", 0) > 0`
         : sql`TRUE`;
 
-  const recencyClause = updatedAfter ? gt(shows.trendingUpdatedAt, updatedAfter) : sql`TRUE`;
+  const recencyClause = updatedAfter
+    ? sql`COALESCE("shows"."trending_updated_at", "shows"."updated_at") > ${updatedAfter}`
+    : sql`TRUE`;
 
   const baseQuery = db.select().from(shows);
   const whereClause = region

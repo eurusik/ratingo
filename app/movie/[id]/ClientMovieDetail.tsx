@@ -5,13 +5,31 @@ import Image from 'next/image';
 import CastList from '@/components/CastList';
 import { WatchProviders } from '@/components/WatchProviders';
 import { Star, Calendar, Clock } from 'lucide-react';
+import type { TMDBVideo } from '@/lib/types';
 
+/**
+ * Клієнтський компонент деталей фільму: рендерить бекдроп,
+ * трейлер (із пріоритетами), опис, каст, рейтинги та провайдерів перегляду.
+ *
+ * @param movie Об'єкт деталей фільму з відео (`TMDBVideo[]`) та іншими полями
+ */
 export function ClientMovieDetail({ movie }: { movie: any }) {
   const searchParams = useSearchParams();
   const regionParam = searchParams.get('region');
 
-  const trailer = movie.videos?.find((v: any) => v.type === 'Trailer') || movie.videos?.[0];
-  const releaseYear = movie.releaseDate ? new Date(movie.releaseDate).getFullYear() : null;
+  const videos: TMDBVideo[] = Array.isArray(movie.videos) ? (movie.videos as TMDBVideo[]) : [];
+  /**
+   * Обирає найкращий трейлер із пріоритетом:
+   * офіційний трейлер → трейлер → офіційне відео → перше відео.
+   */
+  const selectTrailer = (list: TMDBVideo[]): TMDBVideo | undefined =>
+    list.find((video) => video.type === 'Trailer' && video.official) ||
+    list.find((video) => video.type === 'Trailer') ||
+    list.find((video) => video.official) ||
+    list[0];
+  const trailer = selectTrailer(videos);
+  const releaseYear =
+    typeof movie.releaseDate === 'string' ? new Date(movie.releaseDate).getFullYear() : null;
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -115,6 +133,23 @@ export function ClientMovieDetail({ movie }: { movie: any }) {
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">Статус</span>
                   <span className="text-white font-semibold">{movie.status}</span>
+                </div>
+              )}
+
+              {Array.isArray(movie.contentRatings) && movie.contentRatings.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs text-gray-500">Вікові рейтинги</div>
+                  {(movie.contentRatings as Array<{ region: string; rating: string | null }>).map(
+                    (cr) => (
+                      <div
+                        key={`${cr.region}-${cr.rating}`}
+                        className="flex items-center justify-between"
+                      >
+                        <span className="text-gray-400">{cr.region}</span>
+                        <span className="text-white font-semibold">{cr.rating}</span>
+                      </div>
+                    )
+                  )}
                 </div>
               )}
             </div>
