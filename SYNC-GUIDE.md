@@ -136,13 +136,6 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/sync/movi
 - Статистика рейтингів: `tmdb/imdb/trakt` (кількість фільмів з рейтингом)
 - Метадані: `snapshots` (спарклайни), `providers` (платформи), `cast` (актори), `trailers` (трейлери)
 
-## Поради
-
-- **Серіали**: тримай `limit` невеликим (10–20) і викликай процесор кілька разів.
-- **Фільми**: синк працює одним запитом, але може зайняти 2-3 хвилини для 100 фільмів.
-- Завжди додавай заголовок `Authorization: Bearer $CRON_SECRET`.
-- Для production використовуй `https://ratingo.top` замість `localhost:3000`.
-
 ## Де в коді
 
 **Серіали:**
