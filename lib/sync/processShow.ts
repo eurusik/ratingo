@@ -709,7 +709,20 @@ export async function processShow(
                   insReg.push({ ...payload, createdAt: new Date() });
                 }
               }
-              if (insReg.length) await tx.insert(watchProvidersRegistry).values(insReg as any[]);
+              if (insReg.length) {
+                await tx
+                  .insert(watchProvidersRegistry)
+                  .values(insReg as any[])
+                  .onConflictDoUpdate({
+                    target: watchProvidersRegistry.tmdbId,
+                    set: {
+                      name: sql`excluded.name`,
+                      logoPath: sql`excluded.logo_path`,
+                      slug: sql`excluded.slug`,
+                      updatedAt: sql`excluded.updated_at`,
+                    },
+                  });
+              }
               for (const u of updReg) {
                 await tx
                   .update(watchProvidersRegistry)

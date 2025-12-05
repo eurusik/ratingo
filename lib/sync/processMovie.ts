@@ -15,7 +15,7 @@ import { tmdbClient } from '@/lib/api/tmdb';
 import { traktClient } from '@/lib/api/trakt';
 import { omdbClient } from '@/lib/api/omdb';
 import { calculateTrendingScore } from '@/lib/utils';
-import { eq, inArray, desc } from 'drizzle-orm';
+import { eq, inArray, desc, sql } from 'drizzle-orm';
 import { MonthlyMaps } from './types';
 import { LRUCache, cachedWithRetry, withRetry } from './utils';
 
@@ -260,15 +260,13 @@ export async function processMovie(
             })
             .where(eq(movieRatings.id, existingMR[0].id));
         } else {
-          await tx
-            .insert(movieRatings)
-            .values({
-              movieId: movieIdVal,
-              source: 'trakt',
-              avg: ratingTraktAvg ?? null,
-              votes: ratingTraktVotes ?? null,
-              updatedAt: new Date(),
-            } as any);
+          await tx.insert(movieRatings).values({
+            movieId: movieIdVal,
+            source: 'trakt',
+            avg: ratingTraktAvg ?? null,
+            votes: ratingTraktVotes ?? null,
+            updatedAt: new Date(),
+          } as any);
         }
         res.ratingsUpdated++;
         if (ratingDistribution) {
@@ -380,7 +378,20 @@ export async function processMovie(
                 if (existingId) updReg.push({ id: existingId, payload });
                 else insReg.push({ ...payload, createdAt: new Date() });
               }
-              if (insReg.length) await tx.insert(watchProvidersRegistry).values(insReg as any[]);
+              if (insReg.length) {
+                await tx
+                  .insert(watchProvidersRegistry)
+                  .values(insReg as any[])
+                  .onConflictDoUpdate({
+                    target: watchProvidersRegistry.tmdbId,
+                    set: {
+                      name: sql`excluded.name`,
+                      logoPath: sql`excluded.logo_path`,
+                      slug: sql`excluded.slug`,
+                      updatedAt: sql`excluded.updated_at`,
+                    },
+                  });
+              }
               for (const u of updReg)
                 await tx
                   .update(watchProvidersRegistry)
