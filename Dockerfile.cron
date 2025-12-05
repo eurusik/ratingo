@@ -1,9 +1,9 @@
 # Dockerfile for Railway Cron Jobs
-# Lightweight Alpine image with curl
+# Lightweight Alpine image with curl and bash
 FROM alpine:3.19
 
-# Install curl
-RUN apk add --no-cache curl
+# Install curl and bash
+RUN apk add --no-cache curl bash
 
 # Set working directory
 WORKDIR /app

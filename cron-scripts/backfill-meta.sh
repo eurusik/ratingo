@@ -20,7 +20,7 @@ RESPONSE=$(curl --fail-with-body -sS \
   -w "\nHTTP_STATUS:%{http_code}" \
   -H "Authorization: Bearer $CRON_SECRET" \
   "$BASE_URL/api/sync/backfill/meta") || {
-  echo "[$(date -Iseconds)] ❌ FAILED: Curl request failed"
+  echo "[$(date -Iseconds)] вќЊ FAILED: Curl request failed"
   exit 1
 }
 
@@ -35,9 +35,9 @@ echo ""
 
 # Check if response indicates success
 if echo "$BODY" | grep -q '"success"[[:space:]]*:[[:space:]]*true'; then
-  echo "[$(date -Iseconds)] ✅ Meta Backfill completed successfully"
+  echo "[$(date -Iseconds)] вњ… Meta Backfill completed successfully"
   exit 0
 else
-  echo "[$(date -Iseconds)] ❌ Meta Backfill failed - success=false in response"
+  echo "[$(date -Iseconds)] вќЊ Meta Backfill failed - success=false in response"
   exit 1
 fi

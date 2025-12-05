@@ -20,7 +20,7 @@ RESPONSE=$(curl --fail-with-body -sS \
   -w "\nHTTP_STATUS:%{http_code}" \
   -H "Authorization: Bearer $CRON_SECRET" \
   "$BASE_URL/api/sync/calendar/sync") || {
-  echo "[$(date -Iseconds)] ❌ FAILED: Curl request failed"
+  echo "[$(date -Iseconds)] вќЊ FAILED: Curl request failed"
   exit 1
 }
 
@@ -35,9 +35,9 @@ echo ""
 
 # Check if response indicates success
 if echo "$BODY" | grep -q '"success"[[:space:]]*:[[:space:]]*true'; then
-  echo "[$(date -Iseconds)] ✅ Calendar Sync completed successfully"
+  echo "[$(date -Iseconds)] вњ… Calendar Sync completed successfully"
   exit 0
 else
-  echo "[$(date -Iseconds)] ❌ Calendar Sync failed - success=false in response"
+  echo "[$(date -Iseconds)] вќЊ Calendar Sync failed - success=false in response"
   exit 1
 fi

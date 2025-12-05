@@ -25,7 +25,7 @@ while true; do
     --max-time 20 \
     -H "Authorization: Bearer $CRON_SECRET" \
     "$BASE_URL/api/sync/movies/trending/status") || {
-    echo "[$(date -Iseconds)] ❌ Status request failed"
+    echo "[$(date -Iseconds)] вќЊ Status request failed"
     exit 1
   }
   
@@ -35,7 +35,7 @@ while true; do
   echo "[$(date -Iseconds)] Pending tasks: $PENDING"
   
   if [ "$PENDING" -le 0 ]; then
-    echo "[$(date -Iseconds)] ✅ No pending tasks - process completed successfully"
+    echo "[$(date -Iseconds)] вњ… No pending tasks - process completed successfully"
     exit 0
   fi
   
@@ -50,7 +50,7 @@ while true; do
     -w "\nHTTP_STATUS:%{http_code}" \
     -H "Authorization: Bearer $CRON_SECRET" \
     "$BASE_URL/api/sync/movies/trending/process?limit=$LIMIT") || {
-    echo "[$(date -Iseconds)] ⚠️  Process request failed, continuing..."
+    echo "[$(date -Iseconds)] вљ пёЏ  Process request failed, continuing..."
   }
   
   # Show process response
