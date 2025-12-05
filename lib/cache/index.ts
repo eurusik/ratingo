@@ -41,7 +41,15 @@ export async function setCachedJson(key: string, obj: any, ttlSeconds: number): 
 
 /**
  * Формує стандартизований ключ кешу на основі префікса та URL.
+ * Видаляє hostname/port з URL щоб уникнути різних ключів для однакових ендпоінтів.
  */
 export function makeCacheKey(prefix: string, url: string): string {
-  return `${prefix}:${url}`;
+  try {
+    const u = new URL(url);
+    // Використовуємо тільки pathname + search, без hostname/port
+    return `${prefix}:${u.pathname}${u.search}`;
+  } catch {
+    // Якщо URL невалідний, використовуємо як є
+    return `${prefix}:${url}`;
+  }
 }
