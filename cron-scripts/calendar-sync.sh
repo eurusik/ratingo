@@ -1,5 +1,5 @@
 #!/bin/sh
-# Calendar Sync - Every 6 hours (20 minutes offset)
+# Calendar Sync - Every 6 hours at :50 (00:50, 06:50, 12:50, 18:50 UTC)
 # Syncs upcoming episode air dates from Trakt calendar
 
 set -e

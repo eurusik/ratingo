@@ -1,5 +1,5 @@
 #!/bin/sh
-# Calendar Prune - Every 6 hours (25 minutes offset)
+# Calendar Prune - Every 6 hours at :55 (00:55, 06:55, 12:55, 18:55 UTC)
 # Removes old/outdated episode air dates from database
 
 set -e

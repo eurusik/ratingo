@@ -1,5 +1,5 @@
 #!/bin/sh
-# Backfill Meta - Every 6 hours (15 minutes offset)
+# Backfill Meta - Every 6 hours at :45 (00:45, 06:45, 12:45, 18:45 UTC)
 # Enriches shows with TMDB metadata (posters, cast, providers, etc.)
 
 set -e

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Movies Process Trending - Every 6 hours (32 minutes after coordinator)
+# Movies Process Trending - Every 6 hours at :10 (00:10, 06:10, 12:10, 18:10 UTC)
 # Processes batches of trending movies tasks
 
 set -e

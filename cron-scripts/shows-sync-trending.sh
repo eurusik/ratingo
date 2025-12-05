@@ -1,5 +1,5 @@
 #!/bin/sh
-# Shows Sync Trending - Every 6 hours
+# Shows Sync Trending - Every 6 hours at :20 (00:20, 06:20, 12:20, 18:20 UTC)
 # Creates tasks for trending shows coordinator
 
 set -e

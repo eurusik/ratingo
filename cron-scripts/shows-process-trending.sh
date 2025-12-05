@@ -1,5 +1,5 @@
 #!/bin/sh
-# Shows Process Trending - Every 6 hours (2 minutes after coordinator)
+# Shows Process Trending - Every 6 hours at :30 (00:30, 06:30, 12:30, 18:30 UTC)
 # Processes batches of trending shows tasks
 
 set -e

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Movies Sync Trending - Every 6 hours
+# Movies Sync Trending - Every 6 hours at :00 (00:00, 06:00, 12:00, 18:00 UTC)
 # Creates tasks for trending movies coordinator
 
 set -e

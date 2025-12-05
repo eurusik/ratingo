@@ -1,5 +1,5 @@
 #!/bin/sh
-# Backfill OMDb - Every 6 hours (10 minutes offset)
+# Backfill OMDb - Every 6 hours at :40 (00:40, 06:40, 12:40, 18:40 UTC)
 # Enriches shows with IMDb ratings and Metacritic scores from OMDb
 
 set -e
