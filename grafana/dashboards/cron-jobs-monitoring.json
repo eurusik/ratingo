@@ -1,0 +1,107 @@
+{
+  "dashboard": {
+    "title": "Ratingo - Cron Jobs Monitoring",
+    "uid": "ratingo-cron-jobs",
+    "tags": ["ratingo", "cron", "railway"],
+    "timezone": "UTC",
+    "schemaVersion": 39,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Cron Jobs - Last 24h Status",
+        "type": "stat",
+        "gridPos": { "x": 0, "y": 0, "w": 24, "h": 4 },
+        "targets": [
+          {
+            "expr": "count_over_time({service=~\"cron-.*\"} |~ \"completed successfully\" [24h])",
+            "refId": "Success",
+            "legendFormat": "✅ Success"
+          },
+          {
+            "expr": "count_over_time({service=~\"cron-.*\"} |~ \"FAILED\" [24h])",
+            "refId": "Failed",
+            "legendFormat": "❌ Failed"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 1, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Movies Sync Jobs Timeline",
+        "type": "logs",
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "{service=~\"cron-movies.*\"} |= \"Starting\" or |= \"completed\"",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Shows Sync Jobs Timeline",
+        "type": "logs",
+        "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "{service=~\"cron-shows.*\"} |= \"Starting\" or |= \"completed\"",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Backfill Jobs Status",
+        "type": "logs",
+        "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "{service=~\"cron-backfill.*\"} |= \"Starting\" or |= \"completed\"",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Calendar Jobs Status",
+        "type": "logs",
+        "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "{service=~\"cron-calendar.*\"} |= \"Starting\" or |= \"completed\"",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Recent Errors (All Cron Jobs)",
+        "type": "logs",
+        "gridPos": { "x": 0, "y": 20, "w": 24, "h": 8 },
+        "targets": [
+          {
+            "expr": "{service=~\"cron-.*\"} |~ \"FAILED|ERROR|error\"",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "wrapLogMessage": true,
+          "prettifyLogMessage": false,
+          "enableLogDetails": true
+        }
+      }
+    ]
+  }
+}

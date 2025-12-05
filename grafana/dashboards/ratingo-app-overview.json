@@ -1,0 +1,154 @@
+{
+  "dashboard": {
+    "title": "Ratingo - Application Overview",
+    "uid": "ratingo-app-overview",
+    "tags": ["ratingo", "railway", "main"],
+    "timezone": "UTC",
+    "schemaVersion": 39,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Status",
+        "type": "stat",
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "up{service=\"ratingo-app\"}",
+            "refId": "A",
+            "legendFormat": "ratingo-app"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              { "type": "value", "value": "0", "text": "Down", "color": "red" },
+              { "type": "value", "value": "1", "text": "Up", "color": "green" }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 1, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "PostgreSQL Status",
+        "type": "stat",
+        "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "up{service=\"Postgres\"}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Redis Status",
+        "type": "stat",
+        "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "up{service=\"Redis\"}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Grafana Stack Status",
+        "type": "stat",
+        "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "up{service=\"Grafana\"}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Application Logs (ratingo-app)",
+        "type": "logs",
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 10 },
+        "targets": [
+          {
+            "expr": "{service=\"ratingo-app\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "wrapLogMessage": true,
+          "enableLogDetails": true
+        }
+      },
+      {
+        "id": 6,
+        "title": "Cache Performance",
+        "type": "logs",
+        "gridPos": { "x": 12, "y": 4, "w": 12, "h": 10 },
+        "targets": [
+          {
+            "expr": "{service=\"ratingo-app\"} |~ \"cache.*HIT|MISS\"",
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "extractFields",
+            "options": {
+              "source": "line",
+              "format": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Database Queries",
+        "type": "logs",
+        "gridPos": { "x": 0, "y": 14, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "{service=\"ratingo-app\"} |~ \"perf.*getShows|getMovies|getShowDetails\"",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "API Errors",
+        "type": "logs",
+        "gridPos": { "x": 12, "y": 14, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "{service=\"ratingo-app\"} |~ \"ERROR|Error|error|Failed\"",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showTime": true,
+          "wrapLogMessage": true
+        }
+      },
+      {
+        "id": 9,
+        "title": "Sync Operations",
+        "type": "logs",
+        "gridPos": { "x": 0, "y": 22, "w": 24, "h": 8 },
+        "targets": [
+          {
+            "expr": "{service=\"ratingo-app\"} |~ \"trending-sync|Movie sync|Show sync\"",
+            "refId": "A"
+          }
+        ]
+      }
+    ]
+  }
+}
