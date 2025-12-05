@@ -45,12 +45,12 @@ export function generateWebSiteJsonLd() {
     '@type': 'WebSite',
     name: 'Ratingo',
     description: 'Трендові серіали України з рейтингами TMDB, Trakt та IMDb',
-    url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/search?q={search_term_string}`,
+        urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/search?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },

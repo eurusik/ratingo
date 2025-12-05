@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server';
  * - Вимагає заголовок `Authorization: Bearer <CRON_SECRET>` (якщо змінна визначена).
  *
  * Логіка:
- * - Формує URL sitemap на основі `NEXT_PUBLIC_BASE_URL`.
+ * - Формує URL sitemap на основі `NEXT_PUBLIC_SITE_URL`.
  * - Виконує HTTP GET до служб пінгу Google та Bing.
  *
  * Відповідь:

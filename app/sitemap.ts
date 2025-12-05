@@ -80,7 +80,7 @@ async function resolveBaseUrl(): Promise<string> {
  * - Результат кешується (LRU/Redis) на 600 секунд, щоб уникати повторних важких запитів.
  *
  * Абсолютні URL:
- * - Формуються з `NEXT_PUBLIC_BASE_URL` (fallback: `http://localhost:3000`).
+ * - Формуються з `NEXT_PUBLIC_SITE_URL` (fallback: `http://localhost:3000`).
  *
  * @returns Масив записів Sitemap для App Router (`MetadataRoute.Sitemap`).
  */

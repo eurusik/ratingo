@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Ratingo' }],
   creator: 'Ratingo',
   publisher: 'Ratingo',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   openGraph: {
     type: 'website',
     locale: 'uk_UA',
