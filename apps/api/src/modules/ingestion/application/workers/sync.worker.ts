@@ -20,23 +20,23 @@ export class SyncWorker extends WorkerHost {
    * Processes a single job from the queue.
    * BullMQ handles concurrency and retries automatically.
    */
-  async process(job: Job<{ tmdbId: number }, any, string>): Promise<void> {
+  async process(job: Job<{ tmdbId: number; trendingScore?: number }, any, string>): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
 
     try {
       switch (job.name) {
         case IngestionJob.SYNC_MOVIE:
-          await this.syncService.syncMovie(job.data.tmdbId);
+          await this.syncService.syncMovie(job.data.tmdbId, job.data.trendingScore);
           break;
         case IngestionJob.SYNC_SHOW:
-          await this.syncService.syncShow(job.data.tmdbId);
+          await this.syncService.syncShow(job.data.tmdbId, job.data.trendingScore);
           break;
         default:
           this.logger.warn(`Unknown job type: ${job.name}`);
       }
     } catch (error) {
       this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
-      throw error; // Re-throw to let BullMQ handle retry logic
+      throw error;
     }
   }
 }

@@ -26,6 +26,9 @@ export interface NormalizedMedia {
   rating: number;
   voteCount: number;
   popularity: number;
+  
+  /** Synthetic score for sorting trending lists. Null if not in trends. */
+  trendingScore?: number;
 
   /** First air date for shows */
   releaseDate?: Date | null;

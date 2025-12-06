@@ -27,7 +27,7 @@ export class TmdbAdapter implements IMetadataProvider {
    */
   public async getMovie(id: number): Promise<NormalizedMedia | null> {
     try {
-      const data = await this.fetch(`/movie/${id}`, { append_to_response: 'credits,videos,release_dates' });
+      const data = await this.fetch(`/movie/${id}`, { append_to_response: 'credits,videos,release_dates,external_ids' });
       return TmdbMapper.toDomain(data, MediaType.MOVIE);
     } catch (error) {
       if (this.isNotFound(error)) return null;
@@ -41,7 +41,7 @@ export class TmdbAdapter implements IMetadataProvider {
    */
   public async getShow(id: number): Promise<NormalizedMedia | null> {
     try {
-      const data = await this.fetch(`/tv/${id}`, { append_to_response: 'aggregate_credits,videos,content_ratings' });
+      const data = await this.fetch(`/tv/${id}`, { append_to_response: 'aggregate_credits,videos,content_ratings,external_ids' });
       return TmdbMapper.toDomain(data, MediaType.SHOW);
     } catch (error) {
       if (this.isNotFound(error)) return null;

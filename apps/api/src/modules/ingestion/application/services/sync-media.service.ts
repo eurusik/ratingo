@@ -23,7 +23,7 @@ export class SyncMediaService {
    * Synchronizes a movie by TMDB ID.
    * Fetches data from TMDB, normalizes it, and upserts into the catalog.
    */
-  public async syncMovie(tmdbId: number): Promise<void> {
+  public async syncMovie(tmdbId: number, trendingScore?: number): Promise<void> {
     this.logger.log(`Starting sync for Movie ID: ${tmdbId}`);
 
     const normalizedMedia = await this.tmdbAdapter.getMovie(tmdbId);
@@ -33,6 +33,10 @@ export class SyncMediaService {
       return;
     }
 
+    if (trendingScore !== undefined) {
+      normalizedMedia.trendingScore = trendingScore;
+    }
+
     await this.mediaRepository.upsert(normalizedMedia);
     this.logger.log(`Successfully synced Movie: ${normalizedMedia.title}`);
   }
@@ -40,7 +44,7 @@ export class SyncMediaService {
   /**
    * Synchronizes a show by TMDB ID.
    */
-  public async syncShow(tmdbId: number): Promise<void> {
+  public async syncShow(tmdbId: number, trendingScore?: number): Promise<void> {
     this.logger.log(`Starting sync for Show ID: ${tmdbId}`);
 
     const normalizedMedia = await this.tmdbAdapter.getShow(tmdbId);
@@ -50,7 +54,19 @@ export class SyncMediaService {
       return;
     }
 
+    // Inject trending score if provided
+    if (trendingScore !== undefined) {
+      normalizedMedia.trendingScore = trendingScore;
+    }
+
     await this.mediaRepository.upsert(normalizedMedia);
     this.logger.log(`Successfully synced Show: ${normalizedMedia.title}`);
+  }
+
+  /**
+   * Fetches trending media IDs from the provider.
+   */
+  public async getTrending(page = 1) {
+    return this.tmdbAdapter.getTrending(page);
   }
 }

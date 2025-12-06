@@ -55,6 +55,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           rating: media.rating,
           voteCount: media.voteCount,
           popularity: media.popularity,
+          trendingScore: media.trendingScore ?? 0,
           releaseDate: media.releaseDate,
           isAdult: media.isAdult,
           updatedAt: new Date(),
@@ -69,6 +70,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
             rating: media.rating,
             voteCount: media.voteCount,
             popularity: media.popularity,
+            // Only update trendingScore if provided, otherwise keep existing
+            ...(media.trendingScore !== undefined ? { trendingScore: media.trendingScore } : {}),
             posterPath: media.posterPath,
             backdropPath: media.backdropPath,
             updatedAt: new Date(),
