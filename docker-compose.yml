@@ -3,29 +3,37 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: ratingo-db
-    restart: unless-stopped
-    ports:
-      - '5433:5432'
+    container_name: ratingo_postgres
+    restart: always
     environment:
       POSTGRES_USER: ratingo
       POSTGRES_PASSWORD: ratingo_dev_password
       POSTGRES_DB: ratingo
+    ports:
+      - '5433:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ratingo']
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ratingo"]
+      interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: ratingo-redis
-    restart: unless-stopped
+    container_name: ratingo_redis
+    restart: always
     ports:
       - '6379:6379'
-    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
+  redis_data:

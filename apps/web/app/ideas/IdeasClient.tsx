@@ -145,7 +145,6 @@ export default function IdeasClient({ initialItems }: { initialItems: FeatureIte
     if (!initialItems?.length) {
       fetchPage(true);
     }
-     
   }, []);
 
   return (
