@@ -63,6 +63,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
           target: schema.mediaItems.tmdbId,
           set: {
             title: media.title,
+            originalTitle: media.originalTitle,
+            slug: media.slug,
             overview: media.overview,
             rating: media.rating,
             voteCount: media.voteCount,

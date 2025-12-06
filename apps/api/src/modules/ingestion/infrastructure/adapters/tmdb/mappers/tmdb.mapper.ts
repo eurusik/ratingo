@@ -1,5 +1,6 @@
 import { NormalizedMedia } from '../../../../domain/models/normalized-media.model';
 import { MediaType } from '@/common/enums/media-type.enum';
+import slugify from 'slugify';
 
 /**
  * Pure utility class to transform raw TMDB JSON responses into the internal NormalizedMedia format.
@@ -61,11 +62,11 @@ export class TmdbMapper {
   }
 
   private static generateSlug(text: string): string {
-    return text
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    if (!text) return '';
+    return slugify(text, {
+      lower: true,
+      strict: true,
+      locale: 'uk',
+    });
   }
 }

@@ -22,15 +22,12 @@ export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 
 /**
  * MEDIA ITEMS (Base Table)
- * Містить спільні поля для фільмів та серіалів.
- * Використовується для списків, трендів, пошуку.
  */
 export const mediaItems = pgTable(
   'media_items',
   {
     id: serial('id').primaryKey(),
-    type: mediaTypeEnum('type').notNull(), // 'movie' or 'show'
-    
+    type: mediaTypeEnum('type').notNull(),
     // External IDs (Canonical)
     tmdbId: integer('tmdb_id').unique().notNull(),
     imdbId: text('imdb_id'),
@@ -38,7 +35,7 @@ export const mediaItems = pgTable(
     // Basic Info
     title: text('title').notNull(),
     originalTitle: text('original_title'),
-    slug: text('slug').unique().notNull(), // for SEO URLs
+    slug: text('slug').unique().notNull(),
     overview: text('overview'),
     
     // Visuals
@@ -48,11 +45,11 @@ export const mediaItems = pgTable(
     // Metrics (Denormalized for speed)
     trendingScore: doublePrecision('trending_score').default(0),
     popularity: doublePrecision('popularity').default(0),
-    rating: doublePrecision('rating').default(0), // Calculated average
+    rating: doublePrecision('rating').default(0),
     voteCount: integer('vote_count').default(0),
     
     // Metadata
-    releaseDate: timestamp('release_date'), // First air date for shows
+    releaseDate: timestamp('release_date'),
     isAdult: boolean('is_adult').default(false),
     
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -69,7 +66,6 @@ export const mediaItems = pgTable(
 
 /**
  * MOVIES (Details)
- * Додаткова інформація, специфічна тільки для фільмів.
  */
 export const movies = pgTable('movies', {
   id: serial('id').primaryKey(),
@@ -78,15 +74,14 @@ export const movies = pgTable('movies', {
     .notNull()
     .unique(),
     
-  runtime: integer('runtime'), // minutes
+  runtime: integer('runtime'),
   budget: integer('budget'),
   revenue: integer('revenue'),
-  status: text('status'), // Released, Post Production...
+  status: text('status'),
 });
 
 /**
  * SHOWS (Details)
- * Додаткова інформація, специфічна тільки для серіалів.
  */
 export const shows = pgTable('shows', {
   id: serial('id').primaryKey(),
@@ -97,7 +92,7 @@ export const shows = pgTable('shows', {
     
   totalSeasons: integer('total_seasons'),
   totalEpisodes: integer('total_episodes'),
-  status: text('status'), // Returning Series, Ended...
+  status: text('status'),
   lastAirDate: timestamp('last_air_date'),
   nextAirDate: timestamp('next_air_date'),
 });
@@ -134,7 +129,7 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   email: text('email').unique().notNull(),
   username: text('username').unique().notNull(),
-  passwordHash: text('password_hash'), // Nullable if using OAuth only
+  passwordHash: text('password_hash'),
   avatarUrl: text('avatar_url'),
   role: userRoleEnum('role').default('user'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
