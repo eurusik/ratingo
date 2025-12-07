@@ -18,6 +18,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@next/third-parties": "^16.0.7",
     "@types/nprogress": "^0.2.3",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",

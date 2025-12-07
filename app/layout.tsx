@@ -10,6 +10,7 @@ import { MobileNav } from '@/components/MobileNav';
 import { Logo } from '@/components/Logo';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Footer } from '@/components/Footer';
+import { GoogleAnalytics } from '@next/third-parties/google';
 import { Flame, Clapperboard, Film } from 'lucide-react';
 
 const inter = Inter({
@@ -79,6 +80,7 @@ export default function RootLayout({
   return (
     <html lang="uk" className={inter.variable}>
       <body className="antialiased bg-zinc-950 font-sans" suppressHydrationWarning>
+        {process.env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />}
         {/* JSON-LD for website */}
         <script
           type="application/ld+json"
