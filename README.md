@@ -1,5 +1,7 @@
 # Ratingo
 
+<img width="1313" height="872" alt="Screenshot 2025-12-08 at 22 23 50" src="https://github.com/user-attachments/assets/7465af6b-c2ec-4014-a0fa-b2a6865cebe7" />
+
 **Ratingo** — україномовний сервіс, який показує, **що зараз дивляться у світі**: фільми та серіали, їхні рейтинги, де це можна переглянути легально та коли виходять нові серії.
 
 Сайт: https://ratingo.top
