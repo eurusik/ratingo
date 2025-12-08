@@ -5,6 +5,7 @@ import { NormalizedMedia } from '../../../domain/models/normalized-media.model';
 import { TmdbMapper } from './mappers/tmdb.mapper';
 import tmdbConfig from '@/config/tmdb.config';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { TmdbApiException } from '@/common/exceptions';
 
 /**
  * Implementation of MetadataProvider for The Movie Database (TMDB) API v3.
@@ -27,7 +28,7 @@ export class TmdbAdapter implements IMetadataProvider {
    */
   public async getMovie(id: number): Promise<NormalizedMedia | null> {
     try {
-      const data = await this.fetch(`/movie/${id}`, { append_to_response: 'credits,videos,release_dates,external_ids' });
+      const data = await this.fetch(`/movie/${id}`, { append_to_response: 'credits,videos,release_dates,external_ids,translations,watch/providers' });
       return TmdbMapper.toDomain(data, MediaType.MOVIE);
     } catch (error) {
       if (this.isNotFound(error)) return null;
@@ -41,7 +42,7 @@ export class TmdbAdapter implements IMetadataProvider {
    */
   public async getShow(id: number): Promise<NormalizedMedia | null> {
     try {
-      const data = await this.fetch(`/tv/${id}`, { append_to_response: 'aggregate_credits,videos,content_ratings,external_ids' });
+      const data = await this.fetch(`/tv/${id}`, { append_to_response: 'aggregate_credits,videos,content_ratings,external_ids,translations,watch/providers' });
       return TmdbMapper.toDomain(data, MediaType.SHOW);
     } catch (error) {
       if (this.isNotFound(error)) return null;
@@ -79,12 +80,15 @@ export class TmdbAdapter implements IMetadataProvider {
 
     const res = await fetch(url.toString());
     if (!res.ok) {
-      throw new Error(`TMDB API Error: ${res.status} ${res.statusText}`);
+      if (res.status === 404) {
+        throw new TmdbApiException('Resource not found', 404);
+      }
+      throw new TmdbApiException(`${res.status} ${res.statusText}`, res.status);
     }
     return res.json();
   }
 
   private isNotFound(error: any): boolean {
-    return error.message?.includes('404');
+    return error instanceof TmdbApiException && error.details?.statusCode === 404;
   }
 }

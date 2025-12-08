@@ -26,6 +26,6 @@ import { INGESTION_QUEUE } from './ingestion.constants';
   ],
   controllers: [IngestionController],
   providers: [TmdbAdapter, TraktAdapter, OmdbAdapter, SyncMediaService, SyncWorker],
-  exports: [SyncMediaService],
+  exports: [SyncMediaService, TraktAdapter],
 })
 export class IngestionModule {}

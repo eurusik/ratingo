@@ -4,8 +4,9 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '@/database/schema';
 import { IMediaRepository } from '@/modules/catalog/domain/repositories/media.repository.interface';
 import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, inArray } from 'drizzle-orm';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { DatabaseException } from '@/common/exceptions';
 
 /**
  * Drizzle ORM implementation of the Media Repository.
@@ -22,23 +23,33 @@ export class DrizzleMediaRepository implements IMediaRepository {
 
   /**
    * Retrieves minimal media info (ID, slug) by TMDB ID to check existence.
+   *
+   * @throws {DatabaseException} If database query fails
    */
   async findByTmdbId(tmdbId: number): Promise<{ id: string; slug: string } | null> {
-    const result = await this.db
-      .select({ id: schema.mediaItems.id, slug: schema.mediaItems.slug })
-      .from(schema.mediaItems)
-      .where(eq(schema.mediaItems.tmdbId, tmdbId))
-      .limit(1);
-    
-    return result[0] || null;
+    try {
+      const result = await this.db
+        .select({ id: schema.mediaItems.id, slug: schema.mediaItems.slug })
+        .from(schema.mediaItems)
+        .where(eq(schema.mediaItems.tmdbId, tmdbId))
+        .limit(1);
+      
+      return result[0] || null;
+    } catch (error) {
+      this.logger.error(`Failed to find media by TMDB ID ${tmdbId}: ${error.message}`);
+      throw new DatabaseException(`Failed to find media: ${error.message}`, { tmdbId });
+    }
   }
 
   /**
    * Performs a full transactional upsert of a media item.
    * Updates base table, type-specific details, and syncs genres.
+   *
+   * @throws {DatabaseException} If database transaction fails
    */
   async upsert(media: NormalizedMedia): Promise<void> {
-    await this.db.transaction(async (tx) => {
+    try {
+      await this.db.transaction(async (tx) => {
       // Upsert Base Media Item
       const [mediaItem] = await tx
         .insert(schema.mediaItems)
@@ -161,9 +172,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
         const genreIds = await tx
           .select({ id: schema.genres.id })
           .from(schema.genres)
-          .where(
-            sql`${schema.genres.tmdbId} IN ${media.genres.map((g) => g.tmdbId)}`,
-          );
+          .where(inArray(schema.genres.tmdbId, media.genres.map((g) => g.tmdbId)));
 
         if (genreIds.length > 0) {
             // Link genres to media
@@ -178,6 +187,68 @@ export class DrizzleMediaRepository implements IMediaRepository {
               .onConflictDoNothing();
         }
       }
-    });
+
+      // Sync Watch Providers
+      if (media.watchProviders && media.watchProviders.length > 0) {
+        
+        const uniqueProviders = Array.from(
+          new Map(media.watchProviders.map(p => [p.providerId, p])).values()
+        );
+        
+        // Upsert providers registry
+        await tx
+          .insert(schema.watchProviders)
+          .values(uniqueProviders.map(p => ({
+            tmdbId: p.providerId,
+            name: p.name,
+            logoPath: p.logoPath,
+            displayPriority: p.displayPriority,
+          })))
+          .onConflictDoUpdate({
+            target: schema.watchProviders.tmdbId,
+            set: {
+              name: sql`excluded.name`,
+              logoPath: sql`excluded.logo_path`,
+            }
+          });
+
+        // Get internal IDs
+        const providerRows = await tx
+          .select({ id: schema.watchProviders.id, tmdbId: schema.watchProviders.tmdbId })
+          .from(schema.watchProviders)
+          .where(inArray(schema.watchProviders.tmdbId, media.watchProviders.map(p => p.providerId)));
+        
+        const providerMap = new Map(providerRows.map(r => [r.tmdbId, r.id]));
+
+        // Delete old links (clean slate for this media item)
+        await tx
+          .delete(schema.mediaWatchProviders)
+          .where(eq(schema.mediaWatchProviders.mediaItemId, mediaId));
+
+        // Insert new links
+        const links = [];
+        for (const p of media.watchProviders) {
+          const internalId = providerMap.get(p.providerId);
+          if (internalId) {
+            links.push({
+              mediaItemId: mediaId,
+              providerId: internalId,
+              type: p.type
+            });
+          }
+        }
+        
+        if (links.length > 0) {
+          await tx.insert(schema.mediaWatchProviders).values(links);
+        }
+      }
+      });
+    } catch (error) {
+      this.logger.error(`Failed to upsert media ${media.title}: ${error.message}`);
+      throw new DatabaseException(`Failed to upsert media: ${error.message}`, { 
+        tmdbId: media.externalIds.tmdbId,
+        title: media.title,
+      });
+    }
   }
 }

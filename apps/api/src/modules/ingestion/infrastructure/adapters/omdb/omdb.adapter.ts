@@ -2,6 +2,7 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import omdbConfig from '@/config/omdb.config';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { OmdbApiException } from '@/common/exceptions';
 
 /**
  * Adapter for OMDb API.
@@ -35,7 +36,7 @@ export class OmdbAdapter {
    */
   private async fetch<T>(params: Record<string, string>): Promise<T> {
     if (!this.config.apiKey) {
-      throw new Error('OMDb API key is required');
+      throw new OmdbApiException('API key is required');
     }
 
     const url = new URL(this.config.apiUrl);
@@ -47,7 +48,7 @@ export class OmdbAdapter {
     const response = await fetch(url.toString());
 
     if (!response.ok) {
-      throw new Error(`OMDb API error: ${response.status}`);
+      throw new OmdbApiException(`${response.status} ${response.statusText}`, response.status);
     }
 
     return response.json();

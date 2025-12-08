@@ -2,22 +2,28 @@ import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ApiTags, ApiOperation, ApiProperty } from '@nestjs/swagger';
+import { IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '@/common/enums/media-type.enum';
-
 import { SyncMediaService } from '../../application/services/sync-media.service';
 
 class SyncDto {
   @ApiProperty({ example: 550, description: 'TMDB ID of the media' })
+  @IsNumber()
+  @Min(1)
   tmdbId: number;
 
   @ApiProperty({ enum: MediaType, example: MediaType.MOVIE })
+  @IsEnum(MediaType)
   type: MediaType;
 }
 
 class SyncTrendingDto {
-  @ApiProperty({ example: 1, description: 'Page number', default: 1 })
-  page: number;
+  @ApiProperty({ example: 1, description: 'Page number', default: 1, required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  page?: number;
 }
 
 /**

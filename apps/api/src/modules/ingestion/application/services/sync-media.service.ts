@@ -55,20 +55,16 @@ export class SyncMediaService {
       }
 
       // 2. Enhance with external ratings (Parallel)
-      const externalIds = media.externalIds;
-      const imdbId = externalIds.imdbId;
+      const imdbId = media.externalIds?.imdbId;
       
       const [traktRating, omdbRatings] = await Promise.all([
-        // Trakt
-        this.traktAdapter.getMovieRatings(tmdbId).catch(() => null), // Trakt supports TMDB ID lookup for ratings? Usually slug.
+        // Trakt (lookup by TMDB ID, then fetch ratings)
+        type === MediaType.MOVIE
+          ? this.traktAdapter.getMovieRatingsByTmdbId(tmdbId)
+          : this.traktAdapter.getShowRatingsByTmdbId(tmdbId),
         // OMDb (requires IMDb ID)
         imdbId ? this.omdbAdapter.getAggregatedRatings(imdbId, type) : Promise.resolve(null),
       ]);
-
-      // Note: Trakt usually needs slug or Trakt ID. 
-      // If TraktAdapter supports TMDB ID lookup internally, great. 
-      // Otherwise we might need to fetch Trakt ID first. 
-      // For now assuming TraktAdapter handles it or we accept null.
 
       // 3. Merge Data
       if (trendingScore !== undefined) {

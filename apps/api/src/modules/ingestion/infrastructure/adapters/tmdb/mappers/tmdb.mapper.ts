@@ -9,10 +9,17 @@ import slugify from 'slugify';
 export class TmdbMapper {
   /**
    * Converts raw TMDB API response to our Domain Model.
+   * Returns null if content is missing essential localized data (e.g. overview).
    */
-  static toDomain(data: any, type: MediaType): NormalizedMedia {
+  static toDomain(data: any, type: MediaType): NormalizedMedia | null {
     const isMovie = type === MediaType.MOVIE;
-    
+    const title = isMovie ? data.title : data.name;
+    const overview = data.overview;
+
+    if (!title || title.trim() === '' || !overview || overview.trim() === '') {
+      return null;
+    }
+
     const media: NormalizedMedia = {
       externalIds: {
         tmdbId: data.id,
@@ -41,6 +48,8 @@ export class TmdbMapper {
         slug: this.generateSlug(g.name),
       })),
       
+      watchProviders: this.extractProviders(data),
+      
       details: {},
     };
 
@@ -68,5 +77,30 @@ export class TmdbMapper {
       strict: true,
       locale: 'uk',
     });
+  }
+
+  private static extractProviders(data: any): any[] {
+    const providers = data['watch/providers']?.results?.UA;
+    if (!providers) return [];
+
+    const result: any[] = [];
+    const map = (list: any[], type: string) => {
+      if (!list) return;
+      list.forEach(p => result.push({
+        providerId: p.provider_id,
+        name: p.provider_name,
+        logoPath: p.logo_path,
+        displayPriority: p.display_priority,
+        type,
+      }));
+    };
+
+    map(providers.flatrate, 'flatrate');
+    map(providers.buy, 'buy');
+    map(providers.rent, 'rent');
+    map(providers.ads, 'ads');
+    map(providers.free, 'free');
+
+    return result;
   }
 }

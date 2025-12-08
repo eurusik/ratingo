@@ -3,8 +3,11 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 /**
  * Entry point of the API application.
@@ -20,6 +23,20 @@ async function bootstrap(): Promise<void> {
 
   // Global configuration
   app.setGlobalPrefix('api');
+
+  // Global pipes, filters, interceptors
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,           // Strip unknown properties
+      forbidNonWhitelisted: true, // Throw error on unknown properties
+      transform: true,           // Auto-transform payloads to DTO types
+      transformOptions: {
+        enableImplicitConversion: true, // Convert string "123" to number 123
+      },
+    }),
+  );
+  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalInterceptors(new ResponseInterceptor());
 
   // Swagger Documentation Setup
   const config = new DocumentBuilder()

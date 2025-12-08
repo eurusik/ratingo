@@ -58,4 +58,12 @@ export interface NormalizedMedia {
     name: string;
     slug: string;
   }>;
+
+  watchProviders?: Array<{
+    providerId: number; // TMDB Provider ID
+    name: string;
+    logoPath?: string | null;
+    type: string; // 'flatrate' | 'buy' | 'rent'
+    displayPriority?: number;
+  }>;
 }
