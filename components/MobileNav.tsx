@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useFilters } from './FiltersProvider';
-import { Flame, Clapperboard, Film, Menu, X } from 'lucide-react';
+import { Flame, Clapperboard, Film, Menu, X, BookOpen } from 'lucide-react';
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,6 +58,15 @@ export function MobileNav() {
               >
                 <Clapperboard className="w-6 h-6 text-purple-400" />
                 <span className="text-lg font-semibold text-white">Надходження</span>
+              </Link>
+
+              <Link
+                href="/blog"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center space-x-3 p-3 rounded-lg bg-zinc-800/50 hover:bg-zinc-700/50 transition-all duration-300"
+              >
+                <BookOpen className="w-6 h-6 text-blue-400" />
+                <span className="text-lg font-semibold text-white">Блог</span>
               </Link>
 
               {/* Region Selector */}

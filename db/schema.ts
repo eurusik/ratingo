@@ -830,3 +830,33 @@ export type SyncTask = typeof syncTasks.$inferSelect;
 export type NewSyncTask = typeof syncTasks.$inferInsert;
 export type FeatureRequest = typeof featureRequests.$inferSelect;
 export type NewFeatureRequest = typeof featureRequests.$inferInsert;
+
+/**
+ * Блог про розвиток проекту
+ */
+export const blogPosts = pgTable(
+  'blog_posts',
+  {
+    id: serial('id').primaryKey(),
+    slug: text('slug').notNull().unique(),
+    title: text('title').notNull(),
+    brief: text('brief'),
+    content: text('content').notNull(),
+    coverImage: text('cover_image'),
+    tags: jsonb('tags'),
+    published: boolean('published').notNull().default(false),
+    publishedAt: timestamp('published_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => {
+    return {
+      slugIdx: uniqueIndex('blog_posts_slug_idx').on(table.slug),
+      publishedIdx: index('blog_posts_published_idx').on(table.published),
+      publishedAtIdx: index('blog_posts_published_at_idx').on(table.publishedAt),
+    };
+  }
+);
+
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type NewBlogPost = typeof blogPosts.$inferInsert;

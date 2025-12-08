@@ -1,3 +1,52 @@
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import DOMPurify from 'dompurify';
+
+/**
+ * Merge Tailwind CSS classes using clsx and tailwind-merge
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+/**
+ * Sanitize HTML content from malicious code
+ * and remove Tiptap artifacts
+ */
+export function sanitizeHtml(html: string): string {
+  // First remove Tiptap artifacts
+  let cleaned = html.replace(/<br class="ProseMirror-trailingBreak"><\/br>/g, '<br>');
+  cleaned = cleaned.replace(/<br class="ProseMirror-trailingBreak">/g, '<br>');
+  cleaned = cleaned.replace(/\s*data-placeholder="[^"]*"/g, '');
+  cleaned = cleaned.replace(/\s*class="is-empty"/g, '');
+
+  // Then sanitize with DOMPurify
+  return DOMPurify.sanitize(cleaned, {
+    ALLOWED_TAGS: [
+      'p',
+      'br',
+      'b',
+      'i',
+      'em',
+      'strong',
+      'u',
+      's',
+      'h2',
+      'h3',
+      'ul',
+      'ol',
+      'li',
+      'blockquote',
+      'a',
+      'img',
+      'code',
+      'pre',
+    ],
+    ALLOWED_ATTR: ['href', 'src', 'class', 'alt', 'title'],
+    KEEP_CONTENT: true,
+  });
+}
+
 /**
  * Calculate trending score based on TMDB rating and Trakt popularity
  * Formula: (tmdb_normalized * 0.4) + (trakt_normalized * 0.6)

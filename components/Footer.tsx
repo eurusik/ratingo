@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Film, Tv, Calendar, Github, Info, Lightbulb } from 'lucide-react';
+import { Film, Tv, Calendar, Github, Info, Lightbulb, BookOpen } from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -79,15 +79,6 @@ export function Footer() {
                   <span>Надходження</span>
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/about"
-                  className="text-sm text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
-                >
-                  <Info className="w-4 h-4" />
-                  <span>Про проєкт</span>
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -133,15 +124,22 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-white mb-4">Проєкт</h3>
             <ul className="space-y-2">
               <li>
-                <a
-                  href="https://github.com/eurusik/ratingo"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/about"
                   className="text-sm text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
                 >
-                  <Github className="w-4 h-4" />
-                  <span>Репозиторій на GitHub</span>
-                </a>
+                  <Info className="w-4 h-4" />
+                  <span>Про проєкт</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/blog"
+                  className="text-sm text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>Блог</span>
+                </Link>
               </li>
               <li>
                 <Link
@@ -151,6 +149,17 @@ export function Footer() {
                   <Lightbulb className="w-4 h-4" />
                   <span>Ідеї розвитку</span>
                 </Link>
+              </li>
+              <li>
+                <a
+                  href="https://github.com/eurusik/ratingo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-gray-400 hover:text-white transition-colors flex items-center space-x-2"
+                >
+                  <Github className="w-4 h-4" />
+                  <span>GitHub</span>
+                </a>
               </li>
             </ul>
           </div>
