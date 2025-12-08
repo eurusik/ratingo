@@ -6,12 +6,12 @@ import { requireAuth } from '@/lib/auth';
 import { LogoutButton } from '@/components/admin/LogoutButton';
 
 async function getPosts() {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/admin/blog`,
-    {
-      cache: 'no-store',
-    }
-  );
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (typeof window === 'undefined' ? 'http://localhost:3000' : '');
+  const res = await fetch(`${baseUrl}/api/admin/blog`, {
+    cache: 'no-store',
+  });
 
   if (!res.ok) {
     throw new Error('Failed to fetch posts');
