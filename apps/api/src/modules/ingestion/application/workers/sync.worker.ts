@@ -55,6 +55,9 @@ export class SyncWorker extends WorkerHost {
         case IngestionJob.SYNC_TRENDING_FULL:
           await this.processTrendingFull(job.data.page, job.data.syncStats);
           break;
+        case IngestionJob.UPDATE_NOW_PLAYING_FLAGS:
+          await this.updateNowPlayingFlags(job.data.region);
+          break;
         default:
           this.logger.warn(`Unknown job type: ${job.name}`);
       }
@@ -104,32 +107,45 @@ export class SyncWorker extends WorkerHost {
   }
 
   /**
-   * Syncs now playing movies from TMDB.
-   * 1. Fetch IDs from TMDB /movie/now_playing
-   * 2. Queue sync jobs for each movie
-   * 3. Update isNowPlaying flags in DB
+   * Syncs now playing movies from TMDB (ingestion only).
+   * Does NOT update isNowPlaying flags - use UPDATE_NOW_PLAYING_FLAGS for that.
    */
   private async processNowPlaying(region = 'UA'): Promise<void> {
     this.logger.log(`Syncing now playing movies (region: ${region})...`);
 
-    // 1. Get IDs from TMDB
     const tmdbIds = await this.tmdbAdapter.getNowPlayingIds(region);
     this.logger.log(`Found ${tmdbIds.length} now playing movies`);
 
     if (tmdbIds.length === 0) return;
 
-    // 2. Queue sync jobs for each movie (they may not exist in our DB yet)
+    // Queue sync jobs for each movie
     const jobs = tmdbIds.map(tmdbId => ({
       name: IngestionJob.SYNC_MOVIE,
       data: { tmdbId },
     }));
     await this.ingestionQueue.addBulk(jobs);
 
-    // 3. Update isNowPlaying flags (after a delay to let syncs complete)
-    // For now, we update immediately with existing movies
+    this.logger.log(`Now playing ingestion complete: ${tmdbIds.length} movies queued`);
+  }
+
+  /**
+   * Updates isNowPlaying flags based on current TMDB now_playing list.
+   * - Sets isNowPlaying = true for movies in the list that exist in DB
+   * - Sets isNowPlaying = false for movies no longer in the list
+   * 
+   * Should be run AFTER SYNC_NOW_PLAYING has completed (e.g., 5-10 min later).
+   */
+  private async updateNowPlayingFlags(region = 'UA'): Promise<void> {
+    this.logger.log(`Updating now playing flags (region: ${region})...`);
+
+    // Fetch fresh now_playing list from TMDB
+    const tmdbIds = await this.tmdbAdapter.getNowPlayingIds(region);
+    this.logger.log(`Found ${tmdbIds.length} now playing movies in TMDB`);
+
+    // Update flags in DB (sets true for those in list, false for others)
     await this.movieRepository.setNowPlaying(tmdbIds);
 
-    this.logger.log(`Now playing sync complete: ${tmdbIds.length} movies queued`);
+    this.logger.log(`Now playing flags updated for ${tmdbIds.length} movies`);
   }
 
   /**

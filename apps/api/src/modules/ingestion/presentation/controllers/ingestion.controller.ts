@@ -99,12 +99,30 @@ export class IngestionController {
 
   @Post('now-playing')
   @ApiOperation({ 
-    summary: 'Sync movies currently in theaters',
-    description: 'Fetches now playing movies from TMDB and syncs them to the database. Updates isNowPlaying flags.',
+    summary: 'Sync movies currently in theaters (ingestion only)',
+    description: 'Fetches now playing movies from TMDB and queues them for sync. Does NOT update isNowPlaying flags - use /now-playing-flags for that.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncNowPlaying(@Body() dto: SyncNowPlayingDto) {
     const job = await this.ingestionQueue.add(IngestionJob.SYNC_NOW_PLAYING, {
+      region: dto.region || 'UA',
+    });
+
+    return { 
+      status: 'queued', 
+      jobId: job.id,
+      region: dto.region || 'UA',
+    };
+  }
+
+  @Post('now-playing-flags')
+  @ApiOperation({ 
+    summary: 'Update isNowPlaying flags',
+    description: 'Updates isNowPlaying flags based on current TMDB now_playing list. Run this AFTER now-playing sync has completed.',
+  })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async updateNowPlayingFlags(@Body() dto: SyncNowPlayingDto) {
+    const job = await this.ingestionQueue.add(IngestionJob.UPDATE_NOW_PLAYING_FLAGS, {
       region: dto.region || 'UA',
     });
 
