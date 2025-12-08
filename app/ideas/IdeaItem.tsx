@@ -16,6 +16,7 @@ type FeatureItem = {
  * Картка фічі з анімацією голосування.
  * Показує заголовок, короткий опис, теги (з лімітом до 5 + "+N"), дату створення.
  * При голосі запускає коротку анімацію кнопки та індикатор "+1".
+ * Можна розгорнути для перегляду повного опису.
  */
 export default function IdeaItem({
   item,
@@ -28,6 +29,7 @@ export default function IdeaItem({
 }) {
   const [fx, setFx] = useState(false);
   const [plusOne, setPlusOne] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   async function handleVote() {
     if (voted) return;
@@ -38,12 +40,27 @@ export default function IdeaItem({
     setTimeout(() => setPlusOne(false), 600);
   }
 
+  const hasDescription = item.description && item.description !== item.brief;
+
   return (
     <li className="border border-zinc-800 rounded-lg p-4 bg-zinc-900/40">
       <div className="grid grid-cols-[1fr_auto] gap-4 items-start">
         <div>
           <h3 className="text-white font-semibold text-lg">{item.title}</h3>
           {item.brief ? <p className="text-sm text-gray-400 mt-1">{item.brief}</p> : null}
+          {expanded && hasDescription ? (
+            <div className="mt-2 text-sm text-gray-300 whitespace-pre-wrap border-l-2 border-blue-500 pl-3 py-1">
+              {item.description}
+            </div>
+          ) : null}
+          {hasDescription ? (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="mt-2 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              {expanded ? '▼ Згорнути' : '▶ Показати деталі'}
+            </button>
+          ) : null}
           {item.tags && item.tags.length ? (
             <div className="mt-2 flex flex-wrap gap-2">
               {item.tags.slice(0, 5).map((t) => (
