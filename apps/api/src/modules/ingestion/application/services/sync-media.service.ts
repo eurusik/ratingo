@@ -4,7 +4,7 @@ import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter'
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
 import { MediaType } from '@/common/enums/media-type.enum';
-import { NormalizedMedia } from '../../domain/models/normalized-media.model';
+import { ScoreCalculatorService, ScoreInput } from '@/modules/shared/score-calculator';
 
 /**
  * Application Service responsible for orchestrating the sync process.
@@ -18,6 +18,7 @@ export class SyncMediaService {
     private readonly tmdbAdapter: TmdbAdapter,
     private readonly traktAdapter: TraktAdapter,
     private readonly omdbAdapter: OmdbAdapter,
+    private readonly scoreCalculator: ScoreCalculatorService,
     
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
@@ -83,9 +84,28 @@ export class SyncMediaService {
         media.ratingRottenTomatoes = omdbRatings.rottenTomatoes;
       }
 
-      // 4. Persist
+      // 4. Calculate Ratingo Score
+      const scoreInput: ScoreInput = {
+        tmdbPopularity: media.popularity,
+        traktWatchers: 0, // Will be updated by Stats module
+        imdbRating: media.ratingImdb,
+        traktRating: media.ratingTrakt,
+        metacriticRating: media.ratingMetacritic,
+        rottenTomatoesRating: media.ratingRottenTomatoes,
+        imdbVotes: media.voteCountImdb,
+        traktVotes: media.voteCountTrakt,
+        releaseDate: media.releaseDate,
+      };
+
+      const scores = this.scoreCalculator.calculate(scoreInput);
+      media.ratingoScore = scores.ratingoScore;
+      media.qualityScore = scores.qualityScore;
+      media.popularityScore = scores.popularityScore;
+      media.freshnessScore = scores.freshnessScore;
+
+      // 5. Persist
       await this.mediaRepository.upsert(media);
-      this.logger.log(`Synced ${type}: ${media.title} (Score: ${trendingScore ?? 'N/A'})`);
+      this.logger.log(`Synced ${type}: ${media.title} (Ratingo: ${(scores.ratingoScore * 100).toFixed(1)})`);
 
     } catch (error) {
       this.logger.error(`Failed to sync ${type} ${tmdbId}: ${error.message}`, error.stack);

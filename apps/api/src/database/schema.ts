@@ -103,9 +103,18 @@ export const mediaStats = pgTable('media_stats', {
   trendingRank: integer('trending_rank'),               // Position in trending list
   popularity24h: doublePrecision('popularity_24h'),     // Popularity score last 24h
   
+  // Ratingo Score (0.0 - 1.0, calculated)
+  ratingoScore: doublePrecision('ratingo_score'),       // Main composite score
+  qualityScore: doublePrecision('quality_score'),       // Rating-based component
+  popularityScore: doublePrecision('popularity_score'), // Popularity-based component
+  freshnessScore: doublePrecision('freshness_score'),   // Time-based component
+  
   // Timestamps
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (t) => ({
+  ratingoScoreIdx: index('media_stats_ratingo_score_idx').on(t.ratingoScore),
+  watchersIdx: index('media_stats_watchers_idx').on(t.watchersCount),
+}));
 
 /**
  * MOVIES (Details)

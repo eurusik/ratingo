@@ -2,15 +2,22 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '@/database/schema';
-import { IMediaRepository } from '@/modules/catalog/domain/repositories/media.repository.interface';
+import { 
+  IMediaRepository, 
+  MediaScoreData, 
+  MediaWithTmdbId, 
+  MediaScoreDataWithTmdbId 
+} from '@/modules/catalog/domain/repositories/media.repository.interface';
 import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
-import { eq, sql, inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { DatabaseException } from '@/common/exceptions';
+import { DrizzleGenreRepository } from './drizzle-genre.repository';
+import { DrizzleProviderRepository } from './drizzle-provider.repository';
 
 /**
  * Drizzle ORM implementation of the Media Repository.
- * Handles complex transactional upserts for media items and relations.
+ * Orchestrates media item persistence with related entities.
  */
 @Injectable()
 export class DrizzleMediaRepository implements IMediaRepository {
@@ -19,6 +26,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly genreRepository: DrizzleGenreRepository,
+    private readonly providerRepository: DrizzleProviderRepository,
   ) {}
 
   /**
@@ -113,134 +122,39 @@ export class DrizzleMediaRepository implements IMediaRepository {
 
       const mediaId = mediaItem.id;
 
-      // Upsert Specific Details (Movie or Show)
-      if (media.type === MediaType.MOVIE) {
-        await tx
-          .insert(schema.movies)
-          .values({
-            mediaItemId: mediaId,
-            runtime: media.details?.runtime,
-            budget: media.details?.budget,
-            revenue: media.details?.revenue,
-            status: media.status,
-          })
-          .onConflictDoUpdate({
-            target: schema.movies.mediaItemId,
-            set: {
-              runtime: media.details?.runtime,
-              budget: media.details?.budget,
-              revenue: media.details?.revenue,
-              status: media.status,
-            },
-          });
-      } else {
-        await tx
-          .insert(schema.shows)
-          .values({
-            mediaItemId: mediaId,
-            totalSeasons: media.details?.totalSeasons,
-            totalEpisodes: media.details?.totalEpisodes,
-            lastAirDate: media.details?.lastAirDate,
-            status: media.status,
-          })
-          .onConflictDoUpdate({
-            target: schema.shows.mediaItemId,
-            set: {
-              totalSeasons: media.details?.totalSeasons,
-              totalEpisodes: media.details?.totalEpisodes,
-              lastAirDate: media.details?.lastAirDate,
-              status: media.status,
-            },
-          });
-      }
+      // Upsert type-specific details
+      await this.upsertTypeDetails(tx, mediaId, media);
 
       // Sync Genres
-      if (media.genres.length > 0) {
-        // Ensure genres exist in registry
-        await tx
-          .insert(schema.genres)
-          .values(
-            media.genres.map((g) => ({
-              tmdbId: g.tmdbId,
-              name: g.name,
-              slug: g.slug,
-            })),
-          )
-          .onConflictDoNothing();
-
-        // Get internal Genre IDs
-        const genreIds = await tx
-          .select({ id: schema.genres.id })
-          .from(schema.genres)
-          .where(inArray(schema.genres.tmdbId, media.genres.map((g) => g.tmdbId)));
-
-        if (genreIds.length > 0) {
-            // Link genres to media
-            await tx
-              .insert(schema.mediaGenres)
-              .values(
-                genreIds.map((g) => ({
-                  mediaItemId: mediaId,
-                  genreId: g.id,
-                })),
-              )
-              .onConflictDoNothing();
-        }
-      }
+      await this.genreRepository.syncGenres(tx, mediaId, media.genres);
 
       // Sync Watch Providers
-      if (media.watchProviders && media.watchProviders.length > 0) {
-        
-        const uniqueProviders = Array.from(
-          new Map(media.watchProviders.map(p => [p.providerId, p])).values()
-        );
-        
-        // Upsert providers registry
+      if (media.watchProviders) {
+        await this.providerRepository.syncProviders(tx, mediaId, media.watchProviders);
+      }
+
+      // Upsert Ratingo Scores to media_stats
+      if (media.ratingoScore !== undefined) {
         await tx
-          .insert(schema.watchProviders)
-          .values(uniqueProviders.map(p => ({
-            tmdbId: p.providerId,
-            name: p.name,
-            logoPath: p.logoPath,
-            displayPriority: p.displayPriority,
-          })))
+          .insert(schema.mediaStats)
+          .values({
+            mediaItemId: mediaId,
+            ratingoScore: media.ratingoScore,
+            qualityScore: media.qualityScore,
+            popularityScore: media.popularityScore,
+            freshnessScore: media.freshnessScore,
+            updatedAt: new Date(),
+          })
           .onConflictDoUpdate({
-            target: schema.watchProviders.tmdbId,
+            target: schema.mediaStats.mediaItemId,
             set: {
-              name: sql`excluded.name`,
-              logoPath: sql`excluded.logo_path`,
-            }
+              ratingoScore: media.ratingoScore,
+              qualityScore: media.qualityScore,
+              popularityScore: media.popularityScore,
+              freshnessScore: media.freshnessScore,
+              updatedAt: new Date(),
+            },
           });
-
-        // Get internal IDs
-        const providerRows = await tx
-          .select({ id: schema.watchProviders.id, tmdbId: schema.watchProviders.tmdbId })
-          .from(schema.watchProviders)
-          .where(inArray(schema.watchProviders.tmdbId, media.watchProviders.map(p => p.providerId)));
-        
-        const providerMap = new Map(providerRows.map(r => [r.tmdbId, r.id]));
-
-        // Delete old links (clean slate for this media item)
-        await tx
-          .delete(schema.mediaWatchProviders)
-          .where(eq(schema.mediaWatchProviders.mediaItemId, mediaId));
-
-        // Insert new links
-        const links = [];
-        for (const p of media.watchProviders) {
-          const internalId = providerMap.get(p.providerId);
-          if (internalId) {
-            links.push({
-              mediaItemId: mediaId,
-              providerId: internalId,
-              type: p.type
-            });
-          }
-        }
-        
-        if (links.length > 0) {
-          await tx.insert(schema.mediaWatchProviders).values(links);
-        }
       }
       });
     } catch (error) {
@@ -249,6 +163,145 @@ export class DrizzleMediaRepository implements IMediaRepository {
         tmdbId: media.externalIds.tmdbId,
         title: media.title,
       });
+    }
+  }
+
+  /**
+   * Retrieves media data needed for score calculation.
+   *
+   * @throws {DatabaseException} If database query fails
+   */
+  async findByIdForScoring(id: string): Promise<MediaScoreData | null> {
+    try {
+      const result = await this.db
+        .select({
+          id: schema.mediaItems.id,
+          popularity: schema.mediaItems.popularity,
+          releaseDate: schema.mediaItems.releaseDate,
+          ratingImdb: schema.mediaItems.ratingImdb,
+          ratingTrakt: schema.mediaItems.ratingTrakt,
+          ratingMetacritic: schema.mediaItems.ratingMetacritic,
+          ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+          voteCountImdb: schema.mediaItems.voteCountImdb,
+          voteCountTrakt: schema.mediaItems.voteCountTrakt,
+        })
+        .from(schema.mediaItems)
+        .where(eq(schema.mediaItems.id, id))
+        .limit(1);
+
+      return result[0] || null;
+    } catch (error) {
+      this.logger.error(`Failed to find media for scoring ${id}: ${error.message}`);
+      throw new DatabaseException(`Failed to find media for scoring: ${error.message}`, { id });
+    }
+  }
+
+  /**
+   * Batch: Retrieves multiple media items by TMDB IDs in a single query.
+   *
+   * @throws {DatabaseException} If database query fails
+   */
+  async findManyByTmdbIds(tmdbIds: number[]): Promise<MediaWithTmdbId[]> {
+    if (tmdbIds.length === 0) return [];
+
+    try {
+      const result = await this.db
+        .select({
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+        })
+        .from(schema.mediaItems)
+        .where(inArray(schema.mediaItems.tmdbId, tmdbIds));
+
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to find media by TMDB IDs: ${error.message}`);
+      throw new DatabaseException(`Failed to find media by TMDB IDs: ${error.message}`, { 
+        count: tmdbIds.length 
+      });
+    }
+  }
+
+  /**
+   * Batch: Retrieves score data for multiple media items in a single query.
+   *
+   * @throws {DatabaseException} If database query fails
+   */
+  async findManyForScoring(ids: string[]): Promise<MediaScoreDataWithTmdbId[]> {
+    if (ids.length === 0) return [];
+
+    try {
+      const result = await this.db
+        .select({
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          popularity: schema.mediaItems.popularity,
+          releaseDate: schema.mediaItems.releaseDate,
+          ratingImdb: schema.mediaItems.ratingImdb,
+          ratingTrakt: schema.mediaItems.ratingTrakt,
+          ratingMetacritic: schema.mediaItems.ratingMetacritic,
+          ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+          voteCountImdb: schema.mediaItems.voteCountImdb,
+          voteCountTrakt: schema.mediaItems.voteCountTrakt,
+        })
+        .from(schema.mediaItems)
+        .where(inArray(schema.mediaItems.id, ids));
+
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to find media for scoring: ${error.message}`);
+      throw new DatabaseException(`Failed to find media for scoring: ${error.message}`, { 
+        count: ids.length 
+      });
+    }
+  }
+
+  /**
+   * Upserts type-specific details (movie or show).
+   */
+  private async upsertTypeDetails(
+    tx: Parameters<Parameters<typeof this.db.transaction>[0]>[0],
+    mediaId: string,
+    media: NormalizedMedia,
+  ): Promise<void> {
+    if (media.type === MediaType.MOVIE) {
+      await tx
+        .insert(schema.movies)
+        .values({
+          mediaItemId: mediaId,
+          runtime: media.details?.runtime,
+          budget: media.details?.budget,
+          revenue: media.details?.revenue,
+          status: media.status,
+        })
+        .onConflictDoUpdate({
+          target: schema.movies.mediaItemId,
+          set: {
+            runtime: media.details?.runtime,
+            budget: media.details?.budget,
+            revenue: media.details?.revenue,
+            status: media.status,
+          },
+        });
+    } else {
+      await tx
+        .insert(schema.shows)
+        .values({
+          mediaItemId: mediaId,
+          totalSeasons: media.details?.totalSeasons,
+          totalEpisodes: media.details?.totalEpisodes,
+          lastAirDate: media.details?.lastAirDate,
+          status: media.status,
+        })
+        .onConflictDoUpdate({
+          target: schema.shows.mediaItemId,
+          set: {
+            totalSeasons: media.details?.totalSeasons,
+            totalEpisodes: media.details?.totalEpisodes,
+            lastAirDate: media.details?.lastAirDate,
+            status: media.status,
+          },
+        });
     }
   }
 }

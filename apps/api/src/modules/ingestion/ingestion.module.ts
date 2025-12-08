@@ -11,12 +11,14 @@ import omdbConfig from '@/config/omdb.config';
 import { BullModule } from '@nestjs/bullmq';
 import { SyncWorker } from './application/workers/sync.worker';
 import { IngestionController } from './presentation/controllers/ingestion.controller';
+import { ScoreCalculatorModule } from '../shared/score-calculator';
 
 import { INGESTION_QUEUE } from './ingestion.constants';
 
 @Module({
   imports: [
-    CatalogModule, 
+    CatalogModule,
+    ScoreCalculatorModule,
     ConfigModule.forFeature(tmdbConfig),
     ConfigModule.forFeature(traktConfig),
     ConfigModule.forFeature(omdbConfig),

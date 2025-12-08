@@ -38,6 +38,12 @@ export interface NormalizedMedia {
   /** Synthetic score for sorting trending lists. Null if not in trends. */
   trendingScore?: number;
 
+  // Ratingo Score (calculated)
+  ratingoScore?: number;      // Main composite score (0-1)
+  qualityScore?: number;      // Rating-based component (0-1)
+  popularityScore?: number;   // Popularity-based component (0-1)
+  freshnessScore?: number;    // Time-based component (0-1)
+
   /** First air date for shows */
   releaseDate?: Date | null;
   status?: string | null;

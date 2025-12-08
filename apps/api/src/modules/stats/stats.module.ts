@@ -7,6 +7,7 @@ import { DrizzleStatsRepository } from './infrastructure/repositories/drizzle-st
 import { STATS_REPOSITORY } from './domain/repositories/stats.repository.interface';
 import { CatalogModule } from '../catalog/catalog.module';
 import { IngestionModule } from '../ingestion/ingestion.module';
+import { ScoreCalculatorModule } from '../shared/score-calculator';
 import { STATS_QUEUE } from './stats.constants';
 
 /**
@@ -19,6 +20,7 @@ import { STATS_QUEUE } from './stats.constants';
   imports: [
     CatalogModule,
     IngestionModule,
+    ScoreCalculatorModule,
     BullModule.registerQueue({
       name: STATS_QUEUE,
     }),

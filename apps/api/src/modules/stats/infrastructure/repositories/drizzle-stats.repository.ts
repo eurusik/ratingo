@@ -28,6 +28,10 @@ export class DrizzleStatsRepository implements IStatsRepository {
           watchersCount: stats.watchersCount,
           trendingRank: stats.trendingRank,
           popularity24h: stats.popularity24h,
+          ratingoScore: stats.ratingoScore,
+          qualityScore: stats.qualityScore,
+          popularityScore: stats.popularityScore,
+          freshnessScore: stats.freshnessScore,
           updatedAt: new Date(),
         })
         .onConflictDoUpdate({
@@ -36,6 +40,10 @@ export class DrizzleStatsRepository implements IStatsRepository {
             watchersCount: sql`excluded.watchers_count`,
             trendingRank: sql`excluded.trending_rank`,
             popularity24h: sql`excluded.popularity_24h`,
+            ratingoScore: sql`excluded.ratingo_score`,
+            qualityScore: sql`excluded.quality_score`,
+            popularityScore: sql`excluded.popularity_score`,
+            freshnessScore: sql`excluded.freshness_score`,
             updatedAt: new Date(),
           },
         });
@@ -59,6 +67,10 @@ export class DrizzleStatsRepository implements IStatsRepository {
             watchersCount: s.watchersCount,
             trendingRank: s.trendingRank,
             popularity24h: s.popularity24h,
+            ratingoScore: s.ratingoScore,
+            qualityScore: s.qualityScore,
+            popularityScore: s.popularityScore,
+            freshnessScore: s.freshnessScore,
             updatedAt: new Date(),
           })),
         )
@@ -68,6 +80,10 @@ export class DrizzleStatsRepository implements IStatsRepository {
             watchersCount: sql`excluded.watchers_count`,
             trendingRank: sql`excluded.trending_rank`,
             popularity24h: sql`excluded.popularity_24h`,
+            ratingoScore: sql`excluded.ratingo_score`,
+            qualityScore: sql`excluded.quality_score`,
+            popularityScore: sql`excluded.popularity_score`,
+            freshnessScore: sql`excluded.freshness_score`,
             updatedAt: new Date(),
           },
         });

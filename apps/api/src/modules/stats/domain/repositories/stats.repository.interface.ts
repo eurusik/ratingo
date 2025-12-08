@@ -16,6 +16,14 @@ export interface MediaStatsData {
   trendingRank?: number;
   /** Popularity score over the last 24 hours */
   popularity24h?: number;
+  /** Main Ratingo composite score (0-1) */
+  ratingoScore?: number;
+  /** Quality/rating component score (0-1) */
+  qualityScore?: number;
+  /** Popularity component score (0-1) */
+  popularityScore?: number;
+  /** Freshness/recency component score (0-1) */
+  freshnessScore?: number;
 }
 
 /**
