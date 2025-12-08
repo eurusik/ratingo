@@ -10,7 +10,6 @@ import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
  * REST controller for media statistics endpoints.
  * Provides endpoints for syncing and retrieving real-time stats and drop-off analysis.
  */
-@ApiTags('Stats')
 @Controller('stats')
 export class StatsController {
   constructor(
@@ -20,6 +19,7 @@ export class StatsController {
   ) {}
 
   @Post('sync')
+  @ApiTags('Service: Stats')
   @ApiOperation({
     summary: 'Sync trending stats from Trakt',
     description: 'Adds a job to the queue to fetch current watchers count and trending rank from Trakt API.',
@@ -37,6 +37,7 @@ export class StatsController {
   }
 
   @Get('tmdb/:tmdbId')
+  @ApiTags('Public: Stats')
   @ApiOperation({
     summary: 'Get stats by TMDB ID',
     description: 'Returns current watchers count and trending rank for a media item.',
@@ -49,6 +50,7 @@ export class StatsController {
   // === DROP-OFF ANALYSIS ===
 
   @Post('drop-off/analyze')
+  @ApiTags('Service: Stats')
   @ApiOperation({
     summary: 'Analyze drop-off for shows',
     description: 'Adds a job to analyze viewer drop-off for shows. Can analyze a single show or all shows.',
@@ -73,6 +75,7 @@ export class StatsController {
   }
 
   @Post('drop-off/analyze/:tmdbId')
+  @ApiTags('Service: Stats')
   @ApiOperation({
     summary: 'Analyze drop-off for a specific show',
     description: 'Analyzes viewer drop-off for a single show by TMDB ID. Runs in background.',
@@ -88,6 +91,7 @@ export class StatsController {
   }
 
   @Get('drop-off/tmdb/:tmdbId')
+  @ApiTags('Public: Stats')
   @ApiOperation({
     summary: 'Get drop-off analysis for a show',
     description: 'Returns pre-calculated drop-off analysis including drop-off point, engagement metrics, and insights.',

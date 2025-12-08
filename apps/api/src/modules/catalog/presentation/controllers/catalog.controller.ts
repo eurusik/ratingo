@@ -6,7 +6,7 @@ import { IMovieRepository, MOVIE_REPOSITORY } from '../../domain/repositories/mo
  * REST controller for catalog endpoints.
  * Provides endpoints for browsing movies and shows.
  */
-@ApiTags('Catalog')
+@ApiTags('Public: Catalog')
 @Controller('catalog')
 export class CatalogController {
   constructor(
@@ -14,9 +14,9 @@ export class CatalogController {
     private readonly movieRepository: IMovieRepository,
   ) {}
 
-  @Get('now-playing')
+  @Get('movies/now-playing')
   @ApiOperation({
-    summary: 'Get movies currently in theaters',
+    summary: 'Movies currently in theaters',
     description: 'Returns movies currently playing in theaters. Data is synced from TMDB now_playing endpoint.',
   })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items (default: 20)' })
@@ -40,9 +40,9 @@ export class CatalogController {
     };
   }
 
-  @Get('new-releases')
+  @Get('movies/new-releases')
   @ApiOperation({
-    summary: 'Get movies recently released in theaters',
+    summary: 'Movies recently released in theaters',
     description: 'Returns movies with theatrical release in the specified period, sorted by popularity.',
   })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items (default: 20)' })
@@ -69,9 +69,9 @@ export class CatalogController {
     };
   }
 
-  @Get('new-on-digital')
+  @Get('movies/new-on-digital')
   @ApiOperation({
-    summary: 'Get movies recently released on digital platforms',
+    summary: 'Movies recently released on digital platforms',
     description: 'Returns movies with digital release in the last 14 days, sorted by popularity.',
   })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items (default: 20)' })

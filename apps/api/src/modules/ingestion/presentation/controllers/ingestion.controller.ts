@@ -52,7 +52,7 @@ class SyncNewReleasesDto {
  * Controller for triggering ingestion processes manually.
  * Useful for admin panels or debugging.
  */
-@ApiTags('ingestion')
+@ApiTags('Service: Ingestion')
 @Controller('ingestion')
 export class IngestionController {
   constructor(
@@ -97,10 +97,10 @@ export class IngestionController {
     };
   }
 
-  @Post('now-playing')
+  @Post('movies/now-playing')
   @ApiOperation({ 
     summary: 'Sync movies currently in theaters (ingestion only)',
-    description: 'Fetches now playing movies from TMDB and queues them for sync. Does NOT update isNowPlaying flags - use /now-playing-flags for that.',
+    description: 'Fetches now playing movies from TMDB and queues them for sync. Does NOT update isNowPlaying flags - use /ingestion/movies/now-playing-flags for that.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncNowPlaying(@Body() dto: SyncNowPlayingDto) {
@@ -115,9 +115,9 @@ export class IngestionController {
     };
   }
 
-  @Post('now-playing-flags')
+  @Post('movies/now-playing-flags')
   @ApiOperation({ 
-    summary: 'Update isNowPlaying flags',
+    summary: 'Update isNowPlaying flags for movies',
     description: 'Updates isNowPlaying flags based on current TMDB now_playing list. Run this AFTER now-playing sync has completed.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
@@ -133,9 +133,9 @@ export class IngestionController {
     };
   }
 
-  @Post('new-releases')
+  @Post('movies/new-releases')
   @ApiOperation({ 
-    summary: 'Sync new theatrical releases',
+    summary: 'Sync new theatrical movie releases',
     description: 'Fetches movies released in theaters within the specified period and syncs them.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
