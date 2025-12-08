@@ -27,6 +27,14 @@ export interface NormalizedMedia {
   voteCount: number;
   popularity: number;
   
+  // External Ratings (Optional)
+  ratingImdb?: number | null;
+  voteCountImdb?: number | null;
+  ratingMetacritic?: number | null;
+  ratingRottenTomatoes?: number | null;
+  ratingTrakt?: number | null;
+  voteCountTrakt?: number | null;
+  
   /** Synthetic score for sorting trending lists. Null if not in trends. */
   trendingScore?: number;
 

@@ -1,7 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IMetadataProvider } from '../../domain/interfaces/metadata-provider.interface';
 import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
+import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter';
+import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
+import { MediaType } from '@/common/enums/media-type.enum';
+import { NormalizedMedia } from '../../domain/models/normalized-media.model';
 
 /**
  * Application Service responsible for orchestrating the sync process.
@@ -12,8 +15,9 @@ export class SyncMediaService {
   private readonly logger = new Logger(SyncMediaService.name);
 
   constructor(
-    // In the future, we might inject an array of providers here (Strategy Pattern)
     private readonly tmdbAdapter: TmdbAdapter,
+    private readonly traktAdapter: TraktAdapter,
+    private readonly omdbAdapter: OmdbAdapter,
     
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
@@ -21,46 +25,76 @@ export class SyncMediaService {
 
   /**
    * Synchronizes a movie by TMDB ID.
-   * Fetches data from TMDB, normalizes it, and upserts into the catalog.
    */
   public async syncMovie(tmdbId: number, trendingScore?: number): Promise<void> {
-    this.logger.log(`Starting sync for Movie ID: ${tmdbId}`);
-
-    const normalizedMedia = await this.tmdbAdapter.getMovie(tmdbId);
-
-    if (!normalizedMedia) {
-      this.logger.warn(`Movie ${tmdbId} not found in provider`);
-      return;
-    }
-
-    if (trendingScore !== undefined) {
-      normalizedMedia.trendingScore = trendingScore;
-    }
-
-    await this.mediaRepository.upsert(normalizedMedia);
-    this.logger.log(`Successfully synced Movie: ${normalizedMedia.title}`);
+    await this.processMedia(tmdbId, MediaType.MOVIE, trendingScore);
   }
 
   /**
    * Synchronizes a show by TMDB ID.
    */
   public async syncShow(tmdbId: number, trendingScore?: number): Promise<void> {
-    this.logger.log(`Starting sync for Show ID: ${tmdbId}`);
+    await this.processMedia(tmdbId, MediaType.SHOW, trendingScore);
+  }
 
-    const normalizedMedia = await this.tmdbAdapter.getShow(tmdbId);
+  /**
+   * Core processing logic: fetches data from all sources concurrently and upserts.
+   */
+  private async processMedia(tmdbId: number, type: MediaType, trendingScore?: number): Promise<void> {
+    this.logger.debug(`Syncing ${type} ${tmdbId}...`);
 
-    if (!normalizedMedia) {
-      this.logger.warn(`Show ${tmdbId} not found in provider`);
-      return;
+    try {
+      // 1. Fetch Base Metadata from TMDB (Primary Source)
+      const media = type === MediaType.MOVIE 
+        ? await this.tmdbAdapter.getMovie(tmdbId)
+        : await this.tmdbAdapter.getShow(tmdbId);
+
+      if (!media) {
+        this.logger.warn(`${type} ${tmdbId} not found in TMDB`);
+        return;
+      }
+
+      // 2. Enhance with external ratings (Parallel)
+      const externalIds = media.externalIds;
+      const imdbId = externalIds.imdbId;
+      
+      const [traktRating, omdbRatings] = await Promise.all([
+        // Trakt
+        this.traktAdapter.getMovieRatings(tmdbId).catch(() => null), // Trakt supports TMDB ID lookup for ratings? Usually slug.
+        // OMDb (requires IMDb ID)
+        imdbId ? this.omdbAdapter.getAggregatedRatings(imdbId, type) : Promise.resolve(null),
+      ]);
+
+      // Note: Trakt usually needs slug or Trakt ID. 
+      // If TraktAdapter supports TMDB ID lookup internally, great. 
+      // Otherwise we might need to fetch Trakt ID first. 
+      // For now assuming TraktAdapter handles it or we accept null.
+
+      // 3. Merge Data
+      if (trendingScore !== undefined) {
+        media.trendingScore = trendingScore;
+      }
+
+      if (traktRating) {
+        media.ratingTrakt = traktRating.rating;
+        media.voteCountTrakt = traktRating.votes;
+      }
+
+      if (omdbRatings) {
+        media.ratingImdb = omdbRatings.imdbRating;
+        media.voteCountImdb = omdbRatings.imdbVotes;
+        media.ratingMetacritic = omdbRatings.metacritic;
+        media.ratingRottenTomatoes = omdbRatings.rottenTomatoes;
+      }
+
+      // 4. Persist
+      await this.mediaRepository.upsert(media);
+      this.logger.log(`Synced ${type}: ${media.title} (Score: ${trendingScore ?? 'N/A'})`);
+
+    } catch (error) {
+      this.logger.error(`Failed to sync ${type} ${tmdbId}: ${error.message}`, error.stack);
+      throw error; // Let BullMQ retry
     }
-
-    // Inject trending score if provided
-    if (trendingScore !== undefined) {
-      normalizedMedia.trendingScore = trendingScore;
-    }
-
-    await this.mediaRepository.upsert(normalizedMedia);
-    this.logger.log(`Successfully synced Show: ${normalizedMedia.title}`);
   }
 
   /**

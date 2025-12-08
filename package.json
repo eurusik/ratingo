@@ -1,6 +1,7 @@
 {
   "name": "ratingo-monorepo",
   "private": true,
+  "packageManager": "npm@10.8.1",
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",

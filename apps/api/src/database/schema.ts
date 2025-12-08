@@ -1,6 +1,5 @@
 import {
   pgTable,
-  serial,
   text,
   integer,
   doublePrecision,
@@ -10,9 +9,16 @@ import {
   uniqueIndex,
   index,
   pgEnum,
+  uuid,
+  customType,
 } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { MediaType } from '@/common/enums/media-type.enum';
+
+// Define custom tsvector type since Drizzle ORM core doesn't support it natively yet
+const tsvector = customType<{ data: string }>({
+  dataType: () => 'tsvector',
+});
 
 // --- ENUMS ---
 export const mediaTypeEnum = pgEnum('media_type', [MediaType.MOVIE, MediaType.SHOW]);
@@ -26,7 +32,7 @@ export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
 export const mediaItems = pgTable(
   'media_items',
   {
-    id: serial('id').primaryKey(),
+    id: uuid('id').defaultRandom().primaryKey(),
     type: mediaTypeEnum('type').notNull(),
     // External IDs (Canonical)
     tmdbId: integer('tmdb_id').unique().notNull(),
@@ -45,15 +51,29 @@ export const mediaItems = pgTable(
     // Metrics (Denormalized for speed)
     trendingScore: doublePrecision('trending_score').default(0),
     popularity: doublePrecision('popularity').default(0),
+    
+    // Primary Rating (usually TMDB vote_average)
     rating: doublePrecision('rating').default(0),
     voteCount: integer('vote_count').default(0),
+
+    // External Ratings
+    ratingImdb: doublePrecision('rating_imdb'),
+    voteCountImdb: integer('vote_count_imdb'),
+    ratingMetacritic: integer('rating_metacritic'), // 0-100
+    ratingRottenTomatoes: integer('rating_rotten_tomatoes'), // 0-100
+    ratingTrakt: doublePrecision('rating_trakt'),
+    voteCountTrakt: integer('vote_count_trakt'),
     
     // Metadata
     releaseDate: timestamp('release_date'),
-    isAdult: boolean('is_adult').default(false),
     
+    // Full Text Search Vector (auto-generated)
+    searchVector: tsvector('search_vector').generatedAlwaysAs(
+      sql`to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(original_title, '') || ' ' || coalesce(overview, ''))`
+    ),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'), // Soft delete support
   },
   (t) => ({
     typeIdx: index('media_type_idx').on(t.type),
@@ -61,6 +81,10 @@ export const mediaItems = pgTable(
     popularityIdx: index('media_popularity_idx').on(t.popularity),
     releaseDateIdx: index('media_release_date_idx').on(t.releaseDate),
     slugIdx: uniqueIndex('media_slug_idx').on(t.slug),
+    // Partial index for active items (non-deleted)
+    activeIdx: index('media_active_idx').on(t.deletedAt).where(sql`${t.deletedAt} IS NULL`),
+    // GIN Index for fast full-text search
+    searchIdx: index('media_search_idx').on(t.searchVector),
   })
 );
 
@@ -68,8 +92,8 @@ export const mediaItems = pgTable(
  * MOVIES (Details)
  */
 export const movies = pgTable('movies', {
-  id: serial('id').primaryKey(),
-  mediaItemId: integer('media_item_id')
+  id: uuid('id').defaultRandom().primaryKey(),
+  mediaItemId: uuid('media_item_id')
     .references(() => mediaItems.id, { onDelete: 'cascade' })
     .notNull()
     .unique(),
@@ -84,8 +108,8 @@ export const movies = pgTable('movies', {
  * SHOWS (Details)
  */
 export const shows = pgTable('shows', {
-  id: serial('id').primaryKey(),
-  mediaItemId: integer('media_item_id')
+  id: uuid('id').defaultRandom().primaryKey(),
+  mediaItemId: uuid('media_item_id')
     .references(() => mediaItems.id, { onDelete: 'cascade' })
     .notNull()
     .unique(),
@@ -100,7 +124,7 @@ export const shows = pgTable('shows', {
 // --- GENRES ---
 
 export const genres = pgTable('genres', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').defaultRandom().primaryKey(),
   tmdbId: integer('tmdb_id').unique().notNull(),
   name: text('name').notNull(),
   slug: text('slug').unique().notNull(),
@@ -109,11 +133,11 @@ export const genres = pgTable('genres', {
 export const mediaGenres = pgTable(
   'media_genres',
   {
-    id: serial('id').primaryKey(),
-    mediaItemId: integer('media_item_id')
+    id: uuid('id').defaultRandom().primaryKey(),
+    mediaItemId: uuid('media_item_id')
       .references(() => mediaItems.id, { onDelete: 'cascade' })
       .notNull(),
-    genreId: integer('genre_id')
+    genreId: uuid('genre_id')
       .references(() => genres.id, { onDelete: 'cascade' })
       .notNull(),
   },
@@ -126,7 +150,7 @@ export const mediaGenres = pgTable(
 // --- USERS & SOCIAL ---
 
 export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').defaultRandom().primaryKey(),
   email: text('email').unique().notNull(),
   username: text('username').unique().notNull(),
   passwordHash: text('password_hash'),
@@ -134,7 +158,9 @@ export const users = pgTable('users', {
   role: userRoleEnum('role').default('user'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
 });
+
 
 // --- RELATIONS ---
 

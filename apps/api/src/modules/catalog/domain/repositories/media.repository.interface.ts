@@ -16,7 +16,7 @@ export interface IMediaRepository {
   /**
    * Retrieves a media item by its external TMDB ID.
    */
-  findByTmdbId(tmdbId: number): Promise<{ id: number; slug: string } | null>;
+  findByTmdbId(tmdbId: number): Promise<{ id: string; slug: string } | null>;
 }
 
 export const MEDIA_REPOSITORY = 'MEDIA_REPOSITORY';
