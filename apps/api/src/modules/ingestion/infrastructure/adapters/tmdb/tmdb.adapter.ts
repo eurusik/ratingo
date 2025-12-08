@@ -65,6 +65,67 @@ export class TmdbAdapter implements IMetadataProvider {
       }));
   }
 
+  /**
+   * Retrieves IDs of movies currently playing in theaters.
+   * Uses TMDB's now_playing endpoint which handles the "in theaters" logic.
+   * 
+   * @param region - ISO 3166-1 country code (default: UA)
+   * @returns Array of TMDB movie IDs
+   */
+  public async getNowPlayingIds(region = 'UA'): Promise<number[]> {
+    const ids: number[] = [];
+    
+    // Fetch first 2 pages (40 movies should be enough)
+    for (let page = 1; page <= 2; page++) {
+      const data = await this.fetch('/movie/now_playing', { 
+        region, 
+        page: page.toString() 
+      });
+      
+      const pageIds = (data.results || []).map((m: any) => m.id);
+      ids.push(...pageIds);
+      
+      // Stop if we've reached the last page
+      if (page >= data.total_pages) break;
+    }
+    
+    return ids;
+  }
+
+  /**
+   * Retrieves IDs of movies released in theaters within the specified period.
+   * Uses TMDB's discover endpoint with release date filters.
+   * 
+   * @param daysBack - Number of days to look back (default: 30)
+   * @param region - ISO 3166-1 country code (default: UA)
+   * @returns Array of TMDB movie IDs
+   */
+  public async getNewReleaseIds(daysBack = 30, region = 'UA'): Promise<number[]> {
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+    
+    const ids: number[] = [];
+    
+    // Fetch first 2 pages
+    for (let page = 1; page <= 2; page++) {
+      const data = await this.fetch('/discover/movie', {
+        region,
+        'primary_release_date.gte': cutoff.toISOString().split('T')[0],
+        'primary_release_date.lte': now.toISOString().split('T')[0],
+        'with_release_type': '3', // Theatrical
+        'sort_by': 'popularity.desc',
+        page: page.toString(),
+      });
+      
+      const pageIds = (data.results || []).map((m: any) => m.id);
+      ids.push(...pageIds);
+      
+      if (page >= data.total_pages) break;
+    }
+    
+    return ids;
+  }
+
   private async fetch(endpoint: string, params: Record<string, string> = {}): Promise<any> {
     const url = new URL(`${this.config.apiUrl}${endpoint}`);
     

@@ -54,10 +54,14 @@ export class TmdbMapper {
     };
 
     if (isMovie) {
+      const releaseDates = this.extractReleaseDates(data);
       media.details = {
         runtime: data.runtime,
         budget: data.budget,
         revenue: data.revenue,
+        theatricalReleaseDate: releaseDates.theatricalReleaseDate,
+        digitalReleaseDate: releaseDates.digitalReleaseDate,
+        releases: releaseDates.releases,
       };
     } else {
       media.details = {
@@ -77,6 +81,80 @@ export class TmdbMapper {
       strict: true,
       locale: 'uk',
     });
+  }
+
+  /**
+   * Extracts theatrical and digital release dates from TMDB release_dates.
+   * Priority: US > UA > first available country.
+   * TMDB release types: 1=Premiere, 2=Theatrical (limited), 3=Theatrical, 4=Digital, 5=Physical, 6=TV
+   */
+  private static extractReleaseDates(data: any): {
+    theatricalReleaseDate: Date | null;
+    digitalReleaseDate: Date | null;
+    releases: Array<{ country: string; type: number; date: string; certification?: string }>;
+  } {
+    const releaseDates = data.release_dates?.results;
+    if (!Array.isArray(releaseDates) || releaseDates.length === 0) {
+      return { theatricalReleaseDate: null, digitalReleaseDate: null, releases: [] };
+    }
+
+    // Flatten all releases with country info
+    const allReleases: Array<{ country: string; type: number; date: string; certification?: string }> = [];
+    
+    for (const countryData of releaseDates) {
+      const country = countryData.iso_3166_1;
+      for (const release of countryData.release_dates || []) {
+        allReleases.push({
+          country,
+          type: release.type,
+          date: release.release_date,
+          certification: release.certification || undefined,
+        });
+      }
+    }
+
+    // Priority countries for finding primary release dates
+    const priorityCountries = ['US', 'UA'];
+    
+    // Find theatrical release (type 3) - prioritize US/UA
+    let theatricalReleaseDate: Date | null = null;
+    for (const country of priorityCountries) {
+      const theatrical = allReleases.find(r => r.country === country && r.type === 3);
+      if (theatrical) {
+        theatricalReleaseDate = new Date(theatrical.date);
+        break;
+      }
+    }
+    // Fallback to any theatrical release
+    if (!theatricalReleaseDate) {
+      const anyTheatrical = allReleases.find(r => r.type === 3);
+      if (anyTheatrical) {
+        theatricalReleaseDate = new Date(anyTheatrical.date);
+      }
+    }
+
+    // Find digital release (type 4) - prioritize US/UA
+    let digitalReleaseDate: Date | null = null;
+    for (const country of priorityCountries) {
+      const digital = allReleases.find(r => r.country === country && r.type === 4);
+      if (digital) {
+        digitalReleaseDate = new Date(digital.date);
+        break;
+      }
+    }
+    // Fallback to any digital release
+    if (!digitalReleaseDate) {
+      const anyDigital = allReleases.find(r => r.type === 4);
+      if (anyDigital) {
+        digitalReleaseDate = new Date(anyDigital.date);
+      }
+    }
+
+    return {
+      theatricalReleaseDate,
+      digitalReleaseDate,
+      releases: allReleases,
+    };
   }
 
   private static extractProviders(data: any): any[] {

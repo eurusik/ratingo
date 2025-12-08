@@ -10,4 +10,6 @@ export const INGESTION_QUEUE = 'ingestion';
 export enum IngestionJob {
   SYNC_MOVIE = 'sync-movie',
   SYNC_SHOW = 'sync-show',
+  SYNC_NOW_PLAYING = 'sync-now-playing',
+  SYNC_NEW_RELEASES = 'sync-new-releases',
 }

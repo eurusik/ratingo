@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '@/database/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { IStatsRepository, MediaStatsData } from '../../domain/repositories/stats.repository.interface';
 import { DatabaseException } from '@/common/exceptions';
 
@@ -37,13 +37,13 @@ export class DrizzleStatsRepository implements IStatsRepository {
         .onConflictDoUpdate({
           target: schema.mediaStats.mediaItemId,
           set: {
-            watchersCount: sql`excluded.watchers_count`,
-            trendingRank: sql`excluded.trending_rank`,
-            popularity24h: sql`excluded.popularity_24h`,
-            ratingoScore: sql`excluded.ratingo_score`,
-            qualityScore: sql`excluded.quality_score`,
-            popularityScore: sql`excluded.popularity_score`,
-            freshnessScore: sql`excluded.freshness_score`,
+            watchersCount: stats.watchersCount,
+            trendingRank: stats.trendingRank,
+            popularity24h: stats.popularity24h,
+            ratingoScore: stats.ratingoScore,
+            qualityScore: stats.qualityScore,
+            popularityScore: stats.popularityScore,
+            freshnessScore: stats.freshnessScore,
             updatedAt: new Date(),
           },
         });
@@ -59,34 +59,35 @@ export class DrizzleStatsRepository implements IStatsRepository {
     if (stats.length === 0) return;
 
     try {
-      await this.db
-        .insert(schema.mediaStats)
-        .values(
-          stats.map((s) => ({
-            mediaItemId: s.mediaItemId,
-            watchersCount: s.watchersCount,
-            trendingRank: s.trendingRank,
-            popularity24h: s.popularity24h,
-            ratingoScore: s.ratingoScore,
-            qualityScore: s.qualityScore,
-            popularityScore: s.popularityScore,
-            freshnessScore: s.freshnessScore,
+      // Process each stat individually to ensure correct values on conflict
+      for (const stat of stats) {
+        await this.db
+          .insert(schema.mediaStats)
+          .values({
+            mediaItemId: stat.mediaItemId,
+            watchersCount: stat.watchersCount,
+            trendingRank: stat.trendingRank,
+            popularity24h: stat.popularity24h,
+            ratingoScore: stat.ratingoScore,
+            qualityScore: stat.qualityScore,
+            popularityScore: stat.popularityScore,
+            freshnessScore: stat.freshnessScore,
             updatedAt: new Date(),
-          })),
-        )
-        .onConflictDoUpdate({
-          target: schema.mediaStats.mediaItemId,
-          set: {
-            watchersCount: sql`excluded.watchers_count`,
-            trendingRank: sql`excluded.trending_rank`,
-            popularity24h: sql`excluded.popularity_24h`,
-            ratingoScore: sql`excluded.ratingo_score`,
-            qualityScore: sql`excluded.quality_score`,
-            popularityScore: sql`excluded.popularity_score`,
-            freshnessScore: sql`excluded.freshness_score`,
-            updatedAt: new Date(),
-          },
-        });
+          })
+          .onConflictDoUpdate({
+            target: schema.mediaStats.mediaItemId,
+            set: {
+              watchersCount: stat.watchersCount,
+              trendingRank: stat.trendingRank,
+              popularity24h: stat.popularity24h,
+              ratingoScore: stat.ratingoScore,
+              qualityScore: stat.qualityScore,
+              popularityScore: stat.popularityScore,
+              freshnessScore: stat.freshnessScore,
+              updatedAt: new Date(),
+            },
+          });
+      }
     } catch (error) {
       this.logger.error(`Failed to bulk upsert stats: ${error.message}`);
       throw new DatabaseException(`Failed to bulk upsert stats: ${error.message}`, {

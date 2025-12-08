@@ -275,6 +275,9 @@ export class DrizzleMediaRepository implements IMediaRepository {
           budget: media.details?.budget,
           revenue: media.details?.revenue,
           status: media.status,
+          theatricalReleaseDate: media.details?.theatricalReleaseDate,
+          digitalReleaseDate: media.details?.digitalReleaseDate,
+          releases: media.details?.releases,
         })
         .onConflictDoUpdate({
           target: schema.movies.mediaItemId,
@@ -283,6 +286,9 @@ export class DrizzleMediaRepository implements IMediaRepository {
             budget: media.details?.budget,
             revenue: media.details?.revenue,
             status: media.status,
+            theatricalReleaseDate: media.details?.theatricalReleaseDate,
+            digitalReleaseDate: media.details?.digitalReleaseDate,
+            releases: media.details?.releases,
           },
         });
     } else {

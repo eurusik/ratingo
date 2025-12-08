@@ -57,6 +57,16 @@ export interface NormalizedMedia {
     totalSeasons?: number | null;
     totalEpisodes?: number | null;
     lastAirDate?: Date | null;
+    
+    // Release dates (movies only)
+    theatricalReleaseDate?: Date | null;
+    digitalReleaseDate?: Date | null;
+    releases?: Array<{
+      country: string;
+      type: number;
+      date: string;
+      certification?: string;
+    }>;
   };
 
   genres: Array<{

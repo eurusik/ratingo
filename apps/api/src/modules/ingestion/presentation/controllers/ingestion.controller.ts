@@ -26,6 +26,24 @@ class SyncTrendingDto {
   page?: number;
 }
 
+class SyncNowPlayingDto {
+  @ApiProperty({ example: 'UA', description: 'Region code (ISO 3166-1)', default: 'UA', required: false })
+  @IsOptional()
+  region?: string;
+}
+
+class SyncNewReleasesDto {
+  @ApiProperty({ example: 'UA', description: 'Region code (ISO 3166-1)', default: 'UA', required: false })
+  @IsOptional()
+  region?: string;
+
+  @ApiProperty({ example: 30, description: 'Days to look back', default: 30, required: false })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  daysBack?: number;
+}
+
 /**
  * Controller for triggering ingestion processes manually.
  * Useful for admin panels or debugging.
@@ -69,5 +87,43 @@ export class IngestionController {
     await this.ingestionQueue.addBulk(jobs);
 
     return { status: 'queued', count: jobs.length, page };
+  }
+
+  @Post('now-playing')
+  @ApiOperation({ 
+    summary: 'Sync movies currently in theaters',
+    description: 'Fetches now playing movies from TMDB and syncs them to the database. Updates isNowPlaying flags.',
+  })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async syncNowPlaying(@Body() dto: SyncNowPlayingDto) {
+    const job = await this.ingestionQueue.add(IngestionJob.SYNC_NOW_PLAYING, {
+      region: dto.region || 'UA',
+    });
+
+    return { 
+      status: 'queued', 
+      jobId: job.id,
+      region: dto.region || 'UA',
+    };
+  }
+
+  @Post('new-releases')
+  @ApiOperation({ 
+    summary: 'Sync new theatrical releases',
+    description: 'Fetches movies released in theaters within the specified period and syncs them.',
+  })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async syncNewReleases(@Body() dto: SyncNewReleasesDto) {
+    const job = await this.ingestionQueue.add(IngestionJob.SYNC_NEW_RELEASES, {
+      region: dto.region || 'UA',
+      daysBack: dto.daysBack || 30,
+    });
+
+    return { 
+      status: 'queued', 
+      jobId: job.id,
+      region: dto.region || 'UA',
+      daysBack: dto.daysBack || 30,
+    };
   }
 }

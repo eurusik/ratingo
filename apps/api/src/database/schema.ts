@@ -118,6 +118,16 @@ export const mediaStats = pgTable('media_stats', {
 }));
 
 /**
+ * Release info from TMDB release_dates endpoint.
+ */
+export interface ReleaseInfo {
+  country: string;
+  type: number; // TMDB type: 1=Premiere, 2=Theatrical (limited), 3=Theatrical, 4=Digital, 5=Physical, 6=TV
+  date: string;
+  certification?: string;
+}
+
+/**
  * MOVIES (Details)
  */
 export const movies = pgTable('movies', {
@@ -131,7 +141,26 @@ export const movies = pgTable('movies', {
   budget: integer('budget'),
   revenue: integer('revenue'),
   status: text('status'),
-});
+  
+  // Release dates (denormalized for fast queries)
+  theatricalReleaseDate: timestamp('theatrical_release_date'), // Type 3 (Theatrical)
+  digitalReleaseDate: timestamp('digital_release_date'),       // Type 4 (Digital)
+  
+  // Now Playing flag (synced from TMDB /movie/now_playing)
+  isNowPlaying: boolean('is_now_playing').default(false),
+  
+  // Full release data from TMDB (for analytics/future use)
+  releases: jsonb('releases').$type<ReleaseInfo[]>(),
+}, (t) => ({
+  // Partial index for NOW PLAYING queries - only indexes rows where true
+  nowPlayingIdx: index('movies_now_playing_idx').on(t.isNowPlaying).where(sql`${t.isNowPlaying} = true`),
+  // Index for NEW RELEASES queries - DESC for recent first
+  theatricalIdx: index('movies_theatrical_idx').on(t.theatricalReleaseDate),
+  // Index for NEW ON DIGITAL queries
+  digitalIdx: index('movies_digital_idx').on(t.digitalReleaseDate),
+  // FK index for fast JOINs
+  mediaItemIdx: index('movies_media_item_idx').on(t.mediaItemId),
+}));
 
 /**
  * SHOWS (Details)

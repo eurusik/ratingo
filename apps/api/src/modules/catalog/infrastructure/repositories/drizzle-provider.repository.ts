@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '@/database/schema';
-import { eq, sql, inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { DatabaseException } from '@/common/exceptions';
 import { IProviderRepository, WatchProviderData, DbTransaction } from '../../domain/repositories/provider.repository.interface';
 
@@ -35,22 +35,24 @@ export class DrizzleProviderRepository implements IProviderRepository {
         new Map(providers.map(p => [p.providerId, p])).values()
       );
 
-      // Upsert providers registry
-      await tx
-        .insert(schema.watchProviders)
-        .values(uniqueProviders.map(p => ({
-          tmdbId: p.providerId,
-          name: p.name,
-          logoPath: p.logoPath,
-          displayPriority: p.displayPriority,
-        })))
-        .onConflictDoUpdate({
-          target: schema.watchProviders.tmdbId,
-          set: {
-            name: sql`excluded.name`,
-            logoPath: sql`excluded.logo_path`,
-          },
-        });
+      // Upsert providers registry (individual upserts for type-safety)
+      for (const p of uniqueProviders) {
+        await tx
+          .insert(schema.watchProviders)
+          .values({
+            tmdbId: p.providerId,
+            name: p.name,
+            logoPath: p.logoPath,
+            displayPriority: p.displayPriority,
+          })
+          .onConflictDoUpdate({
+            target: schema.watchProviders.tmdbId,
+            set: {
+              name: p.name,
+              logoPath: p.logoPath,
+            },
+          });
+      }
 
       // Get internal IDs
       const providerRows = await tx
