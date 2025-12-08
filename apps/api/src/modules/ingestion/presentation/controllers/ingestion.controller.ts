@@ -24,6 +24,10 @@ class SyncTrendingDto {
   @IsNumber()
   @Min(1)
   page?: number;
+
+  @ApiProperty({ example: true, description: 'Also sync Trakt stats after ingestion', default: true, required: false })
+  @IsOptional()
+  syncStats?: boolean;
 }
 
 class SyncNowPlayingDto {
@@ -70,23 +74,27 @@ export class IngestionController {
   }
 
   @Post('trending')
-  @ApiOperation({ summary: 'Trigger sync for trending movies and shows' })
+  @ApiOperation({ 
+    summary: 'Trigger sync for trending movies and shows',
+    description: 'Syncs trending content from TMDB. With syncStats=true (default), also updates Trakt stats after ingestion.',
+  })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncTrending(@Body() dto: SyncTrendingDto) {
     const page = dto.page || 1;
-    const items = await this.syncService.getTrending(page);
-    
-    const jobs = items.map((item, index) => ({
-      name: item.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW,
-      data: { 
-        tmdbId: item.tmdbId,
-        trendingScore: 10000 - ((page - 1) * 20 + index),
-      },
-    }));
+    const syncStats = dto.syncStats !== false; // default true
 
-    await this.ingestionQueue.addBulk(jobs);
+    // Queue full trending sync job (ingestion + stats)
+    const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_FULL, {
+      page,
+      syncStats,
+    });
 
-    return { status: 'queued', count: jobs.length, page };
+    return { 
+      status: 'queued', 
+      jobId: job.id,
+      page,
+      syncStats,
+    };
   }
 
   @Post('now-playing')

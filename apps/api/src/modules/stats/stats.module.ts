@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { StatsController } from './presentation/controllers/stats.controller';
 import { StatsService } from './application/services/stats.service';
@@ -20,7 +20,7 @@ import { STATS_QUEUE } from './stats.constants';
 @Module({
   imports: [
     CatalogModule,
-    IngestionModule,
+    forwardRef(() => IngestionModule),
     ScoreCalculatorModule,
     DropOffAnalyzerModule,
     BullModule.registerQueue({

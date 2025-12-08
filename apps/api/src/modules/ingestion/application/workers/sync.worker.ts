@@ -6,6 +6,8 @@ import { SyncMediaService } from '../services/sync-media.service';
 import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { IMovieRepository, MOVIE_REPOSITORY } from '@/modules/catalog/domain/repositories/movie.repository.interface';
+import { StatsService } from '@/modules/stats/application/services/stats.service';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 /**
  * Background worker responsible for processing sync jobs from the Queue.
@@ -20,6 +22,7 @@ export class SyncWorker extends WorkerHost {
   constructor(
     private readonly syncService: SyncMediaService,
     private readonly tmdbAdapter: TmdbAdapter,
+    private readonly statsService: StatsService,
     @Inject(MOVIE_REPOSITORY)
     private readonly movieRepository: IMovieRepository,
     @InjectQueue(INGESTION_QUEUE)
@@ -32,7 +35,7 @@ export class SyncWorker extends WorkerHost {
    * Processes a single job from the queue.
    * BullMQ handles concurrency and retries automatically.
    */
-  async process(job: Job<{ tmdbId?: number; trendingScore?: number; region?: string; daysBack?: number }, any, string>): Promise<void> {
+  async process(job: Job<{ tmdbId?: number; trendingScore?: number; region?: string; daysBack?: number; page?: number; syncStats?: boolean }, any, string>): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
 
     try {
@@ -49,6 +52,9 @@ export class SyncWorker extends WorkerHost {
         case IngestionJob.SYNC_NEW_RELEASES:
           await this.processNewReleases(job.data.region, job.data.daysBack);
           break;
+        case IngestionJob.SYNC_TRENDING_FULL:
+          await this.processTrendingFull(job.data.page, job.data.syncStats);
+          break;
         default:
           this.logger.warn(`Unknown job type: ${job.name}`);
       }
@@ -56,6 +62,45 @@ export class SyncWorker extends WorkerHost {
       this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
       throw error;
     }
+  }
+
+  /**
+   * Full trending sync: ingestion + stats.
+   * 1. Fetch trending items from TMDB
+   * 2. Sync each movie/show (sequential to avoid rate limits)
+   * 3. Update Trakt stats if syncStats=true
+   */
+  private async processTrendingFull(page = 1, syncStats = true): Promise<void> {
+    this.logger.log(`Starting full trending sync (page: ${page}, syncStats: ${syncStats})...`);
+
+    // 1. Get trending items from TMDB
+    const items = await this.syncService.getTrending(page);
+    this.logger.log(`Found ${items.length} trending items`);
+
+    // 2. Sync each item sequentially
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const trendingScore = 10000 - ((page - 1) * 20 + i);
+      
+      try {
+        if (item.type === MediaType.MOVIE) {
+          await this.syncService.syncMovie(item.tmdbId, trendingScore);
+        } else {
+          await this.syncService.syncShow(item.tmdbId, trendingScore);
+        }
+      } catch (error) {
+        this.logger.error(`Failed to sync ${item.type} ${item.tmdbId}: ${error.message}`);
+        // Continue with next item
+      }
+    }
+
+    // 3. Sync Trakt stats if requested
+    if (syncStats) {
+      this.logger.log('Syncing Trakt stats...');
+      await this.statsService.syncTrendingStats();
+    }
+
+    this.logger.log(`Full trending sync complete: ${items.length} items processed`);
   }
 
   /**
