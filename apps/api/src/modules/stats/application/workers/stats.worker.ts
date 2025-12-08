@@ -7,8 +7,10 @@ import { StatsService } from '../services/stats.service';
 /**
  * Background worker for processing stats-related jobs.
  * Handles async updates of watchers count and trending metrics.
+ * 
+ * Concurrency: 1 (stats sync is already batched, no need for parallel jobs)
  */
-@Processor(STATS_QUEUE)
+@Processor(STATS_QUEUE, { concurrency: 1 })
 export class StatsWorker extends WorkerHost {
   private readonly logger = new Logger(StatsWorker.name);
 

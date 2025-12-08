@@ -7,8 +7,10 @@ import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 /**
  * Background worker responsible for processing sync jobs from the Queue.
  * Handles 'sync-movie' and 'sync-show' jobs.
+ * 
+ * Concurrency: 5 jobs processed in parallel for faster throughput.
  */
-@Processor(INGESTION_QUEUE)
+@Processor(INGESTION_QUEUE, { concurrency: 5 })
 export class SyncWorker extends WorkerHost {
   private readonly logger = new Logger(SyncWorker.name);
 

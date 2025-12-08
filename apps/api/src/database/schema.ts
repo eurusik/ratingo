@@ -77,6 +77,7 @@ export const mediaItems = pgTable(
   },
   (t) => ({
     typeIdx: index('media_type_idx').on(t.type),
+    imdbIdx: index('media_imdb_idx').on(t.imdbId),
     trendingIdx: index('media_trending_idx').on(t.trendingScore),
     popularityIdx: index('media_popularity_idx').on(t.popularity),
     releaseDateIdx: index('media_release_date_idx').on(t.releaseDate),
