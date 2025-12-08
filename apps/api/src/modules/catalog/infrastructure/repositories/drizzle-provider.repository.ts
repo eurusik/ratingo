@@ -4,20 +4,14 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '@/database/schema';
 import { eq, sql, inArray } from 'drizzle-orm';
 import { DatabaseException } from '@/common/exceptions';
-
-interface WatchProvider {
-  providerId: number;
-  name: string;
-  logoPath?: string | null;
-  type: string;
-  displayPriority?: number;
-}
+import { IProviderRepository, WatchProviderData, DbTransaction } from '../../domain/repositories/provider.repository.interface';
 
 /**
- * Repository for watch provider-related database operations.
+ * Drizzle implementation of IProviderRepository.
+ * Handles watch provider-related database operations.
  */
 @Injectable()
-export class DrizzleProviderRepository {
+export class DrizzleProviderRepository implements IProviderRepository {
   private readonly logger = new Logger(DrizzleProviderRepository.name);
 
   constructor(
@@ -30,9 +24,9 @@ export class DrizzleProviderRepository {
    * Updates provider registry and links providers to the media item.
    */
   async syncProviders(
-    tx: Parameters<Parameters<typeof this.db.transaction>[0]>[0],
+    tx: DbTransaction,
     mediaId: string,
-    providers: WatchProvider[],
+    providers: WatchProviderData[],
   ): Promise<void> {
     if (providers.length === 0) return;
 
@@ -64,7 +58,7 @@ export class DrizzleProviderRepository {
         .from(schema.watchProviders)
         .where(inArray(schema.watchProviders.tmdbId, providers.map(p => p.providerId)));
 
-      const providerMap = new Map(providerRows.map(r => [r.tmdbId, r.id]));
+      const providerMap = new Map<number, string>(providerRows.map(r => [r.tmdbId, r.id]));
 
       // Delete old links (clean slate for this media item)
       await tx

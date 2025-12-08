@@ -4,12 +4,14 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '@/database/schema';
 import { inArray } from 'drizzle-orm';
 import { DatabaseException } from '@/common/exceptions';
+import { IGenreRepository, GenreData, DbTransaction } from '../../domain/repositories/genre.repository.interface';
 
 /**
- * Repository for genre-related database operations.
+ * Drizzle implementation of IGenreRepository.
+ * Handles genre-related database operations.
  */
 @Injectable()
-export class DrizzleGenreRepository {
+export class DrizzleGenreRepository implements IGenreRepository {
   private readonly logger = new Logger(DrizzleGenreRepository.name);
 
   constructor(
@@ -22,9 +24,9 @@ export class DrizzleGenreRepository {
    * Ensures genres exist in registry and links them to the media item.
    */
   async syncGenres(
-    tx: Parameters<Parameters<typeof this.db.transaction>[0]>[0],
+    tx: DbTransaction,
     mediaId: string,
-    genres: Array<{ tmdbId: number; name: string; slug: string }>,
+    genres: GenreData[],
   ): Promise<void> {
     if (genres.length === 0) return;
 

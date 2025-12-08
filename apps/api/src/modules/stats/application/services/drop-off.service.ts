@@ -1,11 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TraktAdapter } from '@/modules/ingestion/infrastructure/adapters/trakt/trakt.adapter';
 import { DropOffAnalyzerService, DropOffAnalysis } from '@/modules/shared/drop-off-analyzer';
-import { DATABASE_CONNECTION } from '@/database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '@/database/schema';
-import { eq } from 'drizzle-orm';
-import { MediaType } from '@/common/enums/media-type.enum';
+import { IShowRepository, SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
 
 /**
  * Service for orchestrating drop-off analysis for shows.
@@ -18,8 +14,8 @@ export class DropOffService {
   constructor(
     private readonly traktAdapter: TraktAdapter,
     private readonly dropOffAnalyzer: DropOffAnalyzerService,
-    @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    @Inject(SHOW_REPOSITORY)
+    private readonly showRepository: IShowRepository,
   ) {}
 
   /**
@@ -61,16 +57,8 @@ export class DropOffService {
   async analyzeAllShows(limit = 50): Promise<{ analyzed: number; failed: number }> {
     this.logger.log(`Starting drop-off analysis for up to ${limit} shows...`);
 
-    // Get shows that need analysis (no analysis or old analysis)
-    const shows = await this.db
-      .select({
-        tmdbId: schema.mediaItems.tmdbId,
-        title: schema.mediaItems.title,
-      })
-      .from(schema.mediaItems)
-      .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-      .where(eq(schema.mediaItems.type, MediaType.SHOW))
-      .limit(limit);
+    // Get shows that need analysis
+    const shows = await this.showRepository.findShowsForAnalysis(limit);
 
     let analyzed = 0;
     let failed = 0;
@@ -93,23 +81,9 @@ export class DropOffService {
 
   /**
    * Saves drop-off analysis to the shows table.
-   * Uses single query with subquery for efficiency.
    */
   private async saveAnalysis(tmdbId: number, analysis: DropOffAnalysis): Promise<void> {
-    // Single UPDATE with subquery - no need for separate SELECT
-    await this.db
-      .update(schema.shows)
-      .set({ dropOffAnalysis: analysis })
-      .where(
-        eq(
-          schema.shows.mediaItemId,
-          this.db
-            .select({ id: schema.mediaItems.id })
-            .from(schema.mediaItems)
-            .where(eq(schema.mediaItems.tmdbId, tmdbId))
-            .limit(1)
-        )
-      );
+    await this.showRepository.saveDropOffAnalysis(tmdbId, analysis);
   }
 
   /**
@@ -117,13 +91,6 @@ export class DropOffService {
    * Returns cached analysis from database.
    */
   async getAnalysis(tmdbId: number): Promise<DropOffAnalysis | null> {
-    const result = await this.db
-      .select({ dropOffAnalysis: schema.shows.dropOffAnalysis })
-      .from(schema.shows)
-      .innerJoin(schema.mediaItems, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-      .where(eq(schema.mediaItems.tmdbId, tmdbId))
-      .limit(1);
-
-    return result[0]?.dropOffAnalysis || null;
+    return this.showRepository.getDropOffAnalysis(tmdbId);
   }
 }

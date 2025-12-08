@@ -8,12 +8,12 @@ import {
   MediaWithTmdbId, 
   MediaScoreDataWithTmdbId 
 } from '@/modules/catalog/domain/repositories/media.repository.interface';
+import { IGenreRepository, GENRE_REPOSITORY } from '@/modules/catalog/domain/repositories/genre.repository.interface';
+import { IProviderRepository, PROVIDER_REPOSITORY } from '@/modules/catalog/domain/repositories/provider.repository.interface';
 import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
 import { eq, inArray } from 'drizzle-orm';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { DatabaseException } from '@/common/exceptions';
-import { DrizzleGenreRepository } from './drizzle-genre.repository';
-import { DrizzleProviderRepository } from './drizzle-provider.repository';
 
 /**
  * Drizzle ORM implementation of the Media Repository.
@@ -26,8 +26,10 @@ export class DrizzleMediaRepository implements IMediaRepository {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
-    private readonly genreRepository: DrizzleGenreRepository,
-    private readonly providerRepository: DrizzleProviderRepository,
+    @Inject(GENRE_REPOSITORY)
+    private readonly genreRepository: IGenreRepository,
+    @Inject(PROVIDER_REPOSITORY)
+    private readonly providerRepository: IProviderRepository,
   ) {}
 
   /**
