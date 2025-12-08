@@ -148,6 +148,23 @@ export const shows = pgTable('shows', {
   status: text('status'),
   lastAirDate: timestamp('last_air_date'),
   nextAirDate: timestamp('next_air_date'),
+  
+  // Pre-calculated drop-off analysis (updated by background job)
+  dropOffAnalysis: jsonb('drop_off_analysis').$type<{
+    dropOffPoint: { season: number; episode: number; title: string } | null;
+    dropOffPercent: number;
+    overallRetention: number;
+    seasonEngagement: Array<{
+      season: number;
+      avgRating: number;
+      avgVotes: number;
+      engagementDrop: number;
+    }>;
+    insight: string;
+    insightType: 'strong_start' | 'steady' | 'drops_early' | 'drops_late';
+    analyzedAt: string;
+    episodesAnalyzed: number;
+  }>(),
 });
 
 // --- GENRES ---

@@ -243,4 +243,105 @@ export class TraktAdapter {
       return [];
     }
   }
+
+  /**
+   * Gets Trakt ID for a show by TMDB ID.
+   */
+  async getTraktIdByTmdbId(tmdbId: number): Promise<number | null> {
+    try {
+      const results = await this.fetch<any[]>(`/search/tmdb/${tmdbId}?type=show`);
+      return results[0]?.show?.ids?.trakt || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Gets all seasons for a show.
+   */
+  async getShowSeasons(traktId: number): Promise<Array<{
+    number: number;
+    episodeCount: number;
+  }>> {
+    try {
+      const seasons = await this.fetch<any[]>(`/shows/${traktId}/seasons`);
+      return seasons
+        .filter((s: any) => s.number > 0) // Exclude specials
+        .map((s: any) => ({
+          number: s.number,
+          episodeCount: s.episode_count || 0,
+        }));
+    } catch (error) {
+      this.logger.warn(`Failed to get seasons for ${traktId}: ${error}`);
+      return [];
+    }
+  }
+
+  /**
+   * Gets all episodes for a season with ratings.
+   */
+  async getSeasonEpisodes(traktId: number, seasonNumber: number): Promise<Array<{
+    number: number;
+    title: string;
+    rating: number;
+    votes: number;
+  }>> {
+    try {
+      const episodes = await this.fetch<any[]>(
+        `/shows/${traktId}/seasons/${seasonNumber}?extended=full`
+      );
+      return episodes.map((ep: any) => ({
+        number: ep.number,
+        title: ep.title || `Episode ${ep.number}`,
+        rating: ep.rating || 0,
+        votes: ep.votes || 0,
+      }));
+    } catch (error) {
+      this.logger.warn(`Failed to get S${seasonNumber} episodes: ${error}`);
+      return [];
+    }
+  }
+
+  /**
+   * Gets all episodes for a show (all seasons) for drop-off analysis.
+   * Returns structured data ready for analysis.
+   */
+  async getShowEpisodesForAnalysis(tmdbId: number): Promise<{
+    traktId: number;
+    seasons: Array<{
+      number: number;
+      episodes: Array<{
+        number: number;
+        title: string;
+        rating: number;
+        votes: number;
+      }>;
+    }>;
+  } | null> {
+    try {
+      // 1. Get Trakt ID
+      const traktId = await this.getTraktIdByTmdbId(tmdbId);
+      if (!traktId) return null;
+
+      // 2. Get seasons
+      const seasons = await this.getShowSeasons(traktId);
+      if (!seasons.length) return null;
+
+      // 3. Get episodes for each season (parallel, max 5 concurrent)
+      const seasonData = await Promise.all(
+        seasons.slice(0, 10).map(async (s) => ({
+          number: s.number,
+          episodes: await this.getSeasonEpisodes(traktId, s.number),
+        }))
+      );
+
+      return {
+        traktId,
+        seasons: seasonData.filter(s => s.episodes.length > 0),
+      };
+    } catch (error) {
+      this.logger.warn(`Failed to get episodes for TMDB ${tmdbId}: ${error}`);
+      return null;
+    }
+  }
 }
