@@ -1,4 +1,4 @@
-import { MediaType } from '@/common/enums/media-type.enum';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
 /**
  * Represents the "Clean" data structure used internally by our system.

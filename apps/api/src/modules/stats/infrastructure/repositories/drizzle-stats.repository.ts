@@ -1,10 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '@/database/schema';
+import * as schema from '../../../../database/schema';
 import { eq } from 'drizzle-orm';
 import { IStatsRepository, MediaStatsData } from '../../domain/repositories/stats.repository.interface';
-import { DatabaseException } from '@/common/exceptions';
+import { DatabaseException } from '../../../../common/exceptions';
 
 /**
  * Drizzle ORM implementation of the Stats Repository.

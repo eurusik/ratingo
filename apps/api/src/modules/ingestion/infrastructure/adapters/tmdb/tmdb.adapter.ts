@@ -1,11 +1,11 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { IMetadataProvider } from '../../../domain/interfaces/metadata-provider.interface';
 import { NormalizedMedia } from '../../../domain/models/normalized-media.model';
 import { TmdbMapper } from './mappers/tmdb.mapper';
-import tmdbConfig from '@/config/tmdb.config';
-import { MediaType } from '@/common/enums/media-type.enum';
-import { TmdbApiException } from '@/common/exceptions';
+import tmdbConfig from '../../../../../config/tmdb.config';
+import { MediaType } from '../../../../../common/enums/media-type.enum';
+import { TmdbApiException } from '../../../../../common/exceptions/external-api.exception';
 
 /**
  * Implementation of MetadataProvider for The Movie Database (TMDB) API v3.

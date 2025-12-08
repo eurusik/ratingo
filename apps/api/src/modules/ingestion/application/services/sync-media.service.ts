@@ -2,9 +2,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
 import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
-import { IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
-import { MediaType } from '@/common/enums/media-type.enum';
-import { ScoreCalculatorService, ScoreInput } from '@/modules/shared/score-calculator';
+import { IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { ScoreCalculatorService, ScoreInput } from '../../../shared/score-calculator';
 
 /**
  * Application Service responsible for orchestrating the sync process.

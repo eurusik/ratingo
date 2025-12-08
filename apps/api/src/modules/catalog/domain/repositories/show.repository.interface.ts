@@ -1,4 +1,4 @@
-import { DropOffAnalysis } from '@/modules/shared/drop-off-analyzer';
+import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 
 /**
  * Show data for listing.

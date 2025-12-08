@@ -1,19 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '@/database/schema';
+import * as schema from '../../../../database/schema';
 import { 
   IMediaRepository, 
   MediaScoreData, 
   MediaWithTmdbId, 
   MediaScoreDataWithTmdbId 
-} from '@/modules/catalog/domain/repositories/media.repository.interface';
-import { IGenreRepository, GENRE_REPOSITORY } from '@/modules/catalog/domain/repositories/genre.repository.interface';
-import { IProviderRepository, PROVIDER_REPOSITORY } from '@/modules/catalog/domain/repositories/provider.repository.interface';
-import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
+} from '../../domain/repositories/media.repository.interface';
+import { IGenreRepository, GENRE_REPOSITORY } from '../../domain/repositories/genre.repository.interface';
+import { IProviderRepository, PROVIDER_REPOSITORY } from '../../domain/repositories/provider.repository.interface';
+import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
 import { eq, inArray } from 'drizzle-orm';
-import { MediaType } from '@/common/enums/media-type.enum';
-import { DatabaseException } from '@/common/exceptions';
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DatabaseException } from '../../../../common/exceptions';
 
 /**
  * Drizzle ORM implementation of the Media Repository.

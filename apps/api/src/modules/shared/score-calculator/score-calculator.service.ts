@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
-import scoreConfig from '@/config/score.config';
+import scoreConfig from '../../../config/score.config';
 
 /**
  * Input data for score calculation.

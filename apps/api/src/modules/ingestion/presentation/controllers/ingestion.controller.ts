@@ -4,7 +4,7 @@ import { Queue } from 'bullmq';
 import { ApiTags, ApiOperation, ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
-import { MediaType } from '@/common/enums/media-type.enum';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 import { SyncMediaService } from '../../application/services/sync-media.service';
 
 class SyncDto {

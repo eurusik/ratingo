@@ -1,5 +1,5 @@
 import { NormalizedMedia } from '../../../../domain/models/normalized-media.model';
-import { MediaType } from '@/common/enums/media-type.enum';
+import { MediaType } from '../../../../../../common/enums/media-type.enum';
 import slugify from 'slugify';
 
 /**

@@ -1,7 +1,8 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
-import traktConfig from '@/config/trakt.config';
-import { TraktApiException } from '@/common/exceptions';
+import traktConfig from '../../../../../config/trakt.config';
+import { TraktApiException } from '../../../../../common/exceptions/external-api.exception';
+import { EpisodeData, SeasonData } from './interfaces/trakt.types';
 
 /**
  * Adapter for communicating with the Trakt.tv API.

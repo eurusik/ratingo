@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '@/database/schema';
+import * as schema from '../../../../database/schema';
 import { eq } from 'drizzle-orm';
-import { MediaType } from '@/common/enums/media-type.enum';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IShowRepository, ShowListItem } from '../../domain/repositories/show.repository.interface';
-import { DropOffAnalysis } from '@/modules/shared/drop-off-analyzer';
+import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 
 /**
  * Drizzle implementation of IShowRepository.

@@ -1,4 +1,4 @@
-import { ReleaseInfo } from '@/database/schema';
+import { ReleaseInfo } from '../../../../database/schema';
 
 /**
  * Movie with media item data for catalog queries.

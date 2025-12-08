@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScoreCalculatorService } from './score-calculator.service';
-import scoreConfig from '@/config/score.config';
+import scoreConfig from '../../../config/score.config';
 
 /**
  * Shared module for Ratingo Score calculation.

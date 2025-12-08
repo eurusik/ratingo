@@ -5,9 +5,9 @@ import { Inject, Logger } from '@nestjs/common';
 import { SyncMediaService } from '../services/sync-media.service';
 import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
-import { IMovieRepository, MOVIE_REPOSITORY } from '@/modules/catalog/domain/repositories/movie.repository.interface';
-import { StatsService } from '@/modules/stats/application/services/stats.service';
-import { MediaType } from '@/common/enums/media-type.enum';
+import { IMovieRepository, MOVIE_REPOSITORY } from '../../../catalog/domain/repositories/movie.repository.interface';
+import { StatsService } from '../../../stats/application/services/stats.service';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
 /**
  * Background worker responsible for processing sync jobs from the Queue.

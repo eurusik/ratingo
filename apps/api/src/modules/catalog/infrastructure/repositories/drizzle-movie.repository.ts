@@ -1,14 +1,14 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '@/database/schema';
+import * as schema from '../../../../database/schema';
 import { eq, gte, lte, and, desc, isNotNull, inArray } from 'drizzle-orm';
 import { 
   IMovieRepository, 
   MovieWithMedia, 
   NowPlayingOptions 
 } from '../../domain/repositories/movie.repository.interface';
-import { ReleaseInfo } from '@/database/schema';
+import { ReleaseInfo } from '../../../../database/schema';
 
 /**
  * Drizzle implementation of IMovieRepository.

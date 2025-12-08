@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { TraktAdapter } from '@/modules/ingestion/infrastructure/adapters/trakt/trakt.adapter';
-import { DropOffAnalyzerService, DropOffAnalysis } from '@/modules/shared/drop-off-analyzer';
-import { IShowRepository, SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
+import { TraktAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt.adapter';
+import { DropOffAnalyzerService, DropOffAnalysis } from '../../../shared/drop-off-analyzer';
+import { IShowRepository, SHOW_REPOSITORY } from '../../../catalog/domain/repositories/show.repository.interface';
 
 /**
  * Service for orchestrating drop-off analysis for shows.

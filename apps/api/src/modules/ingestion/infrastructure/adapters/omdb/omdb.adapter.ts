@@ -1,8 +1,8 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
-import omdbConfig from '@/config/omdb.config';
-import { MediaType } from '@/common/enums/media-type.enum';
-import { OmdbApiException } from '@/common/exceptions';
+import omdbConfig from '../../../../../config/omdb.config';
+import { MediaType } from '../../../../../common/enums/media-type.enum';
+import { OmdbApiException } from '../../../../../common/exceptions/external-api.exception';
 
 /**
  * Adapter for OMDb API.

@@ -13,7 +13,7 @@ import {
   customType,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
-import { MediaType } from '@/common/enums/media-type.enum';
+import { MediaType } from '../common/enums/media-type.enum';
 
 // Define custom tsvector type since Drizzle ORM core doesn't support it natively yet
 const tsvector = customType<{ data: string }>({

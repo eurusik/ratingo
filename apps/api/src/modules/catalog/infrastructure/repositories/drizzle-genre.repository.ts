@@ -1,9 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '@/database/database.module';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '@/database/schema';
+import * as schema from '../../../../database/schema';
 import { inArray } from 'drizzle-orm';
-import { DatabaseException } from '@/common/exceptions';
+import { DatabaseException } from '../../../../common/exceptions';
 import { IGenreRepository, GenreData, DbTransaction } from '../../domain/repositories/genre.repository.interface';
 
 /**

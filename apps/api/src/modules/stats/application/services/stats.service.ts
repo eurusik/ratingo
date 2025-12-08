@@ -1,9 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { TraktAdapter } from '@/modules/ingestion/infrastructure/adapters/trakt/trakt.adapter';
+import { TraktAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt.adapter';
 import { IStatsRepository, STATS_REPOSITORY } from '../../domain/repositories/stats.repository.interface';
-import { IMediaRepository, MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
-import { StatsNotFoundException } from '@/common/exceptions';
-import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
+import { IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
+import { StatsNotFoundException } from '../../../../common/exceptions';
+import { ScoreCalculatorService } from '../../../shared/score-calculator';
 
 /**
  * Application service for managing media statistics.
