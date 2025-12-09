@@ -224,8 +224,7 @@ export class DrizzleShowRepository implements IShowRepository {
       videos: showData.videos,
       primaryTrailer: showData.videos?.[0] || null,
       credits: CreditsMapper.toDto(showData.credits),
-      watchProviders: WatchProvidersMapper.toDto(showData.watchProviders),
-      watchProvidersPrimary: WatchProvidersMapper.getPrimary(showData.watchProviders),
+      availability: WatchProvidersMapper.toAvailability(showData.watchProviders),
       
       // Show specific
       totalSeasons: showData.totalSeasons,

@@ -1,4 +1,4 @@
-import { Credits, CastMember, CrewMember } from '../../../../database/schema';
+import { Credits, CastMember, CrewMember } from '../../../ingestion/domain/models/normalized-media.model';
 import { CreditsDto, CastMemberDto, CrewMemberDto } from '../../presentation/dtos/common.dto';
 
 export class CreditsMapper {

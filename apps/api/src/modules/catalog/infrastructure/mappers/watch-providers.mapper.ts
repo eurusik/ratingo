@@ -1,8 +1,45 @@
 import { WatchProvidersMap, WatchProvider, WatchProviderRegion } from '../../../ingestion/domain/models/normalized-media.model';
-import { WatchProviderRegionDto, WatchProviderDto } from '../../presentation/dtos/common.dto';
+import { WatchProviderRegionDto, WatchProviderDto, AvailabilityDto } from '../../presentation/dtos/common.dto';
 import { ImageMapper } from './image.mapper';
 
 export class WatchProvidersMapper {
+  /**
+   * Maps watch providers to AvailabilityDto with region fallback logic.
+   * Priority: UA > US
+   * 
+   * Frontend can use:
+   * - region: which region was selected
+   * - isFallback: true if UA unavailable and using US
+   * - stream/rent/buy: provider lists to render
+   */
+  static toAvailability(map: WatchProvidersMap | null | undefined): AvailabilityDto | null {
+    if (!map) return null;
+    
+    const ua = map['UA'];
+    const us = map['US'];
+    
+    // Try UA first
+    if (this.hasProviders(ua)) {
+      return {
+        region: 'UA',
+        isFallback: false,
+        ...this.mapRegion(ua),
+      };
+    }
+
+    // Fallback to US
+    if (this.hasProviders(us)) {
+      return {
+        region: 'US',
+        isFallback: true,
+        ...this.mapRegion(us),
+      };
+    }
+
+    return null;
+  }
+
+  /** @deprecated Use toAvailability instead */
   static toDto(map: WatchProvidersMap | null): Record<string, WatchProviderRegionDto> | null {
     if (!map) return null;
     const result: Record<string, WatchProviderRegionDto> = {};
@@ -12,10 +49,10 @@ export class WatchProvidersMapper {
     return result;
   }
 
+  /** @deprecated Use toAvailability instead */
   static getPrimary(map: WatchProvidersMap | null): WatchProviderRegionDto | null {
     if (!map) return null;
     
-    // Priority: UA > US
     const ua = map['UA'];
     if (this.hasProviders(ua)) {
         return this.mapRegion(ua);

@@ -149,8 +149,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
       videos: movie.videos,
       primaryTrailer: movie.videos?.[0] || null,
       credits: CreditsMapper.toDto(movie.credits),
-      watchProviders: WatchProvidersMapper.toDto(movie.watchProviders),
-      watchProvidersPrimary: WatchProvidersMapper.getPrimary(movie.watchProviders),
+      availability: WatchProvidersMapper.toAvailability(movie.watchProviders),
       
       // Movie specific
       runtime: movie.runtime,

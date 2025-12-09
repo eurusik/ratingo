@@ -19,6 +19,7 @@ import {
   WatchProvidersMap 
 } from '../modules/ingestion/domain/models/normalized-media.model';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../common/enums/video.enum';
+import { MediaType } from '../common/enums/media-type.enum';
 
 // Define custom tsvector type since Drizzle ORM core doesn't support it natively yet
 const tsvector = customType<{ data: string }>({
@@ -39,27 +40,6 @@ export interface Video {
   official: boolean;
   language: VideoLanguageEnum; // iso_639_1
   country: string;  // iso_3166_1
-}
-
-export interface CastMember {
-  tmdbId: number;
-  name: string;
-  character: string;
-  profilePath: string | null;
-  order: number;
-}
-
-export interface CrewMember {
-  tmdbId: number;
-  name: string;
-  job: string;
-  department: string;
-  profilePath: string | null;
-}
-
-export interface Credits {
-  cast: CastMember[];
-  crew: CrewMember[];
 }
 
 // --- CORE CATALOG ---
@@ -372,49 +352,4 @@ export const mediaGenresRelations = relations(mediaGenres, ({ one }) => ({
     fields: [mediaGenres.genreId],
     references: [genres.id],
   }),
-}));
-
-// --- WATCH PROVIDERS ---
-
-export const watchProviders = pgTable('watch_providers', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  tmdbId: integer('tmdb_id').unique().notNull(),
-  name: text('name').notNull(),
-  logoPath: text('logo_path'),
-  displayPriority: integer('display_priority').default(0),
-});
-
-export const mediaWatchProviders = pgTable(
-  'media_watch_providers',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    mediaItemId: uuid('media_item_id')
-      .references(() => mediaItems.id, { onDelete: 'cascade' })
-      .notNull(),
-    providerId: uuid('provider_id')
-      .references(() => watchProviders.id, { onDelete: 'cascade' })
-      .notNull(),
-    // Type of access: 'flatrate' (subscription), 'buy', 'rent', 'ads'
-    type: text('type').notNull(), 
-  },
-  (t) => ({
-    // Composite unique index to prevent duplicates
-    uniq: uniqueIndex('media_prov_uniq').on(t.mediaItemId, t.providerId, t.type),
-    providerIdx: index('media_prov_idx').on(t.providerId),
-  })
-);
-
-export const mediaWatchProvidersRelations = relations(mediaWatchProviders, ({ one }) => ({
-  media: one(mediaItems, {
-    fields: [mediaWatchProviders.mediaItemId],
-    references: [mediaItems.id],
-  }),
-  provider: one(watchProviders, {
-    fields: [mediaWatchProviders.providerId],
-    references: [watchProviders.id],
-  }),
-}));
-
-export const watchProvidersRelations = relations(watchProviders, ({ many }) => ({
-  mediaLinks: many(mediaWatchProviders),
 }));

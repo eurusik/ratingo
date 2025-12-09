@@ -2,7 +2,7 @@ import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { Video } from '../../../../database/schema';
-import { CreditsDto, ImageDto, WatchProviderRegionDto } from '../../presentation/dtos/common.dto';
+import { CreditsDto, ImageDto, AvailabilityDto } from '../../presentation/dtos/common.dto';
 
 /**
  * Show data for listing.
@@ -39,8 +39,7 @@ export interface ShowDetails {
   videos?: Video[] | null;
   primaryTrailer?: Video | null;
   credits?: CreditsDto | null;
-  watchProviders?: Record<string, WatchProviderRegionDto> | null;
-  watchProvidersPrimary?: WatchProviderRegionDto | null;
+  availability?: AvailabilityDto | null;
   
   stats: {
     ratingoScore: number | null;

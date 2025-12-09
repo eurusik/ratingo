@@ -158,6 +158,31 @@ describe('TmdbMapper', () => {
       expect(result?.slug).toBe('the-fast-and-the-furious-tokyo-drift');
     });
 
+    it('should only extract UA and US watch providers, ignoring other regions', () => {
+      const movieWithManyRegions = {
+        ...mockMovie,
+        'watch/providers': {
+          results: {
+            AR: { flatrate: [{ provider_id: 1, provider_name: 'AR Provider', logo_path: '/ar.jpg' }] },
+            DE: { flatrate: [{ provider_id: 2, provider_name: 'DE Provider', logo_path: '/de.jpg' }] },
+            UA: { flatrate: [{ provider_id: 3, provider_name: 'UA Provider', logo_path: '/ua.jpg' }] },
+            US: { rent: [{ provider_id: 4, provider_name: 'US Provider', logo_path: '/us.jpg' }] },
+            GB: { buy: [{ provider_id: 5, provider_name: 'GB Provider', logo_path: '/gb.jpg' }] },
+          }
+        }
+      };
+      
+      const result = TmdbMapper.toDomain(movieWithManyRegions, MediaType.MOVIE);
+      
+      expect(result?.watchProviders).toBeDefined();
+      expect(Object.keys(result?.watchProviders || {})).toEqual(['UA', 'US']);
+      expect(result?.watchProviders?.['UA']?.flatrate?.[0].name).toBe('UA Provider');
+      expect(result?.watchProviders?.['US']?.rent?.[0].name).toBe('US Provider');
+      expect(result?.watchProviders?.['AR']).toBeUndefined();
+      expect(result?.watchProviders?.['DE']).toBeUndefined();
+      expect(result?.watchProviders?.['GB']).toBeUndefined();
+    });
+
     it('should handle missing release dates gracefully', () => {
       const movieNoDates = { ...mockMovie, release_dates: { results: [] } };
       const result = TmdbMapper.toDomain(movieNoDates, MediaType.MOVIE);

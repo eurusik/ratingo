@@ -265,21 +265,26 @@ export class TmdbMapper {
       }));
   }
 
+  /** Allowed regions for watch providers - UA primary, US fallback */
+  private static readonly ALLOWED_REGIONS = ['UA', 'US'];
+
   private static extractProviders(data: any): WatchProvidersMap | null {
     const results = data['watch/providers']?.results;
-    if (!results) return null;
+    if (!results || typeof results !== 'object') return null;
 
     const map: WatchProvidersMap = {};
 
-    for (const [countryCode, regionData] of Object.entries(results)) {
-      const region = regionData as any;
-      map[countryCode] = {
-        link: region.link,
-        flatrate: this.mapProviderList(region.flatrate),
-        rent: this.mapProviderList(region.rent),
-        buy: this.mapProviderList(region.buy),
-        ads: this.mapProviderList(region.ads),
-        free: this.mapProviderList(region.free),
+    for (const region of this.ALLOWED_REGIONS) {
+      const entry = results[region];
+      if (!entry) continue;
+
+      map[region] = {
+        link: entry.link ?? null,
+        flatrate: this.mapProviderList(entry.flatrate),
+        rent: this.mapProviderList(entry.rent),
+        buy: this.mapProviderList(entry.buy),
+        ads: this.mapProviderList(entry.ads),
+        free: this.mapProviderList(entry.free),
       };
     }
 

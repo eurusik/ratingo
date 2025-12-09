@@ -195,6 +195,40 @@ export class WatchProviderRegionDto {
   free?: WatchProviderDto[];
 }
 
+export class AvailabilityDto {
+  @ApiProperty({ 
+    example: 'UA', 
+    enum: ['UA', 'US'], 
+    nullable: true,
+    description: 'Selected region for watch providers (UA primary, US fallback)' 
+  })
+  region: 'UA' | 'US' | null;
+
+  @ApiProperty({ 
+    example: false, 
+    description: 'True if using US as fallback because UA is not available' 
+  })
+  isFallback: boolean;
+
+  @ApiProperty({ example: 'https://www.themoviedb.org/movie/123/watch?locale=UA', nullable: true })
+  link: string | null;
+
+  @ApiProperty({ type: [WatchProviderDto], required: false, description: 'Streaming/subscription services (flatrate)' })
+  stream?: WatchProviderDto[];
+
+  @ApiProperty({ type: [WatchProviderDto], required: false })
+  rent?: WatchProviderDto[];
+  
+  @ApiProperty({ type: [WatchProviderDto], required: false })
+  buy?: WatchProviderDto[];
+
+  @ApiProperty({ type: [WatchProviderDto], required: false })
+  ads?: WatchProviderDto[];
+
+  @ApiProperty({ type: [WatchProviderDto], required: false })
+  free?: WatchProviderDto[];
+}
+
 export class MediaBaseDto {
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   id: string;
@@ -244,9 +278,11 @@ export class MediaBaseDto {
   @ApiProperty({ type: CreditsDto, required: false, nullable: true })
   credits?: CreditsDto | null;
 
-  @ApiProperty({ required: false, nullable: true, description: 'Map of providers by country code (UA, US, etc)' })
-  watchProviders?: Record<string, WatchProviderRegionDto> | null;
-
-  @ApiProperty({ type: WatchProviderRegionDto, required: false, nullable: true, description: 'Primary watch providers (UA with fallback to US)' })
-  watchProvidersPrimary?: WatchProviderRegionDto | null;
+  @ApiProperty({ 
+    type: AvailabilityDto, 
+    required: false, 
+    nullable: true, 
+    description: 'Where to watch - UA primary with US fallback' 
+  })
+  availability?: AvailabilityDto | null;
 }

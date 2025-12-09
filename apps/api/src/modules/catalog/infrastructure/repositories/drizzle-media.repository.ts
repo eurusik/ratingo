@@ -9,7 +9,6 @@ import {
   MediaScoreDataWithTmdbId 
 } from '../../domain/repositories/media.repository.interface';
 import { IGenreRepository, GENRE_REPOSITORY } from '../../domain/repositories/genre.repository.interface';
-import { IProviderRepository, PROVIDER_REPOSITORY } from '../../domain/repositories/provider.repository.interface';
 import { IMovieRepository, MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
 import { IShowRepository, SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 import { DrizzleMovieRepository } from './drizzle-movie.repository';
@@ -32,8 +31,6 @@ export class DrizzleMediaRepository implements IMediaRepository {
     private readonly db: PostgresJsDatabase<typeof schema>,
     @Inject(GENRE_REPOSITORY)
     private readonly genreRepository: IGenreRepository,
-    @Inject(PROVIDER_REPOSITORY)
-    private readonly providerRepository: IProviderRepository,
     @Inject(MOVIE_REPOSITORY)
     private readonly movieRepository: IMovieRepository,
     @Inject(SHOW_REPOSITORY)
@@ -84,6 +81,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           backdropPath: media.backdropPath,
           videos: media.videos || null,
           credits: media.credits || null,
+          watchProviders: media.watchProviders || null,
           
           // Metrics
           rating: media.rating,
@@ -129,6 +127,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
             backdropPath: media.backdropPath,
             videos: media.videos || null,
             credits: media.credits || null,
+            watchProviders: media.watchProviders || null,
             updatedAt: new Date(),
           },
         })
@@ -149,11 +148,6 @@ export class DrizzleMediaRepository implements IMediaRepository {
 
       // Sync Genres
       await this.genreRepository.syncGenres(tx, mediaId, media.genres);
-
-      // Sync Watch Providers
-      if (media.watchProviders) {
-        await this.providerRepository.syncProviders(tx, mediaId, media.watchProviders);
-      }
 
       // Upsert Ratingo Scores to media_stats
       if (media.ratingoScore !== undefined) {
