@@ -67,6 +67,9 @@ describe('TmdbAdapter', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('language=uk-UA')
       );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('include_video_language=uk%2Cen')
+      );
     });
 
     it('should return null when movie not found (404)', async () => {

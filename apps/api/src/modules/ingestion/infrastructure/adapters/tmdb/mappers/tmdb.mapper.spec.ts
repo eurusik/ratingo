@@ -1,5 +1,6 @@
 import { TmdbMapper } from './tmdb.mapper';
 import { MediaType } from '../../../../../../common/enums/media-type.enum';
+import { VideoLanguageEnum } from '../../../../../../common/enums/video.enum';
 
 describe('TmdbMapper', () => {
   const mockMovie = {
@@ -170,6 +171,34 @@ describe('TmdbMapper', () => {
       
       const result = TmdbMapper.toDomain(movieOnlyPhysical, MediaType.MOVIE);
       expect(result?.details.theatricalReleaseDate).toBeNull();
+    });
+
+    it('should sort videos correctly (UK > Official > Date)', () => {
+      const movieWithVideos = {
+        ...mockMovie,
+        videos: {
+          results: [
+            { key: '1', name: 'Old Official EN', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en', published_at: '2020-01-01' },
+            { key: '2', name: 'New Unofficial EN', site: 'YouTube', type: 'Trailer', official: false, iso_639_1: 'en', published_at: '2022-01-01' },
+            { key: '3', name: 'UK Trailer', site: 'YouTube', type: 'Trailer', official: false, iso_639_1: 'uk', published_at: '2021-01-01' },
+            { key: '4', name: 'New Official EN', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en', published_at: '2023-01-01' },
+            { key: '5', name: 'Official UK Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'uk', published_at: '2021-06-01' },
+          ]
+        }
+      };
+
+      const result = TmdbMapper.toDomain(movieWithVideos, MediaType.MOVIE);
+
+      expect(result?.videos).toHaveLength(3);
+      // 1. Official UK (key 5)
+      expect(result?.videos[0].key).toBe('5');
+      expect(result?.videos[0].language).toBe(VideoLanguageEnum.UK);
+      // 2. Unofficial UK (key 3)
+      expect(result?.videos[1].key).toBe('3');
+      expect(result?.videos[1].language).toBe(VideoLanguageEnum.UK);
+      // 3. Newest Official EN (key 4) - Note: Old Official EN (key 1) is older, Unofficial EN (key 2) is unofficial
+      expect(result?.videos[2].key).toBe('4');
+      expect(result?.videos[2].language).toBe(VideoLanguageEnum.EN);
     });
   });
 });
