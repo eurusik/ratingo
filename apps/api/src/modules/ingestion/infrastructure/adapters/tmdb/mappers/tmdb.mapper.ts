@@ -59,6 +59,7 @@ export class TmdbMapper {
         runtime: data.runtime,
         budget: data.budget,
         revenue: data.revenue,
+        status: data.status || null,
         theatricalReleaseDate: releaseDates.theatricalReleaseDate,
         digitalReleaseDate: releaseDates.digitalReleaseDate,
         releases: releaseDates.releases,
