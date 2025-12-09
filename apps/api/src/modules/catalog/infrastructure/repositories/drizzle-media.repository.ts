@@ -14,11 +14,12 @@ import { IShowRepository, SHOW_REPOSITORY } from '../../domain/repositories/show
 import { DrizzleMovieRepository } from './drizzle-movie.repository';
 import { DrizzleShowRepository } from './drizzle-show.repository';
 import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, desc, and, lte, isNotNull, gte } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions';
 
 import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { ImageMapper } from '../mappers/image.mapper';
 
 /**
  * Drizzle ORM implementation of the Media Repository.
@@ -208,6 +209,91 @@ export class DrizzleMediaRepository implements IMediaRepository {
       throw new DatabaseException(`Failed to find media for scoring: ${error.message}`, { 
         count: ids.length 
       });
+    }
+  }
+
+  /**
+   * Retrieves top media items for the Hero block.
+   */
+  async findHero(limit: number, type?: MediaType): Promise<any[]> {
+    try {
+      const now = new Date();
+
+      const whereConditions = [
+        lte(schema.mediaItems.releaseDate, now),
+        isNotNull(schema.mediaItems.posterPath),
+        isNotNull(schema.mediaItems.backdropPath),
+        // Quality filters for Hero
+        gte(schema.mediaStats.qualityScore, 60), // Not trash
+        gte(schema.mediaStats.popularityScore, 40) // Not obscure
+      ];
+
+      if (type) {
+        whereConditions.push(eq(schema.mediaItems.type, type));
+      }
+
+      const results = await this.db
+        .select({
+          id: schema.mediaItems.id,
+          type: schema.mediaItems.type,
+          slug: schema.mediaItems.slug,
+          title: schema.mediaItems.title,
+          originalTitle: schema.mediaItems.originalTitle,
+          posterPath: schema.mediaItems.posterPath,
+          backdropPath: schema.mediaItems.backdropPath,
+          releaseDate: schema.mediaItems.releaseDate,
+          videos: schema.mediaItems.videos,
+          
+          // Stats
+          ratingoScore: schema.mediaStats.ratingoScore,
+          qualityScore: schema.mediaStats.qualityScore,
+          
+          // External
+          rating: schema.mediaItems.rating, // TMDB Rating
+          voteCount: schema.mediaItems.voteCount,
+        })
+        .from(schema.mediaItems)
+        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .where(and(...whereConditions))
+        // Sort by Popularity (Hottest) then Ratingo (Quality/Freshness)
+        .orderBy(desc(schema.mediaStats.popularityScore), desc(schema.mediaStats.ratingoScore))
+        .limit(limit);
+
+      const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      const fiveYearsAgo = new Date(now.getFullYear() - 5, now.getMonth(), now.getDate());
+
+      return results.map(item => {
+        const releaseDate = item.releaseDate ? new Date(item.releaseDate) : null;
+        const videos = item.videos as any[];
+        const primaryTrailerKey = videos?.length > 0 ? videos[0].key : null;
+        
+        return {
+          id: item.id,
+          type: item.type,
+          slug: item.slug,
+          title: item.title,
+          originalTitle: item.originalTitle,
+          primaryTrailerKey,
+          poster: ImageMapper.toPoster(item.posterPath),
+          backdrop: ImageMapper.toBackdrop(item.backdropPath),
+          releaseDate: item.releaseDate,
+          isNew: releaseDate ? releaseDate >= ninetyDaysAgo : false,
+          isClassic: releaseDate ? releaseDate <= fiveYearsAgo : false,
+          stats: {
+            ratingoScore: item.ratingoScore,
+            qualityScore: item.qualityScore,
+          },
+          externalRatings: {
+            tmdb: {
+              rating: item.rating,
+              voteCount: item.voteCount,
+            }
+          }
+        };
+      });
+    } catch (error) {
+      this.logger.error(`Failed to find hero items: ${error.message}`);
+      return []; 
     }
   }
 }

@@ -8,6 +8,7 @@ import omdbConfig from './config/omdb.config';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { StatsModule } from './modules/stats/stats.module';
+import { HomeModule } from './modules/home/home.module';
 
 import { BullModule } from '@nestjs/bullmq';
 
@@ -60,6 +61,7 @@ import { BullModule } from '@nestjs/bullmq';
     CatalogModule,
     IngestionModule,
     StatsModule,
+    HomeModule,
   ],
   controllers: [],
   providers: [],

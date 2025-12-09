@@ -1,4 +1,5 @@
 import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
 /**
  * Data needed for score calculation.
@@ -61,9 +62,15 @@ export interface IMediaRepository {
 
   /**
    * Batch: Retrieves score data for multiple media items by their IDs.
-   * Returns array with tmdbId included for mapping.
+   * Batch: Retrieves score data for multiple media items in a single query.
    */
   findManyForScoring(ids: string[]): Promise<MediaScoreDataWithTmdbId[]>;
+
+  /**
+   * Retrieves top media items for the Hero block.
+   * Criteria: Released, has poster/backdrop, sorted by popularity.
+   */
+  findHero(limit: number, type?: MediaType): Promise<any[]>;
 }
 
-export const MEDIA_REPOSITORY = 'MEDIA_REPOSITORY';
+export const MEDIA_REPOSITORY = Symbol('MEDIA_REPOSITORY');
