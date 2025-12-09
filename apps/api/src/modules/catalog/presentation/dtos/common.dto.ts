@@ -32,6 +32,9 @@ export class ExternalRatingItemDto {
 
 export class ExternalRatingsDto {
   @ApiProperty({ type: ExternalRatingItemDto, required: false, nullable: true })
+  tmdb?: ExternalRatingItemDto | null;
+
+  @ApiProperty({ type: ExternalRatingItemDto, required: false, nullable: true })
   imdb?: ExternalRatingItemDto | null;
 
   @ApiProperty({ type: ExternalRatingItemDto, required: false, nullable: true })
@@ -68,12 +71,6 @@ export class MediaBaseDto {
 
   @ApiProperty({ example: '/path/to/backdrop.jpg', required: false, nullable: true })
   backdropPath?: string | null;
-
-  @ApiProperty({ example: 8.5 })
-  rating: number;
-
-  @ApiProperty({ example: 15000 })
-  voteCount: number;
 
   @ApiProperty({ type: RatingoStatsDto, required: false, nullable: true })
   stats?: RatingoStatsDto | null;

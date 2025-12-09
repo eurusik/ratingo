@@ -4,6 +4,7 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { eq, asc, and, gte, lte } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { IShowRepository, ShowListItem, CalendarEpisode, ShowDetails } from '../../domain/repositories/show.repository.interface';
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
@@ -212,13 +213,11 @@ export class DrizzleShowRepository implements IShowRepository {
       overview: showData.overview,
       posterPath: showData.posterPath,
       backdropPath: showData.backdropPath,
-      rating: showData.rating,
-      voteCount: showData.voteCount,
       
       // Show specific
       totalSeasons: showData.totalSeasons,
       totalEpisodes: showData.totalEpisodes,
-      status: showData.status,
+      status: showData.status as ShowStatus | null,
       lastAirDate: showData.lastAirDate,
       nextAirDate: showData.nextAirDate,
       
@@ -229,6 +228,7 @@ export class DrizzleShowRepository implements IShowRepository {
         popularityScore: showData.popularityScore,
       },
       externalRatings: {
+        tmdb: { rating: showData.rating, voteCount: showData.voteCount },
         imdb: showData.ratingImdb ? { rating: showData.ratingImdb, voteCount: showData.voteCountImdb } : null,
         trakt: showData.ratingTrakt ? { rating: showData.ratingTrakt, voteCount: showData.voteCountTrakt } : null,
         metacritic: showData.ratingMetacritic ? { rating: showData.ratingMetacritic } : null,

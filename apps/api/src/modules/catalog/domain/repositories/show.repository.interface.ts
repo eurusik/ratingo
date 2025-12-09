@@ -1,5 +1,6 @@
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
+import { ShowStatus } from '../../../../common/enums/show-status.enum';
 
 /**
  * Show data for listing.
@@ -31,8 +32,6 @@ export interface ShowDetails {
   overview: string | null;
   posterPath: string | null;
   backdropPath: string | null;
-  rating: number;
-  voteCount: number;
   
   stats: {
     ratingoScore: number | null;
@@ -41,6 +40,7 @@ export interface ShowDetails {
   };
 
   externalRatings: {
+    tmdb: { rating: number; voteCount?: number | null } | null;
     imdb: { rating: number; voteCount?: number | null } | null;
     trakt: { rating: number; voteCount?: number | null } | null;
     metacritic: { rating: number; voteCount?: number | null } | null;
@@ -49,7 +49,7 @@ export interface ShowDetails {
 
   totalSeasons: number | null;
   totalEpisodes: number | null;
-  status: string | null;
+  status: ShowStatus | null;
   lastAirDate: Date | null;
   nextAirDate: Date | null;
   

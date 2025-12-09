@@ -68,6 +68,7 @@ export class TmdbMapper {
         totalSeasons: data.number_of_seasons,
         totalEpisodes: data.number_of_episodes,
         lastAirDate: data.last_air_date ? new Date(data.last_air_date) : null,
+        status: data.status || null,
       };
     }
 

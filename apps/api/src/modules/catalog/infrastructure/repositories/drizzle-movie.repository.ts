@@ -9,6 +9,7 @@ import {
   NowPlayingOptions 
 } from '../../domain/repositories/movie.repository.interface';
 import { ReleaseInfo } from '../../../../database/schema';
+import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 
 type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -136,15 +137,13 @@ export class DrizzleMovieRepository implements IMovieRepository {
       overview: movie.overview,
       posterPath: movie.posterPath,
       backdropPath: movie.backdropPath,
-      rating: movie.rating,
-      voteCount: movie.voteCount,
       releaseDate: movie.releaseDate,
       
       // Movie specific
       runtime: movie.runtime,
       budget: movie.budget,
       revenue: movie.revenue,
-      status: movie.status,
+      status: movie.status as MovieStatus | null,
       
       // Nested Objects
       stats: {
@@ -153,6 +152,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
         popularityScore: movie.popularityScore,
       },
       externalRatings: {
+        tmdb: { rating: movie.rating, voteCount: movie.voteCount },
         imdb: movie.ratingImdb ? { rating: movie.ratingImdb, voteCount: movie.voteCountImdb } : null,
         trakt: movie.ratingTrakt ? { rating: movie.ratingTrakt, voteCount: movie.voteCountTrakt } : null,
         metacritic: movie.ratingMetacritic ? { rating: movie.ratingMetacritic } : null,
@@ -369,8 +369,6 @@ export class DrizzleMovieRepository implements IMovieRepository {
       posterPath: m.posterPath,
       backdropPath: m.backdropPath,
       popularity: m.popularity,
-      rating: m.rating,
-      voteCount: m.voteCount,
       releaseDate: m.releaseDate,
       theatricalReleaseDate: m.theatricalReleaseDate,
       digitalReleaseDate: m.digitalReleaseDate,
@@ -383,6 +381,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
         popularityScore: m.popularityScore,
       },
       externalRatings: {
+        tmdb: { rating: m.rating, voteCount: m.voteCount },
         imdb: m.ratingImdb ? { rating: m.ratingImdb, voteCount: m.voteCountImdb } : null,
         trakt: m.ratingTrakt ? { rating: m.ratingTrakt, voteCount: m.voteCountTrakt } : null,
         metacritic: m.ratingMetacritic ? { rating: m.ratingMetacritic } : null,

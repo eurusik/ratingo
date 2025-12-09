@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MediaBaseDto } from './common.dto';
+import { ShowStatus } from '../../../../common/enums/show-status.enum';
 
 export class SeasonDto {
   @ApiProperty({ example: 1 })
@@ -25,8 +26,14 @@ export class ShowResponseDto extends MediaBaseDto {
   @ApiProperty({ example: 62, required: false, nullable: true })
   totalEpisodes?: number | null;
 
-  @ApiProperty({ example: 'Returning Series', required: false, nullable: true })
-  status?: string | null;
+  @ApiProperty({ 
+    enum: ShowStatus,
+    example: ShowStatus.RETURNING_SERIES,
+    description: 'Show status: Returning Series, Ended, Canceled, In Production, Planned',
+    required: false, 
+    nullable: true,
+  })
+  status?: ShowStatus | null;
 
   @ApiProperty({ type: Date, required: false, nullable: true })
   lastAirDate: Date | null;

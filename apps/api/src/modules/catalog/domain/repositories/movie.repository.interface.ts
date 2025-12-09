@@ -1,4 +1,5 @@
 import { ReleaseInfo } from '../../../../database/schema';
+import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 
 /**
  * Movie with media item data for catalog queries.
@@ -13,8 +14,6 @@ export interface MovieWithMedia {
   posterPath: string | null;
   backdropPath: string | null;
   popularity: number;
-  rating: number;
-  voteCount: number;
   releaseDate: Date | null;
   
   stats: {
@@ -24,6 +23,7 @@ export interface MovieWithMedia {
   };
 
   externalRatings: {
+    tmdb: { rating: number; voteCount?: number | null } | null;
     imdb: { rating: number; voteCount?: number | null } | null;
     trakt: { rating: number; voteCount?: number | null } | null;
     metacritic: { rating: number; voteCount?: number | null } | null;
@@ -59,8 +59,6 @@ export interface MovieDetails {
   overview: string | null;
   posterPath: string | null;
   backdropPath: string | null;
-  rating: number;
-  voteCount: number;
   releaseDate: Date | null;
   
   stats: {
@@ -70,6 +68,7 @@ export interface MovieDetails {
   };
 
   externalRatings: {
+    tmdb: { rating: number; voteCount?: number | null } | null;
     imdb: { rating: number; voteCount?: number | null } | null;
     trakt: { rating: number; voteCount?: number | null } | null;
     metacritic: { rating: number; voteCount?: number | null } | null;
@@ -79,7 +78,7 @@ export interface MovieDetails {
   runtime: number | null;
   budget: number | null;
   revenue: number | null;
-  status: string | null;
+  status: MovieStatus | null;
   
   genres: Array<{ id: string; name: string; slug: string }>;
 }

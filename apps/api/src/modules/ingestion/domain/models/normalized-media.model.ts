@@ -80,6 +80,7 @@ export interface NormalizedMedia {
     totalEpisodes?: number | null;
     lastAirDate?: Date | null;
     nextAirDate?: Date | null;
+    status?: string | null;
     seasons?: NormalizedSeason[];
     
     // Release dates (movies only)
