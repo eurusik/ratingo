@@ -1,4 +1,5 @@
-import { ReleaseInfo, Video, Credits } from '../../../../database/schema';
+import { ReleaseInfo, Video } from '../../../../database/schema';
+import { CreditsDto } from '../../presentation/dtos/common.dto';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 
 /**
@@ -63,7 +64,7 @@ export interface MovieDetails {
   releaseDate: Date | null;
   videos?: Video[] | null;
   primaryTrailer?: Video | null;
-  credits?: Credits | null;
+  credits?: CreditsDto | null;
   
   stats: {
     ratingoScore: number | null;

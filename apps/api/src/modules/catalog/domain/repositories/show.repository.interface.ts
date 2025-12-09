@@ -1,7 +1,8 @@
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { Video, Credits } from '../../../../database/schema';
+import { Video } from '../../../../database/schema';
+import { CreditsDto } from '../../presentation/dtos/common.dto';
 
 /**
  * Show data for listing.
@@ -35,7 +36,7 @@ export interface ShowDetails {
   backdropPath: string | null;
   videos?: Video[] | null;
   primaryTrailer?: Video | null;
-  credits?: Credits | null;
+  credits?: CreditsDto | null;
   
   stats: {
     ratingoScore: number | null;

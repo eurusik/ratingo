@@ -10,6 +10,7 @@ import {
 } from '../../domain/repositories/movie.repository.interface';
 import { ReleaseInfo } from '../../../../database/schema';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
+import { CreditsMapper } from '../mappers/credits.mapper';
 
 type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -142,7 +143,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
       releaseDate: movie.releaseDate,
       videos: movie.videos,
       primaryTrailer: movie.videos?.[0] || null,
-      credits: movie.credits,
+      credits: CreditsMapper.toDto(movie.credits),
       
       // Movie specific
       runtime: movie.runtime,

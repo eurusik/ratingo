@@ -36,7 +36,13 @@ export class VideoDto {
 }
 
 export class CastMemberDto {
-  @ApiProperty({ example: 123 })
+  @ApiProperty({ example: 'tmdb:123', description: 'Universal person identifier' })
+  personId: string;
+
+  @ApiProperty({ example: 'brad-pitt', description: 'URL-friendly slug', nullable: true })
+  slug: string | null;
+
+  @ApiProperty({ example: 123, deprecated: true })
   tmdbId: number;
 
   @ApiProperty({ example: 'Brad Pitt' })
@@ -53,7 +59,13 @@ export class CastMemberDto {
 }
 
 export class CrewMemberDto {
-  @ApiProperty({ example: 456 })
+  @ApiProperty({ example: 'tmdb:456', description: 'Universal person identifier' })
+  personId: string;
+
+  @ApiProperty({ example: 'david-fincher', description: 'URL-friendly slug', nullable: true })
+  slug: string | null;
+
+  @ApiProperty({ example: 456, deprecated: true })
   tmdbId: number;
 
   @ApiProperty({ example: 'David Fincher' })
@@ -70,10 +82,32 @@ export class CrewMemberDto {
 }
 
 export class CreditsDto {
-  @ApiProperty({ type: [CastMemberDto] })
+  @ApiProperty({ 
+    type: [CastMemberDto],
+    example: [{
+      personId: 'tmdb:123',
+      slug: 'brad-pitt',
+      tmdbId: 123,
+      name: 'Brad Pitt',
+      character: 'Tyler Durden',
+      profilePath: '/brad.jpg',
+      order: 0
+    }]
+  })
   cast: CastMemberDto[];
 
-  @ApiProperty({ type: [CrewMemberDto] })
+  @ApiProperty({ 
+    type: [CrewMemberDto],
+    example: [{
+      personId: 'tmdb:456',
+      slug: 'david-fincher',
+      tmdbId: 456,
+      name: 'David Fincher',
+      job: 'Director',
+      department: 'Directing',
+      profilePath: '/david.jpg'
+    }]
+  })
   crew: CrewMemberDto[];
 }
 
