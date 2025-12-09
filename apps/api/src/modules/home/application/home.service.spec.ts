@@ -31,8 +31,22 @@ describe('HomeService', () => {
 
   describe('getHero', () => {
     const mockHeroItems = [
-      { id: '1', title: 'Movie 1', type: MediaType.MOVIE },
-      { id: '2', title: 'Show 1', type: MediaType.SHOW },
+      { 
+        id: '1', 
+        title: 'Movie 1', 
+        type: MediaType.MOVIE, 
+        primaryTrailerKey: 'key1',
+        isNew: true,
+        isClassic: false,
+      },
+      { 
+        id: '2', 
+        title: 'Show 1', 
+        type: MediaType.SHOW,
+        showProgress: { season: 1, episode: 1, label: 'S1E1' },
+        isNew: false,
+        isClassic: true,
+      },
     ];
 
     it('should return hero items from repository with default limit 3', async () => {
@@ -42,6 +56,7 @@ describe('HomeService', () => {
 
       expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(3, undefined);
       expect(result).toEqual(mockHeroItems);
+      expect(result[1].showProgress).toBeDefined();
     });
 
     it('should pass type parameter to repository', async () => {

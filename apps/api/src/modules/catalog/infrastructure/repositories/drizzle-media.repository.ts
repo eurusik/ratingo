@@ -259,6 +259,79 @@ export class DrizzleMediaRepository implements IMediaRepository {
         .orderBy(desc(schema.mediaStats.popularityScore), desc(schema.mediaStats.ratingoScore))
         .limit(limit);
 
+      // --- Post-fetch enrichment for Shows ---
+      const showIds = results
+        .filter(r => r.type === MediaType.SHOW)
+        .map(r => r.id);
+
+      const showProgressMap = new Map<string, any>();
+
+      if (showIds.length > 0) {
+        
+        const showsData = await this.db
+          .select({
+            mediaItemId: schema.shows.mediaItemId,
+            showId: schema.shows.id,
+            lastAirDate: schema.shows.lastAirDate,
+            nextAirDate: schema.shows.nextAirDate,
+          })
+          .from(schema.shows)
+          .where(inArray(schema.shows.mediaItemId, showIds));
+        
+        const internalShowIds = showsData.map(s => s.showId);
+        
+        // Find the latest episode for each show
+        // Note: This might be heavy if we have MANY shows, but for Hero (limit 3-10) it is fine.
+        const episodes = await this.db
+          .select({
+            showId: schema.episodes.showId,
+            seasonNumber: schema.episodes.seasonId,
+            seasonNum: schema.seasons.number,
+            episodeNumber: schema.episodes.number,
+            airDate: schema.episodes.airDate,
+          })
+          .from(schema.episodes)
+          .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))
+          .where(
+            and(
+              inArray(schema.episodes.showId, internalShowIds),
+              lte(schema.episodes.airDate, new Date())
+            )
+          )
+          .orderBy(desc(schema.episodes.airDate));
+
+        // Group by showId and pick first (latest)
+        const latestEpisodeMap = new Map<string, any>();
+        for (const ep of episodes) {
+          if (!latestEpisodeMap.has(ep.showId)) {
+            latestEpisodeMap.set(ep.showId, ep);
+          }
+        }
+
+        // Build the result map
+        for (const show of showsData) {
+          const ep = latestEpisodeMap.get(show.showId);
+          if (ep) {
+            showProgressMap.set(show.mediaItemId, {
+              season: ep.seasonNum,
+              episode: ep.episodeNumber,
+              label: `S${ep.seasonNum}E${ep.episodeNumber}`,
+              lastAirDate: show.lastAirDate,
+              nextAirDate: show.nextAirDate,
+            });
+          } else if (show.lastAirDate) {
+             // Fallback if episodes are missing but show has dates
+             showProgressMap.set(show.mediaItemId, {
+              season: 0,
+              episode: 0,
+              label: 'Ended',
+              lastAirDate: show.lastAirDate,
+              nextAirDate: show.nextAirDate,
+            });
+          }
+        }
+      }
+
       const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
       const fiveYearsAgo = new Date(now.getFullYear() - 5, now.getMonth(), now.getDate());
 
@@ -267,7 +340,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
         const videos = item.videos as any[];
         const primaryTrailerKey = videos?.length > 0 ? videos[0].key : null;
         
-        return {
+        const baseItem = {
           id: item.id,
           type: item.type,
           slug: item.slug,
@@ -290,6 +363,15 @@ export class DrizzleMediaRepository implements IMediaRepository {
             }
           }
         };
+
+        if (item.type === MediaType.SHOW) {
+          const progress = showProgressMap.get(item.id);
+          if (progress) {
+            return { ...baseItem, showProgress: progress };
+          }
+        }
+
+        return baseItem;
       });
     } catch (error) {
       this.logger.error(`Failed to find hero items: ${error.message}`);

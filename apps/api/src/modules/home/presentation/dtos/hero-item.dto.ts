@@ -54,4 +54,17 @@ export class HeroItemDto {
 
   @ApiProperty({ example: true, description: 'True if released more than 5 years ago' })
   isClassic: boolean;
+
+  @ApiProperty({ 
+    example: { season: 5, episode: 5, label: 'S5E5', lastAirDate: '2025-12-14' }, 
+    description: 'Progress info for TV Shows (latest aired episode)',
+    required: false 
+  })
+  showProgress?: {
+    season: number;
+    episode: number;
+    label: string;
+    lastAirDate?: Date | null;
+    nextAirDate?: Date | null;
+  };
 }
