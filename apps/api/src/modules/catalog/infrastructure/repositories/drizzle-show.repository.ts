@@ -2,9 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq } from 'drizzle-orm';
+import { eq, asc, and, gte, lte } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { IShowRepository, ShowListItem } from '../../domain/repositories/show.repository.interface';
+import { IShowRepository, ShowListItem, CalendarEpisode } from '../../domain/repositories/show.repository.interface';
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 
@@ -123,6 +123,49 @@ export class DrizzleShowRepository implements IShowRepository {
         }
       }
     }
+  }
+
+  /**
+   * Finds episodes airing within a date range for the global calendar.
+   */
+  async findEpisodesByDateRange(startDate: Date, endDate: Date): Promise<CalendarEpisode[]> {
+    const results = await this.db
+      .select({
+        showId: schema.shows.mediaItemId,
+        showTitle: schema.mediaItems.title,
+        posterPath: schema.mediaItems.posterPath,
+        seasonNumber: schema.seasons.number,
+        episodeNumber: schema.episodes.number,
+        title: schema.episodes.title,
+        overview: schema.episodes.overview,
+        airDate: schema.episodes.airDate,
+        runtime: schema.episodes.runtime,
+        stillPath: schema.episodes.stillPath,
+      })
+      .from(schema.episodes)
+      .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))
+      .innerJoin(schema.shows, eq(schema.episodes.showId, schema.shows.id))
+      .innerJoin(schema.mediaItems, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+      .where(
+        and(
+          gte(schema.episodes.airDate, startDate),
+          lte(schema.episodes.airDate, endDate)
+        )
+      )
+      .orderBy(asc(schema.episodes.airDate));
+
+    return results.map(row => ({
+      showId: row.showId,
+      showTitle: row.showTitle,
+      posterPath: row.posterPath,
+      seasonNumber: row.seasonNumber,
+      episodeNumber: row.episodeNumber,
+      title: row.title,
+      overview: row.overview,
+      airDate: row.airDate!, // Safe assertion due to query constraint
+      runtime: row.runtime,
+      stillPath: row.stillPath,
+    }));
   }
 
   /**
