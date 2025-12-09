@@ -144,6 +144,13 @@ export class DrizzleShowRepository implements IShowRepository {
         rating: schema.mediaItems.rating,
         voteCount: schema.mediaItems.voteCount,
         
+        ratingImdb: schema.mediaItems.ratingImdb,
+        voteCountImdb: schema.mediaItems.voteCountImdb,
+        ratingTrakt: schema.mediaItems.ratingTrakt,
+        voteCountTrakt: schema.mediaItems.voteCountTrakt,
+        ratingMetacritic: schema.mediaItems.ratingMetacritic,
+        ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+        
         // Show Details
         totalSeasons: schema.shows.totalSeasons,
         totalEpisodes: schema.shows.totalEpisodes,
@@ -153,6 +160,8 @@ export class DrizzleShowRepository implements IShowRepository {
 
         // Stats
         ratingoScore: schema.mediaStats.ratingoScore,
+        qualityScore: schema.mediaStats.qualityScore,
+        popularityScore: schema.mediaStats.popularityScore,
         
         // Internal Show ID (needed for seasons join)
         showId: schema.shows.id,
@@ -194,7 +203,38 @@ export class DrizzleShowRepository implements IShowRepository {
     const { showId, ...showData } = show;
 
     return {
-      ...showData,
+      // Basic fields
+      id: showData.id,
+      tmdbId: showData.tmdbId,
+      title: showData.title,
+      originalTitle: showData.originalTitle,
+      slug: showData.slug,
+      overview: showData.overview,
+      posterPath: showData.posterPath,
+      backdropPath: showData.backdropPath,
+      rating: showData.rating,
+      voteCount: showData.voteCount,
+      
+      // Show specific
+      totalSeasons: showData.totalSeasons,
+      totalEpisodes: showData.totalEpisodes,
+      status: showData.status,
+      lastAirDate: showData.lastAirDate,
+      nextAirDate: showData.nextAirDate,
+      
+      // Nested Objects
+      stats: {
+        ratingoScore: showData.ratingoScore,
+        qualityScore: showData.qualityScore,
+        popularityScore: showData.popularityScore,
+      },
+      externalRatings: {
+        imdb: showData.ratingImdb ? { rating: showData.ratingImdb, voteCount: showData.voteCountImdb } : null,
+        trakt: showData.ratingTrakt ? { rating: showData.ratingTrakt, voteCount: showData.voteCountTrakt } : null,
+        metacritic: showData.ratingMetacritic ? { rating: showData.ratingMetacritic } : null,
+        rottenTomatoes: showData.ratingRottenTomatoes ? { rating: showData.ratingRottenTomatoes } : null,
+      },
+      
       genres,
       seasons,
     };

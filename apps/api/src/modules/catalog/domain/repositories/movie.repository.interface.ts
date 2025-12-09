@@ -16,13 +16,23 @@ export interface MovieWithMedia {
   rating: number;
   voteCount: number;
   releaseDate: Date | null;
+  
+  stats: {
+    ratingoScore: number | null;
+    qualityScore: number | null;
+    popularityScore: number | null;
+  };
+
+  externalRatings: {
+    imdb: { rating: number; voteCount?: number | null } | null;
+    trakt: { rating: number; voteCount?: number | null } | null;
+    metacritic: { rating: number; voteCount?: number | null } | null;
+    rottenTomatoes: { rating: number; voteCount?: number | null } | null;
+  };
+
   theatricalReleaseDate: Date | null;
   digitalReleaseDate: Date | null;
   runtime: number | null;
-  // Scores
-  ratingoScore: number | null;
-  qualityScore: number | null;
-  popularityScore: number | null;
 
   genres: Array<{ id: string; name: string; slug: string }>;
 }
@@ -53,12 +63,23 @@ export interface MovieDetails {
   voteCount: number;
   releaseDate: Date | null;
   
+  stats: {
+    ratingoScore: number | null;
+    qualityScore: number | null;
+    popularityScore: number | null;
+  };
+
+  externalRatings: {
+    imdb: { rating: number; voteCount?: number | null } | null;
+    trakt: { rating: number; voteCount?: number | null } | null;
+    metacritic: { rating: number; voteCount?: number | null } | null;
+    rottenTomatoes: { rating: number; voteCount?: number | null } | null;
+  };
+
   runtime: number | null;
   budget: number | null;
   revenue: number | null;
   status: string | null;
-  
-  ratingoScore: number | null;
   
   genres: Array<{ id: string; name: string; slug: string }>;
 }

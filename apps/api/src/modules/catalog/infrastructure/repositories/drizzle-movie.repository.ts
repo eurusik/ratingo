@@ -87,6 +87,14 @@ export class DrizzleMovieRepository implements IMovieRepository {
         voteCount: schema.mediaItems.voteCount,
         releaseDate: schema.mediaItems.releaseDate,
         
+        // External Ratings
+        ratingImdb: schema.mediaItems.ratingImdb,
+        voteCountImdb: schema.mediaItems.voteCountImdb,
+        ratingTrakt: schema.mediaItems.ratingTrakt,
+        voteCountTrakt: schema.mediaItems.voteCountTrakt,
+        ratingMetacritic: schema.mediaItems.ratingMetacritic,
+        ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+        
         // Movie Details
         runtime: schema.movies.runtime,
         budget: schema.movies.budget,
@@ -95,6 +103,8 @@ export class DrizzleMovieRepository implements IMovieRepository {
         
         // Stats
         ratingoScore: schema.mediaStats.ratingoScore,
+        qualityScore: schema.mediaStats.qualityScore,
+        popularityScore: schema.mediaStats.popularityScore,
       })
       .from(schema.mediaItems)
       .innerJoin(schema.movies, eq(schema.mediaItems.id, schema.movies.mediaItemId))
@@ -117,7 +127,38 @@ export class DrizzleMovieRepository implements IMovieRepository {
       .where(eq(schema.mediaGenres.mediaItemId, movie.id));
 
     return {
-      ...movie,
+      // Basic fields
+      id: movie.id,
+      tmdbId: movie.tmdbId,
+      title: movie.title,
+      originalTitle: movie.originalTitle,
+      slug: movie.slug,
+      overview: movie.overview,
+      posterPath: movie.posterPath,
+      backdropPath: movie.backdropPath,
+      rating: movie.rating,
+      voteCount: movie.voteCount,
+      releaseDate: movie.releaseDate,
+      
+      // Movie specific
+      runtime: movie.runtime,
+      budget: movie.budget,
+      revenue: movie.revenue,
+      status: movie.status,
+      
+      // Nested Objects
+      stats: {
+        ratingoScore: movie.ratingoScore,
+        qualityScore: movie.qualityScore,
+        popularityScore: movie.popularityScore,
+      },
+      externalRatings: {
+        imdb: movie.ratingImdb ? { rating: movie.ratingImdb, voteCount: movie.voteCountImdb } : null,
+        trakt: movie.ratingTrakt ? { rating: movie.ratingTrakt, voteCount: movie.voteCountTrakt } : null,
+        metacritic: movie.ratingMetacritic ? { rating: movie.ratingMetacritic } : null,
+        rottenTomatoes: movie.ratingRottenTomatoes ? { rating: movie.ratingRottenTomatoes } : null,
+      },
+      
       genres,
     };
   }
@@ -136,6 +177,15 @@ export class DrizzleMovieRepository implements IMovieRepository {
     rating: schema.mediaItems.rating,
     voteCount: schema.mediaItems.voteCount,
     releaseDate: schema.mediaItems.releaseDate,
+    
+    // External Ratings
+    ratingImdb: schema.mediaItems.ratingImdb,
+    voteCountImdb: schema.mediaItems.voteCountImdb,
+    ratingTrakt: schema.mediaItems.ratingTrakt,
+    voteCountTrakt: schema.mediaItems.voteCountTrakt,
+    ratingMetacritic: schema.mediaItems.ratingMetacritic,
+    ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+
     theatricalReleaseDate: schema.movies.theatricalReleaseDate,
     digitalReleaseDate: schema.movies.digitalReleaseDate,
     runtime: schema.movies.runtime,
@@ -309,7 +359,36 @@ export class DrizzleMovieRepository implements IMovieRepository {
     });
 
     return movies.map(m => ({
-      ...m,
+      // Basic
+      id: m.id,
+      mediaItemId: m.mediaItemId,
+      tmdbId: m.tmdbId,
+      title: m.title,
+      slug: m.slug,
+      overview: m.overview,
+      posterPath: m.posterPath,
+      backdropPath: m.backdropPath,
+      popularity: m.popularity,
+      rating: m.rating,
+      voteCount: m.voteCount,
+      releaseDate: m.releaseDate,
+      theatricalReleaseDate: m.theatricalReleaseDate,
+      digitalReleaseDate: m.digitalReleaseDate,
+      runtime: m.runtime,
+
+      // Nested Stats & Ratings
+      stats: {
+        ratingoScore: m.ratingoScore,
+        qualityScore: m.qualityScore,
+        popularityScore: m.popularityScore,
+      },
+      externalRatings: {
+        imdb: m.ratingImdb ? { rating: m.ratingImdb, voteCount: m.voteCountImdb } : null,
+        trakt: m.ratingTrakt ? { rating: m.ratingTrakt, voteCount: m.voteCountTrakt } : null,
+        metacritic: m.ratingMetacritic ? { rating: m.ratingMetacritic } : null,
+        rottenTomatoes: m.ratingRottenTomatoes ? { rating: m.ratingRottenTomatoes } : null,
+      },
+
       genres: genresMap.get(m.mediaItemId) || [],
     })) as MovieWithMedia[];
   }

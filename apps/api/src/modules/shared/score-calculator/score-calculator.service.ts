@@ -119,11 +119,12 @@ export class ScoreCalculatorService {
       ratingoScore *= penalties.lowVotePenalty;
     }
 
+    // Return scores normalized to 0-100 range
     return {
-      ratingoScore: this.clamp(ratingoScore, 0, 1),
-      qualityScore: this.clamp(qualityScore / (weights.avgRating + weights.voteConfidence), 0, 1),
-      popularityScore: this.clamp(popularityScore / (weights.tmdbPopularity + weights.traktWatchers), 0, 1),
-      freshnessScore: this.clamp(freshnessNorm, 0, 1),
+      ratingoScore: this.clamp(ratingoScore * 100, 0, 100),
+      qualityScore: this.clamp((qualityScore / (weights.avgRating + weights.voteConfidence)) * 100, 0, 100),
+      popularityScore: this.clamp((popularityScore / (weights.tmdbPopularity + weights.traktWatchers)) * 100, 0, 100),
+      freshnessScore: this.clamp(freshnessNorm * 100, 0, 100),
     };
   }
 

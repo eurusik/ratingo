@@ -34,13 +34,24 @@ export interface ShowDetails {
   rating: number;
   voteCount: number;
   
+  stats: {
+    ratingoScore: number | null;
+    qualityScore: number | null;
+    popularityScore: number | null;
+  };
+
+  externalRatings: {
+    imdb: { rating: number; voteCount?: number | null } | null;
+    trakt: { rating: number; voteCount?: number | null } | null;
+    metacritic: { rating: number; voteCount?: number | null } | null;
+    rottenTomatoes: { rating: number; voteCount?: number | null } | null;
+  };
+
   totalSeasons: number | null;
   totalEpisodes: number | null;
   status: string | null;
   lastAirDate: Date | null;
   nextAirDate: Date | null;
-  
-  ratingoScore: number | null;
   
   genres: Array<{ id: string; name: string; slug: string }>;
 
