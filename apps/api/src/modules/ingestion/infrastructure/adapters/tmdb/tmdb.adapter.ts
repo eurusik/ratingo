@@ -134,6 +134,7 @@ export class TmdbAdapter implements IMetadataProvider {
     }
     
     url.searchParams.append('language', this.DEFAULT_LANG);
+    url.searchParams.append('include_video_language', 'uk,en');
     
     for (const [key, value] of Object.entries(params)) {
       url.searchParams.append(key, value);

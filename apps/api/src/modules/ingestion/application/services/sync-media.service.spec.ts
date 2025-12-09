@@ -7,6 +7,7 @@ import { TvMazeAdapter } from '../../infrastructure/adapters/tvmaze/tvmaze.adapt
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '@/common/enums/video.enum';
 
 describe('SyncMediaService', () => {
   let service: SyncMediaService;
@@ -170,6 +171,35 @@ describe('SyncMediaService', () => {
 
       await expect(service.syncMovie(550)).rejects.toThrow('TMDB API Error');
       expect(mediaRepository.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should sync movie with videos', async () => {
+      const mockVideos = [
+        {
+          key: 'dQw4w9WgXcQ',
+          name: 'Official Trailer',
+          site: VideoSiteEnum.YOUTUBE,
+          type: VideoTypeEnum.TRAILER,
+          official: true,
+          language: VideoLanguageEnum.EN,
+          country: 'US',
+        },
+      ];
+      
+      const mediaWithVideos = { ...mockMedia, videos: mockVideos };
+      tmdbAdapter.getMovie.mockResolvedValue(mediaWithVideos);
+      
+      // Mock other calls with empty/default values
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+
+      await service.syncMovie(550);
+
+      expect(mediaRepository.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          videos: mockVideos,
+        })
+      );
     });
   });
 

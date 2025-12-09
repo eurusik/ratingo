@@ -1,4 +1,5 @@
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../../common/enums/video.enum';
 
 export interface NormalizedEpisode {
   tmdbId?: number;
@@ -20,6 +21,16 @@ export interface NormalizedSeason {
   airDate?: Date | null;
   episodeCount?: number;
   episodes: NormalizedEpisode[];
+}
+
+export interface NormalizedVideo {
+  key: string;
+  name: string;
+  site: VideoSiteEnum;
+  type: VideoTypeEnum;
+  official: boolean;
+  language: VideoLanguageEnum; // iso_639_1
+  country: string;  // iso_3166_1
 }
 
 /**
@@ -99,6 +110,8 @@ export interface NormalizedMedia {
     name: string;
     slug: string;
   }>;
+
+  videos?: NormalizedVideo[];
 
   watchProviders?: Array<{
     providerId: number; // TMDB Provider ID

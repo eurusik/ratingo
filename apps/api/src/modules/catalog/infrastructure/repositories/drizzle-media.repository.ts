@@ -82,6 +82,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           overview: media.overview,
           posterPath: media.posterPath,
           backdropPath: media.backdropPath,
+          videos: media.videos || null,
           
           // Metrics
           rating: media.rating,
@@ -125,6 +126,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
 
             posterPath: media.posterPath,
             backdropPath: media.backdropPath,
+            videos: media.videos || null,
             updatedAt: new Date(),
           },
         })

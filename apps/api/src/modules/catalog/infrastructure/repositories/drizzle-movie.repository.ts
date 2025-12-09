@@ -87,6 +87,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
         rating: schema.mediaItems.rating,
         voteCount: schema.mediaItems.voteCount,
         releaseDate: schema.mediaItems.releaseDate,
+        videos: schema.mediaItems.videos,
         
         // External Ratings
         ratingImdb: schema.mediaItems.ratingImdb,
@@ -138,6 +139,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
       posterPath: movie.posterPath,
       backdropPath: movie.backdropPath,
       releaseDate: movie.releaseDate,
+      videos: movie.videos,
       
       // Movie specific
       runtime: movie.runtime,

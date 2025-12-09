@@ -1,5 +1,6 @@
-import { NormalizedMedia } from '../../../../domain/models/normalized-media.model';
+import { NormalizedMedia, NormalizedVideo } from '../../../../domain/models/normalized-media.model';
 import { MediaType } from '../../../../../../common/enums/media-type.enum';
+import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../../../../common/enums/video.enum';
 import slugify from 'slugify';
 
 /**
@@ -48,6 +49,7 @@ export class TmdbMapper {
         slug: this.generateSlug(g.name),
       })),
       
+      videos: this.extractVideos(data),
       watchProviders: this.extractProviders(data),
       
       details: {},
@@ -157,6 +159,48 @@ export class TmdbMapper {
       digitalReleaseDate,
       releases: allReleases,
     };
+  }
+
+  private static extractVideos(data: any): NormalizedVideo[] {
+    const results = data.videos?.results;
+    if (!Array.isArray(results) || results.length === 0) {
+      return [];
+    }
+
+    return results
+      .filter((v: any) => 
+        v.site === VideoSiteEnum.YOUTUBE && 
+        v.type === VideoTypeEnum.TRAILER &&
+        (v.iso_639_1 === VideoLanguageEnum.EN || v.iso_639_1 === VideoLanguageEnum.UK)
+      )
+      .sort((a: any, b: any) => {
+        // Language Priority: UK > Others
+        const isUkA = a.iso_639_1 === VideoLanguageEnum.UK;
+        const isUkB = b.iso_639_1 === VideoLanguageEnum.UK;
+        if (isUkA !== isUkB) {
+          return isUkA ? -1 : 1;
+        }
+
+        // Official Priority: Official > Non-Official
+        if (a.official !== b.official) {
+          return a.official ? -1 : 1;
+        }
+
+        // Date Priority: Newest > Oldest
+        const dateA = new Date(a.published_at).getTime();
+        const dateB = new Date(b.published_at).getTime();
+        return dateB - dateA;
+      })
+      .slice(0, 3) // Take top 3
+      .map((v: any) => ({
+        key: v.key,
+        name: v.name,
+        site: v.site as VideoSiteEnum,
+        type: v.type as VideoTypeEnum,
+        official: v.official,
+        language: v.iso_639_1 as VideoLanguageEnum,
+        country: v.iso_3166_1 || 'US',
+      }));
   }
 
   private static extractProviders(data: any): any[] {

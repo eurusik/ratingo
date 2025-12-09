@@ -14,6 +14,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { MediaType } from '../common/enums/media-type.enum';
+import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../common/enums/video.enum';
 
 // Define custom tsvector type since Drizzle ORM core doesn't support it natively yet
 const tsvector = customType<{ data: string }>({
@@ -23,6 +24,18 @@ const tsvector = customType<{ data: string }>({
 // --- ENUMS ---
 export const mediaTypeEnum = pgEnum('media_type', [MediaType.MOVIE, MediaType.SHOW]);
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
+
+// --- SHARED TYPES ---
+
+export interface Video {
+  key: string;
+  name: string;
+  site: VideoSiteEnum;
+  type: VideoTypeEnum;
+  official: boolean;
+  language: VideoLanguageEnum; // iso_639_1
+  country: string;  // iso_3166_1
+}
 
 // --- CORE CATALOG ---
 
@@ -47,6 +60,7 @@ export const mediaItems = pgTable(
     // Visuals
     posterPath: text('poster_path'),
     backdropPath: text('backdrop_path'),
+    videos: jsonb('videos').$type<Video[] | null>().default(null),
     
     // Metrics (Denormalized for speed)
     trendingScore: doublePrecision('trending_score').default(0),

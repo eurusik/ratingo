@@ -1,4 +1,4 @@
-import { ReleaseInfo } from '../../../../database/schema';
+import { ReleaseInfo, Video } from '../../../../database/schema';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 
 /**
@@ -15,6 +15,7 @@ export interface MovieWithMedia {
   backdropPath: string | null;
   popularity: number;
   releaseDate: Date | null;
+  videos?: Video[] | null;
   
   stats: {
     ratingoScore: number | null;
@@ -60,6 +61,7 @@ export interface MovieDetails {
   posterPath: string | null;
   backdropPath: string | null;
   releaseDate: Date | null;
+  videos?: Video[] | null;
   
   stats: {
     ratingoScore: number | null;
