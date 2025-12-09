@@ -76,11 +76,11 @@ export class SyncWorker extends WorkerHost {
   private async processTrendingFull(page = 1, syncStats = true): Promise<void> {
     this.logger.log(`Starting full trending sync (page: ${page}, syncStats: ${syncStats})...`);
 
-    // 1. Get trending items from TMDB
+    // Get trending items from TMDB
     const items = await this.syncService.getTrending(page);
     this.logger.log(`Found ${items.length} trending items`);
 
-    // 2. Sync each item sequentially
+    // Sync each item sequentially
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const trendingScore = 10000 - ((page - 1) * 20 + i);
@@ -97,7 +97,7 @@ export class SyncWorker extends WorkerHost {
       }
     }
 
-    // 3. Sync Trakt stats if requested
+    // Sync Trakt stats if requested
     if (syncStats) {
       this.logger.log('Syncing Trakt stats...');
       await this.statsService.syncTrendingStats();
@@ -155,13 +155,13 @@ export class SyncWorker extends WorkerHost {
   private async processNewReleases(region = 'UA', daysBack = 30): Promise<void> {
     this.logger.log(`Syncing new releases (region: ${region}, daysBack: ${daysBack})...`);
 
-    // 1. Get IDs from TMDB discover
+    // Get IDs from TMDB discover
     const tmdbIds = await this.tmdbAdapter.getNewReleaseIds(daysBack, region);
     this.logger.log(`Found ${tmdbIds.length} new releases`);
 
     if (tmdbIds.length === 0) return;
 
-    // 2. Queue sync jobs for each movie
+    // Queue sync jobs for each movie
     const jobs = tmdbIds.map(tmdbId => ({
       name: IngestionJob.SYNC_MOVIE,
       data: { tmdbId },

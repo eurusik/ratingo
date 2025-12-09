@@ -1,5 +1,27 @@
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
+export interface NormalizedEpisode {
+  tmdbId?: number;
+  number: number;
+  title: string;
+  overview?: string | null;
+  airDate?: Date | null;
+  runtime?: number | null;
+  stillPath?: string | null;
+  rating?: number | null;
+}
+
+export interface NormalizedSeason {
+  tmdbId?: number;
+  number: number;
+  name?: string | null;
+  overview?: string | null;
+  posterPath?: string | null;
+  airDate?: Date | null;
+  episodeCount?: number;
+  episodes: NormalizedEpisode[];
+}
+
 /**
  * Represents the "Clean" data structure used internally by our system.
  * All external API responses must be converted to this format before processing.
@@ -57,6 +79,8 @@ export interface NormalizedMedia {
     totalSeasons?: number | null;
     totalEpisodes?: number | null;
     lastAirDate?: Date | null;
+    nextAirDate?: Date | null;
+    seasons?: NormalizedSeason[];
     
     // Release dates (movies only)
     theatricalReleaseDate?: Date | null;

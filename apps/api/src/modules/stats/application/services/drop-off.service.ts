@@ -26,17 +26,17 @@ export class DropOffService {
     this.logger.debug(`Analyzing drop-off for show ${tmdbId}...`);
 
     try {
-      // 1. Fetch episode data from Trakt
+      // Fetch episode data from Trakt
       const episodeData = await this.traktAdapter.getShowEpisodesForAnalysis(tmdbId);
       if (!episodeData || !episodeData.seasons.length) {
         this.logger.warn(`No episode data for show ${tmdbId}`);
         return null;
       }
 
-      // 2. Analyze drop-off
+      // Analyze drop-off
       const analysis = this.dropOffAnalyzer.analyze(episodeData.seasons);
 
-      // 3. Store in database
+      // Store in database
       await this.saveAnalysis(tmdbId, analysis);
 
       this.logger.log(

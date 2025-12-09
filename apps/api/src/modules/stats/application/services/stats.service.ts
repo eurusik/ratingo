@@ -37,7 +37,7 @@ export class StatsService {
   async syncTrendingStats(limit = 20): Promise<{ movies: number; shows: number }> {
     this.logger.log(`Syncing trending stats (limit: ${limit})...`);
 
-    // 1. Fetch trending from Trakt (parallel)
+    // Fetch trending from Trakt (parallel)
     const [trendingMovies, trendingShows] = await Promise.all([
       this.traktAdapter.getTrendingMoviesWithWatchers(limit),
       this.traktAdapter.getTrendingShowsWithWatchers(limit),
@@ -54,7 +54,7 @@ export class StatsService {
       return { movies: 0, shows: 0 };
     }
 
-    // 2. Batch: Get all media items by TMDB IDs (1 query)
+    // Batch: Get all media items by TMDB IDs (1 query)
     const tmdbIds = allTrending.map(t => t.tmdbId);
     const mediaItems = await this.mediaRepository.findManyByTmdbIds(tmdbIds);
     const mediaMap = new Map(mediaItems.map(m => [m.tmdbId, m.id]));
@@ -67,12 +67,12 @@ export class StatsService {
       return { movies: 0, shows: 0 };
     }
 
-    // 3. Batch: Get score data for all existing items (1 query)
+    // Batch: Get score data for all existing items (1 query)
     const mediaIds = existingTrending.map(t => mediaMap.get(t.tmdbId)!);
     const scoreDataList = await this.mediaRepository.findManyForScoring(mediaIds);
     const scoreDataMap = new Map(scoreDataList.map(s => [s.tmdbId, s]));
 
-    // 4. Calculate scores and prepare batch upsert
+    // Calculate scores and prepare batch upsert
     const statsToUpsert: import('../../domain/repositories/stats.repository.interface').MediaStatsData[] = [];
 
     for (const item of existingTrending) {
@@ -102,7 +102,7 @@ export class StatsService {
       });
     }
 
-    // 5. Batch: Upsert all stats (1 query)
+    // Batch: Upsert all stats (1 query)
     await this.statsRepository.bulkUpsert(statsToUpsert);
 
     const moviesUpdated = existingTrending.filter(t => t.type === 'movie').length;

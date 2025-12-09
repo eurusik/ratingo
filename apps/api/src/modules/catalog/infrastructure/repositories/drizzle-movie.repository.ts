@@ -10,6 +10,8 @@ import {
 } from '../../domain/repositories/movie.repository.interface';
 import { ReleaseInfo } from '../../../../database/schema';
 
+type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
+
 /**
  * Drizzle implementation of IMovieRepository.
  * Optimized queries for Now Playing, New Releases, and New on Digital.
@@ -22,6 +24,48 @@ export class DrizzleMovieRepository implements IMovieRepository {
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
+
+  /**
+   * Upserts movie details transactionally.
+   */
+  async upsertDetails(
+    tx: DbTransaction,
+    mediaId: string,
+    details: {
+      runtime?: number | null;
+      budget?: number | null;
+      revenue?: number | null;
+      status?: string | null;
+      theatricalReleaseDate?: Date | null;
+      digitalReleaseDate?: Date | null;
+      releases?: ReleaseInfo[];
+    }
+  ): Promise<void> {
+    await tx
+      .insert(schema.movies)
+      .values({
+        mediaItemId: mediaId,
+        runtime: details.runtime,
+        budget: details.budget,
+        revenue: details.revenue,
+        status: details.status,
+        theatricalReleaseDate: details.theatricalReleaseDate,
+        digitalReleaseDate: details.digitalReleaseDate,
+        releases: details.releases,
+      })
+      .onConflictDoUpdate({
+        target: schema.movies.mediaItemId,
+        set: {
+          runtime: details.runtime,
+          budget: details.budget,
+          revenue: details.revenue,
+          status: details.status,
+          theatricalReleaseDate: details.theatricalReleaseDate,
+          digitalReleaseDate: details.digitalReleaseDate,
+          releases: details.releases,
+        },
+      });
+  }
 
   // Common select fields for movie queries
   private readonly movieSelectFields = {

@@ -10,6 +10,10 @@ import {
 } from '../../domain/repositories/media.repository.interface';
 import { IGenreRepository, GENRE_REPOSITORY } from '../../domain/repositories/genre.repository.interface';
 import { IProviderRepository, PROVIDER_REPOSITORY } from '../../domain/repositories/provider.repository.interface';
+import { IMovieRepository, MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
+import { IShowRepository, SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
+import { DrizzleMovieRepository } from './drizzle-movie.repository';
+import { DrizzleShowRepository } from './drizzle-show.repository';
 import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
 import { eq, inArray } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
@@ -30,6 +34,10 @@ export class DrizzleMediaRepository implements IMediaRepository {
     private readonly genreRepository: IGenreRepository,
     @Inject(PROVIDER_REPOSITORY)
     private readonly providerRepository: IProviderRepository,
+    @Inject(MOVIE_REPOSITORY)
+    private readonly movieRepository: IMovieRepository,
+    @Inject(SHOW_REPOSITORY)
+    private readonly showRepository: IShowRepository,
   ) {}
 
   /**
@@ -124,8 +132,16 @@ export class DrizzleMediaRepository implements IMediaRepository {
 
       const mediaId = mediaItem.id;
 
-      // Upsert type-specific details
-      await this.upsertTypeDetails(tx, mediaId, media);
+      // Delegate type-specific upsert
+      if (media.type === MediaType.MOVIE) {
+        if (this.movieRepository instanceof DrizzleMovieRepository) {
+          await this.movieRepository.upsertDetails(tx, mediaId, media.details || {});
+        }
+      } else {
+        if (this.showRepository instanceof DrizzleShowRepository) {
+          await this.showRepository.upsertDetails(tx, mediaId, media.details || {});
+        }
+      }
 
       // Sync Genres
       await this.genreRepository.syncGenres(tx, mediaId, media.genres);
@@ -255,61 +271,6 @@ export class DrizzleMediaRepository implements IMediaRepository {
       throw new DatabaseException(`Failed to find media for scoring: ${error.message}`, { 
         count: ids.length 
       });
-    }
-  }
-
-  /**
-   * Upserts type-specific details (movie or show).
-   */
-  private async upsertTypeDetails(
-    tx: Parameters<Parameters<typeof this.db.transaction>[0]>[0],
-    mediaId: string,
-    media: NormalizedMedia,
-  ): Promise<void> {
-    if (media.type === MediaType.MOVIE) {
-      await tx
-        .insert(schema.movies)
-        .values({
-          mediaItemId: mediaId,
-          runtime: media.details?.runtime,
-          budget: media.details?.budget,
-          revenue: media.details?.revenue,
-          status: media.status,
-          theatricalReleaseDate: media.details?.theatricalReleaseDate,
-          digitalReleaseDate: media.details?.digitalReleaseDate,
-          releases: media.details?.releases,
-        })
-        .onConflictDoUpdate({
-          target: schema.movies.mediaItemId,
-          set: {
-            runtime: media.details?.runtime,
-            budget: media.details?.budget,
-            revenue: media.details?.revenue,
-            status: media.status,
-            theatricalReleaseDate: media.details?.theatricalReleaseDate,
-            digitalReleaseDate: media.details?.digitalReleaseDate,
-            releases: media.details?.releases,
-          },
-        });
-    } else {
-      await tx
-        .insert(schema.shows)
-        .values({
-          mediaItemId: mediaId,
-          totalSeasons: media.details?.totalSeasons,
-          totalEpisodes: media.details?.totalEpisodes,
-          lastAirDate: media.details?.lastAirDate,
-          status: media.status,
-        })
-        .onConflictDoUpdate({
-          target: schema.shows.mediaItemId,
-          set: {
-            totalSeasons: media.details?.totalSeasons,
-            totalEpisodes: media.details?.totalEpisodes,
-            lastAirDate: media.details?.lastAirDate,
-            status: media.status,
-          },
-        });
     }
   }
 }

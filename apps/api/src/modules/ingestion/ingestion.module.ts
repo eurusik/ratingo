@@ -4,6 +4,7 @@ import { StatsModule } from '../stats/stats.module';
 import { TmdbAdapter } from './infrastructure/adapters/tmdb/tmdb.adapter';
 import { TraktAdapter } from './infrastructure/adapters/trakt/trakt.adapter';
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
+import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { SyncMediaService } from './application/services/sync-media.service';
 import { ConfigModule } from '@nestjs/config';
 import tmdbConfig from '../../config/tmdb.config';
@@ -29,7 +30,7 @@ import { INGESTION_QUEUE } from './ingestion.constants';
     }),
   ],
   controllers: [IngestionController],
-  providers: [TmdbAdapter, TraktAdapter, OmdbAdapter, SyncMediaService, SyncWorker],
+  providers: [TmdbAdapter, TraktAdapter, OmdbAdapter, TvMazeAdapter, SyncMediaService, SyncWorker],
   exports: [SyncMediaService, TraktAdapter],
 })
 export class IngestionModule {}

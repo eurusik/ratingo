@@ -196,6 +196,63 @@ export const shows = pgTable('shows', {
   }>(),
 });
 
+// --- SEASONS & EPISODES (Normalized) ---
+
+export const seasons = pgTable('seasons', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  showId: uuid('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(),
+  tmdbId: integer('tmdb_id'),
+  number: integer('number').notNull(),
+  name: text('name'),
+  overview: text('overview'),
+  posterPath: text('poster_path'),
+  airDate: timestamp('air_date'),
+  episodeCount: integer('episode_count').default(0),
+}, (t) => ({
+  showSeasonIdx: uniqueIndex('seasons_show_number_uniq').on(t.showId, t.number),
+  showIdx: index('seasons_show_idx').on(t.showId),
+}));
+
+export const episodes = pgTable('episodes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  seasonId: uuid('season_id').references(() => seasons.id, { onDelete: 'cascade' }).notNull(),
+  showId: uuid('show_id').references(() => shows.id, { onDelete: 'cascade' }).notNull(), // Denormalized for fast calendar queries
+  
+  tmdbId: integer('tmdb_id'),
+  number: integer('number').notNull(),
+  title: text('title'),
+  overview: text('overview'),
+  airDate: timestamp('air_date'),
+  runtime: integer('runtime'),
+  stillPath: text('still_path'),
+  voteAverage: doublePrecision('vote_average'),
+}, (t) => ({
+  seasonEpisodeIdx: uniqueIndex('episodes_season_number_uniq').on(t.seasonId, t.number),
+  airDateIdx: index('episodes_air_date_idx').on(t.airDate),
+  showIdx: index('episodes_show_idx').on(t.showId),
+  showAirDateIdx: index('episodes_show_air_date_idx').on(t.showId, t.airDate),
+}));
+
+export const seasonsRelations = relations(seasons, ({ one, many }) => ({
+  show: one(shows, {
+    fields: [seasons.showId],
+    references: [shows.id],
+  }),
+  episodes: many(episodes),
+}));
+
+export const episodesRelations = relations(episodes, ({ one }) => ({
+  season: one(seasons, {
+    fields: [episodes.seasonId],
+    references: [seasons.id],
+  }),
+  show: one(shows, {
+    fields: [episodes.showId],
+    references: [shows.id],
+  }),
+}));
+
+
 // --- GENRES ---
 
 export const genres = pgTable('genres', {

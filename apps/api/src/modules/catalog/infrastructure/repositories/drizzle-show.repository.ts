@@ -6,6 +6,9 @@ import { eq } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IShowRepository, ShowListItem } from '../../domain/repositories/show.repository.interface';
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
+import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
+
+type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
 /**
  * Drizzle implementation of IShowRepository.
@@ -17,6 +20,110 @@ export class DrizzleShowRepository implements IShowRepository {
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
+
+  /**
+   * Upserts show details, seasons, and episodes transactionally.
+   */
+  async upsertDetails(
+    tx: DbTransaction,
+    mediaId: string,
+    details: {
+      totalSeasons?: number | null;
+      totalEpisodes?: number | null;
+      lastAirDate?: Date | null;
+      nextAirDate?: Date | null;
+      status?: string | null;
+      seasons?: NormalizedSeason[];
+    }
+  ): Promise<void> {
+    // 1. Upsert Show Base
+    const [show] = await tx
+      .insert(schema.shows)
+      .values({
+        mediaItemId: mediaId,
+        totalSeasons: details.totalSeasons,
+        totalEpisodes: details.totalEpisodes,
+        lastAirDate: details.lastAirDate,
+        nextAirDate: details.nextAirDate,
+        status: details.status,
+      })
+      .onConflictDoUpdate({
+        target: schema.shows.mediaItemId,
+        set: {
+          totalSeasons: details.totalSeasons,
+          totalEpisodes: details.totalEpisodes,
+          lastAirDate: details.lastAirDate,
+          nextAirDate: details.nextAirDate,
+          status: details.status,
+        },
+      })
+      .returning({ id: schema.shows.id });
+
+    const showId = show.id;
+
+    // 2. Upsert Seasons & Episodes
+    if (details.seasons?.length) {
+      for (const season of details.seasons) {
+        // Upsert Season
+        const [seasonRecord] = await tx
+          .insert(schema.seasons)
+          .values({
+            showId: showId,
+            tmdbId: season.tmdbId,
+            number: season.number,
+            name: season.name,
+            overview: season.overview,
+            posterPath: season.posterPath,
+            airDate: season.airDate,
+            episodeCount: season.episodeCount,
+          })
+          .onConflictDoUpdate({
+            target: [schema.seasons.showId, schema.seasons.number],
+            set: {
+              tmdbId: season.tmdbId,
+              name: season.name,
+              overview: season.overview,
+              posterPath: season.posterPath,
+              airDate: season.airDate,
+              episodeCount: season.episodeCount,
+            },
+          })
+          .returning({ id: schema.seasons.id });
+
+        // Upsert Episodes
+        if (season.episodes?.length) {
+          for (const ep of season.episodes) {
+            await tx
+              .insert(schema.episodes)
+              .values({
+                seasonId: seasonRecord.id,
+                showId: showId,
+                tmdbId: ep.tmdbId,
+                number: ep.number,
+                title: ep.title,
+                overview: ep.overview,
+                airDate: ep.airDate,
+                runtime: ep.runtime,
+                stillPath: ep.stillPath,
+                voteAverage: ep.rating,
+              })
+              .onConflictDoUpdate({
+                target: [schema.episodes.seasonId, schema.episodes.number],
+                set: {
+                  tmdbId: ep.tmdbId,
+                  title: ep.title,
+                  overview: ep.overview,
+                  airDate: ep.airDate,
+                  runtime: ep.runtime,
+                  stillPath: ep.stillPath,
+                  voteAverage: ep.rating,
+                },
+              });
+          }
+        }
+      }
+    }
+  }
 
   /**
    * Gets shows for drop-off analysis.

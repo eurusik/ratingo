@@ -320,15 +320,15 @@ export class TraktAdapter {
     }>;
   } | null> {
     try {
-      // 1. Get Trakt ID
+      // Get Trakt ID
       const traktId = await this.getTraktIdByTmdbId(tmdbId);
       if (!traktId) return null;
 
-      // 2. Get seasons
+      // Get seasons
       const seasons = await this.getShowSeasons(traktId);
       if (!seasons.length) return null;
 
-      // 3. Get episodes for each season (parallel, max 5 concurrent)
+      // Get episodes for each season (parallel, max 5 concurrent)
       const seasonData = await Promise.all(
         seasons.slice(0, 10).map(async (s) => ({
           number: s.number,
