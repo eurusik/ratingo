@@ -32,9 +32,7 @@ export interface ShowDetails {
   originalTitle: string | null;
   slug: string;
   overview: string | null;
-  posterPath: string | null;
   poster?: ImageDto | null;
-  backdropPath: string | null;
   backdrop?: ImageDto | null;
   videos?: Video[] | null;
   primaryTrailer?: Video | null;

@@ -12,8 +12,8 @@ export interface MovieWithMedia {
   title: string;
   slug: string;
   overview: string | null;
-  posterPath: string | null;
-  backdropPath: string | null;
+  poster?: ImageDto | null;
+  backdrop?: ImageDto | null;
   popularity: number;
   releaseDate: Date | null;
   videos?: Video[] | null;
@@ -61,9 +61,7 @@ export interface MovieDetails {
   originalTitle: string | null;
   slug: string;
   overview: string | null;
-  posterPath: string | null;
   poster?: ImageDto | null;
-  backdropPath: string | null;
   backdrop?: ImageDto | null;
   releaseDate: Date | null;
   videos?: Video[] | null;
