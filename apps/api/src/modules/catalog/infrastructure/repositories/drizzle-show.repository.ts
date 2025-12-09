@@ -116,6 +116,7 @@ export class DrizzleShowRepository implements IShowRepository {
         ratingoScore: schema.mediaStats.ratingoScore,
         qualityScore: schema.mediaStats.qualityScore,
         popularityScore: schema.mediaStats.popularityScore,
+        watchersCount: schema.mediaStats.watchersCount,
         
         // Internal Show ID (needed for seasons join)
         showId: schema.shows.id,
@@ -185,6 +186,7 @@ export class DrizzleShowRepository implements IShowRepository {
         ratingoScore: showData.ratingoScore,
         qualityScore: showData.qualityScore,
         popularityScore: showData.popularityScore,
+        watchersCount: showData.watchersCount,
       },
       externalRatings: {
         tmdb: { rating: showData.rating, voteCount: showData.voteCount },

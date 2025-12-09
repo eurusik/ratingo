@@ -89,6 +89,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
         ratingoScore: schema.mediaStats.ratingoScore,
         qualityScore: schema.mediaStats.qualityScore,
         popularityScore: schema.mediaStats.popularityScore,
+        watchersCount: schema.mediaStats.watchersCount,
       })
       .from(schema.mediaItems)
       .innerJoin(schema.movies, eq(schema.mediaItems.id, schema.movies.mediaItemId))
@@ -139,6 +140,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
         ratingoScore: movie.ratingoScore,
         qualityScore: movie.qualityScore,
         popularityScore: movie.popularityScore,
+        watchersCount: movie.watchersCount,
       },
       externalRatings: {
         tmdb: { rating: movie.rating, voteCount: movie.voteCount },
@@ -181,6 +183,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
     ratingoScore: schema.mediaStats.ratingoScore,
     qualityScore: schema.mediaStats.qualityScore,
     popularityScore: schema.mediaStats.popularityScore,
+    watchersCount: schema.mediaStats.watchersCount,
   };
 
   /**
@@ -368,6 +371,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
         ratingoScore: m.ratingoScore,
         qualityScore: m.qualityScore,
         popularityScore: m.popularityScore,
+        watchersCount: m.watchersCount,
       },
       externalRatings: {
         tmdb: { rating: m.rating, voteCount: m.voteCount },

@@ -38,6 +38,8 @@ describe('HomeService', () => {
         primaryTrailerKey: 'key1',
         isNew: true,
         isClassic: false,
+        overview: 'Overview 1',
+        stats: { ratingoScore: 80, qualityScore: 80, watchersCount: 100 },
       },
       { 
         id: '2', 
@@ -46,6 +48,8 @@ describe('HomeService', () => {
         showProgress: { season: 1, episode: 1, label: 'S1E1' },
         isNew: false,
         isClassic: true,
+        overview: 'Overview 2',
+        stats: { ratingoScore: 90, qualityScore: 90, watchersCount: 500 },
       },
     ];
 

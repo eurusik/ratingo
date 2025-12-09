@@ -120,6 +120,9 @@ export class RatingoStatsDto {
 
   @ApiProperty({ example: 45.2, description: 'Popularity Score (0-100)', required: false, nullable: true })
   popularityScore?: number | null;
+
+  @ApiProperty({ example: 1250, description: 'Number of active watchers (Trakt)', required: false, nullable: true })
+  watchersCount?: number | null;
 }
 
 export class ExternalRatingItemDto {

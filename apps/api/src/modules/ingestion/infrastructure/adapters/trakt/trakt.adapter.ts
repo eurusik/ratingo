@@ -114,10 +114,10 @@ export class TraktAdapter {
   }
 
   /**
-   * Get movie ratings by TMDB ID.
-   * First looks up the Trakt ID, then fetches ratings.
+   * Get movie ratings and watchers by TMDB ID.
+   * First looks up the Trakt ID, then fetches ratings and watchers.
    */
-  async getMovieRatingsByTmdbId(tmdbId: number): Promise<{ rating: number; votes: number } | null> {
+  async getMovieRatingsByTmdbId(tmdbId: number): Promise<{ rating: number; votes: number; watchers: number } | null> {
     try {
       // Step 1: Lookup Trakt ID by TMDB ID
       const results = await this.fetch<any[]>(`/search/tmdb/${tmdbId}?type=movie`);
@@ -126,33 +126,63 @@ export class TraktAdapter {
       }
       const traktId = results[0].movie.ids.trakt;
 
-      // Step 2: Get ratings using Trakt ID
-      const ratings = await this.getMovieRatings(traktId);
-      return { rating: ratings.rating, votes: ratings.votes };
+      // Step 2: Get ratings and watchers using Trakt ID (Parallel, resilient)
+      const [ratingsResult, watchersResult] = await Promise.allSettled([
+        this.getMovieRatings(traktId),
+        this.getMovieWatchers(traktId)
+      ]);
+
+      if (ratingsResult.status === 'rejected') {
+        throw ratingsResult.reason; // Critical failure if ratings fail
+      }
+
+      const ratings = ratingsResult.value;
+      const watchers = watchersResult.status === 'fulfilled' ? watchersResult.value : 0;
+
+      return { 
+        rating: ratings.rating, 
+        votes: ratings.votes,
+        watchers: watchers
+      };
     } catch (error) {
-      this.logger.warn(`Failed to get Trakt ratings for TMDB ${tmdbId}: ${error}`);
+      this.logger.warn(`Failed to get Trakt data for TMDB ${tmdbId}: ${error}`);
       return null;
     }
   }
 
   /**
-   * Get show ratings by TMDB ID.
+   * Get show ratings and watchers by TMDB ID.
    * First looks up the Trakt ID, then fetches ratings.
    */
-  async getShowRatingsByTmdbId(tmdbId: number): Promise<{ rating: number; votes: number } | null> {
+  async getShowRatingsByTmdbId(tmdbId: number): Promise<{ rating: number; votes: number; watchers: number } | null> {
     try {
-      // Step 1: Lookup Trakt ID by TMDB ID
+      // Lookup Trakt ID by TMDB ID
       const results = await this.fetch<any[]>(`/search/tmdb/${tmdbId}?type=show`);
       if (!results.length || !results[0]?.show?.ids?.trakt) {
         return null;
       }
       const traktId = results[0].show.ids.trakt;
 
-      // Step 2: Get ratings using Trakt ID
-      const ratings = await this.getShowRatings(traktId);
-      return { rating: ratings.rating, votes: ratings.votes };
+      // Get ratings and watchers using Trakt ID (Parallel, resilient)
+      const [ratingsResult, watchersResult] = await Promise.allSettled([
+        this.getShowRatings(traktId),
+        this.getShowWatchers(traktId)
+      ]);
+
+      if (ratingsResult.status === 'rejected') {
+        throw ratingsResult.reason;
+      }
+
+      const ratings = ratingsResult.value;
+      const watchers = watchersResult.status === 'fulfilled' ? watchersResult.value : 0;
+
+      return { 
+        rating: ratings.rating, 
+        votes: ratings.votes,
+        watchers: watchers
+      };
     } catch (error) {
-      this.logger.warn(`Failed to get Trakt ratings for TMDB ${tmdbId}: ${error}`);
+      this.logger.warn(`Failed to get Trakt data for TMDB ${tmdbId}: ${error}`);
       return null;
     }
   }

@@ -115,6 +115,9 @@ export interface NormalizedMedia {
   qualityScore?: number;      // Rating-based component (0-1)
   popularityScore?: number;   // Popularity-based component (0-1)
   freshnessScore?: number;    // Time-based component (0-1)
+  
+  /** Number of active watchers (Trakt/Realtime) */
+  watchersCount?: number;
 
   /** First air date for shows */
   releaseDate?: Date | null;

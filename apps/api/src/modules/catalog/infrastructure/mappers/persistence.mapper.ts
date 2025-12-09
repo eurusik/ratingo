@@ -84,6 +84,7 @@ export class PersistenceMapper {
       qualityScore: media.qualityScore,
       popularityScore: media.popularityScore,
       freshnessScore: media.freshnessScore,
+      watchersCount: media.watchersCount ?? 0,
       updatedAt: new Date(),
     };
   }

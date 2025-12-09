@@ -8,6 +8,9 @@ export class HeroStatsDto {
 
   @ApiProperty({ example: 88.5 })
   qualityScore: number;
+
+  @ApiProperty({ example: 1250, description: 'Number of active watchers (Trakt)', required: false })
+  watchersCount?: number;
 }
 
 export class HeroExternalRatingsDto {
@@ -30,6 +33,9 @@ export class HeroItemDto {
 
   @ApiProperty({ example: 'Fight Club' })
   originalTitle: string;
+
+  @ApiProperty({ example: 'An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more.' })
+  overview: string | null;
 
   @ApiProperty({ example: 'ogFrkWefoLQ', description: 'YouTube video key for primary trailer', required: false, nullable: true })
   primaryTrailerKey?: string | null;

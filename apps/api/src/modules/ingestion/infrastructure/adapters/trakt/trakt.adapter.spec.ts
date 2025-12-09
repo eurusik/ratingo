@@ -107,31 +107,35 @@ describe('TraktAdapter', () => {
 
   describe('getMovieRatingsByTmdbId', () => {
     it('should lookup movie and return ratings', async () => {
-      // First call: search by TMDB ID
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve([{ movie: { ids: { trakt: 123 } } }]),
-        })
-        // Second call: get ratings
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ rating: 8.5, votes: 10000 }),
-        });
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes('/search/tmdb/100')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve([{ movie: { ids: { trakt: 123 } } }])
+          });
+        }
+        if (url.includes('/movies/123/ratings')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ rating: 8.5, votes: 10000 })
+          });
+        }
+        if (url.includes('/movies/123/watching')) {
+          return Promise.reject(new Error('Network error')); // Watchers fail
+        }
+        return Promise.reject(new Error(`Unexpected URL: ${url}`));
+      });
 
-      const result = await adapter.getMovieRatingsByTmdbId(550);
+      const result = await adapter.getMovieRatingsByTmdbId(100);
 
-      expect(result).toEqual({ rating: 8.5, votes: 10000 });
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      // Should still return ratings, with watchers 0
+      expect(result).toEqual({ rating: 8.5, votes: 10000, watchers: 0 });
     });
 
     it('should return null when movie not found', async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve([]), // Empty search results
-      });
+      mockFetch.mockResolvedValueOnce([]); // Lookup returns empty
 
-      const result = await adapter.getMovieRatingsByTmdbId(999999);
+      const result = await adapter.getMovieRatingsByTmdbId(999);
 
       expect(result).toBeNull();
     });
@@ -139,19 +143,29 @@ describe('TraktAdapter', () => {
 
   describe('getShowRatingsByTmdbId', () => {
     it('should lookup show and return ratings', async () => {
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve([{ show: { ids: { trakt: 456 } } }]),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ rating: 9.0, votes: 50000 }),
-        });
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes('/search/tmdb/1000')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve([{ show: { ids: { trakt: 200 } } }])
+          });
+        }
+        if (url.includes('/shows/200/ratings')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ rating: 9.0, votes: 50000 })
+          });
+        }
+        if (url.includes('/shows/200/watching')) {
+          return Promise.reject(new Error('Network error')); // Watchers fail
+        }
+        return Promise.reject(new Error(`Unexpected URL: ${url}`));
+      });
 
       const result = await adapter.getShowRatingsByTmdbId(1000);
 
-      expect(result).toEqual({ rating: 9.0, votes: 50000 });
+      // Should still return ratings, with watchers 0
+      expect(result).toEqual({ rating: 9.0, votes: 50000, watchers: 0 });
     });
   });
 

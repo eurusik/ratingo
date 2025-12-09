@@ -108,6 +108,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
                 qualityScore: statsInsert.qualityScore,
                 popularityScore: statsInsert.popularityScore,
                 freshnessScore: statsInsert.freshnessScore,
+                watchersCount: statsInsert.watchersCount,
                 updatedAt: new Date(),
               },
             });
@@ -239,6 +240,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           slug: schema.mediaItems.slug,
           title: schema.mediaItems.title,
           originalTitle: schema.mediaItems.originalTitle,
+          overview: schema.mediaItems.overview,
           posterPath: schema.mediaItems.posterPath,
           backdropPath: schema.mediaItems.backdropPath,
           releaseDate: schema.mediaItems.releaseDate,
@@ -247,6 +249,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           // Stats
           ratingoScore: schema.mediaStats.ratingoScore,
           qualityScore: schema.mediaStats.qualityScore,
+          watchersCount: schema.mediaStats.watchersCount,
           
           // External
           rating: schema.mediaItems.rating, // TMDB Rating
@@ -346,6 +349,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           slug: item.slug,
           title: item.title,
           originalTitle: item.originalTitle,
+          overview: item.overview,
           primaryTrailerKey,
           poster: ImageMapper.toPoster(item.posterPath),
           backdrop: ImageMapper.toBackdrop(item.backdropPath),
@@ -355,6 +359,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           stats: {
             ratingoScore: item.ratingoScore,
             qualityScore: item.qualityScore,
+            watchersCount: item.watchersCount,
           },
           externalRatings: {
             tmdb: {

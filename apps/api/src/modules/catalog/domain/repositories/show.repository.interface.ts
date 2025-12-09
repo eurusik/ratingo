@@ -45,6 +45,7 @@ export interface ShowDetails {
     ratingoScore: number | null;
     qualityScore: number | null;
     popularityScore: number | null;
+    watchersCount: number | null;
   };
 
   externalRatings: {
