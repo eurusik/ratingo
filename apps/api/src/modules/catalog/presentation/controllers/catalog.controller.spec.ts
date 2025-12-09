@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogController } from './catalog.controller';
 import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
+import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 
 describe('CatalogController', () => {
   let controller: CatalogController;
   let movieRepository: any;
+  let showRepository: any;
 
   beforeEach(async () => {
     const mockMovieRepository = {
@@ -13,15 +15,37 @@ describe('CatalogController', () => {
       findNewOnDigital: jest.fn().mockResolvedValue([{ id: 3, title: 'Digital Movie' }]),
     };
 
+    const mockShowRepository = {
+      findEpisodesByDateRange: jest.fn().mockResolvedValue([
+        { 
+          airDate: new Date('2024-01-01T10:00:00Z'), 
+          title: 'Ep 1',
+          showTitle: 'Show A'
+        },
+        { 
+          airDate: new Date('2024-01-01T11:00:00Z'), 
+          title: 'Ep 2',
+          showTitle: 'Show B'
+        },
+        { 
+          airDate: new Date('2024-01-02T10:00:00Z'), 
+          title: 'Ep 3',
+          showTitle: 'Show A'
+        }
+      ]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CatalogController],
       providers: [
         { provide: MOVIE_REPOSITORY, useValue: mockMovieRepository },
+        { provide: SHOW_REPOSITORY, useValue: mockShowRepository },
       ],
     }).compile();
 
     controller = module.get<CatalogController>(CatalogController);
     movieRepository = module.get(MOVIE_REPOSITORY);
+    showRepository = module.get(SHOW_REPOSITORY);
   });
 
   describe('getNowPlaying', () => {
@@ -65,6 +89,30 @@ describe('CatalogController', () => {
       expect(movieRepository.findNewOnDigital).toHaveBeenCalledWith(
         expect.objectContaining({ limit: 25 })
       );
+    });
+  });
+
+  describe('getCalendar', () => {
+    it('should return grouped episodes by date', async () => {
+      const result = await controller.getCalendar('2024-01-01', 7);
+
+      expect(showRepository.findEpisodesByDateRange).toHaveBeenCalled();
+      
+      // Check grouping logic
+      expect(result.days).toHaveLength(2);
+      
+      const day1 = result.days.find(d => d.date === '2024-01-01');
+      expect(day1).toBeDefined();
+      expect(day1.episodes).toHaveLength(2);
+
+      const day2 = result.days.find(d => d.date === '2024-01-02');
+      expect(day2).toBeDefined();
+      expect(day2.episodes).toHaveLength(1);
+    });
+
+    it('should use default parameters if not provided', async () => {
+      await controller.getCalendar();
+      expect(showRepository.findEpisodesByDateRange).toHaveBeenCalled();
     });
   });
 });
