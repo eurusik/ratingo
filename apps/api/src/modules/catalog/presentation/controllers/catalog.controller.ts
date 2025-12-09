@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Inject, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Query, Inject, DefaultValuePipe, ParseIntPipe, Param, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { IMovieRepository, MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
 import { IShowRepository, SHOW_REPOSITORY, CalendarEpisode } from '../../domain/repositories/show.repository.interface';
@@ -29,8 +29,6 @@ export class CatalogController {
     @Query('days', new DefaultValuePipe(7), ParseIntPipe) days?: number,
   ) {
     const start = startDateString ? new Date(startDateString) : new Date();
-    // Normalize to start of the day UTC?? Or keep as provided.
-    // Let's assume input is correct point in time.
     
     const end = new Date(start);
     end.setDate(end.getDate() + (days || 7));
@@ -150,5 +148,31 @@ export class CatalogController {
         offset: offset || 0,
       },
     };
+  }
+
+  @Get('movies/:slug')
+  @ApiOperation({
+    summary: 'Get movie details by slug',
+    description: 'Returns full movie details including genres and stats.',
+  })
+  async getMovieBySlug(@Param('slug') slug: string) {
+    const movie = await this.movieRepository.findBySlug(slug);
+    if (!movie) {
+      throw new NotFoundException(`Movie with slug "${slug}" not found`);
+    }
+    return movie;
+  }
+
+  @Get('shows/:slug')
+  @ApiOperation({
+    summary: 'Get show details by slug',
+    description: 'Returns full show details including seasons list.',
+  })
+  async getShowBySlug(@Param('slug') slug: string) {
+    const show = await this.showRepository.findBySlug(slug);
+    if (!show) {
+      throw new NotFoundException(`Show with slug "${slug}" not found`);
+    }
+    return show;
   }
 }

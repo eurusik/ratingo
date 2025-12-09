@@ -67,6 +67,61 @@ export class DrizzleMovieRepository implements IMovieRepository {
       });
   }
 
+  /**
+   * Finds full movie details by slug.
+   */
+  async findBySlug(slug: string): Promise<any> {
+    // Fetch Main Data (Movie + MediaItem + Stats)
+    const result = await this.db
+      .select({
+        // MediaItem
+        id: schema.mediaItems.id,
+        tmdbId: schema.mediaItems.tmdbId,
+        title: schema.mediaItems.title,
+        originalTitle: schema.mediaItems.originalTitle,
+        slug: schema.mediaItems.slug,
+        overview: schema.mediaItems.overview,
+        posterPath: schema.mediaItems.posterPath,
+        backdropPath: schema.mediaItems.backdropPath,
+        rating: schema.mediaItems.rating,
+        voteCount: schema.mediaItems.voteCount,
+        releaseDate: schema.mediaItems.releaseDate,
+        
+        // Movie Details
+        runtime: schema.movies.runtime,
+        budget: schema.movies.budget,
+        revenue: schema.movies.revenue,
+        status: schema.movies.status,
+        
+        // Stats
+        ratingoScore: schema.mediaStats.ratingoScore,
+      })
+      .from(schema.mediaItems)
+      .innerJoin(schema.movies, eq(schema.mediaItems.id, schema.movies.mediaItemId))
+      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+      .where(eq(schema.mediaItems.slug, slug))
+      .limit(1);
+
+    if (result.length === 0) return null;
+    const movie = result[0];
+
+    // Fetch Genres
+    const genres = await this.db
+      .select({
+        id: schema.genres.id,
+        name: schema.genres.name,
+        slug: schema.genres.slug,
+      })
+      .from(schema.genres)
+      .innerJoin(schema.mediaGenres, eq(schema.genres.id, schema.mediaGenres.genreId))
+      .where(eq(schema.mediaGenres.mediaItemId, movie.id));
+
+    return {
+      ...movie,
+      genres,
+    };
+  }
+
   // Common select fields for movie queries
   private readonly movieSelectFields = {
     id: schema.movies.id,

@@ -36,6 +36,32 @@ export interface NowPlayingOptions {
 }
 
 /**
+ * Movie details.
+ */
+export interface MovieDetails {
+  id: string;
+  tmdbId: number;
+  title: string;
+  originalTitle: string | null;
+  slug: string;
+  overview: string | null;
+  posterPath: string | null;
+  backdropPath: string | null;
+  rating: number;
+  voteCount: number;
+  releaseDate: Date | null;
+  
+  runtime: number | null;
+  budget: number | null;
+  revenue: number | null;
+  status: string | null;
+  
+  ratingoScore: number | null;
+  
+  genres: Array<{ id: string; name: string; slug: string }>;
+}
+
+/**
  * Abstract interface for Movie-specific storage operations.
  */
 export interface IMovieRepository {
@@ -76,6 +102,28 @@ export interface IMovieRepository {
       releases?: ReleaseInfo[];
     }
   ): Promise<void>;
+
+  /**
+   * Upserts movie details transactionally.
+   */
+  upsertDetails(
+    tx: any, 
+    mediaId: string,
+    details: {
+      runtime?: number | null;
+      budget?: number | null;
+      revenue?: number | null;
+      status?: string | null;
+      theatricalReleaseDate?: Date | null;
+      digitalReleaseDate?: Date | null;
+      releases?: ReleaseInfo[];
+    }
+  ): Promise<void>;
+
+  /**
+   * Finds full movie details by slug.
+   */
+  findBySlug(slug: string): Promise<MovieDetails | null>;
 }
 
 export const MOVIE_REPOSITORY = Symbol('MOVIE_REPOSITORY');

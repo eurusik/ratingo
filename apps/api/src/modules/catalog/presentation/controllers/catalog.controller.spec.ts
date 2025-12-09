@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogController } from './catalog.controller';
 import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
+import { NotFoundException } from '@nestjs/common';
 
 describe('CatalogController', () => {
   let controller: CatalogController;
@@ -13,6 +14,7 @@ describe('CatalogController', () => {
       findNowPlaying: jest.fn().mockResolvedValue([{ id: 1, title: 'Movie' }]),
       findNewReleases: jest.fn().mockResolvedValue([{ id: 2, title: 'New Movie' }]),
       findNewOnDigital: jest.fn().mockResolvedValue([{ id: 3, title: 'Digital Movie' }]),
+      findBySlug: jest.fn(),
     };
 
     const mockShowRepository = {
@@ -33,6 +35,7 @@ describe('CatalogController', () => {
           showTitle: 'Show A'
         }
       ]),
+      findBySlug: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -113,6 +116,46 @@ describe('CatalogController', () => {
     it('should use default parameters if not provided', async () => {
       await controller.getCalendar();
       expect(showRepository.findEpisodesByDateRange).toHaveBeenCalled();
+    });
+  });
+
+  describe('getMovieBySlug', () => {
+    it('should return movie details when found', async () => {
+      const mockMovie = { id: '1', title: 'Matrix', slug: 'the-matrix' };
+      movieRepository.findBySlug.mockResolvedValue(mockMovie);
+
+      const result = await controller.getMovieBySlug('the-matrix');
+
+      expect(movieRepository.findBySlug).toHaveBeenCalledWith('the-matrix');
+      expect(result).toEqual(mockMovie);
+    });
+
+    it('should throw NotFoundException when movie not found', async () => {
+      movieRepository.findBySlug.mockResolvedValue(null);
+
+      await expect(controller.getMovieBySlug('unknown-movie'))
+        .rejects
+        .toThrow(NotFoundException);
+    });
+  });
+
+  describe('getShowBySlug', () => {
+    it('should return show details when found', async () => {
+      const mockShow = { id: '2', title: 'Arcane', slug: 'arcane' };
+      showRepository.findBySlug.mockResolvedValue(mockShow);
+
+      const result = await controller.getShowBySlug('arcane');
+
+      expect(showRepository.findBySlug).toHaveBeenCalledWith('arcane');
+      expect(result).toEqual(mockShow);
+    });
+
+    it('should throw NotFoundException when show not found', async () => {
+      showRepository.findBySlug.mockResolvedValue(null);
+
+      await expect(controller.getShowBySlug('unknown-show'))
+        .rejects
+        .toThrow(NotFoundException);
     });
   });
 });

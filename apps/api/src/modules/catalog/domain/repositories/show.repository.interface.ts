@@ -22,6 +22,37 @@ export interface CalendarEpisode {
   stillPath: string | null;
 }
 
+export interface ShowDetails {
+  id: string;
+  tmdbId: number;
+  title: string;
+  originalTitle: string | null;
+  slug: string;
+  overview: string | null;
+  posterPath: string | null;
+  backdropPath: string | null;
+  rating: number;
+  voteCount: number;
+  
+  totalSeasons: number | null;
+  totalEpisodes: number | null;
+  status: string | null;
+  lastAirDate: Date | null;
+  nextAirDate: Date | null;
+  
+  ratingoScore: number | null;
+  
+  genres: Array<{ id: string; name: string; slug: string }>;
+
+  seasons: Array<{
+    number: number;
+    name: string;
+    episodeCount: number;
+    posterPath: string | null;
+    airDate: Date | null;
+  }>;
+}
+
 /**
  * Abstract interface for Show-specific storage operations.
  * Extends catalog functionality with show-specific queries.
@@ -63,6 +94,11 @@ export interface IShowRepository {
    * Finds episodes airing within a date range for the global calendar.
    */
   findEpisodesByDateRange(startDate: Date, endDate: Date): Promise<CalendarEpisode[]>;
+
+  /**
+   * Finds full show details by slug.
+   */
+  findBySlug(slug: string): Promise<ShowDetails | null>;
 }
 
 export const SHOW_REPOSITORY = Symbol('SHOW_REPOSITORY');
