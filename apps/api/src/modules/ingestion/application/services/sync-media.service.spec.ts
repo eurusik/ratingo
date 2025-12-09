@@ -3,6 +3,7 @@ import { SyncMediaService } from './sync-media.service';
 import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
 import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
+import { TvMazeAdapter } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -12,6 +13,7 @@ describe('SyncMediaService', () => {
   let tmdbAdapter: jest.Mocked<TmdbAdapter>;
   let traktAdapter: jest.Mocked<TraktAdapter>;
   let omdbAdapter: jest.Mocked<OmdbAdapter>;
+  let tvMazeAdapter: jest.Mocked<TvMazeAdapter>;
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
   let mediaRepository: any;
 
@@ -29,10 +31,10 @@ describe('SyncMediaService', () => {
   };
 
   const mockScores = {
-    ratingoScore: 0.75,
-    qualityScore: 0.8,
-    popularityScore: 0.7,
-    freshnessScore: 0.6,
+    ratingoScore: 75,
+    qualityScore: 80,
+    popularityScore: 70,
+    freshnessScore: 60,
   };
 
   beforeEach(async () => {
@@ -51,6 +53,10 @@ describe('SyncMediaService', () => {
       getAggregatedRatings: jest.fn(),
     };
 
+    const mockTvMazeAdapter = {
+      getEpisodesByImdbId: jest.fn(),
+    };
+
     const mockScoreCalculator = {
       calculate: jest.fn().mockReturnValue(mockScores),
     };
@@ -65,6 +71,7 @@ describe('SyncMediaService', () => {
         { provide: TmdbAdapter, useValue: mockTmdbAdapter },
         { provide: TraktAdapter, useValue: mockTraktAdapter },
         { provide: OmdbAdapter, useValue: mockOmdbAdapter },
+        { provide: TvMazeAdapter, useValue: mockTvMazeAdapter },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
       ],
@@ -74,6 +81,7 @@ describe('SyncMediaService', () => {
     tmdbAdapter = module.get(TmdbAdapter);
     traktAdapter = module.get(TraktAdapter);
     omdbAdapter = module.get(OmdbAdapter);
+    tvMazeAdapter = module.get(TvMazeAdapter);
     scoreCalculator = module.get(ScoreCalculatorService);
     mediaRepository = module.get(MEDIA_REPOSITORY);
   });
@@ -104,7 +112,7 @@ describe('SyncMediaService', () => {
           voteCountImdb: 2000000,
           ratingMetacritic: 66,
           ratingRottenTomatoes: 79,
-          ratingoScore: 0.75,
+          ratingoScore: 75,
         })
       );
     });
@@ -152,7 +160,7 @@ describe('SyncMediaService', () => {
 
       expect(mediaRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          ratingoScore: 0.75, // Score still calculated
+          ratingoScore: 75, // Score still calculated
         })
       );
     });

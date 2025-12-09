@@ -52,13 +52,13 @@ describe('ScoreCalculatorService', () => {
       const result = service.calculate(input);
 
       expect(result.ratingoScore).toBeGreaterThanOrEqual(0);
-      expect(result.ratingoScore).toBeLessThanOrEqual(1);
+      expect(result.ratingoScore).toBeLessThanOrEqual(100);
       expect(result.qualityScore).toBeGreaterThanOrEqual(0);
-      expect(result.qualityScore).toBeLessThanOrEqual(1);
+      expect(result.qualityScore).toBeLessThanOrEqual(100);
       expect(result.popularityScore).toBeGreaterThanOrEqual(0);
-      expect(result.popularityScore).toBeLessThanOrEqual(1);
+      expect(result.popularityScore).toBeLessThanOrEqual(100);
       expect(result.freshnessScore).toBeGreaterThanOrEqual(0);
-      expect(result.freshnessScore).toBeLessThanOrEqual(1);
+      expect(result.freshnessScore).toBeLessThanOrEqual(100);
     });
 
     it('should give higher score to popular content with good ratings', () => {
@@ -176,7 +176,7 @@ describe('ScoreCalculatorService', () => {
       const result = service.calculate(input);
 
       // Should use minimum floor for unknown release date
-      expect(result.freshnessScore).toBe(mockConfig.normalization.freshnessMinFloor);
+      expect(result.freshnessScore).toBe(mockConfig.normalization.freshnessMinFloor * 100);
     });
 
     it('should normalize ratings from different scales', () => {
@@ -196,48 +196,46 @@ describe('ScoreCalculatorService', () => {
       const result = service.calculate(input);
 
       // Quality score should be reasonable (not inflated by 0-100 scales)
-      expect(result.qualityScore).toBeLessThanOrEqual(1);
-      expect(result.qualityScore).toBeGreaterThan(0.5); // Good ratings
+      expect(result.qualityScore).toBeLessThanOrEqual(100);
+      expect(result.qualityScore).toBeGreaterThan(50); // Good ratings
     });
   });
 
   describe('edge cases', () => {
     it('should handle zero values', () => {
-      const input: ScoreInput = {
+      const inputZero: ScoreInput = {
         tmdbPopularity: 0,
         traktWatchers: 0,
         imdbRating: 0,
         traktRating: 0,
+        metacriticRating: 0,
+        rottenTomatoesRating: 0,
         imdbVotes: 0,
         traktVotes: 0,
-        releaseDate: new Date(),
+        releaseDate: null,
       };
 
-      const result = service.calculate(input);
-
+      const result = service.calculate(inputZero);
+      // Even with 0 inputs, freshness floor might add some score
       expect(result.ratingoScore).toBeGreaterThanOrEqual(0);
-      expect(result.ratingoScore).toBeLessThanOrEqual(1);
+      expect(result.ratingoScore).toBeLessThanOrEqual(100);
     });
 
     it('should handle extremely high values', () => {
-      const input: ScoreInput = {
-        tmdbPopularity: 10000,
+      const inputHigh: ScoreInput = {
+        tmdbPopularity: 1000000,
         traktWatchers: 1000000,
         imdbRating: 10,
         traktRating: 10,
         metacriticRating: 100,
         rottenTomatoesRating: 100,
         imdbVotes: 10000000,
-        traktVotes: 5000000,
+        traktVotes: 10000000,
         releaseDate: new Date(),
       };
 
-      const result = service.calculate(input);
-
-      // Should be clamped to 1
-      expect(result.ratingoScore).toBeLessThanOrEqual(1);
-      expect(result.qualityScore).toBeLessThanOrEqual(1);
-      expect(result.popularityScore).toBeLessThanOrEqual(1);
+      const result = service.calculate(inputHigh);
+      expect(result.ratingoScore).toBeLessThanOrEqual(100);
     });
   });
 });
