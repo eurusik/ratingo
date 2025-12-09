@@ -14,6 +14,8 @@ import { CreditsMapper } from '../mappers/credits.mapper';
 import { ImageMapper } from '../mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 
+import { PersistenceMapper } from '../mappers/persistence.mapper';
+
 type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
 /**
@@ -35,39 +37,14 @@ export class DrizzleMovieRepository implements IMovieRepository {
   async upsertDetails(
     tx: DbTransaction,
     mediaId: string,
-    details: {
-      runtime?: number | null;
-      budget?: number | null;
-      revenue?: number | null;
-      status?: string | null;
-      theatricalReleaseDate?: Date | null;
-      digitalReleaseDate?: Date | null;
-      releases?: ReleaseInfo[];
-    }
+    details: any
   ): Promise<void> {
     await tx
       .insert(schema.movies)
-      .values({
-        mediaItemId: mediaId,
-        runtime: details.runtime,
-        budget: details.budget,
-        revenue: details.revenue,
-        status: details.status,
-        theatricalReleaseDate: details.theatricalReleaseDate,
-        digitalReleaseDate: details.digitalReleaseDate,
-        releases: details.releases,
-      })
+      .values(PersistenceMapper.toMovieInsert(mediaId, details))
       .onConflictDoUpdate({
         target: schema.movies.mediaItemId,
-        set: {
-          runtime: details.runtime,
-          budget: details.budget,
-          revenue: details.revenue,
-          status: details.status,
-          theatricalReleaseDate: details.theatricalReleaseDate,
-          digitalReleaseDate: details.digitalReleaseDate,
-          releases: details.releases,
-        },
+        set: PersistenceMapper.toMovieUpdate(details),
       });
   }
 

@@ -18,6 +18,8 @@ import { eq, inArray } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions';
 
+import { PersistenceMapper } from '../mappers/persistence.mapper';
+
 /**
  * Drizzle ORM implementation of the Media Repository.
  * Orchestrates media item persistence with related entities.
@@ -66,112 +68,49 @@ export class DrizzleMediaRepository implements IMediaRepository {
   async upsert(media: NormalizedMedia): Promise<void> {
     try {
       await this.db.transaction(async (tx) => {
-      // Upsert Base Media Item
-      const [mediaItem] = await tx
-        .insert(schema.mediaItems)
-        .values({
-          type: media.type,
-          tmdbId: media.externalIds.tmdbId,
-          imdbId: media.externalIds.imdbId || null,
-          title: media.title,
-          originalTitle: media.originalTitle,
-          slug: media.slug,
-          overview: media.overview,
-          posterPath: media.posterPath,
-          backdropPath: media.backdropPath,
-          videos: media.videos || null,
-          credits: media.credits || null,
-          watchProviders: media.watchProviders || null,
-          
-          // Metrics
-          rating: media.rating,
-          voteCount: media.voteCount,
-          popularity: media.popularity,
-          trendingScore: media.trendingScore ?? 0,
-          
-          // External Ratings
-          ratingImdb: media.ratingImdb,
-          voteCountImdb: media.voteCountImdb,
-          ratingTrakt: media.ratingTrakt,
-          voteCountTrakt: media.voteCountTrakt,
-          ratingMetacritic: media.ratingMetacritic,
-          ratingRottenTomatoes: media.ratingRottenTomatoes,
-
-          releaseDate: media.releaseDate,
-          isAdult: media.isAdult,
-          updatedAt: new Date(),
-        } as any) // Explicit cast to bypass strict type check for now
-        .onConflictDoUpdate({
-          target: schema.mediaItems.tmdbId,
-          set: {
-            title: media.title,
-            originalTitle: media.originalTitle,
-            slug: media.slug,
-            overview: media.overview,
-            
-            rating: media.rating,
-            voteCount: media.voteCount,
-            popularity: media.popularity,
-            // Only update trendingScore if provided
-            ...(media.trendingScore !== undefined ? { trendingScore: media.trendingScore } : {}),
-            
-            // Update external ratings
-            ratingImdb: media.ratingImdb,
-            voteCountImdb: media.voteCountImdb,
-            ratingTrakt: media.ratingTrakt,
-            voteCountTrakt: media.voteCountTrakt,
-            ratingMetacritic: media.ratingMetacritic,
-            ratingRottenTomatoes: media.ratingRottenTomatoes,
-
-            posterPath: media.posterPath,
-            backdropPath: media.backdropPath,
-            videos: media.videos || null,
-            credits: media.credits || null,
-            watchProviders: media.watchProviders || null,
-            updatedAt: new Date(),
-          },
-        })
-        .returning({ id: schema.mediaItems.id });
-
-      const mediaId = mediaItem.id;
-
-      // Delegate type-specific upsert
-      if (media.type === MediaType.MOVIE) {
-        if (this.movieRepository instanceof DrizzleMovieRepository) {
-          await this.movieRepository.upsertDetails(tx, mediaId, media.details || {});
-        }
-      } else {
-        if (this.showRepository instanceof DrizzleShowRepository) {
-          await this.showRepository.upsertDetails(tx, mediaId, media.details || {});
-        }
-      }
-
-      // Sync Genres
-      await this.genreRepository.syncGenres(tx, mediaId, media.genres);
-
-      // Upsert Ratingo Scores to media_stats
-      if (media.ratingoScore !== undefined) {
-        await tx
-          .insert(schema.mediaStats)
-          .values({
-            mediaItemId: mediaId,
-            ratingoScore: media.ratingoScore,
-            qualityScore: media.qualityScore,
-            popularityScore: media.popularityScore,
-            freshnessScore: media.freshnessScore,
-            updatedAt: new Date(),
-          })
+        // Upsert Base Media Item
+        const [mediaItem] = await tx
+          .insert(schema.mediaItems)
+          .values(PersistenceMapper.toMediaItemInsert(media))
           .onConflictDoUpdate({
-            target: schema.mediaStats.mediaItemId,
-            set: {
-              ratingoScore: media.ratingoScore,
-              qualityScore: media.qualityScore,
-              popularityScore: media.popularityScore,
-              freshnessScore: media.freshnessScore,
-              updatedAt: new Date(),
-            },
-          });
-      }
+            target: schema.mediaItems.tmdbId,
+            set: PersistenceMapper.toMediaItemUpdate(media),
+          })
+          .returning({ id: schema.mediaItems.id });
+
+        const mediaId = mediaItem.id;
+
+        // Delegate type-specific upsert
+        if (media.type === MediaType.MOVIE) {
+          if (this.movieRepository instanceof DrizzleMovieRepository) {
+            await this.movieRepository.upsertDetails(tx, mediaId, media.details || {});
+          }
+        } else {
+          if (this.showRepository instanceof DrizzleShowRepository) {
+            await this.showRepository.upsertDetails(tx, mediaId, media.details || {});
+          }
+        }
+
+        // Sync Genres
+        await this.genreRepository.syncGenres(tx, mediaId, media.genres);
+
+        // Upsert Ratingo Scores to media_stats
+        const statsInsert = PersistenceMapper.toMediaStatsInsert(mediaId, media);
+        if (statsInsert) {
+          await tx
+            .insert(schema.mediaStats)
+            .values(statsInsert)
+            .onConflictDoUpdate({
+              target: schema.mediaStats.mediaItemId,
+              set: {
+                ratingoScore: statsInsert.ratingoScore,
+                qualityScore: statsInsert.qualityScore,
+                popularityScore: statsInsert.popularityScore,
+                freshnessScore: statsInsert.freshnessScore,
+                updatedAt: new Date(),
+              },
+            });
+        }
       });
     } catch (error) {
       this.logger.error(`Failed to upsert media ${media.title}: ${error.message}`);

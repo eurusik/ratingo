@@ -12,6 +12,8 @@ import { CreditsMapper } from '../mappers/credits.mapper';
 import { ImageMapper } from '../mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 
+import { PersistenceMapper } from '../mappers/persistence.mapper';
+
 type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
 /**
@@ -31,35 +33,15 @@ export class DrizzleShowRepository implements IShowRepository {
   async upsertDetails(
     tx: DbTransaction,
     mediaId: string,
-    details: {
-      totalSeasons?: number | null;
-      totalEpisodes?: number | null;
-      lastAirDate?: Date | null;
-      nextAirDate?: Date | null;
-      status?: string | null;
-      seasons?: NormalizedSeason[];
-    }
+    details: any
   ): Promise<void> {
     // 1. Upsert Show Base
     const [show] = await tx
       .insert(schema.shows)
-      .values({
-        mediaItemId: mediaId,
-        totalSeasons: details.totalSeasons,
-        totalEpisodes: details.totalEpisodes,
-        lastAirDate: details.lastAirDate,
-        nextAirDate: details.nextAirDate,
-        status: details.status,
-      })
+      .values(PersistenceMapper.toShowInsert(mediaId, details))
       .onConflictDoUpdate({
         target: schema.shows.mediaItemId,
-        set: {
-          totalSeasons: details.totalSeasons,
-          totalEpisodes: details.totalEpisodes,
-          lastAirDate: details.lastAirDate,
-          nextAirDate: details.nextAirDate,
-          status: details.status,
-        },
+        set: PersistenceMapper.toShowUpdate(details),
       })
       .returning({ id: schema.shows.id });
 
@@ -71,26 +53,10 @@ export class DrizzleShowRepository implements IShowRepository {
         // Upsert Season
         const [seasonRecord] = await tx
           .insert(schema.seasons)
-          .values({
-            showId: showId,
-            tmdbId: season.tmdbId,
-            number: season.number,
-            name: season.name,
-            overview: season.overview,
-            posterPath: season.posterPath,
-            airDate: season.airDate,
-            episodeCount: season.episodeCount,
-          })
+          .values(PersistenceMapper.toSeasonInsert(showId, season))
           .onConflictDoUpdate({
             target: [schema.seasons.showId, schema.seasons.number],
-            set: {
-              tmdbId: season.tmdbId,
-              name: season.name,
-              overview: season.overview,
-              posterPath: season.posterPath,
-              airDate: season.airDate,
-              episodeCount: season.episodeCount,
-            },
+            set: PersistenceMapper.toSeasonUpdate(season),
           })
           .returning({ id: schema.seasons.id });
 
@@ -99,29 +65,10 @@ export class DrizzleShowRepository implements IShowRepository {
           for (const ep of season.episodes) {
             await tx
               .insert(schema.episodes)
-              .values({
-                seasonId: seasonRecord.id,
-                showId: showId,
-                tmdbId: ep.tmdbId,
-                number: ep.number,
-                title: ep.title,
-                overview: ep.overview,
-                airDate: ep.airDate,
-                runtime: ep.runtime,
-                stillPath: ep.stillPath,
-                voteAverage: ep.rating,
-              })
+              .values(PersistenceMapper.toEpisodeInsert(seasonRecord.id, showId, ep))
               .onConflictDoUpdate({
                 target: [schema.episodes.seasonId, schema.episodes.number],
-                set: {
-                  tmdbId: ep.tmdbId,
-                  title: ep.title,
-                  overview: ep.overview,
-                  airDate: ep.airDate,
-                  runtime: ep.runtime,
-                  stillPath: ep.stillPath,
-                  voteAverage: ep.rating,
-                },
+                set: PersistenceMapper.toEpisodeUpdate(ep),
               });
           }
         }
