@@ -29,6 +29,7 @@ describe('SyncMediaService', () => {
     releaseDate: new Date('1999-10-15'),
     isAdult: false,
     genres: [],
+    credits: { cast: [], crew: [] },
   };
 
   const mockScores = {

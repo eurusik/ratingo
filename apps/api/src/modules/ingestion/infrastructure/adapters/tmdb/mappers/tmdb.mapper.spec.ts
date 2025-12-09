@@ -98,6 +98,10 @@ describe('TmdbMapper', () => {
           theatricalReleaseDate: new Date('1999-10-15'),
           digitalReleaseDate: new Date('2000-01-01'),
         }),
+        credits: expect.objectContaining({
+          cast: [],
+          crew: [],
+        }),
       }));
       
       expect(result?.genres).toHaveLength(1);
@@ -125,6 +129,10 @@ describe('TmdbMapper', () => {
           totalSeasons: 5,
           totalEpisodes: 62,
           lastAirDate: new Date('2013-09-29'),
+        }),
+        credits: expect.objectContaining({
+          cast: [],
+          crew: [],
         }),
       }));
 
@@ -171,6 +179,99 @@ describe('TmdbMapper', () => {
       
       const result = TmdbMapper.toDomain(movieOnlyPhysical, MediaType.MOVIE);
       expect(result?.details.theatricalReleaseDate).toBeNull();
+    });
+
+    it('should extract credits for movies correctly', () => {
+      const movieWithCredits = {
+        ...mockMovie,
+        credits: {
+          cast: [
+            { id: 1, name: 'Brad Pitt', character: 'Tyler Durden', profile_path: '/brad.jpg', order: 0 },
+            { id: 2, name: 'Edward Norton', character: 'The Narrator', profile_path: '/edward.jpg', order: 1 },
+          ],
+          crew: [
+            { id: 3, name: 'David Fincher', job: 'Director', department: 'Directing', profile_path: '/david.jpg' },
+            { id: 4, name: 'Jim Uhls', job: 'Screenplay', department: 'Writing', profile_path: null },
+          ]
+        }
+      };
+
+      const result = TmdbMapper.toDomain(movieWithCredits, MediaType.MOVIE);
+
+      expect(result?.credits.cast).toHaveLength(2);
+      expect(result?.credits.cast[0]).toEqual({
+        tmdbId: 1,
+        name: 'Brad Pitt',
+        character: 'Tyler Durden',
+        profilePath: '/brad.jpg',
+        order: 0,
+      });
+
+      // Only Directors are included
+      expect(result?.credits.crew).toHaveLength(1);
+      expect(result?.credits.crew[0]).toEqual({
+        tmdbId: 3,
+        name: 'David Fincher',
+        job: 'Director',
+        department: 'Directing',
+        profilePath: '/david.jpg',
+      });
+    });
+
+    it('should extract credits for shows correctly (aggregate_credits + created_by)', () => {
+      const showWithCredits = {
+        ...mockShow,
+        aggregate_credits: {
+          cast: [
+            { id: 10, name: 'Bryan Cranston', roles: [{ character: 'Walter White' }], profile_path: '/bryan.jpg', order: 0 },
+            { id: 11, name: 'Aaron Paul', roles: [{ character: 'Jesse Pinkman' }], profile_path: '/aaron.jpg', order: 1 },
+          ]
+        },
+        created_by: [
+          { id: 20, name: 'Vince Gilligan', profile_path: '/vince.jpg' }
+        ]
+      };
+
+      const result = TmdbMapper.toDomain(showWithCredits, MediaType.SHOW);
+
+      expect(result?.credits.cast).toHaveLength(2);
+      expect(result?.credits.cast[0]).toEqual({
+        tmdbId: 10,
+        name: 'Bryan Cranston',
+        character: 'Walter White',
+        profilePath: '/bryan.jpg',
+        order: 0,
+      });
+
+      expect(result?.credits.crew).toHaveLength(1);
+      expect(result?.credits.crew[0]).toEqual({
+        tmdbId: 20,
+        name: 'Vince Gilligan',
+        job: 'Creator',
+        department: 'Writing',
+        profilePath: '/vince.jpg',
+      });
+    });
+
+    it('should limit cast to 10 members', () => {
+      const cast = Array.from({ length: 15 }, (_, i) => ({
+        id: i,
+        name: `Actor ${i}`,
+        character: `Character ${i}`,
+        profile_path: null,
+        order: i,
+      }));
+
+      const movieWithManyCast = {
+        ...mockMovie,
+        credits: { cast, crew: [] }
+      };
+
+      const result = TmdbMapper.toDomain(movieWithManyCast, MediaType.MOVIE);
+
+      expect(result?.credits.cast).toHaveLength(10);
+      expect(result?.credits.cast[0].name).toBe('Actor 0');
+      expect(result?.credits.cast[9].name).toBe('Actor 9');
     });
 
     it('should sort videos correctly (UK > Official > Date)', () => {

@@ -1,6 +1,27 @@
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../../common/enums/video.enum';
 
+export interface CastMember {
+  tmdbId: number;
+  name: string;
+  character: string;
+  profilePath: string | null;
+  order: number;
+}
+
+export interface CrewMember {
+  tmdbId: number;
+  name: string;
+  job: string;
+  department: string;
+  profilePath: string | null;
+}
+
+export interface Credits {
+  cast: CastMember[];
+  crew: CrewMember[];
+}
+
 export interface NormalizedEpisode {
   tmdbId?: number;
   number: number;
@@ -93,7 +114,7 @@ export interface NormalizedMedia {
     nextAirDate?: Date | null;
     status?: string | null;
     seasons?: NormalizedSeason[];
-    
+
     // Release dates (movies only)
     theatricalReleaseDate?: Date | null;
     digitalReleaseDate?: Date | null;
@@ -112,6 +133,7 @@ export interface NormalizedMedia {
   }>;
 
   videos?: NormalizedVideo[];
+  credits: Credits;
 
   watchProviders?: Array<{
     providerId: number; // TMDB Provider ID

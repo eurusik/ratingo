@@ -88,6 +88,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
         voteCount: schema.mediaItems.voteCount,
         releaseDate: schema.mediaItems.releaseDate,
         videos: schema.mediaItems.videos,
+        credits: schema.mediaItems.credits,
         
         // External Ratings
         ratingImdb: schema.mediaItems.ratingImdb,
@@ -140,6 +141,8 @@ export class DrizzleMovieRepository implements IMovieRepository {
       backdropPath: movie.backdropPath,
       releaseDate: movie.releaseDate,
       videos: movie.videos,
+      primaryTrailer: movie.videos?.[0] || null,
+      credits: movie.credits,
       
       // Movie specific
       runtime: movie.runtime,

@@ -1,4 +1,4 @@
-import { NormalizedMedia, NormalizedVideo } from '../../../../domain/models/normalized-media.model';
+import { NormalizedMedia, NormalizedVideo, Credits, CastMember, CrewMember } from '../../../../domain/models/normalized-media.model';
 import { MediaType } from '../../../../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../../../../common/enums/video.enum';
 import slugify from 'slugify';
@@ -50,6 +50,7 @@ export class TmdbMapper {
       })),
       
       videos: this.extractVideos(data),
+      credits: this.extractCredits(data, type),
       watchProviders: this.extractProviders(data),
       
       details: {},
@@ -159,6 +160,67 @@ export class TmdbMapper {
       digitalReleaseDate,
       releases: allReleases,
     };
+  }
+
+  private static extractCredits(data: any, type: MediaType): Credits {
+    const credits: Credits = { cast: [], crew: [] };
+    const isMovie = type === MediaType.MOVIE;
+
+    if (isMovie) {
+      const rawCast = data.credits?.cast || [];
+      const rawCrew = data.credits?.crew || [];
+
+      credits.cast = this.processCast(rawCast, true);
+
+      // Movies: Filter Directors
+      const processedCrew = new Map<number, CrewMember>();
+      rawCrew
+        .filter((c: any) => c.job === 'Director')
+        .forEach((c: any) => this.addCrewMember(processedCrew, c, 'Director'));
+      credits.crew = Array.from(processedCrew.values());
+    } else {
+      const rawCast = data.aggregate_credits?.cast || [];
+
+      credits.cast = this.processCast(rawCast, false);
+
+      // Shows: Creators (from created_by)
+      const processedCrew = new Map<number, CrewMember>();
+      if (Array.isArray(data.created_by)) {
+        data.created_by.forEach((c: any) => this.addCrewMember(processedCrew, c, 'Creator'));
+      }
+      credits.crew = Array.from(processedCrew.values());
+    }
+
+    return credits;
+  }
+
+  private static processCast(rawCast: any[], isMovie: boolean): CastMember[] {
+    return rawCast
+      .sort((a: any, b: any) => {
+        const orderA = a.order ?? 999;
+        const orderB = b.order ?? 999;
+        return orderA - orderB;
+      })
+      .slice(0, 10)
+      .map((c: any, index: number) => ({
+        tmdbId: c.id,
+        name: c.name,
+        character: isMovie ? c.character : (c.roles?.[0]?.character || 'Unknown'),
+        profilePath: c.profile_path,
+        order: c.order ?? index,
+      }));
+  }
+
+  private static addCrewMember(map: Map<number, CrewMember>, c: any, job: string) {
+    if (!map.has(c.id)) {
+      map.set(c.id, {
+        tmdbId: c.id,
+        name: c.name,
+        job: job,
+        department: c.department || (job === 'Creator' ? 'Writing' : 'Directing'),
+        profilePath: c.profile_path,
+      });
+    }
   }
 
   private static extractVideos(data: any): NormalizedVideo[] {

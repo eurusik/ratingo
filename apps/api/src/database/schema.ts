@@ -37,6 +37,27 @@ export interface Video {
   country: string;  // iso_3166_1
 }
 
+export interface CastMember {
+  tmdbId: number;
+  name: string;
+  character: string;
+  profilePath: string | null;
+  order: number;
+}
+
+export interface CrewMember {
+  tmdbId: number;
+  name: string;
+  job: string;
+  department: string;
+  profilePath: string | null;
+}
+
+export interface Credits {
+  cast: CastMember[];
+  crew: CrewMember[];
+}
+
 // --- CORE CATALOG ---
 
 /**
@@ -61,6 +82,7 @@ export const mediaItems = pgTable(
     posterPath: text('poster_path'),
     backdropPath: text('backdrop_path'),
     videos: jsonb('videos').$type<Video[] | null>().default(null),
+    credits: jsonb('credits').$type<Credits>().default({ cast: [], crew: [] }),
     
     // Metrics (Denormalized for speed)
     trendingScore: doublePrecision('trending_score').default(0),

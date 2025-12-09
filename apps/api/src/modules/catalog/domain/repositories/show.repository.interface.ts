@@ -1,7 +1,7 @@
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { Video } from '../../../../database/schema';
+import { Video, Credits } from '../../../../database/schema';
 
 /**
  * Show data for listing.
@@ -34,6 +34,8 @@ export interface ShowDetails {
   posterPath: string | null;
   backdropPath: string | null;
   videos?: Video[] | null;
+  primaryTrailer?: Video | null;
+  credits?: Credits | null;
   
   stats: {
     ratingoScore: number | null;

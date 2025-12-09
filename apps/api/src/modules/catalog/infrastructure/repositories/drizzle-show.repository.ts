@@ -143,6 +143,7 @@ export class DrizzleShowRepository implements IShowRepository {
         posterPath: schema.mediaItems.posterPath,
         backdropPath: schema.mediaItems.backdropPath,
         videos: schema.mediaItems.videos,
+        credits: schema.mediaItems.credits,
         rating: schema.mediaItems.rating,
         voteCount: schema.mediaItems.voteCount,
         
@@ -215,6 +216,8 @@ export class DrizzleShowRepository implements IShowRepository {
       posterPath: showData.posterPath,
       backdropPath: showData.backdropPath,
       videos: showData.videos,
+      primaryTrailer: showData.videos?.[0] || null,
+      credits: showData.credits,
       
       // Show specific
       totalSeasons: showData.totalSeasons,

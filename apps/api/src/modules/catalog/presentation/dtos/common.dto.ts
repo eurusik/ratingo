@@ -35,6 +35,48 @@ export class VideoDto {
   country: string;
 }
 
+export class CastMemberDto {
+  @ApiProperty({ example: 123 })
+  tmdbId: number;
+
+  @ApiProperty({ example: 'Brad Pitt' })
+  name: string;
+
+  @ApiProperty({ example: 'Tyler Durden' })
+  character: string;
+
+  @ApiProperty({ example: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg', nullable: true })
+  profilePath: string | null;
+  
+  @ApiProperty({ example: 0 })
+  order: number;
+}
+
+export class CrewMemberDto {
+  @ApiProperty({ example: 456 })
+  tmdbId: number;
+
+  @ApiProperty({ example: 'David Fincher' })
+  name: string;
+
+  @ApiProperty({ example: 'Director' })
+  job: string;
+
+  @ApiProperty({ example: 'Directing' })
+  department: string;
+
+  @ApiProperty({ example: '/y.jpg', nullable: true })
+  profilePath: string | null;
+}
+
+export class CreditsDto {
+  @ApiProperty({ type: [CastMemberDto] })
+  cast: CastMemberDto[];
+
+  @ApiProperty({ type: [CrewMemberDto] })
+  crew: CrewMemberDto[];
+}
+
 export class RatingoStatsDto {
   @ApiProperty({ example: 85.5, description: 'Composite Hype Score (0-100)', required: false, nullable: true })
   ratingoScore?: number | null;
@@ -107,4 +149,10 @@ export class MediaBaseDto {
 
   @ApiProperty({ type: [VideoDto], required: false, nullable: true })
   videos?: VideoDto[] | null;
+
+  @ApiProperty({ type: VideoDto, required: false, nullable: true, description: 'Primary trailer (first UK or EN trailer)' })
+  primaryTrailer?: VideoDto | null;
+
+  @ApiProperty({ type: CreditsDto, required: false, nullable: true })
+  credits?: CreditsDto | null;
 }

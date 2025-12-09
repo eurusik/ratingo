@@ -16,6 +16,7 @@ jest.mock('./mappers/tmdb.mapper', () => ({
       title: data.title || data.name,
       externalIds: { tmdbId: data.id },
       popularity: data.popularity,
+      credits: { cast: [], crew: [] },
     })),
   },
 }));

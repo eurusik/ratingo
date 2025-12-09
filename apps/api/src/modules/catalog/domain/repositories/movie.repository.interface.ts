@@ -1,4 +1,4 @@
-import { ReleaseInfo, Video } from '../../../../database/schema';
+import { ReleaseInfo, Video, Credits } from '../../../../database/schema';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 
 /**
@@ -62,6 +62,8 @@ export interface MovieDetails {
   backdropPath: string | null;
   releaseDate: Date | null;
   videos?: Video[] | null;
+  primaryTrailer?: Video | null;
+  credits?: Credits | null;
   
   stats: {
     ratingoScore: number | null;
