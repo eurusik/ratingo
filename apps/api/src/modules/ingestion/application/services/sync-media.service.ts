@@ -155,6 +155,7 @@ export class SyncMediaService {
         media.ratingTrakt = traktRating.rating;
         media.voteCountTrakt = traktRating.votes;
         media.watchersCount = traktRating.watchers;
+        media.totalWatchers = traktRating.totalWatchers;
       }
 
       if (omdbRatings) {

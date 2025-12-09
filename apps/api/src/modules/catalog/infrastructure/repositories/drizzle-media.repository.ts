@@ -109,6 +109,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
                 popularityScore: statsInsert.popularityScore,
                 freshnessScore: statsInsert.freshnessScore,
                 watchersCount: statsInsert.watchersCount,
+                totalWatchers: statsInsert.totalWatchers,
                 updatedAt: new Date(),
               },
             });
@@ -249,7 +250,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
           // Stats
           ratingoScore: schema.mediaStats.ratingoScore,
           qualityScore: schema.mediaStats.qualityScore,
-          watchersCount: schema.mediaStats.watchersCount,
+          watchersCount: schema.mediaStats.watchersCount, // live
+          totalWatchers: schema.mediaStats.totalWatchers, // total
           
           // External
           rating: schema.mediaItems.rating, // TMDB Rating
@@ -359,7 +361,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
           stats: {
             ratingoScore: item.ratingoScore,
             qualityScore: item.qualityScore,
-            watchersCount: item.watchersCount,
+            liveWatchers: item.watchersCount,
+            totalWatchers: item.totalWatchers,
           },
           externalRatings: {
             tmdb: {

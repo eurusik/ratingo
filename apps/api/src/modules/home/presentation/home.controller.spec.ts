@@ -35,7 +35,7 @@ describe('HomeController', () => {
         id: '1', 
         title: 'Test', 
         overview: 'Overview',
-        stats: { watchersCount: 100 }
+        stats: { liveWatchers: 100, totalWatchers: 5000 }
       }];
       homeServiceMock.getHero.mockResolvedValue(mockData);
 

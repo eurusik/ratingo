@@ -119,6 +119,9 @@ export interface NormalizedMedia {
   /** Number of active watchers (Trakt/Realtime) */
   watchersCount?: number;
 
+  /** Total unique watchers all time (Trakt stats) */
+  totalWatchers?: number;
+
   /** First air date for shows */
   releaseDate?: Date | null;
   status?: string | null;

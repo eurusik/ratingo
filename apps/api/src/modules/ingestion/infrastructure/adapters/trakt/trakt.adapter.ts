@@ -117,7 +117,7 @@ export class TraktAdapter {
    * Get movie ratings and watchers by TMDB ID.
    * First looks up the Trakt ID, then fetches ratings and watchers.
    */
-  async getMovieRatingsByTmdbId(tmdbId: number): Promise<{ rating: number; votes: number; watchers: number } | null> {
+  async getMovieRatingsByTmdbId(tmdbId: number): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
     try {
       // Step 1: Lookup Trakt ID by TMDB ID
       const results = await this.fetch<any[]>(`/search/tmdb/${tmdbId}?type=movie`);
@@ -126,10 +126,11 @@ export class TraktAdapter {
       }
       const traktId = results[0].movie.ids.trakt;
 
-      // Step 2: Get ratings and watchers using Trakt ID (Parallel, resilient)
-      const [ratingsResult, watchersResult] = await Promise.allSettled([
+      // Step 2: Get ratings, live watchers, and total stats using Trakt ID (Parallel, resilient)
+      const [ratingsResult, watchersResult, statsResult] = await Promise.allSettled([
         this.getMovieRatings(traktId),
-        this.getMovieWatchers(traktId)
+        this.getMovieWatchers(traktId),
+        this.getMovieStats(traktId)
       ]);
 
       if (ratingsResult.status === 'rejected') {
@@ -138,11 +139,13 @@ export class TraktAdapter {
 
       const ratings = ratingsResult.value;
       const watchers = watchersResult.status === 'fulfilled' ? watchersResult.value : 0;
+      const stats = statsResult.status === 'fulfilled' ? statsResult.value : { watchers: 0 };
 
       return { 
         rating: ratings.rating, 
         votes: ratings.votes,
-        watchers: watchers
+        watchers: watchers,
+        totalWatchers: stats.watchers
       };
     } catch (error) {
       this.logger.warn(`Failed to get Trakt data for TMDB ${tmdbId}: ${error}`);
@@ -154,19 +157,20 @@ export class TraktAdapter {
    * Get show ratings and watchers by TMDB ID.
    * First looks up the Trakt ID, then fetches ratings.
    */
-  async getShowRatingsByTmdbId(tmdbId: number): Promise<{ rating: number; votes: number; watchers: number } | null> {
+  async getShowRatingsByTmdbId(tmdbId: number): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
     try {
-      // Lookup Trakt ID by TMDB ID
+      // Step 1: Lookup Trakt ID by TMDB ID
       const results = await this.fetch<any[]>(`/search/tmdb/${tmdbId}?type=show`);
       if (!results.length || !results[0]?.show?.ids?.trakt) {
         return null;
       }
       const traktId = results[0].show.ids.trakt;
 
-      // Get ratings and watchers using Trakt ID (Parallel, resilient)
-      const [ratingsResult, watchersResult] = await Promise.allSettled([
+      // Step 2: Get ratings, live watchers, and total stats using Trakt ID (Parallel, resilient)
+      const [ratingsResult, watchersResult, statsResult] = await Promise.allSettled([
         this.getShowRatings(traktId),
-        this.getShowWatchers(traktId)
+        this.getShowWatchers(traktId),
+        this.getShowStats(traktId)
       ]);
 
       if (ratingsResult.status === 'rejected') {
@@ -175,11 +179,13 @@ export class TraktAdapter {
 
       const ratings = ratingsResult.value;
       const watchers = watchersResult.status === 'fulfilled' ? watchersResult.value : 0;
+      const stats = statsResult.status === 'fulfilled' ? statsResult.value : { watchers: 0 };
 
       return { 
         rating: ratings.rating, 
         votes: ratings.votes,
-        watchers: watchers
+        watchers: watchers,
+        totalWatchers: stats.watchers
       };
     } catch (error) {
       this.logger.warn(`Failed to get Trakt data for TMDB ${tmdbId}: ${error}`);
@@ -203,6 +209,17 @@ export class TraktAdapter {
   }
 
   /**
+   * Retrieves full stats for a movie (watchers, plays, collected, etc.)
+   */
+  async getMovieStats(traktIdOrSlug: string | number): Promise<{ watchers: number; plays: number; votes: number }> {
+    try {
+      return await this.fetch(`/movies/${traktIdOrSlug}/stats`);
+    } catch {
+      return { watchers: 0, plays: 0, votes: 0 };
+    }
+  }
+
+  /**
    * Gets count of users currently watching a show.
    *
    * @param {string | number} traktIdOrSlug - Trakt ID or slug of the show
@@ -214,6 +231,17 @@ export class TraktAdapter {
       return watchers.length;
     } catch {
       return 0;
+    }
+  }
+
+  /**
+   * Retrieves full stats for a show.
+   */
+  async getShowStats(traktIdOrSlug: string | number): Promise<{ watchers: number; plays: number; votes: number }> {
+    try {
+      return await this.fetch(`/shows/${traktIdOrSlug}/stats`);
+    } catch {
+      return { watchers: 0, plays: 0, votes: 0 };
     }
   }
 

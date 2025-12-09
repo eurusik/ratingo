@@ -9,8 +9,11 @@ export class HeroStatsDto {
   @ApiProperty({ example: 88.5 })
   qualityScore: number;
 
-  @ApiProperty({ example: 1250, description: 'Number of active watchers (Trakt)', required: false })
-  watchersCount?: number;
+  @ApiProperty({ example: 6, description: 'Number of people watching right now (Live)', required: false })
+  liveWatchers?: number;
+
+  @ApiProperty({ example: 6423, description: 'Total unique watchers all time', required: false })
+  totalWatchers?: number;
 }
 
 export class HeroExternalRatingsDto {

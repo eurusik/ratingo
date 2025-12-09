@@ -39,7 +39,7 @@ describe('HomeService', () => {
         isNew: true,
         isClassic: false,
         overview: 'Overview 1',
-        stats: { ratingoScore: 80, qualityScore: 80, watchersCount: 100 },
+        stats: { ratingoScore: 80, qualityScore: 80, liveWatchers: 100, totalWatchers: 1000 },
       },
       { 
         id: '2', 
@@ -49,7 +49,7 @@ describe('HomeService', () => {
         isNew: false,
         isClassic: true,
         overview: 'Overview 2',
-        stats: { ratingoScore: 90, qualityScore: 90, watchersCount: 500 },
+        stats: { ratingoScore: 90, qualityScore: 90, liveWatchers: 500, totalWatchers: 5000 },
       },
     ];
 

@@ -119,7 +119,8 @@ export const mediaStats = pgTable('media_stats', {
     .primaryKey(),
   
   // Real-time stats from Trakt
-  watchersCount: integer('watchers_count').default(0),  // People watching RIGHT NOW
+  watchersCount: integer('watchers_count').default(0),  // People watching RIGHT NOW (Live)
+  totalWatchers: integer('total_watchers').default(0),  // Total unique watchers (All time)
   
   // Trending/Popularity metrics
   trendingRank: integer('trending_rank'),               // Position in trending list

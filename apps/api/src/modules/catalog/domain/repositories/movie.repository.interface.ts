@@ -22,7 +22,8 @@ export interface MovieWithMedia {
     ratingoScore: number | null;
     qualityScore: number | null;
     popularityScore: number | null;
-    watchersCount: number | null;
+    liveWatchers: number | null;
+    totalWatchers: number | null;
   };
 
   externalRatings: {
@@ -74,7 +75,8 @@ export interface MovieDetails {
     ratingoScore: number | null;
     qualityScore: number | null;
     popularityScore: number | null;
-    watchersCount: number | null;
+    liveWatchers: number | null;
+    totalWatchers: number | null;
   };
 
   externalRatings: {

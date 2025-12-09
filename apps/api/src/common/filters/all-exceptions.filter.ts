@@ -97,7 +97,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     // Handle unknown errors
-    const message = exception instanceof Error ? exception.message : 'Unknown error occurred';
+    // Mask internal error details in production-like environments
+    const isProduction = process.env.NODE_ENV === 'production';
+    const message = isProduction 
+      ? 'Internal server error' 
+      : (exception instanceof Error ? exception.message : 'Unknown error occurred');
 
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

@@ -14,7 +14,7 @@ describe('CatalogController', () => {
       findNowPlaying: jest.fn().mockResolvedValue([{ 
         id: 1, 
         title: 'Movie',
-        stats: { watchersCount: 50, popularityScore: 80 }
+        stats: { liveWatchers: 50, totalWatchers: 5000, popularityScore: 80 }
       }]),
       findNewReleases: jest.fn().mockResolvedValue([{ id: 2, title: 'New Movie' }]),
       findNewOnDigital: jest.fn().mockResolvedValue([{ id: 3, title: 'Digital Movie' }]),
