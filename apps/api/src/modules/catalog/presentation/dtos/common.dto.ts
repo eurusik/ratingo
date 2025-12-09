@@ -1,0 +1,50 @@
+import { ApiProperty } from '@nestjs/swagger';
+
+export class GenreDto {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  id: string;
+
+  @ApiProperty({ example: 'Action' })
+  name: string;
+
+  @ApiProperty({ example: 'action' })
+  slug: string;
+}
+
+export class MediaBaseDto {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
+  id: string;
+
+  @ApiProperty({ example: 12345 })
+  tmdbId: number;
+
+  @ApiProperty({ example: 'The Matrix' })
+  title: string;
+
+  @ApiProperty({ example: 'The Matrix', required: false, nullable: true })
+  originalTitle?: string | null;
+
+  @ApiProperty({ example: 'the-matrix' })
+  slug: string;
+
+  @ApiProperty({ example: 'Overview text...', required: false, nullable: true })
+  overview?: string | null;
+
+  @ApiProperty({ example: '/path/to/poster.jpg', required: false, nullable: true })
+  posterPath?: string | null;
+
+  @ApiProperty({ example: '/path/to/backdrop.jpg', required: false, nullable: true })
+  backdropPath?: string | null;
+
+  @ApiProperty({ example: 8.5 })
+  rating: number;
+
+  @ApiProperty({ example: 15000 })
+  voteCount: number;
+
+  @ApiProperty({ example: 85.5, required: false, nullable: true })
+  ratingoScore?: number | null;
+
+  @ApiProperty({ type: [GenreDto] })
+  genres: GenreDto[];
+}

@@ -23,6 +23,8 @@ export interface MovieWithMedia {
   ratingoScore: number | null;
   qualityScore: number | null;
   popularityScore: number | null;
+
+  genres: Array<{ id: string; name: string; slug: string }>;
 }
 
 /**

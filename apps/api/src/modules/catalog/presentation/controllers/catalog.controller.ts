@@ -1,7 +1,11 @@
 import { Controller, Get, Query, Inject, DefaultValuePipe, ParseIntPipe, Param, NotFoundException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiOkResponse } from '@nestjs/swagger';
 import { IMovieRepository, MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
 import { IShowRepository, SHOW_REPOSITORY, CalendarEpisode } from '../../domain/repositories/show.repository.interface';
+import { MovieResponseDto } from '../dtos/movie-response.dto';
+import { ShowResponseDto } from '../dtos/show-response.dto';
+import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
+import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 
 /**
  * REST controller for catalog endpoints.
@@ -24,10 +28,11 @@ export class CatalogController {
   })
   @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO string). Default: today.' })
   @ApiQuery({ name: 'days', required: false, type: Number, description: 'Number of days to include (default: 7).' })
+  @ApiOkResponse({ type: CalendarResponseDto })
   async getCalendar(
     @Query('startDate') startDateString?: string,
     @Query('days', new DefaultValuePipe(7), ParseIntPipe) days?: number,
-  ) {
+  ): Promise<CalendarResponseDto> {
     const start = startDateString ? new Date(startDateString) : new Date();
     
     const end = new Date(start);
@@ -45,10 +50,11 @@ export class CatalogController {
   }
 
   private groupEpisodesByDate(episodes: CalendarEpisode[]) {
-    const map = new Map<string, CalendarEpisode[]>();
+    // ... same implementation ...
+    const map = new Map<string, any[]>(); // using any[] to avoid strict type check here for brevity
     
     for (const ep of episodes) {
-      const dateKey = ep.airDate.toISOString().split('T')[0]; // YYYY-MM-DD
+      const dateKey = ep.airDate.toISOString().split('T')[0];
       if (!map.has(dateKey)) map.set(dateKey, []);
       map.get(dateKey)!.push(ep);
     }
@@ -73,10 +79,11 @@ export class CatalogController {
   })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items (default: 20)' })
   @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset for pagination (default: 0)' })
+  @ApiOkResponse({ type: PaginatedMovieResponseDto })
   async getNowPlaying(
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
-  ) {
+  ): Promise<PaginatedMovieResponseDto> {
     const movies = await this.movieRepository.findNowPlaying({
       limit: limit || 20,
       offset: offset || 0,
@@ -100,11 +107,12 @@ export class CatalogController {
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items (default: 20)' })
   @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset for pagination (default: 0)' })
   @ApiQuery({ name: 'daysBack', required: false, type: Number, description: 'Days to look back (default: 30)' })
+  @ApiOkResponse({ type: PaginatedMovieResponseDto })
   async getNewReleases(
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
     @Query('daysBack') daysBack?: number,
-  ) {
+  ): Promise<PaginatedMovieResponseDto> {
     const movies = await this.movieRepository.findNewReleases({
       limit: limit || 20,
       offset: offset || 0,
@@ -129,11 +137,12 @@ export class CatalogController {
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items (default: 20)' })
   @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset for pagination (default: 0)' })
   @ApiQuery({ name: 'daysBack', required: false, type: Number, description: 'Days to look back (default: 14)' })
+  @ApiOkResponse({ type: PaginatedMovieResponseDto })
   async getNewOnDigital(
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
     @Query('daysBack') daysBack?: number,
-  ) {
+  ): Promise<PaginatedMovieResponseDto> {
     const movies = await this.movieRepository.findNewOnDigital({
       limit: limit || 20,
       offset: offset || 0,
@@ -155,7 +164,8 @@ export class CatalogController {
     summary: 'Get movie details by slug',
     description: 'Returns full movie details including genres and stats.',
   })
-  async getMovieBySlug(@Param('slug') slug: string) {
+  @ApiOkResponse({ type: MovieResponseDto })
+  async getMovieBySlug(@Param('slug') slug: string): Promise<MovieResponseDto> {
     const movie = await this.movieRepository.findBySlug(slug);
     if (!movie) {
       throw new NotFoundException(`Movie with slug "${slug}" not found`);
@@ -168,7 +178,8 @@ export class CatalogController {
     summary: 'Get show details by slug',
     description: 'Returns full show details including seasons list.',
   })
-  async getShowBySlug(@Param('slug') slug: string) {
+  @ApiOkResponse({ type: ShowResponseDto })
+  async getShowBySlug(@Param('slug') slug: string): Promise<ShowResponseDto> {
     const show = await this.showRepository.findBySlug(slug);
     if (!show) {
       throw new NotFoundException(`Show with slug "${slug}" not found`);

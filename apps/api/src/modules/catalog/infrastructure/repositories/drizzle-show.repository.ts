@@ -61,7 +61,7 @@ export class DrizzleShowRepository implements IShowRepository {
 
     const showId = show.id;
 
-    // 2. Upsert Seasons & Episodes
+    // Upsert Seasons & Episodes
     if (details.seasons?.length) {
       for (const season of details.seasons) {
         // Upsert Season
@@ -177,7 +177,7 @@ export class DrizzleShowRepository implements IShowRepository {
       .innerJoin(schema.mediaGenres, eq(schema.genres.id, schema.mediaGenres.genreId))
       .where(eq(schema.mediaGenres.mediaItemId, show.id));
 
-    // 3. Fetch Seasons
+    // Fetch Seasons
     const seasons = await this.db
       .select({
         number: schema.seasons.number,

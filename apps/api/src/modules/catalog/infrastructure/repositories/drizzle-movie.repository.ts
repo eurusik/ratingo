@@ -161,7 +161,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
       .limit(limit)
       .offset(offset);
 
-    return results as MovieWithMedia[];
+    return this.attachGenres(results);
   }
 
   /**
@@ -190,7 +190,36 @@ export class DrizzleMovieRepository implements IMovieRepository {
       .limit(limit)
       .offset(offset);
 
-    return results as MovieWithMedia[];
+    return this.attachGenres(results);
+  }
+
+  /**
+   * Finds movies recently released on digital platforms.
+   * Uses indexed digitalReleaseDate for fast queries.
+   */
+  async findNewOnDigital(options: NowPlayingOptions = {}): Promise<MovieWithMedia[]> {
+    const { limit = 20, offset = 0, daysBack = 14 } = options;
+
+    const now = new Date();
+    const cutoffDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+
+    const results = await this.db
+      .select(this.movieSelectFields)
+      .from(schema.movies)
+      .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+      .where(
+        and(
+          isNotNull(schema.movies.digitalReleaseDate),
+          gte(schema.movies.digitalReleaseDate, cutoffDate),
+          lte(schema.movies.digitalReleaseDate, now)
+        )
+      )
+      .orderBy(desc(schema.mediaItems.popularity))
+      .limit(limit)
+      .offset(offset);
+
+    return this.attachGenres(results);
   }
 
   /**
@@ -234,35 +263,6 @@ export class DrizzleMovieRepository implements IMovieRepository {
   }
 
   /**
-   * Finds movies recently released on digital platforms.
-   * Uses indexed digitalReleaseDate for fast queries.
-   */
-  async findNewOnDigital(options: NowPlayingOptions = {}): Promise<MovieWithMedia[]> {
-    const { limit = 20, offset = 0, daysBack = 14 } = options;
-
-    const now = new Date();
-    const cutoffDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
-
-    const results = await this.db
-      .select(this.movieSelectFields)
-      .from(schema.movies)
-      .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(
-        and(
-          isNotNull(schema.movies.digitalReleaseDate),
-          gte(schema.movies.digitalReleaseDate, cutoffDate),
-          lte(schema.movies.digitalReleaseDate, now)
-        )
-      )
-      .orderBy(desc(schema.mediaItems.popularity))
-      .limit(limit)
-      .offset(offset);
-
-    return results as MovieWithMedia[];
-  }
-
-  /**
    * Updates release dates for a movie.
    */
   async updateReleaseDates(
@@ -281,5 +281,36 @@ export class DrizzleMovieRepository implements IMovieRepository {
         releases: data.releases,
       })
       .where(eq(schema.movies.mediaItemId, mediaItemId));
+  }
+
+  /**
+   * Helper to attach genres to a list of movies
+   */
+  private async attachGenres(movies: any[]): Promise<MovieWithMedia[]> {
+    if (movies.length === 0) return [];
+
+    const mediaItemIds = movies.map(m => m.mediaItemId);
+    
+    const genresData = await this.db
+      .select({
+        mediaItemId: schema.mediaGenres.mediaItemId,
+        id: schema.genres.id,
+        name: schema.genres.name,
+        slug: schema.genres.slug,
+      })
+      .from(schema.mediaGenres)
+      .innerJoin(schema.genres, eq(schema.mediaGenres.genreId, schema.genres.id))
+      .where(inArray(schema.mediaGenres.mediaItemId, mediaItemIds));
+
+    const genresMap = new Map<string, any[]>();
+    genresData.forEach(g => {
+      if (!genresMap.has(g.mediaItemId)) genresMap.set(g.mediaItemId, []);
+      genresMap.get(g.mediaItemId).push({ id: g.id, name: g.name, slug: g.slug });
+    });
+
+    return movies.map(m => ({
+      ...m,
+      genres: genresMap.get(m.mediaItemId) || [],
+    })) as MovieWithMedia[];
   }
 }
