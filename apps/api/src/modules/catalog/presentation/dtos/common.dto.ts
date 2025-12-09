@@ -147,6 +147,20 @@ export class ExternalRatingsDto {
   rottenTomatoes?: ExternalRatingItemDto | null;
 }
 
+export class ImageDto {
+  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w342/abc.jpg', description: 'Small image for cards (w342)' })
+  small: string;
+
+  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w500/abc.jpg', description: 'Medium image for details (w500)' })
+  medium: string;
+
+  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w780/abc.jpg', description: 'Large image for banners (w780)' })
+  large: string;
+
+  @ApiProperty({ example: 'https://image.tmdb.org/t/p/original/abc.jpg', description: 'Original quality image' })
+  original: string;
+}
+
 export class MediaBaseDto {
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   id: string;
@@ -166,11 +180,17 @@ export class MediaBaseDto {
   @ApiProperty({ example: 'Overview text...', required: false, nullable: true })
   overview?: string | null;
 
-  @ApiProperty({ example: '/path/to/poster.jpg', required: false, nullable: true })
+  @ApiProperty({ example: '/path/to/poster.jpg', required: false, nullable: true, deprecated: true })
   posterPath?: string | null;
 
-  @ApiProperty({ example: '/path/to/backdrop.jpg', required: false, nullable: true })
+  @ApiProperty({ type: ImageDto, required: false, nullable: true })
+  poster?: ImageDto | null;
+
+  @ApiProperty({ example: '/path/to/backdrop.jpg', required: false, nullable: true, deprecated: true })
   backdropPath?: string | null;
+
+  @ApiProperty({ type: ImageDto, required: false, nullable: true })
+  backdrop?: ImageDto | null;
 
   @ApiProperty({ type: RatingoStatsDto, required: false, nullable: true })
   stats?: RatingoStatsDto | null;

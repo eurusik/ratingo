@@ -9,6 +9,7 @@ import { IShowRepository, ShowListItem, CalendarEpisode, ShowDetails } from '../
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 import { CreditsMapper } from '../mappers/credits.mapper';
+import { ImageMapper } from '../mappers/image.mapper';
 
 type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -215,7 +216,9 @@ export class DrizzleShowRepository implements IShowRepository {
       slug: showData.slug,
       overview: showData.overview,
       posterPath: showData.posterPath,
+      poster: ImageMapper.toPoster(showData.posterPath),
       backdropPath: showData.backdropPath,
+      backdrop: ImageMapper.toBackdrop(showData.backdropPath),
       videos: showData.videos,
       primaryTrailer: showData.videos?.[0] || null,
       credits: CreditsMapper.toDto(showData.credits),

@@ -1,5 +1,5 @@
 import { ReleaseInfo, Video } from '../../../../database/schema';
-import { CreditsDto } from '../../presentation/dtos/common.dto';
+import { CreditsDto, ImageDto } from '../../presentation/dtos/common.dto';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 
 /**
@@ -60,7 +60,9 @@ export interface MovieDetails {
   slug: string;
   overview: string | null;
   posterPath: string | null;
+  poster?: ImageDto | null;
   backdropPath: string | null;
+  backdrop?: ImageDto | null;
   releaseDate: Date | null;
   videos?: Video[] | null;
   primaryTrailer?: Video | null;
