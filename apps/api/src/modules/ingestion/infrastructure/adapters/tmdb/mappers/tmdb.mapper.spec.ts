@@ -107,11 +107,12 @@ describe('TmdbMapper', () => {
       expect(result?.genres).toHaveLength(1);
       expect(result?.genres[0]).toEqual({ tmdbId: 18, name: 'Drama', slug: 'drama' });
       
-      expect(result?.watchProviders).toHaveLength(1);
-      expect(result?.watchProviders[0]).toEqual(expect.objectContaining({
+      expect(result?.watchProviders).toBeDefined();
+      expect(result?.watchProviders?.['UA']).toBeDefined();
+      expect(result?.watchProviders?.['UA'].flatrate).toHaveLength(1);
+      expect(result?.watchProviders?.['UA'].flatrate?.[0]).toEqual(expect.objectContaining({
         providerId: 8,
         name: 'Netflix',
-        type: 'flatrate'
       }));
     });
 
@@ -136,8 +137,10 @@ describe('TmdbMapper', () => {
         }),
       }));
 
-      expect(result?.watchProviders).toHaveLength(1);
-      expect(result?.watchProviders[0].type).toBe('buy');
+      expect(result?.watchProviders).toBeDefined();
+      expect(result?.watchProviders?.['UA']).toBeDefined();
+      expect(result?.watchProviders?.['UA'].buy).toHaveLength(1);
+      expect(result?.watchProviders?.['UA'].buy?.[0].providerId).toBe(3);
     });
 
     it('should return null if essential data is missing', () => {

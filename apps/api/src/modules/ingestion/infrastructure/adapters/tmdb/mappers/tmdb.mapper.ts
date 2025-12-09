@@ -1,4 +1,4 @@
-import { NormalizedMedia, NormalizedVideo, Credits, CastMember, CrewMember } from '../../../../domain/models/normalized-media.model';
+import { NormalizedMedia, NormalizedVideo, Credits, CastMember, CrewMember, WatchProvidersMap, WatchProvider } from '../../../../domain/models/normalized-media.model';
 import { MediaType } from '../../../../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../../../../common/enums/video.enum';
 import slugify from 'slugify';
@@ -265,28 +265,34 @@ export class TmdbMapper {
       }));
   }
 
-  private static extractProviders(data: any): any[] {
-    const providers = data['watch/providers']?.results?.UA;
-    if (!providers) return [];
+  private static extractProviders(data: any): WatchProvidersMap | null {
+    const results = data['watch/providers']?.results;
+    if (!results) return null;
 
-    const result: any[] = [];
-    const map = (list: any[], type: string) => {
-      if (!list) return;
-      list.forEach(p => result.push({
-        providerId: p.provider_id,
-        name: p.provider_name,
-        logoPath: p.logo_path,
-        displayPriority: p.display_priority,
-        type,
-      }));
-    };
+    const map: WatchProvidersMap = {};
 
-    map(providers.flatrate, 'flatrate');
-    map(providers.buy, 'buy');
-    map(providers.rent, 'rent');
-    map(providers.ads, 'ads');
-    map(providers.free, 'free');
+    for (const [countryCode, regionData] of Object.entries(results)) {
+      const region = regionData as any;
+      map[countryCode] = {
+        link: region.link,
+        flatrate: this.mapProviderList(region.flatrate),
+        rent: this.mapProviderList(region.rent),
+        buy: this.mapProviderList(region.buy),
+        ads: this.mapProviderList(region.ads),
+        free: this.mapProviderList(region.free),
+      };
+    }
 
-    return result;
+    return Object.keys(map).length > 0 ? map : null;
+  }
+
+  private static mapProviderList(list: any[]): WatchProvider[] | undefined {
+    if (!Array.isArray(list) || list.length === 0) return undefined;
+    return list.map(p => ({
+      providerId: p.provider_id,
+      name: p.provider_name,
+      logoPath: p.logo_path,
+      displayPriority: p.display_priority,
+    }));
   }
 }

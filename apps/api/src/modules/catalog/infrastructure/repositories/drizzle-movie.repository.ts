@@ -12,6 +12,7 @@ import { ReleaseInfo } from '../../../../database/schema';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 import { CreditsMapper } from '../mappers/credits.mapper';
 import { ImageMapper } from '../mappers/image.mapper';
+import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 
 type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -91,6 +92,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
         releaseDate: schema.mediaItems.releaseDate,
         videos: schema.mediaItems.videos,
         credits: schema.mediaItems.credits,
+        watchProviders: schema.mediaItems.watchProviders,
         
         // External Ratings
         ratingImdb: schema.mediaItems.ratingImdb,
@@ -147,6 +149,8 @@ export class DrizzleMovieRepository implements IMovieRepository {
       videos: movie.videos,
       primaryTrailer: movie.videos?.[0] || null,
       credits: CreditsMapper.toDto(movie.credits),
+      watchProviders: WatchProvidersMapper.toDto(movie.watchProviders),
+      watchProvidersPrimary: WatchProvidersMapper.getPrimary(movie.watchProviders),
       
       // Movie specific
       runtime: movie.runtime,

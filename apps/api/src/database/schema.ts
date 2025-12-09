@@ -13,7 +13,11 @@ import {
   customType,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
-import { MediaType } from '../common/enums/media-type.enum';
+import { 
+  NormalizedVideo, 
+  Credits,
+  WatchProvidersMap 
+} from '../modules/ingestion/domain/models/normalized-media.model';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../common/enums/video.enum';
 
 // Define custom tsvector type since Drizzle ORM core doesn't support it natively yet
@@ -83,6 +87,7 @@ export const mediaItems = pgTable(
     backdropPath: text('backdrop_path'),
     videos: jsonb('videos').$type<Video[] | null>().default(null),
     credits: jsonb('credits').$type<Credits>().default({ cast: [], crew: [] }),
+    watchProviders: jsonb('watch_providers').$type<WatchProvidersMap | null>().default(null),
     
     // Metrics (Denormalized for speed)
     trendingScore: doublePrecision('trending_score').default(0),

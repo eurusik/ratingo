@@ -10,6 +10,7 @@ import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 import { CreditsMapper } from '../mappers/credits.mapper';
 import { ImageMapper } from '../mappers/image.mapper';
+import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 
 type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -146,6 +147,7 @@ export class DrizzleShowRepository implements IShowRepository {
         backdropPath: schema.mediaItems.backdropPath,
         videos: schema.mediaItems.videos,
         credits: schema.mediaItems.credits,
+        watchProviders: schema.mediaItems.watchProviders,
         rating: schema.mediaItems.rating,
         voteCount: schema.mediaItems.voteCount,
         
@@ -222,6 +224,8 @@ export class DrizzleShowRepository implements IShowRepository {
       videos: showData.videos,
       primaryTrailer: showData.videos?.[0] || null,
       credits: CreditsMapper.toDto(showData.credits),
+      watchProviders: WatchProvidersMapper.toDto(showData.watchProviders),
+      watchProvidersPrimary: WatchProvidersMapper.getPrimary(showData.watchProviders),
       
       // Show specific
       totalSeasons: showData.totalSeasons,

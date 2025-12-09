@@ -22,6 +22,24 @@ export interface Credits {
   crew: CrewMember[];
 }
 
+export interface WatchProvider {
+  providerId: number;
+  name: string;
+  logoPath: string | null;
+  displayPriority?: number;
+}
+
+export interface WatchProviderRegion {
+  link: string | null;
+  flatrate?: WatchProvider[]; // TMDB calls this 'flatrate'
+  rent?: WatchProvider[];
+  buy?: WatchProvider[];
+  ads?: WatchProvider[];
+  free?: WatchProvider[];
+}
+
+export type WatchProvidersMap = Record<string, WatchProviderRegion>;
+
 export interface NormalizedEpisode {
   tmdbId?: number;
   number: number;
@@ -135,11 +153,5 @@ export interface NormalizedMedia {
   videos?: NormalizedVideo[];
   credits: Credits;
 
-  watchProviders?: Array<{
-    providerId: number; // TMDB Provider ID
-    name: string;
-    logoPath?: string | null;
-    type: string; // 'flatrate' | 'buy' | 'rent'
-    displayPriority?: number;
-  }>;
+  watchProviders?: WatchProvidersMap | null;
 }

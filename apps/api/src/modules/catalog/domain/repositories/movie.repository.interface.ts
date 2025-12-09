@@ -1,5 +1,5 @@
 import { ReleaseInfo, Video } from '../../../../database/schema';
-import { CreditsDto, ImageDto } from '../../presentation/dtos/common.dto';
+import { CreditsDto, ImageDto, WatchProviderRegionDto } from '../../presentation/dtos/common.dto';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 
 /**
@@ -67,6 +67,8 @@ export interface MovieDetails {
   videos?: Video[] | null;
   primaryTrailer?: Video | null;
   credits?: CreditsDto | null;
+  watchProviders?: Record<string, WatchProviderRegionDto> | null;
+  watchProvidersPrimary?: WatchProviderRegionDto | null;
   
   stats: {
     ratingoScore: number | null;
