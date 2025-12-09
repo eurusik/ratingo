@@ -91,7 +91,7 @@ describe('SyncMediaService', () => {
   describe('syncMovie', () => {
     it('should sync a movie successfully', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
-      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ rating: 8.0, votes: 5000 });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ rating: 8.0, votes: 5000, watchers: 100, totalWatchers: 5000 });
       omdbAdapter.getAggregatedRatings.mockResolvedValue({
         imdbRating: 8.8,
         imdbVotes: 2000000,
@@ -145,7 +145,7 @@ describe('SyncMediaService', () => {
     it('should handle missing IMDb ID gracefully', async () => {
       const mediaWithoutImdb = { ...mockMedia, externalIds: { tmdbId: 550 } };
       tmdbAdapter.getMovie.mockResolvedValue(mediaWithoutImdb);
-      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ rating: 7.5, votes: 3000 });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ rating: 7.5, votes: 3000, watchers: 50, totalWatchers: 2000 });
 
       await service.syncMovie(550);
 
@@ -214,7 +214,7 @@ describe('SyncMediaService', () => {
 
     it('should sync a show successfully', async () => {
       tmdbAdapter.getShow.mockResolvedValue({ ...mockShow });
-      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue({ rating: 8.5, votes: 8000 });
+      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue({ rating: 8.5, votes: 8000, watchers: 200, totalWatchers: 10000 });
       omdbAdapter.getAggregatedRatings.mockResolvedValue({
         imdbRating: 9.0,
         imdbVotes: 1500000,
@@ -297,7 +297,7 @@ describe('SyncMediaService', () => {
         releaseDate: new Date('2023-06-15'),
       };
       tmdbAdapter.getMovie.mockResolvedValue(media);
-      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ rating: 7.8, votes: 4000 });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ rating: 7.8, votes: 4000, watchers: 80, totalWatchers: 3000 });
       omdbAdapter.getAggregatedRatings.mockResolvedValue({
         imdbRating: 7.5,
         imdbVotes: 50000,

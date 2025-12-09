@@ -199,10 +199,10 @@ describe('StatsService', () => {
 
     it('should fetch movies and shows in parallel', async () => {
       const moviePromise = new Promise<any[]>(resolve => 
-        setTimeout(() => resolve([]), 100)
+        setTimeout(() => resolve([]), 50)
       );
       const showPromise = new Promise<any[]>(resolve => 
-        setTimeout(() => resolve([]), 100)
+        setTimeout(() => resolve([]), 50)
       );
 
       traktAdapter.getTrendingMoviesWithWatchers.mockReturnValue(moviePromise);
@@ -212,7 +212,7 @@ describe('StatsService', () => {
       await service.syncTrendingStats();
       const duration = Date.now() - start;
 
-      // Should complete in ~100ms (parallel), not ~200ms (sequential)
+      // Should complete in ~50ms (parallel), not ~100ms (sequential)
       expect(duration).toBeLessThan(150);
     });
   });

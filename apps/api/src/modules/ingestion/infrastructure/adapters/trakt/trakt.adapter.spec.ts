@@ -129,7 +129,7 @@ describe('TraktAdapter', () => {
       const result = await adapter.getMovieRatingsByTmdbId(100);
 
       // Should still return ratings, with watchers 0
-      expect(result).toEqual({ rating: 8.5, votes: 10000, watchers: 0 });
+      expect(result).toEqual({ rating: 8.5, votes: 10000, watchers: 0, totalWatchers: 0 });
     });
 
     it('should return null when movie not found', async () => {
@@ -165,7 +165,7 @@ describe('TraktAdapter', () => {
       const result = await adapter.getShowRatingsByTmdbId(1000);
 
       // Should still return ratings, with watchers 0
-      expect(result).toEqual({ rating: 9.0, votes: 50000, watchers: 0 });
+      expect(result).toEqual({ rating: 9.0, votes: 50000, watchers: 0, totalWatchers: 0 });
     });
   });
 

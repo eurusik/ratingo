@@ -13,8 +13,8 @@ import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 import { CreditsMapper } from '../mappers/credits.mapper';
 import { ImageMapper } from '../mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
-
 import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -196,17 +196,22 @@ export class DrizzleMovieRepository implements IMovieRepository {
   async findNowPlaying(options: NowPlayingOptions = {}): Promise<MovieWithMedia[]> {
     const { limit = 20, offset = 0 } = options;
 
-    const results = await this.db
-      .select(this.movieSelectFields)
-      .from(schema.movies)
-      .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(eq(schema.movies.isNowPlaying, true))
-      .orderBy(desc(schema.mediaItems.popularity))
-      .limit(limit)
-      .offset(offset);
+    try {
+      const results = await this.db
+        .select(this.movieSelectFields)
+        .from(schema.movies)
+        .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .where(eq(schema.movies.isNowPlaying, true))
+        .orderBy(desc(schema.mediaItems.popularity)) // Sort by general popularity
+        .limit(limit)
+        .offset(offset);
 
-    return this.attachGenres(results);
+      return this.attachGenres(results);
+    } catch (error) {
+      this.logger.error(`Failed to find now playing movies: ${error.message}`, error.stack);
+      throw new DatabaseException(`Failed to fetch now playing movies`, { originalError: error.message });
+    }
   }
 
   /**
@@ -217,54 +222,61 @@ export class DrizzleMovieRepository implements IMovieRepository {
     const { limit = 20, offset = 0, daysBack = 30 } = options;
 
     const now = new Date();
-    const cutoffDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(now.getDate() - daysBack);
 
-    const results = await this.db
-      .select(this.movieSelectFields)
-      .from(schema.movies)
-      .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(
-        and(
-          isNotNull(schema.movies.theatricalReleaseDate),
-          gte(schema.movies.theatricalReleaseDate, cutoffDate),
-          lte(schema.movies.theatricalReleaseDate, now)
+    try {
+      const results = await this.db
+        .select(this.movieSelectFields)
+        .from(schema.movies)
+        .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .where(
+          and(
+            isNotNull(schema.movies.theatricalReleaseDate),
+            gte(schema.movies.theatricalReleaseDate, cutoffDate),
+            lte(schema.movies.theatricalReleaseDate, now)
+          )
         )
-      )
-      .orderBy(desc(schema.mediaItems.popularity))
-      .limit(limit)
-      .offset(offset);
+        .orderBy(desc(schema.movies.theatricalReleaseDate))
+        .limit(limit)
+        .offset(offset);
 
-    return this.attachGenres(results);
+      return this.attachGenres(results);
+    } catch (error) {
+      this.logger.error(`Failed to find new releases: ${error.message}`, error.stack);
+      throw new DatabaseException(`Failed to fetch new releases`, { originalError: error.message });
+    }
   }
 
-  /**
-   * Finds movies recently released on digital platforms.
-   * Uses indexed digitalReleaseDate for fast queries.
-   */
   async findNewOnDigital(options: NowPlayingOptions = {}): Promise<MovieWithMedia[]> {
     const { limit = 20, offset = 0, daysBack = 14 } = options;
 
     const now = new Date();
     const cutoffDate = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
 
-    const results = await this.db
-      .select(this.movieSelectFields)
-      .from(schema.movies)
-      .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
-      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-      .where(
-        and(
-          isNotNull(schema.movies.digitalReleaseDate),
-          gte(schema.movies.digitalReleaseDate, cutoffDate),
-          lte(schema.movies.digitalReleaseDate, now)
+    try {
+      const results = await this.db
+        .select(this.movieSelectFields)
+        .from(schema.movies)
+        .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .where(
+          and(
+            isNotNull(schema.movies.digitalReleaseDate),
+            gte(schema.movies.digitalReleaseDate, cutoffDate),
+            lte(schema.movies.digitalReleaseDate, now)
+          )
         )
-      )
-      .orderBy(desc(schema.mediaItems.popularity))
-      .limit(limit)
-      .offset(offset);
+        .orderBy(desc(schema.movies.digitalReleaseDate))
+        .limit(limit)
+        .offset(offset);
 
-    return this.attachGenres(results);
+      return this.attachGenres(results);
+    } catch (error) {
+      this.logger.error(`Failed to find new on digital: ${error.message}`, error.stack);
+      throw new DatabaseException(`Failed to fetch new on digital`, { originalError: error.message });
+    }
   }
 
   /**
