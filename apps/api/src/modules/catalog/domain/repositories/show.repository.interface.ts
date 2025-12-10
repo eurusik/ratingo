@@ -2,7 +2,47 @@ import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { Video } from '../../../../database/schema';
-import { CreditsDto, ImageDto, AvailabilityDto } from '../../presentation/dtos/common.dto';
+import { CreditsDto, ImageDto, AvailabilityDto, ExternalRatingsDto, RatingoStatsDto } from '../../presentation/dtos/common.dto';
+
+/**
+ * Options for trending shows query.
+ */
+export interface TrendingShowsOptions {
+  limit?: number;
+  offset?: number;
+  minRating?: number;
+  genreId?: string;
+}
+
+/**
+ * Lightweight trending show item.
+ */
+export interface TrendingShowItem {
+  id: string;
+  type: 'show';
+  slug: string;
+  title: string;
+  originalTitle: string | null;
+  overview: string | null;
+  primaryTrailerKey: string | null;
+  poster: ImageDto | null;
+  backdrop: ImageDto | null;
+  releaseDate: Date | null;
+  
+  isNew: boolean;
+  isClassic: boolean;
+  
+  stats: RatingoStatsDto;
+  externalRatings: ExternalRatingsDto;
+  
+  showProgress: {
+    lastAirDate: Date | null;
+    nextAirDate: Date | null;
+    season: number | null;
+    episode: number | null;
+    label: string | null;
+  } | null;
+}
 
 /**
  * Show data for listing.
@@ -113,6 +153,11 @@ export interface IShowRepository {
    * Finds episodes airing within a date range for the global calendar.
    */
   findEpisodesByDateRange(startDate: Date, endDate: Date): Promise<CalendarEpisode[]>;
+
+  /**
+   * Finds trending shows with filtering and pagination.
+   */
+  findTrending(options: TrendingShowsOptions): Promise<TrendingShowItem[]>;
 
   /**
    * Finds full show details by slug.

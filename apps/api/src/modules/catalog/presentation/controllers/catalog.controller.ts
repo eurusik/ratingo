@@ -6,6 +6,7 @@ import { MovieResponseDto } from '../dtos/movie-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
 import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
+import { TrendingShowsQueryDto, TrendingShowsResponseDto } from '../dtos/trending.dto';
 
 /**
  * REST controller for catalog endpoints.
@@ -20,6 +21,30 @@ export class CatalogController {
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
   ) {}
+
+  @Get('shows/trending')
+  @ApiOperation({
+    summary: 'Trending TV shows',
+    description: 'Returns trending shows sorted by popularity and rating.',
+  })
+  @ApiOkResponse({ type: TrendingShowsResponseDto })
+  async getTrendingShows(
+    @Query() query: TrendingShowsQueryDto,
+  ): Promise<TrendingShowsResponseDto> {
+    const shows = await this.showRepository.findTrending(query);
+
+    return {
+      data: shows.map(show => ({
+        ...show,
+        type: 'show' as const,
+      })),
+      meta: {
+        count: shows.length,
+        limit: query.limit || 20,
+        offset: query.offset || 0,
+      },
+    };
+  }
 
   @Get('shows/calendar')
   @ApiOperation({

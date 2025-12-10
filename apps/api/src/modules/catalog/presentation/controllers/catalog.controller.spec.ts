@@ -40,6 +40,9 @@ describe('CatalogController', () => {
         }
       ]),
       findBySlug: jest.fn(),
+      findTrending: jest.fn().mockResolvedValue([
+        { id: 'trending-1', title: 'Trending Show', type: 'show' }
+      ]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -96,6 +99,50 @@ describe('CatalogController', () => {
       expect(movieRepository.findNewOnDigital).toHaveBeenCalledWith(
         expect.objectContaining({ limit: 25 })
       );
+    });
+  });
+
+  describe('getTrendingShows', () => {
+    it('should return trending shows', async () => {
+      const result = await controller.getTrendingShows({ limit: 10, offset: 0 });
+
+      expect(showRepository.findTrending).toHaveBeenCalledWith({
+        limit: 10,
+        offset: 0,
+      });
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].type).toBe('show');
+    });
+
+    it('should respect pagination and filters', async () => {
+      await controller.getTrendingShows({ 
+        limit: 50, 
+        offset: 10,
+        minRating: 80,
+        genreId: 'uuid-genre'
+      });
+
+      expect(showRepository.findTrending).toHaveBeenCalledWith({
+        limit: 50,
+        offset: 10,
+        minRating: 80,
+        genreId: 'uuid-genre'
+      });
+    });
+
+    it('should return correct meta data', async () => {
+      showRepository.findTrending.mockResolvedValue([
+        { id: '1', title: 'Show 1', type: 'show' }, 
+        { id: '2', title: 'Show 2', type: 'show' }
+      ]);
+      
+      const result = await controller.getTrendingShows({ limit: 10, offset: 0 });
+      
+      expect(result.meta).toEqual({
+        count: 2,
+        limit: 10,
+        offset: 0
+      });
     });
   });
 

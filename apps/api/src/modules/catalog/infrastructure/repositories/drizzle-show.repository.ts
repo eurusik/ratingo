@@ -2,10 +2,17 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq, asc, and, gte, lte } from 'drizzle-orm';
+import { eq, asc, desc, and, gte, lte, isNull, inArray } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { IShowRepository, ShowListItem, CalendarEpisode, ShowDetails } from '../../domain/repositories/show.repository.interface';
+import { 
+  IShowRepository, 
+  ShowListItem, 
+  CalendarEpisode, 
+  ShowDetails,
+  TrendingShowItem,
+  TrendingShowsOptions 
+} from '../../domain/repositories/show.repository.interface';
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { CreditsMapper } from '../mappers/credits.mapper';
 import { ImageMapper } from '../mappers/image.mapper';
@@ -319,6 +326,131 @@ export class DrizzleShowRepository implements IShowRepository {
     } catch (error) {
       this.logger.error(`Failed to get drop-off analysis for ${tmdbId}: ${error.message}`, error.stack);
       throw new DatabaseException(`Failed to get drop-off analysis for ${tmdbId}`, { originalError: error.message });
+    }
+  }
+
+  /**
+   * Finds trending shows with filtering and pagination.
+   */
+  async findTrending(options: TrendingShowsOptions): Promise<TrendingShowItem[]> {
+    const { limit = 20, offset = 0, minRating, genreId } = options;
+
+    try {
+      const conditions = [
+        eq(schema.mediaItems.type, MediaType.SHOW),
+        isNull(schema.mediaItems.deletedAt),
+      ];
+
+      if (minRating !== undefined) {
+        conditions.push(gte(schema.mediaStats.ratingoScore, minRating));
+      }
+
+      if (genreId) {
+        const genreSubquery = this.db
+          .select({ mediaItemId: schema.mediaGenres.mediaItemId })
+          .from(schema.mediaGenres)
+          .where(eq(schema.mediaGenres.genreId, genreId));
+        
+        conditions.push(inArray(schema.mediaItems.id, genreSubquery));
+      }
+
+      const results = await this.db
+        .select({
+          // MediaItem
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          title: schema.mediaItems.title,
+          originalTitle: schema.mediaItems.originalTitle,
+          slug: schema.mediaItems.slug,
+          overview: schema.mediaItems.overview,
+          posterPath: schema.mediaItems.posterPath,
+          backdropPath: schema.mediaItems.backdropPath,
+          releaseDate: schema.mediaItems.releaseDate,
+          videos: schema.mediaItems.videos,
+          
+          // External Ratings
+          rating: schema.mediaItems.rating,
+          voteCount: schema.mediaItems.voteCount,
+          ratingImdb: schema.mediaItems.ratingImdb,
+          voteCountImdb: schema.mediaItems.voteCountImdb,
+          ratingTrakt: schema.mediaItems.ratingTrakt,
+          voteCountTrakt: schema.mediaItems.voteCountTrakt,
+          ratingMetacritic: schema.mediaItems.ratingMetacritic,
+          ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+
+          // Stats
+          ratingoScore: schema.mediaStats.ratingoScore,
+          qualityScore: schema.mediaStats.qualityScore,
+          popularityScore: schema.mediaStats.popularityScore,
+          watchersCount: schema.mediaStats.watchersCount,
+          totalWatchers: schema.mediaStats.totalWatchers,
+
+          // Show specific
+          lastAirDate: schema.shows.lastAirDate,
+          nextAirDate: schema.shows.nextAirDate,
+        })
+        .from(schema.mediaItems)
+        .innerJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
+        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .where(and(...conditions))
+        .orderBy(
+          desc(schema.mediaStats.popularityScore),
+          desc(schema.mediaStats.ratingoScore),
+          desc(schema.mediaItems.popularity)
+        )
+        .limit(limit)
+        .offset(offset);
+
+      const now = new Date();
+      const newReleaseCutoff = new Date();
+      newReleaseCutoff.setDate(now.getDate() - 30);
+
+      const classicCutoff = new Date();
+      classicCutoff.setFullYear(now.getFullYear() - 10);
+
+      return results.map(row => ({
+        id: row.id,
+        type: 'show',
+        slug: row.slug,
+        title: row.title,
+        originalTitle: row.originalTitle,
+        overview: row.overview,
+        primaryTrailerKey: row.videos?.[0]?.key || null,
+        poster: ImageMapper.toPoster(row.posterPath),
+        backdrop: ImageMapper.toBackdrop(row.backdropPath),
+        releaseDate: row.releaseDate,
+        
+        isNew: row.releaseDate ? row.releaseDate >= newReleaseCutoff : false,
+        isClassic: row.releaseDate 
+          ? (row.releaseDate <= classicCutoff && (row.ratingoScore || 0) >= 80) 
+          : false,
+
+        stats: {
+          ratingoScore: row.ratingoScore,
+          qualityScore: row.qualityScore,
+          popularityScore: row.popularityScore,
+          liveWatchers: row.watchersCount,
+          totalWatchers: row.totalWatchers,
+        },
+        externalRatings: {
+          tmdb: { rating: row.rating, voteCount: row.voteCount },
+          imdb: row.ratingImdb ? { rating: row.ratingImdb, voteCount: row.voteCountImdb } : null,
+          trakt: row.ratingTrakt ? { rating: row.ratingTrakt, voteCount: row.voteCountTrakt } : null,
+          metacritic: row.ratingMetacritic ? { rating: row.ratingMetacritic } : null,
+          rottenTomatoes: row.ratingRottenTomatoes ? { rating: row.ratingRottenTomatoes } : null,
+        },
+        
+        showProgress: {
+          lastAirDate: row.lastAirDate,
+          nextAirDate: row.nextAirDate,
+          season: null,
+          episode: null,
+          label: null,
+        },
+      }));
+    } catch (error) {
+      this.logger.error(`Failed to find trending shows: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to fetch trending shows', { originalError: error.message });
     }
   }
 }
