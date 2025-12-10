@@ -7,6 +7,12 @@ import { InsightsRepository } from '../../domain/repositories/insights.repositor
 import { RiseFallItemDto } from '../../presentation/dtos/insights.dto';
 import { ImageMapper } from '../../../catalog/infrastructure/mappers/image.mapper';
 
+/**
+ * Drizzle implementation of insights repository.
+ *
+ * Provides read-only analytical queries used for trends and movements,
+ * aggregating watcher snapshots over configurable time windows.
+ */
 @Injectable()
 export class DrizzleInsightsRepository implements InsightsRepository {
   private readonly logger = new Logger(DrizzleInsightsRepository.name);
@@ -16,6 +22,14 @@ export class DrizzleInsightsRepository implements InsightsRepository {
     private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
+  /**
+   * Gets media movements (risers and fallers) for the given time window.
+   *
+   * @param {number} windowDays - Size of the comparison window in days
+   * @param {number} limit - Maximum number of items per list
+   * @returns {Promise<{ risers: RiseFallItemDto[]; fallers: RiseFallItemDto[] }>}
+   *          Lists of biggest risers and fallers by watcher delta
+   */
   async getMovements(
     windowDays: number,
     limit: number,
@@ -109,7 +123,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
         };
       });
 
-      // 5. Separate Risers & Fallers and Sort
+      // Separate Risers & Fallers and Sort
       const risers = items
         .filter((i) => i.stats.deltaWatchers > 0)
         .sort((a, b) => b.stats.deltaWatchers - a.stats.deltaWatchers)

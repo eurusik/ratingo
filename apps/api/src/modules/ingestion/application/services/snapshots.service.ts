@@ -6,6 +6,12 @@ import * as schema from '../../../../database/schema';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { isNull } from 'drizzle-orm';
 
+/**
+ * Service for managing daily snapshots of media metrics.
+ *
+ * Captures point-in-time watchers data for all active media items so that
+ * trends and movements can be analyzed later (e.g. in Insights module).
+ */
 @Injectable()
 export class SnapshotsService {
   private readonly logger = new Logger(SnapshotsService.name);
@@ -18,7 +24,13 @@ export class SnapshotsService {
 
   /**
    * Syncs daily watchers snapshots for all media items.
-   * Intended to be run once a day by a cron job.
+   *
+   * Iterates over all non-deleted media items, fetches current watchers stats
+   * from Trakt, and upserts a snapshot row per (media, date, region).
+   * Designed to be run once per day by a cron job and to be idempotent for
+   * the same UTC day.
+   *
+   * @returns {Promise<void>} Resolves when all snapshots are processed
    */
   async syncDailySnapshots() {
     this.logger.log('Starting daily snapshots sync...');

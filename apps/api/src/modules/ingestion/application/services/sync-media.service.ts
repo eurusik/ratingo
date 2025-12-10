@@ -10,7 +10,10 @@ import { NormalizedSeason, NormalizedEpisode } from '../../domain/models/normali
 
 /**
  * Application Service responsible for orchestrating the sync process.
- * It coordinates fetching data from adapters and persisting it to the repository.
+ *
+ * Coordinates fetching data from multiple sources (TMDB, Trakt, OMDb, TVMaze),
+ * merging metadata, calculating Ratingo scores, and persisting the unified
+ * NormalizedMedia entity to the repository.
  */
 @Injectable()
 export class SyncMediaService {
@@ -29,6 +32,9 @@ export class SyncMediaService {
 
   /**
    * Synchronizes a movie by TMDB ID.
+   *
+   * @param {number} tmdbId - TMDB ID of the movie
+   * @param {number} [trendingScore] - Optional trending rank for sorting
    */
   public async syncMovie(tmdbId: number, trendingScore?: number): Promise<void> {
     await this.processMedia(tmdbId, MediaType.MOVIE, trendingScore);
@@ -36,6 +42,9 @@ export class SyncMediaService {
 
   /**
    * Synchronizes a show by TMDB ID.
+   *
+   * @param {number} tmdbId - TMDB ID of the show
+   * @param {number} [trendingScore] - Optional trending rank for sorting
    */
   public async syncShow(tmdbId: number, trendingScore?: number): Promise<void> {
     await this.processMedia(tmdbId, MediaType.SHOW, trendingScore);
@@ -43,6 +52,14 @@ export class SyncMediaService {
 
   /**
    * Core processing logic: fetches data from all sources concurrently and upserts.
+   *
+   * 1. Fetches base metadata from TMDB
+   * 2. Enriches with TVMaze episode data (for shows)
+   * 3. Fetches external ratings from Trakt and OMDb (IMDb/Rotten Tomatoes)
+   * 4. Calculates Ratingo score
+   * 5. Upserts NormalizedMedia to database
+   *
+   * @throws Will throw error if TMDB fetch fails or critical data is missing
    */
   private async processMedia(tmdbId: number, type: MediaType, trendingScore?: number): Promise<void> {
     this.logger.debug(`Syncing ${type} ${tmdbId}...`);
@@ -196,6 +213,10 @@ export class SyncMediaService {
 
   /**
    * Fetches trending media IDs from the provider.
+   *
+   * @param {number} page - Page number to fetch (1-based)
+   * @param {MediaType} [type] - Optional type filter (movie/show)
+   * @returns {Promise<any[]>} List of trending items with TMDB IDs
    */
   public async getTrending(page = 1, type?: MediaType) {
     return this.tmdbAdapter.getTrending(page, type);
