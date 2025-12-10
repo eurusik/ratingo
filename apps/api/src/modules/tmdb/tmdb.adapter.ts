@@ -123,16 +123,27 @@ export class TmdbAdapter implements IMetadataProvider {
   public async getNewReleaseIds(daysBack = 30, region = DEFAULT_REGION): Promise<number[]> {
     const now = new Date();
     const cutoff = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+    const ids: number[] = [];
     
-    const data = await this.fetch('/discover/movie', {
-      region,
-      sort_by: 'primary_release_date.desc',
-      'primary_release_date.lte': now.toISOString().split('T')[0],
-      'primary_release_date.gte': cutoff.toISOString().split('T')[0],
-      with_release_type: '3', // Theatrical
-    });
+    // Fetch first N pages
+    for (let page = 1; page <= this.NOW_PLAYING_PAGE_LIMIT; page++) {
+      const data = await this.fetch('/discover/movie', {
+        region,
+        sort_by: 'primary_release_date.desc',
+        'primary_release_date.lte': now.toISOString().split('T')[0],
+        'primary_release_date.gte': cutoff.toISOString().split('T')[0],
+        with_release_type: '3', // Theatrical
+        page: page.toString(),
+      });
 
-    return (data.results || []).map((m: any) => m.id);
+      const pageIds = (data.results || []).map((m: any) => m.id);
+      ids.push(...pageIds);
+
+      // Stop if we've reached the last page
+      if (page >= data.total_pages) break;
+    }
+
+    return ids;
   }
 
   /**
