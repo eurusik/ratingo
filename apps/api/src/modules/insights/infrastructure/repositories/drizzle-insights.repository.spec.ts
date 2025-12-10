@@ -134,7 +134,7 @@ describe('DrizzleInsightsRepository', () => {
       expect(riser.stats.deltaWatchers).toBe(4000); // 5k - 1k
       expect(riser.stats.growthPrev).toBe(1000);
       expect(riser.stats.growthCurrent).toBe(5000);
-      expect(riser.stats.isNew).toBe(false);
+      expect(riser.stats.isNewInTrends).toBe(false);
 
       // Check Faller
       const faller = result.fallers.find(r => r.id === 'faller-id');
@@ -142,14 +142,14 @@ describe('DrizzleInsightsRepository', () => {
       expect(faller.stats.deltaWatchers).toBe(-4000); // 1k - 5k
       expect(faller.stats.growthPrev).toBe(5000);
       expect(faller.stats.growthCurrent).toBe(1000);
-      expect(faller.stats.isNew).toBe(false);
+      expect(faller.stats.isNewInTrends).toBe(false);
 
       // Check New Item (Should be in Risers because growthCurrent > 0 and growthPrev=0, so delta = 1000 - 0 = 1000 > 0)
       const newItem = result.risers.find(r => r.id === 'new-id');
       expect(newItem).toBeDefined();
       expect(newItem.stats.deltaWatchers).toBe(1000);
       expect(newItem.stats.deltaPercent).toBeNull(); // Should be null, not 100
-      expect(newItem.stats.isNew).toBe(true);
+      expect(newItem.stats.isNewInTrends).toBe(true);
     });
 
     it('should filter out insignificant fallers', async () => {

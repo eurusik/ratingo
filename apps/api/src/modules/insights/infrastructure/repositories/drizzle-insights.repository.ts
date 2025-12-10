@@ -80,7 +80,8 @@ export class DrizzleInsightsRepository implements InsightsRepository {
           deltaPercent = (delta / Math.abs(growthPrev)) * 100;
         }
 
-        const isNew = growthPrev === 0 && growthCurrent > 0;
+        // Identify new entrants (no growth in previous window, but growth now)
+        const isNewInTrends = growthPrev === 0 && growthCurrent > 0;
 
         return {
           id: media.id,
@@ -97,7 +98,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
             currentWatchers: tNow,
             growthCurrent,
             growthPrev,
-            isNew,
+            isNewInTrends,
           },
           externalRatings: {
             tmdb: {
