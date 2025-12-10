@@ -28,6 +28,11 @@ class SyncTrendingDto {
   @ApiProperty({ example: true, description: 'Also sync Trakt stats after ingestion', default: true, required: false })
   @IsOptional()
   syncStats?: boolean;
+
+  @ApiProperty({ enum: MediaType, description: 'Sync only specific media type (movie or show)', required: false })
+  @IsOptional()
+  @IsEnum(MediaType)
+  type?: MediaType;
 }
 
 class SyncNowPlayingDto {
@@ -87,6 +92,7 @@ export class IngestionController {
     const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_FULL, {
       page,
       syncStats,
+      type: dto.type,
     });
 
     return { 
@@ -94,6 +100,7 @@ export class IngestionController {
       jobId: job.id,
       page,
       syncStats,
+      type: dto.type,
     };
   }
 

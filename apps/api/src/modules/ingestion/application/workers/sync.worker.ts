@@ -35,7 +35,7 @@ export class SyncWorker extends WorkerHost {
    * Processes a single job from the queue.
    * BullMQ handles concurrency and retries automatically.
    */
-  async process(job: Job<{ tmdbId?: number; trendingScore?: number; region?: string; daysBack?: number; page?: number; syncStats?: boolean }, any, string>): Promise<void> {
+  async process(job: Job<{ tmdbId?: number; trendingScore?: number; region?: string; daysBack?: number; page?: number; syncStats?: boolean; type?: MediaType }, any, string>): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
 
     try {
@@ -53,7 +53,7 @@ export class SyncWorker extends WorkerHost {
           await this.processNewReleases(job.data.region, job.data.daysBack);
           break;
         case IngestionJob.SYNC_TRENDING_FULL:
-          await this.processTrendingFull(job.data.page, job.data.syncStats);
+          await this.processTrendingFull(job.data.page, job.data.syncStats, job.data.type);
           break;
         case IngestionJob.UPDATE_NOW_PLAYING_FLAGS:
           await this.updateNowPlayingFlags(job.data.region);
@@ -73,11 +73,11 @@ export class SyncWorker extends WorkerHost {
    * 2. Sync each movie/show (sequential to avoid rate limits)
    * 3. Update Trakt stats if syncStats=true
    */
-  private async processTrendingFull(page = 1, syncStats = true): Promise<void> {
-    this.logger.log(`Starting full trending sync (page: ${page}, syncStats: ${syncStats})...`);
+  private async processTrendingFull(page = 1, syncStats = true, type?: MediaType): Promise<void> {
+    this.logger.log(`Starting full trending sync (page: ${page}, syncStats: ${syncStats}, type: ${type || 'all'})...`);
 
     // Get trending items from TMDB
-    const items = await this.syncService.getTrending(page);
+    const items = await this.syncService.getTrending(page, type);
     this.logger.log(`Found ${items.length} trending items`);
 
     // Sync each item sequentially

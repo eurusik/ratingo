@@ -55,13 +55,25 @@ export class TmdbAdapter implements IMetadataProvider {
    * Retrieves trending movies and shows for the current day.
    * Filters out persons and other media types.
    */
-  public async getTrending(page = 1): Promise<Array<{ tmdbId: number; type: MediaType }>> {
-    const data = await this.fetch('/trending/all/day', { page: page.toString() });
+  public async getTrending(page = 1, type?: MediaType): Promise<Array<{ tmdbId: number; type: MediaType }>> {
+    const TMDB_TYPE = {
+      MOVIE: 'movie',
+      TV: 'tv'
+    } as const;
+
+    let endpoint = '/trending/all/day';
+    if (type === MediaType.MOVIE) endpoint = '/trending/movie/day';
+    else if (type === MediaType.SHOW) endpoint = '/trending/tv/day';
+
+    const data = await this.fetch(endpoint, { page: page.toString() });
     return (data.results || [])
-      .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
+      .filter((item: any) => {
+        if (type) return true;
+        return item.media_type === TMDB_TYPE.MOVIE || item.media_type === TMDB_TYPE.TV;
+      })
       .map((item: any) => ({
         tmdbId: item.id,
-        type: item.media_type === 'tv' ? MediaType.SHOW : MediaType.MOVIE,
+        type: type || (item.media_type === TMDB_TYPE.TV ? MediaType.SHOW : MediaType.MOVIE),
       }));
   }
 

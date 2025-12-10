@@ -197,7 +197,7 @@ export class SyncMediaService {
   /**
    * Fetches trending media IDs from the provider.
    */
-  public async getTrending(page = 1) {
-    return this.tmdbAdapter.getTrending(page);
+  public async getTrending(page = 1, type?: MediaType) {
+    return this.tmdbAdapter.getTrending(page, type);
   }
 }
