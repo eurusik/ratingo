@@ -14,12 +14,12 @@ import { IShowRepository, SHOW_REPOSITORY } from '../../domain/repositories/show
 import { DrizzleMovieRepository } from './drizzle-movie.repository';
 import { DrizzleShowRepository } from './drizzle-show.repository';
 import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
-import { eq, inArray, desc, and, lte, isNotNull, gte } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions';
 
 import { PersistenceMapper } from '../mappers/persistence.mapper';
-import { ImageMapper } from '../mappers/image.mapper';
+import { HeroMediaQuery } from '../queries/hero-media.query';
 
 /**
  * Drizzle ORM implementation of the Media Repository.
@@ -38,6 +38,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     private readonly movieRepository: IMovieRepository,
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
+    private readonly heroMediaQuery: HeroMediaQuery,
   ) {}
 
   /**
@@ -216,174 +217,12 @@ export class DrizzleMediaRepository implements IMediaRepository {
 
   /**
    * Retrieves top media items for the Hero block.
+   *
+   * @param {number} limit - Maximum number of items to return
+   * @param {MediaType} type - Optional filter by media type
+   * @returns {Promise<any[]>} List of hero-worthy media items
    */
   async findHero(limit: number, type?: MediaType): Promise<any[]> {
-    try {
-      const now = new Date();
-
-      const whereConditions = [
-        lte(schema.mediaItems.releaseDate, now),
-        isNotNull(schema.mediaItems.posterPath),
-        isNotNull(schema.mediaItems.backdropPath),
-        // Quality filters for Hero
-        gte(schema.mediaStats.qualityScore, 60), // Not trash
-        gte(schema.mediaStats.popularityScore, 40) // Not obscure
-      ];
-
-      if (type) {
-        whereConditions.push(eq(schema.mediaItems.type, type));
-      }
-
-      const results = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          type: schema.mediaItems.type,
-          slug: schema.mediaItems.slug,
-          title: schema.mediaItems.title,
-          originalTitle: schema.mediaItems.originalTitle,
-          overview: schema.mediaItems.overview,
-          posterPath: schema.mediaItems.posterPath,
-          backdropPath: schema.mediaItems.backdropPath,
-          releaseDate: schema.mediaItems.releaseDate,
-          videos: schema.mediaItems.videos,
-          
-          // Stats
-          ratingoScore: schema.mediaStats.ratingoScore,
-          qualityScore: schema.mediaStats.qualityScore,
-          watchersCount: schema.mediaStats.watchersCount, // live
-          totalWatchers: schema.mediaStats.totalWatchers, // total
-          
-          // External
-          rating: schema.mediaItems.rating, // TMDB Rating
-          voteCount: schema.mediaItems.voteCount,
-        })
-        .from(schema.mediaItems)
-        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-        .where(and(...whereConditions))
-        // Sort by Popularity (Hottest) then Ratingo (Quality/Freshness)
-        .orderBy(desc(schema.mediaStats.popularityScore), desc(schema.mediaStats.ratingoScore))
-        .limit(limit);
-
-      // --- Post-fetch enrichment for Shows ---
-      const showIds = results
-        .filter(r => r.type === MediaType.SHOW)
-        .map(r => r.id);
-
-      const showProgressMap = new Map<string, any>();
-
-      if (showIds.length > 0) {
-        
-        const showsData = await this.db
-          .select({
-            mediaItemId: schema.shows.mediaItemId,
-            showId: schema.shows.id,
-            lastAirDate: schema.shows.lastAirDate,
-            nextAirDate: schema.shows.nextAirDate,
-          })
-          .from(schema.shows)
-          .where(inArray(schema.shows.mediaItemId, showIds));
-        
-        const internalShowIds = showsData.map(s => s.showId);
-        
-        // Find the latest episode for each show
-        // Note: This might be heavy if we have MANY shows, but for Hero (limit 3-10) it is fine.
-        const episodes = await this.db
-          .select({
-            showId: schema.episodes.showId,
-            seasonNumber: schema.episodes.seasonId,
-            seasonNum: schema.seasons.number,
-            episodeNumber: schema.episodes.number,
-            airDate: schema.episodes.airDate,
-          })
-          .from(schema.episodes)
-          .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))
-          .where(
-            and(
-              inArray(schema.episodes.showId, internalShowIds),
-              lte(schema.episodes.airDate, new Date())
-            )
-          )
-          .orderBy(desc(schema.episodes.airDate));
-
-        // Group by showId and pick first (latest)
-        const latestEpisodeMap = new Map<string, any>();
-        for (const ep of episodes) {
-          if (!latestEpisodeMap.has(ep.showId)) {
-            latestEpisodeMap.set(ep.showId, ep);
-          }
-        }
-
-        // Build the result map
-        for (const show of showsData) {
-          const ep = latestEpisodeMap.get(show.showId);
-          if (ep) {
-            showProgressMap.set(show.mediaItemId, {
-              season: ep.seasonNum,
-              episode: ep.episodeNumber,
-              label: `S${ep.seasonNum}E${ep.episodeNumber}`,
-              lastAirDate: show.lastAirDate,
-              nextAirDate: show.nextAirDate,
-            });
-          } else if (show.lastAirDate) {
-             // Fallback if episodes are missing but show has dates
-             showProgressMap.set(show.mediaItemId, {
-              season: 0,
-              episode: 0,
-              label: 'Ended',
-              lastAirDate: show.lastAirDate,
-              nextAirDate: show.nextAirDate,
-            });
-          }
-        }
-      }
-
-      const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-      const fiveYearsAgo = new Date(now.getFullYear() - 5, now.getMonth(), now.getDate());
-
-      return results.map(item => {
-        const releaseDate = item.releaseDate ? new Date(item.releaseDate) : null;
-        const videos = item.videos as any[];
-        const primaryTrailerKey = videos?.length > 0 ? videos[0].key : null;
-        
-        const baseItem = {
-          id: item.id,
-          type: item.type,
-          slug: item.slug,
-          title: item.title,
-          originalTitle: item.originalTitle,
-          overview: item.overview,
-          primaryTrailerKey,
-          poster: ImageMapper.toPoster(item.posterPath),
-          backdrop: ImageMapper.toBackdrop(item.backdropPath),
-          releaseDate: item.releaseDate,
-          isNew: releaseDate ? releaseDate >= ninetyDaysAgo : false,
-          isClassic: releaseDate ? releaseDate <= fiveYearsAgo : false,
-          stats: {
-            ratingoScore: item.ratingoScore,
-            qualityScore: item.qualityScore,
-            liveWatchers: item.watchersCount,
-            totalWatchers: item.totalWatchers,
-          },
-          externalRatings: {
-            tmdb: {
-              rating: item.rating,
-              voteCount: item.voteCount,
-            }
-          }
-        };
-
-        if (item.type === MediaType.SHOW) {
-          const progress = showProgressMap.get(item.id);
-          if (progress) {
-            return { ...baseItem, showProgress: progress };
-          }
-        }
-
-        return baseItem;
-      });
-    } catch (error) {
-      this.logger.error(`Failed to find hero items: ${error.message}`);
-      return []; 
-    }
+    return this.heroMediaQuery.execute({ limit, type });
   }
 }
