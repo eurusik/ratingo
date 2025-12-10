@@ -168,6 +168,32 @@ describe('TmdbAdapter', () => {
       ]);
     });
 
+    it('should use movie endpoint when type is MOVIE', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ results: [] }),
+      });
+
+      await adapter.getTrending(1, MediaType.MOVIE);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/trending/movie/day')
+      );
+    });
+
+    it('should use tv endpoint when type is SHOW', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ results: [] }),
+      });
+
+      await adapter.getTrending(1, MediaType.SHOW);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/trending/tv/day')
+      );
+    });
+
     it('should use correct endpoint', async () => {
       mockFetch.mockResolvedValue({
         ok: true,

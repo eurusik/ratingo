@@ -50,6 +50,17 @@ describe('IngestionController', () => {
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_FULL, {
         page: 2,
         syncStats: false,
+        type: undefined,
+      });
+    });
+
+    it('should queue trending sync job with type', async () => {
+      await controller.syncTrending({ page: 1, syncStats: true, type: MediaType.SHOW });
+
+      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_FULL, {
+        page: 1,
+        syncStats: true,
+        type: MediaType.SHOW,
       });
     });
   });
