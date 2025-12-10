@@ -106,4 +106,95 @@ describe('SyncWorker', () => {
       ]);
     });
   });
+
+  describe('processNewReleases', () => {
+    it('should queue new releases sync jobs', async () => {
+      tmdbAdapter.getNewReleaseIds.mockResolvedValue([30, 40]);
+      const job = { name: IngestionJob.SYNC_NEW_RELEASES, data: { region: 'GB', daysBack: 60 }, id: '6' } as Job;
+
+      await worker.process(job);
+
+      expect(tmdbAdapter.getNewReleaseIds).toHaveBeenCalledWith(60, 'GB');
+      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
+        { name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 30 } },
+        { name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 40 } },
+      ]);
+    });
+
+    it('should do nothing if no new releases found', async () => {
+      tmdbAdapter.getNewReleaseIds.mockResolvedValue([]);
+      const job = { name: IngestionJob.SYNC_NEW_RELEASES, data: { region: 'US' }, id: '7' } as Job;
+
+      await worker.process(job);
+
+      expect(ingestionQueue.addBulk).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('processTrendingFull', () => {
+    it('should process full trending sync', async () => {
+      const mockItems = [
+        { tmdbId: 100, type: 'movie' },
+        { tmdbId: 200, type: 'show' }, // Use string literal to match MediaType enum usually
+      ];
+      syncService.getTrending.mockResolvedValue(mockItems);
+
+      const job = { 
+        name: IngestionJob.SYNC_TRENDING_FULL, 
+        data: { page: 1, syncStats: true }, 
+        id: '8' 
+      } as Job;
+
+      await worker.process(job);
+
+      expect(syncService.getTrending).toHaveBeenCalledWith(1, undefined);
+      // Score = 10000 - ((1-1)*20 + i) -> 10000, 9999
+      expect(syncService.syncMovie).toHaveBeenCalledWith(100, 10000);
+      expect(syncService.syncShow).toHaveBeenCalledWith(200, 9999);
+      expect(statsService.syncTrendingStats).toHaveBeenCalled();
+    });
+
+    it('should skip stats sync if syncStats is false', async () => {
+      syncService.getTrending.mockResolvedValue([]);
+      const job = { 
+        name: IngestionJob.SYNC_TRENDING_FULL, 
+        data: { page: 1, syncStats: false }, 
+        id: '9' 
+      } as Job;
+
+      await worker.process(job);
+
+      expect(statsService.syncTrendingStats).not.toHaveBeenCalled();
+    });
+
+    it('should continue processing items even if one fails', async () => {
+      const mockItems = [
+        { tmdbId: 100, type: 'movie' }, // Fails
+        { tmdbId: 200, type: 'show' },  // Succeeds
+      ];
+      syncService.getTrending.mockResolvedValue(mockItems);
+      syncService.syncMovie.mockRejectedValue(new Error('Sync failed'));
+
+      const job = { 
+        name: IngestionJob.SYNC_TRENDING_FULL, 
+        data: { page: 1 }, 
+        id: '10' 
+      } as Job;
+
+      await worker.process(job);
+
+      expect(syncService.syncMovie).toHaveBeenCalled();
+      expect(syncService.syncShow).toHaveBeenCalled(); // Should still be called
+    });
+  });
+
+  describe('error handling', () => {
+    it('should log and rethrow errors', async () => {
+      const error = new Error('Processing failed');
+      syncService.syncMovie.mockRejectedValue(error);
+      const job = { name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 550 }, id: 'err-1' } as Job;
+
+      await expect(worker.process(job)).rejects.toThrow(error);
+    });
+  });
 });

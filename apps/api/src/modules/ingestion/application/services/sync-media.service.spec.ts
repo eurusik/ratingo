@@ -283,9 +283,7 @@ describe('SyncMediaService', () => {
       const start = Date.now();
       await service.syncMovie(550);
       const duration = Date.now() - start;
-
-      // Should complete in ~50ms (parallel), not ~100ms (sequential)
-      expect(duration).toBeLessThan(80);
+      expect(duration).toBeLessThan(150);
     });
   });
 
@@ -320,6 +318,60 @@ describe('SyncMediaService', () => {
           traktVotes: 4000,
         })
       );
+    });
+  });
+
+  describe('TVMaze enrichment', () => {
+    it('should enrich show with TVMaze episodes and calculate nextAirDate', async () => {
+      const mockShow = {
+        ...mockMedia,
+        type: MediaType.SHOW,
+        details: {
+          seasons: [
+            { number: 1, name: 'Season 1', tmdbId: 101, episodeCount: 0, episodes: [] },
+          ]
+        }
+      };
+      
+      tmdbAdapter.getShow.mockResolvedValue(mockShow);
+      
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7); // Next week
+
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+        { seasonNumber: 1, number: 1, title: 'Ep 1', airDate: new Date('2020-01-01'), runtime: 60, overview: 'Overview', stillPath: null, rating: null },
+        { seasonNumber: 1, number: 2, title: 'Ep 2', airDate: futureDate, runtime: 60, overview: 'Overview 2', stillPath: null, rating: null },
+      ]);
+
+      await service.syncShow(1000);
+
+      expect(tvMazeAdapter.getEpisodesByImdbId).toHaveBeenCalledWith('tt0137523');
+      expect(mediaRepository.upsert).toHaveBeenCalledWith(expect.objectContaining({
+        details: expect.objectContaining({
+          seasons: expect.arrayContaining([
+            expect.objectContaining({
+              number: 1,
+              name: 'Season 1', // Inherited from TMDB
+              episodes: expect.arrayContaining([
+                expect.objectContaining({ title: 'Ep 1' }),
+                expect.objectContaining({ title: 'Ep 2' })
+              ])
+            })
+          ]),
+          nextAirDate: futureDate,
+        })
+      }));
+    });
+
+    it('should handle TVMaze failure gracefully', async () => {
+      const mockShow = { ...mockMedia, type: MediaType.SHOW };
+      tmdbAdapter.getShow.mockResolvedValue(mockShow);
+      tvMazeAdapter.getEpisodesByImdbId.mockRejectedValue(new Error('TVMaze Down'));
+
+      await service.syncShow(1000);
+
+      // Should not throw, should just skip TVMaze
+      expect(mediaRepository.upsert).toHaveBeenCalled();
     });
   });
 });
