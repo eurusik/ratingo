@@ -109,7 +109,10 @@ export class MovieListingsQuery {
     switch (type) {
       case 'now_playing':
         return {
-          conditions: [eq(schema.movies.isNowPlaying, true)],
+          conditions: [
+            eq(schema.movies.isNowPlaying, true),
+            lte(schema.movies.theatricalReleaseDate, now),
+          ],
           orderBy: desc(schema.mediaItems.popularity),
         };
 
@@ -122,7 +125,7 @@ export class MovieListingsQuery {
             gte(schema.movies.theatricalReleaseDate, cutoffDate),
             lte(schema.movies.theatricalReleaseDate, now),
           ],
-          orderBy: desc(schema.movies.theatricalReleaseDate),
+          orderBy: desc(schema.mediaStats.popularityScore),
         };
       }
 
@@ -134,7 +137,7 @@ export class MovieListingsQuery {
             gte(schema.movies.digitalReleaseDate, cutoffDate),
             lte(schema.movies.digitalReleaseDate, now),
           ],
-          orderBy: desc(schema.movies.digitalReleaseDate),
+          orderBy: desc(schema.mediaStats.popularityScore),
         };
       }
     }

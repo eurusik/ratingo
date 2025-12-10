@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MovieResponseDto } from './movie-response.dto';
+import { MovieListItemDto } from './movie-list-item.dto';
 
 export class PaginationMetaDto {
   @ApiProperty({ example: 100 })
@@ -13,8 +13,8 @@ export class PaginationMetaDto {
 }
 
 export class PaginatedMovieResponseDto {
-  @ApiProperty({ type: [MovieResponseDto] })
-  data: MovieResponseDto[];
+  @ApiProperty({ type: [MovieListItemDto] })
+  data: MovieListItemDto[];
 
   @ApiProperty({ type: PaginationMetaDto })
   meta: PaginationMetaDto;
