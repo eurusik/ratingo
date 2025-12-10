@@ -19,6 +19,9 @@ describe('CatalogController', () => {
       findNewReleases: jest.fn().mockResolvedValue([{ id: 2, title: 'New Movie' }]),
       findNewOnDigital: jest.fn().mockResolvedValue([{ id: 3, title: 'Digital Movie' }]),
       findBySlug: jest.fn(),
+      findTrending: jest.fn().mockResolvedValue([
+        { id: 'tm-1', title: 'Trending Movie', type: 'movie' }
+      ]),
     };
 
     const mockShowRepository = {
@@ -143,6 +146,19 @@ describe('CatalogController', () => {
         limit: 10,
         offset: 0
       });
+    });
+  });
+
+  describe('getTrendingMovies', () => {
+    it('should return trending movies', async () => {
+      const result = await controller.getTrendingMovies({ limit: 10, offset: 0 });
+
+      expect(movieRepository.findTrending).toHaveBeenCalledWith({
+        limit: 10,
+        offset: 0,
+      });
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].type).toBe('movie');
     });
   });
 
