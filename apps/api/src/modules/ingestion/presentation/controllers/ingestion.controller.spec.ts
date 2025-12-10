@@ -73,6 +73,14 @@ describe('IngestionController', () => {
         region: 'US',
       });
     });
+
+    it('should use default region when not provided', async () => {
+      await controller.syncNowPlaying({});
+
+      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_NOW_PLAYING, {
+        region: 'UA',
+      });
+    });
   });
 
   describe('syncNewReleases', () => {
@@ -82,6 +90,15 @@ describe('IngestionController', () => {
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_NEW_RELEASES, {
         region: 'UA',
         daysBack: 60,
+      });
+    });
+
+    it('should use default values when not provided', async () => {
+      await controller.syncNewReleases({});
+
+      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_NEW_RELEASES, {
+        region: 'UA',
+        daysBack: 30,
       });
     });
   });

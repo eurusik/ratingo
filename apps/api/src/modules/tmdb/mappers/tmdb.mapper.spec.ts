@@ -210,6 +210,27 @@ describe('TmdbMapper', () => {
       expect(result?.details.theatricalReleaseDate).toBeNull();
     });
 
+    it('should fallback to other countries for release dates if primary regions missing', () => {
+      const movieOtherRegions = {
+        ...mockMovie,
+        release_dates: {
+          results: [
+            {
+              iso_3166_1: 'FR',
+              release_dates: [
+                { type: 3, release_date: '2001-01-01' }, // Theatrical
+                { type: 4, release_date: '2001-02-01' }, // Digital
+              ]
+            }
+          ]
+        }
+      };
+
+      const result = TmdbMapper.toDomain(movieOtherRegions, MediaType.MOVIE);
+      expect(result?.details.theatricalReleaseDate).toEqual(new Date('2001-01-01'));
+      expect(result?.details.digitalReleaseDate).toEqual(new Date('2001-02-01'));
+    });
+
     it('should extract credits for movies correctly', () => {
       const movieWithCredits = {
         ...mockMovie,
@@ -329,6 +350,24 @@ describe('TmdbMapper', () => {
       // 3. Newest Official EN (key 4) - Note: Old Official EN (key 1) is older, Unofficial EN (key 2) is unofficial
       expect(result?.videos[2].key).toBe('4');
       expect(result?.videos[2].language).toBe(VideoLanguageEnum.EN);
+    });
+
+    it('should sort videos: Trailer > Teaser (when not UK)', () => {
+       const movieWithTypes = {
+        ...mockMovie,
+        videos: {
+          results: [
+            { key: '1', name: 'Teaser', site: 'YouTube', type: 'Teaser', official: true, iso_639_1: 'en', published_at: '2023-01-01' },
+            { key: '2', name: 'Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en', published_at: '2023-01-01' },
+          ]
+        }
+      };
+      
+      const result = TmdbMapper.toDomain(movieWithTypes, MediaType.MOVIE);
+      // Expect Trailer (key 2) first
+      expect(result?.videos[0].key).toBe('2');
+      expect(result?.videos[0].type).toBe('Trailer');
+      expect(result?.videos[1].key).toBe('1');
     });
   });
 });

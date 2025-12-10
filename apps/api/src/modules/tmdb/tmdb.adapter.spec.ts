@@ -142,6 +142,16 @@ describe('TmdbAdapter', () => {
 
       expect(result).toBeNull();
     });
+
+    it('should throw on other errors', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
+
+      await expect(adapter.getShow(1000)).rejects.toThrow(TmdbApiException);
+    });
   });
 
   describe('getTrending', () => {
