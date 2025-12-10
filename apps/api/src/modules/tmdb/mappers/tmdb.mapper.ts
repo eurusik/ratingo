@@ -1,6 +1,7 @@
 import { NormalizedMedia, NormalizedVideo, Credits, CastMember, CrewMember, WatchProvidersMap, WatchProvider } from '../../ingestion/domain/models/normalized-media.model';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../common/enums/video.enum';
+import { DEFAULT_REGION } from '../../../common/constants';
 import slugify from 'slugify';
 
 /**
@@ -119,7 +120,7 @@ export class TmdbMapper {
     }
 
     // Priority countries for finding primary release dates
-    const priorityCountries = ['US', 'UA'];
+    const priorityCountries = ['US', DEFAULT_REGION];
     
     // Find theatrical release (type 3) - prioritize US/UA
     let theatricalReleaseDate: Date | null = null;
@@ -271,7 +272,7 @@ export class TmdbMapper {
   }
 
   /** Allowed regions for watch providers - UA primary, US fallback */
-  private static readonly ALLOWED_REGIONS = ['UA', 'US'];
+  private static readonly ALLOWED_REGIONS = [DEFAULT_REGION, 'US'];
 
   private static extractProviders(data: any): WatchProvidersMap | null {
     const results = data['watch/providers']?.results;

@@ -6,6 +6,7 @@ import { TmdbMapper } from './mappers/tmdb.mapper';
 import tmdbConfig from '../../config/tmdb.config';
 import { MediaType } from '../../common/enums/media-type.enum';
 import { TmdbApiException } from '../../common/exceptions/external-api.exception';
+import { DEFAULT_REGION, DEFAULT_LANGUAGE } from '../../common/constants';
 
 /**
  * Implementation of MetadataProvider for The Movie Database (TMDB) API v3.
@@ -15,7 +16,7 @@ import { TmdbApiException } from '../../common/exceptions/external-api.exception
 export class TmdbAdapter implements IMetadataProvider {
   public readonly providerName = 'tmdb';
   private readonly logger = new Logger(TmdbAdapter.name);
-  private readonly DEFAULT_LANG = 'uk-UA';
+  private readonly DEFAULT_LANG = DEFAULT_LANGUAGE;
   private readonly NOW_PLAYING_PAGE_LIMIT = 2;
 
   constructor(
@@ -27,85 +28,60 @@ export class TmdbAdapter implements IMetadataProvider {
    * Fetches full movie details including credits and videos in a single request.
    * Returns null if the resource is not found (404).
    */
-  public async getMovie(id: number): Promise<NormalizedMedia | null> {
+  public async getMovie(tmdbId: number): Promise<NormalizedMedia | null> {
     try {
-      const data = await this.fetch(`/movie/${id}`, { append_to_response: 'credits,videos,release_dates,external_ids,translations,watch/providers' });
+      const data = await this.fetch(`/movie/${tmdbId}`, {
+        append_to_response: 'credits,videos,release_dates,watch/providers',
+        include_video_language: 'uk,en',
+      });
       return TmdbMapper.toDomain(data, MediaType.MOVIE);
     } catch (error) {
-      if (this.isNotFound(error)) {
-        this.logger.warn(`Movie ${id} not found in TMDB (404)`);
+      if (error instanceof TmdbApiException && error.details?.statusCode === 404) {
         return null;
       }
-      this.logger.error(`Failed to fetch movie ${id}: ${error.message}`, error.stack);
       throw error;
     }
   }
 
   /**
-   * Fetches show details including aggregate credits and content ratings.
+   * Fetches full show details including aggregate credits and videos.
+   * Returns null if the resource is not found (404).
    */
-  public async getShow(id: number): Promise<NormalizedMedia | null> {
+  public async getShow(tmdbId: number): Promise<NormalizedMedia | null> {
     try {
-      const data = await this.fetch(`/tv/${id}`, { append_to_response: 'aggregate_credits,videos,content_ratings,external_ids,translations,watch/providers' });
+      const data = await this.fetch(`/tv/${tmdbId}`, {
+        append_to_response: 'aggregate_credits,videos,content_ratings,watch/providers',
+        include_video_language: 'uk,en',
+      });
       return TmdbMapper.toDomain(data, MediaType.SHOW);
     } catch (error) {
-      if (this.isNotFound(error)) {
-        this.logger.warn(`Show ${id} not found in TMDB (404)`);
+      if (error instanceof TmdbApiException && error.details?.statusCode === 404) {
         return null;
       }
-      this.logger.error(`Failed to fetch show ${id}: ${error.message}`, error.stack);
       throw error;
     }
   }
 
   /**
-   * Searches for movies and shows.
+   * Fetches trending media for the day.
+   * Supports filtering by media type (movie/show).
    */
-  public async searchMulti(query: string, page = 1): Promise<NormalizedMedia[]> {
-    try {
-      const data = await this.fetch('/search/multi', {
-        query,
-        page: page.toString(),
-      });
-
-      const results = (data.results || []).filter((item: any) =>
-        item.media_type === 'movie' || item.media_type === 'tv'
-      );
-
-      const mapped = results.map((item: any) => {
-        return TmdbMapper.toDomain(item, item.media_type === 'tv' ? MediaType.SHOW : MediaType.MOVIE);
-      });
-
-      return mapped.filter((m: any) => m !== null) as NormalizedMedia[];
-    } catch (error) {
-      this.logger.error(`Failed to search TMDB for "${query}": ${error.message}`);
-      return [];
-    }
-  }
-
-  /**
-   * Retrieves trending movies and shows for the current day.
-   * Filters out persons and other media types.
-   */
-  public async getTrending(page = 1, type?: MediaType): Promise<Array<{ tmdbId: number; type: MediaType }>> {
-    const TMDB_TYPE = {
-      MOVIE: 'movie',
-      TV: 'tv'
-    } as const;
-
+  public async getTrending(page = 1, type?: MediaType): Promise<{ tmdbId: number; type: MediaType }[]> {
     let endpoint = '/trending/all/day';
-    if (type === MediaType.MOVIE) endpoint = '/trending/movie/day';
-    else if (type === MediaType.SHOW) endpoint = '/trending/tv/day';
+    
+    if (type) {
+      const tmdbType = type === MediaType.MOVIE ? 'movie' : 'tv';
+      endpoint = `/trending/${tmdbType}/day`;
+    }
 
     const data = await this.fetch(endpoint, { page: page.toString() });
+    
     return (data.results || [])
-      .filter((item: any) => {
-        if (type) return true;
-        return item.media_type === TMDB_TYPE.MOVIE || item.media_type === TMDB_TYPE.TV;
-      })
+      .filter((item: any) => item.media_type !== 'person')
       .map((item: any) => ({
         tmdbId: item.id,
-        type: type || (item.media_type === TMDB_TYPE.TV ? MediaType.SHOW : MediaType.MOVIE),
+        // If specific type endpoint used, media_type might be missing in result, so use the requested type
+        type: type || (item.media_type === 'movie' ? MediaType.MOVIE : MediaType.SHOW),
       }));
   }
 
@@ -113,10 +89,10 @@ export class TmdbAdapter implements IMetadataProvider {
    * Retrieves IDs of movies currently playing in theaters.
    * Uses TMDB's now_playing endpoint which handles the "in theaters" logic.
    * 
-   * @param region - ISO 3166-1 country code (default: UA)
+   * @param region - ISO 3166-1 country code
    * @returns Array of TMDB movie IDs
    */
-  public async getNowPlayingIds(region = 'UA'): Promise<number[]> {
+  public async getNowPlayingIds(region = DEFAULT_REGION): Promise<number[]> {
     const ids: number[] = [];
     
     // Fetch first N pages
@@ -137,64 +113,84 @@ export class TmdbAdapter implements IMetadataProvider {
   }
 
   /**
-   * Retrieves IDs of movies released in theaters within the specified period.
-   * Uses TMDB's discover endpoint with release date filters.
+   * Retrieves IDs of newly released movies (theatrical).
+   * Uses discover endpoint with release date filters.
    * 
-   * @param daysBack - Number of days to look back (default: 30)
-   * @param region - ISO 3166-1 country code (default: UA)
+   * @param daysBack - How far back to look for releases
+   * @param region - ISO 3166-1 country code
    * @returns Array of TMDB movie IDs
    */
-  public async getNewReleaseIds(daysBack = 30, region = 'UA'): Promise<number[]> {
+  public async getNewReleaseIds(daysBack = 30, region = DEFAULT_REGION): Promise<number[]> {
     const now = new Date();
     const cutoff = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
     
-    const ids: number[] = [];
-    
-    // Fetch first 2 pages
-    for (let page = 1; page <= 2; page++) {
-      const data = await this.fetch('/discover/movie', {
-        region,
-        'primary_release_date.gte': cutoff.toISOString().split('T')[0],
-        'primary_release_date.lte': now.toISOString().split('T')[0],
-        'with_release_type': '3', // Theatrical
-        'sort_by': 'popularity.desc',
-        page: page.toString(),
-      });
-      
-      const pageIds = (data.results || []).map((m: any) => m.id);
-      ids.push(...pageIds);
-      
-      if (page >= data.total_pages) break;
-    }
-    
-    return ids;
+    const data = await this.fetch('/discover/movie', {
+      region,
+      sort_by: 'primary_release_date.desc',
+      'primary_release_date.lte': now.toISOString().split('T')[0],
+      'primary_release_date.gte': cutoff.toISOString().split('T')[0],
+      with_release_type: '3', // Theatrical
+    });
+
+    return (data.results || []).map((m: any) => m.id);
   }
 
+  /**
+   * Performs a multi-search (movies & shows).
+   * 
+   * @param query Search string
+   * @param page Page number
+   */
+  public async searchMulti(query: string, page = 1): Promise<any[]> {
+    const data = await this.fetch('/search/multi', {
+      query,
+      page: page.toString(),
+      include_adult: 'false',
+    });
+
+    return (data.results || [])
+      .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
+      .map((item: any) => ({
+        externalIds: { tmdbId: item.id },
+        type: item.media_type === 'movie' ? MediaType.MOVIE : MediaType.SHOW,
+        title: item.title || item.name,
+        originalTitle: item.original_title || item.original_name,
+        releaseDate: item.release_date || item.first_air_date,
+        posterPath: item.poster_path,
+        rating: item.vote_average,
+      }));
+  }
+
+  /**
+   * Helper method to perform fetch requests with default headers and params.
+   */
   private async fetch(endpoint: string, params: Record<string, string> = {}): Promise<any> {
     const url = new URL(`${this.config.apiUrl}${endpoint}`);
     
-    if (this.config.apiKey) {
-      url.searchParams.append('api_key', this.config.apiKey);
-    }
-    
+    // Default params
+    url.searchParams.append('api_key', this.config.apiKey);
     url.searchParams.append('language', this.DEFAULT_LANG);
-    url.searchParams.append('include_video_language', 'uk,en');
     
-    for (const [key, value] of Object.entries(params)) {
+    // Custom params
+    Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, value);
-    }
+    });
 
-    const res = await fetch(url.toString());
-    if (!res.ok) {
-      if (res.status === 404) {
-        throw new TmdbApiException('Resource not found', 404);
+    try {
+      const res = await fetch(url.toString());
+      
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new TmdbApiException('Resource not found', 404);
+        }
+        throw new TmdbApiException(`${res.status} ${res.statusText}`, res.status);
       }
-      throw new TmdbApiException(`${res.status} ${res.statusText}`, res.status);
-    }
-    return res.json();
-  }
 
-  private isNotFound(error: any): boolean {
-    return error instanceof TmdbApiException && error.details?.statusCode === 404;
+      return await res.json();
+    } catch (error) {
+      if (error instanceof TmdbApiException) throw error;
+      this.logger.error(`TMDB Request Failed: ${error.message}`, error.stack);
+      throw new TmdbApiException('Failed to communicate with TMDB', 500);
+    }
   }
 }

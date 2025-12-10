@@ -6,6 +6,7 @@ import { IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { SyncMediaService } from '../../application/services/sync-media.service';
+import { DEFAULT_REGION } from '../../../../common/constants';
 
 class SyncDto {
   @ApiProperty({ example: 550, description: 'TMDB ID of the media' })
@@ -36,13 +37,13 @@ class SyncTrendingDto {
 }
 
 class SyncNowPlayingDto {
-  @ApiProperty({ example: 'UA', description: 'Region code (ISO 3166-1)', default: 'UA', required: false })
+  @ApiProperty({ example: DEFAULT_REGION, description: 'Region code (ISO 3166-1)', default: DEFAULT_REGION, required: false })
   @IsOptional()
   region?: string;
 }
 
 class SyncNewReleasesDto {
-  @ApiProperty({ example: 'UA', description: 'Region code (ISO 3166-1)', default: 'UA', required: false })
+  @ApiProperty({ example: DEFAULT_REGION, description: 'Region code (ISO 3166-1)', default: DEFAULT_REGION, required: false })
   @IsOptional()
   region?: string;
 

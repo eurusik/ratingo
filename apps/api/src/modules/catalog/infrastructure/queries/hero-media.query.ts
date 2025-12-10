@@ -5,6 +5,12 @@ import * as schema from '../../../../database/schema';
 import { eq, desc, and, lte, isNotNull, gte, inArray } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ImageMapper } from '../mappers/image.mapper';
+import { 
+  HERO_MIN_POPULARITY_SCORE, 
+  HERO_MIN_QUALITY_SCORE, 
+  NEW_RELEASE_DAYS_THRESHOLD, 
+  CLASSIC_YEARS_THRESHOLD 
+} from '../../../../common/constants';
 
 /**
  * Options for hero media query.
@@ -47,8 +53,8 @@ export class HeroMediaQuery {
         lte(schema.mediaItems.releaseDate, now),
         isNotNull(schema.mediaItems.posterPath),
         isNotNull(schema.mediaItems.backdropPath),
-        gte(schema.mediaStats.qualityScore, 60),
-        gte(schema.mediaStats.popularityScore, 40),
+        gte(schema.mediaStats.qualityScore, HERO_MIN_QUALITY_SCORE),
+        gte(schema.mediaStats.popularityScore, HERO_MIN_POPULARITY_SCORE),
       ];
 
       if (type) {
@@ -182,8 +188,8 @@ export class HeroMediaQuery {
     showProgressMap: Map<string, any>,
     now: Date
   ): any[] {
-    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-    const fiveYearsAgo = new Date(now.getFullYear() - 5, now.getMonth(), now.getDate());
+    const ninetyDaysAgo = new Date(now.getTime() - NEW_RELEASE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000);
+    const fiveYearsAgo = new Date(now.getFullYear() - CLASSIC_YEARS_THRESHOLD, now.getMonth(), now.getDate());
 
     return results.map(item => {
       const releaseDate = item.releaseDate ? new Date(item.releaseDate) : null;

@@ -250,7 +250,7 @@ describe('TmdbAdapter', () => {
     it('should handle network errors', async () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
 
-      await expect(adapter.getMovie(550)).rejects.toThrow('Network error');
+      await expect(adapter.getMovie(550)).rejects.toThrow('Failed to communicate with TMDB');
     });
   });
 });

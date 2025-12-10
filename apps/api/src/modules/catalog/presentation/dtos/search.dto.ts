@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ImageDto } from './common.dto';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
 export enum SearchSource {
   LOCAL = 'local',
@@ -10,8 +11,8 @@ export class SearchItemDto {
   @ApiProperty({ enum: SearchSource })
   source: SearchSource;
 
-  @ApiProperty({ example: 'movie', enum: ['movie', 'show'] })
-  type: 'movie' | 'show';
+  @ApiProperty({ enum: MediaType })
+  type: MediaType;
 
   @ApiProperty({ required: false })
   id?: string;

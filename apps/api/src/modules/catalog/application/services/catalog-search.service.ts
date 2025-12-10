@@ -12,6 +12,8 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 @Injectable()
 export class CatalogSearchService {
   private readonly logger = new Logger(CatalogSearchService.name);
+  private readonly SEARCH_RESULTS_LIMIT = 10;
+  private readonly MIN_QUERY_LENGTH = 2;
 
   constructor(
     @Inject(MEDIA_REPOSITORY)
@@ -26,14 +28,14 @@ export class CatalogSearchService {
    * @returns Combined search results split by source
    */
   async search(query: string): Promise<SearchResponseDto> {
-    if (!query || query.trim().length < 2) {
+    if (!query || query.trim().length < this.MIN_QUERY_LENGTH) {
       return { query, local: [], tmdb: [] };
     }
 
     try {
       // Parallel search
       const [localResults, tmdbResultsRaw] = await Promise.all([
-        this.mediaRepository.search(query, 10),
+        this.mediaRepository.search(query, this.SEARCH_RESULTS_LIMIT),
         this.tmdbAdapter.searchMulti(query, 1),
       ]);
 
@@ -43,7 +45,7 @@ export class CatalogSearchService {
       // Map local results
       const local: SearchItemDto[] = localResults.map(r => ({
         source: SearchSource.LOCAL,
-        type: (r.type === MediaType.MOVIE ? 'movie' : 'show') as 'movie' | 'show',
+        type: r.type as MediaType,
         id: r.id,
         slug: r.slug,
         tmdbId: r.tmdbId,
@@ -60,7 +62,7 @@ export class CatalogSearchService {
         .filter(r => !localTmdbIds.has(r.externalIds.tmdbId))
         .map(r => ({
           source: SearchSource.TMDB,
-          type: (r.type === MediaType.MOVIE ? 'movie' : 'show') as 'movie' | 'show',
+          type: r.type,
           tmdbId: r.externalIds.tmdbId,
           title: r.title,
           originalTitle: r.originalTitle,

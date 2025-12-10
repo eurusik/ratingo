@@ -1,6 +1,7 @@
 import { TmdbMapper } from './tmdb.mapper';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { VideoLanguageEnum } from '../../../common/enums/video.enum';
+import { DEFAULT_REGION } from '../../../common/constants';
 
 describe('TmdbMapper', () => {
   const mockMovie = {
@@ -31,7 +32,7 @@ describe('TmdbMapper', () => {
           ]
         },
         {
-          iso_3166_1: 'UA',
+          iso_3166_1: DEFAULT_REGION,
           release_dates: [
             { type: 4, release_date: '2000-01-01' } // Digital
           ]
@@ -40,7 +41,7 @@ describe('TmdbMapper', () => {
     },
     'watch/providers': {
       results: {
-        UA: {
+        [DEFAULT_REGION]: {
           flatrate: [
             { provider_id: 8, provider_name: 'Netflix', logo_path: '/t2yyOv40HZeVlLkJs8hXc.jpg', display_priority: 0 }
           ]
@@ -68,7 +69,7 @@ describe('TmdbMapper', () => {
     ],
     'watch/providers': {
       results: {
-        UA: {
+        [DEFAULT_REGION]: {
           buy: [
             { provider_id: 3, provider_name: 'Google Play', logo_path: '/pe.jpg', display_priority: 1 }
           ]
@@ -108,9 +109,9 @@ describe('TmdbMapper', () => {
       expect(result?.genres[0]).toEqual({ tmdbId: 18, name: 'Drama', slug: 'drama' });
       
       expect(result?.watchProviders).toBeDefined();
-      expect(result?.watchProviders?.['UA']).toBeDefined();
-      expect(result?.watchProviders?.['UA'].flatrate).toHaveLength(1);
-      expect(result?.watchProviders?.['UA'].flatrate?.[0]).toEqual(expect.objectContaining({
+      expect(result?.watchProviders?.[DEFAULT_REGION]).toBeDefined();
+      expect(result?.watchProviders?.[DEFAULT_REGION].flatrate).toHaveLength(1);
+      expect(result?.watchProviders?.[DEFAULT_REGION].flatrate?.[0]).toEqual(expect.objectContaining({
         providerId: 8,
         name: 'Netflix',
       }));
@@ -138,9 +139,9 @@ describe('TmdbMapper', () => {
       }));
 
       expect(result?.watchProviders).toBeDefined();
-      expect(result?.watchProviders?.['UA']).toBeDefined();
-      expect(result?.watchProviders?.['UA'].buy).toHaveLength(1);
-      expect(result?.watchProviders?.['UA'].buy?.[0].providerId).toBe(3);
+      expect(result?.watchProviders?.[DEFAULT_REGION]).toBeDefined();
+      expect(result?.watchProviders?.[DEFAULT_REGION].buy).toHaveLength(1);
+      expect(result?.watchProviders?.[DEFAULT_REGION].buy?.[0].providerId).toBe(3);
     });
 
     it('should return null if essential data is missing', () => {
@@ -165,7 +166,7 @@ describe('TmdbMapper', () => {
           results: {
             AR: { flatrate: [{ provider_id: 1, provider_name: 'AR Provider', logo_path: '/ar.jpg' }] },
             DE: { flatrate: [{ provider_id: 2, provider_name: 'DE Provider', logo_path: '/de.jpg' }] },
-            UA: { flatrate: [{ provider_id: 3, provider_name: 'UA Provider', logo_path: '/ua.jpg' }] },
+            [DEFAULT_REGION]: { flatrate: [{ provider_id: 3, provider_name: 'UA Provider', logo_path: '/ua.jpg' }] },
             US: { rent: [{ provider_id: 4, provider_name: 'US Provider', logo_path: '/us.jpg' }] },
             GB: { buy: [{ provider_id: 5, provider_name: 'GB Provider', logo_path: '/gb.jpg' }] },
           }
@@ -175,8 +176,8 @@ describe('TmdbMapper', () => {
       const result = TmdbMapper.toDomain(movieWithManyRegions, MediaType.MOVIE);
       
       expect(result?.watchProviders).toBeDefined();
-      expect(Object.keys(result?.watchProviders || {})).toEqual(['UA', 'US']);
-      expect(result?.watchProviders?.['UA']?.flatrate?.[0].name).toBe('UA Provider');
+      expect(Object.keys(result?.watchProviders || {})).toEqual([DEFAULT_REGION, 'US']);
+      expect(result?.watchProviders?.[DEFAULT_REGION]?.flatrate?.[0].name).toBe('UA Provider');
       expect(result?.watchProviders?.['US']?.rent?.[0].name).toBe('US Provider');
       expect(result?.watchProviders?.['AR']).toBeUndefined();
       expect(result?.watchProviders?.['DE']).toBeUndefined();
