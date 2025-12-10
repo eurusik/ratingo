@@ -3,6 +3,7 @@ import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-me
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { Video } from '../../../../database/schema';
 import { CreditsDto, ImageDto, AvailabilityDto, ExternalRatingsDto, RatingoStatsDto } from '../../presentation/dtos/common.dto';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
  * Options for trending shows query.
@@ -24,6 +25,7 @@ export interface TrendingShowItem {
   title: string;
   originalTitle: string | null;
   overview: string | null;
+  ingestionStatus: IngestionStatus;
   primaryTrailerKey: string | null;
   poster: ImageDto | null;
   backdrop: ImageDto | null;
@@ -72,6 +74,7 @@ export interface ShowDetails {
   originalTitle: string | null;
   slug: string;
   overview: string | null;
+  ingestionStatus: IngestionStatus;
   poster?: ImageDto | null;
   backdrop?: ImageDto | null;
   videos?: Video[] | null;

@@ -2,6 +2,7 @@ import { ReleaseInfo, Video } from '../../../../database/schema';
 import { CreditsDto, ImageDto, AvailabilityDto } from '../../presentation/dtos/common.dto';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 import { TrendingShowsQueryDto } from '../../presentation/dtos/trending.dto';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
  * Movie with media item data for catalog queries.
@@ -13,6 +14,7 @@ export interface MovieWithMedia {
   title: string;
   slug: string;
   overview: string | null;
+  ingestionStatus: IngestionStatus;
   poster?: ImageDto | null;
   backdrop?: ImageDto | null;
   popularity: number;
@@ -62,6 +64,7 @@ export interface MovieDetails {
   originalTitle: string | null;
   slug: string;
   overview: string | null;
+  ingestionStatus: IngestionStatus;
   poster?: ImageDto | null;
   backdrop?: ImageDto | null;
   releaseDate: Date | null;

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
+import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter, TvMazeEpisode } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
@@ -7,6 +7,7 @@ import { IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/domain/repo
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ScoreCalculatorService, ScoreInput } from '../../../shared/score-calculator';
 import { NormalizedSeason, NormalizedEpisode } from '../../domain/models/normalized-media.model';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
  * Application Service responsible for orchestrating the sync process.
@@ -200,6 +201,7 @@ export class SyncMediaService {
       media.qualityScore = scores.qualityScore;
       media.popularityScore = scores.popularityScore;
       media.freshnessScore = scores.freshnessScore;
+      media.ingestionStatus = IngestionStatus.READY;
 
       // Persist
       await this.mediaRepository.upsert(media);

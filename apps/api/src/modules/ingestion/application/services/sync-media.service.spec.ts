@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SyncMediaService } from './sync-media.service';
-import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
+import { TmdbAdapter } from '@/modules/tmdb/tmdb.adapter';
 import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';

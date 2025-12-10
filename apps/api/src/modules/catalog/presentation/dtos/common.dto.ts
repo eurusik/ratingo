@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../../common/enums/video.enum';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 export class GenreDto {
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
@@ -274,6 +275,9 @@ export class MediaBaseDto {
 
   @ApiProperty({ type: [GenreDto], required: false })
   genres?: GenreDto[];
+
+  @ApiProperty({ example: IngestionStatus.READY, enum: IngestionStatus, default: IngestionStatus.READY })
+  ingestionStatus: IngestionStatus;
 
   @ApiProperty({ type: [VideoDto], required: false, nullable: true })
   videos?: VideoDto[] | null;

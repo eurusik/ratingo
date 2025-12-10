@@ -1,6 +1,6 @@
 import { TmdbMapper } from './tmdb.mapper';
-import { MediaType } from '../../../../../../common/enums/media-type.enum';
-import { VideoLanguageEnum } from '../../../../../../common/enums/video.enum';
+import { MediaType } from '../../../common/enums/media-type.enum';
+import { VideoLanguageEnum } from '../../../common/enums/video.enum';
 
 describe('TmdbMapper', () => {
   const mockMovie = {

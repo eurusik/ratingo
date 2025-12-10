@@ -1,11 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
-import { IMetadataProvider } from '../../../domain/interfaces/metadata-provider.interface';
-import { NormalizedMedia } from '../../../domain/models/normalized-media.model';
+import { IMetadataProvider } from '../ingestion/domain/interfaces/metadata-provider.interface';
+import { NormalizedMedia } from '../ingestion/domain/models/normalized-media.model';
 import { TmdbMapper } from './mappers/tmdb.mapper';
-import tmdbConfig from '../../../../../config/tmdb.config';
-import { MediaType } from '../../../../../common/enums/media-type.enum';
-import { TmdbApiException } from '../../../../../common/exceptions/external-api.exception';
+import tmdbConfig from '../../config/tmdb.config';
+import { MediaType } from '../../common/enums/media-type.enum';
+import { TmdbApiException } from '../../common/exceptions/external-api.exception';
 
 /**
  * Implementation of MetadataProvider for The Movie Database (TMDB) API v3.
@@ -54,6 +54,31 @@ export class TmdbAdapter implements IMetadataProvider {
       }
       this.logger.error(`Failed to fetch show ${id}: ${error.message}`, error.stack);
       throw error;
+    }
+  }
+
+  /**
+   * Searches for movies and shows.
+   */
+  public async searchMulti(query: string, page = 1): Promise<NormalizedMedia[]> {
+    try {
+      const data = await this.fetch('/search/multi', {
+        query,
+        page: page.toString(),
+      });
+
+      const results = (data.results || []).filter((item: any) =>
+        item.media_type === 'movie' || item.media_type === 'tv'
+      );
+
+      const mapped = results.map((item: any) => {
+        return TmdbMapper.toDomain(item, item.media_type === 'tv' ? MediaType.SHOW : MediaType.MOVIE);
+      });
+
+      return mapped.filter((m: any) => m !== null) as NormalizedMedia[];
+    } catch (error) {
+      this.logger.error(`Failed to search TMDB for "${query}": ${error.message}`);
+      return [];
     }
   }
 

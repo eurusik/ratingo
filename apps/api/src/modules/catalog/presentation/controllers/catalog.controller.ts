@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Inject, DefaultValuePipe, ParseIntPipe, Param, NotFoundException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery, ApiOkResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiOkResponse, ApiResponse } from '@nestjs/swagger';
 import { IMovieRepository, MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
 import { IShowRepository, SHOW_REPOSITORY, CalendarEpisode } from '../../domain/repositories/show.repository.interface';
 import { MovieResponseDto } from '../dtos/movie-response.dto';
@@ -7,6 +7,8 @@ import { ShowResponseDto } from '../dtos/show-response.dto';
 import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { TrendingShowsQueryDto, TrendingShowsResponseDto, TrendingMoviesResponseDto } from '../dtos/trending.dto';
+import { CatalogSearchService } from '../../application/services/catalog-search.service';
+import { SearchResponseDto } from '../dtos/search.dto';
 
 /**
  * REST controller for catalog endpoints.
@@ -20,7 +22,15 @@ export class CatalogController {
     private readonly movieRepository: IMovieRepository,
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
+    private readonly catalogSearchService: CatalogSearchService,
   ) {}
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search movies and shows' })
+  @ApiResponse({ status: 200, type: SearchResponseDto })
+  async search(@Query('query') query: string): Promise<SearchResponseDto> {
+    return this.catalogSearchService.search(query);
+  }
 
   @Get('shows/trending')
   @ApiOperation({

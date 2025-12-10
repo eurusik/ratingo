@@ -1,5 +1,6 @@
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../../common/enums/video.enum';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 export interface CastMember {
   tmdbId: number;
@@ -87,6 +88,8 @@ export interface NormalizedMedia {
   title: string;
   originalTitle?: string | null;
   overview?: string | null;
+  
+  ingestionStatus?: IngestionStatus;
   
   /** Generated SEO-friendly slug */
   slug: string;

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ImageDto, ExternalRatingsDto, RatingoStatsDto, GenreDto } from './common.dto';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 export class MovieListItemDto {
   @ApiProperty()
@@ -16,6 +17,9 @@ export class MovieListItemDto {
 
   @ApiProperty()
   slug: string;
+
+  @ApiProperty({ example: IngestionStatus.READY, enum: IngestionStatus, default: IngestionStatus.READY })
+  ingestionStatus: IngestionStatus;
 
   @ApiProperty({ nullable: true })
   overview: string | null;

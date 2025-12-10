@@ -7,6 +7,7 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { TrendingShowItem, TrendingShowsOptions } from '../../domain/repositories/show.repository.interface';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
  * Fetches trending TV shows with episode progress.
@@ -66,6 +67,7 @@ export class TrendingShowsQuery {
           mi.backdrop_path,
           mi.release_date,
           mi.videos,
+          mi.ingestion_status,
           
           mi.rating,
           mi.vote_count,
@@ -143,6 +145,7 @@ export class TrendingShowsQuery {
         title: row.title,
         originalTitle: row.original_title,
         overview: row.overview,
+        ingestionStatus: row.ingestion_status as IngestionStatus,
         primaryTrailerKey: row.videos?.[0]?.key || null,
         poster: ImageMapper.toPoster(row.poster_path),
         backdrop: ImageMapper.toBackdrop(row.backdrop_path),

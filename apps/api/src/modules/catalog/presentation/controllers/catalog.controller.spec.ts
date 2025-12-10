@@ -3,11 +3,13 @@ import { CatalogController } from './catalog.controller';
 import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 import { NotFoundException } from '@nestjs/common';
+import { CatalogSearchService } from '../../application/services/catalog-search.service';
 
 describe('CatalogController', () => {
   let controller: CatalogController;
   let movieRepository: any;
   let showRepository: any;
+  let catalogSearchService: any;
 
   beforeEach(async () => {
     const mockMovieRepository = {
@@ -48,17 +50,31 @@ describe('CatalogController', () => {
       ]),
     };
 
+    const mockCatalogSearchService = {
+      search: jest.fn().mockResolvedValue({ query: 'test', local: [], tmdb: [] }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CatalogController],
       providers: [
         { provide: MOVIE_REPOSITORY, useValue: mockMovieRepository },
         { provide: SHOW_REPOSITORY, useValue: mockShowRepository },
+        { provide: CatalogSearchService, useValue: mockCatalogSearchService },
       ],
     }).compile();
 
     controller = module.get<CatalogController>(CatalogController);
     movieRepository = module.get(MOVIE_REPOSITORY);
     showRepository = module.get(SHOW_REPOSITORY);
+    catalogSearchService = module.get(CatalogSearchService);
+  });
+
+  describe('search', () => {
+    it('should call catalogSearchService.search', async () => {
+      const result = await controller.search('matrix');
+      expect(catalogSearchService.search).toHaveBeenCalledWith('matrix');
+      expect(result).toBeDefined();
+    });
   });
 
   describe('getNowPlaying', () => {

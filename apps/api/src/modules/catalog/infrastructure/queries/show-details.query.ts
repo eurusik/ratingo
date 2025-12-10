@@ -9,6 +9,7 @@ import { CreditsMapper } from '../mappers/credits.mapper';
 import { ImageMapper } from '../mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
  * Fetches complete TV show details by slug.
@@ -45,6 +46,7 @@ export class ShowDetailsQuery {
           slug: schema.mediaItems.slug,
           overview: schema.mediaItems.overview,
           posterPath: schema.mediaItems.posterPath,
+          ingestionStatus: schema.mediaItems.ingestionStatus,
           backdropPath: schema.mediaItems.backdropPath,
           videos: schema.mediaItems.videos,
           credits: schema.mediaItems.credits,
@@ -96,6 +98,7 @@ export class ShowDetailsQuery {
         originalTitle: showData.originalTitle,
         slug: showData.slug,
         overview: showData.overview,
+        ingestionStatus: showData.ingestionStatus as IngestionStatus,
         poster: ImageMapper.toPoster(showData.posterPath),
         backdrop: ImageMapper.toBackdrop(showData.backdropPath),
         videos: showData.videos,

@@ -71,6 +71,11 @@ export interface IMediaRepository {
    * Criteria: Released, has poster/backdrop, sorted by popularity.
    */
   findHero(limit: number, type?: MediaType): Promise<any[]>;
+
+  /**
+   * Searches for media items using full-text search.
+   */
+  search(query: string, limit: number): Promise<any[]>;
 }
 
 export const MEDIA_REPOSITORY = Symbol('MEDIA_REPOSITORY');

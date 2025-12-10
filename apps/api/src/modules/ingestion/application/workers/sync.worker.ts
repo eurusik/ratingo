@@ -4,7 +4,7 @@ import { Job, Queue } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { SyncMediaService } from '../services/sync-media.service';
 import { SnapshotsService } from '../services/snapshots.service';
-import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
+import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { IMovieRepository, MOVIE_REPOSITORY } from '../../../catalog/domain/repositories/movie.repository.interface';
 import { StatsService } from '../../../stats/application/services/stats.service';

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SyncWorker } from './sync.worker';
 import { SyncMediaService } from '../services/sync-media.service';
 import { SnapshotsService } from '../services/snapshots.service';
-import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
+import { TmdbAdapter } from '@/modules/tmdb/tmdb.adapter';
 import { getQueueToken } from '@nestjs/bullmq';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { Job } from 'bullmq';

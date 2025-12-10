@@ -14,7 +14,7 @@ import { IShowRepository, SHOW_REPOSITORY } from '../../domain/repositories/show
 import { DrizzleMovieRepository } from './drizzle-movie.repository';
 import { DrizzleShowRepository } from './drizzle-show.repository';
 import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, sql, and, desc } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions';
 
@@ -224,5 +224,42 @@ export class DrizzleMediaRepository implements IMediaRepository {
    */
   async findHero(limit: number, type?: MediaType): Promise<any[]> {
     return this.heroMediaQuery.execute({ limit, type });
+  }
+
+  /**
+   * Searches for media items using full-text search.
+   */
+  async search(query: string, limit: number): Promise<any[]> {
+    try {
+      // Create tsquery: 'word1 & word2:*' for partial matching
+      const formattedQuery = query.trim().split(/\s+/).join(' & ') + ':*';
+      const sqlQuery = sql`to_tsquery('simple', ${formattedQuery})`;
+
+      return await this.db
+        .select({
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          type: schema.mediaItems.type,
+          title: schema.mediaItems.title,
+          originalTitle: schema.mediaItems.originalTitle,
+          slug: schema.mediaItems.slug,
+          posterPath: schema.mediaItems.posterPath,
+          rating: schema.mediaItems.rating,
+          releaseDate: schema.mediaItems.releaseDate,
+          ingestionStatus: schema.mediaItems.ingestionStatus,
+        })
+        .from(schema.mediaItems)
+        .where(
+          and(
+            sql`${schema.mediaItems.deletedAt} IS NULL`,
+            sql`${schema.mediaItems.searchVector} @@ ${sqlQuery}`
+          )
+        )
+        .orderBy(desc(schema.mediaItems.popularity))
+        .limit(limit);
+    } catch (error) {
+      this.logger.error(`Failed to search media for "${query}": ${error.message}`);
+      return [];
+    }
   }
 }

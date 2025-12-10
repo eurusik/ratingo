@@ -1,29 +1,27 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { CatalogModule } from '../catalog/catalog.module';
 import { StatsModule } from '../stats/stats.module';
-import { TmdbAdapter } from './infrastructure/adapters/tmdb/tmdb.adapter';
+import { TmdbModule } from '../tmdb/tmdb.module';
 import { TraktAdapter } from './infrastructure/adapters/trakt/trakt.adapter';
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { SyncMediaService } from './application/services/sync-media.service';
 import { ConfigModule } from '@nestjs/config';
-import tmdbConfig from '../../config/tmdb.config';
 import traktConfig from '../../config/trakt.config';
-import omdbConfig from '../../config/omdb.config';
 import { BullModule } from '@nestjs/bullmq';
-import { SyncWorker } from './application/workers/sync.worker';
+import { INGESTION_QUEUE } from './ingestion.constants';
 import { IngestionController } from './presentation/controllers/ingestion.controller';
 import { ScoreCalculatorModule } from '../shared/score-calculator';
 import { SnapshotsService } from './application/services/snapshots.service';
-
-import { INGESTION_QUEUE } from './ingestion.constants';
+import omdbConfig from '../../config/omdb.config';
+import { SyncWorker } from './application/workers/sync.worker';
 
 @Module({
   imports: [
     CatalogModule,
+    TmdbModule,
     forwardRef(() => StatsModule),
     ScoreCalculatorModule,
-    ConfigModule.forFeature(tmdbConfig),
     ConfigModule.forFeature(traktConfig),
     ConfigModule.forFeature(omdbConfig),
     BullModule.registerQueue({
@@ -31,7 +29,7 @@ import { INGESTION_QUEUE } from './ingestion.constants';
     }),
   ],
   controllers: [IngestionController],
-  providers: [TmdbAdapter, TraktAdapter, OmdbAdapter, TvMazeAdapter, SyncMediaService, SyncWorker, SnapshotsService],
+  providers: [TraktAdapter, OmdbAdapter, TvMazeAdapter, SyncMediaService, SyncWorker, SnapshotsService],
   exports: [SyncMediaService, TraktAdapter, SnapshotsService],
 })
 export class IngestionModule {}

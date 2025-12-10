@@ -29,6 +29,7 @@ const tsvector = customType<{ data: string }>({
 // --- ENUMS ---
 export const mediaTypeEnum = pgEnum('media_type', [MediaType.MOVIE, MediaType.SHOW]);
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
+export const ingestionStatusEnum = pgEnum('ingestion_status', ['importing', 'ready', 'failed']);
 
 // --- SHARED TYPES ---
 
@@ -87,6 +88,7 @@ export const mediaItems = pgTable(
     
     // Metadata
     releaseDate: timestamp('release_date'),
+    ingestionStatus: ingestionStatusEnum('ingestion_status').default('ready').notNull(),
     
     // Full Text Search Vector (auto-generated)
     searchVector: tsvector('search_vector').generatedAlwaysAs(

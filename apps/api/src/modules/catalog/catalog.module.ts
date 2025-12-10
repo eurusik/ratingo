@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { DrizzleMediaRepository } from './infrastructure/repositories/drizzle-media.repository';
 import { DrizzleGenreRepository } from './infrastructure/repositories/drizzle-genre.repository';
 import { DrizzleShowRepository } from './infrastructure/repositories/drizzle-show.repository';
@@ -21,10 +21,14 @@ import { MovieListingsQuery } from './infrastructure/queries/movie-listings.quer
 
 // Query Objects - Mixed Media
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
+import { CatalogSearchService } from './application/services/catalog-search.service';
+import { TmdbModule } from '../tmdb/tmdb.module';
 
 @Module({
+  imports: [TmdbModule],
   controllers: [CatalogController],
   providers: [
+    CatalogSearchService,
     // Query Objects - Shows
     TrendingShowsQuery,
     ShowDetailsQuery,

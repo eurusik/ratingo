@@ -1,6 +1,6 @@
-import { NormalizedMedia, NormalizedVideo, Credits, CastMember, CrewMember, WatchProvidersMap, WatchProvider } from '../../../../domain/models/normalized-media.model';
-import { MediaType } from '../../../../../../common/enums/media-type.enum';
-import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../../../../common/enums/video.enum';
+import { NormalizedMedia, NormalizedVideo, Credits, CastMember, CrewMember, WatchProvidersMap, WatchProvider } from '../../ingestion/domain/models/normalized-media.model';
+import { MediaType } from '../../../common/enums/media-type.enum';
+import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../common/enums/video.enum';
 import slugify from 'slugify';
 
 /**
