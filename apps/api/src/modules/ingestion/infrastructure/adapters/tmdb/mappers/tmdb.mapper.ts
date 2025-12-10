@@ -232,7 +232,7 @@ export class TmdbMapper {
     return results
       .filter((v: any) => 
         v.site === VideoSiteEnum.YOUTUBE && 
-        v.type === VideoTypeEnum.TRAILER &&
+        (v.type === VideoTypeEnum.TRAILER || v.type === VideoTypeEnum.TEASER) &&
         (v.iso_639_1 === VideoLanguageEnum.EN || v.iso_639_1 === VideoLanguageEnum.UK)
       )
       .sort((a: any, b: any) => {
@@ -241,6 +241,11 @@ export class TmdbMapper {
         const isUkB = b.iso_639_1 === VideoLanguageEnum.UK;
         if (isUkA !== isUkB) {
           return isUkA ? -1 : 1;
+        }
+
+        // Type Priority: Trailer > Teaser
+        if (a.type !== b.type) {
+          return a.type === VideoTypeEnum.TRAILER ? -1 : 1;
         }
 
         // Official Priority: Official > Non-Official
