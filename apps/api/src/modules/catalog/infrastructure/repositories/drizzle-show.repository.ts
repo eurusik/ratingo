@@ -422,7 +422,7 @@ export class DrizzleShowRepository implements IShowRepository {
         
         isNew: row.releaseDate ? row.releaseDate >= newReleaseCutoff : false,
         isClassic: row.releaseDate 
-          ? (row.releaseDate <= classicCutoff && (row.ratingoScore || 0) >= 80) 
+          ? (row.releaseDate <= classicCutoff) || ((row.ratingoScore || 0) >= 80 && (row.totalWatchers || 0) > 10000)
           : false,
 
         stats: {
