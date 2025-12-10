@@ -354,3 +354,31 @@ export const mediaGenresRelations = relations(mediaGenres, ({ one }) => ({
     references: [genres.id],
   }),
 }));
+
+/**
+ * DAILY WATCHERS SNAPSHOTS (Time-series for Rise/Fall analysis)
+ */
+export const mediaWatchersSnapshots = pgTable(
+  'media_watchers_snapshots',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    mediaItemId: uuid('media_item_id')
+      .references(() => mediaItems.id, { onDelete: 'cascade' })
+      .notNull(),
+    snapshotDate: timestamp('snapshot_date').notNull(),
+    totalWatchers: integer('total_watchers').notNull(), // Trakt /stats.watchers (cumulative)
+    region: text('region').default('global'),
+  },
+  (t) => ({
+    mediaDateIdx: uniqueIndex('media_watchers_media_date_region_uniq')
+      .on(t.mediaItemId, t.snapshotDate, t.region),
+    dateIdx: index('media_watchers_date_idx').on(t.snapshotDate),
+  }),
+);
+
+export const mediaWatchersSnapshotsRelations = relations(mediaWatchersSnapshots, ({ one }) => ({
+  media: one(mediaItems, {
+    fields: [mediaWatchersSnapshots.mediaItemId],
+    references: [mediaItems.id],
+  }),
+}));

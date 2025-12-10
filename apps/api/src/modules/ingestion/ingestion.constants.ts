@@ -14,4 +14,5 @@ export enum IngestionJob {
   SYNC_NEW_RELEASES = 'sync-new-releases',
   SYNC_TRENDING_FULL = 'sync-trending-full',
   UPDATE_NOW_PLAYING_FLAGS = 'update-now-playing-flags',
+  SYNC_SNAPSHOTS = 'sync-snapshots',
 }

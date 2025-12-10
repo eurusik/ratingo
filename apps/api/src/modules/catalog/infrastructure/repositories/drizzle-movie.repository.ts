@@ -15,6 +15,7 @@ import { ImageMapper } from '../mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { TrendingShowsQueryDto } from '../../presentation/dtos/trending.dto';
 
 type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -274,6 +275,69 @@ export class DrizzleMovieRepository implements IMovieRepository {
     } catch (error) {
       this.logger.error(`Failed to find new on digital: ${error.message}`, error.stack);
       throw new DatabaseException(`Failed to fetch new on digital`, { originalError: error.message });
+    }
+  }
+
+  /**
+   * Finds trending movies sorted by popularity and rating.
+   */
+  async findTrending(options: TrendingShowsQueryDto): Promise<any[]> {
+    const { limit = 20, offset = 0, minRating, genreId } = options;
+
+    const query = this.db
+      .select(this.movieSelectFields)
+      .from(schema.movies)
+      .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId));
+
+    const conditions = [];
+
+    // Filter by genre
+    if (genreId) {
+      query.innerJoin(schema.mediaGenres, eq(schema.mediaItems.id, schema.mediaGenres.mediaItemId));
+      conditions.push(eq(schema.mediaGenres.genreId, genreId));
+    }
+
+    if (minRating) {
+      conditions.push(gte(schema.mediaStats.ratingoScore, minRating));
+    }
+
+    // Ensure we have stats to sort by
+    conditions.push(isNotNull(schema.mediaStats.popularityScore));
+
+    if (conditions.length > 0) {
+      // @ts-ignore - spread works but TS might complain about tuple
+      query.where(and(...conditions));
+    }
+
+    query.orderBy(desc(schema.mediaStats.popularityScore), desc(schema.mediaItems.popularity));
+    query.limit(limit).offset(offset);
+
+    try {
+      const results = await query;
+      // If we joined genres, we might have duplicates. 
+      // Filter unique by id before attaching genres.
+      const uniqueResults = Array.from(new Map(results.map(item => [item.id, item])).values());
+      
+      const moviesWithMedia = await this.attachGenres(uniqueResults);
+
+      const now = new Date();
+      const newReleaseCutoff = new Date(now);
+      newReleaseCutoff.setDate(now.getDate() - 60); // Movies might be considered new longer or shorter? Let's stick to 60.
+
+      const classicCutoff = new Date(now);
+      classicCutoff.setFullYear(now.getFullYear() - 10);
+
+      return moviesWithMedia.map(m => ({
+        ...m,
+        isNew: m.releaseDate ? m.releaseDate >= newReleaseCutoff : false,
+        isClassic: m.releaseDate 
+          ? (m.releaseDate <= classicCutoff) || ((m.stats.ratingoScore || 0) >= 80 && (m.stats.totalWatchers || 0) > 10000)
+          : false,
+      }));
+    } catch (error) {
+      this.logger.error(`Failed to find trending movies: ${error.message}`, error.stack);
+      throw new DatabaseException(`Failed to fetch trending movies`, { originalError: error.message });
     }
   }
 

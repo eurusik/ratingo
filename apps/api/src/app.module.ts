@@ -9,6 +9,7 @@ import { CatalogModule } from './modules/catalog/catalog.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { HomeModule } from './modules/home/home.module';
+import { InsightsModule } from './modules/insights/insights.module';
 
 import { BullModule } from '@nestjs/bullmq';
 
@@ -62,6 +63,7 @@ import { BullModule } from '@nestjs/bullmq';
     IngestionModule,
     StatsModule,
     HomeModule,
+    InsightsModule,
   ],
   controllers: [],
   providers: [],

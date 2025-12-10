@@ -159,4 +159,19 @@ export class IngestionController {
       daysBack: dto.daysBack || 30,
     };
   }
+
+  @Post('snapshots')
+  @ApiOperation({
+    summary: 'Trigger daily watchers snapshots sync',
+    description: 'Updates daily watcher counts for all media items from Trakt.',
+  })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async syncSnapshots() {
+    const job = await this.ingestionQueue.add(IngestionJob.SYNC_SNAPSHOTS, {});
+    
+    return {
+      status: 'queued',
+      jobId: job.id,
+    };
+  }
 }

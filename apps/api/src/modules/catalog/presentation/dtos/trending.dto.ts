@@ -114,3 +114,65 @@ export class TrendingShowsResponseDto {
     offset: number;
   };
 }
+
+export class MovieTrendingItemDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty({ example: 'movie' })
+  type: 'movie';
+
+  @ApiProperty()
+  slug: string;
+
+  @ApiProperty()
+  title: string;
+
+  @ApiProperty({ required: false, nullable: true })
+  originalTitle?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  overview?: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  primaryTrailerKey?: string | null;
+
+  @ApiProperty({ type: ImageDto, required: false, nullable: true })
+  poster?: ImageDto | null;
+
+  @ApiProperty({ type: ImageDto, required: false, nullable: true })
+  backdrop?: ImageDto | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  releaseDate: Date | null;
+
+  @ApiProperty()
+  isNew: boolean;
+
+  @ApiProperty()
+  isClassic: boolean;
+
+  @ApiProperty({ type: RatingoStatsDto })
+  stats: RatingoStatsDto;
+
+  @ApiProperty({ type: ExternalRatingsDto })
+  externalRatings: ExternalRatingsDto;
+}
+
+export class TrendingMoviesResponseDto {
+  @ApiProperty({ type: [MovieTrendingItemDto] })
+  data: MovieTrendingItemDto[];
+
+  @ApiProperty({
+    properties: {
+      count: { type: 'number' },
+      limit: { type: 'number' },
+      offset: { type: 'number' },
+    }
+  })
+  meta: {
+    count: number;
+    limit: number;
+    offset: number;
+  };
+}

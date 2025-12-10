@@ -6,7 +6,7 @@ import { MovieResponseDto } from '../dtos/movie-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
 import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
-import { TrendingShowsQueryDto, TrendingShowsResponseDto } from '../dtos/trending.dto';
+import { TrendingShowsQueryDto, TrendingShowsResponseDto, TrendingMoviesResponseDto } from '../dtos/trending.dto';
 
 /**
  * REST controller for catalog endpoints.
@@ -40,6 +40,30 @@ export class CatalogController {
       })),
       meta: {
         count: shows.length,
+        limit: query.limit || 20,
+        offset: query.offset || 0,
+      },
+    };
+  }
+
+  @Get('movies/trending')
+  @ApiOperation({
+    summary: 'Trending movies',
+    description: 'Returns trending movies sorted by popularity and rating.',
+  })
+  @ApiOkResponse({ type: TrendingMoviesResponseDto })
+  async getTrendingMovies(
+    @Query() query: TrendingShowsQueryDto,
+  ): Promise<TrendingMoviesResponseDto> {
+    const movies = await this.movieRepository.findTrending(query);
+
+    return {
+      data: movies.map(movie => ({
+        ...movie,
+        type: 'movie' as const,
+      })),
+      meta: {
+        count: movies.length,
         limit: query.limit || 20,
         offset: query.offset || 0,
       },

@@ -84,4 +84,12 @@ describe('IngestionController', () => {
       });
     });
   });
+
+  describe('syncSnapshots', () => {
+    it('should queue snapshots sync job', async () => {
+      await controller.syncSnapshots();
+
+      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_SNAPSHOTS, {});
+    });
+  });
 });

@@ -253,7 +253,7 @@ describe('SyncMediaService', () => {
       const result = await service.getTrending(1);
 
       expect(result).toEqual(mockTrending);
-      expect(tmdbAdapter.getTrending).toHaveBeenCalledWith(1);
+      expect(tmdbAdapter.getTrending).toHaveBeenCalledWith(1, undefined);
     });
 
     it('should use default page 1', async () => {
@@ -261,7 +261,7 @@ describe('SyncMediaService', () => {
 
       await service.getTrending();
 
-      expect(tmdbAdapter.getTrending).toHaveBeenCalledWith(1);
+      expect(tmdbAdapter.getTrending).toHaveBeenCalledWith(1, undefined);
     });
   });
 

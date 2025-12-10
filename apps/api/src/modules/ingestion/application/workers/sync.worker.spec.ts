@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SyncWorker } from './sync.worker';
 import { SyncMediaService } from '../services/sync-media.service';
+import { SnapshotsService } from '../services/snapshots.service';
 import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
 import { getQueueToken } from '@nestjs/bullmq';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
@@ -11,6 +12,7 @@ import { MOVIE_REPOSITORY } from '../../../catalog/domain/repositories/movie.rep
 describe('SyncWorker', () => {
   let worker: SyncWorker;
   let syncService: any;
+  let snapshotsService: any;
   let tmdbAdapter: any;
   let ingestionQueue: any;
   let movieRepository: any;
@@ -21,6 +23,10 @@ describe('SyncWorker', () => {
       syncMovie: jest.fn(),
       syncShow: jest.fn(),
       getTrending: jest.fn(),
+    };
+
+    snapshotsService = {
+      syncDailySnapshots: jest.fn(),
     };
 
     tmdbAdapter = {
@@ -45,6 +51,7 @@ describe('SyncWorker', () => {
       providers: [
         SyncWorker,
         { provide: SyncMediaService, useValue: syncService },
+        { provide: SnapshotsService, useValue: snapshotsService },
         { provide: TmdbAdapter, useValue: tmdbAdapter },
         { provide: StatsService, useValue: statsService },
         { provide: MOVIE_REPOSITORY, useValue: movieRepository },
@@ -76,6 +83,12 @@ describe('SyncWorker', () => {
       
       expect(tmdbAdapter.getNowPlayingIds).toHaveBeenCalledWith('UA');
       expect(movieRepository.setNowPlaying).toHaveBeenCalledWith([1, 2, 3]);
+    });
+
+    it('should process SYNC_SNAPSHOTS job', async () => {
+      const job = { name: IngestionJob.SYNC_SNAPSHOTS, data: {}, id: '5' } as Job;
+      await worker.process(job);
+      expect(snapshotsService.syncDailySnapshots).toHaveBeenCalled();
     });
   });
 

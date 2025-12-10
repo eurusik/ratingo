@@ -3,6 +3,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { SyncMediaService } from '../services/sync-media.service';
+import { SnapshotsService } from '../services/snapshots.service';
 import { TmdbAdapter } from '../../infrastructure/adapters/tmdb/tmdb.adapter';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { IMovieRepository, MOVIE_REPOSITORY } from '../../../catalog/domain/repositories/movie.repository.interface';
@@ -21,6 +22,7 @@ export class SyncWorker extends WorkerHost {
 
   constructor(
     private readonly syncService: SyncMediaService,
+    private readonly snapshotsService: SnapshotsService,
     private readonly tmdbAdapter: TmdbAdapter,
     private readonly statsService: StatsService,
     @Inject(MOVIE_REPOSITORY)
@@ -57,6 +59,9 @@ export class SyncWorker extends WorkerHost {
           break;
         case IngestionJob.UPDATE_NOW_PLAYING_FLAGS:
           await this.updateNowPlayingFlags(job.data.region);
+          break;
+        case IngestionJob.SYNC_SNAPSHOTS:
+          await this.snapshotsService.syncDailySnapshots();
           break;
         default:
           this.logger.warn(`Unknown job type: ${job.name}`);

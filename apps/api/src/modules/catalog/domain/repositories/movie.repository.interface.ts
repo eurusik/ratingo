@@ -1,6 +1,7 @@
 import { ReleaseInfo, Video } from '../../../../database/schema';
 import { CreditsDto, ImageDto, AvailabilityDto } from '../../presentation/dtos/common.dto';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
+import { TrendingShowsQueryDto } from '../../presentation/dtos/trending.dto';
 
 /**
  * Movie with media item data for catalog queries.
@@ -114,6 +115,11 @@ export interface IMovieRepository {
    * Returns movies with digital release in the last N days.
    */
   findNewOnDigital(options?: NowPlayingOptions): Promise<MovieWithMedia[]>;
+
+  /**
+   * Finds trending movies sorted by popularity and rating.
+   */
+  findTrending(options: TrendingShowsQueryDto): Promise<any[]>;
 
   /**
    * Sets isNowPlaying flag for movies.

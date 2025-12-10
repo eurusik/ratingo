@@ -14,6 +14,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { SyncWorker } from './application/workers/sync.worker';
 import { IngestionController } from './presentation/controllers/ingestion.controller';
 import { ScoreCalculatorModule } from '../shared/score-calculator';
+import { SnapshotsService } from './application/services/snapshots.service';
 
 import { INGESTION_QUEUE } from './ingestion.constants';
 
@@ -30,7 +31,7 @@ import { INGESTION_QUEUE } from './ingestion.constants';
     }),
   ],
   controllers: [IngestionController],
-  providers: [TmdbAdapter, TraktAdapter, OmdbAdapter, TvMazeAdapter, SyncMediaService, SyncWorker],
-  exports: [SyncMediaService, TraktAdapter],
+  providers: [TmdbAdapter, TraktAdapter, OmdbAdapter, TvMazeAdapter, SyncMediaService, SyncWorker, SnapshotsService],
+  exports: [SyncMediaService, TraktAdapter, SnapshotsService],
 })
 export class IngestionModule {}
