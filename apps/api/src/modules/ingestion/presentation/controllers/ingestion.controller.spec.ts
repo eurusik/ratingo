@@ -75,6 +75,17 @@ describe('IngestionController', () => {
     });
   });
 
+  describe('syncNewReleases', () => {
+    it('should queue new releases sync job', async () => {
+      await controller.syncNewReleases({ region: 'UA', daysBack: 60 });
+
+      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_NEW_RELEASES, {
+        region: 'UA',
+        daysBack: 60,
+      });
+    });
+  });
+
   describe('updateNowPlayingFlags', () => {
     it('should queue flag update job', async () => {
       await controller.updateNowPlayingFlags({ region: 'UA' });

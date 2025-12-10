@@ -246,6 +246,106 @@ describe('TmdbAdapter', () => {
     });
   });
 
+  describe('getNowPlayingIds', () => {
+    it('should fetch first 2 pages and return aggregated IDs', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          page: 1,
+          total_pages: 5,
+          results: [{ id: 101 }, { id: 102 }]
+        })
+      });
+      
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          page: 2,
+          total_pages: 5,
+          results: [{ id: 103 }, { id: 104 }]
+        })
+      });
+
+      const result = await adapter.getNowPlayingIds();
+
+      expect(result).toHaveLength(4);
+      expect(result).toEqual([101, 102, 103, 104]);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'));
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'));
+    });
+
+    it('should stop early if total_pages < limit', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          page: 1,
+          total_pages: 1,
+          results: [{ id: 101 }]
+        })
+      });
+
+      const result = await adapter.getNowPlayingIds();
+
+      expect(result).toHaveLength(1);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getNewReleaseIds', () => {
+    it('should fetch first 2 pages and return aggregated IDs', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          page: 1,
+          total_pages: 5,
+          results: [{ id: 201 }]
+        })
+      });
+      
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          page: 2,
+          total_pages: 5,
+          results: [{ id: 202 }]
+        })
+      });
+
+      const result = await adapter.getNewReleaseIds(30, 'UA');
+
+      expect(result).toEqual([201, 202]);
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/discover/movie'));
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'));
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'));
+    });
+  });
+
+  describe('searchMulti', () => {
+    it('should search for movies and shows', async () => {
+      const mockResults = {
+        results: [
+          { id: 1, media_type: 'movie', title: 'Movie 1' },
+          { id: 2, media_type: 'tv', name: 'Show 1' },
+          { id: 3, media_type: 'person', name: 'Person 1' } // Should be filtered
+        ]
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResults)
+      });
+
+      const result = await adapter.searchMulti('test');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].type).toBe(MediaType.MOVIE);
+      expect(result[1].type).toBe(MediaType.SHOW);
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/search/multi'));
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('query=test'));
+    });
+  });
+
   describe('error handling', () => {
     it('should handle network errors', async () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
