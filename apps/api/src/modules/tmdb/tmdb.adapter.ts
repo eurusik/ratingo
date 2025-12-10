@@ -16,6 +16,7 @@ export class TmdbAdapter implements IMetadataProvider {
   public readonly providerName = 'tmdb';
   private readonly logger = new Logger(TmdbAdapter.name);
   private readonly DEFAULT_LANG = 'uk-UA';
+  private readonly NOW_PLAYING_PAGE_LIMIT = 2;
 
   constructor(
     @Inject(tmdbConfig.KEY)
@@ -118,8 +119,8 @@ export class TmdbAdapter implements IMetadataProvider {
   public async getNowPlayingIds(region = 'UA'): Promise<number[]> {
     const ids: number[] = [];
     
-    // Fetch first 2 pages (40 movies should be enough)
-    for (let page = 1; page <= 2; page++) {
+    // Fetch first N pages
+    for (let page = 1; page <= this.NOW_PLAYING_PAGE_LIMIT; page++) {
       const data = await this.fetch('/movie/now_playing', { 
         region, 
         page: page.toString() 
