@@ -31,8 +31,11 @@ export class TmdbAdapter implements IMetadataProvider {
       const data = await this.fetch(`/movie/${id}`, { append_to_response: 'credits,videos,release_dates,external_ids,translations,watch/providers' });
       return TmdbMapper.toDomain(data, MediaType.MOVIE);
     } catch (error) {
-      if (this.isNotFound(error)) return null;
-      this.logger.error(`Failed to fetch movie ${id}: ${error}`);
+      if (this.isNotFound(error)) {
+        this.logger.warn(`Movie ${id} not found in TMDB (404)`);
+        return null;
+      }
+      this.logger.error(`Failed to fetch movie ${id}: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -45,8 +48,11 @@ export class TmdbAdapter implements IMetadataProvider {
       const data = await this.fetch(`/tv/${id}`, { append_to_response: 'aggregate_credits,videos,content_ratings,external_ids,translations,watch/providers' });
       return TmdbMapper.toDomain(data, MediaType.SHOW);
     } catch (error) {
-      if (this.isNotFound(error)) return null;
-      this.logger.error(`Failed to fetch show ${id}: ${error}`);
+      if (this.isNotFound(error)) {
+        this.logger.warn(`Show ${id} not found in TMDB (404)`);
+        return null;
+      }
+      this.logger.error(`Failed to fetch show ${id}: ${error.message}`, error.stack);
       throw error;
     }
   }
