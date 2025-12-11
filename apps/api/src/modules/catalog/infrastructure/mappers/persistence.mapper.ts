@@ -15,6 +15,7 @@ export class PersistenceMapper {
       originalTitle: media.originalTitle,
       slug: media.slug,
       overview: media.overview,
+      ingestionStatus: media.ingestionStatus,
       posterPath: media.posterPath,
       backdropPath: media.backdropPath,
       videos: media.videos || null,
@@ -46,6 +47,7 @@ export class PersistenceMapper {
       originalTitle: media.originalTitle,
       slug: media.slug,
       overview: media.overview,
+      ingestionStatus: media.ingestionStatus,
 
       rating: media.rating,
       voteCount: media.voteCount,
@@ -163,7 +165,7 @@ export class PersistenceMapper {
   static toEpisodeInsert(
     seasonId: string,
     showId: string,
-    episode: any
+    episode: any,
   ): InferInsertModel<typeof schema.episodes> {
     return {
       seasonId: seasonId,

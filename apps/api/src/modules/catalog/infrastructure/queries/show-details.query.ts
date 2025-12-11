@@ -25,7 +25,7 @@ export class ShowDetailsQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   /**
@@ -76,7 +76,7 @@ export class ShowDetailsQuery {
           showId: schema.shows.id,
         })
         .from(schema.mediaItems)
-        .innerJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
+        .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(eq(schema.mediaItems.slug, slug))
         .limit(1);
@@ -86,7 +86,7 @@ export class ShowDetailsQuery {
 
       const [genres, seasons] = await Promise.all([
         this.fetchGenres(show.id),
-        this.fetchSeasons(show.showId),
+        show.showId ? this.fetchSeasons(show.showId) : Promise.resolve([]),
       ]);
 
       const { showId, ...showData } = show;

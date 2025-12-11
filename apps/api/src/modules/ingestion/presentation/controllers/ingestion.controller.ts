@@ -7,6 +7,14 @@ import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { SyncMediaService } from '../../application/services/sync-media.service';
 import { DEFAULT_REGION } from '../../../../common/constants';
+import { Inject } from '@nestjs/common';
+import {
+  MEDIA_REPOSITORY,
+  IMediaRepository,
+} from '../../../catalog/domain/repositories/media.repository.interface';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import slugify from 'slugify';
+import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 
 class SyncDto {
   @ApiProperty({ example: 550, description: 'TMDB ID of the media' })
@@ -82,20 +90,61 @@ class SyncNewReleasesDto {
 export class IngestionController {
   constructor(
     @InjectQueue(INGESTION_QUEUE) private readonly ingestionQueue: Queue,
-    private readonly syncService: SyncMediaService
+    private readonly syncService: SyncMediaService,
+    @Inject(MEDIA_REPOSITORY) private readonly mediaRepository: IMediaRepository,
+    private readonly tmdbAdapter: TmdbAdapter,
   ) {}
 
   @Post('sync')
   @ApiOperation({ summary: 'Manually trigger sync for a specific media item' })
   @HttpCode(HttpStatus.ACCEPTED)
   async sync(@Body() dto: SyncDto) {
+    // Check if already in DB
+    const existing = await this.mediaRepository.findByTmdbId(dto.tmdbId);
+    if (existing) {
+      return {
+        id: existing.id,
+        type: existing.type,
+        slug: existing.slug,
+        ingestionStatus: existing.ingestionStatus,
+        status: 'exists',
+      };
+    }
+
+    // Build stub
+    const title =
+      dto.type === MediaType.MOVIE
+        ? (await this.tmdbAdapter.getMovie(dto.tmdbId))?.title
+        : (await this.tmdbAdapter.getShow(dto.tmdbId))?.title;
+    const slug = slugify(title || `tmdb-${dto.tmdbId}`, {
+      lower: true,
+      strict: true,
+      locale: 'uk',
+    });
+
+    const stub = await this.mediaRepository.upsertStub({
+      tmdbId: dto.tmdbId,
+      type: dto.type,
+      title: title || `TMDB #${dto.tmdbId}`,
+      slug,
+      ingestionStatus: IngestionStatus.IMPORTING,
+    });
+
     const jobName = dto.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
 
     await this.ingestionQueue.add(jobName, {
       tmdbId: dto.tmdbId,
     });
 
-    return { status: 'queued', jobId: jobName, tmdbId: dto.tmdbId };
+    return {
+      status: 'queued',
+      jobId: jobName,
+      tmdbId: dto.tmdbId,
+      id: stub.id,
+      slug: stub.slug,
+      type: dto.type,
+      ingestionStatus: IngestionStatus.IMPORTING,
+    };
   }
 
   @Post('trending')

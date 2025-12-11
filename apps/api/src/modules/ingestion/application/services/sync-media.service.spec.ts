@@ -65,6 +65,7 @@ describe('SyncMediaService', () => {
 
     const mockMediaRepository = {
       upsert: jest.fn(),
+      updateIngestionStatus: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -120,7 +121,7 @@ describe('SyncMediaService', () => {
           ratingMetacritic: 66,
           ratingRottenTomatoes: 79,
           ratingoScore: 75,
-        })
+        }),
       );
     });
 
@@ -131,6 +132,10 @@ describe('SyncMediaService', () => {
 
       expect(traktAdapter.getMovieRatingsByTmdbId).not.toHaveBeenCalled();
       expect(mediaRepository.upsert).not.toHaveBeenCalled();
+      expect(mediaRepository.updateIngestionStatus).toHaveBeenCalledWith(
+        999999,
+        expect.stringMatching(/importing|failed/i),
+      );
     });
 
     it('should sync with trending score when provided', async () => {
@@ -143,7 +148,7 @@ describe('SyncMediaService', () => {
       expect(mediaRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           trendingScore: 0.95,
-        })
+        }),
       );
     });
 
@@ -173,7 +178,7 @@ describe('SyncMediaService', () => {
       expect(mediaRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           ratingoScore: 75, // Score still calculated
-        })
+        }),
       );
     });
 
@@ -209,7 +214,7 @@ describe('SyncMediaService', () => {
       expect(mediaRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           videos: mockVideos,
-        })
+        }),
       );
     });
   });
@@ -286,10 +291,10 @@ describe('SyncMediaService', () => {
 
       // Simulate slow API calls
       const traktPromise = new Promise<any>((resolve) =>
-        setTimeout(() => resolve({ rating: 8.0, votes: 5000 }), 50)
+        setTimeout(() => resolve({ rating: 8.0, votes: 5000 }), 50),
       );
       const omdbPromise = new Promise<any>((resolve) =>
-        setTimeout(() => resolve({ imdbRating: 8.5, imdbVotes: 1000000 }), 50)
+        setTimeout(() => resolve({ imdbRating: 8.5, imdbVotes: 1000000 }), 50),
       );
 
       traktAdapter.getMovieRatingsByTmdbId.mockReturnValue(traktPromise);
@@ -336,7 +341,7 @@ describe('SyncMediaService', () => {
           rottenTomatoesRating: 70,
           imdbVotes: 50000,
           traktVotes: 4000,
-        })
+        }),
       );
     });
   });
@@ -397,7 +402,7 @@ describe('SyncMediaService', () => {
             ]),
             nextAirDate: futureDate,
           }),
-        })
+        }),
       );
     });
 

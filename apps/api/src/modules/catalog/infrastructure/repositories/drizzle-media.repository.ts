@@ -25,6 +25,7 @@ import { DrizzleShowRepository } from './drizzle-show.repository';
 import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
 import { eq, inArray, sql, and, desc } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions';
 
 import { PersistenceMapper } from '../mappers/persistence.mapper';
@@ -47,7 +48,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     private readonly movieRepository: IMovieRepository,
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
-    private readonly heroMediaQuery: HeroMediaQuery
+    private readonly heroMediaQuery: HeroMediaQuery,
   ) {}
 
   /**
@@ -55,18 +56,97 @@ export class DrizzleMediaRepository implements IMediaRepository {
    *
    * @throws {DatabaseException} If database query fails
    */
-  async findByTmdbId(tmdbId: number): Promise<{ id: string; slug: string } | null> {
+  async findByTmdbId(
+    tmdbId: number,
+  ): Promise<{
+    id: string;
+    slug: string;
+    type: MediaType;
+    ingestionStatus: IngestionStatus;
+  } | null> {
     try {
       const result = await this.db
-        .select({ id: schema.mediaItems.id, slug: schema.mediaItems.slug })
+        .select({
+          id: schema.mediaItems.id,
+          slug: schema.mediaItems.slug,
+          type: schema.mediaItems.type,
+          ingestionStatus: schema.mediaItems.ingestionStatus,
+        })
         .from(schema.mediaItems)
         .where(eq(schema.mediaItems.tmdbId, tmdbId))
         .limit(1);
 
-      return result[0] || null;
+      if (!result[0]) return null;
+      const row = result[0];
+      return {
+        ...row,
+        ingestionStatus: row.ingestionStatus as IngestionStatus,
+      };
     } catch (error) {
       this.logger.error(`Failed to find media by TMDB ID ${tmdbId}: ${error.message}`);
       throw new DatabaseException(`Failed to find media: ${error.message}`, { tmdbId });
+    }
+  }
+
+  /**
+   * Updates ingestion status by TMDB ID (noop if not found).
+   */
+  async updateIngestionStatus(tmdbId: number, status: IngestionStatus): Promise<void> {
+    try {
+      await this.db
+        .update(schema.mediaItems)
+        .set({ ingestionStatus: status, updatedAt: new Date() })
+        .where(eq(schema.mediaItems.tmdbId, tmdbId));
+    } catch (error) {
+      this.logger.error(`Failed to update ingestion status for TMDB ${tmdbId}: ${error.message}`);
+      throw new DatabaseException('Failed to update ingestion status', { tmdbId, status });
+    }
+  }
+
+  /**
+   * Inserts a minimal stub media item (media_items only).
+   * If exists, returns existing id/slug without failing.
+   */
+  async upsertStub(payload: {
+    tmdbId: number;
+    type: MediaType;
+    title: string;
+    slug: string;
+    ingestionStatus: IngestionStatus;
+  }): Promise<{ id: string; slug: string }> {
+    try {
+      const [row] = await this.db
+        .insert(schema.mediaItems)
+        .values({
+          tmdbId: payload.tmdbId,
+          type: payload.type,
+          title: payload.title,
+          slug: payload.slug,
+          ingestionStatus: payload.ingestionStatus,
+          // minimal defaults
+          popularity: 0,
+          rating: 0,
+          voteCount: 0,
+          credits: { cast: [], crew: [] },
+          videos: null,
+          watchProviders: null,
+          overview: null,
+        })
+        .onConflictDoUpdate({
+          target: schema.mediaItems.tmdbId,
+          set: {
+            title: payload.title,
+            slug: payload.slug,
+            ingestionStatus: payload.ingestionStatus,
+            updatedAt: new Date(),
+          },
+        })
+        .returning({ id: schema.mediaItems.id, slug: schema.mediaItems.slug });
+
+      return row;
+    } catch (error) {
+      this.logger.error(`Failed to upsert stub for tmdbId ${payload.tmdbId}: ${error.message}`);
+      throw new DatabaseException('Failed to upsert stub media item', { tmdbId: payload.tmdbId });
     }
   }
 
@@ -261,8 +341,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
         .where(
           and(
             sql`${schema.mediaItems.deletedAt} IS NULL`,
-            sql`${schema.mediaItems.searchVector} @@ ${sqlQuery}`
-          )
+            sql`${schema.mediaItems.searchVector} @@ ${sqlQuery}`,
+          ),
         )
         .orderBy(desc(schema.mediaItems.popularity))
         .limit(limit);

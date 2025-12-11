@@ -4,6 +4,8 @@ import { SyncMediaService } from '../../application/services/sync-media.service'
 import { getQueueToken } from '@nestjs/bullmq';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
+import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 
 describe('IngestionController', () => {
   let controller: IngestionController;
@@ -15,12 +17,22 @@ describe('IngestionController', () => {
     };
 
     const mockSyncService = {}; // Not used directly in controller methods we test
+    const mockMediaRepo = {
+      findByTmdbId: jest.fn().mockResolvedValue(null),
+      upsertStub: jest.fn().mockResolvedValue({ id: 'stub-1', slug: 'stub-slug' }),
+    };
+    const mockTmdbAdapter = {
+      getMovie: jest.fn().mockResolvedValue(null),
+      getShow: jest.fn().mockResolvedValue(null),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [IngestionController],
       providers: [
         { provide: getQueueToken(INGESTION_QUEUE), useValue: mockQueue },
         { provide: SyncMediaService, useValue: mockSyncService },
+        { provide: MEDIA_REPOSITORY, useValue: mockMediaRepo },
+        { provide: TmdbAdapter, useValue: mockTmdbAdapter },
       ],
     }).compile();
 

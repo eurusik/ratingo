@@ -80,6 +80,8 @@ describe('MovieDetailsQuery', () => {
       popularityScore: 0.9,
       watchersCount: 10,
       totalWatchers: 20,
+      theatricalReleaseDate: new Date('2020-02-01'),
+      digitalReleaseDate: new Date('2020-03-01'),
     } as any;
 
     const genresRows = [
@@ -99,6 +101,9 @@ describe('MovieDetailsQuery', () => {
     expect(res?.backdrop).toEqual({ small: 'backdrop' });
     expect(res?.availability).toEqual({ region: 'UA' });
     expect(res?.genres).toHaveLength(2);
+    expect(res?.releaseDate).toEqual(new Date('2020-01-01'));
+    expect(res?.theatricalReleaseDate).toEqual(new Date('2020-02-01'));
+    expect(res?.digitalReleaseDate).toEqual(new Date('2020-03-01'));
     expect(CreditsMapper.toDto).toHaveBeenCalled();
     expect(WatchProvidersMapper.toAvailability).toHaveBeenCalled();
   });

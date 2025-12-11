@@ -23,7 +23,7 @@ export class MovieDetailsQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   /**
@@ -64,6 +64,8 @@ export class MovieDetailsQuery {
           budget: schema.movies.budget,
           revenue: schema.movies.revenue,
           status: schema.movies.status,
+          theatricalReleaseDate: schema.movies.theatricalReleaseDate,
+          digitalReleaseDate: schema.movies.digitalReleaseDate,
 
           ratingoScore: schema.mediaStats.ratingoScore,
           qualityScore: schema.mediaStats.qualityScore,
@@ -72,7 +74,7 @@ export class MovieDetailsQuery {
           totalWatchers: schema.mediaStats.totalWatchers,
         })
         .from(schema.mediaItems)
-        .innerJoin(schema.movies, eq(schema.mediaItems.id, schema.movies.mediaItemId))
+        .leftJoin(schema.movies, eq(schema.mediaItems.id, schema.movies.mediaItemId))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(eq(schema.mediaItems.slug, slug))
         .limit(1);
@@ -92,16 +94,18 @@ export class MovieDetailsQuery {
         ingestionStatus: movie.ingestionStatus,
         poster: ImageMapper.toPoster(movie.posterPath),
         backdrop: ImageMapper.toBackdrop(movie.backdropPath),
-        releaseDate: movie.releaseDate,
+        releaseDate: movie.releaseDate ?? movie.theatricalReleaseDate ?? null,
         videos: movie.videos,
         primaryTrailer: movie.videos?.[0] || null,
         credits: CreditsMapper.toDto(movie.credits),
         availability: WatchProvidersMapper.toAvailability(movie.watchProviders),
 
-        runtime: movie.runtime,
-        budget: movie.budget,
-        revenue: movie.revenue,
-        status: movie.status as MovieStatus | null,
+        runtime: movie.runtime ?? null,
+        budget: movie.budget ?? null,
+        revenue: movie.revenue ?? null,
+        status: movie.status ? (movie.status as MovieStatus) : null,
+        theatricalReleaseDate: movie.theatricalReleaseDate ?? null,
+        digitalReleaseDate: movie.digitalReleaseDate ?? null,
 
         stats: {
           ratingoScore: movie.ratingoScore,

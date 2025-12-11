@@ -31,7 +31,7 @@ export class SyncMediaService {
     private readonly scoreCalculator: ScoreCalculatorService,
 
     @Inject(MEDIA_REPOSITORY)
-    private readonly mediaRepository: IMediaRepository
+    private readonly mediaRepository: IMediaRepository,
   ) {}
 
   /**
@@ -68,11 +68,14 @@ export class SyncMediaService {
   private async processMedia(
     tmdbId: number,
     type: MediaType,
-    trendingScore?: number
+    trendingScore?: number,
   ): Promise<void> {
     this.logger.debug(`Syncing ${type} ${tmdbId}...`);
 
     try {
+      // Mark as importing
+      await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.IMPORTING);
+
       // Fetch Base Metadata from TMDB (Primary Source)
       const media =
         type === MediaType.MOVIE
@@ -81,6 +84,7 @@ export class SyncMediaService {
 
       if (!media) {
         this.logger.warn(`${type} ${tmdbId} not found in TMDB`);
+        await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
         return;
       }
 
@@ -213,11 +217,19 @@ export class SyncMediaService {
 
       // Persist
       await this.mediaRepository.upsert(media);
+      await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.READY);
       this.logger.log(
-        `Synced ${type}: ${media.title} (Ratingo: ${(scores.ratingoScore * 100).toFixed(1)})`
+        `Synced ${type}: ${media.title} (Ratingo: ${(scores.ratingoScore * 100).toFixed(1)})`,
       );
     } catch (error) {
       this.logger.error(`Failed to sync ${type} ${tmdbId}: ${error.message}`, error.stack);
+      try {
+        await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
+      } catch (statusError) {
+        this.logger.warn(
+          `Failed to mark ${type} ${tmdbId} as failed: ${(statusError as Error).message}`,
+        );
+      }
       throw error; // Let BullMQ retry
     }
   }

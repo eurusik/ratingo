@@ -1,5 +1,6 @@
 import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
  * Data needed for score calculation.
@@ -37,6 +38,18 @@ export interface MediaScoreDataWithTmdbId extends MediaScoreData {
  */
 export interface IMediaRepository {
   /**
+   * Creates a minimal stub media item (media_items only) used to start ingestion.
+   * Should not fail if the item already exists – returns existing id/slug in that case.
+   */
+  upsertStub(payload: {
+    tmdbId: number;
+    type: MediaType;
+    title: string;
+    slug: string;
+    ingestionStatus: IngestionStatus;
+  }): Promise<{ id: string; slug: string }>;
+
+  /**
    * Creates or updates a media item (Movie/Show) and its related entities
    * (genres, specific details) in a transactional way.
    *
@@ -47,7 +60,19 @@ export interface IMediaRepository {
   /**
    * Retrieves a media item by its external TMDB ID.
    */
-  findByTmdbId(tmdbId: number): Promise<{ id: string; slug: string } | null>;
+  findByTmdbId(
+    tmdbId: number,
+  ): Promise<{
+    id: string;
+    slug: string;
+    type: MediaType;
+    ingestionStatus: IngestionStatus;
+  } | null>;
+
+  /**
+   * Updates ingestion status by TMDB ID (no-op if not found).
+   */
+  updateIngestionStatus(tmdbId: number, status: IngestionStatus): Promise<void>;
 
   /**
    * Retrieves media data needed for score calculation.
