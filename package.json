@@ -2,6 +2,27 @@
   "name": "ratingo-monorepo",
   "private": true,
   "packageManager": "npm@10.8.1",
+  "description": "Ratingo — україномовний сервіс, який показує, що зараз дивляться у світі: фільми та серіали, їхні рейтинги, та коли виходять нові серії.",
+  "author": "eurusik",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eurusik/ratingo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eurusik/ratingo/issues"
+  },
+  "homepage": "https://ratingo.top",
+  "keywords": [
+    "ratingo",
+    "nestjs",
+    "nextjs",
+    "drizzle-orm",
+    "turbo",
+    "monorepo",
+    "jest",
+    "eslint",
+    "prettier"
+  ],
   "scripts": {
     "build:all": "turbo run build",
     "build:api": "turbo run build --filter=api",
