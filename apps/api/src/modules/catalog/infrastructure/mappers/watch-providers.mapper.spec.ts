@@ -96,4 +96,50 @@ describe('WatchProvidersMapper', () => {
       expect(result?.free).toHaveLength(1);
     });
   });
+
+  describe('toDto (deprecated)', () => {
+    it('should map all regions with providers', () => {
+      const result = WatchProvidersMapper.toDto(mockProviders);
+      expect(result).toEqual({
+        UA: expect.objectContaining({
+          stream: expect.arrayContaining([expect.objectContaining({ name: 'Megogo', providerId: 1 })]),
+        }),
+        US: expect.objectContaining({
+          stream: expect.arrayContaining([expect.objectContaining({ name: 'Netflix', providerId: 2 })]),
+        }),
+      });
+    });
+
+    it('should return null for null input', () => {
+      expect(WatchProvidersMapper.toDto(null)).toBeNull();
+    });
+  });
+
+  describe('getPrimary (deprecated)', () => {
+    it('should prefer UA when it has providers', () => {
+      const primary = WatchProvidersMapper.getPrimary(mockProviders);
+      expect(primary?.stream?.[0].name).toBe('Megogo');
+    });
+
+    it('should fallback to US when UA empty', () => {
+      const providersEmptyUa: WatchProvidersMap = {
+        UA: { link: 'ua', flatrate: [] },
+        US: { link: 'us', flatrate: [{ providerId: 2, name: 'Netflix', logoPath: '/netflix.png' }] },
+      };
+      const primary = WatchProvidersMapper.getPrimary(providersEmptyUa);
+      expect(primary?.stream?.[0].name).toBe('Netflix');
+    });
+
+    it('should return null when no providers', () => {
+      const providersEmpty: WatchProvidersMap = {
+        UA: { link: 'ua', flatrate: [] },
+        US: { link: 'us', flatrate: [] },
+      };
+      expect(WatchProvidersMapper.getPrimary(providersEmpty)).toBeNull();
+    });
+
+    it('should return null for null input', () => {
+      expect(WatchProvidersMapper.getPrimary(null)).toBeNull();
+    });
+  });
 });
