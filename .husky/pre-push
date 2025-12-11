@@ -1,7 +1,7 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npm --prefix apps/api run lint && \
-npm --prefix apps/api run typecheck && \
-npm --prefix apps/api run build && \
-npm --prefix apps/api test -- --runInBand
+turbo run lint --filter=api && \
+turbo run typecheck --filter=api && \
+turbo run build --filter=api && \
+turbo run test --filter=api -- --runInBand

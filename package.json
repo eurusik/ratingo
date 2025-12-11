@@ -3,10 +3,18 @@
   "private": true,
   "packageManager": "npm@10.8.1",
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "lint": "turbo lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "build:all": "turbo run build",
+    "build:api": "turbo run build --filter=api",
+    "build:web": "turbo run build --filter=web",
+    "dev:api": "turbo run dev --filter=api",
+    "dev:web": "turbo run dev --filter=web",
+    "lint:all": "turbo run lint",
+    "lint:api": "turbo run lint --filter=api",
+    "lint:web": "turbo run lint --filter=web",
+    "test:all": "turbo run test",
+    "test:api": "turbo run test --filter=api -- --runInBand",
+    "test:web": "turbo run test --filter=web",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,md,json}\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
