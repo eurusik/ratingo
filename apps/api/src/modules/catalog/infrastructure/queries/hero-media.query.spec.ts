@@ -88,12 +88,22 @@ describe('HeroMediaQuery', () => {
 
     // Second select: shows data
     const showsData = [
-      { mediaItemId: 's1', showId: 'sh1', lastAirDate: new Date('2024-01-01'), nextAirDate: new Date('2025-01-01') },
+      {
+        mediaItemId: 's1',
+        showId: 'sh1',
+        lastAirDate: new Date('2024-01-01'),
+        nextAirDate: new Date('2025-01-01'),
+      },
     ];
 
     // Third select: episodes data (latest first)
     const episodes = [
-      { showId: 'sh1', seasonNum: 2, episodeNumber: 3, airDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000) },
+      {
+        showId: 'sh1',
+        seasonNum: 2,
+        episodeNumber: 3,
+        airDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
+      },
     ];
 
     setup([mediaRows, showsData, episodes]);
@@ -102,14 +112,14 @@ describe('HeroMediaQuery', () => {
 
     expect(result).toHaveLength(2);
 
-    const movie = result.find(r => r.id === 'm1')!;
+    const movie = result.find((r) => r.id === 'm1')!;
     expect(movie.isClassic).toBe(true);
     expect(movie.isNew).toBe(false);
     expect(movie.primaryTrailerKey).toBe('trailer1');
     expect(movie.poster).toEqual({ small: 'poster' });
     expect(movie.backdrop).toEqual({ small: 'backdrop' });
 
-    const show = result.find(r => r.id === 's1')!;
+    const show = result.find((r) => r.id === 's1')!;
     expect(show.isNew).toBe(true);
     expect(show.isClassic).toBe(false);
     expect(show.showProgress).toMatchObject({ season: 2, episode: 3, label: 'S2E3' });

@@ -6,14 +6,17 @@ import { SyncMediaService } from '../services/sync-media.service';
 import { SnapshotsService } from '../services/snapshots.service';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
-import { IMovieRepository, MOVIE_REPOSITORY } from '../../../catalog/domain/repositories/movie.repository.interface';
+import {
+  IMovieRepository,
+  MOVIE_REPOSITORY,
+} from '../../../catalog/domain/repositories/movie.repository.interface';
 import { StatsService } from '../../../stats/application/services/stats.service';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
 /**
  * Background worker responsible for processing sync jobs from the Queue.
  * Handles movie/show sync and now playing/new releases batch jobs.
- * 
+ *
  * Concurrency: 5 jobs processed in parallel for faster throughput.
  */
 @Processor(INGESTION_QUEUE, { concurrency: 5 })
@@ -28,7 +31,7 @@ export class SyncWorker extends WorkerHost {
     @Inject(MOVIE_REPOSITORY)
     private readonly movieRepository: IMovieRepository,
     @InjectQueue(INGESTION_QUEUE)
-    private readonly ingestionQueue: Queue,
+    private readonly ingestionQueue: Queue
   ) {
     super();
   }
@@ -37,7 +40,21 @@ export class SyncWorker extends WorkerHost {
    * Processes a single job from the queue.
    * BullMQ handles concurrency and retries automatically.
    */
-  async process(job: Job<{ tmdbId?: number; trendingScore?: number; region?: string; daysBack?: number; page?: number; syncStats?: boolean; type?: MediaType }, any, string>): Promise<void> {
+  async process(
+    job: Job<
+      {
+        tmdbId?: number;
+        trendingScore?: number;
+        region?: string;
+        daysBack?: number;
+        page?: number;
+        syncStats?: boolean;
+        type?: MediaType;
+      },
+      any,
+      string
+    >
+  ): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
 
     try {
@@ -79,7 +96,9 @@ export class SyncWorker extends WorkerHost {
    * 3. Update Trakt stats if syncStats=true
    */
   private async processTrendingFull(page = 1, syncStats = true, type?: MediaType): Promise<void> {
-    this.logger.log(`Starting full trending sync (page: ${page}, syncStats: ${syncStats}, type: ${type || 'all'})...`);
+    this.logger.log(
+      `Starting full trending sync (page: ${page}, syncStats: ${syncStats}, type: ${type || 'all'})...`
+    );
 
     // Get trending items from TMDB
     const items = await this.syncService.getTrending(page, type);
@@ -89,7 +108,7 @@ export class SyncWorker extends WorkerHost {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const trendingScore = 10000 - ((page - 1) * 20 + i);
-      
+
       try {
         if (item.type === MediaType.MOVIE) {
           await this.syncService.syncMovie(item.tmdbId, trendingScore);
@@ -124,7 +143,7 @@ export class SyncWorker extends WorkerHost {
     if (tmdbIds.length === 0) return;
 
     // Queue sync jobs for each movie
-    const jobs = tmdbIds.map(tmdbId => ({
+    const jobs = tmdbIds.map((tmdbId) => ({
       name: IngestionJob.SYNC_MOVIE,
       data: { tmdbId },
     }));
@@ -137,7 +156,7 @@ export class SyncWorker extends WorkerHost {
    * Updates isNowPlaying flags based on current TMDB now_playing list.
    * - Sets isNowPlaying = true for movies in the list that exist in DB
    * - Sets isNowPlaying = false for movies no longer in the list
-   * 
+   *
    * Should be run AFTER SYNC_NOW_PLAYING has completed (e.g., 5-10 min later).
    */
   private async updateNowPlayingFlags(region = 'UA'): Promise<void> {
@@ -167,7 +186,7 @@ export class SyncWorker extends WorkerHost {
     if (tmdbIds.length === 0) return;
 
     // Queue sync jobs for each movie
-    const jobs = tmdbIds.map(tmdbId => ({
+    const jobs = tmdbIds.map((tmdbId) => ({
       name: IngestionJob.SYNC_MOVIE,
       data: { tmdbId },
     }));

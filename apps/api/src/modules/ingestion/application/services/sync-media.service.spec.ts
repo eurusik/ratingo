@@ -91,7 +91,12 @@ describe('SyncMediaService', () => {
   describe('syncMovie', () => {
     it('should sync a movie successfully', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
-      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ rating: 8.0, votes: 5000, watchers: 100, totalWatchers: 5000 });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({
+        rating: 8.0,
+        votes: 5000,
+        watchers: 100,
+        totalWatchers: 5000,
+      });
       omdbAdapter.getAggregatedRatings.mockResolvedValue({
         imdbRating: 8.8,
         imdbVotes: 2000000,
@@ -145,7 +150,12 @@ describe('SyncMediaService', () => {
     it('should handle missing IMDb ID gracefully', async () => {
       const mediaWithoutImdb = { ...mockMedia, externalIds: { tmdbId: 550 } };
       tmdbAdapter.getMovie.mockResolvedValue(mediaWithoutImdb);
-      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ rating: 7.5, votes: 3000, watchers: 50, totalWatchers: 2000 });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({
+        rating: 7.5,
+        votes: 3000,
+        watchers: 50,
+        totalWatchers: 2000,
+      });
 
       await service.syncMovie(550);
 
@@ -186,10 +196,10 @@ describe('SyncMediaService', () => {
           country: 'US',
         },
       ];
-      
+
       const mediaWithVideos = { ...mockMedia, videos: mockVideos };
       tmdbAdapter.getMovie.mockResolvedValue(mediaWithVideos);
-      
+
       // Mock other calls with empty/default values
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
       omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
@@ -214,7 +224,12 @@ describe('SyncMediaService', () => {
 
     it('should sync a show successfully', async () => {
       tmdbAdapter.getShow.mockResolvedValue({ ...mockShow });
-      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue({ rating: 8.5, votes: 8000, watchers: 200, totalWatchers: 10000 });
+      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue({
+        rating: 8.5,
+        votes: 8000,
+        watchers: 200,
+        totalWatchers: 10000,
+      });
       omdbAdapter.getAggregatedRatings.mockResolvedValue({
         imdbRating: 9.0,
         imdbVotes: 1500000,
@@ -270,10 +285,10 @@ describe('SyncMediaService', () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
 
       // Simulate slow API calls
-      const traktPromise = new Promise<any>(resolve =>
+      const traktPromise = new Promise<any>((resolve) =>
         setTimeout(() => resolve({ rating: 8.0, votes: 5000 }), 50)
       );
-      const omdbPromise = new Promise<any>(resolve =>
+      const omdbPromise = new Promise<any>((resolve) =>
         setTimeout(() => resolve({ imdbRating: 8.5, imdbVotes: 1000000 }), 50)
       );
 
@@ -295,7 +310,12 @@ describe('SyncMediaService', () => {
         releaseDate: new Date('2023-06-15'),
       };
       tmdbAdapter.getMovie.mockResolvedValue(media);
-      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ rating: 7.8, votes: 4000, watchers: 80, totalWatchers: 3000 });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({
+        rating: 7.8,
+        votes: 4000,
+        watchers: 80,
+        totalWatchers: 3000,
+      });
       omdbAdapter.getAggregatedRatings.mockResolvedValue({
         imdbRating: 7.5,
         imdbVotes: 50000,
@@ -327,40 +347,58 @@ describe('SyncMediaService', () => {
         ...mockMedia,
         type: MediaType.SHOW,
         details: {
-          seasons: [
-            { number: 1, name: 'Season 1', tmdbId: 101, episodeCount: 0, episodes: [] },
-          ]
-        }
+          seasons: [{ number: 1, name: 'Season 1', tmdbId: 101, episodeCount: 0, episodes: [] }],
+        },
       };
-      
+
       tmdbAdapter.getShow.mockResolvedValue(mockShow);
-      
+
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 7); // Next week
 
       tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
-        { seasonNumber: 1, number: 1, title: 'Ep 1', airDate: new Date('2020-01-01'), runtime: 60, overview: 'Overview', stillPath: null, rating: null },
-        { seasonNumber: 1, number: 2, title: 'Ep 2', airDate: futureDate, runtime: 60, overview: 'Overview 2', stillPath: null, rating: null },
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Ep 1',
+          airDate: new Date('2020-01-01'),
+          runtime: 60,
+          overview: 'Overview',
+          stillPath: null,
+          rating: null,
+        },
+        {
+          seasonNumber: 1,
+          number: 2,
+          title: 'Ep 2',
+          airDate: futureDate,
+          runtime: 60,
+          overview: 'Overview 2',
+          stillPath: null,
+          rating: null,
+        },
       ]);
 
       await service.syncShow(1000);
 
       expect(tvMazeAdapter.getEpisodesByImdbId).toHaveBeenCalledWith('tt0137523');
-      expect(mediaRepository.upsert).toHaveBeenCalledWith(expect.objectContaining({
-        details: expect.objectContaining({
-          seasons: expect.arrayContaining([
-            expect.objectContaining({
-              number: 1,
-              name: 'Season 1', // Inherited from TMDB
-              episodes: expect.arrayContaining([
-                expect.objectContaining({ title: 'Ep 1' }),
-                expect.objectContaining({ title: 'Ep 2' })
-              ])
-            })
-          ]),
-          nextAirDate: futureDate,
+      expect(mediaRepository.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          details: expect.objectContaining({
+            seasons: expect.arrayContaining([
+              expect.objectContaining({
+                number: 1,
+                name: 'Season 1', // Inherited from TMDB
+                episodes: expect.arrayContaining([
+                  expect.objectContaining({ title: 'Ep 1' }),
+                  expect.objectContaining({ title: 'Ep 2' }),
+                ]),
+              }),
+            ]),
+            nextAirDate: futureDate,
+          }),
         })
-      }));
+      );
     });
 
     it('should handle TVMaze failure gracefully', async () => {

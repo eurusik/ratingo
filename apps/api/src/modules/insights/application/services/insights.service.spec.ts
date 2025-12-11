@@ -12,10 +12,7 @@ describe('InsightsService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        InsightsService,
-        { provide: INSIGHTS_REPOSITORY, useValue: repository },
-      ],
+      providers: [InsightsService, { provide: INSIGHTS_REPOSITORY, useValue: repository }],
     }).compile();
 
     service = module.get<InsightsService>(InsightsService);

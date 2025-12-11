@@ -23,7 +23,7 @@ export class MovieDetailsQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly db: PostgresJsDatabase<typeof schema>
   ) {}
 
   /**
@@ -52,19 +52,19 @@ export class MovieDetailsQuery {
           videos: schema.mediaItems.videos,
           credits: schema.mediaItems.credits,
           watchProviders: schema.mediaItems.watchProviders,
-          
+
           ratingImdb: schema.mediaItems.ratingImdb,
           voteCountImdb: schema.mediaItems.voteCountImdb,
           ratingTrakt: schema.mediaItems.ratingTrakt,
           voteCountTrakt: schema.mediaItems.voteCountTrakt,
           ratingMetacritic: schema.mediaItems.ratingMetacritic,
           ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-          
+
           runtime: schema.movies.runtime,
           budget: schema.movies.budget,
           revenue: schema.movies.revenue,
           status: schema.movies.status,
-          
+
           ratingoScore: schema.mediaStats.ratingoScore,
           qualityScore: schema.mediaStats.qualityScore,
           popularityScore: schema.mediaStats.popularityScore,
@@ -97,12 +97,12 @@ export class MovieDetailsQuery {
         primaryTrailer: movie.videos?.[0] || null,
         credits: CreditsMapper.toDto(movie.credits),
         availability: WatchProvidersMapper.toAvailability(movie.watchProviders),
-        
+
         runtime: movie.runtime,
         budget: movie.budget,
         revenue: movie.revenue,
         status: movie.status as MovieStatus | null,
-        
+
         stats: {
           ratingoScore: movie.ratingoScore,
           qualityScore: movie.qualityScore,
@@ -112,17 +112,25 @@ export class MovieDetailsQuery {
         },
         externalRatings: {
           tmdb: { rating: movie.rating, voteCount: movie.voteCount },
-          imdb: movie.ratingImdb ? { rating: movie.ratingImdb, voteCount: movie.voteCountImdb } : null,
-          trakt: movie.ratingTrakt ? { rating: movie.ratingTrakt, voteCount: movie.voteCountTrakt } : null,
+          imdb: movie.ratingImdb
+            ? { rating: movie.ratingImdb, voteCount: movie.voteCountImdb }
+            : null,
+          trakt: movie.ratingTrakt
+            ? { rating: movie.ratingTrakt, voteCount: movie.voteCountTrakt }
+            : null,
           metacritic: movie.ratingMetacritic ? { rating: movie.ratingMetacritic } : null,
-          rottenTomatoes: movie.ratingRottenTomatoes ? { rating: movie.ratingRottenTomatoes } : null,
+          rottenTomatoes: movie.ratingRottenTomatoes
+            ? { rating: movie.ratingRottenTomatoes }
+            : null,
         },
-        
+
         genres,
       };
     } catch (error) {
       this.logger.error(`Failed to find movie by slug ${slug}: ${error.message}`, error.stack);
-      throw new DatabaseException(`Failed to fetch movie ${slug}`, { originalError: error.message });
+      throw new DatabaseException(`Failed to fetch movie ${slug}`, {
+        originalError: error.message,
+      });
     }
   }
 

@@ -9,7 +9,7 @@ export class NotFoundException extends AppException {
   constructor(
     code: ErrorCode = ErrorCode.RESOURCE_NOT_FOUND,
     message: string = 'Resource not found',
-    details?: Record<string, any>,
+    details?: Record<string, any>
   ) {
     super(code, message, HttpStatus.NOT_FOUND, details);
   }
@@ -20,11 +20,9 @@ export class NotFoundException extends AppException {
  */
 export class MediaNotFoundException extends NotFoundException {
   constructor(identifier: string | number, type: 'tmdbId' | 'id' = 'tmdbId') {
-    super(
-      ErrorCode.MEDIA_NOT_FOUND,
-      `Media with ${type} ${identifier} not found`,
-      { [type]: identifier },
-    );
+    super(ErrorCode.MEDIA_NOT_FOUND, `Media with ${type} ${identifier} not found`, {
+      [type]: identifier,
+    });
   }
 }
 
@@ -33,10 +31,8 @@ export class MediaNotFoundException extends NotFoundException {
  */
 export class StatsNotFoundException extends NotFoundException {
   constructor(identifier: string | number, type: 'tmdbId' | 'mediaItemId' = 'tmdbId') {
-    super(
-      ErrorCode.STATS_NOT_FOUND,
-      `Stats for ${type} ${identifier} not found`,
-      { [type]: identifier },
-    );
+    super(ErrorCode.STATS_NOT_FOUND, `Stats for ${type} ${identifier} not found`, {
+      [type]: identifier,
+    });
   }
 }

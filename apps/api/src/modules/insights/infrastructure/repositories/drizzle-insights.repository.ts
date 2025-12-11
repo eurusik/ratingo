@@ -19,7 +19,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly db: PostgresJsDatabase<typeof schema>
   ) {}
 
   /**
@@ -32,7 +32,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
    */
   async getMovements(
     windowDays: number,
-    limit: number,
+    limit: number
   ): Promise<{ risers: RiseFallItemDto[]; fallers: RiseFallItemDto[] }> {
     // Prepare target dates (Midnight UTC)
     const now = new Date();
@@ -57,18 +57,18 @@ export class DrizzleInsightsRepository implements InsightsRepository {
         .from(schema.mediaWatchersSnapshots)
         .innerJoin(
           schema.mediaItems,
-          eq(schema.mediaWatchersSnapshots.mediaItemId, schema.mediaItems.id),
+          eq(schema.mediaWatchersSnapshots.mediaItemId, schema.mediaItems.id)
         )
         .where(
           and(
             eq(schema.mediaWatchersSnapshots.region, 'global'),
-            inArray(schema.mediaWatchersSnapshots.snapshotDate, targetDates),
-          ),
+            inArray(schema.mediaWatchersSnapshots.snapshotDate, targetDates)
+          )
         );
 
       const grouped = new Map<
         string,
-        { media: typeof rows[0]['media']; snapshots: Record<string, number> }
+        { media: (typeof rows)[0]['media']; snapshots: Record<string, number> }
       >();
 
       for (const row of rows) {
@@ -107,8 +107,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
           backdrop: ImageMapper.toBackdrop(media.backdropPath),
           stats: {
             deltaWatchers: delta,
-            deltaPercent:
-              deltaPercent !== null ? Number(deltaPercent.toFixed(1)) : null,
+            deltaPercent: deltaPercent !== null ? Number(deltaPercent.toFixed(1)) : null,
             currentWatchers: tNow,
             growthCurrent,
             growthPrev,
@@ -133,7 +132,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
         .filter((i) => {
           if (i.stats.deltaWatchers >= 0) return false;
 
-          const MIN_PREV_GROWTH = 100; 
+          const MIN_PREV_GROWTH = 100;
           const MAX_DROP_PERCENT = -10;
 
           if (i.stats.growthPrev < MIN_PREV_GROWTH) return false;
@@ -146,10 +145,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
 
       return { risers, fallers };
     } catch (error) {
-      this.logger.error(
-        `Failed to get movements: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to get movements: ${error.message}`, error.stack);
       return { risers: [], fallers: [] };
     }
   }

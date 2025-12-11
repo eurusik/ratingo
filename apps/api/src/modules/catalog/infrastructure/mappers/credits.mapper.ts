@@ -1,4 +1,8 @@
-import { Credits, CastMember, CrewMember } from '../../../ingestion/domain/models/normalized-media.model';
+import {
+  Credits,
+  CastMember,
+  CrewMember,
+} from '../../../ingestion/domain/models/normalized-media.model';
 import { CreditsDto, CastMemberDto, CrewMemberDto } from '../../presentation/dtos/common.dto';
 
 export class CreditsMapper {
@@ -41,7 +45,7 @@ export class CreditsMapper {
       .replace(/[^\w\s-]/g, '') // Remove special chars
       .trim()
       .replace(/\s+/g, '-'); // Replace spaces with hyphens
-    
+
     return slug.length > 0 ? slug : null;
   }
 }

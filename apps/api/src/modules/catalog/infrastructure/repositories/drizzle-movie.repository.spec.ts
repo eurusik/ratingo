@@ -10,9 +10,16 @@ import { MovieListingsQuery } from '../queries/movie-listings.query';
 const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {
   const thenable: any = {};
   const chainMethods = [
-    'insert', 'values', 'onConflictDoUpdate',
-    'update', 'set', 'where',
-    'select', 'from', 'innerJoin', 'limit',
+    'insert',
+    'values',
+    'onConflictDoUpdate',
+    'update',
+    'set',
+    'where',
+    'select',
+    'from',
+    'innerJoin',
+    'limit',
     ...extraMethods,
   ];
   chainMethods.forEach((m) => {
@@ -46,7 +53,9 @@ describe('DrizzleMovieRepository', () => {
       select: jest.fn().mockReturnValue(selectChain),
       insert: jest.fn().mockReturnValue(insertChain),
       update: jest.fn().mockReturnValue(updateChain),
-      transaction: jest.fn(async (cb: any) => cb({ select: db.select, insert: db.insert, update: db.update })),
+      transaction: jest.fn(async (cb: any) =>
+        cb({ select: db.select, insert: db.insert, update: db.update })
+      ),
     };
 
     movieDetailsQuery = { execute: jest.fn().mockResolvedValue('details') };
@@ -123,7 +132,9 @@ describe('DrizzleMovieRepository', () => {
         select: jest.fn().mockReturnValue(selectChain),
         insert: jest.fn().mockReturnValue(insertChain),
         update: jest.fn().mockReturnValue(updateChain),
-        transaction: jest.fn(async () => { throw error; }),
+        transaction: jest.fn(async () => {
+          throw error;
+        }),
       };
       const module: TestingModule = await Test.createTestingModule({
         providers: [

@@ -30,7 +30,7 @@ export class TrendingMoviesQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly db: PostgresJsDatabase<typeof schema>
   ) {}
 
   private readonly selectFields = {
@@ -47,7 +47,7 @@ export class TrendingMoviesQuery {
     rating: schema.mediaItems.rating,
     voteCount: schema.mediaItems.voteCount,
     releaseDate: schema.mediaItems.releaseDate,
-    
+
     ratingImdb: schema.mediaItems.ratingImdb,
     voteCountImdb: schema.mediaItems.voteCountImdb,
     ratingTrakt: schema.mediaItems.ratingTrakt,
@@ -87,7 +87,7 @@ export class TrendingMoviesQuery {
           .select({ mediaItemId: schema.mediaGenres.mediaItemId })
           .from(schema.mediaGenres)
           .where(eq(schema.mediaGenres.genreId, genreId));
-        
+
         conditions.push(inArray(schema.mediaItems.id, genreSubquery));
       }
 
@@ -105,7 +105,9 @@ export class TrendingMoviesQuery {
       return this.mapResults(moviesWithGenres);
     } catch (error) {
       this.logger.error(`Failed to find trending movies: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch trending movies', { originalError: error.message });
+      throw new DatabaseException('Failed to fetch trending movies', {
+        originalError: error.message,
+      });
     }
   }
 
@@ -120,11 +122,12 @@ export class TrendingMoviesQuery {
     const classicCutoff = new Date(now);
     classicCutoff.setFullYear(now.getFullYear() - 10);
 
-    return movies.map(m => ({
+    return movies.map((m) => ({
       ...m,
       isNew: m.releaseDate ? m.releaseDate >= newReleaseCutoff : false,
-      isClassic: m.releaseDate 
-        ? (m.releaseDate <= classicCutoff) || ((m.stats.ratingoScore || 0) >= 80 && (m.stats.totalWatchers || 0) > 10000)
+      isClassic: m.releaseDate
+        ? m.releaseDate <= classicCutoff ||
+          ((m.stats.ratingoScore || 0) >= 80 && (m.stats.totalWatchers || 0) > 10000)
         : false,
     }));
   }
@@ -135,8 +138,8 @@ export class TrendingMoviesQuery {
   private async attachGenres(movies: any[]): Promise<any[]> {
     if (movies.length === 0) return [];
 
-    const mediaItemIds = movies.map(m => m.mediaItemId);
-    
+    const mediaItemIds = movies.map((m) => m.mediaItemId);
+
     const genresData = await this.db
       .select({
         mediaItemId: schema.mediaGenres.mediaItemId,
@@ -149,12 +152,12 @@ export class TrendingMoviesQuery {
       .where(inArray(schema.mediaGenres.mediaItemId, mediaItemIds));
 
     const genresMap = new Map<string, any[]>();
-    genresData.forEach(g => {
+    genresData.forEach((g) => {
       if (!genresMap.has(g.mediaItemId)) genresMap.set(g.mediaItemId, []);
       genresMap.get(g.mediaItemId)!.push({ id: g.id, name: g.name, slug: g.slug });
     });
 
-    return movies.map(m => ({
+    return movies.map((m) => ({
       id: m.id,
       mediaItemId: m.mediaItemId,
       tmdbId: m.tmdbId,

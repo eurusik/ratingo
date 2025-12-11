@@ -5,11 +5,11 @@ import * as schema from '../../../../database/schema';
 import { eq, desc, and, lte, isNotNull, gte, inArray } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ImageMapper } from '../mappers/image.mapper';
-import { 
-  HERO_MIN_POPULARITY_SCORE, 
-  HERO_MIN_QUALITY_SCORE, 
-  NEW_RELEASE_DAYS_THRESHOLD, 
-  CLASSIC_YEARS_THRESHOLD 
+import {
+  HERO_MIN_POPULARITY_SCORE,
+  HERO_MIN_QUALITY_SCORE,
+  NEW_RELEASE_DAYS_THRESHOLD,
+  CLASSIC_YEARS_THRESHOLD,
 } from '../../../../common/constants';
 
 /**
@@ -34,7 +34,7 @@ export class HeroMediaQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly db: PostgresJsDatabase<typeof schema>
   ) {}
 
   /**
@@ -73,12 +73,12 @@ export class HeroMediaQuery {
           backdropPath: schema.mediaItems.backdropPath,
           releaseDate: schema.mediaItems.releaseDate,
           videos: schema.mediaItems.videos,
-          
+
           ratingoScore: schema.mediaStats.ratingoScore,
           qualityScore: schema.mediaStats.qualityScore,
           watchersCount: schema.mediaStats.watchersCount,
           totalWatchers: schema.mediaStats.totalWatchers,
-          
+
           rating: schema.mediaItems.rating,
           voteCount: schema.mediaItems.voteCount,
         })
@@ -100,13 +100,8 @@ export class HeroMediaQuery {
   /**
    * Fetches show progress (season/episode) for TV shows in the results.
    */
-  private async fetchShowProgress(
-    results: any[],
-    now: Date
-  ): Promise<Map<string, any>> {
-    const showIds = results
-      .filter(r => r.type === MediaType.SHOW)
-      .map(r => r.id);
+  private async fetchShowProgress(results: any[], now: Date): Promise<Map<string, any>> {
+    const showIds = results.filter((r) => r.type === MediaType.SHOW).map((r) => r.id);
 
     const progressMap = new Map<string, any>();
 
@@ -124,7 +119,7 @@ export class HeroMediaQuery {
       .from(schema.shows)
       .where(inArray(schema.shows.mediaItemId, showIds));
 
-    const internalShowIds = showsData.map(s => s.showId);
+    const internalShowIds = showsData.map((s) => s.showId);
 
     if (internalShowIds.length === 0) {
       return progressMap;
@@ -140,10 +135,7 @@ export class HeroMediaQuery {
       .from(schema.episodes)
       .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))
       .where(
-        and(
-          inArray(schema.episodes.showId, internalShowIds),
-          lte(schema.episodes.airDate, now)
-        )
+        and(inArray(schema.episodes.showId, internalShowIds), lte(schema.episodes.airDate, now))
       )
       .orderBy(desc(schema.episodes.airDate));
 
@@ -183,15 +175,17 @@ export class HeroMediaQuery {
   /**
    * Maps raw database rows to hero item DTOs.
    */
-  private mapResults(
-    results: any[],
-    showProgressMap: Map<string, any>,
-    now: Date
-  ): any[] {
-    const ninetyDaysAgo = new Date(now.getTime() - NEW_RELEASE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000);
-    const fiveYearsAgo = new Date(now.getFullYear() - CLASSIC_YEARS_THRESHOLD, now.getMonth(), now.getDate());
+  private mapResults(results: any[], showProgressMap: Map<string, any>, now: Date): any[] {
+    const ninetyDaysAgo = new Date(
+      now.getTime() - NEW_RELEASE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000
+    );
+    const fiveYearsAgo = new Date(
+      now.getFullYear() - CLASSIC_YEARS_THRESHOLD,
+      now.getMonth(),
+      now.getDate()
+    );
 
-    return results.map(item => {
+    return results.map((item) => {
       const releaseDate = item.releaseDate ? new Date(item.releaseDate) : null;
       const videos = item.videos as any[];
       const primaryTrailerKey = videos?.length > 0 ? videos[0].key : null;

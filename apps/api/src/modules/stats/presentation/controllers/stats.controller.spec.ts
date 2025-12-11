@@ -47,19 +47,13 @@ describe('StatsController', () => {
         message: 'Stats sync job added to queue',
         jobId: 'job-123',
       });
-      expect(mockQueue.add).toHaveBeenCalledWith(
-        STATS_JOBS.SYNC_TRENDING,
-        { limit: 20 }
-      );
+      expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.SYNC_TRENDING, { limit: 20 });
     });
 
     it('should use custom limit when provided', async () => {
       await controller.syncTrendingStats(50);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
-        STATS_JOBS.SYNC_TRENDING,
-        { limit: 50 }
-      );
+      expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.SYNC_TRENDING, { limit: 50 });
     });
   });
 
@@ -80,13 +74,9 @@ describe('StatsController', () => {
     });
 
     it('should propagate StatsNotFoundException', async () => {
-      statsService.getStatsByTmdbId.mockRejectedValue(
-        new StatsNotFoundException(999, 'tmdbId')
-      );
+      statsService.getStatsByTmdbId.mockRejectedValue(new StatsNotFoundException(999, 'tmdbId'));
 
-      await expect(controller.getStatsByTmdbId(999)).rejects.toThrow(
-        StatsNotFoundException
-      );
+      await expect(controller.getStatsByTmdbId(999)).rejects.toThrow(StatsNotFoundException);
     });
   });
 
@@ -98,10 +88,10 @@ describe('StatsController', () => {
         message: 'Drop-off analysis job for 50 shows added to queue',
         jobId: 'job-123',
       });
-      expect(mockQueue.add).toHaveBeenCalledWith(
-        STATS_JOBS.ANALYZE_DROP_OFF,
-        { tmdbId: undefined, limit: 50 }
-      );
+      expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.ANALYZE_DROP_OFF, {
+        tmdbId: undefined,
+        limit: 50,
+      });
     });
 
     it('should add single show analysis job when tmdbId provided', async () => {
@@ -111,19 +101,19 @@ describe('StatsController', () => {
         message: 'Drop-off analysis job for show 12345 added to queue',
         jobId: 'job-123',
       });
-      expect(mockQueue.add).toHaveBeenCalledWith(
-        STATS_JOBS.ANALYZE_DROP_OFF,
-        { tmdbId: 12345, limit: 50 }
-      );
+      expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.ANALYZE_DROP_OFF, {
+        tmdbId: 12345,
+        limit: 50,
+      });
     });
 
     it('should use custom limit', async () => {
       await controller.analyzeDropOff(undefined, 100);
 
-      expect(mockQueue.add).toHaveBeenCalledWith(
-        STATS_JOBS.ANALYZE_DROP_OFF,
-        { tmdbId: undefined, limit: 100 }
-      );
+      expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.ANALYZE_DROP_OFF, {
+        tmdbId: undefined,
+        limit: 100,
+      });
     });
   });
 
@@ -135,10 +125,7 @@ describe('StatsController', () => {
         message: 'Drop-off analysis job for show 12345 added to queue',
         jobId: 'job-123',
       });
-      expect(mockQueue.add).toHaveBeenCalledWith(
-        STATS_JOBS.ANALYZE_DROP_OFF,
-        { tmdbId: 12345 }
-      );
+      expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.ANALYZE_DROP_OFF, { tmdbId: 12345 });
     });
   });
 

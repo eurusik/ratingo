@@ -1,4 +1,12 @@
-import { NormalizedMedia, NormalizedVideo, Credits, CastMember, CrewMember, WatchProvidersMap, WatchProvider } from '../../ingestion/domain/models/normalized-media.model';
+import {
+  NormalizedMedia,
+  NormalizedVideo,
+  Credits,
+  CastMember,
+  CrewMember,
+  WatchProvidersMap,
+  WatchProvider,
+} from '../../ingestion/domain/models/normalized-media.model';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../common/enums/video.enum';
 import { DEFAULT_REGION } from '../../../common/constants';
@@ -32,28 +40,31 @@ export class TmdbMapper {
       originalTitle: isMovie ? data.original_title : data.original_name,
       overview: data.overview || null,
       slug: this.generateSlug(isMovie ? data.title : data.name),
-      
+
       posterPath: data.poster_path || null,
       backdropPath: data.backdrop_path || null,
-      
+
       rating: data.vote_average || 0,
       voteCount: data.vote_count || 0,
       popularity: data.popularity || 0,
-      
-      releaseDate: data.release_date || data.first_air_date ? new Date(data.release_date || data.first_air_date) : null,
+
+      releaseDate:
+        data.release_date || data.first_air_date
+          ? new Date(data.release_date || data.first_air_date)
+          : null,
       status: data.status || null,
       isAdult: data.adult || false,
-      
+
       genres: (data.genres || []).map((g: any) => ({
         tmdbId: g.id,
         name: g.name,
         slug: this.generateSlug(g.name),
       })),
-      
+
       videos: this.extractVideos(data),
       credits: this.extractCredits(data, type),
       watchProviders: this.extractProviders(data),
-      
+
       details: {},
     };
 
@@ -105,8 +116,13 @@ export class TmdbMapper {
     }
 
     // Flatten all releases with country info
-    const allReleases: Array<{ country: string; type: number; date: string; certification?: string }> = [];
-    
+    const allReleases: Array<{
+      country: string;
+      type: number;
+      date: string;
+      certification?: string;
+    }> = [];
+
     for (const countryData of releaseDates) {
       const country = countryData.iso_3166_1;
       for (const release of countryData.release_dates || []) {
@@ -121,11 +137,11 @@ export class TmdbMapper {
 
     // Priority countries for finding primary release dates
     const priorityCountries = ['US', DEFAULT_REGION];
-    
+
     // Find theatrical release (type 3) - prioritize US/UA
     let theatricalReleaseDate: Date | null = null;
     for (const country of priorityCountries) {
-      const theatrical = allReleases.find(r => r.country === country && r.type === 3);
+      const theatrical = allReleases.find((r) => r.country === country && r.type === 3);
       if (theatrical) {
         theatricalReleaseDate = new Date(theatrical.date);
         break;
@@ -133,7 +149,7 @@ export class TmdbMapper {
     }
     // Fallback to any theatrical release
     if (!theatricalReleaseDate) {
-      const anyTheatrical = allReleases.find(r => r.type === 3);
+      const anyTheatrical = allReleases.find((r) => r.type === 3);
       if (anyTheatrical) {
         theatricalReleaseDate = new Date(anyTheatrical.date);
       }
@@ -142,7 +158,7 @@ export class TmdbMapper {
     // Find digital release (type 4) - prioritize US/UA
     let digitalReleaseDate: Date | null = null;
     for (const country of priorityCountries) {
-      const digital = allReleases.find(r => r.country === country && r.type === 4);
+      const digital = allReleases.find((r) => r.country === country && r.type === 4);
       if (digital) {
         digitalReleaseDate = new Date(digital.date);
         break;
@@ -150,7 +166,7 @@ export class TmdbMapper {
     }
     // Fallback to any digital release
     if (!digitalReleaseDate) {
-      const anyDigital = allReleases.find(r => r.type === 4);
+      const anyDigital = allReleases.find((r) => r.type === 4);
       if (anyDigital) {
         digitalReleaseDate = new Date(anyDigital.date);
       }
@@ -206,7 +222,7 @@ export class TmdbMapper {
       .map((c: any, index: number) => ({
         tmdbId: c.id,
         name: c.name,
-        character: isMovie ? c.character : (c.roles?.[0]?.character || 'Unknown'),
+        character: isMovie ? c.character : c.roles?.[0]?.character || 'Unknown',
         profilePath: c.profile_path,
         order: c.order ?? index,
       }));
@@ -231,10 +247,11 @@ export class TmdbMapper {
     }
 
     return results
-      .filter((v: any) => 
-        v.site === VideoSiteEnum.YOUTUBE && 
-        (v.type === VideoTypeEnum.TRAILER || v.type === VideoTypeEnum.TEASER) &&
-        (v.iso_639_1 === VideoLanguageEnum.EN || v.iso_639_1 === VideoLanguageEnum.UK)
+      .filter(
+        (v: any) =>
+          v.site === VideoSiteEnum.YOUTUBE &&
+          (v.type === VideoTypeEnum.TRAILER || v.type === VideoTypeEnum.TEASER) &&
+          (v.iso_639_1 === VideoLanguageEnum.EN || v.iso_639_1 === VideoLanguageEnum.UK)
       )
       .sort((a: any, b: any) => {
         // Language Priority: UK > Others
@@ -299,7 +316,7 @@ export class TmdbMapper {
 
   private static mapProviderList(list: any[]): WatchProvider[] | undefined {
     if (!Array.isArray(list) || list.length === 0) return undefined;
-    return list.map(p => ({
+    return list.map((p) => ({
       providerId: p.provider_id,
       name: p.provider_name,
       logoPath: p.logo_path,

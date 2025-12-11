@@ -35,10 +35,7 @@ describe('DrizzleGenreRepository', () => {
     };
 
     return Test.createTestingModule({
-      providers: [
-        DrizzleGenreRepository,
-        { provide: DATABASE_CONNECTION, useValue: db },
-      ],
+      providers: [DrizzleGenreRepository, { provide: DATABASE_CONNECTION, useValue: db }],
     }).compile();
   };
 

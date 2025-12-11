@@ -20,10 +20,7 @@ describe('TraktAdapter', () => {
     mockFetch.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TraktAdapter,
-        { provide: traktConfig.KEY, useValue: mockConfig },
-      ],
+      providers: [TraktAdapter, { provide: traktConfig.KEY, useValue: mockConfig }],
     }).compile();
 
     adapter = module.get<TraktAdapter>(TraktAdapter);
@@ -86,9 +83,7 @@ describe('TraktAdapter', () => {
 
   describe('getTrendingShows', () => {
     it('should fetch trending shows', async () => {
-      const mockResponse = [
-        { show: { ids: { tmdb: 1000 } }, watchers: 200 },
-      ];
+      const mockResponse = [{ show: { ids: { tmdb: 1000 } }, watchers: 200 }];
 
       mockFetch.mockResolvedValue({
         ok: true,
@@ -111,13 +106,13 @@ describe('TraktAdapter', () => {
         if (url.includes('/search/tmdb/100')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve([{ movie: { ids: { trakt: 123 } } }])
+            json: () => Promise.resolve([{ movie: { ids: { trakt: 123 } } }]),
           });
         }
         if (url.includes('/movies/123/ratings')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ rating: 8.5, votes: 10000 })
+            json: () => Promise.resolve({ rating: 8.5, votes: 10000 }),
           });
         }
         if (url.includes('/movies/123/watching')) {
@@ -147,13 +142,13 @@ describe('TraktAdapter', () => {
         if (url.includes('/search/tmdb/1000')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve([{ show: { ids: { trakt: 200 } } }])
+            json: () => Promise.resolve([{ show: { ids: { trakt: 200 } } }]),
           });
         }
         if (url.includes('/shows/200/ratings')) {
           return Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({ rating: 9.0, votes: 50000 })
+            json: () => Promise.resolve({ rating: 9.0, votes: 50000 }),
           });
         }
         if (url.includes('/shows/200/watching')) {
@@ -224,19 +219,21 @@ describe('TraktAdapter', () => {
         });
 
       // Mock headers.get
-      mockFetch.mockImplementationOnce(() =>
-        Promise.resolve({
-          ok: false,
-          status: 429,
-          statusText: 'Too Many Requests',
-          headers: { get: () => '0.1' },
-        })
-      ).mockImplementationOnce(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve([{ movie: { ids: { tmdb: 1 } } }]),
-        })
-      );
+      mockFetch
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            ok: false,
+            status: 429,
+            statusText: 'Too Many Requests',
+            headers: { get: () => '0.1' },
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve([{ movie: { ids: { tmdb: 1 } } }]),
+          })
+        );
 
       const result = await adapter.getTrendingMovies(1);
 
@@ -274,26 +271,26 @@ describe('TraktAdapter', () => {
         // Get seasons
         .mockResolvedValueOnce({
           ok: true,
-          json: () => Promise.resolve([
-            { number: 0, episode_count: 5 }, // Specials - should be filtered
-            { number: 1, episode_count: 10 },
-            { number: 2, episode_count: 8 },
-          ]),
+          json: () =>
+            Promise.resolve([
+              { number: 0, episode_count: 5 }, // Specials - should be filtered
+              { number: 1, episode_count: 10 },
+              { number: 2, episode_count: 8 },
+            ]),
         })
         // Get S1 episodes
         .mockResolvedValueOnce({
           ok: true,
-          json: () => Promise.resolve([
-            { number: 1, title: 'Pilot', rating: 8.5, votes: 1000 },
-            { number: 2, title: 'Episode 2', rating: 8.0, votes: 900 },
-          ]),
+          json: () =>
+            Promise.resolve([
+              { number: 1, title: 'Pilot', rating: 8.5, votes: 1000 },
+              { number: 2, title: 'Episode 2', rating: 8.0, votes: 900 },
+            ]),
         })
         // Get S2 episodes
         .mockResolvedValueOnce({
           ok: true,
-          json: () => Promise.resolve([
-            { number: 1, title: 'S2E1', rating: 7.5, votes: 800 },
-          ]),
+          json: () => Promise.resolve([{ number: 1, title: 'S2E1', rating: 7.5, votes: 800 }]),
         });
 
       const result = await adapter.getShowEpisodesForAnalysis(12345);

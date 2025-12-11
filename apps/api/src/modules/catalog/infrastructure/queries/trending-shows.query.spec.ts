@@ -90,14 +90,14 @@ describe('TrendingShowsQuery', () => {
     expect(db.execute).toHaveBeenCalledTimes(1);
     expect(res).toHaveLength(2);
 
-    const first = res.find(r => r.id === 'm1')!;
+    const first = res.find((r) => r.id === 'm1')!;
     expect(first.isNew).toBe(true);
     expect(first.isClassic).toBe(true); // ratingoScore + watchers triggers classic
     expect(first.primaryTrailerKey).toBe('trailer1');
     expect(first.showProgress?.label).toBe('S3E5');
     expect(first.poster).toEqual({ small: 'poster' });
 
-    const second = res.find(r => r.id === 'm2')!;
+    const second = res.find((r) => r.id === 'm2')!;
     expect(second.isClassic).toBe(true);
     expect(second.showProgress?.label).toBeNull();
   });

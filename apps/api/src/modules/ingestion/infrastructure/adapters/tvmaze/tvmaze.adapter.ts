@@ -18,17 +18,17 @@ export class TvMazeAdapter {
     try {
       // Lookup Show ID via IMDb ID (Follows redirects)
       const show = await this.fetch<{ id: number }>(`/lookup/shows?imdb=${imdbId}`);
-      
+
       if (!show || !show.id) {
         return [];
       }
 
       // Fetch all episodes
       const episodes = await this.fetch<any[]>(`/shows/${show.id}/episodes`);
-      
+
       if (!Array.isArray(episodes)) return [];
 
-      return episodes.map(ep => ({
+      return episodes.map((ep) => ({
         seasonNumber: ep.season,
         number: ep.number,
         title: ep.name,

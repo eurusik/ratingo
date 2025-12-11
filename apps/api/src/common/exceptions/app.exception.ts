@@ -13,7 +13,7 @@ export class AppException extends HttpException {
     code: ErrorCode,
     message: string,
     statusCode: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
-    details?: Record<string, any>,
+    details?: Record<string, any>
   ) {
     super(message, statusCode);
     this.code = code;

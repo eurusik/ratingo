@@ -20,7 +20,7 @@ export interface MovieWithMedia {
   popularity: number;
   releaseDate: Date | null;
   videos?: Video[] | null;
-  
+
   stats: {
     ratingoScore: number | null;
     qualityScore: number | null;
@@ -72,7 +72,7 @@ export interface MovieDetails {
   primaryTrailer?: Video | null;
   credits?: CreditsDto | null;
   availability?: AvailabilityDto | null;
-  
+
   stats: {
     ratingoScore: number | null;
     qualityScore: number | null;
@@ -93,7 +93,7 @@ export interface MovieDetails {
   budget: number | null;
   revenue: number | null;
   status: MovieStatus | null;
-  
+
   genres: Array<{ id: string; name: string; slug: string }>;
 }
 
@@ -127,7 +127,7 @@ export interface IMovieRepository {
   /**
    * Sets isNowPlaying flag for movies.
    * Called by SYNC_NOW_PLAYING job.
-   * 
+   *
    * @param tmdbIds - TMDB IDs of movies currently playing
    */
   setNowPlaying(tmdbIds: number[]): Promise<void>;
@@ -148,7 +148,7 @@ export interface IMovieRepository {
    * Upserts movie details transactionally.
    */
   upsertDetails(
-    tx: any, 
+    tx: any,
     mediaId: string,
     details: {
       runtime?: number | null;

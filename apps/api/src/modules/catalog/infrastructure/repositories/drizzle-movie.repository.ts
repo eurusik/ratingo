@@ -3,10 +3,10 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { eq, inArray } from 'drizzle-orm';
-import { 
-  IMovieRepository, 
-  MovieWithMedia, 
-  NowPlayingOptions 
+import {
+  IMovieRepository,
+  MovieWithMedia,
+  NowPlayingOptions,
 } from '../../domain/repositories/movie.repository.interface';
 import { ReleaseInfo } from '../../../../database/schema';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
@@ -33,17 +33,13 @@ export class DrizzleMovieRepository implements IMovieRepository {
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly movieDetailsQuery: MovieDetailsQuery,
     private readonly trendingMoviesQuery: TrendingMoviesQuery,
-    private readonly movieListingsQuery: MovieListingsQuery,
+    private readonly movieListingsQuery: MovieListingsQuery
   ) {}
 
   /**
    * Upserts movie details transactionally.
    */
-  async upsertDetails(
-    tx: DbTransaction,
-    mediaId: string,
-    details: any
-  ): Promise<void> {
+  async upsertDetails(tx: DbTransaction, mediaId: string, details: any): Promise<void> {
     await tx
       .insert(schema.movies)
       .values(PersistenceMapper.toMovieInsert(mediaId, details))
@@ -78,7 +74,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
         return;
       }
 
-      const mediaItemIds = mediaItems.map(m => m.id);
+      const mediaItemIds = mediaItems.map((m) => m.id);
 
       await tx
         .update(schema.movies)
@@ -111,7 +107,9 @@ export class DrizzleMovieRepository implements IMovieRepository {
         .where(eq(schema.movies.mediaItemId, mediaItemId));
     } catch (error) {
       this.logger.error(`Failed to update release dates: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to update release dates', { originalError: error.message });
+      throw new DatabaseException('Failed to update release dates', {
+        originalError: error.message,
+      });
     }
   }
 

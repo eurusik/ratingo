@@ -58,9 +58,7 @@ describe('CreditsMapper', () => {
 
   it('should return null slug for non-Latin characters if transliteration is missing', () => {
     const credits: Credits = {
-      cast: [
-        { tmdbId: 1, name: 'Джинніфер Ґудвін', order: 0, character: '', profilePath: '' },
-      ],
+      cast: [{ tmdbId: 1, name: 'Джинніфер Ґудвін', order: 0, character: '', profilePath: '' }],
       crew: [],
     };
 
@@ -73,7 +71,7 @@ describe('CreditsMapper', () => {
     const credits: Credits = {
       cast: [
         { tmdbId: 1, name: 'Robert Downey Jr.', order: 0, character: '', profilePath: '' },
-        { tmdbId: 2, name: 'Lupita Nyong\'o', order: 1, character: '', profilePath: '' },
+        { tmdbId: 2, name: "Lupita Nyong'o", order: 1, character: '', profilePath: '' },
         { tmdbId: 3, name: 'Mads Mikkelsen', order: 2, character: '', profilePath: '' },
       ],
       crew: [],

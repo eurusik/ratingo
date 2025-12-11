@@ -65,12 +65,18 @@ describe('PersistenceMapper', () => {
   it('toMediaItemUpdate should omit trendingScore when undefined', () => {
     const res = PersistenceMapper.toMediaItemUpdate(baseMedia as any);
     expect(res).not.toHaveProperty('trendingScore');
-    const withTrending = PersistenceMapper.toMediaItemUpdate({ ...baseMedia, trendingScore: 1 } as any);
+    const withTrending = PersistenceMapper.toMediaItemUpdate({
+      ...baseMedia,
+      trendingScore: 1,
+    } as any);
     expect(withTrending.trendingScore).toBe(1);
   });
 
   it('toMediaStatsInsert should return null when ratingoScore undefined', () => {
-    const resNull = PersistenceMapper.toMediaStatsInsert('m1', { ...baseMedia, ratingoScore: undefined } as any);
+    const resNull = PersistenceMapper.toMediaStatsInsert('m1', {
+      ...baseMedia,
+      ratingoScore: undefined,
+    } as any);
     expect(resNull).toBeNull();
     const res = PersistenceMapper.toMediaStatsInsert('m1', baseMedia as any)!;
     expect(res).toMatchObject({

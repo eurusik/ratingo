@@ -11,7 +11,8 @@ export class InsightsController {
   @Get('movements')
   @ApiOperation({
     summary: 'Get biggest risers and fallers',
-    description: 'Returns media items with the biggest change in watchers count over the specified window.',
+    description:
+      'Returns media items with the biggest change in watchers count over the specified window.',
   })
   @ApiOkResponse({ type: RiseFallResponseDto })
   async getMovements(@Query() query: InsightsQueryDto): Promise<RiseFallResponseDto> {

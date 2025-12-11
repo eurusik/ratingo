@@ -5,7 +5,16 @@ import { ImageMapper } from '../mappers/image.mapper';
 // Simple chainable thenable for Drizzle-like API
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
   const thenable: any = {};
-  const methods = ['select', 'from', 'innerJoin', 'leftJoin', 'where', 'orderBy', 'limit', 'offset'];
+  const methods = [
+    'select',
+    'from',
+    'innerJoin',
+    'leftJoin',
+    'where',
+    'orderBy',
+    'limit',
+    'offset',
+  ];
   methods.forEach((m) => {
     thenable[m] = jest.fn().mockReturnValue(thenable);
   });
@@ -97,8 +106,52 @@ describe('MovieListingsQuery', () => {
 
   it('should handle new_releases with custom daysBack and multiple items', async () => {
     const movies = [
-      { id: 'r1', mediaItemId: 'm1', tmdbId: 1, title: 'A', slug: 'a', overview: '', ingestionStatus: 'done', posterPath: '/p1', backdropPath: '/b1', popularity: 1, releaseDate: new Date(), theatricalReleaseDate: new Date(), digitalReleaseDate: null, runtime: 90, ratingoScore: 1, qualityScore: 1, popularityScore: 1, watchersCount: 1, totalWatchers: 1, rating: 7, voteCount: 10 },
-      { id: 'r2', mediaItemId: 'm2', tmdbId: 2, title: 'B', slug: 'b', overview: '', ingestionStatus: 'done', posterPath: '/p2', backdropPath: '/b2', popularity: 2, releaseDate: new Date(), theatricalReleaseDate: new Date(), digitalReleaseDate: null, runtime: 100, ratingoScore: 2, qualityScore: 2, popularityScore: 2, watchersCount: 2, totalWatchers: 2, rating: 8, voteCount: 20 },
+      {
+        id: 'r1',
+        mediaItemId: 'm1',
+        tmdbId: 1,
+        title: 'A',
+        slug: 'a',
+        overview: '',
+        ingestionStatus: 'done',
+        posterPath: '/p1',
+        backdropPath: '/b1',
+        popularity: 1,
+        releaseDate: new Date(),
+        theatricalReleaseDate: new Date(),
+        digitalReleaseDate: null,
+        runtime: 90,
+        ratingoScore: 1,
+        qualityScore: 1,
+        popularityScore: 1,
+        watchersCount: 1,
+        totalWatchers: 1,
+        rating: 7,
+        voteCount: 10,
+      },
+      {
+        id: 'r2',
+        mediaItemId: 'm2',
+        tmdbId: 2,
+        title: 'B',
+        slug: 'b',
+        overview: '',
+        ingestionStatus: 'done',
+        posterPath: '/p2',
+        backdropPath: '/b2',
+        popularity: 2,
+        releaseDate: new Date(),
+        theatricalReleaseDate: new Date(),
+        digitalReleaseDate: null,
+        runtime: 100,
+        ratingoScore: 2,
+        qualityScore: 2,
+        popularityScore: 2,
+        watchersCount: 2,
+        totalWatchers: 2,
+        rating: 8,
+        voteCount: 20,
+      },
     ];
     const genres = [
       { mediaItemId: 'm1', id: 'g1', name: 'Action', slug: 'action' },
@@ -118,7 +171,29 @@ describe('MovieListingsQuery', () => {
 
   it('should handle new_on_digital branch', async () => {
     const movies = [
-      { id: 'd1', mediaItemId: 'dm1', tmdbId: 3, title: 'Digital', slug: 'digital', overview: '', ingestionStatus: 'done', posterPath: '/pd', backdropPath: '/bd', popularity: 3, releaseDate: new Date(), theatricalReleaseDate: null, digitalReleaseDate: new Date(), runtime: 110, ratingoScore: 3, qualityScore: 3, popularityScore: 3, watchersCount: 3, totalWatchers: 3, rating: 9, voteCount: 30 },
+      {
+        id: 'd1',
+        mediaItemId: 'dm1',
+        tmdbId: 3,
+        title: 'Digital',
+        slug: 'digital',
+        overview: '',
+        ingestionStatus: 'done',
+        posterPath: '/pd',
+        backdropPath: '/bd',
+        popularity: 3,
+        releaseDate: new Date(),
+        theatricalReleaseDate: null,
+        digitalReleaseDate: new Date(),
+        runtime: 110,
+        ratingoScore: 3,
+        qualityScore: 3,
+        popularityScore: 3,
+        watchersCount: 3,
+        totalWatchers: 3,
+        rating: 9,
+        voteCount: 30,
+      },
     ];
     const genres = [{ mediaItemId: 'dm1', id: 'g3', name: 'SciFi', slug: 'sci-fi' }];
 

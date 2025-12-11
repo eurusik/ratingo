@@ -29,7 +29,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (statusCode >= 500) {
       this.logger.error(
         `${errorResponse.error.code}: ${errorResponse.error.message}`,
-        exception instanceof Error ? exception.stack : undefined,
+        exception instanceof Error ? exception.stack : undefined
       );
     } else {
       this.logger.warn(`${errorResponse.error.code}: ${errorResponse.error.message}`);
@@ -99,9 +99,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Handle unknown errors
     // Mask internal error details in production-like environments
     const isProduction = process.env.NODE_ENV === 'production';
-    const message = isProduction 
-      ? 'Internal server error' 
-      : (exception instanceof Error ? exception.message : 'Unknown error occurred');
+    const message = isProduction
+      ? 'Internal server error'
+      : exception instanceof Error
+        ? exception.message
+        : 'Unknown error occurred';
 
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,

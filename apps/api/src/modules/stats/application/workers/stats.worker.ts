@@ -8,7 +8,7 @@ import { DropOffService } from '../services/drop-off.service';
 /**
  * Background worker for processing stats-related jobs.
  * Handles async updates of watchers count, trending metrics, and drop-off analysis.
- * 
+ *
  * Concurrency: 1 (jobs are already batched internally)
  */
 @Processor(STATS_QUEUE, { concurrency: 1 })
@@ -17,7 +17,7 @@ export class StatsWorker extends WorkerHost {
 
   constructor(
     private readonly statsService: StatsService,
-    private readonly dropOffService: DropOffService,
+    private readonly dropOffService: DropOffService
   ) {
     super();
   }

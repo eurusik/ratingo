@@ -9,7 +9,7 @@ export class ExternalApiException extends AppException {
   constructor(
     code: ErrorCode = ErrorCode.EXTERNAL_API_ERROR,
     message: string = 'External API error',
-    details?: Record<string, any>,
+    details?: Record<string, any>
   ) {
     super(code, message, HttpStatus.BAD_GATEWAY, details);
   }

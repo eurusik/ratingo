@@ -7,7 +7,7 @@ import { EpisodeData, SeasonData } from './interfaces/trakt.types';
 /**
  * Adapter for communicating with the Trakt.tv API.
  * Handles fetching trending content and user-generated ratings.
- * 
+ *
  * Implements rate limiting handling (HTTP 429) to ensure stability.
  */
 @Injectable()
@@ -16,7 +16,7 @@ export class TraktAdapter {
 
   constructor(
     @Inject(traktConfig.KEY)
-    private readonly config: ConfigType<typeof traktConfig>,
+    private readonly config: ConfigType<typeof traktConfig>
   ) {
     if (!this.config.clientId) {
       throw new TraktApiException('Client ID is not configured');
@@ -25,7 +25,7 @@ export class TraktAdapter {
 
   /**
    * Generic fetch wrapper with automatic rate limit handling.
-   * 
+   *
    * @param {string} endpoint - API endpoint starting with slash (e.g., '/shows/trending')
    * @param {RequestInit} options - Standard fetch options
    * @returns {Promise<T>} Parsed JSON response
@@ -33,8 +33,8 @@ export class TraktAdapter {
    */
   private async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.config.apiUrl}${endpoint}`;
-    
-    // Trakt headers requirements: 
+
+    // Trakt headers requirements:
     // - Content-Type: application/json
     // - trakt-api-version: 2
     // - trakt-api-key: client_id
@@ -71,7 +71,7 @@ export class TraktAdapter {
 
   /**
    * Retrieves a list of trending shows from Trakt.
-   * 
+   *
    * @param {number} limit - Number of items to retrieve (default 20)
    * @returns {Promise<any[]>} List of trending shows
    */
@@ -81,7 +81,7 @@ export class TraktAdapter {
 
   /**
    * Retrieves a list of trending movies from Trakt.
-   * 
+   *
    * @param {number} limit - Number of items to retrieve (default 20)
    * @returns {Promise<any[]>} List of trending movies
    */
@@ -91,7 +91,7 @@ export class TraktAdapter {
 
   /**
    * Retrieves detailed ratings for a show (average, votes, distribution).
-   * 
+   *
    * @param {string | number} idOrSlug - Trakt ID or Slug
    * @returns {Promise<{ rating: number; votes: number }>} Rating data
    */
@@ -103,7 +103,7 @@ export class TraktAdapter {
 
   /**
    * Retrieves detailed ratings for a movie.
-   * 
+   *
    * @param {string | number} idOrSlug - Trakt ID or Slug
    * @returns {Promise<{ rating: number; votes: number }>} Rating data
    */
@@ -117,7 +117,9 @@ export class TraktAdapter {
    * Get movie ratings and watchers by TMDB ID.
    * First looks up the Trakt ID, then fetches ratings and watchers.
    */
-  async getMovieRatingsByTmdbId(tmdbId: number): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
+  async getMovieRatingsByTmdbId(
+    tmdbId: number
+  ): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
     try {
       // Step 1: Lookup Trakt ID by TMDB ID
       const results = await this.fetch<any[]>(`/search/tmdb/${tmdbId}?type=movie`);
@@ -130,7 +132,7 @@ export class TraktAdapter {
       const [ratingsResult, watchersResult, statsResult] = await Promise.allSettled([
         this.getMovieRatings(traktId),
         this.getMovieWatchers(traktId),
-        this.getMovieStats(traktId)
+        this.getMovieStats(traktId),
       ]);
 
       if (ratingsResult.status === 'rejected') {
@@ -141,11 +143,11 @@ export class TraktAdapter {
       const watchers = watchersResult.status === 'fulfilled' ? watchersResult.value : 0;
       const stats = statsResult.status === 'fulfilled' ? statsResult.value : { watchers: 0 };
 
-      return { 
-        rating: ratings.rating, 
+      return {
+        rating: ratings.rating,
         votes: ratings.votes,
         watchers: watchers,
-        totalWatchers: stats.watchers
+        totalWatchers: stats.watchers,
       };
     } catch (error) {
       this.logger.warn(`Failed to get Trakt data for TMDB ${tmdbId}: ${error}`);
@@ -157,7 +159,9 @@ export class TraktAdapter {
    * Get show ratings and watchers by TMDB ID.
    * First looks up the Trakt ID, then fetches ratings.
    */
-  async getShowRatingsByTmdbId(tmdbId: number): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
+  async getShowRatingsByTmdbId(
+    tmdbId: number
+  ): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
     try {
       // Step 1: Lookup Trakt ID by TMDB ID
       const results = await this.fetch<any[]>(`/search/tmdb/${tmdbId}?type=show`);
@@ -170,7 +174,7 @@ export class TraktAdapter {
       const [ratingsResult, watchersResult, statsResult] = await Promise.allSettled([
         this.getShowRatings(traktId),
         this.getShowWatchers(traktId),
-        this.getShowStats(traktId)
+        this.getShowStats(traktId),
       ]);
 
       if (ratingsResult.status === 'rejected') {
@@ -181,11 +185,11 @@ export class TraktAdapter {
       const watchers = watchersResult.status === 'fulfilled' ? watchersResult.value : 0;
       const stats = statsResult.status === 'fulfilled' ? statsResult.value : { watchers: 0 };
 
-      return { 
-        rating: ratings.rating, 
+      return {
+        rating: ratings.rating,
         votes: ratings.votes,
         watchers: watchers,
-        totalWatchers: stats.watchers
+        totalWatchers: stats.watchers,
       };
     } catch (error) {
       this.logger.warn(`Failed to get Trakt data for TMDB ${tmdbId}: ${error}`);
@@ -211,7 +215,9 @@ export class TraktAdapter {
   /**
    * Retrieves full stats for a movie (watchers, plays, collected, etc.)
    */
-  async getMovieStats(traktIdOrSlug: string | number): Promise<{ watchers: number; plays: number; votes: number }> {
+  async getMovieStats(
+    traktIdOrSlug: string | number
+  ): Promise<{ watchers: number; plays: number; votes: number }> {
     try {
       return await this.fetch(`/movies/${traktIdOrSlug}/stats`);
     } catch {
@@ -237,7 +243,9 @@ export class TraktAdapter {
   /**
    * Retrieves full stats for a show.
    */
-  async getShowStats(traktIdOrSlug: string | number): Promise<{ watchers: number; plays: number; votes: number }> {
+  async getShowStats(
+    traktIdOrSlug: string | number
+  ): Promise<{ watchers: number; plays: number; votes: number }> {
     try {
       return await this.fetch(`/shows/${traktIdOrSlug}/stats`);
     } catch {
@@ -256,18 +264,22 @@ export class TraktAdapter {
    * const trending = await traktAdapter.getTrendingMoviesWithWatchers(10);
    * // [{ tmdbId: 550, watchers: 125, rank: 1 }, ...]
    */
-  async getTrendingMoviesWithWatchers(limit = 20): Promise<Array<{
-    tmdbId: number;
-    watchers: number;
-    rank: number;
-  }>> {
+  async getTrendingMoviesWithWatchers(limit = 20): Promise<
+    Array<{
+      tmdbId: number;
+      watchers: number;
+      rank: number;
+    }>
+  > {
     try {
       const trending = await this.fetch<any[]>(`/movies/trending?limit=${limit}`);
-      return trending.map((item, index) => ({
-        tmdbId: item.movie?.ids?.tmdb,
-        watchers: item.watchers || 0,
-        rank: index + 1,
-      })).filter(item => item.tmdbId);
+      return trending
+        .map((item, index) => ({
+          tmdbId: item.movie?.ids?.tmdb,
+          watchers: item.watchers || 0,
+          rank: index + 1,
+        }))
+        .filter((item) => item.tmdbId);
     } catch (error) {
       this.logger.warn(`Failed to get trending movies: ${error}`);
       return [];
@@ -285,18 +297,22 @@ export class TraktAdapter {
    * const trending = await traktAdapter.getTrendingShowsWithWatchers(10);
    * // [{ tmdbId: 66732, watchers: 89, rank: 1 }, ...]
    */
-  async getTrendingShowsWithWatchers(limit = 20): Promise<Array<{
-    tmdbId: number;
-    watchers: number;
-    rank: number;
-  }>> {
+  async getTrendingShowsWithWatchers(limit = 20): Promise<
+    Array<{
+      tmdbId: number;
+      watchers: number;
+      rank: number;
+    }>
+  > {
     try {
       const trending = await this.fetch<any[]>(`/shows/trending?limit=${limit}`);
-      return trending.map((item, index) => ({
-        tmdbId: item.show?.ids?.tmdb,
-        watchers: item.watchers || 0,
-        rank: index + 1,
-      })).filter(item => item.tmdbId);
+      return trending
+        .map((item, index) => ({
+          tmdbId: item.show?.ids?.tmdb,
+          watchers: item.watchers || 0,
+          rank: index + 1,
+        }))
+        .filter((item) => item.tmdbId);
     } catch (error) {
       this.logger.warn(`Failed to get trending shows: ${error}`);
       return [];
@@ -318,10 +334,12 @@ export class TraktAdapter {
   /**
    * Gets all seasons for a show.
    */
-  async getShowSeasons(traktId: number): Promise<Array<{
-    number: number;
-    episodeCount: number;
-  }>> {
+  async getShowSeasons(traktId: number): Promise<
+    Array<{
+      number: number;
+      episodeCount: number;
+    }>
+  > {
     try {
       const seasons = await this.fetch<any[]>(`/shows/${traktId}/seasons`);
       return seasons
@@ -339,12 +357,17 @@ export class TraktAdapter {
   /**
    * Gets all episodes for a season with ratings.
    */
-  async getSeasonEpisodes(traktId: number, seasonNumber: number): Promise<Array<{
-    number: number;
-    title: string;
-    rating: number;
-    votes: number;
-  }>> {
+  async getSeasonEpisodes(
+    traktId: number,
+    seasonNumber: number
+  ): Promise<
+    Array<{
+      number: number;
+      title: string;
+      rating: number;
+      votes: number;
+    }>
+  > {
     try {
       const episodes = await this.fetch<any[]>(
         `/shows/${traktId}/seasons/${seasonNumber}?extended=full`
@@ -396,7 +419,7 @@ export class TraktAdapter {
 
       return {
         traktId,
-        seasons: seasonData.filter(s => s.episodes.length > 0),
+        seasons: seasonData.filter((s) => s.episodes.length > 0),
       };
     } catch (error) {
       this.logger.warn(`Failed to get episodes for TMDB ${tmdbId}: ${error}`);

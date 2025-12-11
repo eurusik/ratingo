@@ -1,12 +1,20 @@
-import { WatchProvidersMap, WatchProvider, WatchProviderRegion } from '../../../ingestion/domain/models/normalized-media.model';
-import { WatchProviderRegionDto, WatchProviderDto, AvailabilityDto } from '../../presentation/dtos/common.dto';
+import {
+  WatchProvidersMap,
+  WatchProvider,
+  WatchProviderRegion,
+} from '../../../ingestion/domain/models/normalized-media.model';
+import {
+  WatchProviderRegionDto,
+  WatchProviderDto,
+  AvailabilityDto,
+} from '../../presentation/dtos/common.dto';
 import { ImageMapper } from './image.mapper';
 
 export class WatchProvidersMapper {
   /**
    * Maps watch providers to AvailabilityDto with region fallback logic.
    * Priority: UA > US
-   * 
+   *
    * Frontend can use:
    * - region: which region was selected
    * - isFallback: true if UA unavailable and using US
@@ -14,10 +22,10 @@ export class WatchProvidersMapper {
    */
   static toAvailability(map: WatchProvidersMap | null | undefined): AvailabilityDto | null {
     if (!map) return null;
-    
+
     const ua = map['UA'];
     const us = map['US'];
-    
+
     // Try UA first
     if (this.hasProviders(ua)) {
       return {
@@ -52,15 +60,15 @@ export class WatchProvidersMapper {
   /** @deprecated Use toAvailability instead */
   static getPrimary(map: WatchProvidersMap | null): WatchProviderRegionDto | null {
     if (!map) return null;
-    
+
     const ua = map['UA'];
     if (this.hasProviders(ua)) {
-        return this.mapRegion(ua);
+      return this.mapRegion(ua);
     }
 
     const us = map['US'];
     if (this.hasProviders(us)) {
-        return this.mapRegion(us);
+      return this.mapRegion(us);
     }
 
     return null;
@@ -69,11 +77,11 @@ export class WatchProvidersMapper {
   private static hasProviders(region?: WatchProviderRegion): boolean {
     if (!region) return false;
     return !!(
-        region.flatrate?.length ||
-        region.rent?.length ||
-        region.buy?.length ||
-        region.ads?.length ||
-        region.free?.length
+      region.flatrate?.length ||
+      region.rent?.length ||
+      region.buy?.length ||
+      region.ads?.length ||
+      region.free?.length
     );
   }
 
@@ -95,5 +103,5 @@ export class WatchProvidersMapper {
       logo: ImageMapper.toPoster(p.logoPath), // Reusing poster logic for logos
       displayPriority: p.displayPriority,
     };
-  }
+  };
 }

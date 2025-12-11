@@ -5,7 +5,16 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 // Chainable thenable for Drizzle-like API
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
   const thenable: any = {};
-  const methods = ['select', 'from', 'innerJoin', 'leftJoin', 'where', 'orderBy', 'limit', 'offset'];
+  const methods = [
+    'select',
+    'from',
+    'innerJoin',
+    'leftJoin',
+    'where',
+    'orderBy',
+    'limit',
+    'offset',
+  ];
   methods.forEach((m) => {
     thenable[m] = jest.fn().mockReturnValue(thenable);
   });
@@ -114,18 +123,33 @@ describe('TrendingMoviesQuery', () => {
     expect(db.select).toHaveBeenCalledTimes(2);
     expect(res).toHaveLength(2);
 
-    const newMovie = res.find(m => m.id === 'row1')!;
+    const newMovie = res.find((m) => m.id === 'row1')!;
     expect(newMovie.isNew).toBe(true);
     expect(newMovie.isClassic).toBe(true); // ratingoScore high + watchers trigger classic
     expect(newMovie.genres).toHaveLength(1);
     expect(newMovie.poster).toEqual({ small: 'poster' });
 
-    const oldMovie = res.find(m => m.id === 'row2')!;
+    const oldMovie = res.find((m) => m.id === 'row2')!;
     expect(oldMovie.isClassic).toBe(true);
   });
 
   it('should apply genre filter (subquery) and map results', async () => {
-    const movies = [{ id: 'row', mediaItemId: 'mid', tmdbId: 1, title: 'T', slug: 't', overview: '', ingestionStatus: 'done', posterPath: '/p', backdropPath: '/b', popularity: 1, releaseDate: new Date(), ratingoScore: 10 }] as any[];
+    const movies = [
+      {
+        id: 'row',
+        mediaItemId: 'mid',
+        tmdbId: 1,
+        title: 'T',
+        slug: 't',
+        overview: '',
+        ingestionStatus: 'done',
+        posterPath: '/p',
+        backdropPath: '/b',
+        popularity: 1,
+        releaseDate: new Date(),
+        ratingoScore: 10,
+      },
+    ] as any[];
     const genres = [{ mediaItemId: 'mid', id: 'g1', name: 'Action', slug: 'action' }];
 
     // select for genre subquery, main results, attachGenres

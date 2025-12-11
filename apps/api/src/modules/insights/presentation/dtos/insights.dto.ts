@@ -13,7 +13,10 @@ export class RiseFallStatsDto {
   @ApiProperty({ description: 'Current total watchers count' })
   currentWatchers: number;
 
-  @ApiProperty({ description: 'Indicates if the item is new to trends (no previous history)', required: false })
+  @ApiProperty({
+    description: 'Indicates if the item is new to trends (no previous history)',
+    required: false,
+  })
   isNewInTrends?: boolean;
 
   @ApiProperty({ description: 'Watchers added in the current window' })

@@ -9,7 +9,11 @@ export class HeroStatsDto {
   @ApiProperty({ example: 88.5 })
   qualityScore: number;
 
-  @ApiProperty({ example: 6, description: 'Number of people watching right now (Live)', required: false })
+  @ApiProperty({
+    example: 6,
+    description: 'Number of people watching right now (Live)',
+    required: false,
+  })
   liveWatchers?: number;
 
   @ApiProperty({ example: 6423, description: 'Total unique watchers all time', required: false })
@@ -37,10 +41,18 @@ export class HeroItemDto {
   @ApiProperty({ example: 'Fight Club' })
   originalTitle: string;
 
-  @ApiProperty({ example: 'An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more.' })
+  @ApiProperty({
+    example:
+      'An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more.',
+  })
   overview: string | null;
 
-  @ApiProperty({ example: 'ogFrkWefoLQ', description: 'YouTube video key for primary trailer', required: false, nullable: true })
+  @ApiProperty({
+    example: 'ogFrkWefoLQ',
+    description: 'YouTube video key for primary trailer',
+    required: false,
+    nullable: true,
+  })
   primaryTrailerKey?: string | null;
 
   @ApiProperty({ type: ImageDto })
@@ -64,10 +76,10 @@ export class HeroItemDto {
   @ApiProperty({ example: true, description: 'True if released more than 5 years ago' })
   isClassic: boolean;
 
-  @ApiProperty({ 
-    example: { season: 5, episode: 5, label: 'S5E5', lastAirDate: '2025-12-14' }, 
+  @ApiProperty({
+    example: { season: 5, episode: 5, label: 'S5E5', lastAirDate: '2025-12-14' },
     description: 'Progress info for TV Shows (latest aired episode)',
-    required: false 
+    required: false,
   })
   showProgress?: {
     season: number;

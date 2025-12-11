@@ -1,7 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TraktAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt.adapter';
 import { DropOffAnalyzerService, DropOffAnalysis } from '../../../shared/drop-off-analyzer';
-import { IShowRepository, SHOW_REPOSITORY } from '../../../catalog/domain/repositories/show.repository.interface';
+import {
+  IShowRepository,
+  SHOW_REPOSITORY,
+} from '../../../catalog/domain/repositories/show.repository.interface';
 
 /**
  * Service for orchestrating drop-off analysis for shows.
@@ -15,7 +18,7 @@ export class DropOffService {
     private readonly traktAdapter: TraktAdapter,
     private readonly dropOffAnalyzer: DropOffAnalyzerService,
     @Inject(SHOW_REPOSITORY)
-    private readonly showRepository: IShowRepository,
+    private readonly showRepository: IShowRepository
   ) {}
 
   /**
@@ -72,7 +75,7 @@ export class DropOffService {
       }
 
       // Rate limiting: wait 500ms between API calls
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 500));
     }
 
     this.logger.log(`Drop-off analysis complete: ${analyzed} analyzed, ${failed} failed`);

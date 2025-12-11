@@ -37,9 +37,9 @@ export interface MediaScoreDataWithTmdbId extends MediaScoreData {
  */
 export interface IMediaRepository {
   /**
-   * Creates or updates a media item (Movie/Show) and its related entities 
+   * Creates or updates a media item (Movie/Show) and its related entities
    * (genres, specific details) in a transactional way.
-   * 
+   *
    * Strategy: Match by TMDB ID.
    */
   upsert(media: NormalizedMedia): Promise<void>;

@@ -33,15 +33,15 @@ import { TmdbModule } from '../tmdb/tmdb.module';
     TrendingShowsQuery,
     ShowDetailsQuery,
     CalendarEpisodesQuery,
-    
+
     // Query Objects - Movies
     MovieDetailsQuery,
     TrendingMoviesQuery,
     MovieListingsQuery,
-    
+
     // Query Objects - Mixed Media
     HeroMediaQuery,
-    
+
     // Repositories
     {
       provide: GENRE_REPOSITORY,

@@ -20,13 +20,13 @@ export class PersistenceMapper {
       videos: media.videos || null,
       credits: media.credits || null,
       watchProviders: media.watchProviders || null,
-      
+
       // Metrics
       rating: media.rating,
       voteCount: media.voteCount,
       popularity: media.popularity,
       trendingScore: media.trendingScore ?? 0,
-      
+
       // External Ratings
       ratingImdb: media.ratingImdb,
       voteCountImdb: media.voteCountImdb,
@@ -46,11 +46,11 @@ export class PersistenceMapper {
       originalTitle: media.originalTitle,
       slug: media.slug,
       overview: media.overview,
-      
+
       rating: media.rating,
       voteCount: media.voteCount,
       popularity: media.popularity,
-      
+
       // External ratings
       ratingImdb: media.ratingImdb,
       voteCountImdb: media.voteCountImdb,
@@ -160,7 +160,11 @@ export class PersistenceMapper {
     };
   }
 
-  static toEpisodeInsert(seasonId: string, showId: string, episode: any): InferInsertModel<typeof schema.episodes> {
+  static toEpisodeInsert(
+    seasonId: string,
+    showId: string,
+    episode: any
+  ): InferInsertModel<typeof schema.episodes> {
     return {
       seasonId: seasonId,
       showId: showId,

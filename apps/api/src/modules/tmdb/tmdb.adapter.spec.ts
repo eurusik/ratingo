@@ -33,10 +33,7 @@ describe('TmdbAdapter', () => {
     mockFetch.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TmdbAdapter,
-        { provide: tmdbConfig.KEY, useValue: mockConfig },
-      ],
+      providers: [TmdbAdapter, { provide: tmdbConfig.KEY, useValue: mockConfig }],
     }).compile();
 
     adapter = module.get<TmdbAdapter>(TmdbAdapter);
@@ -59,15 +56,9 @@ describe('TmdbAdapter', () => {
 
       expect(result).not.toBeNull();
       expect(result?.title).toBe('Fight Club');
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/movie/550')
-      );
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('api_key=test-api-key')
-      );
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('language=uk-UA')
-      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/movie/550'));
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('api_key=test-api-key'));
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('language=uk-UA'));
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('include_video_language=uk%2Cen')
       );
@@ -103,9 +94,7 @@ describe('TmdbAdapter', () => {
 
       await adapter.getMovie(550);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('append_to_response=')
-      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('append_to_response='));
     });
   });
 
@@ -126,9 +115,7 @@ describe('TmdbAdapter', () => {
 
       expect(result).not.toBeNull();
       expect(result?.title).toBe('Breaking Bad');
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/tv/1000')
-      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/tv/1000'));
     });
 
     it('should return null when show not found', async () => {
@@ -186,9 +173,7 @@ describe('TmdbAdapter', () => {
 
       await adapter.getTrending(1, MediaType.MOVIE);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/trending/movie/day')
-      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/trending/movie/day'));
     });
 
     it('should use tv endpoint when type is SHOW', async () => {
@@ -199,9 +184,7 @@ describe('TmdbAdapter', () => {
 
       await adapter.getTrending(1, MediaType.SHOW);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/trending/tv/day')
-      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/trending/tv/day'));
     });
 
     it('should use correct endpoint', async () => {
@@ -212,12 +195,8 @@ describe('TmdbAdapter', () => {
 
       await adapter.getTrending(2);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('/trending/all/day')
-      );
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('page=2')
-      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/trending/all/day'));
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'));
     });
 
     it('should use default page 1', async () => {
@@ -228,9 +207,7 @@ describe('TmdbAdapter', () => {
 
       await adapter.getTrending();
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('page=1')
-      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'));
     });
 
     it('should handle empty results', async () => {
@@ -260,20 +237,22 @@ describe('TmdbAdapter', () => {
     it('should fetch first 2 pages and return aggregated IDs', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          page: 1,
-          total_pages: 5,
-          results: [{ id: 101 }, { id: 102 }]
-        })
+        json: () =>
+          Promise.resolve({
+            page: 1,
+            total_pages: 5,
+            results: [{ id: 101 }, { id: 102 }],
+          }),
       });
-      
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          page: 2,
-          total_pages: 5,
-          results: [{ id: 103 }, { id: 104 }]
-        })
+        json: () =>
+          Promise.resolve({
+            page: 2,
+            total_pages: 5,
+            results: [{ id: 103 }, { id: 104 }],
+          }),
       });
 
       const result = await adapter.getNowPlayingIds();
@@ -288,11 +267,12 @@ describe('TmdbAdapter', () => {
     it('should stop early if total_pages < limit', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          page: 1,
-          total_pages: 1,
-          results: [{ id: 101 }]
-        })
+        json: () =>
+          Promise.resolve({
+            page: 1,
+            total_pages: 1,
+            results: [{ id: 101 }],
+          }),
       });
 
       const result = await adapter.getNowPlayingIds();
@@ -306,20 +286,22 @@ describe('TmdbAdapter', () => {
     it('should fetch first 2 pages and return aggregated IDs', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          page: 1,
-          total_pages: 5,
-          results: [{ id: 201 }]
-        })
+        json: () =>
+          Promise.resolve({
+            page: 1,
+            total_pages: 5,
+            results: [{ id: 201 }],
+          }),
       });
-      
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({
-          page: 2,
-          total_pages: 5,
-          results: [{ id: 202 }]
-        })
+        json: () =>
+          Promise.resolve({
+            page: 2,
+            total_pages: 5,
+            results: [{ id: 202 }],
+          }),
       });
 
       const result = await adapter.getNewReleaseIds(30, 'UA');
@@ -337,13 +319,13 @@ describe('TmdbAdapter', () => {
         results: [
           { id: 1, media_type: 'movie', title: 'Movie 1' },
           { id: 2, media_type: 'tv', name: 'Show 1' },
-          { id: 3, media_type: 'person', name: 'Person 1' } // Should be filtered
-        ]
+          { id: 3, media_type: 'person', name: 'Person 1' }, // Should be filtered
+        ],
       };
 
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockResults)
+        json: () => Promise.resolve(mockResults),
       });
 
       const result = await adapter.searchMulti('test');

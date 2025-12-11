@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../../common/enums/video.enum';
+import {
+  VideoSiteEnum,
+  VideoTypeEnum,
+  VideoLanguageEnum,
+} from '../../../../common/enums/video.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 export class GenreDto {
@@ -29,7 +33,11 @@ export class VideoDto {
   @ApiProperty({ example: true, description: 'Is this an official video' })
   official: boolean;
 
-  @ApiProperty({ enum: VideoLanguageEnum, example: VideoLanguageEnum.EN, description: 'ISO 639-1 language code' })
+  @ApiProperty({
+    enum: VideoLanguageEnum,
+    example: VideoLanguageEnum.EN,
+    description: 'ISO 639-1 language code',
+  })
   language: VideoLanguageEnum;
 
   @ApiProperty({ example: 'US', description: 'ISO 3166-1 alpha-2 country code' })
@@ -54,7 +62,7 @@ export class CastMemberDto {
 
   @ApiProperty({ example: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg', nullable: true })
   profilePath: string | null;
-  
+
   @ApiProperty({ example: 0 })
   order: number;
 }
@@ -83,49 +91,78 @@ export class CrewMemberDto {
 }
 
 export class CreditsDto {
-  @ApiProperty({ 
+  @ApiProperty({
     type: [CastMemberDto],
-    example: [{
-      personId: 'tmdb:123',
-      slug: 'brad-pitt',
-      tmdbId: 123,
-      name: 'Brad Pitt',
-      character: 'Tyler Durden',
-      profilePath: '/brad.jpg',
-      order: 0
-    }]
+    example: [
+      {
+        personId: 'tmdb:123',
+        slug: 'brad-pitt',
+        tmdbId: 123,
+        name: 'Brad Pitt',
+        character: 'Tyler Durden',
+        profilePath: '/brad.jpg',
+        order: 0,
+      },
+    ],
   })
   cast: CastMemberDto[];
 
-  @ApiProperty({ 
+  @ApiProperty({
     type: [CrewMemberDto],
-    example: [{
-      personId: 'tmdb:456',
-      slug: 'david-fincher',
-      tmdbId: 456,
-      name: 'David Fincher',
-      job: 'Director',
-      department: 'Directing',
-      profilePath: '/david.jpg'
-    }]
+    example: [
+      {
+        personId: 'tmdb:456',
+        slug: 'david-fincher',
+        tmdbId: 456,
+        name: 'David Fincher',
+        job: 'Director',
+        department: 'Directing',
+        profilePath: '/david.jpg',
+      },
+    ],
   })
   crew: CrewMemberDto[];
 }
 
 export class RatingoStatsDto {
-  @ApiProperty({ example: 85.5, description: 'Composite Hype Score (0-100)', required: false, nullable: true })
+  @ApiProperty({
+    example: 85.5,
+    description: 'Composite Hype Score (0-100)',
+    required: false,
+    nullable: true,
+  })
   ratingoScore?: number | null;
 
-  @ApiProperty({ example: 88.5, description: 'Quality Score (0-100)', required: false, nullable: true })
+  @ApiProperty({
+    example: 88.5,
+    description: 'Quality Score (0-100)',
+    required: false,
+    nullable: true,
+  })
   qualityScore?: number | null;
 
-  @ApiProperty({ example: 45.2, description: 'Popularity Score (0-100)', required: false, nullable: true })
+  @ApiProperty({
+    example: 45.2,
+    description: 'Popularity Score (0-100)',
+    required: false,
+    nullable: true,
+  })
   popularityScore?: number | null;
 
-  @ApiProperty({ example: 6, description: 'Number of people watching right now (Live)', required: false, nullable: true })
+  @ApiProperty({
+    example: 6,
+    description: 'Number of people watching right now (Live)',
+    required: false,
+    nullable: true,
+  })
   liveWatchers?: number | null;
 
-  @ApiProperty({ example: 6423, description: 'Total unique watchers all time', required: false, nullable: true })
+  @ApiProperty({
+    example: 6423,
+    description: 'Total unique watchers all time',
+    required: false,
+    nullable: true,
+  })
   totalWatchers?: number | null;
 }
 
@@ -155,16 +192,28 @@ export class ExternalRatingsDto {
 }
 
 export class ImageDto {
-  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w342/abc.jpg', description: 'Small image for cards (w342)' })
+  @ApiProperty({
+    example: 'https://image.tmdb.org/t/p/w342/abc.jpg',
+    description: 'Small image for cards (w342)',
+  })
   small: string;
 
-  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w500/abc.jpg', description: 'Medium image for details (w500)' })
+  @ApiProperty({
+    example: 'https://image.tmdb.org/t/p/w500/abc.jpg',
+    description: 'Medium image for details (w500)',
+  })
   medium: string;
 
-  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w780/abc.jpg', description: 'Large image for banners (w780)' })
+  @ApiProperty({
+    example: 'https://image.tmdb.org/t/p/w780/abc.jpg',
+    description: 'Large image for banners (w780)',
+  })
   large: string;
 
-  @ApiProperty({ example: 'https://image.tmdb.org/t/p/original/abc.jpg', description: 'Original quality image' })
+  @ApiProperty({
+    example: 'https://image.tmdb.org/t/p/original/abc.jpg',
+    description: 'Original quality image',
+  })
   original: string;
 }
 
@@ -191,7 +240,7 @@ export class WatchProviderRegionDto {
 
   @ApiProperty({ type: [WatchProviderDto], required: false })
   rent?: WatchProviderDto[];
-  
+
   @ApiProperty({ type: [WatchProviderDto], required: false })
   buy?: WatchProviderDto[];
 
@@ -203,29 +252,33 @@ export class WatchProviderRegionDto {
 }
 
 export class AvailabilityDto {
-  @ApiProperty({ 
-    example: 'UA', 
-    enum: ['UA', 'US'], 
+  @ApiProperty({
+    example: 'UA',
+    enum: ['UA', 'US'],
     nullable: true,
-    description: 'Selected region for watch providers (UA primary, US fallback)' 
+    description: 'Selected region for watch providers (UA primary, US fallback)',
   })
   region: 'UA' | 'US' | null;
 
-  @ApiProperty({ 
-    example: false, 
-    description: 'True if using US as fallback because UA is not available' 
+  @ApiProperty({
+    example: false,
+    description: 'True if using US as fallback because UA is not available',
   })
   isFallback: boolean;
 
   @ApiProperty({ example: 'https://www.themoviedb.org/movie/123/watch?locale=UA', nullable: true })
   link: string | null;
 
-  @ApiProperty({ type: [WatchProviderDto], required: false, description: 'Streaming/subscription services (flatrate)' })
+  @ApiProperty({
+    type: [WatchProviderDto],
+    required: false,
+    description: 'Streaming/subscription services (flatrate)',
+  })
   stream?: WatchProviderDto[];
 
   @ApiProperty({ type: [WatchProviderDto], required: false })
   rent?: WatchProviderDto[];
-  
+
   @ApiProperty({ type: [WatchProviderDto], required: false })
   buy?: WatchProviderDto[];
 
@@ -255,13 +308,23 @@ export class MediaBaseDto {
   @ApiProperty({ example: 'Overview text...', required: false, nullable: true })
   overview?: string | null;
 
-  @ApiProperty({ example: '/path/to/poster.jpg', required: false, nullable: true, deprecated: true })
+  @ApiProperty({
+    example: '/path/to/poster.jpg',
+    required: false,
+    nullable: true,
+    deprecated: true,
+  })
   posterPath?: string | null;
 
   @ApiProperty({ type: ImageDto, required: false, nullable: true })
   poster?: ImageDto | null;
 
-  @ApiProperty({ example: '/path/to/backdrop.jpg', required: false, nullable: true, deprecated: true })
+  @ApiProperty({
+    example: '/path/to/backdrop.jpg',
+    required: false,
+    nullable: true,
+    deprecated: true,
+  })
   backdropPath?: string | null;
 
   @ApiProperty({ type: ImageDto, required: false, nullable: true })
@@ -276,23 +339,32 @@ export class MediaBaseDto {
   @ApiProperty({ type: [GenreDto], required: false })
   genres?: GenreDto[];
 
-  @ApiProperty({ example: IngestionStatus.READY, enum: IngestionStatus, default: IngestionStatus.READY })
+  @ApiProperty({
+    example: IngestionStatus.READY,
+    enum: IngestionStatus,
+    default: IngestionStatus.READY,
+  })
   ingestionStatus: IngestionStatus;
 
   @ApiProperty({ type: [VideoDto], required: false, nullable: true })
   videos?: VideoDto[] | null;
 
-  @ApiProperty({ type: VideoDto, required: false, nullable: true, description: 'Primary trailer (first UK or EN trailer)' })
+  @ApiProperty({
+    type: VideoDto,
+    required: false,
+    nullable: true,
+    description: 'Primary trailer (first UK or EN trailer)',
+  })
   primaryTrailer?: VideoDto | null;
 
   @ApiProperty({ type: CreditsDto, required: false, nullable: true })
   credits?: CreditsDto | null;
 
-  @ApiProperty({ 
-    type: AvailabilityDto, 
-    required: false, 
-    nullable: true, 
-    description: 'Where to watch - UA primary with US fallback' 
+  @ApiProperty({
+    type: AvailabilityDto,
+    required: false,
+    nullable: true,
+    description: 'Where to watch - UA primary with US fallback',
   })
   availability?: AvailabilityDto | null;
 }

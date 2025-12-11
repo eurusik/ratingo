@@ -1,5 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { INSIGHTS_REPOSITORY, InsightsRepository } from '../../domain/repositories/insights.repository.interface';
+import {
+  INSIGHTS_REPOSITORY,
+  InsightsRepository,
+} from '../../domain/repositories/insights.repository.interface';
 import { InsightsQueryDto, RiseFallResponseDto } from '../../presentation/dtos/insights.dto';
 
 /**
@@ -12,7 +15,7 @@ import { InsightsQueryDto, RiseFallResponseDto } from '../../presentation/dtos/i
 export class InsightsService {
   constructor(
     @Inject(INSIGHTS_REPOSITORY)
-    private readonly insightsRepository: InsightsRepository,
+    private readonly insightsRepository: InsightsRepository
   ) {}
 
   /**
@@ -27,7 +30,7 @@ export class InsightsService {
       '90d': 90,
       '365d': 365,
     };
-    
+
     const windowKey = query.window || '30d';
     const windowDays = windowMap[windowKey] || 30;
     const limit = query.limit || 5;

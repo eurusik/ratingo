@@ -162,7 +162,9 @@ describe('ScoreCalculatorService', () => {
       const result = service.calculate(veryOld);
 
       // Should be at or above the floor (0.2)
-      expect(result.freshnessScore).toBeGreaterThanOrEqual(mockConfig.normalization.freshnessMinFloor);
+      expect(result.freshnessScore).toBeGreaterThanOrEqual(
+        mockConfig.normalization.freshnessMinFloor
+      );
     });
 
     it('should handle null release date', () => {
@@ -184,9 +186,9 @@ describe('ScoreCalculatorService', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
         traktWatchers: 500,
-        imdbRating: 8.0,        // 0-10 scale
-        traktRating: 7.5,       // 0-10 scale
-        metacriticRating: 80,   // 0-100 scale
+        imdbRating: 8.0, // 0-10 scale
+        traktRating: 7.5, // 0-10 scale
+        metacriticRating: 80, // 0-100 scale
         rottenTomatoesRating: 85, // 0-100 scale
         imdbVotes: 10000,
         traktVotes: 5000,

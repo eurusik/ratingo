@@ -26,11 +26,11 @@ export class ShowResponseDto extends MediaBaseDto {
   @ApiProperty({ example: 62, required: false, nullable: true })
   totalEpisodes?: number | null;
 
-  @ApiProperty({ 
+  @ApiProperty({
     enum: ShowStatus,
     example: ShowStatus.RETURNING_SERIES,
     description: 'Show status: Returning Series, Ended, Canceled, In Production, Planned',
-    required: false, 
+    required: false,
     nullable: true,
   })
   status?: ShowStatus | null;

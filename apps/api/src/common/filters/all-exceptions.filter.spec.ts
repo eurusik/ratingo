@@ -17,7 +17,7 @@ describe('AllExceptionsFilter', () => {
       switchToHttp: () => ({
         getResponse: () => response,
       }),
-    } as any);
+    }) as any;
 
   let filter: AllExceptionsFilter;
   let loggerErrorSpy: jest.SpyInstance;
@@ -57,7 +57,7 @@ describe('AllExceptionsFilter', () => {
     const response = replyMock();
     const validationException = new HttpException(
       { message: ['field must be defined', 'other issue'] },
-      HttpStatus.BAD_REQUEST,
+      HttpStatus.BAD_REQUEST
     );
 
     filter.catch(validationException, hostMock(response));

@@ -1,5 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IMediaRepository, MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
+import {
+  IMediaRepository,
+  MEDIA_REPOSITORY,
+} from '../../domain/repositories/media.repository.interface';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { SearchResponseDto, SearchItemDto, SearchSource } from '../../presentation/dtos/search.dto';
 import { ImageMapper } from '../../infrastructure/mappers/image.mapper';
@@ -18,12 +21,12 @@ export class CatalogSearchService {
   constructor(
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
-    private readonly tmdbAdapter: TmdbAdapter,
+    private readonly tmdbAdapter: TmdbAdapter
   ) {}
 
   /**
    * Performs hybrid search.
-   * 
+   *
    * @param query Search string
    * @returns Combined search results split by source
    */
@@ -40,10 +43,10 @@ export class CatalogSearchService {
       ]);
 
       // Collect TMDB IDs from local results to filter duplicates
-      const localTmdbIds = new Set(localResults.map(r => r.tmdbId));
+      const localTmdbIds = new Set(localResults.map((r) => r.tmdbId));
 
       // Map local results
-      const local: SearchItemDto[] = localResults.map(r => ({
+      const local: SearchItemDto[] = localResults.map((r) => ({
         source: SearchSource.LOCAL,
         type: r.type as MediaType,
         id: r.id,
@@ -59,8 +62,8 @@ export class CatalogSearchService {
 
       // Filter and map TMDB results
       const tmdb: SearchItemDto[] = tmdbResultsRaw
-        .filter(r => !localTmdbIds.has(r.externalIds.tmdbId))
-        .map(r => ({
+        .filter((r) => !localTmdbIds.has(r.externalIds.tmdbId))
+        .map((r) => ({
           source: SearchSource.TMDB,
           type: r.type,
           tmdbId: r.externalIds.tmdbId,

@@ -20,7 +20,7 @@ export class CalendarEpisodesQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly db: PostgresJsDatabase<typeof schema>
   ) {}
 
   /**
@@ -50,15 +50,10 @@ export class CalendarEpisodesQuery {
         .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))
         .innerJoin(schema.shows, eq(schema.episodes.showId, schema.shows.id))
         .innerJoin(schema.mediaItems, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-        .where(
-          and(
-            gte(schema.episodes.airDate, startDate),
-            lte(schema.episodes.airDate, endDate)
-          )
-        )
+        .where(and(gte(schema.episodes.airDate, startDate), lte(schema.episodes.airDate, endDate)))
         .orderBy(asc(schema.episodes.airDate));
 
-      return results.map(row => ({
+      return results.map((row) => ({
         showId: row.showId,
         showTitle: row.showTitle,
         posterPath: row.posterPath,
@@ -72,7 +67,9 @@ export class CalendarEpisodesQuery {
       }));
     } catch (error) {
       this.logger.error(`Failed to find episodes by date range: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch calendar episodes', { originalError: error.message });
+      throw new DatabaseException('Failed to fetch calendar episodes', {
+        originalError: error.message,
+      });
     }
   }
 }

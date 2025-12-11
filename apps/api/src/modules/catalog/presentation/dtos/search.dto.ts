@@ -37,8 +37,11 @@ export class SearchItemDto {
 
   @ApiProperty({ example: 8.5 })
   rating: number;
-  
-  @ApiProperty({ example: false, description: 'If true, this TMDB item already exists in local DB' })
+
+  @ApiProperty({
+    example: false,
+    description: 'If true, this TMDB item already exists in local DB',
+  })
   isImported?: boolean;
 }
 

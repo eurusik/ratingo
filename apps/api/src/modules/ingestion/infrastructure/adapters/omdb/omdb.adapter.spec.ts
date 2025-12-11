@@ -20,10 +20,7 @@ describe('OmdbAdapter', () => {
     mockFetch.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        OmdbAdapter,
-        { provide: omdbConfig.KEY, useValue: mockConfig },
-      ],
+      providers: [OmdbAdapter, { provide: omdbConfig.KEY, useValue: mockConfig }],
     }).compile();
 
     adapter = module.get<OmdbAdapter>(OmdbAdapter);
@@ -66,9 +63,7 @@ describe('OmdbAdapter', () => {
 
       await adapter.getAggregatedRatings('tt0137523', MediaType.MOVIE);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('type=movie')
-      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('type=movie'));
     });
 
     it('should use correct type mapping for shows', async () => {
@@ -79,9 +74,7 @@ describe('OmdbAdapter', () => {
 
       await adapter.getAggregatedRatings('tt0903747', MediaType.SHOW);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('type=series')
-      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('type=series'));
     });
 
     it('should include IMDb ID in request', async () => {
@@ -92,9 +85,7 @@ describe('OmdbAdapter', () => {
 
       await adapter.getAggregatedRatings('tt0137523', MediaType.MOVIE);
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('i=tt0137523')
-      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('i=tt0137523'));
     });
 
     it('should handle N/A values', async () => {
@@ -146,10 +137,11 @@ describe('OmdbAdapter', () => {
     it('should parse votes with commas correctly', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          imdbRating: '9.0',
-          imdbVotes: '1,500,000',
-        }),
+        json: () =>
+          Promise.resolve({
+            imdbRating: '9.0',
+            imdbVotes: '1,500,000',
+          }),
       });
 
       const result = await adapter.getAggregatedRatings('tt0903747', MediaType.SHOW);
@@ -210,11 +202,10 @@ describe('OmdbAdapter', () => {
     it('should parse Rotten Tomatoes percentage', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          Ratings: [
-            { Source: 'Rotten Tomatoes', Value: '95%' },
-          ],
-        }),
+        json: () =>
+          Promise.resolve({
+            Ratings: [{ Source: 'Rotten Tomatoes', Value: '95%' }],
+          }),
       });
 
       const result = await adapter.getAggregatedRatings('tt0000000', MediaType.MOVIE);
@@ -225,11 +216,10 @@ describe('OmdbAdapter', () => {
     it('should parse Metacritic score', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          Ratings: [
-            { Source: 'Metacritic', Value: '85/100' },
-          ],
-        }),
+        json: () =>
+          Promise.resolve({
+            Ratings: [{ Source: 'Metacritic', Value: '85/100' }],
+          }),
       });
 
       const result = await adapter.getAggregatedRatings('tt0000000', MediaType.MOVIE);
@@ -240,12 +230,13 @@ describe('OmdbAdapter', () => {
     it('should handle malformed rating values', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          Ratings: [
-            { Source: 'Rotten Tomatoes', Value: 'invalid' },
-            { Source: 'Metacritic', Value: 'bad' },
-          ],
-        }),
+        json: () =>
+          Promise.resolve({
+            Ratings: [
+              { Source: 'Rotten Tomatoes', Value: 'invalid' },
+              { Source: 'Metacritic', Value: 'bad' },
+            ],
+          }),
       });
 
       const result = await adapter.getAggregatedRatings('tt0000000', MediaType.MOVIE);

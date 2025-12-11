@@ -166,9 +166,7 @@ describe('StatsService', () => {
       ]);
       traktAdapter.getTrendingShowsWithWatchers.mockResolvedValue([]);
 
-      mediaRepository.findManyByTmdbIds.mockResolvedValue([
-        { id: 'uuid-550', tmdbId: 550 },
-      ]);
+      mediaRepository.findManyByTmdbIds.mockResolvedValue([{ id: 'uuid-550', tmdbId: 550 }]);
 
       // No score data available
       mediaRepository.findManyForScoring.mockResolvedValue([]);
@@ -198,12 +196,8 @@ describe('StatsService', () => {
     });
 
     it('should fetch movies and shows in parallel', async () => {
-      const moviePromise = new Promise<any[]>(resolve => 
-        setTimeout(() => resolve([]), 50)
-      );
-      const showPromise = new Promise<any[]>(resolve => 
-        setTimeout(() => resolve([]), 50)
-      );
+      const moviePromise = new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 50));
+      const showPromise = new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 50));
 
       traktAdapter.getTrendingMoviesWithWatchers.mockReturnValue(moviePromise);
       traktAdapter.getTrendingShowsWithWatchers.mockReturnValue(showPromise);
@@ -236,9 +230,7 @@ describe('StatsService', () => {
     it('should throw StatsNotFoundException when not found', async () => {
       statsRepository.findByTmdbId.mockResolvedValue(null);
 
-      await expect(service.getStatsByTmdbId(999)).rejects.toThrow(
-        StatsNotFoundException
-      );
+      await expect(service.getStatsByTmdbId(999)).rejects.toThrow(StatsNotFoundException);
     });
   });
 });

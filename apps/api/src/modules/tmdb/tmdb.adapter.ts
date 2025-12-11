@@ -21,7 +21,7 @@ export class TmdbAdapter implements IMetadataProvider {
 
   constructor(
     @Inject(tmdbConfig.KEY)
-    private readonly config: ConfigType<typeof tmdbConfig>,
+    private readonly config: ConfigType<typeof tmdbConfig>
   ) {}
 
   /**
@@ -66,16 +66,19 @@ export class TmdbAdapter implements IMetadataProvider {
    * Fetches trending media for the day.
    * Supports filtering by media type (movie/show).
    */
-  public async getTrending(page = 1, type?: MediaType): Promise<{ tmdbId: number; type: MediaType }[]> {
+  public async getTrending(
+    page = 1,
+    type?: MediaType
+  ): Promise<{ tmdbId: number; type: MediaType }[]> {
     let endpoint = '/trending/all/day';
-    
+
     if (type) {
       const tmdbType = type === MediaType.MOVIE ? 'movie' : 'tv';
       endpoint = `/trending/${tmdbType}/day`;
     }
 
     const data = await this.fetch(endpoint, { page: page.toString() });
-    
+
     return (data.results || [])
       .filter((item: any) => item.media_type !== 'person')
       .map((item: any) => ({
@@ -88,34 +91,34 @@ export class TmdbAdapter implements IMetadataProvider {
   /**
    * Retrieves IDs of movies currently playing in theaters.
    * Uses TMDB's now_playing endpoint which handles the "in theaters" logic.
-   * 
+   *
    * @param region - ISO 3166-1 country code
    * @returns Array of TMDB movie IDs
    */
   public async getNowPlayingIds(region = DEFAULT_REGION): Promise<number[]> {
     const ids: number[] = [];
-    
+
     // Fetch first N pages
     for (let page = 1; page <= this.NOW_PLAYING_PAGE_LIMIT; page++) {
-      const data = await this.fetch('/movie/now_playing', { 
-        region, 
-        page: page.toString() 
+      const data = await this.fetch('/movie/now_playing', {
+        region,
+        page: page.toString(),
       });
-      
+
       const pageIds = (data.results || []).map((m: any) => m.id);
       ids.push(...pageIds);
-      
+
       // Stop if we've reached the last page
       if (page >= data.total_pages) break;
     }
-    
+
     return ids;
   }
 
   /**
    * Retrieves IDs of newly released movies (theatrical).
    * Uses discover endpoint with release date filters.
-   * 
+   *
    * @param daysBack - How far back to look for releases
    * @param region - ISO 3166-1 country code
    * @returns Array of TMDB movie IDs
@@ -124,7 +127,7 @@ export class TmdbAdapter implements IMetadataProvider {
     const now = new Date();
     const cutoff = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
     const ids: number[] = [];
-    
+
     // Fetch first N pages
     for (let page = 1; page <= this.NOW_PLAYING_PAGE_LIMIT; page++) {
       const data = await this.fetch('/discover/movie', {
@@ -148,7 +151,7 @@ export class TmdbAdapter implements IMetadataProvider {
 
   /**
    * Performs a multi-search (movies & shows).
-   * 
+   *
    * @param query Search string
    * @param page Page number
    */
@@ -177,11 +180,11 @@ export class TmdbAdapter implements IMetadataProvider {
    */
   private async fetch(endpoint: string, params: Record<string, string> = {}): Promise<any> {
     const url = new URL(`${this.config.apiUrl}${endpoint}`);
-    
+
     // Default params
     url.searchParams.append('api_key', this.config.apiKey);
     url.searchParams.append('language', this.DEFAULT_LANG);
-    
+
     // Custom params
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, value);
@@ -189,7 +192,7 @@ export class TmdbAdapter implements IMetadataProvider {
 
     try {
       const res = await fetch(url.toString());
-      
+
       if (!res.ok) {
         if (res.status === 404) {
           throw new TmdbApiException('Resource not found', 404);

@@ -4,13 +4,13 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { eq } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { 
-  IShowRepository, 
-  ShowListItem, 
-  CalendarEpisode, 
+import {
+  IShowRepository,
+  ShowListItem,
+  CalendarEpisode,
   ShowDetails,
   TrendingShowItem,
-  TrendingShowsOptions 
+  TrendingShowsOptions,
 } from '../../domain/repositories/show.repository.interface';
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
@@ -36,7 +36,7 @@ export class DrizzleShowRepository implements IShowRepository {
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly trendingShowsQuery: TrendingShowsQuery,
     private readonly showDetailsQuery: ShowDetailsQuery,
-    private readonly calendarEpisodesQuery: CalendarEpisodesQuery,
+    private readonly calendarEpisodesQuery: CalendarEpisodesQuery
   ) {}
 
   // ─────────────────────────────────────────────────────────────────
@@ -46,11 +46,7 @@ export class DrizzleShowRepository implements IShowRepository {
   /**
    * Upserts show details, seasons, and episodes transactionally.
    */
-  async upsertDetails(
-    tx: DbTransaction,
-    mediaId: string,
-    details: any
-  ): Promise<void> {
+  async upsertDetails(tx: DbTransaction, mediaId: string, details: any): Promise<void> {
     const [show] = await tx
       .insert(schema.shows)
       .values(PersistenceMapper.toShowInsert(mediaId, details))
@@ -107,8 +103,13 @@ export class DrizzleShowRepository implements IShowRepository {
           )
         );
     } catch (error) {
-      this.logger.error(`Failed to save drop-off analysis for ${tmdbId}: ${error.message}`, error.stack);
-      throw new DatabaseException(`Failed to save drop-off analysis for ${tmdbId}`, { originalError: error.message });
+      this.logger.error(
+        `Failed to save drop-off analysis for ${tmdbId}: ${error.message}`,
+        error.stack
+      );
+      throw new DatabaseException(`Failed to save drop-off analysis for ${tmdbId}`, {
+        originalError: error.message,
+      });
     }
   }
 
@@ -159,7 +160,9 @@ export class DrizzleShowRepository implements IShowRepository {
       return shows;
     } catch (error) {
       this.logger.error(`Failed to find shows for analysis: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch shows for analysis', { originalError: error.message });
+      throw new DatabaseException('Failed to fetch shows for analysis', {
+        originalError: error.message,
+      });
     }
   }
 
@@ -177,8 +180,13 @@ export class DrizzleShowRepository implements IShowRepository {
 
       return result[0]?.dropOffAnalysis || null;
     } catch (error) {
-      this.logger.error(`Failed to get drop-off analysis for ${tmdbId}: ${error.message}`, error.stack);
-      throw new DatabaseException(`Failed to get drop-off analysis for ${tmdbId}`, { originalError: error.message });
+      this.logger.error(
+        `Failed to get drop-off analysis for ${tmdbId}: ${error.message}`,
+        error.stack
+      );
+      throw new DatabaseException(`Failed to get drop-off analysis for ${tmdbId}`, {
+        originalError: error.message,
+      });
     }
   }
 }

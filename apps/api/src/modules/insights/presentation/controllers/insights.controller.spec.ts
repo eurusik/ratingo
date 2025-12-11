@@ -14,9 +14,7 @@ describe('InsightsController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [InsightsController],
-      providers: [
-        { provide: InsightsService, useValue: service },
-      ],
+      providers: [{ provide: InsightsService, useValue: service }],
     }).compile();
 
     controller = module.get<InsightsController>(InsightsController);

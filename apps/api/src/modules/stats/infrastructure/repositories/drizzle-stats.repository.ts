@@ -3,7 +3,10 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { eq } from 'drizzle-orm';
-import { IStatsRepository, MediaStatsData } from '../../domain/repositories/stats.repository.interface';
+import {
+  IStatsRepository,
+  MediaStatsData,
+} from '../../domain/repositories/stats.repository.interface';
 import { DatabaseException } from '../../../../common/exceptions';
 
 /**
@@ -16,7 +19,7 @@ export class DrizzleStatsRepository implements IStatsRepository {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly db: PostgresJsDatabase<typeof schema>
   ) {}
 
   async upsert(stats: MediaStatsData): Promise<void> {
@@ -128,10 +131,7 @@ export class DrizzleStatsRepository implements IStatsRepository {
           popularity24h: schema.mediaStats.popularity24h,
         })
         .from(schema.mediaStats)
-        .innerJoin(
-          schema.mediaItems,
-          eq(schema.mediaStats.mediaItemId, schema.mediaItems.id),
-        )
+        .innerJoin(schema.mediaItems, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
         .where(eq(schema.mediaItems.tmdbId, tmdbId))
         .limit(1);
 

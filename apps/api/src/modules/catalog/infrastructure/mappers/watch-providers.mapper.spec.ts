@@ -10,13 +10,13 @@ describe('WatchProvidersMapper', () => {
     US: {
       link: 'https://tmdb.org/movie/123/watch?locale=US',
       flatrate: [{ providerId: 2, name: 'Netflix', logoPath: '/netflix.png' }],
-    }
+    },
   };
 
   describe('toAvailability', () => {
     it('should return UA with isFallback=false when UA has providers', () => {
       const result = WatchProvidersMapper.toAvailability(mockProviders);
-      
+
       expect(result).toBeDefined();
       expect(result?.region).toBe('UA');
       expect(result?.isFallback).toBe(false);
@@ -31,11 +31,11 @@ describe('WatchProvidersMapper', () => {
         US: {
           link: 'https://tmdb.org/movie/123/watch?locale=US',
           flatrate: [{ providerId: 2, name: 'Netflix', logoPath: '/netflix.png' }],
-        }
+        },
       };
 
       const result = WatchProvidersMapper.toAvailability(providersNoUa);
-      
+
       expect(result).toBeDefined();
       expect(result?.region).toBe('US');
       expect(result?.isFallback).toBe(true);
@@ -49,11 +49,11 @@ describe('WatchProvidersMapper', () => {
         US: {
           link: 'https://tmdb.org/movie/123/watch?locale=US',
           flatrate: [{ providerId: 2, name: 'Netflix', logoPath: '/netflix.png' }],
-        }
+        },
       };
 
       const result = WatchProvidersMapper.toAvailability(providersEmptyUa);
-      
+
       expect(result).toBeDefined();
       expect(result?.region).toBe('US');
       expect(result?.isFallback).toBe(true);
@@ -62,11 +62,11 @@ describe('WatchProvidersMapper', () => {
     it('should return null if neither UA nor US has providers', () => {
       const providersEmpty: WatchProvidersMap = {
         UA: { link: 'ua-link', flatrate: [] },
-        US: { link: 'us-link', flatrate: [] }
+        US: { link: 'us-link', flatrate: [] },
       };
 
       const result = WatchProvidersMapper.toAvailability(providersEmpty);
-      
+
       expect(result).toBeNull();
     });
 
@@ -84,11 +84,11 @@ describe('WatchProvidersMapper', () => {
           buy: [{ providerId: 3, name: 'Buy', logoPath: '/b.png' }],
           ads: [{ providerId: 4, name: 'Ads', logoPath: '/a.png' }],
           free: [{ providerId: 5, name: 'Free', logoPath: '/f.png' }],
-        }
+        },
       };
 
       const result = WatchProvidersMapper.toAvailability(fullProviders);
-      
+
       expect(result?.stream).toHaveLength(1);
       expect(result?.rent).toHaveLength(1);
       expect(result?.buy).toHaveLength(1);
@@ -102,10 +102,14 @@ describe('WatchProvidersMapper', () => {
       const result = WatchProvidersMapper.toDto(mockProviders);
       expect(result).toEqual({
         UA: expect.objectContaining({
-          stream: expect.arrayContaining([expect.objectContaining({ name: 'Megogo', providerId: 1 })]),
+          stream: expect.arrayContaining([
+            expect.objectContaining({ name: 'Megogo', providerId: 1 }),
+          ]),
         }),
         US: expect.objectContaining({
-          stream: expect.arrayContaining([expect.objectContaining({ name: 'Netflix', providerId: 2 })]),
+          stream: expect.arrayContaining([
+            expect.objectContaining({ name: 'Netflix', providerId: 2 }),
+          ]),
         }),
       });
     });
@@ -124,7 +128,10 @@ describe('WatchProvidersMapper', () => {
     it('should fallback to US when UA empty', () => {
       const providersEmptyUa: WatchProvidersMap = {
         UA: { link: 'ua', flatrate: [] },
-        US: { link: 'us', flatrate: [{ providerId: 2, name: 'Netflix', logoPath: '/netflix.png' }] },
+        US: {
+          link: 'us',
+          flatrate: [{ providerId: 2, name: 'Netflix', logoPath: '/netflix.png' }],
+        },
       };
       const primary = WatchProvidersMapper.getPrimary(providersEmptyUa);
       expect(primary?.stream?.[0].name).toBe('Netflix');

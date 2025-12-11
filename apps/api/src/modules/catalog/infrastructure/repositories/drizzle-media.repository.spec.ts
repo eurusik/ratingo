@@ -13,7 +13,17 @@ import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-med
 const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {
   const thenable: any = {};
   const chainMethods = [
-    'select', 'from', 'where', 'limit', 'innerJoin', 'insert', 'values', 'onConflictDoUpdate', 'update', 'orderBy', 'returning',
+    'select',
+    'from',
+    'where',
+    'limit',
+    'innerJoin',
+    'insert',
+    'values',
+    'onConflictDoUpdate',
+    'update',
+    'orderBy',
+    'returning',
     ...extraMethods,
   ];
   chainMethods.forEach((m) => {

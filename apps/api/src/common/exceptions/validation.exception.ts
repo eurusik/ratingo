@@ -6,10 +6,7 @@ import { AppException } from './app.exception';
  * Exception for validation errors (400).
  */
 export class ValidationException extends AppException {
-  constructor(
-    message: string = 'Validation failed',
-    details?: Record<string, any>,
-  ) {
+  constructor(message: string = 'Validation failed', details?: Record<string, any>) {
     super(ErrorCode.VALIDATION_ERROR, message, HttpStatus.BAD_REQUEST, details);
   }
 }

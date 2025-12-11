@@ -2,7 +2,7 @@ import { NormalizedMedia } from '../models/normalized-media.model';
 
 /**
  * Port (Interface) for any external metadata provider.
- * 
+ *
  * Whether it's TMDB, Trakt, or OMDb - they all must satisfy this contract.
  * This allows us to switch or aggregate providers without changing business logic.
  */

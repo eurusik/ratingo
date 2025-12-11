@@ -35,7 +35,7 @@ export class MovieListingsQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly db: PostgresJsDatabase<typeof schema>
   ) {}
 
   private readonly selectFields = {
@@ -52,7 +52,7 @@ export class MovieListingsQuery {
     rating: schema.mediaItems.rating,
     voteCount: schema.mediaItems.voteCount,
     releaseDate: schema.mediaItems.releaseDate,
-    
+
     ratingImdb: schema.mediaItems.ratingImdb,
     voteCountImdb: schema.mediaItems.voteCountImdb,
     ratingTrakt: schema.mediaItems.ratingTrakt,
@@ -78,7 +78,10 @@ export class MovieListingsQuery {
    * @returns {Promise<MovieWithMedia[]>} List of movies matching the criteria
    * @throws {DatabaseException} When database query fails
    */
-  async execute(type: MovieListingType, options: MovieListingOptions = {}): Promise<MovieWithMedia[]> {
+  async execute(
+    type: MovieListingType,
+    options: MovieListingOptions = {}
+  ): Promise<MovieWithMedia[]> {
     const { limit = 20, offset = 0, daysBack } = options;
 
     try {
@@ -97,7 +100,9 @@ export class MovieListingsQuery {
       return this.attachGenres(results);
     } catch (error) {
       this.logger.error(`Failed to find ${type} movies: ${error.message}`, error.stack);
-      throw new DatabaseException(`Failed to fetch ${type} movies`, { originalError: error.message });
+      throw new DatabaseException(`Failed to fetch ${type} movies`, {
+        originalError: error.message,
+      });
     }
   }
 
@@ -150,8 +155,8 @@ export class MovieListingsQuery {
   private async attachGenres(movies: any[]): Promise<MovieWithMedia[]> {
     if (movies.length === 0) return [];
 
-    const mediaItemIds = movies.map(m => m.mediaItemId);
-    
+    const mediaItemIds = movies.map((m) => m.mediaItemId);
+
     const genresData = await this.db
       .select({
         mediaItemId: schema.mediaGenres.mediaItemId,
@@ -164,12 +169,12 @@ export class MovieListingsQuery {
       .where(inArray(schema.mediaGenres.mediaItemId, mediaItemIds));
 
     const genresMap = new Map<string, any[]>();
-    genresData.forEach(g => {
+    genresData.forEach((g) => {
       if (!genresMap.has(g.mediaItemId)) genresMap.set(g.mediaItemId, []);
       genresMap.get(g.mediaItemId)!.push({ id: g.id, name: g.name, slug: g.slug });
     });
 
-    return movies.map(m => ({
+    return movies.map((m) => ({
       id: m.id,
       mediaItemId: m.mediaItemId,
       tmdbId: m.tmdbId,

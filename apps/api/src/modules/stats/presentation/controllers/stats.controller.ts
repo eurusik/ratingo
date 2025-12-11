@@ -15,16 +15,22 @@ export class StatsController {
   constructor(
     private readonly statsService: StatsService,
     private readonly dropOffService: DropOffService,
-    @InjectQueue(STATS_QUEUE) private readonly statsQueue: Queue,
+    @InjectQueue(STATS_QUEUE) private readonly statsQueue: Queue
   ) {}
 
   @Post('sync')
   @ApiTags('Service: Stats')
   @ApiOperation({
     summary: 'Sync trending stats from Trakt',
-    description: 'Adds a job to the queue to fetch current watchers count and trending rank from Trakt API.',
+    description:
+      'Adds a job to the queue to fetch current watchers count and trending rank from Trakt API.',
   })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of items to sync (default: 20)' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items to sync (default: 20)',
+  })
   async syncTrendingStats(@Query('limit') limit?: number) {
     const job = await this.statsQueue.add(STATS_JOBS.SYNC_TRENDING, {
       limit: limit || 20,
@@ -53,21 +59,29 @@ export class StatsController {
   @ApiTags('Service: Stats')
   @ApiOperation({
     summary: 'Analyze drop-off for shows',
-    description: 'Adds a job to analyze viewer drop-off for shows. Can analyze a single show or all shows.',
+    description:
+      'Adds a job to analyze viewer drop-off for shows. Can analyze a single show or all shows.',
   })
-  @ApiQuery({ name: 'tmdbId', required: false, type: Number, description: 'TMDB ID of specific show to analyze' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max shows to analyze (default: 50)' })
-  async analyzeDropOff(
-    @Query('tmdbId') tmdbId?: number,
-    @Query('limit') limit?: number,
-  ) {
+  @ApiQuery({
+    name: 'tmdbId',
+    required: false,
+    type: Number,
+    description: 'TMDB ID of specific show to analyze',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max shows to analyze (default: 50)',
+  })
+  async analyzeDropOff(@Query('tmdbId') tmdbId?: number, @Query('limit') limit?: number) {
     const job = await this.statsQueue.add(STATS_JOBS.ANALYZE_DROP_OFF, {
       tmdbId,
       limit: limit || 50,
     });
 
     return {
-      message: tmdbId 
+      message: tmdbId
         ? `Drop-off analysis job for show ${tmdbId} added to queue`
         : `Drop-off analysis job for ${limit || 50} shows added to queue`,
       jobId: job.id,
@@ -94,7 +108,8 @@ export class StatsController {
   @ApiTags('Public: Stats')
   @ApiOperation({
     summary: 'Get drop-off analysis for a show',
-    description: 'Returns pre-calculated drop-off analysis including drop-off point, engagement metrics, and insights.',
+    description:
+      'Returns pre-calculated drop-off analysis including drop-off point, engagement metrics, and insights.',
   })
   @ApiParam({ name: 'tmdbId', type: Number, description: 'TMDB ID of the show' })
   async getDropOffAnalysis(@Param('tmdbId') tmdbId: number) {

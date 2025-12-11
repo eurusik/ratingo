@@ -2,7 +2,13 @@ import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { Video } from '../../../../database/schema';
-import { CreditsDto, ImageDto, AvailabilityDto, ExternalRatingsDto, RatingoStatsDto } from '../../presentation/dtos/common.dto';
+import {
+  CreditsDto,
+  ImageDto,
+  AvailabilityDto,
+  ExternalRatingsDto,
+  RatingoStatsDto,
+} from '../../presentation/dtos/common.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
@@ -30,13 +36,13 @@ export interface TrendingShowItem {
   poster: ImageDto | null;
   backdrop: ImageDto | null;
   releaseDate: Date | null;
-  
+
   isNew: boolean;
   isClassic: boolean;
-  
+
   stats: RatingoStatsDto;
   externalRatings: ExternalRatingsDto;
-  
+
   showProgress: {
     lastAirDate: Date | null;
     nextAirDate: Date | null;
@@ -81,7 +87,7 @@ export interface ShowDetails {
   primaryTrailer?: Video | null;
   credits?: CreditsDto | null;
   availability?: AvailabilityDto | null;
-  
+
   stats: {
     ratingoScore: number | null;
     qualityScore: number | null;
@@ -103,7 +109,7 @@ export interface ShowDetails {
   status: ShowStatus | null;
   lastAirDate: Date | null;
   nextAirDate: Date | null;
-  
+
   genres: Array<{ id: string; name: string; slug: string }>;
 
   seasons: Array<{

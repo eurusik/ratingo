@@ -1,7 +1,13 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TraktAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt.adapter';
-import { IStatsRepository, STATS_REPOSITORY } from '../../domain/repositories/stats.repository.interface';
-import { IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
+import {
+  IStatsRepository,
+  STATS_REPOSITORY,
+} from '../../domain/repositories/stats.repository.interface';
+import {
+  IMediaRepository,
+  MEDIA_REPOSITORY,
+} from '../../../catalog/domain/repositories/media.repository.interface';
 import { StatsNotFoundException } from '../../../../common/exceptions';
 import { ScoreCalculatorService } from '../../../shared/score-calculator';
 
@@ -21,7 +27,7 @@ export class StatsService {
     private readonly statsRepository: IStatsRepository,
 
     @Inject(MEDIA_REPOSITORY)
-    private readonly mediaRepository: IMediaRepository,
+    private readonly mediaRepository: IMediaRepository
   ) {}
 
   /**
@@ -45,8 +51,8 @@ export class StatsService {
 
     // Combine all trending items
     const allTrending = [
-      ...trendingMovies.map(m => ({ ...m, type: 'movie' as const })),
-      ...trendingShows.map(s => ({ ...s, type: 'show' as const })),
+      ...trendingMovies.map((m) => ({ ...m, type: 'movie' as const })),
+      ...trendingShows.map((s) => ({ ...s, type: 'show' as const })),
     ];
 
     if (allTrending.length === 0) {
@@ -55,12 +61,12 @@ export class StatsService {
     }
 
     // Batch: Get all media items by TMDB IDs (1 query)
-    const tmdbIds = allTrending.map(t => t.tmdbId);
+    const tmdbIds = allTrending.map((t) => t.tmdbId);
     const mediaItems = await this.mediaRepository.findManyByTmdbIds(tmdbIds);
-    const mediaMap = new Map(mediaItems.map(m => [m.tmdbId, m.id]));
+    const mediaMap = new Map(mediaItems.map((m) => [m.tmdbId, m.id]));
 
     // Filter to only items we have in DB
-    const existingTrending = allTrending.filter(t => mediaMap.has(t.tmdbId));
+    const existingTrending = allTrending.filter((t) => mediaMap.has(t.tmdbId));
 
     if (existingTrending.length === 0) {
       this.logger.log('No matching media items in database');
@@ -68,28 +74,31 @@ export class StatsService {
     }
 
     // Batch: Get score data for all existing items (1 query)
-    const mediaIds = existingTrending.map(t => mediaMap.get(t.tmdbId)!);
+    const mediaIds = existingTrending.map((t) => mediaMap.get(t.tmdbId)!);
     const scoreDataList = await this.mediaRepository.findManyForScoring(mediaIds);
-    const scoreDataMap = new Map(scoreDataList.map(s => [s.tmdbId, s]));
+    const scoreDataMap = new Map(scoreDataList.map((s) => [s.tmdbId, s]));
 
     // Calculate scores and prepare batch upsert
-    const statsToUpsert: import('../../domain/repositories/stats.repository.interface').MediaStatsData[] = [];
+    const statsToUpsert: import('../../domain/repositories/stats.repository.interface').MediaStatsData[] =
+      [];
 
     for (const item of existingTrending) {
       const mediaId = mediaMap.get(item.tmdbId)!;
       const scoreData = scoreDataMap.get(item.tmdbId);
 
-      const scores = scoreData ? this.scoreCalculator.calculate({
-        tmdbPopularity: scoreData.popularity,
-        traktWatchers: item.watchers,
-        imdbRating: scoreData.ratingImdb,
-        traktRating: scoreData.ratingTrakt,
-        metacriticRating: scoreData.ratingMetacritic,
-        rottenTomatoesRating: scoreData.ratingRottenTomatoes,
-        imdbVotes: scoreData.voteCountImdb,
-        traktVotes: scoreData.voteCountTrakt,
-        releaseDate: scoreData.releaseDate,
-      }) : null;
+      const scores = scoreData
+        ? this.scoreCalculator.calculate({
+            tmdbPopularity: scoreData.popularity,
+            traktWatchers: item.watchers,
+            imdbRating: scoreData.ratingImdb,
+            traktRating: scoreData.ratingTrakt,
+            metacriticRating: scoreData.ratingMetacritic,
+            rottenTomatoesRating: scoreData.ratingRottenTomatoes,
+            imdbVotes: scoreData.voteCountImdb,
+            traktVotes: scoreData.voteCountTrakt,
+            releaseDate: scoreData.releaseDate,
+          })
+        : null;
 
       statsToUpsert.push({
         mediaItemId: mediaId,
@@ -105,8 +114,8 @@ export class StatsService {
     // Batch: Upsert all stats (1 query)
     await this.statsRepository.bulkUpsert(statsToUpsert);
 
-    const moviesUpdated = existingTrending.filter(t => t.type === 'movie').length;
-    const showsUpdated = existingTrending.filter(t => t.type === 'show').length;
+    const moviesUpdated = existingTrending.filter((t) => t.type === 'movie').length;
+    const showsUpdated = existingTrending.filter((t) => t.type === 'show').length;
 
     this.logger.log(`Synced stats: ${moviesUpdated} movies, ${showsUpdated} shows`);
     return { movies: moviesUpdated, shows: showsUpdated };

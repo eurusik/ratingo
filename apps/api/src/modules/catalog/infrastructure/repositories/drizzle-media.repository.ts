@@ -2,15 +2,24 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { 
-  IMediaRepository, 
-  MediaScoreData, 
-  MediaWithTmdbId, 
-  MediaScoreDataWithTmdbId 
+import {
+  IMediaRepository,
+  MediaScoreData,
+  MediaWithTmdbId,
+  MediaScoreDataWithTmdbId,
 } from '../../domain/repositories/media.repository.interface';
-import { IGenreRepository, GENRE_REPOSITORY } from '../../domain/repositories/genre.repository.interface';
-import { IMovieRepository, MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
-import { IShowRepository, SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
+import {
+  IGenreRepository,
+  GENRE_REPOSITORY,
+} from '../../domain/repositories/genre.repository.interface';
+import {
+  IMovieRepository,
+  MOVIE_REPOSITORY,
+} from '../../domain/repositories/movie.repository.interface';
+import {
+  IShowRepository,
+  SHOW_REPOSITORY,
+} from '../../domain/repositories/show.repository.interface';
 import { DrizzleMovieRepository } from './drizzle-movie.repository';
 import { DrizzleShowRepository } from './drizzle-show.repository';
 import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
@@ -38,7 +47,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     private readonly movieRepository: IMovieRepository,
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
-    private readonly heroMediaQuery: HeroMediaQuery,
+    private readonly heroMediaQuery: HeroMediaQuery
   ) {}
 
   /**
@@ -53,7 +62,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
         .from(schema.mediaItems)
         .where(eq(schema.mediaItems.tmdbId, tmdbId))
         .limit(1);
-      
+
       return result[0] || null;
     } catch (error) {
       this.logger.error(`Failed to find media by TMDB ID ${tmdbId}: ${error.message}`);
@@ -118,7 +127,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
       });
     } catch (error) {
       this.logger.error(`Failed to upsert media ${media.title}: ${error.message}`);
-      throw new DatabaseException(`Failed to upsert media: ${error.message}`, { 
+      throw new DatabaseException(`Failed to upsert media: ${error.message}`, {
         tmdbId: media.externalIds.tmdbId,
         title: media.title,
       });
@@ -175,8 +184,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
       return result;
     } catch (error) {
       this.logger.error(`Failed to find media by TMDB IDs: ${error.message}`);
-      throw new DatabaseException(`Failed to find media by TMDB IDs: ${error.message}`, { 
-        count: tmdbIds.length 
+      throw new DatabaseException(`Failed to find media by TMDB IDs: ${error.message}`, {
+        count: tmdbIds.length,
       });
     }
   }
@@ -209,8 +218,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
       return result;
     } catch (error) {
       this.logger.error(`Failed to find media for scoring: ${error.message}`);
-      throw new DatabaseException(`Failed to find media for scoring: ${error.message}`, { 
-        count: ids.length 
+      throw new DatabaseException(`Failed to find media for scoring: ${error.message}`, {
+        count: ids.length,
       });
     }
   }

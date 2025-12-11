@@ -13,41 +13,43 @@ describe('CatalogController', () => {
 
   beforeEach(async () => {
     const mockMovieRepository = {
-      findNowPlaying: jest.fn().mockResolvedValue([{ 
-        id: 1, 
-        title: 'Movie',
-        stats: { liveWatchers: 50, totalWatchers: 5000, popularityScore: 80 }
-      }]),
+      findNowPlaying: jest.fn().mockResolvedValue([
+        {
+          id: 1,
+          title: 'Movie',
+          stats: { liveWatchers: 50, totalWatchers: 5000, popularityScore: 80 },
+        },
+      ]),
       findNewReleases: jest.fn().mockResolvedValue([{ id: 2, title: 'New Movie' }]),
       findNewOnDigital: jest.fn().mockResolvedValue([{ id: 3, title: 'Digital Movie' }]),
       findBySlug: jest.fn(),
-      findTrending: jest.fn().mockResolvedValue([
-        { id: 'tm-1', title: 'Trending Movie', type: 'movie' }
-      ]),
+      findTrending: jest
+        .fn()
+        .mockResolvedValue([{ id: 'tm-1', title: 'Trending Movie', type: 'movie' }]),
     };
 
     const mockShowRepository = {
       findEpisodesByDateRange: jest.fn().mockResolvedValue([
-        { 
-          airDate: new Date('2024-01-01T10:00:00Z'), 
+        {
+          airDate: new Date('2024-01-01T10:00:00Z'),
           title: 'Ep 1',
-          showTitle: 'Show A'
+          showTitle: 'Show A',
         },
-        { 
-          airDate: new Date('2024-01-01T11:00:00Z'), 
+        {
+          airDate: new Date('2024-01-01T11:00:00Z'),
           title: 'Ep 2',
-          showTitle: 'Show B'
+          showTitle: 'Show B',
         },
-        { 
-          airDate: new Date('2024-01-02T10:00:00Z'), 
+        {
+          airDate: new Date('2024-01-02T10:00:00Z'),
           title: 'Ep 3',
-          showTitle: 'Show A'
-        }
+          showTitle: 'Show A',
+        },
       ]),
       findBySlug: jest.fn(),
-      findTrending: jest.fn().mockResolvedValue([
-        { id: 'trending-1', title: 'Trending Show', type: 'show' }
-      ]),
+      findTrending: jest
+        .fn()
+        .mockResolvedValue([{ id: 'trending-1', title: 'Trending Show', type: 'show' }]),
     };
 
     const mockCatalogSearchService = {
@@ -134,33 +136,33 @@ describe('CatalogController', () => {
     });
 
     it('should respect pagination and filters', async () => {
-      await controller.getTrendingShows({ 
-        limit: 50, 
+      await controller.getTrendingShows({
+        limit: 50,
         offset: 10,
         minRating: 80,
-        genreId: 'uuid-genre'
+        genreId: 'uuid-genre',
       });
 
       expect(showRepository.findTrending).toHaveBeenCalledWith({
         limit: 50,
         offset: 10,
         minRating: 80,
-        genreId: 'uuid-genre'
+        genreId: 'uuid-genre',
       });
     });
 
     it('should return correct meta data', async () => {
       showRepository.findTrending.mockResolvedValue([
-        { id: '1', title: 'Show 1', type: 'show' }, 
-        { id: '2', title: 'Show 2', type: 'show' }
+        { id: '1', title: 'Show 1', type: 'show' },
+        { id: '2', title: 'Show 2', type: 'show' },
       ]);
-      
+
       const result = await controller.getTrendingShows({ limit: 10, offset: 0 });
-      
+
       expect(result.meta).toEqual({
         count: 2,
         limit: 10,
-        offset: 0
+        offset: 0,
       });
     });
   });
@@ -183,15 +185,15 @@ describe('CatalogController', () => {
       const result = await controller.getCalendar('2024-01-01', 7);
 
       expect(showRepository.findEpisodesByDateRange).toHaveBeenCalled();
-      
+
       // Check grouping logic
       expect(result.days).toHaveLength(2);
-      
-      const day1 = result.days.find(d => d.date === '2024-01-01');
+
+      const day1 = result.days.find((d) => d.date === '2024-01-01');
       expect(day1).toBeDefined();
       expect(day1.episodes).toHaveLength(2);
 
-      const day2 = result.days.find(d => d.date === '2024-01-02');
+      const day2 = result.days.find((d) => d.date === '2024-01-02');
       expect(day2).toBeDefined();
       expect(day2.episodes).toHaveLength(1);
     });
@@ -216,9 +218,7 @@ describe('CatalogController', () => {
     it('should throw NotFoundException when movie not found', async () => {
       movieRepository.findBySlug.mockResolvedValue(null);
 
-      await expect(controller.getMovieBySlug('unknown-movie'))
-        .rejects
-        .toThrow(NotFoundException);
+      await expect(controller.getMovieBySlug('unknown-movie')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -236,9 +236,7 @@ describe('CatalogController', () => {
     it('should throw NotFoundException when show not found', async () => {
       showRepository.findBySlug.mockResolvedValue(null);
 
-      await expect(controller.getShowBySlug('unknown-show'))
-        .rejects
-        .toThrow(NotFoundException);
+      await expect(controller.getShowBySlug('unknown-show')).rejects.toThrow(NotFoundException);
     });
   });
 });

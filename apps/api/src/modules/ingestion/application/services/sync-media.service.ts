@@ -3,7 +3,10 @@ import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter, TvMazeEpisode } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
-import { IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
+import {
+  IMediaRepository,
+  MEDIA_REPOSITORY,
+} from '../../../catalog/domain/repositories/media.repository.interface';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ScoreCalculatorService, ScoreInput } from '../../../shared/score-calculator';
 import { NormalizedSeason, NormalizedEpisode } from '../../domain/models/normalized-media.model';
@@ -26,9 +29,9 @@ export class SyncMediaService {
     private readonly omdbAdapter: OmdbAdapter,
     private readonly tvMazeAdapter: TvMazeAdapter,
     private readonly scoreCalculator: ScoreCalculatorService,
-    
+
     @Inject(MEDIA_REPOSITORY)
-    private readonly mediaRepository: IMediaRepository,
+    private readonly mediaRepository: IMediaRepository
   ) {}
 
   /**
@@ -62,14 +65,19 @@ export class SyncMediaService {
    *
    * @throws Will throw error if TMDB fetch fails or critical data is missing
    */
-  private async processMedia(tmdbId: number, type: MediaType, trendingScore?: number): Promise<void> {
+  private async processMedia(
+    tmdbId: number,
+    type: MediaType,
+    trendingScore?: number
+  ): Promise<void> {
     this.logger.debug(`Syncing ${type} ${tmdbId}...`);
 
     try {
       // Fetch Base Metadata from TMDB (Primary Source)
-      const media = type === MediaType.MOVIE 
-        ? await this.tmdbAdapter.getMovie(tmdbId)
-        : await this.tmdbAdapter.getShow(tmdbId);
+      const media =
+        type === MediaType.MOVIE
+          ? await this.tmdbAdapter.getMovie(tmdbId)
+          : await this.tmdbAdapter.getShow(tmdbId);
 
       if (!media) {
         this.logger.warn(`${type} ${tmdbId} not found in TMDB`);
@@ -82,11 +90,11 @@ export class SyncMediaService {
       if (type === MediaType.SHOW && imdbId) {
         try {
           const tvMazeEpisodes = await this.tvMazeAdapter.getEpisodesByImdbId(imdbId);
-          
+
           if (tvMazeEpisodes.length > 0) {
             // Group TVMaze episodes by season
             const seasonMap = new Map<number, TvMazeEpisode[]>();
-            
+
             for (const ep of tvMazeEpisodes) {
               if (!seasonMap.has(ep.seasonNumber)) seasonMap.set(ep.seasonNumber, []);
               seasonMap.get(ep.seasonNumber).push(ep);
@@ -94,7 +102,7 @@ export class SyncMediaService {
 
             const mergedSeasons: NormalizedSeason[] = [];
             const tmdbSeasonMap = new Map<number, NormalizedSeason>();
-            
+
             if (media.details?.seasons) {
               for (const s of media.details.seasons) {
                 tmdbSeasonMap.set(s.number, s);
@@ -104,9 +112,9 @@ export class SyncMediaService {
             // Iterate over TVMaze seasons (Time Authority)
             for (const [sNum, eps] of seasonMap.entries()) {
               const tmdbSeason = tmdbSeasonMap.get(sNum);
-              
+
               // Map TvMazeEpisode back to NormalizedEpisode (remove seasonNumber)
-              const cleanEpisodes: NormalizedEpisode[] = eps.map(e => {
+              const cleanEpisodes: NormalizedEpisode[] = eps.map((e) => {
                 const { seasonNumber, ...rest } = e;
                 return rest;
               });
@@ -123,27 +131,27 @@ export class SyncMediaService {
                 episodes: cleanEpisodes,
               });
             }
-            
+
             // Add leftover TMDB seasons (e.g. Specials)
             if (media.details?.seasons) {
-               for (const s of media.details.seasons) {
-                 if (!seasonMap.has(s.number)) {
-                   mergedSeasons.push(s);
-                 }
-               }
+              for (const s of media.details.seasons) {
+                if (!seasonMap.has(s.number)) {
+                  mergedSeasons.push(s);
+                }
+              }
             }
-            
+
             mergedSeasons.sort((a, b) => a.number - b.number);
-            
+
             if (!media.details) media.details = {};
             media.details.seasons = mergedSeasons;
-            
+
             // Calculate Next Air Date
             const now = new Date();
             const futureEpisodes = tvMazeEpisodes
-              .filter(e => e.airDate && e.airDate > now)
+              .filter((e) => e.airDate && e.airDate > now)
               .sort((a, b) => a.airDate!.getTime() - b.airDate!.getTime());
-              
+
             if (futureEpisodes.length > 0) {
               media.details.nextAirDate = futureEpisodes[0].airDate;
             }
@@ -154,7 +162,7 @@ export class SyncMediaService {
       }
 
       // Enhance with external ratings (Parallel)
-      
+
       const [traktRating, omdbRatings] = await Promise.all([
         // Trakt (lookup by TMDB ID, then fetch ratings)
         type === MediaType.MOVIE
@@ -205,8 +213,9 @@ export class SyncMediaService {
 
       // Persist
       await this.mediaRepository.upsert(media);
-      this.logger.log(`Synced ${type}: ${media.title} (Ratingo: ${(scores.ratingoScore * 100).toFixed(1)})`);
-
+      this.logger.log(
+        `Synced ${type}: ${media.title} (Ratingo: ${(scores.ratingoScore * 100).toFixed(1)})`
+      );
     } catch (error) {
       this.logger.error(`Failed to sync ${type} ${tmdbId}: ${error.message}`, error.stack);
       throw error; // Let BullMQ retry

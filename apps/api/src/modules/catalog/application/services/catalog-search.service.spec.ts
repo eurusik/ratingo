@@ -62,7 +62,7 @@ describe('CatalogSearchService', () => {
 
   it('should return empty results for short query', async () => {
     const result = await service.search('a');
-    
+
     expect(result.local).toEqual([]);
     expect(result.tmdb).toEqual([]);
     expect(mediaRepository.search).not.toHaveBeenCalled();
@@ -76,25 +76,29 @@ describe('CatalogSearchService', () => {
     const result = await service.search('movie');
 
     expect(result.query).toBe('movie');
-    
+
     // Check Local
     expect(result.local).toHaveLength(1);
-    expect(result.local[0]).toEqual(expect.objectContaining({
-      id: 'uuid-1',
-      tmdbId: 100,
-      source: SearchSource.LOCAL,
-      isImported: true,
-      title: 'Local Movie',
-    }));
+    expect(result.local[0]).toEqual(
+      expect.objectContaining({
+        id: 'uuid-1',
+        tmdbId: 100,
+        source: SearchSource.LOCAL,
+        isImported: true,
+        title: 'Local Movie',
+      })
+    );
 
     // Check TMDB
     expect(result.tmdb).toHaveLength(1);
-    expect(result.tmdb[0]).toEqual(expect.objectContaining({
-      tmdbId: 200,
-      source: SearchSource.TMDB,
-      isImported: false,
-      title: 'TMDB Movie',
-    }));
+    expect(result.tmdb[0]).toEqual(
+      expect.objectContaining({
+        tmdbId: 200,
+        source: SearchSource.TMDB,
+        isImported: false,
+        title: 'TMDB Movie',
+      })
+    );
   });
 
   it('should filter out TMDB results that exist locally (deduplication)', async () => {
@@ -109,9 +113,9 @@ describe('CatalogSearchService', () => {
 
     expect(result.tmdb).toHaveLength(1);
     expect(result.tmdb[0].tmdbId).toBe(200); // Only the new one
-    
+
     // Ensure duplicate (ID 100) is NOT in tmdb array
-    const duplicate = result.tmdb.find(m => m.tmdbId === 100);
+    const duplicate = result.tmdb.find((m) => m.tmdbId === 100);
     expect(duplicate).toBeUndefined();
   });
 
@@ -122,10 +126,10 @@ describe('CatalogSearchService', () => {
     const result = await service.search('movie');
 
     expect(result.local).toHaveLength(0); // Current implementation catches error and returns empty everything?
-    // Let's check implementation. 
+    // Let's check implementation.
     // Implementation: try { ... Promise.all ... } catch { return empty }
     // So if ONE fails, Promise.all fails, and it returns empty.
-    
+
     // Ideally it should use Promise.allSettled or separate try-catch if we want partial results.
     // But based on current code:
     expect(result.local).toEqual([]);

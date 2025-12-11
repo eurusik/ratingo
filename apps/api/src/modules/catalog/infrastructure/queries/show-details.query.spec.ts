@@ -89,8 +89,20 @@ describe('ShowDetailsQuery', () => {
     ];
 
     const seasons = [
-      { number: 1, name: 'S1', episodeCount: 10, posterPath: '/s1.jpg', airDate: new Date('2023-01-01') },
-      { number: 2, name: 'S2', episodeCount: 10, posterPath: '/s2.jpg', airDate: new Date('2024-01-01') },
+      {
+        number: 1,
+        name: 'S1',
+        episodeCount: 10,
+        posterPath: '/s1.jpg',
+        airDate: new Date('2023-01-01'),
+      },
+      {
+        number: 2,
+        name: 'S2',
+        episodeCount: 10,
+        posterPath: '/s2.jpg',
+        airDate: new Date('2024-01-01'),
+      },
     ];
 
     setup([[showRow], genres, seasons]);

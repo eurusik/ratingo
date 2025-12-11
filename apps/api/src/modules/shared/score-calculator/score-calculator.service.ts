@@ -13,7 +13,7 @@ export interface ScoreInput {
   // Ratings (0-10 scale, except MC/RT which are 0-100)
   imdbRating?: number | null;
   traktRating?: number | null;
-  metacriticRating?: number | null;    // 0-100
+  metacriticRating?: number | null; // 0-100
   rottenTomatoesRating?: number | null; // 0-100
 
   // Vote counts
@@ -28,10 +28,10 @@ export interface ScoreInput {
  * Output scores from calculation.
  */
 export interface ScoreOutput {
-  ratingoScore: number;      // Main composite score (0-1)
-  qualityScore: number;      // Rating-based component (0-1)
-  popularityScore: number;   // Popularity-based component (0-1)
-  freshnessScore: number;    // Time-based component (0-1)
+  ratingoScore: number; // Main composite score (0-1)
+  qualityScore: number; // Rating-based component (0-1)
+  popularityScore: number; // Popularity-based component (0-1)
+  freshnessScore: number; // Time-based component (0-1)
 }
 
 /**
@@ -44,7 +44,7 @@ interface RatingSource {
 
 /**
  * Service for calculating Ratingo Score.
- * 
+ *
  * The Ratingo Score is a composite metric that combines:
  * - Popularity (TMDB + Trakt watchers) - 40%
  * - Quality (weighted average of IMDb, Trakt, MC, RT) - 40%
@@ -54,7 +54,7 @@ interface RatingSource {
 export class ScoreCalculatorService {
   constructor(
     @Inject(scoreConfig.KEY)
-    private readonly config: ConfigType<typeof scoreConfig>,
+    private readonly config: ConfigType<typeof scoreConfig>
   ) {}
 
   /**
@@ -70,12 +70,14 @@ export class ScoreCalculatorService {
 
     const tmdbPopularityNorm = this.clamp(
       input.tmdbPopularity / normalization.tmdbPopularityMax,
-      0, 1
+      0,
+      1
     );
 
     const traktWatchersNorm = this.clamp(
       Math.log1p(input.traktWatchers) / Math.log1p(normalization.traktWatchersMax),
-      0, 1
+      0,
+      1
     );
 
     const avgRating = this.calculateAvgRating(
@@ -89,7 +91,8 @@ export class ScoreCalculatorService {
     const totalVotes = (input.imdbVotes || 0) + (input.traktVotes || 0);
     const voteConfidenceNorm = this.clamp(
       1 - Math.exp(-totalVotes / normalization.voteConfidenceK),
-      0, 1
+      0,
+      1
     );
 
     const freshnessNorm = this.calculateFreshness(
@@ -100,13 +103,11 @@ export class ScoreCalculatorService {
 
     // === CALCULATE COMPONENT SCORES ===
 
-    const popularityScore = 
-      (tmdbPopularityNorm * weights.tmdbPopularity) +
-      (traktWatchersNorm * weights.traktWatchers);
+    const popularityScore =
+      tmdbPopularityNorm * weights.tmdbPopularity + traktWatchersNorm * weights.traktWatchers;
 
-    const qualityScore = 
-      (avgRatingNorm * weights.avgRating) +
-      (voteConfidenceNorm * weights.voteConfidence);
+    const qualityScore =
+      avgRatingNorm * weights.avgRating + voteConfidenceNorm * weights.voteConfidence;
 
     const freshnessScore = freshnessNorm * weights.freshness;
 
@@ -122,8 +123,16 @@ export class ScoreCalculatorService {
     // Return scores normalized to 0-100 range
     return {
       ratingoScore: this.clamp(ratingoScore * 100, 0, 100),
-      qualityScore: this.clamp((qualityScore / (weights.avgRating + weights.voteConfidence)) * 100, 0, 100),
-      popularityScore: this.clamp((popularityScore / (weights.tmdbPopularity + weights.traktWatchers)) * 100, 0, 100),
+      qualityScore: this.clamp(
+        (qualityScore / (weights.avgRating + weights.voteConfidence)) * 100,
+        0,
+        100
+      ),
+      popularityScore: this.clamp(
+        (popularityScore / (weights.tmdbPopularity + weights.traktWatchers)) * 100,
+        0,
+        100
+      ),
       freshnessScore: this.clamp(freshnessNorm * 100, 0, 100),
     };
   }
@@ -141,37 +150,34 @@ export class ScoreCalculatorService {
     const { ratingWeights } = this.config;
 
     const sources: RatingSource[] = [
-      { value: imdbRating,                        weight: ratingWeights.imdb },
-      { value: traktRating,                       weight: ratingWeights.trakt },
-      { value: mcRating ? mcRating / 10 : null,   weight: ratingWeights.metacritic },
-      { value: rtRating ? rtRating / 10 : null,   weight: ratingWeights.rottenTomatoes },
+      { value: imdbRating, weight: ratingWeights.imdb },
+      { value: traktRating, weight: ratingWeights.trakt },
+      { value: mcRating ? mcRating / 10 : null, weight: ratingWeights.metacritic },
+      { value: rtRating ? rtRating / 10 : null, weight: ratingWeights.rottenTomatoes },
     ];
 
-    const active = sources.filter(s => typeof s.value === 'number' && s.value !== null);
+    const active = sources.filter((s) => typeof s.value === 'number' && s.value !== null);
 
     if (active.length === 0) {
       return 5.0; // Neutral default
     }
 
     const totalWeight = active.reduce((sum, s) => sum + s.weight, 0);
-    return active.reduce((sum, s) => sum + (s.value! * s.weight), 0) / totalWeight;
+    return active.reduce((sum, s) => sum + s.value! * s.weight, 0) / totalWeight;
   }
 
   /**
    * Calculates freshness score with exponential decay and minimum floor.
    * Ensures classics don't fall to zero.
    */
-  private calculateFreshness(
-    releaseDate?: Date | null,
-    decayDays = 180,
-    minFloor = 0.2
-  ): number {
+  private calculateFreshness(releaseDate?: Date | null, decayDays = 180, minFloor = 0.2): number {
     if (!releaseDate) {
       return minFloor; // Unknown release date = treat as old
     }
 
     const now = new Date();
-    const daysSinceRelease = Math.max(0, 
+    const daysSinceRelease = Math.max(
+      0,
       Math.floor((now.getTime() - releaseDate.getTime()) / (1000 * 60 * 60 * 24))
     );
 

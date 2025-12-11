@@ -20,34 +20,35 @@ describe('TmdbMapper', () => {
     runtime: 139,
     budget: 63000000,
     revenue: 100853753,
-    genres: [
-      { id: 18, name: 'Drama' }
-    ],
+    genres: [{ id: 18, name: 'Drama' }],
     release_dates: {
       results: [
         {
           iso_3166_1: 'US',
-          release_dates: [
-            { type: 3, release_date: '1999-10-15', certification: 'R' }
-          ]
+          release_dates: [{ type: 3, release_date: '1999-10-15', certification: 'R' }],
         },
         {
           iso_3166_1: DEFAULT_REGION,
           release_dates: [
-            { type: 4, release_date: '2000-01-01' } // Digital
-          ]
-        }
-      ]
+            { type: 4, release_date: '2000-01-01' }, // Digital
+          ],
+        },
+      ],
     },
     'watch/providers': {
       results: {
         [DEFAULT_REGION]: {
           flatrate: [
-            { provider_id: 8, provider_name: 'Netflix', logo_path: '/t2yyOv40HZeVlLkJs8hXc.jpg', display_priority: 0 }
-          ]
-        }
-      }
-    }
+            {
+              provider_id: 8,
+              provider_name: 'Netflix',
+              logo_path: '/t2yyOv40HZeVlLkJs8hXc.jpg',
+              display_priority: 0,
+            },
+          ],
+        },
+      },
+    },
   };
 
   const mockShow = {
@@ -64,18 +65,21 @@ describe('TmdbMapper', () => {
     number_of_seasons: 5,
     number_of_episodes: 62,
     status: 'Ended',
-    genres: [
-      { id: 18, name: 'Drama' }
-    ],
+    genres: [{ id: 18, name: 'Drama' }],
     'watch/providers': {
       results: {
         [DEFAULT_REGION]: {
           buy: [
-            { provider_id: 3, provider_name: 'Google Play', logo_path: '/pe.jpg', display_priority: 1 }
-          ]
-        }
-      }
-    }
+            {
+              provider_id: 3,
+              provider_name: 'Google Play',
+              logo_path: '/pe.jpg',
+              display_priority: 1,
+            },
+          ],
+        },
+      },
+    },
   };
 
   describe('toDomain', () => {
@@ -83,60 +87,66 @@ describe('TmdbMapper', () => {
       const result = TmdbMapper.toDomain(mockMovie, MediaType.MOVIE);
 
       expect(result).not.toBeNull();
-      expect(result).toEqual(expect.objectContaining({
-        title: 'Fight Club',
-        slug: 'fight-club',
-        type: MediaType.MOVIE,
-        externalIds: { tmdbId: 550, imdbId: null },
-        rating: 8.4,
-        voteCount: 20000,
-        popularity: 60.5,
-        status: 'Released',
-        details: expect.objectContaining({
-          runtime: 139,
-          budget: 63000000,
-          revenue: 100853753,
-          theatricalReleaseDate: new Date('1999-10-15'),
-          digitalReleaseDate: new Date('2000-01-01'),
-        }),
-        credits: expect.objectContaining({
-          cast: [],
-          crew: [],
-        }),
-      }));
-      
+      expect(result).toEqual(
+        expect.objectContaining({
+          title: 'Fight Club',
+          slug: 'fight-club',
+          type: MediaType.MOVIE,
+          externalIds: { tmdbId: 550, imdbId: null },
+          rating: 8.4,
+          voteCount: 20000,
+          popularity: 60.5,
+          status: 'Released',
+          details: expect.objectContaining({
+            runtime: 139,
+            budget: 63000000,
+            revenue: 100853753,
+            theatricalReleaseDate: new Date('1999-10-15'),
+            digitalReleaseDate: new Date('2000-01-01'),
+          }),
+          credits: expect.objectContaining({
+            cast: [],
+            crew: [],
+          }),
+        })
+      );
+
       expect(result?.genres).toHaveLength(1);
       expect(result?.genres[0]).toEqual({ tmdbId: 18, name: 'Drama', slug: 'drama' });
-      
+
       expect(result?.watchProviders).toBeDefined();
       expect(result?.watchProviders?.[DEFAULT_REGION]).toBeDefined();
       expect(result?.watchProviders?.[DEFAULT_REGION].flatrate).toHaveLength(1);
-      expect(result?.watchProviders?.[DEFAULT_REGION].flatrate?.[0]).toEqual(expect.objectContaining({
-        providerId: 8,
-        name: 'Netflix',
-      }));
+      expect(result?.watchProviders?.[DEFAULT_REGION].flatrate?.[0]).toEqual(
+        expect.objectContaining({
+          providerId: 8,
+          name: 'Netflix',
+        })
+      );
     });
 
     it('should map a show correctly', () => {
       const result = TmdbMapper.toDomain(mockShow, MediaType.SHOW);
 
       expect(result).not.toBeNull();
-      expect(result).toEqual(expect.objectContaining({
-        title: 'Breaking Bad',
-        slug: 'breaking-bad',
-        type: MediaType.SHOW,
-        externalIds: { tmdbId: 1396, imdbId: null },
-        rating: 9.5,
-        details: expect.objectContaining({
-          totalSeasons: 5,
-          totalEpisodes: 62,
-          lastAirDate: new Date('2013-09-29'),
-        }),
-        credits: expect.objectContaining({
-          cast: [],
-          crew: [],
-        }),
-      }));
+      expect(result).toEqual(
+        expect.objectContaining({
+          title: 'Breaking Bad',
+          slug: 'breaking-bad',
+          type: MediaType.SHOW,
+          externalIds: { tmdbId: 1396, imdbId: null },
+          rating: 9.5,
+          details: expect.objectContaining({
+            totalSeasons: 5,
+            totalEpisodes: 62,
+            lastAirDate: new Date('2013-09-29'),
+          }),
+          credits: expect.objectContaining({
+            cast: [],
+            crew: [],
+          }),
+        })
+      );
 
       expect(result?.watchProviders).toBeDefined();
       expect(result?.watchProviders?.[DEFAULT_REGION]).toBeDefined();
@@ -155,7 +165,7 @@ describe('TmdbMapper', () => {
     it('should generate slugs correctly', () => {
       const movieWithSpecialChars = { ...mockMovie, title: 'The Fast & The Furious: Tokyo Drift' };
       const result = TmdbMapper.toDomain(movieWithSpecialChars, MediaType.MOVIE);
-      
+
       expect(result?.slug).toBe('the-fast-and-the-furious-tokyo-drift');
     });
 
@@ -164,17 +174,23 @@ describe('TmdbMapper', () => {
         ...mockMovie,
         'watch/providers': {
           results: {
-            AR: { flatrate: [{ provider_id: 1, provider_name: 'AR Provider', logo_path: '/ar.jpg' }] },
-            DE: { flatrate: [{ provider_id: 2, provider_name: 'DE Provider', logo_path: '/de.jpg' }] },
-            [DEFAULT_REGION]: { flatrate: [{ provider_id: 3, provider_name: 'UA Provider', logo_path: '/ua.jpg' }] },
+            AR: {
+              flatrate: [{ provider_id: 1, provider_name: 'AR Provider', logo_path: '/ar.jpg' }],
+            },
+            DE: {
+              flatrate: [{ provider_id: 2, provider_name: 'DE Provider', logo_path: '/de.jpg' }],
+            },
+            [DEFAULT_REGION]: {
+              flatrate: [{ provider_id: 3, provider_name: 'UA Provider', logo_path: '/ua.jpg' }],
+            },
             US: { rent: [{ provider_id: 4, provider_name: 'US Provider', logo_path: '/us.jpg' }] },
             GB: { buy: [{ provider_id: 5, provider_name: 'GB Provider', logo_path: '/gb.jpg' }] },
-          }
-        }
+          },
+        },
       };
-      
+
       const result = TmdbMapper.toDomain(movieWithManyRegions, MediaType.MOVIE);
-      
+
       expect(result?.watchProviders).toBeDefined();
       expect(Object.keys(result?.watchProviders || {})).toEqual([DEFAULT_REGION, 'US']);
       expect(result?.watchProviders?.[DEFAULT_REGION]?.flatrate?.[0].name).toBe('UA Provider');
@@ -197,15 +213,15 @@ describe('TmdbMapper', () => {
         ...mockMovie,
         release_dates: {
           results: [
-            { iso_3166_1: 'US', release_dates: [{ type: 5, release_date: '2000-05-05' }] } // Physical only
-          ]
-        }
+            { iso_3166_1: 'US', release_dates: [{ type: 5, release_date: '2000-05-05' }] }, // Physical only
+          ],
+        },
       };
-      
-      // Mapper logic: if theatrical (3) not found, it does NOT fallback to physical (5). 
+
+      // Mapper logic: if theatrical (3) not found, it does NOT fallback to physical (5).
       // But let's check logic. Code: const anyTheatrical = allReleases.find(r => r.type === 3);
       // So it strictly looks for type 3.
-      
+
       const result = TmdbMapper.toDomain(movieOnlyPhysical, MediaType.MOVIE);
       expect(result?.details.theatricalReleaseDate).toBeNull();
     });
@@ -220,10 +236,10 @@ describe('TmdbMapper', () => {
               release_dates: [
                 { type: 3, release_date: '2001-01-01' }, // Theatrical
                 { type: 4, release_date: '2001-02-01' }, // Digital
-              ]
-            }
-          ]
-        }
+              ],
+            },
+          ],
+        },
       };
 
       const result = TmdbMapper.toDomain(movieOtherRegions, MediaType.MOVIE);
@@ -236,14 +252,38 @@ describe('TmdbMapper', () => {
         ...mockMovie,
         credits: {
           cast: [
-            { id: 1, name: 'Brad Pitt', character: 'Tyler Durden', profile_path: '/brad.jpg', order: 0 },
-            { id: 2, name: 'Edward Norton', character: 'The Narrator', profile_path: '/edward.jpg', order: 1 },
+            {
+              id: 1,
+              name: 'Brad Pitt',
+              character: 'Tyler Durden',
+              profile_path: '/brad.jpg',
+              order: 0,
+            },
+            {
+              id: 2,
+              name: 'Edward Norton',
+              character: 'The Narrator',
+              profile_path: '/edward.jpg',
+              order: 1,
+            },
           ],
           crew: [
-            { id: 3, name: 'David Fincher', job: 'Director', department: 'Directing', profile_path: '/david.jpg' },
-            { id: 4, name: 'Jim Uhls', job: 'Screenplay', department: 'Writing', profile_path: null },
-          ]
-        }
+            {
+              id: 3,
+              name: 'David Fincher',
+              job: 'Director',
+              department: 'Directing',
+              profile_path: '/david.jpg',
+            },
+            {
+              id: 4,
+              name: 'Jim Uhls',
+              job: 'Screenplay',
+              department: 'Writing',
+              profile_path: null,
+            },
+          ],
+        },
       };
 
       const result = TmdbMapper.toDomain(movieWithCredits, MediaType.MOVIE);
@@ -273,13 +313,23 @@ describe('TmdbMapper', () => {
         ...mockShow,
         aggregate_credits: {
           cast: [
-            { id: 10, name: 'Bryan Cranston', roles: [{ character: 'Walter White' }], profile_path: '/bryan.jpg', order: 0 },
-            { id: 11, name: 'Aaron Paul', roles: [{ character: 'Jesse Pinkman' }], profile_path: '/aaron.jpg', order: 1 },
-          ]
+            {
+              id: 10,
+              name: 'Bryan Cranston',
+              roles: [{ character: 'Walter White' }],
+              profile_path: '/bryan.jpg',
+              order: 0,
+            },
+            {
+              id: 11,
+              name: 'Aaron Paul',
+              roles: [{ character: 'Jesse Pinkman' }],
+              profile_path: '/aaron.jpg',
+              order: 1,
+            },
+          ],
         },
-        created_by: [
-          { id: 20, name: 'Vince Gilligan', profile_path: '/vince.jpg' }
-        ]
+        created_by: [{ id: 20, name: 'Vince Gilligan', profile_path: '/vince.jpg' }],
       };
 
       const result = TmdbMapper.toDomain(showWithCredits, MediaType.SHOW);
@@ -314,7 +364,7 @@ describe('TmdbMapper', () => {
 
       const movieWithManyCast = {
         ...mockMovie,
-        credits: { cast, crew: [] }
+        credits: { cast, crew: [] },
       };
 
       const result = TmdbMapper.toDomain(movieWithManyCast, MediaType.MOVIE);
@@ -329,13 +379,53 @@ describe('TmdbMapper', () => {
         ...mockMovie,
         videos: {
           results: [
-            { key: '1', name: 'Old Official EN', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en', published_at: '2020-01-01' },
-            { key: '2', name: 'New Unofficial EN', site: 'YouTube', type: 'Trailer', official: false, iso_639_1: 'en', published_at: '2022-01-01' },
-            { key: '3', name: 'UK Trailer', site: 'YouTube', type: 'Trailer', official: false, iso_639_1: 'uk', published_at: '2021-01-01' },
-            { key: '4', name: 'New Official EN', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en', published_at: '2023-01-01' },
-            { key: '5', name: 'Official UK Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'uk', published_at: '2021-06-01' },
-          ]
-        }
+            {
+              key: '1',
+              name: 'Old Official EN',
+              site: 'YouTube',
+              type: 'Trailer',
+              official: true,
+              iso_639_1: 'en',
+              published_at: '2020-01-01',
+            },
+            {
+              key: '2',
+              name: 'New Unofficial EN',
+              site: 'YouTube',
+              type: 'Trailer',
+              official: false,
+              iso_639_1: 'en',
+              published_at: '2022-01-01',
+            },
+            {
+              key: '3',
+              name: 'UK Trailer',
+              site: 'YouTube',
+              type: 'Trailer',
+              official: false,
+              iso_639_1: 'uk',
+              published_at: '2021-01-01',
+            },
+            {
+              key: '4',
+              name: 'New Official EN',
+              site: 'YouTube',
+              type: 'Trailer',
+              official: true,
+              iso_639_1: 'en',
+              published_at: '2023-01-01',
+            },
+            {
+              key: '5',
+              name: 'Official UK Trailer',
+              site: 'YouTube',
+              type: 'Trailer',
+              official: true,
+              iso_639_1: 'uk',
+              published_at: '2021-06-01',
+            },
+          ],
+        },
       };
 
       const result = TmdbMapper.toDomain(movieWithVideos, MediaType.MOVIE);
@@ -353,16 +443,32 @@ describe('TmdbMapper', () => {
     });
 
     it('should sort videos: Trailer > Teaser (when not UK)', () => {
-       const movieWithTypes = {
+      const movieWithTypes = {
         ...mockMovie,
         videos: {
           results: [
-            { key: '1', name: 'Teaser', site: 'YouTube', type: 'Teaser', official: true, iso_639_1: 'en', published_at: '2023-01-01' },
-            { key: '2', name: 'Trailer', site: 'YouTube', type: 'Trailer', official: true, iso_639_1: 'en', published_at: '2023-01-01' },
-          ]
-        }
+            {
+              key: '1',
+              name: 'Teaser',
+              site: 'YouTube',
+              type: 'Teaser',
+              official: true,
+              iso_639_1: 'en',
+              published_at: '2023-01-01',
+            },
+            {
+              key: '2',
+              name: 'Trailer',
+              site: 'YouTube',
+              type: 'Trailer',
+              official: true,
+              iso_639_1: 'en',
+              published_at: '2023-01-01',
+            },
+          ],
+        },
       };
-      
+
       const result = TmdbMapper.toDomain(movieWithTypes, MediaType.MOVIE);
       // Expect Trailer (key 2) first
       expect(result?.videos[0].key).toBe('2');

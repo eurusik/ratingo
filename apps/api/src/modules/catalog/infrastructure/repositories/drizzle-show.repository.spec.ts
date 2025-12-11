@@ -10,9 +10,17 @@ import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
 const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {
   const thenable: any = {};
   const chainMethods = [
-    'insert', 'values', 'onConflictDoUpdate', 'returning',
-    'update', 'set', 'where',
-    'select', 'from', 'innerJoin', 'limit',
+    'insert',
+    'values',
+    'onConflictDoUpdate',
+    'returning',
+    'update',
+    'set',
+    'where',
+    'select',
+    'from',
+    'innerJoin',
+    'limit',
     ...extraMethods,
   ];
   chainMethods.forEach((m) => {
@@ -103,7 +111,9 @@ describe('DrizzleShowRepository', () => {
       const module: TestingModule = await setup({ reject: new Error('DB Error') });
       repository = module.get(DrizzleShowRepository);
 
-      await expect(repository.saveDropOffAnalysis(1, { chart: [] } as any)).rejects.toThrow(DatabaseException);
+      await expect(repository.saveDropOffAnalysis(1, { chart: [] } as any)).rejects.toThrow(
+        DatabaseException
+      );
     });
   });
 
@@ -127,7 +137,9 @@ describe('DrizzleShowRepository', () => {
 
   describe('getDropOffAnalysis', () => {
     it('should return analysis when found', async () => {
-      const module: TestingModule = await setup({ resolveSelect: [{ dropOffAnalysis: { chart: [] } }] });
+      const module: TestingModule = await setup({
+        resolveSelect: [{ dropOffAnalysis: { chart: [] } }],
+      });
       repository = module.get(DrizzleShowRepository);
 
       const res = await repository.getDropOffAnalysis(1);

@@ -1,5 +1,9 @@
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../../common/enums/video.enum';
+import {
+  VideoSiteEnum,
+  VideoTypeEnum,
+  VideoLanguageEnum,
+} from '../../../../common/enums/video.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 export interface CastMember {
@@ -70,7 +74,7 @@ export interface NormalizedVideo {
   type: VideoTypeEnum;
   official: boolean;
   language: VideoLanguageEnum; // iso_639_1
-  country: string;  // iso_3166_1
+  country: string; // iso_3166_1
 }
 
 /**
@@ -88,9 +92,9 @@ export interface NormalizedMedia {
   title: string;
   originalTitle?: string | null;
   overview?: string | null;
-  
+
   ingestionStatus?: IngestionStatus;
-  
+
   /** Generated SEO-friendly slug */
   slug: string;
 
@@ -101,7 +105,7 @@ export interface NormalizedMedia {
   rating: number;
   voteCount: number;
   popularity: number;
-  
+
   // External Ratings (Optional)
   ratingImdb?: number | null;
   voteCountImdb?: number | null;
@@ -109,16 +113,16 @@ export interface NormalizedMedia {
   ratingRottenTomatoes?: number | null;
   ratingTrakt?: number | null;
   voteCountTrakt?: number | null;
-  
+
   /** Synthetic score for sorting trending lists. Null if not in trends. */
   trendingScore?: number;
 
   // Ratingo Score (calculated)
-  ratingoScore?: number;      // Main composite score (0-1)
-  qualityScore?: number;      // Rating-based component (0-1)
-  popularityScore?: number;   // Popularity-based component (0-1)
-  freshnessScore?: number;    // Time-based component (0-1)
-  
+  ratingoScore?: number; // Main composite score (0-1)
+  qualityScore?: number; // Rating-based component (0-1)
+  popularityScore?: number; // Popularity-based component (0-1)
+  freshnessScore?: number; // Time-based component (0-1)
+
   /** Number of active watchers (Trakt/Realtime) */
   watchersCount?: number;
 
@@ -134,7 +138,7 @@ export interface NormalizedMedia {
     runtime?: number | null;
     budget?: number | null;
     revenue?: number | null;
-    
+
     totalSeasons?: number | null;
     totalEpisodes?: number | null;
     lastAirDate?: Date | null;

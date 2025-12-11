@@ -12,11 +12,12 @@ export class MovieResponseDto extends MediaBaseDto {
   @ApiProperty({ example: 500000000, required: false, nullable: true })
   revenue?: number | null;
 
-  @ApiProperty({ 
+  @ApiProperty({
     enum: MovieStatus,
     example: MovieStatus.RELEASED,
-    description: 'Movie status: Rumored, Planned, In Production, Post Production, Released, Canceled',
-    required: false, 
+    description:
+      'Movie status: Rumored, Planned, In Production, Post Production, Released, Canceled',
+    required: false,
     nullable: true,
   })
   status?: MovieStatus | null;

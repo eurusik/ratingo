@@ -31,12 +31,14 @@ describe('HomeController', () => {
 
   describe('getHero', () => {
     it('should return data from service', async () => {
-      const mockData = [{ 
-        id: '1', 
-        title: 'Test', 
-        overview: 'Overview',
-        stats: { liveWatchers: 100, totalWatchers: 5000 }
-      }];
+      const mockData = [
+        {
+          id: '1',
+          title: 'Test',
+          overview: 'Overview',
+          stats: { liveWatchers: 100, totalWatchers: 5000 },
+        },
+      ];
       homeServiceMock.getHero.mockResolvedValue(mockData);
 
       const result = await controller.getHero();

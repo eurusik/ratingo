@@ -53,7 +53,7 @@ const DROP_OFF_CONFIG = {
 
 /**
  * Service for analyzing show episode data to detect viewer drop-off points.
- * 
+ *
  * Drop-off is detected when:
  * - Rating drops by >= 1.0 points AND
  * - Votes drop by >= 40%
@@ -72,23 +72,23 @@ export class DropOffAnalyzerService {
 
     // Flatten all episodes with season info
     const allEpisodes = this.flattenEpisodes(seasons);
-    
+
     if (allEpisodes.length < 3) {
       return this.emptyAnalysis();
     }
 
     // Calculate season engagement
     const seasonEngagement = this.calculateSeasonEngagement(seasons);
-    
+
     // Find drop-off point
     const dropOffPoint = this.findDropOffPoint(allEpisodes);
-    
+
     // Calculate overall retention based on season engagement (first vs last season avg votes)
     const firstSeasonVotes = seasonEngagement[0]?.avgVotes || 1;
     const lastSeasonVotes = seasonEngagement[seasonEngagement.length - 1]?.avgVotes || 0;
     const overallRetention = Math.round((lastSeasonVotes / firstSeasonVotes) * 100);
-    
-    const dropOffPercent = dropOffPoint 
+
+    const dropOffPercent = dropOffPoint
       ? this.calculateDropOffPercent(allEpisodes, dropOffPoint)
       : 0;
 
@@ -116,9 +116,7 @@ export class DropOffAnalyzerService {
    * Flattens seasons into a single episode array with season info.
    */
   private flattenEpisodes(seasons: SeasonData[]): Array<EpisodeData & { season: number }> {
-    return seasons.flatMap(s => 
-      s.episodes.map(ep => ({ ...ep, season: s.number }))
-    );
+    return seasons.flatMap((s) => s.episodes.map((ep) => ({ ...ep, season: s.number })));
   }
 
   /**
@@ -126,26 +124,27 @@ export class DropOffAnalyzerService {
    */
   private calculateSeasonEngagement(seasons: SeasonData[]): DropOffAnalysis['seasonEngagement'] {
     let prevAvgVotes = 0;
-    
+
     return seasons.map((season, index) => {
       const validEpisodes = season.episodes.filter(
-        ep => ep.votes >= DROP_OFF_CONFIG.minVotesThreshold
+        (ep) => ep.votes >= DROP_OFF_CONFIG.minVotesThreshold
       );
-      
+
       const avgRating = validEpisodes.length
         ? validEpisodes.reduce((sum, ep) => sum + ep.rating, 0) / validEpisodes.length
         : 0;
-      
+
       const avgVotes = validEpisodes.length
         ? Math.round(validEpisodes.reduce((sum, ep) => sum + ep.votes, 0) / validEpisodes.length)
         : 0;
-      
-      const engagementDrop = index === 0 || prevAvgVotes === 0
-        ? 0
-        : Math.round(((prevAvgVotes - avgVotes) / prevAvgVotes) * 100);
-      
+
+      const engagementDrop =
+        index === 0 || prevAvgVotes === 0
+          ? 0
+          : Math.round(((prevAvgVotes - avgVotes) / prevAvgVotes) * 100);
+
       prevAvgVotes = avgVotes;
-      
+
       return {
         season: season.number,
         avgRating: Math.round(avgRating * 10) / 10,
@@ -162,19 +161,17 @@ export class DropOffAnalyzerService {
     episodes: Array<EpisodeData & { season: number }>
   ): DropOffAnalysis['dropOffPoint'] {
     // Need at least 2 episodes with valid votes
-    const validEpisodes = episodes.filter(
-      ep => ep.votes >= DROP_OFF_CONFIG.minVotesThreshold
-    );
-    
+    const validEpisodes = episodes.filter((ep) => ep.votes >= DROP_OFF_CONFIG.minVotesThreshold);
+
     if (validEpisodes.length < 2) return null;
 
     for (let i = 1; i < validEpisodes.length; i++) {
       const prev = validEpisodes[i - 1];
       const curr = validEpisodes[i];
-      
+
       const ratingDrop = prev.rating - curr.rating;
       const votesDropPercent = ((prev.votes - curr.votes) / prev.votes) * 100;
-      
+
       if (
         ratingDrop >= DROP_OFF_CONFIG.minRatingDrop &&
         votesDropPercent >= DROP_OFF_CONFIG.minVotesDropPercent
@@ -186,7 +183,7 @@ export class DropOffAnalyzerService {
         };
       }
     }
-    
+
     return null;
   }
 
@@ -198,14 +195,14 @@ export class DropOffAnalyzerService {
     dropOffPoint: NonNullable<DropOffAnalysis['dropOffPoint']>
   ): number {
     const dropIndex = episodes.findIndex(
-      ep => ep.season === dropOffPoint.season && ep.number === dropOffPoint.episode
+      (ep) => ep.season === dropOffPoint.season && ep.number === dropOffPoint.episode
     );
-    
+
     if (dropIndex <= 0) return 0;
-    
+
     const beforeVotes = episodes[dropIndex - 1].votes;
     const atVotes = episodes[dropIndex].votes;
-    
+
     return Math.round(((beforeVotes - atVotes) / beforeVotes) * 100);
   }
 

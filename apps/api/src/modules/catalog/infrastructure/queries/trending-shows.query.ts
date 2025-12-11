@@ -4,7 +4,10 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { sql, SQL } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { TrendingShowItem, TrendingShowsOptions } from '../../domain/repositories/show.repository.interface';
+import {
+  TrendingShowItem,
+  TrendingShowsOptions,
+} from '../../domain/repositories/show.repository.interface';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
@@ -23,7 +26,7 @@ export class TrendingShowsQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly db: PostgresJsDatabase<typeof schema>
   ) {}
 
   /**
@@ -37,10 +40,7 @@ export class TrendingShowsQuery {
     const { limit = 20, offset = 0, minRating, genreId } = options;
 
     try {
-      const whereConditions: SQL[] = [
-        sql`mi.type = ${MediaType.SHOW}`,
-        sql`mi.deleted_at IS NULL`,
-      ];
+      const whereConditions: SQL[] = [sql`mi.type = ${MediaType.SHOW}`, sql`mi.deleted_at IS NULL`];
 
       if (minRating !== undefined) {
         whereConditions.push(sql`ms.ratingo_score >= ${minRating}`);
@@ -120,7 +120,9 @@ export class TrendingShowsQuery {
       return this.mapResults(results);
     } catch (error) {
       this.logger.error(`Failed to find trending shows: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch trending shows', { originalError: error.message });
+      throw new DatabaseException('Failed to fetch trending shows', {
+        originalError: error.message,
+      });
     }
   }
 
@@ -150,10 +152,11 @@ export class TrendingShowsQuery {
         poster: ImageMapper.toPoster(row.poster_path),
         backdrop: ImageMapper.toBackdrop(row.backdrop_path),
         releaseDate,
-        
+
         isNew: releaseDate ? releaseDate >= newReleaseCutoff : false,
-        isClassic: releaseDate 
-          ? (releaseDate <= classicCutoff) || ((row.ratingo_score || 0) >= 80 && (row.total_watchers || 0) > 10000)
+        isClassic: releaseDate
+          ? releaseDate <= classicCutoff ||
+            ((row.ratingo_score || 0) >= 80 && (row.total_watchers || 0) > 10000)
           : false,
 
         stats: {
@@ -165,12 +168,18 @@ export class TrendingShowsQuery {
         },
         externalRatings: {
           tmdb: { rating: row.rating, voteCount: row.vote_count },
-          imdb: row.rating_imdb ? { rating: row.rating_imdb, voteCount: row.vote_count_imdb } : null,
-          trakt: row.rating_trakt ? { rating: row.rating_trakt, voteCount: row.vote_count_trakt } : null,
+          imdb: row.rating_imdb
+            ? { rating: row.rating_imdb, voteCount: row.vote_count_imdb }
+            : null,
+          trakt: row.rating_trakt
+            ? { rating: row.rating_trakt, voteCount: row.vote_count_trakt }
+            : null,
           metacritic: row.rating_metacritic ? { rating: row.rating_metacritic } : null,
-          rottenTomatoes: row.rating_rotten_tomatoes ? { rating: row.rating_rotten_tomatoes } : null,
+          rottenTomatoes: row.rating_rotten_tomatoes
+            ? { rating: row.rating_rotten_tomatoes }
+            : null,
         },
-        
+
         showProgress: this.buildShowProgress(row),
       };
     });

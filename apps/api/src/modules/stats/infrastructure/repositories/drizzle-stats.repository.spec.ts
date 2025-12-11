@@ -10,20 +10,20 @@ describe('DrizzleStatsRepository', () => {
     // Create a thenable object that resolves/rejects when awaited
     const createThenable = () => {
       const thenable: any = {};
-      
+
       // All chain methods return the same thenable
       const chainMethods = ['from', 'where', 'limit', 'innerJoin', 'values', 'onConflictDoUpdate'];
-      chainMethods.forEach(method => {
+      chainMethods.forEach((method) => {
         thenable[method] = jest.fn().mockReturnValue(thenable);
       });
 
       // Make it thenable (awaitable)
       if (options.rejectWith) {
-        thenable.then = function(onFulfilled: any, onRejected: any) {
+        thenable.then = function (onFulfilled: any, onRejected: any) {
           return Promise.reject(options.rejectWith).then(onFulfilled, onRejected);
         };
       } else {
-        thenable.then = function(onFulfilled: any, onRejected: any) {
+        thenable.then = function (onFulfilled: any, onRejected: any) {
           return Promise.resolve(options.resolveWith ?? []).then(onFulfilled, onRejected);
         };
       }
@@ -43,12 +43,9 @@ describe('DrizzleStatsRepository', () => {
   describe('upsert', () => {
     it('should upsert stats successfully', async () => {
       const mockDb = createMockDb();
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
@@ -61,30 +58,25 @@ describe('DrizzleStatsRepository', () => {
 
     it('should throw DatabaseException on error', async () => {
       const mockDb = createMockDb({ rejectWith: new Error('DB Error') });
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
 
-      await expect(repository.upsert({ mediaItemId: '1', watchersCount: 0 }))
-        .rejects.toThrow(DatabaseException);
+      await expect(repository.upsert({ mediaItemId: '1', watchersCount: 0 })).rejects.toThrow(
+        DatabaseException
+      );
     });
   });
 
   describe('bulkUpsert', () => {
     it('should upsert multiple stats', async () => {
       const mockDb = createMockDb();
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
@@ -100,48 +92,42 @@ describe('DrizzleStatsRepository', () => {
 
     it('should return early if array is empty', async () => {
       const mockDb = createMockDb();
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
 
       await repository.bulkUpsert([]);
-      
+
       expect(mockDb.insert).not.toHaveBeenCalled();
     });
 
     it('should throw DatabaseException on error', async () => {
       const mockDb = createMockDb({ rejectWith: new Error('DB Error') });
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
 
-      await expect(repository.bulkUpsert([{ mediaItemId: '1', watchersCount: 0 }]))
-        .rejects.toThrow(DatabaseException);
+      await expect(repository.bulkUpsert([{ mediaItemId: '1', watchersCount: 0 }])).rejects.toThrow(
+        DatabaseException
+      );
     });
   });
 
   describe('findByMediaItemId', () => {
     it('should return stats if found', async () => {
-      const mockResult = [{ mediaItemId: 'media-1', watchersCount: 100, trendingRank: 5, popularity24h: 50 }];
+      const mockResult = [
+        { mediaItemId: 'media-1', watchersCount: 100, trendingRank: 5, popularity24h: 50 },
+      ];
       const mockDb = createMockDb({ resolveWith: mockResult });
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
@@ -158,30 +144,26 @@ describe('DrizzleStatsRepository', () => {
 
     it('should return null if not found', async () => {
       const mockDb = createMockDb({ resolveWith: [] });
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
 
       const result = await repository.findByMediaItemId('non-existent');
-      
+
       expect(result).toBeNull();
     });
 
     it('should handle null values gracefully', async () => {
-      const mockResult = [{ mediaItemId: 'media-1', watchersCount: null, trendingRank: null, popularity24h: null }];
+      const mockResult = [
+        { mediaItemId: 'media-1', watchersCount: null, trendingRank: null, popularity24h: null },
+      ];
       const mockDb = createMockDb({ resolveWith: mockResult });
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
@@ -198,31 +180,26 @@ describe('DrizzleStatsRepository', () => {
 
     it('should throw DatabaseException on error', async () => {
       const mockDb = createMockDb({ rejectWith: new Error('DB Error') });
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
 
-      await expect(repository.findByMediaItemId('1'))
-        .rejects.toThrow(DatabaseException);
+      await expect(repository.findByMediaItemId('1')).rejects.toThrow(DatabaseException);
     });
   });
 
   describe('findByTmdbId', () => {
     it('should return stats if found', async () => {
-      const mockResult = [{ mediaItemId: 'media-1', watchersCount: 200, trendingRank: 3, popularity24h: 80 }];
+      const mockResult = [
+        { mediaItemId: 'media-1', watchersCount: 200, trendingRank: 3, popularity24h: 80 },
+      ];
       const mockDb = createMockDb({ resolveWith: mockResult });
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
@@ -240,35 +217,28 @@ describe('DrizzleStatsRepository', () => {
 
     it('should return null if not found', async () => {
       const mockDb = createMockDb({ resolveWith: [] });
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
 
       const result = await repository.findByTmdbId(999999);
-      
+
       expect(result).toBeNull();
     });
 
     it('should throw DatabaseException on error', async () => {
       const mockDb = createMockDb({ rejectWith: new Error('DB Error') });
-      
+
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          DrizzleStatsRepository,
-          { provide: DATABASE_CONNECTION, useValue: mockDb },
-        ],
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
       }).compile();
 
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
 
-      await expect(repository.findByTmdbId(550))
-        .rejects.toThrow(DatabaseException);
+      await expect(repository.findByTmdbId(550)).rejects.toThrow(DatabaseException);
     });
   });
 });

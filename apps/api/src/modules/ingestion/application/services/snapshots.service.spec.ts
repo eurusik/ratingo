@@ -56,10 +56,10 @@ describe('SnapshotsService', () => {
 
       expect(db.select).toHaveBeenCalled();
       expect(db.from).toHaveBeenCalled();
-      
+
       // Check movie sync
       expect(traktAdapter.getMovieRatingsByTmdbId).toHaveBeenCalledWith(101);
-      
+
       // Check show sync
       expect(traktAdapter.getShowRatingsByTmdbId).toHaveBeenCalledWith(202);
 

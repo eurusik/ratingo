@@ -19,7 +19,7 @@ export class SnapshotsService {
   constructor(
     private readonly traktAdapter: TraktAdapter,
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly db: PostgresJsDatabase<typeof schema>
   ) {}
 
   /**
@@ -58,7 +58,7 @@ export class SnapshotsService {
 
     for (let i = 0; i < items.length; i += BATCH_SIZE) {
       const batch = items.slice(i, i + BATCH_SIZE);
-      
+
       await Promise.allSettled(
         batch.map(async (item) => {
           try {
@@ -92,7 +92,9 @@ export class SnapshotsService {
               updated++;
             }
           } catch (e) {
-            this.logger.warn(`Failed to sync snapshot for item ${item.id} (TMDB ${item.tmdbId}): ${e.message} \nFull Error: ${JSON.stringify(e)}`);
+            this.logger.warn(
+              `Failed to sync snapshot for item ${item.id} (TMDB ${item.tmdbId}): ${e.message} \nFull Error: ${JSON.stringify(e)}`
+            );
           }
         })
       );

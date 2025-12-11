@@ -2,7 +2,7 @@ import { RiseFallItemDto } from '../../presentation/dtos/insights.dto';
 
 export interface InsightsRepository {
   getMovements(
-    windowDays: number, 
+    windowDays: number,
     limit: number
   ): Promise<{ risers: RiseFallItemDto[]; fallers: RiseFallItemDto[] }>;
 }

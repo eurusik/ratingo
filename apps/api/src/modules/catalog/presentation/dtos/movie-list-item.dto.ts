@@ -18,7 +18,11 @@ export class MovieListItemDto {
   @ApiProperty()
   slug: string;
 
-  @ApiProperty({ example: IngestionStatus.READY, enum: IngestionStatus, default: IngestionStatus.READY })
+  @ApiProperty({
+    example: IngestionStatus.READY,
+    enum: IngestionStatus,
+    default: IngestionStatus.READY,
+  })
   ingestionStatus: IngestionStatus;
 
   @ApiProperty({ nullable: true })

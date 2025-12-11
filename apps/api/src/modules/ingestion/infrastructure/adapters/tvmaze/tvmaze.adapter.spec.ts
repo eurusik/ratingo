@@ -9,7 +9,7 @@ describe('TvMazeAdapter', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [TvMazeAdapter],
     }).compile();
@@ -71,20 +71,20 @@ describe('TvMazeAdapter', () => {
     });
 
     it('should handle API errors gracefully', async () => {
-        // Mock lookup ok
-        (global.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            json: async () => ({ id: 123 }),
-        });
+      // Mock lookup ok
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 123 }),
+      });
 
-        // Mock episodes error
-        (global.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: false,
-            status: 500,
-        });
+      // Mock episodes error
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      });
 
-        const result = await adapter.getEpisodesByImdbId('tt123');
-        expect(result).toEqual([]);
+      const result = await adapter.getEpisodesByImdbId('tt123');
+      expect(result).toEqual([]);
     });
   });
 });

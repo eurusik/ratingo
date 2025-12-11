@@ -34,13 +34,26 @@ export class TrendingShowsQueryDto {
 }
 
 export class ShowProgressDto {
-  @ApiProperty({ required: false, nullable: true, description: 'Null for trending list optimization' })
+  @ApiProperty({
+    required: false,
+    nullable: true,
+    description: 'Null for trending list optimization',
+  })
   season?: number | null;
 
-  @ApiProperty({ required: false, nullable: true, description: 'Null for trending list optimization' })
+  @ApiProperty({
+    required: false,
+    nullable: true,
+    description: 'Null for trending list optimization',
+  })
   episode?: number | null;
 
-  @ApiProperty({ required: false, nullable: true, example: 'S5E2', description: 'Null for trending list optimization' })
+  @ApiProperty({
+    required: false,
+    nullable: true,
+    example: 'S5E2',
+    description: 'Null for trending list optimization',
+  })
   label?: string | null;
 
   @ApiProperty({ required: false, nullable: true })
@@ -106,7 +119,7 @@ export class TrendingShowsResponseDto {
       count: { type: 'number' },
       limit: { type: 'number' },
       offset: { type: 'number' },
-    }
+    },
   })
   meta: {
     count: number;
@@ -168,7 +181,7 @@ export class TrendingMoviesResponseDto {
       count: { type: 'number' },
       limit: { type: 'number' },
       offset: { type: 'number' },
-    }
+    },
   })
   meta: {
     count: number;

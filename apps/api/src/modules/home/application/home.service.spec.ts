@@ -31,19 +31,19 @@ describe('HomeService', () => {
 
   describe('getHero', () => {
     const mockHeroItems = [
-      { 
-        id: '1', 
-        title: 'Movie 1', 
-        type: MediaType.MOVIE, 
+      {
+        id: '1',
+        title: 'Movie 1',
+        type: MediaType.MOVIE,
         primaryTrailerKey: 'key1',
         isNew: true,
         isClassic: false,
         overview: 'Overview 1',
         stats: { ratingoScore: 80, qualityScore: 80, liveWatchers: 100, totalWatchers: 1000 },
       },
-      { 
-        id: '2', 
-        title: 'Show 1', 
+      {
+        id: '2',
+        title: 'Show 1',
         type: MediaType.SHOW,
         showProgress: { season: 1, episode: 1, label: 'S1E1' },
         isNew: false,

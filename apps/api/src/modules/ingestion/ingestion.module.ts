@@ -29,7 +29,14 @@ import { SyncWorker } from './application/workers/sync.worker';
     }),
   ],
   controllers: [IngestionController],
-  providers: [TraktAdapter, OmdbAdapter, TvMazeAdapter, SyncMediaService, SyncWorker, SnapshotsService],
+  providers: [
+    TraktAdapter,
+    OmdbAdapter,
+    TvMazeAdapter,
+    SyncMediaService,
+    SyncWorker,
+    SnapshotsService,
+  ],
   exports: [SyncMediaService, TraktAdapter, SnapshotsService],
 })
 export class IngestionModule {}

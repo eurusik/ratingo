@@ -26,24 +26,43 @@ class SyncTrendingDto {
   @Min(1)
   page?: number;
 
-  @ApiProperty({ example: true, description: 'Also sync Trakt stats after ingestion', default: true, required: false })
+  @ApiProperty({
+    example: true,
+    description: 'Also sync Trakt stats after ingestion',
+    default: true,
+    required: false,
+  })
   @IsOptional()
   syncStats?: boolean;
 
-  @ApiProperty({ enum: MediaType, description: 'Sync only specific media type (movie or show)', required: false })
+  @ApiProperty({
+    enum: MediaType,
+    description: 'Sync only specific media type (movie or show)',
+    required: false,
+  })
   @IsOptional()
   @IsEnum(MediaType)
   type?: MediaType;
 }
 
 class SyncNowPlayingDto {
-  @ApiProperty({ example: DEFAULT_REGION, description: 'Region code (ISO 3166-1)', default: DEFAULT_REGION, required: false })
+  @ApiProperty({
+    example: DEFAULT_REGION,
+    description: 'Region code (ISO 3166-1)',
+    default: DEFAULT_REGION,
+    required: false,
+  })
   @IsOptional()
   region?: string;
 }
 
 class SyncNewReleasesDto {
-  @ApiProperty({ example: DEFAULT_REGION, description: 'Region code (ISO 3166-1)', default: DEFAULT_REGION, required: false })
+  @ApiProperty({
+    example: DEFAULT_REGION,
+    description: 'Region code (ISO 3166-1)',
+    default: DEFAULT_REGION,
+    required: false,
+  })
   @IsOptional()
   region?: string;
 
@@ -63,7 +82,7 @@ class SyncNewReleasesDto {
 export class IngestionController {
   constructor(
     @InjectQueue(INGESTION_QUEUE) private readonly ingestionQueue: Queue,
-    private readonly syncService: SyncMediaService,
+    private readonly syncService: SyncMediaService
   ) {}
 
   @Post('sync')
@@ -71,7 +90,7 @@ export class IngestionController {
   @HttpCode(HttpStatus.ACCEPTED)
   async sync(@Body() dto: SyncDto) {
     const jobName = dto.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
-    
+
     await this.ingestionQueue.add(jobName, {
       tmdbId: dto.tmdbId,
     });
@@ -80,9 +99,10 @@ export class IngestionController {
   }
 
   @Post('trending')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Trigger sync for trending movies and shows',
-    description: 'Syncs trending content from TMDB. With syncStats=true (default), also updates Trakt stats after ingestion.',
+    description:
+      'Syncs trending content from TMDB. With syncStats=true (default), also updates Trakt stats after ingestion.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncTrending(@Body() dto: SyncTrendingDto) {
@@ -96,8 +116,8 @@ export class IngestionController {
       type: dto.type,
     });
 
-    return { 
-      status: 'queued', 
+    return {
+      status: 'queued',
       jobId: job.id,
       page,
       syncStats,
@@ -106,9 +126,10 @@ export class IngestionController {
   }
 
   @Post('movies/now-playing')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Sync movies currently in theaters (ingestion only)',
-    description: 'Fetches now playing movies from TMDB and queues them for sync. Does NOT update isNowPlaying flags - use /ingestion/movies/now-playing-flags for that.',
+    description:
+      'Fetches now playing movies from TMDB and queues them for sync. Does NOT update isNowPlaying flags - use /ingestion/movies/now-playing-flags for that.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncNowPlaying(@Body() dto: SyncNowPlayingDto) {
@@ -116,17 +137,18 @@ export class IngestionController {
       region: dto.region || 'UA',
     });
 
-    return { 
-      status: 'queued', 
+    return {
+      status: 'queued',
       jobId: job.id,
       region: dto.region || 'UA',
     };
   }
 
   @Post('movies/now-playing-flags')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update isNowPlaying flags for movies',
-    description: 'Updates isNowPlaying flags based on current TMDB now_playing list. Run this AFTER now-playing sync has completed.',
+    description:
+      'Updates isNowPlaying flags based on current TMDB now_playing list. Run this AFTER now-playing sync has completed.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async updateNowPlayingFlags(@Body() dto: SyncNowPlayingDto) {
@@ -134,15 +156,15 @@ export class IngestionController {
       region: dto.region || 'UA',
     });
 
-    return { 
-      status: 'queued', 
+    return {
+      status: 'queued',
       jobId: job.id,
       region: dto.region || 'UA',
     };
   }
 
   @Post('movies/new-releases')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Sync new theatrical movie releases',
     description: 'Fetches movies released in theaters within the specified period and syncs them.',
   })
@@ -153,8 +175,8 @@ export class IngestionController {
       daysBack: dto.daysBack || 30,
     });
 
-    return { 
-      status: 'queued', 
+    return {
+      status: 'queued',
       jobId: job.id,
       region: dto.region || 'UA',
       daysBack: dto.daysBack || 30,
@@ -169,7 +191,7 @@ export class IngestionController {
   @HttpCode(HttpStatus.ACCEPTED)
   async syncSnapshots() {
     const job = await this.ingestionQueue.add(IngestionJob.SYNC_SNAPSHOTS, {});
-    
+
     return {
       status: 'queued',
       jobId: job.id,

@@ -1,8 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -16,10 +13,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
  * @returns {Promise<void>}
  */
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter()
-  );
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
 
   // Global configuration
   app.setGlobalPrefix('api');
@@ -27,13 +21,13 @@ async function bootstrap(): Promise<void> {
   // Global pipes, filters, interceptors
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,           // Strip unknown properties
+      whitelist: true, // Strip unknown properties
       forbidNonWhitelisted: true, // Throw error on unknown properties
-      transform: true,           // Auto-transform payloads to DTO types
+      transform: true, // Auto-transform payloads to DTO types
       transformOptions: {
         enableImplicitConversion: true, // Convert string "123" to number 123
       },
-    }),
+    })
   );
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
@@ -45,7 +39,7 @@ async function bootstrap(): Promise<void> {
     .setVersion('2.0')
     .addBearerAuth()
     .build();
-    
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 

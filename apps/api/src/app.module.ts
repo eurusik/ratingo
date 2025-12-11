@@ -22,9 +22,7 @@ import { BullModule } from '@nestjs/bullmq';
       validationSchema: Joi.object({
         // Server
         PORT: Joi.number().default(3001),
-        NODE_ENV: Joi.string()
-          .valid('development', 'production', 'test')
-          .default('development'),
+        NODE_ENV: Joi.string().valid('development', 'production', 'test').default('development'),
 
         // Database
         DATABASE_URL: Joi.string().required(),
@@ -46,7 +44,7 @@ import { BullModule } from '@nestjs/bullmq';
       }),
       validationOptions: {
         allowUnknown: true, // Allow other env vars
-        abortEarly: true,   // Stop on first error
+        abortEarly: true, // Stop on first error
       },
     }),
     BullModule.forRootAsync({

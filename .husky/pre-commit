@@ -1,7 +1,4 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npm --prefix apps/api run format && \
-npm --prefix apps/api run lint && \
-npm --prefix apps/api run build && \
-npm --prefix apps/api test -- --runInBand
+npm --prefix apps/api run lint:staged

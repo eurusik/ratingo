@@ -25,7 +25,7 @@ export class ShowDetailsQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly db: PostgresJsDatabase<typeof schema>
   ) {}
 
   /**
@@ -53,14 +53,14 @@ export class ShowDetailsQuery {
           watchProviders: schema.mediaItems.watchProviders,
           rating: schema.mediaItems.rating,
           voteCount: schema.mediaItems.voteCount,
-          
+
           ratingImdb: schema.mediaItems.ratingImdb,
           voteCountImdb: schema.mediaItems.voteCountImdb,
           ratingTrakt: schema.mediaItems.ratingTrakt,
           voteCountTrakt: schema.mediaItems.voteCountTrakt,
           ratingMetacritic: schema.mediaItems.ratingMetacritic,
           ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-          
+
           totalSeasons: schema.shows.totalSeasons,
           totalEpisodes: schema.shows.totalEpisodes,
           status: schema.shows.status,
@@ -72,7 +72,7 @@ export class ShowDetailsQuery {
           popularityScore: schema.mediaStats.popularityScore,
           watchersCount: schema.mediaStats.watchersCount,
           totalWatchers: schema.mediaStats.totalWatchers,
-          
+
           showId: schema.shows.id,
         })
         .from(schema.mediaItems)
@@ -105,13 +105,13 @@ export class ShowDetailsQuery {
         primaryTrailer: showData.videos?.[0] || null,
         credits: CreditsMapper.toDto(showData.credits),
         availability: WatchProvidersMapper.toAvailability(showData.watchProviders),
-        
+
         totalSeasons: showData.totalSeasons,
         totalEpisodes: showData.totalEpisodes,
         status: showData.status as ShowStatus | null,
         lastAirDate: showData.lastAirDate,
         nextAirDate: showData.nextAirDate,
-        
+
         stats: {
           ratingoScore: showData.ratingoScore,
           qualityScore: showData.qualityScore,
@@ -121,12 +121,18 @@ export class ShowDetailsQuery {
         },
         externalRatings: {
           tmdb: { rating: showData.rating, voteCount: showData.voteCount },
-          imdb: showData.ratingImdb ? { rating: showData.ratingImdb, voteCount: showData.voteCountImdb } : null,
-          trakt: showData.ratingTrakt ? { rating: showData.ratingTrakt, voteCount: showData.voteCountTrakt } : null,
+          imdb: showData.ratingImdb
+            ? { rating: showData.ratingImdb, voteCount: showData.voteCountImdb }
+            : null,
+          trakt: showData.ratingTrakt
+            ? { rating: showData.ratingTrakt, voteCount: showData.voteCountTrakt }
+            : null,
           metacritic: showData.ratingMetacritic ? { rating: showData.ratingMetacritic } : null,
-          rottenTomatoes: showData.ratingRottenTomatoes ? { rating: showData.ratingRottenTomatoes } : null,
+          rottenTomatoes: showData.ratingRottenTomatoes
+            ? { rating: showData.ratingRottenTomatoes }
+            : null,
         },
-        
+
         genres,
         seasons,
       };

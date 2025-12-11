@@ -16,7 +16,7 @@ export class OmdbAdapter {
   private readonly NA_VALUE = 'N/A';
   private readonly SOURCE_ROTTEN_TOMATOES = 'Rotten Tomatoes';
   private readonly SOURCE_METACRITIC = 'Metacritic';
-  
+
   // Mapping our types to OMDb types
   private readonly TYPE_MAPPING = {
     [MediaType.MOVIE]: 'movie',
@@ -25,12 +25,12 @@ export class OmdbAdapter {
 
   constructor(
     @Inject(omdbConfig.KEY)
-    private readonly config: ConfigType<typeof omdbConfig>,
+    private readonly config: ConfigType<typeof omdbConfig>
   ) {}
 
   /**
    * Internal helper to make requests to OMDb.
-   * 
+   *
    * @param {Record<string, string>} params - Query parameters
    * @returns {Promise<T>} Typed response
    */
@@ -56,12 +56,15 @@ export class OmdbAdapter {
 
   /**
    * Fetches aggregated ratings (IMDb, Rotten Tomatoes, Metacritic) for a media item.
-   * 
+   *
    * @param {string} imdbId - The IMDb ID of the content (e.g. tt1234567)
    * @param {MediaType} type - Type of content (MOVIE or SHOW)
    * @returns {Promise<object>} Object containing available ratings
    */
-  async getAggregatedRatings(imdbId: string, type: MediaType): Promise<{
+  async getAggregatedRatings(
+    imdbId: string,
+    type: MediaType
+  ): Promise<{
     imdbRating: number | null;
     imdbVotes: number | null;
     rottenTomatoes: number | null;
@@ -71,13 +74,14 @@ export class OmdbAdapter {
     try {
       const omdbType = this.TYPE_MAPPING[type];
       const data = await this.fetch<any>({ i: imdbId, type: omdbType });
-      
+
       const imdbRating =
         data.imdbRating && data.imdbRating !== this.NA_VALUE ? parseFloat(data.imdbRating) : null;
-      
-      const imdbVotes = data.imdbVotes && data.imdbVotes !== this.NA_VALUE
-        ? parseInt(String(data.imdbVotes).replace(/,/g, ''), 10)
-        : null;
+
+      const imdbVotes =
+        data.imdbVotes && data.imdbVotes !== this.NA_VALUE
+          ? parseInt(String(data.imdbVotes).replace(/,/g, ''), 10)
+          : null;
 
       let rottenTomatoes: number | null = null;
       let metacritic: number | null = null;

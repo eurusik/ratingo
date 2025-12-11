@@ -70,17 +70,25 @@ describe('SyncWorker', () => {
     });
 
     it('should process SYNC_SHOW job', async () => {
-      const job = { name: IngestionJob.SYNC_SHOW, data: { tmdbId: 100, trendingScore: 0.5 }, id: '2' } as Job;
+      const job = {
+        name: IngestionJob.SYNC_SHOW,
+        data: { tmdbId: 100, trendingScore: 0.5 },
+        id: '2',
+      } as Job;
       await worker.process(job);
       expect(syncService.syncShow).toHaveBeenCalledWith(100, 0.5);
     });
 
     it('should process UPDATE_NOW_PLAYING_FLAGS', async () => {
       tmdbAdapter.getNowPlayingIds.mockResolvedValue([1, 2, 3]);
-      const job = { name: IngestionJob.UPDATE_NOW_PLAYING_FLAGS, data: { region: 'UA' }, id: '3' } as Job;
-      
+      const job = {
+        name: IngestionJob.UPDATE_NOW_PLAYING_FLAGS,
+        data: { region: 'UA' },
+        id: '3',
+      } as Job;
+
       await worker.process(job);
-      
+
       expect(tmdbAdapter.getNowPlayingIds).toHaveBeenCalledWith('UA');
       expect(movieRepository.setNowPlaying).toHaveBeenCalledWith([1, 2, 3]);
     });
@@ -110,7 +118,11 @@ describe('SyncWorker', () => {
   describe('processNewReleases', () => {
     it('should queue new releases sync jobs', async () => {
       tmdbAdapter.getNewReleaseIds.mockResolvedValue([30, 40]);
-      const job = { name: IngestionJob.SYNC_NEW_RELEASES, data: { region: 'GB', daysBack: 60 }, id: '6' } as Job;
+      const job = {
+        name: IngestionJob.SYNC_NEW_RELEASES,
+        data: { region: 'GB', daysBack: 60 },
+        id: '6',
+      } as Job;
 
       await worker.process(job);
 
@@ -139,10 +151,10 @@ describe('SyncWorker', () => {
       ];
       syncService.getTrending.mockResolvedValue(mockItems);
 
-      const job = { 
-        name: IngestionJob.SYNC_TRENDING_FULL, 
-        data: { page: 1, syncStats: true }, 
-        id: '8' 
+      const job = {
+        name: IngestionJob.SYNC_TRENDING_FULL,
+        data: { page: 1, syncStats: true },
+        id: '8',
       } as Job;
 
       await worker.process(job);
@@ -156,10 +168,10 @@ describe('SyncWorker', () => {
 
     it('should skip stats sync if syncStats is false', async () => {
       syncService.getTrending.mockResolvedValue([]);
-      const job = { 
-        name: IngestionJob.SYNC_TRENDING_FULL, 
-        data: { page: 1, syncStats: false }, 
-        id: '9' 
+      const job = {
+        name: IngestionJob.SYNC_TRENDING_FULL,
+        data: { page: 1, syncStats: false },
+        id: '9',
       } as Job;
 
       await worker.process(job);
@@ -170,15 +182,15 @@ describe('SyncWorker', () => {
     it('should continue processing items even if one fails', async () => {
       const mockItems = [
         { tmdbId: 100, type: 'movie' }, // Fails
-        { tmdbId: 200, type: 'show' },  // Succeeds
+        { tmdbId: 200, type: 'show' }, // Succeeds
       ];
       syncService.getTrending.mockResolvedValue(mockItems);
       syncService.syncMovie.mockRejectedValue(new Error('Sync failed'));
 
-      const job = { 
-        name: IngestionJob.SYNC_TRENDING_FULL, 
-        data: { page: 1 }, 
-        id: '10' 
+      const job = {
+        name: IngestionJob.SYNC_TRENDING_FULL,
+        data: { page: 1 },
+        id: '10',
       } as Job;
 
       await worker.process(job);
