@@ -47,6 +47,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
     "autoprefixer": "^10.4.21",
     "drizzle-kit": "^0.31.6",
     "eslint": "^9.39.1",
