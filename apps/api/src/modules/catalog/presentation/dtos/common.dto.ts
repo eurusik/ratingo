@@ -166,6 +166,20 @@ export class RatingoStatsDto {
   totalWatchers?: number | null;
 }
 
+export class UserMediaStateDto {
+  @ApiProperty({ enum: ['watching', 'completed', 'planned', 'dropped'], example: 'watching' })
+  state: 'watching' | 'completed' | 'planned' | 'dropped';
+
+  @ApiProperty({ example: 85, required: false, nullable: true })
+  rating?: number | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  progress?: Record<string, unknown> | null;
+
+  @ApiProperty({ example: 'Rewatching with friends', required: false, nullable: true })
+  notes?: string | null;
+}
+
 export class ExternalRatingItemDto {
   @ApiProperty({ example: 8.8 })
   rating: number;
@@ -339,12 +353,16 @@ export class MediaBaseDto {
   @ApiProperty({ type: [GenreDto], required: false })
   genres?: GenreDto[];
 
-  @ApiProperty({
-    example: IngestionStatus.READY,
-    enum: IngestionStatus,
-    default: IngestionStatus.READY,
-  })
+  @ApiProperty({ enum: IngestionStatus, example: IngestionStatus.READY })
   ingestionStatus: IngestionStatus;
+
+  @ApiProperty({
+    description: 'User-specific state, present only when authenticated',
+    required: false,
+    nullable: true,
+    type: () => UserMediaStateDto,
+  })
+  userState?: UserMediaStateDto | null;
 
   @ApiProperty({ type: [VideoDto], required: false, nullable: true })
   videos?: VideoDto[] | null;

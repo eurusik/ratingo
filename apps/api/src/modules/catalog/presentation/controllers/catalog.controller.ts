@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Param,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiOkResponse, ApiResponse } from '@nestjs/swagger';
 import {
@@ -29,12 +30,16 @@ import {
 } from '../dtos/trending.dto';
 import { CatalogSearchService } from '../../application/services/catalog-search.service';
 import { SearchResponseDto } from '../dtos/search.dto';
+import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
+import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 
 /**
  * REST controller for catalog endpoints.
  * Provides endpoints for browsing movies and shows.
  */
 @ApiTags('Public: Catalog')
+@UseGuards(OptionalJwtAuthGuard)
 @Controller('catalog')
 export class CatalogController {
   constructor(
@@ -42,7 +47,8 @@ export class CatalogController {
     private readonly movieRepository: IMovieRepository,
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
-    private readonly catalogSearchService: CatalogSearchService
+    private readonly catalogSearchService: CatalogSearchService,
+    private readonly userStateEnricher: CatalogUserStateEnricher,
   ) {}
 
   @Get('search')
@@ -58,14 +64,15 @@ export class CatalogController {
     description: 'Returns trending shows sorted by popularity and rating.',
   })
   @ApiOkResponse({ type: TrendingShowsResponseDto })
-  async getTrendingShows(@Query() query: TrendingShowsQueryDto): Promise<TrendingShowsResponseDto> {
+  async getTrendingShows(
+    @Query() query: TrendingShowsQueryDto,
+    @CurrentUser() user: { id: string } | null,
+  ): Promise<TrendingShowsResponseDto> {
     const shows = await this.showRepository.findTrending(query);
+    const data = await this.catalogUserListEnrich(user, shows, 'show');
 
     return {
-      data: shows.map((show) => ({
-        ...show,
-        type: 'show' as const,
-      })),
+      data,
       meta: {
         count: shows.length,
         limit: query.limit || 20,
@@ -81,15 +88,14 @@ export class CatalogController {
   })
   @ApiOkResponse({ type: TrendingMoviesResponseDto })
   async getTrendingMovies(
-    @Query() query: TrendingShowsQueryDto
+    @Query() query: TrendingShowsQueryDto,
+    @CurrentUser() user: { id: string } | null,
   ): Promise<TrendingMoviesResponseDto> {
     const movies = await this.movieRepository.findTrending(query);
+    const data = await this.catalogUserListEnrich(user, movies, 'movie');
 
     return {
-      data: movies.map((movie) => ({
-        ...movie,
-        type: 'movie' as const,
-      })),
+      data,
       meta: {
         count: movies.length,
         limit: query.limit || 20,
@@ -118,7 +124,7 @@ export class CatalogController {
   @ApiOkResponse({ type: CalendarResponseDto })
   async getCalendar(
     @Query('startDate') startDateString?: string,
-    @Query('days', new DefaultValuePipe(7), ParseIntPipe) days?: number
+    @Query('days', new DefaultValuePipe(7), ParseIntPipe) days?: number,
   ): Promise<CalendarResponseDto> {
     const start = startDateString ? new Date(startDateString) : new Date();
 
@@ -180,15 +186,17 @@ export class CatalogController {
   @ApiOkResponse({ type: PaginatedMovieResponseDto })
   async getNowPlaying(
     @Query('limit') limit?: number,
-    @Query('offset') offset?: number
+    @Query('offset') offset?: number,
+    @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
     const movies = await this.movieRepository.findNowPlaying({
       limit: limit || 20,
       offset: offset || 0,
     });
+    const data = await this.catalogUserListEnrich(user, movies, 'movie');
 
     return {
-      data: movies,
+      data,
       meta: {
         count: movies.length,
         limit: limit || 20,
@@ -225,16 +233,18 @@ export class CatalogController {
   async getNewReleases(
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
-    @Query('daysBack') daysBack?: number
+    @Query('daysBack') daysBack?: number,
+    @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
     const movies = await this.movieRepository.findNewReleases({
       limit: limit || 20,
       offset: offset || 0,
       daysBack: daysBack || 30,
     });
+    const data = await this.catalogUserListEnrich(user, movies, 'movie');
 
     return {
-      data: movies,
+      data,
       meta: {
         count: movies.length,
         limit: limit || 20,
@@ -270,16 +280,18 @@ export class CatalogController {
   async getNewOnDigital(
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
-    @Query('daysBack') daysBack?: number
+    @Query('daysBack') daysBack?: number,
+    @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
     const movies = await this.movieRepository.findNewOnDigital({
       limit: limit || 20,
       offset: offset || 0,
       daysBack: daysBack || 14,
     });
+    const data = await this.catalogUserListEnrich(user, movies, 'movie');
 
     return {
-      data: movies,
+      data,
       meta: {
         count: movies.length,
         limit: limit || 20,
@@ -294,12 +306,16 @@ export class CatalogController {
     description: 'Returns full movie details including genres and stats.',
   })
   @ApiOkResponse({ type: MovieResponseDto })
-  async getMovieBySlug(@Param('slug') slug: string): Promise<MovieResponseDto> {
+  async getMovieBySlug(
+    @Param('slug') slug: string,
+    @CurrentUser() user?: { id: string } | null,
+  ): Promise<MovieResponseDto> {
     const movie = await this.movieRepository.findBySlug(slug);
     if (!movie) {
       throw new NotFoundException(`Movie with slug "${slug}" not found`);
     }
-    return movie;
+    const enriched = await this.catalogUserOneEnrich(user, movie);
+    return enriched as any;
   }
 
   @Get('shows/:slug')
@@ -308,11 +324,31 @@ export class CatalogController {
     description: 'Returns full show details including seasons list.',
   })
   @ApiOkResponse({ type: ShowResponseDto })
-  async getShowBySlug(@Param('slug') slug: string): Promise<ShowResponseDto> {
+  async getShowBySlug(
+    @Param('slug') slug: string,
+    @CurrentUser() user?: { id: string } | null,
+  ): Promise<ShowResponseDto> {
     const show = await this.showRepository.findBySlug(slug);
     if (!show) {
       throw new NotFoundException(`Show with slug "${slug}" not found`);
     }
-    return show;
+    const enriched = await this.catalogUserOneEnrich(user, show);
+    return enriched as any;
+  }
+
+  private async catalogUserListEnrich<T extends { id: string }>(
+    user: { id: string } | null | undefined,
+    items: T[],
+    type: 'movie' | 'show',
+  ): Promise<Array<T & { type: 'movie' | 'show'; userState: any | null }>> {
+    const typed = items.map((i) => ({ ...i, type, userState: null as any }));
+    return this.userStateEnricher.enrichList(user?.id, typed);
+  }
+
+  private async catalogUserOneEnrich<T extends { id: string }>(
+    user: { id: string } | null | undefined,
+    item: T,
+  ): Promise<T & { userState: any | null }> {
+    return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
   }
 }

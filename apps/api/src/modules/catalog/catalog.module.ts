@@ -23,12 +23,15 @@ import { MovieListingsQuery } from './infrastructure/queries/movie-listings.quer
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
 import { CatalogSearchService } from './application/services/catalog-search.service';
 import { TmdbModule } from '../tmdb/tmdb.module';
+import { UserMediaModule } from '../user-media/user-media.module';
+import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
 
 @Module({
-  imports: [TmdbModule],
+  imports: [TmdbModule, UserMediaModule],
   controllers: [CatalogController],
   providers: [
     CatalogSearchService,
+    CatalogUserStateEnricher,
     // Query Objects - Shows
     TrendingShowsQuery,
     ShowDetailsQuery,

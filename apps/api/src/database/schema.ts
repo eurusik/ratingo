@@ -29,6 +29,12 @@ const tsvector = customType<{ data: string }>({
 // --- ENUMS ---
 export const mediaTypeEnum = pgEnum('media_type', [MediaType.MOVIE, MediaType.SHOW]);
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
+export const userMediaStatusEnum = pgEnum('user_media_status', [
+  'watching',
+  'completed',
+  'planned',
+  'dropped',
+]);
 export const ingestionStatusEnum = pgEnum('ingestion_status', ['importing', 'ready', 'failed']);
 
 // --- SHARED TYPES ---
@@ -92,7 +98,7 @@ export const mediaItems = pgTable(
 
     // Full Text Search Vector (auto-generated)
     searchVector: tsvector('search_vector').generatedAlwaysAs(
-      sql`to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(original_title, '') || ' ' || coalesce(overview, ''))`
+      sql`to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(original_title, '') || ' ' || coalesce(overview, ''))`,
     ),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -111,7 +117,7 @@ export const mediaItems = pgTable(
       .where(sql`${t.deletedAt} IS NULL`),
     // GIN Index for fast full-text search
     searchIdx: index('media_search_idx').on(t.searchVector),
-  })
+  }),
 );
 
 /**
@@ -144,7 +150,7 @@ export const mediaStats = pgTable(
   (t) => ({
     ratingoScoreIdx: index('media_stats_ratingo_score_idx').on(t.ratingoScore),
     watchersIdx: index('media_stats_watchers_idx').on(t.watchersCount),
-  })
+  }),
 );
 
 /**
@@ -195,7 +201,7 @@ export const movies = pgTable(
     digitalIdx: index('movies_digital_idx').on(t.digitalReleaseDate),
     // FK index for fast JOINs
     mediaItemIdx: index('movies_media_item_idx').on(t.mediaItemId),
-  })
+  }),
 );
 
 /**
@@ -252,7 +258,7 @@ export const seasons = pgTable(
   (t) => ({
     showSeasonIdx: uniqueIndex('seasons_show_number_uniq').on(t.showId, t.number),
     showIdx: index('seasons_show_idx').on(t.showId),
-  })
+  }),
 );
 
 export const episodes = pgTable(
@@ -280,7 +286,7 @@ export const episodes = pgTable(
     airDateIdx: index('episodes_air_date_idx').on(t.airDate),
     showIdx: index('episodes_show_idx').on(t.showId),
     showAirDateIdx: index('episodes_show_air_date_idx').on(t.showId, t.airDate),
-  })
+  }),
 );
 
 export const seasonsRelations = relations(seasons, ({ one, many }) => ({
@@ -325,7 +331,7 @@ export const mediaGenres = pgTable(
   (t) => ({
     uniq: uniqueIndex('media_genres_uniq').on(t.mediaItemId, t.genreId),
     genreIdx: index('media_genres_genre_idx').on(t.genreId),
-  })
+  }),
 );
 
 // --- USERS & SOCIAL ---
@@ -336,11 +342,64 @@ export const users = pgTable('users', {
   username: text('username').unique().notNull(),
   passwordHash: text('password_hash'),
   avatarUrl: text('avatar_url'),
+  bio: text('bio'),
+  location: text('location'),
+  website: text('website'),
+  preferredLanguage: text('preferred_language'),
+  preferredRegion: text('preferred_region'),
+  isProfilePublic: boolean('is_profile_public').default(true),
+  showWatchHistory: boolean('show_watch_history').default(true),
+  showRatings: boolean('show_ratings').default(true),
+  allowFollowers: boolean('allow_followers').default(true),
   role: userRoleEnum('role').default('user'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
 });
+
+export const userMediaState = pgTable(
+  'user_media_state',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    mediaItemId: uuid('media_item_id')
+      .references(() => mediaItems.id, { onDelete: 'cascade' })
+      .notNull(),
+    state: userMediaStatusEnum('state').notNull(),
+    rating: integer('rating'), // 0-100 scale
+    progress: jsonb('progress').$type<Record<string, unknown> | null>().default(null),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    uniqUserMedia: uniqueIndex('user_media_state_user_media_uniq').on(t.userId, t.mediaItemId),
+    userIdx: index('user_media_state_user_idx').on(t.userId),
+    mediaIdx: index('user_media_state_media_idx').on(t.mediaItemId),
+  }),
+);
+
+export const refreshTokens = pgTable(
+  'refresh_tokens',
+  {
+    id: uuid('id').defaultRandom().primaryKey(), // jti
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    tokenHash: text('token_hash').notNull(),
+    userAgent: text('user_agent'),
+    ip: text('ip'),
+    expiresAt: timestamp('expires_at').notNull(),
+    revokedAt: timestamp('revoked_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    userIdx: index('refresh_tokens_user_idx').on(t.userId),
+    expiresIdx: index('refresh_tokens_expires_idx').on(t.expiresAt),
+  }),
+);
 
 // --- RELATIONS ---
 
@@ -399,10 +458,10 @@ export const mediaWatchersSnapshots = pgTable(
     mediaDateIdx: uniqueIndex('media_watchers_media_date_region_uniq').on(
       t.mediaItemId,
       t.snapshotDate,
-      t.region
+      t.region,
     ),
     dateIdx: index('media_watchers_date_idx').on(t.snapshotDate),
-  })
+  }),
 );
 
 export const mediaWatchersSnapshotsRelations = relations(mediaWatchersSnapshots, ({ one }) => ({

@@ -4,12 +4,14 @@ import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.int
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 import { NotFoundException } from '@nestjs/common';
 import { CatalogSearchService } from '../../application/services/catalog-search.service';
+import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 
 describe('CatalogController', () => {
   let controller: CatalogController;
   let movieRepository: any;
   let showRepository: any;
   let catalogSearchService: any;
+  let userStateEnricher: any;
 
   beforeEach(async () => {
     const mockMovieRepository = {
@@ -56,12 +58,23 @@ describe('CatalogController', () => {
       search: jest.fn().mockResolvedValue({ query: 'test', local: [], tmdb: [] }),
     };
 
+    const mockUserStateEnricher = {
+      enrichList: jest.fn(async (_userId: string | null, items: any[]) =>
+        items.map((i) => ({ ...i, userState: null })),
+      ),
+      enrichOne: jest.fn(async (_userId: string | null, item: any) => ({
+        ...item,
+        userState: null,
+      })),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CatalogController],
       providers: [
         { provide: MOVIE_REPOSITORY, useValue: mockMovieRepository },
         { provide: SHOW_REPOSITORY, useValue: mockShowRepository },
         { provide: CatalogSearchService, useValue: mockCatalogSearchService },
+        { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
       ],
     }).compile();
 
@@ -69,6 +82,7 @@ describe('CatalogController', () => {
     movieRepository = module.get(MOVIE_REPOSITORY);
     showRepository = module.get(SHOW_REPOSITORY);
     catalogSearchService = module.get(CatalogSearchService);
+    userStateEnricher = module.get(CatalogUserStateEnricher);
   });
 
   describe('search', () => {
@@ -118,14 +132,14 @@ describe('CatalogController', () => {
       await controller.getNewOnDigital(25);
 
       expect(movieRepository.findNewOnDigital).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 25 })
+        expect.objectContaining({ limit: 25 }),
       );
     });
   });
 
   describe('getTrendingShows', () => {
     it('should return trending shows', async () => {
-      const result = await controller.getTrendingShows({ limit: 10, offset: 0 });
+      const result = await controller.getTrendingShows({ limit: 10, offset: 0 }, null);
 
       expect(showRepository.findTrending).toHaveBeenCalledWith({
         limit: 10,
@@ -136,12 +150,15 @@ describe('CatalogController', () => {
     });
 
     it('should respect pagination and filters', async () => {
-      await controller.getTrendingShows({
-        limit: 50,
-        offset: 10,
-        minRating: 80,
-        genreId: 'uuid-genre',
-      });
+      await controller.getTrendingShows(
+        {
+          limit: 50,
+          offset: 10,
+          minRating: 80,
+          genreId: 'uuid-genre',
+        },
+        null,
+      );
 
       expect(showRepository.findTrending).toHaveBeenCalledWith({
         limit: 50,
@@ -157,7 +174,7 @@ describe('CatalogController', () => {
         { id: '2', title: 'Show 2', type: 'show' },
       ]);
 
-      const result = await controller.getTrendingShows({ limit: 10, offset: 0 });
+      const result = await controller.getTrendingShows({ limit: 10, offset: 0 }, null);
 
       expect(result.meta).toEqual({
         count: 2,
@@ -169,7 +186,7 @@ describe('CatalogController', () => {
 
   describe('getTrendingMovies', () => {
     it('should return trending movies', async () => {
-      const result = await controller.getTrendingMovies({ limit: 10, offset: 0 });
+      const result = await controller.getTrendingMovies({ limit: 10, offset: 0 }, null);
 
       expect(movieRepository.findTrending).toHaveBeenCalledWith({
         limit: 10,
@@ -212,7 +229,7 @@ describe('CatalogController', () => {
       const result = await controller.getMovieBySlug('the-matrix');
 
       expect(movieRepository.findBySlug).toHaveBeenCalledWith('the-matrix');
-      expect(result).toEqual(mockMovie);
+      expect(result).toEqual({ ...mockMovie, userState: null });
     });
 
     it('should throw NotFoundException when movie not found', async () => {
@@ -230,7 +247,7 @@ describe('CatalogController', () => {
       const result = await controller.getShowBySlug('arcane');
 
       expect(showRepository.findBySlug).toHaveBeenCalledWith('arcane');
-      expect(result).toEqual(mockShow);
+      expect(result).toEqual({ ...mockShow, userState: null });
     });
 
     it('should throw NotFoundException when show not found', async () => {

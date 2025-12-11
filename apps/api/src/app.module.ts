@@ -5,11 +5,15 @@ import { DatabaseModule } from './database/database.module';
 import tmdbConfig from './config/tmdb.config';
 import traktConfig from './config/trakt.config';
 import omdbConfig from './config/omdb.config';
+import authConfig from './config/auth.config';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { HomeModule } from './modules/home/home.module';
 import { InsightsModule } from './modules/insights/insights.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { UserMediaModule } from './modules/user-media/user-media.module';
 
 import { BullModule } from '@nestjs/bullmq';
 
@@ -18,7 +22,7 @@ import { BullModule } from '@nestjs/bullmq';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['../../.env', '.env'],
-      load: [tmdbConfig, traktConfig, omdbConfig],
+      load: [tmdbConfig, traktConfig, omdbConfig, authConfig],
       validationSchema: Joi.object({
         // Server
         PORT: Joi.number().default(3001),
@@ -41,6 +45,13 @@ import { BullModule } from '@nestjs/bullmq';
 
         // OMDb
         OMDB_API_KEY: Joi.string().required(),
+
+        // Auth
+        ACCESS_TOKEN_SECRET: Joi.string(),
+        REFRESH_TOKEN_SECRET: Joi.string(),
+        ACCESS_TOKEN_TTL: Joi.string(),
+        REFRESH_TOKEN_TTL: Joi.string(),
+        BCRYPT_SALT_ROUNDS: Joi.number(),
       }),
       validationOptions: {
         allowUnknown: true, // Allow other env vars
@@ -62,6 +73,9 @@ import { BullModule } from '@nestjs/bullmq';
     StatsModule,
     HomeModule,
     InsightsModule,
+    AuthModule,
+    UsersModule,
+    UserMediaModule,
   ],
   controllers: [],
   providers: [],

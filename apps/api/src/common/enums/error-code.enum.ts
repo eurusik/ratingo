@@ -24,4 +24,6 @@ export enum ErrorCode {
   // Generic errors
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   UNKNOWN_ERROR = 'UNKNOWN_ERROR',
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  FORBIDDEN = 'FORBIDDEN',
 }

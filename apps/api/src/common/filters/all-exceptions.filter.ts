@@ -29,7 +29,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (statusCode >= 500) {
       this.logger.error(
         `${errorResponse.error.code}: ${errorResponse.error.message}`,
-        exception instanceof Error ? exception.stack : undefined
+        exception instanceof Error ? exception.stack : undefined,
       );
     } else {
       this.logger.warn(`${errorResponse.error.code}: ${errorResponse.error.message}`);
@@ -63,6 +63,36 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
+      // Explicit mapping for auth errors
+      if (status === HttpStatus.UNAUTHORIZED || status === HttpStatus.FORBIDDEN) {
+        const code =
+          status === HttpStatus.UNAUTHORIZED ? ErrorCode.UNAUTHORIZED : ErrorCode.FORBIDDEN;
+        const message =
+          typeof exceptionResponse === 'object' && 'message' in (exceptionResponse as any)
+            ? ((exceptionResponse as any).message as string)
+            : exception.message;
+
+        return {
+          statusCode: status,
+          errorResponse: {
+            success: false,
+            error: {
+              code,
+              message,
+              statusCode: status,
+              details:
+                typeof exceptionResponse === 'object' && 'message' in (exceptionResponse as any)
+                  ? {
+                      errors: Array.isArray((exceptionResponse as any).message)
+                        ? (exceptionResponse as any).message
+                        : [(exceptionResponse as any).message],
+                    }
+                  : undefined,
+            },
+          },
+        };
+      }
+
       // Handle validation errors from class-validator
       if (typeof exceptionResponse === 'object' && 'message' in exceptionResponse) {
         const messages = Array.isArray((exceptionResponse as any).message)
@@ -83,12 +113,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
         };
       }
 
+      const code =
+        status === HttpStatus.UNAUTHORIZED
+          ? ErrorCode.UNAUTHORIZED
+          : status === HttpStatus.FORBIDDEN
+            ? ErrorCode.FORBIDDEN
+            : ErrorCode.UNKNOWN_ERROR;
+
       return {
         statusCode: status,
         errorResponse: {
           success: false,
           error: {
-            code: ErrorCode.UNKNOWN_ERROR,
+            code,
             message: exception.message,
             statusCode: status,
           },
