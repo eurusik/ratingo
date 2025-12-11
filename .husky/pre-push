@@ -2,6 +2,6 @@
 . "$(dirname "$0")/_/husky.sh"
 
 turbo run lint --filter=api && \
-turbo run typecheck --filter=api && \
+npm --prefix apps/api run typecheck && \
 turbo run build --filter=api && \
 turbo run test --filter=api -- --runInBand
