@@ -1,5 +1,5 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter';
+import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
@@ -17,9 +17,9 @@ export class SnapshotsService {
   private readonly logger = new Logger(SnapshotsService.name);
 
   constructor(
-    private readonly traktAdapter: TraktAdapter,
+    private readonly traktAdapter: TraktRatingsAdapter,
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   /**
@@ -93,10 +93,10 @@ export class SnapshotsService {
             }
           } catch (e) {
             this.logger.warn(
-              `Failed to sync snapshot for item ${item.id} (TMDB ${item.tmdbId}): ${e.message} \nFull Error: ${JSON.stringify(e)}`
+              `Failed to sync snapshot for item ${item.id} (TMDB ${item.tmdbId}): ${e.message} \nFull Error: ${JSON.stringify(e)}`,
             );
           }
-        })
+        }),
       );
 
       processed += batch.length;

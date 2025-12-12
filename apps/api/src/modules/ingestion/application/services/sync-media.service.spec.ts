@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SyncMediaService } from './sync-media.service';
 import { TmdbAdapter } from '@/modules/tmdb/tmdb.adapter';
-import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter';
+import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
@@ -12,7 +12,7 @@ import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '@/common/enums/
 describe('SyncMediaService', () => {
   let service: SyncMediaService;
   let tmdbAdapter: jest.Mocked<TmdbAdapter>;
-  let traktAdapter: jest.Mocked<TraktAdapter>;
+  let traktAdapter: jest.Mocked<TraktRatingsAdapter>;
   let omdbAdapter: jest.Mocked<OmdbAdapter>;
   let tvMazeAdapter: jest.Mocked<TvMazeAdapter>;
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
@@ -72,7 +72,7 @@ describe('SyncMediaService', () => {
       providers: [
         SyncMediaService,
         { provide: TmdbAdapter, useValue: mockTmdbAdapter },
-        { provide: TraktAdapter, useValue: mockTraktAdapter },
+        { provide: TraktRatingsAdapter, useValue: mockTraktAdapter },
         { provide: OmdbAdapter, useValue: mockOmdbAdapter },
         { provide: TvMazeAdapter, useValue: mockTvMazeAdapter },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
@@ -82,7 +82,7 @@ describe('SyncMediaService', () => {
 
     service = module.get<SyncMediaService>(SyncMediaService);
     tmdbAdapter = module.get(TmdbAdapter);
-    traktAdapter = module.get(TraktAdapter);
+    traktAdapter = module.get(TraktRatingsAdapter);
     omdbAdapter = module.get(OmdbAdapter);
     tvMazeAdapter = module.get(TvMazeAdapter);
     scoreCalculator = module.get(ScoreCalculatorService);

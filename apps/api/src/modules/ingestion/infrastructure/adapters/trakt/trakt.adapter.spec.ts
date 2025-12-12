@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TraktAdapter } from './trakt.adapter';
+import { TraktRatingsAdapter } from './trakt-ratings.adapter';
+import { TraktListsAdapter } from './trakt-lists.adapter';
 import traktConfig from '@/config/trakt.config';
 import { TraktApiException } from '@/common/exceptions';
 
@@ -7,8 +8,9 @@ import { TraktApiException } from '@/common/exceptions';
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-describe('TraktAdapter', () => {
-  let adapter: TraktAdapter;
+describe('Trakt adapters', () => {
+  let ratingsAdapter: TraktRatingsAdapter;
+  let listsAdapter: TraktListsAdapter;
 
   const mockConfig = {
     clientId: 'test-client-id',
@@ -20,10 +22,15 @@ describe('TraktAdapter', () => {
     mockFetch.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TraktAdapter, { provide: traktConfig.KEY, useValue: mockConfig }],
+      providers: [
+        TraktRatingsAdapter,
+        TraktListsAdapter,
+        { provide: traktConfig.KEY, useValue: mockConfig },
+      ],
     }).compile();
 
-    adapter = module.get<TraktAdapter>(TraktAdapter);
+    ratingsAdapter = module.get<TraktRatingsAdapter>(TraktRatingsAdapter);
+    listsAdapter = module.get<TraktListsAdapter>(TraktListsAdapter);
   });
 
   describe('constructor', () => {
@@ -31,15 +38,16 @@ describe('TraktAdapter', () => {
       await expect(
         Test.createTestingModule({
           providers: [
-            TraktAdapter,
+            TraktRatingsAdapter,
+            TraktListsAdapter,
             { provide: traktConfig.KEY, useValue: { ...mockConfig, clientId: '' } },
           ],
-        }).compile()
+        }).compile(),
       ).rejects.toThrow(TraktApiException);
     });
   });
 
-  describe('getTrendingMovies', () => {
+  describe('lists adapter: trending movies', () => {
     it('should fetch trending movies with correct headers', async () => {
       const mockResponse = [
         { movie: { ids: { tmdb: 550 } }, watchers: 100 },
@@ -51,9 +59,12 @@ describe('TraktAdapter', () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const result = await adapter.getTrendingMovies(10);
+      const result = await listsAdapter.getTrendingMoviesWithWatchers(10);
 
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual([
+        { tmdbId: 550, watchers: 100, rank: 1 },
+        { tmdbId: 551, watchers: 80, rank: 2 },
+      ]);
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.trakt.tv/movies/trending?limit=10',
         expect.objectContaining({
@@ -62,7 +73,7 @@ describe('TraktAdapter', () => {
             'trakt-api-version': '2',
             'Content-Type': 'application/json',
           }),
-        })
+        }),
       );
     });
 
@@ -72,16 +83,16 @@ describe('TraktAdapter', () => {
         json: () => Promise.resolve([]),
       });
 
-      await adapter.getTrendingMovies();
+      await listsAdapter.getTrendingMoviesWithWatchers();
 
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('limit=20'),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
 
-  describe('getTrendingShows', () => {
+  describe('lists adapter: trending shows', () => {
     it('should fetch trending shows', async () => {
       const mockResponse = [{ show: { ids: { tmdb: 1000 } }, watchers: 200 }];
 
@@ -90,17 +101,17 @@ describe('TraktAdapter', () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const result = await adapter.getTrendingShows(5);
+      const result = await listsAdapter.getTrendingShowsWithWatchers(5);
 
-      expect(result).toEqual(mockResponse);
+      expect(result).toEqual([{ tmdbId: 1000, watchers: 200, rank: 1 }]);
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.trakt.tv/shows/trending?limit=5',
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
 
-  describe('getMovieRatingsByTmdbId', () => {
+  describe('ratings adapter: getMovieRatingsByTmdbId', () => {
     it('should lookup movie and return ratings', async () => {
       mockFetch.mockImplementation((url: string) => {
         if (url.includes('/search/tmdb/100')) {
@@ -121,7 +132,7 @@ describe('TraktAdapter', () => {
         return Promise.reject(new Error(`Unexpected URL: ${url}`));
       });
 
-      const result = await adapter.getMovieRatingsByTmdbId(100);
+      const result = await ratingsAdapter.getMovieRatingsByTmdbId(100);
 
       // Should still return ratings, with watchers 0
       expect(result).toEqual({ rating: 8.5, votes: 10000, watchers: 0, totalWatchers: 0 });
@@ -130,13 +141,13 @@ describe('TraktAdapter', () => {
     it('should return null when movie not found', async () => {
       mockFetch.mockResolvedValueOnce([]); // Lookup returns empty
 
-      const result = await adapter.getMovieRatingsByTmdbId(999);
+      const result = await ratingsAdapter.getMovieRatingsByTmdbId(999);
 
       expect(result).toBeNull();
     });
   });
 
-  describe('getShowRatingsByTmdbId', () => {
+  describe('ratings adapter: getShowRatingsByTmdbId', () => {
     it('should lookup show and return ratings', async () => {
       mockFetch.mockImplementation((url: string) => {
         if (url.includes('/search/tmdb/1000')) {
@@ -157,14 +168,14 @@ describe('TraktAdapter', () => {
         return Promise.reject(new Error(`Unexpected URL: ${url}`));
       });
 
-      const result = await adapter.getShowRatingsByTmdbId(1000);
+      const result = await ratingsAdapter.getShowRatingsByTmdbId(1000);
 
       // Should still return ratings, with watchers 0
       expect(result).toEqual({ rating: 9.0, votes: 50000, watchers: 0, totalWatchers: 0 });
     });
   });
 
-  describe('getTrendingMoviesWithWatchers', () => {
+  describe('lists adapter: getTrendingMoviesWithWatchers', () => {
     it('should return formatted trending data with watchers', async () => {
       const mockResponse = [
         { movie: { ids: { tmdb: 550 } }, watchers: 1000 },
@@ -176,7 +187,7 @@ describe('TraktAdapter', () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const result = await adapter.getTrendingMoviesWithWatchers(10);
+      const result = await listsAdapter.getTrendingMoviesWithWatchers(10);
 
       expect(result).toEqual([
         { tmdbId: 550, watchers: 1000, rank: 1 },
@@ -195,14 +206,14 @@ describe('TraktAdapter', () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const result = await adapter.getTrendingMoviesWithWatchers();
+      const result = await listsAdapter.getTrendingMoviesWithWatchers();
 
       expect(result).toHaveLength(1);
       expect(result[0].tmdbId).toBe(550);
     });
   });
 
-  describe('rate limiting', () => {
+  describe('base http rate limiting (lists)', () => {
     it('should retry after rate limit (429)', async () => {
       // First call returns 429
       mockFetch
@@ -226,23 +237,23 @@ describe('TraktAdapter', () => {
             status: 429,
             statusText: 'Too Many Requests',
             headers: { get: () => '0.1' },
-          })
+          }),
         )
         .mockImplementationOnce(() =>
           Promise.resolve({
             ok: true,
             json: () => Promise.resolve([{ movie: { ids: { tmdb: 1 } } }]),
-          })
+          }),
         );
 
-      const result = await adapter.getTrendingMovies(1);
+      const result = await listsAdapter.getTrendingMoviesWithWatchers(1);
 
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('error handling', () => {
-    it('should throw TraktApiException on non-OK response', async () => {
+    it('should return empty array on non-OK response', async () => {
       mockFetch.mockResolvedValue({
         ok: false,
         status: 500,
@@ -250,17 +261,19 @@ describe('TraktAdapter', () => {
         headers: { get: () => null },
       });
 
-      await expect(adapter.getTrendingMovies()).rejects.toThrow(TraktApiException);
+      const result = await listsAdapter.getTrendingMoviesWithWatchers();
+      expect(result).toEqual([]);
     });
 
-    it('should handle network errors gracefully', async () => {
+    it('should handle network errors gracefully and return empty array', async () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
 
-      await expect(adapter.getTrendingMovies()).rejects.toThrow('Network error');
+      const result = await listsAdapter.getTrendingMoviesWithWatchers();
+      expect(result).toEqual([]);
     });
   });
 
-  describe('getShowEpisodesForAnalysis', () => {
+  describe('ratings adapter: getShowEpisodesForAnalysis', () => {
     it('should fetch all seasons and episodes', async () => {
       // Search by TMDB ID
       mockFetch
@@ -293,7 +306,7 @@ describe('TraktAdapter', () => {
           json: () => Promise.resolve([{ number: 1, title: 'S2E1', rating: 7.5, votes: 800 }]),
         });
 
-      const result = await adapter.getShowEpisodesForAnalysis(12345);
+      const result = await ratingsAdapter.getShowEpisodesForAnalysis(12345);
 
       expect(result).not.toBeNull();
       expect(result?.traktId).toBe(100);
@@ -307,7 +320,7 @@ describe('TraktAdapter', () => {
         json: () => Promise.resolve([]),
       });
 
-      const result = await adapter.getShowEpisodesForAnalysis(999999);
+      const result = await ratingsAdapter.getShowEpisodesForAnalysis(999999);
 
       expect(result).toBeNull();
     });

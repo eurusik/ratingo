@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
-import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter';
+import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter, TvMazeEpisode } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
 import {
@@ -25,7 +25,7 @@ export class SyncMediaService {
 
   constructor(
     private readonly tmdbAdapter: TmdbAdapter,
-    private readonly traktAdapter: TraktAdapter,
+    private readonly traktRatingsAdapter: TraktRatingsAdapter,
     private readonly omdbAdapter: OmdbAdapter,
     private readonly tvMazeAdapter: TvMazeAdapter,
     private readonly scoreCalculator: ScoreCalculatorService,
@@ -170,8 +170,8 @@ export class SyncMediaService {
       const [traktRating, omdbRatings] = await Promise.all([
         // Trakt (lookup by TMDB ID, then fetch ratings)
         type === MediaType.MOVIE
-          ? this.traktAdapter.getMovieRatingsByTmdbId(tmdbId)
-          : this.traktAdapter.getShowRatingsByTmdbId(tmdbId),
+          ? this.traktRatingsAdapter.getMovieRatingsByTmdbId(tmdbId)
+          : this.traktRatingsAdapter.getShowRatingsByTmdbId(tmdbId),
         // OMDb (requires IMDb ID)
         imdbId ? this.omdbAdapter.getAggregatedRatings(imdbId, type) : Promise.resolve(null),
       ]);

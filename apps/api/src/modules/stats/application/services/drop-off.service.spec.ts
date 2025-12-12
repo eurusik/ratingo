@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DropOffService } from './drop-off.service';
-import { TraktAdapter } from '@/modules/ingestion/infrastructure/adapters/trakt/trakt.adapter';
+import { TraktRatingsAdapter } from '@/modules/ingestion/infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { DropOffAnalyzerService } from '@/modules/shared/drop-off-analyzer';
 import { SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
 
 describe('DropOffService', () => {
   let service: DropOffService;
-  let traktAdapter: jest.Mocked<TraktAdapter>;
+  let traktAdapter: jest.Mocked<TraktRatingsAdapter>;
   let dropOffAnalyzer: jest.Mocked<DropOffAnalyzerService>;
   let showRepository: any;
 
@@ -28,14 +28,14 @@ describe('DropOffService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DropOffService,
-        { provide: TraktAdapter, useValue: mockTraktAdapter },
+        { provide: TraktRatingsAdapter, useValue: mockTraktAdapter },
         { provide: DropOffAnalyzerService, useValue: mockDropOffAnalyzer },
         { provide: SHOW_REPOSITORY, useValue: mockShowRepository },
       ],
     }).compile();
 
     service = module.get<DropOffService>(DropOffService);
-    traktAdapter = module.get(TraktAdapter);
+    traktAdapter = module.get(TraktRatingsAdapter);
     dropOffAnalyzer = module.get(DropOffAnalyzerService);
     showRepository = module.get(SHOW_REPOSITORY);
   });

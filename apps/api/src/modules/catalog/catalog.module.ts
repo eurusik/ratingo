@@ -1,9 +1,11 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { DrizzleMediaRepository } from './infrastructure/repositories/drizzle-media.repository';
 import { DrizzleGenreRepository } from './infrastructure/repositories/drizzle-genre.repository';
 import { DrizzleShowRepository } from './infrastructure/repositories/drizzle-show.repository';
 import { DrizzleMovieRepository } from './infrastructure/repositories/drizzle-movie.repository';
-import { CatalogController } from './presentation/controllers/catalog.controller';
+import { CatalogMoviesController } from './presentation/controllers/catalog.movies.controller';
+import { CatalogShowsController } from './presentation/controllers/catalog.shows.controller';
+import { CatalogSearchController } from './presentation/controllers/catalog.search.controller';
 import { MEDIA_REPOSITORY } from './domain/repositories/media.repository.interface';
 import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface';
 import { GENRE_REPOSITORY } from './domain/repositories/genre.repository.interface';
@@ -28,7 +30,7 @@ import { CatalogUserStateEnricher } from './application/services/catalog-usersta
 
 @Module({
   imports: [TmdbModule, UserMediaModule],
-  controllers: [CatalogController],
+  controllers: [CatalogMoviesController, CatalogShowsController, CatalogSearchController],
   providers: [
     CatalogSearchService,
     CatalogUserStateEnricher,

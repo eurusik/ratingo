@@ -2,7 +2,8 @@ import { Module, forwardRef } from '@nestjs/common';
 import { CatalogModule } from '../catalog/catalog.module';
 import { StatsModule } from '../stats/stats.module';
 import { TmdbModule } from '../tmdb/tmdb.module';
-import { TraktAdapter } from './infrastructure/adapters/trakt/trakt.adapter';
+import { TraktRatingsAdapter } from './infrastructure/adapters/trakt/trakt-ratings.adapter';
+import { TraktListsAdapter } from './infrastructure/adapters/trakt/trakt-lists.adapter';
 import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { SyncMediaService } from './application/services/sync-media.service';
@@ -30,13 +31,14 @@ import { SyncWorker } from './application/workers/sync.worker';
   ],
   controllers: [IngestionController],
   providers: [
-    TraktAdapter,
+    TraktRatingsAdapter,
+    TraktListsAdapter,
     OmdbAdapter,
     TvMazeAdapter,
     SyncMediaService,
     SyncWorker,
     SnapshotsService,
   ],
-  exports: [SyncMediaService, TraktAdapter, SnapshotsService],
+  exports: [SyncMediaService, TraktRatingsAdapter, TraktListsAdapter, SnapshotsService],
 })
 export class IngestionModule {}

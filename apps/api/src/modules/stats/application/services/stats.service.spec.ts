@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StatsService } from './stats.service';
-import { TraktAdapter } from '@/modules/ingestion/infrastructure/adapters/trakt/trakt.adapter';
+import { TraktListsAdapter } from '@/modules/ingestion/infrastructure/adapters/trakt/trakt-lists.adapter';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { STATS_REPOSITORY } from '../../domain/repositories/stats.repository.interface';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
@@ -8,7 +8,7 @@ import { StatsNotFoundException } from '@/common/exceptions';
 
 describe('StatsService', () => {
   let service: StatsService;
-  let traktAdapter: jest.Mocked<TraktAdapter>;
+  let traktAdapter: jest.Mocked<TraktListsAdapter>;
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
   let statsRepository: any;
   let mediaRepository: any;
@@ -37,7 +37,7 @@ describe('StatsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StatsService,
-        { provide: TraktAdapter, useValue: mockTraktAdapter },
+        { provide: TraktListsAdapter, useValue: mockTraktAdapter },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: STATS_REPOSITORY, useValue: mockStatsRepository },
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
@@ -45,7 +45,7 @@ describe('StatsService', () => {
     }).compile();
 
     service = module.get<StatsService>(StatsService);
-    traktAdapter = module.get(TraktAdapter);
+    traktAdapter = module.get(TraktListsAdapter);
     scoreCalculator = module.get(ScoreCalculatorService);
     statsRepository = module.get(STATS_REPOSITORY);
     mediaRepository = module.get(MEDIA_REPOSITORY);
@@ -156,7 +156,7 @@ describe('StatsService', () => {
             watchersCount: 500,
             trendingRank: 1,
           }),
-        ])
+        ]),
       );
     });
 

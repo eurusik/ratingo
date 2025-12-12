@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { TraktAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt.adapter';
+import { TraktListsAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt-lists.adapter';
 import {
   IStatsRepository,
   STATS_REPOSITORY,
@@ -20,14 +20,14 @@ export class StatsService {
   private readonly logger = new Logger(StatsService.name);
 
   constructor(
-    private readonly traktAdapter: TraktAdapter,
+    private readonly traktListsAdapter: TraktListsAdapter,
     private readonly scoreCalculator: ScoreCalculatorService,
 
     @Inject(STATS_REPOSITORY)
     private readonly statsRepository: IStatsRepository,
 
     @Inject(MEDIA_REPOSITORY)
-    private readonly mediaRepository: IMediaRepository
+    private readonly mediaRepository: IMediaRepository,
   ) {}
 
   /**
@@ -45,8 +45,8 @@ export class StatsService {
 
     // Fetch trending from Trakt (parallel)
     const [trendingMovies, trendingShows] = await Promise.all([
-      this.traktAdapter.getTrendingMoviesWithWatchers(limit),
-      this.traktAdapter.getTrendingShowsWithWatchers(limit),
+      this.traktListsAdapter.getTrendingMoviesWithWatchers(limit),
+      this.traktListsAdapter.getTrendingShowsWithWatchers(limit),
     ]);
 
     // Combine all trending items

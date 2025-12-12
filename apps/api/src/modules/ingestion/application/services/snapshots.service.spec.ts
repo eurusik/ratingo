@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SnapshotsService } from './snapshots.service';
-import { TraktAdapter } from '../../infrastructure/adapters/trakt/trakt.adapter';
+import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
@@ -24,15 +24,15 @@ describe('SnapshotsService', () => {
       onConflictDoUpdate: jest.fn().mockResolvedValue(undefined),
     };
 
-    const module: TestingModule = await Test.createTestingModule({
+    const testingModule: TestingModule = await Test.createTestingModule({
       providers: [
         SnapshotsService,
-        { provide: TraktAdapter, useValue: traktAdapter },
+        { provide: TraktRatingsAdapter, useValue: traktAdapter },
         { provide: DATABASE_CONNECTION, useValue: db },
       ],
     }).compile();
 
-    service = module.get<SnapshotsService>(SnapshotsService);
+    service = testingModule.get<SnapshotsService>(SnapshotsService);
   });
 
   it('should be defined', () => {

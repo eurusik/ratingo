@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { TraktAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt.adapter';
+import { TraktRatingsAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { DropOffAnalyzerService, DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import {
   IShowRepository,
@@ -15,10 +15,10 @@ export class DropOffService {
   private readonly logger = new Logger(DropOffService.name);
 
   constructor(
-    private readonly traktAdapter: TraktAdapter,
+    private readonly traktAdapter: TraktRatingsAdapter,
     private readonly dropOffAnalyzer: DropOffAnalyzerService,
     @Inject(SHOW_REPOSITORY)
-    private readonly showRepository: IShowRepository
+    private readonly showRepository: IShowRepository,
   ) {}
 
   /**
@@ -43,7 +43,7 @@ export class DropOffService {
       await this.saveAnalysis(tmdbId, analysis);
 
       this.logger.log(
-        `Analyzed show ${tmdbId}: ${analysis.insight} (${analysis.episodesAnalyzed} episodes)`
+        `Analyzed show ${tmdbId}: ${analysis.insight} (${analysis.episodesAnalyzed} episodes)`,
       );
 
       return analysis;

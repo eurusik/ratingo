@@ -7,5 +7,6 @@ export interface EpisodeData {
 
 export interface SeasonData {
   number: number;
-  episodes: EpisodeData[];
+  episodes?: EpisodeData[];
+  episode_count?: number;
 }
