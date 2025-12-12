@@ -1,10 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
   IUserMediaStateRepository,
+  UserMediaStats,
   UpsertUserMediaStateData,
 } from '../../domain/repositories/user-media-state.repository.interface';
 import { UserMediaState } from '../../domain/entities/user-media-state.entity';
@@ -61,6 +62,29 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
         userId: data.userId,
         mediaItemId: data.mediaItemId,
       });
+    }
+  }
+
+  async getStats(userId: string): Promise<UserMediaStats> {
+    try {
+      const [row] = await this.db
+        .select({
+          moviesRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.MOVIE} and ${schema.userMediaState.rating} is not null)`,
+          showsRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.SHOW} and ${schema.userMediaState.rating} is not null)`,
+          watchlistCount: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.userMediaState.state} = 'planned')`,
+        })
+        .from(schema.userMediaState)
+        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+        .where(eq(schema.userMediaState.userId, userId));
+
+      return {
+        moviesRated: Number(row?.moviesRated ?? 0),
+        showsRated: Number(row?.showsRated ?? 0),
+        watchlistCount: Number(row?.watchlistCount ?? 0),
+      };
+    } catch (error) {
+      this.logger.error(`getStats failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to fetch user media stats', { userId });
     }
   }
 

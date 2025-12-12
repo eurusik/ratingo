@@ -12,6 +12,7 @@ import { DatabaseModule } from '../../database/database.module';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { AuthController } from './presentation/controllers/auth.controller';
+import { UserMediaModule } from '../user-media/user-media.module';
 
 /**
  * Auth module wiring (tokens, hashing, refresh storage).
@@ -28,6 +29,7 @@ import { AuthController } from './presentation/controllers/auth.controller';
       }),
     }),
     forwardRef(() => UsersModule),
+    forwardRef(() => UserMediaModule),
     DatabaseModule,
   ],
   providers: [

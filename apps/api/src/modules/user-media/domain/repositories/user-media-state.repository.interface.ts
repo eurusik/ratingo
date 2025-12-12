@@ -18,6 +18,12 @@ export interface UpsertUserMediaStateData {
   notes?: string | null;
 }
 
+export interface UserMediaStats {
+  moviesRated: number;
+  showsRated: number;
+  watchlistCount: number;
+}
+
 /**
  * Repository contract for user-media state operations.
  */
@@ -26,6 +32,11 @@ export interface IUserMediaStateRepository {
   findOne(userId: string, mediaItemId: string): Promise<UserMediaState | null>;
   listByUser(userId: string, limit?: number, offset?: number): Promise<UserMediaState[]>;
   findManyByMediaIds(userId: string, mediaItemIds: string[]): Promise<UserMediaState[]>;
+
+  /**
+   * Aggregated stats for user profile.
+   */
+  getStats(userId: string): Promise<UserMediaStats>;
 
   /**
    * Returns user media states with attached media summary (id, type, title, slug, poster).

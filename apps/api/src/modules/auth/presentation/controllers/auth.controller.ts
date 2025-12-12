@@ -26,6 +26,7 @@ import { CurrentUser } from '../../infrastructure/decorators/current-user.decora
 import { MeDto } from '../dto/me.dto';
 import { AuthTokensDto } from '../dto/auth-tokens.dto';
 import { UsersService } from '../../../users/application/users.service';
+import { UserMediaService } from '../../../user-media/application/user-media.service';
 
 /**
  * Auth controller: register/login/refresh/logout.
@@ -36,6 +37,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
+    private readonly userMediaService: UserMediaService,
   ) {}
 
   /**
@@ -115,7 +117,8 @@ export class AuthController {
       throw new NotFoundException('User not found');
     }
 
-    // Static stats placeholder; replace with real aggregation when available.
+    const stats = await this.userMediaService.getStats(dbUser.id);
+
     return {
       id: dbUser.id,
       email: dbUser.email,
@@ -135,11 +138,7 @@ export class AuthController {
           allowFollowers: dbUser.allowFollowers,
         },
       },
-      stats: {
-        moviesRated: 0,
-        showsRated: 0,
-        watchlistCount: 0,
-      },
+      stats,
     };
   }
 }

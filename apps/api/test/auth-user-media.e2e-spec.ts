@@ -175,6 +175,16 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     return this.states.filter((s) => s.userId === userId).slice(offset, offset + limit);
   }
 
+  async getStats(userId: string) {
+    const byUser = this.states.filter((s) => s.userId === userId);
+    const rated = byUser.filter((s) => s.rating !== null);
+    return {
+      moviesRated: rated.filter((s) => s.mediaSummary.type === MediaType.MOVIE).length,
+      showsRated: rated.filter((s) => s.mediaSummary.type === MediaType.SHOW).length,
+      watchlistCount: byUser.filter((s) => s.state === 'planned').length,
+    };
+  }
+
   async findOneWithMedia(userId: string, mediaItemId: string) {
     return this.states.find((s) => s.userId === userId && s.mediaItemId === mediaItemId) ?? null;
   }

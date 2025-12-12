@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   IUserMediaStateRepository,
   USER_MEDIA_STATE_REPOSITORY,
+  UserMediaStats,
   UpsertUserMediaStateData,
 } from '../domain/repositories/user-media-state.repository.interface';
 import { UserMediaState } from '../domain/entities/user-media-state.entity';
@@ -106,5 +107,12 @@ export class UserMediaService {
    */
   async findMany(userId: string, mediaItemIds: string[]): Promise<UserMediaState[]> {
     return this.repo.findManyByMediaIds(userId, mediaItemIds);
+  }
+
+  /**
+   * Aggregated stats for user profile.
+   */
+  async getStats(userId: string): Promise<UserMediaStats> {
+    return this.repo.getStats(userId);
   }
 }

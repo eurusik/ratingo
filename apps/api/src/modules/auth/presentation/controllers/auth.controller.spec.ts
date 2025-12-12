@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from '../../application/auth.service';
 import { UsersService } from '../../../users/application/users.service';
+import { UserMediaService } from '../../../user-media/application/user-media.service';
 
 describe('AuthController.register', () => {
   let controller: AuthController;
@@ -17,12 +18,17 @@ describe('AuthController.register', () => {
     getById: jest.fn(),
   };
 
+  const userMediaService = {
+    getStats: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: authService },
         { provide: UsersService, useValue: usersService },
+        { provide: UserMediaService, useValue: userMediaService },
       ],
     }).compile();
 

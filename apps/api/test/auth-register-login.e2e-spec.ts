@@ -18,6 +18,10 @@ import {
 import { User } from '../src/modules/users/domain/entities/user.entity';
 import { RefreshToken } from '../src/modules/auth/domain/entities/refresh-token.entity';
 import { DATABASE_CONNECTION } from '../src/database/database.module';
+import {
+  IUserMediaStateRepository,
+  USER_MEDIA_STATE_REPOSITORY,
+} from '../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
 
 class InMemoryUsersRepository implements IUsersRepository {
   private users: User[] = [];
@@ -70,6 +74,30 @@ class InMemoryUsersRepository implements IUsersRepository {
   }
 }
 
+class InMemoryUserMediaRepository implements IUserMediaStateRepository {
+  async upsert(): Promise<any> {
+    throw new Error('Not implemented');
+  }
+  async findOne(): Promise<any> {
+    return null;
+  }
+  async listByUser(): Promise<any[]> {
+    return [];
+  }
+  async findManyByMediaIds(): Promise<any[]> {
+    return [];
+  }
+  async getStats(): Promise<{ moviesRated: number; showsRated: number; watchlistCount: number }> {
+    return { moviesRated: 0, showsRated: 0, watchlistCount: 0 };
+  }
+  async listWithMedia(): Promise<any[]> {
+    return [];
+  }
+  async findOneWithMedia(): Promise<any> {
+    return null;
+  }
+}
+
 class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {
   private tokens: RefreshToken[] = [];
 
@@ -116,6 +144,8 @@ describe('Auth e2e: register -> login -> refresh -> me', () => {
       .useClass(InMemoryUsersRepository)
       .overrideProvider(REFRESH_TOKENS_REPOSITORY)
       .useClass(InMemoryRefreshTokensRepository)
+      .overrideProvider(USER_MEDIA_STATE_REPOSITORY)
+      .useClass(InMemoryUserMediaRepository)
       .overrideProvider(DATABASE_CONNECTION)
       .useValue({})
       .compile();

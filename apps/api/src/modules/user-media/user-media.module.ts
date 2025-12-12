@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
 import { USER_MEDIA_STATE_REPOSITORY } from './domain/repositories/user-media-state.repository.interface';
 import { DrizzleUserMediaStateRepository } from './infrastructure/repositories/drizzle-user-media-state.repository';
@@ -10,7 +10,7 @@ import { AuthModule } from '../auth/auth.module';
  * User Media module wiring.
  */
 @Module({
-  imports: [DatabaseModule, AuthModule],
+  imports: [DatabaseModule, forwardRef(() => AuthModule)],
   providers: [
     UserMediaService,
     {
