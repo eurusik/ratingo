@@ -54,7 +54,7 @@ class MoviesNowPlayingQueryDto extends OffsetPaginationQueryDto {
     required: false,
     enum: LISTING_SORT_VALUES,
     default: LISTING_SORT.POPULARITY,
-    description: 'Sort order',
+    description: "Sort order. For sort='popularity' this uses raw media_items.popularity.",
   })
   @IsOptional()
   sort?: ListingSort;
@@ -72,7 +72,8 @@ class MoviesNewReleasesQueryDto extends OffsetPaginationQueryDto {
     required: false,
     enum: LISTING_SORT_VALUES,
     default: LISTING_SORT.POPULARITY,
-    description: 'Sort order',
+    description:
+      "Sort order. For sort='popularity' this uses aggregated media_stats.popularity_score.",
   })
   @IsOptional()
   sort?: ListingSort;
@@ -90,7 +91,8 @@ class MoviesNewOnDigitalQueryDto extends OffsetPaginationQueryDto {
     required: false,
     enum: LISTING_SORT_VALUES,
     default: LISTING_SORT.POPULARITY,
-    description: 'Sort order',
+    description:
+      "Sort order. For sort='popularity' this uses aggregated media_stats.popularity_score.",
   })
   @IsOptional()
   sort?: ListingSort;
