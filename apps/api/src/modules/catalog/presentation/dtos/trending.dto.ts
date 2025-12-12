@@ -1,24 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min, Max, IsUUID } from 'class-validator';
+import { IsInt, IsOptional, Min, Max, IsUUID } from 'class-validator';
 import { ImageDto, ExternalRatingsDto, RatingoStatsDto } from './common.dto';
+import { OffsetPaginationQueryDto } from './pagination.dto';
 
-export class TrendingShowsQueryDto {
-  @ApiProperty({ required: false, default: 20 })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  @Type(() => Number)
-  limit?: number = 20;
-
-  @ApiProperty({ required: false, default: 0 })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Type(() => Number)
-  offset?: number = 0;
-
+export class TrendingShowsQueryDto extends OffsetPaginationQueryDto {
   @ApiProperty({ required: false, description: 'Filter by minimum Ratingo Score (0-100)' })
   @IsOptional()
   @IsInt()
