@@ -47,7 +47,7 @@ describe('UserMediaService', () => {
 
     const result = await service.listWithMedia('u1', 20, 0);
 
-    expect(repo.listWithMedia).toHaveBeenCalledWith('u1', 20, 0);
+    expect(repo.listWithMedia).toHaveBeenCalledWith('u1', 20, 0, undefined);
     expect(result).toEqual([{ id: 's1' }]);
   });
 

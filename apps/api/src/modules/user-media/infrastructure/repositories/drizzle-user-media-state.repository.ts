@@ -1,10 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
   IUserMediaStateRepository,
+  ListWithMediaOptions,
+  USER_MEDIA_LIST_SORT,
   UserMediaStats,
   UpsertUserMediaStateData,
 } from '../../domain/repositories/user-media-state.repository.interface';
@@ -173,6 +175,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     userId: string,
     limit = 20,
     offset = 0,
+    options?: ListWithMediaOptions,
   ): Promise<
     Array<
       UserMediaState & {
@@ -182,11 +185,24 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           title: string;
           slug: string;
           poster: ImageDto | null;
+          releaseDate?: Date | null;
         };
       }
     >
   > {
     try {
+      const whereParts = [eq(schema.userMediaState.userId, userId)];
+
+      if (options?.ratedOnly) {
+        whereParts.push(isNotNull(schema.userMediaState.rating));
+      }
+
+      if (options?.states?.length) {
+        whereParts.push(inArray(schema.userMediaState.state, options.states));
+      }
+
+      const orderBy = this.buildListOrderBy(options?.sort);
+
       const rows = await this.db
         .select({
           state: schema.userMediaState,
@@ -196,12 +212,13 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             title: schema.mediaItems.title,
             slug: schema.mediaItems.slug,
             posterPath: schema.mediaItems.posterPath,
+            releaseDate: schema.mediaItems.releaseDate,
           },
         })
         .from(schema.userMediaState)
         .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-        .where(eq(schema.userMediaState.userId, userId))
-        .orderBy(desc(schema.userMediaState.updatedAt))
+        .where(and(...whereParts))
+        .orderBy(...orderBy)
         .limit(limit)
         .offset(offset);
 
@@ -213,11 +230,24 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           title: r.media.title,
           slug: r.media.slug,
           poster: ImageMapper.toPoster(r.media.posterPath),
+          releaseDate: r.media.releaseDate,
         },
       }));
     } catch (error) {
       this.logger.error(`listWithMedia failed: ${error.message}`, error.stack);
       throw new DatabaseException('Failed to list user media state with media', { userId });
+    }
+  }
+
+  private buildListOrderBy(sort?: ListWithMediaOptions['sort']) {
+    switch (sort) {
+      case USER_MEDIA_LIST_SORT.RATING:
+        return [desc(schema.userMediaState.rating), desc(schema.userMediaState.updatedAt)];
+      case USER_MEDIA_LIST_SORT.RELEASE_DATE:
+        return [desc(schema.mediaItems.releaseDate), desc(schema.userMediaState.updatedAt)];
+      case USER_MEDIA_LIST_SORT.RECENT:
+      default:
+        return [desc(schema.userMediaState.updatedAt)];
     }
   }
 
@@ -235,6 +265,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           title: string;
           slug: string;
           poster: ImageDto | null;
+          releaseDate?: Date | null;
         };
       })
     | null
@@ -249,6 +280,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             title: schema.mediaItems.title,
             slug: schema.mediaItems.slug,
             posterPath: schema.mediaItems.posterPath,
+            releaseDate: schema.mediaItems.releaseDate,
           },
         })
         .from(schema.userMediaState)
@@ -271,6 +303,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           title: row.media.title,
           slug: row.media.slug,
           poster: ImageMapper.toPoster(row.media.posterPath),
+          releaseDate: row.media.releaseDate,
         },
       };
     } catch (error) {

@@ -197,8 +197,18 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     return this.states.filter((s) => s.userId === userId && mediaItemIds.includes(s.mediaItemId));
   }
 
-  async listWithMedia(userId: string, limit = 20, offset = 0) {
-    return this.states.filter((s) => s.userId === userId).slice(offset, offset + limit);
+  async listWithMedia(userId: string, limit = 20, offset = 0, options?: any) {
+    let items = this.states.filter((s) => s.userId === userId);
+
+    if (options?.ratedOnly) {
+      items = items.filter((s) => s.rating !== null);
+    }
+
+    if (options?.states?.length) {
+      items = items.filter((s) => options.states.includes(s.state));
+    }
+
+    return items.slice(offset, offset + limit);
   }
 
   async getStats(userId: string) {

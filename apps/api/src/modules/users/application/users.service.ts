@@ -4,6 +4,7 @@ import {
   USERS_REPOSITORY,
 } from '../domain/repositories/users.repository.interface';
 import { User } from '../domain/entities/user.entity';
+import { UserProfileVisibilityPolicy, ViewerContext } from './user-profile-visibility.policy';
 
 /**
  * Application service for user-related use cases.
@@ -45,6 +46,50 @@ export class UsersService {
    */
   async getByUsername(username: string): Promise<User | null> {
     return this.usersRepository.findByUsername(username);
+  }
+
+  /**
+   * Returns public-safe profile or null when not visible for the viewer.
+   */
+  async getPublicProfileByUsername(
+    username: string,
+    viewer?: ViewerContext | null,
+  ): Promise<{
+    id: string;
+    username: string;
+    avatarUrl: string | null;
+    bio: string | null;
+    location: string | null;
+    website: string | null;
+    createdAt: Date;
+    privacy: {
+      isProfilePublic: boolean;
+      showWatchHistory: boolean;
+      showRatings: boolean;
+      allowFollowers: boolean;
+    };
+  } | null> {
+    const user = await this.getByUsername(username);
+    if (!user) return null;
+
+    const canView = UserProfileVisibilityPolicy.canViewProfile(user, viewer);
+    if (!canView) return null;
+
+    return {
+      id: user.id,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      bio: user.bio,
+      location: user.location,
+      website: user.website,
+      createdAt: user.createdAt,
+      privacy: {
+        isProfilePublic: user.isProfilePublic,
+        showWatchHistory: user.showWatchHistory,
+        showRatings: user.showRatings,
+        allowFollowers: user.allowFollowers,
+      },
+    };
   }
 
   /**

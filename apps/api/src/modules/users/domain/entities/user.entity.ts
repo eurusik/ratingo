@@ -16,6 +16,20 @@ export interface User {
   showWatchHistory: boolean;
   showRatings: boolean;
   allowFollowers: boolean;
+  role: UserRole;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const USER_ROLE = {
+  USER: 'user',
+  ADMIN: 'admin',
+} as const;
+
+export type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE];
+
+// Keep legacy compatibility with existing shape
+export interface UserLegacy extends Omit<User, 'role'> {
   role: 'user' | 'admin';
   createdAt: Date;
   updatedAt: Date;

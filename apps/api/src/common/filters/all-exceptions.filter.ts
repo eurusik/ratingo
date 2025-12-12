@@ -113,12 +113,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         };
       }
 
-      const code =
-        status === HttpStatus.UNAUTHORIZED
-          ? ErrorCode.UNAUTHORIZED
-          : status === HttpStatus.FORBIDDEN
-            ? ErrorCode.FORBIDDEN
-            : ErrorCode.UNKNOWN_ERROR;
+      const code = this.mapHttpStatusToErrorCode(status);
 
       return {
         statusCode: status,
@@ -153,5 +148,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
         },
       },
     };
+  }
+
+  private mapHttpStatusToErrorCode(status: number): ErrorCode {
+    const map: Record<number, ErrorCode> = {
+      [HttpStatus.UNAUTHORIZED]: ErrorCode.UNAUTHORIZED,
+      [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
+      [HttpStatus.NOT_FOUND]: ErrorCode.RESOURCE_NOT_FOUND,
+      [HttpStatus.CONFLICT]: ErrorCode.UNKNOWN_ERROR,
+    };
+    return map[status] ?? ErrorCode.UNKNOWN_ERROR;
   }
 }

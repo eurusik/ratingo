@@ -24,6 +24,7 @@ describe('DrizzleUserMediaStateRepository', () => {
         title: 'Title',
         slug: 'title',
         posterPath,
+        releaseDate: new Date('2020-01-01'),
       },
     },
   ];
@@ -58,6 +59,7 @@ describe('DrizzleUserMediaStateRepository', () => {
 
     expect(result[0].mediaSummary.poster).toEqual(expectedPoster);
     expect(result[0].mediaSummary).not.toHaveProperty('posterPath');
+    expect(result[0].mediaSummary.releaseDate).toEqual(new Date('2020-01-01'));
   });
 
   it('findOneWithMedia should map poster and return null when not found', async () => {

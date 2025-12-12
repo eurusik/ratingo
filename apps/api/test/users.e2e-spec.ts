@@ -88,26 +88,111 @@ class InMemoryUsersRepository implements IUsersRepository {
 }
 
 class InMemoryUserMediaRepository implements IUserMediaStateRepository {
-  async upsert(): Promise<any> {
-    throw new Error('Not implemented');
+  private states: any[] = [];
+
+  addState(state: any) {
+    this.states.push(state);
   }
-  async findOne(): Promise<any> {
-    return null;
+
+  clear() {
+    this.states = [];
   }
-  async listByUser(): Promise<any[]> {
-    return [];
+
+  private makeSummary(mediaItemId: string) {
+    return {
+      id: mediaItemId,
+      type: 'movie',
+      title: `Title ${mediaItemId}`,
+      slug: `slug-${mediaItemId}`,
+      poster: null,
+      releaseDate: new Date('2020-01-01'),
+    };
   }
-  async findManyByMediaIds(): Promise<any[]> {
-    return [];
+
+  async upsert(data: any): Promise<any> {
+    const existing = this.states.find(
+      (s) => s.userId === data.userId && s.mediaItemId === data.mediaItemId,
+    );
+    if (existing) {
+      Object.assign(existing, {
+        state: data.state,
+        rating: data.rating ?? null,
+        progress: data.progress ?? null,
+        notes: data.notes ?? null,
+        updatedAt: new Date(),
+      });
+      return existing;
+    }
+    const created = {
+      id: `state-${this.states.length + 1}`,
+      userId: data.userId,
+      mediaItemId: data.mediaItemId,
+      state: data.state,
+      rating: data.rating ?? null,
+      progress: data.progress ?? null,
+      notes: data.notes ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      mediaSummary: this.makeSummary(data.mediaItemId),
+    };
+    this.states.push(created);
+    return created;
   }
+
+  async findOne(userId: string, mediaItemId: string): Promise<any> {
+    return this.states.find((s) => s.userId === userId && s.mediaItemId === mediaItemId) ?? null;
+  }
+
+  async listByUser(userId: string, limit = 20, offset = 0): Promise<any[]> {
+    return this.states.filter((s) => s.userId === userId).slice(offset, offset + limit);
+  }
+
+  async findManyByMediaIds(userId: string, mediaItemIds: string[]): Promise<any[]> {
+    return this.states.filter((s) => s.userId === userId && mediaItemIds.includes(s.mediaItemId));
+  }
+
   async getStats(): Promise<{ moviesRated: number; showsRated: number; watchlistCount: number }> {
     return { moviesRated: 0, showsRated: 0, watchlistCount: 0 };
   }
-  async listWithMedia(): Promise<any[]> {
-    return [];
+
+  async listWithMedia(
+    userId: string,
+    limit = 20,
+    offset = 0,
+    options?: { ratedOnly?: boolean; states?: string[]; sort?: string },
+  ): Promise<any[]> {
+    let items = this.states.filter((s) => s.userId === userId);
+
+    if (options?.ratedOnly) {
+      items = items.filter((s) => s.rating !== null);
+    }
+    if (options?.states?.length) {
+      items = items.filter((s) => options.states.includes(s.state));
+    }
+
+    switch (options?.sort) {
+      case 'rating':
+        items = [...items].sort(
+          (a, b) => (b.rating ?? 0) - (a.rating ?? 0) || b.updatedAt - a.updatedAt,
+        );
+        break;
+      case 'releaseDate':
+        items = [...items].sort(
+          (a, b) =>
+            (b.mediaSummary.releaseDate?.getTime() ?? 0) -
+              (a.mediaSummary.releaseDate?.getTime() ?? 0) || b.updatedAt - a.updatedAt,
+        );
+        break;
+      case 'recent':
+      default:
+        items = [...items].sort((a, b) => b.updatedAt - a.updatedAt);
+    }
+
+    return items.slice(offset, offset + limit);
   }
-  async findOneWithMedia(): Promise<any> {
-    return null;
+
+  async findOneWithMedia(userId: string, mediaItemId: string): Promise<any> {
+    return this.states.find((s) => s.userId === userId && s.mediaItemId === mediaItemId) ?? null;
   }
 }
 
@@ -145,6 +230,8 @@ describe('Users e2e', () => {
   let app: INestApplication;
   const authBase = '/api/auth';
   const usersBase = '/api/users';
+  let usersRepo: InMemoryUsersRepository;
+  let userMediaRepo: InMemoryUserMediaRepository;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -165,6 +252,8 @@ describe('Users e2e', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    usersRepo = app.get(USERS_REPOSITORY) as any;
+    userMediaRepo = app.get(USER_MEDIA_STATE_REPOSITORY) as any;
     app.setGlobalPrefix('api');
     app.useGlobalPipes(
       new ValidationPipe({
@@ -201,6 +290,10 @@ describe('Users e2e', () => {
 
     return { accessToken: loginRes.body.data.accessToken as string, email, username, password };
   };
+
+  afterEach(() => {
+    userMediaRepo.clear();
+  });
 
   it('me: requires auth and returns user without password', async () => {
     await request(app.getHttpServer()).get(`${usersBase}/me`).expect(401);
@@ -319,5 +412,125 @@ describe('Users e2e', () => {
       .set('Authorization', `Bearer ${accessToken}`)
       .send({ currentPassword: 'short', newPassword: 'short' })
       .expect(400);
+  });
+
+  it('public profile: returns 200 for public user and 404 for private to guest', async () => {
+    await usersRepo.create({
+      email: 'public@example.com',
+      username: 'public_user',
+      passwordHash: 'hash',
+      isProfilePublic: true,
+    } as any);
+
+    const pubRes = await request(app.getHttpServer()).get(`${usersBase}/public_user`).expect(200);
+    expect(pubRes.body.success).toBe(true);
+    expect(pubRes.body.data.username).toBe('public_user');
+
+    await usersRepo.create({
+      email: 'private@example.com',
+      username: 'private_user',
+      passwordHash: 'hash',
+      isProfilePublic: false,
+    } as any);
+
+    await request(app.getHttpServer()).get(`${usersBase}/private_user`).expect(404);
+  });
+
+  it('public profile: owner can view private profile (200)', async () => {
+    const email = `owner${Date.now()}@example.com`;
+    const username = `owner${Date.now()}`;
+    const password = 'S3curePassw0rd';
+
+    await request(app.getHttpServer())
+      .post(`${authBase}/register`)
+      .send({ email, username, password })
+      .expect(201);
+
+    const loginRes = await request(app.getHttpServer())
+      .post(`${authBase}/login`)
+      .send({ email, password })
+      .expect(200);
+
+    const token = loginRes.body.data.accessToken as string;
+
+    // make profile private
+    await request(app.getHttpServer())
+      .patch(`${usersBase}/me`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ isProfilePublic: false })
+      .expect(200);
+
+    const res = await request(app.getHttpServer())
+      .get(`${usersBase}/${username}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.username).toBe(username);
+  });
+
+  it('public ratings: guest sees public ratings, hidden when showRatings=false', async () => {
+    const user = await usersRepo.create({
+      email: 'ratings@example.com',
+      username: 'ratings_user',
+      passwordHash: 'hash',
+      isProfilePublic: true,
+      showRatings: true,
+    } as any);
+
+    await userMediaRepo.upsert({
+      userId: user.id,
+      mediaItemId: 'm1',
+      state: 'completed',
+      rating: 90,
+    });
+
+    const res = await request(app.getHttpServer())
+      .get(`${usersBase}/ratings_user/ratings`)
+      .expect(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveLength(1);
+
+    await usersRepo.updateProfile(user.id, { showRatings: false });
+    await request(app.getHttpServer()).get(`${usersBase}/ratings_user/ratings`).expect(404);
+  });
+
+  it('public watchlist/history: visibility respects showWatchHistory and profile privacy', async () => {
+    const user = await usersRepo.create({
+      email: 'watch@example.com',
+      username: 'watch_user',
+      passwordHash: 'hash',
+      isProfilePublic: true,
+      showWatchHistory: true,
+    } as any);
+
+    await userMediaRepo.upsert({
+      userId: user.id,
+      mediaItemId: 'm2',
+      state: 'planned',
+      rating: null,
+    });
+    await userMediaRepo.upsert({
+      userId: user.id,
+      mediaItemId: 'm3',
+      state: 'watching',
+      rating: null,
+    });
+
+    const wlRes = await request(app.getHttpServer())
+      .get(`${usersBase}/watch_user/watchlist`)
+      .expect(200);
+    expect(wlRes.body.data).toHaveLength(1);
+
+    const histRes = await request(app.getHttpServer())
+      .get(`${usersBase}/watch_user/history`)
+      .expect(200);
+    expect(histRes.body.data).toHaveLength(1);
+
+    await usersRepo.updateProfile(user.id, { showWatchHistory: false });
+    await request(app.getHttpServer()).get(`${usersBase}/watch_user/history`).expect(404);
+
+    await usersRepo.updateProfile(user.id, { isProfilePublic: false });
+    await request(app.getHttpServer()).get(`${usersBase}/watch_user/watchlist`).expect(404);
   });
 });

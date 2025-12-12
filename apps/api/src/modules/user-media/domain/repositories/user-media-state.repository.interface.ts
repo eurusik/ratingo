@@ -7,6 +7,19 @@ import { UserMediaState } from '../entities/user-media-state.entity';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
 
+export const USER_MEDIA_LIST_SORT = {
+  RECENT: 'recent',
+  RATING: 'rating',
+  RELEASE_DATE: 'releaseDate',
+} as const;
+export type UserMediaListSort = (typeof USER_MEDIA_LIST_SORT)[keyof typeof USER_MEDIA_LIST_SORT];
+
+export interface ListWithMediaOptions {
+  ratedOnly?: boolean;
+  states?: Array<UserMediaState['state']>;
+  sort?: UserMediaListSort;
+}
+
 export interface UpsertUserMediaStateData {
   userId: string;
   mediaItemId: string;
@@ -45,6 +58,7 @@ export interface IUserMediaStateRepository {
     userId: string,
     limit?: number,
     offset?: number,
+    options?: ListWithMediaOptions,
   ): Promise<
     Array<
       UserMediaState & {
@@ -54,6 +68,7 @@ export interface IUserMediaStateRepository {
           title: string;
           slug: string;
           poster: ImageDto | null;
+          releaseDate?: Date | null;
         };
       }
     >
@@ -73,6 +88,7 @@ export interface IUserMediaStateRepository {
           title: string;
           slug: string;
           poster: ImageDto | null;
+          releaseDate?: Date | null;
         };
       })
     | null

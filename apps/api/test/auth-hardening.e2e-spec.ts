@@ -95,7 +95,12 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   async getStats(): Promise<{ moviesRated: number; showsRated: number; watchlistCount: number }> {
     return { moviesRated: 0, showsRated: 0, watchlistCount: 0 };
   }
-  async listWithMedia(): Promise<any[]> {
+  async listWithMedia(
+    _userId?: string,
+    _limit?: number,
+    _offset?: number,
+    _options?: any,
+  ): Promise<any[]> {
     return [];
   }
   async findOneWithMedia(): Promise<any> {

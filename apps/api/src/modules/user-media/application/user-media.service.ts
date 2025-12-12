@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   IUserMediaStateRepository,
+  ListWithMediaOptions,
   USER_MEDIA_STATE_REPOSITORY,
   UserMediaStats,
   UpsertUserMediaStateData,
@@ -56,6 +57,7 @@ export class UserMediaService {
           title: string;
           slug: string;
           poster: ImageDto | null;
+          releaseDate?: Date | null;
         };
       })
     | null
@@ -82,6 +84,7 @@ export class UserMediaService {
     userId: string,
     limit = 20,
     offset = 0,
+    options?: ListWithMediaOptions,
   ): Promise<
     Array<
       UserMediaState & {
@@ -91,11 +94,12 @@ export class UserMediaService {
           title: string;
           slug: string;
           poster: ImageDto | null;
+          releaseDate?: Date | null;
         };
       }
     >
   > {
-    return this.repo.listWithMedia(userId, limit, offset);
+    return this.repo.listWithMedia(userId, limit, offset, options);
   }
 
   /**
