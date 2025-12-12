@@ -132,4 +132,52 @@ describe('IngestionController', () => {
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_SNAPSHOTS, {});
     });
   });
+
+  describe('getJobStatus', () => {
+    const makeJob = (state: string, overrides: Partial<any> = {}) => ({
+      id: 'job-42',
+      getState: jest.fn().mockResolvedValue(state),
+      failedReason: null,
+      finishedOn: null,
+      processedOn: null,
+      timestamp: Date.now(),
+      ...overrides,
+    });
+
+    it('maps waiting/delayed to queued', async () => {
+      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('waiting'));
+      const res = await controller.getJobStatus('job-42');
+      expect(res.status).toBe('queued');
+
+      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('delayed'));
+      const res2 = await controller.getJobStatus('job-42');
+      expect(res2.status).toBe('queued');
+    });
+
+    it('maps active to processing', async () => {
+      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('active'));
+      const res = await controller.getJobStatus('job-42');
+      expect(res.status).toBe('processing');
+    });
+
+    it('maps completed to ready and sets updatedAt', async () => {
+      const finishedOn = Date.now();
+      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('completed', { finishedOn }));
+      const res = await controller.getJobStatus('job-42');
+      expect(res.status).toBe('ready');
+      expect(res.updatedAt).toBe(new Date(finishedOn).toISOString());
+    });
+
+    it('maps failed to failed and returns errorMessage', async () => {
+      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('failed', { failedReason: 'boom' }));
+      const res = await controller.getJobStatus('job-42');
+      expect(res.status).toBe('failed');
+      expect(res.errorMessage).toBe('boom');
+    });
+
+    it('throws NotFound when job is missing', async () => {
+      mockQueue.getJob = jest.fn().mockResolvedValue(null);
+      await expect(controller.getJobStatus('missing')).rejects.toThrow('Job not found');
+    });
+  });
 });

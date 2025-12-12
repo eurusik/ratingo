@@ -1,4 +1,13 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Get,
+  Param,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ApiTags, ApiOperation, ApiProperty } from '@nestjs/swagger';
@@ -15,6 +24,7 @@ import {
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import slugify from 'slugify';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
+import { ApiOkResponse } from '@nestjs/swagger';
 
 class SyncDto {
   @ApiProperty({ example: 550, description: 'TMDB ID of the media' })
@@ -88,12 +98,63 @@ class SyncNewReleasesDto {
 @ApiTags('Service: Ingestion')
 @Controller('ingestion')
 export class IngestionController {
+  private static readonly bullStateToPublicStatus: Record<
+    string,
+    'queued' | 'processing' | 'ready' | 'failed'
+  > = {
+    waiting: 'queued',
+    delayed: 'queued',
+    active: 'processing',
+    completed: 'ready',
+    failed: 'failed',
+    paused: 'queued',
+    stalled: 'failed',
+  };
+
   constructor(
     @InjectQueue(INGESTION_QUEUE) private readonly ingestionQueue: Queue,
     private readonly syncService: SyncMediaService,
     @Inject(MEDIA_REPOSITORY) private readonly mediaRepository: IMediaRepository,
     private readonly tmdbAdapter: TmdbAdapter,
   ) {}
+
+  @Get('jobs/:id')
+  @ApiOperation({ summary: 'Get ingestion job status' })
+  @ApiOkResponse({
+    description: 'Ingestion job status',
+    schema: {
+      properties: {
+        id: { type: 'string' },
+        status: { type: 'string', enum: ['queued', 'processing', 'ready', 'failed'] },
+        errorMessage: { type: 'string', nullable: true },
+        updatedAt: { type: 'string', format: 'date-time', nullable: true },
+      },
+    },
+  })
+  async getJobStatus(@Param('id') id: string) {
+    const job = await this.ingestionQueue.getJob(id);
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    const state = await job.getState();
+    const status =
+      IngestionController.bullStateToPublicStatus[state] ??
+      IngestionController.bullStateToPublicStatus[job.finishedOn ? 'completed' : 'failed'] ??
+      'failed';
+
+    const updatedAt =
+      (job.finishedOn ?? job.processedOn ?? job.timestamp)
+        ? new Date(job.finishedOn ?? job.processedOn ?? job.timestamp)
+        : null;
+
+    return {
+      id: `${job.id}`,
+      status,
+      errorMessage: job.failedReason ?? null,
+      updatedAt: updatedAt ? updatedAt.toISOString() : null,
+    };
+  }
 
   @Post('sync')
   @ApiOperation({ summary: 'Manually trigger sync for a specific media item' })
