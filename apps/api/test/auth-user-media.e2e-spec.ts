@@ -132,7 +132,9 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   }
 
   async upsert(data: UpsertUserMediaStateData): Promise<UserMediaState> {
-    const existing = this.states.find((s) => s.userId === data.userId && s.mediaItemId === data.mediaItemId);
+    const existing = this.states.find(
+      (s) => s.userId === data.userId && s.mediaItemId === data.mediaItemId,
+    );
     if (existing) {
       existing.state = data.state;
       existing.rating = data.rating ?? null;
@@ -182,6 +184,16 @@ describe('User Media e2e', () => {
   let app: INestApplication;
   const baseUrl = '/api/auth';
   const mediaUrl = '/api/user-media';
+  const registerAndLogin = async (suffix = '') => {
+    const email = `media${suffix}${Date.now()}@example.com`;
+    const username = `media${suffix}${Date.now()}`;
+    const password = 'S3curePassw0rd';
+    const reg = await request(app.getHttpServer())
+      .post(`${baseUrl}/register`)
+      .send({ email, username, password })
+      .expect(201);
+    return reg.body.data.accessToken as string;
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -222,12 +234,17 @@ describe('User Media e2e', () => {
     await app.close();
   });
 
+  it('rejects unauthenticated requests', async () => {
+    await request(app.getHttpServer())
+      .patch(`${mediaUrl}/mid-unauth`)
+      .send({ state: 'watching' })
+      .expect(401);
+    await request(app.getHttpServer()).get(`${mediaUrl}/mid-unauth`).expect(401);
+    await request(app.getHttpServer()).get(`${mediaUrl}`).expect(401);
+  });
+
   it('set/get/list with bearer', async () => {
-    const reg = await request(app.getHttpServer())
-      .post(`${baseUrl}/register`)
-      .send({ email: 'media@example.com', username: 'media', password: 'S3curePassw0rd' })
-      .expect(201);
-    const token = reg.body.data.accessToken as string;
+    const token = await registerAndLogin();
 
     const mediaItemId = 'mid-1';
 
@@ -253,5 +270,51 @@ describe('User Media e2e', () => {
     expect(listRes.body.success).toBe(true);
     expect(Array.isArray(listRes.body.data)).toBe(true);
     expect(listRes.body.data.length).toBeGreaterThan(0);
+  });
+
+  it('upsert updates existing state and supports nullable fields', async () => {
+    const token = await registerAndLogin('upsert');
+    const mediaItemId = 'mid-upsert';
+
+    await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'watching', rating: 7, notes: 'first' })
+      .expect(200);
+
+    const second = await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'completed', rating: null, progress: null, notes: null })
+      .expect(200);
+
+    expect(second.body.data.state).toBe('completed');
+    expect(second.body.data.rating).toBeNull();
+    expect(second.body.data.notes).toBeNull();
+  });
+
+  it('pagination respects limit/offset', async () => {
+    const token = await registerAndLogin('page');
+
+    for (let i = 0; i < 5; i++) {
+      await request(app.getHttpServer())
+        .patch(`${mediaUrl}/mid-page-${i}`)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ state: 'watching' })
+        .expect(200);
+    }
+
+    const page1 = await request(app.getHttpServer())
+      .get(`${mediaUrl}?limit=2&offset=0`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    const page2 = await request(app.getHttpServer())
+      .get(`${mediaUrl}?limit=2&offset=2`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(page1.body.data.length).toBe(2);
+    expect(page2.body.data.length).toBe(2);
+    expect(page1.body.data[0].mediaItemId).not.toBe(page2.body.data[0].mediaItemId);
   });
 });
