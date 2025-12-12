@@ -2,7 +2,13 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Min, Max, IsUUID } from 'class-validator';
 import { ImageDto, ExternalRatingsDto, RatingoStatsDto } from './common.dto';
-import { OffsetPaginationQueryDto } from './pagination.dto';
+import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from './pagination.dto';
+
+export enum TrendingSort {
+  POPULARITY = 'popularity',
+  RATINGO = 'ratingo',
+  RELEASE_DATE = 'releaseDate',
+}
 
 export class TrendingShowsQueryDto extends OffsetPaginationQueryDto {
   @ApiProperty({ required: false, description: 'Filter by minimum Ratingo Score (0-100)' })
@@ -17,6 +23,15 @@ export class TrendingShowsQueryDto extends OffsetPaginationQueryDto {
   @IsOptional()
   @IsUUID()
   genreId?: string;
+
+  @ApiProperty({
+    required: false,
+    enum: TrendingSort,
+    description: 'Sort order',
+    default: TrendingSort.POPULARITY,
+  })
+  @IsOptional()
+  sort?: TrendingSort;
 }
 
 export class ShowProgressDto {
@@ -100,18 +115,8 @@ export class TrendingShowsResponseDto {
   @ApiProperty({ type: [ShowTrendingItemDto] })
   data: ShowTrendingItemDto[];
 
-  @ApiProperty({
-    properties: {
-      count: { type: 'number' },
-      limit: { type: 'number' },
-      offset: { type: 'number' },
-    },
-  })
-  meta: {
-    count: number;
-    limit: number;
-    offset: number;
-  };
+  @ApiProperty({ type: OffsetPaginationMetaDto })
+  meta: OffsetPaginationMetaDto;
 }
 
 export class MovieTrendingItemDto {
@@ -162,16 +167,6 @@ export class TrendingMoviesResponseDto {
   @ApiProperty({ type: [MovieTrendingItemDto] })
   data: MovieTrendingItemDto[];
 
-  @ApiProperty({
-    properties: {
-      count: { type: 'number' },
-      limit: { type: 'number' },
-      offset: { type: 'number' },
-    },
-  })
-  meta: {
-    count: number;
-    limit: number;
-    offset: number;
-  };
+  @ApiProperty({ type: OffsetPaginationMetaDto })
+  meta: OffsetPaginationMetaDto;
 }

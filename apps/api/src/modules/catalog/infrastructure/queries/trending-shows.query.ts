@@ -26,7 +26,7 @@ export class TrendingShowsQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   /**
@@ -37,7 +37,7 @@ export class TrendingShowsQuery {
    * @throws {DatabaseException} When database query fails
    */
   async execute(options: TrendingShowsOptions): Promise<TrendingShowItem[]> {
-    const { limit = 20, offset = 0, minRating, genreId } = options;
+    const { limit = 20, offset = 0, minRating, genreId, sort } = options;
 
     try {
       const whereConditions: SQL[] = [sql`mi.type = ${MediaType.SHOW}`, sql`mi.deleted_at IS NULL`];
@@ -107,11 +107,8 @@ export class TrendingShowsQuery {
         LEFT JOIN ${schema.seasons} se ON se.id = ep.season_id
 
         WHERE ${sql.join(whereConditions, sql` AND `)}
-        
-        ORDER BY 
-          ms.popularity_score DESC NULLS LAST,
-          ms.ratingo_score DESC NULLS LAST,
-          mi.popularity DESC NULLS LAST
+
+        ORDER BY ${this.buildOrderBy(sort)}
         LIMIT ${limit} OFFSET ${offset}
       `;
 
@@ -201,5 +198,24 @@ export class TrendingShowsQuery {
       episode: row.episode_number ?? null,
       label,
     };
+  }
+
+  /**
+   * Builds ORDER BY clause based on sort option.
+   */
+  private buildOrderBy(sort?: TrendingShowsOptions['sort']): SQL {
+    switch (sort) {
+      case 'ratingo':
+        return sql`ms.ratingo_score DESC NULLS LAST, mi.popularity DESC NULLS LAST`;
+      case 'releaseDate':
+        return sql`mi.release_date DESC NULLS LAST, mi.popularity DESC NULLS LAST`;
+      case 'popularity':
+      default:
+        return sql`
+          ms.popularity_score DESC NULLS LAST,
+          ms.ratingo_score DESC NULLS LAST,
+          mi.popularity DESC NULLS LAST
+        `;
+    }
   }
 }

@@ -42,9 +42,23 @@ import { SearchResponseDto } from '../dtos/search.dto';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
-import { OffsetPaginationQueryDto } from '../dtos/pagination.dto';
+import {
+  LISTING_SORT,
+  LISTING_SORT_VALUES,
+  ListingSort,
+  OffsetPaginationQueryDto,
+} from '../dtos/pagination.dto';
 
-class MoviesNowPlayingQueryDto extends OffsetPaginationQueryDto {}
+class MoviesNowPlayingQueryDto extends OffsetPaginationQueryDto {
+  @ApiPropertyOptional({
+    required: false,
+    enum: LISTING_SORT_VALUES,
+    default: LISTING_SORT.POPULARITY,
+    description: 'Sort order',
+  })
+  @IsOptional()
+  sort?: ListingSort;
+}
 
 class MoviesNewReleasesQueryDto extends OffsetPaginationQueryDto {
   @ApiPropertyOptional({ default: 30, description: 'Days to look back' })
@@ -53,6 +67,15 @@ class MoviesNewReleasesQueryDto extends OffsetPaginationQueryDto {
   @Min(0)
   @Type(() => Number)
   daysBack?: number = 30;
+
+  @ApiPropertyOptional({
+    required: false,
+    enum: LISTING_SORT_VALUES,
+    default: LISTING_SORT.POPULARITY,
+    description: 'Sort order',
+  })
+  @IsOptional()
+  sort?: ListingSort;
 }
 
 class MoviesNewOnDigitalQueryDto extends OffsetPaginationQueryDto {
@@ -62,6 +85,15 @@ class MoviesNewOnDigitalQueryDto extends OffsetPaginationQueryDto {
   @Min(0)
   @Type(() => Number)
   daysBack?: number = 14;
+
+  @ApiPropertyOptional({
+    required: false,
+    enum: LISTING_SORT_VALUES,
+    default: LISTING_SORT.POPULARITY,
+    description: 'Sort order',
+  })
+  @IsOptional()
+  sort?: ListingSort;
 }
 
 /**
@@ -224,9 +256,11 @@ export class CatalogController {
   ): Promise<PaginatedMovieResponseDto> {
     const limit = query.limit ?? 20;
     const offset = query.offset ?? 0;
+    const sort = query.sort ?? LISTING_SORT.POPULARITY;
     const movies = await this.movieRepository.findNowPlaying({
       limit,
       offset,
+      sort,
     });
     const data = await this.catalogUserListEnrich(user, movies, 'movie');
 
@@ -272,10 +306,12 @@ export class CatalogController {
     const limit = query.limit ?? 20;
     const offset = query.offset ?? 0;
     const daysBack = query.daysBack ?? 30;
+    const sort = query.sort ?? LISTING_SORT.POPULARITY;
     const movies = await this.movieRepository.findNewReleases({
       limit,
       offset,
       daysBack,
+      sort,
     });
     const data = await this.catalogUserListEnrich(user, movies, 'movie');
 
@@ -320,10 +356,12 @@ export class CatalogController {
     const limit = query.limit ?? 20;
     const offset = query.offset ?? 0;
     const daysBack = query.daysBack ?? 14;
+    const sort = query.sort ?? LISTING_SORT.POPULARITY;
     const movies = await this.movieRepository.findNewOnDigital({
       limit,
       offset,
       daysBack,
+      sort,
     });
     const data = await this.catalogUserListEnrich(user, movies, 'movie');
 

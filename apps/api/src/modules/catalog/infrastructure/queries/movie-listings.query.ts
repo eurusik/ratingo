@@ -19,6 +19,7 @@ export interface MovieListingOptions {
   limit?: number;
   offset?: number;
   daysBack?: number;
+  sort?: 'popularity' | 'releaseDate';
 }
 
 /**
@@ -35,7 +36,7 @@ export class MovieListingsQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   private readonly selectFields = {
@@ -80,12 +81,12 @@ export class MovieListingsQuery {
    */
   async execute(
     type: MovieListingType,
-    options: MovieListingOptions = {}
+    options: MovieListingOptions = {},
   ): Promise<MovieWithMedia[]> {
-    const { limit = 20, offset = 0, daysBack } = options;
+    const { limit = 20, offset = 0, daysBack, sort = 'popularity' } = options;
 
     try {
-      const { conditions, orderBy } = this.buildQueryParams(type, daysBack);
+      const { conditions, orderBy } = this.buildQueryParams(type, daysBack, sort);
 
       const results = await this.db
         .select(this.selectFields)
@@ -109,7 +110,11 @@ export class MovieListingsQuery {
   /**
    * Builds query conditions and order based on listing type.
    */
-  private buildQueryParams(type: MovieListingType, daysBack?: number) {
+  private buildQueryParams(
+    type: MovieListingType,
+    daysBack: number | undefined,
+    sort: 'popularity' | 'releaseDate',
+  ) {
     const now = new Date();
 
     switch (type) {
@@ -119,7 +124,10 @@ export class MovieListingsQuery {
             eq(schema.movies.isNowPlaying, true),
             lte(schema.movies.theatricalReleaseDate, now),
           ],
-          orderBy: desc(schema.mediaItems.popularity),
+          orderBy:
+            sort === 'releaseDate'
+              ? desc(schema.mediaItems.releaseDate)
+              : desc(schema.mediaItems.popularity),
         };
 
       case 'new_releases': {
@@ -131,7 +139,10 @@ export class MovieListingsQuery {
             gte(schema.movies.theatricalReleaseDate, cutoffDate),
             lte(schema.movies.theatricalReleaseDate, now),
           ],
-          orderBy: desc(schema.mediaStats.popularityScore),
+          orderBy:
+            sort === 'releaseDate'
+              ? desc(schema.movies.theatricalReleaseDate)
+              : desc(schema.mediaStats.popularityScore),
         };
       }
 
@@ -143,7 +154,10 @@ export class MovieListingsQuery {
             gte(schema.movies.digitalReleaseDate, cutoffDate),
             lte(schema.movies.digitalReleaseDate, now),
           ],
-          orderBy: desc(schema.mediaStats.popularityScore),
+          orderBy:
+            sort === 'releaseDate'
+              ? desc(schema.movies.digitalReleaseDate)
+              : desc(schema.mediaStats.popularityScore),
         };
       }
     }

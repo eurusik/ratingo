@@ -19,6 +19,7 @@ export interface TrendingShowsOptions {
   offset?: number;
   minRating?: number;
   genreId?: string;
+  sort?: 'popularity' | 'ratingo' | 'releaseDate';
 }
 
 /**
@@ -139,7 +140,7 @@ export interface IShowRepository {
       nextAirDate?: Date | null;
       status?: string | null;
       seasons?: NormalizedSeason[];
-    }
+    },
   ): Promise<void>;
 
   /**

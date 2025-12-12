@@ -95,44 +95,47 @@ describe('CatalogController', () => {
 
   describe('getNowPlaying', () => {
     it('should return movies with default params', async () => {
-      const result = await controller.getNowPlaying();
+      const result = await controller.getNowPlaying({} as any);
 
       expect(movieRepository.findNowPlaying).toHaveBeenCalledWith({
         limit: 20,
         offset: 0,
+        sort: 'popularity',
       });
       expect(result.data).toHaveLength(1);
       expect(result.meta.count).toBe(1);
     });
 
     it('should return movies with custom params', async () => {
-      await controller.getNowPlaying(10, 5);
+      await controller.getNowPlaying({ limit: 10, offset: 5 } as any);
 
       expect(movieRepository.findNowPlaying).toHaveBeenCalledWith({
         limit: 10,
         offset: 5,
+        sort: 'popularity',
       });
     });
   });
 
   describe('getNewReleases', () => {
     it('should return new releases', async () => {
-      await controller.getNewReleases(15, 0, 60);
+      await controller.getNewReleases({ limit: 15, offset: 0, daysBack: 60 } as any);
 
       expect(movieRepository.findNewReleases).toHaveBeenCalledWith({
         limit: 15,
         offset: 0,
         daysBack: 60,
+        sort: 'popularity',
       });
     });
   });
 
   describe('getNewOnDigital', () => {
     it('should return digital releases', async () => {
-      await controller.getNewOnDigital(25);
+      await controller.getNewOnDigital({ limit: 25 } as any);
 
       expect(movieRepository.findNewOnDigital).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 25 }),
+        expect.objectContaining({ limit: 25, sort: 'popularity' }),
       );
     });
   });
@@ -144,6 +147,7 @@ describe('CatalogController', () => {
       expect(showRepository.findTrending).toHaveBeenCalledWith({
         limit: 10,
         offset: 0,
+        sort: undefined,
       });
       expect(result.data).toHaveLength(1);
       expect(result.data[0].type).toBe('show');
@@ -156,6 +160,7 @@ describe('CatalogController', () => {
           offset: 10,
           minRating: 80,
           genreId: 'uuid-genre',
+          sort: undefined,
         },
         null,
       );

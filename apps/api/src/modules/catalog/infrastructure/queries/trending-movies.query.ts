@@ -14,6 +14,7 @@ export interface TrendingMoviesOptions {
   offset?: number;
   minRating?: number;
   genreId?: string;
+  sort?: 'popularity' | 'ratingo' | 'releaseDate';
 }
 
 /**
@@ -30,7 +31,7 @@ export class TrendingMoviesQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   private readonly selectFields = {
@@ -73,7 +74,7 @@ export class TrendingMoviesQuery {
    * @throws {DatabaseException} When database query fails
    */
   async execute(options: TrendingMoviesOptions): Promise<any[]> {
-    const { limit = 20, offset = 0, minRating, genreId } = options;
+    const { limit = 20, offset = 0, minRating, genreId, sort } = options;
 
     try {
       const conditions: any[] = [isNotNull(schema.mediaStats.popularityScore)];
@@ -97,7 +98,13 @@ export class TrendingMoviesQuery {
         .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(and(...conditions))
-        .orderBy(desc(schema.mediaStats.popularityScore), desc(schema.mediaItems.popularity))
+        .orderBy(
+          ...(sort === 'ratingo'
+            ? [desc(schema.mediaStats.ratingoScore), desc(schema.mediaItems.popularity)]
+            : sort === 'releaseDate'
+              ? [desc(schema.mediaItems.releaseDate), desc(schema.mediaItems.popularity)]
+              : [desc(schema.mediaStats.popularityScore), desc(schema.mediaItems.popularity)]),
+        )
         .limit(limit)
         .offset(offset);
 

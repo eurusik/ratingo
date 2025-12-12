@@ -52,6 +52,8 @@ export interface NowPlayingOptions {
   offset?: number;
   /** Number of days to look back (default: 30) */
   daysBack?: number;
+  /** Sort order (default: popularity) */
+  sort?: 'popularity' | 'releaseDate';
 }
 
 /**
@@ -141,7 +143,7 @@ export interface IMovieRepository {
       theatricalReleaseDate?: Date | null;
       digitalReleaseDate?: Date | null;
       releases?: ReleaseInfo[];
-    }
+    },
   ): Promise<void>;
 
   /**
@@ -158,7 +160,7 @@ export interface IMovieRepository {
       theatricalReleaseDate?: Date | null;
       digitalReleaseDate?: Date | null;
       releases?: ReleaseInfo[];
-    }
+    },
   ): Promise<void>;
 
   /**
