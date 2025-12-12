@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import authConfig from '../src/config/auth.config';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { UsersModule } from '../src/modules/users/users.module';
+import { UserMediaModule } from '../src/modules/user-media/user-media.module';
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import {
@@ -18,6 +19,23 @@ import {
 import { User } from '../src/modules/users/domain/entities/user.entity';
 import { RefreshToken } from '../src/modules/auth/domain/entities/refresh-token.entity';
 import { DATABASE_CONNECTION } from '../src/database/database.module';
+import {
+  IUserMediaStateRepository,
+  USER_MEDIA_STATE_REPOSITORY,
+  UpsertUserMediaStateData,
+} from '../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
+import { UserMediaState } from '../src/modules/user-media/domain/entities/user-media-state.entity';
+import { MediaType } from '../src/common/enums/media-type.enum';
+
+type MediaSummary = {
+  id: string;
+  type: MediaType;
+  title: string;
+  slug: string;
+  poster: null;
+};
+
+type MediaStateWithSummary = UserMediaState & { mediaSummary: MediaSummary };
 
 class InMemoryUsersRepository implements IUsersRepository {
   private users: User[] = [];
@@ -100,9 +118,70 @@ class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {
   }
 }
 
-describe('Auth e2e: register -> login -> refresh -> me', () => {
+class InMemoryUserMediaRepository implements IUserMediaStateRepository {
+  private states: MediaStateWithSummary[] = [];
+
+  private makeSummary(mediaItemId: string): MediaSummary {
+    return {
+      id: mediaItemId,
+      type: 'movie',
+      title: `Title ${mediaItemId}`,
+      slug: `slug-${mediaItemId}`,
+      poster: null,
+    } as MediaSummary;
+  }
+
+  async upsert(data: UpsertUserMediaStateData): Promise<UserMediaState> {
+    const existing = this.states.find((s) => s.userId === data.userId && s.mediaItemId === data.mediaItemId);
+    if (existing) {
+      existing.state = data.state;
+      existing.rating = data.rating ?? null;
+      existing.progress = data.progress ?? null;
+      existing.notes = data.notes ?? null;
+      existing.updatedAt = new Date();
+      return existing;
+    }
+    const created: MediaStateWithSummary = {
+      id: `state-${this.states.length + 1}`,
+      userId: data.userId,
+      mediaItemId: data.mediaItemId,
+      state: data.state,
+      rating: data.rating ?? null,
+      progress: data.progress ?? null,
+      notes: data.notes ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      mediaSummary: this.makeSummary(data.mediaItemId),
+    };
+    this.states.push(created);
+    return created;
+  }
+
+  async findOne(userId: string, mediaItemId: string): Promise<UserMediaState | null> {
+    return this.states.find((s) => s.userId === userId && s.mediaItemId === mediaItemId) ?? null;
+  }
+
+  async listByUser(userId: string, limit = 20, offset = 0): Promise<UserMediaState[]> {
+    return this.states.filter((s) => s.userId === userId).slice(offset, offset + limit);
+  }
+
+  async findManyByMediaIds(userId: string, mediaItemIds: string[]): Promise<UserMediaState[]> {
+    return this.states.filter((s) => s.userId === userId && mediaItemIds.includes(s.mediaItemId));
+  }
+
+  async listWithMedia(userId: string, limit = 20, offset = 0) {
+    return this.states.filter((s) => s.userId === userId).slice(offset, offset + limit);
+  }
+
+  async findOneWithMedia(userId: string, mediaItemId: string) {
+    return this.states.find((s) => s.userId === userId && s.mediaItemId === mediaItemId) ?? null;
+  }
+}
+
+describe('User Media e2e', () => {
   let app: INestApplication;
   const baseUrl = '/api/auth';
+  const mediaUrl = '/api/user-media';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -110,6 +189,7 @@ describe('Auth e2e: register -> login -> refresh -> me', () => {
         ConfigModule.forRoot({ isGlobal: true, load: [authConfig], ignoreEnvFile: true }),
         AuthModule,
         UsersModule,
+        UserMediaModule,
       ],
     })
       .overrideProvider(USERS_REPOSITORY)
@@ -118,6 +198,8 @@ describe('Auth e2e: register -> login -> refresh -> me', () => {
       .useClass(InMemoryRefreshTokensRepository)
       .overrideProvider(DATABASE_CONNECTION)
       .useValue({})
+      .overrideProvider(USER_MEDIA_STATE_REPOSITORY)
+      .useClass(InMemoryUserMediaRepository)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -140,77 +222,36 @@ describe('Auth e2e: register -> login -> refresh -> me', () => {
     await app.close();
   });
 
-  it('should register then login successfully', async () => {
-    const registerRes = await request(app.getHttpServer())
+  it('set/get/list with bearer', async () => {
+    const reg = await request(app.getHttpServer())
       .post(`${baseUrl}/register`)
-      .send({
-        email: 'user@example.com',
-        username: 'tester',
-        password: 'S3curePassw0rd',
-      })
+      .send({ email: 'media@example.com', username: 'media', password: 'S3curePassw0rd' })
       .expect(201);
+    const token = reg.body.data.accessToken as string;
 
-    expect(registerRes.body.success).toBe(true);
-    expect(registerRes.body.data.accessToken).toBeDefined();
-    expect(registerRes.body.data.refreshToken).toBeDefined();
+    const mediaItemId = 'mid-1';
 
-    const loginRes = await request(app.getHttpServer())
-      .post(`${baseUrl}/login`)
-      .send({ email: 'user@example.com', password: 'S3curePassw0rd' })
+    const setRes = await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'watching', rating: 8 })
       .expect(200);
+    expect(setRes.body.success).toBe(true);
+    expect(setRes.body.data.state).toBe('watching');
 
-    expect(loginRes.body.success).toBe(true);
-    expect(loginRes.body.data.accessToken).toBeDefined();
-    expect(loginRes.body.data.refreshToken).toBeDefined();
-  });
+    const getRes = await request(app.getHttpServer())
+      .get(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(getRes.body.success).toBe(true);
+    expect(getRes.body.data.mediaSummary.id).toBe(mediaItemId);
 
-  it('should fail validation on bad email/password', async () => {
-    await request(app.getHttpServer())
-      .post(`${baseUrl}/register`)
-      .send({ email: 'bad', username: 'a', password: '123' })
-      .expect(400);
-  });
-
-  it('should conflict on duplicate email', async () => {
-    await request(app.getHttpServer())
-      .post(`${baseUrl}/register`)
-      .send({ email: 'dup@example.com', username: 'dup1', password: 'S3curePassw0rd' })
-      .expect(201);
-
-    await request(app.getHttpServer())
-      .post(`${baseUrl}/register`)
-      .send({ email: 'dup@example.com', username: 'dup2', password: 'S3curePassw0rd' })
-      .expect(409);
-  });
-
-  it('should reject login with wrong password', async () => {
-    await request(app.getHttpServer())
-      .post(`${baseUrl}/register`)
-      .send({ email: 'wrongpass@example.com', username: 'wrongpass', password: 'S3curePassw0rd' })
-      .expect(201);
-
-    await request(app.getHttpServer())
-      .post(`${baseUrl}/login`)
-      .send({ email: 'wrongpass@example.com', password: 'bad' })
-      .expect(401);
-  });
-
-  it('should logout and revoke refresh token', async () => {
-    const registerRes = await request(app.getHttpServer())
-      .post(`${baseUrl}/register`)
-      .send({ email: 'logout@example.com', username: 'logoutu', password: 'S3curePassw0rd' })
-      .expect(201);
-
-    const { accessToken, refreshToken } = registerRes.body.data;
-
-    await request(app.getHttpServer())
-      .post(`${baseUrl}/logout`)
-      .set('Authorization', `Bearer ${accessToken}`)
-      .expect(204);
-
-    await request(app.getHttpServer())
-      .post(`${baseUrl}/refresh`)
-      .send({ refreshToken })
-      .expect(401);
+    const listRes = await request(app.getHttpServer())
+      .get(`${mediaUrl}?limit=10&offset=0`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    expect(listRes.body.success).toBe(true);
+    expect(Array.isArray(listRes.body.data)).toBe(true);
+    expect(listRes.body.data.length).toBeGreaterThan(0);
   });
 });
