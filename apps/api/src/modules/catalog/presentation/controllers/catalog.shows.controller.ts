@@ -99,6 +99,9 @@ export class CatalogShowsController {
     days?: number,
   ): Promise<CalendarResponseDto> {
     const start = startDateString ? new Date(startDateString) : new Date();
+    if (startDateString && Number.isNaN(start.getTime())) {
+      throw new BadRequestException('startDate must be a valid ISO date string');
+    }
 
     const end = new Date(start);
     const daysToAdd =

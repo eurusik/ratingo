@@ -53,6 +53,33 @@ describe('Catalog E2E - Trending Shows', () => {
     expect(rangeRes.body.data.data.map((s: any) => s.id)).toEqual(['sid-1']);
   });
 
+  it('applies minRatingo filter', async () => {
+    const res = await ctx.get('/api/catalog/shows/trending?minRatingo=60').expect(200);
+    expect(res.body.data.data.map((s: any) => s.id)).toEqual(['sid-1']);
+  });
+
+  it('supports sorting by releaseDate and tmdbPopularity', async () => {
+    const byReleaseDesc = await ctx
+      .get('/api/catalog/shows/trending?sort=releaseDate&order=desc')
+      .expect(200);
+    expect(byReleaseDesc.body.data.data.map((s: any) => s.id)).toEqual(['sid-1', 'sid-2']);
+
+    const byReleaseAsc = await ctx
+      .get('/api/catalog/shows/trending?sort=releaseDate&order=asc')
+      .expect(200);
+    expect(byReleaseAsc.body.data.data.map((s: any) => s.id)).toEqual(['sid-2', 'sid-1']);
+
+    const byTmdbPopularityDesc = await ctx
+      .get('/api/catalog/shows/trending?sort=tmdbPopularity&order=desc')
+      .expect(200);
+    expect(byTmdbPopularityDesc.body.data.data.map((s: any) => s.id)).toEqual(['sid-1', 'sid-2']);
+
+    const byTmdbPopularityAsc = await ctx
+      .get('/api/catalog/shows/trending?sort=tmdbPopularity&order=asc')
+      .expect(200);
+    expect(byTmdbPopularityAsc.body.data.data.map((s: any) => s.id)).toEqual(['sid-2', 'sid-1']);
+  });
+
   it('returns correct meta total/hasMore across pages', async () => {
     const page1 = await ctx.get('/api/catalog/shows/trending?limit=1&offset=0').expect(200);
     expect(page1.body.data.meta.total).toBe(2);

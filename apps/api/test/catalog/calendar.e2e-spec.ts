@@ -32,4 +32,8 @@ describe('Catalog E2E - Calendar', () => {
   it('rejects invalid days param', async () => {
     await ctx.get('/api/catalog/shows/calendar?days=-1').expect(400);
   });
+
+  it('rejects invalid startDate', async () => {
+    await ctx.get('/api/catalog/shows/calendar?startDate=not-a-date').expect(400);
+  });
 });

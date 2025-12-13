@@ -51,6 +51,53 @@ describe('Catalog E2E - Trending Movies', () => {
     expect(rangeRes.body.data.data.map((m: any) => m.id)).toEqual(['mid-2', 'mid-3']);
   });
 
+  it('applies minRatingo filter', async () => {
+    const res = await ctx.get('/api/catalog/movies/trending?minRatingo=70').expect(200);
+    expect(res.body.data.data.map((m: any) => m.id)).toEqual(['mid-1']);
+  });
+
+  it('supports sorting by releaseDate and tmdbPopularity', async () => {
+    const byReleaseDesc = await ctx
+      .get('/api/catalog/movies/trending?sort=releaseDate&order=desc')
+      .expect(200);
+    expect(byReleaseDesc.body.data.data.map((m: any) => m.id)).toEqual([
+      'mid-1',
+      'mid-2',
+      'mid-3',
+      'mid-4',
+    ]);
+
+    const byReleaseAsc = await ctx
+      .get('/api/catalog/movies/trending?sort=releaseDate&order=asc')
+      .expect(200);
+    expect(byReleaseAsc.body.data.data.map((m: any) => m.id)).toEqual([
+      'mid-4',
+      'mid-3',
+      'mid-2',
+      'mid-1',
+    ]);
+
+    const byTmdbPopularityDesc = await ctx
+      .get('/api/catalog/movies/trending?sort=tmdbPopularity&order=desc')
+      .expect(200);
+    expect(byTmdbPopularityDesc.body.data.data.map((m: any) => m.id)).toEqual([
+      'mid-1',
+      'mid-2',
+      'mid-3',
+      'mid-4',
+    ]);
+
+    const byTmdbPopularityAsc = await ctx
+      .get('/api/catalog/movies/trending?sort=tmdbPopularity&order=asc')
+      .expect(200);
+    expect(byTmdbPopularityAsc.body.data.data.map((m: any) => m.id)).toEqual([
+      'mid-4',
+      'mid-3',
+      'mid-2',
+      'mid-1',
+    ]);
+  });
+
   it('validates query params', async () => {
     const queries = [
       '?limit=0',

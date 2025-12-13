@@ -71,6 +71,7 @@ const applySort = <T>(
   order: string | undefined,
   selectors: {
     popularity: (x: T) => number;
+    tmdbPopularity?: (x: T) => number;
     ratingo: (x: T) => number;
     releaseDate?: (x: T) => number;
   },
@@ -79,7 +80,7 @@ const applySort = <T>(
   const pick = () => {
     if (sort === 'ratingo') return selectors.ratingo;
     if (sort === 'releaseDate' && selectors.releaseDate) return selectors.releaseDate;
-    if (sort === 'tmdbPopularity') return selectors.popularity;
+    if (sort === 'tmdbPopularity' && selectors.tmdbPopularity) return selectors.tmdbPopularity;
     return selectors.popularity; // default popularity
   };
   const getValue = pick();
@@ -110,7 +111,8 @@ export class FakeMovieRepository implements IMovieRepository {
     this.lastNowPlayingOptions = options;
     const filtered = applyMovieFilters(this.items, options);
     const sorted = applySort(filtered, options?.sort, options?.order, {
-      popularity: (m) => m.stats?.popularityScore ?? m.popularity ?? 0,
+      popularity: (m) => m.stats?.popularityScore ?? 0,
+      tmdbPopularity: (m) => m.popularity ?? 0,
       ratingo: (m) => m.stats?.ratingoScore ?? 0,
       releaseDate: (m) => (m.releaseDate ? m.releaseDate.getTime() : -Infinity),
     });
@@ -131,7 +133,8 @@ export class FakeMovieRepository implements IMovieRepository {
         : this.items;
     const filtered = applyMovieFilters(windowed, options);
     const sorted = applySort(filtered, options?.sort, options?.order, {
-      popularity: (m) => m.stats?.popularityScore ?? m.popularity ?? 0,
+      popularity: (m) => m.stats?.popularityScore ?? 0,
+      tmdbPopularity: (m) => m.popularity ?? 0,
       ratingo: (m) => m.stats?.ratingoScore ?? 0,
       releaseDate: (m) => (m.theatricalReleaseDate ? m.theatricalReleaseDate.getTime() : -Infinity),
     });
@@ -152,7 +155,8 @@ export class FakeMovieRepository implements IMovieRepository {
         : this.items;
     const filtered = applyMovieFilters(windowed, options);
     const sorted = applySort(filtered, options?.sort, options?.order, {
-      popularity: (m) => m.stats?.popularityScore ?? m.popularity ?? 0,
+      popularity: (m) => m.stats?.popularityScore ?? 0,
+      tmdbPopularity: (m) => m.popularity ?? 0,
       ratingo: (m) => m.stats?.ratingoScore ?? 0,
       releaseDate: (m) => (m.digitalReleaseDate ? m.digitalReleaseDate.getTime() : -Infinity),
     });
@@ -166,7 +170,8 @@ export class FakeMovieRepository implements IMovieRepository {
     this.lastTrendingOptions = options;
     const filtered = applyMovieFilters(this.items, options);
     const sorted = applySort(filtered, options?.sort, options?.order, {
-      popularity: (m) => m.stats?.popularityScore ?? m.popularity ?? 0,
+      popularity: (m) => m.stats?.popularityScore ?? 0,
+      tmdbPopularity: (m) => m.popularity ?? 0,
       ratingo: (m) => m.stats?.ratingoScore ?? 0,
       releaseDate: (m) => (m.releaseDate ? m.releaseDate.getTime() : -Infinity),
     });
@@ -231,7 +236,8 @@ export class FakeShowRepository implements IShowRepository {
     this.lastTrendingOptions = options;
     const filtered = applyShowFilters(this.items as any, options);
     const sorted = applySort(filtered, options?.sort, options?.order, {
-      popularity: (s: any) => (s.stats?.popularityScore ?? s.popularity ?? 0) as number,
+      popularity: (s: any) => (s.stats?.popularityScore ?? 0) as number,
+      tmdbPopularity: (s: any) => (s.popularity ?? 0) as number,
       ratingo: (s: any) => (s.stats?.ratingoScore ?? 0) as number,
       releaseDate: (s: any) => (s.releaseDate ? s.releaseDate.getTime() : -Infinity),
     });
