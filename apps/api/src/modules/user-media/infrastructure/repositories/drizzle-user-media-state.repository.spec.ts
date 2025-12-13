@@ -76,4 +76,53 @@ describe('DrizzleUserMediaStateRepository', () => {
     const missing = await repo.findOneWithMedia('u1', 'm1');
     expect(missing).toBeNull();
   });
+
+  it('listWithMedia should respect sort=rating (orderBy has 2 args)', async () => {
+    const dbMock = makeDbMock();
+    const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+    (repo as any).mapRow = jest.fn((state) => state);
+
+    await repo.listWithMedia('u1', 10, 0, { sort: 'rating' } as any);
+
+    const chain = (dbMock.select as jest.Mock).mock.results[0].value;
+    expect(chain.orderBy).toHaveBeenCalled();
+    expect(chain.orderBy.mock.calls[0].length).toBe(2);
+  });
+
+  it('listWithMedia should respect sort=recent (orderBy has 1 arg)', async () => {
+    const dbMock = makeDbMock();
+    const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+    (repo as any).mapRow = jest.fn((state) => state);
+
+    await repo.listWithMedia('u1', 10, 0, { sort: 'recent' } as any);
+
+    const chain = (dbMock.select as jest.Mock).mock.results[0].value;
+    expect(chain.orderBy).toHaveBeenCalled();
+    expect(chain.orderBy.mock.calls[0].length).toBe(1);
+  });
+
+  it('listWithMedia should accept ratedOnly and states options (smoke)', async () => {
+    const dbMock = makeDbMock();
+    const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+    (repo as any).mapRow = jest.fn((state) => state);
+
+    const result = await repo.listWithMedia('u1', 10, 0, {
+      ratedOnly: true,
+      states: ['planned'],
+      sort: 'releaseDate',
+    } as any);
+
+    expect(result).toHaveLength(1);
+    const chain = (dbMock.select as jest.Mock).mock.results[0].value;
+    expect(chain.where).toHaveBeenCalledTimes(1);
+  });
+
+  it('findManyByMediaIds should return empty without querying DB when ids empty', async () => {
+    const dbMock = makeDbMock();
+    const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+
+    const result = await repo.findManyByMediaIds('u1', []);
+    expect(result).toEqual([]);
+    expect(dbMock.select).not.toHaveBeenCalled();
+  });
 });

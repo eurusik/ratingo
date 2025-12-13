@@ -53,11 +53,82 @@ describe('AllExceptionsFilter', () => {
     expect(loggerWarnSpy).toHaveBeenCalled();
   });
 
+  it('should handle HttpException unauthorized and map code', () => {
+    const response = replyMock();
+    const exception = new HttpException({ message: 'nope' }, HttpStatus.UNAUTHORIZED);
+
+    filter.catch(exception, hostMock(response));
+
+    expect(response.status).toHaveBeenCalledWith(HttpStatus.UNAUTHORIZED);
+    expect(response.send).toHaveBeenCalledWith({
+      success: false,
+      error: {
+        code: ErrorCode.UNAUTHORIZED,
+        message: 'nope',
+        statusCode: HttpStatus.UNAUTHORIZED,
+        details: { errors: ['nope'] },
+      },
+    });
+    expect(loggerWarnSpy).toHaveBeenCalled();
+  });
+
+  it('should handle HttpException forbidden and map code', () => {
+    const response = replyMock();
+    const exception = new HttpException('forbidden', HttpStatus.FORBIDDEN);
+
+    filter.catch(exception, hostMock(response));
+
+    expect(response.status).toHaveBeenCalledWith(HttpStatus.FORBIDDEN);
+    expect(response.send).toHaveBeenCalledWith({
+      success: false,
+      error: {
+        code: ErrorCode.FORBIDDEN,
+        message: 'forbidden',
+        statusCode: HttpStatus.FORBIDDEN,
+        details: undefined,
+      },
+    });
+  });
+
+  it('should handle HttpException default mapping (e.g. 404) without details', () => {
+    const response = replyMock();
+    const exception = new HttpException('nope', HttpStatus.NOT_FOUND);
+
+    filter.catch(exception, hostMock(response));
+
+    expect(response.status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
+    expect(response.send).toHaveBeenCalledWith({
+      success: false,
+      error: {
+        code: ErrorCode.RESOURCE_NOT_FOUND,
+        message: 'nope',
+        statusCode: HttpStatus.NOT_FOUND,
+      },
+    });
+  });
+
+  it('should handle unknown errors and expose message in non-production', () => {
+    const response = replyMock();
+    const exception = new Error('secret stack');
+
+    filter.catch(exception, hostMock(response));
+
+    expect(response.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
+    expect(response.send).toHaveBeenCalledWith({
+      success: false,
+      error: {
+        code: ErrorCode.INTERNAL_ERROR,
+        message: 'secret stack',
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      },
+    });
+  });
+
   it('should handle HttpException with validation messages array', () => {
     const response = replyMock();
     const validationException = new HttpException(
       { message: ['field must be defined', 'other issue'] },
-      HttpStatus.BAD_REQUEST
+      HttpStatus.BAD_REQUEST,
     );
 
     filter.catch(validationException, hostMock(response));
