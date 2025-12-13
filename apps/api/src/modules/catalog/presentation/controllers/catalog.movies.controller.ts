@@ -138,8 +138,11 @@ export class CatalogMoviesController {
     const {
       limit = CatalogMoviesController.DEFAULT_LIMIT,
       offset = CatalogMoviesController.DEFAULT_OFFSET,
-      daysBack = CatalogMoviesController.DEFAULT_NEW_RELEASE_DAYS,
     } = normalizedQuery;
+    const daysBack =
+      normalizedQuery.daysBack !== undefined && normalizedQuery.daysBack > 0
+        ? normalizedQuery.daysBack
+        : CatalogMoviesController.DEFAULT_NEW_RELEASE_DAYS;
     const movies = await this.movieRepository.findNewReleases({
       ...normalizedQuery,
       limit,
@@ -181,8 +184,11 @@ export class CatalogMoviesController {
     const {
       limit = CatalogMoviesController.DEFAULT_LIMIT,
       offset = CatalogMoviesController.DEFAULT_OFFSET,
-      daysBack = CatalogMoviesController.DEFAULT_DIGITAL_DAYS,
     } = normalizedQuery;
+    const daysBack =
+      normalizedQuery.daysBack !== undefined && normalizedQuery.daysBack > 0
+        ? normalizedQuery.daysBack
+        : CatalogMoviesController.DEFAULT_DIGITAL_DAYS;
     const movies = await this.movieRepository.findNewOnDigital({
       ...normalizedQuery,
       limit,

@@ -138,9 +138,7 @@ class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {
   }
 
   async revokeAllForUser(userId: string): Promise<void> {
-    this.tokens.forEach((t) => {
-      if (t.userId === userId) t.revokedAt = new Date();
-    });
+    this.tokens = this.tokens.filter((t) => t.userId !== userId);
   }
 }
 
@@ -351,6 +349,7 @@ class FakeMovieRepository implements IMovieRepository {
 }
 
 class FakeShowRepository implements IShowRepository {
+  public lastTrendingOptions: TrendingShowsOptions | undefined;
   private items = [
     {
       id: 'sid-1',
@@ -462,6 +461,7 @@ class FakeShowRepository implements IShowRepository {
   }
 
   async findTrending(options: TrendingShowsOptions): Promise<any[]> {
+    this.lastTrendingOptions = options;
     const limit = options?.limit ?? this.items.length;
     const offset = options?.offset ?? 0;
     const slice = this.items.slice(offset, offset + limit).map((s) => ({ ...s, type: 'show' }));
@@ -532,6 +532,7 @@ class FakeCatalogSearchService {
 describe('Catalog e2e', () => {
   let app: INestApplication;
   let moviesRepo: FakeMovieRepository;
+  let showsRepo: FakeShowRepository;
   const authBase = '/api/auth';
   const catalogBase = '/api/catalog';
 
@@ -577,6 +578,7 @@ describe('Catalog e2e', () => {
       .compile();
 
     moviesRepo = moduleFixture.get(MOVIE_REPOSITORY) as unknown as FakeMovieRepository;
+    showsRepo = moduleFixture.get(SHOW_REPOSITORY) as unknown as FakeShowRepository;
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
@@ -632,6 +634,26 @@ describe('Catalog e2e', () => {
     expect(withoutState.userState).toBeNull();
   });
 
+  it('shows trending: forwards filters/sort to repository', async () => {
+    await request(app.getHttpServer())
+      .get(
+        `${catalogBase}/shows/trending?limit=4&offset=2&sort=tmdbPopularity&order=desc&genres=thriller&minRatingo=55&voteSource=trakt&minVotes=200&year=2022`,
+      )
+      .expect(200);
+
+    expect(showsRepo.lastTrendingOptions).toMatchObject({
+      limit: 4,
+      offset: 2,
+      sort: 'tmdbPopularity',
+      order: 'desc',
+      minRatingo: 55,
+      voteSource: 'trakt',
+      minVotes: 200,
+      year: 2022,
+    });
+    expect(showsRepo.lastTrendingOptions?.genres).toEqual(['thriller']);
+  });
+
   it('movies trending: supports default meta and pagination via limit/offset', async () => {
     const defaultRes = await request(app.getHttpServer())
       .get(`${catalogBase}/movies/trending`)
@@ -652,12 +674,46 @@ describe('Catalog e2e', () => {
     expect(paged.body.data.meta.offset).toBe(1);
   });
 
-  const trendingValidationQueries = ['?limit=0', '?limit=101', '?offset=-1', '?genreId=not-a-uuid'];
+  it('movies trending: forwards filters/sort to repository', async () => {
+    await request(app.getHttpServer())
+      .get(
+        `${catalogBase}/movies/trending?limit=3&offset=1&sort=ratingo&order=asc&genres=action,drama&minRatingo=70&voteSource=tmdb&minVotes=500&yearFrom=2010&yearTo=2015`,
+      )
+      .expect(200);
+
+    expect(moviesRepo.lastTrendingOptions).toMatchObject({
+      limit: 3,
+      offset: 1,
+      sort: 'ratingo',
+      order: 'asc',
+      minRatingo: 70,
+      voteSource: 'tmdb',
+      minVotes: 500,
+      yearFrom: 2010,
+      yearTo: 2015,
+    });
+    expect(moviesRepo.lastTrendingOptions.genres).toEqual(['action', 'drama']);
+  });
+
+  const trendingValidationQueries = [
+    '?limit=0',
+    '?limit=51',
+    '?offset=-1',
+    '?sort=invalid',
+    '?order=invalid',
+    '?voteSource=invalid',
+    '?minRatingo=101',
+    '?year=2200',
+    '?yearFrom=2200',
+    '?yearTo=1800',
+    '?year=2020&yearFrom=2019',
+    '?yearFrom=2021&yearTo=2020',
+  ];
   [
     { name: 'movies', url: `${catalogBase}/movies/trending` },
     { name: 'shows', url: `${catalogBase}/shows/trending` },
   ].forEach(({ name, url }) => {
-    it(`${name} trending: validates query params (limit/offset/genreId)`, async () => {
+    it(`${name} trending: validates query params`, async () => {
       for (const q of trendingValidationQueries) {
         await get(`${url}${q}`).expect(400);
       }
@@ -709,6 +765,39 @@ describe('Catalog e2e', () => {
     expect(res.body.data.meta.count).toBe(2);
   });
 
+  it('movies now-playing: forwards filters/sort to repository', async () => {
+    await request(app.getHttpServer())
+      .get(
+        `${catalogBase}/movies/now-playing?limit=2&offset=1&sort=tmdbPopularity&order=asc&genres=action&minRatingo=60&voteSource=tmdb&minVotes=50&year=2020`,
+      )
+      .expect(200);
+
+    expect(moviesRepo.lastNowPlayingOptions).toMatchObject({
+      limit: 2,
+      offset: 1,
+      sort: 'tmdbPopularity',
+      order: 'asc',
+      minRatingo: 60,
+      voteSource: 'tmdb',
+      minVotes: 50,
+      year: 2020,
+    });
+    expect(moviesRepo.lastNowPlayingOptions?.genres).toEqual(['action']);
+  });
+
+  it('movies now-playing: validates query params', async () => {
+    const queries = [
+      '?limit=0',
+      '?offset=-1',
+      '?sort=invalid',
+      '?order=invalid',
+      '?minRatingo=101',
+    ];
+    for (const q of queries) {
+      await request(app.getHttpServer()).get(`${catalogBase}/movies/now-playing${q}`).expect(400);
+    }
+  });
+
   it('movies new-releases: forwards daysBack and applies default when 0/undefined', async () => {
     await request(app.getHttpServer())
       .get(`${catalogBase}/movies/new-releases?daysBack=15&limit=1&offset=0`)
@@ -724,6 +813,65 @@ describe('Catalog e2e', () => {
       .get(`${catalogBase}/movies/new-releases?limit=1&offset=0`)
       .expect(200);
     expect(moviesRepo.lastNewReleasesOptions?.daysBack).toBe(30);
+  });
+
+  it('movies new-releases: forwards filters/sort to repository', async () => {
+    await request(app.getHttpServer())
+      .get(
+        `${catalogBase}/movies/new-releases?limit=3&offset=2&sort=releaseDate&order=desc&genres=drama&minRatingo=65&voteSource=tmdb&minVotes=40&yearFrom=2019&yearTo=2021&daysBack=45`,
+      )
+      .expect(200);
+
+    expect(moviesRepo.lastNewReleasesOptions).toMatchObject({
+      limit: 3,
+      offset: 2,
+      sort: 'releaseDate',
+      order: 'desc',
+      minRatingo: 65,
+      voteSource: 'tmdb',
+      minVotes: 40,
+      yearFrom: 2019,
+      yearTo: 2021,
+      daysBack: 45,
+    });
+    expect(moviesRepo.lastNewReleasesOptions?.genres).toEqual(['drama']);
+  });
+
+  it('movies new-releases: validates query params', async () => {
+    const queries = ['?daysBack=-1', '?limit=0', '?offset=-1', '?sort=invalid', '?minRatingo=101'];
+    for (const q of queries) {
+      await request(app.getHttpServer()).get(`${catalogBase}/movies/new-releases${q}`).expect(400);
+    }
+  });
+
+  it('movies new-on-digital: forwards filters/sort to repository', async () => {
+    await request(app.getHttpServer())
+      .get(
+        `${catalogBase}/movies/new-on-digital?limit=4&offset=0&sort=ratingo&order=asc&genres=comedy&minRatingo=50&voteSource=tmdb&minVotes=20&year=2023&daysBack=10`,
+      )
+      .expect(200);
+
+    expect(moviesRepo.lastNewOnDigitalOptions).toMatchObject({
+      limit: 4,
+      offset: 0,
+      sort: 'ratingo',
+      order: 'asc',
+      minRatingo: 50,
+      voteSource: 'tmdb',
+      minVotes: 20,
+      year: 2023,
+      daysBack: 10,
+    });
+    expect(moviesRepo.lastNewOnDigitalOptions?.genres).toEqual(['comedy']);
+  });
+
+  it('movies new-on-digital: validates query params', async () => {
+    const queries = ['?daysBack=-1', '?limit=0', '?offset=-1', '?sort=invalid', '?minRatingo=101'];
+    for (const q of queries) {
+      await request(app.getHttpServer())
+        .get(`${catalogBase}/movies/new-on-digital${q}`)
+        .expect(400);
+    }
   });
 
   it('calendar returns grouped days', async () => {

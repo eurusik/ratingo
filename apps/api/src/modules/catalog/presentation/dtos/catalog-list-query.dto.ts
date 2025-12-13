@@ -9,8 +9,37 @@ import {
   IsString,
   Max,
   Min,
-  ValidateIf,
+  Validate,
+  ValidationArguments,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
 } from 'class-validator';
+
+@ValidatorConstraint({ name: 'YearRange', async: false })
+class YearRangeConstraint implements ValidatorConstraintInterface {
+  validate(yearTo: any, args: ValidationArguments): boolean {
+    const o = args.object as any;
+    if (o.yearFrom === undefined || yearTo === undefined) return true;
+    return o.yearFrom <= yearTo;
+  }
+
+  defaultMessage(): string {
+    return 'yearFrom must be less than or equal to yearTo';
+  }
+}
+
+@ValidatorConstraint({ name: 'YearExclusive', async: false })
+class YearExclusiveConstraint implements ValidatorConstraintInterface {
+  validate(year: any, args: ValidationArguments): boolean {
+    const o = args.object as any;
+    if (year === undefined) return true;
+    return o.yearFrom === undefined && o.yearTo === undefined;
+  }
+
+  defaultMessage(): string {
+    return 'year cannot be used with yearFrom/yearTo';
+  }
+}
 
 export const CATALOG_SORT = {
   POPULARITY: 'popularity',
@@ -103,6 +132,7 @@ export class CatalogListQueryDto {
 
   @ApiPropertyOptional({ description: 'Release year (shortcut)' })
   @IsOptional()
+  @Validate(YearExclusiveConstraint)
   @IsInt()
   @Min(1900)
   @Max(2100)
@@ -119,16 +149,10 @@ export class CatalogListQueryDto {
 
   @ApiPropertyOptional({ description: 'Release year to (inclusive)' })
   @IsOptional()
+  @Validate(YearRangeConstraint)
   @IsInt()
   @Min(1900)
   @Max(2100)
   @Type(() => Number)
   yearTo?: number;
-
-  @ValidateIf((o) => o.yearFrom !== undefined && o.yearTo !== undefined)
-  validateYearRange() {
-    if (this.yearFrom !== undefined && this.yearTo !== undefined && this.yearFrom > this.yearTo) {
-      throw new Error('yearFrom must be less than or equal to yearTo');
-    }
-  }
 }
