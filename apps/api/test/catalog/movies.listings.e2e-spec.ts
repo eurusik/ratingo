@@ -50,6 +50,29 @@ describe('Catalog E2E - Movies Listings', () => {
     expect(filtered.body.data.data.map((m: any) => m.id)).toEqual(['mid-4']);
   });
 
+  it('new-releases: daysBack defaults (0 and missing) apply server defaults', async () => {
+    await ctx.get('/api/catalog/movies/new-releases?daysBack=0&limit=1&offset=0').expect(200);
+    expect(ctx.moviesRepo.lastNewReleasesOptions?.daysBack).toBe(30);
+
+    await ctx.get('/api/catalog/movies/new-releases?limit=1&offset=0').expect(200);
+    expect(ctx.moviesRepo.lastNewReleasesOptions?.daysBack).toBe(30);
+  });
+
+  it('new-on-digital: daysBack defaults (0 and missing) apply server defaults', async () => {
+    await ctx.get('/api/catalog/movies/new-on-digital?daysBack=0&limit=1&offset=0').expect(200);
+    expect(ctx.moviesRepo.lastNewOnDigitalOptions?.daysBack).toBe(14);
+
+    await ctx.get('/api/catalog/movies/new-on-digital?limit=1&offset=0').expect(200);
+    expect(ctx.moviesRepo.lastNewOnDigitalOptions?.daysBack).toBe(14);
+  });
+
+  it('rejects unknown query params (forbidNonWhitelisted)', async () => {
+    const endpoints = ['now-playing', 'new-releases', 'new-on-digital'];
+    for (const ep of endpoints) {
+      await ctx.get(`/api/catalog/movies/${ep}?foo=bar`).expect(400);
+    }
+  });
+
   it('meta total/hasMore for listings', async () => {
     const res = await ctx.get('/api/catalog/movies/now-playing?limit=2&offset=0').expect(200);
     expect(res.body.data.meta.total).toBe(4);

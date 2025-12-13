@@ -6,6 +6,7 @@ import {
   UseGuards,
   Param,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
@@ -104,6 +105,10 @@ export class CatalogShowsController {
       typeof days === 'number' && !Number.isNaN(days)
         ? days
         : CatalogShowsController.DEFAULT_CALENDAR_DAYS;
+
+    if (daysToAdd < 0) {
+      throw new BadRequestException('days must be greater than or equal to 0');
+    }
     end.setDate(end.getDate() + daysToAdd);
 
     const episodes = await this.showRepository.findEpisodesByDateRange(start, end);

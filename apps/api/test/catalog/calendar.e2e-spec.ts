@@ -28,4 +28,8 @@ describe('Catalog E2E - Calendar', () => {
     expect(res.body.data.startDate).toBe(startDate);
     expect(res.body.data.days[0].date).toBe('2024-01-01');
   });
+
+  it('rejects invalid days param', async () => {
+    await ctx.get('/api/catalog/shows/calendar?days=-1').expect(400);
+  });
 });

@@ -62,4 +62,28 @@ describe('Catalog E2E - Trending Shows', () => {
     expect(page2.body.data.meta.total).toBe(2);
     expect(page2.body.data.meta.hasMore).toBe(false);
   });
+
+  it('validates query params', async () => {
+    const queries = [
+      '?limit=0',
+      '?limit=51',
+      '?offset=-1',
+      '?sort=invalid',
+      '?order=invalid',
+      '?voteSource=invalid',
+      '?minRatingo=101',
+      '?year=2200',
+      '?yearFrom=2200',
+      '?yearTo=1800',
+      '?year=2020&yearFrom=2019',
+      '?yearFrom=2021&yearTo=2020',
+    ];
+    for (const q of queries) {
+      await ctx.get(`/api/catalog/shows/trending${q}`).expect(400);
+    }
+  });
+
+  it('rejects unknown query params (forbidNonWhitelisted)', async () => {
+    await ctx.get('/api/catalog/shows/trending?foo=bar').expect(400);
+  });
 });

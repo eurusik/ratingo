@@ -71,6 +71,10 @@ describe('Catalog E2E - Trending Movies', () => {
     }
   });
 
+  it('rejects unknown query params (forbidNonWhitelisted)', async () => {
+    await ctx.get('/api/catalog/movies/trending?foo=bar').expect(400);
+  });
+
   it('returns correct meta total/hasMore across pages', async () => {
     const page1 = await ctx.get('/api/catalog/movies/trending?limit=2&offset=0').expect(200);
     expect(page1.body.data.meta.total).toBe(4);
