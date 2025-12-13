@@ -2,9 +2,17 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq, gte, desc, isNotNull, inArray, and } from 'drizzle-orm';
+import { eq, gte, lte, desc, isNotNull, inArray, and, exists, sql } from 'drizzle-orm';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import {
+  CatalogSort,
+  SortOrder,
+  VoteSource,
+  CATALOG_SORT,
+  SORT_ORDER,
+  VOTE_SOURCE,
+} from '../../presentation/dtos/catalog-list-query.dto';
 
 /**
  * Options for trending movies query.
@@ -12,9 +20,15 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 export interface TrendingMoviesOptions {
   limit?: number;
   offset?: number;
-  minRating?: number;
-  genreId?: string;
-  sort?: 'popularity' | 'ratingo' | 'releaseDate';
+  minRatingo?: number;
+  genres?: string[];
+  sort?: CatalogSort;
+  order?: SortOrder;
+  voteSource?: VoteSource;
+  minVotes?: number;
+  year?: number;
+  yearFrom?: number;
+  yearTo?: number;
 }
 
 /**
@@ -28,6 +42,10 @@ export interface TrendingMoviesOptions {
 @Injectable()
 export class TrendingMoviesQuery {
   private readonly logger = new Logger(TrendingMoviesQuery.name);
+  private static readonly YEAR_START_MONTH = 0;
+  private static readonly YEAR_START_DAY = 1;
+  private static readonly CLASSIC_RATINGO_THRESHOLD = 80;
+  private static readonly CLASSIC_WATCHERS_THRESHOLD = 10000;
 
   constructor(
     @Inject(DATABASE_CONNECTION)
@@ -74,22 +92,74 @@ export class TrendingMoviesQuery {
    * @throws {DatabaseException} When database query fails
    */
   async execute(options: TrendingMoviesOptions): Promise<any[]> {
-    const { limit = 20, offset = 0, minRating, genreId, sort } = options;
+    const {
+      limit = 20,
+      offset = 0,
+      minRatingo,
+      genres,
+      sort = CATALOG_SORT.POPULARITY,
+      order = SORT_ORDER.DESC,
+      voteSource = VOTE_SOURCE.TMDB,
+      minVotes,
+      year,
+      yearFrom,
+      yearTo,
+    } = options;
 
     try {
       const conditions: any[] = [isNotNull(schema.mediaStats.popularityScore)];
 
-      if (minRating) {
-        conditions.push(gte(schema.mediaStats.ratingoScore, minRating));
+      if (minRatingo !== undefined) {
+        conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
       }
 
-      if (genreId) {
-        const genreSubquery = this.db
-          .select({ mediaItemId: schema.mediaGenres.mediaItemId })
-          .from(schema.mediaGenres)
-          .where(eq(schema.mediaGenres.genreId, genreId));
+      if (genres && genres.length) {
+        conditions.push(
+          exists(
+            this.db
+              .select({ id: schema.mediaGenres.id })
+              .from(schema.mediaGenres)
+              .innerJoin(schema.genres, eq(schema.mediaGenres.genreId, schema.genres.id))
+              .where(
+                and(
+                  eq(schema.mediaGenres.mediaItemId, schema.mediaItems.id),
+                  inArray(schema.genres.slug, genres),
+                ),
+              ),
+          ),
+        );
+      }
 
-        conditions.push(inArray(schema.mediaItems.id, genreSubquery));
+      if (minVotes !== undefined) {
+        if (voteSource === 'trakt') {
+          conditions.push(gte(schema.mediaItems.voteCountTrakt, minVotes));
+        } else {
+          conditions.push(gte(schema.mediaItems.voteCount, minVotes));
+        }
+      }
+
+      if (year !== undefined) {
+        const { start, end } = this.buildYearRange(year);
+        conditions.push(
+          isNotNull(schema.mediaItems.releaseDate),
+          gte(schema.mediaItems.releaseDate, start),
+          lte(schema.mediaItems.releaseDate, end),
+        );
+      } else if (yearFrom !== undefined || yearTo !== undefined) {
+        if (yearFrom !== undefined) {
+          const start = this.buildYearStart(yearFrom);
+          conditions.push(
+            isNotNull(schema.mediaItems.releaseDate),
+            gte(schema.mediaItems.releaseDate, start),
+          );
+        }
+        if (yearTo !== undefined) {
+          const end = this.buildYearStart(yearTo + 1);
+          conditions.push(
+            isNotNull(schema.mediaItems.releaseDate),
+            lte(schema.mediaItems.releaseDate, end),
+          );
+        }
       }
 
       const results = await this.db
@@ -98,18 +168,15 @@ export class TrendingMoviesQuery {
         .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(and(...conditions))
-        .orderBy(
-          ...(sort === 'ratingo'
-            ? [desc(schema.mediaStats.ratingoScore), desc(schema.mediaItems.popularity)]
-            : sort === 'releaseDate'
-              ? [desc(schema.mediaItems.releaseDate), desc(schema.mediaItems.popularity)]
-              : [desc(schema.mediaStats.popularityScore), desc(schema.mediaItems.popularity)]),
-        )
+        .orderBy(...this.buildOrder(sort, order))
         .limit(limit)
         .offset(offset);
 
+      const total = await this.countTotal(conditions);
       const moviesWithGenres = await this.attachGenres(results);
-      return this.mapResults(moviesWithGenres);
+      const mapped = this.mapResults(moviesWithGenres);
+      (mapped as any).total = total;
+      return mapped;
     } catch (error) {
       this.logger.error(`Failed to find trending movies: ${error.message}`, error.stack);
       throw new DatabaseException('Failed to fetch trending movies', {
@@ -134,9 +201,51 @@ export class TrendingMoviesQuery {
       isNew: m.releaseDate ? m.releaseDate >= newReleaseCutoff : false,
       isClassic: m.releaseDate
         ? m.releaseDate <= classicCutoff ||
-          ((m.stats.ratingoScore || 0) >= 80 && (m.stats.totalWatchers || 0) > 10000)
+          ((m.stats.ratingoScore || 0) >= TrendingMoviesQuery.CLASSIC_RATINGO_THRESHOLD &&
+            (m.stats.totalWatchers || 0) > TrendingMoviesQuery.CLASSIC_WATCHERS_THRESHOLD)
         : false,
     }));
+  }
+
+  private buildYearStart(year: number): Date {
+    return new Date(
+      Date.UTC(year, TrendingMoviesQuery.YEAR_START_MONTH, TrendingMoviesQuery.YEAR_START_DAY),
+    );
+  }
+
+  private buildYearRange(year: number): { start: Date; end: Date } {
+    const start = this.buildYearStart(year);
+    const end = this.buildYearStart(year + 1);
+    return { start, end };
+  }
+
+  private buildOrder(sort: CatalogSort, order: SortOrder) {
+    const dir = order === 'asc' ? sql`asc` : sql`desc`;
+    const nullsLast = sql`NULLS LAST`;
+
+    if (sort === 'ratingo') {
+      return [sql`${schema.mediaStats.ratingoScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
+    }
+    if (sort === 'releaseDate') {
+      return [
+        sql`${schema.mediaItems.releaseDate} ${dir} ${nullsLast}`,
+        sql`${schema.mediaItems.id} desc`,
+      ];
+    }
+    if (sort === 'tmdbPopularity') {
+      return [sql`${schema.mediaItems.popularity} ${dir}`, sql`${schema.mediaItems.id} desc`];
+    }
+    return [sql`${schema.mediaStats.popularityScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
+  }
+
+  private async countTotal(conditions: any[]): Promise<number> {
+    const [{ total }] = await this.db
+      .select({ total: sql<number>`count(*)` })
+      .from(schema.movies)
+      .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+      .where(and(...conditions));
+    return Number(total ?? 0);
   }
 
   /**

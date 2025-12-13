@@ -115,12 +115,12 @@ describe('TrendingMoviesQuery', () => {
       { mediaItemId: 'mid2', id: 'g2', name: 'Drama', slug: 'drama' },
     ];
 
-    // main select + attachGenres
-    setup([movies, genres]);
+    // main select + count + attachGenres
+    setup([movies, [{ total: movies.length }], genres]);
 
-    const res = await query.execute({ limit: 5, offset: 0, minRating: 50 });
+    const res = await query.execute({ limit: 5, offset: 0, minRatingo: 50 });
 
-    expect(db.select).toHaveBeenCalledTimes(2);
+    expect(db.select).toHaveBeenCalledTimes(3);
     expect(res).toHaveLength(2);
 
     const newMovie = res.find((m) => m.id === 'row1')!;
@@ -152,20 +152,21 @@ describe('TrendingMoviesQuery', () => {
     ] as any[];
     const genres = [{ mediaItemId: 'mid', id: 'g1', name: 'Action', slug: 'action' }];
 
-    // select for genre subquery, main results, attachGenres
-    setup([[], movies, genres]);
+    // select for genre subquery, main results, count, attachGenres
+    setup([[{ id: 'mg' }], movies, [{ total: movies.length }], genres]);
 
-    const res = await query.execute({ limit: 1, offset: 0, genreId: 'g1' });
-    expect(db.select).toHaveBeenCalledTimes(3);
+    const res = await query.execute({ limit: 1, offset: 0, genres: ['g1'] });
+    expect(db.select).toHaveBeenCalledTimes(4);
     expect(res).toHaveLength(1);
     expect(res[0].genres).toHaveLength(1);
   });
 
   it('should return empty array when no movies', async () => {
-    setup([[]]);
+    setup([[], [{ total: 0 }]]); // main + count (attachGenres skipped)
     const res = await query.execute({});
-    expect(res).toEqual([]);
-    expect(db.select).toHaveBeenCalledTimes(1);
+    expect(res).toHaveLength(0);
+    expect((res as any).total).toBe(0);
+    expect(db.select).toHaveBeenCalledTimes(2);
   });
 
   it('should throw DatabaseException on error', async () => {

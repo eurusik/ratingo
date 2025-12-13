@@ -9,7 +9,14 @@ import {
   ExternalRatingsDto,
   RatingoStatsDto,
 } from '../../presentation/dtos/common.dto';
+import {
+  CatalogListQueryDto,
+  CatalogSort,
+  SortOrder,
+  VoteSource,
+} from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
 /**
  * Options for trending shows query.
@@ -17,9 +24,15 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 export interface TrendingShowsOptions {
   limit?: number;
   offset?: number;
-  minRating?: number;
-  genreId?: string;
-  sort?: 'popularity' | 'ratingo' | 'releaseDate';
+  minRatingo?: number;
+  genres?: string[];
+  sort?: CatalogSort;
+  order?: SortOrder;
+  voteSource?: VoteSource;
+  minVotes?: number;
+  year?: number;
+  yearFrom?: number;
+  yearTo?: number;
 }
 
 /**
@@ -27,7 +40,7 @@ export interface TrendingShowsOptions {
  */
 export interface TrendingShowItem {
   id: string;
-  type: 'show';
+  type: MediaType.SHOW;
   slug: string;
   title: string;
   originalTitle: string | null;

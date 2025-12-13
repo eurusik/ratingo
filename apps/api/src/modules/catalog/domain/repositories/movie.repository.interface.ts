@@ -1,7 +1,12 @@
 import { ReleaseInfo, Video } from '../../../../database/schema';
 import { CreditsDto, ImageDto, AvailabilityDto } from '../../presentation/dtos/common.dto';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
-import { TrendingShowsQueryDto } from '../../presentation/dtos/trending.dto';
+import {
+  CatalogListQueryDto,
+  CatalogSort,
+  SortOrder,
+  VoteSource,
+} from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
@@ -53,7 +58,15 @@ export interface NowPlayingOptions {
   /** Number of days to look back (default: 30) */
   daysBack?: number;
   /** Sort order (default: popularity) */
-  sort?: 'popularity' | 'releaseDate';
+  sort?: CatalogSort;
+  order?: SortOrder;
+  genres?: string[];
+  minRatingo?: number;
+  voteSource?: VoteSource;
+  minVotes?: number;
+  year?: number;
+  yearFrom?: number;
+  yearTo?: number;
 }
 
 /**
@@ -124,7 +137,7 @@ export interface IMovieRepository {
   /**
    * Finds trending movies sorted by popularity and rating.
    */
-  findTrending(options: TrendingShowsQueryDto): Promise<any[]>;
+  findTrending(options: CatalogListQueryDto): Promise<any[]>;
 
   /**
    * Sets isNowPlaying flag for movies.

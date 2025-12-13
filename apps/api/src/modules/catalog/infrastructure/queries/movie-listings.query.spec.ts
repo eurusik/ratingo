@@ -91,12 +91,12 @@ describe('MovieListingsQuery', () => {
       { mediaItemId: 'mid1', id: 'g2', name: 'Drama', slug: 'drama' },
     ];
 
-    // main select + attachGenres select
-    setup([movies, genres]);
+    // main select + count + attachGenres select
+    setup([movies, [{ total: movies.length }], genres]);
 
     const res = await query.execute('now_playing', { limit: 5, offset: 0 });
 
-    expect(db.select).toHaveBeenCalledTimes(2);
+    expect(db.select).toHaveBeenCalledTimes(3);
     expect(res).toHaveLength(1);
     expect(res[0].id).toBe('row1');
     expect(res[0].genres).toHaveLength(2);
@@ -158,12 +158,12 @@ describe('MovieListingsQuery', () => {
       { mediaItemId: 'm2', id: 'g2', name: 'Drama', slug: 'drama' },
     ];
 
-    // main + genres
-    setup([movies, genres]);
+    // main + count + genres
+    setup([movies, [{ total: movies.length }], genres]);
 
     const res = await query.execute('new_releases', { daysBack: 10, limit: 2, offset: 1 });
 
-    expect(db.select).toHaveBeenCalledTimes(2);
+    expect(db.select).toHaveBeenCalledTimes(3);
     expect(res).toHaveLength(2);
     expect(res[0].genres[0].slug).toBe('action');
     expect(res[1].genres[0].slug).toBe('drama');
@@ -197,19 +197,19 @@ describe('MovieListingsQuery', () => {
     ];
     const genres = [{ mediaItemId: 'dm1', id: 'g3', name: 'SciFi', slug: 'sci-fi' }];
 
-    setup([movies, genres]);
+    setup([movies, [{ total: movies.length }], genres]);
 
     const res = await query.execute('new_on_digital', { daysBack: 7 });
-    expect(db.select).toHaveBeenCalledTimes(2);
+    expect(db.select).toHaveBeenCalledTimes(3);
     expect(res[0].genres[0].name).toBe('SciFi');
   });
 
   it('should return empty array when no movies', async () => {
-    setup([[]]);
+    setup([[], [{ total: 0 }]]); // main + count; attachGenres skipped on empty
     const res = await query.execute('now_playing', {});
-    expect(res).toEqual([]);
-    // only one select call (attachGenres skipped)
-    expect(db.select).toHaveBeenCalledTimes(1);
+    expect(res).toHaveLength(0);
+    expect((res as any).total).toBe(0);
+    expect(db.select).toHaveBeenCalledTimes(2);
   });
 
   it('should throw DatabaseException on error', async () => {

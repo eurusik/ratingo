@@ -30,15 +30,23 @@ export class OffsetPaginationMetaDto {
   @ApiPropertyOptional({ example: 100 })
   count!: number;
 
+  @ApiPropertyOptional({ example: 250 })
+  total?: number;
+
   @ApiPropertyOptional({ example: 20 })
   limit!: number;
 
   @ApiPropertyOptional({ example: 0 })
   offset!: number;
+
+  @ApiPropertyOptional({ example: true })
+  hasMore?: boolean;
 }
 
 export interface OffsetPaginationMeta {
   count: number;
+  total?: number;
   limit: number;
   offset: number;
+  hasMore?: boolean;
 }

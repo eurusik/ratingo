@@ -11,12 +11,17 @@ import {
 import { ReleaseInfo } from '../../../../database/schema';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { TrendingShowsQueryDto } from '../../presentation/dtos/trending.dto';
+import {
+  CatalogListQueryDto,
+  CatalogSort,
+  SortOrder,
+  VoteSource,
+} from '../../presentation/dtos/catalog-list-query.dto';
 
 // Query Objects
 import { MovieDetailsQuery } from '../queries/movie-details.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';
-import { MovieListingsQuery } from '../queries/movie-listings.query';
+import { MovieListingsQuery, MOVIE_LISTING_TYPE } from '../queries/movie-listings.query';
 
 type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
 
@@ -33,7 +38,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly movieDetailsQuery: MovieDetailsQuery,
     private readonly trendingMoviesQuery: TrendingMoviesQuery,
-    private readonly movieListingsQuery: MovieListingsQuery
+    private readonly movieListingsQuery: MovieListingsQuery,
   ) {}
 
   /**
@@ -94,7 +99,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
       theatricalReleaseDate?: Date | null;
       digitalReleaseDate?: Date | null;
       releases?: ReleaseInfo[];
-    }
+    },
   ): Promise<void> {
     try {
       await this.db
@@ -123,28 +128,36 @@ export class DrizzleMovieRepository implements IMovieRepository {
   /**
    * Finds trending movies sorted by popularity and rating.
    */
-  async findTrending(options: TrendingShowsQueryDto): Promise<any[]> {
-    return this.trendingMoviesQuery.execute(options);
+  async findTrending(options: CatalogListQueryDto): Promise<any[]> {
+    const normalized = { ...options, genres: this.normalizeGenres(options.genres) };
+    return this.trendingMoviesQuery.execute(normalized);
   }
 
   /**
    * Finds movies currently in theaters (isNowPlaying = true).
    */
   async findNowPlaying(options: NowPlayingOptions = {}): Promise<MovieWithMedia[]> {
-    return this.movieListingsQuery.execute('now_playing', options);
+    return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NOW_PLAYING, options);
   }
 
   /**
    * Finds movies recently released in theaters.
    */
   async findNewReleases(options: NowPlayingOptions = {}): Promise<MovieWithMedia[]> {
-    return this.movieListingsQuery.execute('new_releases', options);
+    return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_RELEASES, options);
   }
 
   /**
    * Finds movies recently released on digital platforms.
    */
   async findNewOnDigital(options: NowPlayingOptions = {}): Promise<MovieWithMedia[]> {
-    return this.movieListingsQuery.execute('new_on_digital', options);
+    return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_ON_DIGITAL, options);
+  }
+
+  private normalizeGenres(genres?: string | string[]): string[] | undefined {
+    if (!genres) return undefined;
+    const arr = Array.isArray(genres) ? genres : genres.split(',');
+    const cleaned = arr.map((g) => g.trim()).filter((g) => g.length > 0);
+    return cleaned.length ? cleaned : undefined;
   }
 }

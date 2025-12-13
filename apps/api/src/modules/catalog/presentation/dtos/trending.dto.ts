@@ -1,38 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Min, Max, IsUUID } from 'class-validator';
 import { ImageDto, ExternalRatingsDto, RatingoStatsDto } from './common.dto';
-import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from './pagination.dto';
+import { OffsetPaginationMetaDto } from './pagination.dto';
+import { CatalogListQueryDto } from './catalog-list-query.dto';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
-export enum TrendingSort {
-  POPULARITY = 'popularity',
-  RATINGO = 'ratingo',
-  RELEASE_DATE = 'releaseDate',
-}
-
-export class TrendingShowsQueryDto extends OffsetPaginationQueryDto {
-  @ApiProperty({ required: false, description: 'Filter by minimum Ratingo Score (0-100)' })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(100)
-  @Type(() => Number)
-  minRating?: number;
-
-  @ApiProperty({ required: false, description: 'Filter by genre ID (UUID)' })
-  @IsOptional()
-  @IsUUID()
-  genreId?: string;
-
-  @ApiProperty({
-    required: false,
-    enum: TrendingSort,
-    description: 'Sort order',
-    default: TrendingSort.POPULARITY,
-  })
-  @IsOptional()
-  sort?: TrendingSort;
-}
+export class TrendingShowsQueryDto extends CatalogListQueryDto {}
 
 export class ShowProgressDto {
   @ApiProperty({
@@ -68,8 +40,8 @@ export class ShowTrendingItemDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty({ example: 'show' })
-  type: 'show';
+  @ApiProperty({ example: MediaType.SHOW, enum: [MediaType.SHOW] })
+  type: MediaType.SHOW;
 
   @ApiProperty()
   slug: string;
@@ -123,8 +95,8 @@ export class MovieTrendingItemDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty({ example: 'movie' })
-  type: 'movie';
+  @ApiProperty({ example: MediaType.MOVIE, enum: [MediaType.MOVIE] })
+  type: MediaType.MOVIE;
 
   @ApiProperty()
   slug: string;

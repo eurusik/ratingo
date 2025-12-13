@@ -7,85 +7,32 @@ import {
   UseGuards,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  ApiOkResponse,
-  ApiOperation,
-  ApiPropertyOptional,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
-import { IsInt, IsOptional, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   IMovieRepository,
   MOVIE_REPOSITORY,
 } from '../../domain/repositories/movie.repository.interface';
 import { MovieResponseDto } from '../dtos/movie-response.dto';
 import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
-import {
-  LISTING_SORT,
-  LISTING_SORT_VALUES,
-  ListingSort,
-  OffsetPaginationQueryDto,
-} from '../dtos/pagination.dto';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { TrendingMoviesResponseDto } from '../dtos/trending.dto';
+import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
+import { CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-days.dto';
 
-class MoviesNowPlayingQueryDto extends OffsetPaginationQueryDto {
-  @ApiPropertyOptional({
-    required: false,
-    enum: LISTING_SORT_VALUES,
-    default: LISTING_SORT.POPULARITY,
-    description: "Sort order. For sort='popularity' this uses raw media_items.popularity.",
-  })
-  @IsOptional()
-  sort?: ListingSort;
-}
-
-class MoviesNewReleasesQueryDto extends OffsetPaginationQueryDto {
-  @ApiPropertyOptional({ default: 30, description: 'Days to look back' })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Type(() => Number)
-  daysBack?: number = 30;
-
-  @ApiPropertyOptional({
-    required: false,
-    enum: LISTING_SORT_VALUES,
-    default: LISTING_SORT.POPULARITY,
-    description:
-      "Sort order. For sort='popularity' this uses aggregated media_stats.popularity_score.",
-  })
-  @IsOptional()
-  sort?: ListingSort;
-}
-
-class MoviesNewOnDigitalQueryDto extends OffsetPaginationQueryDto {
-  @ApiPropertyOptional({ default: 14, description: 'Days to look back for digital releases' })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Type(() => Number)
-  daysBack?: number = 14;
-
-  @ApiPropertyOptional({
-    required: false,
-    enum: LISTING_SORT_VALUES,
-    default: LISTING_SORT.POPULARITY,
-    description:
-      "Sort order. For sort='popularity' this uses aggregated media_stats.popularity_score.",
-  })
-  @IsOptional()
-  sort?: ListingSort;
-}
-
+/**
+ * Public movie catalog endpoints (trending, listings, details).
+ */
 @ApiTags('Public: Catalog')
 @UseGuards(OptionalJwtAuthGuard)
 @Controller('catalog/movies')
 export class CatalogMoviesController {
+  private static readonly DEFAULT_LIMIT = 20;
+  private static readonly DEFAULT_OFFSET = 0;
+  private static readonly DEFAULT_NEW_RELEASE_DAYS = 30;
+  private static readonly DEFAULT_DIGITAL_DAYS = 14;
+
   /**
    * Public movie catalog endpoints (trending, listings, details).
    */
@@ -109,20 +56,24 @@ export class CatalogMoviesController {
   })
   @ApiOkResponse({ type: PaginatedMovieResponseDto })
   async getTrendingMovies(
-    @Query() query: OffsetPaginationQueryDto,
+    @Query() query: CatalogListQueryDto,
     @CurrentUser() user: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const limit = query.limit ?? 20;
-    const offset = query.offset ?? 0;
-    const movies = await this.movieRepository.findTrending({ limit, offset });
+    const normalizedQuery = this.normalizeListQuery(query);
+    const movies = await this.movieRepository.findTrending(normalizedQuery);
+    const limit = normalizedQuery.limit ?? CatalogMoviesController.DEFAULT_LIMIT;
+    const offset = normalizedQuery.offset ?? CatalogMoviesController.DEFAULT_OFFSET;
+    const total = (movies as any).total ?? movies.length;
     const data = await this.catalogUserListEnrich(user, movies, 'movie');
 
     return {
       data,
       meta: {
         count: movies.length,
+        total,
         limit,
         offset,
+        hasMore: offset + movies.length < total,
       },
     };
   }
@@ -140,32 +91,28 @@ export class CatalogMoviesController {
     description:
       'Returns movies currently playing in theaters. Data is synced from TMDB now_playing endpoint.',
   })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Number of items (default: 20)',
-  })
-  @ApiQuery({
-    name: 'offset',
-    required: false,
-    type: Number,
-    description: 'Offset for pagination (default: 0)',
-  })
   @ApiOkResponse({ type: PaginatedMovieResponseDto })
   async getNowPlaying(
-    @Query() query: MoviesNowPlayingQueryDto,
+    @Query() query: CatalogListQueryDto,
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const limit = query.limit ?? 20;
-    const offset = query.offset ?? 0;
-    const sort = query.sort ?? LISTING_SORT.POPULARITY;
-    const movies = await this.movieRepository.findNowPlaying({ limit, offset, sort });
+    const normalizedQuery = this.normalizeListQuery(query);
+    const {
+      limit = CatalogMoviesController.DEFAULT_LIMIT,
+      offset = CatalogMoviesController.DEFAULT_OFFSET,
+    } = normalizedQuery;
+    const movies = await this.movieRepository.findNowPlaying({ ...normalizedQuery, limit, offset });
     const data = await this.catalogUserListEnrich(user, movies, 'movie');
-
+    const total = (movies as any).total ?? movies.length;
     return {
       data,
-      meta: { count: movies.length, limit, offset },
+      meta: {
+        count: movies.length,
+        total,
+        limit,
+        offset,
+        hasMore: offset + movies.length < total,
+      },
     };
   }
 
@@ -184,19 +131,32 @@ export class CatalogMoviesController {
   })
   @ApiOkResponse({ type: PaginatedMovieResponseDto })
   async getNewReleases(
-    @Query() query: MoviesNewReleasesQueryDto,
+    @Query() query: CatalogListQueryWithDaysDto,
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const limit = query.limit ?? 20;
-    const offset = query.offset ?? 0;
-    const daysBack = query.daysBack ?? 30;
-    const sort = query.sort ?? LISTING_SORT.POPULARITY;
-    const movies = await this.movieRepository.findNewReleases({ limit, offset, daysBack, sort });
+    const normalizedQuery = this.normalizeListQuery(query);
+    const {
+      limit = CatalogMoviesController.DEFAULT_LIMIT,
+      offset = CatalogMoviesController.DEFAULT_OFFSET,
+      daysBack = CatalogMoviesController.DEFAULT_NEW_RELEASE_DAYS,
+    } = normalizedQuery;
+    const movies = await this.movieRepository.findNewReleases({
+      ...normalizedQuery,
+      limit,
+      offset,
+      daysBack,
+    });
     const data = await this.catalogUserListEnrich(user, movies, 'movie');
-
+    const total = (movies as any).total ?? movies.length;
     return {
       data,
-      meta: { count: movies.length, limit, offset },
+      meta: {
+        count: movies.length,
+        total,
+        limit,
+        offset,
+        hasMore: offset + movies.length < total,
+      },
     };
   }
 
@@ -214,19 +174,32 @@ export class CatalogMoviesController {
   })
   @ApiOkResponse({ type: PaginatedMovieResponseDto })
   async getNewOnDigital(
-    @Query() query: MoviesNewOnDigitalQueryDto,
+    @Query() query: CatalogListQueryWithDaysDto,
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const limit = query.limit ?? 20;
-    const offset = query.offset ?? 0;
-    const daysBack = query.daysBack ?? 14;
-    const sort = query.sort ?? LISTING_SORT.POPULARITY;
-    const movies = await this.movieRepository.findNewOnDigital({ limit, offset, daysBack, sort });
+    const normalizedQuery = this.normalizeListQuery(query);
+    const {
+      limit = CatalogMoviesController.DEFAULT_LIMIT,
+      offset = CatalogMoviesController.DEFAULT_OFFSET,
+      daysBack = CatalogMoviesController.DEFAULT_DIGITAL_DAYS,
+    } = normalizedQuery;
+    const movies = await this.movieRepository.findNewOnDigital({
+      ...normalizedQuery,
+      limit,
+      offset,
+      daysBack,
+    });
     const data = await this.catalogUserListEnrich(user, movies, 'movie');
-
+    const total = (movies as any).total ?? movies.length;
     return {
       data,
-      meta: { count: movies.length, limit, offset },
+      meta: {
+        count: movies.length,
+        total,
+        limit,
+        offset,
+        hasMore: offset + movies.length < total,
+      },
     };
   }
 
@@ -266,5 +239,14 @@ export class CatalogMoviesController {
     item: T,
   ): Promise<T & { userState: any | null }> {
     return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
+  }
+
+  private normalizeListQuery<T extends CatalogListQueryDto>(query: T): T & { genres?: string[] } {
+    const genres =
+      query.genres
+        ?.split(',')
+        .map((g) => g.trim())
+        .filter((g) => g.length > 0) || undefined;
+    return { ...query, genres } as T & { genres?: string[] };
   }
 }

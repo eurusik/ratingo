@@ -322,7 +322,9 @@ class FakeMovieRepository implements IMovieRepository {
     this.lastTrendingOptions = options;
     const limit = options?.limit ?? this.items.length;
     const offset = options?.offset ?? 0;
-    return this.items.slice(offset, offset + limit);
+    const slice = this.items.slice(offset, offset + limit);
+    (slice as any).total = this.items.length;
+    return slice;
   }
 
   async setNowPlaying(): Promise<void> {
@@ -462,7 +464,9 @@ class FakeShowRepository implements IShowRepository {
   async findTrending(options: TrendingShowsOptions): Promise<any[]> {
     const limit = options?.limit ?? this.items.length;
     const offset = options?.offset ?? 0;
-    return this.items.slice(offset, offset + limit).map((s) => ({ ...s, type: 'show' }));
+    const slice = this.items.slice(offset, offset + limit).map((s) => ({ ...s, type: 'show' }));
+    (slice as any).total = this.items.length;
+    return slice;
   }
 
   async findBySlug(slug: string): Promise<any | null> {

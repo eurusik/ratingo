@@ -11,6 +11,14 @@ import {
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import {
+  CatalogSort,
+  SortOrder,
+  VoteSource,
+  VOTE_SOURCE,
+  CATALOG_SORT,
+  SORT_ORDER,
+} from '../../presentation/dtos/catalog-list-query.dto';
 
 /**
  * Fetches trending TV shows with episode progress.
@@ -37,23 +45,71 @@ export class TrendingShowsQuery {
    * @throws {DatabaseException} When database query fails
    */
   async execute(options: TrendingShowsOptions): Promise<TrendingShowItem[]> {
-    const { limit = 20, offset = 0, minRating, genreId, sort } = options;
+    const {
+      limit = 20,
+      offset = 0,
+      minRatingo,
+      genres,
+      sort = CATALOG_SORT.POPULARITY,
+      order = SORT_ORDER.DESC,
+      voteSource = VOTE_SOURCE.TMDB,
+      minVotes,
+      year,
+      yearFrom,
+      yearTo,
+    } = options;
 
     try {
       const whereConditions: SQL[] = [sql`mi.type = ${MediaType.SHOW}`, sql`mi.deleted_at IS NULL`];
 
-      if (minRating !== undefined) {
-        whereConditions.push(sql`ms.ratingo_score >= ${minRating}`);
+      if (minRatingo !== undefined) {
+        whereConditions.push(sql`ms.ratingo_score >= ${minRatingo}`);
       }
 
-      if (genreId) {
+      if (genres && genres.length) {
+        const genreList = sql.join(
+          genres.map((g) => sql`${g}`),
+          sql`, `,
+        );
         whereConditions.push(sql`
           EXISTS (
             SELECT 1 FROM ${schema.mediaGenres} mg 
-            WHERE mg.media_item_id = mi.id AND mg.genre_id = ${genreId}
+            JOIN ${schema.genres} g ON g.id = mg.genre_id
+            WHERE mg.media_item_id = mi.id AND g.slug IN (${genreList})
           )
         `);
       }
+
+      if (minVotes !== undefined) {
+        if (voteSource === ('trakt' satisfies VoteSource)) {
+          whereConditions.push(sql`mi.vote_count_trakt >= ${minVotes}`);
+        } else {
+          whereConditions.push(sql`mi.vote_count >= ${minVotes}`);
+        }
+      }
+
+      if (year !== undefined) {
+        whereConditions.push(
+          sql`mi.release_date IS NOT NULL`,
+          sql`mi.release_date >= ${new Date(Date.UTC(year, 0, 1))}`,
+          sql`mi.release_date < ${new Date(Date.UTC(year + 1, 0, 1))}`,
+        );
+      } else if (yearFrom !== undefined || yearTo !== undefined) {
+        if (yearFrom !== undefined) {
+          whereConditions.push(
+            sql`mi.release_date IS NOT NULL`,
+            sql`mi.release_date >= ${new Date(Date.UTC(yearFrom, 0, 1))}`,
+          );
+        }
+        if (yearTo !== undefined) {
+          whereConditions.push(
+            sql`mi.release_date IS NOT NULL`,
+            sql`mi.release_date < ${new Date(Date.UTC(yearTo + 1, 0, 1))}`,
+          );
+        }
+      }
+
+      const whereSql = sql.join(whereConditions, sql` AND `);
 
       const query = sql`
         SELECT
@@ -106,15 +162,29 @@ export class TrendingShowsQuery {
         ) ep ON TRUE
         LEFT JOIN ${schema.seasons} se ON se.id = ep.season_id
 
-        WHERE ${sql.join(whereConditions, sql` AND `)}
+        WHERE ${whereSql}
 
-        ORDER BY ${this.buildOrderBy(sort)}
+        ORDER BY ${this.buildOrderBy(sort, order)}
         LIMIT ${limit} OFFSET ${offset}
       `;
 
-      const results = await this.db.execute(query);
+      const countQuery = sql`
+        SELECT COUNT(*)::int AS total
+        FROM ${schema.mediaItems} mi
+        JOIN ${schema.shows} s ON s.media_item_id = mi.id
+        LEFT JOIN ${schema.mediaStats} ms ON ms.media_item_id = mi.id
+        WHERE ${whereSql}
+      `;
 
-      return this.mapResults(results);
+      const [results, totalRows] = await Promise.all([
+        this.db.execute(query),
+        this.db.execute(countQuery),
+      ]);
+      const total = (totalRows as any[])[0]?.total ?? 0;
+
+      const mapped = this.mapResults(results);
+      (mapped as any).total = total;
+      return mapped;
     } catch (error) {
       this.logger.error(`Failed to find trending shows: ${error.message}`, error.stack);
       throw new DatabaseException('Failed to fetch trending shows', {
@@ -139,7 +209,7 @@ export class TrendingShowsQuery {
 
       return {
         id: row.id,
-        type: 'show' as const,
+        type: MediaType.SHOW,
         slug: row.slug,
         title: row.title,
         originalTitle: row.original_title,
@@ -203,19 +273,17 @@ export class TrendingShowsQuery {
   /**
    * Builds ORDER BY clause based on sort option.
    */
-  private buildOrderBy(sort?: TrendingShowsOptions['sort']): SQL {
+  private buildOrderBy(sort: CatalogSort | undefined, order: SortOrder) {
+    const dir = order === 'asc' ? sql`ASC` : sql`DESC`;
     switch (sort) {
       case 'ratingo':
-        return sql`ms.ratingo_score DESC NULLS LAST, mi.popularity DESC NULLS LAST`;
+        return sql`ms.ratingo_score ${dir} NULLS LAST, mi.id DESC`;
       case 'releaseDate':
-        return sql`mi.release_date DESC NULLS LAST, mi.popularity DESC NULLS LAST`;
-      case 'popularity':
+        return sql`mi.release_date ${dir} NULLS LAST, mi.id DESC`;
+      case 'tmdbPopularity':
+        return sql`mi.popularity ${dir}, mi.id DESC`;
       default:
-        return sql`
-          ms.popularity_score DESC NULLS LAST,
-          ms.ratingo_score DESC NULLS LAST,
-          mi.popularity DESC NULLS LAST
-        `;
+        return sql`ms.popularity_score ${dir} NULLS LAST, mi.id DESC`;
     }
   }
 }

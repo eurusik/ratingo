@@ -54,7 +54,7 @@ describe('CatalogMoviesController', () => {
       const result = await controller.getTrendingMovies({ limit: 10, offset: 0 } as any, null);
 
       expect(movieRepository.findTrending).toHaveBeenCalledWith({ limit: 10, offset: 0 });
-      expect(result.meta).toEqual({ count: 1, limit: 10, offset: 0 });
+      expect(result.meta).toEqual({ count: 1, total: 1, limit: 10, offset: 0, hasMore: false });
     });
   });
 
@@ -62,11 +62,9 @@ describe('CatalogMoviesController', () => {
     it('uses defaults and enriches', async () => {
       const result = await controller.getNowPlaying({} as any);
 
-      expect(movieRepository.findNowPlaying).toHaveBeenCalledWith({
-        limit: 20,
-        offset: 0,
-        sort: 'popularity',
-      });
+      expect(movieRepository.findNowPlaying).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 20, offset: 0 }),
+      );
       expect(result.data).toHaveLength(1);
       expect(userStateEnricher.enrichList).toHaveBeenCalled();
     });
@@ -76,7 +74,7 @@ describe('CatalogMoviesController', () => {
     it('passes parameters to repo', async () => {
       await controller.getNewReleases({ limit: 15, offset: 0, daysBack: 60 } as any);
       expect(movieRepository.findNewReleases).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 15, offset: 0, daysBack: 60, sort: 'popularity' }),
+        expect.objectContaining({ limit: 15, offset: 0, daysBack: 60 }),
       );
     });
   });
@@ -85,7 +83,7 @@ describe('CatalogMoviesController', () => {
     it('applies default daysBack and pagination', async () => {
       await controller.getNewOnDigital({ limit: 25 } as any);
       expect(movieRepository.findNewOnDigital).toHaveBeenCalledWith(
-        expect.objectContaining({ limit: 25, daysBack: 14, sort: 'popularity' }),
+        expect.objectContaining({ limit: 25, daysBack: 14 }),
       );
     });
   });

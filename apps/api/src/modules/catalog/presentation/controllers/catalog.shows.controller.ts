@@ -20,11 +20,16 @@ import { CatalogUserStateEnricher } from '../../application/services/catalog-use
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
 import { DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
 @ApiTags('Public: Catalog')
 @UseGuards(OptionalJwtAuthGuard)
 @Controller('catalog/shows')
 export class CatalogShowsController {
+  private static readonly DEFAULT_CALENDAR_DAYS = 7;
+  private static readonly DEFAULT_LIMIT = 20;
+  private static readonly DEFAULT_OFFSET = 0;
+
   /**
    * Public show catalog endpoints (trending, calendar, details).
    */
@@ -47,17 +52,21 @@ export class CatalogShowsController {
     @Query() query: TrendingShowsQueryDto,
     @CurrentUser() user: { id: string } | null,
   ): Promise<TrendingShowsResponseDto> {
-    const shows = await this.showRepository.findTrending(query);
-    const data = await this.catalogUserListEnrich(user, shows, 'show');
-    const limit = query.limit ?? 20;
-    const offset = query.offset ?? 0;
+    const normalizedQuery = this.normalizeListQuery(query);
+    const shows = await this.showRepository.findTrending(normalizedQuery);
+    const data = await this.catalogUserListEnrich(user, shows);
+    const limit = normalizedQuery.limit ?? CatalogShowsController.DEFAULT_LIMIT;
+    const offset = normalizedQuery.offset ?? CatalogShowsController.DEFAULT_OFFSET;
+    const total = (shows as any).total ?? shows.length;
 
     return {
       data,
       meta: {
         count: shows.length,
+        total,
         limit,
         offset,
+        hasMore: offset + shows.length < total,
       },
     };
   }
@@ -85,12 +94,17 @@ export class CatalogShowsController {
   @ApiOkResponse({ type: CalendarResponseDto })
   async getCalendar(
     @Query('startDate') startDateString?: string,
-    @Query('days', new DefaultValuePipe(7), ParseIntPipe) days?: number,
+    @Query('days', new DefaultValuePipe(CatalogShowsController.DEFAULT_CALENDAR_DAYS), ParseIntPipe)
+    days?: number,
   ): Promise<CalendarResponseDto> {
     const start = startDateString ? new Date(startDateString) : new Date();
 
     const end = new Date(start);
-    end.setDate(end.getDate() + (days || 7));
+    const daysToAdd =
+      typeof days === 'number' && !Number.isNaN(days)
+        ? days
+        : CatalogShowsController.DEFAULT_CALENDAR_DAYS;
+    end.setDate(end.getDate() + daysToAdd);
 
     const episodes = await this.showRepository.findEpisodesByDateRange(start, end);
 
@@ -127,9 +141,8 @@ export class CatalogShowsController {
   private async catalogUserListEnrich<T extends { id: string }>(
     user: { id: string } | null | undefined,
     items: T[],
-    type: 'show',
-  ): Promise<Array<T & { type: 'show'; userState: any | null }>> {
-    const typed = items.map((i) => ({ ...i, type, userState: null as any }));
+  ): Promise<Array<T & { type: MediaType; userState: any | null }>> {
+    const typed = items.map((i) => ({ ...i, type: MediaType.SHOW, userState: null as any }));
     return this.userStateEnricher.enrichList(user?.id, typed);
   }
 
@@ -138,6 +151,15 @@ export class CatalogShowsController {
     item: T,
   ): Promise<T & { userState: any | null }> {
     return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
+  }
+
+  private normalizeListQuery<T extends TrendingShowsQueryDto>(query: T): T & { genres?: string[] } {
+    const genres =
+      query.genres
+        ?.split(',')
+        .map((g) => g.trim())
+        .filter((g) => g.length > 0) || undefined;
+    return { ...query, genres } as T & { genres?: string[] };
   }
 
   private groupEpisodesByDate(episodes: CalendarEpisode[]) {

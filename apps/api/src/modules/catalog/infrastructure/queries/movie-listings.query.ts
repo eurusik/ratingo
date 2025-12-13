@@ -2,15 +2,21 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq, gte, lte, desc, isNotNull, inArray, and } from 'drizzle-orm';
+import { eq, gte, lte, desc, isNotNull, inArray, and, exists, sql } from 'drizzle-orm';
 import { MovieWithMedia } from '../../domain/repositories/movie.repository.interface';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { CatalogSort, SortOrder, VoteSource } from '../../presentation/dtos/catalog-list-query.dto';
 
 /**
  * Type of movie listing to fetch.
  */
-export type MovieListingType = 'now_playing' | 'new_releases' | 'new_on_digital';
+export const MOVIE_LISTING_TYPE = {
+  NOW_PLAYING: 'now_playing',
+  NEW_RELEASES: 'new_releases',
+  NEW_ON_DIGITAL: 'new_on_digital',
+} as const;
+export type MovieListingType = (typeof MOVIE_LISTING_TYPE)[keyof typeof MOVIE_LISTING_TYPE];
 
 /**
  * Options for movie listings query.
@@ -19,7 +25,15 @@ export interface MovieListingOptions {
   limit?: number;
   offset?: number;
   daysBack?: number;
-  sort?: 'popularity' | 'releaseDate';
+  sort?: CatalogSort;
+  order?: SortOrder;
+  genres?: string[];
+  minRatingo?: number;
+  voteSource?: VoteSource;
+  minVotes?: number;
+  year?: number;
+  yearFrom?: number;
+  yearTo?: number;
 }
 
 /**
@@ -83,10 +97,35 @@ export class MovieListingsQuery {
     type: MovieListingType,
     options: MovieListingOptions = {},
   ): Promise<MovieWithMedia[]> {
-    const { limit = 20, offset = 0, daysBack, sort = 'popularity' } = options;
+    const {
+      limit = 20,
+      offset = 0,
+      daysBack,
+      sort = 'popularity',
+      order = 'desc',
+      genres,
+      minRatingo,
+      voteSource = 'tmdb',
+      minVotes,
+      year,
+      yearFrom,
+      yearTo,
+    } = options;
 
     try {
-      const { conditions, orderBy } = this.buildQueryParams(type, daysBack, sort);
+      const { conditions, orderBy } = this.buildQueryParams(
+        type,
+        daysBack,
+        sort,
+        order,
+        genres,
+        minRatingo,
+        voteSource,
+        minVotes,
+        year,
+        yearFrom,
+        yearTo,
+      );
 
       const results = await this.db
         .select(this.selectFields)
@@ -94,11 +133,15 @@ export class MovieListingsQuery {
         .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(and(...conditions))
-        .orderBy(orderBy)
+        .orderBy(...orderBy)
         .limit(limit)
         .offset(offset);
 
-      return this.attachGenres(results);
+      const total = await this.countTotal(conditions);
+
+      const items = await this.attachGenres(results);
+      (items as any).total = total;
+      return items;
     } catch (error) {
       this.logger.error(`Failed to find ${type} movies: ${error.message}`, error.stack);
       throw new DatabaseException(`Failed to fetch ${type} movies`, {
@@ -113,54 +156,142 @@ export class MovieListingsQuery {
   private buildQueryParams(
     type: MovieListingType,
     daysBack: number | undefined,
-    sort: 'popularity' | 'releaseDate',
+    sort: CatalogSort,
+    order: SortOrder,
+    genres?: string[],
+    minRatingo?: number,
+    voteSource?: VoteSource,
+    minVotes?: number,
+    year?: number,
+    yearFrom?: number,
+    yearTo?: number,
   ) {
     const now = new Date();
+    const conditions: any[] = [];
+
+    // Release date filters
+    if (year !== undefined) {
+      const start = new Date(Date.UTC(year, 0, 1));
+      const end = new Date(Date.UTC(year + 1, 0, 1));
+      conditions.push(
+        isNotNull(schema.mediaItems.releaseDate),
+        gte(schema.mediaItems.releaseDate, start),
+        lte(schema.mediaItems.releaseDate, end),
+      );
+    } else if (yearFrom !== undefined || yearTo !== undefined) {
+      if (yearFrom !== undefined) {
+        const start = new Date(Date.UTC(yearFrom, 0, 1));
+        conditions.push(
+          isNotNull(schema.mediaItems.releaseDate),
+          gte(schema.mediaItems.releaseDate, start),
+        );
+      }
+      if (yearTo !== undefined) {
+        const end = new Date(Date.UTC(yearTo + 1, 0, 1));
+        conditions.push(
+          isNotNull(schema.mediaItems.releaseDate),
+          lte(schema.mediaItems.releaseDate, end),
+        );
+      }
+    }
+
+    if (minRatingo !== undefined) {
+      conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
+    }
+
+    if (minVotes !== undefined) {
+      if (voteSource === 'trakt') {
+        conditions.push(gte(schema.mediaItems.voteCountTrakt, minVotes));
+      } else {
+        conditions.push(gte(schema.mediaItems.voteCount, minVotes));
+      }
+    }
+
+    if (genres && genres.length) {
+      conditions.push(
+        exists(
+          this.db
+            .select({ id: schema.mediaGenres.id })
+            .from(schema.mediaGenres)
+            .innerJoin(schema.genres, eq(schema.mediaGenres.genreId, schema.genres.id))
+            .where(
+              and(
+                eq(schema.mediaGenres.mediaItemId, schema.mediaItems.id),
+                inArray(schema.genres.slug, genres),
+              ),
+            ),
+        ),
+      );
+    }
 
     switch (type) {
       case 'now_playing':
+        conditions.push(
+          eq(schema.movies.isNowPlaying, true),
+          lte(schema.movies.theatricalReleaseDate, now),
+        );
         return {
-          conditions: [
-            eq(schema.movies.isNowPlaying, true),
-            lte(schema.movies.theatricalReleaseDate, now),
-          ],
-          orderBy:
-            sort === 'releaseDate'
-              ? desc(schema.mediaItems.releaseDate)
-              : desc(schema.mediaItems.popularity),
+          conditions,
+          orderBy: this.buildOrder(sort, order),
         };
 
       case 'new_releases': {
         const cutoffDate = new Date();
         cutoffDate.setDate(now.getDate() - (daysBack ?? 30));
+        conditions.push(
+          isNotNull(schema.movies.theatricalReleaseDate),
+          gte(schema.movies.theatricalReleaseDate, cutoffDate),
+          lte(schema.movies.theatricalReleaseDate, now),
+        );
         return {
-          conditions: [
-            isNotNull(schema.movies.theatricalReleaseDate),
-            gte(schema.movies.theatricalReleaseDate, cutoffDate),
-            lte(schema.movies.theatricalReleaseDate, now),
-          ],
-          orderBy:
-            sort === 'releaseDate'
-              ? desc(schema.movies.theatricalReleaseDate)
-              : desc(schema.mediaStats.popularityScore),
+          conditions,
+          orderBy: this.buildOrder(sort, order),
         };
       }
 
       case 'new_on_digital': {
         const cutoffDate = new Date(now.getTime() - (daysBack ?? 14) * 24 * 60 * 60 * 1000);
+        conditions.push(
+          isNotNull(schema.movies.digitalReleaseDate),
+          gte(schema.movies.digitalReleaseDate, cutoffDate),
+          lte(schema.movies.digitalReleaseDate, now),
+        );
         return {
-          conditions: [
-            isNotNull(schema.movies.digitalReleaseDate),
-            gte(schema.movies.digitalReleaseDate, cutoffDate),
-            lte(schema.movies.digitalReleaseDate, now),
-          ],
-          orderBy:
-            sort === 'releaseDate'
-              ? desc(schema.movies.digitalReleaseDate)
-              : desc(schema.mediaStats.popularityScore),
+          conditions,
+          orderBy: this.buildOrder(sort, order),
         };
       }
     }
+  }
+
+  private buildOrder(sort: CatalogSort, order: SortOrder) {
+    const dir = order === 'asc' ? sql`asc` : sql`desc`;
+    const nullsLast = sql`NULLS LAST`;
+
+    if (sort === 'ratingo') {
+      return [sql`${schema.mediaStats.ratingoScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
+    }
+    if (sort === 'releaseDate') {
+      return [
+        sql`${schema.mediaItems.releaseDate} ${dir} ${nullsLast}`,
+        sql`${schema.mediaItems.id} desc`,
+      ];
+    }
+    if (sort === 'tmdbPopularity') {
+      return [sql`${schema.mediaItems.popularity} ${dir}`, sql`${schema.mediaItems.id} desc`];
+    }
+    // default popularity (aggregated)
+    return [sql`${schema.mediaStats.popularityScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
+  }
+
+  private async countTotal(conditions: any[]): Promise<number> {
+    const [{ total }] = await this.db
+      .select({ total: sql<number>`count(*)` })
+      .from(schema.movies)
+      .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+      .where(and(...conditions));
+    return Number(total ?? 0);
   }
 
   /**

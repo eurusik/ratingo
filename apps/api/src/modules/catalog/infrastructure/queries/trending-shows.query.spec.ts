@@ -83,30 +83,35 @@ describe('TrendingShowsQuery', () => {
       },
     ];
 
-    db.execute.mockResolvedValue(rows);
+    db.execute
+      .mockResolvedValueOnce(rows) // main query
+      .mockResolvedValueOnce([{ total: rows.length }]); // count query
 
-    const res = await query.execute({ limit: 10, offset: 0, minRating: 50 });
+    const result = await query.execute({ limit: 10, offset: 0, minRatingo: 50 });
 
-    expect(db.execute).toHaveBeenCalledTimes(1);
-    expect(res).toHaveLength(2);
+    expect(db.execute).toHaveBeenCalledTimes(2);
+    expect(result).toHaveLength(2);
 
-    const first = res.find((r) => r.id === 'm1')!;
+    const first = result.find((r) => r.id === 'm1')!;
     expect(first.isNew).toBe(true);
     expect(first.isClassic).toBe(true); // ratingoScore + watchers triggers classic
     expect(first.primaryTrailerKey).toBe('trailer1');
     expect(first.showProgress?.label).toBe('S3E5');
     expect(first.poster).toEqual({ small: 'poster' });
 
-    const second = res.find((r) => r.id === 'm2')!;
+    const second = result.find((r) => r.id === 'm2')!;
     expect(second.isClassic).toBe(true);
     expect(second.showProgress?.label).toBeNull();
   });
 
   it('should return empty array when no results', async () => {
-    db.execute.mockResolvedValue([]);
+    db.execute
+      .mockResolvedValueOnce([]) // main query
+      .mockResolvedValueOnce([{ total: 0 }]); // count query
     const res = await query.execute({});
-    expect(res).toEqual([]);
-    expect(db.execute).toHaveBeenCalledTimes(1);
+    expect(res).toHaveLength(0);
+    expect((res as any).total).toBe(0);
+    expect(db.execute).toHaveBeenCalledTimes(2);
   });
 
   it('should throw DatabaseException on error', async () => {

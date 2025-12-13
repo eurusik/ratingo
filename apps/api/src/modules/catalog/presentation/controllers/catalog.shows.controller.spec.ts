@@ -50,7 +50,7 @@ describe('CatalogShowsController', () => {
       const result = await controller.getTrendingShows({ limit: 10, offset: 0 } as any, null);
 
       expect(showRepository.findTrending).toHaveBeenCalledWith({ limit: 10, offset: 0 });
-      expect(result.meta).toEqual({ count: 1, limit: 10, offset: 0 });
+      expect(result.meta).toEqual({ count: 1, total: 1, limit: 10, offset: 0, hasMore: false });
     });
   });
 
