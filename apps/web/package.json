@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@types/nprogress": "^0.2.3",
+    "@ratingo/api-contract": "^0.1.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "lucide-react": "^0.553.0",

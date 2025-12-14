@@ -1,0 +1,4891 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/catalog/movies/trending": {
+      "get": {
+        "operationId": "CatalogMoviesController_getTrendingMovies",
+        "summary": "Trending movies",
+        "description": "Returns trending movies sorted by popularity and rating.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "schema": {
+              "default": "popularity",
+              "enum": [
+                "popularity",
+                "ratingo",
+                "releaseDate",
+                "tmdbPopularity"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "genres",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated genre slugs (OR logic), e.g. \"komediya,zhakhy\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minRatingo",
+            "required": false,
+            "in": "query",
+            "description": "Min ratingoScore (0-100)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "voteSource",
+            "required": false,
+            "in": "query",
+            "description": "Vote source for minVotes filter",
+            "schema": {
+              "default": "tmdb",
+              "enum": [
+                "tmdb",
+                "trakt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "minVotes",
+            "required": false,
+            "in": "query",
+            "description": "Min votes for selected voteSource",
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Release year (shortcut)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearFrom",
+            "required": false,
+            "in": "query",
+            "description": "Release year from (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearTo",
+            "required": false,
+            "in": "query",
+            "description": "Release year to (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/movies/now-playing": {
+      "get": {
+        "operationId": "CatalogMoviesController_getNowPlaying",
+        "summary": "Movies currently in theaters",
+        "description": "Returns movies currently playing in theaters. Data is synced from TMDB now_playing endpoint.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "schema": {
+              "default": "popularity",
+              "enum": [
+                "popularity",
+                "ratingo",
+                "releaseDate",
+                "tmdbPopularity"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "genres",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated genre slugs (OR logic), e.g. \"komediya,zhakhy\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minRatingo",
+            "required": false,
+            "in": "query",
+            "description": "Min ratingoScore (0-100)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "voteSource",
+            "required": false,
+            "in": "query",
+            "description": "Vote source for minVotes filter",
+            "schema": {
+              "default": "tmdb",
+              "enum": [
+                "tmdb",
+                "trakt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "minVotes",
+            "required": false,
+            "in": "query",
+            "description": "Min votes for selected voteSource",
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Release year (shortcut)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearFrom",
+            "required": false,
+            "in": "query",
+            "description": "Release year from (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearTo",
+            "required": false,
+            "in": "query",
+            "description": "Release year to (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/movies/new-releases": {
+      "get": {
+        "operationId": "CatalogMoviesController_getNewReleases",
+        "summary": "Movies recently released in theaters",
+        "description": "Returns movies with theatrical release in the specified period, sorted by popularity.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "schema": {
+              "default": "popularity",
+              "enum": [
+                "popularity",
+                "ratingo",
+                "releaseDate",
+                "tmdbPopularity"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "genres",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated genre slugs (OR logic), e.g. \"komediya,zhakhy\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minRatingo",
+            "required": false,
+            "in": "query",
+            "description": "Min ratingoScore (0-100)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "voteSource",
+            "required": false,
+            "in": "query",
+            "description": "Vote source for minVotes filter",
+            "schema": {
+              "default": "tmdb",
+              "enum": [
+                "tmdb",
+                "trakt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "minVotes",
+            "required": false,
+            "in": "query",
+            "description": "Min votes for selected voteSource",
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Release year (shortcut)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearFrom",
+            "required": false,
+            "in": "query",
+            "description": "Release year from (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearTo",
+            "required": false,
+            "in": "query",
+            "description": "Release year to (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "daysBack",
+            "required": false,
+            "in": "query",
+            "description": "Days to look back",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/movies/new-on-digital": {
+      "get": {
+        "operationId": "CatalogMoviesController_getNewOnDigital",
+        "summary": "Movies recently released on digital platforms",
+        "description": "Returns movies with digital release in the last 14 days, sorted by popularity.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "schema": {
+              "default": "popularity",
+              "enum": [
+                "popularity",
+                "ratingo",
+                "releaseDate",
+                "tmdbPopularity"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "genres",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated genre slugs (OR logic), e.g. \"komediya,zhakhy\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minRatingo",
+            "required": false,
+            "in": "query",
+            "description": "Min ratingoScore (0-100)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "voteSource",
+            "required": false,
+            "in": "query",
+            "description": "Vote source for minVotes filter",
+            "schema": {
+              "default": "tmdb",
+              "enum": [
+                "tmdb",
+                "trakt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "minVotes",
+            "required": false,
+            "in": "query",
+            "description": "Min votes for selected voteSource",
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Release year (shortcut)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearFrom",
+            "required": false,
+            "in": "query",
+            "description": "Release year from (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearTo",
+            "required": false,
+            "in": "query",
+            "description": "Release year to (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "daysBack",
+            "required": false,
+            "in": "query",
+            "description": "Days to look back",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/movies/{slug}": {
+      "get": {
+        "operationId": "CatalogMoviesController_getMovieBySlug",
+        "summary": "Get movie details by slug",
+        "description": "Returns full movie details including genres and stats.",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MovieResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/shows/trending": {
+      "get": {
+        "operationId": "CatalogShowsController_getTrendingShows",
+        "summary": "Trending TV shows",
+        "description": "Returns trending shows sorted by popularity and rating.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "schema": {
+              "default": "popularity",
+              "enum": [
+                "popularity",
+                "ratingo",
+                "releaseDate",
+                "tmdbPopularity"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "genres",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated genre slugs (OR logic), e.g. \"komediya,zhakhy\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minRatingo",
+            "required": false,
+            "in": "query",
+            "description": "Min ratingoScore (0-100)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "voteSource",
+            "required": false,
+            "in": "query",
+            "description": "Vote source for minVotes filter",
+            "schema": {
+              "default": "tmdb",
+              "enum": [
+                "tmdb",
+                "trakt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "minVotes",
+            "required": false,
+            "in": "query",
+            "description": "Min votes for selected voteSource",
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Release year (shortcut)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearFrom",
+            "required": false,
+            "in": "query",
+            "description": "Release year from (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearTo",
+            "required": false,
+            "in": "query",
+            "description": "Release year to (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TrendingShowsResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/shows/calendar": {
+      "get": {
+        "operationId": "CatalogShowsController_getCalendar",
+        "summary": "Global release calendar for TV shows",
+        "description": "Returns episodes airing within the specified date range. Groups episodes by day.",
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Start date (ISO string). Default: today.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "description": "Number of days to include (default: 7).",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CalendarResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/shows/{slug}": {
+      "get": {
+        "operationId": "CatalogShowsController_getShowBySlug",
+        "summary": "Get show details by slug",
+        "description": "Returns full show details including seasons list.",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ShowResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/search": {
+      "get": {
+        "operationId": "CatalogSearchController_search",
+        "summary": "Search movies and shows",
+        "parameters": [
+          {
+            "name": "query",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SearchResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/user-media/{mediaItemId}": {
+      "get": {
+        "operationId": "UserMediaController_getState",
+        "summary": "Get user media state with media summary (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User media state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserMediaStateDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "User Media"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "UserMediaController_setState",
+        "summary": "Upsert user media state with media summary (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetUserMediaStateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upserted user media state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserMediaStateDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "User Media"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/user-media": {
+      "get": {
+        "operationId": "UserMediaController_list",
+        "summary": "List user media states with media summary (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset (default 0)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size (default 20)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User media states",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserMediaStateDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "User Media"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/ratings": {
+      "get": {
+        "operationId": "MeListsController_ratings",
+        "summary": "My ratings (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "rating",
+                "releaseDate"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/watchlist": {
+      "get": {
+        "operationId": "MeListsController_watchlist",
+        "summary": "My watchlist (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "rating",
+                "releaseDate"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/history": {
+      "get": {
+        "operationId": "MeListsController_history",
+        "summary": "My history (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "rating",
+                "releaseDate"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/activity": {
+      "get": {
+        "operationId": "MeListsController_activity",
+        "summary": "My activity (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "rating",
+                "releaseDate"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "summary": "Register new user",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens pair",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokensDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "summary": "Login with email/password",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens pair",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokensDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "summary": "Refresh tokens",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens pair",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokensDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "summary": "Logout (revoke refresh tokens)",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "summary": "Get current user profile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current authenticated user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MeDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "operationId": "UsersController_me",
+        "summary": "Get current user profile (auth: Bearer)",
+        "parameters": [],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "UsersController_updateProfile",
+        "summary": "Update current user profile (auth: Bearer)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/users/me/password": {
+      "patch": {
+        "operationId": "UsersController_changePassword",
+        "summary": "Change current user password (auth: Bearer)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/users/me/avatar/upload-url": {
+      "post": {
+        "operationId": "UsersController_createAvatarUploadUrl",
+        "summary": "Create presigned upload URL for avatar (auth: Bearer)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAvatarUploadUrlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AvatarUploadUrlDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/users/{username}": {
+      "get": {
+        "operationId": "PublicUsersController_getPublicProfile",
+        "summary": "Get public user profile by username (auth optional, privacy aware)",
+        "parameters": [
+          {
+            "name": "username",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Public: Users"
+        ]
+      }
+    },
+    "/api/users/{username}/ratings": {
+      "get": {
+        "operationId": "PublicUsersController_getRatings",
+        "summary": "Get public user ratings (auth optional, privacy aware)",
+        "parameters": [
+          {
+            "name": "username",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "rating",
+                "releaseDate"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Users"
+        ]
+      }
+    },
+    "/api/users/{username}/watchlist": {
+      "get": {
+        "operationId": "PublicUsersController_getWatchlist",
+        "summary": "Get public user watchlist (auth optional, privacy aware)",
+        "parameters": [
+          {
+            "name": "username",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "rating",
+                "releaseDate"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Users"
+        ]
+      }
+    },
+    "/api/users/{username}/history": {
+      "get": {
+        "operationId": "PublicUsersController_getHistory",
+        "summary": "Get public user watch history (auth optional, privacy aware)",
+        "parameters": [
+          {
+            "name": "username",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "rating",
+                "releaseDate"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Users"
+        ]
+      }
+    },
+    "/api/ingestion/jobs/{id}": {
+      "get": {
+        "operationId": "IngestionController_getJobStatus",
+        "summary": "Get ingestion job status",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ingestion job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "processing",
+                            "ready",
+                            "failed"
+                          ]
+                        },
+                        "errorMessage": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ]
+      }
+    },
+    "/api/ingestion/sync": {
+      "post": {
+        "operationId": "IngestionController_sync",
+        "summary": "Manually trigger sync for a specific media item",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ]
+      }
+    },
+    "/api/ingestion/trending": {
+      "post": {
+        "operationId": "IngestionController_syncTrending",
+        "summary": "Trigger sync for trending movies and shows",
+        "description": "Syncs trending content from TMDB. With syncStats=true (default), also updates Trakt stats after ingestion.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncTrendingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ]
+      }
+    },
+    "/api/ingestion/movies/now-playing": {
+      "post": {
+        "operationId": "IngestionController_syncNowPlaying",
+        "summary": "Sync movies currently in theaters (ingestion only)",
+        "description": "Fetches now playing movies from TMDB and queues them for sync. Does NOT update isNowPlaying flags - use /ingestion/movies/now-playing-flags for that.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncNowPlayingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ]
+      }
+    },
+    "/api/ingestion/movies/now-playing-flags": {
+      "post": {
+        "operationId": "IngestionController_updateNowPlayingFlags",
+        "summary": "Update isNowPlaying flags for movies",
+        "description": "Updates isNowPlaying flags based on current TMDB now_playing list. Run this AFTER now-playing sync has completed.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncNowPlayingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ]
+      }
+    },
+    "/api/ingestion/movies/new-releases": {
+      "post": {
+        "operationId": "IngestionController_syncNewReleases",
+        "summary": "Sync new theatrical movie releases",
+        "description": "Fetches movies released in theaters within the specified period and syncs them.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncNewReleasesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ]
+      }
+    },
+    "/api/ingestion/snapshots": {
+      "post": {
+        "operationId": "IngestionController_syncSnapshots",
+        "summary": "Trigger daily watchers snapshots sync",
+        "description": "Updates daily watcher counts for all media items from Trakt.",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ]
+      }
+    },
+    "/api/stats/sync": {
+      "post": {
+        "operationId": "StatsController_syncTrendingStats",
+        "summary": "Sync trending stats from Trakt",
+        "description": "Adds a job to the queue to fetch current watchers count and trending rank from Trakt API.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items to sync (default: 20)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Stats"
+        ]
+      }
+    },
+    "/api/stats/tmdb/{tmdbId}": {
+      "get": {
+        "operationId": "StatsController_getStatsByTmdbId",
+        "summary": "Get stats by TMDB ID",
+        "description": "Returns current watchers count and trending rank for a media item.",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "required": true,
+            "in": "path",
+            "description": "TMDB ID of the media item",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Public: Stats"
+        ]
+      }
+    },
+    "/api/stats/drop-off/analyze": {
+      "post": {
+        "operationId": "StatsController_analyzeDropOff",
+        "summary": "Analyze drop-off for shows",
+        "description": "Adds a job to analyze viewer drop-off for shows. Can analyze a single show or all shows.",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "required": false,
+            "in": "query",
+            "description": "TMDB ID of specific show to analyze",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max shows to analyze (default: 50)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Stats"
+        ]
+      }
+    },
+    "/api/stats/drop-off/analyze/{tmdbId}": {
+      "post": {
+        "operationId": "StatsController_analyzeDropOffById",
+        "summary": "Analyze drop-off for a specific show",
+        "description": "Analyzes viewer drop-off for a single show by TMDB ID. Runs in background.",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "required": true,
+            "in": "path",
+            "description": "TMDB ID of the show to analyze",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Stats"
+        ]
+      }
+    },
+    "/api/stats/drop-off/tmdb/{tmdbId}": {
+      "get": {
+        "operationId": "StatsController_getDropOffAnalysis",
+        "summary": "Get drop-off analysis for a show",
+        "description": "Returns pre-calculated drop-off analysis including drop-off point, engagement metrics, and insights.",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "required": true,
+            "in": "path",
+            "description": "TMDB ID of the show",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Public: Stats"
+        ]
+      }
+    },
+    "/api/home/hero": {
+      "get": {
+        "operationId": "HomeController_getHero",
+        "summary": "Get Hero block items (Top 3 hottest media)",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HeroItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Home"
+        ]
+      }
+    },
+    "/api/insights/movements": {
+      "get": {
+        "operationId": "InsightsController_getMovements",
+        "summary": "Get biggest risers and fallers",
+        "description": "Returns media items with the biggest change in watchers count over the specified window.",
+        "parameters": [
+          {
+            "name": "window",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "30d",
+              "enum": [
+                "30d",
+                "90d",
+                "365d"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 5,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RiseFallResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Insights"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Ratingo API",
+    "description": "Rest API for Ratingo mobile and web clients",
+    "version": "2.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "ImageDto": {
+        "type": "object",
+        "properties": {
+          "small": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/w342/abc.jpg",
+            "description": "Small image for cards (w342)"
+          },
+          "medium": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/w500/abc.jpg",
+            "description": "Medium image for details (w500)"
+          },
+          "large": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/w780/abc.jpg",
+            "description": "Large image for banners (w780)"
+          },
+          "original": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/original/abc.jpg",
+            "description": "Original quality image"
+          }
+        },
+        "required": [
+          "small",
+          "medium",
+          "large",
+          "original"
+        ]
+      },
+      "RatingoStatsDto": {
+        "type": "object",
+        "properties": {
+          "ratingoScore": {
+            "type": "number",
+            "example": 85.5,
+            "description": "Composite Hype Score (0-100)",
+            "nullable": true
+          },
+          "qualityScore": {
+            "type": "number",
+            "example": 88.5,
+            "description": "Quality Score (0-100)",
+            "nullable": true
+          },
+          "popularityScore": {
+            "type": "number",
+            "example": 45.2,
+            "description": "Popularity Score (0-100)",
+            "nullable": true
+          },
+          "liveWatchers": {
+            "type": "number",
+            "example": 6,
+            "description": "Number of people watching right now (Live)",
+            "nullable": true
+          },
+          "totalWatchers": {
+            "type": "number",
+            "example": 6423,
+            "description": "Total unique watchers all time",
+            "nullable": true
+          }
+        }
+      },
+      "ExternalRatingItemDto": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "number",
+            "example": 8.8
+          },
+          "voteCount": {
+            "type": "number",
+            "example": 2000000,
+            "nullable": true
+          }
+        },
+        "required": [
+          "rating"
+        ]
+      },
+      "ExternalRatingsDto": {
+        "type": "object",
+        "properties": {
+          "tmdb": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingItemDto"
+              }
+            ]
+          },
+          "imdb": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingItemDto"
+              }
+            ]
+          },
+          "trakt": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingItemDto"
+              }
+            ]
+          },
+          "metacritic": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingItemDto"
+              }
+            ]
+          },
+          "rottenTomatoes": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingItemDto"
+              }
+            ]
+          }
+        }
+      },
+      "GenreDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "example": "Action"
+          },
+          "slug": {
+            "type": "string",
+            "example": "action"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ]
+      },
+      "MovieListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "mediaItemId": {
+            "type": "string"
+          },
+          "tmdbId": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "ingestionStatus": {
+            "type": "string",
+            "example": "ready",
+            "enum": [
+              "importing",
+              "ready",
+              "failed"
+            ],
+            "default": "ready"
+          },
+          "overview": {
+            "type": "string",
+            "nullable": true
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "backdrop": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "popularity": {
+            "type": "number",
+            "example": 120.5
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "theatricalReleaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "digitalReleaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "runtime": {
+            "type": "number",
+            "nullable": true
+          },
+          "stats": {
+            "$ref": "#/components/schemas/RatingoStatsDto"
+          },
+          "externalRatings": {
+            "$ref": "#/components/schemas/ExternalRatingsDto"
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GenreDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "tmdbId",
+          "title",
+          "slug",
+          "ingestionStatus",
+          "overview",
+          "popularity",
+          "releaseDate",
+          "theatricalReleaseDate",
+          "digitalReleaseDate",
+          "runtime",
+          "stats",
+          "externalRatings",
+          "genres"
+        ]
+      },
+      "OffsetPaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 100
+          },
+          "total": {
+            "type": "number",
+            "example": 250
+          },
+          "limit": {
+            "type": "number",
+            "example": 20
+          },
+          "offset": {
+            "type": "number",
+            "example": 0
+          },
+          "hasMore": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "PaginatedMovieResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovieListItemDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/OffsetPaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "UserMediaStateDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b"
+          },
+          "userId": {
+            "type": "string",
+            "example": "6bd54e62-bac3-49dd-a0d4-05efd7761700"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "c1f2c3d4-e5f6-7890-abcd-1234567890ab"
+          },
+          "state": {
+            "type": "string",
+            "example": "watching",
+            "enum": [
+              "watching",
+              "completed",
+              "planned",
+              "dropped"
+            ]
+          },
+          "rating": {
+            "type": "number",
+            "example": 85,
+            "nullable": true,
+            "description": "0-100 rating"
+          },
+          "progress": {
+            "type": "object",
+            "example": {
+              "seasons": {
+                "1": 3
+              }
+            },
+            "nullable": true,
+            "description": "Arbitrary progress payload (JSON)"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Must watch this weekend",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-12-11T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-12-11T12:00:00.000Z"
+          },
+          "mediaSummary": {
+            "type": "object",
+            "nullable": true,
+            "description": "Lightweight media summary to avoid extra catalog calls",
+            "example": {
+              "id": "0a8085e4-a128-42b4-a64f-e6692c112ee6",
+              "type": "show",
+              "title": "Stranger Things",
+              "slug": "dyvni-dyva",
+              "poster": {
+                "small": "https://image.tmdb.org/t/p/w342/poster.jpg",
+                "medium": "https://image.tmdb.org/t/p/w500/poster.jpg",
+                "large": "https://image.tmdb.org/t/p/w780/poster.jpg",
+                "original": "https://image.tmdb.org/t/p/original/poster.jpg"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "mediaItemId",
+          "state",
+          "rating",
+          "progress",
+          "notes",
+          "createdAt",
+          "updatedAt",
+          "mediaSummary"
+        ]
+      },
+      "VideoDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "dQw4w9WgXcQ",
+            "description": "YouTube video key"
+          },
+          "name": {
+            "type": "string",
+            "example": "Dune: Part Two | Official Trailer 3",
+            "description": "Video title"
+          },
+          "site": {
+            "type": "string",
+            "enum": [
+              "YouTube",
+              "Vimeo"
+            ],
+            "example": "YouTube"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "Trailer",
+              "Teaser",
+              "Clip",
+              "Featurette",
+              "Behind the Scenes",
+              "Bloopers"
+            ],
+            "example": "Trailer"
+          },
+          "official": {
+            "type": "boolean",
+            "example": true,
+            "description": "Is this an official video"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "en",
+              "uk"
+            ],
+            "example": "en",
+            "description": "ISO 639-1 language code"
+          },
+          "country": {
+            "type": "string",
+            "example": "US",
+            "description": "ISO 3166-1 alpha-2 country code"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "site",
+          "type",
+          "official",
+          "language",
+          "country"
+        ]
+      },
+      "CastMemberDto": {
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "example": "tmdb:123",
+            "description": "Universal person identifier"
+          },
+          "slug": {
+            "type": "string",
+            "example": "brad-pitt",
+            "description": "URL-friendly slug",
+            "nullable": true
+          },
+          "tmdbId": {
+            "type": "number",
+            "example": 123,
+            "deprecated": true
+          },
+          "name": {
+            "type": "string",
+            "example": "Brad Pitt"
+          },
+          "character": {
+            "type": "string",
+            "example": "Tyler Durden"
+          },
+          "profilePath": {
+            "type": "string",
+            "example": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+            "nullable": true
+          },
+          "order": {
+            "type": "number",
+            "example": 0
+          }
+        },
+        "required": [
+          "personId",
+          "slug",
+          "tmdbId",
+          "name",
+          "character",
+          "profilePath",
+          "order"
+        ]
+      },
+      "CrewMemberDto": {
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "string",
+            "example": "tmdb:456",
+            "description": "Universal person identifier"
+          },
+          "slug": {
+            "type": "string",
+            "example": "david-fincher",
+            "description": "URL-friendly slug",
+            "nullable": true
+          },
+          "tmdbId": {
+            "type": "number",
+            "example": 456,
+            "deprecated": true
+          },
+          "name": {
+            "type": "string",
+            "example": "David Fincher"
+          },
+          "job": {
+            "type": "string",
+            "example": "Director"
+          },
+          "department": {
+            "type": "string",
+            "example": "Directing"
+          },
+          "profilePath": {
+            "type": "string",
+            "example": "/y.jpg",
+            "nullable": true
+          }
+        },
+        "required": [
+          "personId",
+          "slug",
+          "tmdbId",
+          "name",
+          "job",
+          "department",
+          "profilePath"
+        ]
+      },
+      "CreditsDto": {
+        "type": "object",
+        "properties": {
+          "cast": {
+            "example": [
+              {
+                "personId": "tmdb:123",
+                "slug": "brad-pitt",
+                "tmdbId": 123,
+                "name": "Brad Pitt",
+                "character": "Tyler Durden",
+                "profilePath": "/brad.jpg",
+                "order": 0
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CastMemberDto"
+            }
+          },
+          "crew": {
+            "example": [
+              {
+                "personId": "tmdb:456",
+                "slug": "david-fincher",
+                "tmdbId": 456,
+                "name": "David Fincher",
+                "job": "Director",
+                "department": "Directing",
+                "profilePath": "/david.jpg"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrewMemberDto"
+            }
+          }
+        },
+        "required": [
+          "cast",
+          "crew"
+        ]
+      },
+      "WatchProviderDto": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "number",
+            "example": 8
+          },
+          "name": {
+            "type": "string",
+            "example": "Netflix"
+          },
+          "logo": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "displayPriority": {
+            "type": "number",
+            "example": 10
+          }
+        },
+        "required": [
+          "providerId",
+          "name"
+        ]
+      },
+      "AvailabilityDto": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "example": "UA",
+            "enum": [
+              "UA",
+              "US"
+            ],
+            "nullable": true,
+            "description": "Selected region for watch providers (UA primary, US fallback)"
+          },
+          "isFallback": {
+            "type": "boolean",
+            "example": false,
+            "description": "True if using US as fallback because UA is not available"
+          },
+          "link": {
+            "type": "string",
+            "example": "https://www.themoviedb.org/movie/123/watch?locale=UA",
+            "nullable": true
+          },
+          "stream": {
+            "description": "Streaming/subscription services (flatrate)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchProviderDto"
+            }
+          },
+          "rent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchProviderDto"
+            }
+          },
+          "buy": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchProviderDto"
+            }
+          },
+          "ads": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchProviderDto"
+            }
+          },
+          "free": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WatchProviderDto"
+            }
+          }
+        },
+        "required": [
+          "region",
+          "isFallback",
+          "link"
+        ]
+      },
+      "MovieResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "tmdbId": {
+            "type": "number",
+            "example": 12345
+          },
+          "title": {
+            "type": "string",
+            "example": "The Matrix"
+          },
+          "originalTitle": {
+            "type": "string",
+            "example": "The Matrix",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string",
+            "example": "the-matrix"
+          },
+          "overview": {
+            "type": "string",
+            "example": "Overview text...",
+            "nullable": true
+          },
+          "posterPath": {
+            "type": "string",
+            "example": "/path/to/poster.jpg",
+            "nullable": true,
+            "deprecated": true
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "backdropPath": {
+            "type": "string",
+            "example": "/path/to/backdrop.jpg",
+            "nullable": true,
+            "deprecated": true
+          },
+          "backdrop": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "stats": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RatingoStatsDto"
+              }
+            ]
+          },
+          "externalRatings": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingsDto"
+              }
+            ]
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GenreDto"
+            }
+          },
+          "ingestionStatus": {
+            "type": "string",
+            "enum": [
+              "importing",
+              "ready",
+              "failed"
+            ],
+            "example": "ready"
+          },
+          "userState": {
+            "description": "User-specific state, present only when authenticated",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserMediaStateDto"
+              }
+            ]
+          },
+          "videos": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VideoDto"
+            }
+          },
+          "primaryTrailer": {
+            "nullable": true,
+            "description": "Primary trailer (first UK or EN trailer)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VideoDto"
+              }
+            ]
+          },
+          "credits": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreditsDto"
+              }
+            ]
+          },
+          "availability": {
+            "nullable": true,
+            "description": "Where to watch - UA primary with US fallback",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AvailabilityDto"
+              }
+            ]
+          },
+          "runtime": {
+            "type": "number",
+            "example": 120,
+            "nullable": true
+          },
+          "budget": {
+            "type": "number",
+            "example": 100000000,
+            "nullable": true
+          },
+          "revenue": {
+            "type": "number",
+            "example": 500000000,
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Rumored",
+              "Planned",
+              "In Production",
+              "Post Production",
+              "Released",
+              "Canceled"
+            ],
+            "example": "Released",
+            "description": "Movie status: Rumored, Planned, In Production, Post Production, Released, Canceled",
+            "nullable": true
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "tmdbId",
+          "title",
+          "slug",
+          "ingestionStatus"
+        ]
+      },
+      "ShowProgressDto": {
+        "type": "object",
+        "properties": {
+          "season": {
+            "type": "number",
+            "nullable": true,
+            "description": "Null for trending list optimization"
+          },
+          "episode": {
+            "type": "number",
+            "nullable": true,
+            "description": "Null for trending list optimization"
+          },
+          "label": {
+            "type": "string",
+            "nullable": true,
+            "example": "S5E2",
+            "description": "Null for trending list optimization"
+          },
+          "lastAirDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "nextAirDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ShowTrendingItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "example": "show",
+            "enum": [
+              "show"
+            ]
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "originalTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "overview": {
+            "type": "string",
+            "nullable": true
+          },
+          "primaryTrailerKey": {
+            "type": "string",
+            "nullable": true
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "backdrop": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "isNew": {
+            "type": "boolean"
+          },
+          "isClassic": {
+            "type": "boolean"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/RatingoStatsDto"
+          },
+          "externalRatings": {
+            "$ref": "#/components/schemas/ExternalRatingsDto"
+          },
+          "showProgress": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShowProgressDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "slug",
+          "title",
+          "isNew",
+          "isClassic",
+          "stats",
+          "externalRatings"
+        ]
+      },
+      "TrendingShowsResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowTrendingItemDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/OffsetPaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "CalendarEpisodeDto": {
+        "type": "object",
+        "properties": {
+          "showId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "showTitle": {
+            "type": "string",
+            "example": "Arcane"
+          },
+          "posterPath": {
+            "type": "string",
+            "example": "/path/to/poster.jpg",
+            "nullable": true
+          },
+          "seasonNumber": {
+            "type": "number",
+            "example": 2
+          },
+          "episodeNumber": {
+            "type": "number",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Heavy Is the Crown"
+          },
+          "overview": {
+            "type": "string",
+            "example": "Overview...",
+            "nullable": true
+          },
+          "airDate": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "runtime": {
+            "type": "number",
+            "example": 45,
+            "nullable": true
+          },
+          "stillPath": {
+            "type": "string",
+            "example": "http://image.com/1.jpg",
+            "nullable": true
+          }
+        },
+        "required": [
+          "showId",
+          "showTitle",
+          "seasonNumber",
+          "episodeNumber",
+          "title",
+          "airDate"
+        ]
+      },
+      "CalendarDayDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2024-11-09"
+          },
+          "episodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarEpisodeDto"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "episodes"
+        ]
+      },
+      "CalendarResponseDto": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "example": "2024-11-01T00:00:00.000Z"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2024-11-08T00:00:00.000Z"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CalendarDayDto"
+            }
+          }
+        },
+        "required": [
+          "startDate",
+          "endDate",
+          "days"
+        ]
+      },
+      "SeasonDto": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "number",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "Season 1",
+            "nullable": true
+          },
+          "episodeCount": {
+            "type": "number",
+            "example": 10,
+            "nullable": true
+          },
+          "posterPath": {
+            "type": "string",
+            "example": "/path/to/poster.jpg",
+            "nullable": true
+          },
+          "airDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "number"
+        ]
+      },
+      "ShowResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "tmdbId": {
+            "type": "number",
+            "example": 12345
+          },
+          "title": {
+            "type": "string",
+            "example": "The Matrix"
+          },
+          "originalTitle": {
+            "type": "string",
+            "example": "The Matrix",
+            "nullable": true
+          },
+          "slug": {
+            "type": "string",
+            "example": "the-matrix"
+          },
+          "overview": {
+            "type": "string",
+            "example": "Overview text...",
+            "nullable": true
+          },
+          "posterPath": {
+            "type": "string",
+            "example": "/path/to/poster.jpg",
+            "nullable": true,
+            "deprecated": true
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "backdropPath": {
+            "type": "string",
+            "example": "/path/to/backdrop.jpg",
+            "nullable": true,
+            "deprecated": true
+          },
+          "backdrop": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "stats": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RatingoStatsDto"
+              }
+            ]
+          },
+          "externalRatings": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExternalRatingsDto"
+              }
+            ]
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GenreDto"
+            }
+          },
+          "ingestionStatus": {
+            "type": "string",
+            "enum": [
+              "importing",
+              "ready",
+              "failed"
+            ],
+            "example": "ready"
+          },
+          "userState": {
+            "description": "User-specific state, present only when authenticated",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserMediaStateDto"
+              }
+            ]
+          },
+          "videos": {
+            "nullable": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VideoDto"
+            }
+          },
+          "primaryTrailer": {
+            "nullable": true,
+            "description": "Primary trailer (first UK or EN trailer)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VideoDto"
+              }
+            ]
+          },
+          "credits": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreditsDto"
+              }
+            ]
+          },
+          "availability": {
+            "nullable": true,
+            "description": "Where to watch - UA primary with US fallback",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AvailabilityDto"
+              }
+            ]
+          },
+          "totalSeasons": {
+            "type": "number",
+            "example": 5,
+            "nullable": true
+          },
+          "totalEpisodes": {
+            "type": "number",
+            "example": 62,
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "Returning Series",
+              "Planned",
+              "In Production",
+              "Ended",
+              "Canceled",
+              "Pilot"
+            ],
+            "example": "Returning Series",
+            "description": "Show status: Returning Series, Ended, Canceled, In Production, Planned",
+            "nullable": true
+          },
+          "lastAirDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "nextAirDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "seasons": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeasonDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "tmdbId",
+          "title",
+          "slug",
+          "ingestionStatus",
+          "seasons"
+        ]
+      },
+      "SearchItemDto": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "local",
+              "tmdb"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "tmdbId": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "originalTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "year": {
+            "type": "number",
+            "nullable": true
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "rating": {
+            "type": "number",
+            "example": 8.5
+          },
+          "isImported": {
+            "type": "boolean",
+            "example": false,
+            "description": "If true, this TMDB item already exists in local DB"
+          }
+        },
+        "required": [
+          "source",
+          "type",
+          "tmdbId",
+          "title",
+          "rating",
+          "isImported"
+        ]
+      },
+      "SearchResponseDto": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "local": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchItemDto"
+            }
+          },
+          "tmdb": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchItemDto"
+            }
+          }
+        },
+        "required": [
+          "query",
+          "local",
+          "tmdb"
+        ]
+      },
+      "SetUserMediaStateDto": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "watching",
+              "completed",
+              "planned",
+              "dropped"
+            ],
+            "example": "watching"
+          },
+          "rating": {
+            "type": "number",
+            "example": null,
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100
+          },
+          "progress": {
+            "type": "object",
+            "example": {
+              "seasons": {
+                "1": 3
+              }
+            },
+            "description": "Season -> episode progress map"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Rewatching with friends",
+            "nullable": true
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "MeUserMediaSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "slug",
+          "poster"
+        ]
+      },
+      "MeUserMediaListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b"
+          },
+          "userId": {
+            "type": "string",
+            "example": "6bd54e62-bac3-49dd-a0d4-05efd7761700"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "c1f2c3d4-e5f6-7890-abcd-1234567890ab"
+          },
+          "state": {
+            "type": "string",
+            "example": "watching",
+            "enum": [
+              "watching",
+              "completed",
+              "planned",
+              "dropped"
+            ]
+          },
+          "rating": {
+            "type": "number",
+            "example": 85,
+            "nullable": true,
+            "description": "0-100 rating"
+          },
+          "progress": {
+            "type": "object",
+            "example": {
+              "seasons": {
+                "1": 3
+              }
+            },
+            "nullable": true,
+            "description": "Arbitrary progress payload (JSON)"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Must watch this weekend",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-12-11T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-12-11T12:00:00.000Z"
+          },
+          "mediaSummary": {
+            "nullable": true,
+            "description": "Lightweight media summary to avoid extra catalog calls",
+            "example": {
+              "id": "0a8085e4-a128-42b4-a64f-e6692c112ee6",
+              "type": "show",
+              "title": "Stranger Things",
+              "slug": "dyvni-dyva",
+              "poster": {
+                "small": "https://image.tmdb.org/t/p/w342/poster.jpg",
+                "medium": "https://image.tmdb.org/t/p/w500/poster.jpg",
+                "large": "https://image.tmdb.org/t/p/w780/poster.jpg",
+                "original": "https://image.tmdb.org/t/p/original/poster.jpg"
+              }
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeUserMediaSummaryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "mediaItemId",
+          "state",
+          "rating",
+          "progress",
+          "notes",
+          "createdAt",
+          "updatedAt",
+          "mediaSummary"
+        ]
+      },
+      "PaginatedMeUserMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MeUserMediaListItemDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/OffsetPaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "username": {
+            "type": "string",
+            "example": "ratingo_fan"
+          },
+          "password": {
+            "type": "string",
+            "example": "S3curePassw0rd"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "example": "https://cdn.example.com/avatar.png"
+          }
+        },
+        "required": [
+          "email",
+          "username",
+          "password"
+        ]
+      },
+      "AuthTokensDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmQ1NGU2Mi1iYWMzLTQ5ZGQtYTBkNC0wNWVmZDc3NjE3MDAiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2NTQ1ODE3NCwiZXhwIjoxNzY1NDU5MDc0fQ.JYlxU9C9P_DJOJTeN_tosd5Dds5H5u3U9_y_AQdLtDU",
+            "description": "JWT access token"
+          },
+          "refreshToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2YmQ1NGU2Mi1iYWMzLTQ5ZGQtYTBkNC0wNWVmZDc3NjE3MDAiLCJqdGkiOiJmYmUwYTQxOC05ZWVkLTRjNmEtOTU2MS00MDRmZDFiMTFhOTciLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc2NTQ1ODE3NCwiZXhwIjoxNzY4MDUwMTc0fQ.Jra2xAp4OeKcm5ZSalwwMrqwoQngn8Js9ql_rK0VjFQ",
+            "description": "Refresh token"
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken"
+        ]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "S3curePassw0rd"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RefreshDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "PrivacyDto": {
+        "type": "object",
+        "properties": {
+          "isProfilePublic": {
+            "type": "boolean",
+            "example": true
+          },
+          "showWatchHistory": {
+            "type": "boolean",
+            "example": false
+          },
+          "showRatings": {
+            "type": "boolean",
+            "example": true
+          },
+          "allowFollowers": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "isProfilePublic",
+          "showWatchHistory",
+          "showRatings",
+          "allowFollowers"
+        ]
+      },
+      "ProfileDto": {
+        "type": "object",
+        "properties": {
+          "bio": {
+            "type": "string",
+            "example": "Люблю жахи та sci-fi",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "example": "Kyiv",
+            "nullable": true
+          },
+          "website": {
+            "type": "string",
+            "example": "https://instagram.com/me",
+            "nullable": true
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "example": "uk",
+            "nullable": true
+          },
+          "preferredRegion": {
+            "type": "string",
+            "example": "UA",
+            "nullable": true
+          },
+          "privacy": {
+            "$ref": "#/components/schemas/PrivacyDto"
+          }
+        },
+        "required": [
+          "bio",
+          "location",
+          "website",
+          "preferredLanguage",
+          "preferredRegion",
+          "privacy"
+        ]
+      },
+      "StatsDto": {
+        "type": "object",
+        "properties": {
+          "moviesRated": {
+            "type": "number",
+            "example": 24
+          },
+          "showsRated": {
+            "type": "number",
+            "example": 10
+          },
+          "watchlistCount": {
+            "type": "number",
+            "example": 42
+          }
+        },
+        "required": [
+          "moviesRated",
+          "showsRated",
+          "watchlistCount"
+        ]
+      },
+      "MeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "6bd54e62-bac3-49dd-a0d4-05efd7761700"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "username": {
+            "type": "string",
+            "example": "ratingo_fan"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "example": "https://cdn.ratingo/avatar.png",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "example": "user",
+            "enum": [
+              "user",
+              "admin"
+            ]
+          },
+          "profile": {
+            "$ref": "#/components/schemas/ProfileDto"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/StatsDto"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "username",
+          "avatarUrl",
+          "role",
+          "profile",
+          "stats"
+        ]
+      },
+      "UpdateProfileDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "ratingo_fan"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "example": "https://cdn.example.com/avatar.png"
+          },
+          "bio": {
+            "type": "string",
+            "example": "Люблю фільми жахів та наукову фантастику"
+          },
+          "location": {
+            "type": "string",
+            "example": "Kyiv, Ukraine"
+          },
+          "website": {
+            "type": "string",
+            "example": "https://instagram.com/myprofile"
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "example": "uk"
+          },
+          "preferredRegion": {
+            "type": "string",
+            "example": "UA"
+          },
+          "isProfilePublic": {
+            "type": "boolean",
+            "example": true
+          },
+          "showWatchHistory": {
+            "type": "boolean",
+            "example": false
+          },
+          "showRatings": {
+            "type": "boolean",
+            "example": true
+          },
+          "allowFollowers": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "example": "OldPass123"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NewPass456"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
+      "CreateAvatarUploadUrlDto": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ]
+          }
+        },
+        "required": [
+          "contentType"
+        ]
+      },
+      "AvatarUploadUrlDto": {
+        "type": "object",
+        "properties": {
+          "uploadUrl": {
+            "type": "string"
+          },
+          "publicUrl": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "uploadUrl",
+          "publicUrl",
+          "key"
+        ]
+      },
+      "PublicUserMediaSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "slug",
+          "poster"
+        ]
+      },
+      "PublicUserMediaListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "watching",
+              "completed",
+              "planned",
+              "dropped"
+            ]
+          },
+          "rating": {
+            "type": "number",
+            "nullable": true,
+            "description": "0-100 rating"
+          },
+          "progress": {
+            "type": "object",
+            "nullable": true,
+            "description": "Arbitrary progress payload (JSON)"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "mediaSummary": {
+            "$ref": "#/components/schemas/PublicUserMediaSummaryDto"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "rating",
+          "createdAt",
+          "updatedAt",
+          "mediaSummary"
+        ]
+      },
+      "PaginatedPublicUserMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicUserMediaListItemDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/OffsetPaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "SyncDto": {
+        "type": "object",
+        "properties": {
+          "tmdbId": {
+            "type": "number",
+            "example": 550,
+            "description": "TMDB ID of the media"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ],
+            "example": "movie"
+          }
+        },
+        "required": [
+          "tmdbId",
+          "type"
+        ]
+      },
+      "SyncTrendingDto": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1,
+            "description": "Page number",
+            "default": 1
+          },
+          "syncStats": {
+            "type": "boolean",
+            "example": true,
+            "description": "Also sync Trakt stats after ingestion",
+            "default": true
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ],
+            "description": "Sync only specific media type (movie or show)"
+          }
+        }
+      },
+      "SyncNowPlayingDto": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "example": "UA",
+            "description": "Region code (ISO 3166-1)",
+            "default": "UA"
+          }
+        }
+      },
+      "SyncNewReleasesDto": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "example": "UA",
+            "description": "Region code (ISO 3166-1)",
+            "default": "UA"
+          },
+          "daysBack": {
+            "type": "number",
+            "example": 30,
+            "description": "Days to look back",
+            "default": 30
+          }
+        }
+      },
+      "HeroStatsDto": {
+        "type": "object",
+        "properties": {
+          "ratingoScore": {
+            "type": "number",
+            "example": 85.5
+          },
+          "qualityScore": {
+            "type": "number",
+            "example": 88.5
+          },
+          "liveWatchers": {
+            "type": "number",
+            "example": 6,
+            "description": "Number of people watching right now (Live)"
+          },
+          "totalWatchers": {
+            "type": "number",
+            "example": 6423,
+            "description": "Total unique watchers all time"
+          }
+        },
+        "required": [
+          "ratingoScore",
+          "qualityScore"
+        ]
+      },
+      "HeroExternalRatingsDto": {
+        "type": "object",
+        "properties": {
+          "tmdb": {
+            "type": "object",
+            "example": {
+              "rating": 8.4,
+              "voteCount": 20000
+            }
+          }
+        }
+      },
+      "HeroItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "type": {
+            "type": "string",
+            "example": "movie",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "slug": {
+            "type": "string",
+            "example": "fight-club"
+          },
+          "title": {
+            "type": "string",
+            "example": "Fight Club"
+          },
+          "originalTitle": {
+            "type": "string",
+            "example": "Fight Club"
+          },
+          "overview": {
+            "type": "string",
+            "example": "An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more."
+          },
+          "primaryTrailerKey": {
+            "type": "string",
+            "example": "ogFrkWefoLQ",
+            "description": "YouTube video key for primary trailer",
+            "nullable": true
+          },
+          "poster": {
+            "$ref": "#/components/schemas/ImageDto"
+          },
+          "backdrop": {
+            "$ref": "#/components/schemas/ImageDto"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/HeroStatsDto"
+          },
+          "externalRatings": {
+            "$ref": "#/components/schemas/HeroExternalRatingsDto"
+          },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "1999-10-15T00:00:00.000Z"
+          },
+          "isNew": {
+            "type": "boolean",
+            "example": false,
+            "description": "True if released within last 90 days"
+          },
+          "isClassic": {
+            "type": "boolean",
+            "example": true,
+            "description": "True if released more than 5 years ago"
+          },
+          "showProgress": {
+            "type": "object",
+            "example": {
+              "season": 5,
+              "episode": 5,
+              "label": "S5E5",
+              "lastAirDate": "2025-12-14"
+            },
+            "description": "Progress info for TV Shows (latest aired episode)"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "slug",
+          "title",
+          "originalTitle",
+          "overview",
+          "poster",
+          "backdrop",
+          "stats",
+          "releaseDate",
+          "isNew",
+          "isClassic"
+        ]
+      },
+      "RiseFallStatsDto": {
+        "type": "object",
+        "properties": {
+          "deltaWatchers": {
+            "type": "number",
+            "description": "Absolute change in watchers count"
+          },
+          "deltaPercent": {
+            "type": "number",
+            "description": "Percentage change in watchers count",
+            "nullable": true
+          },
+          "currentWatchers": {
+            "type": "number",
+            "description": "Current total watchers count"
+          },
+          "isNewInTrends": {
+            "type": "boolean",
+            "description": "Indicates if the item is new to trends (no previous history)"
+          },
+          "growthCurrent": {
+            "type": "number",
+            "description": "Watchers added in the current window"
+          },
+          "growthPrev": {
+            "type": "number",
+            "description": "Watchers added in the previous window"
+          }
+        },
+        "required": [
+          "deltaWatchers",
+          "deltaPercent",
+          "currentWatchers",
+          "growthCurrent",
+          "growthPrev"
+        ]
+      },
+      "RiseFallItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "originalTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "backdrop": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImageDto"
+              }
+            ]
+          },
+          "stats": {
+            "$ref": "#/components/schemas/RiseFallStatsDto"
+          },
+          "externalRatings": {
+            "$ref": "#/components/schemas/ExternalRatingsDto"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "slug",
+          "title",
+          "originalTitle",
+          "poster",
+          "backdrop",
+          "stats"
+        ]
+      },
+      "RiseFallResponseDto": {
+        "type": "object",
+        "properties": {
+          "window": {
+            "type": "string",
+            "enum": [
+              "30d",
+              "90d",
+              "365d"
+            ]
+          },
+          "region": {
+            "type": "string",
+            "example": "global"
+          },
+          "metric": {
+            "type": "string",
+            "example": "delta"
+          },
+          "risers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RiseFallItemDto"
+            }
+          },
+          "fallers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RiseFallItemDto"
+            }
+          }
+        },
+        "required": [
+          "window",
+          "region",
+          "metric",
+          "risers",
+          "fallers"
+        ]
+      }
+    }
+  }
+}

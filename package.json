@@ -35,7 +35,10 @@
     "test:all": "turbo run test",
     "test:api": "turbo run test --filter=api -- --runInBand",
     "test:web": "turbo run test --filter=web",
-    "format": "prettier --write \"apps/**/*.{ts,tsx,md,json}\""
+    "format": "prettier --write \"apps/**/*.{ts,tsx,md,json}\"",
+    "contracts:openapi": "npm run openapi:generate --workspace=api",
+    "contracts:types": "npm run generate:types --workspace=@ratingo/api-contract",
+    "contracts:update": "npm run contracts:openapi && npm run contracts:types"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

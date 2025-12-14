@@ -1,6 +1,10 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettierConfig from 'eslint-config-prettier';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const tsconfigRootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default [
   {
@@ -35,6 +39,11 @@ export default [
   },
   {
     files: ['**/*.{ts,tsx,js,jsx,mjs}'],
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir,
+      },
+    },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
