@@ -1,4 +1,4 @@
-# Ratingo API — Architecture (apps/api/src)
+# Ratingo API — Architecture (apps/api)
 
 ## Scope
 
