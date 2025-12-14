@@ -6,6 +6,9 @@ import {
 } from '../../../../common/enums/video.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
+/**
+ * Cast member representation in normalized credits.
+ */
 export interface CastMember {
   tmdbId: number;
   name: string;
@@ -14,6 +17,9 @@ export interface CastMember {
   order: number;
 }
 
+/**
+ * Crew member representation in normalized credits.
+ */
 export interface CrewMember {
   tmdbId: number;
   name: string;
@@ -22,11 +28,17 @@ export interface CrewMember {
   profilePath: string | null;
 }
 
+/**
+ * Normalized credits object.
+ */
 export interface Credits {
   cast: CastMember[];
   crew: CrewMember[];
 }
 
+/**
+ * Watch provider definition.
+ */
 export interface WatchProvider {
   providerId: number;
   name: string;
@@ -34,6 +46,9 @@ export interface WatchProvider {
   displayPriority?: number;
 }
 
+/**
+ * Availability for a single region.
+ */
 export interface WatchProviderRegion {
   link: string | null;
   flatrate?: WatchProvider[]; // TMDB calls this 'flatrate'
@@ -43,8 +58,14 @@ export interface WatchProviderRegion {
   free?: WatchProvider[];
 }
 
+/**
+ * Map of region code to watch providers availability.
+ */
 export type WatchProvidersMap = Record<string, WatchProviderRegion>;
 
+/**
+ * Normalized episode payload.
+ */
 export interface NormalizedEpisode {
   tmdbId?: number;
   number: number;
@@ -56,6 +77,9 @@ export interface NormalizedEpisode {
   rating?: number | null;
 }
 
+/**
+ * Normalized season payload.
+ */
 export interface NormalizedSeason {
   tmdbId?: number;
   number: number;
@@ -67,6 +91,9 @@ export interface NormalizedSeason {
   episodes: NormalizedEpisode[];
 }
 
+/**
+ * Normalized video payload.
+ */
 export interface NormalizedVideo {
   key: string;
   name: string;

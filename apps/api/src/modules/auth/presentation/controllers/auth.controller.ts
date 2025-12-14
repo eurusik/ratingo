@@ -44,7 +44,7 @@ export class AuthController {
    * Registers a new user.
    *
    * @param {RegisterDto} body - Registration payload
-   * @returns Tokens pair
+   * @returns {Promise<any>} Tokens pair
    */
   @Post('register')
   @ApiOperation({ summary: 'Register new user' })
@@ -59,7 +59,7 @@ export class AuthController {
    * Authenticates user with email/password.
    *
    * @param {LoginDto} body - Login payload
-   * @returns Tokens pair
+   * @returns {Promise<any>} Tokens pair
    */
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -77,7 +77,7 @@ export class AuthController {
    * Refreshes tokens using valid refresh token.
    *
    * @param {RefreshDto} body - Refresh payload
-   * @returns Tokens pair
+   * @returns {Promise<any>} Tokens pair
    */
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh tokens' })
@@ -90,7 +90,7 @@ export class AuthController {
   /**
    * Logs out user by revoking all refresh tokens.
    *
-   * @returns Success flag
+   * @returns {Promise<void>} Nothing
    */
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -104,6 +104,9 @@ export class AuthController {
 
   /**
    * Returns current authenticated user (basic payload).
+   *
+   * @param {{ id: string; email: string; role: string }} user - Current user context
+   * @returns {Promise<MeDto>} Current user profile
    */
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)

@@ -12,6 +12,7 @@ import { USERS_REPOSITORY } from '../../src/modules/users/domain/repositories/us
 import { REFRESH_TOKENS_REPOSITORY } from '../../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import { DATABASE_CONNECTION } from '../../src/database/database.module';
 import { USER_MEDIA_STATE_REPOSITORY } from '../../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
+import { OBJECT_STORAGE_SERVICE } from '../../src/modules/users/domain/services/object-storage.service.interface';
 import {
   InMemoryRefreshTokensRepository,
   InMemoryUserMediaRepository,
@@ -51,6 +52,14 @@ export async function createUsersApp(): Promise<UsersE2eContext> {
     .useClass(InMemoryRefreshTokensRepository)
     .overrideProvider(USER_MEDIA_STATE_REPOSITORY)
     .useClass(InMemoryUserMediaRepository)
+    .overrideProvider(OBJECT_STORAGE_SERVICE)
+    .useValue({
+      getPresignedPutUrl: async ({ key }: { key: string }) => ({
+        uploadUrl: `https://uploads.example.com/signed-put?key=${encodeURIComponent(key)}`,
+        publicUrl: `https://cdn.example.com/${key}`,
+        key,
+      }),
+    })
     .overrideProvider(DATABASE_CONNECTION)
     .useValue({})
     .compile();

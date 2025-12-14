@@ -21,7 +21,7 @@ export class TmdbAdapter implements IMetadataProvider {
 
   constructor(
     @Inject(tmdbConfig.KEY)
-    private readonly config: ConfigType<typeof tmdbConfig>
+    private readonly config: ConfigType<typeof tmdbConfig>,
   ) {}
 
   /**
@@ -68,7 +68,7 @@ export class TmdbAdapter implements IMetadataProvider {
    */
   public async getTrending(
     page = 1,
-    type?: MediaType
+    type?: MediaType,
   ): Promise<{ tmdbId: number; type: MediaType }[]> {
     let endpoint = '/trending/all/day';
 
@@ -92,8 +92,8 @@ export class TmdbAdapter implements IMetadataProvider {
    * Retrieves IDs of movies currently playing in theaters.
    * Uses TMDB's now_playing endpoint which handles the "in theaters" logic.
    *
-   * @param region - ISO 3166-1 country code
-   * @returns Array of TMDB movie IDs
+   * @param {string} region - ISO 3166-1 country code
+   * @returns {Promise<number[]>} Array of TMDB movie IDs
    */
   public async getNowPlayingIds(region = DEFAULT_REGION): Promise<number[]> {
     const ids: number[] = [];
@@ -119,9 +119,9 @@ export class TmdbAdapter implements IMetadataProvider {
    * Retrieves IDs of newly released movies (theatrical).
    * Uses discover endpoint with release date filters.
    *
-   * @param daysBack - How far back to look for releases
-   * @param region - ISO 3166-1 country code
-   * @returns Array of TMDB movie IDs
+   * @param {number} daysBack - How far back to look for releases
+   * @param {string} region - ISO 3166-1 country code
+   * @returns {Promise<number[]>} Array of TMDB movie IDs
    */
   public async getNewReleaseIds(daysBack = 30, region = DEFAULT_REGION): Promise<number[]> {
     const now = new Date();
@@ -152,8 +152,9 @@ export class TmdbAdapter implements IMetadataProvider {
   /**
    * Performs a multi-search (movies & shows).
    *
-   * @param query Search string
-   * @param page Page number
+   * @param {string} query - Search string
+   * @param {number} page - Page number
+   * @returns {Promise<any[]>} Search results
    */
   public async searchMulti(query: string, page = 1): Promise<any[]> {
     const data = await this.fetch('/search/multi', {

@@ -3,6 +3,8 @@
  */
 export const USERS_REPOSITORY = Symbol('USERS_REPOSITORY');
 
+import { User } from '../entities/user.entity';
+
 /**
  * Data shape for creating a user.
  */
@@ -44,13 +46,53 @@ export interface UpdateUserProfileData {
  * Users repository contract.
  */
 export interface IUsersRepository {
-  findById(id: string): Promise<import('../entities/user.entity').User | null>;
-  findByEmail(email: string): Promise<import('../entities/user.entity').User | null>;
-  findByUsername(username: string): Promise<import('../entities/user.entity').User | null>;
-  create(data: CreateUserData): Promise<import('../entities/user.entity').User>;
-  updateProfile(
-    id: string,
-    data: UpdateUserProfileData,
-  ): Promise<import('../entities/user.entity').User>;
+  /**
+   * Finds a user by id.
+   *
+   * @param {string} id - User id
+   * @returns {Promise<User | null>} User or null
+   */
+  findById(id: string): Promise<User | null>;
+
+  /**
+   * Finds a user by email.
+   *
+   * @param {string} email - Email
+   * @returns {Promise<User | null>} User or null
+   */
+  findByEmail(email: string): Promise<User | null>;
+
+  /**
+   * Finds a user by username.
+   *
+   * @param {string} username - Username
+   * @returns {Promise<User | null>} User or null
+   */
+  findByUsername(username: string): Promise<User | null>;
+
+  /**
+   * Creates a new user.
+   *
+   * @param {CreateUserData} data - New user payload
+   * @returns {Promise<User>} Created user
+   */
+  create(data: CreateUserData): Promise<User>;
+
+  /**
+   * Updates non-sensitive profile fields.
+   *
+   * @param {string} id - User id
+   * @param {UpdateUserProfileData} data - Profile updates
+   * @returns {Promise<User>} Updated user
+   */
+  updateProfile(id: string, data: UpdateUserProfileData): Promise<User>;
+
+  /**
+   * Updates password hash.
+   *
+   * @param {string} id - User id
+   * @param {string} passwordHash - New password hash
+   * @returns {Promise<void>} Nothing
+   */
   updatePassword(id: string, passwordHash: string): Promise<void>;
 }

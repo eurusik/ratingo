@@ -23,6 +23,17 @@ export default [
   ...tseslint.configs.recommended,
   prettierConfig,
   {
+    files: ['**/.eslintrc.js', '**/.eslintrc.cjs', '**/*.config.js'],
+    languageOptions: {
+      globals: {
+        module: 'readonly',
+        __dirname: 'readonly',
+        require: 'readonly',
+        process: 'readonly',
+      },
+    },
+  },
+  {
     files: ['**/*.{ts,tsx,js,jsx,mjs}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',

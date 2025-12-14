@@ -28,6 +28,9 @@ import { TmdbModule } from '../tmdb/tmdb.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
 
+/**
+ * Catalog module.
+ */
 @Module({
   imports: [TmdbModule, UserMediaModule],
   controllers: [CatalogMoviesController, CatalogShowsController, CatalogSearchController],

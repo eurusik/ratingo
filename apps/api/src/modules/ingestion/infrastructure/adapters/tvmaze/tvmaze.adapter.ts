@@ -1,10 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NormalizedEpisode } from '../../../domain/models/normalized-media.model';
 
+/**
+ * TVMaze episode with season number.
+ */
 export interface TvMazeEpisode extends NormalizedEpisode {
   seasonNumber: number;
 }
 
+/**
+ * TVMaze adapter for fetching episodes schedule by IMDb ID.
+ */
 @Injectable()
 export class TvMazeAdapter {
   private readonly logger = new Logger(TvMazeAdapter.name);
@@ -13,6 +19,9 @@ export class TvMazeAdapter {
   /**
    * Fetches episode schedule from TVMaze using IMDb ID.
    * Returns flat list of all episodes with normalized data and season number.
+   *
+   * @param {string} imdbId - IMDb ID (e.g. 'tt0944947')
+   * @returns {Promise<TvMazeEpisode[]>} Episodes list
    */
   async getEpisodesByImdbId(imdbId: string): Promise<TvMazeEpisode[]> {
     try {
@@ -47,6 +56,12 @@ export class TvMazeAdapter {
     }
   }
 
+  /**
+   * Fetches TVMaze JSON endpoint.
+   *
+   * @param {string} endpoint - Relative endpoint starting with slash
+   * @returns {Promise<T>} Parsed JSON response
+   */
   private async fetch<T>(endpoint: string): Promise<T> {
     const res = await fetch(`${this.BASE_URL}${endpoint}`);
     if (!res.ok) {

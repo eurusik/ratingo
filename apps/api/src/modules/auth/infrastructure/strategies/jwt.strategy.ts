@@ -22,8 +22,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   /**
    * Validates JWT payload and maps to request user.
    *
-   * @param payload - Decoded JWT payload
-   * @returns Payload as request user object
+   * @param {{ sub: string; email: string; role: string }} payload - Decoded JWT payload
+   * @returns {Promise<{ id: string; email: string; role: string }>} Payload as request user object
    */
   async validate(payload: { sub: string; email: string; role: string }) {
     return { id: payload.sub, email: payload.email, role: payload.role };

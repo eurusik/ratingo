@@ -35,7 +35,7 @@ export interface IStatsRepository {
    * Upserts stats for a single media item.
    *
    * @param {MediaStatsData} stats - Stats data to upsert
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Nothing
    */
   upsert(stats: MediaStatsData): Promise<void>;
 
@@ -44,7 +44,7 @@ export interface IStatsRepository {
    * More efficient than calling upsert() in a loop.
    *
    * @param {MediaStatsData[]} stats - Array of stats data to upsert
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Nothing
    */
   bulkUpsert(stats: MediaStatsData[]): Promise<void>;
 

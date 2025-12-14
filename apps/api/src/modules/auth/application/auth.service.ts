@@ -140,7 +140,7 @@ export class AuthService {
    * Revokes all refresh tokens for user (logout everywhere).
    *
    * @param {string} userId - User identifier
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Nothing
    */
   async logout(userId: string): Promise<void> {
     await this.refreshTokensRepository.revokeAllForUser(userId);
@@ -187,7 +187,7 @@ export class AuthService {
    * @param {string} userId - User identifier
    * @param {string} currentPassword - Current password
    * @param {string} newPassword - New password to set
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Nothing
    */
   async changePassword(
     userId: string,

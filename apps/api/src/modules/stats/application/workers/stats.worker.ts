@@ -17,7 +17,7 @@ export class StatsWorker extends WorkerHost {
 
   constructor(
     private readonly statsService: StatsService,
-    private readonly dropOffService: DropOffService
+    private readonly dropOffService: DropOffService,
   ) {
     super();
   }
@@ -26,7 +26,7 @@ export class StatsWorker extends WorkerHost {
    * Processes incoming jobs from the stats queue.
    *
    * @param {Job} job - BullMQ job containing type and data
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Nothing
    */
   async process(job: Job): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);

@@ -14,19 +14,22 @@ export interface IMetadataProvider {
 
   /**
    * Fetches details for a movie by its external ID (usually TMDB ID for now).
-   * @param id - The TMDB ID of the movie
+   * @param {number} id - The TMDB ID of the movie
+   * @returns {Promise<NormalizedMedia | null>} Movie details or null
    */
   getMovie(id: number): Promise<NormalizedMedia | null>;
 
   /**
    * Fetches details for a TV show.
-   * @param id - The TMDB ID of the show
+   * @param {number} id - The TMDB ID of the show
+   * @returns {Promise<NormalizedMedia | null>} Show details or null
    */
   getShow(id: number): Promise<NormalizedMedia | null>;
 
   /**
    * Fetches currently trending items.
-   * @returns List of TMDB IDs and basic info if available
+   * @param {number} page - Page number (1-based)
+   * @returns {Promise<Array<{ tmdbId: number; type: 'movie' | 'show' }>>} List of TMDB IDs and basic info if available
    */
   getTrending(page?: number): Promise<Array<{ tmdbId: number; type: 'movie' | 'show' }>>;
 }

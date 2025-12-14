@@ -30,7 +30,7 @@ export class SnapshotsService {
    * Designed to be run once per day by a cron job and to be idempotent for
    * the same UTC day.
    *
-   * @returns {Promise<void>} Resolves when all snapshots are processed
+   * @returns {Promise<void>} Nothing
    */
   async syncDailySnapshots() {
     this.logger.log('Starting daily snapshots sync...');

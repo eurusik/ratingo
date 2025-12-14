@@ -42,16 +42,18 @@ describe('IngestionController', () => {
   describe('sync', () => {
     it('should queue movie sync job', async () => {
       const dto = { tmdbId: 550, type: MediaType.MOVIE };
-      await controller.sync(dto);
+      const res = await controller.sync(dto);
 
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_MOVIE, { tmdbId: 550 });
+      expect(res.jobId).toBe('job-1');
     });
 
     it('should queue show sync job', async () => {
       const dto = { tmdbId: 100, type: MediaType.SHOW };
-      await controller.sync(dto);
+      const res = await controller.sync(dto);
 
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_SHOW, { tmdbId: 100 });
+      expect(res.jobId).toBe('job-1');
     });
   });
 

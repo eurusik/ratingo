@@ -112,7 +112,7 @@ export class DrizzleUsersRepository implements IUsersRepository {
    * Updates user profile (avatar/username).
    *
    * @param {string} id - User identifier
-   * @param {UpdateUserProfileData} data - Payload
+   * @param {UpdateUserProfileData} data - Profile payload
    * @returns {Promise<User>} Updated user
    */
   async updateProfile(id: string, data: UpdateUserProfileData): Promise<User> {
@@ -152,7 +152,7 @@ export class DrizzleUsersRepository implements IUsersRepository {
    *
    * @param {string} id - User identifier
    * @param {string} passwordHash - Hashed password
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Nothing
    */
   async updatePassword(id: string, passwordHash: string): Promise<void> {
     try {

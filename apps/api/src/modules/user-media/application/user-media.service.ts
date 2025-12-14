@@ -25,7 +25,7 @@ export class UserMediaService {
   /**
    * Upserts state for a media item.
    *
-   * @param {UpsertUserMediaStateData} data - Payload
+   * @param {UpsertUserMediaStateData} data - Upsert payload
    * @returns {Promise<UserMediaState>} Persisted state
    */
   async setState(data: UpsertUserMediaStateData): Promise<UserMediaState> {
@@ -35,8 +35,8 @@ export class UserMediaService {
   /**
    * Gets state for a single media item.
    *
-   * @param {string} userId - User id
-   * @param {string} mediaItemId - Media id
+   * @param {string} userId - User identifier
+   * @param {string} mediaItemId - Media item identifier
    * @returns {Promise<UserMediaState | null>} State or null
    */
   async getState(userId: string, mediaItemId: string): Promise<UserMediaState | null> {
@@ -45,6 +45,22 @@ export class UserMediaService {
 
   /**
    * Gets state with media summary.
+   *
+   * @param {string} userId - User identifier
+   * @param {string} mediaItemId - Media item identifier
+   * @returns {Promise<
+   *   | (UserMediaState & {
+   *       mediaSummary: {
+   *         id: string;
+   *         type: MediaType;
+   *         title: string;
+   *         slug: string;
+   *         poster: ImageDto | null;
+   *         releaseDate?: Date | null;
+   *       };
+   *     })
+   *   | null
+   * >} State with media summary or null
    */
   async getStateWithMedia(
     userId: string,
@@ -68,7 +84,7 @@ export class UserMediaService {
   /**
    * Lists states for user.
    *
-   * @param {string} userId - User id
+   * @param {string} userId - User identifier
    * @param {number} limit - Page size
    * @param {number} offset - Offset
    * @returns {Promise<UserMediaState[]>} States
@@ -79,6 +95,25 @@ export class UserMediaService {
 
   /**
    * Lists states with media summary.
+   *
+   * @param {string} userId - User identifier
+   * @param {number} limit - Page size
+   * @param {number} offset - Offset
+   * @param {ListWithMediaOptions} options - List options
+   * @returns {Promise<
+   *   Array<
+   *     UserMediaState & {
+   *       mediaSummary: {
+   *         id: string;
+   *         type: MediaType;
+   *         title: string;
+   *         slug: string;
+   *         poster: ImageDto | null;
+   *         releaseDate?: Date | null;
+   *       };
+   *     }
+   *   >
+   * >} List of states with media summary
    */
   async listWithMedia(
     userId: string,
@@ -103,10 +138,43 @@ export class UserMediaService {
   }
 
   /**
+   * Counts list items using the same filters as listWithMedia.
+   *
+   * @param {string} userId - User identifier
+   * @param {ListWithMediaOptions} options - List options
+   * @returns {Promise<number>} Total items
+   */
+  async countWithMedia(userId: string, options?: ListWithMediaOptions): Promise<number> {
+    return this.repo.countWithMedia(userId, options);
+  }
+
+  /**
+   * Lists activity items with media summary.
+   *
+   * @param {string} userId - User identifier
+   * @param {number} limit - Page size
+   * @param {number} offset - Offset
+   * @returns {Promise<any[]>} Activity list items
+   */
+  async listActivityWithMedia(userId: string, limit = 20, offset = 0) {
+    return this.repo.listActivityWithMedia(userId, limit, offset);
+  }
+
+  /**
+   * Counts activity items.
+   *
+   * @param {string} userId - User identifier
+   * @returns {Promise<number>} Total activity items
+   */
+  async countActivityWithMedia(userId: string): Promise<number> {
+    return this.repo.countActivityWithMedia(userId);
+  }
+
+  /**
    * Finds states for multiple media IDs.
    *
-   * @param {string} userId - User id
-   * @param {string[]} mediaItemIds - Media ids
+   * @param {string} userId - User identifier
+   * @param {string[]} mediaItemIds - Media item identifiers
    * @returns {Promise<UserMediaState[]>} States
    */
   async findMany(userId: string, mediaItemIds: string[]): Promise<UserMediaState[]> {
@@ -115,6 +183,9 @@ export class UserMediaService {
 
   /**
    * Aggregated stats for user profile.
+   *
+   * @param {string} userId - User identifier
+   * @returns {Promise<UserMediaStats>} Aggregated stats
    */
   async getStats(userId: string): Promise<UserMediaStats> {
     return this.repo.getStats(userId);

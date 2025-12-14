@@ -50,6 +50,24 @@ export class UsersService {
 
   /**
    * Returns public-safe profile or null when not visible for the viewer.
+   *
+   * @param {string} username - Username
+   * @param {ViewerContext | null} viewer - Optional viewer context
+   * @returns {Promise<{
+   *   id: string;
+   *   username: string;
+   *   avatarUrl: string | null;
+   *   bio: string | null;
+   *   location: string | null;
+   *   website: string | null;
+   *   createdAt: Date;
+   *   privacy: {
+   *     isProfilePublic: boolean;
+   *     showWatchHistory: boolean;
+   *     showRatings: boolean;
+   *     allowFollowers: boolean;
+   *   };
+   * } | null>} Public profile or null
    */
   async getPublicProfileByUsername(
     username: string,
@@ -117,19 +135,7 @@ export class UsersService {
    * Updates user profile (non-sensitive fields).
    *
    * @param {string} id - User identifier
-   * @param {{
-   *   avatarUrl?: string | null;
-   *   username?: string;
-   *   bio?: string | null;
-   *   location?: string | null;
-   *   website?: string | null;
-   *   preferredLanguage?: string | null;
-   *   preferredRegion?: string | null;
-   *   isProfilePublic?: boolean;
-   *   showWatchHistory?: boolean;
-   *   showRatings?: boolean;
-   *   allowFollowers?: boolean;
-   * }} payload - Profile fields
+   * @param {object} payload - Profile fields
    * @returns {Promise<User>} Updated user
    */
   async updateProfile(
@@ -156,7 +162,7 @@ export class UsersService {
    *
    * @param {string} id - User identifier
    * @param {string} passwordHash - Hashed password
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Nothing
    */
   async updatePassword(id: string, passwordHash: string): Promise<void> {
     await this.usersRepository.updatePassword(id, passwordHash);

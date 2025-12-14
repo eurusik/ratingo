@@ -1,6 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsOptional } from 'class-validator';
-import { OffsetPaginationQueryDto } from '../../../catalog/presentation/dtos/pagination.dto';
+import {
+  OffsetPaginationMetaDto,
+  OffsetPaginationQueryDto,
+} from '../../../catalog/presentation/dtos/pagination.dto';
 import { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import {
@@ -17,7 +20,13 @@ export const USER_MEDIA_LIST_SORT = {
 export type UserMediaListSort = (typeof USER_MEDIA_LIST_SORT)[keyof typeof USER_MEDIA_LIST_SORT];
 export const USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
 
+/**
+ * Query DTO for public user media lists.
+ */
 export class PublicUserMediaListQueryDto extends OffsetPaginationQueryDto {
+  /**
+   * Defines sorting for the list.
+   */
   @ApiPropertyOptional({
     required: false,
     enum: USER_MEDIA_LIST_SORT_VALUES,
@@ -28,6 +37,9 @@ export class PublicUserMediaListQueryDto extends OffsetPaginationQueryDto {
   sort?: UserMediaListSort = USER_MEDIA_LIST_SORT.RECENT;
 }
 
+/**
+ * Represents media summary in public lists.
+ */
 export class PublicUserMediaSummaryDto {
   @ApiProperty()
   id!: string;
@@ -48,6 +60,9 @@ export class PublicUserMediaSummaryDto {
   releaseDate?: Date | null;
 }
 
+/**
+ * Represents a single item in public user media lists.
+ */
 export class PublicUserMediaListItemDto {
   @ApiProperty()
   id!: string;
@@ -72,4 +87,15 @@ export class PublicUserMediaListItemDto {
 
   @ApiProperty({ type: PublicUserMediaSummaryDto })
   mediaSummary!: PublicUserMediaSummaryDto;
+}
+
+/**
+ * Represents a paginated public user media list response.
+ */
+export class PaginatedPublicUserMediaResponseDto {
+  @ApiProperty({ type: PublicUserMediaListItemDto, isArray: true })
+  data!: PublicUserMediaListItemDto[];
+
+  @ApiProperty({ type: OffsetPaginationMetaDto })
+  meta!: OffsetPaginationMetaDto;
 }

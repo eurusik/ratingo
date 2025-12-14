@@ -74,6 +74,9 @@ export interface ShowListItem {
   title: string;
 }
 
+/**
+ * Calendar episode item for the global show calendar.
+ */
 export interface CalendarEpisode {
   showId: string;
   showTitle: string;
@@ -87,6 +90,9 @@ export interface CalendarEpisode {
   stillPath: string | null;
 }
 
+/**
+ * Full show details.
+ */
 export interface ShowDetails {
   id: string;
   tmdbId: number;
@@ -142,6 +148,11 @@ export interface ShowDetails {
 export interface IShowRepository {
   /**
    * Upserts show details (called by orchestrator).
+   *
+   * @param {any} tx - Transaction handle
+   * @param {string} mediaId - Media item id
+   * @param {{ totalSeasons?: number | null; totalEpisodes?: number | null; lastAirDate?: Date | null; nextAirDate?: Date | null; status?: string | null; seasons?: NormalizedSeason[] }} details - Details payload
+   * @returns {Promise<void>} Nothing
    */
   upsertDetails(
     tx: any, // We use 'any' here to avoid exposing Drizzle types to domain, implementation casts it
@@ -159,33 +170,56 @@ export interface IShowRepository {
   /**
    * Gets shows for drop-off analysis.
    * Returns shows that need analysis (no analysis or outdated).
+   *
+   * @param {number} limit - Max shows
+   * @returns {Promise<ShowListItem[]>} Shows list
    */
   findShowsForAnalysis(limit: number): Promise<ShowListItem[]>;
 
   /**
    * Saves drop-off analysis for a show.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @param {DropOffAnalysis} analysis - Analysis payload
+   * @returns {Promise<void>} Nothing
    */
   saveDropOffAnalysis(tmdbId: number, analysis: DropOffAnalysis): Promise<void>;
 
   /**
    * Gets drop-off analysis for a show by TMDB ID.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<DropOffAnalysis | null>} Analysis or null
    */
   getDropOffAnalysis(tmdbId: number): Promise<DropOffAnalysis | null>;
 
   /**
    * Finds episodes airing within a date range for the global calendar.
+   *
+   * @param {Date} startDate - Start date
+   * @param {Date} endDate - End date
+   * @returns {Promise<CalendarEpisode[]>} Episodes list
    */
   findEpisodesByDateRange(startDate: Date, endDate: Date): Promise<CalendarEpisode[]>;
 
   /**
    * Finds trending shows with filtering and pagination.
+   *
+   * @param {TrendingShowsOptions} options - Query options
+   * @returns {Promise<TrendingShowItem[]>} Shows list
    */
   findTrending(options: TrendingShowsOptions): Promise<TrendingShowItem[]>;
 
   /**
    * Finds full show details by slug.
+   *
+   * @param {string} slug - Show slug
+   * @returns {Promise<ShowDetails | null>} Show details or null
    */
   findBySlug(slug: string): Promise<ShowDetails | null>;
 }
 
+/**
+ * Injection token for the Show repository.
+ */
 export const SHOW_REPOSITORY = Symbol('SHOW_REPOSITORY');

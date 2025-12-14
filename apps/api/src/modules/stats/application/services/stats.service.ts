@@ -37,8 +37,8 @@ export class StatsService {
    *
    * Optimized: Uses 3 batch queries instead of N*3 individual queries.
    *
-   * @param {number} limit - Number of trending items to fetch per type (default: 20)
-   * @returns {Promise<{movies: number, shows: number}>} Count of updated items
+   * @param {number} limit - Number of trending items to fetch per type
+   * @returns {Promise<{ movies: number; shows: number }>} Count of updated items
    */
   async syncTrendingStats(limit = 20): Promise<{ movies: number; shows: number }> {
     this.logger.log(`Syncing trending stats (limit: ${limit})...`);
@@ -125,7 +125,7 @@ export class StatsService {
    * Gets stats for a media item by TMDB ID.
    *
    * @param {number} tmdbId - TMDB ID of the media item
-   * @returns {Promise<MediaStatsData>} Stats data
+   * @returns {Promise<import('../../domain/repositories/stats.repository.interface').MediaStatsData>} Stats data
    * @throws {StatsNotFoundException} If stats not found
    */
   async getStatsByTmdbId(tmdbId: number) {

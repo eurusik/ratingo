@@ -19,9 +19,9 @@ export class BaseTraktHttp {
   /**
    * Generic fetch wrapper with automatic rate limit handling.
    *
-   * @param endpoint - API endpoint starting with slash (e.g., '/shows/trending')
-   * @param options - Standard fetch options
-   * @returns Parsed JSON response
+   * @param {string} endpoint - API endpoint starting with slash (e.g., '/shows/trending')
+   * @param {RequestInit} options - Standard fetch options
+   * @returns {Promise<T>} Parsed JSON response
    * @throws TraktApiException if response is not OK and not retriable
    */
   protected async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

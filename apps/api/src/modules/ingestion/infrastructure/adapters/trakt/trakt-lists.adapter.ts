@@ -8,6 +8,9 @@ import { BaseTraktHttp } from './base-trakt-http';
 export class TraktListsAdapter extends BaseTraktHttp {
   /**
    * Gets trending movies with watchers and rank.
+   *
+   * @param {number} limit - Max items to fetch
+   * @returns {Promise<Array<{ tmdbId: number; watchers: number; rank: number }>>} Trending movies with watchers and rank
    */
   async getTrendingMoviesWithWatchers(limit = 20): Promise<
     Array<{
@@ -33,6 +36,9 @@ export class TraktListsAdapter extends BaseTraktHttp {
 
   /**
    * Gets trending shows with watchers and rank.
+   *
+   * @param {number} limit - Max items to fetch
+   * @returns {Promise<Array<{ tmdbId: number; watchers: number; rank: number }>>} Trending shows with watchers and rank
    */
   async getTrendingShowsWithWatchers(limit = 20): Promise<
     Array<{

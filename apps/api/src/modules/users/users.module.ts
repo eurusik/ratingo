@@ -8,15 +8,23 @@ import { PublicUsersController } from './presentation/controllers/public-users.c
 import { AuthModule } from '../auth/auth.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 import { PublicUserMediaService } from './application/public-user-media.service';
+import { AvatarUploadService } from './application/avatar-upload.service';
+import { OBJECT_STORAGE_SERVICE } from './domain/services/object-storage.service.interface';
+import { S3ObjectStorageService } from './infrastructure/storage/s3-object-storage.service';
 
 /**
- * Users module (domain + application wiring).
+ * Wires Users domain and application services.
  */
 @Module({
   imports: [DatabaseModule, forwardRef(() => AuthModule), forwardRef(() => UserMediaModule)],
   providers: [
     UsersService,
     PublicUserMediaService,
+    AvatarUploadService,
+    {
+      provide: OBJECT_STORAGE_SERVICE,
+      useClass: S3ObjectStorageService,
+    },
     {
       provide: USERS_REPOSITORY,
       useClass: DrizzleUsersRepository,

@@ -17,6 +17,9 @@ import { UserMediaModule } from './modules/user-media/user-media.module';
 
 import { BullModule } from '@nestjs/bullmq';
 
+/**
+ * Root application module.
+ */
 @Module({
   imports: [
     ConfigModule.forRoot({

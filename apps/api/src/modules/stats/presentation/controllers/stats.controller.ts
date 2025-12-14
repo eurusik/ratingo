@@ -15,9 +15,15 @@ export class StatsController {
   constructor(
     private readonly statsService: StatsService,
     private readonly dropOffService: DropOffService,
-    @InjectQueue(STATS_QUEUE) private readonly statsQueue: Queue
+    @InjectQueue(STATS_QUEUE) private readonly statsQueue: Queue,
   ) {}
 
+  /**
+   * Triggers stats sync job.
+   *
+   * @param {number} limit - Number of items to sync
+   * @returns {Promise<any>} Job info
+   */
   @Post('sync')
   @ApiTags('Service: Stats')
   @ApiOperation({
@@ -42,6 +48,12 @@ export class StatsController {
     };
   }
 
+  /**
+   * Gets stats by TMDB ID.
+   *
+   * @param {number} tmdbId - TMDB ID of the media item
+   * @returns {Promise<any>} Stats payload
+   */
   @Get('tmdb/:tmdbId')
   @ApiTags('Public: Stats')
   @ApiOperation({
@@ -55,6 +67,13 @@ export class StatsController {
 
   // === DROP-OFF ANALYSIS ===
 
+  /**
+   * Triggers drop-off analysis job.
+   *
+   * @param {number} tmdbId - Optional show TMDB ID to analyze
+   * @param {number} limit - Max shows to analyze
+   * @returns {Promise<any>} Job info
+   */
   @Post('drop-off/analyze')
   @ApiTags('Service: Stats')
   @ApiOperation({
@@ -88,6 +107,12 @@ export class StatsController {
     };
   }
 
+  /**
+   * Triggers drop-off analysis for a specific show.
+   *
+   * @param {number} tmdbId - TMDB ID of the show
+   * @returns {Promise<any>} Job info
+   */
   @Post('drop-off/analyze/:tmdbId')
   @ApiTags('Service: Stats')
   @ApiOperation({
@@ -104,6 +129,12 @@ export class StatsController {
     };
   }
 
+  /**
+   * Gets drop-off analysis results.
+   *
+   * @param {number} tmdbId - TMDB ID of the show
+   * @returns {Promise<any>} Analysis payload
+   */
   @Get('drop-off/tmdb/:tmdbId')
   @ApiTags('Public: Stats')
   @ApiOperation({

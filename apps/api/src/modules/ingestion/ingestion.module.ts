@@ -17,6 +17,9 @@ import { SnapshotsService } from './application/services/snapshots.service';
 import omdbConfig from '../../config/omdb.config';
 import { SyncWorker } from './application/workers/sync.worker';
 
+/**
+ * Ingestion module.
+ */
 @Module({
   imports: [
     CatalogModule,

@@ -33,7 +33,7 @@ describe('Users public ratings e2e', () => {
 
     const res = await ctx.get(`${ctx.usersBase}/ratings_user/ratings`).expect(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data.data).toHaveLength(1);
 
     await ctx.usersRepo.updateProfile(user.id, { showRatings: false });
     await ctx.get(`${ctx.usersBase}/ratings_user/ratings`).expect(404);
@@ -65,7 +65,7 @@ describe('Users public ratings e2e', () => {
 
     const res = await ctx.get(`${ctx.usersBase}/ratings_owner/ratings`, ownerToken).expect(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data.data).toHaveLength(1);
   });
 
   it('public ratings: admin can view ratings even when showRatings=false', async () => {
@@ -96,7 +96,7 @@ describe('Users public ratings e2e', () => {
       .get(`${ctx.usersBase}/ratings_admin_target/ratings`, adminToken)
       .expect(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data.data).toHaveLength(1);
   });
 
   it('public ratings: progress and notes are hidden for guest, visible for owner', async () => {
@@ -119,8 +119,8 @@ describe('Users public ratings e2e', () => {
 
     const guestRes = await ctx.get(`${ctx.usersBase}/ratings_hide/ratings`).expect(200);
     expect(guestRes.body.success).toBe(true);
-    expect(guestRes.body.data[0].progress).toBeNull();
-    expect(guestRes.body.data[0].notes).toBeNull();
+    expect(guestRes.body.data.data[0].progress).toBeNull();
+    expect(guestRes.body.data.data[0].notes).toBeNull();
 
     const ownerToken = await ctx.makeAccessToken({
       sub: user.id,
@@ -130,8 +130,8 @@ describe('Users public ratings e2e', () => {
 
     const ownerRes = await ctx.get(`${ctx.usersBase}/ratings_hide/ratings`, ownerToken).expect(200);
     expect(ownerRes.body.success).toBe(true);
-    expect(ownerRes.body.data[0].progress).toEqual({ seasons: { 1: 3 } });
-    expect(ownerRes.body.data[0].notes).toBe('secret-notes');
+    expect(ownerRes.body.data.data[0].progress).toEqual({ seasons: { 1: 3 } });
+    expect(ownerRes.body.data.data[0].notes).toBe('secret-notes');
   });
 
   it('public ratings: rejects unknown query params (forbidNonWhitelisted)', async () => {
@@ -186,8 +186,9 @@ describe('Users public ratings e2e', () => {
 
     // default sort=recent => m3, m2, m1
     const res = await ctx.get(`${ctx.usersBase}/ratings_page/ratings?limit=1&offset=1`).expect(200);
-    expect(res.body.data).toHaveLength(1);
-    expect(res.body.data[0].mediaSummary.id).toBe('m2');
+    expect(res.body.data.data).toHaveLength(1);
+    expect(res.body.data.data[0].mediaSummary.id).toBe('m2');
+    expect(res.body.data.meta.total).toBe(3);
   });
 
   it('public ratings: validates pagination params (limit/offset)', async () => {
@@ -245,7 +246,7 @@ describe('Users public ratings e2e', () => {
     const res = await ctx
       .get(`${ctx.usersBase}/ratings_sort_recent/ratings?sort=recent`)
       .expect(200);
-    expect(res.body.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
+    expect(res.body.data.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
   });
 
   it('public ratings: sorts by rating (rating desc, tie-breaker updatedAt)', async () => {
@@ -282,7 +283,7 @@ describe('Users public ratings e2e', () => {
     const res = await ctx
       .get(`${ctx.usersBase}/ratings_sort_rating/ratings?sort=rating`)
       .expect(200);
-    expect(res.body.data.map((i: any) => i.mediaSummary.id)).toEqual(['m3', 'm2', 'm1']);
+    expect(res.body.data.data.map((i: any) => i.mediaSummary.id)).toEqual(['m3', 'm2', 'm1']);
   });
 
   it('public ratings: sorts by releaseDate (releaseDate desc)', async () => {
@@ -322,6 +323,6 @@ describe('Users public ratings e2e', () => {
     const res = await ctx
       .get(`${ctx.usersBase}/ratings_sort_release/ratings?sort=releaseDate`)
       .expect(200);
-    expect(res.body.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
+    expect(res.body.data.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
   });
 });

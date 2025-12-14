@@ -4,12 +4,21 @@ import { CatalogSearchService } from '../../application/services/catalog-search.
 import { SearchResponseDto } from '../dtos/search.dto';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 
+/**
+ * Public catalog search endpoints.
+ */
 @ApiTags('Public: Catalog')
 @UseGuards(OptionalJwtAuthGuard)
 @Controller('catalog')
 export class CatalogSearchController {
   constructor(private readonly catalogSearchService: CatalogSearchService) {}
 
+  /**
+   * Searches movies and shows.
+   *
+   * @param {string} query - Search string
+   * @returns {Promise<SearchResponseDto>} Search results
+   */
   @Get('search')
   @ApiOperation({ summary: 'Search movies and shows' })
   @ApiResponse({ status: 200, type: SearchResponseDto })

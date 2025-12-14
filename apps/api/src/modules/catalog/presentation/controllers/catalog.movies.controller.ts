@@ -42,14 +42,14 @@ export class CatalogMoviesController {
     private readonly userStateEnricher: CatalogUserStateEnricher,
   ) {}
 
-  @Get('trending')
   /**
    * Returns trending movies list with pagination.
    *
-   * @param query - Pagination params
-   * @param user - Optional authenticated user
-   * @returns Paginated trending movies enriched with user state
+   * @param {CatalogListQueryDto} query - Pagination params
+   * @param {{ id: string } | null} user - Optional authenticated user
+   * @returns {Promise<PaginatedMovieResponseDto>} Paginated trending movies enriched with user state
    */
+  @Get('trending')
   @ApiOperation({
     summary: 'Trending movies',
     description: 'Returns trending movies sorted by popularity and rating.',
@@ -78,14 +78,14 @@ export class CatalogMoviesController {
     };
   }
 
-  @Get('now-playing')
   /**
    * Lists movies currently in theaters with optional sort.
    *
-   * @param query - Pagination and sort params
-   * @param user - Optional authenticated user
-   * @returns Paginated now-playing movies enriched with user state
+   * @param {CatalogListQueryDto} query - Pagination and sort params
+   * @param {{ id: string } | null} user - Optional authenticated user
+   * @returns {Promise<PaginatedMovieResponseDto>} Paginated now-playing movies enriched with user state
    */
+  @Get('now-playing')
   @ApiOperation({
     summary: 'Movies currently in theaters',
     description:
@@ -116,14 +116,14 @@ export class CatalogMoviesController {
     };
   }
 
-  @Get('new-releases')
   /**
    * Lists recent theatrical releases within a window.
    *
-   * @param query - Pagination, daysBack, sort params
-   * @param user - Optional authenticated user
-   * @returns Paginated new releases enriched with user state
+   * @param {CatalogListQueryWithDaysDto} query - Pagination, daysBack, sort params
+   * @param {{ id: string } | null} user - Optional authenticated user
+   * @returns {Promise<PaginatedMovieResponseDto>} Paginated new releases enriched with user state
    */
+  @Get('new-releases')
   @ApiOperation({
     summary: 'Movies recently released in theaters',
     description:
@@ -163,14 +163,14 @@ export class CatalogMoviesController {
     };
   }
 
-  @Get('new-on-digital')
   /**
    * Lists movies recently released on digital platforms.
    *
-   * @param query - Pagination, daysBack, sort params
-   * @param user - Optional authenticated user
-   * @returns Paginated digital releases enriched with user state
+   * @param {CatalogListQueryWithDaysDto} query - Pagination, daysBack, sort params
+   * @param {{ id: string } | null} user - Optional authenticated user
+   * @returns {Promise<PaginatedMovieResponseDto>} Paginated digital releases enriched with user state
    */
+  @Get('new-on-digital')
   @ApiOperation({
     summary: 'Movies recently released on digital platforms',
     description: 'Returns movies with digital release in the last 14 days, sorted by popularity.',
@@ -209,14 +209,14 @@ export class CatalogMoviesController {
     };
   }
 
-  @Get(':slug')
   /**
    * Returns movie details by slug.
    *
-   * @param slug - Movie slug
-   * @param user - Optional authenticated user
-   * @returns Movie details enriched with user state
+   * @param {string} slug - Movie slug
+   * @param {{ id: string } | null} user - Optional authenticated user
+   * @returns {Promise<MovieResponseDto>} Movie details enriched with user state
    */
+  @Get(':slug')
   @ApiOperation({
     summary: 'Get movie details by slug',
     description: 'Returns full movie details including genres and stats.',
@@ -231,6 +231,14 @@ export class CatalogMoviesController {
     return (await this.catalogUserOneEnrich(user, movie)) as any;
   }
 
+  /**
+   * Enriches a list of catalog items with user state.
+   *
+   * @param {{ id: string } | null | undefined} user - Optional authenticated user
+   * @param {T[]} items - Catalog items to enrich
+   * @param {'movie'} type - Media type discriminator
+   * @returns {Promise<Array<T & { type: 'movie'; userState: any | null }>>} Enriched list
+   */
   private async catalogUserListEnrich<T extends { id: string }>(
     user: { id: string } | null | undefined,
     items: T[],
@@ -240,6 +248,13 @@ export class CatalogMoviesController {
     return this.userStateEnricher.enrichList(user?.id, typed);
   }
 
+  /**
+   * Enriches a single catalog item with user state.
+   *
+   * @param {{ id: string } | null | undefined} user - Optional authenticated user
+   * @param {T} item - Catalog item to enrich
+   * @returns {Promise<T & { userState: any | null }>} Enriched item
+   */
   private async catalogUserOneEnrich<T extends { id: string }>(
     user: { id: string } | null | undefined,
     item: T,
@@ -247,6 +262,12 @@ export class CatalogMoviesController {
     return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
   }
 
+  /**
+   * Normalizes list query by parsing comma-separated genres into an array.
+   *
+   * @param {T} query - Incoming query DTO
+   * @returns {T & { genres?: string[] }} Normalized query
+   */
   private normalizeListQuery<T extends CatalogListQueryDto>(query: T): T & { genres?: string[] } {
     const genres =
       query.genres

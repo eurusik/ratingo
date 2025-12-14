@@ -38,10 +38,12 @@ describe('Users public watchlist/history e2e', () => {
     });
 
     const wlRes = await ctx.get(`${ctx.usersBase}/watch_user/watchlist`).expect(200);
-    expect(wlRes.body.data).toHaveLength(1);
+    expect(wlRes.body.success).toBe(true);
+    expect(wlRes.body.data.data).toHaveLength(1);
 
     const histRes = await ctx.get(`${ctx.usersBase}/watch_user/history`).expect(200);
-    expect(histRes.body.data).toHaveLength(1);
+    expect(histRes.body.success).toBe(true);
+    expect(histRes.body.data.data).toHaveLength(1);
 
     await ctx.usersRepo.updateProfile(user.id, { showWatchHistory: false });
     await ctx.get(`${ctx.usersBase}/watch_user/history`).expect(404);
@@ -132,8 +134,9 @@ describe('Users public watchlist/history e2e', () => {
     });
 
     const guestRes = await ctx.get(`${ctx.usersBase}/watch_hide/watchlist`).expect(200);
-    expect(guestRes.body.data[0].progress).toBeNull();
-    expect(guestRes.body.data[0].notes).toBeNull();
+    expect(guestRes.body.success).toBe(true);
+    expect(guestRes.body.data.data[0].progress).toBeNull();
+    expect(guestRes.body.data.data[0].notes).toBeNull();
 
     const ownerToken = await ctx.makeAccessToken({
       sub: user.id,
@@ -142,8 +145,9 @@ describe('Users public watchlist/history e2e', () => {
     });
 
     const ownerRes = await ctx.get(`${ctx.usersBase}/watch_hide/watchlist`, ownerToken).expect(200);
-    expect(ownerRes.body.data[0].progress).toEqual({ seasons: { 1: 1 } });
-    expect(ownerRes.body.data[0].notes).toBe('secret-notes');
+    expect(ownerRes.body.success).toBe(true);
+    expect(ownerRes.body.data.data[0].progress).toEqual({ seasons: { 1: 1 } });
+    expect(ownerRes.body.data.data[0].notes).toBe('secret-notes');
   });
 
   it('public watchlist/history: rejects unknown query params (forbidNonWhitelisted)', async () => {
@@ -199,8 +203,10 @@ describe('Users public watchlist/history e2e', () => {
 
     // default sort=recent => m3, m2, m1
     const res = await ctx.get(`${ctx.usersBase}/watch_page/watchlist?limit=1&offset=1`).expect(200);
-    expect(res.body.data).toHaveLength(1);
-    expect(res.body.data[0].mediaSummary.id).toBe('m2');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.data).toHaveLength(1);
+    expect(res.body.data.data[0].mediaSummary.id).toBe('m2');
+    expect(res.body.data.meta.total).toBe(3);
   });
 
   it('public history: paginates with limit/offset', async () => {
@@ -236,8 +242,10 @@ describe('Users public watchlist/history e2e', () => {
 
     // default sort=recent => m3, m2, m1
     const res = await ctx.get(`${ctx.usersBase}/history_page/history?limit=1&offset=1`).expect(200);
-    expect(res.body.data).toHaveLength(1);
-    expect(res.body.data[0].mediaSummary.id).toBe('m2');
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.data).toHaveLength(1);
+    expect(res.body.data.data[0].mediaSummary.id).toBe('m2');
+    expect(res.body.data.meta.total).toBe(3);
   });
 
   it('public watchlist/history: validates pagination params (limit/offset)', async () => {
@@ -299,7 +307,8 @@ describe('Users public watchlist/history e2e', () => {
     const res = await ctx
       .get(`${ctx.usersBase}/watch_sort_recent/watchlist?sort=recent`)
       .expect(200);
-    expect(res.body.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
   });
 
   it('public watchlist: sorts by releaseDate (releaseDate desc)', async () => {
@@ -339,7 +348,8 @@ describe('Users public watchlist/history e2e', () => {
     const res = await ctx
       .get(`${ctx.usersBase}/watch_sort_release/watchlist?sort=releaseDate`)
       .expect(200);
-    expect(res.body.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
   });
 
   it('public history: sorts by recent (updatedAt desc)', async () => {
@@ -376,7 +386,8 @@ describe('Users public watchlist/history e2e', () => {
     const res = await ctx
       .get(`${ctx.usersBase}/history_sort_recent/history?sort=recent`)
       .expect(200);
-    expect(res.body.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
   });
 
   it('public history: sorts by releaseDate (releaseDate desc)', async () => {
@@ -416,6 +427,7 @@ describe('Users public watchlist/history e2e', () => {
     const res = await ctx
       .get(`${ctx.usersBase}/history_sort_release/history?sort=releaseDate`)
       .expect(200);
-    expect(res.body.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.data.map((i: any) => i.mediaSummary.id)).toEqual(['m2', 'm3', 'm1']);
   });
 });

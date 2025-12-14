@@ -9,6 +9,9 @@ import { EpisodeData, SeasonData } from './interfaces/trakt.types';
 export class TraktRatingsAdapter extends BaseTraktHttp {
   /**
    * Retrieves detailed ratings for a movie.
+   *
+   * @param {string | number} idOrSlug - Trakt ID or slug
+   * @returns {Promise<{ rating: number; votes: number; distribution?: Record<string, number> }>} Movie ratings payload
    */
   async getMovieRatings(
     idOrSlug: string | number,
@@ -18,6 +21,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
 
   /**
    * Retrieves detailed ratings for a show.
+   *
+   * @param {string | number} idOrSlug - Trakt ID or slug
+   * @returns {Promise<{ rating: number; votes: number; distribution?: Record<string, number> }>} Show ratings payload
    */
   async getShowRatings(
     idOrSlug: string | number,
@@ -27,6 +33,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
 
   /**
    * Gets count of users currently watching a movie.
+   *
+   * @param {string | number} traktIdOrSlug - Trakt ID or slug
+   * @returns {Promise<number>} Current watchers count
    */
   async getMovieWatchers(traktIdOrSlug: string | number): Promise<number> {
     try {
@@ -39,6 +48,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
 
   /**
    * Retrieves full stats for a movie (watchers, plays, collected, etc.)
+   *
+   * @param {string | number} traktIdOrSlug - Trakt ID or slug
+   * @returns {Promise<{ watchers: number; plays: number; votes: number }>} Movie stats payload
    */
   async getMovieStats(
     traktIdOrSlug: string | number,
@@ -52,6 +64,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
 
   /**
    * Gets count of users currently watching a show.
+   *
+   * @param {string | number} traktIdOrSlug - Trakt ID or slug
+   * @returns {Promise<number>} Current watchers count
    */
   async getShowWatchers(traktIdOrSlug: string | number): Promise<number> {
     try {
@@ -64,6 +79,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
 
   /**
    * Retrieves full stats for a show.
+   *
+   * @param {string | number} traktIdOrSlug - Trakt ID or slug
+   * @returns {Promise<{ watchers: number; plays: number; votes: number }>} Show stats payload
    */
   async getShowStats(
     traktIdOrSlug: string | number,
@@ -78,6 +96,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
   /**
    * Get movie ratings and watchers by TMDB ID.
    * First looks up the Trakt ID, then fetches ratings and watchers.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null>} Ratings payload or null
    */
   async getMovieRatingsByTmdbId(
     tmdbId: number,
@@ -118,6 +139,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
   /**
    * Get show ratings and watchers by TMDB ID.
    * First looks up the Trakt ID, then fetches ratings.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null>} Ratings payload or null
    */
   async getShowRatingsByTmdbId(
     tmdbId: number,
@@ -157,6 +181,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
 
   /**
    * Gets Trakt ID for a show by TMDB ID.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<number | null>} Trakt ID or null
    */
   async getTraktIdByTmdbId(tmdbId: number): Promise<number | null> {
     try {
@@ -169,6 +196,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
 
   /**
    * Gets all seasons for a show.
+   *
+   * @param {number} traktId - Trakt ID
+   * @returns {Promise<Array<{ number: number; episodeCount: number }>>} Seasons list
    */
   async getShowSeasons(traktId: number): Promise<Array<{ number: number; episodeCount: number }>> {
     try {
@@ -187,6 +217,10 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
 
   /**
    * Gets all episodes for a season with ratings.
+   *
+   * @param {number} traktId - Trakt ID
+   * @param {number} seasonNumber - Season number
+   * @returns {Promise<Array<{ number: number; title: string; rating: number; votes: number }>>} Episode ratings list
    */
   async getSeasonEpisodes(
     traktId: number,
@@ -211,6 +245,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
   /**
    * Gets all episodes for a show (all seasons) for drop-off analysis.
    * Returns structured data ready for analysis.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<{ traktId: number; seasons: Array<{ number: number; episodes: Array<{ number: number; title: string; rating: number; votes: number }> }> } | null>} Analysis payload or null
    */
   async getShowEpisodesForAnalysis(tmdbId: number): Promise<{
     traktId: number;

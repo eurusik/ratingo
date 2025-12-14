@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { and, desc, eq, inArray, isNotNull, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, or, sql } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
@@ -31,7 +31,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   /**
    * Upserts user media state.
    *
-   * @param {UpsertUserMediaStateData} data - Payload
+   * @param {UpsertUserMediaStateData} data - Upsert payload
    * @returns {Promise<UserMediaState>} Persisted state
    */
   async upsert(data: UpsertUserMediaStateData): Promise<UserMediaState> {
@@ -67,6 +67,13 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     }
   }
 
+  /**
+   * Gets aggregated user media stats.
+   *
+   * @param {string} userId - User identifier
+   * @returns {Promise<UserMediaStats>} Aggregated stats
+   * @throws {DatabaseException} When query fails
+   */
   async getStats(userId: string): Promise<UserMediaStats> {
     try {
       const [row] = await this.db
@@ -94,7 +101,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
    * Finds states for a user across multiple media IDs.
    *
    * @param {string} userId - User identifier
-   * @param {string[]} mediaItemIds - Media item IDs
+   * @param {string[]} mediaItemIds - Media item identifiers
    * @returns {Promise<UserMediaState[]>} States
    */
   async findManyByMediaIds(userId: string, mediaItemIds: string[]): Promise<UserMediaState[]> {
@@ -148,8 +155,8 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
    * Lists states for a user.
    *
    * @param {string} userId - User identifier
-   * @param {number} [limit=20] - Max items
-   * @param {number} [offset=0] - Offset
+   * @param {number} limit - Page size
+   * @param {number} offset - Offset
    * @returns {Promise<UserMediaState[]>} States
    */
   async listByUser(userId: string, limit = 20, offset = 0): Promise<UserMediaState[]> {
@@ -170,6 +177,26 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
 
   /**
    * Lists states with media summary.
+   *
+   * @param {string} userId - User identifier
+   * @param {number} limit - Page size
+   * @param {number} offset - Offset
+   * @param {ListWithMediaOptions} options - List options
+   * @returns {Promise<
+   *   Array<
+   *     UserMediaState & {
+   *       mediaSummary: {
+   *         id: string;
+   *         type: MediaType;
+   *         title: string;
+   *         slug: string;
+   *         poster: ImageDto | null;
+   *         releaseDate?: Date | null;
+   *       };
+   *     }
+   *   >
+   * >} List items with media summary
+   * @throws {DatabaseException} When query fails
    */
   async listWithMedia(
     userId: string,
@@ -239,6 +266,128 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     }
   }
 
+  /**
+   * Counts states for listWithMedia with the same filters.
+   *
+   * @param {string} userId - User identifier
+   * @param {ListWithMediaOptions} options - Count options
+   * @returns {Promise<number>} Total count
+   * @throws {DatabaseException} When query fails
+   */
+  async countWithMedia(userId: string, options?: ListWithMediaOptions): Promise<number> {
+    try {
+      const whereParts = [eq(schema.userMediaState.userId, userId)];
+
+      if (options?.ratedOnly) {
+        whereParts.push(isNotNull(schema.userMediaState.rating));
+      }
+
+      if (options?.states?.length) {
+        whereParts.push(inArray(schema.userMediaState.state, options.states));
+      }
+
+      const [row] = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(schema.userMediaState)
+        .where(and(...whereParts));
+
+      return Number(row?.count ?? 0);
+    } catch (error) {
+      this.logger.error(`countWithMedia failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to count user media state with media', { userId });
+    }
+  }
+
+  /**
+   * Lists activity items with media summary.
+   * Semantics: state = 'watching' OR progress IS NOT NULL.
+   *
+   * @param {string} userId - User identifier
+   * @param {number} limit - Page size
+   * @param {number} offset - Offset
+   * @returns {Promise<any[]>} Activity list items
+   * @throws {DatabaseException} When query fails
+   */
+  async listActivityWithMedia(userId: string, limit = 20, offset = 0) {
+    try {
+      const rows = await this.db
+        .select({
+          state: schema.userMediaState,
+          media: {
+            id: schema.mediaItems.id,
+            type: schema.mediaItems.type,
+            title: schema.mediaItems.title,
+            slug: schema.mediaItems.slug,
+            posterPath: schema.mediaItems.posterPath,
+            releaseDate: schema.mediaItems.releaseDate,
+          },
+        })
+        .from(schema.userMediaState)
+        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+        .where(
+          and(
+            eq(schema.userMediaState.userId, userId),
+            or(
+              eq(schema.userMediaState.state, 'watching' as any),
+              isNotNull(schema.userMediaState.progress),
+            ),
+          ),
+        )
+        .orderBy(desc(schema.userMediaState.updatedAt))
+        .limit(limit)
+        .offset(offset);
+
+      return rows.map((r) => ({
+        ...this.mapRow(r.state),
+        mediaSummary: {
+          id: r.media.id,
+          type: r.media.type as MediaType,
+          title: r.media.title,
+          slug: r.media.slug,
+          poster: ImageMapper.toPoster(r.media.posterPath),
+          releaseDate: r.media.releaseDate,
+        },
+      }));
+    } catch (error) {
+      this.logger.error(`listActivityWithMedia failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to list user media activity with media', { userId });
+    }
+  }
+
+  /**
+   * Counts activity items.
+   *
+   * @param {string} userId - User identifier
+   * @returns {Promise<number>} Total activity items
+   * @throws {DatabaseException} When query fails
+   */
+  async countActivityWithMedia(userId: string): Promise<number> {
+    try {
+      const [row] = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(schema.userMediaState)
+        .where(
+          and(
+            eq(schema.userMediaState.userId, userId),
+            or(
+              eq(schema.userMediaState.state, 'watching' as any),
+              isNotNull(schema.userMediaState.progress),
+            ),
+          ),
+        );
+      return Number(row?.count ?? 0);
+    } catch (error) {
+      this.logger.error(`countActivityWithMedia failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to count user media activity with media', { userId });
+    }
+  }
+
+  /**
+   * Builds order by clauses for listWithMedia.
+   *
+   * @param {ListWithMediaOptions['sort']} sort - Sort option
+   * @returns {any[]} Drizzle orderBy list
+   */
   private buildListOrderBy(sort?: ListWithMediaOptions['sort']) {
     switch (sort) {
       case USER_MEDIA_LIST_SORT.RATING:
@@ -252,7 +401,24 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   }
 
   /**
-   * Finds one with media summary.
+   * Finds a single state with media summary.
+   *
+   * @param {string} userId - User identifier
+   * @param {string} mediaItemId - Media item identifier
+   * @returns {Promise<
+   *   | (UserMediaState & {
+   *       mediaSummary: {
+   *         id: string;
+   *         type: MediaType;
+   *         title: string;
+   *         slug: string;
+   *         poster: ImageDto | null;
+   *         releaseDate?: Date | null;
+   *       };
+   *     })
+   *   | null
+   * >} State with media summary or null
+   * @throws {DatabaseException} When query fails
    */
   async findOneWithMedia(
     userId: string,

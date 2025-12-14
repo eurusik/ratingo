@@ -13,7 +13,7 @@ import { DropOffAnalyzerModule } from '../shared/drop-off-analyzer';
 import { STATS_QUEUE } from './stats.constants';
 
 /**
- * Stats Module.
+ * Stats module.
  * Handles real-time media statistics like watchers count, trending metrics, and drop-off analysis.
  * Uses BullMQ for background processing of stats sync and analysis jobs.
  */

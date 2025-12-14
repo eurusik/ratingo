@@ -1,5 +1,8 @@
 {
   "mcpServers": {
+    "context7": {
+      "serverUrl": "https://mcp.context7.com/mcp"
+    },
     "next-devtools": {
       "command": "npx",
       "args": ["-y", "next-devtools-mcp@latest"]

@@ -2,6 +2,11 @@ import { Test } from '@nestjs/testing';
 import { PublicUserMediaService } from './public-user-media.service';
 import { UsersService } from './users.service';
 import { UserMediaService } from '../../user-media/application/user-media.service';
+import { UserProfileVisibilityPolicy } from './user-profile-visibility.policy';
+import {
+  USER_MEDIA_HISTORY_STATES,
+  USER_MEDIA_WATCHLIST_STATES,
+} from '../../user-media/domain/entities/user-media-state.entity';
 
 describe('PublicUserMediaService', () => {
   const usersService = {
@@ -10,6 +15,7 @@ describe('PublicUserMediaService', () => {
 
   const userMediaService = {
     listWithMedia: jest.fn(),
+    countWithMedia: jest.fn(),
   };
 
   const makeUser = (overrides?: Partial<any>) =>
@@ -70,6 +76,7 @@ describe('PublicUserMediaService', () => {
   it('getRatings: guest sees progress/notes as null', async () => {
     const user = makeUser({ isProfilePublic: true, showRatings: true });
     usersService.getByUsername.mockResolvedValue(user);
+    userMediaService.countWithMedia.mockResolvedValue(1);
     userMediaService.listWithMedia.mockResolvedValue([makeState()]);
 
     const res = await service.getRatings('john', null, {
@@ -78,17 +85,20 @@ describe('PublicUserMediaService', () => {
       sort: 'recent',
     } as any);
 
+    expect(userMediaService.countWithMedia).toHaveBeenCalledWith(user.id, { ratedOnly: true });
     expect(userMediaService.listWithMedia).toHaveBeenCalledWith(user.id, 20, 0, {
       ratedOnly: true,
       sort: 'recent',
     });
-    expect(res![0].progress).toBeNull();
-    expect(res![0].notes).toBeNull();
+    expect(res!.total).toBe(1);
+    expect(res!.data[0].progress).toBeNull();
+    expect(res!.data[0].notes).toBeNull();
   });
 
   it('getRatings: owner sees progress/notes', async () => {
     const user = makeUser({ isProfilePublic: true, showRatings: false });
     usersService.getByUsername.mockResolvedValue(user);
+    userMediaService.countWithMedia.mockResolvedValue(1);
     userMediaService.listWithMedia.mockResolvedValue([makeState()]);
 
     const res = await service.getRatings('john', { id: user.id, role: 'user' }, {
@@ -97,42 +107,62 @@ describe('PublicUserMediaService', () => {
       sort: 'rating',
     } as any);
 
+    expect(userMediaService.countWithMedia).toHaveBeenCalledWith(user.id, { ratedOnly: true });
     expect(userMediaService.listWithMedia).toHaveBeenCalledWith(user.id, 20, 0, {
       ratedOnly: true,
       sort: 'rating',
     });
-    expect(res![0].progress).toEqual({ seasons: { 1: 3 } });
-    expect(res![0].notes).toBe('secret');
+    expect(res!.total).toBe(1);
+    expect(res!.data[0].progress).toEqual({ seasons: { 1: 3 } });
+    expect(res!.data[0].notes).toBe('secret');
   });
 
   it('getWatchlist: forwards planned states and sort', async () => {
     const user = makeUser({ isProfilePublic: true, showWatchHistory: true });
     usersService.getByUsername.mockResolvedValue(user);
+    userMediaService.countWithMedia.mockResolvedValue(1);
     userMediaService.listWithMedia.mockResolvedValue([
       makeState({ state: 'planned', rating: null }),
     ]);
 
-    await service.getWatchlist('john', null, { limit: 10, offset: 5, sort: 'releaseDate' } as any);
+    const res = await service.getWatchlist('john', null, {
+      limit: 10,
+      offset: 5,
+      sort: 'releaseDate',
+    } as any);
 
+    expect(userMediaService.countWithMedia).toHaveBeenCalledWith(user.id, {
+      states: USER_MEDIA_WATCHLIST_STATES,
+    });
     expect(userMediaService.listWithMedia).toHaveBeenCalledWith(user.id, 10, 5, {
-      states: ['planned'],
+      states: USER_MEDIA_WATCHLIST_STATES,
       sort: 'releaseDate',
     });
+    expect(res!.total).toBe(1);
   });
 
   it('getHistory: forwards watching/completed states and sort', async () => {
     const user = makeUser({ isProfilePublic: true, showWatchHistory: true });
     usersService.getByUsername.mockResolvedValue(user);
+    userMediaService.countWithMedia.mockResolvedValue(2);
     userMediaService.listWithMedia.mockResolvedValue([
       makeState({ state: 'watching', rating: null }),
       makeState({ state: 'completed' }),
     ]);
 
-    await service.getHistory('john', null, { limit: 1, offset: 0, sort: 'recent' } as any);
+    const res = await service.getHistory('john', null, {
+      limit: 1,
+      offset: 0,
+      sort: 'recent',
+    } as any);
 
+    expect(userMediaService.countWithMedia).toHaveBeenCalledWith(user.id, {
+      states: USER_MEDIA_HISTORY_STATES,
+    });
     expect(userMediaService.listWithMedia).toHaveBeenCalledWith(user.id, 1, 0, {
-      states: ['watching', 'completed'],
+      states: USER_MEDIA_HISTORY_STATES,
       sort: 'recent',
     });
+    expect(res!.total).toBe(2);
   });
 });

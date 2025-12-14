@@ -95,7 +95,7 @@ export class DrizzleRefreshTokensRepository implements IRefreshTokensRepository 
    * Revokes single token by ID.
    *
    * @param {string} id - Token identifier
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Nothing
    */
   async revoke(id: string): Promise<void> {
     try {
@@ -113,7 +113,7 @@ export class DrizzleRefreshTokensRepository implements IRefreshTokensRepository 
    * Revokes all tokens for user.
    *
    * @param {string} userId - User identifier
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} Nothing
    */
   async revokeAllForUser(userId: string): Promise<void> {
     try {

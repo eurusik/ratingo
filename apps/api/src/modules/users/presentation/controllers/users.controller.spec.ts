@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from '../../application/users.service';
 import { AuthService } from '../../../auth/application/auth.service';
+import { AvatarUploadService } from '../../application/avatar-upload.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -12,6 +13,9 @@ describe('UsersController', () => {
   const authService = {
     changePassword: jest.fn(),
   };
+  const avatarUploadService = {
+    createUploadUrl: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -19,6 +23,7 @@ describe('UsersController', () => {
       providers: [
         { provide: UsersService, useValue: usersService },
         { provide: AuthService, useValue: authService },
+        { provide: AvatarUploadService, useValue: avatarUploadService },
       ],
     }).compile();
 
@@ -158,5 +163,20 @@ describe('UsersController', () => {
     } as any);
 
     expect(authService.changePassword).toHaveBeenCalledWith('u1', 'old', 'new');
+  });
+
+  it('should delegate avatar upload url creation to AvatarUploadService', async () => {
+    avatarUploadService.createUploadUrl.mockResolvedValue({
+      uploadUrl: 'https://uploads.example.com/signed-put',
+      publicUrl: 'https://cdn.example.com/avatars/u1/avatar.png',
+      key: 'avatars/u1/avatar.png',
+    });
+
+    const res = await controller.createAvatarUploadUrl({ id: 'u1' }, {
+      contentType: 'image/png',
+    } as any);
+
+    expect(avatarUploadService.createUploadUrl).toHaveBeenCalledWith('u1', 'image/png');
+    expect(res.publicUrl).toBe('https://cdn.example.com/avatars/u1/avatar.png');
   });
 });

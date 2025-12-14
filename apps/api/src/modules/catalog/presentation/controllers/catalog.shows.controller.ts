@@ -23,6 +23,9 @@ import { ShowResponseDto } from '../dtos/show-response.dto';
 import { DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
+/**
+ * Public show catalog endpoints (trending, calendar, details).
+ */
 @ApiTags('Public: Catalog')
 @UseGuards(OptionalJwtAuthGuard)
 @Controller('catalog/shows')
@@ -40,10 +43,14 @@ export class CatalogShowsController {
     private readonly userStateEnricher: CatalogUserStateEnricher,
   ) {}
 
-  @Get('trending')
   /**
    * Returns trending shows list with pagination.
+   *
+   * @param {TrendingShowsQueryDto} query - Query params
+   * @param {{ id: string } | null} user - Optional authenticated user
+   * @returns {Promise<TrendingShowsResponseDto>} Trending shows response
    */
+  @Get('trending')
   @ApiOperation({
     summary: 'Trending TV shows',
     description: 'Returns trending shows sorted by popularity and rating.',
@@ -72,10 +79,14 @@ export class CatalogShowsController {
     };
   }
 
-  @Get('calendar')
   /**
    * Returns show episodes grouped by date within a range.
+   *
+   * @param {string} startDateString - Start date ISO string
+   * @param {number} days - Number of days to include
+   * @returns {Promise<CalendarResponseDto>} Calendar response
    */
+  @Get('calendar')
   @ApiOperation({
     summary: 'Global release calendar for TV shows',
     description: 'Returns episodes airing within the specified date range. Groups episodes by day.',
@@ -125,10 +136,14 @@ export class CatalogShowsController {
     };
   }
 
-  @Get(':slug')
   /**
    * Returns show details by slug.
+   *
+   * @param {string} slug - Show slug
+   * @param {{ id: string } | null} user - Optional authenticated user
+   * @returns {Promise<ShowResponseDto>} Show details
    */
+  @Get(':slug')
   @ApiOperation({
     summary: 'Get show details by slug',
     description: 'Returns full show details including seasons list.',
@@ -146,6 +161,13 @@ export class CatalogShowsController {
     return enriched as any;
   }
 
+  /**
+   * Enriches a list of catalog items with user state.
+   *
+   * @param {{ id: string } | null | undefined} user - Optional authenticated user
+   * @param {T[]} items - Items to enrich
+   * @returns {Promise<Array<T & { type: MediaType; userState: any | null }>>} Enriched items
+   */
   private async catalogUserListEnrich<T extends { id: string }>(
     user: { id: string } | null | undefined,
     items: T[],
@@ -154,6 +176,13 @@ export class CatalogShowsController {
     return this.userStateEnricher.enrichList(user?.id, typed);
   }
 
+  /**
+   * Enriches a single catalog item with user state.
+   *
+   * @param {{ id: string } | null | undefined} user - Optional authenticated user
+   * @param {T} item - Item to enrich
+   * @returns {Promise<T & { userState: any | null }>} Enriched item
+   */
   private async catalogUserOneEnrich<T extends { id: string }>(
     user: { id: string } | null | undefined,
     item: T,
@@ -161,6 +190,12 @@ export class CatalogShowsController {
     return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
   }
 
+  /**
+   * Normalizes list query by parsing comma-separated genres into an array.
+   *
+   * @param {T} query - Incoming query DTO
+   * @returns {T & { genres?: string[] }} Normalized query
+   */
   private normalizeListQuery<T extends TrendingShowsQueryDto>(query: T): T & { genres?: string[] } {
     const genres =
       query.genres
@@ -170,6 +205,12 @@ export class CatalogShowsController {
     return { ...query, genres } as T & { genres?: string[] };
   }
 
+  /**
+   * Groups calendar episodes by air date.
+   *
+   * @param {CalendarEpisode[]} episodes - Episodes to group
+   * @returns {any[]} Days list
+   */
   private groupEpisodesByDate(episodes: CalendarEpisode[]) {
     const map = new Map<string, any[]>();
 

@@ -98,6 +98,18 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   ): Promise<any[]> {
     return [];
   }
+
+  async countWithMedia(): Promise<number> {
+    return 0;
+  }
+
+  async listActivityWithMedia(): Promise<any[]> {
+    return [];
+  }
+
+  async countActivityWithMedia(): Promise<number> {
+    return 0;
+  }
   async findOneWithMedia(): Promise<any> {
     return null;
   }

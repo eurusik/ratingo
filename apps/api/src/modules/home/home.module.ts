@@ -3,6 +3,9 @@ import { CatalogModule } from '../catalog/catalog.module';
 import { HomeController } from './presentation/home.controller';
 import { HomeService } from './application/home.service';
 
+/**
+ * Home module.
+ */
 @Module({
   imports: [CatalogModule], // Import CatalogModule to access repositories
   controllers: [HomeController],

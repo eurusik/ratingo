@@ -21,14 +21,14 @@ export class CatalogSearchService {
   constructor(
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
-    private readonly tmdbAdapter: TmdbAdapter
+    private readonly tmdbAdapter: TmdbAdapter,
   ) {}
 
   /**
    * Performs hybrid search.
    *
-   * @param query Search string
-   * @returns Combined search results split by source
+   * @param {string} query - Search string
+   * @returns {Promise<SearchResponseDto>} Combined search results split by source
    */
   async search(query: string): Promise<SearchResponseDto> {
     if (!query || query.trim().length < this.MIN_QUERY_LENGTH) {

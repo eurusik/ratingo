@@ -21,14 +21,23 @@ export interface User {
   updatedAt: Date;
 }
 
+/**
+ * User role enum-like map.
+ */
 export const USER_ROLE = {
   USER: 'user',
   ADMIN: 'admin',
 } as const;
 
+/**
+ * User role union.
+ */
 export type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE];
 
 // Keep legacy compatibility with existing shape
+/**
+ * Legacy user shape used for backward compatibility.
+ */
 export interface UserLegacy extends Omit<User, 'role'> {
   role: 'user' | 'admin';
   createdAt: Date;

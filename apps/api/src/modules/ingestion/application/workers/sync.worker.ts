@@ -31,7 +31,7 @@ export class SyncWorker extends WorkerHost {
     @Inject(MOVIE_REPOSITORY)
     private readonly movieRepository: IMovieRepository,
     @InjectQueue(INGESTION_QUEUE)
-    private readonly ingestionQueue: Queue
+    private readonly ingestionQueue: Queue,
   ) {
     super();
   }
@@ -39,6 +39,9 @@ export class SyncWorker extends WorkerHost {
   /**
    * Processes a single job from the queue.
    * BullMQ handles concurrency and retries automatically.
+   *
+   * @param {Job<{ tmdbId?: number; trendingScore?: number; region?: string; daysBack?: number; page?: number; syncStats?: boolean; type?: MediaType }>} job - Ingestion job payload
+   * @returns {Promise<void>} Nothing
    */
   async process(
     job: Job<
@@ -53,7 +56,7 @@ export class SyncWorker extends WorkerHost {
       },
       any,
       string
-    >
+    >,
   ): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
 
@@ -97,7 +100,7 @@ export class SyncWorker extends WorkerHost {
    */
   private async processTrendingFull(page = 1, syncStats = true, type?: MediaType): Promise<void> {
     this.logger.log(
-      `Starting full trending sync (page: ${page}, syncStats: ${syncStats}, type: ${type || 'all'})...`
+      `Starting full trending sync (page: ${page}, syncStats: ${syncStats}, type: ${type || 'all'})...`,
     );
 
     // Get trending items from TMDB

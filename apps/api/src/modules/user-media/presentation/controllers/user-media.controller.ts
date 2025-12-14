@@ -38,7 +38,8 @@ export class UserMediaController {
   /**
    * Gets state for a media item.
    *
-   * @param {string} mediaItemId - Media item id
+   * @param {string} mediaItemId - Media item identifier
+   * @returns {Promise<any>} State with media summary
    */
   @ApiParam({ name: 'mediaItemId', type: String, description: 'Media item UUID' })
   @ApiOkResponse({ description: 'User media state', type: UserMediaStateDto, isArray: false })
@@ -52,8 +53,9 @@ export class UserMediaController {
   /**
    * Sets state for a media item (upsert).
    *
-   * @param {string} mediaItemId - Media item id
-   * @param {SetUserMediaStateDto} body - State payload
+   * @param {string} mediaItemId - Media item identifier
+   * @param {SetUserMediaStateDto} body - Upsert payload
+   * @returns {Promise<any>} Updated state with media summary
    */
   @ApiParam({ name: 'mediaItemId', type: String, description: 'Media item UUID' })
   @ApiBody({ type: SetUserMediaStateDto })
@@ -84,6 +86,7 @@ export class UserMediaController {
    *
    * @param {number} limit - Page size
    * @param {number} offset - Offset
+   * @returns {Promise<any[]>} List of states with media summary
    */
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Page size (default 20)' })
   @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset (default 0)' })

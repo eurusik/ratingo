@@ -25,7 +25,7 @@ export class OmdbAdapter {
 
   constructor(
     @Inject(omdbConfig.KEY)
-    private readonly config: ConfigType<typeof omdbConfig>
+    private readonly config: ConfigType<typeof omdbConfig>,
   ) {}
 
   /**
@@ -59,11 +59,11 @@ export class OmdbAdapter {
    *
    * @param {string} imdbId - The IMDb ID of the content (e.g. tt1234567)
    * @param {MediaType} type - Type of content (MOVIE or SHOW)
-   * @returns {Promise<object>} Object containing available ratings
+   * @returns {Promise<{ imdbRating: number | null; imdbVotes: number | null; rottenTomatoes: number | null; metacritic: number | null; metascore: number | null }>} Object containing available ratings
    */
   async getAggregatedRatings(
     imdbId: string,
-    type: MediaType
+    type: MediaType,
   ): Promise<{
     imdbRating: number | null;
     imdbVotes: number | null;

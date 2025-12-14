@@ -92,8 +92,8 @@ class SyncNewReleasesDto {
 }
 
 /**
- * Controller for triggering ingestion processes manually.
- * Useful for admin panels or debugging.
+ * Triggers ingestion processes.
+ * Intended for admin panels and operational debugging.
  */
 @ApiTags('Service: Ingestion')
 @Controller('ingestion')
@@ -118,6 +118,13 @@ export class IngestionController {
     private readonly tmdbAdapter: TmdbAdapter,
   ) {}
 
+  /**
+   * Gets ingestion job status.
+   *
+   * @param {string} id - Job identifier
+   * @returns {Promise<{ id: string; status: string; errorMessage: string | null; updatedAt: string | null }>} Job status payload
+   * @throws {NotFoundException} When job does not exist
+   */
   @Get('jobs/:id')
   @ApiOperation({ summary: 'Get ingestion job status' })
   @ApiOkResponse({
@@ -156,6 +163,12 @@ export class IngestionController {
     };
   }
 
+  /**
+   * Queues ingestion sync for a specific TMDB item.
+   *
+   * @param {SyncDto} dto - Sync payload
+   * @returns {Promise<any>} Queueing result
+   */
   @Post('sync')
   @ApiOperation({ summary: 'Manually trigger sync for a specific media item' })
   @HttpCode(HttpStatus.ACCEPTED)
@@ -193,13 +206,13 @@ export class IngestionController {
 
     const jobName = dto.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
 
-    await this.ingestionQueue.add(jobName, {
+    const job = await this.ingestionQueue.add(jobName, {
       tmdbId: dto.tmdbId,
     });
 
     return {
       status: 'queued',
-      jobId: jobName,
+      jobId: `${job.id}`,
       tmdbId: dto.tmdbId,
       id: stub.id,
       slug: stub.slug,
@@ -208,6 +221,12 @@ export class IngestionController {
     };
   }
 
+  /**
+   * Queues full trending sync job.
+   *
+   * @param {SyncTrendingDto} dto - Trending sync payload
+   * @returns {Promise<any>} Queueing result with jobId
+   */
   @Post('trending')
   @ApiOperation({
     summary: 'Trigger sync for trending movies and shows',
@@ -235,6 +254,12 @@ export class IngestionController {
     };
   }
 
+  /**
+   * Queues now playing movies ingestion job.
+   *
+   * @param {SyncNowPlayingDto} dto - Now playing payload
+   * @returns {Promise<any>} Queueing result with jobId
+   */
   @Post('movies/now-playing')
   @ApiOperation({
     summary: 'Sync movies currently in theaters (ingestion only)',
@@ -254,6 +279,12 @@ export class IngestionController {
     };
   }
 
+  /**
+   * Queues now playing flags update job.
+   *
+   * @param {SyncNowPlayingDto} dto - Region payload
+   * @returns {Promise<any>} Queueing result with jobId
+   */
   @Post('movies/now-playing-flags')
   @ApiOperation({
     summary: 'Update isNowPlaying flags for movies',
@@ -273,6 +304,12 @@ export class IngestionController {
     };
   }
 
+  /**
+   * Queues new movie releases ingestion job.
+   *
+   * @param {SyncNewReleasesDto} dto - New releases payload
+   * @returns {Promise<any>} Queueing result with jobId
+   */
   @Post('movies/new-releases')
   @ApiOperation({
     summary: 'Sync new theatrical movie releases',
@@ -293,6 +330,11 @@ export class IngestionController {
     };
   }
 
+  /**
+   * Queues daily snapshots sync job.
+   *
+   * @returns {Promise<any>} Queueing result with jobId
+   */
   @Post('snapshots')
   @ApiOperation({
     summary: 'Trigger daily watchers snapshots sync',

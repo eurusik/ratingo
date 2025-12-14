@@ -74,11 +74,12 @@ describe('PublicUsersController', () => {
   });
 
   it('watchlist should return list when visible', async () => {
-    publicUserMediaService.getWatchlist.mockResolvedValue([{ id: 's1' }]);
+    publicUserMediaService.getWatchlist.mockResolvedValue({ total: 1, data: [{ id: 's1' }] });
     const res = await controller.getWatchlist('john', { id: 'v1', role: 'user' }, {
       limit: 20,
       offset: 0,
     } as any);
-    expect(res).toEqual([{ id: 's1' }]);
+    expect(res.data).toEqual([{ id: 's1' }]);
+    expect(res.meta.total).toBe(1);
   });
 });

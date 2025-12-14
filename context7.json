@@ -1,0 +1,25 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Ratingo",
+  "description": "Ratingo monorepo: NestJS API (apps/api) + Next.js web app (apps/web)",
+  "folders": ["apps/api", "apps/web"],
+  "excludeFolders": [
+    "node_modules",
+    ".git",
+    ".next",
+    "dist",
+    "build",
+    "coverage",
+    ".turbo",
+    ".vercel",
+    ".husky",
+    "tmp",
+    "temp"
+  ],
+  "excludeFiles": ["package-lock.json", "tsconfig.tsbuildinfo", ".env"],
+  "rules": [
+    "Keep NestJS code organized by modules with clear application/domain/infrastructure/presentation boundaries.",
+    "Validate all request DTOs using class-validator and keep response contracts stable (prefer { data, meta } for paginated lists).",
+    "For Next.js, prefer server-safe code in server components/routes and keep API calls typed and centralized."
+  ]
+}

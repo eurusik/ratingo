@@ -80,9 +80,11 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   }
 
   private makeSummary(mediaItemId: string) {
+    const type =
+      mediaItemId.startsWith('sid-') || mediaItemId.startsWith('show-') ? 'show' : 'movie';
     return {
       id: mediaItemId,
-      type: 'movie',
+      type,
       title: `Title ${mediaItemId}`,
       slug: `slug-${mediaItemId}`,
       poster: null,
@@ -145,8 +147,29 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     return this.states.filter((s) => s.userId === userId && mediaItemIds.includes(s.mediaItemId));
   }
 
-  async getStats(): Promise<{ moviesRated: number; showsRated: number; watchlistCount: number }> {
-    return { moviesRated: 0, showsRated: 0, watchlistCount: 0 };
+  async getStats(
+    userId: string,
+  ): Promise<{ moviesRated: number; showsRated: number; watchlistCount: number }> {
+    const byUser = this.states.filter((s) => s.userId === userId);
+
+    const ratedMediaItemIds = new Set(
+      byUser.filter((s) => s.rating !== null && s.rating !== undefined).map((s) => s.mediaItemId),
+    );
+
+    let moviesRated = 0;
+    let showsRated = 0;
+    for (const id of ratedMediaItemIds) {
+      const state = byUser.find((s) => s.mediaItemId === id);
+      const type = state?.mediaSummary?.type;
+      if (type === 'show') showsRated += 1;
+      else moviesRated += 1;
+    }
+
+    const watchlistItemIds = new Set(
+      byUser.filter((s) => s.state === 'planned').map((s) => s.mediaItemId),
+    );
+
+    return { moviesRated, showsRated, watchlistCount: watchlistItemIds.size };
   }
 
   async listWithMedia(
@@ -183,6 +206,37 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     }
 
     return items.slice(offset, offset + limit);
+  }
+
+  async countWithMedia(
+    userId: string,
+    options?: { ratedOnly?: boolean; states?: string[]; sort?: string },
+  ): Promise<number> {
+    let items = this.states.filter((s) => s.userId === userId);
+
+    if (options?.ratedOnly) {
+      items = items.filter((s) => s.rating !== null);
+    }
+
+    if (options?.states?.length) {
+      items = items.filter((s) => options.states.includes(s.state));
+    }
+
+    return items.length;
+  }
+
+  async listActivityWithMedia(userId: string, limit = 20, offset = 0): Promise<any[]> {
+    let items = this.states.filter((s) => s.userId === userId);
+    items = items.filter((s) => s.state === 'watching' || s.progress !== null);
+    items = [...items].sort((a, b) => b.updatedAt - a.updatedAt);
+    return items.slice(offset, offset + limit);
+  }
+
+  async countActivityWithMedia(userId: string): Promise<number> {
+    const items = this.states.filter(
+      (s) => s.userId === userId && (s.state === 'watching' || s.progress !== null),
+    );
+    return items.length;
   }
 
   async findOneWithMedia(userId: string, mediaItemId: string): Promise<any> {

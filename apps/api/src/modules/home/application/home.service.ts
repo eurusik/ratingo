@@ -6,15 +6,24 @@ import {
 import { HeroItemDto } from '../presentation/dtos/hero-item.dto';
 import { MediaType } from '../../../common/enums/media-type.enum';
 
+/**
+ * Application service for Home module endpoints.
+ */
 @Injectable()
 export class HomeService {
   private readonly logger = new Logger(HomeService.name);
 
   constructor(
     @Inject(MEDIA_REPOSITORY)
-    private readonly mediaRepository: IMediaRepository
+    private readonly mediaRepository: IMediaRepository,
   ) {}
 
+  /**
+   * Returns hero items for the home page.
+   *
+   * @param {MediaType} type - Optional media type filter
+   * @returns {Promise<HeroItemDto[]>} Hero items
+   */
   async getHero(type?: MediaType): Promise<HeroItemDto[]> {
     try {
       // Get top items from repository

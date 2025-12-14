@@ -38,7 +38,8 @@ export class SyncMediaService {
    * Synchronizes a movie by TMDB ID.
    *
    * @param {number} tmdbId - TMDB ID of the movie
-   * @param {number} [trendingScore] - Optional trending rank for sorting
+   * @param {number} trendingScore - Optional trending rank for sorting
+   * @returns {Promise<void>} Nothing
    */
   public async syncMovie(tmdbId: number, trendingScore?: number): Promise<void> {
     await this.processMedia(tmdbId, MediaType.MOVIE, trendingScore);
@@ -48,7 +49,8 @@ export class SyncMediaService {
    * Synchronizes a show by TMDB ID.
    *
    * @param {number} tmdbId - TMDB ID of the show
-   * @param {number} [trendingScore] - Optional trending rank for sorting
+   * @param {number} trendingScore - Optional trending rank for sorting
+   * @returns {Promise<void>} Nothing
    */
   public async syncShow(tmdbId: number, trendingScore?: number): Promise<void> {
     await this.processMedia(tmdbId, MediaType.SHOW, trendingScore);
@@ -238,8 +240,8 @@ export class SyncMediaService {
    * Fetches trending media IDs from the provider.
    *
    * @param {number} page - Page number to fetch (1-based)
-   * @param {MediaType} [type] - Optional type filter (movie/show)
-   * @returns {Promise<any[]>} List of trending items with TMDB IDs
+   * @param {MediaType} type - Optional type filter (movie/show)
+   * @returns {Promise<any>} List of trending items with TMDB IDs
    */
   public async getTrending(page = 1, type?: MediaType) {
     return this.tmdbAdapter.getTrending(page, type);
