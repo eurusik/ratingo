@@ -27,6 +27,16 @@ export type PrimaryCta = (typeof PRIMARY_CTA)[keyof typeof PRIMARY_CTA];
 
 export const PRIMARY_CTA_VALUES: PrimaryCta[] = Object.values(PRIMARY_CTA);
 
+export const CARD_LIST_CONTEXT = {
+  TRENDING_LIST: 'TRENDING_LIST',
+  NEW_RELEASES_LIST: 'NEW_RELEASES_LIST',
+  DEFAULT: 'DEFAULT',
+} as const;
+
+export type CardListContext = (typeof CARD_LIST_CONTEXT)[keyof typeof CARD_LIST_CONTEXT];
+
+export const CARD_LIST_CONTEXT_VALUES: CardListContext[] = Object.values(CARD_LIST_CONTEXT);
+
 /**
  * Badge priority values for debugging and deterministic selection.
  */

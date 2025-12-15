@@ -3,7 +3,7 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { eq, gte, lte, desc, isNotNull, inArray, and, exists, sql } from 'drizzle-orm';
-import { MovieWithMedia } from '../../domain/repositories/movie.repository.interface';
+import { MovieWithMedia, WithTotal } from '../../domain/repositories/movie.repository.interface';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { CatalogSort, SortOrder, VoteSource } from '../../presentation/dtos/catalog-list-query.dto';
@@ -96,7 +96,7 @@ export class MovieListingsQuery {
   async execute(
     type: MovieListingType,
     options: MovieListingOptions = {},
-  ): Promise<MovieWithMedia[]> {
+  ): Promise<WithTotal<MovieWithMedia>> {
     const {
       limit = 20,
       offset = 0,
@@ -140,8 +140,9 @@ export class MovieListingsQuery {
       const total = await this.countTotal(conditions);
 
       const items = await this.attachGenres(results);
-      (items as any).total = total;
-      return items;
+      const withTotal = items as WithTotal<MovieWithMedia>;
+      withTotal.total = total;
+      return withTotal;
     } catch (error) {
       this.logger.error(`Failed to find ${type} movies: ${error.message}`, error.stack);
       throw new DatabaseException(`Failed to fetch ${type} movies`, {

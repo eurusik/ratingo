@@ -1,8 +1,8 @@
-import { MediaType } from '../../src/common/enums/media-type.enum';
 import {
   MovieWithMedia,
   NowPlayingOptions,
   IMovieRepository,
+  WithTotal,
 } from '../../src/modules/catalog/domain/repositories/movie.repository.interface';
 import {
   IShowRepository,
@@ -107,7 +107,7 @@ export class FakeMovieRepository implements IMovieRepository {
 
   private items = moviesFixture;
 
-  async findNowPlaying(options?: NowPlayingOptions): Promise<MovieWithMedia[]> {
+  async findNowPlaying(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>> {
     this.lastNowPlayingOptions = options;
     const filtered = applyMovieFilters(this.items, options);
     const sorted = applySort(filtered, options?.sort, options?.order, {
@@ -119,7 +119,7 @@ export class FakeMovieRepository implements IMovieRepository {
     return paginate(sorted, options?.limit, options?.offset);
   }
 
-  async findNewReleases(options?: NowPlayingOptions): Promise<MovieWithMedia[]> {
+  async findNewReleases(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>> {
     this.lastNewReleasesOptions = options;
     const daysBack = options?.daysBack;
     const windowed =
@@ -141,7 +141,7 @@ export class FakeMovieRepository implements IMovieRepository {
     return paginate(sorted, options?.limit, options?.offset);
   }
 
-  async findNewOnDigital(options?: NowPlayingOptions): Promise<MovieWithMedia[]> {
+  async findNewOnDigital(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>> {
     this.lastNewOnDigitalOptions = options;
     const daysBack = options?.daysBack;
     const windowed =

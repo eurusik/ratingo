@@ -82,7 +82,7 @@ export class UserMediaService {
   > {
     const item = await this.repo.findOneWithMedia(userId, mediaItemId);
     if (!item) return null;
-    return this.cards.enrichUserMedia([item as any])[0] as any;
+    return this.cards.enrichUserMedia([item])[0];
   }
 
   /**
@@ -139,7 +139,7 @@ export class UserMediaService {
     >
   > {
     const items = await this.repo.listWithMedia(userId, limit, offset, options);
-    return this.cards.enrichUserMedia(items as any) as any;
+    return this.cards.enrichUserMedia(items);
   }
 
   /**
@@ -163,7 +163,7 @@ export class UserMediaService {
    */
   async listActivityWithMedia(userId: string, limit = 20, offset = 0) {
     const items = await this.repo.listActivityWithMedia(userId, limit, offset);
-    return this.cards.enrichUserMedia(items as any);
+    return this.cards.enrichUserMedia(items);
   }
 
   /**

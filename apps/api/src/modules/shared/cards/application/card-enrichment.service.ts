@@ -4,7 +4,8 @@ import type { UserMediaState } from '../../../user-media/domain/entities/user-me
 import type { MediaType } from '../../../../common/enums/media-type.enum';
 import type { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
 import { buildCardMeta, extractContinuePoint } from '../domain/selectors';
-import { CARD_NEW_RELEASE_WINDOW_DAYS } from '../domain/card.constants';
+import { CARD_LIST_CONTEXT, CARD_NEW_RELEASE_WINDOW_DAYS } from '../domain/card.constants';
+import type { CardListContext } from '../domain/card.constants';
 import type { CardMeta } from '../domain/card.types';
 
 export type MediaSummaryWithCard = {
@@ -40,15 +41,18 @@ export class CardEnrichmentService {
     return items.map((item) => {
       const continuePoint = extractContinuePoint(item.progress);
 
-      const card = buildCardMeta({
-        hasUserEntry: true,
-        userState: item.state,
-        continuePoint,
-        hasNewEpisode: false,
-        isTrending: false,
-        isNewRelease: false,
-        trendDelta: null,
-      });
+      const card = buildCardMeta(
+        {
+          hasUserEntry: true,
+          userState: item.state,
+          continuePoint,
+          hasNewEpisode: false,
+          isNewRelease: false,
+          trendDelta: null,
+          isTrending: false,
+        },
+        CARD_LIST_CONTEXT.DEFAULT,
+      );
 
       if (item.state === USER_MEDIA_STATE.PLANNED) {
         card.continue = null;
@@ -79,7 +83,9 @@ export class CardEnrichmentService {
       theatricalReleaseDate?: Date | null;
       digitalReleaseDate?: Date | null;
     } & CatalogItemWithUserState,
-  >(items: T[], isTrendingContext: boolean, now = new Date()): Array<T & { card: CardMeta }> {
+  >(items: T[], opts: { context: CardListContext; now?: Date }): Array<T & { card: CardMeta }> {
+    const now = opts.now ?? new Date();
+
     return items.map((item) => {
       const userState = item.userState ?? null;
 
@@ -90,15 +96,18 @@ export class CardEnrichmentService {
         now,
       );
 
-      const card = buildCardMeta({
-        hasUserEntry: Boolean(userState),
-        userState: userState?.state ?? null,
-        continuePoint,
-        hasNewEpisode: false,
-        isTrending: isTrendingContext,
-        isNewRelease,
-        trendDelta: null,
-      });
+      const card = buildCardMeta(
+        {
+          hasUserEntry: Boolean(userState),
+          userState: userState?.state ?? null,
+          continuePoint,
+          hasNewEpisode: false,
+          isNewRelease,
+          trendDelta: null,
+          isTrending: false,
+        },
+        opts.context,
+      );
 
       if (userState?.state === USER_MEDIA_STATE.PLANNED) {
         card.continue = null;

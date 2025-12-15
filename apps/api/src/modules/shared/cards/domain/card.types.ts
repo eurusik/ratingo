@@ -1,4 +1,4 @@
-import type { BadgeKey, PrimaryCta } from './card.constants';
+import type { BadgeKey, CardListContext, PrimaryCta } from './card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 
 export interface ContinuePoint {
@@ -16,10 +16,10 @@ export interface CardMeta {
   badgeKey: BadgeKey | null;
   primaryCta: PrimaryCta;
   continue: ContinuePoint | null;
-  badgeReason?: string;
+  listContext?: CardListContext;
 }
 
-export interface CardSignals {
+export interface CardItemSignals {
   hasUserEntry: boolean;
   userState?: UserMediaState['state'] | null;
   continuePoint?: ContinuePoint | null;

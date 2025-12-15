@@ -13,6 +13,7 @@ import {
   IShowRepository,
   SHOW_REPOSITORY,
   CalendarEpisode,
+  ShowDetails,
 } from '../../domain/repositories/show.repository.interface';
 import { TrendingShowsQueryDto, TrendingShowsResponseDto } from '../dtos/trending.dto';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
@@ -23,6 +24,7 @@ import { ShowResponseDto } from '../dtos/show-response.dto';
 import { DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 
 /**
@@ -66,7 +68,9 @@ export class CatalogShowsController {
     const normalizedQuery = this.normalizeListQuery(query);
     const shows = await this.showRepository.findTrending(normalizedQuery);
     const data = await this.catalogUserListEnrich(user, shows);
-    const withCards = this.cards.enrichCatalogItems(data, true);
+    const withCards = this.cards.enrichCatalogItems(data, {
+      context: CARD_LIST_CONTEXT.TRENDING_LIST,
+    });
     const limit = normalizedQuery.limit ?? CatalogShowsController.DEFAULT_LIMIT;
     const offset = normalizedQuery.offset ?? CatalogShowsController.DEFAULT_OFFSET;
     const total = shows.total ?? shows.length;
@@ -156,13 +160,13 @@ export class CatalogShowsController {
   async getShowBySlug(
     @Param('slug') slug: string,
     @CurrentUser() user?: { id: string } | null,
-  ): Promise<ShowResponseDto> {
+  ): Promise<ShowDetails & { userState: UserMediaState | null }> {
     const show = await this.showRepository.findBySlug(slug);
     if (!show) {
       throw new NotFoundException(`Show with slug "${slug}" not found`);
     }
     const enriched = await this.catalogUserOneEnrich(user, show);
-    return enriched as any;
+    return enriched;
   }
 
   /**

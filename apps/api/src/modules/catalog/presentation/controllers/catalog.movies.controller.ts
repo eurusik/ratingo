@@ -10,6 +10,7 @@ import {
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   IMovieRepository,
+  MovieDetails,
   MOVIE_REPOSITORY,
 } from '../../domain/repositories/movie.repository.interface';
 import { MovieResponseDto } from '../dtos/movie-response.dto';
@@ -21,6 +22,7 @@ import { TrendingMoviesResponseDto } from '../dtos/trending.dto';
 import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
 import { CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-days.dto';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 
 /**
@@ -68,7 +70,9 @@ export class CatalogMoviesController {
     const offset = normalizedQuery.offset ?? CatalogMoviesController.DEFAULT_OFFSET;
     const total = movies.total ?? movies.length;
     const data = await this.catalogUserListEnrich(user, movies);
-    const withCards = this.cards.enrichCatalogItems(data, true);
+    const withCards = this.cards.enrichCatalogItems(data, {
+      context: CARD_LIST_CONTEXT.TRENDING_LIST,
+    });
 
     return {
       data: withCards,
@@ -107,7 +111,7 @@ export class CatalogMoviesController {
     } = normalizedQuery;
     const movies = await this.movieRepository.findNowPlaying({ ...normalizedQuery, limit, offset });
     const data = await this.catalogUserListEnrich(user, movies);
-    const total = (movies as any).total ?? movies.length;
+    const total = movies.total ?? movies.length;
     return {
       data,
       meta: {
@@ -154,9 +158,12 @@ export class CatalogMoviesController {
       daysBack,
     });
     const data = await this.catalogUserListEnrich(user, movies);
-    const total = (movies as any).total ?? movies.length;
+    const withCards = this.cards.enrichCatalogItems(data, {
+      context: CARD_LIST_CONTEXT.NEW_RELEASES_LIST,
+    });
+    const total = movies.total ?? movies.length;
     return {
-      data,
+      data: withCards,
       meta: {
         count: movies.length,
         total,
@@ -200,9 +207,12 @@ export class CatalogMoviesController {
       daysBack,
     });
     const data = await this.catalogUserListEnrich(user, movies);
-    const total = (movies as any).total ?? movies.length;
+    const withCards = this.cards.enrichCatalogItems(data, {
+      context: CARD_LIST_CONTEXT.NEW_RELEASES_LIST,
+    });
+    const total = movies.total ?? movies.length;
     return {
-      data,
+      data: withCards,
       meta: {
         count: movies.length,
         total,
@@ -229,10 +239,10 @@ export class CatalogMoviesController {
   async getMovieBySlug(
     @Param('slug') slug: string,
     @CurrentUser() user?: { id: string } | null,
-  ): Promise<MovieResponseDto> {
+  ): Promise<MovieDetails & { userState: UserMediaState | null }> {
     const movie = await this.movieRepository.findBySlug(slug);
     if (!movie) throw new NotFoundException(`Movie with slug "${slug}" not found`);
-    return (await this.catalogUserOneEnrich(user, movie)) as any;
+    return this.catalogUserOneEnrich(user, movie);
   }
 
   /**
@@ -260,7 +270,7 @@ export class CatalogMoviesController {
   private async catalogUserOneEnrich<T extends { id: string }>(
     user: { id: string } | null | undefined,
     item: T,
-  ): Promise<T & { userState: any | null }> {
+  ): Promise<T & { userState: UserMediaState | null }> {
     return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
   }
 

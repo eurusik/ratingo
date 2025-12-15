@@ -136,7 +136,7 @@ export interface IMovieRepository {
    * @param {NowPlayingOptions} options - Query options
    * @returns {Promise<MovieWithMedia[]>} Movies list
    */
-  findNowPlaying(options?: NowPlayingOptions): Promise<MovieWithMedia[]>;
+  findNowPlaying(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds movies recently released in theaters.
@@ -145,7 +145,7 @@ export interface IMovieRepository {
    * @param {NowPlayingOptions} options - Query options
    * @returns {Promise<MovieWithMedia[]>} Movies list
    */
-  findNewReleases(options?: NowPlayingOptions): Promise<MovieWithMedia[]>;
+  findNewReleases(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds movies recently released on digital platforms.
@@ -154,7 +154,7 @@ export interface IMovieRepository {
    * @param {NowPlayingOptions} options - Query options
    * @returns {Promise<MovieWithMedia[]>} Movies list
    */
-  findNewOnDigital(options?: NowPlayingOptions): Promise<MovieWithMedia[]>;
+  findNewOnDigital(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds trending movies sorted by popularity and rating.

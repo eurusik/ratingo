@@ -31,6 +31,12 @@ describe('Catalog E2E - Movies Listings', () => {
   it('new-releases: daysBack window and filters', async () => {
     const within7 = await ctx.get('/api/catalog/movies/new-releases?daysBack=7').expect(200);
     expect(within7.body.data.data.map((m: any) => m.id)).toEqual(['mid-1', 'mid-2']);
+    expect(
+      within7.body.data.data.every(
+        (m: any) =>
+          m.card && m.card.badgeKey === 'NEW_RELEASE' && m.card.listContext === 'NEW_RELEASES_LIST',
+      ),
+    ).toBe(true);
 
     const filtered = await ctx
       .get(
@@ -38,16 +44,34 @@ describe('Catalog E2E - Movies Listings', () => {
       )
       .expect(200);
     expect(filtered.body.data.data.map((m: any) => m.id)).toEqual(['mid-2']);
+    expect(
+      filtered.body.data.data.every(
+        (m: any) =>
+          m.card && m.card.badgeKey === 'NEW_RELEASE' && m.card.listContext === 'NEW_RELEASES_LIST',
+      ),
+    ).toBe(true);
   });
 
   it('new-on-digital: daysBack and filters', async () => {
     const within7 = await ctx.get('/api/catalog/movies/new-on-digital?daysBack=7').expect(200);
     expect(within7.body.data.data.map((m: any) => m.id)).toEqual(['mid-1', 'mid-4']);
+    expect(
+      within7.body.data.data.every(
+        (m: any) =>
+          m.card && m.card.badgeKey === 'NEW_RELEASE' && m.card.listContext === 'NEW_RELEASES_LIST',
+      ),
+    ).toBe(true);
 
     const filtered = await ctx
       .get('/api/catalog/movies/new-on-digital?genres=comedy&minRatingo=30')
       .expect(200);
     expect(filtered.body.data.data.map((m: any) => m.id)).toEqual(['mid-4']);
+    expect(
+      filtered.body.data.data.every(
+        (m: any) =>
+          m.card && m.card.badgeKey === 'NEW_RELEASE' && m.card.listContext === 'NEW_RELEASES_LIST',
+      ),
+    ).toBe(true);
   });
 
   it('new-releases: daysBack defaults (0 and missing) apply server defaults', async () => {

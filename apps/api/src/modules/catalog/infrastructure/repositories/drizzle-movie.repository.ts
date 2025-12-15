@@ -13,12 +13,7 @@ import {
 import { ReleaseInfo } from '../../../../database/schema';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import {
-  CatalogListQueryDto,
-  CatalogSort,
-  SortOrder,
-  VoteSource,
-} from '../../presentation/dtos/catalog-list-query.dto';
+import { CatalogListQueryDto } from '../../presentation/dtos/catalog-list-query.dto';
 
 // Query Objects
 import { MovieDetailsQuery } from '../queries/movie-details.query';
@@ -138,21 +133,21 @@ export class DrizzleMovieRepository implements IMovieRepository {
   /**
    * Finds movies currently in theaters (isNowPlaying = true).
    */
-  async findNowPlaying(options: NowPlayingOptions = {}): Promise<MovieWithMedia[]> {
+  async findNowPlaying(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NOW_PLAYING, options);
   }
 
   /**
    * Finds movies recently released in theaters.
    */
-  async findNewReleases(options: NowPlayingOptions = {}): Promise<MovieWithMedia[]> {
+  async findNewReleases(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_RELEASES, options);
   }
 
   /**
    * Finds movies recently released on digital platforms.
    */
-  async findNewOnDigital(options: NowPlayingOptions = {}): Promise<MovieWithMedia[]> {
+  async findNewOnDigital(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_ON_DIGITAL, options);
   }
 

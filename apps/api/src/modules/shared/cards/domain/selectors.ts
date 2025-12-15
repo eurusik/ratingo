@@ -1,7 +1,8 @@
-import { BADGE_KEY, BADGE_PRIORITY, PRIMARY_CTA } from './card.constants';
+import { BADGE_KEY, BADGE_PRIORITY, CARD_LIST_CONTEXT, PRIMARY_CTA } from './card.constants';
+import type { CardListContext } from './card.constants';
 import type { PrimaryCta } from './card.constants';
 import { USER_MEDIA_STATE } from '../../../user-media/domain/entities/user-media-state.entity';
-import type { CardBadge, CardMeta, CardSignals } from './card.types';
+import type { CardBadge, CardItemSignals, CardMeta } from './card.types';
 
 const BADGE_REASON = {
   NEW_EPISODE: 'watching+hasNewEpisode',
@@ -45,7 +46,7 @@ export function extractContinuePoint(
 /**
  * Selects a single badge for a card based on canonical priority.
  */
-export function selectBadge(signals: CardSignals): CardBadge | null {
+export function selectBadge(signals: CardItemSignals, ctx: CardListContext): CardBadge | null {
   if (signals.userState === USER_MEDIA_STATE.WATCHING && signals.hasNewEpisode) {
     return {
       key: BADGE_KEY.NEW_EPISODE,
@@ -70,7 +71,7 @@ export function selectBadge(signals: CardSignals): CardBadge | null {
     };
   }
 
-  if (signals.isTrending) {
+  if (ctx === CARD_LIST_CONTEXT.TRENDING_LIST) {
     return {
       key: BADGE_KEY.TRENDING,
       priority: BADGE_PRIORITY.TRENDING,
@@ -78,7 +79,7 @@ export function selectBadge(signals: CardSignals): CardBadge | null {
     };
   }
 
-  if (signals.isNewRelease) {
+  if (ctx === CARD_LIST_CONTEXT.NEW_RELEASES_LIST && signals.isNewRelease) {
     return {
       key: BADGE_KEY.NEW_RELEASE,
       priority: BADGE_PRIORITY.NEW_RELEASE,
@@ -86,12 +87,30 @@ export function selectBadge(signals: CardSignals): CardBadge | null {
     };
   }
 
-  if (signals.trendDelta === 'up') {
-    return {
-      key: BADGE_KEY.RISING,
-      priority: BADGE_PRIORITY.RISING,
-      reason: BADGE_REASON.RISING,
-    };
+  if (ctx === CARD_LIST_CONTEXT.DEFAULT) {
+    if (signals.isNewRelease) {
+      return {
+        key: BADGE_KEY.NEW_RELEASE,
+        priority: BADGE_PRIORITY.NEW_RELEASE,
+        reason: BADGE_REASON.NEW_RELEASE,
+      };
+    }
+
+    if (signals.trendDelta === 'up') {
+      return {
+        key: BADGE_KEY.RISING,
+        priority: BADGE_PRIORITY.RISING,
+        reason: BADGE_REASON.RISING,
+      };
+    }
+
+    if (signals.isTrending) {
+      return {
+        key: BADGE_KEY.TRENDING,
+        priority: BADGE_PRIORITY.TRENDING,
+        reason: BADGE_REASON.TRENDING,
+      };
+    }
   }
 
   return null;
@@ -100,7 +119,10 @@ export function selectBadge(signals: CardSignals): CardBadge | null {
 /**
  * Selects a primary CTA for a card.
  */
-export function selectPrimaryCta(signals: CardSignals, badgeKey: CardMeta['badgeKey']): PrimaryCta {
+export function selectPrimaryCta(
+  signals: CardItemSignals,
+  badgeKey: CardMeta['badgeKey'],
+): PrimaryCta {
   if (badgeKey === BADGE_KEY.NEW_EPISODE || badgeKey === BADGE_KEY.CONTINUE) {
     return PRIMARY_CTA.CONTINUE;
   }
@@ -115,12 +137,13 @@ export function selectPrimaryCta(signals: CardSignals, badgeKey: CardMeta['badge
 /**
  * Builds card metadata for a media card.
  */
-export function buildCardMeta(signals: CardSignals): CardMeta {
-  const badge = selectBadge(signals);
+export function buildCardMeta(signals: CardItemSignals, ctx: CardListContext): CardMeta {
+  const badge = selectBadge(signals, ctx);
 
   return {
     badgeKey: badge?.key ?? null,
     primaryCta: selectPrimaryCta(signals, badge?.key ?? null),
     continue: signals.continuePoint ?? null,
+    listContext: ctx,
   };
 }

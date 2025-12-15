@@ -14,9 +14,12 @@ describe('Catalog E2E - Trending Movies', () => {
   it('enriches userState for auth and null for anon', async () => {
     const anon = await ctx.get('/api/catalog/movies/trending').expect(200);
     expect(anon.body.data.data.every((m: any) => m.userState === null)).toBe(true);
-    expect(anon.body.data.data.every((m: any) => m.card && m.card.badgeKey === 'NEW_RELEASE')).toBe(
+    expect(anon.body.data.data.every((m: any) => m.card && m.card.badgeKey === 'TRENDING')).toBe(
       true,
     );
+    expect(
+      anon.body.data.data.every((m: any) => m.card && m.card.listContext === 'TRENDING_LIST'),
+    ).toBe(true);
 
     const token = await ctx.registerAndLogin();
     await ctx.setUserState(token, 'mid-1');
