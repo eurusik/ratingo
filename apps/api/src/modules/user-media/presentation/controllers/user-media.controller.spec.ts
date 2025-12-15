@@ -8,6 +8,7 @@ describe('UserMediaController', () => {
     getStateWithMedia: jest.fn(),
     setState: jest.fn(),
     listWithMedia: jest.fn(),
+    listContinueWithMedia: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -63,6 +64,15 @@ describe('UserMediaController', () => {
     const result = await controller.list({ id: 'u1' }, '10' as any, '5' as any);
 
     expect(userMediaService.listWithMedia).toHaveBeenCalledWith('u1', 10, 5);
+    expect(result).toEqual([{ id: 's1' }]);
+  });
+
+  it('listContinue should parse limit/offset and call service.listContinueWithMedia', async () => {
+    userMediaService.listContinueWithMedia.mockResolvedValue([{ id: 's1' }] as any);
+
+    const result = await controller.listContinue({ id: 'u1' }, '10' as any, '5' as any);
+
+    expect(userMediaService.listContinueWithMedia).toHaveBeenCalledWith('u1', 10, 5);
     expect(result).toEqual([{ id: 's1' }]);
   });
 });

@@ -181,6 +181,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-media/continue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List continue items with media summary (auth: Bearer) */
+        get: operations["UserMediaController_listContinue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user-media/{mediaItemId}": {
         parameters: {
             query?: never;
@@ -834,6 +851,21 @@ export interface components {
             /** @example action */
             slug: string;
         };
+        ContinuePointDto: {
+            /** @example 2 */
+            season: number;
+            /** @example 5 */
+            episode: number;
+        };
+        CardMetaDto: {
+            /** @enum {string|null} */
+            badgeKey?: "NEW_EPISODE" | "CONTINUE" | "IN_WATCHLIST" | "NEW_RELEASE" | "RISING" | "TRENDING" | null;
+            /** @enum {string} */
+            listContext?: "TRENDING_LIST" | "NEW_RELEASES_LIST" | "USER_LIBRARY" | "CONTINUE_LIST" | "DEFAULT";
+            /** @enum {string} */
+            primaryCta: "SAVE" | "CONTINUE" | "OPEN";
+            continue?: components["schemas"]["ContinuePointDto"] | null;
+        };
         MovieListItemDto: {
             id: string;
             mediaItemId: string;
@@ -861,6 +893,7 @@ export interface components {
             stats: components["schemas"]["RatingoStatsDto"];
             externalRatings: components["schemas"]["ExternalRatingsDto"];
             genres: components["schemas"]["GenreDto"][];
+            card?: components["schemas"]["CardMetaDto"];
         };
         OffsetPaginationMetaDto: {
             /** @example 100 */
@@ -1154,6 +1187,7 @@ export interface components {
         };
         ShowTrendingItemDto: {
             id: string;
+            mediaItemId: string;
             /**
              * @example show
              * @enum {string}
@@ -1173,6 +1207,7 @@ export interface components {
             stats: components["schemas"]["RatingoStatsDto"];
             externalRatings: components["schemas"]["ExternalRatingsDto"];
             showProgress?: components["schemas"]["ShowProgressDto"] | null;
+            card?: components["schemas"]["CardMetaDto"];
         };
         TrendingShowsResponseDto: {
             data: components["schemas"]["ShowTrendingItemDto"][];
@@ -1287,6 +1322,7 @@ export interface components {
             /** @enum {string} */
             type: "movie" | "show";
             id?: string;
+            mediaItemId?: string;
             slug?: string;
             tmdbId: number;
             title: string;
@@ -1335,6 +1371,7 @@ export interface components {
             poster: components["schemas"]["ImageDto"] | null;
             /** Format: date-time */
             releaseDate?: string | null;
+            card?: components["schemas"]["CardMetaDto"];
         };
         MeUserMediaListItemDto: {
             /** @example 5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b */
@@ -1624,6 +1661,8 @@ export interface components {
         HeroItemDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
             id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
             /**
              * @example movie
              * @enum {string}
@@ -1688,6 +1727,7 @@ export interface components {
         };
         RiseFallItemDto: {
             id: string;
+            mediaItemId: string;
             /** @enum {string} */
             type: "movie" | "show";
             slug: string;
@@ -2036,6 +2076,42 @@ export interface operations {
                         data: components["schemas"]["SearchResponseDto"];
                     };
                 };
+            };
+        };
+    };
+    UserMediaController_listContinue: {
+        parameters: {
+            query?: {
+                /** @description Offset (default 0) */
+                offset?: number;
+                /** @description Page size (default 20) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Continue items */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"][];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

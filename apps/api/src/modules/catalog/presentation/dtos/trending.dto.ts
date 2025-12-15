@@ -41,6 +41,9 @@ export class ShowTrendingItemDto {
   @ApiProperty()
   id: string;
 
+  @ApiProperty()
+  mediaItemId: string;
+
   @ApiProperty({ example: MediaType.SHOW, enum: [MediaType.SHOW] })
   type: MediaType.SHOW;
 
@@ -98,6 +101,9 @@ export class TrendingShowsResponseDto {
 export class MovieTrendingItemDto {
   @ApiProperty()
   id: string;
+
+  @ApiProperty()
+  mediaItemId: string;
 
   @ApiProperty({ example: MediaType.MOVIE, enum: [MediaType.MOVIE] })
   type: MediaType.MOVIE;

@@ -50,6 +50,7 @@ export class CatalogSearchService {
         source: SearchSource.LOCAL,
         type: r.type as MediaType,
         id: r.id,
+        mediaItemId: r.id,
         slug: r.slug,
         tmdbId: r.tmdbId,
         title: r.title,

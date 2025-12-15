@@ -34,10 +34,22 @@ export class CardEnrichmentService {
    *
    * MVP: computes only user-derived signals (CONTINUE, IN_WATCHLIST).
    *
+   * Use `opts.context` to control list-specific behavior (e.g. suppress
+   * certain badges in user library, or enforce "continue-first" behavior
+   * in continue sections).
+   *
    * @param {UserMediaWithSummary[]} items - User media items with media summary
+   * @param {{ context?: CardListContext } | undefined} opts - Optional enrichment options
    * @returns {UserMediaWithSummary[]} Enriched items
    */
-  enrichUserMedia(items: UserMediaWithSummary[]): UserMediaWithSummary[] {
+  enrichUserMedia(
+    items: UserMediaWithSummary[],
+    opts?: {
+      context?: CardListContext;
+    },
+  ): UserMediaWithSummary[] {
+    const ctx = opts?.context ?? CARD_LIST_CONTEXT.DEFAULT;
+
     return items.map((item) => {
       const continuePoint = extractContinuePoint(item.progress);
 
@@ -51,7 +63,7 @@ export class CardEnrichmentService {
           trendDelta: null,
           isTrending: false,
         },
-        CARD_LIST_CONTEXT.DEFAULT,
+        ctx,
       );
 
       if (item.state === USER_MEDIA_STATE.PLANNED) {

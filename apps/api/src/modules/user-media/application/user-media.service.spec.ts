@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { UserMediaService } from './user-media.service';
 
 describe('UserMediaService', () => {
@@ -35,6 +36,58 @@ describe('UserMediaService', () => {
 
     expect(repo.upsert).toHaveBeenCalled();
     expect(result).toEqual({ id: 's1' });
+  });
+
+  it('setState should auto-upgrade state to watching when progress is provided', async () => {
+    repo.upsert.mockResolvedValue({ id: 's1' } as any);
+
+    await service.setState({
+      userId: 'u1',
+      mediaItemId: 'm1',
+      state: 'planned',
+      rating: null,
+      progress: { seasons: { 1: 3 } },
+      notes: null,
+    });
+
+    expect(repo.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: 'watching',
+        progress: { seasons: { 1: 3 } },
+      }),
+    );
+  });
+
+  it('setState should reject progress for completed state', async () => {
+    await expect(
+      service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: 'completed',
+        rating: null,
+        progress: { seasons: { 1: 3 } },
+        notes: null,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(repo.upsert).not.toHaveBeenCalled();
+  });
+
+  it('setState should reject progress for dropped state', async () => {
+    await expect(
+      service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: 'dropped',
+        rating: null,
+        progress: { seasons: { 1: 3 } },
+        notes: null,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(repo.upsert).not.toHaveBeenCalled();
   });
 
   it('getStateWithMedia should delegate to repo.findOneWithMedia', async () => {

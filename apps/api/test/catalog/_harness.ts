@@ -186,10 +186,21 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     return items.slice(offset, offset + limit);
   }
 
+  async listContinueWithMedia(userId: string, limit = 20, offset = 0): Promise<any[]> {
+    let items = this.states.filter((s) => s.userId === userId);
+    items = items.filter((s) => s.progress !== null);
+    items = [...items].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    return items.slice(offset, offset + limit);
+  }
+
   async countActivityWithMedia(userId: string): Promise<number> {
     return this.states.filter(
       (s) => s.userId === userId && (s.state === 'watching' || s.progress !== null),
     ).length;
+  }
+
+  async countContinueWithMedia(userId: string): Promise<number> {
+    return this.states.filter((s) => s.userId === userId && s.progress !== null).length;
   }
   async getStats(userId: string) {
     const byUser = this.states.filter((s) => s.userId === userId);

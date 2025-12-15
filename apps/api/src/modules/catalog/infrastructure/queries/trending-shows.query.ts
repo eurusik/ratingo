@@ -212,6 +212,7 @@ export class TrendingShowsQuery {
 
       return {
         id: row.id,
+        mediaItemId: row.id,
         type: MediaType.SHOW,
         slug: row.slug,
         title: row.title,

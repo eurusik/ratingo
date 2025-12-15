@@ -142,6 +142,7 @@ export const moviesFixture: MovieWithMedia[] = [
 export const showsFixture: any[] = [
   {
     id: 'sid-1',
+    mediaItemId: 'sid-1',
     type: MediaType.SHOW,
     slug: 'show-one',
     title: 'Show One',
@@ -180,6 +181,7 @@ export const showsFixture: any[] = [
   },
   {
     id: 'sid-2',
+    mediaItemId: 'sid-2',
     type: MediaType.SHOW,
     slug: 'show-two',
     title: 'Show Two',

@@ -36,6 +36,32 @@ export class UserMediaController {
   constructor(private readonly userMediaService: UserMediaService) {}
 
   /**
+   * Lists "Continue" items for the current user.
+   *
+   * Returns only items that have `progress` set (i.e. user can resume watching).
+   *
+   * @param {{ id: string }} user - Current user context
+   * @param {number} limit - Page size (default 20)
+   * @param {number} offset - Offset (default 0)
+   * @returns {Promise<UserMediaStateDto[]>} Continue items with media summary
+   */
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Page size (default 20)' })
+  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Offset (default 0)' })
+  @ApiOkResponse({ description: 'Continue items', type: UserMediaStateDto, isArray: true })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiOperation({ summary: 'List continue items with media summary (auth: Bearer)' })
+  @Get('continue')
+  async listContinue(
+    @CurrentUser() user: { id: string },
+    @Query('limit') limit = 20,
+    @Query('offset') offset = 0,
+  ) {
+    const parsedLimit = Number(limit) || 20;
+    const parsedOffset = Number(offset) || 0;
+    return this.userMediaService.listContinueWithMedia(user.id, parsedLimit, parsedOffset);
+  }
+
+  /**
    * Gets state for a media item.
    *
    * @param {string} mediaItemId - Media item identifier

@@ -206,10 +206,21 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     return items.slice(offset, offset + limit);
   }
 
+  async listContinueWithMedia(userId: string, limit = 20, offset = 0): Promise<any[]> {
+    let items = this.states.filter((s) => s.userId === userId);
+    items = items.filter((s) => s.progress !== null);
+    items = [...items].sort((a, b) => (b.updatedAt as any) - (a.updatedAt as any));
+    return items.slice(offset, offset + limit);
+  }
+
   async countActivityWithMedia(userId: string): Promise<number> {
     return this.states.filter(
       (s) => s.userId === userId && (s.state === 'watching' || s.progress !== null),
     ).length;
+  }
+
+  async countContinueWithMedia(userId: string): Promise<number> {
+    return this.states.filter((s) => s.userId === userId && s.progress !== null).length;
   }
 
   async getStats(userId: string) {
@@ -364,6 +375,37 @@ describe('User Media e2e', () => {
     expect(res.body.data.mediaSummary.card.continue).toEqual({ season: 1, episode: 3 });
   });
 
+  it('auto-upgrades state to watching when progress is provided', async () => {
+    const token = await registerAndLogin('progress-up');
+    const mediaItemId = 'mid-progress-upgrade';
+
+    const res = await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'planned', progress: { seasons: { 1: 2 } } })
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.state).toBe('watching');
+    expect(res.body.data.progress).toEqual({ seasons: { 1: 2 } });
+  });
+
+  it('rejects progress for completed/dropped states', async () => {
+    const token = await registerAndLogin('progress-reject');
+
+    await request(app.getHttpServer())
+      .patch(`${mediaUrl}/mid-progress-completed`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'completed', progress: { seasons: { 1: 2 } } })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .patch(`${mediaUrl}/mid-progress-dropped`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'dropped', progress: { seasons: { 1: 2 } } })
+      .expect(400);
+  });
+
   it('pagination respects limit/offset', async () => {
     const token = await registerAndLogin('page');
 
@@ -387,5 +429,35 @@ describe('User Media e2e', () => {
     expect(page1.body.data.length).toBe(2);
     expect(page2.body.data.length).toBe(2);
     expect(page1.body.data[0].mediaItemId).not.toBe(page2.body.data[0].mediaItemId);
+  });
+
+  it('lists continue items (progress only) and sets listContext=CONTINUE_LIST', async () => {
+    const token = await registerAndLogin('continue-list');
+
+    await request(app.getHttpServer())
+      .patch(`${mediaUrl}/mid-continue-a`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'watching', progress: { seasons: { 1: 1 } } })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .patch(`${mediaUrl}/mid-continue-b`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'watching' })
+      .expect(200);
+
+    const res = await request(app.getHttpServer())
+      .get(`${mediaUrl}/continue?limit=10&offset=0`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data.length).toBe(1);
+    expect(res.body.data[0].progress).toEqual({ seasons: { 1: 1 } });
+    expect(res.body.data[0].mediaSummary.card).toBeDefined();
+    expect(res.body.data[0].mediaSummary.card.listContext).toBe('CONTINUE_LIST');
+    expect(res.body.data[0].mediaSummary.card.badgeKey).toBe('CONTINUE');
+    expect(res.body.data[0].mediaSummary.card.primaryCta).toBe('CONTINUE');
   });
 });

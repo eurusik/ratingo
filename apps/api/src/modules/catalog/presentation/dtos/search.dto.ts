@@ -18,6 +18,9 @@ export class SearchItemDto {
   id?: string;
 
   @ApiProperty({ required: false })
+  mediaItemId?: string;
+
+  @ApiProperty({ required: false })
   slug?: string;
 
   @ApiProperty()

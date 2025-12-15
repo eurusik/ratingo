@@ -1006,6 +1006,73 @@
         ]
       }
     },
+    "/api/user-media/continue": {
+      "get": {
+        "operationId": "UserMediaController_listContinue",
+        "summary": "List continue items with media summary (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset (default 0)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size (default 20)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Continue items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserMediaStateDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "User Media"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/user-media/{mediaItemId}": {
       "get": {
         "operationId": "UserMediaController_getState",
@@ -2711,6 +2778,69 @@
           "slug"
         ]
       },
+      "ContinuePointDto": {
+        "type": "object",
+        "properties": {
+          "season": {
+            "type": "number",
+            "example": 2
+          },
+          "episode": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "season",
+          "episode"
+        ]
+      },
+      "CardMetaDto": {
+        "type": "object",
+        "properties": {
+          "badgeKey": {
+            "type": "string",
+            "enum": [
+              "NEW_EPISODE",
+              "CONTINUE",
+              "IN_WATCHLIST",
+              "NEW_RELEASE",
+              "RISING",
+              "TRENDING"
+            ],
+            "nullable": true
+          },
+          "listContext": {
+            "type": "string",
+            "enum": [
+              "TRENDING_LIST",
+              "NEW_RELEASES_LIST",
+              "USER_LIBRARY",
+              "CONTINUE_LIST",
+              "DEFAULT"
+            ]
+          },
+          "primaryCta": {
+            "type": "string",
+            "enum": [
+              "SAVE",
+              "CONTINUE",
+              "OPEN"
+            ]
+          },
+          "continue": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContinuePointDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "primaryCta"
+        ]
+      },
       "MovieListItemDto": {
         "type": "object",
         "properties": {
@@ -2793,6 +2923,9 @@
             "items": {
               "$ref": "#/components/schemas/GenreDto"
             }
+          },
+          "card": {
+            "$ref": "#/components/schemas/CardMetaDto"
           }
         },
         "required": [
@@ -3443,6 +3576,9 @@
           "id": {
             "type": "string"
           },
+          "mediaItemId": {
+            "type": "string"
+          },
           "type": {
             "type": "string",
             "example": "show",
@@ -3508,10 +3644,14 @@
                 "$ref": "#/components/schemas/ShowProgressDto"
               }
             ]
+          },
+          "card": {
+            "$ref": "#/components/schemas/CardMetaDto"
           }
         },
         "required": [
           "id",
+          "mediaItemId",
           "type",
           "slug",
           "title",
@@ -3871,6 +4011,9 @@
           "id": {
             "type": "string"
           },
+          "mediaItemId": {
+            "type": "string"
+          },
           "slug": {
             "type": "string"
           },
@@ -4010,6 +4153,9 @@
             "format": "date-time",
             "type": "string",
             "nullable": true
+          },
+          "card": {
+            "$ref": "#/components/schemas/CardMetaDto"
           }
         },
         "required": [
@@ -4669,6 +4815,10 @@
             "type": "string",
             "example": "123e4567-e89b-12d3-a456-426614174000"
           },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
           "type": {
             "type": "string",
             "example": "movie",
@@ -4739,6 +4889,7 @@
         },
         "required": [
           "id",
+          "mediaItemId",
           "type",
           "slug",
           "title",
@@ -4795,6 +4946,9 @@
           "id": {
             "type": "string"
           },
+          "mediaItemId": {
+            "type": "string"
+          },
           "type": {
             "type": "string",
             "enum": [
@@ -4837,6 +4991,7 @@
         },
         "required": [
           "id",
+          "mediaItemId",
           "type",
           "slug",
           "title",

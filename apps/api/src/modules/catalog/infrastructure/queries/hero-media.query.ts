@@ -199,6 +199,7 @@ export class HeroMediaQuery {
 
       const baseItem = {
         id: item.id,
+        mediaItemId: item.id,
         type: item.type,
         slug: item.slug,
         title: item.title,

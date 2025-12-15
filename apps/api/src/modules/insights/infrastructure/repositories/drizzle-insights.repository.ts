@@ -19,7 +19,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   /**
@@ -32,7 +32,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
    */
   async getMovements(
     windowDays: number,
-    limit: number
+    limit: number,
   ): Promise<{ risers: RiseFallItemDto[]; fallers: RiseFallItemDto[] }> {
     // Prepare target dates (Midnight UTC)
     const now = new Date();
@@ -57,13 +57,13 @@ export class DrizzleInsightsRepository implements InsightsRepository {
         .from(schema.mediaWatchersSnapshots)
         .innerJoin(
           schema.mediaItems,
-          eq(schema.mediaWatchersSnapshots.mediaItemId, schema.mediaItems.id)
+          eq(schema.mediaWatchersSnapshots.mediaItemId, schema.mediaItems.id),
         )
         .where(
           and(
             eq(schema.mediaWatchersSnapshots.region, 'global'),
-            inArray(schema.mediaWatchersSnapshots.snapshotDate, targetDates)
-          )
+            inArray(schema.mediaWatchersSnapshots.snapshotDate, targetDates),
+          ),
         );
 
       const grouped = new Map<
@@ -99,6 +99,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
 
         return {
           id: media.id,
+          mediaItemId: media.id,
           type: media.type,
           slug: media.slug,
           title: media.title,

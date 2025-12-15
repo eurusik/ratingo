@@ -69,6 +69,57 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   }
 
   /**
+   * Lists "Continue" items with media summary.
+   *
+   * Semantics: `progress IS NOT NULL`.
+   *
+   * @param {string} userId - User identifier
+   * @param {number} limit - Page size
+   * @param {number} offset - Offset
+   * @returns {Promise<any[]>} Continue items with media summary
+   * @throws {DatabaseException} When query fails
+   */
+  async listContinueWithMedia(userId: string, limit = 20, offset = 0) {
+    try {
+      const rows = await this.db
+        .select({
+          state: schema.userMediaState,
+          media: {
+            id: schema.mediaItems.id,
+            type: schema.mediaItems.type,
+            title: schema.mediaItems.title,
+            slug: schema.mediaItems.slug,
+            posterPath: schema.mediaItems.posterPath,
+            releaseDate: schema.mediaItems.releaseDate,
+          },
+        })
+        .from(schema.userMediaState)
+        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+        .where(
+          and(eq(schema.userMediaState.userId, userId), isNotNull(schema.userMediaState.progress)),
+        )
+        .orderBy(desc(schema.userMediaState.updatedAt))
+        .limit(limit)
+        .offset(offset);
+
+      return rows.map((r) => ({
+        ...this.mapRow(r.state),
+        mediaSummary: {
+          id: r.media.id,
+          type: r.media.type as MediaType,
+          title: r.media.title,
+          slug: r.media.slug,
+          poster: ImageMapper.toPoster(r.media.posterPath),
+          releaseDate: r.media.releaseDate,
+        },
+      }));
+    } catch (error) {
+      this.logger.error(`listContinueWithMedia failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to list continue items with media', { userId });
+    }
+  }
+
+  /**
    * Gets aggregated user media stats.
    *
    * @param {string} userId - User identifier
@@ -380,6 +431,30 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     } catch (error) {
       this.logger.error(`countActivityWithMedia failed: ${error.message}`, error.stack);
       throw new DatabaseException('Failed to count user media activity with media', { userId });
+    }
+  }
+
+  /**
+   * Counts "Continue" items.
+   *
+   * Semantics: `progress IS NOT NULL`.
+   *
+   * @param {string} userId - User identifier
+   * @returns {Promise<number>} Total continue items
+   * @throws {DatabaseException} When query fails
+   */
+  async countContinueWithMedia(userId: string): Promise<number> {
+    try {
+      const [row] = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(schema.userMediaState)
+        .where(
+          and(eq(schema.userMediaState.userId, userId), isNotNull(schema.userMediaState.progress)),
+        );
+      return Number(row?.count ?? 0);
+    } catch (error) {
+      this.logger.error(`countContinueWithMedia failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to count continue items with media', { userId });
     }
   }
 

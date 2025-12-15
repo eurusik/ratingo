@@ -45,6 +45,7 @@ export type WithTotal<T> = T[] & { total?: number };
  */
 export interface TrendingShowItem {
   id: string;
+  mediaItemId: string;
   type: MediaType.SHOW;
   slug: string;
   title: string;

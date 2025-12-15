@@ -127,6 +127,35 @@ export interface IUserMediaStateRepository {
   >;
 
   /**
+   * Lists "Continue" items with media summary.
+   *
+   * Semantics: `progress IS NOT NULL`.
+   *
+   * @param {string} userId - User identifier
+   * @param {number} limit - Page size
+   * @param {number} offset - Offset
+   * @returns {Promise<Array<UserMediaState & { mediaSummary: { id: string; type: MediaType; title: string; slug: string; poster: ImageDto | null; releaseDate?: Date | null } }>>} Continue items
+   */
+  listContinueWithMedia(
+    userId: string,
+    limit?: number,
+    offset?: number,
+  ): Promise<
+    Array<
+      UserMediaState & {
+        mediaSummary: {
+          id: string;
+          type: MediaType;
+          title: string;
+          slug: string;
+          poster: ImageDto | null;
+          releaseDate?: Date | null;
+        };
+      }
+    >
+  >;
+
+  /**
    * Returns a single state with media summary.
    *
    * @param {string} userId - User identifier
@@ -194,4 +223,14 @@ export interface IUserMediaStateRepository {
    * @returns {Promise<number>} Total activity items
    */
   countActivityWithMedia(userId: string): Promise<number>;
+
+  /**
+   * Counts "Continue" items.
+   *
+   * Semantics: `progress IS NOT NULL`.
+   *
+   * @param {string} userId - User identifier
+   * @returns {Promise<number>} Total continue items
+   */
+  countContinueWithMedia(userId: string): Promise<number>;
 }

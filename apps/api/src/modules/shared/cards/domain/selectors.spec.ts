@@ -132,6 +132,55 @@ describe('cards selectors', () => {
       expect(badge?.key).toBe(BADGE_KEY.IN_WATCHLIST);
     });
 
+    it('suppresses IN_WATCHLIST in USER_LIBRARY context', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: true,
+          userState: USER_MEDIA_STATE.PLANNED,
+        },
+        CARD_LIST_CONTEXT.USER_LIBRARY,
+      );
+      expect(badge).toBeNull();
+    });
+
+    it('suppresses context-derived badges in CONTINUE_LIST context', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: true,
+          userState: USER_MEDIA_STATE.WATCHING,
+          isTrending: true,
+          isNewRelease: true,
+          trendDelta: 'up',
+        },
+        CARD_LIST_CONTEXT.CONTINUE_LIST,
+      );
+      expect(badge).toBeNull();
+    });
+
+    it('keeps CONTINUE badge in CONTINUE_LIST context when continuePoint exists', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: true,
+          userState: USER_MEDIA_STATE.WATCHING,
+          continuePoint: { season: 1, episode: 2 },
+        },
+        CARD_LIST_CONTEXT.CONTINUE_LIST,
+      );
+      expect(badge?.key).toBe(BADGE_KEY.CONTINUE);
+    });
+
+    it('keeps NEW_EPISODE badge in CONTINUE_LIST context', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: true,
+          userState: USER_MEDIA_STATE.WATCHING,
+          hasNewEpisode: true,
+        },
+        CARD_LIST_CONTEXT.CONTINUE_LIST,
+      );
+      expect(badge?.key).toBe(BADGE_KEY.NEW_EPISODE);
+    });
+
     it('returns null when no signals match', () => {
       const badge = selectBadge(
         {

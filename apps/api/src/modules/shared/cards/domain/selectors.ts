@@ -63,7 +63,11 @@ export function selectBadge(signals: CardItemSignals, ctx: CardListContext): Car
     };
   }
 
-  if (signals.userState === USER_MEDIA_STATE.PLANNED) {
+  if (ctx === CARD_LIST_CONTEXT.CONTINUE_LIST) {
+    return null;
+  }
+
+  if (ctx !== CARD_LIST_CONTEXT.USER_LIBRARY && signals.userState === USER_MEDIA_STATE.PLANNED) {
     return {
       key: BADGE_KEY.IN_WATCHLIST,
       priority: BADGE_PRIORITY.IN_WATCHLIST,

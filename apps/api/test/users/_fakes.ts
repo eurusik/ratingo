@@ -232,10 +232,22 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     return items.slice(offset, offset + limit);
   }
 
+  async listContinueWithMedia(userId: string, limit = 20, offset = 0): Promise<any[]> {
+    let items = this.states.filter((s) => s.userId === userId);
+    items = items.filter((s) => s.progress !== null);
+    items = [...items].sort((a, b) => b.updatedAt - a.updatedAt);
+    return items.slice(offset, offset + limit);
+  }
+
   async countActivityWithMedia(userId: string): Promise<number> {
     const items = this.states.filter(
       (s) => s.userId === userId && (s.state === 'watching' || s.progress !== null),
     );
+    return items.length;
+  }
+
+  async countContinueWithMedia(userId: string): Promise<number> {
+    const items = this.states.filter((s) => s.userId === userId && s.progress !== null);
     return items.length;
   }
 

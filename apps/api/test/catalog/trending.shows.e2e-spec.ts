@@ -14,6 +14,9 @@ describe('Catalog E2E - Trending Shows', () => {
   it('enriches userState for auth and null for anon', async () => {
     const anon = await ctx.get('/api/catalog/shows/trending').expect(200);
     expect(anon.body.data.data.every((m: any) => m.userState === null)).toBe(true);
+    expect(anon.body.data.data.every((s: any) => s.mediaItemId && s.mediaItemId === s.id)).toBe(
+      true,
+    );
     expect(anon.body.data.data.every((s: any) => s.card && s.card.badgeKey === 'TRENDING')).toBe(
       true,
     );

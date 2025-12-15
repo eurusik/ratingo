@@ -30,6 +30,9 @@ export class RiseFallItemDto {
   @ApiProperty()
   id: string;
 
+  @ApiProperty()
+  mediaItemId: string;
+
   @ApiProperty({ enum: ['movie', 'show'] })
   type: 'movie' | 'show';
 
