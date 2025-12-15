@@ -45,6 +45,18 @@ describe('cards selectors', () => {
       expect(badge?.key).toBe(BADGE_KEY.NEW_EPISODE);
     });
 
+    it('returns null in NEW_RELEASES_LIST when item is not a new release', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: false,
+          userState: null,
+          isNewRelease: false,
+        },
+        CARD_LIST_CONTEXT.NEW_RELEASES_LIST,
+      );
+      expect(badge).toBeNull();
+    });
+
     it('returns TRENDING in TRENDING_LIST even when item is new release', () => {
       const badge = selectBadge(
         {
@@ -58,6 +70,19 @@ describe('cards selectors', () => {
       expect(badge?.key).toBe(BADGE_KEY.TRENDING);
     });
 
+    it('prefers CONTINUE over TRENDING_LIST context', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: true,
+          userState: USER_MEDIA_STATE.WATCHING,
+          continuePoint: { season: 1, episode: 1 },
+          isTrending: true,
+        },
+        CARD_LIST_CONTEXT.TRENDING_LIST,
+      );
+      expect(badge?.key).toBe(BADGE_KEY.CONTINUE);
+    });
+
     it('returns NEW_RELEASE in NEW_RELEASES_LIST even when item is trending', () => {
       const badge = selectBadge(
         {
@@ -67,6 +92,19 @@ describe('cards selectors', () => {
           isNewRelease: true,
         },
         CARD_LIST_CONTEXT.NEW_RELEASES_LIST,
+      );
+      expect(badge?.key).toBe(BADGE_KEY.NEW_RELEASE);
+    });
+
+    it('returns NEW_RELEASE in DEFAULT even when item is trending', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: false,
+          userState: null,
+          isTrending: true,
+          isNewRelease: true,
+        },
+        CARD_LIST_CONTEXT.DEFAULT,
       );
       expect(badge?.key).toBe(BADGE_KEY.NEW_RELEASE);
     });
