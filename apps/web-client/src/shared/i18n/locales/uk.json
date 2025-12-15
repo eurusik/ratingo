@@ -1,0 +1,146 @@
+{
+  "common": {
+    "loading": "Завантаження...",
+    "error": "Помилка",
+    "retry": "Спробувати ще",
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "close": "Закрити",
+    "showAll": "Показати всі",
+    "back": "Назад"
+  },
+  "home": {
+    "tagline": "Швидкий спосіб зрозуміти, що дивитись зараз",
+    "subtitle": "Тренди фільмів і серіалів без шуму. Рейтинги, глядачі, нові епізоди — все в одному місці.",
+    "sections": {
+      "trending": "Зараз дивляться",
+      "top3": "Топ-3",
+      "movies": "Фільми в тренді",
+      "shows": "Серіали в тренді",
+      "upcoming": "Скоро виходить"
+    }
+  },
+  "card": {
+    "cta": {
+      "details": "Деталі",
+      "save": "Зберегти",
+      "saved": "Збережено",
+      "continue": "Продовжити",
+      "whereToWatch": "Де дивитись"
+    },
+    "badge": {
+      "trending": "ХІТ",
+      "newRelease": "Новинка",
+      "rising": "Ріст",
+      "newEpisode": "Новий епізод"
+    },
+    "season": {
+      "released": "Вийшло",
+      "ofEpisodes": "з"
+    },
+    "noPoster": "Без постера"
+  },
+  "rating": {
+    "imdb": "IMDb",
+    "tmdb": "TMDB",
+    "trakt": "Trakt",
+    "viewers": "глядачів"
+  },
+  "auth": {
+    "login": "Увійти",
+    "register": "Реєстрація",
+    "logout": "Вийти",
+    "guest": "Гість"
+  },
+  "nav": {
+    "home": "Головна",
+    "movies": "Фільми",
+    "shows": "Серіали",
+    "watchlist": "Мій список",
+    "airings": "Надходження"
+  },
+  "details": {
+    "backToHome": "Назад",
+    "share": "Поділитись",
+    "save": "Зберегти",
+    "saved": "У списку",
+    "continue": "Продовжити",
+    "whereToWatch": "Де дивитись",
+    "showMore": "Показати більше",
+    "showLess": "Сховати",
+    "cta": {
+      "saveHint": {
+        "newEpisodes": "щоб не пропустити нові серії",
+        "general": "додати до свого списку"
+      },
+      "whereToWatchHint": "офіційні сервіси"
+    },
+    "quickPitch": {
+      "title": "Коротко",
+      "suitable": "Підійде, якщо подобається"
+    },
+    "trailer": {
+      "watch": "Трейлер",
+      "youtube": "YouTube"
+    },
+    "overview": {
+      "title": "Опис"
+    },
+    "showStatus": {
+      "title": "Стан серіалу",
+      "season": "Сезон",
+      "episodesReleased": "вийшло",
+      "of": "з",
+      "episodes": "епізодів",
+      "nextEpisode": "Наступна серія",
+      "noDate": "—",
+      "ended": "Завершено",
+      "returning": "Продовжується",
+      "inProduction": "У виробництві",
+      "canceled": "Скасовано"
+    },
+    "movieRelease": {
+      "title": "Реліз",
+      "theaters": "Кінотеатри",
+      "digital": "Digital",
+      "inProduction": "У виробництві",
+      "postProduction": "Пост-продакшн",
+      "rumored": "Чутки"
+    },
+    "providers": {
+      "title": "Де дивитись",
+      "stream": "Підписка",
+      "rent": "Оренда",
+      "buy": "Купити",
+      "noProviders": "Немає доступних сервісів",
+      "officialNote": "Ми ведемо на офіційні сервіси"
+    },
+    "similar": {
+      "title": "Схоже на це"
+    },
+    "verdict": {
+      "byData": "За даними Ratingo",
+      "seasonComparison": {
+        "stronger": "Сезон {season} тримає планку попереднього",
+        "weaker": "Сезон {season} стартував слабше попереднього",
+        "peak": "Перший сезон залишається піком серіалу"
+      },
+      "userContext": {
+        "continueFromS1": "Обов'язково, якщо дивився перший сезон",
+        "genreMatch": "Підійде, якщо любиш {genre}"
+      },
+      "genreMatch": {
+        "forFansOf": "Для фанатів {tags}"
+      }
+    }
+  },
+  "errors": {
+    "notFound": "Сторінку не знайдено",
+    "serverError": "Щось пішло не так",
+    "networkError": "Перевірте з'єднання з інтернетом"
+  },
+  "meta": {
+    "siteName": "Ratingo",
+    "description": "Швидкий спосіб зрозуміти, що дивитись зараз"
+  }
+}

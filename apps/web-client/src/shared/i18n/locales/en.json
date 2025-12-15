@@ -1,0 +1,146 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "showAll": "Show all",
+    "back": "Back"
+  },
+  "home": {
+    "tagline": "Quick way to decide what to watch now",
+    "subtitle": "Trending movies and shows without the noise. Ratings, viewers, new episodes — all in one place.",
+    "sections": {
+      "trending": "Trending now",
+      "top3": "Top 3",
+      "movies": "Trending movies",
+      "shows": "Trending shows",
+      "upcoming": "Coming soon"
+    }
+  },
+  "card": {
+    "cta": {
+      "details": "Details",
+      "save": "Save",
+      "saved": "Saved",
+      "continue": "Continue",
+      "whereToWatch": "Where to watch"
+    },
+    "badge": {
+      "trending": "HOT",
+      "newRelease": "New",
+      "rising": "Rising",
+      "newEpisode": "New episode"
+    },
+    "season": {
+      "released": "Released",
+      "ofEpisodes": "of"
+    },
+    "noPoster": "No poster"
+  },
+  "rating": {
+    "imdb": "IMDb",
+    "tmdb": "TMDB",
+    "trakt": "Trakt",
+    "viewers": "viewers"
+  },
+  "auth": {
+    "login": "Sign in",
+    "register": "Sign up",
+    "logout": "Sign out",
+    "guest": "Guest"
+  },
+  "nav": {
+    "home": "Home",
+    "movies": "Movies",
+    "shows": "Shows",
+    "watchlist": "My list",
+    "airings": "Airings"
+  },
+  "details": {
+    "backToHome": "Back",
+    "share": "Share",
+    "save": "Save",
+    "saved": "In list",
+    "continue": "Continue",
+    "whereToWatch": "Where to watch",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "cta": {
+      "saveHint": {
+        "newEpisodes": "to never miss new episodes",
+        "general": "add to your list"
+      },
+      "whereToWatchHint": "official services"
+    },
+    "quickPitch": {
+      "title": "Quick pitch",
+      "suitable": "Good if you like"
+    },
+    "trailer": {
+      "watch": "Trailer",
+      "youtube": "YouTube"
+    },
+    "overview": {
+      "title": "Overview"
+    },
+    "showStatus": {
+      "title": "Show status",
+      "season": "Season",
+      "episodesReleased": "released",
+      "of": "of",
+      "episodes": "episodes",
+      "nextEpisode": "Next episode",
+      "noDate": "—",
+      "ended": "Ended",
+      "returning": "Returning",
+      "inProduction": "In production",
+      "canceled": "Canceled"
+    },
+    "movieRelease": {
+      "title": "Release",
+      "theaters": "Theaters",
+      "digital": "Digital",
+      "inProduction": "In Production",
+      "postProduction": "Post Production",
+      "rumored": "Rumored"
+    },
+    "providers": {
+      "title": "Where to watch",
+      "stream": "Stream",
+      "rent": "Rent",
+      "buy": "Buy",
+      "noProviders": "No providers available",
+      "officialNote": "We link to official services"
+    },
+    "similar": {
+      "title": "Similar to this"
+    },
+    "verdict": {
+      "byData": "Based on Ratingo data",
+      "seasonComparison": {
+        "stronger": "Season {season} maintains the bar of the previous one",
+        "weaker": "Season {season} started weaker than the previous one",
+        "peak": "First season remains the peak of the series"
+      },
+      "userContext": {
+        "continueFromS1": "Must-watch if you saw the first season",
+        "genreMatch": "Perfect if you love {genre}"
+      },
+      "genreMatch": {
+        "forFansOf": "For fans of {tags}"
+      }
+    }
+  },
+  "errors": {
+    "notFound": "Page not found",
+    "serverError": "Something went wrong",
+    "networkError": "Check your internet connection"
+  },
+  "meta": {
+    "siteName": "Ratingo",
+    "description": "Quick way to decide what to watch now"
+  }
+}
