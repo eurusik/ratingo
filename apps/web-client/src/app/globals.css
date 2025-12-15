@@ -106,3 +106,12 @@
 .glass {
   @apply bg-zinc-900/50 backdrop-blur-xl;
 }
+
+/* Hide scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

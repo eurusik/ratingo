@@ -123,6 +123,14 @@ export function DataVerdict({
   const config = verdictConfig[type];
   const Icon = config.icon;
 
+  // Dynamic CTA gradient based on verdict type
+  const ctaGradientClasses = {
+    season_comparison: 'bg-gradient-to-r from-amber-500/5 via-transparent to-transparent border-amber-500/10 hover:border-amber-500/20 hover:from-amber-500/10',
+    user_context: 'bg-gradient-to-r from-blue-500/5 via-transparent to-transparent border-blue-500/10 hover:border-blue-500/20 hover:from-blue-500/10',
+    genre_match: 'bg-gradient-to-r from-purple-500/5 via-transparent to-transparent border-purple-500/10 hover:border-purple-500/20 hover:from-purple-500/10',
+    general: 'bg-gradient-to-r from-zinc-500/5 via-transparent to-transparent border-zinc-500/10 hover:border-zinc-500/20 hover:from-zinc-500/10',
+  } as const;
+
   return (
     <section
       className={cn(
@@ -165,9 +173,10 @@ export function DataVerdict({
             <button
               onClick={ctaProps?.onSave}
               className={cn(
-                'group flex items-center justify-between w-full mt-4 pt-4 border-t border-zinc-800/50',
+                'group flex items-center justify-between w-full mt-4 pt-4 border-t',
                 '-mx-5 px-5 -mb-5 pb-5 rounded-b-2xl',
-                'hover:bg-zinc-800/30 transition-all'
+                ctaGradientClasses[type],
+                'transition-all'
               )}
             >
               <div className="flex flex-col items-start">

@@ -34,14 +34,6 @@ const badgeConfig: Record<BadgeKey, { icon: typeof Flame; className: string; lab
   NEW_EPISODE: { icon: Clapperboard, className: 'bg-purple-500 text-white', labelKey: 'newEpisode' },
 };
 
-const ratingSourceConfig = {
-  imdb: { label: 'IMDb', className: 'text-yellow-400 bg-yellow-400/20', isPercent: false },
-  tmdb: { label: 'TMDB', className: 'text-sky-400 bg-sky-400/20', isPercent: false },
-  trakt: { label: 'Trakt', className: 'text-red-400 bg-red-400/20', isPercent: false },
-  metacritic: { label: 'MC', className: 'text-yellow-300 bg-yellow-300/20', isPercent: true },
-  rottenTomatoes: { label: 'RT', className: 'text-red-500 bg-red-500/20', isPercent: true },
-} as const;
-
 export function DetailsHero({
   title,
   originalTitle,
@@ -57,23 +49,24 @@ export function DetailsHero({
   dict,
 }: DetailsHeroProps) {
   const rating = stats.ratingoScore / 10;
+  const imdbRating = externalRatings?.imdb?.rating;
   const BadgeIcon = badgeKey ? badgeConfig[badgeKey]?.icon : null;
   const [backdropError, setBackdropError] = useState(false);
-
-  // Collect all available external ratings
-  const availableRatings = externalRatings
-    ? (Object.entries(externalRatings) as [keyof typeof ratingSourceConfig, { rating: number; voteCount?: number } | undefined][])
-        .filter(([, data]) => data?.rating != null)
-        .map(([source, data]) => ({ source, ...data! }))
-    : [];
 
   // Use poster as fallback if backdrop fails or doesn't exist
   const useBackdrop = backdrop && !backdropError;
 
   return (
     <section className="relative min-h-[70vh] md:min-h-[60vh] flex items-end">
-      {/* FULL BACKDROP */}
-      <div className="absolute inset-0 z-0">
+      {/* FULL BACKDROP - TEMPORARY DEBUG */}
+      <div className="absolute inset-0 -z-10">
+        {/* Debug: Show what we're using */}
+        {backdrop && (
+          <div className="absolute top-0 left-0 z-50 bg-red-500 text-white text-xs p-2">
+            Backdrop: {backdrop.large.substring(backdrop.large.lastIndexOf('/'))}
+          </div>
+        )}
+        
         {useBackdrop ? (
           <>
             <Image
@@ -82,17 +75,15 @@ export function DetailsHero({
               fill
               className="object-cover"
               priority
-              onError={() => setBackdropError(true)}
+              onError={() => {
+                console.log('Backdrop failed:', backdrop.large);
+                setBackdropError(true);
+              }}
+              onLoad={() => console.log('Backdrop loaded:', backdrop.large)}
             />
-            {/* Gradient overlays for smooth fade into background */}
-            {/* Bottom fade - strongest, creates the "dissolve" effect */}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 via-40% to-transparent" />
-            {/* Left side vignette */}
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/60 via-transparent to-zinc-950/30" />
-            {/* Top subtle darkening */}
-            <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/40 via-transparent to-transparent" />
-            {/* Radial vignette for cinematic look */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(9,9,11,0.4)_70%,rgba(9,9,11,0.8)_100%)]" />
+            {/* Much lighter gradients to show backdrop */}
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/40 via-transparent to-transparent" />
           </>
         ) : (
           <>
@@ -145,47 +136,56 @@ export function DetailsHero({
               {formatYear(releaseDate)} • {genres.map(g => g.name).join(', ')}
             </p>
 
-            {/* Ratings row - PROMINENT */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Primary Ratingo rating - LARGER */}
-              <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-yellow-500/30">
-                <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                <span className="text-2xl md:text-3xl font-bold text-white">{formatRating(rating)}</span>
-              </div>
+            {/* Ratings and stats - VERTICAL LAYOUT */}
+            <div className="space-y-3">
+              {/* Ratings row */}
+              <div className="flex items-center gap-4 md:gap-6 flex-wrap">
+                {/* Primary rating */}
+                <div className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                  <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                  <span className="text-xl md:text-2xl font-bold text-white">{formatRating(rating)}</span>
+                </div>
 
-              {/* All external ratings */}
-              {availableRatings.map(({ source, rating: r }) => {
-                const config = ratingSourceConfig[source];
-                const displayValue = config.isPercent ? `${Math.round(r)}%` : formatRating(r);
-                return (
-                  <div key={source} className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                    <span className={cn('text-xs font-bold px-2 py-0.5 rounded', config.className)}>
-                      {config.label}
-                    </span>
-                    <span className="text-base font-semibold text-white">{displayValue}</span>
+                {/* IMDb rating */}
+                {imdbRating != null && imdbRating !== rating && (
+                  <div className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                    <span className="text-xs font-bold text-yellow-400 bg-yellow-400/20 px-1.5 py-0.5 rounded">IMDb</span>
+                    <span className="text-lg font-semibold text-white">{formatRating(imdbRating)}</span>
                   </div>
-                );
-              })}
+                )}
+              </div>
 
               {/* Live watchers */}
               {stats.liveWatchers != null && stats.liveWatchers > 0 && (
-                <div className="flex items-center gap-1.5 text-zinc-300">
-                  <Eye className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm font-medium">{stats.liveWatchers.toLocaleString()}</span>
+                <div className="flex items-center gap-2 text-zinc-300">
+                  <Eye className="w-5 h-5 text-blue-400" />
+                  <span className="text-base font-medium">{stats.liveWatchers.toLocaleString()}</span>
+                </div>
+              )}
+
+              {/* Status badges */}
+              {(badgeKey || (rank != null && rank <= 10)) && (
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Status badge */}
+                  {badgeKey && BadgeIcon && (
+                    <span className={cn(
+                      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold',
+                      badgeConfig[badgeKey].className
+                    )}>
+                      <BadgeIcon className="w-4 h-4" />
+                      {dict.card.badge[badgeConfig[badgeKey].labelKey]}
+                    </span>
+                  )}
+
+                  {/* Rank badge */}
+                  {rank != null && rank <= 10 && (
+                    <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold bg-yellow-400 text-black">
+                      №{rank}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
-
-            {/* Status badge - separate row */}
-            {badgeKey && BadgeIcon && (
-              <span className={cn(
-                'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold w-fit',
-                badgeConfig[badgeKey].className
-              )}>
-                <BadgeIcon className="w-4 h-4" />
-                {dict.card.badge[badgeConfig[badgeKey].labelKey]}
-              </span>
-            )}
 
             {/* Quick Pitch - READABLE */}
             {quickPitch && (

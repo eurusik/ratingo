@@ -14,7 +14,12 @@ import {
   ProvidersList,
   SimilarCarousel,
   DataVerdict,
+  TrailersCarousel,
+  CastCarousel,
   type BadgeKey,
+  type Video,
+  type CastMember,
+  type CrewMember,
 } from '@/modules/details';
 import type { MediaCardServerProps } from '@/modules/home';
 
@@ -42,6 +47,7 @@ const demoShows: Record<string, {
   releaseDate: string;
   status: 'Returning Series' | 'Ended' | 'Canceled' | 'In Production';
   totalSeasons?: number;
+  totalEpisodes?: number;
   currentSeason?: number;
   currentSeasonEpisodesReleased?: number;
   currentSeasonTotalEpisodes?: number;
@@ -49,6 +55,9 @@ const demoShows: Record<string, {
   badgeKey?: BadgeKey;
   rank?: number;
   primaryTrailerKey?: string;
+  videos?: Video[];
+  cast?: CastMember[];
+  crew?: CrewMember[];
   providers?: { id: number; name: string; logo?: string; type: 'stream' | 'rent' | 'buy' }[];
 }> = {
   'kraina-vohnyu': {
@@ -67,6 +76,7 @@ const demoShows: Record<string, {
     releaseDate: '2024-11-17',
     status: 'Returning Series',
     totalSeasons: 1,
+    totalEpisodes: 10,
     currentSeason: 1,
     currentSeasonEpisodesReleased: 8,
     currentSeasonTotalEpisodes: 10,
@@ -74,6 +84,11 @@ const demoShows: Record<string, {
     badgeKey: 'TRENDING',
     rank: 3,
     primaryTrailerKey: 'dQw4w9WgXcQ',
+    videos: [
+      { key: 'dQw4w9WgXcQ', name: 'Landman | Official Trailer', site: 'YouTube', type: 'Trailer', official: true, language: 'en', country: 'US' },
+      { key: 'L_jWHffIx5E', name: 'Landman | Teaser', site: 'YouTube', type: 'Trailer', official: true, language: 'en', country: 'US' },
+      { key: '9bZkp7q19f0', name: 'Landman | Behind the Scenes', site: 'YouTube', type: 'Trailer', official: false, language: 'en', country: 'US' },
+    ],
     providers: [
       { id: 1, name: 'Netflix', type: 'stream' },
       { id: 2, name: 'Megogo', type: 'stream' },
@@ -95,11 +110,27 @@ const demoShows: Record<string, {
     releaseDate: '2021-09-17',
     status: 'Returning Series',
     totalSeasons: 2,
+    totalEpisodes: 17,
     currentSeason: 2,
     currentSeasonEpisodesReleased: 0,
     currentSeasonTotalEpisodes: 7,
     nextEpisodeDate: '2025-12-26',
     badgeKey: 'NEW_EPISODE',
+    videos: [
+      { key: 'PZ5typf6LC8', name: 'Squid Game: Season 2 | Official Trailer', site: 'YouTube', type: 'Trailer', official: true, language: 'en', country: 'US' },
+      { key: 'T3tIW8iS-io', name: 'Squid Game 2 | Teaser', site: 'YouTube', type: 'Trailer', official: true, language: 'ko', country: 'KR' },
+      { key: 'eKS0GyKmH4g', name: 'Squid Game | Season 1 Recap', site: 'YouTube', type: 'Trailer', official: false, language: 'en', country: 'US' },
+    ],
+    cast: [
+      { personId: 'tmdb:1223786', slug: 'lee-jung-jae', tmdbId: 1223786, name: 'І Чон Дже', character: 'Сон Гі Хун', profilePath: '/r0wtbAW7CbiB7fPbxR1C1cvqLOk.jpg', order: 0 },
+      { personId: 'tmdb:1225809', slug: 'park-hae-soo', tmdbId: 1225809, name: 'Пак Хе Су', character: 'Чо Сан У', profilePath: '/q1hLPHUPG6zixyIj42GhjWPtkOX.jpg', order: 1 },
+      { personId: 'tmdb:1246027', slug: 'wi-ha-jun', tmdbId: 1246027, name: 'Ві Ха Джун', character: 'Хван Чжун Хо', profilePath: '/dX0Mb1MrCQKbdeBRVkdIJQz3WGB.jpg', order: 2 },
+      { personId: 'tmdb:1586180', slug: 'jung-ho-yeon', tmdbId: 1586180, name: 'Чон Хо Ен', character: 'Кан Се Бек', profilePath: '/j9f3z9FVoPhsZJBJmMaUrLjLUzv.jpg', order: 3 },
+      { personId: 'tmdb:1223784', slug: 'o-yeong-su', tmdbId: 1223784, name: 'О Ен Су', character: 'О Іл Нам', profilePath: '/lGv7pF06lkGEli9P4mV3rfdtT6A.jpg', order: 4 },
+    ],
+    crew: [
+      { personId: 'tmdb:1230344', slug: 'hwang-dong-hyuk', tmdbId: 1230344, name: 'Хван Дон Хек', job: 'Director', department: 'Directing', profilePath: '/zKq8QqxEY3hLT1pWIQqV9jTCL0N.jpg' },
+    ],
     providers: [
       { id: 1, name: 'Netflix', type: 'stream' },
     ],
@@ -119,9 +150,14 @@ const demoShows: Record<string, {
     releaseDate: '2022-06-23',
     status: 'Returning Series',
     totalSeasons: 3,
+    totalEpisodes: 28,
     currentSeason: 3,
     currentSeasonEpisodesReleased: 10,
     currentSeasonTotalEpisodes: 10,
+    videos: [
+      { key: 'y-cqqAJIXhs', name: 'The Bear | Season 3 Official Trailer', site: 'YouTube', type: 'Trailer', official: true, language: 'en', country: 'US' },
+      { key: 'U69uEL8eHjM', name: 'The Bear | Season 2 Trailer', site: 'YouTube', type: 'Trailer', official: true, language: 'en', country: 'US' },
+    ],
     providers: [
       { id: 3, name: 'Disney+', type: 'stream' },
       { id: 4, name: 'Apple TV', type: 'rent' },
@@ -204,7 +240,31 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
       <div className="bg-zinc-950">
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
-        {/* 2. Data Verdict with integrated CTA */}
+        {/* 1. "Suitable for" tags - FIRST, before overview */}
+        {show.suitableFor && show.suitableFor.length > 0 && (
+          <section className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-zinc-500 uppercase tracking-wider">
+              {dict.details.quickPitch.suitable}:
+            </span>
+            {show.suitableFor.map((tag) => (
+              <span
+                key={tag}
+                className="px-3 py-1 text-xs font-medium text-zinc-300 bg-zinc-800/60 rounded-full border border-zinc-700/50"
+              >
+                {tag}
+              </span>
+            ))}
+          </section>
+        )}
+
+        {/* 2. Overview */}
+        <section className="space-y-2">
+          <p className="text-base md:text-lg text-zinc-200 leading-relaxed">
+            {show.overview}
+          </p>
+        </section>
+
+        {/* 3. Data Verdict with integrated CTA */}
         {slug === 'squid-game' && (
           <DataVerdict
             type="season_comparison"
@@ -232,7 +292,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           />
         )}
 
-        {/* 3. Standalone CTA for shows without verdict */}
+        {/* 4. Standalone CTA for shows without verdict */}
         {!['squid-game', 'the-bear'].includes(slug) && (
           <DetailsCtaRow
             hasNewEpisodes={show.badgeKey === 'NEW_EPISODE'}
@@ -240,56 +300,56 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           />
         )}
 
-        {/* 4. "Suitable for" tags (moved from Quick Pitch) */}
-        {show.suitableFor && show.suitableFor.length > 0 && (
-          <section className="-mt-2">
-            <p className="text-sm text-zinc-500">
-              {dict.details.quickPitch.suitable}:{' '}
-              <span className="text-zinc-400">{show.suitableFor.join(', ')}</span>
-            </p>
-          </section>
+        {/* 5. Genres as chips */}
+        <section className="flex flex-wrap items-center gap-2">
+          {show.genres.map((genre) => (
+            <span
+              key={genre.id}
+              className="px-3 py-1.5 text-sm font-medium text-zinc-300 bg-zinc-800/60 rounded-full border border-zinc-700/50 hover:border-zinc-600 transition-colors"
+            >
+              {genre.name}
+            </span>
+          ))}
+        </section>
+
+        {/* 5. Trailers carousel */}
+        {show.videos && show.videos.length > 0 && (
+          <TrailersCarousel
+            videos={show.videos}
+            primaryTrailer={show.videos.find(v => v.key === show.primaryTrailerKey)}
+          />
         )}
 
-        {/* 5. Overview - collapsed by default */}
-        <details className="group">
-          <summary className="cursor-pointer list-none">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-400">
-                {dict.details.overview.title}
-              </h2>
-              <span className="text-xs text-blue-400 group-open:hidden">
-                {dict.details.showMore}
-              </span>
-              <span className="text-xs text-blue-400 hidden group-open:inline">
-                {dict.details.showLess}
-              </span>
-            </div>
-          </summary>
-          <p className="text-zinc-300 leading-relaxed mt-3">
-            {show.overview}
-          </p>
-        </details>
+        {/* Divider */}
+        <div className="border-t border-zinc-800/50" />
 
-        {/* 6. Trailer button (TODO: add modal) */}
-        {show.primaryTrailerKey && (
-          <section>
-            <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">
-              ▶ {dict.details.trailer.watch}
-            </button>
-          </section>
-        )}
-
-        {/* 7. Show status */}
+        {/* 6. Show status */}
         <ShowStatus
           currentSeason={show.currentSeason}
           currentSeasonEpisodesReleased={show.currentSeasonEpisodesReleased}
           currentSeasonTotalEpisodes={show.currentSeasonTotalEpisodes}
           nextEpisodeDate={show.nextEpisodeDate}
           status={show.status}
+          totalSeasons={show.totalSeasons}
+          totalEpisodes={show.totalEpisodes}
           dict={dict}
         />
 
-        {/* 8. Where to watch */}
+        {/* Divider */}
+        <div className="border-t border-zinc-800/50" />
+
+        {/* 7. Cast & Crew */}
+        {show.cast && show.cast.length > 0 && (
+          <CastCarousel
+            cast={show.cast}
+            crew={show.crew}
+          />
+        )}
+
+        {/* Divider */}
+        <div className="border-t border-zinc-800/50" />
+
+        {/* 7. Where to watch */}
         <ProvidersList providers={show.providers} dict={dict} />
 
         {/* 9. Similar */}
