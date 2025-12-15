@@ -32,8 +32,15 @@ export interface Stats {
   totalWatchers?: number;
 }
 
+export interface RatingSource {
+  rating: number;
+  voteCount?: number;
+}
+
 export interface ExternalRatings {
-  imdb?: { rating: number; voteCount?: number };
-  tmdb?: { rating: number; voteCount?: number };
-  trakt?: { rating: number; voteCount?: number };
+  imdb?: RatingSource;
+  tmdb?: RatingSource;
+  trakt?: RatingSource;
+  metacritic?: RatingSource;
+  rottenTomatoes?: RatingSource;
 }

@@ -1,7 +1,5 @@
 /**
- * Primary action button: Save to watchlist.
- *
- * CLIENT COMPONENT - requires onClick handler.
+ * Compact CTA row: Save to watchlist.
  */
 
 'use client';
@@ -30,41 +28,53 @@ export function DetailsCtaRow({
 
   return (
     <section>
-      {/* Primary CTA: Save or Continue */}
+      {/* Primary CTA: Save or Continue - compact inline style */}
       {continuePoint ? (
         <button
           onClick={onContinue}
-          className={cn(
-            'w-full flex flex-col items-center justify-center gap-1 py-3.5 px-4 rounded-xl font-medium transition-all',
-            'bg-green-500 hover:bg-green-600 text-white shadow-lg shadow-green-500/20'
-          )}
+          className="group flex items-center gap-3 px-4 py-3 rounded-xl border border-green-500/30 bg-green-500/5 hover:bg-green-500/10 transition-all"
         >
-          <div className="flex items-center gap-2">
-            <ArrowRight className="w-5 h-5" />
-            <span>
-              {dict.details.continue} S{continuePoint.season}E{continuePoint.episode}
-            </span>
-          </div>
+          <ArrowRight className="w-4 h-4 text-green-400 group-hover:translate-x-0.5 transition-transform" />
+          <span className="text-sm font-medium text-zinc-200">
+            {dict.details.continue} S{continuePoint.season}E{continuePoint.episode}
+          </span>
         </button>
       ) : (
         <button
           onClick={onSave}
           className={cn(
-            'w-full flex flex-col items-center justify-center gap-1 py-3.5 px-4 rounded-xl font-medium transition-all',
+            'group flex items-center justify-between w-full px-4 py-3 rounded-xl border transition-all',
             isSaved
-              ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500/20'
-              : 'bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+              ? 'border-zinc-700 bg-zinc-800/50'
+              : 'border-zinc-700/50 hover:border-zinc-600 hover:bg-zinc-800/30'
           )}
         >
-          <div className="flex items-center gap-2">
-            <Bookmark className={cn('w-5 h-5', isSaved && 'fill-current')} />
-            <span>{isSaved ? dict.details.saved : dict.details.save}</span>
+          <div className="flex items-center gap-3">
+            <Bookmark className={cn(
+              'w-4 h-4 transition-all',
+              isSaved 
+                ? 'text-zinc-400 fill-current' 
+                : 'text-zinc-500 group-hover:text-zinc-300 group-hover:scale-110'
+            )} />
+            <div className="flex flex-col items-start">
+              <span className={cn(
+                'text-sm font-medium',
+                isSaved ? 'text-zinc-400' : 'text-zinc-200'
+              )}>
+                {isSaved ? dict.details.saved : dict.details.save}
+              </span>
+              {!isSaved && (
+                <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
+                  {hasNewEpisodes
+                    ? dict.details.cta.saveHint.newEpisodes
+                    : dict.details.cta.saveHint.general}
+                </span>
+              )}
+            </div>
           </div>
           {!isSaved && (
-            <span className="text-xs opacity-70">
-              {hasNewEpisodes
-                ? dict.details.cta.saveHint.newEpisodes
-                : dict.details.cta.saveHint.general}
+            <span className="text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all">
+              →
             </span>
           )}
         </button>

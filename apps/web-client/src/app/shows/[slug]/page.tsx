@@ -37,7 +37,7 @@ const demoShows: Record<string, {
   poster: { small: string; medium: string; large: string; original: string };
   backdrop?: { small: string; medium: string; large: string; original: string };
   stats: { ratingoScore: number; liveWatchers?: number; popularityScore?: number };
-  externalRatings: { imdb?: { rating: number } };
+  externalRatings: { imdb?: { rating: number }; tmdb?: { rating: number }; trakt?: { rating: number }; metacritic?: { rating: number }; rottenTomatoes?: { rating: number } };
   genres: { id: string; name: string; slug: string }[];
   releaseDate: string;
   status: 'Returning Series' | 'Ended' | 'Canceled' | 'In Production';
@@ -88,8 +88,9 @@ const demoShows: Record<string, {
     quickPitch: 'Дитячі ігри із смертельними наслідками — гострий корейський трилер.',
     suitableFor: ['трилер', 'соціальна драма', 'Battle Royale'],
     poster: { small: 'https://image.tmdb.org/t/p/w342/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg', medium: 'https://image.tmdb.org/t/p/w500/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg', large: 'https://image.tmdb.org/t/p/w780/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg', original: 'https://image.tmdb.org/t/p/original/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg' },
+    backdrop: { small: 'https://image.tmdb.org/t/p/w300/oaGvjB0DvdhXhOAuADfHb261ZHa.jpg', medium: 'https://image.tmdb.org/t/p/w780/oaGvjB0DvdhXhOAuADfHb261ZHa.jpg', large: 'https://image.tmdb.org/t/p/w1280/oaGvjB0DvdhXhOAuADfHb261ZHa.jpg', original: 'https://image.tmdb.org/t/p/original/oaGvjB0DvdhXhOAuADfHb261ZHa.jpg' },
     stats: { ratingoScore: 78, liveWatchers: 5600, popularityScore: 95 },
-    externalRatings: { imdb: { rating: 8.0 } },
+    externalRatings: { imdb: { rating: 8.0 }, tmdb: { rating: 8.1 }, trakt: { rating: 8.3 }, rottenTomatoes: { rating: 95 } },
     genres: [{ id: '3', name: 'Трилер', slug: 'thriller' }, { id: '1', name: 'Драма', slug: 'drama' }],
     releaseDate: '2021-09-17',
     status: 'Returning Series',
@@ -167,9 +168,9 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950">
+    <main className="min-h-screen">
       {/* 0. App bar */}
-      <header className="sticky top-0 z-50 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
+      <header className="sticky top-0 z-50 bg-transparent backdrop-blur border-b border-zinc-800">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link
             href={'/' as Route}
@@ -184,22 +185,24 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
         </div>
       </header>
 
+      {/* 1. Hero with Quick Pitch - FULL WIDTH */}
+      <DetailsHero
+        title={show.title}
+        originalTitle={show.originalTitle}
+        poster={show.poster}
+        backdrop={show.backdrop}
+        releaseDate={show.releaseDate}
+        genres={show.genres}
+        stats={show.stats}
+        externalRatings={show.externalRatings}
+        badgeKey={show.badgeKey}
+        rank={show.rank}
+        quickPitch={show.quickPitch}
+        dict={dict}
+      />
+
+      <div className="bg-zinc-950">
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        {/* 1. Hero with Quick Pitch */}
-        <DetailsHero
-          title={show.title}
-          originalTitle={show.originalTitle}
-          poster={show.poster}
-          backdrop={show.backdrop}
-          releaseDate={show.releaseDate}
-          genres={show.genres}
-          stats={show.stats}
-          externalRatings={show.externalRatings}
-          badgeKey={show.badgeKey}
-          rank={show.rank}
-          quickPitch={show.quickPitch}
-          dict={dict}
-        />
 
         {/* 2. Data Verdict with integrated CTA */}
         {slug === 'squid-game' && (
@@ -208,7 +211,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             message="Другий сезон стартував слабше першого"
             context="Рейтинг IMDb: 8.0 (S2) vs 8.7 (S1)"
             confidence="high"
-            showCta={true}
+            showCta
             ctaProps={{
               isSaved: false,
               hasNewEpisodes: show.badgeKey === 'NEW_EPISODE',
@@ -220,7 +223,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           <DataVerdict
             type="genre_match"
             message="Для фанатів повільних, напружених драм про кулінарію"
-            showCta={true}
+            showCta
             ctaProps={{
               isSaved: false,
               hasNewEpisodes: false,
@@ -291,6 +294,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
 
         {/* 9. Similar */}
         <SimilarCarousel items={similarShows} locale="uk" dict={dict} />
+      </div>
       </div>
     </main>
   );

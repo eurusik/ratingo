@@ -12,7 +12,7 @@
 
 'use client';
 
-import { Info, TrendingDown, User, Target, Bookmark } from 'lucide-react';
+import { Info, TrendingDown, User, Target, Bookmark, Check, Plus } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
 
@@ -54,16 +54,17 @@ export interface DataVerdictProps {
   context?: string;
 
   /**
-   * Show "Save" CTA button inside verdict
+   * Show integrated CTA
    */
   showCta?: boolean;
 
   /**
-   * CTA props
+   * CTA state
    */
   ctaProps?: {
     isSaved?: boolean;
     hasNewEpisodes?: boolean;
+    onSave?: () => void;
   };
 
   /**
@@ -121,90 +122,6 @@ export function DataVerdict({
 }: DataVerdictProps) {
   const config = verdictConfig[type];
   const Icon = config.icon;
-  const accent = config.ctaAccent;
-
-  // Handle save action (will be connected to real API later)
-  const handleSave = () => {
-    console.log('Save clicked - will integrate with API');
-    // TODO: Call API to save to watchlist
-  };
-
-  // Dynamic CTA styles based on verdict type
-  const getCtaStyles = () => {
-    const accentStyles = {
-      amber: {
-        border: 'border-amber-500/50',
-        borderHover: 'hover:border-amber-500/70',
-        bg: 'bg-amber-500/10',
-        bgHover: 'hover:bg-amber-500/5',
-        text: 'text-amber-400',
-        textHover: 'hover:text-amber-300',
-        iconHover: 'group-hover:text-amber-400',
-        arrowHover: 'group-hover:text-amber-400',
-        separator: 'border-amber-500/20',
-        shadow: 'shadow-lg shadow-amber-500/20',
-        shadowHover: 'hover:shadow-lg hover:shadow-amber-500/10',
-      },
-      blue: {
-        border: 'border-blue-500/50',
-        borderHover: 'hover:border-blue-500/70',
-        bg: 'bg-blue-500/10',
-        bgHover: 'hover:bg-blue-500/5',
-        text: 'text-blue-400',
-        textHover: 'hover:text-blue-300',
-        iconHover: 'group-hover:text-blue-400',
-        arrowHover: 'group-hover:text-blue-400',
-        separator: 'border-blue-500/20',
-        shadow: 'shadow-lg shadow-blue-500/20',
-        shadowHover: 'hover:shadow-lg hover:shadow-blue-500/10',
-      },
-      purple: {
-        border: 'border-purple-500/50',
-        borderHover: 'hover:border-purple-500/70',
-        bg: 'bg-purple-500/10',
-        bgHover: 'hover:bg-purple-500/5',
-        text: 'text-purple-400',
-        textHover: 'hover:text-purple-300',
-        iconHover: 'group-hover:text-purple-400',
-        arrowHover: 'group-hover:text-purple-400',
-        separator: 'border-purple-500/20',
-        shadow: 'shadow-lg shadow-purple-500/20',
-        shadowHover: 'hover:shadow-lg hover:shadow-purple-500/10',
-      },
-      zinc: {
-        border: 'border-zinc-500/50',
-        borderHover: 'hover:border-zinc-500/70',
-        bg: 'bg-zinc-500/10',
-        bgHover: 'hover:bg-zinc-500/5',
-        text: 'text-zinc-400',
-        textHover: 'hover:text-zinc-300',
-        iconHover: 'group-hover:text-zinc-400',
-        arrowHover: 'group-hover:text-zinc-400',
-        separator: 'border-zinc-500/20',
-        shadow: 'shadow-lg shadow-zinc-500/20',
-        shadowHover: 'hover:shadow-lg hover:shadow-zinc-500/10',
-      },
-    };
-
-    const styles = accentStyles[accent];
-
-    if (ctaProps?.isSaved) {
-      return {
-        button: cn(styles.border, styles.bg, styles.text, styles.shadow),
-        icon: styles.text,
-        separator: styles.separator,
-      };
-    }
-
-    return {
-      button: cn('border-zinc-600/60', styles.borderHover, styles.bgHover, 'text-zinc-200', styles.textHover, styles.shadowHover),
-      icon: cn('text-zinc-300', styles.iconHover, 'group-hover:scale-110 group-hover:fill-current'),
-      arrow: cn('text-zinc-500', styles.arrowHover, 'group-hover:translate-x-1 group-hover:scale-110'),
-      separator: styles.separator,
-    };
-  };
-
-  const ctaStyles = getCtaStyles();
 
   return (
     <section
@@ -243,42 +160,45 @@ export function DataVerdict({
             </p>
           )}
 
-          {/* CTA: Save button with dynamic accent color matching verdict type */}
+          {/* Integrated CTA */}
           {showCta && (
-            <div className={cn('mt-4 pt-4 border-t', ctaStyles.separator)}>
-              <button
-                onClick={handleSave}
-                className={cn(
-                  'group w-full px-4 py-3 rounded-lg border transition-all duration-300',
-                  'flex items-center justify-between',
-                  ctaStyles.button
-                )}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Bookmark className={cn(
-                    'w-4 h-4 transition-all duration-300',
-                    ctaProps?.isSaved 
-                      ? cn('fill-current', ctaStyles.icon)
-                      : ctaStyles.icon
-                  )} />
-                  <div className="flex flex-col items-start gap-0.5">
-                    <span className="font-medium text-sm leading-tight">
-                      {ctaProps?.isSaved ? dict.details.saved : dict.details.save}
-                    </span>
-                    <span className="text-[13px] text-zinc-400 group-hover:text-zinc-300 transition-colors leading-tight">
-                      {ctaProps?.hasNewEpisodes 
-                        ? dict.details.cta.saveHint.newEpisodes
-                        : dict.details.cta.saveHint.general
-                      }
-                    </span>
-                  </div>
-                </div>
+            <button
+              onClick={ctaProps?.onSave}
+              className={cn(
+                'group flex items-center justify-between w-full mt-4 pt-4 border-t border-zinc-800/50',
+                '-mx-5 px-5 -mb-5 pb-5 rounded-b-2xl',
+                'hover:bg-zinc-800/30 transition-all'
+              )}
+            >
+              <div className="flex flex-col items-start">
                 <span className={cn(
-                  'transition-all duration-300',
-                  ctaStyles.arrow || 'text-zinc-500 group-hover:translate-x-1 group-hover:scale-110'
-                )}>→</span>
-              </button>
-            </div>
+                  'text-sm font-medium',
+                  ctaProps?.isSaved ? 'text-green-400' : 'text-zinc-200'
+                )}>
+                  {ctaProps?.isSaved ? dict.details.saved : dict.details.save}
+                </span>
+                {!ctaProps?.isSaved && (
+                  <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
+                    {ctaProps?.hasNewEpisodes
+                      ? dict.details.cta.saveHint.newEpisodes
+                      : dict.details.cta.saveHint.general}
+                  </span>
+                )}
+              </div>
+              <div className={cn(
+                'w-8 h-8 rounded-full flex items-center justify-center transition-all',
+                ctaProps?.isSaved 
+                  ? 'bg-green-500/20' 
+                  : 'bg-zinc-800 group-hover:bg-zinc-700'
+              )}>
+                <Check className={cn(
+                  'w-4 h-4 transition-all',
+                  ctaProps?.isSaved 
+                    ? 'text-green-500' 
+                    : 'text-zinc-500 group-hover:text-zinc-300'
+                )} />
+              </div>
+            </button>
           )}
         </div>
       </div>
