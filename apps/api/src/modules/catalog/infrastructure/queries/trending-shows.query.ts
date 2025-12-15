@@ -7,6 +7,7 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import {
   TrendingShowItem,
   TrendingShowsOptions,
+  WithTotal,
 } from '../../domain/repositories/show.repository.interface';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -41,10 +42,10 @@ export class TrendingShowsQuery {
    * Executes the trending shows query.
    *
    * @param {TrendingShowsOptions} options - Query options (limit, offset, filters)
-   * @returns {Promise<TrendingShowItem[]>} List of trending shows with stats and progress
+   * @returns {Promise<WithTotal<TrendingShowItem>>} List of trending shows with stats and progress
    * @throws {DatabaseException} When database query fails
    */
-  async execute(options: TrendingShowsOptions): Promise<TrendingShowItem[]> {
+  async execute(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>> {
     const {
       limit = 20,
       offset = 0,
@@ -180,11 +181,13 @@ export class TrendingShowsQuery {
         this.db.execute(query),
         this.db.execute(countQuery),
       ]);
-      const total = (totalRows as any[])[0]?.total ?? 0;
+      const typedTotalRows = totalRows as Array<{ total?: number | null }>;
+      const total = Number(typedTotalRows[0]?.total ?? 0);
 
       const mapped = this.mapResults(results);
-      (mapped as any).total = total;
-      return mapped;
+      const withTotal = mapped as WithTotal<TrendingShowItem>;
+      withTotal.total = total;
+      return withTotal;
     } catch (error) {
       this.logger.error(`Failed to find trending shows: ${error.message}`, error.stack);
       throw new DatabaseException('Failed to fetch trending shows', {

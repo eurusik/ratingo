@@ -11,6 +11,20 @@ import { AppException } from '../exceptions/app.exception';
 import { ErrorCode } from '../enums/error-code.enum';
 import { ApiErrorResponse } from '../interfaces/api-response.interface';
 
+type ExceptionResponseMessage = string | string[];
+
+function hasMessageField(value: unknown): value is { message?: unknown } {
+  return typeof value === 'object' && value !== null && 'message' in value;
+}
+
+function extractExceptionResponseMessage(value: unknown): ExceptionResponseMessage | undefined {
+  if (!hasMessageField(value)) return undefined;
+  const msg = value.message;
+  if (typeof msg === 'string') return msg;
+  if (Array.isArray(msg) && msg.every((x) => typeof x === 'string')) return msg as string[];
+  return undefined;
+}
+
 /**
  * Global exception filter that catches all exceptions.
  * Formats errors into a standardized API response format.
@@ -67,10 +81,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       if (status === HttpStatus.UNAUTHORIZED || status === HttpStatus.FORBIDDEN) {
         const code =
           status === HttpStatus.UNAUTHORIZED ? ErrorCode.UNAUTHORIZED : ErrorCode.FORBIDDEN;
-        const message =
-          typeof exceptionResponse === 'object' && 'message' in (exceptionResponse as any)
-            ? ((exceptionResponse as any).message as string)
-            : exception.message;
+        const extracted = extractExceptionResponseMessage(exceptionResponse);
+        const message = typeof extracted === 'string' ? extracted : exception.message;
 
         return {
           statusCode: status,
@@ -80,24 +92,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
               code,
               message,
               statusCode: status,
-              details:
-                typeof exceptionResponse === 'object' && 'message' in (exceptionResponse as any)
-                  ? {
-                      errors: Array.isArray((exceptionResponse as any).message)
-                        ? (exceptionResponse as any).message
-                        : [(exceptionResponse as any).message],
-                    }
-                  : undefined,
+              details: extracted
+                ? { errors: Array.isArray(extracted) ? extracted : [extracted] }
+                : undefined,
             },
           },
         };
       }
 
       // Handle validation errors from class-validator
-      if (typeof exceptionResponse === 'object' && 'message' in exceptionResponse) {
-        const messages = Array.isArray((exceptionResponse as any).message)
-          ? (exceptionResponse as any).message
-          : [(exceptionResponse as any).message];
+      if (extractExceptionResponseMessage(exceptionResponse)) {
+        const extracted = extractExceptionResponseMessage(exceptionResponse)!;
+        const messages = Array.isArray(extracted) ? extracted : [extracted];
 
         return {
           statusCode: status,

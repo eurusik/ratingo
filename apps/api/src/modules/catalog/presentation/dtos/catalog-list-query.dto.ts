@@ -18,7 +18,7 @@ import {
 @ValidatorConstraint({ name: 'YearRange', async: false })
 class YearRangeConstraint implements ValidatorConstraintInterface {
   validate(yearTo: any, args: ValidationArguments): boolean {
-    const o = args.object as any;
+    const o = args.object as { yearFrom?: number; yearTo?: number };
     if (o.yearFrom === undefined || yearTo === undefined) return true;
     return o.yearFrom <= yearTo;
   }
@@ -31,7 +31,7 @@ class YearRangeConstraint implements ValidatorConstraintInterface {
 @ValidatorConstraint({ name: 'YearExclusive', async: false })
 class YearExclusiveConstraint implements ValidatorConstraintInterface {
   validate(year: any, args: ValidationArguments): boolean {
-    const o = args.object as any;
+    const o = args.object as { yearFrom?: number; yearTo?: number };
     if (year === undefined) return true;
     return o.yearFrom === undefined && o.yearTo === undefined;
   }

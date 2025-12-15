@@ -1,14 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsInt,
-  IsObject,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-  ValidateIf,
-} from 'class-validator';
+import { IsIn, IsInt, IsObject, IsOptional, IsString, Max, Min, ValidateIf } from 'class-validator';
 
 const STATES = ['watching', 'completed', 'planned', 'dropped'] as const;
 type State = (typeof STATES)[number];
@@ -21,7 +12,7 @@ export class SetUserMediaStateDto {
    * State of the media for the user.
    */
   @ApiProperty({ enum: STATES, example: 'watching' })
-  @IsEnum(STATES as any)
+  @IsIn(STATES)
   state: State;
 
   /**

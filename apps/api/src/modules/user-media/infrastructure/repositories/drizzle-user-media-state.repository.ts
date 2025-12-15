@@ -11,6 +11,7 @@ import {
   UpsertUserMediaStateData,
 } from '../../domain/repositories/user-media-state.repository.interface';
 import { UserMediaState } from '../../domain/entities/user-media-state.entity';
+import { USER_MEDIA_STATE } from '../../domain/entities/user-media-state.entity';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ImageMapper } from '../../../catalog/infrastructure/mappers/image.mapper';
@@ -328,7 +329,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           and(
             eq(schema.userMediaState.userId, userId),
             or(
-              eq(schema.userMediaState.state, 'watching' as any),
+              eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
               isNotNull(schema.userMediaState.progress),
             ),
           ),
@@ -370,7 +371,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           and(
             eq(schema.userMediaState.userId, userId),
             or(
-              eq(schema.userMediaState.state, 'watching' as any),
+              eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
               isNotNull(schema.userMediaState.progress),
             ),
           ),

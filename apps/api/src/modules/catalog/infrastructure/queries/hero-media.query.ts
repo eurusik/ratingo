@@ -34,7 +34,7 @@ export class HeroMediaQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   /**
@@ -135,7 +135,7 @@ export class HeroMediaQuery {
       .from(schema.episodes)
       .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))
       .where(
-        and(inArray(schema.episodes.showId, internalShowIds), lte(schema.episodes.airDate, now))
+        and(inArray(schema.episodes.showId, internalShowIds), lte(schema.episodes.airDate, now)),
       )
       .orderBy(desc(schema.episodes.airDate));
 
@@ -172,23 +172,30 @@ export class HeroMediaQuery {
     return progressMap;
   }
 
+  private extractPrimaryTrailerKey(videos: unknown): string | null {
+    if (!Array.isArray(videos) || videos.length === 0) return null;
+    const first = videos[0];
+    if (!first || typeof first !== 'object') return null;
+    const key = (first as Record<string, unknown>).key;
+    return typeof key === 'string' ? key : null;
+  }
+
   /**
    * Maps raw database rows to hero item DTOs.
    */
   private mapResults(results: any[], showProgressMap: Map<string, any>, now: Date): any[] {
     const ninetyDaysAgo = new Date(
-      now.getTime() - NEW_RELEASE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000
+      now.getTime() - NEW_RELEASE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000,
     );
     const fiveYearsAgo = new Date(
       now.getFullYear() - CLASSIC_YEARS_THRESHOLD,
       now.getMonth(),
-      now.getDate()
+      now.getDate(),
     );
 
     return results.map((item) => {
       const releaseDate = item.releaseDate ? new Date(item.releaseDate) : null;
-      const videos = item.videos as any[];
-      const primaryTrailerKey = videos?.length > 0 ? videos[0].key : null;
+      const primaryTrailerKey = this.extractPrimaryTrailerKey(item.videos);
 
       const baseItem = {
         id: item.id,

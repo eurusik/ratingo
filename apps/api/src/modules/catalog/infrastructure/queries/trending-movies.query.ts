@@ -5,6 +5,10 @@ import * as schema from '../../../../database/schema';
 import { eq, gte, lte, desc, isNotNull, inArray, and, exists, sql } from 'drizzle-orm';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import type {
+  TrendingMovieItem,
+  WithTotal,
+} from '../../domain/repositories/movie.repository.interface';
 import {
   CatalogSort,
   SortOrder,
@@ -91,7 +95,7 @@ export class TrendingMoviesQuery {
    * @returns {Promise<any[]>} List of trending movies with stats and genres
    * @throws {DatabaseException} When database query fails
    */
-  async execute(options: TrendingMoviesOptions): Promise<any[]> {
+  async execute(options: TrendingMoviesOptions): Promise<WithTotal<TrendingMovieItem>> {
     const {
       limit = 20,
       offset = 0,
@@ -175,8 +179,9 @@ export class TrendingMoviesQuery {
       const total = await this.countTotal(conditions);
       const moviesWithGenres = await this.attachGenres(results);
       const mapped = this.mapResults(moviesWithGenres);
-      (mapped as any).total = total;
-      return mapped;
+      const withTotal = mapped as WithTotal<TrendingMovieItem>;
+      withTotal.total = total;
+      return withTotal;
     } catch (error) {
       this.logger.error(`Failed to find trending movies: ${error.message}`, error.stack);
       throw new DatabaseException('Failed to fetch trending movies', {
@@ -188,7 +193,7 @@ export class TrendingMoviesQuery {
   /**
    * Maps movies with isNew and isClassic flags.
    */
-  private mapResults(movies: any[]): any[] {
+  private mapResults(movies: any[]): TrendingMovieItem[] {
     const now = new Date();
     const newReleaseCutoff = new Date(now);
     newReleaseCutoff.setDate(now.getDate() - 60);
@@ -204,7 +209,7 @@ export class TrendingMoviesQuery {
           ((m.stats.ratingoScore || 0) >= TrendingMoviesQuery.CLASSIC_RATINGO_THRESHOLD &&
             (m.stats.totalWatchers || 0) > TrendingMoviesQuery.CLASSIC_WATCHERS_THRESHOLD)
         : false,
-    }));
+    })) as TrendingMovieItem[];
   }
 
   private buildYearStart(year: number): Date {
