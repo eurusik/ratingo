@@ -302,6 +302,10 @@ describe('User Media e2e', () => {
       .expect(200);
     expect(setRes.body.success).toBe(true);
     expect(setRes.body.data.state).toBe('watching');
+    expect(setRes.body.data.mediaSummary.card).toBeDefined();
+    expect(setRes.body.data.mediaSummary.card.badgeKey).toBeNull();
+    expect(setRes.body.data.mediaSummary.card.primaryCta).toBe('OPEN');
+    expect(setRes.body.data.mediaSummary.card.continue).toBeNull();
 
     const getRes = await request(app.getHttpServer())
       .get(`${mediaUrl}/${mediaItemId}`)
@@ -309,6 +313,8 @@ describe('User Media e2e', () => {
       .expect(200);
     expect(getRes.body.success).toBe(true);
     expect(getRes.body.data.mediaSummary.id).toBe(mediaItemId);
+    expect(getRes.body.data.mediaSummary.card).toBeDefined();
+    expect(getRes.body.data.mediaSummary.card.primaryCta).toBe('OPEN');
 
     const listRes = await request(app.getHttpServer())
       .get(`${mediaUrl}?limit=10&offset=0`)
@@ -317,6 +323,7 @@ describe('User Media e2e', () => {
     expect(listRes.body.success).toBe(true);
     expect(Array.isArray(listRes.body.data)).toBe(true);
     expect(listRes.body.data.length).toBeGreaterThan(0);
+    expect(listRes.body.data[0].mediaSummary.card).toBeDefined();
   });
 
   it('upsert updates existing state and supports nullable fields', async () => {
@@ -338,6 +345,23 @@ describe('User Media e2e', () => {
     expect(second.body.data.state).toBe('completed');
     expect(second.body.data.rating).toBeNull();
     expect(second.body.data.notes).toBeNull();
+  });
+
+  it('returns CONTINUE badge when progress.seasons exists', async () => {
+    const token = await registerAndLogin('continue');
+    const mediaItemId = 'mid-continue';
+
+    const res = await request(app.getHttpServer())
+      .patch(`${mediaUrl}/${mediaItemId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ state: 'watching', progress: { seasons: { 1: 3 } } })
+      .expect(200);
+
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.mediaSummary.card).toBeDefined();
+    expect(res.body.data.mediaSummary.card.badgeKey).toBe('CONTINUE');
+    expect(res.body.data.mediaSummary.card.primaryCta).toBe('CONTINUE');
+    expect(res.body.data.mediaSummary.card.continue).toEqual({ season: 1, episode: 3 });
   });
 
   it('pagination respects limit/offset', async () => {

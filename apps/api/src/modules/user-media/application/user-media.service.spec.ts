@@ -10,11 +10,15 @@ describe('UserMediaService', () => {
     findManyByMediaIds: jest.fn(),
   };
 
+  const cards = {
+    enrichUserMedia: jest.fn((items: any[]) => items),
+  };
+
   let service: UserMediaService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new UserMediaService(repo as any);
+    service = new UserMediaService(repo as any, cards as any);
   });
 
   it('setState should delegate to repo.upsert', async () => {

@@ -3,11 +3,13 @@ import { CatalogMoviesController } from './catalog.movies.controller';
 import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { NotFoundException } from '@nestjs/common';
+import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 
 describe('CatalogMoviesController', () => {
   let controller: CatalogMoviesController;
   let movieRepository: any;
   let userStateEnricher: any;
+  let cards: any;
 
   beforeEach(async () => {
     const mockMovieRepository = {
@@ -26,6 +28,10 @@ describe('CatalogMoviesController', () => {
       findBySlug: jest.fn(),
     };
 
+    const mockCards = {
+      enrichCatalogItems: jest.fn((items: any[]) => items),
+    };
+
     const mockUserStateEnricher = {
       enrichList: jest.fn(async (_userId: string | null, items: any[]) =>
         items.map((i) => ({ ...i, userState: null })),
@@ -41,12 +47,14 @@ describe('CatalogMoviesController', () => {
       providers: [
         { provide: MOVIE_REPOSITORY, useValue: mockMovieRepository },
         { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
+        { provide: CardEnrichmentService, useValue: mockCards },
       ],
     }).compile();
 
     controller = module.get<CatalogMoviesController>(CatalogMoviesController);
     movieRepository = module.get(MOVIE_REPOSITORY);
     userStateEnricher = module.get(CatalogUserStateEnricher);
+    cards = module.get(CardEnrichmentService);
   });
 
   describe('getTrendingMovies', () => {

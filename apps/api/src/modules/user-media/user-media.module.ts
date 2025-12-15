@@ -7,12 +7,13 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
 import { MeListsController } from './presentation/controllers/me-lists.controller';
 import { AuthModule } from '../auth/auth.module';
 import { MeListsService } from './application/me-lists.service';
+import { CardsModule } from '../shared/cards/cards.module';
 
 /**
  * User Media module wiring.
  */
 @Module({
-  imports: [DatabaseModule, forwardRef(() => AuthModule)],
+  imports: [DatabaseModule, forwardRef(() => AuthModule), CardsModule],
   providers: [
     UserMediaService,
     MeListsService,

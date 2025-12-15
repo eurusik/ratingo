@@ -11,6 +11,7 @@ import {
 import { UserMediaStateDto } from './user-media-state.dto';
 import { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 
 export const ME_USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
 
@@ -52,6 +53,9 @@ export class MeUserMediaSummaryDto {
 
   @ApiPropertyOptional({ nullable: true })
   releaseDate?: Date | null;
+
+  @ApiPropertyOptional({ type: CardMetaDto, required: false })
+  card?: CardMetaDto;
 }
 
 /**

@@ -1,8 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ImageDto, ExternalRatingsDto, RatingoStatsDto } from './common.dto';
 import { OffsetPaginationMetaDto } from './pagination.dto';
 import { CatalogListQueryDto } from './catalog-list-query.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 
 export class TrendingShowsQueryDto extends CatalogListQueryDto {}
 
@@ -81,6 +82,9 @@ export class ShowTrendingItemDto {
 
   @ApiProperty({ type: ShowProgressDto, required: false, nullable: true })
   showProgress?: ShowProgressDto | null;
+
+  @ApiPropertyOptional({ type: CardMetaDto, required: false })
+  card?: CardMetaDto;
 }
 
 export class TrendingShowsResponseDto {

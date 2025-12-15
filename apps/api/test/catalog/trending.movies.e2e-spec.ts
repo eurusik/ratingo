@@ -14,6 +14,9 @@ describe('Catalog E2E - Trending Movies', () => {
   it('enriches userState for auth and null for anon', async () => {
     const anon = await ctx.get('/api/catalog/movies/trending').expect(200);
     expect(anon.body.data.data.every((m: any) => m.userState === null)).toBe(true);
+    expect(anon.body.data.data.every((m: any) => m.card && m.card.badgeKey === 'NEW_RELEASE')).toBe(
+      true,
+    );
 
     const token = await ctx.registerAndLogin();
     await ctx.setUserState(token, 'mid-1');
@@ -23,6 +26,8 @@ describe('Catalog E2E - Trending Movies', () => {
     const withoutState = auth.body.data.data.find((m: any) => m.id === 'mid-2');
     expect(withState.userState).not.toBeNull();
     expect(withoutState.userState).toBeNull();
+    expect(withState.card).toBeDefined();
+    expect(withoutState.card).toBeDefined();
   });
 
   it('applies sorting (ratingo asc) and stable tie-breaker', async () => {

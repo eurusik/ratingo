@@ -5,12 +5,14 @@ import * as schema from '../../../../database/schema';
 import { eq } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import {
-  IShowRepository,
-  ShowListItem,
   CalendarEpisode,
+  IShowRepository,
+  SHOW_REPOSITORY,
   ShowDetails,
+  ShowListItem,
   TrendingShowItem,
   TrendingShowsOptions,
+  WithTotal,
 } from '../../domain/repositories/show.repository.interface';
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
@@ -36,12 +38,8 @@ export class DrizzleShowRepository implements IShowRepository {
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly trendingShowsQuery: TrendingShowsQuery,
     private readonly showDetailsQuery: ShowDetailsQuery,
-    private readonly calendarEpisodesQuery: CalendarEpisodesQuery
+    private readonly calendarEpisodesQuery: CalendarEpisodesQuery,
   ) {}
-
-  // ─────────────────────────────────────────────────────────────────
-  // Write Operations (kept in repository)
-  // ─────────────────────────────────────────────────────────────────
 
   /**
    * Upserts show details, seasons, and episodes transactionally.
@@ -99,23 +97,19 @@ export class DrizzleShowRepository implements IShowRepository {
               .select({ id: schema.mediaItems.id })
               .from(schema.mediaItems)
               .where(eq(schema.mediaItems.tmdbId, tmdbId))
-              .limit(1)
-          )
+              .limit(1),
+          ),
         );
     } catch (error) {
       this.logger.error(
         `Failed to save drop-off analysis for ${tmdbId}: ${error.message}`,
-        error.stack
+        error.stack,
       );
       throw new DatabaseException(`Failed to save drop-off analysis for ${tmdbId}`, {
         originalError: error.message,
       });
     }
   }
-
-  // ─────────────────────────────────────────────────────────────────
-  // Read Operations (delegated to Query Objects)
-  // ─────────────────────────────────────────────────────────────────
 
   /**
    * Finds full show details by slug.
@@ -127,8 +121,8 @@ export class DrizzleShowRepository implements IShowRepository {
   /**
    * Finds trending shows with filtering and pagination.
    */
-  async findTrending(options: TrendingShowsOptions): Promise<TrendingShowItem[]> {
-    return this.trendingShowsQuery.execute(options);
+  async findTrending(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>> {
+    return this.trendingShowsQuery.execute(options) as unknown as WithTotal<TrendingShowItem>;
   }
 
   /**
@@ -137,10 +131,6 @@ export class DrizzleShowRepository implements IShowRepository {
   async findEpisodesByDateRange(startDate: Date, endDate: Date): Promise<CalendarEpisode[]> {
     return this.calendarEpisodesQuery.execute(startDate, endDate);
   }
-
-  // ─────────────────────────────────────────────────────────────────
-  // Simple Read Operations (kept in repository - too small to extract)
-  // ─────────────────────────────────────────────────────────────────
 
   /**
    * Gets shows for drop-off analysis.
@@ -182,7 +172,7 @@ export class DrizzleShowRepository implements IShowRepository {
     } catch (error) {
       this.logger.error(
         `Failed to get drop-off analysis for ${tmdbId}: ${error.message}`,
-        error.stack
+        error.stack,
       );
       throw new DatabaseException(`Failed to get drop-off analysis for ${tmdbId}`, {
         originalError: error.message,

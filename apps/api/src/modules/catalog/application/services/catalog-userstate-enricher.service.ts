@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UserMediaService } from '../../../user-media/application/user-media.service';
+import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 
-type WithId<T> = T & { id: string; userState?: any };
+type WithId<T> = T & { id: string; userState?: UserMediaState | null };
 
 /**
  * Application-level enricher for attaching user-specific media state.

@@ -50,6 +50,19 @@ export interface MovieWithMedia {
 }
 
 /**
+ * Helper type for list queries that also return total count.
+ */
+export type WithTotal<T> = T[] & { total?: number };
+
+/**
+ * Trending movie item extends base list item with derived flags.
+ */
+export type TrendingMovieItem = MovieWithMedia & {
+  isNew: boolean;
+  isClassic: boolean;
+};
+
+/**
  * Options for now playing query.
  */
 export interface NowPlayingOptions {
@@ -147,9 +160,9 @@ export interface IMovieRepository {
    * Finds trending movies sorted by popularity and rating.
    *
    * @param {CatalogListQueryDto} options - List query
-   * @returns {Promise<any[]>} Movies list
+   * @returns {Promise<WithTotal<TrendingMovieItem>>} Movies list
    */
-  findTrending(options: CatalogListQueryDto): Promise<any[]>;
+  findTrending(options: CatalogListQueryDto): Promise<WithTotal<TrendingMovieItem>>;
 
   /**
    * Sets isNowPlaying flag for movies.

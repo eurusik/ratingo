@@ -36,6 +36,11 @@ export interface TrendingShowsOptions {
 }
 
 /**
+ * Helper type for list queries that also return total count.
+ */
+export type WithTotal<T> = T[] & { total?: number };
+
+/**
  * Lightweight trending show item.
  */
 export interface TrendingShowItem {
@@ -206,9 +211,9 @@ export interface IShowRepository {
    * Finds trending shows with filtering and pagination.
    *
    * @param {TrendingShowsOptions} options - Query options
-   * @returns {Promise<TrendingShowItem[]>} Shows list
+   * @returns {Promise<WithTotal<TrendingShowItem>>} Shows list
    */
-  findTrending(options: TrendingShowsOptions): Promise<TrendingShowItem[]>;
+  findTrending(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>>;
 
   /**
    * Finds full show details by slug.

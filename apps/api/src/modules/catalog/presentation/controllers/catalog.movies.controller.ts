@@ -20,6 +20,8 @@ import { CatalogUserStateEnricher } from '../../application/services/catalog-use
 import { TrendingMoviesResponseDto } from '../dtos/trending.dto';
 import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
 import { CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-days.dto';
+import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 
 /**
  * Public movie catalog endpoints (trending, listings, details).
@@ -40,6 +42,7 @@ export class CatalogMoviesController {
     @Inject(MOVIE_REPOSITORY)
     private readonly movieRepository: IMovieRepository,
     private readonly userStateEnricher: CatalogUserStateEnricher,
+    private readonly cards: CardEnrichmentService,
   ) {}
 
   /**
@@ -63,11 +66,12 @@ export class CatalogMoviesController {
     const movies = await this.movieRepository.findTrending(normalizedQuery);
     const limit = normalizedQuery.limit ?? CatalogMoviesController.DEFAULT_LIMIT;
     const offset = normalizedQuery.offset ?? CatalogMoviesController.DEFAULT_OFFSET;
-    const total = (movies as any).total ?? movies.length;
-    const data = await this.catalogUserListEnrich(user, movies, 'movie');
+    const total = movies.total ?? movies.length;
+    const data = await this.catalogUserListEnrich(user, movies);
+    const withCards = this.cards.enrichCatalogItems(data, true);
 
     return {
-      data,
+      data: withCards,
       meta: {
         count: movies.length,
         total,
@@ -102,7 +106,7 @@ export class CatalogMoviesController {
       offset = CatalogMoviesController.DEFAULT_OFFSET,
     } = normalizedQuery;
     const movies = await this.movieRepository.findNowPlaying({ ...normalizedQuery, limit, offset });
-    const data = await this.catalogUserListEnrich(user, movies, 'movie');
+    const data = await this.catalogUserListEnrich(user, movies);
     const total = (movies as any).total ?? movies.length;
     return {
       data,
@@ -149,7 +153,7 @@ export class CatalogMoviesController {
       offset,
       daysBack,
     });
-    const data = await this.catalogUserListEnrich(user, movies, 'movie');
+    const data = await this.catalogUserListEnrich(user, movies);
     const total = (movies as any).total ?? movies.length;
     return {
       data,
@@ -195,7 +199,7 @@ export class CatalogMoviesController {
       offset,
       daysBack,
     });
-    const data = await this.catalogUserListEnrich(user, movies, 'movie');
+    const data = await this.catalogUserListEnrich(user, movies);
     const total = (movies as any).total ?? movies.length;
     return {
       data,
@@ -236,15 +240,13 @@ export class CatalogMoviesController {
    *
    * @param {{ id: string } | null | undefined} user - Optional authenticated user
    * @param {T[]} items - Catalog items to enrich
-   * @param {'movie'} type - Media type discriminator
-   * @returns {Promise<Array<T & { type: 'movie'; userState: any | null }>>} Enriched list
+   * @returns {Promise<Array<T & { userState: UserMediaState | null }>>} Enriched list
    */
   private async catalogUserListEnrich<T extends { id: string }>(
     user: { id: string } | null | undefined,
     items: T[],
-    type: 'movie',
-  ): Promise<Array<T & { type: 'movie'; userState: any | null }>> {
-    const typed = items.map((i) => ({ ...i, type, userState: null as any }));
+  ): Promise<Array<T & { userState: UserMediaState | null }>> {
+    const typed = items.map((i) => ({ ...i, userState: null }));
     return this.userStateEnricher.enrichList(user?.id, typed);
   }
 

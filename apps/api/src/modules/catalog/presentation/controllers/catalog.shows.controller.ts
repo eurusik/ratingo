@@ -22,6 +22,8 @@ import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
 import { DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 
 /**
  * Public show catalog endpoints (trending, calendar, details).
@@ -41,6 +43,7 @@ export class CatalogShowsController {
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
     private readonly userStateEnricher: CatalogUserStateEnricher,
+    private readonly cards: CardEnrichmentService,
   ) {}
 
   /**
@@ -63,12 +66,13 @@ export class CatalogShowsController {
     const normalizedQuery = this.normalizeListQuery(query);
     const shows = await this.showRepository.findTrending(normalizedQuery);
     const data = await this.catalogUserListEnrich(user, shows);
+    const withCards = this.cards.enrichCatalogItems(data, true);
     const limit = normalizedQuery.limit ?? CatalogShowsController.DEFAULT_LIMIT;
     const offset = normalizedQuery.offset ?? CatalogShowsController.DEFAULT_OFFSET;
-    const total = (shows as any).total ?? shows.length;
+    const total = shows.total ?? shows.length;
 
     return {
-      data,
+      data: withCards,
       meta: {
         count: shows.length,
         total,
@@ -171,8 +175,8 @@ export class CatalogShowsController {
   private async catalogUserListEnrich<T extends { id: string }>(
     user: { id: string } | null | undefined,
     items: T[],
-  ): Promise<Array<T & { type: MediaType; userState: any | null }>> {
-    const typed = items.map((i) => ({ ...i, type: MediaType.SHOW, userState: null as any }));
+  ): Promise<Array<T & { userState: UserMediaState | null }>> {
+    const typed = items.map((i) => ({ ...i, userState: null as UserMediaState | null }));
     return this.userStateEnricher.enrichList(user?.id, typed);
   }
 
@@ -186,7 +190,7 @@ export class CatalogShowsController {
   private async catalogUserOneEnrich<T extends { id: string }>(
     user: { id: string } | null | undefined,
     item: T,
-  ): Promise<T & { userState: any | null }> {
+  ): Promise<T & { userState: UserMediaState | null }> {
     return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
   }
 

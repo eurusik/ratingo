@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ImageDto, ExternalRatingsDto, RatingoStatsDto, GenreDto } from './common.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 
 export class MovieListItemDto {
   @ApiProperty()
@@ -57,4 +58,7 @@ export class MovieListItemDto {
 
   @ApiProperty({ type: [GenreDto] })
   genres: GenreDto[];
+
+  @ApiPropertyOptional({ type: CardMetaDto, required: false })
+  card?: CardMetaDto;
 }

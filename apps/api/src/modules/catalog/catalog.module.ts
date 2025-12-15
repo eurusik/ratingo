@@ -27,12 +27,13 @@ import { CatalogSearchService } from './application/services/catalog-search.serv
 import { TmdbModule } from '../tmdb/tmdb.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
+import { CardsModule } from '../shared/cards/cards.module';
 
 /**
  * Catalog module.
  */
 @Module({
-  imports: [TmdbModule, UserMediaModule],
+  imports: [TmdbModule, UserMediaModule, CardsModule],
   controllers: [CatalogMoviesController, CatalogShowsController, CatalogSearchController],
   providers: [
     CatalogSearchService,

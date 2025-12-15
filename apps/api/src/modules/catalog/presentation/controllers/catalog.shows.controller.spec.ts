@@ -2,12 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogShowsController } from './catalog.shows.controller';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
+import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 import { NotFoundException } from '@nestjs/common';
 
 describe('CatalogShowsController', () => {
   let controller: CatalogShowsController;
   let showRepository: any;
   let userStateEnricher: any;
+  let cards: any;
 
   beforeEach(async () => {
     const mockShowRepository = {
@@ -20,6 +22,10 @@ describe('CatalogShowsController', () => {
         { airDate: new Date('2024-01-02T10:00:00Z'), title: 'Ep3' },
       ]),
       findBySlug: jest.fn(),
+    };
+
+    const mockCards = {
+      enrichCatalogItems: jest.fn((items: any[]) => items),
     };
 
     const mockUserStateEnricher = {
@@ -37,12 +43,14 @@ describe('CatalogShowsController', () => {
       providers: [
         { provide: SHOW_REPOSITORY, useValue: mockShowRepository },
         { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
+        { provide: CardEnrichmentService, useValue: mockCards },
       ],
     }).compile();
 
     controller = module.get<CatalogShowsController>(CatalogShowsController);
     showRepository = module.get(SHOW_REPOSITORY);
     userStateEnricher = module.get(CatalogUserStateEnricher);
+    cards = module.get(CardEnrichmentService);
   });
 
   describe('getTrendingShows', () => {

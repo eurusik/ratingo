@@ -9,6 +9,7 @@ import {
 import { UserMediaState } from '../domain/entities/user-media-state.entity';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { ImageDto } from '../../catalog/presentation/dtos/common.dto';
+import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
 
 /**
  * Application service for user media state use cases.
@@ -20,6 +21,7 @@ export class UserMediaService {
   constructor(
     @Inject(USER_MEDIA_STATE_REPOSITORY)
     private readonly repo: IUserMediaStateRepository,
+    private readonly cards: CardEnrichmentService,
   ) {}
 
   /**
@@ -78,7 +80,9 @@ export class UserMediaService {
       })
     | null
   > {
-    return this.repo.findOneWithMedia(userId, mediaItemId);
+    const item = await this.repo.findOneWithMedia(userId, mediaItemId);
+    if (!item) return null;
+    return this.cards.enrichUserMedia([item as any])[0] as any;
   }
 
   /**
@@ -134,7 +138,8 @@ export class UserMediaService {
       }
     >
   > {
-    return this.repo.listWithMedia(userId, limit, offset, options);
+    const items = await this.repo.listWithMedia(userId, limit, offset, options);
+    return this.cards.enrichUserMedia(items as any) as any;
   }
 
   /**
@@ -157,7 +162,8 @@ export class UserMediaService {
    * @returns {Promise<any[]>} Activity list items
    */
   async listActivityWithMedia(userId: string, limit = 20, offset = 0) {
-    return this.repo.listActivityWithMedia(userId, limit, offset);
+    const items = await this.repo.listActivityWithMedia(userId, limit, offset);
+    return this.cards.enrichUserMedia(items as any);
   }
 
   /**
