@@ -5,10 +5,9 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import useEmblaCarousel from 'embla-carousel-react';
+import { Carousel } from '@/shared/components/carousel';
 
 export interface CastMember {
   personId: string;
@@ -114,78 +113,21 @@ export function CastCarousel({ cast, crew }: CastCarouselProps) {
   // Find director
   const director = crew?.find(c => c.job === 'Director');
 
-  // Embla carousel
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    align: 'start',
-    dragFree: true,
-  });
-  const [canScrollPrev, setCanScrollPrev] = useState(false);
-  const [canScrollNext, setCanScrollNext] = useState(false);
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setCanScrollPrev(emblaApi.canScrollPrev());
-    setCanScrollNext(emblaApi.canScrollNext());
-  }, [emblaApi]);
-
-  const scrollPrev = useCallback(() => {
-    if (emblaApi) emblaApi.scrollPrev();
-  }, [emblaApi]);
-
-  const scrollNext = useCallback(() => {
-    if (emblaApi) emblaApi.scrollNext();
-  }, [emblaApi]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    onSelect();
-    emblaApi.on('select', onSelect);
-    emblaApi.on('reInit', onSelect);
-  }, [emblaApi, onSelect]);
-
-  const showNavigation = sortedCast.length > 5;
-
   if (sortedCast.length === 0) return null;
 
-  return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold text-zinc-400">Акторський склад</h2>
-          {director && (
-            <p className="text-xs text-zinc-500">
-              Режисер: <span className="text-zinc-300">{director.name}</span>
-            </p>
-          )}
-        </div>
-        
-        {showNavigation && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={scrollPrev}
-              disabled={!canScrollPrev}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/10 to-zinc-800/60 hover:from-blue-500/20 hover:to-zinc-700/60 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:from-zinc-800/60 disabled:to-zinc-800/60"
-            >
-              <ChevronLeft className="w-5 h-5 text-zinc-400" />
-            </button>
-            <button
-              onClick={scrollNext}
-              disabled={!canScrollNext}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/10 to-zinc-800/60 hover:from-blue-500/20 hover:to-zinc-700/60 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:from-zinc-800/60 disabled:to-zinc-800/60"
-            >
-              <ChevronRight className="w-5 h-5 text-zinc-400" />
-            </button>
-          </div>
-        )}
-      </div>
+  const subtitle = director 
+    ? `Режисер: ${director.name}`
+    : undefined;
 
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex gap-4 pb-2">
-          {sortedCast.map((actor) => (
-            <ActorAvatar key={actor.personId} actor={actor} />
-          ))}
-        </div>
-      </div>
-    </section>
+  return (
+    <Carousel 
+      title="Акторський склад" 
+      subtitle={subtitle}
+      gap="lg"
+    >
+      {sortedCast.map((actor) => (
+        <ActorAvatar key={actor.personId} actor={actor} />
+      ))}
+    </Carousel>
   );
 }
