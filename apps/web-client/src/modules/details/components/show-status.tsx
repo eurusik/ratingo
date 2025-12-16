@@ -1,102 +1,68 @@
 /**
- * Show status: Season progress + next episode.
- * Redesigned for clean, informative, beautiful UI.
- * Color scheme: unified blue for consistency.
+ * Show status: Seasons/episodes count + next episode date.
+ * Clean, minimal display using API data directly.
  */
 
-import { Calendar, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import type { getDictionary } from '@/shared/i18n';
 import { formatDate } from '@/shared/utils/format';
 
 export interface ShowStatusProps {
-  currentSeason?: number;
-  currentSeasonEpisodesReleased?: number;
-  currentSeasonTotalEpisodes?: number;
   nextEpisodeDate?: string | null;
-  status?: 'Returning Series' | 'Ended' | 'Canceled' | 'In Production';
   totalSeasons?: number;
   totalEpisodes?: number;
   dict: ReturnType<typeof getDictionary>;
 }
 
+/**
+ * Pluralizes words using Intl.PluralRules API.
+ * Supports proper plural forms for Ukrainian and other languages.
+ */
+function pluralize(
+  count: number,
+  forms: { one: string; few: string; many: string },
+  locale: string = 'uk'
+): string {
+  const pr = new Intl.PluralRules(locale);
+  const rule = pr.select(count);
+  return forms[rule as keyof typeof forms] ?? forms.many;
+}
+
 export function ShowStatus({
-  currentSeason,
-  currentSeasonEpisodesReleased,
-  currentSeasonTotalEpisodes,
   nextEpisodeDate,
-  status,
   totalSeasons,
   totalEpisodes,
   dict,
 }: ShowStatusProps) {
-  const episodesReleased = currentSeasonEpisodesReleased ?? 0;
-  const progress = currentSeasonTotalEpisodes 
-    ? (episodesReleased / currentSeasonTotalEpisodes) * 100 
-    : 0;
+  // Don't render if no data
+  if (!totalSeasons && !totalEpisodes && !nextEpisodeDate) {
+    return null;
+  }
 
   return (
-    <section className="bg-zinc-900/30 rounded-2xl p-4 border border-zinc-800/50">
-      <div className="space-y-3">
+    <section className="bg-zinc-900/30 rounded-2xl p-5 border border-zinc-800/50">
+      <div className="space-y-4">
         {/* Total seasons/episodes summary */}
-        {totalSeasons && totalEpisodes && (
-          <div className="text-sm text-zinc-400">
-            <span className="font-medium">{totalSeasons}</span> {totalSeasons === 1 ? 'сезон' : totalSeasons < 5 ? 'сезони' : 'сезонів'}
-            <span className="text-zinc-600 mx-1.5">•</span>
-            <span className="font-medium">{totalEpisodes}</span> {totalEpisodes === 1 ? 'епізод' : totalEpisodes < 5 ? 'епізоди' : 'епізодів'}
-          </div>
-        )}
-
-        {/* Season progress with bar */}
-        {currentSeason && currentSeasonTotalEpisodes && (
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-medium text-white">
-                  {dict.details.showStatus.season} {currentSeason}
-                </span>
-              </div>
-              <span className="text-sm font-semibold tabular-nums">
-                <span className="text-blue-400">{episodesReleased}</span>
-                <span className="text-zinc-600 mx-1">/</span>
-                <span className="text-zinc-400">{currentSeasonTotalEpisodes}</span>
-              </span>
-            </div>
-            
-            {/* Progress bar */}
-            <div className="relative h-1.5 bg-zinc-800/80 rounded-full overflow-hidden">
-              <div 
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+        {totalSeasons !== undefined && totalEpisodes !== undefined && (
+          <div className="text-base text-zinc-300">
+            <span className="font-medium">{totalSeasons}</span>{' '}
+            {pluralize(totalSeasons, dict.details.showStatus.plurals.season)}
+            <span className="text-zinc-600 mx-2">•</span>
+            <span className="font-medium">{totalEpisodes}</span>{' '}
+            {pluralize(totalEpisodes, dict.details.showStatus.plurals.episode)}
           </div>
         )}
 
         {/* Next episode */}
         {nextEpisodeDate && (
-          <div className="flex items-center gap-2 pt-0.5">
-            <Clock className="w-4 h-4 text-blue-400" />
+          <div className="flex items-center gap-2.5">
+            <Clock className="w-4 h-4 text-blue-400 flex-shrink-0" />
             <span className="text-sm text-zinc-400">
               {dict.details.showStatus.nextEpisode}:
             </span>
             <span className="text-sm text-blue-400 font-medium">
               {formatDate(nextEpisodeDate)}
             </span>
-          </div>
-        )}
-
-        {/* Status for ended shows */}
-        {!nextEpisodeDate && status === 'Ended' && (
-          <div className="flex items-center gap-2 text-sm text-zinc-500">
-            <div className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-            {dict.details.showStatus.ended}
-          </div>
-        )}
-        {!nextEpisodeDate && status === 'Canceled' && (
-          <div className="flex items-center gap-2 text-sm text-zinc-500">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
-            {dict.details.showStatus.canceled}
           </div>
         )}
       </div>

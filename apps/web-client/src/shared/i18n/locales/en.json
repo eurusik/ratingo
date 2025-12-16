@@ -114,7 +114,19 @@
       "ended": "Ended",
       "returning": "Returning",
       "inProduction": "In production",
-      "canceled": "Canceled"
+      "canceled": "Canceled",
+      "plurals": {
+        "season": {
+          "one": "season",
+          "few": "seasons",
+          "many": "seasons"
+        },
+        "episode": {
+          "one": "episode",
+          "few": "episodes",
+          "many": "episodes"
+        }
+      }
     },
     "movieRelease": {
       "title": "Release",
@@ -136,7 +148,12 @@
       "title": "Similar to this"
     },
     "cast": {
-      "title": "Cast & Crew"
+      "title": "Main Cast (from credits)",
+      "tooltip": "Top 10 actors in official billing order from credits. This is not a popularity ranking or our rating."
+    },
+    "crew": {
+      "title": "Creators & Crew",
+      "tooltip": "Key people behind the scenes: directors, creators, writers."
     },
     "verdict": {
       "byData": "Based on Ratingo data",

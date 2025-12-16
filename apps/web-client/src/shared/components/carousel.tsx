@@ -6,12 +6,14 @@
 'use client';
 
 import { useState, useCallback, useEffect, type ReactNode } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export interface CarouselProps {
   children: ReactNode;
   title?: string;
+  titleTooltip?: string;
   subtitle?: string;
   actions?: ReactNode;
   gap?: 'sm' | 'md' | 'lg';
@@ -21,6 +23,7 @@ export interface CarouselProps {
 export function Carousel({ 
   children, 
   title, 
+  titleTooltip,
   subtitle,
   actions,
   gap = 'md',
@@ -67,7 +70,23 @@ export function Carousel({
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             {title && (
-              <h2 className="text-sm font-semibold text-zinc-400">{title}</h2>
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">{title}</h2>
+                {titleTooltip && (
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="text-zinc-500 hover:text-zinc-400 transition-colors">
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p className="text-xs">{titleTooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
             )}
             {subtitle && (
               <p className="text-xs text-zinc-500">{subtitle}</p>

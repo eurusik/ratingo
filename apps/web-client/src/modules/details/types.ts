@@ -1,46 +1,19 @@
 /**
  * Shared types for details pages.
+ * Most types are now imported from @ratingo/api-contract to avoid duplication.
  */
 
-export type BadgeKey = 'TRENDING' | 'NEW_RELEASE' | 'RISING' | 'NEW_EPISODE' | 'CONTINUE' | 'IN_WATCHLIST';
+import type { components } from '@ratingo/api-contract';
 
-export interface Provider {
-  id: number;
-  name: string;
-  logo?: string;
-  type: 'stream' | 'rent' | 'buy';
-}
+// Re-export commonly used types from API contract
+export type ImageSet = components['schemas']['ImageDto'];
+export type Genre = components['schemas']['GenreDto'];
+export type Stats = components['schemas']['RatingoStatsDto'];
+export type ExternalRatings = components['schemas']['ExternalRatingsDto'];
+export type RatingSource = components['schemas']['ExternalRatingItemDto'];
+export type Video = components['schemas']['VideoDto'];
+export type CastMember = components['schemas']['CastMemberDto'];
+export type CrewMember = components['schemas']['CrewMemberDto'];
 
-export interface Genre {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-export interface ImageSet {
-  small: string;
-  medium: string;
-  large: string;
-  original: string;
-}
-
-export interface Stats {
-  ratingoScore: number;
-  qualityScore?: number;
-  popularityScore?: number;
-  liveWatchers?: number;
-  totalWatchers?: number;
-}
-
-export interface RatingSource {
-  rating: number;
-  voteCount?: number;
-}
-
-export interface ExternalRatings {
-  imdb?: RatingSource;
-  tmdb?: RatingSource;
-  trakt?: RatingSource;
-  metacritic?: RatingSource;
-  rottenTomatoes?: RatingSource;
-}
+// Badge key type - derived from CardMetaDto
+export type BadgeKey = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>

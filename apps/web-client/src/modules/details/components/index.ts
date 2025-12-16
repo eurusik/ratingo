@@ -7,8 +7,8 @@ export { ProvidersList, type ProvidersListProps } from './providers-list';
 export { SimilarCarousel, type SimilarCarouselProps } from './similar-carousel';
 export { DataVerdict, type DataVerdictProps, type VerdictType, type ConfidenceLevel } from './data-verdict';
 export { VerdictCtaButton } from './verdict-cta-button';
-export { TrailersCarousel, type TrailersCarouselProps, type Video } from './trailers-carousel';
-export { CastCarousel, type CastCarouselProps, type CastMember, type CrewMember } from './cast-carousel';
+export { TrailersCarousel, type TrailersCarouselProps } from './trailers-carousel';
+export { CastCarousel, CrewCarousel, type CastCarouselProps } from './cast-carousel';
 
 // Atomic components for Hero section
 export { RatingBadge } from './rating-badge';
@@ -19,4 +19,4 @@ export { WatchersStats } from './watchers-stats';
 export { StatusBadges } from './status-badges';
 export { HeroBackdrop } from './hero-backdrop';
 
-export type { BadgeKey, Provider, Genre, ImageSet, Stats, ExternalRatings } from '../types';
+export type { BadgeKey, Genre, ImageSet, Stats, ExternalRatings, Video, CastMember, CrewMember } from '../types';

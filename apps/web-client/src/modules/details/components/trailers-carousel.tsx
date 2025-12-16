@@ -8,16 +8,7 @@
 import { useState } from 'react';
 import { Play, X } from 'lucide-react';
 import { Carousel } from '@/shared/components/carousel';
-
-export interface Video {
-  key: string;
-  name: string;
-  site: string;
-  type: string;
-  official: boolean;
-  language: string;
-  country: string;
-}
+import type { Video } from '../types';
 
 export interface TrailersCarouselProps {
   videos: Video[];

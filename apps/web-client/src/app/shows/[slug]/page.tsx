@@ -15,6 +15,7 @@ import {
   DataVerdict,
   TrailersCarousel,
   CastCarousel,
+  CrewCarousel,
   type BadgeKey,
 } from '@/modules/details';
 
@@ -31,9 +32,6 @@ interface ShowDetailsPageProps {
 interface EnrichedShowDetails extends ShowDetailsDto {
   quickPitch: string;
   suitableFor: string[];
-  currentSeason?: number;
-  currentSeasonEpisodesReleased?: number;
-  currentSeasonTotalEpisodes?: number;
   badgeKey?: BadgeKey;
   rank?: number;
   primaryTrailerKey?: string;
@@ -63,19 +61,6 @@ function enrichShowDetails(show: ShowDetailsDto): EnrichedShowDetails {
   // Compute suitableFor from genres (fallback until API provides it)
   const suitableFor = (show.genres || []).map(g => g.name).slice(0, 3);
 
-  // Compute current season info from seasons array
-  const now = new Date();
-  const currentSeasonData = show.seasons
-    .filter(s => s.airDate && new Date(s.airDate) <= now)
-    .sort((a, b) => b.number - a.number)[0]; // Latest aired season
-
-  const currentSeason = currentSeasonData?.number;
-  const currentSeasonTotalEpisodes = currentSeasonData?.episodeCount ?? undefined;
-
-  // For episodes released, we'd need episode-level data from API
-  // For now, if season aired fully, assume all episodes released
-  const currentSeasonEpisodesReleased = currentSeasonTotalEpisodes;
-
   // Use API's primaryTrailer if available, fallback to first video
   const primaryTrailerKey = show.primaryTrailer?.key || show.videos?.[0]?.key;
 
@@ -98,9 +83,6 @@ function enrichShowDetails(show: ShowDetailsDto): EnrichedShowDetails {
     ...show,
     quickPitch,
     suitableFor,
-    currentSeason,
-    currentSeasonEpisodesReleased,
-    currentSeasonTotalEpisodes,
     badgeKey,
     rank,
     primaryTrailerKey,
@@ -250,32 +232,33 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             {dict.details.showStatus.sectionTitle}
           </h2>
           <ShowStatus
-          currentSeason={show.currentSeason}
-          currentSeasonEpisodesReleased={show.currentSeasonEpisodesReleased}
-          currentSeasonTotalEpisodes={show.currentSeasonTotalEpisodes}
-          nextEpisodeDate={show.nextEpisodeDate}
-          status={show.status as any}
-          totalSeasons={show.totalSeasons ?? undefined}
-          totalEpisodes={show.totalEpisodes ?? undefined}
-          dict={dict}
-        />
-
+            nextEpisodeDate={show.nextEpisodeDate}
+            totalSeasons={show.totalSeasons ?? undefined}
+            totalEpisodes={show.totalEpisodes ?? undefined}
+            dict={dict}
+          />
         </section>
 
         {/* Divider */}
         <div className="border-t border-zinc-800/50 my-12" />
 
-        {/* 7. Cast & Crew */}
-        {show.credits?.cast && show.credits.cast.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-              {dict.details.cast.title}
-            </h2>
-            <CastCarousel
-              cast={show.credits.cast as any}
-              crew={(show.credits.crew || []) as any}
-            />
-          </section>
+        {/* 7. Cast & Crew - Combined section */}
+        {((show.credits?.cast && show.credits.cast.length > 0) || 
+          (show.credits?.crew && show.credits.crew.length > 0)) && (
+          <div className="space-y-8">
+            {/* Cast */}
+            {show.credits?.cast && show.credits.cast.length > 0 && (
+              <CastCarousel
+                cast={show.credits.cast as any}
+                crew={(show.credits.crew || []) as any}
+              />
+            )}
+
+            {/* Crew */}
+            {show.credits?.crew && show.credits.crew.length > 0 && (
+              <CrewCarousel crew={show.credits.crew as any} />
+            )}
+          </div>
         )}
 
         {/* Divider */}

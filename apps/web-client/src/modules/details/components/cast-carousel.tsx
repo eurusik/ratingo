@@ -8,26 +8,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Carousel } from '@/shared/components/carousel';
-
-export interface CastMember {
-  personId: string;
-  slug: string;
-  tmdbId: number;
-  name: string;
-  character: string;
-  profilePath: string | null;
-  order: number;
-}
-
-export interface CrewMember {
-  personId: string;
-  slug: string;
-  tmdbId: number;
-  name: string;
-  job: string;
-  department: string;
-  profilePath: string | null;
-}
+import { useTranslation } from '@/shared/i18n';
+import type { CastMember, CrewMember } from '../types';
 
 export interface CastCarouselProps {
   cast: CastMember[];
@@ -35,7 +17,13 @@ export interface CastCarouselProps {
 }
 
 // Actor Avatar Component
-function ActorAvatar({ actor }: { actor: CastMember }) {
+function PersonAvatar({ 
+  person, 
+  role 
+}: { 
+  person: { name: string; profilePath: string | null }; 
+  role: string;
+}) {
   const [imageLoaded, setImageLoaded] = useState(false);
   
   const getProfileUrl = (path: string | null) => {
@@ -66,16 +54,16 @@ function ActorAvatar({ actor }: { actor: CastMember }) {
     return colors[hash % colors.length];
   };
 
-  const profileUrl = getProfileUrl(actor.profilePath);
+  const profileUrl = getProfileUrl(person.profilePath);
 
   return (
     <div className="flex-shrink-0 w-20 space-y-2">
       {/* Photo */}
       <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-zinc-800 transition-colors opacity-90">
         {/* Avatar background - always visible */}
-        <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${getColorFromName(actor.name)}`}>
+        <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${getColorFromName(person.name)}`}>
           <span className="text-2xl font-bold text-white">
-            {getInitials(actor.name)}
+            {getInitials(person.name)}
           </span>
         </div>
         
@@ -83,7 +71,7 @@ function ActorAvatar({ actor }: { actor: CastMember }) {
         {profileUrl && (
           <Image
             src={profileUrl}
-            alt={actor.name}
+            alt={person.name}
             fill
             className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             sizes="80px"
@@ -93,13 +81,13 @@ function ActorAvatar({ actor }: { actor: CastMember }) {
         )}
       </div>
 
-      {/* Name & Character */}
+      {/* Name & Role */}
       <div className="text-center">
         <p className="text-xs font-medium text-zinc-200 line-clamp-1">
-          {actor.name}
+          {person.name}
         </p>
         <p className="text-[10px] text-zinc-500 line-clamp-1">
-          {actor.character}
+          {role}
         </p>
       </div>
     </div>
@@ -107,25 +95,77 @@ function ActorAvatar({ actor }: { actor: CastMember }) {
 }
 
 export function CastCarousel({ cast, crew }: CastCarouselProps) {
+  const { t } = useTranslation();
+  
   // Sort by order
   const sortedCast = cast.sort((a, b) => a.order - b.order);
-  
-  // Find director
-  const director = crew?.find(c => c.job === 'Director');
 
   if (sortedCast.length === 0) return null;
 
-  const subtitle = director 
-    ? `Режисер: ${director.name}`
-    : undefined;
-
   return (
     <Carousel 
-      subtitle={subtitle}
+      title={t('details.cast.title')}
+      titleTooltip={t('details.cast.tooltip')}
       gap="lg"
     >
       {sortedCast.map((actor) => (
-        <ActorAvatar key={actor.personId} actor={actor} />
+        <PersonAvatar 
+          key={actor.personId} 
+          person={actor} 
+          role={actor.character}
+        />
+      ))}
+    </Carousel>
+  );
+}
+
+// Crew Carousel Component
+export function CrewCarousel({ crew }: { crew: CrewMember[] }) {
+  const { t } = useTranslation();
+
+  // Translate job titles
+  const translateJob = (job: string): string => {
+    const translations: Record<string, string> = {
+      'Director': 'Режисер',
+      'Creator': 'Креатор',
+      'Executive Producer': 'Виконавчий продюсер',
+      'Writer': 'Сценарист',
+      'Screenplay': 'Сценарист',
+    };
+    return translations[job] || job;
+  };
+
+  // Filter important crew roles
+  const importantCrew = crew.filter(c => 
+    ['Director', 'Creator', 'Executive Producer', 'Writer', 'Screenplay'].includes(c.job)
+  );
+
+  // Prioritize: Creator → Director → Writer → Executive Producer
+  const sortedCrew = importantCrew.sort((a, b) => {
+    const priority: Record<string, number> = {
+      'Creator': 1,
+      'Director': 2,
+      'Writer': 3,
+      'Screenplay': 4,
+      'Executive Producer': 5,
+    };
+    return (priority[a.job] || 99) - (priority[b.job] || 99);
+  });
+
+  if (sortedCrew.length === 0) return null;
+
+  return (
+    <Carousel 
+      title={t('details.crew.title')}
+      titleTooltip={t('details.crew.tooltip')}
+      gap="lg"
+    >
+      {sortedCrew.map((member) => (
+        <PersonAvatar 
+          key={member.personId} 
+          person={member} 
+          role={translateJob(member.job)}
+        />
       ))}
     </Carousel>
   );
