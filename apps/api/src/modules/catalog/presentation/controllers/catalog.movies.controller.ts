@@ -25,6 +25,7 @@ import { CardEnrichmentService } from '../../../shared/cards/application/card-en
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import { normalizeListQuery } from '../utils/query-normalizer';
+import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
 
 /**
  * Public movie catalog endpoints (trending, listings, details).
@@ -243,7 +244,34 @@ export class CatalogMoviesController {
   ): Promise<MovieDetails & { userState: UserMediaState | null }> {
     const movie = await this.movieRepository.findBySlug(slug);
     if (!movie) throw new NotFoundException(`Movie with slug "${slug}" not found`);
-    return this.catalogUserOneEnrich(user, movie);
+    const enriched = await this.catalogUserOneEnrich(user, movie);
+
+    // Build card metadata for details page
+    const card = buildCardMeta(
+      {
+        hasUserEntry: Boolean(enriched.userState),
+        userState: enriched.userState?.state ?? null,
+        continuePoint: extractContinuePoint(enriched.userState?.progress ?? null),
+        hasNewEpisode: false, // Movies don't have episodes
+        isNewRelease: this.isNewRelease(movie.releaseDate),
+        trendDelta: null,
+        isTrending: false,
+      },
+      CARD_LIST_CONTEXT.DEFAULT,
+    );
+
+    return { ...enriched, card };
+  }
+
+  /**
+   * Checks if movie is a new release (within 14 days).
+   */
+  private isNewRelease(releaseDate: Date | null): boolean {
+    if (!releaseDate) return false;
+    const now = new Date();
+    const diffMs = now.getTime() - new Date(releaseDate).getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= 14;
   }
 
   /**

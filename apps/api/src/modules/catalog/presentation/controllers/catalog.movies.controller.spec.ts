@@ -97,14 +97,17 @@ describe('CatalogMoviesController', () => {
   });
 
   describe('getMovieBySlug', () => {
-    it('returns details when found', async () => {
-      const mockMovie = { id: '1', title: 'Matrix', slug: 'the-matrix' };
+    it('returns details with card when found', async () => {
+      const mockMovie = { id: '1', title: 'Matrix', slug: 'the-matrix', releaseDate: null };
       movieRepository.findBySlug.mockResolvedValue(mockMovie);
 
       const result = await controller.getMovieBySlug('the-matrix');
 
       expect(movieRepository.findBySlug).toHaveBeenCalledWith('the-matrix');
-      expect(result).toEqual({ ...mockMovie, userState: null });
+      expect(result.id).toBe('1');
+      expect(result.userState).toBeNull();
+      expect(result.card).toBeDefined();
+      expect(result.card.badgeKey).toBeNull(); // No badge for default context without signals
     });
 
     it('throws NotFoundException when not found', async () => {

@@ -53,6 +53,7 @@ export class ShowDetailsQuery {
           watchProviders: schema.mediaItems.watchProviders,
           rating: schema.mediaItems.rating,
           voteCount: schema.mediaItems.voteCount,
+          releaseDate: schema.mediaItems.releaseDate,
 
           ratingImdb: schema.mediaItems.ratingImdb,
           voteCountImdb: schema.mediaItems.voteCountImdb,
@@ -105,6 +106,7 @@ export class ShowDetailsQuery {
         primaryTrailer: showData.videos?.[0] || null,
         credits: CreditsMapper.toDto(showData.credits),
         availability: WatchProvidersMapper.toAvailability(showData.watchProviders),
+        releaseDate: showData.releaseDate,
 
         totalSeasons: showData.totalSeasons,
         totalEpisodes: showData.totalEpisodes,

@@ -2,7 +2,7 @@
  * Shared types for details pages.
  */
 
-export type BadgeKey = 'TRENDING' | 'NEW_RELEASE' | 'RISING' | 'NEW_EPISODE';
+export type BadgeKey = 'TRENDING' | 'NEW_RELEASE' | 'RISING' | 'NEW_EPISODE' | 'CONTINUE' | 'IN_WATCHLIST';
 
 export interface Provider {
   id: number;

@@ -73,13 +73,22 @@ describe('CatalogShowsController', () => {
   });
 
   describe('getShowBySlug', () => {
-    it('returns details when found', async () => {
-      const mockShow = { id: '2', title: 'Arcane', slug: 'arcane' };
+    it('returns details with card when found', async () => {
+      const mockShow = {
+        id: '2',
+        title: 'Arcane',
+        slug: 'arcane',
+        releaseDate: null,
+        nextAirDate: null,
+      };
       showRepository.findBySlug.mockResolvedValue(mockShow);
 
       const result = await controller.getShowBySlug('arcane');
       expect(showRepository.findBySlug).toHaveBeenCalledWith('arcane');
-      expect(result).toEqual({ ...mockShow, userState: null });
+      expect(result.id).toBe('2');
+      expect(result.userState).toBeNull();
+      expect(result.card).toBeDefined();
+      expect(result.card.badgeKey).toBeNull(); // No badge for default context without signals
     });
 
     it('throws NotFoundException when not found', async () => {

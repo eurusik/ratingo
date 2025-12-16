@@ -68,6 +68,18 @@
     "whereToWatch": "Where to watch",
     "showMore": "Show more",
     "showLess": "Show less",
+    "watchingNow": "watching now",
+    "totalWatchers": "total views",
+    "qualityBadge": {
+      "high": "High Quality",
+      "good": "Critics Loved It",
+      "decent": "Quality Content"
+    },
+    "popularityBadge": {
+      "hot": "Currently Popular",
+      "trending": "Trending",
+      "rising": "Rising Hype"
+    },
     "cta": {
       "saveHint": {
         "newEpisodes": "to never miss new episodes",

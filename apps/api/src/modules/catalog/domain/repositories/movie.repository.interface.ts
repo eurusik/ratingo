@@ -8,6 +8,7 @@ import {
   VoteSource,
 } from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import type { CardMeta } from '../../../shared/cards/domain/card.types';
 import { DatabaseTransaction } from '../types/transaction.type';
 
 /**
@@ -124,6 +125,8 @@ export interface MovieDetails {
   status: MovieStatus | null;
 
   genres: Array<{ id: string; name: string; slug: string }>;
+
+  card?: CardMeta;
 }
 
 /**

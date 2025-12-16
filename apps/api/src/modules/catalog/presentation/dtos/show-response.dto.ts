@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MediaBaseDto } from './common.dto';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
+import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 
 export class SeasonDto {
   @ApiProperty({ example: 1 })
@@ -20,6 +21,14 @@ export class SeasonDto {
 }
 
 export class ShowResponseDto extends MediaBaseDto {
+  @ApiProperty({
+    type: Date,
+    required: false,
+    nullable: true,
+    description: 'First air date of the show',
+  })
+  releaseDate?: Date | null;
+
   @ApiProperty({ example: 5, required: false, nullable: true })
   totalSeasons?: number | null;
 
@@ -43,4 +52,12 @@ export class ShowResponseDto extends MediaBaseDto {
 
   @ApiProperty({ type: [SeasonDto] })
   seasons: SeasonDto[];
+
+  @ApiProperty({
+    type: CardMetaDto,
+    required: false,
+    nullable: true,
+    description: 'Card metadata with badge and CTA info',
+  })
+  card?: CardMetaDto | null;
 }

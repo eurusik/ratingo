@@ -18,6 +18,7 @@ import {
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseTransaction } from '../types/transaction.type';
+import type { CardMeta } from '../../../shared/cards/domain/card.types';
 
 /**
  * Options for trending shows query.
@@ -131,6 +132,7 @@ export interface ShowDetails {
     rottenTomatoes: { rating: number; voteCount?: number | null } | null;
   };
 
+  releaseDate: Date | null;
   totalSeasons: number | null;
   totalEpisodes: number | null;
   status: ShowStatus | null;
@@ -146,6 +148,8 @@ export interface ShowDetails {
     posterPath: string | null;
     airDate: Date | null;
   }>;
+
+  card?: CardMeta;
 }
 
 /**

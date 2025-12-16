@@ -51,8 +51,14 @@ interface EnrichedShowDetails extends ShowDetailsDto {
  * Enriches API response with computed UI fields.
  */
 function enrichShowDetails(show: ShowDetailsDto): EnrichedShowDetails {
-  // Compute quickPitch from overview (fallback until API provides it)
-  const quickPitch = show.overview?.slice(0, 150) || '';
+  // Compute quickPitch: Take FIRST sentence only (not overview!)
+  // Quick pitch should be a short verdict, not plot description
+  const firstSentence = show.overview?.split(/[.!?]\s+/)[0];
+  const quickPitch = firstSentence 
+    ? (firstSentence.length > 120 
+        ? firstSentence.slice(0, 120) + '...' 
+        : firstSentence + '...')  // Always add ellipsis to hint there's more
+    : '';
 
   // Compute suitableFor from genres (fallback until API provides it)
   const suitableFor = (show.genres || []).map(g => g.name).slice(0, 3);
@@ -70,11 +76,20 @@ function enrichShowDetails(show: ShowDetailsDto): EnrichedShowDetails {
   // For now, if season aired fully, assume all episodes released
   const currentSeasonEpisodesReleased = currentSeasonTotalEpisodes;
 
-  // Find primary trailer
+  // Use API's primaryTrailer if available, fallback to first video
   const primaryTrailerKey = show.primaryTrailer?.key || show.videos?.[0]?.key;
 
-  // Use lastAirDate (last aired episode) as releaseDate
-  const releaseDate = show.lastAirDate ? new Date(show.lastAirDate).toISOString() : '';
+  // Use releaseDate directly from API (already in ISO format)
+  const releaseDate = show.releaseDate || '';
+
+  // Use nextAirDate directly from API (already in ISO format)
+  const nextEpisodeDate = show.nextAirDate || undefined;
+
+  // Use ratingoScore as rank (0-100 composite score)
+  const rank = show.stats?.ratingoScore ? Math.round(show.stats.ratingoScore) : undefined;
+
+  // Use card.badgeKey from API (behavioral context from backend)
+  const badgeKey = show.card?.badgeKey || undefined;
 
   // Verdict is null until API provides it
   const verdict = null;
@@ -86,10 +101,10 @@ function enrichShowDetails(show: ShowDetailsDto): EnrichedShowDetails {
     currentSeason,
     currentSeasonEpisodesReleased,
     currentSeasonTotalEpisodes,
-    badgeKey: undefined, // TODO: compute from API data
-    rank: undefined, // TODO: compute from API data
+    badgeKey,
+    rank,
     primaryTrailerKey,
-    nextEpisodeDate: undefined, // TODO: compute from nextAirDate
+    nextEpisodeDate,
     releaseDate,
     verdict,
   };
@@ -176,7 +191,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           </section>
         )}
 
-        {/* 2. Data Verdict with integrated CTA - "Що думає Ratingo" */}
+        {/* 2. Data Verdict with integrated CTA - Details only */}
         <DataVerdict
           type="season_comparison"
           message="Другий сезон стартував слабше першого"
@@ -185,14 +200,19 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           showCta
           ctaProps={{
             isSaved: false,
-            hintKey: 'afterAllEpisodes', // Context-specific: wait for all episodes
+            hintKey: 'afterAllEpisodes',
+            primaryCta: show.card?.primaryCta,
+            continuePoint: show.card?.continue,
           }}
           dict={dict}
         />
 
-        {/* 3. Overview - "Про що це" */}
-        <section className="space-y-2">
-          <p className="text-base md:text-lg text-zinc-200 leading-relaxed">
+        {/* 3. Full Overview - Complete description */}
+        <section id="overview-section" className="space-y-2 scroll-mt-8">
+          <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+            {dict.details.overview.title}
+          </h3>
+          <p className="text-base md:text-lg text-zinc-300 leading-relaxed">
             {show.overview}
           </p>
         </section>
@@ -267,7 +287,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
               {dict.details.providers.title}
             </h2>
-            <ProvidersList providers={show.availability as any} dict={dict} />
+            <ProvidersList providers={show.availability} dict={dict} />
           </section>
         )}
       </div>

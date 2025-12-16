@@ -68,6 +68,28 @@
     "whereToWatch": "Де дивитись",
     "showMore": "Показати більше",
     "showLess": "Сховати",
+    "watchingNow": "дивляться зараз",
+    "totalWatchers": "переглянули",
+    "qualityBadge": {
+      "high": "Критикам зайшло",
+      "good": "Сильні оцінки",
+      "decent": "Добре прийнято"
+    },
+    "qualityBadgeTooltip": {
+      "high": "За сукупними оцінками IMDb, TMDB та Metacritic",
+      "good": "Стабільні оцінки критиків і глядачів",
+      "decent": "Переважно позитивні відгуки"
+    },
+    "popularityBadge": {
+      "hot": "Зараз дивляться",
+      "trending": "Набирає популярність",
+      "rising": "Помічають"
+    },
+    "popularityBadgeTooltip": {
+      "hot": "Високий інтерес просто зараз",
+      "trending": "Зростання переглядів і пошуків",
+      "rising": "Інтерес починає зростати"
+    },
     "cta": {
       "saveHint": {
         "newEpisodes": "щоб не пропустити нові серії",

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MediaBaseDto } from './common.dto';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
+import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 
 export class MovieResponseDto extends MediaBaseDto {
   @ApiProperty({ example: 120, required: false, nullable: true })
@@ -24,4 +25,12 @@ export class MovieResponseDto extends MediaBaseDto {
 
   @ApiProperty({ type: Date, required: false, nullable: true })
   releaseDate: Date | null;
+
+  @ApiProperty({
+    type: CardMetaDto,
+    required: false,
+    nullable: true,
+    description: 'Card metadata with badge and CTA info',
+  })
+  card?: CardMetaDto | null;
 }

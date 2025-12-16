@@ -3529,6 +3529,15 @@
             "format": "date-time",
             "type": "string",
             "nullable": true
+          },
+          "card": {
+            "nullable": true,
+            "description": "Card metadata with badge and CTA info",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CardMetaDto"
+              }
+            ]
           }
         },
         "required": [
@@ -3941,6 +3950,12 @@
               }
             ]
           },
+          "releaseDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "First air date of the show"
+          },
           "totalSeasons": {
             "type": "number",
             "example": 5,
@@ -3980,6 +3995,15 @@
             "items": {
               "$ref": "#/components/schemas/SeasonDto"
             }
+          },
+          "card": {
+            "nullable": true,
+            "description": "Card metadata with badge and CTA info",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CardMetaDto"
+              }
+            ]
           }
         },
         "required": [

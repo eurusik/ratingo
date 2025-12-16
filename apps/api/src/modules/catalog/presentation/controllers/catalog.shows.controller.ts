@@ -27,6 +27,7 @@ import { CardEnrichmentService } from '../../../shared/cards/application/card-en
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import { normalizeListQuery } from '../utils/query-normalizer';
+import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
 
 /**
  * Public show catalog endpoints (trending, calendar, details).
@@ -167,7 +168,44 @@ export class CatalogShowsController {
       throw new NotFoundException(`Show with slug "${slug}" not found`);
     }
     const enriched = await this.catalogUserOneEnrich(user, show);
-    return enriched;
+
+    // Build card metadata for details page
+    const card = buildCardMeta(
+      {
+        hasUserEntry: Boolean(enriched.userState),
+        userState: enriched.userState?.state ?? null,
+        continuePoint: extractContinuePoint(enriched.userState?.progress ?? null),
+        hasNewEpisode: this.hasNewEpisode(show),
+        isNewRelease: this.isNewRelease(show.releaseDate),
+        trendDelta: null,
+        isTrending: false,
+      },
+      CARD_LIST_CONTEXT.DEFAULT,
+    );
+
+    return { ...enriched, card };
+  }
+
+  /**
+   * Checks if show has a new episode (nextAirDate in the past week).
+   */
+  private hasNewEpisode(show: ShowDetails): boolean {
+    if (!show.nextAirDate) return false;
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const nextAir = new Date(show.nextAirDate);
+    return nextAir >= weekAgo && nextAir <= now;
+  }
+
+  /**
+   * Checks if show is a new release (within 14 days).
+   */
+  private isNewRelease(releaseDate: Date | null): boolean {
+    if (!releaseDate) return false;
+    const now = new Date();
+    const diffMs = now.getTime() - new Date(releaseDate).getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= 14;
   }
 
   /**

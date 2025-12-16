@@ -1169,6 +1169,8 @@ export interface components {
             status?: "Rumored" | "Planned" | "In Production" | "Post Production" | "Released" | "Canceled" | null;
             /** Format: date-time */
             releaseDate?: string | null;
+            /** @description Card metadata with badge and CTA info */
+            card?: components["schemas"]["CardMetaDto"] | null;
         };
         ShowProgressDto: {
             /** @description Null for trending list optimization */
@@ -1300,6 +1302,11 @@ export interface components {
             credits?: components["schemas"]["CreditsDto"] | null;
             /** @description Where to watch - UA primary with US fallback */
             availability?: components["schemas"]["AvailabilityDto"] | null;
+            /**
+             * Format: date-time
+             * @description First air date of the show
+             */
+            releaseDate?: string | null;
             /** @example 5 */
             totalSeasons?: number | null;
             /** @example 62 */
@@ -1315,6 +1322,8 @@ export interface components {
             /** Format: date-time */
             nextAirDate?: string | null;
             seasons: components["schemas"]["SeasonDto"][];
+            /** @description Card metadata with badge and CTA info */
+            card?: components["schemas"]["CardMetaDto"] | null;
         };
         SearchItemDto: {
             /** @enum {string} */
