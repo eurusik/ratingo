@@ -8,11 +8,13 @@
  * - NEW_EPISODE: 🎬 Новий епізод
  */
 
-import { Flame, Sparkles, TrendingUp, Clapperboard } from 'lucide-react';
+import { Flame, Sparkles, TrendingUp, Clapperboard, Play, Bookmark, Star } from 'lucide-react';
+import type { components } from '@ratingo/api-contract';
 import { cn } from '@/shared/utils';
 import { useTranslation } from '@/shared/i18n';
 
-type BadgeKey = 'NEW_EPISODE' | 'CONTINUE' | 'IN_WATCHLIST' | 'NEW_RELEASE' | 'RISING' | 'TRENDING';
+// Re-use type from API contract
+type BadgeKey = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
 
 interface CardBadgeProps {
   /** Badge type from backend. */
@@ -23,6 +25,11 @@ interface CardBadgeProps {
 }
 
 const badgeConfig: Record<BadgeKey, { labelKey: string; icon: React.ElementType; className: string }> = {
+  HIT: {
+    labelKey: 'card.badge.hit',
+    icon: Star,
+    className: 'bg-yellow-500 text-black',
+  },
   TRENDING: {
     labelKey: 'card.badge.trending',
     icon: Flame,
@@ -44,14 +51,14 @@ const badgeConfig: Record<BadgeKey, { labelKey: string; icon: React.ElementType;
     className: 'bg-purple-500 text-white',
   },
   CONTINUE: {
-    labelKey: '',
-    icon: () => null,
-    className: '',
+    labelKey: 'card.badge.continue',
+    icon: Play,
+    className: 'bg-blue-500 text-white',
   },
   IN_WATCHLIST: {
-    labelKey: '',
-    icon: () => null,
-    className: '',
+    labelKey: 'card.badge.inWatchlist',
+    icon: Bookmark,
+    className: 'bg-green-600 text-white',
   },
 };
 

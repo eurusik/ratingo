@@ -35,6 +35,15 @@ class SyncDto {
   @ApiProperty({ enum: MediaType, example: MediaType.MOVIE })
   @IsEnum(MediaType)
   type: MediaType;
+
+  @ApiProperty({
+    example: false,
+    description: 'Force re-sync even if media already exists',
+    required: false,
+    default: false,
+  })
+  @IsOptional()
+  force?: boolean;
 }
 
 class SyncTrendingDto {
@@ -175,7 +184,7 @@ export class IngestionController {
   async sync(@Body() dto: SyncDto) {
     // Check if already in DB
     const existing = await this.mediaRepository.findByTmdbId(dto.tmdbId);
-    if (existing) {
+    if (existing && !dto.force) {
       return {
         id: existing.id,
         type: existing.type,

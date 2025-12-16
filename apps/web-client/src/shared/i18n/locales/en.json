@@ -32,7 +32,9 @@
       "trending": "HOT",
       "newRelease": "New",
       "rising": "Rising",
-      "newEpisode": "New episode"
+      "newEpisode": "New episode",
+      "continue": "Continue",
+      "inWatchlist": "In list"
     },
     "season": {
       "released": "Released",
@@ -70,6 +72,15 @@
     "showLess": "Show less",
     "watchingNow": "watching now",
     "totalWatchers": "total views",
+    "ratingTooltip": {
+      "title": "Ratingo rating",
+      "subtitle": "Shows how relevant the content is right now",
+      "whatItMeans": "What this means:",
+      "description": "Ratingo combines quality and current interest to highlight what people are actually watching today, not just \"timeless classics\".",
+      "howToRead": "How to read the rating:",
+      "exampleHigh": "High Ratingo but low IMDb → trending now, but may not become a classic",
+      "exampleLow": "Low Ratingo but high IMDb → recognized classic, but not many watching now"
+    },
     "qualityBadge": {
       "high": "High Quality",
       "good": "Critics Loved It",

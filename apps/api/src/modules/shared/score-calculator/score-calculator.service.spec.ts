@@ -163,7 +163,7 @@ describe('ScoreCalculatorService', () => {
 
       // Should be at or above the floor (0.2)
       expect(result.freshnessScore).toBeGreaterThanOrEqual(
-        mockConfig.normalization.freshnessMinFloor
+        mockConfig.normalization.freshnessMinFloor,
       );
     });
 
@@ -200,6 +200,86 @@ describe('ScoreCalculatorService', () => {
       // Quality score should be reasonable (not inflated by 0-100 scales)
       expect(result.qualityScore).toBeLessThanOrEqual(100);
       expect(result.qualityScore).toBeGreaterThan(50); // Good ratings
+    });
+  });
+
+  describe('avgRating and totalVotes', () => {
+    it('should return avgRating as weighted average of available ratings', () => {
+      const input: ScoreInput = {
+        tmdbPopularity: 100,
+        traktWatchers: 500,
+        imdbRating: 8.0,
+        traktRating: 7.0,
+        imdbVotes: 10000,
+        traktVotes: 5000,
+        releaseDate: new Date(),
+      };
+
+      const result = service.calculate(input);
+
+      // avgRating should be weighted average (imdb: 0.4, trakt: 0.25)
+      // (8.0 * 0.4 + 7.0 * 0.25) / (0.4 + 0.25) = (3.2 + 1.75) / 0.65 = 7.615
+      expect(result.avgRating).toBeCloseTo(7.615, 1);
+    });
+
+    it('should return totalVotes as sum of IMDb and Trakt votes', () => {
+      const input: ScoreInput = {
+        tmdbPopularity: 100,
+        traktWatchers: 500,
+        imdbRating: 8.0,
+        traktRating: 7.0,
+        imdbVotes: 10000,
+        traktVotes: 5000,
+        releaseDate: new Date(),
+      };
+
+      const result = service.calculate(input);
+
+      expect(result.totalVotes).toBe(15000);
+    });
+
+    it('should return avgRating of 5.0 when no ratings provided', () => {
+      const input: ScoreInput = {
+        tmdbPopularity: 100,
+        traktWatchers: 500,
+        releaseDate: new Date(),
+      };
+
+      const result = service.calculate(input);
+
+      expect(result.avgRating).toBe(5.0); // Neutral default
+    });
+
+    it('should return totalVotes of 0 when no votes provided', () => {
+      const input: ScoreInput = {
+        tmdbPopularity: 100,
+        traktWatchers: 500,
+        imdbRating: 8.0,
+        releaseDate: new Date(),
+      };
+
+      const result = service.calculate(input);
+
+      expect(result.totalVotes).toBe(0);
+    });
+
+    it('should clamp avgRating between 0 and 10', () => {
+      const input: ScoreInput = {
+        tmdbPopularity: 100,
+        traktWatchers: 500,
+        imdbRating: 10,
+        traktRating: 10,
+        metacriticRating: 100, // Converts to 10
+        rottenTomatoesRating: 100, // Converts to 10
+        imdbVotes: 10000,
+        traktVotes: 5000,
+        releaseDate: new Date(),
+      };
+
+      const result = service.calculate(input);
+
+      expect(result.avgRating).toBeLessThanOrEqual(10);
+      expect(result.avgRating).toBeGreaterThanOrEqual(0);
     });
   });
 

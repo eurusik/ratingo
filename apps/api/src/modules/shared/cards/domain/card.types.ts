@@ -25,6 +25,7 @@ export interface CardItemSignals {
   continuePoint?: ContinuePoint | null;
   hasNewEpisode?: boolean;
   isNewRelease?: boolean;
+  isHit?: boolean;
   trendDelta?: 'up' | 'down' | 'stable' | null;
   isTrending?: boolean;
 }

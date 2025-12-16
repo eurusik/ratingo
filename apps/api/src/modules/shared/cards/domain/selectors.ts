@@ -8,6 +8,7 @@ const BADGE_REASON = {
   NEW_EPISODE: 'watching+hasNewEpisode',
   CONTINUE: 'continuePoint',
   IN_WATCHLIST: 'planned',
+  HIT: 'qualityScore>=85',
   TRENDING: 'isTrending',
   NEW_RELEASE: 'newReleaseWindow',
   RISING: 'trendDelta=up',
@@ -72,6 +73,15 @@ export function selectBadge(signals: CardItemSignals, ctx: CardListContext): Car
       key: BADGE_KEY.IN_WATCHLIST,
       priority: BADGE_PRIORITY.IN_WATCHLIST,
       reason: BADGE_REASON.IN_WATCHLIST,
+    };
+  }
+
+  // HIT badge for high-quality content (qualityScore >= 85)
+  if (signals.isHit) {
+    return {
+      key: BADGE_KEY.HIT,
+      priority: BADGE_PRIORITY.HIT,
+      reason: BADGE_REASON.HIT,
     };
   }
 

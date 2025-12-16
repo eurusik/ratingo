@@ -18,8 +18,9 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@types/nprogress": "^0.2.3",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "@ratingo/api-contract": "^0.1.0",
+    "@types/nprogress": "^0.2.3",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "lucide-react": "^0.553.0",

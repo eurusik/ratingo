@@ -66,6 +66,25 @@ export type GetData<
   Status extends keyof GetResponses<P> = Extract<keyof GetResponses<P>, 200>
 > = GetJson<P, Status> extends { data: infer D } ? D : never;
 
+/**
+ * Extract JSON for endpoints that return arrays directly (without {data} wrapper).
+ * Supports both 200 and 'default' status codes.
+ */
+export type GetJsonArray<P extends GetPath> = 200 extends keyof GetResponses<P>
+  ? GetResponses<P>[200] extends { content: { 'application/json': infer J } }
+    ? J
+    : never
+  : 'default' extends keyof GetResponses<P>
+    ? GetResponses<P>['default'] extends { content: { 'application/json': infer J } }
+      ? J
+      : never
+    : never;
+
+/**
+ * Extract array item type from endpoints that return arrays directly.
+ */
+export type GetArrayItem<P extends GetPath> = GetJsonArray<P> extends (infer Item)[] ? Item : never;
+
 export type PatchPath = {
   [P in ApiPath]: paths[P] extends { patch: unknown } ? P : never;
 }[ApiPath];

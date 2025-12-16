@@ -132,6 +132,8 @@ describe('StatsService', () => {
         qualityScore: 0.8,
         popularityScore: 0.7,
         freshnessScore: 0.6,
+        avgRating: 7.5,
+        totalVotes: 10000,
       });
 
       const result = await service.syncTrendingStats();

@@ -5,7 +5,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Star } from 'lucide-react';
+import { Activity, Info } from 'lucide-react';
 import type { BadgeKey, Stats, ExternalRatings, Genre, ImageSet } from '../types';
 import { formatRating, formatYear } from '@/shared/utils/format';
 import type { getDictionary } from '@/shared/i18n';
@@ -16,6 +16,7 @@ import { QuickPitchScroll } from './quick-pitch-scroll';
 import { WatchersStats } from './watchers-stats';
 import { StatusBadges } from './status-badges';
 import { HeroBackdrop } from './hero-backdrop';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export interface DetailsHeroProps {
   title: string;
@@ -110,11 +111,50 @@ export function DetailsHero({
             <div className="space-y-3">
               {/* Ratings row */}
               <div className="flex items-center gap-4 md:gap-6 flex-wrap">
-                {/* Primary rating - qualityScore (Ratingo rating) */}
+                {/* Primary rating - qualityScore (Ratingo rating) with tooltip */}
                 {rating != null && (
                   <div className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                    <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                    <Activity className="w-6 h-6 text-blue-400" />
                     <span className="text-xl md:text-2xl font-bold text-white">{formatRating(rating)}</span>
+                    
+                    {/* Info icon with tooltip */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button 
+                            type="button"
+                            className="ml-1 text-gray-500 hover:text-gray-400 transition-colors cursor-help"
+                            onClick={(e) => e.preventDefault()}
+                          >
+                            <Info className="w-4 h-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-sm bg-zinc-800 border border-zinc-700">
+                          <div className="text-xs leading-relaxed space-y-3">
+                            {/* Header */}
+                            <div>
+                              <p className="font-semibold text-white">{dict.details.ratingTooltip.title}</p>
+                              <p className="text-zinc-400 mt-0.5">{dict.details.ratingTooltip.subtitle}</p>
+                            </div>
+                            
+                            {/* What it means */}
+                            <div>
+                              <p className="font-medium text-white mb-1">{dict.details.ratingTooltip.whatItMeans}</p>
+                              <p className="text-zinc-300">{dict.details.ratingTooltip.description}</p>
+                            </div>
+                            
+                            {/* How to read */}
+                            <div>
+                              <p className="font-medium text-white mb-1.5">{dict.details.ratingTooltip.howToRead}</p>
+                              <ul className="text-zinc-300 space-y-1.5">
+                                <li>• {dict.details.ratingTooltip.exampleHigh}</li>
+                                <li>• {dict.details.ratingTooltip.exampleLow}</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 )}
 

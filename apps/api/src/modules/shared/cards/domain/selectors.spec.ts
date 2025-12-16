@@ -192,6 +192,56 @@ describe('cards selectors', () => {
       );
       expect(badge).toBeNull();
     });
+
+    it('returns HIT when isHit is true and no higher priority badges', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: false,
+          userState: null,
+          isHit: true,
+        },
+        CARD_LIST_CONTEXT.DEFAULT,
+      );
+      expect(badge?.key).toBe(BADGE_KEY.HIT);
+    });
+
+    it('prefers IN_WATCHLIST over HIT', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: true,
+          userState: USER_MEDIA_STATE.PLANNED,
+          isHit: true,
+        },
+        CARD_LIST_CONTEXT.DEFAULT,
+      );
+      expect(badge?.key).toBe(BADGE_KEY.IN_WATCHLIST);
+    });
+
+    it('prefers HIT over NEW_RELEASE', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: false,
+          userState: null,
+          isHit: true,
+          isNewRelease: true,
+        },
+        CARD_LIST_CONTEXT.DEFAULT,
+      );
+      expect(badge?.key).toBe(BADGE_KEY.HIT);
+    });
+
+    it('prefers HIT over TRENDING in DEFAULT context', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: false,
+          userState: null,
+          isHit: true,
+          isTrending: true,
+        },
+        CARD_LIST_CONTEXT.DEFAULT,
+      );
+      expect(badge?.key).toBe(BADGE_KEY.HIT);
+    });
   });
 
   describe('selectPrimaryCta', () => {

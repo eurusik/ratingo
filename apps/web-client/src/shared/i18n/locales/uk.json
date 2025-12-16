@@ -29,10 +29,13 @@
       "whereToWatch": "Де дивитись"
     },
     "badge": {
-      "trending": "ХІТ",
+      "hit": "ХІТ",
+      "trending": "Трендінг",
       "newRelease": "Новинка",
       "rising": "Ріст",
-      "newEpisode": "Новий епізод"
+      "newEpisode": "Новий епізод",
+      "continue": "Продовжити",
+      "inWatchlist": "У списку"
     },
     "season": {
       "released": "Вийшло",
@@ -70,6 +73,15 @@
     "showLess": "Сховати",
     "watchingNow": "дивляться зараз",
     "totalWatchers": "переглянули",
+    "ratingTooltip": {
+      "title": "Ratingo рейтинг",
+      "subtitle": "Показує, наскільки контент актуальний саме зараз",
+      "whatItMeans": "Що це означає:",
+      "description": "Ratingo поєднує якість і поточний інтерес, щоб виділити не \"вічну класику\", а те, що реально дивляться сьогодні.",
+      "howToRead": "Як читати рейтинг:",
+      "exampleHigh": "Високий Ratingo, але низький IMDb → зараз у тренді, але може не стати класикою",
+      "exampleLow": "Низький Ratingo, але високий IMDb → визнана класика, але зараз мало дивляться"
+    },
     "qualityBadge": {
       "high": "Критикам зайшло",
       "good": "Сильні оцінки",

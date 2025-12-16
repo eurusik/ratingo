@@ -10,6 +10,7 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Calendar } from 'lucide-react';
+import type { components } from '@ratingo/api-contract';
 import { cn } from '@/shared/utils';
 import { formatYear } from '@/shared/utils/format';
 import { CardPoster } from './card-poster';
@@ -19,8 +20,9 @@ import { CardProgress, SeasonProgress } from './card-progress';
 import { CardCta } from './card-cta';
 import { CardBadge, RankBadge } from './card-badge';
 
-type BadgeKey = 'NEW_EPISODE' | 'CONTINUE' | 'IN_WATCHLIST' | 'NEW_RELEASE' | 'RISING' | 'TRENDING';
-type CtaType = 'SAVE' | 'CONTINUE' | 'OPEN';
+// Re-use types from API contract
+type BadgeKey = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
+type CtaType = components['schemas']['CardMetaDto']['primaryCta'];
 
 /** Base props for all media cards. */
 interface BaseMediaCardProps {
@@ -40,9 +42,9 @@ interface BaseMediaCardProps {
   href: string;
   /** Rank in trending (1-3 shows badge). */
   rank?: number;
-  /** Badge from CardMetaDto. */
+  /** Badge from CardMetaDto (nullable from backend). */
   badgeKey?: BadgeKey | null;
-  /** CTA type from CardMetaDto. */
+  /** CTA type from CardMetaDto (required from backend). */
   ctaType?: CtaType;
   /** Continue point for shows. */
   continuePoint?: { season: number; episode: number } | null;

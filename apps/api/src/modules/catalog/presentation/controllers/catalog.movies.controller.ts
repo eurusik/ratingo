@@ -26,6 +26,7 @@ import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import { normalizeListQuery } from '../utils/query-normalizer';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
+import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
 
 /**
  * Public movie catalog endpoints (trending, listings, details).
@@ -254,6 +255,7 @@ export class CatalogMoviesController {
         continuePoint: extractContinuePoint(enriched.userState?.progress ?? null),
         hasNewEpisode: false, // Movies don't have episodes
         isNewRelease: this.isNewRelease(movie.releaseDate),
+        isHit: isHitQuality(movie.externalRatings),
         trendDelta: null,
         isTrending: false,
       },

@@ -53,12 +53,12 @@ describe('HomeService', () => {
       },
     ];
 
-    it('should return hero items from repository with default limit 3', async () => {
+    it('should return hero items from repository with default limit 4', async () => {
       mediaRepositoryMock.findHero.mockResolvedValue(mockHeroItems);
 
       const result = await service.getHero();
 
-      expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(3, undefined);
+      expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(4, undefined);
       expect(result).toEqual(mockHeroItems);
       expect(result[1].showProgress).toBeDefined();
     });
@@ -68,7 +68,7 @@ describe('HomeService', () => {
 
       const result = await service.getHero(MediaType.MOVIE);
 
-      expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(3, MediaType.MOVIE);
+      expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(4, MediaType.MOVIE);
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe(MediaType.MOVIE);
     });

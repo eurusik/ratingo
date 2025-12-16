@@ -859,7 +859,7 @@ export interface components {
         };
         CardMetaDto: {
             /** @enum {string|null} */
-            badgeKey?: "NEW_EPISODE" | "CONTINUE" | "IN_WATCHLIST" | "NEW_RELEASE" | "RISING" | "TRENDING" | null;
+            badgeKey?: "NEW_EPISODE" | "CONTINUE" | "IN_WATCHLIST" | "HIT" | "NEW_RELEASE" | "RISING" | "TRENDING" | null;
             /** @enum {string} */
             listContext?: "TRENDING_LIST" | "NEW_RELEASES_LIST" | "USER_LIBRARY" | "CONTINUE_LIST" | "DEFAULT";
             /** @enum {string} */
@@ -1600,6 +1600,12 @@ export interface components {
              * @enum {string}
              */
             type: "movie" | "show";
+            /**
+             * @description Force re-sync even if media already exists
+             * @default false
+             * @example false
+             */
+            force: boolean;
         };
         SyncTrendingDto: {
             /**

@@ -7,7 +7,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Star, Eye, Calendar, Film, Tv, Flame, Sparkles, TrendingUp, Clapperboard, Info, Bookmark, ArrowRight, MapPin } from 'lucide-react';
+import { Star, Eye, Calendar, Film, Tv, Flame, Sparkles, TrendingUp, Clapperboard, Play, Bookmark, Info, ArrowRight, MapPin } from 'lucide-react';
 import type { components } from '@ratingo/api-contract';
 import { cn } from '@/shared/utils';
 import { formatNumber, formatRating, formatDate, formatYear } from '@/shared/utils/format';
@@ -40,13 +40,14 @@ export interface MediaCardServerProps {
 }
 
 // Badge config
-const badgeConfig: Record<BadgeKey, { labelKey: 'trending' | 'newRelease' | 'rising' | 'newEpisode'; icon: typeof Flame; className: string }> = {
+const badgeConfig: Record<BadgeKey, { labelKey: 'hit' | 'trending' | 'newRelease' | 'rising' | 'newEpisode' | 'continue' | 'inWatchlist'; icon: typeof Flame; className: string }> = {
+  HIT: { labelKey: 'hit', icon: Star, className: 'bg-yellow-500 text-black' },
   TRENDING: { labelKey: 'trending', icon: Flame, className: 'bg-red-600 text-white' },
   NEW_RELEASE: { labelKey: 'newRelease', icon: Sparkles, className: 'bg-green-500 text-white' },
   RISING: { labelKey: 'rising', icon: TrendingUp, className: 'bg-orange-500 text-white' },
   NEW_EPISODE: { labelKey: 'newEpisode', icon: Clapperboard, className: 'bg-purple-500 text-white' },
-  CONTINUE: { labelKey: 'trending', icon: Flame, className: '' },
-  IN_WATCHLIST: { labelKey: 'trending', icon: Flame, className: '' },
+  CONTINUE: { labelKey: 'continue', icon: Play, className: 'bg-blue-500 text-white' },
+  IN_WATCHLIST: { labelKey: 'inWatchlist', icon: Bookmark, className: 'bg-green-600 text-white' },
 };
 
 // CTA config

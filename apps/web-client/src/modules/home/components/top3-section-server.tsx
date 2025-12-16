@@ -24,9 +24,9 @@ interface Top3SectionServerProps {
 export function Top3SectionServer({ items, title, locale = 'uk', className }: Top3SectionServerProps) {
   const dict = getDictionary(locale);
 
-  if (!Array.isArray(items) || items.length < 3) return null;
+  if (!Array.isArray(items) || items.length === 0) return null;
 
-  const top3 = items.slice(0, 3);
+  const displayItems = items.slice(0, 3);
 
   return (
     <section className={className}>
@@ -36,7 +36,7 @@ export function Top3SectionServer({ items, title, locale = 'uk', className }: To
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {top3.map((item, index) => (
+        {displayItems.map((item, index) => (
           <MediaCardServer key={item.id} {...item} rank={index + 1} locale={locale} />
         ))}
       </div>

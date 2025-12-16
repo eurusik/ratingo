@@ -2804,6 +2804,7 @@
               "NEW_EPISODE",
               "CONTINUE",
               "IN_WATCHLIST",
+              "HIT",
               "NEW_RELEASE",
               "RISING",
               "TRENDING"
@@ -4733,6 +4734,12 @@
               "show"
             ],
             "example": "movie"
+          },
+          "force": {
+            "type": "boolean",
+            "example": false,
+            "description": "Force re-sync even if media already exists",
+            "default": false
           }
         },
         "required": [

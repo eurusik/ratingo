@@ -5,6 +5,7 @@ export const BADGE_KEY = {
   NEW_EPISODE: 'NEW_EPISODE',
   CONTINUE: 'CONTINUE',
   IN_WATCHLIST: 'IN_WATCHLIST',
+  HIT: 'HIT',
   NEW_RELEASE: 'NEW_RELEASE',
   RISING: 'RISING',
   TRENDING: 'TRENDING',
@@ -46,10 +47,18 @@ export const BADGE_PRIORITY = {
   NEW_EPISODE: 100,
   CONTINUE: 90,
   IN_WATCHLIST: 80,
+  HIT: 70,
   NEW_RELEASE: 60,
   RISING: 40,
   TRENDING: 20,
 } as const;
+
+/**
+ * HIT badge thresholds (pure quality, not composite).
+ * avgRating is weighted average of IMDb/TMDB/Trakt (0-10 scale).
+ */
+export const HIT_AVG_RATING_THRESHOLD = 7.5;
+export const HIT_MIN_VOTES_THRESHOLD = 1000;
 
 /**
  * Defines the recency window for the NEW_RELEASE badge.

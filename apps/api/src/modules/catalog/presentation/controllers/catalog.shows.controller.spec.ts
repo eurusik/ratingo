@@ -80,6 +80,13 @@ describe('CatalogShowsController', () => {
         slug: 'arcane',
         releaseDate: null,
         nextAirDate: null,
+        externalRatings: {
+          imdb: null,
+          tmdb: null,
+          trakt: null,
+          metacritic: null,
+          rottenTomatoes: null,
+        },
       };
       showRepository.findBySlug.mockResolvedValue(mockShow);
 

@@ -27,8 +27,7 @@ export class HomeService {
   async getHero(type?: MediaType): Promise<HeroItemDto[]> {
     try {
       // Get top items from repository
-      // We ask for strict limit of 3 for now
-      const items = await this.mediaRepository.findHero(3, type);
+      const items = await this.mediaRepository.findHero(4, type);
 
       return items as HeroItemDto[];
     } catch (error) {

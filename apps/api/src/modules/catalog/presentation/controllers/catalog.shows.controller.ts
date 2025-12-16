@@ -28,6 +28,7 @@ import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import { normalizeListQuery } from '../utils/query-normalizer';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
+import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
 
 /**
  * Public show catalog endpoints (trending, calendar, details).
@@ -177,6 +178,7 @@ export class CatalogShowsController {
         continuePoint: extractContinuePoint(enriched.userState?.progress ?? null),
         hasNewEpisode: this.hasNewEpisode(show),
         isNewRelease: this.isNewRelease(show.releaseDate),
+        isHit: isHitQuality(show.externalRatings),
         trendDelta: null,
         isTrending: false,
       },

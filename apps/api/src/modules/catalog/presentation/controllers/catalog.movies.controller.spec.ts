@@ -98,7 +98,19 @@ describe('CatalogMoviesController', () => {
 
   describe('getMovieBySlug', () => {
     it('returns details with card when found', async () => {
-      const mockMovie = { id: '1', title: 'Matrix', slug: 'the-matrix', releaseDate: null };
+      const mockMovie = {
+        id: '1',
+        title: 'Matrix',
+        slug: 'the-matrix',
+        releaseDate: null,
+        externalRatings: {
+          imdb: null,
+          tmdb: null,
+          trakt: null,
+          metacritic: null,
+          rottenTomatoes: null,
+        },
+      };
       movieRepository.findBySlug.mockResolvedValue(mockMovie);
 
       const result = await controller.getMovieBySlug('the-matrix');

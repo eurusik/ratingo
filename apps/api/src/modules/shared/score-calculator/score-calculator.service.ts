@@ -28,10 +28,12 @@ export interface ScoreInput {
  * Output scores from calculation.
  */
 export interface ScoreOutput {
-  ratingoScore: number; // Main composite score (0-1)
-  qualityScore: number; // Rating-based component (0-1)
-  popularityScore: number; // Popularity-based component (0-1)
-  freshnessScore: number; // Time-based component (0-1)
+  ratingoScore: number; // Main composite score (0-100)
+  qualityScore: number; // Rating-based component (0-100)
+  popularityScore: number; // Popularity-based component (0-100)
+  freshnessScore: number; // Time-based component (0-100)
+  avgRating: number; // Pure weighted average rating (0-10 scale)
+  totalVotes: number; // Total vote count (IMDb + Trakt)
 }
 
 /**
@@ -54,7 +56,7 @@ interface RatingSource {
 export class ScoreCalculatorService {
   constructor(
     @Inject(scoreConfig.KEY)
-    private readonly config: ConfigType<typeof scoreConfig>
+    private readonly config: ConfigType<typeof scoreConfig>,
   ) {}
 
   /**
@@ -71,20 +73,20 @@ export class ScoreCalculatorService {
     const tmdbPopularityNorm = this.clamp(
       input.tmdbPopularity / normalization.tmdbPopularityMax,
       0,
-      1
+      1,
     );
 
     const traktWatchersNorm = this.clamp(
       Math.log1p(input.traktWatchers) / Math.log1p(normalization.traktWatchersMax),
       0,
-      1
+      1,
     );
 
     const avgRating = this.calculateAvgRating(
       input.imdbRating,
       input.traktRating,
       input.metacriticRating,
-      input.rottenTomatoesRating
+      input.rottenTomatoesRating,
     );
     const avgRatingNorm = this.clamp(avgRating / 10, 0, 1);
 
@@ -92,13 +94,13 @@ export class ScoreCalculatorService {
     const voteConfidenceNorm = this.clamp(
       1 - Math.exp(-totalVotes / normalization.voteConfidenceK),
       0,
-      1
+      1,
     );
 
     const freshnessNorm = this.calculateFreshness(
       input.releaseDate,
       normalization.freshnessDecayDays,
-      normalization.freshnessMinFloor
+      normalization.freshnessMinFloor,
     );
 
     // === CALCULATE COMPONENT SCORES ===
@@ -126,14 +128,16 @@ export class ScoreCalculatorService {
       qualityScore: this.clamp(
         (qualityScore / (weights.avgRating + weights.voteConfidence)) * 100,
         0,
-        100
+        100,
       ),
       popularityScore: this.clamp(
         (popularityScore / (weights.tmdbPopularity + weights.traktWatchers)) * 100,
         0,
-        100
+        100,
       ),
       freshnessScore: this.clamp(freshnessNorm * 100, 0, 100),
+      avgRating: this.clamp(avgRating, 0, 10), // Pure rating without confidence
+      totalVotes,
     };
   }
 
@@ -145,7 +149,7 @@ export class ScoreCalculatorService {
     imdbRating?: number | null,
     traktRating?: number | null,
     mcRating?: number | null,
-    rtRating?: number | null
+    rtRating?: number | null,
   ): number {
     const { ratingWeights } = this.config;
 
@@ -178,7 +182,7 @@ export class ScoreCalculatorService {
     const now = new Date();
     const daysSinceRelease = Math.max(
       0,
-      Math.floor((now.getTime() - releaseDate.getTime()) / (1000 * 60 * 60 * 24))
+      Math.floor((now.getTime() - releaseDate.getTime()) / (1000 * 60 * 60 * 24)),
     );
 
     const expDecay = Math.exp(-daysSinceRelease / decayDays);

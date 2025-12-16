@@ -8,7 +8,7 @@
  * const shows = await catalogApi.getTrendingShows({ limit: 20 });
  */
 
-import type { GetData } from '@ratingo/api-contract';
+import type { GetData, GetArrayItem, components } from '@ratingo/api-contract';
 import { apiGet } from './client';
 
 /**
@@ -26,14 +26,24 @@ export interface TrendingShowsParams {
 export type ShowDetailsDto = GetData<'/api/catalog/shows/{slug}'>;
 
 /**
- * Trending shows response.
+ * Hero block data (array unwrapped from {success, data} by apiGet).
+ */
+export type HeroData = GetArrayItem<'/api/home/hero'>[];
+
+/**
+ * Hero block item (Top 3).
+ */
+export type HeroItemDto = GetArrayItem<'/api/home/hero'>;
+
+/**
+ * Trending shows response (has {data, meta} structure).
  */
 export type TrendingShowsDto = GetData<'/api/catalog/shows/trending'>;
 
 /**
- * Trending shows item.
+ * Trending show list item.
  */
-export type ShowTrendingItemDto = TrendingShowsDto['data'][number];
+export type ShowTrendingItemDto = components['schemas']['ShowTrendingItemDto'];
 
 /**
  * Calendar response.
@@ -45,13 +55,28 @@ export type CalendarResponseDto = GetData<'/api/catalog/shows/calendar'>;
  */
 export const catalogApi = {
   /**
+   * Fetches hero block items (Top 3 hottest media).
+   *
+   * @param params - Query parameters
+   * @returns Hero items array (unwrapped)
+   *
+   * @example
+   * const heroItems = await catalogApi.getHeroItems({ type: 'show' });
+   */
+  async getHeroItems(params?: { type?: 'show' | 'movie' }): Promise<HeroData> {
+    return apiGet<HeroData>('home/hero', {
+      searchParams: params as Record<string, string>,
+    });
+  },
+
+  /**
    * Fetches trending shows.
    *
    * @param params - Query parameters
-   * @returns Trending shows response
+   * @returns Trending shows data (unwrapped)
    *
    * @example
-   * const response = await catalogApi.getTrendingShows({ limit: 20 });
+   * const trendingData = await catalogApi.getTrendingShows({ limit: 20 });
    */
   async getTrendingShows(params?: TrendingShowsParams): Promise<TrendingShowsDto> {
     return apiGet<TrendingShowsDto>('catalog/shows/trending', {
