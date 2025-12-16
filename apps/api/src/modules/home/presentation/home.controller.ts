@@ -19,7 +19,7 @@ export class HomeController {
    * @returns {Promise<HeroItemDto[]>} Hero items
    */
   @Get('hero')
-  @ApiOperation({ summary: 'Get Hero block items (Top 3 hottest media)' })
+  @ApiOperation({ summary: 'Get Hero block items (Top 4 hottest media)' })
   @ApiQuery({ name: 'type', required: false, enum: MediaType })
   @ApiResponse({ type: [HeroItemDto] })
   async getHero(@Query('type') type?: MediaType): Promise<HeroItemDto[]> {
