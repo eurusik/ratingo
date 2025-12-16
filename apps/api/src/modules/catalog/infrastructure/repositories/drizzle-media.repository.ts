@@ -20,8 +20,6 @@ import {
   IShowRepository,
   SHOW_REPOSITORY,
 } from '../../domain/repositories/show.repository.interface';
-import { DrizzleMovieRepository } from './drizzle-movie.repository';
-import { DrizzleShowRepository } from './drizzle-show.repository';
 import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
 import { eq, inArray, sql, and, desc } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
@@ -30,6 +28,7 @@ import { DatabaseException } from '../../../../common/exceptions';
 
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { HeroMediaQuery } from '../queries/hero-media.query';
+import { HeroMediaItem, LocalSearchResult } from '../../domain/models/hero-media.model';
 
 /**
  * Drizzle ORM implementation of the Media Repository.
@@ -56,9 +55,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
    *
    * @throws {DatabaseException} If database query fails
    */
-  async findByTmdbId(
-    tmdbId: number,
-  ): Promise<{
+  async findByTmdbId(tmdbId: number): Promise<{
     id: string;
     slug: string;
     type: MediaType;
@@ -173,13 +170,9 @@ export class DrizzleMediaRepository implements IMediaRepository {
 
         // Delegate type-specific upsert
         if (media.type === MediaType.MOVIE) {
-          if (this.movieRepository instanceof DrizzleMovieRepository) {
-            await this.movieRepository.upsertDetails(tx, mediaId, media.details || {});
-          }
+          await this.movieRepository.upsertDetails(tx, mediaId, media.details || {});
         } else {
-          if (this.showRepository instanceof DrizzleShowRepository) {
-            await this.showRepository.upsertDetails(tx, mediaId, media.details || {});
-          }
+          await this.showRepository.upsertDetails(tx, mediaId, media.details || {});
         }
 
         // Sync Genres
@@ -309,16 +302,16 @@ export class DrizzleMediaRepository implements IMediaRepository {
    *
    * @param {number} limit - Maximum number of items to return
    * @param {MediaType} type - Optional filter by media type
-   * @returns {Promise<any[]>} List of hero-worthy media items
+   * @returns {Promise<HeroMediaItem[]>} List of hero-worthy media items
    */
-  async findHero(limit: number, type?: MediaType): Promise<any[]> {
+  async findHero(limit: number, type?: MediaType): Promise<HeroMediaItem[]> {
     return this.heroMediaQuery.execute({ limit, type });
   }
 
   /**
    * Searches for media items using full-text search.
    */
-  async search(query: string, limit: number): Promise<any[]> {
+  async search(query: string, limit: number): Promise<LocalSearchResult[]> {
     try {
       // Create tsquery: 'word1 & word2:*' for partial matching
       const formattedQuery = query.trim().split(/\s+/).join(' & ') + ':*';

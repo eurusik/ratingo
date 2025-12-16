@@ -8,6 +8,19 @@
  *
  * Important: NOT an expert opinion, but a data-based inference.
  *
+ * CTA Philosophy:
+ * CTA copy follows the principle: "дія + причина (1 рядок)"
+ * - Never pressures or oversells
+ * - Explains WHY to act NOW in context of the verdict
+ * - Always calm, brief, without emotional words
+ * 
+ * Examples:
+ * - season_comparison (weak start) → "щоб вирішити після виходу всіх серій"
+ * - ongoing series → "щоб не пропустити нові серії" 
+ * - movie/not streaming → "щоб повернутися, коли буде на стрімінгах"
+ * - general → "нагадаємо, коли вийде нова серія"
+ * 
+ * Positioning: "Пульт вибору, а не телевізор" (Discovery tool, not player)
  */
 
 'use client';
@@ -64,6 +77,8 @@ export interface DataVerdictProps {
   ctaProps?: {
     isSaved?: boolean;
     hasNewEpisodes?: boolean;
+    /** Custom hint key for context-specific CTA copy */
+    hintKey?: 'newEpisodes' | 'afterAllEpisodes' | 'whenOnStreaming' | 'notifyNewEpisode' | 'general';
     onSave?: () => void;
   };
 
@@ -188,9 +203,11 @@ export function DataVerdict({
                 </span>
                 {!ctaProps?.isSaved && (
                   <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
-                    {ctaProps?.hasNewEpisodes
-                      ? dict.details.cta.saveHint.newEpisodes
-                      : dict.details.cta.saveHint.general}
+                    {ctaProps?.hintKey 
+                      ? dict.details.cta.saveHint[ctaProps.hintKey]
+                      : ctaProps?.hasNewEpisodes
+                        ? dict.details.cta.saveHint.newEpisodes
+                        : dict.details.cta.saveHint.general}
                   </span>
                 )}
               </div>

@@ -11,6 +11,7 @@ import {
   NEW_RELEASE_DAYS_THRESHOLD,
   CLASSIC_YEARS_THRESHOLD,
 } from '../../../../common/constants';
+import { HeroMediaItem, HeroShowProgress } from '../../domain/models/hero-media.model';
 
 /**
  * Options for hero media query.
@@ -41,9 +42,9 @@ export class HeroMediaQuery {
    * Executes the hero media query.
    *
    * @param {HeroMediaOptions} options - Query options (limit, optional type filter)
-   * @returns {Promise<any[]>} List of hero-worthy media items
+   * @returns {Promise<HeroMediaItem[]>} List of hero-worthy media items
    */
-  async execute(options: HeroMediaOptions): Promise<any[]> {
+  async execute(options: HeroMediaOptions): Promise<HeroMediaItem[]> {
     const { limit, type } = options;
 
     try {
@@ -100,10 +101,13 @@ export class HeroMediaQuery {
   /**
    * Fetches show progress (season/episode) for TV shows in the results.
    */
-  private async fetchShowProgress(results: any[], now: Date): Promise<Map<string, any>> {
+  private async fetchShowProgress(
+    results: Array<{ id: string; type: MediaType }>,
+    now: Date,
+  ): Promise<Map<string, HeroShowProgress>> {
     const showIds = results.filter((r) => r.type === MediaType.SHOW).map((r) => r.id);
 
-    const progressMap = new Map<string, any>();
+    const progressMap = new Map<string, HeroShowProgress>();
 
     if (showIds.length === 0) {
       return progressMap;
@@ -183,7 +187,28 @@ export class HeroMediaQuery {
   /**
    * Maps raw database rows to hero item DTOs.
    */
-  private mapResults(results: any[], showProgressMap: Map<string, any>, now: Date): any[] {
+  private mapResults(
+    results: Array<{
+      id: string;
+      type: MediaType;
+      slug: string;
+      title: string;
+      originalTitle: string | null;
+      overview: string | null;
+      posterPath: string | null;
+      backdropPath: string | null;
+      releaseDate: Date | null;
+      videos: unknown;
+      ratingoScore: number | null;
+      qualityScore: number | null;
+      watchersCount: number | null;
+      totalWatchers: number | null;
+      rating: number;
+      voteCount: number;
+    }>,
+    showProgressMap: Map<string, HeroShowProgress>,
+    now: Date,
+  ): HeroMediaItem[] {
     const ninetyDaysAgo = new Date(
       now.getTime() - NEW_RELEASE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000,
     );

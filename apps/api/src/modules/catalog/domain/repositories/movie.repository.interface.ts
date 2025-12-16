@@ -8,6 +8,7 @@ import {
   VoteSource,
 } from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { DatabaseTransaction } from '../types/transaction.type';
 
 /**
  * Movie with media item data for catalog queries.
@@ -192,13 +193,13 @@ export interface IMovieRepository {
   /**
    * Upserts movie details transactionally.
    *
-   * @param {any} tx - Transaction handle
+   * @param {DatabaseTransaction} tx - Transaction handle
    * @param {string} mediaId - Media item id
    * @param {{ runtime?: number | null; budget?: number | null; revenue?: number | null; status?: string | null; theatricalReleaseDate?: Date | null; digitalReleaseDate?: Date | null; releases?: ReleaseInfo[] }} details - Details payload
    * @returns {Promise<void>} Nothing
    */
   upsertDetails(
-    tx: any,
+    tx: DatabaseTransaction,
     mediaId: string,
     details: {
       runtime?: number | null;

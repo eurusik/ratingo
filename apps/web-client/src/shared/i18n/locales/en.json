@@ -71,7 +71,10 @@
     "cta": {
       "saveHint": {
         "newEpisodes": "to never miss new episodes",
-        "general": "add to your list"
+        "afterAllEpisodes": "to decide after all episodes are out",
+        "whenOnStreaming": "to return when it's on streaming",
+        "notifyNewEpisode": "we'll remind you when a new episode drops",
+        "general": "to never miss new episodes"
       },
       "whereToWatchHint": "official services"
     },

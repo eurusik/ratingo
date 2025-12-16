@@ -6,12 +6,14 @@ import { eq, inArray } from 'drizzle-orm';
 import {
   IMovieRepository,
   MovieWithMedia,
+  MovieDetails,
   NowPlayingOptions,
   TrendingMovieItem,
   WithTotal,
 } from '../../domain/repositories/movie.repository.interface';
 import { ReleaseInfo } from '../../../../database/schema';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { DatabaseTransaction } from '../../domain/types/transaction.type';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { CatalogListQueryDto } from '../../presentation/dtos/catalog-list-query.dto';
 
@@ -20,7 +22,22 @@ import { MovieDetailsQuery } from '../queries/movie-details.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';
 import { MovieListingsQuery, MOVIE_LISTING_TYPE } from '../queries/movie-listings.query';
 
-type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
+type DrizzleTransaction = Parameters<
+  Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]
+>[0];
+
+/**
+ * Movie details payload for upsert operation.
+ */
+interface MovieDetailsPayload {
+  runtime?: number | null;
+  budget?: number | null;
+  revenue?: number | null;
+  status?: string | null;
+  theatricalReleaseDate?: Date | null;
+  digitalReleaseDate?: Date | null;
+  releases?: ReleaseInfo[];
+}
 
 /**
  * Drizzle implementation of IMovieRepository.
@@ -41,8 +58,13 @@ export class DrizzleMovieRepository implements IMovieRepository {
   /**
    * Upserts movie details transactionally.
    */
-  async upsertDetails(tx: DbTransaction, mediaId: string, details: any): Promise<void> {
-    await tx
+  async upsertDetails(
+    tx: DatabaseTransaction,
+    mediaId: string,
+    details: MovieDetailsPayload,
+  ): Promise<void> {
+    const drizzleTx = tx as DrizzleTransaction;
+    await drizzleTx
       .insert(schema.movies)
       .values(PersistenceMapper.toMovieInsert(mediaId, details))
       .onConflictDoUpdate({
@@ -118,7 +140,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
   /**
    * Finds full movie details by slug.
    */
-  async findBySlug(slug: string): Promise<any> {
+  async findBySlug(slug: string): Promise<MovieDetails | null> {
     return this.movieDetailsQuery.execute(slug);
   }
 

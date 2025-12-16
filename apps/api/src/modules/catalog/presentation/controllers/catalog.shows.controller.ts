@@ -26,6 +26,7 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
+import { normalizeListQuery } from '../utils/query-normalizer';
 
 /**
  * Public show catalog endpoints (trending, calendar, details).
@@ -65,7 +66,7 @@ export class CatalogShowsController {
     @Query() query: TrendingShowsQueryDto,
     @CurrentUser() user: { id: string } | null,
   ): Promise<TrendingShowsResponseDto> {
-    const normalizedQuery = this.normalizeListQuery(query);
+    const normalizedQuery = normalizeListQuery(query);
     const shows = await this.showRepository.findTrending(normalizedQuery);
     const data = await this.catalogUserListEnrich(user, shows);
     const withCards = this.cards.enrichCatalogItems(data, {
@@ -196,21 +197,6 @@ export class CatalogShowsController {
     item: T,
   ): Promise<T & { userState: UserMediaState | null }> {
     return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
-  }
-
-  /**
-   * Normalizes list query by parsing comma-separated genres into an array.
-   *
-   * @param {T} query - Incoming query DTO
-   * @returns {T & { genres?: string[] }} Normalized query
-   */
-  private normalizeListQuery<T extends TrendingShowsQueryDto>(query: T): T & { genres?: string[] } {
-    const genres =
-      query.genres
-        ?.split(',')
-        .map((g) => g.trim())
-        .filter((g) => g.length > 0) || undefined;
-    return { ...query, genres } as T & { genres?: string[] };
   }
 
   /**

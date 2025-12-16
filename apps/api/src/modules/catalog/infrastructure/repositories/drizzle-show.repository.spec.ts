@@ -78,7 +78,7 @@ describe('DrizzleShowRepository', () => {
       const tx = { insert: jest.fn().mockReturnValue(insertChain) } as any;
 
       await repository.upsertDetails(tx, 'media-1', {
-        seasons: [{ number: 1, episodes: [{ number: 1 }] }],
+        seasons: [{ number: 1, episodes: [{ number: 1, title: 'Pilot' }] }],
       });
 
       expect(tx.insert).toHaveBeenCalled();
@@ -112,7 +112,7 @@ describe('DrizzleShowRepository', () => {
       repository = module.get(DrizzleShowRepository);
 
       await expect(repository.saveDropOffAnalysis(1, { chart: [] } as any)).rejects.toThrow(
-        DatabaseException
+        DatabaseException,
       );
     });
   });

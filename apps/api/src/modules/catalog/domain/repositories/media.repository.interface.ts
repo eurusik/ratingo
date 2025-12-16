@@ -1,6 +1,7 @@
 import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { HeroMediaItem, LocalSearchResult } from '../models/hero-media.model';
 
 /**
  * Data needed for score calculation.
@@ -117,18 +118,18 @@ export interface IMediaRepository {
    *
    * @param {number} limit - Max items
    * @param {MediaType} type - Optional media type filter
-   * @returns {Promise<any[]>} Hero items
+   * @returns {Promise<HeroMediaItem[]>} Hero items
    */
-  findHero(limit: number, type?: MediaType): Promise<any[]>;
+  findHero(limit: number, type?: MediaType): Promise<HeroMediaItem[]>;
 
   /**
    * Searches for media items using full-text search.
    *
    * @param {string} query - Search string
    * @param {number} limit - Max items
-   * @returns {Promise<any[]>} Search results
+   * @returns {Promise<LocalSearchResult[]>} Search results
    */
-  search(query: string, limit: number): Promise<any[]>;
+  search(query: string, limit: number): Promise<LocalSearchResult[]>;
 }
 
 /**

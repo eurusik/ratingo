@@ -24,6 +24,7 @@ import { CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-day
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
+import { normalizeListQuery } from '../utils/query-normalizer';
 
 /**
  * Public movie catalog endpoints (trending, listings, details).
@@ -64,7 +65,7 @@ export class CatalogMoviesController {
     @Query() query: CatalogListQueryDto,
     @CurrentUser() user: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const normalizedQuery = this.normalizeListQuery(query);
+    const normalizedQuery = normalizeListQuery(query);
     const movies = await this.movieRepository.findTrending(normalizedQuery);
     const limit = normalizedQuery.limit ?? CatalogMoviesController.DEFAULT_LIMIT;
     const offset = normalizedQuery.offset ?? CatalogMoviesController.DEFAULT_OFFSET;
@@ -104,7 +105,7 @@ export class CatalogMoviesController {
     @Query() query: CatalogListQueryDto,
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const normalizedQuery = this.normalizeListQuery(query);
+    const normalizedQuery = normalizeListQuery(query);
     const {
       limit = CatalogMoviesController.DEFAULT_LIMIT,
       offset = CatalogMoviesController.DEFAULT_OFFSET,
@@ -142,7 +143,7 @@ export class CatalogMoviesController {
     @Query() query: CatalogListQueryWithDaysDto,
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const normalizedQuery = this.normalizeListQuery(query);
+    const normalizedQuery = normalizeListQuery(query);
     const {
       limit = CatalogMoviesController.DEFAULT_LIMIT,
       offset = CatalogMoviesController.DEFAULT_OFFSET,
@@ -191,7 +192,7 @@ export class CatalogMoviesController {
     @Query() query: CatalogListQueryWithDaysDto,
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const normalizedQuery = this.normalizeListQuery(query);
+    const normalizedQuery = normalizeListQuery(query);
     const {
       limit = CatalogMoviesController.DEFAULT_LIMIT,
       offset = CatalogMoviesController.DEFAULT_OFFSET,
@@ -272,20 +273,5 @@ export class CatalogMoviesController {
     item: T,
   ): Promise<T & { userState: UserMediaState | null }> {
     return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
-  }
-
-  /**
-   * Normalizes list query by parsing comma-separated genres into an array.
-   *
-   * @param {T} query - Incoming query DTO
-   * @returns {T & { genres?: string[] }} Normalized query
-   */
-  private normalizeListQuery<T extends CatalogListQueryDto>(query: T): T & { genres?: string[] } {
-    const genres =
-      query.genres
-        ?.split(',')
-        .map((g) => g.trim())
-        .filter((g) => g.length > 0) || undefined;
-    return { ...query, genres } as T & { genres?: string[] };
   }
 }

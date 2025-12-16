@@ -17,6 +17,7 @@ import {
 } from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DatabaseTransaction } from '../types/transaction.type';
 
 /**
  * Options for trending shows query.
@@ -155,13 +156,13 @@ export interface IShowRepository {
   /**
    * Upserts show details (called by orchestrator).
    *
-   * @param {any} tx - Transaction handle
+   * @param {DatabaseTransaction} tx - Transaction handle
    * @param {string} mediaId - Media item id
    * @param {{ totalSeasons?: number | null; totalEpisodes?: number | null; lastAirDate?: Date | null; nextAirDate?: Date | null; status?: string | null; seasons?: NormalizedSeason[] }} details - Details payload
    * @returns {Promise<void>} Nothing
    */
   upsertDetails(
-    tx: any, // We use 'any' here to avoid exposing Drizzle types to domain, implementation casts it
+    tx: DatabaseTransaction,
     mediaId: string,
     details: {
       totalSeasons?: number | null;

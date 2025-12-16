@@ -7,7 +7,6 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import {
   CalendarEpisode,
   IShowRepository,
-  SHOW_REPOSITORY,
   ShowDetails,
   ShowListItem,
   TrendingShowItem,
@@ -16,6 +15,8 @@ import {
 } from '../../domain/repositories/show.repository.interface';
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { DatabaseTransaction } from '../../domain/types/transaction.type';
+import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 // Query Objects
@@ -23,7 +24,21 @@ import { TrendingShowsQuery } from '../queries/trending-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
 
-type DbTransaction = Parameters<Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]>[0];
+type DrizzleTransaction = Parameters<
+  Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]
+>[0];
+
+/**
+ * Show details payload for upsert operation.
+ */
+interface ShowDetailsPayload {
+  totalSeasons?: number | null;
+  totalEpisodes?: number | null;
+  lastAirDate?: Date | null;
+  nextAirDate?: Date | null;
+  status?: string | null;
+  seasons?: NormalizedSeason[];
+}
 
 /**
  * Drizzle implementation of IShowRepository.
@@ -44,8 +59,13 @@ export class DrizzleShowRepository implements IShowRepository {
   /**
    * Upserts show details, seasons, and episodes transactionally.
    */
-  async upsertDetails(tx: DbTransaction, mediaId: string, details: any): Promise<void> {
-    const [show] = await tx
+  async upsertDetails(
+    tx: DatabaseTransaction,
+    mediaId: string,
+    details: ShowDetailsPayload,
+  ): Promise<void> {
+    const drizzleTx = tx as DrizzleTransaction;
+    const [show] = await drizzleTx
       .insert(schema.shows)
       .values(PersistenceMapper.toShowInsert(mediaId, details))
       .onConflictDoUpdate({
@@ -58,7 +78,7 @@ export class DrizzleShowRepository implements IShowRepository {
 
     if (details.seasons?.length) {
       for (const season of details.seasons) {
-        const [seasonRecord] = await tx
+        const [seasonRecord] = await drizzleTx
           .insert(schema.seasons)
           .values(PersistenceMapper.toSeasonInsert(showId, season))
           .onConflictDoUpdate({
@@ -69,7 +89,7 @@ export class DrizzleShowRepository implements IShowRepository {
 
         if (season.episodes?.length) {
           for (const ep of season.episodes) {
-            await tx
+            await drizzleTx
               .insert(schema.episodes)
               .values(PersistenceMapper.toEpisodeInsert(seasonRecord.id, showId, ep))
               .onConflictDoUpdate({

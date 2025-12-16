@@ -274,7 +274,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             showCta
             ctaProps={{
               isSaved: false,
-              hasNewEpisodes: show.badgeKey === 'NEW_EPISODE',
+              hintKey: 'afterAllEpisodes', // Context-specific: wait for all episodes
             }}
             dict={dict}
           />
