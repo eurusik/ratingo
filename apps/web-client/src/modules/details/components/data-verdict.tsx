@@ -79,34 +79,34 @@ export interface DataVerdictProps {
 const verdictConfig = {
   season_comparison: {
     icon: TrendingDown,
-    iconColor: 'text-amber-400/70',
-    textColor: 'text-amber-50',
-    bgGradient: 'bg-gradient-to-br from-amber-500/5 via-transparent to-transparent',
-    borderColor: 'border-l-amber-400/20',
+    iconColor: 'text-amber-400',
+    textColor: 'text-white',
+    bgGradient: 'bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent',
+    borderColor: 'border-l-amber-400/40',
     ctaAccent: 'amber', // CTA button accent color
   },
   user_context: {
     icon: User,
-    iconColor: 'text-blue-400/70',
-    textColor: 'text-blue-50',
-    bgGradient: 'bg-gradient-to-br from-blue-500/5 via-transparent to-transparent',
-    borderColor: 'border-l-blue-400/20',
+    iconColor: 'text-blue-400',
+    textColor: 'text-white',
+    bgGradient: 'bg-gradient-to-br from-blue-500/15 via-blue-500/5 to-transparent',
+    borderColor: 'border-l-blue-400/40',
     ctaAccent: 'blue',
   },
   genre_match: {
     icon: Target,
-    iconColor: 'text-purple-400/70',
-    textColor: 'text-purple-50',
-    bgGradient: 'bg-gradient-to-br from-purple-500/5 via-transparent to-transparent',
-    borderColor: 'border-l-purple-400/20',
+    iconColor: 'text-purple-400',
+    textColor: 'text-white',
+    bgGradient: 'bg-gradient-to-br from-purple-500/15 via-purple-500/5 to-transparent',
+    borderColor: 'border-l-purple-400/40',
     ctaAccent: 'purple',
   },
   general: {
     icon: Info,
-    iconColor: 'text-zinc-400/70',
-    textColor: 'text-zinc-50',
-    bgGradient: 'bg-gradient-to-br from-zinc-500/5 via-transparent to-transparent',
-    borderColor: 'border-l-zinc-400/20',
+    iconColor: 'text-zinc-400',
+    textColor: 'text-white',
+    bgGradient: 'bg-gradient-to-br from-zinc-500/15 via-zinc-500/5 to-transparent',
+    borderColor: 'border-l-zinc-400/40',
     ctaAccent: 'zinc',
   },
 } as const;
@@ -125,10 +125,10 @@ export function DataVerdict({
 
   // Dynamic CTA gradient based on verdict type
   const ctaGradientClasses = {
-    season_comparison: 'bg-gradient-to-r from-amber-500/5 via-transparent to-transparent border-amber-500/10 hover:border-amber-500/20 hover:from-amber-500/10',
-    user_context: 'bg-gradient-to-r from-blue-500/5 via-transparent to-transparent border-blue-500/10 hover:border-blue-500/20 hover:from-blue-500/10',
-    genre_match: 'bg-gradient-to-r from-purple-500/5 via-transparent to-transparent border-purple-500/10 hover:border-purple-500/20 hover:from-purple-500/10',
-    general: 'bg-gradient-to-r from-zinc-500/5 via-transparent to-transparent border-zinc-500/10 hover:border-zinc-500/20 hover:from-zinc-500/10',
+    season_comparison: 'bg-gradient-to-r from-amber-500/10 via-transparent to-transparent border-amber-500/20 hover:border-amber-500/30 hover:from-amber-500/15',
+    user_context: 'bg-gradient-to-r from-blue-500/10 via-transparent to-transparent border-blue-500/20 hover:border-blue-500/30 hover:from-blue-500/15',
+    genre_match: 'bg-gradient-to-r from-purple-500/10 via-transparent to-transparent border-purple-500/20 hover:border-purple-500/30 hover:from-purple-500/15',
+    general: 'bg-gradient-to-r from-zinc-500/10 via-transparent to-transparent border-zinc-500/20 hover:border-zinc-500/30 hover:from-zinc-500/15',
   } as const;
 
   return (
@@ -145,7 +145,7 @@ export function DataVerdict({
 
         <div className="flex-1 min-w-0 space-y-2">
           {/* Header: "Based on Ratingo data" */}
-          <p className="text-xs font-medium text-zinc-500/80 uppercase tracking-wider">
+          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
             {dict.details.verdict.byData}
           </p>
 
@@ -156,7 +156,7 @@ export function DataVerdict({
 
           {/* Additional context (optional) */}
           {context && (
-            <p className="text-xs text-zinc-500 leading-relaxed">
+            <p className="text-sm text-zinc-400 leading-relaxed">
               {context}
             </p>
           )}
