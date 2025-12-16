@@ -4,6 +4,9 @@ export { DetailsQuickPitch, type DetailsQuickPitchProps } from './details-quick-
 export { ShowStatus, type ShowStatusProps } from './show-status';
 export { MovieRelease, type MovieReleaseProps } from './movie-release';
 export { ProvidersList, type ProvidersListProps } from './providers-list';
+export { ProviderCard } from './provider-card';
+export { ProvidersCategory } from './providers-category';
+export { ProvidersRegionBadge } from './providers-region-badge';
 export { SimilarCarousel, type SimilarCarouselProps } from './similar-carousel';
 export { DataVerdict, type DataVerdictProps, type VerdictType, type ConfidenceLevel } from './data-verdict';
 export { VerdictCtaButton } from './verdict-cta-button';

@@ -85,6 +85,7 @@ export class TmdbMapper {
         totalEpisodes: data.number_of_episodes,
         lastAirDate: data.last_air_date ? new Date(data.last_air_date) : null,
         status: data.status || null,
+        seasons: this.extractSeasons(data.seasons),
       };
     }
 
@@ -240,6 +241,38 @@ export class TmdbMapper {
     }
   }
 
+  /**
+   * Extracts seasons from TMDB API response.
+   * Filters out "Specials" (season 0) and maps to NormalizedSeason format.
+   */
+  private static extractSeasons(seasons: any[] | undefined): Array<{
+    tmdbId: number;
+    number: number;
+    name: string | null;
+    overview: string | null;
+    posterPath: string | null;
+    airDate: Date | null;
+    episodeCount: number;
+    episodes: [];
+  }> {
+    if (!Array.isArray(seasons) || seasons.length === 0) {
+      return [];
+    }
+
+    return seasons
+      .filter((s: any) => s.season_number > 0) // Exclude "Specials" (season 0)
+      .map((s: any) => ({
+        tmdbId: s.id,
+        number: s.season_number,
+        name: s.name || null,
+        overview: s.overview || null,
+        posterPath: s.poster_path || null,
+        airDate: s.air_date ? new Date(s.air_date) : null,
+        episodeCount: s.episode_count || 0,
+        episodes: [], // Episodes are fetched separately via Trakt
+      }));
+  }
+
   private static extractVideos(data: any): NormalizedVideo[] {
     const results = data.videos?.results;
     if (!Array.isArray(results) || results.length === 0) {
@@ -251,7 +284,7 @@ export class TmdbMapper {
         (v: any) =>
           v.site === VideoSiteEnum.YOUTUBE &&
           (v.type === VideoTypeEnum.TRAILER || v.type === VideoTypeEnum.TEASER) &&
-          (v.iso_639_1 === VideoLanguageEnum.EN || v.iso_639_1 === VideoLanguageEnum.UK)
+          (v.iso_639_1 === VideoLanguageEnum.EN || v.iso_639_1 === VideoLanguageEnum.UK),
       )
       .sort((a: any, b: any) => {
         // Language Priority: UK > Others
