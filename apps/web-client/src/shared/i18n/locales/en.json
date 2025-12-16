@@ -70,8 +70,8 @@
     "whereToWatch": "Where to watch",
     "showMore": "Show more",
     "showLess": "Show less",
-    "watchingNow": "watching now",
-    "totalWatchers": "total views",
+    "watchingNow": "interested now",
+    "totalWatchers": "watched overall",
     "ratingTooltip": {
       "title": "Ratingo rating",
       "subtitle": "Shows how relevant the content is right now",

@@ -1,17 +1,11 @@
 /**
  * Smart badge component for media cards.
  *
- * Shows badge based on CardMetaDto.badgeKey:
- * - TRENDING: 🔥 ХІТ
- * - NEW_RELEASE: 🆕 Новинка
- * - RISING: 📈 Ріст
- * - NEW_EPISODE: 🎬 Новий епізод
  */
 
 import { Flame, Sparkles, TrendingUp, Clapperboard, Play, Bookmark, Star } from 'lucide-react';
 import type { components } from '@ratingo/api-contract';
 import { cn } from '@/shared/utils';
-import { useTranslation } from '@/shared/i18n';
 
 // Re-use type from API contract
 type BadgeKey = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
@@ -19,44 +13,50 @@ type BadgeKey = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
 interface CardBadgeProps {
   /** Badge type from backend. */
   badgeKey: BadgeKey;
+  /** Badge label text (for SSR compatibility). */
+  label: string;
   /** Position on card. */
   position?: 'top-left' | 'top-right';
   className?: string;
 }
 
-const badgeConfig: Record<BadgeKey, { labelKey: string; icon: React.ElementType; className: string }> = {
+/** Badge label keys mapping for i18n */
+export const badgeLabelKeys: Record<BadgeKey, 'hit' | 'trending' | 'newRelease' | 'rising' | 'newEpisode' | 'continue' | 'inWatchlist'> = {
+  HIT: 'hit',
+  TRENDING: 'trending',
+  NEW_RELEASE: 'newRelease',
+  RISING: 'rising',
+  NEW_EPISODE: 'newEpisode',
+  CONTINUE: 'continue',
+  IN_WATCHLIST: 'inWatchlist',
+};
+
+const badgeConfig: Record<BadgeKey, { icon: React.ElementType; className: string }> = {
   HIT: {
-    labelKey: 'card.badge.hit',
     icon: Star,
     className: 'bg-yellow-500 text-black',
   },
   TRENDING: {
-    labelKey: 'card.badge.trending',
     icon: Flame,
     className: 'bg-red-600 text-white',
   },
   NEW_RELEASE: {
-    labelKey: 'card.badge.newRelease',
     icon: Sparkles,
     className: 'bg-green-500 text-white',
   },
   RISING: {
-    labelKey: 'card.badge.rising',
     icon: TrendingUp,
     className: 'bg-orange-500 text-white',
   },
   NEW_EPISODE: {
-    labelKey: 'card.badge.newEpisode',
     icon: Clapperboard,
     className: 'bg-purple-500 text-white',
   },
   CONTINUE: {
-    labelKey: 'card.badge.continue',
     icon: Play,
     className: 'bg-blue-500 text-white',
   },
   IN_WATCHLIST: {
-    labelKey: 'card.badge.inWatchlist',
     icon: Bookmark,
     className: 'bg-green-600 text-white',
   },
@@ -69,20 +69,12 @@ const positionClasses = {
 
 /**
  * Badge overlay for media cards.
- *
- * @example
- * <CardBadge badgeKey="TRENDING" position="top-right" />
- * // 🔥 ХІТ
  */
-export function CardBadge({ badgeKey, position = 'top-right', className }: CardBadgeProps) {
-  const { t } = useTranslation();
+export function CardBadge({ badgeKey, label, position = 'top-right', className }: CardBadgeProps) {
   const config = badgeConfig[badgeKey];
-
-  // Skip empty badges
-  if (!config.labelKey) return null;
+  if (!config) return null;
 
   const Icon = config.icon;
-  const label = t(config.labelKey);
 
   return (
     <div
@@ -107,10 +99,6 @@ interface RankBadgeProps {
 
 /**
  * Rank badge for top-3 items.
- *
- * @example
- * <RankBadge rank={1} />
- * // №1 (gold)
  */
 export function RankBadge({ rank, className }: RankBadgeProps) {
   if (rank > 3) return null;

@@ -24,15 +24,14 @@ export function formatNumber(value: number | null | undefined): string {
 }
 
 /**
- * Format rating to one decimal place.
- *
- * @example
- * formatRating(8.234) // "8.2"
- * formatRating(null) // "—"
+ * Format rating to human-readable 1-10 scale.
+ * Auto-detects scale: if > 10, assumes 0-100 and converts.
  */
 export function formatRating(value: number | null | undefined): string {
   if (value == null) return '—';
-  return value.toFixed(1);
+  // Auto-detect scale: if > 10, it's 0-100 scale, convert to 0-10
+  const normalized = value > 10 ? value / 10 : value;
+  return normalized.toFixed(1);
 }
 
 /**

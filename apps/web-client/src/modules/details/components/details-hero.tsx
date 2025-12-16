@@ -49,13 +49,9 @@ export function DetailsHero({
   quickPitch,
   dict,
 }: DetailsHeroProps) {
-  // Primary rating: Show qualityScore (objective quality) as main Ratingo rating
-  // ratingoScore is used internally for ranking/sorting, never shown to user
-  const rating = stats.qualityScore != null ? stats.qualityScore / 10 : null;
+  const rating = stats.qualityScore;
   const imdbRating = externalRatings?.imdb?.rating;
-
-  // Визначаємо, чи це класика (високий рейтинг + мало онлайн)
-  const isClassicCase = rating != null && rating >= 8 && stats.liveWatchers != null && stats.liveWatchers < 100;
+  const isClassicCase = rating != null && rating >= 80 && stats.liveWatchers != null && stats.liveWatchers < 100;
 
   // Compute badge labels and tooltips
   const getQualityBadgeProps = (score: number) => {

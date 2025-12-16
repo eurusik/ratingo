@@ -8,7 +8,6 @@
 import Image from 'next/image';
 import { Film, Tv } from 'lucide-react';
 import { cn } from '@/shared/utils';
-import { useTranslation } from '@/shared/i18n';
 
 interface CardPosterProps {
   /** TMDB poster URL. */
@@ -17,6 +16,8 @@ interface CardPosterProps {
   alt: string;
   /** Media type for fallback icon. */
   type?: 'movie' | 'show';
+  /** Fallback text when no poster (for SSR compatibility). */
+  noPosterText?: string;
   /** Badge overlays. */
   children?: React.ReactNode;
   className?: string;
@@ -30,9 +31,7 @@ interface CardPosterProps {
  *   <Badge variant="rank" position="top-left">№1</Badge>
  * </CardPoster>
  */
-export function CardPoster({ src, alt, type = 'movie', children, className }: CardPosterProps) {
-  const { t } = useTranslation();
-
+export function CardPoster({ src, alt, type = 'movie', noPosterText, children, className }: CardPosterProps) {
   return (
     <div className={cn('aspect-[2/3] relative bg-zinc-800 overflow-hidden', className)}>
       {src ? (
@@ -55,7 +54,7 @@ export function CardPoster({ src, alt, type = 'movie', children, className }: Ca
             ) : (
               <Tv className="w-12 h-12 mx-auto mb-2" />
             )}
-            <div className="text-sm">{t('card.noPoster')}</div>
+            {noPosterText && <div className="text-sm">{noPosterText}</div>}
           </div>
         </div>
       )}

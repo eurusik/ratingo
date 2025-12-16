@@ -1,9 +1,10 @@
 /**
  * Watchers statistics display.
- * Shows live watchers and total watchers counts.
+ * Shows active interest and total watched counts.
+ * Note: Trakt data = interest, not live viewing.
  */
 
-import { Eye, Users } from 'lucide-react';
+import { TrendingUp, Users } from 'lucide-react';
 import type { Stats } from '../types';
 
 interface WatchersStatsProps {
@@ -24,10 +25,10 @@ export function WatchersStats({ stats, dict }: WatchersStatsProps) {
 
   return (
     <div className="flex items-center gap-4 md:gap-6 flex-wrap">
-      {/* Live watchers */}
+      {/* Active interest (Trakt watching) */}
       {hasLiveWatchers && (
         <div className="flex items-center gap-2 text-zinc-300">
-          <Eye className="w-5 h-5 text-blue-400" />
+          <TrendingUp className="w-5 h-5 text-blue-400" />
           <span className="text-base font-medium">
             {stats.liveWatchers!.toLocaleString()}
           </span>
@@ -35,7 +36,7 @@ export function WatchersStats({ stats, dict }: WatchersStatsProps) {
         </div>
       )}
 
-      {/* Total watchers */}
+      {/* Total watched (Trakt watchers) */}
       {hasTotalWatchers && (
         <div className="flex items-center gap-2 text-zinc-400">
           <Users className="w-5 h-5 text-zinc-500" />
