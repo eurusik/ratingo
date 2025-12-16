@@ -5,12 +5,17 @@
 'use client';
 
 import Image from 'next/image';
-import { Star, Eye, Flame, Sparkles, TrendingUp, Clapperboard } from 'lucide-react';
-import { useState } from 'react';
+import { Star } from 'lucide-react';
 import type { BadgeKey, Stats, ExternalRatings, Genre, ImageSet } from '../types';
-import { cn } from '@/shared/utils';
 import { formatRating, formatYear } from '@/shared/utils/format';
 import type { getDictionary } from '@/shared/i18n';
+import { RatingBadge } from './rating-badge';
+import { QualityBadge } from './quality-badge';
+import { PopularityBadge } from './popularity-badge';
+import { QuickPitchScroll } from './quick-pitch-scroll';
+import { WatchersStats } from './watchers-stats';
+import { StatusBadges } from './status-badges';
+import { HeroBackdrop } from './hero-backdrop';
 
 export interface DetailsHeroProps {
   title: string;
@@ -27,12 +32,7 @@ export interface DetailsHeroProps {
   dict: ReturnType<typeof getDictionary>;
 }
 
-const badgeConfig: Record<BadgeKey, { icon: typeof Flame; className: string; labelKey: 'trending' | 'newRelease' | 'rising' | 'newEpisode' }> = {
-  TRENDING: { icon: Flame, className: 'bg-red-600 text-white', labelKey: 'trending' },
-  NEW_RELEASE: { icon: Sparkles, className: 'bg-green-500 text-white', labelKey: 'newRelease' },
-  RISING: { icon: TrendingUp, className: 'bg-orange-500 text-white', labelKey: 'rising' },
-  NEW_EPISODE: { icon: Clapperboard, className: 'bg-purple-500 text-white', labelKey: 'newEpisode' },
-};
+
 
 export function DetailsHero({
   title,
@@ -48,47 +48,28 @@ export function DetailsHero({
   quickPitch,
   dict,
 }: DetailsHeroProps) {
-  const rating = stats.ratingoScore / 10;
+  // Primary rating: Show qualityScore (objective quality) as main Ratingo rating
+  // ratingoScore is used internally for ranking/sorting, never shown to user
+  const rating = stats.qualityScore != null ? stats.qualityScore / 10 : null;
   const imdbRating = externalRatings?.imdb?.rating;
-  const BadgeIcon = badgeKey ? badgeConfig[badgeKey]?.icon : null;
-  const [backdropError, setBackdropError] = useState(false);
 
-  // Use poster as fallback if backdrop fails or doesn't exist
-  const useBackdrop = backdrop && !backdropError;
+  // Compute badge labels and tooltips
+  const getQualityBadgeProps = (score: number) => {
+    if (score >= 85) return { label: dict.details.qualityBadge.high, tooltip: dict.details.qualityBadgeTooltip.high };
+    if (score >= 75) return { label: dict.details.qualityBadge.good, tooltip: dict.details.qualityBadgeTooltip.good };
+    return { label: dict.details.qualityBadge.decent, tooltip: dict.details.qualityBadgeTooltip.decent };
+  };
+
+  const getPopularityBadgeProps = (score: number) => {
+    if (score >= 80) return { label: dict.details.popularityBadge.hot, tooltip: dict.details.popularityBadgeTooltip.hot };
+    if (score >= 60) return { label: dict.details.popularityBadge.trending, tooltip: dict.details.popularityBadgeTooltip.trending };
+    return { label: dict.details.popularityBadge.rising, tooltip: dict.details.popularityBadgeTooltip.rising };
+  };
 
   return (
     <section className="relative min-h-[70vh] md:min-h-[60vh] flex items-end">
       {/* FULL BACKDROP */}
-      <div className="absolute inset-0 -z-10">
-        {useBackdrop ? (
-          <>
-            <Image
-              src={backdrop.large}
-              alt=""
-              fill
-              className="object-cover"
-              priority
-              onError={() => setBackdropError(true)}
-            />
-            {/* Much lighter gradients to show backdrop */}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/40 via-transparent to-transparent" />
-          </>
-        ) : (
-          <>
-            <Image
-              src={poster.large}
-              alt=""
-              fill
-              className="object-cover scale-110 blur-xl"
-              priority
-            />
-            {/* Darker gradients for blurred poster */}
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/70 via-zinc-950/30 to-transparent" />
-          </>
-        )}
-      </div>
+      <HeroBackdrop backdrop={backdrop} poster={poster} />
 
       {/* Content */}
       <div className="relative w-full pb-8 pt-32 md:pt-48">
@@ -129,83 +110,72 @@ export function DetailsHero({
             <div className="space-y-3">
               {/* Ratings row */}
               <div className="flex items-center gap-4 md:gap-6 flex-wrap">
-                {/* Primary rating */}
-                <div className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                  <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                  <span className="text-xl md:text-2xl font-bold text-white">{formatRating(rating)}</span>
-                </div>
+                {/* Primary rating - qualityScore (Ratingo rating) */}
+                {rating != null && (
+                  <div className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                    <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                    <span className="text-xl md:text-2xl font-bold text-white">{formatRating(rating)}</span>
+                  </div>
+                )}
 
                 {/* IMDb rating */}
                 {imdbRating != null && imdbRating !== rating && (
-                  <div className="flex items-center gap-1.5 bg-zinc-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
-                    <span className="text-[10px] font-bold text-yellow-400 bg-yellow-400/20 px-1 py-0.5 rounded">IMDb</span>
-                    <span className="text-sm font-semibold text-zinc-300">{formatRating(imdbRating)}</span>
-                  </div>
+                  <RatingBadge source="IMDb" rating={imdbRating} />
                 )}
 
                 {/* TMDB rating */}
                 {externalRatings?.tmdb?.rating != null && externalRatings.tmdb.rating !== rating && (
-                  <div className="flex items-center gap-1.5 bg-zinc-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
-                    <span className="text-[10px] font-bold text-blue-400 bg-blue-400/20 px-1 py-0.5 rounded">TMDB</span>
-                    <span className="text-sm font-semibold text-zinc-300">{formatRating(externalRatings.tmdb.rating)}</span>
-                  </div>
+                  <RatingBadge source="TMDB" rating={externalRatings.tmdb.rating} />
                 )}
 
                 {/* Trakt rating */}
                 {externalRatings?.trakt?.rating != null && externalRatings.trakt.rating !== rating && (
-                  <div className="flex items-center gap-1.5 bg-zinc-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
-                    <span className="text-[10px] font-bold text-red-400 bg-red-400/20 px-1 py-0.5 rounded">Trakt</span>
-                    <span className="text-sm font-semibold text-zinc-300">{formatRating(externalRatings.trakt.rating)}</span>
-                  </div>
+                  <RatingBadge source="Trakt" rating={externalRatings.trakt.rating} />
                 )}
 
                 {/* Rotten Tomatoes rating */}
                 {externalRatings?.rottenTomatoes?.rating != null && (
-                  <div className="flex items-center gap-1.5 bg-zinc-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
-                    <span className="text-[10px] font-bold text-green-400 bg-green-400/20 px-1 py-0.5 rounded">RT</span>
-                    <span className="text-sm font-semibold text-zinc-300">{externalRatings.rottenTomatoes.rating}%</span>
-                  </div>
+                  <RatingBadge source="RT" rating={externalRatings.rottenTomatoes.rating} isPercentage />
                 )}
               </div>
 
-              {/* Live watchers */}
-              {stats.liveWatchers != null && stats.liveWatchers > 0 && (
-                <div className="flex items-center gap-2 text-zinc-300">
-                  <Eye className="w-5 h-5 text-blue-400" />
-                  <span className="text-base font-medium">{stats.liveWatchers.toLocaleString()}</span>
+              {/* Quality & Popularity badges */}
+              {(stats.qualityScore != null && stats.qualityScore >= 65) || (stats.popularityScore != null && stats.popularityScore >= 40) ? (
+                <div className="flex items-center gap-3 flex-wrap">
+                  {stats.qualityScore != null && stats.qualityScore >= 65 && (
+                    <QualityBadge 
+                      score={stats.qualityScore} 
+                      {...getQualityBadgeProps(stats.qualityScore)}
+                    />
+                  )}
+                  {stats.popularityScore != null && stats.popularityScore >= 40 && (
+                    <PopularityBadge 
+                      score={stats.popularityScore} 
+                      {...getPopularityBadgeProps(stats.popularityScore)}
+                    />
+                  )}
                 </div>
-              )}
+              ) : null}
+
+              {/* Live watchers & Total watchers */}
+              <WatchersStats 
+                stats={stats} 
+                dict={{
+                  watchingNow: dict.details.watchingNow,
+                  totalWatchers: dict.details.totalWatchers,
+                }}
+              />
 
               {/* Status badges */}
-              {(badgeKey || (rank != null && rank <= 10)) && (
-                <div className="flex items-center gap-3 flex-wrap">
-                  {/* Status badge */}
-                  {badgeKey && BadgeIcon && (
-                    <span className={cn(
-                      'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold',
-                      badgeConfig[badgeKey].className
-                    )}>
-                      <BadgeIcon className="w-4 h-4" />
-                      {dict.card.badge[badgeConfig[badgeKey].labelKey]}
-                    </span>
-                  )}
-
-                  {/* Rank badge */}
-                  {rank != null && rank <= 10 && (
-                    <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold bg-yellow-400 text-black">
-                      №{rank}
-                    </span>
-                  )}
-                </div>
-              )}
+              <StatusBadges 
+                badgeKey={badgeKey} 
+                rank={rank} 
+                dict={{ badge: dict.card.badge }}
+              />
             </div>
 
-            {/* Quick Pitch - READABLE */}
-            {quickPitch && (
-              <p className="text-base md:text-lg text-zinc-200 leading-relaxed max-w-2xl">
-                {quickPitch}
-              </p>
-            )}
+            {/* Quick Pitch - Interactive scroll to overview */}
+            {quickPitch && <QuickPitchScroll text={quickPitch} />}
           </div>
           </div>
         </div>
