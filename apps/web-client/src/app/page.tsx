@@ -3,9 +3,10 @@
  */
 
 import type { MediaCardServerProps } from '@/modules/home';
-import { MediaCardServer, HeroSection, Top3SectionServer } from '@/modules/home';
+import { MediaCardServer, HeroSection, Top3SectionServer, TrendingCarousel } from '@/modules/home';
 import { getDictionary } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
+import { Flame } from 'lucide-react';
 
 export default async function HomePage() {
   const dict = getDictionary('uk');
@@ -75,24 +76,24 @@ export default async function HomePage() {
         )}
 
         {/* Trending section */}
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <span className="text-2xl">🔥</span>
-              {dict.home.sections.trending}
-            </h2>
+        <TrendingCarousel
+          title={dict.home.sections.trending}
+          titleIcon={<Flame className="w-5 h-5 text-orange-500" />}
+          actions={
             <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
               {dict.common.showAll} →
             </button>
-          </div>
-
-          {/* Cards grid with real data */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {catalogCards.map((item) => (
-              <MediaCardServer key={item.id} {...item} locale="uk" />
-            ))}
-          </div>
-        </section>
+          }
+        >
+          {catalogCards.map((item) => (
+            <div
+              key={item.id}
+              className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
+            >
+              <MediaCardServer {...item} locale="uk" />
+            </div>
+          ))}
+        </TrendingCarousel>
       </div>
     </main>
   );

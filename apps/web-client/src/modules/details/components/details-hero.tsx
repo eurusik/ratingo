@@ -54,6 +54,9 @@ export function DetailsHero({
   const rating = stats.qualityScore != null ? stats.qualityScore / 10 : null;
   const imdbRating = externalRatings?.imdb?.rating;
 
+  // Визначаємо, чи це класика (високий рейтинг + мало онлайн)
+  const isClassicCase = rating != null && rating >= 8 && stats.liveWatchers != null && stats.liveWatchers < 100;
+
   // Compute badge labels and tooltips
   const getQualityBadgeProps = (score: number) => {
     if (score >= 85) return { label: dict.details.qualityBadge.high, tooltip: dict.details.qualityBadgeTooltip.high };
@@ -143,12 +146,19 @@ export function DetailsHero({
                               <p className="text-zinc-300">{dict.details.ratingTooltip.description}</p>
                             </div>
                             
+                            {/* Classic case hint */}
+                            {isClassicCase && (
+                              <div className="bg-blue-500/10 border border-blue-500/30 rounded px-2 py-1.5">
+                                <p className="text-blue-300 font-medium">💡 {dict.details.ratingTooltip.classicCase}</p>
+                              </div>
+                            )}
+                            
                             {/* How to read */}
                             <div>
                               <p className="font-medium text-white mb-1.5">{dict.details.ratingTooltip.howToRead}</p>
                               <ul className="text-zinc-300 space-y-1.5">
                                 <li>• {dict.details.ratingTooltip.exampleHigh}</li>
-                                <li>• {dict.details.ratingTooltip.exampleLow}</li>
+                                <li>• {dict.details.ratingTooltip.exampleTrending}</li>
                               </ul>
                             </div>
                           </div>

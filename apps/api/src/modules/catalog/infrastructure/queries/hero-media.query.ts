@@ -82,6 +82,12 @@ export class HeroMediaQuery {
 
           rating: schema.mediaItems.rating,
           voteCount: schema.mediaItems.voteCount,
+          ratingImdb: schema.mediaItems.ratingImdb,
+          voteCountImdb: schema.mediaItems.voteCountImdb,
+          ratingTrakt: schema.mediaItems.ratingTrakt,
+          voteCountTrakt: schema.mediaItems.voteCountTrakt,
+          ratingMetacritic: schema.mediaItems.ratingMetacritic,
+          ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
         })
         .from(schema.mediaItems)
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
@@ -205,6 +211,12 @@ export class HeroMediaQuery {
       totalWatchers: number | null;
       rating: number;
       voteCount: number;
+      ratingImdb: number | null;
+      voteCountImdb: number | null;
+      ratingTrakt: number | null;
+      voteCountTrakt: number | null;
+      ratingMetacritic: number | null;
+      ratingRottenTomatoes: number | null;
     }>,
     showProgressMap: Map<string, HeroShowProgress>,
     now: Date,
@@ -243,10 +255,13 @@ export class HeroMediaQuery {
           totalWatchers: item.totalWatchers,
         },
         externalRatings: {
-          tmdb: {
-            rating: item.rating,
-            voteCount: item.voteCount,
-          },
+          tmdb: { rating: item.rating, voteCount: item.voteCount },
+          imdb: item.ratingImdb ? { rating: item.ratingImdb, voteCount: item.voteCountImdb } : null,
+          trakt: item.ratingTrakt
+            ? { rating: item.ratingTrakt, voteCount: item.voteCountTrakt }
+            : null,
+          metacritic: item.ratingMetacritic ? { rating: item.ratingMetacritic } : null,
+          rottenTomatoes: item.ratingRottenTomatoes ? { rating: item.ratingRottenTomatoes } : null,
         },
       };
 

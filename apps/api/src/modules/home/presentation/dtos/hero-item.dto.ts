@@ -23,6 +23,18 @@ export class HeroStatsDto {
 export class HeroExternalRatingsDto {
   @ApiProperty({ example: { rating: 8.4, voteCount: 20000 }, required: false })
   tmdb?: { rating: number; voteCount?: number };
+
+  @ApiProperty({ example: { rating: 8.7, voteCount: 1500000 }, required: false, nullable: true })
+  imdb?: { rating: number; voteCount?: number | null } | null;
+
+  @ApiProperty({ example: { rating: 8.5, voteCount: 50000 }, required: false, nullable: true })
+  trakt?: { rating: number; voteCount?: number | null } | null;
+
+  @ApiProperty({ example: { rating: 75 }, required: false, nullable: true })
+  metacritic?: { rating: number } | null;
+
+  @ApiProperty({ example: { rating: 85 }, required: false, nullable: true })
+  rottenTomatoes?: { rating: number } | null;
 }
 
 export class HeroItemDto {

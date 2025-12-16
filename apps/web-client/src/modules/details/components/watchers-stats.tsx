@@ -29,8 +29,9 @@ export function WatchersStats({ stats, dict }: WatchersStatsProps) {
         <div className="flex items-center gap-2 text-zinc-300">
           <Eye className="w-5 h-5 text-blue-400" />
           <span className="text-base font-medium">
-            {stats.liveWatchers!.toLocaleString()} {dict.watchingNow}
+            {stats.liveWatchers!.toLocaleString()}
           </span>
+          <span className="text-sm text-zinc-400">{dict.watchingNow}</span>
         </div>
       )}
 
@@ -39,8 +40,9 @@ export function WatchersStats({ stats, dict }: WatchersStatsProps) {
         <div className="flex items-center gap-2 text-zinc-400">
           <Users className="w-5 h-5 text-zinc-500" />
           <span className="text-base font-medium">
-            {stats.totalWatchers!.toLocaleString()} {dict.totalWatchers}
+            {stats.totalWatchers!.toLocaleString()}
           </span>
+          <span className="text-sm text-zinc-400">{dict.totalWatchers}</span>
         </div>
       )}
     </div>

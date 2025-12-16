@@ -7,7 +7,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Star, Eye, Calendar, Film, Tv, Flame, Sparkles, TrendingUp, Clapperboard, Play, Bookmark, Info, ArrowRight, MapPin } from 'lucide-react';
+import { Star, Eye, Calendar, Film, Tv, Flame, Sparkles, TrendingUp, Clapperboard, Play, Bookmark, Info, ArrowRight, MapPin, Activity } from 'lucide-react';
 import type { components } from '@ratingo/api-contract';
 import { cn } from '@/shared/utils';
 import { formatNumber, formatRating, formatDate, formatYear } from '@/shared/utils/format';
@@ -161,17 +161,20 @@ export function MediaCardServer(props: MediaCardServerProps) {
           {/* Ratings */}
           <div className="flex items-center justify-between text-xs mb-2">
             <div className="flex items-center space-x-2">
+              {/* Ratingo rating */}
               <div className="flex items-center space-x-1">
-                <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                <Activity className="w-3 h-3 text-blue-400" />
                 <span className="text-white font-semibold">{formatRating(rating)}</span>
               </div>
+              {/* IMDb if different */}
               {ratingImdb != null && ratingImdb !== rating && (
                 <div className="flex items-center space-x-1">
-                  <span className="text-yellow-300 font-medium">IMDb</span>
+                  <span className="text-yellow-300 font-medium text-[10px]">IMDb</span>
                   <span className="text-white font-semibold">{formatRating(ratingImdb)}</span>
                 </div>
               )}
             </div>
+            {/* Live watchers */}
             {watchers != null && watchers > 0 && (
               <div className="flex items-center space-x-1 text-gray-300">
                 <Eye className="w-3 h-3 text-blue-400" />

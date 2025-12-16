@@ -7,7 +7,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Play, TrendingUp, Users, Star } from 'lucide-react';
+import { Play, TrendingUp, Users, Star, Activity } from 'lucide-react';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import type { MediaCardServerProps } from './media-card/media-card-server';
 
@@ -89,25 +89,35 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
 
           {/* Stats */}
           <div className="flex items-center gap-6 mb-8">
-            {externalRatings?.tmdb && (
+            {/* Ratingo Score */}
+            {stats?.qualityScore && (
+              <div className="flex items-center gap-2 text-white">
+                <Activity className="w-5 h-5 text-blue-400" />
+                <span className="text-xl font-semibold">{(stats.qualityScore / 10).toFixed(1)}</span>
+              </div>
+            )}
+
+            {/* IMDb (пріоритет) або TMDB */}
+            {externalRatings?.imdb ? (
+              <div className="flex items-center gap-2 text-white">
+                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                <span className="text-xl font-semibold">{externalRatings.imdb.rating.toFixed(1)}</span>
+                <span className="text-sm text-zinc-400">IMDb</span>
+              </div>
+            ) : externalRatings?.tmdb ? (
               <div className="flex items-center gap-2 text-white">
                 <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                 <span className="text-xl font-semibold">{externalRatings.tmdb.rating.toFixed(1)}</span>
+                <span className="text-sm text-zinc-400">TMDB</span>
               </div>
-            )}
+            ) : null}
 
+            {/* Live watchers */}
             {stats?.liveWatchers && (
               <div className="flex items-center gap-2 text-zinc-300">
                 <Users className="w-5 h-5" />
-                <span>{stats.liveWatchers.toLocaleString()} дивляться</span>
-              </div>
-            )}
-
-            {stats?.ratingoScore && (
-              <div className="px-3 py-1 bg-blue-600/20 border border-blue-500/30 rounded-lg">
-                <span className="text-blue-400 font-semibold">
-                  Hype {Math.round(stats.ratingoScore)}
-                </span>
+                <span>{stats.liveWatchers.toLocaleString()}</span>
+                <span className="text-sm text-zinc-400">онлайн зараз</span>
               </div>
             )}
           </div>

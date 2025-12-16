@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 export interface CarouselProps {
   children: ReactNode;
-  title?: string;
+  title?: string | ReactNode;
   titleTooltip?: string;
   subtitle?: string;
   actions?: ReactNode;
