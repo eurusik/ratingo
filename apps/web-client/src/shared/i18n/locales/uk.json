@@ -71,7 +71,7 @@
     "cta": {
       "saveHint": {
         "newEpisodes": "щоб не пропустити нові серії",
-        "afterAllEpisodes": "щоб вирішити після виходу всіх серій",
+        "afterAllEpisodes": "щоб вирішити, дивитись чи ні, після виходу всіх серій",
         "whenOnStreaming": "щоб повернутися, коли буде на стрімінгах",
         "notifyNewEpisode": "нагадаємо, коли вийде нова серія",
         "general": "щоб не пропустити нові серії"
@@ -84,13 +84,15 @@
     },
     "trailer": {
       "watch": "Трейлер",
-      "youtube": "YouTube"
+      "youtube": "YouTube",
+      "sectionTitle": "Трейлери"
     },
     "overview": {
       "title": "Опис"
     },
     "showStatus": {
       "title": "Стан серіалу",
+      "sectionTitle": "Епізоди",
       "season": "Сезон",
       "episodesReleased": "вийшло",
       "of": "з",
@@ -121,6 +123,9 @@
     "similar": {
       "title": "Схоже на це"
     },
+    "cast": {
+      "title": "Актори та знімальна група"
+    },
     "verdict": {
       "byData": "За даними Ratingo",
       "seasonComparison": {
@@ -129,11 +134,7 @@
         "peak": "Перший сезон залишається піком серіалу"
       },
       "userContext": {
-        "continueFromS1": "Обов'язково, якщо дивився перший сезон",
-        "genreMatch": "Підійде, якщо любиш {genre}"
-      },
-      "genreMatch": {
-        "forFansOf": "Для фанатів {tags}"
+        "continueFromS1": "Обов'язково, якщо дивився перший сезон"
       }
     }
   },

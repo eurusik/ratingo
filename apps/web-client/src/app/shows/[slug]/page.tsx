@@ -9,10 +9,8 @@ import { getDictionary } from '@/shared/i18n';
 import {
   DetailsHero,
   DetailsCtaRow,
-  DetailsQuickPitch,
   ShowStatus,
   ProvidersList,
-  SimilarCarousel,
   DataVerdict,
   TrailersCarousel,
   CastCarousel,
@@ -265,66 +263,52 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
         </section>
 
         {/* 3. Data Verdict with integrated CTA */}
-        {slug === 'squid-game' && (
-          <DataVerdict
-            type="season_comparison"
-            message="Другий сезон стартував слабше першого"
-            context="Рейтинг IMDb: 8.0 (S2) vs 8.7 (S1)"
-            confidence="high"
-            showCta
-            ctaProps={{
-              isSaved: false,
-              hintKey: 'afterAllEpisodes', // Context-specific: wait for all episodes
-            }}
-            dict={dict}
-          />
-        )}
-        {slug === 'the-bear' && (
-          <DataVerdict
-            type="genre_match"
-            message="Для фанатів повільних, напружених драм про кулінарію"
-            showCta
-            ctaProps={{
-              isSaved: false,
-              hasNewEpisodes: false,
-            }}
-            dict={dict}
-          />
-        )}
+        <DataVerdict
+          type="season_comparison"
+          message="Другий сезон стартував слабше першого"
+          context="Рейтинг IMDb: 8.0 (S2) vs 8.7 (S1)"
+          confidence="high"
+          showCta
+          ctaProps={{
+            isSaved: false,
+            hintKey: 'afterAllEpisodes', // Context-specific: wait for all episodes
+          }}
+          dict={dict}
+        />
 
         {/* 4. Standalone CTA for shows without verdict */}
-        {!['squid-game', 'the-bear'].includes(slug) && (
+        {false && (
           <DetailsCtaRow
             hasNewEpisodes={show.badgeKey === 'NEW_EPISODE'}
             dict={dict}
           />
         )}
 
-        {/* 5. Genres as chips */}
-        <section className="flex flex-wrap items-center gap-2">
-          {show.genres.map((genre) => (
-            <span
-              key={genre.id}
-              className="px-3 py-1.5 text-sm font-medium text-zinc-300 bg-zinc-800/60 rounded-full border border-zinc-700/50 hover:border-zinc-600 transition-colors"
-            >
-              {genre.name}
-            </span>
-          ))}
-        </section>
+        {/* Divider */}
+        <div className="border-t border-zinc-800/50 my-12" />
 
         {/* 5. Trailers carousel */}
         {show.videos && show.videos.length > 0 && (
-          <TrailersCarousel
-            videos={show.videos}
-            primaryTrailer={show.videos.find(v => v.key === show.primaryTrailerKey)}
-          />
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+              {dict.details.trailer.sectionTitle}
+            </h2>
+            <TrailersCarousel
+              videos={show.videos}
+              primaryTrailer={show.videos.find(v => v.key === show.primaryTrailerKey)}
+            />
+          </section>
         )}
 
         {/* Divider */}
-        <div className="border-t border-zinc-800/50" />
+        <div className="border-t border-zinc-800/50 my-12" />
 
-        {/* 6. Show status */}
-        <ShowStatus
+        {/* 6. Show status - Episodes section */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+            {dict.details.showStatus.sectionTitle}
+          </h2>
+          <ShowStatus
           currentSeason={show.currentSeason}
           currentSeasonEpisodesReleased={show.currentSeasonEpisodesReleased}
           currentSeasonTotalEpisodes={show.currentSeasonTotalEpisodes}
@@ -335,25 +319,34 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           dict={dict}
         />
 
+        </section>
+
         {/* Divider */}
-        <div className="border-t border-zinc-800/50" />
+        <div className="border-t border-zinc-800/50 my-12" />
 
         {/* 7. Cast & Crew */}
         {show.cast && show.cast.length > 0 && (
-          <CastCarousel
-            cast={show.cast}
-            crew={show.crew}
-          />
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+              {dict.details.cast.title}
+            </h2>
+            <CastCarousel
+              cast={show.cast}
+              crew={show.crew}
+            />
+          </section>
         )}
 
         {/* Divider */}
-        <div className="border-t border-zinc-800/50" />
+        <div className="border-t border-zinc-800/50 my-12" />
 
-        {/* 7. Where to watch */}
-        <ProvidersList providers={show.providers} dict={dict} />
-
-        {/* 9. Similar */}
-        <SimilarCarousel items={similarShows} locale="uk" dict={dict} />
+        {/* 8. Where to watch */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+            {dict.details.providers.title}
+          </h2>
+          <ProvidersList providers={show.providers} dict={dict} />
+        </section>
       </div>
       </div>
     </main>

@@ -121,7 +121,6 @@ export function CastCarousel({ cast, crew }: CastCarouselProps) {
 
   return (
     <Carousel 
-      title="Акторський склад" 
       subtitle={subtitle}
       gap="lg"
     >

@@ -58,15 +58,8 @@ export function DetailsHero({
 
   return (
     <section className="relative min-h-[70vh] md:min-h-[60vh] flex items-end">
-      {/* FULL BACKDROP - TEMPORARY DEBUG */}
+      {/* FULL BACKDROP */}
       <div className="absolute inset-0 -z-10">
-        {/* Debug: Show what we're using */}
-        {backdrop && (
-          <div className="absolute top-0 left-0 z-50 bg-red-500 text-white text-xs p-2">
-            Backdrop: {backdrop.large.substring(backdrop.large.lastIndexOf('/'))}
-          </div>
-        )}
-        
         {useBackdrop ? (
           <>
             <Image
@@ -75,11 +68,7 @@ export function DetailsHero({
               fill
               className="object-cover"
               priority
-              onError={() => {
-                console.log('Backdrop failed:', backdrop.large);
-                setBackdropError(true);
-              }}
-              onLoad={() => console.log('Backdrop loaded:', backdrop.large)}
+              onError={() => setBackdropError(true)}
             />
             {/* Much lighter gradients to show backdrop */}
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
@@ -148,9 +137,33 @@ export function DetailsHero({
 
                 {/* IMDb rating */}
                 {imdbRating != null && imdbRating !== rating && (
-                  <div className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-sm px-3 py-1.5 rounded-lg">
-                    <span className="text-xs font-bold text-yellow-400 bg-yellow-400/20 px-1.5 py-0.5 rounded">IMDb</span>
-                    <span className="text-lg font-semibold text-white">{formatRating(imdbRating)}</span>
+                  <div className="flex items-center gap-1.5 bg-zinc-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
+                    <span className="text-[10px] font-bold text-yellow-400 bg-yellow-400/20 px-1 py-0.5 rounded">IMDb</span>
+                    <span className="text-sm font-semibold text-zinc-300">{formatRating(imdbRating)}</span>
+                  </div>
+                )}
+
+                {/* TMDB rating */}
+                {externalRatings?.tmdb?.rating != null && externalRatings.tmdb.rating !== rating && (
+                  <div className="flex items-center gap-1.5 bg-zinc-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
+                    <span className="text-[10px] font-bold text-blue-400 bg-blue-400/20 px-1 py-0.5 rounded">TMDB</span>
+                    <span className="text-sm font-semibold text-zinc-300">{formatRating(externalRatings.tmdb.rating)}</span>
+                  </div>
+                )}
+
+                {/* Trakt rating */}
+                {externalRatings?.trakt?.rating != null && externalRatings.trakt.rating !== rating && (
+                  <div className="flex items-center gap-1.5 bg-zinc-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
+                    <span className="text-[10px] font-bold text-red-400 bg-red-400/20 px-1 py-0.5 rounded">Trakt</span>
+                    <span className="text-sm font-semibold text-zinc-300">{formatRating(externalRatings.trakt.rating)}</span>
+                  </div>
+                )}
+
+                {/* Rotten Tomatoes rating */}
+                {externalRatings?.rottenTomatoes?.rating != null && (
+                  <div className="flex items-center gap-1.5 bg-zinc-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
+                    <span className="text-[10px] font-bold text-green-400 bg-green-400/20 px-1 py-0.5 rounded">RT</span>
+                    <span className="text-sm font-semibold text-zinc-300">{externalRatings.rottenTomatoes.rating}%</span>
                   </div>
                 )}
               </div>

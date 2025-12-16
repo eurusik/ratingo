@@ -71,7 +71,7 @@
     "cta": {
       "saveHint": {
         "newEpisodes": "to never miss new episodes",
-        "afterAllEpisodes": "to decide after all episodes are out",
+        "afterAllEpisodes": "to decide whether to watch after all episodes are out",
         "whenOnStreaming": "to return when it's on streaming",
         "notifyNewEpisode": "we'll remind you when a new episode drops",
         "general": "to never miss new episodes"
@@ -84,13 +84,15 @@
     },
     "trailer": {
       "watch": "Trailer",
-      "youtube": "YouTube"
+      "youtube": "YouTube",
+      "sectionTitle": "Trailers"
     },
     "overview": {
       "title": "Overview"
     },
     "showStatus": {
       "title": "Show status",
+      "sectionTitle": "Episodes",
       "season": "Season",
       "episodesReleased": "released",
       "of": "of",
@@ -121,6 +123,9 @@
     "similar": {
       "title": "Similar to this"
     },
+    "cast": {
+      "title": "Cast & Crew"
+    },
     "verdict": {
       "byData": "Based on Ratingo data",
       "seasonComparison": {
@@ -129,11 +134,7 @@
         "peak": "First season remains the peak of the series"
       },
       "userContext": {
-        "continueFromS1": "Must-watch if you saw the first season",
-        "genreMatch": "Perfect if you love {genre}"
-      },
-      "genreMatch": {
-        "forFansOf": "For fans of {tags}"
+        "continueFromS1": "Must-watch if you saw the first season"
       }
     }
   },

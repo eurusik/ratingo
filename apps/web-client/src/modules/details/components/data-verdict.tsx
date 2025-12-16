@@ -13,19 +13,23 @@
  * - Never pressures or oversells
  * - Explains WHY to act NOW in context of the verdict
  * - Always calm, brief, without emotional words
+ * - ALWAYS answers: "What decision can I make later?" (watch/not watch, now/later)
  * 
  * Examples:
- * - season_comparison (weak start) → "щоб вирішити після виходу всіх серій"
+ * - season_comparison (weak start) → "щоб вирішити, дивитись чи ні, після виходу всіх серій"
  * - ongoing series → "щоб не пропустити нові серії" 
  * - movie/not streaming → "щоб повернутися, коли буде на стрімінгах"
  * - general → "нагадаємо, коли вийде нова серія"
+ * 
+ * Rule: If the text doesn't clearly state WHAT decision (watch/don't watch, now/later),
+ * the copy is incomplete.
  * 
  * Positioning: "Пульт вибору, а не телевізор" (Discovery tool, not player)
  */
 
 'use client';
 
-import { Info, TrendingDown, User, Target, Bookmark, Check, Plus } from 'lucide-react';
+import { Info, TrendingDown, User, Bookmark, Check, Plus } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
 
@@ -35,7 +39,6 @@ import type { getDictionary } from '@/shared/i18n';
 export type VerdictType = 
   | 'season_comparison'   // Season comparisons
   | 'user_context'        // Personal context
-  | 'genre_match'         // Genre profile
   | 'general';            // General insight
 
 /**
@@ -108,14 +111,6 @@ const verdictConfig = {
     borderColor: 'border-l-blue-400/40',
     ctaAccent: 'blue',
   },
-  genre_match: {
-    icon: Target,
-    iconColor: 'text-purple-400',
-    textColor: 'text-white',
-    bgGradient: 'bg-gradient-to-br from-purple-500/15 via-purple-500/5 to-transparent',
-    borderColor: 'border-l-purple-400/40',
-    ctaAccent: 'purple',
-  },
   general: {
     icon: Info,
     iconColor: 'text-zinc-400',
@@ -142,7 +137,6 @@ export function DataVerdict({
   const ctaGradientClasses = {
     season_comparison: 'bg-gradient-to-r from-amber-500/10 via-transparent to-transparent border-amber-500/20 hover:border-amber-500/30 hover:from-amber-500/15',
     user_context: 'bg-gradient-to-r from-blue-500/10 via-transparent to-transparent border-blue-500/20 hover:border-blue-500/30 hover:from-blue-500/15',
-    genre_match: 'bg-gradient-to-r from-purple-500/10 via-transparent to-transparent border-purple-500/20 hover:border-purple-500/30 hover:from-purple-500/15',
     general: 'bg-gradient-to-r from-zinc-500/10 via-transparent to-transparent border-zinc-500/20 hover:border-zinc-500/30 hover:from-zinc-500/15',
   } as const;
 

@@ -42,7 +42,7 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
   return (
     <>
       {/* Carousel */}
-      <Carousel title="Трейлери" gap="md">
+      <Carousel gap="md">
         {sortedTrailers.map((video, index) => (
           <button
             key={video.key}
