@@ -8,7 +8,8 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { ArrowLeft, Film, Share2 } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
-import { createMediaMetadata } from '@/shared/utils';
+import { createMediaMetadata, createNotFoundMetadata } from '@/shared/utils';
+import { catalogApi } from '@/core/api';
 import {
   DetailsHero,
   DetailsCtaRow,
@@ -29,15 +30,16 @@ interface PageParams {
 
 /**
  * Dynamic metadata for SEO.
- * TODO: Replace with API call when movie API is ready.
  */
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   const { slug } = await params;
   
-  // For now, generate basic metadata from slug (until movie API is ready)
-  const title = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  
-  return createMediaMetadata({ title }, { type: 'movie' });
+  try {
+    const movie = await catalogApi.getMovieBySlug(slug);
+    return createMediaMetadata(movie, { type: 'movie' });
+  } catch {
+    return createNotFoundMetadata('movie');
+  }
 }
 
 interface MovieDetailsPageProps {

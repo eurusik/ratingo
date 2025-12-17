@@ -26,6 +26,11 @@ export interface TrendingShowsParams {
 export type ShowDetailsDto = GetData<'/api/catalog/shows/{slug}'>;
 
 /**
+ * Movie details by slug.
+ */
+export type MovieDetailsDto = GetData<'/api/catalog/movies/{slug}'>;
+
+/**
  * Hero block data (array unwrapped from {success, data} by apiGet).
  */
 export type HeroData = GetArrayItem<'/api/home/hero'>[];
@@ -113,5 +118,18 @@ export const catalogApi = {
     return apiGet<CalendarResponseDto>('catalog/shows/calendar', {
       searchParams: params as Record<string, string | number>,
     });
+  },
+
+  /**
+   * Fetches movie details by slug.
+   *
+   * @param slug - Movie slug
+   * @returns Movie details
+   *
+   * @example
+   * const movie = await catalogApi.getMovieBySlug('dune-part-two');
+   */
+  async getMovieBySlug(slug: string): Promise<MovieDetailsDto> {
+    return apiGet<MovieDetailsDto>(`catalog/movies/${slug}`);
   },
 } as const;
