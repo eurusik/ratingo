@@ -8,6 +8,7 @@
 import { useEffect } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation } from '@/shared/i18n';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -15,6 +16,8 @@ interface ErrorProps {
 }
 
 export default function Error({ error, reset }: ErrorProps) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     // Log error to console (can be replaced with error reporting service)
     console.error('Application error:', error);
@@ -30,12 +33,12 @@ export default function Error({ error, reset }: ErrorProps) {
 
         {/* Title */}
         <h1 className="text-2xl font-bold text-white mb-2">
-          Щось пішло не так
+          {t('error.title')}
         </h1>
 
         {/* Description */}
         <p className="text-zinc-400 mb-8">
-          Виникла помилка при завантаженні сторінки. Спробуйте оновити або поверніться на головну.
+          {t('error.description')}
         </p>
 
         {/* Actions */}
@@ -45,21 +48,21 @@ export default function Error({ error, reset }: ErrorProps) {
             className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
-            Спробувати знову
+            {t('error.tryAgain')}
           </button>
           <Link
             href="/"
             className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors"
           >
             <Home className="w-4 h-4" />
-            На головну
+            {t('common.home')}
           </Link>
         </div>
 
         {/* Error digest (for debugging) */}
         {error.digest && (
           <p className="mt-8 text-xs text-zinc-600">
-            Код помилки: {error.digest}
+            {t('error.errorCode')}: {error.digest}
           </p>
         )}
       </div>

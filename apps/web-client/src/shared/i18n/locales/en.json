@@ -7,7 +7,14 @@
     "cancel": "Cancel",
     "close": "Close",
     "showAll": "Show all",
-    "back": "Back"
+    "back": "Back",
+    "home": "Go home"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "description": "An error occurred while loading the page. Try refreshing or go back to home.",
+    "tryAgain": "Try again",
+    "errorCode": "Error code"
   },
   "home": {
     "tagline": "Quick way to decide what to watch now",
