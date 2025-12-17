@@ -16,7 +16,7 @@ import { QuickPitchScroll } from './quick-pitch-scroll';
 import { WatchersStats } from './watchers-stats';
 import { StatusBadges } from './status-badges';
 import { HeroBackdrop } from './hero-backdrop';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 
 export interface DetailsHeroProps {
   title: string;

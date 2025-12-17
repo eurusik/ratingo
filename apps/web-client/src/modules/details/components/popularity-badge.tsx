@@ -6,7 +6,7 @@
 'use client';
 
 import { Flame, TrendingUp, Sparkles } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 
 interface PopularityBadgeProps {
   score: number;
