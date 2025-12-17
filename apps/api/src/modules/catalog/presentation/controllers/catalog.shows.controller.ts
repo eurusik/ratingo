@@ -29,8 +29,7 @@ import type { UserMediaState } from '../../../user-media/domain/entities/user-me
 import { normalizeListQuery } from '../utils/query-normalizer';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
-import { computeShowVerdict } from '../../domain/utils/show-verdict.utils';
-import { RATING_SOURCE } from '../../domain/utils/movie-verdict.utils';
+import { computeShowVerdict, RATING_SOURCE } from '../../../shared/verdict';
 
 /**
  * Public show catalog endpoints (trending, calendar, details).

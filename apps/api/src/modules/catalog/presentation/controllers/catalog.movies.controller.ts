@@ -29,11 +29,7 @@ import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domai
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
 import { computeReleaseStatus } from '../../domain/utils/release-status.utils';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import {
-  computeMovieVerdict,
-  MovieVerdict,
-  RATING_SOURCE,
-} from '../../domain/utils/movie-verdict.utils';
+import { computeMovieVerdict, MovieVerdict, RATING_SOURCE } from '../../../shared/verdict';
 
 /**
  * Public movie catalog endpoints (trending, listings, details).

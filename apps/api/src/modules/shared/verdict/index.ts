@@ -5,4 +5,5 @@
  */
 
 export * from './domain';
+export * from './application';
 export { VerdictModule } from './verdict.module';

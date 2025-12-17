@@ -3,8 +3,9 @@ import {
   VerdictType,
   VerdictHintKey,
   MovieVerdictMessageKey,
-} from '../../domain/utils/movie-verdict.utils';
-import { ShowQualityVerdictKey, ShowStatusHintKey } from '../../domain/utils/show-verdict.utils';
+  ShowQualityVerdictKey,
+  ShowStatusHintKey,
+} from '../../../shared/verdict';
 
 /**
  * Verdict DTO returned to clients for movie details.
