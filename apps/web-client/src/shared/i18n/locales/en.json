@@ -21,7 +21,7 @@
     "subtitle": "Trending movies and shows without the noise. Ratings, viewers, new episodes — all in one place.",
     "sections": {
       "trending": "Trending now",
-      "top3": "Top 3",
+      "popularNow": "Popular now",
       "movies": "Trending movies",
       "shows": "Trending shows",
       "upcoming": "Coming soon"

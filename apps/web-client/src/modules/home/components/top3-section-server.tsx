@@ -4,6 +4,7 @@
  * Horizontal cards layout for compact display.
  */
 
+import { TrendingUp } from 'lucide-react';
 import { HorizontalCard } from './media-card/horizontal-card';
 import type { MediaCardServerProps } from './media-card/media-card-server';
 import { getDictionary, type Locale } from '@/shared/i18n';
@@ -32,8 +33,8 @@ export function Top3SectionServer({ items, title, locale = 'uk', className }: To
   return (
     <section className={className}>
       <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-        <span>🏆</span>
-        <span>{title || dict.home.sections.top3 || 'Топ-3'}</span>
+        <TrendingUp className="w-5 h-5 text-orange-500" />
+        <span>{title || dict.home.sections.popularNow}</span>
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
