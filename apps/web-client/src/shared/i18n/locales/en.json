@@ -27,6 +27,39 @@
       "upcoming": "Coming soon"
     }
   },
+  "browse": {
+    "trending": {
+      "title": "Trending now",
+      "description": "Shows that are currently most watched"
+    },
+    "shows": {
+      "title": "Shows",
+      "description": "All shows on Ratingo"
+    },
+    "movies": {
+      "title": "Movies",
+      "description": "All movies on Ratingo"
+    },
+    "moviesTrending": {
+      "title": "Trending movies",
+      "description": "Movies that are currently most watched"
+    },
+    "moviesNowPlaying": {
+      "title": "Now in theaters",
+      "description": "Movies currently playing in theaters"
+    },
+    "moviesNewReleases": {
+      "title": "New releases",
+      "description": "Recently released movies in theaters"
+    },
+    "moviesDigital": {
+      "title": "New on digital",
+      "description": "Movies recently released on streaming platforms"
+    },
+    "loading": "Loading...",
+    "noResults": "Nothing found",
+    "backToHome": "Back to home"
+  },
   "card": {
     "cta": {
       "details": "Details",

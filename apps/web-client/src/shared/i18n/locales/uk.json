@@ -27,6 +27,39 @@
       "upcoming": "Скоро виходить"
     }
   },
+  "browse": {
+    "trending": {
+      "title": "Зараз дивляться",
+      "description": "Серіали, які зараз найбільше дивляться"
+    },
+    "shows": {
+      "title": "Серіали",
+      "description": "Всі серіали на Ratingo"
+    },
+    "movies": {
+      "title": "Фільми",
+      "description": "Всі фільми на Ratingo"
+    },
+    "moviesTrending": {
+      "title": "Фільми в тренді",
+      "description": "Фільми, які зараз найбільше дивляться"
+    },
+    "moviesNowPlaying": {
+      "title": "Зараз у кіно",
+      "description": "Фільми, які зараз йдуть у кінотеатрах"
+    },
+    "moviesNewReleases": {
+      "title": "Нові релізи",
+      "description": "Нещодавно випущені фільми в кінотеатрах"
+    },
+    "moviesDigital": {
+      "title": "Нове на цифрових платформах",
+      "description": "Фільми, які нещодавно з'явились на стрімінгу"
+    },
+    "loading": "Завантаження...",
+    "noResults": "Нічого не знайдено",
+    "backToHome": "На головну"
+  },
   "card": {
     "cta": {
       "details": "Деталі",

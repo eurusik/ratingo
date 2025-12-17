@@ -2,6 +2,7 @@
  * Home page with real trending shows from API.
  */
 
+import Link from 'next/link';
 import type { MediaCardServerProps } from '@/modules/home';
 import { MediaCardServer, HeroSection, Top3SectionServer, TrendingCarousel } from '@/modules/home';
 import { getDictionary } from '@/shared/i18n';
@@ -75,9 +76,12 @@ export default async function HomePage() {
           title={dict.home.sections.trending}
           titleIcon={<Flame className="w-5 h-5 text-orange-500" />}
           actions={
-            <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+            <Link
+              href="/browse/trending"
+              className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            >
               {dict.common.showAll} →
-            </button>
+            </Link>
           }
         >
           {catalogCards.map((item) => (

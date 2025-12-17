@@ -12,12 +12,32 @@ import type { GetData, GetArrayItem, components } from '@ratingo/api-contract';
 import { apiGet } from './client';
 
 /**
- * Trending shows query params.
+ * Pagination params for list endpoints.
  */
-export interface TrendingShowsParams {
+export interface PaginationParams {
   limit?: number;
   offset?: number;
+}
+
+/**
+ * Trending shows query params.
+ */
+export interface TrendingShowsParams extends PaginationParams {
   sort?: 'trending' | 'rating' | 'popularity';
+}
+
+/**
+ * Trending movies query params.
+ */
+export interface TrendingMoviesParams extends PaginationParams {
+  sort?: 'trending' | 'rating' | 'popularity';
+}
+
+/**
+ * Search query params.
+ */
+export interface SearchParams extends PaginationParams {
+  q: string;
 }
 
 /**
@@ -54,6 +74,31 @@ export type ShowTrendingItemDto = components['schemas']['ShowTrendingItemDto'];
  * Calendar response.
  */
 export type CalendarResponseDto = GetData<'/api/catalog/shows/calendar'>;
+
+/**
+ * Trending movies response.
+ */
+export type TrendingMoviesDto = GetData<'/api/catalog/movies/trending'>;
+
+/**
+ * Now playing movies response.
+ */
+export type NowPlayingMoviesDto = GetData<'/api/catalog/movies/now-playing'>;
+
+/**
+ * New releases movies response.
+ */
+export type NewReleasesMoviesDto = GetData<'/api/catalog/movies/new-releases'>;
+
+/**
+ * New on digital movies response.
+ */
+export type NewOnDigitalMoviesDto = GetData<'/api/catalog/movies/new-on-digital'>;
+
+/**
+ * Search response.
+ */
+export type SearchDto = GetData<'/api/catalog/search'>;
 
 /**
  * Catalog API client.
@@ -131,5 +176,50 @@ export const catalogApi = {
    */
   async getMovieBySlug(slug: string): Promise<MovieDetailsDto> {
     return apiGet<MovieDetailsDto>(`catalog/movies/${slug}`);
+  },
+
+  /**
+   * Fetches trending movies.
+   */
+  async getTrendingMovies(params?: TrendingMoviesParams): Promise<TrendingMoviesDto> {
+    return apiGet<TrendingMoviesDto>('catalog/movies/trending', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Fetches movies currently in theaters.
+   */
+  async getNowPlayingMovies(params?: PaginationParams): Promise<NowPlayingMoviesDto> {
+    return apiGet<NowPlayingMoviesDto>('catalog/movies/now-playing', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Fetches movies recently released in theaters.
+   */
+  async getNewReleasesMovies(params?: PaginationParams): Promise<NewReleasesMoviesDto> {
+    return apiGet<NewReleasesMoviesDto>('catalog/movies/new-releases', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Fetches movies recently released on digital platforms.
+   */
+  async getNewOnDigitalMovies(params?: PaginationParams): Promise<NewOnDigitalMoviesDto> {
+    return apiGet<NewOnDigitalMoviesDto>('catalog/movies/new-on-digital', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Search movies and shows.
+   */
+  async search(params: SearchParams): Promise<SearchDto> {
+    return apiGet<SearchDto>('catalog/search', {
+      searchParams: params as unknown as Record<string, string | number>,
+    });
   },
 } as const;
