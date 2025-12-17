@@ -250,7 +250,7 @@
         "mixedReviews": "Opinions are divided",
         "belowAverage": "Lots of mixed reactions",
         "poorRatings": "Most viewers were disappointed",
-        "earlyReviews": "Early reviews are in"
+        "earlyReviews": "Ratings still forming"
       },
       "show": {
         "cancelled": "Series cancelled",
@@ -262,7 +262,7 @@
         "longRunning": "Proven over time",
         "trendingNow": "Everyone's talking about it",
         "risingHype": "Rapidly gaining interest",
-        "earlyReviews": "Early reviews are in",
+        "earlyReviews": "Ratings still forming",
         "mixedReviews": "Opinions are divided",
         "noConsensusYet": "Ratings still forming"
       },
