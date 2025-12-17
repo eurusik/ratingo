@@ -58,6 +58,7 @@ export interface DataVerdictProps {
     hintKey?: 'newEpisodes' | 'afterAllEpisodes' | 'whenOnStreaming' | 'notifyNewEpisode' | 'general';
     primaryCta?: 'SAVE' | 'CONTINUE' | 'OPEN';
     continuePoint?: { season: number; episode: number } | null;
+    onSave?: () => void;
   };
 
   /**

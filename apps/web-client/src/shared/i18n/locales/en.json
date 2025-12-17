@@ -36,6 +36,7 @@
       "whereToWatch": "Where to watch"
     },
     "badge": {
+      "hit": "HIT",
       "trending": "HOT",
       "newRelease": "New",
       "rising": "Rising",
@@ -84,19 +85,30 @@
       "subtitle": "Shows how relevant the content is right now",
       "whatItMeans": "What this means:",
       "description": "Ratingo combines quality and current interest to highlight what people are actually watching today, not just \"timeless classics\".",
+      "classicCase": "Classic with high rating, even without current hype",
       "howToRead": "How to read the rating:",
-      "exampleHigh": "High Ratingo but low IMDb → trending now, but may not become a classic",
-      "exampleLow": "Low Ratingo but high IMDb → recognized classic, but not many watching now"
+      "exampleHigh": "High Ratingo + few online → proven classic",
+      "exampleTrending": "High Ratingo + many online → fresh hit"
     },
     "qualityBadge": {
       "high": "High Quality",
       "good": "Critics Loved It",
       "decent": "Quality Content"
     },
+    "qualityBadgeTooltip": {
+      "high": "Based on combined IMDb, TMDB and Metacritic ratings",
+      "good": "Stable ratings from critics and viewers",
+      "decent": "Mostly positive reviews"
+    },
     "popularityBadge": {
       "hot": "Currently Popular",
       "trending": "Trending",
       "rising": "Rising Hype"
+    },
+    "popularityBadgeTooltip": {
+      "hot": "High interest right now",
+      "trending": "Growing views and searches",
+      "rising": "Interest is starting to grow"
     },
     "cta": {
       "saveHint": {

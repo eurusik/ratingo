@@ -21,6 +21,7 @@ interface StatusBadgesProps {
 }
 
 const badgeConfig: Record<BadgeKey, { icon: typeof Flame; className: string; labelKey: 'trending' | 'newRelease' | 'rising' | 'newEpisode' }> = {
+  HIT: { icon: Flame, className: 'bg-red-600 text-white', labelKey: 'trending' },
   TRENDING: { icon: Flame, className: 'bg-red-600 text-white', labelKey: 'trending' },
   NEW_RELEASE: { icon: Sparkles, className: 'bg-green-500 text-white', labelKey: 'newRelease' },
   RISING: { icon: TrendingUp, className: 'bg-orange-500 text-white', labelKey: 'rising' },

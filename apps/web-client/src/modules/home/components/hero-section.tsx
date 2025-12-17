@@ -14,6 +14,7 @@ import type { MediaCardServerProps } from './media-card/media-card-server';
 interface HeroSectionProps {
   item: MediaCardServerProps & {
     backdrop?: { small: string; medium: string; large: string; original: string } | null;
+    ctaType?: 'SAVE' | 'CONTINUE' | 'OPEN';
   };
   locale?: Locale;
   className?: string;

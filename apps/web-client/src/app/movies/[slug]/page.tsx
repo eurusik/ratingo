@@ -66,7 +66,14 @@ const demoMovies: Record<string, {
   badgeKey?: BadgeKey;
   rank?: number;
   primaryTrailerKey?: string;
-  providers?: { id: number; name: string; logo?: string; type: 'stream' | 'rent' | 'buy' }[];
+  availability?: {
+    region: 'UA' | 'US' | null;
+    isFallback: boolean;
+    link: string | null;
+    stream?: { providerId: number; name: string; logo?: { small: string; medium: string; large: string; original: string } | null }[];
+    rent?: { providerId: number; name: string; logo?: { small: string; medium: string; large: string; original: string } | null }[];
+    buy?: { providerId: number; name: string; logo?: { small: string; medium: string; large: string; original: string } | null }[];
+  };
 }> = {
   'dune-part-two': {
     id: '4',
@@ -85,10 +92,13 @@ const demoMovies: Record<string, {
     runtime: 166,
     badgeKey: 'TRENDING',
     primaryTrailerKey: 'Way9Dexny3w',
-    providers: [
-      { id: 1, name: 'Netflix', type: 'stream' },
-      { id: 5, name: 'Apple TV', type: 'rent' },
-    ],
+    availability: {
+      region: 'UA',
+      isFallback: false,
+      link: 'https://www.themoviedb.org/movie/693134/watch',
+      stream: [{ providerId: 8, name: 'Netflix', logo: null }],
+      rent: [{ providerId: 2, name: 'Apple TV', logo: null }],
+    },
   },
   'oppenheimer': {
     id: '5',
@@ -105,10 +115,15 @@ const demoMovies: Record<string, {
     releaseDate: '2023-07-19',
     digitalReleaseDate: '2023-09-12',
     runtime: 180,
-    providers: [
-      { id: 1, name: 'Netflix', type: 'stream' },
-      { id: 6, name: 'Amazon Prime', type: 'stream' },
-    ],
+    availability: {
+      region: 'UA',
+      isFallback: false,
+      link: 'https://www.themoviedb.org/movie/872585/watch',
+      stream: [
+        { providerId: 8, name: 'Netflix', logo: null },
+        { providerId: 9, name: 'Amazon Prime', logo: null },
+      ],
+    },
   },
 };
 
@@ -243,7 +258,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
         />
 
         {/* 7. Where to watch */}
-        <ProvidersList providers={movie.providers} dict={dict} />
+        <ProvidersList providers={movie.availability} dict={dict} />
 
         {/* 8. Similar */}
         <SimilarCarousel items={similarMovies} locale="uk" dict={dict} />
