@@ -7,14 +7,8 @@
 
 import { Injectable } from '@nestjs/common';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { BADGE_KEY, type BadgeKey } from '../../cards/domain/card.constants';
-import {
-  ExternalRatings,
-  VerdictType,
-  VerdictHintKey,
-  BaseVerdict,
-  RATING_SOURCE,
-} from '../domain/verdict.types';
+import { BADGE_KEY } from '../../cards/domain/card.constants';
+import { ShowVerdictInput, ShowVerdict, ShowVerdictResult } from '../domain/show-verdict.types';
 import {
   CONFIDENCE,
   RATING_THRESHOLDS,
@@ -22,61 +16,6 @@ import {
   TIME_WINDOWS,
 } from '../domain/verdict.constants';
 import { aggregateRatings, formatRatingContext } from '../domain/rating-aggregator';
-
-/**
- * Quality verdict message keys - answer "is it worth it?"
- */
-export type ShowQualityVerdictKey =
-  | 'cancelled'
-  | 'poorRatings'
-  | 'belowAverage'
-  | 'criticsLoved'
-  | 'strongRatings'
-  | 'decentRatings'
-  | 'longRunning'
-  | 'trendingNow'
-  | 'risingHype'
-  | 'earlyReviews'
-  | 'mixedReviews'
-  | 'noConsensusYet'
-  | null;
-
-/**
- * Status hint message keys - explain "why now?"
- */
-export type ShowStatusHintKey = 'newSeason' | 'seriesFinale' | null;
-
-/**
- * Input data for show verdict computation.
- */
-export interface ShowVerdictInput {
-  status?: ShowStatus | null;
-  externalRatings?: ExternalRatings | null;
-  badgeKey?: BadgeKey;
-  popularity?: number | null;
-  totalSeasons?: number | null;
-  lastAirDate?: Date | null;
-}
-
-/**
- * Main verdict - answers "is it worth it?"
- */
-export type ShowVerdict = BaseVerdict<ShowQualityVerdictKey>;
-
-/**
- * Status hint - explains "why now?" (secondary, optional)
- */
-export interface ShowStatusHint {
-  messageKey: ShowStatusHintKey;
-}
-
-/**
- * Full verdict result with optional status hint.
- */
-export interface ShowVerdictResult {
-  verdict: ShowVerdict;
-  statusHint: ShowStatusHint | null;
-}
 
 /**
  * Show Verdict Service

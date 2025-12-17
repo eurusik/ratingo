@@ -7,53 +7,11 @@
 
 import { Injectable } from '@nestjs/common';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import { BADGE_KEY, type BadgeKey } from '../../cards/domain/card.constants';
-import {
-  VerdictType,
-  VerdictHintKey,
-  BaseVerdict,
-  RatingSourceLabel,
-  RATING_SOURCE,
-} from '../domain/verdict.types';
+import { BADGE_KEY } from '../../cards/domain/card.constants';
+import { MovieVerdictInput, MovieVerdict } from '../domain/movie-verdict.types';
+import { RATING_SOURCE } from '../domain/verdict.types';
 import { CONFIDENCE, RATING_THRESHOLDS, POPULARITY_THRESHOLDS } from '../domain/verdict.constants';
 import { formatRatingContext } from '../domain/rating-aggregator';
-
-/**
- * Message key for i18n lookup on client.
- */
-export type MovieVerdictMessageKey =
-  | 'upcomingHit'
-  | 'justReleased'
-  | 'nowStreaming'
-  | 'criticsLoved'
-  | 'trendingNow'
-  | 'strongRatings'
-  | 'decentRatings'
-  | 'risingHype'
-  | 'comingToStreaming'
-  | 'mixedReviews'
-  | 'belowAverage'
-  | 'poorRatings'
-  | 'earlyReviews'
-  | null;
-
-/**
- * Input data for movie verdict computation.
- */
-export interface MovieVerdictInput {
-  releaseStatus?: ReleaseStatus | null;
-  ratingoScore?: number | null;
-  avgRating?: number | null;
-  voteCount?: number | null;
-  ratingSource?: RatingSourceLabel | null;
-  badgeKey?: BadgeKey;
-  popularity?: number | null;
-}
-
-/**
- * Verdict result returned to client.
- */
-export type MovieVerdict = BaseVerdict<MovieVerdictMessageKey>;
 
 /**
  * Movie Verdict Service
