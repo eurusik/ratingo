@@ -226,6 +226,16 @@ describe('ShowVerdictService', () => {
       expect(result.statusHint?.messageKey).toBe('seriesFinale');
     });
 
+    it('should add seriesFinale hint for ended shows even with mixed quality', () => {
+      const result = service.compute({
+        status: ShowStatus.ENDED,
+        externalRatings: { imdb: { rating: 6.3, voteCount: 500 } },
+      });
+
+      // ended shows always get seriesFinale hint (regardless of quality)
+      expect(result.statusHint?.messageKey).toBe('seriesFinale');
+    });
+
     it('should NOT add status hint for warnings', () => {
       const result = service.compute({
         status: ShowStatus.CANCELED,

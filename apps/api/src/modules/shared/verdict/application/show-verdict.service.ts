@@ -102,7 +102,8 @@ export class ShowVerdictService {
       if (hasRecentSeason) {
         return { verdict, statusHint: { messageKey: 'newSeason' } };
       }
-      if (isEnded && isGoodQuality) {
+      // ended → statusHint for ALL ended shows (not just goodQuality)
+      if (isEnded) {
         return { verdict, statusHint: { messageKey: 'seriesFinale' } };
       }
 
