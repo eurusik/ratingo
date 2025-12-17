@@ -16,26 +16,31 @@ interface CardRatingProps {
 }
 
 /**
- * Minimalist rating row
+ * Rating row with spread layout: rating left, watchers right
  */
 export function CardRating({ rating, watchers, className }: CardRatingProps) {
+  const hasRating = rating != null;
+  const hasWatchers = watchers != null && watchers > 0;
+
+  if (!hasRating && !hasWatchers) return null;
+
   return (
-    <div className={cn('flex items-center gap-3 text-xs', className)}>
-      {/* ⚡ Актуальність (Ratingo score) */}
-      {rating != null && (
-        <div className="flex items-center gap-1">
-          <Activity className="w-3.5 h-3.5 text-blue-400" />
+    <div className={cn('flex items-center justify-between text-sm', className)}>
+      {/* ⚡ Актуальність (left) */}
+      {hasRating ? (
+        <div className="flex items-center gap-1.5">
+          <Activity className="w-4 h-4 text-blue-400" />
           <span className="text-white font-semibold">{formatRating(rating)}</span>
         </div>
-      )}
+      ) : <div />}
 
-      {/* 📈 Активний інтерес (Trakt watching) */}
-      {watchers != null && watchers > 0 && (
-        <div className="flex items-center gap-1">
-          <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
-          <span className="text-gray-300 font-medium">{formatNumber(watchers)}</span>
+      {/* � Активний інтерес (right) */}
+      {hasWatchers ? (
+        <div className="flex items-center gap-1.5 text-gray-400">
+          <TrendingUp className="w-4 h-4" />
+          <span className="font-medium">{formatNumber(watchers)}</span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

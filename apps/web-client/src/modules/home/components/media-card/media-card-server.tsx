@@ -85,15 +85,13 @@ export function MediaCardServer(props: MediaCardServerProps) {
         {title}
       </h3>
 
-      {/* ⚡ актуальність + 👁 онлайн */}
-      <CardRating rating={rating} watchers={watchers} className="mb-3" />
+      {/* ⭐ Rating left, 👁 Watchers right */}
+      <CardRating rating={rating} watchers={watchers} className="mb-2" />
 
-      <div className="flex-1" />
-
-      {/* Discovery context: show year, NOT episode info */}
+      {/* 📅 Year (separate row) */}
       {releaseDate ? (
-        <div className="text-xs text-gray-400 flex items-center gap-1">
-          <Calendar className="w-3 h-3" />
+        <div className="text-sm text-gray-400 flex items-center gap-1.5 mt-auto">
+          <Calendar className="w-4 h-4" />
           <span>{formatYear(releaseDate)}</span>
         </div>
       ) : null}

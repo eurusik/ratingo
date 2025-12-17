@@ -9,7 +9,7 @@ import { cn } from '@/shared/utils';
 /** Container styles for card hover effects */
 export const cardContainerStyles = [
   'group relative h-full flex flex-col',
-  'bg-zinc-900 rounded-xl overflow-hidden',
+  'bg-[#111113] rounded-xl overflow-hidden',
   'transition-all duration-300',
   'hover:shadow-2xl hover:shadow-blue-500/20',
   'border border-zinc-800 hover:border-blue-500/50',
@@ -17,7 +17,7 @@ export const cardContainerStyles = [
 
 /** Title styles */
 export const cardTitleStyles = [
-  'font-semibold text-white text-sm line-clamp-2 mb-2',
+  'font-semibold text-white text-base line-clamp-2 mb-2',
   'min-h-[2.5rem] break-words',
   'group-hover:text-blue-400 transition-colors',
 ] as const;

@@ -18,7 +18,7 @@ interface CardEpisodeInfoProps {
  */
 export function CardEpisodeInfo({ season, episode, className }: CardEpisodeInfoProps) {
   return (
-    <span className={cn('inline-block px-2 py-0.5 bg-zinc-800 rounded font-mono text-white text-xs', className)}>
+    <span className={cn('inline-block px-2 py-1 bg-zinc-800 rounded font-mono text-white text-sm', className)}>
       S{season}E{episode}
     </span>
   );

@@ -114,21 +114,19 @@ export function MediaCard(props: MediaCardProps) {
         {title}
       </h3>
 
-      {/* ⚡ актуальність + 👁 онлайн (one rating only) */}
-      <CardRating rating={rating} watchers={watchers} className="mb-3" />
+      {/* ⭐ Rating left, 👁 Watchers right */}
+      <CardRating rating={rating} watchers={watchers} className="mb-2" />
 
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Minimal context: S4E9 or Year */}
+      {/* 📅 Context: S4E9 or Year (separate row) */}
       {type === 'show' && props.nextEpisodeNumber != null && props.nextEpisodeSeason != null ? (
         <CardEpisodeInfo
           season={props.nextEpisodeSeason}
           episode={props.nextEpisodeNumber}
+          className="mt-auto"
         />
       ) : type === 'movie' && props.releaseDate ? (
-        <div className="text-xs text-gray-400 flex items-center gap-1">
-          <Calendar className="w-3 h-3" />
+        <div className="text-sm text-gray-400 flex items-center gap-1.5 mt-auto">
+          <Calendar className="w-4 h-4" />
           <span>{formatYear(props.releaseDate)}</span>
         </div>
       ) : null}
