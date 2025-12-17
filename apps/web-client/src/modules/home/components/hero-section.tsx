@@ -7,7 +7,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Play, TrendingUp, Users, Star, Activity } from 'lucide-react';
+import { Play, TrendingUp, Star, Activity } from 'lucide-react';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import type { MediaCardServerProps } from './media-card/media-card-server';
 
@@ -112,17 +112,17 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
               </div>
             ) : null}
 
-            {/* Live watchers */}
+            {/* Interest */}
             {stats?.liveWatchers && (
               <div className="flex items-center gap-2 text-zinc-300">
-                <Users className="w-5 h-5" />
+                <TrendingUp className="w-5 h-5" />
                 <span>{stats.liveWatchers.toLocaleString()}</span>
-                <span className="text-sm text-zinc-400">онлайн зараз</span>
+                <span className="text-sm text-zinc-400">{dict.details.watchingNow}</span>
               </div>
             )}
           </div>
 
-          {/* CTA Buttons */}
+          {/* CTA - Single button */}
           <div className="flex items-center gap-4">
             <Link
               href={href}
@@ -134,13 +134,6 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
                   ? dict.card.cta.continue
                   : dict.card.cta.details}
               </span>
-            </Link>
-
-            <Link
-              href={href}
-              className="inline-flex items-center gap-2 bg-zinc-800/50 backdrop-blur-sm text-white px-6 py-4 rounded-lg font-semibold hover:bg-zinc-700/50 transition-colors border border-zinc-700"
-            >
-              <span>Більше інфо</span>
             </Link>
           </div>
         </div>
