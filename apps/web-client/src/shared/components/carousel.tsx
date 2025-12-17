@@ -8,7 +8,7 @@
 import { useState, useCallback, useEffect, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
 import useEmblaCarousel from 'embla-carousel-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 
 export interface CarouselProps {
   children: ReactNode;
