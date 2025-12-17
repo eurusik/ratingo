@@ -3,6 +3,7 @@ import { CatalogShowsController } from './catalog.shows.controller';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import { NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.query';
 import { NotFoundException } from '@nestjs/common';
 
 describe('CatalogShowsController', () => {
@@ -38,12 +39,17 @@ describe('CatalogShowsController', () => {
       })),
     };
 
+    const mockNewEpisodesQuery = {
+      execute: jest.fn().mockResolvedValue([]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CatalogShowsController],
       providers: [
         { provide: SHOW_REPOSITORY, useValue: mockShowRepository },
         { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
         { provide: CardEnrichmentService, useValue: mockCards },
+        { provide: NewEpisodesQuery, useValue: mockNewEpisodesQuery },
       ],
     }).compile();
 

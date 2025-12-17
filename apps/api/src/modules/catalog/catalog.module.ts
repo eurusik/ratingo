@@ -15,6 +15,7 @@ import { MOVIE_REPOSITORY } from './domain/repositories/movie.repository.interfa
 import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
 import { ShowDetailsQuery } from './infrastructure/queries/show-details.query';
 import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
+import { NewEpisodesQuery } from './infrastructure/queries/new-episodes.query';
 
 // Query Objects - Movies
 import { MovieDetailsQuery } from './infrastructure/queries/movie-details.query';
@@ -42,6 +43,7 @@ import { CardsModule } from '../shared/cards/cards.module';
     TrendingShowsQuery,
     ShowDetailsQuery,
     CalendarEpisodesQuery,
+    NewEpisodesQuery,
 
     // Query Objects - Movies
     MovieDetailsQuery,

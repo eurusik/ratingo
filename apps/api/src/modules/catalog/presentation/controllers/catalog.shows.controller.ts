@@ -20,6 +20,8 @@ import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/option
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
+import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
+import { NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.query';
 import { ShowResponseDto } from '../dtos/show-response.dto';
 import { DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { MediaType } from '../../../../common/enums/media-type.enum';
@@ -50,6 +52,7 @@ export class CatalogShowsController {
     private readonly showRepository: IShowRepository,
     private readonly userStateEnricher: CatalogUserStateEnricher,
     private readonly cards: CardEnrichmentService,
+    private readonly newEpisodesQuery: NewEpisodesQuery,
   ) {}
 
   /**
@@ -89,6 +92,41 @@ export class CatalogShowsController {
         hasMore: offset + shows.length < total,
       },
     };
+  }
+
+  /**
+   * Returns shows with new episodes (update feed).
+   * Groups by show - one entry per show with the latest episode.
+   *
+   * @param {number} days - Number of days to look back (default: 7)
+   * @param {number} limit - Max number of shows (default: 20)
+   * @returns {Promise<NewEpisodesResponseDto>} New episodes response
+   */
+  @Get('new-episodes')
+  @ApiOperation({
+    summary: 'Shows with new episodes',
+    description:
+      'Returns shows that have aired new episodes recently. One entry per show with the latest episode.',
+  })
+  @ApiQuery({
+    name: 'days',
+    required: false,
+    type: Number,
+    description: 'Number of days to look back (default: 7).',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Max number of shows to return (default: 20).',
+  })
+  @ApiOkResponse({ type: NewEpisodesResponseDto })
+  async getNewEpisodes(
+    @Query('days', new DefaultValuePipe(7), ParseIntPipe) days: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ): Promise<NewEpisodesResponseDto> {
+    const episodes = await this.newEpisodesQuery.execute(days, limit);
+    return { data: episodes };
   }
 
   /**
