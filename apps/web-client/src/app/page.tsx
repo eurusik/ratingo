@@ -32,7 +32,7 @@ export default async function HomePage() {
   const [heroItems, trendingShowsData, newEpisodesData, trendingMoviesData, nowPlayingData, newOnDigitalData] = await Promise.all([
     catalogApi.getHeroItems({ type: 'show' }).catch(() => []),
     catalogApi.getTrendingShows({ limit: 12 }).catch(() => ({ data: [] })),
-    catalogApi.getNewEpisodes({ days: 7, limit: 10 }).catch(() => ({ data: [] })),
+    catalogApi.getNewEpisodes({ days: 7, limit: 9 }).catch(() => ({ data: [] })),
     catalogApi.getTrendingMovies({ limit: 12 }).catch(() => ({ data: [] })),
     catalogApi.getNowPlayingMovies({ limit: 12 }).catch(() => ({ data: [] })),
     catalogApi.getNewOnDigitalMovies({ limit: 12 }).catch(() => ({ data: [] })),
