@@ -117,13 +117,13 @@
     "totalWatchers": "watched overall",
     "ratingTooltip": {
       "title": "Ratingo rating",
-      "subtitle": "Shows how relevant the content is right now",
-      "whatItMeans": "What this means:",
-      "description": "Ratingo combines quality and current interest to highlight what people are actually watching today, not just \"timeless classics\".",
-      "classicCase": "Classic with high rating, even without current hype",
-      "howToRead": "How to read the rating:",
-      "exampleHigh": "High Ratingo + few online → proven classic",
-      "exampleTrending": "High Ratingo + many online → fresh hit"
+      "subtitle": "Combines quality and current interest",
+      "whatItMeans": "How to read:",
+      "description": "High rating → content receives good reviews. Activity now → shows how much people are talking about it today.",
+      "classicCase": "Quality content without current hype",
+      "howToRead": "Examples:",
+      "exampleHigh": "High rating + low activity → quality content without hype",
+      "exampleTrending": "High rating + high activity → quality content that's trending now"
     },
     "qualityBadge": {
       "high": "High Quality",
