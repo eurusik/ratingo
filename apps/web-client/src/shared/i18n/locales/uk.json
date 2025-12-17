@@ -247,7 +247,7 @@
         "decentRatings": "Нормальний варіант на вечір",
         "risingHype": "Швидко набирає інтерес",
         "comingToStreaming": "Скоро можна буде подивитись вдома",
-        "mixedReviews": "Зайшло не всім",
+        "mixedReviews": "Думки розділились",
         "belowAverage": "Багато суперечливих відгуків",
         "poorRatings": "Більшість глядачів розчаровані",
         "earlyReviews": "Перші відгуки вже є"
@@ -263,7 +263,7 @@
         "trendingNow": "Про нього зараз багато говорять",
         "risingHype": "Швидко набирає інтерес",
         "earlyReviews": "Перші відгуки вже є",
-        "mixedReviews": "Зайшло не всім",
+        "mixedReviews": "Думки розділились",
         "noConsensusYet": "Оцінки ще нестабільні"
       },
       "showStatusHint": {

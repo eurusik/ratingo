@@ -247,7 +247,7 @@
         "decentRatings": "Solid pick for the evening",
         "risingHype": "Rapidly gaining interest",
         "comingToStreaming": "Coming soon to watch at home",
-        "mixedReviews": "Not for everyone",
+        "mixedReviews": "Opinions are divided",
         "belowAverage": "Lots of mixed reactions",
         "poorRatings": "Most viewers were disappointed",
         "earlyReviews": "Early reviews are in"
@@ -263,7 +263,7 @@
         "trendingNow": "Everyone's talking about it",
         "risingHype": "Rapidly gaining interest",
         "earlyReviews": "Early reviews are in",
-        "mixedReviews": "Not for everyone",
+        "mixedReviews": "Opinions are divided",
         "noConsensusYet": "Ratings still forming"
       },
       "showStatusHint": {
