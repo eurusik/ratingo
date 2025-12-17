@@ -7,6 +7,7 @@
  */
 
 import { ThemeProvider } from 'next-themes';
+import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 import { QueryProvider } from './query-provider';
 import { I18nProvider, type Locale, DEFAULT_LOCALE } from '@/shared/i18n';
 
@@ -32,7 +33,15 @@ export function AppProviders({ children, locale = DEFAULT_LOCALE }: AppProviders
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" disableTransitionOnChange>
       <I18nProvider locale={locale}>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          {children}
+          <ProgressBar
+            height="3px"
+            color="#3b82f6"
+            options={{ showSpinner: false }}
+            shallowRouting
+          />
+        </QueryProvider>
       </I18nProvider>
     </ThemeProvider>
   );
