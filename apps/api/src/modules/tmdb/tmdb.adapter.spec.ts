@@ -60,7 +60,7 @@ describe('TmdbAdapter', () => {
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('api_key=test-api-key'));
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('language=uk-UA'));
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('include_video_language=uk%2Cen')
+        expect.stringContaining('include_video_language=uk%2Cen'),
       );
     });
 
@@ -234,13 +234,13 @@ describe('TmdbAdapter', () => {
   });
 
   describe('getNowPlayingIds', () => {
-    it('should fetch first 2 pages and return aggregated IDs', async () => {
+    it('should fetch all pages until total_pages and return aggregated IDs', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
             page: 1,
-            total_pages: 5,
+            total_pages: 2,
             results: [{ id: 101 }, { id: 102 }],
           }),
       });
@@ -250,7 +250,7 @@ describe('TmdbAdapter', () => {
         json: () =>
           Promise.resolve({
             page: 2,
-            total_pages: 5,
+            total_pages: 2,
             results: [{ id: 103 }, { id: 104 }],
           }),
       });
@@ -283,13 +283,13 @@ describe('TmdbAdapter', () => {
   });
 
   describe('getNewReleaseIds', () => {
-    it('should fetch first 2 pages and return aggregated IDs', async () => {
+    it('should fetch all pages until total_pages and return aggregated IDs', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () =>
           Promise.resolve({
             page: 1,
-            total_pages: 5,
+            total_pages: 2,
             results: [{ id: 201 }],
           }),
       });
@@ -299,7 +299,7 @@ describe('TmdbAdapter', () => {
         json: () =>
           Promise.resolve({
             page: 2,
-            total_pages: 5,
+            total_pages: 2,
             results: [{ id: 202 }],
           }),
       });

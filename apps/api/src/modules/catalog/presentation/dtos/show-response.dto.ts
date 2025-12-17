@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { MediaBaseDto } from './common.dto';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
+import { ShowVerdictDto, ShowStatusHintDto } from './verdict.dto';
 
 export class SeasonDto {
   @ApiProperty({ example: 1 })
@@ -60,4 +61,20 @@ export class ShowResponseDto extends MediaBaseDto {
     description: 'Card metadata with badge and CTA info',
   })
   card?: CardMetaDto | null;
+
+  @ApiProperty({
+    type: ShowVerdictDto,
+    required: false,
+    nullable: true,
+    description: 'Show verdict - answers "is it worth it?"',
+  })
+  verdict?: ShowVerdictDto | null;
+
+  @ApiProperty({
+    type: ShowStatusHintDto,
+    required: false,
+    nullable: true,
+    description: 'Status hint - explains "why now?" (secondary, optional)',
+  })
+  statusHint?: ShowStatusHintDto | null;
 }

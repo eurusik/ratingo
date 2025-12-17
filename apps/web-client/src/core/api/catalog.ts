@@ -8,7 +8,7 @@
  * const shows = await catalogApi.getTrendingShows({ limit: 20 });
  */
 
-import type { GetData, GetArrayItem, components } from '@ratingo/api-contract';
+import type { GetData, GetJson, GetArrayItem, components } from '@ratingo/api-contract';
 import { apiGet } from './client';
 
 /**
@@ -43,12 +43,12 @@ export interface SearchParams extends PaginationParams {
 /**
  * Show details by slug.
  */
-export type ShowDetailsDto = GetData<'/api/catalog/shows/{slug}'>;
+export type ShowDetailsDto = GetJson<'/api/catalog/shows/{slug}'>;
 
 /**
  * Movie details by slug.
  */
-export type MovieDetailsDto = GetData<'/api/catalog/movies/{slug}'>;
+export type MovieDetailsDto = GetJson<'/api/catalog/movies/{slug}'>;
 
 /**
  * Hero block data (array unwrapped from {success, data} by apiGet).

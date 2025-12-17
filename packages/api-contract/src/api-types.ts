@@ -1114,6 +1114,30 @@ export interface components {
             ads?: components["schemas"]["WatchProviderDto"][];
             free?: components["schemas"]["WatchProviderDto"][];
         };
+        MovieVerdictDto: {
+            /**
+             * @description Verdict type for UI styling
+             * @example quality
+             * @enum {string}
+             */
+            type: "warning" | "release" | "quality" | "popularity" | "general";
+            /**
+             * @description Message key for i18n lookup on client (details.verdict.movie.*)
+             * @example strongRatings
+             */
+            messageKey: string | null;
+            /**
+             * @description Additional context to display with verdict
+             * @example IMDb: 6.3
+             */
+            context?: string | null;
+            /**
+             * @description Hint key for CTA suggestions
+             * @example forLater
+             * @enum {string}
+             */
+            hintKey: "newEpisodes" | "afterAllEpisodes" | "whenOnStreaming" | "notifyNewEpisode" | "general" | "forLater" | "notifyRelease" | "decideToWatch";
+        };
         MovieResponseDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
             id: string;
@@ -1171,6 +1195,14 @@ export interface components {
             releaseDate?: string | null;
             /** @description Card metadata with badge and CTA info */
             card?: components["schemas"]["CardMetaDto"] | null;
+            /**
+             * @description Computed release status: upcoming, in_theaters, streaming, new_on_streaming
+             * @example in_theaters
+             * @enum {string|null}
+             */
+            releaseStatus?: "upcoming" | "in_theaters" | "streaming" | "new_on_streaming" | null;
+            /** @description Computed verdict for movie details page. Clients use messageKey for i18n lookup. */
+            verdict?: components["schemas"]["MovieVerdictDto"] | null;
         };
         ShowProgressDto: {
             /** @description Null for trending list optimization */
@@ -1261,6 +1293,39 @@ export interface components {
             /** Format: date-time */
             airDate?: string | null;
         };
+        ShowVerdictDto: {
+            /**
+             * @description Verdict type for UI styling
+             * @example quality
+             * @enum {string}
+             */
+            type: "warning" | "release" | "quality" | "popularity" | "general";
+            /**
+             * @description Message key for i18n lookup on client (details.verdict.show.*)
+             * @example strongRatings
+             * @enum {string|null}
+             */
+            messageKey: "cancelled" | "poorRatings" | "belowAverage" | "criticsLoved" | "strongRatings" | "decentRatings" | "longRunning" | "trendingNow" | "risingHype" | "earlyReviews" | "mixedReviews" | null;
+            /**
+             * @description Additional context to display with verdict
+             * @example IMDb: 8.2
+             */
+            context?: string | null;
+            /**
+             * @description Hint key for CTA suggestions
+             * @example forLater
+             * @enum {string}
+             */
+            hintKey: "newEpisodes" | "afterAllEpisodes" | "whenOnStreaming" | "notifyNewEpisode" | "general" | "forLater" | "notifyRelease" | "decideToWatch";
+        };
+        ShowStatusHintDto: {
+            /**
+             * @description Message key for i18n lookup on client (details.verdict.showStatusHint.*)
+             * @example newSeason
+             * @enum {string|null}
+             */
+            messageKey: "newSeason" | "seriesFinale" | null;
+        };
         ShowResponseDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
             id: string;
@@ -1324,6 +1389,10 @@ export interface components {
             seasons: components["schemas"]["SeasonDto"][];
             /** @description Card metadata with badge and CTA info */
             card?: components["schemas"]["CardMetaDto"] | null;
+            /** @description Show verdict - answers "is it worth it?" */
+            verdict?: components["schemas"]["ShowVerdictDto"] | null;
+            /** @description Status hint - explains "why now?" (secondary, optional) */
+            statusHint?: components["schemas"]["ShowStatusHintDto"] | null;
         };
         SearchItemDto: {
             /** @enum {string} */
@@ -1832,11 +1901,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMovieResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
                 };
             };
         };
@@ -1875,11 +1940,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMovieResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
                 };
             };
         };
@@ -1920,11 +1981,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMovieResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
                 };
             };
         };
@@ -1965,11 +2022,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMovieResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
                 };
             };
         };
@@ -1990,11 +2043,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MovieResponseDto"];
-                    };
+                    "application/json": components["schemas"]["MovieResponseDto"];
                 };
             };
         };
@@ -2033,11 +2082,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["TrendingShowsResponseDto"];
-                    };
+                    "application/json": components["schemas"]["TrendingShowsResponseDto"];
                 };
             };
         };
@@ -2061,11 +2106,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["CalendarResponseDto"];
-                    };
+                    "application/json": components["schemas"]["CalendarResponseDto"];
                 };
             };
         };
@@ -2086,11 +2127,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["ShowResponseDto"];
-                    };
+                    "application/json": components["schemas"]["ShowResponseDto"];
                 };
             };
         };
@@ -2111,11 +2148,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SearchResponseDto"];
-                    };
+                    "application/json": components["schemas"]["SearchResponseDto"];
                 };
             };
         };
@@ -2140,11 +2173,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UserMediaStateDto"][];
-                    };
+                    "application/json": components["schemas"]["UserMediaStateDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -2174,11 +2203,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UserMediaStateDto"];
-                    };
+                    "application/json": components["schemas"]["UserMediaStateDto"];
                 };
             };
             /** @description Unauthorized */
@@ -2212,11 +2237,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UserMediaStateDto"];
-                    };
+                    "application/json": components["schemas"]["UserMediaStateDto"];
                 };
             };
             /** @description Unauthorized */
@@ -2248,11 +2269,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UserMediaStateDto"][];
-                    };
+                    "application/json": components["schemas"]["UserMediaStateDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -2282,11 +2299,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
                 };
             };
         };
@@ -2309,11 +2322,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
                 };
             };
         };
@@ -2336,11 +2345,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
                 };
             };
         };
@@ -2363,11 +2368,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
                 };
             };
         };
@@ -2391,11 +2392,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthTokensDto"];
-                    };
+                    "application/json": components["schemas"]["AuthTokensDto"];
                 };
             };
         };
@@ -2419,11 +2416,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthTokensDto"];
-                    };
+                    "application/json": components["schemas"]["AuthTokensDto"];
                 };
             };
             /** @description Invalid credentials */
@@ -2454,11 +2447,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthTokensDto"];
-                    };
+                    "application/json": components["schemas"]["AuthTokensDto"];
                 };
             };
         };
@@ -2495,11 +2484,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MeDto"];
-                    };
+                    "application/json": components["schemas"]["MeDto"];
                 };
             };
             /** @description Unauthorized */
@@ -2591,11 +2576,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AvatarUploadUrlDto"];
-                    };
+                    "application/json": components["schemas"]["AvatarUploadUrlDto"];
                 };
             };
             /** @description Unauthorized */
@@ -2646,11 +2627,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
                 };
             };
         };
@@ -2675,11 +2652,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
                 };
             };
         };
@@ -2704,11 +2677,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
                 };
             };
         };
@@ -2731,16 +2700,12 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: {
-                            id?: string;
-                            /** @enum {string} */
-                            status?: "queued" | "processing" | "ready" | "failed";
-                            errorMessage?: string | null;
-                            /** Format: date-time */
-                            updatedAt?: string | null;
-                        };
+                        id?: string;
+                        /** @enum {string} */
+                        status?: "queued" | "processing" | "ready" | "failed";
+                        errorMessage?: string | null;
+                        /** Format: date-time */
+                        updatedAt?: string | null;
                     };
                 };
             };
@@ -3008,11 +2973,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["RiseFallResponseDto"];
-                    };
+                    "application/json": components["schemas"]["RiseFallResponseDto"];
                 };
             };
         };

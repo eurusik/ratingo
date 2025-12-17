@@ -7,7 +7,7 @@ import type { MediaCardServerProps } from '@/modules/home';
 import { MediaCardServer, HeroSection, Top3SectionServer, TrendingCarousel } from '@/modules/home';
 import { getDictionary } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
-import { Flame, Film, Clapperboard, Tv } from 'lucide-react';
+import { TrendingUp, Clapperboard, Sparkles, Film } from 'lucide-react';
 
 /** Map API item to MediaCardServerProps */
 function toCardProps(item: Record<string, unknown>, type: 'show' | 'movie'): MediaCardServerProps {
@@ -89,10 +89,10 @@ export default async function HomePage() {
           <Top3SectionServer items={top3Cards.slice(1)} locale="uk" className="mb-12" />
         )}
 
-        {/* Trending Shows */}
+        {/* Серіали в тренді */}
         <TrendingCarousel
-          title={dict.home.sections.trending}
-          titleIcon={<Tv className="w-5 h-5 text-blue-500" />}
+          title={dict.home.sections.shows}
+          titleIcon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
           actions={
             <Link
               href="/browse/trending"
@@ -112,35 +112,23 @@ export default async function HomePage() {
           ))}
         </TrendingCarousel>
 
-        {/* Trending Movies */}
-        {trendingMovieCards.length > 0 && (
-          <TrendingCarousel
-            title={dict.home.sections.movies}
-            titleIcon={<Film className="w-5 h-5 text-purple-500" />}
-            actions={
-              <Link
-                href="/browse/movies"
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                {dict.common.showAll} →
-              </Link>
-            }
-          >
-            {trendingMovieCards.map((item) => (
-              <div
-                key={item.id}
-                className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
-              >
-                <MediaCardServer {...item} locale="uk" />
-              </div>
-            ))}
-          </TrendingCarousel>
-        )}
+        {/* ═══ Візуальне розділення: Фільми ═══ */}
+        <div className="relative my-8">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-full border-t border-zinc-800" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-zinc-950 px-4 text-sm text-zinc-500 flex items-center gap-2">
+              <Film className="w-4 h-4" />
+              Фільми
+            </span>
+          </div>
+        </div>
 
-        {/* Now Playing in Theaters */}
+        {/* Зараз у кіно 🎬 */}
         {nowPlayingCards.length > 0 && (
           <TrendingCarousel
-            title="Зараз у кіно"
+            title={dict.browse.moviesNowPlaying.title}
             titleIcon={<Clapperboard className="w-5 h-5 text-red-500" />}
             actions={
               <Link
@@ -162,11 +150,11 @@ export default async function HomePage() {
           </TrendingCarousel>
         )}
 
-        {/* New on Digital */}
+        {/* Нове на стрімінгу ✨ */}
         {newDigitalCards.length > 0 && (
           <TrendingCarousel
-            title="Нове на стрімінгу"
-            titleIcon={<Flame className="w-5 h-5 text-orange-500" />}
+            title={dict.browse.moviesDigital.title}
+            titleIcon={<Sparkles className="w-5 h-5 text-amber-400" />}
             actions={
               <Link
                 href="/browse/movies-digital"
@@ -177,6 +165,31 @@ export default async function HomePage() {
             }
           >
             {newDigitalCards.map((item) => (
+              <div
+                key={item.id}
+                className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
+              >
+                <MediaCardServer {...item} locale="uk" />
+              </div>
+            ))}
+          </TrendingCarousel>
+        )}
+
+        {/* Фільми в тренді */}
+        {trendingMovieCards.length > 0 && (
+          <TrendingCarousel
+            title={dict.home.sections.movies}
+            titleIcon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
+            actions={
+              <Link
+                href="/browse/movies"
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                {dict.common.showAll} →
+              </Link>
+            }
+          >
+            {trendingMovieCards.map((item) => (
               <div
                 key={item.id}
                 className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"

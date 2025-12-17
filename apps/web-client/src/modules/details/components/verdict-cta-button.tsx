@@ -9,7 +9,7 @@ import { Bookmark, Check, ArrowRight, Info } from 'lucide-react';
 import type { PrimaryCta } from '@/shared/types';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
-type VerdictType = 'season_comparison' | 'user_context' | 'general';
+type VerdictType = 'season_comparison' | 'user_context' | 'general' | 'quality' | 'popularity' | 'release' | 'warning';
 
 interface VerdictCtaButtonProps {
   /** CTA type from card metadata */
@@ -21,7 +21,7 @@ interface VerdictCtaButtonProps {
   /** Has new episodes */
   hasNewEpisodes?: boolean;
   /** Custom hint key */
-  hintKey?: 'newEpisodes' | 'afterAllEpisodes' | 'whenOnStreaming' | 'notifyNewEpisode' | 'general';
+  hintKey?: 'newEpisodes' | 'afterAllEpisodes' | 'whenOnStreaming' | 'notifyNewEpisode' | 'general' | 'forLater' | 'notifyRelease' | 'decideToWatch';
   /** Verdict type for styling */
   verdictType: VerdictType;
   /** Dictionary for translations */
@@ -82,11 +82,15 @@ export function VerdictCtaButton({
   const CtaIcon = config.icon;
 
   // Dynamic CTA gradient based on verdict type
-  const ctaGradientClasses = {
+  const ctaGradientClasses: Record<VerdictType, string> = {
     season_comparison: 'bg-gradient-to-r from-amber-500/10 via-transparent to-transparent border-amber-500/20 hover:border-amber-500/30 hover:from-amber-500/15',
     user_context: 'bg-gradient-to-r from-blue-500/10 via-transparent to-transparent border-blue-500/20 hover:border-blue-500/30 hover:from-blue-500/15',
     general: 'bg-gradient-to-r from-zinc-500/10 via-transparent to-transparent border-zinc-500/20 hover:border-zinc-500/30 hover:from-zinc-500/15',
-  } as const;
+    quality: 'bg-gradient-to-r from-green-500/10 via-transparent to-transparent border-green-500/20 hover:border-green-500/30 hover:from-green-500/15',
+    popularity: 'bg-gradient-to-r from-purple-500/10 via-transparent to-transparent border-purple-500/20 hover:border-purple-500/30 hover:from-purple-500/15',
+    release: 'bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent border-cyan-500/20 hover:border-cyan-500/30 hover:from-cyan-500/15',
+    warning: 'bg-gradient-to-r from-orange-500/10 via-transparent to-transparent border-orange-500/20 hover:border-orange-500/30 hover:from-orange-500/15',
+  };
 
   return (
     <button

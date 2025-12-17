@@ -26,17 +26,20 @@ export async function GET(
   try {
     // Call the appropriate API method based on category config
     const apiMethod = catalogApi[config.apiMethod];
-    const response = await apiMethod({ offset, limit });
+    const response = await apiMethod({ offset, limit }) as unknown as { 
+      data: Array<{
+        id: string;
+        slug: string;
+        title: string;
+        poster?: { small: string; medium: string; large: string; original: string } | null;
+        stats?: { qualityScore?: number | null; liveWatchers?: number | null } | null;
+        externalRatings?: { imdb?: { rating: number } | null; tmdb?: { rating: number } | null } | null;
+        releaseDate?: string | null;
+      }>;
+      meta: { total?: number };
+    };
     
-    const items = response.data.map((item: {
-      id: string;
-      slug: string;
-      title: string;
-      poster?: { small: string; medium: string; large: string; original: string } | null;
-      stats?: { qualityScore?: number | null; liveWatchers?: number | null } | null;
-      externalRatings?: { imdb?: { rating: number } | null; tmdb?: { rating: number } | null } | null;
-      releaseDate?: string | null;
-    }) => ({
+    const items = response.data.map((item) => ({
       id: item.id,
       slug: item.slug,
       type: config.mediaType,

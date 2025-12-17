@@ -9,17 +9,19 @@ import type { Route } from 'next';
 import { ArrowLeft, Film, Share2 } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
 import { createMediaMetadata, createNotFoundMetadata } from '@/shared/utils';
-import { catalogApi } from '@/core/api';
+import { catalogApi, type MovieDetailsDto } from '@/core/api';
 import {
   DetailsHero,
-  DetailsCtaRow,
-  DetailsQuickPitch,
+  DataVerdict,
   MovieRelease,
   ProvidersList,
-  SimilarCarousel,
+  TrailersCarousel,
+  CastCarousel,
+  CrewCarousel,
   type BadgeKey,
+  type MovieVerdict,
+  type MovieVerdictMessageKey,
 } from '@/modules/details';
-import type { MediaCardServerProps } from '@/modules/home';
 
 // ISR: Revalidate every hour
 export const revalidate = 3600;
@@ -46,137 +48,91 @@ interface MovieDetailsPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Demo data (will be replaced with API call)
-const demoMovies: Record<string, {
-  id: string;
-  slug: string;
-  title: string;
-  originalTitle?: string;
-  overview: string;
+/**
+ * Extended movie type with computed fields for UI.
+ */
+interface EnrichedMovieDetails extends MovieDetailsDto {
   quickPitch: string;
   suitableFor: string[];
-  poster: { small: string; medium: string; large: string; original: string };
-  backdrop?: { small: string; medium: string; large: string; original: string };
-  stats: { ratingoScore: number; liveWatchers?: number };
-  externalRatings: { imdb?: { rating: number } };
-  genres: { id: string; name: string; slug: string }[];
-  releaseDate: string;
-  digitalReleaseDate?: string;
-  runtime?: number;
   badgeKey?: BadgeKey;
   rank?: number;
   primaryTrailerKey?: string;
-  availability?: {
-    region: 'UA' | 'US' | null;
-    isFallback: boolean;
-    link: string | null;
-    stream?: { providerId: number; name: string; logo?: { small: string; medium: string; large: string; original: string } | null }[];
-    rent?: { providerId: number; name: string; logo?: { small: string; medium: string; large: string; original: string } | null }[];
-    buy?: { providerId: number; name: string; logo?: { small: string; medium: string; large: string; original: string } | null }[];
+  releaseDate: string;
+  digitalReleaseDate?: string | null;
+}
+
+/**
+ * Enriches API response with computed UI fields.
+ */
+function enrichMovieDetails(movie: MovieDetailsDto): EnrichedMovieDetails {
+  // Compute quickPitch: Take FIRST sentence only
+  const firstSentence = movie.overview?.split(/[.!?]\s+/)[0];
+  const quickPitch = firstSentence 
+    ? (firstSentence.length > 120 
+        ? firstSentence.slice(0, 120) + '...' 
+        : firstSentence + '...')
+    : '';
+
+  // Compute suitableFor from genres
+  const suitableFor = (movie.genres || []).map(g => g.name).slice(0, 3);
+
+  // Use API's primaryTrailer if available, fallback to first video
+  const primaryTrailerKey = movie.primaryTrailer?.key || movie.videos?.[0]?.key;
+
+  // Use releaseDate directly from API
+  const releaseDate = movie.releaseDate || '';
+
+  // Use ratingoScore as rank
+  const rank = movie.stats?.ratingoScore ? Math.round(movie.stats.ratingoScore) : undefined;
+
+  // Use card.badgeKey from API
+  const badgeKey = movie.card?.badgeKey || undefined;
+
+  // Use digitalReleaseDate from API (cast to any since contract may not have it yet)
+  const digitalReleaseDate = (movie as any).digitalReleaseDate || null;
+
+  return {
+    ...movie,
+    quickPitch,
+    suitableFor,
+    badgeKey,
+    rank,
+    primaryTrailerKey,
+    releaseDate,
+    digitalReleaseDate,
   };
-}> = {
-  'dune-part-two': {
-    id: '4',
-    slug: 'dune-part-two',
-    title: 'Дюна: Частина друга',
-    originalTitle: 'Dune: Part Two',
-    overview: 'Пол Атрейдес об\'єднується з Чані та фременами, щоб помститися змовникам, які знищили його сім\'ю. Опинившись перед вибором між коханням свого життя і долею відомого всесвіту, він намагається запобігти жахливому майбутньому, яке тільки він може передбачити.',
-    quickPitch: 'Епічна сага про помсту, владу та виживання на пустельній планеті Арракіс.',
-    suitableFor: ['фантастика', 'епік', 'Зоряні війни'],
-    poster: { small: 'https://image.tmdb.org/t/p/w342/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg', medium: 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg', large: 'https://image.tmdb.org/t/p/w780/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg', original: 'https://image.tmdb.org/t/p/original/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg' },
-    stats: { ratingoScore: 84, liveWatchers: 2100 },
-    externalRatings: { imdb: { rating: 8.6 } },
-    genres: [{ id: '5', name: 'Фантастика', slug: 'sci-fi' }, { id: '6', name: 'Пригоди', slug: 'adventure' }],
-    releaseDate: '2024-02-27',
-    digitalReleaseDate: '2024-04-15',
-    runtime: 166,
-    badgeKey: 'TRENDING',
-    primaryTrailerKey: 'Way9Dexny3w',
-    availability: {
-      region: 'UA',
-      isFallback: false,
-      link: 'https://www.themoviedb.org/movie/693134/watch',
-      stream: [{ providerId: 8, name: 'Netflix', logo: null }],
-      rent: [{ providerId: 2, name: 'Apple TV', logo: null }],
-    },
-  },
-  'oppenheimer': {
-    id: '5',
-    slug: 'oppenheimer',
-    title: 'Оппенгеймер',
-    originalTitle: 'Oppenheimer',
-    overview: 'Історія американського вченого Дж. Роберта Оппенгеймера та його ролі в розробці атомної бомби. Фільм досліджує складні моральні дилеми, з якими він стикнувся, і наслідки його роботи для людства.',
-    quickPitch: 'Біографічний трилер про створення атомної бомби та моральну ціну наукового прогресу.',
-    suitableFor: ['драма', 'історія', 'Нолан'],
-    poster: { small: 'https://image.tmdb.org/t/p/w342/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', medium: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', large: 'https://image.tmdb.org/t/p/w780/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', original: 'https://image.tmdb.org/t/p/original/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg' },
-    stats: { ratingoScore: 81, liveWatchers: 1800 },
-    externalRatings: { imdb: { rating: 8.3 } },
-    genres: [{ id: '1', name: 'Драма', slug: 'drama' }, { id: '7', name: 'Історичний', slug: 'history' }, { id: '3', name: 'Трилер', slug: 'thriller' }],
-    releaseDate: '2023-07-19',
-    digitalReleaseDate: '2023-09-12',
-    runtime: 180,
-    availability: {
-      region: 'UA',
-      isFallback: false,
-      link: 'https://www.themoviedb.org/movie/872585/watch',
-      stream: [
-        { providerId: 8, name: 'Netflix', logo: null },
-        { providerId: 9, name: 'Amazon Prime', logo: null },
-      ],
-    },
-  },
-};
-
-// Similar movies demo
-const similarMovies: MediaCardServerProps[] = [
-  {
-    id: 'm1', slug: 'blade-runner-2049', type: 'movie' as const, title: 'Blade Runner 2049',
-    poster: { small: 'https://image.tmdb.org/t/p/w342/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg', medium: 'https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg', large: '', original: '' },
-    stats: { ratingoScore: 81 }, externalRatings: { imdb: { rating: 8.0 } },
-  },
-  {
-    id: 'm2', slug: 'interstellar', type: 'movie' as const, title: 'Interstellar',
-    poster: { small: 'https://image.tmdb.org/t/p/w342/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', medium: 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', large: '', original: '' },
-    stats: { ratingoScore: 87 }, externalRatings: { imdb: { rating: 8.7 } },
-  },
-  {
-    id: 'm3', slug: 'inception', type: 'movie' as const, title: 'Inception',
-    poster: { small: 'https://image.tmdb.org/t/p/w342/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg', medium: 'https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg', large: '', original: '' },
-    stats: { ratingoScore: 87 }, externalRatings: { imdb: { rating: 8.8 } },
-  },
-];
-
-function formatRuntime(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return hours > 0 ? `${hours}г ${mins}хв` : `${mins}хв`;
 }
 
 export default async function MovieDetailsPage({ params }: MovieDetailsPageProps) {
   const { slug } = await params;
   const dict = getDictionary('uk');
 
-  // Get demo data (will be replaced with API fetch)
-  const movie = demoMovies[slug];
-
-  if (!movie) {
+  // Fetch movie from API
+  let apiMovie: MovieDetailsDto;
+  try {
+    apiMovie = await catalogApi.getMovieBySlug(slug);
+  } catch (error) {
+    // Movie not found or API error
     return (
       <main className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Film className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">{dict.errors.notFound}</h1>
           <Link href={'/' as Route} className="text-blue-400 hover:text-blue-300">
-            {dict.details.backToHome}
+            ← {dict.details.backToHome}
           </Link>
         </div>
       </main>
     );
   }
 
+  // Enrich with computed fields
+  const movie = enrichMovieDetails(apiMovie);
+
   return (
-    <main className="min-h-screen bg-zinc-950">
+    <main className="min-h-screen">
       {/* 0. App bar */}
-      <header className="sticky top-0 z-50 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
+      <header className="sticky top-0 z-50 bg-transparent backdrop-blur border-b border-zinc-800">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link
             href={'/' as Route}
@@ -191,77 +147,137 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
         </div>
       </header>
 
+      {/* 1. Hero with Quick Pitch - FULL WIDTH */}
+      <DetailsHero
+        title={movie.title}
+        originalTitle={movie.originalTitle ?? undefined}
+        poster={(movie.poster ?? undefined) as any}
+        backdrop={(movie.backdrop ?? undefined) as any}
+        releaseDate={movie.releaseDate}
+        genres={movie.genres ?? []}
+        stats={(movie.stats ?? undefined) as any}
+        externalRatings={(movie.externalRatings ?? undefined) as any}
+        badgeKey={movie.badgeKey}
+        rank={movie.rank}
+        quickPitch={movie.quickPitch}
+        dict={dict}
+      />
+
+      <div className="bg-zinc-950">
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        {/* 1. Hero with Quick Pitch */}
-        <DetailsHero
-          title={movie.title}
-          originalTitle={movie.originalTitle}
-          poster={movie.poster}
-          backdrop={movie.backdrop}
-          releaseDate={movie.releaseDate}
-          genres={movie.genres}
-          stats={movie.stats}
-          externalRatings={movie.externalRatings}
-          badgeKey={movie.badgeKey}
-          rank={movie.rank}
-          quickPitch={movie.quickPitch}
-          dict={dict}
-        />
 
-        {/* 2. Standalone CTA (movies typically don't have verdicts) */}
-        <DetailsCtaRow dict={dict} />
-
-        {/* 3. "Suitable for" tags */}
+        {/* 1. "Suitable for" tags */}
         {movie.suitableFor && movie.suitableFor.length > 0 && (
-          <section className="-mt-2">
-            <p className="text-sm text-zinc-500">
-              {dict.details.quickPitch.suitable}:{' '}
-              <span className="text-zinc-400">{movie.suitableFor.join(', ')}</span>
-            </p>
+          <section className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-zinc-500 uppercase tracking-wider">
+              {dict.details.quickPitch.suitable}:
+            </span>
+            {movie.suitableFor.map((tag) => (
+              <span
+                key={tag}
+                className="px-3 py-1 text-xs font-medium text-zinc-300 bg-zinc-800/60 rounded-full border border-zinc-700/50"
+              >
+                {tag}
+              </span>
+            ))}
           </section>
         )}
 
-        {/* 4. Overview - collapsed by default */}
-        <details className="group">
-          <summary className="cursor-pointer list-none">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-400">
-                {dict.details.overview.title}
-              </h2>
-              <span className="text-xs text-blue-400 group-open:hidden">
-                {dict.details.showMore}
-              </span>
-              <span className="text-xs text-blue-400 hidden group-open:inline">
-                {dict.details.showLess}
-              </span>
-            </div>
-          </summary>
-          <p className="text-zinc-300 leading-relaxed mt-3">
+        {/* 2. Data Verdict with CTA */}
+        {(() => {
+          // Use verdict from API (backend-computed)
+          const verdict = (movie as { verdict?: MovieVerdict }).verdict;
+          if (!verdict || !verdict.messageKey) return null;
+          
+          const message = dict.details.verdict.movie[verdict.messageKey as MovieVerdictMessageKey];
+          return (
+            <DataVerdict
+              type={verdict.type}
+              message={message}
+              context={verdict.context ?? undefined}
+              showCta
+              ctaProps={{
+                isSaved: false,
+                hintKey: verdict.hintKey,
+                primaryCta: movie.card?.primaryCta,
+              }}
+              dict={dict}
+            />
+          );
+        })()}
+
+        {/* 3. Full Overview */}
+        <section id="overview-section" className="space-y-2 scroll-mt-8">
+          <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+            {dict.details.overview.title}
+          </h3>
+          <p className="text-base md:text-lg text-zinc-300 leading-relaxed">
             {movie.overview}
           </p>
-        </details>
+        </section>
 
-        {/* 5. Trailer button (TODO: add modal) */}
-        {movie.primaryTrailerKey && (
-          <section>
-            <button className="text-blue-400 hover:text-blue-300 text-sm font-medium">
-              ▶ {dict.details.trailer.watch} {movie.runtime && `(${formatRuntime(movie.runtime)})`}
-            </button>
+        {/* Divider */}
+        <div className="border-t border-zinc-800/50 my-12" />
+
+        {/* 4. Trailers carousel */}
+        {movie.videos && movie.videos.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+              {dict.details.trailer.sectionTitle}
+            </h2>
+            <TrailersCarousel
+              videos={movie.videos}
+              primaryTrailer={movie.videos.find(v => v.key === movie.primaryTrailerKey)}
+            />
           </section>
         )}
 
-        {/* 6. Movie release */}
+        {/* Divider */}
+        <div className="border-t border-zinc-800/50 my-12" />
+
+        {/* 5. Movie release & runtime */}
         <MovieRelease
           releaseDate={movie.releaseDate}
-          digitalReleaseDate={movie.digitalReleaseDate}
+          digitalReleaseDate={movie.digitalReleaseDate ?? undefined}
+          runtime={(movie as any).runtime ?? undefined}
           dict={dict}
         />
 
-        {/* 7. Where to watch */}
-        <ProvidersList providers={movie.availability} dict={dict} />
+        {/* Divider */}
+        <div className="border-t border-zinc-800/50 my-12" />
 
-        {/* 8. Similar */}
-        <SimilarCarousel items={similarMovies} locale="uk" dict={dict} />
+        {/* 6. Cast & Crew */}
+        {((movie.credits?.cast && movie.credits.cast.length > 0) || 
+          (movie.credits?.crew && movie.credits.crew.length > 0)) && (
+          <div className="space-y-8">
+            {/* Cast */}
+            {movie.credits?.cast && movie.credits.cast.length > 0 && (
+              <CastCarousel
+                cast={movie.credits.cast as any}
+                crew={(movie.credits.crew || []) as any}
+              />
+            )}
+
+            {/* Crew */}
+            {movie.credits?.crew && movie.credits.crew.length > 0 && (
+              <CrewCarousel crew={movie.credits.crew as any} />
+            )}
+          </div>
+        )}
+
+        {/* Divider */}
+        <div className="border-t border-zinc-800/50 my-12" />
+
+        {/* 7. Where to watch */}
+        {movie.availability && (
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+              {dict.details.providers.title}
+            </h2>
+            <ProvidersList providers={movie.availability} dict={dict} />
+          </section>
+        )}
+      </div>
       </div>
     </main>
   );

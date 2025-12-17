@@ -36,4 +36,39 @@ describe('Catalog E2E - Details (movies/shows)', () => {
 
     await ctx.get('/api/catalog/shows/unknown').expect(404);
   });
+
+  describe('show verdict + statusHint', () => {
+    it('should return verdict for good show with statusHint', async () => {
+      const res = await ctx.get('/api/catalog/shows/show-one').expect(200);
+      const { verdict, statusHint } = res.body.data;
+
+      expect(verdict).toBeDefined();
+      expect(verdict.type).toMatch(/quality|popularity/);
+      expect(verdict.messageKey).toBeDefined();
+      expect(verdict.hintKey).toBeDefined();
+
+      expect(statusHint).toBeDefined();
+      expect(statusHint.messageKey).toBe('newSeason');
+    });
+
+    it('should return cancelled warning for cancelled show without statusHint', async () => {
+      const res = await ctx.get('/api/catalog/shows/show-two').expect(200);
+      const { verdict, statusHint } = res.body.data;
+
+      expect(verdict).toBeDefined();
+      expect(verdict.type).toBe('warning');
+      expect(verdict.messageKey).toBe('cancelled');
+
+      expect(statusHint).toBeNull();
+    });
+
+    it('should never return statusHint for warning verdicts (invariant)', async () => {
+      const res = await ctx.get('/api/catalog/shows/show-two').expect(200);
+      const { verdict, statusHint } = res.body.data;
+
+      if (verdict.type === 'warning') {
+        expect(statusHint).toBeNull();
+      }
+    });
+  });
 });

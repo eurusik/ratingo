@@ -27,6 +27,13 @@ import type { UserMediaState } from '../../../user-media/domain/entities/user-me
 import { normalizeListQuery } from '../utils/query-normalizer';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
+import { computeReleaseStatus } from '../../domain/utils/release-status.utils';
+import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
+import {
+  computeMovieVerdict,
+  MovieVerdict,
+  RATING_SOURCE,
+} from '../../domain/utils/movie-verdict.utils';
 
 /**
  * Public movie catalog endpoints (trending, listings, details).
@@ -245,7 +252,13 @@ export class CatalogMoviesController {
   async getMovieBySlug(
     @Param('slug') slug: string,
     @CurrentUser() user?: { id: string } | null,
-  ): Promise<MovieDetails & { userState: UserMediaState | null }> {
+  ): Promise<
+    MovieDetails & {
+      userState: UserMediaState | null;
+      releaseStatus: ReleaseStatus;
+      verdict: MovieVerdict;
+    }
+  > {
     const movie = await this.movieRepository.findBySlug(slug);
     if (!movie) throw new NotFoundException(`Movie with slug "${slug}" not found`);
     const enriched = await this.catalogUserOneEnrich(user, movie);
@@ -265,7 +278,47 @@ export class CatalogMoviesController {
       CARD_LIST_CONTEXT.DEFAULT,
     );
 
-    return { ...enriched, card };
+    // Compute release status on the backend
+    const releaseStatus = computeReleaseStatus(
+      movie.releaseDate,
+      movie.theatricalReleaseDate,
+      movie.digitalReleaseDate,
+    );
+
+    // Compute verdict for details page
+    const ratings = movie.externalRatings;
+    const { rating: bestRating, source: bestRatingSource } = this.getBestRating(ratings);
+
+    const verdict = computeMovieVerdict({
+      releaseStatus,
+      ratingoScore: movie.stats?.ratingoScore ?? null,
+      avgRating: bestRating?.rating ?? null,
+      voteCount: bestRating?.voteCount ?? null,
+      ratingSource: bestRatingSource,
+      badgeKey: card?.badgeKey ?? null,
+      popularity: movie.stats?.popularityScore ?? null,
+    });
+
+    return { ...enriched, card, releaseStatus, verdict };
+  }
+
+  /**
+   * Gets the best available rating source (IMDb > Trakt > TMDB).
+   */
+  private getBestRating(
+    ratings: {
+      imdb?: { rating: number; voteCount?: number } | null;
+      trakt?: { rating: number; voteCount?: number } | null;
+      tmdb?: { rating: number; voteCount?: number } | null;
+    } | null,
+  ): {
+    rating: { rating: number; voteCount?: number } | null;
+    source: (typeof RATING_SOURCE)[keyof typeof RATING_SOURCE] | null;
+  } {
+    if (ratings?.imdb) return { rating: ratings.imdb, source: RATING_SOURCE.IMDB };
+    if (ratings?.trakt) return { rating: ratings.trakt, source: RATING_SOURCE.TRAKT };
+    if (ratings?.tmdb) return { rating: ratings.tmdb, source: RATING_SOURCE.TMDB };
+    return { rating: null, source: null };
   }
 
   /**

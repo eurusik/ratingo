@@ -1,7 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MediaBaseDto } from './common.dto';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
+import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
 import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
+import { MovieVerdictDto } from './verdict.dto';
 
 export class MovieResponseDto extends MediaBaseDto {
   @ApiProperty({ example: 120, required: false, nullable: true })
@@ -33,4 +35,21 @@ export class MovieResponseDto extends MediaBaseDto {
     description: 'Card metadata with badge and CTA info',
   })
   card?: CardMetaDto | null;
+
+  @ApiProperty({
+    enum: ReleaseStatus,
+    example: ReleaseStatus.IN_THEATERS,
+    description: 'Computed release status: upcoming, in_theaters, streaming, new_on_streaming',
+    required: false,
+    nullable: true,
+  })
+  releaseStatus?: ReleaseStatus | null;
+
+  @ApiProperty({
+    type: MovieVerdictDto,
+    required: false,
+    nullable: true,
+    description: 'Computed verdict for movie details page. Clients use messageKey for i18n lookup.',
+  })
+  verdict?: MovieVerdictDto | null;
 }

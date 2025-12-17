@@ -73,17 +73,20 @@ async function fetchInitialData(category: BrowseCategory, page: number = 1) {
     
     // Call the appropriate API method based on category config
     const apiMethod = catalogApi[config.apiMethod];
-    const response = await apiMethod(params);
+    const response = await apiMethod(params) as unknown as {
+      data: Array<{
+        id: string;
+        slug: string;
+        title: string;
+        poster?: { small: string; medium: string; large: string; original: string } | null;
+        stats?: { qualityScore?: number | null; liveWatchers?: number | null } | null;
+        externalRatings?: { imdb?: { rating: number } | null; tmdb?: { rating: number } | null } | null;
+        releaseDate?: string | null;
+      }>;
+      meta: { total?: number };
+    };
     
-    const items: MediaCardServerProps[] = response.data.map((item: {
-      id: string;
-      slug: string;
-      title: string;
-      poster?: { small: string; medium: string; large: string; original: string } | null;
-      stats?: { qualityScore?: number | null; liveWatchers?: number | null } | null;
-      externalRatings?: { imdb?: { rating: number } | null; tmdb?: { rating: number } | null } | null;
-      releaseDate?: string | null;
-    }) => ({
+    const items: MediaCardServerProps[] = response.data.map((item) => ({
       id: item.id,
       slug: item.slug,
       type: config.mediaType,

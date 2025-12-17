@@ -29,6 +29,8 @@ import type { UserMediaState } from '../../../user-media/domain/entities/user-me
 import { normalizeListQuery } from '../utils/query-normalizer';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
+import { computeShowVerdict } from '../../domain/utils/show-verdict.utils';
+import { RATING_SOURCE } from '../../domain/utils/movie-verdict.utils';
 
 /**
  * Public show catalog endpoints (trending, calendar, details).
@@ -160,10 +162,7 @@ export class CatalogShowsController {
     description: 'Returns full show details including seasons list.',
   })
   @ApiOkResponse({ type: ShowResponseDto })
-  async getShowBySlug(
-    @Param('slug') slug: string,
-    @CurrentUser() user?: { id: string } | null,
-  ): Promise<ShowDetails & { userState: UserMediaState | null }> {
+  async getShowBySlug(@Param('slug') slug: string, @CurrentUser() user?: { id: string } | null) {
     const show = await this.showRepository.findBySlug(slug);
     if (!show) {
       throw new NotFoundException(`Show with slug "${slug}" not found`);
@@ -185,7 +184,36 @@ export class CatalogShowsController {
       CARD_LIST_CONTEXT.DEFAULT,
     );
 
-    return { ...enriched, card };
+    // Compute verdict for details page using consensus rating (median of all sources)
+    const { verdict, statusHint } = computeShowVerdict({
+      status: show.status,
+      externalRatings: show.externalRatings,
+      badgeKey: card?.badgeKey ?? null,
+      popularity: show.stats?.popularityScore ?? null,
+      totalSeasons: show.totalSeasons,
+      lastAirDate: show.lastAirDate,
+    });
+
+    return { ...enriched, card, verdict, statusHint };
+  }
+
+  /**
+   * Gets the best available rating source (IMDb > Trakt > TMDB).
+   */
+  private getBestRating(
+    ratings: {
+      imdb?: { rating: number; voteCount?: number | null } | null;
+      trakt?: { rating: number; voteCount?: number | null } | null;
+      tmdb?: { rating: number; voteCount?: number | null } | null;
+    } | null,
+  ): {
+    rating: { rating: number; voteCount?: number | null } | null;
+    source: (typeof RATING_SOURCE)[keyof typeof RATING_SOURCE] | null;
+  } {
+    if (ratings?.imdb) return { rating: ratings.imdb, source: RATING_SOURCE.IMDB };
+    if (ratings?.trakt) return { rating: ratings.trakt, source: RATING_SOURCE.TRAKT };
+    if (ratings?.tmdb) return { rating: ratings.tmdb, source: RATING_SOURCE.TMDB };
+    return { rating: null, source: null };
   }
 
   /**

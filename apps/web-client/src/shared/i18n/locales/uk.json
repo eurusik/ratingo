@@ -151,7 +151,10 @@
         "afterAllEpisodes": "щоб вирішити, дивитись чи ні, після виходу всіх серій",
         "whenOnStreaming": "щоб повернутися, коли буде на стрімінгах",
         "notifyNewEpisode": "нагадаємо, коли вийде нова серія",
-        "general": "щоб не пропустити нові серії"
+        "general": "щоб не пропустити нові серії",
+        "forLater": "щоб повернутись пізніше",
+        "notifyRelease": "повідомимо, коли з'явиться",
+        "decideToWatch": "щоб вирішити, дивитись чи ні"
       },
       "whereToWatchHint": "офіційні сервіси"
     },
@@ -195,8 +198,12 @@
     },
     "movieRelease": {
       "title": "Реліз",
+      "runtime": "Тривалість",
       "theaters": "Кінотеатри",
       "digital": "Digital",
+      "combinedRelease": "Реліз:",
+      "theaterPrefix": "У кіно з",
+      "digitalPrefix": "На стрімінгу з",
       "inProduction": "У виробництві",
       "postProduction": "Пост-продакшн",
       "rumored": "Чутки"
@@ -221,7 +228,7 @@
       "tooltip": "Ключові люди за кадром: режисери, креатори, сценаристи."
     },
     "verdict": {
-      "byData": "За даними Ratingo",
+      "byData": "Вердикт Ratingo",
       "seasonComparison": {
         "stronger": "Сезон {season} тримає планку попереднього",
         "weaker": "Сезон {season} стартував слабше попереднього",
@@ -229,6 +236,39 @@
       },
       "userContext": {
         "continueFromS1": "Обов'язково, якщо дивився перший сезон"
+      },
+      "movie": {
+        "upcomingHit": "Один з найочікуваніших релізів року",
+        "justReleased": "Зараз можна подивитись у кіно",
+        "nowStreaming": "Вже можна подивитись вдома",
+        "criticsLoved": "Критикам і глядачам зайшло",
+        "trendingNow": "Про нього зараз багато говорять",
+        "strongRatings": "Більше подобається, ніж ні",
+        "decentRatings": "Нормальний варіант на вечір",
+        "risingHype": "Швидко набирає інтерес",
+        "comingToStreaming": "Скоро можна буде подивитись вдома",
+        "mixedReviews": "Зайшло не всім",
+        "belowAverage": "Багато суперечливих відгуків",
+        "poorRatings": "Більшість глядачів розчаровані",
+        "earlyReviews": "Перші відгуки вже є"
+      },
+      "show": {
+        "cancelled": "Серіал скасовано",
+        "poorRatings": "Більшість глядачів розчаровані",
+        "belowAverage": "Оцінки нижче середнього",
+        "criticsLoved": "Критикам і глядачам зайшло",
+        "strongRatings": "Більше подобається, ніж ні",
+        "decentRatings": "Нормальний варіант на вечір",
+        "longRunning": "Перевірений часом серіал",
+        "trendingNow": "Про нього зараз багато говорять",
+        "risingHype": "Швидко набирає інтерес",
+        "earlyReviews": "Перші відгуки вже є",
+        "mixedReviews": "Зайшло не всім",
+        "noConsensusYet": "Оцінки ще нестабільні"
+      },
+      "showStatusHint": {
+        "newSeason": "Новий сезон вже вийшов",
+        "seriesFinale": "Можна дивитись повністю"
       }
     }
   },

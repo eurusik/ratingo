@@ -25,3 +25,41 @@ export type Video = VideoDto;
 export type CastMember = CastMemberDto;
 export type CrewMember = CrewMemberDto;
 export type { BadgeKey };
+
+/**
+ * Verdict types from backend API.
+ * These match the backend VerdictDto structure.
+ */
+import type { VerdictType } from './components/data-verdict';
+
+export type VerdictHintKey =
+  | 'newEpisodes'
+  | 'afterAllEpisodes'
+  | 'whenOnStreaming'
+  | 'notifyNewEpisode'
+  | 'general'
+  | 'forLater'
+  | 'notifyRelease'
+  | 'decideToWatch';
+
+export type MovieVerdictMessageKey =
+  | 'upcomingHit'
+  | 'justReleased'
+  | 'nowStreaming'
+  | 'criticsLoved'
+  | 'trendingNow'
+  | 'strongRatings'
+  | 'decentRatings'
+  | 'risingHype'
+  | 'comingToStreaming'
+  | 'mixedReviews'
+  | 'belowAverage'
+  | 'poorRatings'
+  | 'earlyReviews';
+
+export interface MovieVerdict {
+  type: VerdictType;
+  messageKey: MovieVerdictMessageKey | null;
+  context?: string | null;
+  hintKey: VerdictHintKey;
+}

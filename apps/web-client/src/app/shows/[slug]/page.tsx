@@ -2,16 +2,16 @@
  * Show details page
  */
 
+import { cache } from 'react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { ArrowLeft, Tv, Share2 } from 'lucide-react';
+import { Tv, ArrowLeft, Share2 } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
 import { createMediaMetadata, createNotFoundMetadata } from '@/shared/utils';
 import { catalogApi, type ShowDetailsDto } from '@/core/api';
 import {
   DetailsHero,
-  DetailsCtaRow,
   ShowStatus,
   ProvidersList,
   DataVerdict,
@@ -20,6 +20,18 @@ import {
   CrewCarousel,
   type BadgeKey,
 } from '@/modules/details';
+
+/**
+ * Cached show fetcher - deduplicates requests within same render.
+ * React cache ensures generateMetadata and page component share the same request.
+ */
+const getShow = cache(async (slug: string): Promise<ShowDetailsDto | null> => {
+  try {
+    return await catalogApi.getShowBySlug(slug);
+  } catch {
+    return null;
+  }
+});
 
 // ISR: Revalidate every hour (balance between fresh data & performance)
 export const revalidate = 3600;
@@ -33,13 +45,12 @@ interface PageParams {
  */
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   const { slug } = await params;
+  const show = await getShow(slug);
   
-  try {
-    const show = await catalogApi.getShowBySlug(slug);
-    return createMediaMetadata(show, { type: 'show' });
-  } catch {
+  if (!show) {
     return createNotFoundMetadata('show');
   }
+  return createMediaMetadata(show, { type: 'show' });
 }
 
 interface ShowDetailsPageProps {
@@ -57,12 +68,6 @@ interface EnrichedShowDetails extends ShowDetailsDto {
   primaryTrailerKey?: string;
   nextEpisodeDate?: string;
   releaseDate: string;
-  verdict?: {
-    type: 'season_comparison' | 'user_context' | 'general';
-    message: string;
-    context: string;
-    confidence: 'high' | 'medium' | 'low';
-  } | null;
 }
 
 /**
@@ -96,9 +101,6 @@ function enrichShowDetails(show: ShowDetailsDto): EnrichedShowDetails {
   // Use card.badgeKey from API (behavioral context from backend)
   const badgeKey = show.card?.badgeKey || undefined;
 
-  // Verdict is null until API provides it
-  const verdict = null;
-
   return {
     ...show,
     quickPitch,
@@ -108,7 +110,6 @@ function enrichShowDetails(show: ShowDetailsDto): EnrichedShowDetails {
     primaryTrailerKey,
     nextEpisodeDate,
     releaseDate,
-    verdict,
   };
 }
 
@@ -117,11 +118,10 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
   const { slug } = await params;
   const dict = getDictionary('uk');
   
-  // Fetch show from API
-  let apiShow: ShowDetailsDto;
-  try {
-    apiShow = await catalogApi.getShowBySlug(slug);
-  } catch (error) {
+  // Fetch show from API (uses React cache - deduped with generateMetadata)
+  const apiShow = await getShow(slug);
+  
+  if (!apiShow) {
     // Show not found or API error
     return (
       <main className="min-h-screen flex items-center justify-center">
@@ -194,20 +194,23 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
         )}
 
         {/* 2. Data Verdict with integrated CTA - Details only */}
-        <DataVerdict
-          type="season_comparison"
-          message="Другий сезон стартував слабше першого"
-          context="Рейтинг IMDb: 8.0 (S2) vs 8.7 (S1)"
-          confidence="high"
-          showCta
-          ctaProps={{
-            isSaved: false,
-            hintKey: 'afterAllEpisodes',
-            primaryCta: show.card?.primaryCta,
-            continuePoint: show.card?.continue,
-          }}
-          dict={dict}
-        />
+        {apiShow.verdict?.messageKey && (
+          <DataVerdict
+            type={apiShow.verdict.type as any}
+            message={dict.details.verdict.show[apiShow.verdict.messageKey as keyof typeof dict.details.verdict.show] || ''}
+            context={apiShow.statusHint?.messageKey 
+              ? dict.details.verdict.showStatusHint[apiShow.statusHint.messageKey as keyof typeof dict.details.verdict.showStatusHint]
+              : apiShow.verdict.context || undefined}
+            showCta
+            ctaProps={{
+              isSaved: false,
+              hintKey: apiShow.verdict.hintKey as any,
+              primaryCta: show.card?.primaryCta,
+              continuePoint: show.card?.continue,
+            }}
+            dict={dict}
+          />
+        )}
 
         {/* 3. Full Overview - Complete description */}
         <section id="overview-section" className="space-y-2 scroll-mt-8">
@@ -218,14 +221,6 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             {show.overview}
           </p>
         </section>
-
-        {/* 4. Standalone CTA for shows without verdict */}
-        {false && (
-          <DetailsCtaRow
-            hasNewEpisodes={show.badgeKey === 'NEW_EPISODE'}
-            dict={dict}
-          />
-        )}
 
         {/* Divider */}
         <div className="border-t border-zinc-800/50 my-12" />

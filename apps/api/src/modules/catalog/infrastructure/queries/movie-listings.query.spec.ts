@@ -216,4 +216,90 @@ describe('MovieListingsQuery', () => {
     setup([], new Error('DB Error'));
     await expect(query.execute('new_releases', {})).rejects.toThrow(DatabaseException);
   });
+
+  describe('now_playing query conditions', () => {
+    it('should include movies with future theatricalReleaseDate if isNowPlaying is true (trust TMDB)', async () => {
+      // Avatar: Fire and Ash scenario - TMDB says it's now playing even though
+      // theatricalReleaseDate is in the future (regional release dates differ)
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 5); // 5 days in future
+
+      const movies = [
+        {
+          id: 'avatar',
+          mediaItemId: 'mid-avatar',
+          tmdbId: 83533,
+          title: 'Avatar: Fire and Ash',
+          slug: 'avatar-fire-and-ash',
+          overview: 'Avatar 3',
+          ingestionStatus: 'ready',
+          posterPath: '/avatar.jpg',
+          backdropPath: '/avatar-bg.jpg',
+          popularity: 100,
+          releaseDate: futureDate,
+          theatricalReleaseDate: futureDate, // Future date
+          digitalReleaseDate: null,
+          runtime: 180,
+          ratingoScore: 80,
+          qualityScore: 85,
+          popularityScore: 90,
+          watchersCount: 1000,
+          totalWatchers: 5000,
+          rating: 0,
+          voteCount: 0,
+        },
+      ];
+
+      const genres = [{ mediaItemId: 'mid-avatar', id: 'g1', name: 'Sci-Fi', slug: 'sci-fi' }];
+
+      setup([movies, [{ total: 1 }], genres]);
+
+      const res = await query.execute('now_playing', { limit: 10, offset: 0 });
+
+      // Should return the movie even with future theatricalReleaseDate
+      // because we trust TMDB's isNowPlaying flag
+      expect(res).toHaveLength(1);
+      expect(res[0].title).toBe('Avatar: Fire and Ash');
+      expect(res[0].slug).toBe('avatar-fire-and-ash');
+    });
+
+    it('should exclude movies that are already on streaming (digitalReleaseDate <= now)', async () => {
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - 30); // 30 days ago
+
+      const movies = [
+        {
+          id: 'streaming-movie',
+          mediaItemId: 'mid-streaming',
+          tmdbId: 12345,
+          title: 'Already Streaming Movie',
+          slug: 'already-streaming',
+          overview: 'This movie is on streaming',
+          ingestionStatus: 'ready',
+          posterPath: '/stream.jpg',
+          backdropPath: '/stream-bg.jpg',
+          popularity: 50,
+          releaseDate: pastDate,
+          theatricalReleaseDate: pastDate,
+          digitalReleaseDate: pastDate, // Already on streaming
+          runtime: 120,
+          ratingoScore: 70,
+          qualityScore: 75,
+          popularityScore: 60,
+          watchersCount: 500,
+          totalWatchers: 2000,
+          rating: 7,
+          voteCount: 1000,
+        },
+      ];
+
+      // Query returns empty because digitalReleaseDate filter excludes it
+      setup([[], [{ total: 0 }]]);
+
+      const res = await query.execute('now_playing', {});
+
+      // Should be empty - movies on streaming are excluded from now_playing
+      expect(res).toHaveLength(0);
+    });
+  });
 });

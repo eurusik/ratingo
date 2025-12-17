@@ -147,11 +147,14 @@
     },
     "cta": {
       "saveHint": {
-        "newEpisodes": "to never miss new episodes",
+        "newEpisodes": "to not miss new episodes",
         "afterAllEpisodes": "to decide whether to watch after all episodes are out",
-        "whenOnStreaming": "to return when it's on streaming",
-        "notifyNewEpisode": "we'll remind you when a new episode drops",
-        "general": "to never miss new episodes"
+        "whenOnStreaming": "to come back when it's on streaming",
+        "notifyNewEpisode": "we'll notify you when a new episode is out",
+        "general": "to not miss new episodes",
+        "forLater": "to come back later",
+        "notifyRelease": "we'll notify you when it's available",
+        "decideToWatch": "to decide whether to watch"
       },
       "whereToWatchHint": "official services"
     },
@@ -195,8 +198,12 @@
     },
     "movieRelease": {
       "title": "Release",
+      "runtime": "Runtime",
       "theaters": "Theaters",
       "digital": "Digital",
+      "combinedRelease": "Release:",
+      "theaterPrefix": "In theaters from",
+      "digitalPrefix": "On streaming from",
       "inProduction": "In Production",
       "postProduction": "Post Production",
       "rumored": "Rumored"
@@ -221,14 +228,47 @@
       "tooltip": "Key people behind the scenes: directors, creators, writers."
     },
     "verdict": {
-      "byData": "Based on Ratingo data",
+      "byData": "Ratingo's Verdict",
       "seasonComparison": {
-        "stronger": "Season {season} maintains the bar of the previous one",
-        "weaker": "Season {season} started weaker than the previous one",
-        "peak": "First season remains the peak of the series"
+        "stronger": "Season {season} maintains the previous bar",
+        "weaker": "Season {season} started weaker than the previous",
+        "peak": "The first season remains the peak of the series"
       },
       "userContext": {
-        "continueFromS1": "Must-watch if you saw the first season"
+        "continueFromS1": "A must if you watched the first season"
+      },
+      "movie": {
+        "upcomingHit": "One of the most anticipated releases of the year",
+        "justReleased": "Now playing in theaters",
+        "nowStreaming": "Available to watch at home",
+        "criticsLoved": "Critics and audiences loved it",
+        "trendingNow": "Everyone's talking about it",
+        "strongRatings": "More liked than not",
+        "decentRatings": "Solid pick for the evening",
+        "risingHype": "Rapidly gaining interest",
+        "comingToStreaming": "Coming soon to watch at home",
+        "mixedReviews": "Not for everyone",
+        "belowAverage": "Lots of mixed reactions",
+        "poorRatings": "Most viewers were disappointed",
+        "earlyReviews": "Early reviews are in"
+      },
+      "show": {
+        "cancelled": "Series cancelled",
+        "poorRatings": "Most viewers were disappointed",
+        "belowAverage": "Below average ratings",
+        "criticsLoved": "Critics and audiences loved it",
+        "strongRatings": "More liked than not",
+        "decentRatings": "Solid pick for the evening",
+        "longRunning": "Proven over time",
+        "trendingNow": "Everyone's talking about it",
+        "risingHype": "Rapidly gaining interest",
+        "earlyReviews": "Early reviews are in",
+        "mixedReviews": "Not for everyone",
+        "noConsensusYet": "Ratings still forming"
+      },
+      "showStatusHint": {
+        "newSeason": "New season is out",
+        "seriesFinale": "Ready to binge"
       }
     }
   },

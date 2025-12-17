@@ -98,6 +98,8 @@ export interface MovieDetails {
   poster?: ImageDto | null;
   backdrop?: ImageDto | null;
   releaseDate: Date | null;
+  theatricalReleaseDate: Date | null;
+  digitalReleaseDate: Date | null;
   videos?: Video[] | null;
   primaryTrailer?: Video | null;
   credits?: CreditsDto | null;

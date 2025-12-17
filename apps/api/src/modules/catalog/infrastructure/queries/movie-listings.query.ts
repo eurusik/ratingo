@@ -2,7 +2,20 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq, gte, lte, desc, isNotNull, inArray, and, exists, sql } from 'drizzle-orm';
+import {
+  eq,
+  gte,
+  gt,
+  lte,
+  desc,
+  isNotNull,
+  isNull,
+  inArray,
+  and,
+  or,
+  exists,
+  sql,
+} from 'drizzle-orm';
 import { MovieWithMedia, WithTotal } from '../../domain/repositories/movie.repository.interface';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -229,7 +242,8 @@ export class MovieListingsQuery {
       case 'now_playing':
         conditions.push(
           eq(schema.movies.isNowPlaying, true),
-          lte(schema.movies.theatricalReleaseDate, now),
+          // Exclude movies already on streaming
+          or(isNull(schema.movies.digitalReleaseDate), gt(schema.movies.digitalReleaseDate, now)),
         );
         return {
           conditions,
@@ -243,6 +257,8 @@ export class MovieListingsQuery {
           isNotNull(schema.movies.theatricalReleaseDate),
           gte(schema.movies.theatricalReleaseDate, cutoffDate),
           lte(schema.movies.theatricalReleaseDate, now),
+          // Exclude movies already on streaming
+          or(isNull(schema.movies.digitalReleaseDate), gt(schema.movies.digitalReleaseDate, now)),
         );
         return {
           conditions,

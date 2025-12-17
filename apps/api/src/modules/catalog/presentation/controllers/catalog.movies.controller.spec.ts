@@ -126,5 +126,91 @@ describe('CatalogMoviesController', () => {
       movieRepository.findBySlug.mockResolvedValue(null);
       await expect(controller.getMovieBySlug('unknown')).rejects.toThrow(NotFoundException);
     });
+
+    it('returns verdict computed from movie data', async () => {
+      const mockMovie = {
+        id: '1',
+        title: 'Good Movie',
+        slug: 'good-movie',
+        releaseDate: new Date('2024-01-01'),
+        theatricalReleaseDate: new Date('2024-01-01'),
+        digitalReleaseDate: new Date('2024-06-01'),
+        stats: {
+          ratingoScore: 75,
+          qualityScore: 70,
+          popularityScore: 60,
+        },
+        externalRatings: {
+          imdb: { rating: 7.5, voteCount: 5000 },
+          tmdb: null,
+          trakt: null,
+          metacritic: null,
+          rottenTomatoes: null,
+        },
+      };
+      movieRepository.findBySlug.mockResolvedValue(mockMovie);
+
+      const result = await controller.getMovieBySlug('good-movie');
+
+      expect(result.verdict).toBeDefined();
+      expect(result.verdict.type).toBeDefined();
+      expect(result.verdict.hintKey).toBeDefined();
+      expect(['warning', 'release', 'quality', 'popularity', 'general']).toContain(
+        result.verdict.type,
+      );
+    });
+
+    it('returns warning verdict for low-rated movie with confident votes', async () => {
+      const mockMovie = {
+        id: '1',
+        title: 'Bad Movie',
+        slug: 'bad-movie',
+        releaseDate: new Date('2024-01-01'),
+        stats: {
+          ratingoScore: 35,
+          qualityScore: 30,
+          popularityScore: 20,
+        },
+        externalRatings: {
+          imdb: { rating: 4.5, voteCount: 500 }, // >= 200 for confidence
+          tmdb: null,
+          trakt: null,
+          metacritic: null,
+          rottenTomatoes: null,
+        },
+      };
+      movieRepository.findBySlug.mockResolvedValue(mockMovie);
+
+      const result = await controller.getMovieBySlug('bad-movie');
+
+      expect(result.verdict.type).toBe('warning');
+      expect(result.verdict.messageKey).toBe('poorRatings');
+    });
+
+    it('returns releaseStatus computed from dates', async () => {
+      const now = new Date();
+      const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+      const mockMovie = {
+        id: '1',
+        title: 'Upcoming Movie',
+        slug: 'upcoming-movie',
+        releaseDate: futureDate,
+        theatricalReleaseDate: futureDate,
+        digitalReleaseDate: null,
+        stats: { ratingoScore: null },
+        externalRatings: {
+          imdb: null,
+          tmdb: null,
+          trakt: null,
+          metacritic: null,
+          rottenTomatoes: null,
+        },
+      };
+      movieRepository.findBySlug.mockResolvedValue(mockMovie);
+
+      const result = await controller.getMovieBySlug('upcoming-movie');
+
+      expect(result.releaseStatus).toBe('upcoming');
+    });
   });
 });

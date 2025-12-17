@@ -133,22 +133,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
                 }
               }
             }
@@ -291,22 +276,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
                 }
               }
             }
@@ -458,22 +428,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
                 }
               }
             }
@@ -625,22 +580,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
                 }
               }
             }
@@ -672,22 +612,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/MovieResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MovieResponseDto"
                 }
               }
             }
@@ -830,22 +755,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/TrendingShowsResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/TrendingShowsResponseDto"
                 }
               }
             }
@@ -887,22 +797,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/CalendarResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/CalendarResponseDto"
                 }
               }
             }
@@ -934,22 +829,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/ShowResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/ShowResponseDto"
                 }
               }
             }
@@ -980,22 +860,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/SearchResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/SearchResponseDto"
                 }
               }
             }
@@ -1036,24 +901,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/UserMediaStateDto"
-                      }
-                    }
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserMediaStateDto"
                   }
                 }
               }
@@ -1094,22 +944,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/UserMediaStateDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/UserMediaStateDto"
                 }
               }
             }
@@ -1157,22 +992,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/UserMediaStateDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/UserMediaStateDto"
                 }
               }
             }
@@ -1221,24 +1041,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/UserMediaStateDto"
-                      }
-                    }
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserMediaStateDto"
                   }
                 }
               }
@@ -1302,22 +1107,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
                 }
               }
             }
@@ -1377,22 +1167,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
                 }
               }
             }
@@ -1452,22 +1227,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
                 }
               }
             }
@@ -1527,22 +1287,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
                 }
               }
             }
@@ -1579,22 +1324,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/AuthTokensDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthTokensDto"
                 }
               }
             }
@@ -1626,22 +1356,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/AuthTokensDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthTokensDto"
                 }
               }
             }
@@ -1676,22 +1391,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/AuthTokensDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthTokensDto"
                 }
               }
             }
@@ -1733,22 +1433,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/MeDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MeDto"
                 }
               }
             }
@@ -1866,22 +1551,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/AvatarUploadUrlDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AvatarUploadUrlDto"
                 }
               }
             }
@@ -1976,22 +1646,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
                 }
               }
             }
@@ -2054,22 +1709,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
                 }
               }
             }
@@ -2132,22 +1772,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
                 }
               }
             }
@@ -2178,42 +1803,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
                   "properties": {
-                    "success": {
-                      "type": "boolean",
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
                       "enum": [
-                        true
+                        "queued",
+                        "processing",
+                        "ready",
+                        "failed"
                       ]
                     },
-                    "data": {
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "queued",
-                            "processing",
-                            "ready",
-                            "failed"
-                          ]
-                        },
-                        "errorMessage": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        }
-                      }
+                    "errorMessage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
                     }
                   }
                 }
@@ -2584,22 +2194,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/RiseFallResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/RiseFallResponseDto"
                 }
               }
             }
@@ -3371,6 +2966,55 @@
           "link"
         ]
       },
+      "MovieVerdictDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "warning",
+              "release",
+              "quality",
+              "popularity",
+              "general"
+            ],
+            "example": "quality",
+            "description": "Verdict type for UI styling"
+          },
+          "messageKey": {
+            "type": "string",
+            "example": "strongRatings",
+            "nullable": true,
+            "description": "Message key for i18n lookup on client (details.verdict.movie.*)"
+          },
+          "context": {
+            "type": "string",
+            "example": "IMDb: 6.3",
+            "nullable": true,
+            "description": "Additional context to display with verdict"
+          },
+          "hintKey": {
+            "type": "string",
+            "enum": [
+              "newEpisodes",
+              "afterAllEpisodes",
+              "whenOnStreaming",
+              "notifyNewEpisode",
+              "general",
+              "forLater",
+              "notifyRelease",
+              "decideToWatch"
+            ],
+            "example": "forLater",
+            "description": "Hint key for CTA suggestions"
+          }
+        },
+        "required": [
+          "type",
+          "messageKey",
+          "hintKey"
+        ]
+      },
       "MovieResponseDto": {
         "type": "object",
         "properties": {
@@ -3541,6 +3185,27 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/CardMetaDto"
+              }
+            ]
+          },
+          "releaseStatus": {
+            "type": "string",
+            "enum": [
+              "upcoming",
+              "in_theaters",
+              "streaming",
+              "new_on_streaming"
+            ],
+            "example": "in_theaters",
+            "description": "Computed release status: upcoming, in_theaters, streaming, new_on_streaming",
+            "nullable": true
+          },
+          "verdict": {
+            "nullable": true,
+            "description": "Computed verdict for movie details page. Clients use messageKey for i18n lookup.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MovieVerdictDto"
               }
             ]
           }
@@ -3825,6 +3490,86 @@
           "number"
         ]
       },
+      "ShowVerdictDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "warning",
+              "release",
+              "quality",
+              "popularity",
+              "general"
+            ],
+            "example": "quality",
+            "description": "Verdict type for UI styling"
+          },
+          "messageKey": {
+            "type": "string",
+            "enum": [
+              "cancelled",
+              "poorRatings",
+              "belowAverage",
+              "criticsLoved",
+              "strongRatings",
+              "decentRatings",
+              "longRunning",
+              "trendingNow",
+              "risingHype",
+              "earlyReviews",
+              "mixedReviews"
+            ],
+            "example": "strongRatings",
+            "nullable": true,
+            "description": "Message key for i18n lookup on client (details.verdict.show.*)"
+          },
+          "context": {
+            "type": "string",
+            "example": "IMDb: 8.2",
+            "nullable": true,
+            "description": "Additional context to display with verdict"
+          },
+          "hintKey": {
+            "type": "string",
+            "enum": [
+              "newEpisodes",
+              "afterAllEpisodes",
+              "whenOnStreaming",
+              "notifyNewEpisode",
+              "general",
+              "forLater",
+              "notifyRelease",
+              "decideToWatch"
+            ],
+            "example": "forLater",
+            "description": "Hint key for CTA suggestions"
+          }
+        },
+        "required": [
+          "type",
+          "messageKey",
+          "hintKey"
+        ]
+      },
+      "ShowStatusHintDto": {
+        "type": "object",
+        "properties": {
+          "messageKey": {
+            "type": "string",
+            "enum": [
+              "newSeason",
+              "seriesFinale"
+            ],
+            "example": "newSeason",
+            "nullable": true,
+            "description": "Message key for i18n lookup on client (details.verdict.showStatusHint.*)"
+          }
+        },
+        "required": [
+          "messageKey"
+        ]
+      },
       "ShowResponseDto": {
         "type": "object",
         "properties": {
@@ -4007,6 +3752,24 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/CardMetaDto"
+              }
+            ]
+          },
+          "verdict": {
+            "nullable": true,
+            "description": "Show verdict - answers \"is it worth it?\"",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShowVerdictDto"
+              }
+            ]
+          },
+          "statusHint": {
+            "nullable": true,
+            "description": "Status hint - explains \"why now?\" (secondary, optional)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShowStatusHintDto"
               }
             ]
           }
