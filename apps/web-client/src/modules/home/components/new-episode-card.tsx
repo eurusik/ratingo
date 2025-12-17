@@ -9,26 +9,46 @@ interface NewEpisodeCardProps {
   locale?: string;
 }
 
+interface RelativeDateResult {
+  text: string;
+  freshness: 'fresh' | 'recent' | 'older';
+}
+
 /**
- * Formats air date as relative time (today, yesterday, X days ago).
+ * Formats air date as relative time with freshness indicator.
+ * - fresh: today (яскравіший)
+ * - recent: 1-3 days (нормальний)
+ * - older: 4+ days (приглушений)
  */
-function formatRelativeDate(airDate: string, locale: string): string {
+function formatRelativeDate(airDate: string, locale: string): RelativeDateResult {
   const date = new Date(airDate);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
+  const getFreshness = (days: number): 'fresh' | 'recent' | 'older' => {
+    if (days === 0) return 'fresh';
+    if (days <= 3) return 'recent';
+    return 'older';
+  };
+
   if (locale === 'uk') {
-    if (diffDays === 0) return 'сьогодні';
-    if (diffDays === 1) return 'вчора';
-    if (diffDays < 7) return `${diffDays} дн. тому`;
-    return date.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+    if (diffDays === 0) return { text: 'сьогодні', freshness: 'fresh' };
+    if (diffDays === 1) return { text: 'вчора', freshness: getFreshness(diffDays) };
+    if (diffDays < 7) return { text: `${diffDays} дн. тому`, freshness: getFreshness(diffDays) };
+    return { 
+      text: date.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }),
+      freshness: 'older',
+    };
   }
 
-  if (diffDays === 0) return 'today';
-  if (diffDays === 1) return 'yesterday';
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  if (diffDays === 0) return { text: 'today', freshness: 'fresh' };
+  if (diffDays === 1) return { text: 'yesterday', freshness: getFreshness(diffDays) };
+  if (diffDays < 7) return { text: `${diffDays}d ago`, freshness: getFreshness(diffDays) };
+  return { 
+    text: date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+    freshness: 'older',
+  };
 }
 
 /**
@@ -69,7 +89,17 @@ export function NewEpisodeCard({ item, locale = 'uk' }: NewEpisodeCardProps) {
         <p className="text-xs text-zinc-400 mt-0.5">
           <span className="text-emerald-400 font-medium">{episodeLabel}</span>
           <span className="mx-1.5">•</span>
-          <span>{relativeDate}</span>
+          <span
+            className={
+              relativeDate.freshness === 'fresh'
+                ? 'text-amber-400 font-medium'
+                : relativeDate.freshness === 'recent'
+                  ? 'text-zinc-300'
+                  : 'text-zinc-500'
+            }
+          >
+            {relativeDate.text}
+          </span>
         </p>
         {item.episodeTitle && (
           <p className="text-xs text-zinc-500 mt-0.5 truncate">
