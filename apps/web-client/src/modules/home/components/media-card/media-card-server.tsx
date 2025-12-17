@@ -3,7 +3,7 @@
  */
 
 import { Calendar } from 'lucide-react';
-import type { components } from '@ratingo/api-contract';
+import type { BadgeKey, ImageDto, RatingoStatsDto, ExternalRatingsDto, ShowProgressDto } from '@/modules/home/types';
 import { cn } from '@/shared/utils';
 import { formatYear } from '@/shared/utils/format';
 import { getDictionary, type Locale } from '@/shared/i18n';
@@ -13,12 +13,6 @@ import { CardRating } from './card-rating';
 import { CardBadge, RankBadge, badgeLabelKeys } from './card-badge';
 import { CardBookmark } from './card-cta';
 
-// Re-export types from contract
-type BadgeKey = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
-type ImageDto = components['schemas']['ImageDto'];
-type RatingoStatsDto = components['schemas']['RatingoStatsDto'];
-type ExternalRatingsDto = components['schemas']['ExternalRatingsDto'];
-type ShowProgressDto = components['schemas']['ShowProgressDto'];
 
 /** Props for MediaCardServer - minimalist view props. */
 export interface MediaCardServerProps {

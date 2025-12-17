@@ -5,7 +5,7 @@
 'use client';
 
 import { Calendar } from 'lucide-react';
-import type { components } from '@ratingo/api-contract';
+import type { BadgeKey } from '@/modules/home/types';
 import { cn } from '@/shared/utils';
 import { formatYear } from '@/shared/utils/format';
 import { useTranslation } from '@/shared/i18n';
@@ -17,8 +17,6 @@ import { SeasonProgress } from './card-progress';
 import { CardBookmark } from './card-cta';
 import { CardBadge, RankBadge, badgeLabelKeys } from './card-badge';
 
-// Re-use types from API contract
-type BadgeKey = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
 
 /** Base props for all media cards. */
 interface BaseMediaCardProps {

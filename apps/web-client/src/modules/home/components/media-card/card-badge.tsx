@@ -4,11 +4,8 @@
  */
 
 import { Flame, Sparkles, TrendingUp, Clapperboard, Play, Bookmark, Star } from 'lucide-react';
-import type { components } from '@ratingo/api-contract';
+import type { BadgeKey } from '@/modules/home/types';
 import { cn } from '@/shared/utils';
-
-// Re-use type from API contract
-type BadgeKey = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
 
 interface CardBadgeProps {
   /** Badge type from backend. */
