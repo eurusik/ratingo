@@ -8,6 +8,22 @@ import { getDictionary } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
 import { Flame } from 'lucide-react';
 
+/** Map API item to MediaCardServerProps */
+function toCardProps(item: Record<string, unknown>, type: 'show' | 'movie'): MediaCardServerProps {
+  return {
+    id: item.id as string,
+    slug: item.slug as string,
+    type,
+    title: item.title as string,
+    poster: (item.poster as MediaCardServerProps['poster']) ?? undefined,
+    stats: (item.stats as MediaCardServerProps['stats']) ?? undefined,
+    externalRatings: (item.externalRatings as MediaCardServerProps['externalRatings']) ?? undefined,
+    showProgress: (item.showProgress as MediaCardServerProps['showProgress']) ?? undefined,
+    releaseDate: (item.releaseDate as string) ?? undefined,
+    badgeKey: ((item.card as Record<string, unknown>)?.badgeKey as MediaCardServerProps['badgeKey']) ?? undefined,
+  };
+}
+
 export default async function HomePage() {
   const dict = getDictionary('uk');
   
@@ -16,43 +32,22 @@ export default async function HomePage() {
   
   // Fetch trending shows for grid
   const trendingData = await catalogApi.getTrendingShows({ limit: 20 });
-  const shows = Array.isArray(trendingData) ? trendingData : (trendingData as any).data ?? [];
+  const shows = Array.isArray(trendingData) 
+    ? trendingData 
+    : ((trendingData as Record<string, unknown>).data as unknown[]) ?? [];
 
   // Map hero items to MediaCardServerProps
-  const top3Cards: MediaCardServerProps[] = heroItems.map((item: any) => ({
-    id: item.id,
-    slug: item.slug,
-    type: item.type,
-    title: item.title,
-    poster: item.poster ?? undefined,
-    stats: item.stats,
-    externalRatings: item.externalRatings,
-    showProgress: item.showProgress ?? undefined,
-    releaseDate: item.releaseDate ?? undefined,
-    // 🎯 Hero має card metadata
-    badgeKey: item.card?.badgeKey ?? undefined,
-    ctaType: item.card?.primaryCta ?? 'OPEN',
-    continuePoint: item.card?.continue ?? undefined,
-  }));
+  const top3Cards = heroItems.map((item) => 
+    toCardProps(item as Record<string, unknown>, (item as Record<string, unknown>).type as 'show' | 'movie')
+  );
 
   // Map trending shows to MediaCardServerProps
-  const mediaCards: MediaCardServerProps[] = shows.map((show: any) => ({
-    id: show.id,
-    slug: show.slug,
-    type: 'show',
-    title: show.title,
-    poster: show.poster ?? undefined,
-    stats: show.stats,
-    externalRatings: show.externalRatings,
-    showProgress: show.showProgress ?? undefined,
-    releaseDate: show.releaseDate ?? undefined,
-    badgeKey: show.card?.badgeKey ?? undefined,
-    ctaType: show.card?.primaryCta ?? 'OPEN',
-    continuePoint: show.card?.continue ?? undefined,
-  }));
+  const mediaCards = shows.map((show) => 
+    toCardProps(show as Record<string, unknown>, 'show')
+  );
 
   // Filter out hero items from trending to avoid duplicates
-  const heroIds = new Set(heroItems.map((item: any) => item.id));
+  const heroIds = new Set(heroItems.map((item) => item.id));
   const catalogCards = mediaCards.filter(card => !heroIds.has(card.id));
 
   return (
