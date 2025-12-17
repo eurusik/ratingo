@@ -7,6 +7,7 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { ArrowLeft, Tv, Share2 } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
+import { createMediaMetadata, createNotFoundMetadata } from '@/shared/utils';
 import { catalogApi, type ShowDetailsDto } from '@/core/api';
 import {
   DetailsHero,
@@ -35,31 +36,9 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   
   try {
     const show = await catalogApi.getShowBySlug(slug);
-    const title = show.title;
-    const description = show.overview?.slice(0, 160) || `Дивіться ${show.title} на Ratingo`;
-    const posterUrl = show.poster?.large;
-
-    return {
-      title,
-      description,
-      openGraph: {
-        title: `${title} | Ratingo`,
-        description,
-        type: 'video.tv_show',
-        images: posterUrl ? [{ url: posterUrl, width: 500, height: 750 }] : [],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description,
-        images: posterUrl ? [posterUrl] : [],
-      },
-    };
+    return createMediaMetadata(show, { type: 'show' });
   } catch {
-    return {
-      title: 'Серіал не знайдено',
-      description: 'Серіал не знайдено на Ratingo',
-    };
+    return createNotFoundMetadata('show');
   }
 }
 

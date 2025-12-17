@@ -8,6 +8,7 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { ArrowLeft, Film, Share2 } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
+import { createMediaMetadata } from '@/shared/utils';
 import {
   DetailsHero,
   DetailsCtaRow,
@@ -33,18 +34,10 @@ interface PageParams {
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   const { slug } = await params;
   
-  // For now, generate basic metadata from slug
+  // For now, generate basic metadata from slug (until movie API is ready)
   const title = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   
-  return {
-    title,
-    description: `Дивіться ${title} на Ratingo`,
-    openGraph: {
-      title: `${title} | Ratingo`,
-      description: `Дивіться ${title} на Ratingo`,
-      type: 'video.movie',
-    },
-  };
+  return createMediaMetadata({ title }, { type: 'movie' });
 }
 
 interface MovieDetailsPageProps {
