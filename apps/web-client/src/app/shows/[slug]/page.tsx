@@ -2,6 +2,7 @@
  * Show details page
  */
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { ArrowLeft, Tv, Share2 } from 'lucide-react';
@@ -21,6 +22,46 @@ import {
 
 // ISR: Revalidate every hour (balance between fresh data & performance)
 export const revalidate = 3600;
+
+interface PageParams {
+  params: Promise<{ slug: string }>;
+}
+
+/**
+ * Dynamic metadata for SEO.
+ */
+export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
+  const { slug } = await params;
+  
+  try {
+    const show = await catalogApi.getShowBySlug(slug);
+    const title = show.title;
+    const description = show.overview?.slice(0, 160) || `Дивіться ${show.title} на Ratingo`;
+    const posterUrl = show.poster?.large;
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title: `${title} | Ratingo`,
+        description,
+        type: 'video.tv_show',
+        images: posterUrl ? [{ url: posterUrl, width: 500, height: 750 }] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: posterUrl ? [posterUrl] : [],
+      },
+    };
+  } catch {
+    return {
+      title: 'Серіал не знайдено',
+      description: 'Серіал не знайдено на Ratingo',
+    };
+  }
+}
 
 interface ShowDetailsPageProps {
   params: Promise<{ slug: string }>;

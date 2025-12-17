@@ -3,6 +3,7 @@
  *
  */
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { ArrowLeft, Film, Share2 } from 'lucide-react';
@@ -20,6 +21,31 @@ import type { MediaCardServerProps } from '@/modules/home';
 
 // ISR: Revalidate every hour
 export const revalidate = 3600;
+
+interface PageParams {
+  params: Promise<{ slug: string }>;
+}
+
+/**
+ * Dynamic metadata for SEO.
+ * TODO: Replace with API call when movie API is ready.
+ */
+export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
+  const { slug } = await params;
+  
+  // For now, generate basic metadata from slug
+  const title = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  
+  return {
+    title,
+    description: `Дивіться ${title} на Ratingo`,
+    openGraph: {
+      title: `${title} | Ratingo`,
+      description: `Дивіться ${title} на Ratingo`,
+      type: 'video.movie',
+    },
+  };
+}
 
 interface MovieDetailsPageProps {
   params: Promise<{ slug: string }>;
