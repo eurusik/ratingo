@@ -861,7 +861,7 @@ export interface components {
             /** @enum {string|null} */
             badgeKey?: "NEW_EPISODE" | "CONTINUE" | "IN_WATCHLIST" | "HIT" | "NEW_RELEASE" | "RISING" | "TRENDING" | "IN_THEATERS" | "NEW_ON_STREAMING" | null;
             /** @enum {string} */
-            listContext?: "TRENDING_LIST" | "NEW_RELEASES_LIST" | "USER_LIBRARY" | "CONTINUE_LIST" | "DEFAULT";
+            listContext?: "TRENDING_LIST" | "NEW_RELEASES_LIST" | "IN_THEATERS_LIST" | "NEW_ON_STREAMING_LIST" | "USER_LIBRARY" | "CONTINUE_LIST" | "DEFAULT";
             /** @enum {string} */
             primaryCta: "SAVE" | "CONTINUE" | "OPEN";
             continue?: components["schemas"]["ContinuePointDto"] | null;

@@ -11,6 +11,8 @@ const BADGE_REASON = {
   HIT: 'qualityScore>=85',
   TRENDING: 'isTrending',
   NEW_RELEASE: 'newReleaseWindow',
+  IN_THEATERS: 'inTheatersContext',
+  NEW_ON_STREAMING: 'newOnStreamingContext',
   RISING: 'trendDelta=up',
 } as const;
 
@@ -98,6 +100,22 @@ export function selectBadge(signals: CardItemSignals, ctx: CardListContext): Car
       key: BADGE_KEY.NEW_RELEASE,
       priority: BADGE_PRIORITY.NEW_RELEASE,
       reason: BADGE_REASON.NEW_RELEASE,
+    };
+  }
+
+  if (ctx === CARD_LIST_CONTEXT.IN_THEATERS_LIST) {
+    return {
+      key: BADGE_KEY.IN_THEATERS,
+      priority: BADGE_PRIORITY.IN_THEATERS,
+      reason: BADGE_REASON.IN_THEATERS,
+    };
+  }
+
+  if (ctx === CARD_LIST_CONTEXT.NEW_ON_STREAMING_LIST) {
+    return {
+      key: BADGE_KEY.NEW_ON_STREAMING,
+      priority: BADGE_PRIORITY.NEW_ON_STREAMING,
+      reason: BADGE_REASON.NEW_ON_STREAMING,
     };
   }
 

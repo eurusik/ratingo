@@ -2818,6 +2818,8 @@
             "enum": [
               "TRENDING_LIST",
               "NEW_RELEASES_LIST",
+              "IN_THEATERS_LIST",
+              "NEW_ON_STREAMING_LIST",
               "USER_LIBRARY",
               "CONTINUE_LIST",
               "DEFAULT"
