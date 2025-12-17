@@ -8,13 +8,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Play, TrendingUp, Star, Activity } from 'lucide-react';
+import type { PrimaryCta } from '@/shared/types';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import type { MediaCardServerProps } from './media-card/media-card-server';
 
 interface HeroSectionProps {
   item: MediaCardServerProps & {
     backdrop?: { small: string; medium: string; large: string; original: string } | null;
-    ctaType?: 'SAVE' | 'CONTINUE' | 'OPEN';
+    ctaType?: PrimaryCta;
   };
   locale?: Locale;
   className?: string;

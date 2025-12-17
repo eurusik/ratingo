@@ -4,6 +4,7 @@
  */
 
 import { Info, TrendingDown, User } from 'lucide-react';
+import type { PrimaryCta } from '@/shared/types';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
 import { VerdictCtaButton } from './verdict-cta-button';
@@ -56,7 +57,7 @@ export interface DataVerdictProps {
     isSaved?: boolean;
     hasNewEpisodes?: boolean;
     hintKey?: 'newEpisodes' | 'afterAllEpisodes' | 'whenOnStreaming' | 'notifyNewEpisode' | 'general';
-    primaryCta?: 'SAVE' | 'CONTINUE' | 'OPEN';
+    primaryCta?: PrimaryCta;
     continuePoint?: { season: number; episode: number } | null;
     onSave?: () => void;
   };

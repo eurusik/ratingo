@@ -6,10 +6,9 @@
 'use client';
 
 import { Bookmark, Check, ArrowRight, Info } from 'lucide-react';
+import type { PrimaryCta } from '@/shared/types';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
-
-type PrimaryCta = 'SAVE' | 'CONTINUE' | 'OPEN';
 type VerdictType = 'season_comparison' | 'user_context' | 'general';
 
 interface VerdictCtaButtonProps {

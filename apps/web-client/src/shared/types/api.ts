@@ -15,6 +15,9 @@ export type ExternalRatingItemDto = components['schemas']['ExternalRatingItemDto
 
 // Card types
 export type BadgeKey = NonNullable<components['schemas']['CardMetaDto']['badgeKey']>;
+export type ListContext = NonNullable<components['schemas']['CardMetaDto']['listContext']>;
+export type PrimaryCta = components['schemas']['CardMetaDto']['primaryCta'];
+export type ContinuePointDto = components['schemas']['ContinuePointDto'];
 export type ShowProgressDto = components['schemas']['ShowProgressDto'];
 
 // Content types
