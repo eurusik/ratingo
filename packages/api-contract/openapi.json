@@ -2513,7 +2513,7 @@
     "/api/home/hero": {
       "get": {
         "operationId": "HomeController_getHero",
-        "summary": "Get Hero block items (Top 3 hottest media)",
+        "summary": "Get Hero block items (Top 4 hottest media)",
         "parameters": [
           {
             "name": "type",
@@ -2807,7 +2807,9 @@
               "HIT",
               "NEW_RELEASE",
               "RISING",
-              "TRENDING"
+              "TRENDING",
+              "IN_THEATERS",
+              "NEW_ON_STREAMING"
             ],
             "nullable": true
           },
@@ -4836,6 +4838,36 @@
               "rating": 8.4,
               "voteCount": 20000
             }
+          },
+          "imdb": {
+            "type": "object",
+            "example": {
+              "rating": 8.7,
+              "voteCount": 1500000
+            },
+            "nullable": true
+          },
+          "trakt": {
+            "type": "object",
+            "example": {
+              "rating": 8.5,
+              "voteCount": 50000
+            },
+            "nullable": true
+          },
+          "metacritic": {
+            "type": "object",
+            "example": {
+              "rating": 75
+            },
+            "nullable": true
+          },
+          "rottenTomatoes": {
+            "type": "object",
+            "example": {
+              "rating": 85
+            },
+            "nullable": true
           }
         }
       },

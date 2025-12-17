@@ -3,7 +3,7 @@
  *
  */
 
-import { Flame, Sparkles, TrendingUp, Clapperboard, Play, Bookmark, Star } from 'lucide-react';
+import { Flame, Sparkles, TrendingUp, Clapperboard, Play, Bookmark, Star, Tv } from 'lucide-react';
 import type { BadgeKey } from '@/modules/home/types';
 import { cn } from '@/shared/utils';
 
@@ -18,7 +18,7 @@ interface CardBadgeProps {
 }
 
 /** Badge label keys mapping for i18n */
-export const badgeLabelKeys: Record<BadgeKey, 'hit' | 'trending' | 'newRelease' | 'rising' | 'newEpisode' | 'continue' | 'inWatchlist'> = {
+export const badgeLabelKeys: Record<BadgeKey, 'hit' | 'trending' | 'newRelease' | 'rising' | 'newEpisode' | 'continue' | 'inWatchlist' | 'inTheaters' | 'newOnStreaming'> = {
   HIT: 'hit',
   TRENDING: 'trending',
   NEW_RELEASE: 'newRelease',
@@ -26,6 +26,8 @@ export const badgeLabelKeys: Record<BadgeKey, 'hit' | 'trending' | 'newRelease' 
   NEW_EPISODE: 'newEpisode',
   CONTINUE: 'continue',
   IN_WATCHLIST: 'inWatchlist',
+  IN_THEATERS: 'inTheaters',
+  NEW_ON_STREAMING: 'newOnStreaming',
 };
 
 const badgeConfig: Record<BadgeKey, { icon: React.ElementType; className: string }> = {
@@ -56,6 +58,14 @@ const badgeConfig: Record<BadgeKey, { icon: React.ElementType; className: string
   IN_WATCHLIST: {
     icon: Bookmark,
     className: 'bg-green-600 text-white',
+  },
+  IN_THEATERS: {
+    icon: Clapperboard,
+    className: 'bg-red-500 text-white',
+  },
+  NEW_ON_STREAMING: {
+    icon: Tv,
+    className: 'bg-blue-500 text-white',
   },
 };
 

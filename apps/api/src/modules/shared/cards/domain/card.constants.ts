@@ -9,6 +9,8 @@ export const BADGE_KEY = {
   NEW_RELEASE: 'NEW_RELEASE',
   RISING: 'RISING',
   TRENDING: 'TRENDING',
+  IN_THEATERS: 'IN_THEATERS',
+  NEW_ON_STREAMING: 'NEW_ON_STREAMING',
 } as const;
 
 export type BadgeKey = (typeof BADGE_KEY)[keyof typeof BADGE_KEY];
@@ -49,6 +51,8 @@ export const BADGE_PRIORITY = {
   IN_WATCHLIST: 80,
   HIT: 70,
   NEW_RELEASE: 60,
+  IN_THEATERS: 55,
+  NEW_ON_STREAMING: 50,
   RISING: 40,
   TRENDING: 20,
 } as const;

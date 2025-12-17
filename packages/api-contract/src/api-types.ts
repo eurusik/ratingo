@@ -747,7 +747,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Hero block items (Top 3 hottest media) */
+        /** Get Hero block items (Top 4 hottest media) */
         get: operations["HomeController_getHero"];
         put?: never;
         post?: never;
@@ -859,7 +859,7 @@ export interface components {
         };
         CardMetaDto: {
             /** @enum {string|null} */
-            badgeKey?: "NEW_EPISODE" | "CONTINUE" | "IN_WATCHLIST" | "HIT" | "NEW_RELEASE" | "RISING" | "TRENDING" | null;
+            badgeKey?: "NEW_EPISODE" | "CONTINUE" | "IN_WATCHLIST" | "HIT" | "NEW_RELEASE" | "RISING" | "TRENDING" | "IN_THEATERS" | "NEW_ON_STREAMING" | null;
             /** @enum {string} */
             listContext?: "TRENDING_LIST" | "NEW_RELEASES_LIST" | "USER_LIBRARY" | "CONTINUE_LIST" | "DEFAULT";
             /** @enum {string} */
@@ -1672,6 +1672,32 @@ export interface components {
              *     }
              */
             tmdb?: Record<string, never>;
+            /**
+             * @example {
+             *       "rating": 8.7,
+             *       "voteCount": 1500000
+             *     }
+             */
+            imdb?: Record<string, never> | null;
+            /**
+             * @example {
+             *       "rating": 8.5,
+             *       "voteCount": 50000
+             *     }
+             */
+            trakt?: Record<string, never> | null;
+            /**
+             * @example {
+             *       "rating": 75
+             *     }
+             */
+            metacritic?: Record<string, never> | null;
+            /**
+             * @example {
+             *       "rating": 85
+             *     }
+             */
+            rottenTomatoes?: Record<string, never> | null;
         };
         HeroItemDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */

@@ -3,7 +3,7 @@
  * Shows badge status (TRENDING, NEW_RELEASE, etc.) and rank badge.
  */
 
-import { Flame, Sparkles, TrendingUp, Clapperboard, Play, Bookmark } from 'lucide-react';
+import { Flame, Sparkles, TrendingUp, Clapperboard, Play, Bookmark, Tv } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import type { BadgeKey } from '../types';
 
@@ -16,11 +16,13 @@ interface StatusBadgesProps {
       newRelease: string;
       rising: string;
       newEpisode: string;
+      inTheaters: string;
+      newOnStreaming: string;
     };
   };
 }
 
-const badgeConfig: Record<BadgeKey, { icon: typeof Flame; className: string; labelKey: 'trending' | 'newRelease' | 'rising' | 'newEpisode' }> = {
+const badgeConfig: Record<BadgeKey, { icon: typeof Flame; className: string; labelKey: 'trending' | 'newRelease' | 'rising' | 'newEpisode' | 'inTheaters' | 'newOnStreaming' }> = {
   HIT: { icon: Flame, className: 'bg-red-600 text-white', labelKey: 'trending' },
   TRENDING: { icon: Flame, className: 'bg-red-600 text-white', labelKey: 'trending' },
   NEW_RELEASE: { icon: Sparkles, className: 'bg-green-500 text-white', labelKey: 'newRelease' },
@@ -28,6 +30,8 @@ const badgeConfig: Record<BadgeKey, { icon: typeof Flame; className: string; lab
   NEW_EPISODE: { icon: Clapperboard, className: 'bg-purple-500 text-white', labelKey: 'newEpisode' },
   CONTINUE: { icon: Play, className: 'bg-blue-500 text-white', labelKey: 'newEpisode' },
   IN_WATCHLIST: { icon: Bookmark, className: 'bg-green-600 text-white', labelKey: 'trending' },
+  IN_THEATERS: { icon: Clapperboard, className: 'bg-red-500 text-white', labelKey: 'inTheaters' },
+  NEW_ON_STREAMING: { icon: Tv, className: 'bg-blue-500 text-white', labelKey: 'newOnStreaming' },
 };
 
 export function StatusBadges({ badgeKey, rank, dict }: StatusBadgesProps) {

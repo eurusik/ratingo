@@ -75,7 +75,9 @@
       "rising": "Ріст",
       "newEpisode": "Новий епізод",
       "continue": "Продовжити",
-      "inWatchlist": "У списку"
+      "inWatchlist": "У списку",
+      "inTheaters": "У кіно",
+      "newOnStreaming": "На стрімінгу"
     },
     "season": {
       "released": "Вийшло",

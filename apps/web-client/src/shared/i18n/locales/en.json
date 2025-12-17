@@ -75,7 +75,9 @@
       "rising": "Rising",
       "newEpisode": "New episode",
       "continue": "Continue",
-      "inWatchlist": "In list"
+      "inWatchlist": "In list",
+      "inTheaters": "In theaters",
+      "newOnStreaming": "On streaming"
     },
     "season": {
       "released": "Released",
