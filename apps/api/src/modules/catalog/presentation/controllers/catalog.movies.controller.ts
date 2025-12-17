@@ -114,9 +114,12 @@ export class CatalogMoviesController {
     } = normalizedQuery;
     const movies = await this.movieRepository.findNowPlaying({ ...normalizedQuery, limit, offset });
     const data = await this.catalogUserListEnrich(user, movies);
+    const withCards = this.cards.enrichCatalogItems(data, {
+      context: CARD_LIST_CONTEXT.IN_THEATERS_LIST,
+    });
     const total = movies.total ?? movies.length;
     return {
-      data,
+      data: withCards,
       meta: {
         count: movies.length,
         total,
@@ -211,7 +214,7 @@ export class CatalogMoviesController {
     });
     const data = await this.catalogUserListEnrich(user, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
-      context: CARD_LIST_CONTEXT.NEW_RELEASES_LIST,
+      context: CARD_LIST_CONTEXT.NEW_ON_STREAMING_LIST,
     });
     const total = movies.total ?? movies.length;
     return {
