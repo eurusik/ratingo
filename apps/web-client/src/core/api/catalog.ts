@@ -76,6 +76,27 @@ export type ShowTrendingItemDto = components['schemas']['ShowTrendingItemDto'];
 export type CalendarResponseDto = GetData<'/api/catalog/shows/calendar'>;
 
 /**
+ * New episodes item.
+ */
+export interface NewEpisodeItem {
+  showId: string;
+  slug: string;
+  title: string;
+  posterPath: string | null;
+  seasonNumber: number;
+  episodeNumber: number;
+  episodeTitle: string;
+  airDate: string;
+}
+
+/**
+ * New episodes response.
+ */
+export interface NewEpisodesDto {
+  data: NewEpisodeItem[];
+}
+
+/**
  * Trending movies response.
  */
 export type TrendingMoviesDto = GetData<'/api/catalog/movies/trending'>;
@@ -220,6 +241,21 @@ export const catalogApi = {
   async search(params: SearchParams): Promise<SearchDto> {
     return apiGet<SearchDto>('catalog/search', {
       searchParams: params as unknown as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Fetches shows with new episodes (update feed).
+   *
+   * @param params - Query parameters
+   * @returns New episodes data
+   *
+   * @example
+   * const newEpisodes = await catalogApi.getNewEpisodes({ days: 7, limit: 20 });
+   */
+  async getNewEpisodes(params?: { days?: number; limit?: number }): Promise<NewEpisodesDto> {
+    return apiGet<NewEpisodesDto>('catalog/shows/new-episodes', {
+      searchParams: params as Record<string, string | number>,
     });
   },
 } as const;

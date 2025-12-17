@@ -4,10 +4,10 @@
 
 import Link from 'next/link';
 import type { MediaCardServerProps } from '@/modules/home';
-import { MediaCardServer, HeroSection, Top3SectionServer, TrendingCarousel } from '@/modules/home';
+import { MediaCardServer, HeroSection, Top3SectionServer, TrendingCarousel, NewEpisodeCard } from '@/modules/home';
 import { getDictionary } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
-import { TrendingUp, Clapperboard, Sparkles, Film } from 'lucide-react';
+import { TrendingUp, Clapperboard, Sparkles, Film, Tv } from 'lucide-react';
 
 /** Map API item to MediaCardServerProps */
 function toCardProps(item: Record<string, unknown>, type: 'show' | 'movie'): MediaCardServerProps {
@@ -29,9 +29,10 @@ export default async function HomePage() {
   const dict = getDictionary('uk');
   
   // Fetch all data in parallel
-  const [heroItems, trendingShowsData, trendingMoviesData, nowPlayingData, newOnDigitalData] = await Promise.all([
+  const [heroItems, trendingShowsData, newEpisodesData, trendingMoviesData, nowPlayingData, newOnDigitalData] = await Promise.all([
     catalogApi.getHeroItems({ type: 'show' }).catch(() => []),
     catalogApi.getTrendingShows({ limit: 12 }).catch(() => ({ data: [] })),
+    catalogApi.getNewEpisodes({ days: 7, limit: 10 }).catch(() => ({ data: [] })),
     catalogApi.getTrendingMovies({ limit: 12 }).catch(() => ({ data: [] })),
     catalogApi.getNowPlayingMovies({ limit: 12 }).catch(() => ({ data: [] })),
     catalogApi.getNewOnDigitalMovies({ limit: 12 }).catch(() => ({ data: [] })),
@@ -53,6 +54,9 @@ export default async function HomePage() {
   const newOnDigitalMovies = Array.isArray(newOnDigitalData)
     ? newOnDigitalData
     : ((newOnDigitalData as Record<string, unknown>).data as unknown[]) ?? [];
+
+  // Extract new episodes
+  const newEpisodes = (newEpisodesData as { data: unknown[] })?.data ?? [];
 
   // Map hero items to MediaCardServerProps
   const top3Cards = (heroItems ?? []).map((item) => 
@@ -111,6 +115,23 @@ export default async function HomePage() {
             </div>
           ))}
         </TrendingCarousel>
+
+        {/* Нові епізоди 📺 */}
+        {newEpisodes.length > 0 && (
+          <section className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                <Tv className="w-5 h-5 text-blue-400" />
+                {dict.home.sections.newEpisodes}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 bg-zinc-900/50 rounded-xl p-2">
+              {(newEpisodes as import('@/core/api/catalog').NewEpisodeItem[]).map((item) => (
+                <NewEpisodeCard key={item.showId} item={item} locale="uk" />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ═══ Візуальне розділення: Фільми ═══ */}
         <div className="relative my-8">
