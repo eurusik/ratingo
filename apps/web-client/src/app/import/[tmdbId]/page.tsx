@@ -45,14 +45,16 @@ export default function ImportPage({ params }: ImportPageProps) {
   // Determine current status
   const isReady = jobStatus?.status === 'ready';
   const isFailed = jobStatus?.status === 'failed';
+  // Use slug from job status (fetched from DB when ready) or fallback to initial slug
+  const resolvedSlug = jobStatus?.slug || slug;
 
   // Redirect when import is complete
   useEffect(() => {
-    if (isReady && slug) {
-      const path = type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`;
+    if (isReady && resolvedSlug) {
+      const path = type === 'movie' ? `/movies/${resolvedSlug}` : `/shows/${resolvedSlug}`;
       router.replace(path as any);
     }
-  }, [isReady, slug, type, router]);
+  }, [isReady, resolvedSlug, type, router]);
 
   // Failed state
   if (isFailed) {

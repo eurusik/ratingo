@@ -144,6 +144,11 @@ export class IngestionController {
         status: { type: 'string', enum: ['queued', 'processing', 'ready', 'failed'] },
         errorMessage: { type: 'string', nullable: true },
         updatedAt: { type: 'string', format: 'date-time', nullable: true },
+        slug: {
+          type: 'string',
+          nullable: true,
+          description: 'Media slug (available when status is ready)',
+        },
       },
     },
   })
@@ -164,11 +169,19 @@ export class IngestionController {
         ? new Date(job.finishedOn ?? job.processedOn ?? job.timestamp)
         : null;
 
+    // Get slug from DB if job is completed and has tmdbId
+    let slug: string | null = null;
+    if (status === 'ready' && job.data?.tmdbId) {
+      const media = await this.mediaRepository.findByTmdbId(job.data.tmdbId);
+      slug = media?.slug ?? null;
+    }
+
     return {
       id: `${job.id}`,
       status,
       errorMessage: job.failedReason ?? null,
       updatedAt: updatedAt ? updatedAt.toISOString() : null,
+      slug,
     };
   }
 

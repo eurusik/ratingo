@@ -324,4 +324,5 @@ export interface JobStatusDto {
   status: 'queued' | 'processing' | 'ready' | 'failed';
   errorMessage: string | null;
   updatedAt: string | null;
+  slug: string | null;
 }
