@@ -123,11 +123,8 @@ export type SearchDto = GetData<'/api/catalog/search'>;
 
 /**
  * Import result DTO from api-contract.
- * Extended with jobId for polling.
  */
-export type ImportResultDto = components['schemas']['ImportResultDto'] & {
-  jobId?: string;
-};
+export type ImportResultDto = components['schemas']['ImportResultDto'];
 
 /**
  * Import status type (derived from API schema).

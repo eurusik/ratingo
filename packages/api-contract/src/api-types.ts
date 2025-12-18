@@ -235,23 +235,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/catalog/import/status/{tmdbId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Check import status by TMDB ID */
-        get: operations["CatalogSearchController_checkImportStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/user-media/continue": {
         parameters: {
             query?: never;
@@ -1643,6 +1626,8 @@ export interface components {
             tmdbId: number;
             /** @enum {string} */
             ingestionStatus?: "importing" | "ready" | "failed";
+            /** @description Job ID for polling ingestion status */
+            jobId?: string;
         };
         SetUserMediaStateDto: {
             /**
@@ -2688,31 +2673,6 @@ export interface operations {
         requestBody?: never;
         responses: {
             202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["ImportResultDto"];
-                    };
-                };
-            };
-        };
-    };
-    CatalogSearchController_checkImportStatus: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tmdbId: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
                 headers: {
                     [name: string]: unknown;
                 };

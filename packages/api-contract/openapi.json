@@ -1155,52 +1155,6 @@
         ]
       }
     },
-    "/api/catalog/import/status/{tmdbId}": {
-      "get": {
-        "operationId": "CatalogSearchController_checkImportStatus",
-        "summary": "Check import status by TMDB ID",
-        "parameters": [
-          {
-            "name": "tmdbId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/ImportResultDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Public: Catalog"
-        ]
-      }
-    },
     "/api/user-media/continue": {
       "get": {
         "operationId": "UserMediaController_listContinue",
@@ -5106,6 +5060,10 @@
               "ready",
               "failed"
             ]
+          },
+          "jobId": {
+            "type": "string",
+            "description": "Job ID for polling ingestion status"
           }
         },
         "required": [
