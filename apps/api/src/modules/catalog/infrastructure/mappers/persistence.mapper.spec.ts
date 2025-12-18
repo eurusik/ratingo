@@ -72,6 +72,23 @@ describe('PersistenceMapper', () => {
     expect(withTrending.trendingScore).toBe(1);
   });
 
+  it('toMediaItemUpdate should include releaseDate', () => {
+    const releaseDate = new Date('2012-09-27');
+    const res = PersistenceMapper.toMediaItemUpdate({
+      ...baseMedia,
+      releaseDate,
+    } as any);
+    expect(res.releaseDate).toEqual(releaseDate);
+  });
+
+  it('toMediaItemUpdate should handle null releaseDate', () => {
+    const res = PersistenceMapper.toMediaItemUpdate({
+      ...baseMedia,
+      releaseDate: null,
+    } as any);
+    expect(res.releaseDate).toBeNull();
+  });
+
   it('toMediaStatsInsert should return null when ratingoScore undefined', () => {
     const resNull = PersistenceMapper.toMediaStatsInsert('m1', {
       ...baseMedia,

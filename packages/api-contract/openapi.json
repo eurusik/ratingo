@@ -2361,6 +2361,11 @@
                           "type": "string",
                           "format": "date-time",
                           "nullable": true
+                        },
+                        "slug": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Media slug (available when status is ready)"
                         }
                       }
                     }
@@ -4988,11 +4993,6 @@
             "type": "boolean",
             "example": false,
             "description": "If true, this TMDB item already exists in local DB"
-          },
-          "hasUkrainianLocalization": {
-            "type": "boolean",
-            "example": true,
-            "description": "If false, item has no Ukrainian localization and cannot be imported"
           }
         },
         "required": [
@@ -5001,8 +5001,7 @@
           "tmdbId",
           "title",
           "rating",
-          "isImported",
-          "hasUkrainianLocalization"
+          "isImported"
         ]
       },
       "SearchResponseDto": {

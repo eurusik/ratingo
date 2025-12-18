@@ -1610,11 +1610,6 @@ export interface components {
              * @example false
              */
             isImported: boolean;
-            /**
-             * @description If false, item has no Ukrainian localization and cannot be imported
-             * @example true
-             */
-            hasUkrainianLocalization: boolean;
         };
         SearchResponseDto: {
             query: string;
@@ -3311,6 +3306,8 @@ export interface operations {
                             errorMessage?: string | null;
                             /** Format: date-time */
                             updatedAt?: string | null;
+                            /** @description Media slug (available when status is ready) */
+                            slug?: string | null;
                         };
                     };
                 };
