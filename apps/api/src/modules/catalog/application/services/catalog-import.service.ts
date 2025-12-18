@@ -82,9 +82,9 @@ export class CatalogImportService {
 
     // Queue for full sync
     const jobName = type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
-    await this.ingestionQueue.add(jobName, { tmdbId });
+    const job = await this.ingestionQueue.add(jobName, { tmdbId });
 
-    this.logger.log(`Queued import for ${type} ${tmdbId}: ${media.title}`);
+    this.logger.log(`Queued import for ${type} ${tmdbId}: ${media.title} (job: ${job.id})`);
 
     return {
       status: ImportStatus.IMPORTING,
@@ -93,6 +93,7 @@ export class CatalogImportService {
       type,
       tmdbId,
       ingestionStatus: IngestionStatus.IMPORTING,
+      jobId: job.id,
     };
   }
 

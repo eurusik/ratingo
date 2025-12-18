@@ -71,12 +71,13 @@ export function useSearch() {
       } else if (result.status === ImportStatus.IMPORTING || result.status === ImportStatus.EXISTS) {
         setOpen(false);
         setQuery('');
-        // Pass title and poster via query params for better UX
+        // Pass title, poster and jobId via query params for better UX
         const params = new URLSearchParams({
           type: result.type,
           title: importingItem?.title || '',
           ...(importingItem?.poster && { poster: importingItem.poster }),
           ...(importingItem?.year && { year: String(importingItem.year) }),
+          ...(result.jobId && { jobId: result.jobId }),
         });
         router.push(`/import/${result.tmdbId}?${params.toString()}` as any);
       }

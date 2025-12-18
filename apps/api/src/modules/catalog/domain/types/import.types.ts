@@ -22,4 +22,5 @@ export interface ImportResult {
   type: MediaType;
   tmdbId: number;
   ingestionStatus?: IngestionStatus;
+  jobId?: string;
 }

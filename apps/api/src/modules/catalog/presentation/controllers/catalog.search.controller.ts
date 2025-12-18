@@ -35,6 +35,9 @@ class ImportResultDto implements ImportResult {
 
   @ApiProperty({ required: false, enum: IngestionStatus })
   ingestionStatus?: IngestionStatus;
+
+  @ApiProperty({ required: false, description: 'Job ID for polling ingestion status' })
+  jobId?: string;
 }
 
 /**

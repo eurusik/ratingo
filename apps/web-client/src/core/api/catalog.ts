@@ -123,8 +123,11 @@ export type SearchDto = GetData<'/api/catalog/search'>;
 
 /**
  * Import result DTO from api-contract.
+ * Extended with jobId for polling.
  */
-export type ImportResultDto = components['schemas']['ImportResultDto'];
+export type ImportResultDto = components['schemas']['ImportResultDto'] & {
+  jobId?: string;
+};
 
 /**
  * Import status type (derived from API schema).
@@ -313,4 +316,22 @@ export const catalogApi = {
   async checkImportStatus(tmdbId: number): Promise<ImportResultDto | null> {
     return apiGet<ImportResultDto | null>(`catalog/import/status/${tmdbId}`);
   },
+
+  /**
+   * Checks ingestion job status by job ID.
+   * Use this for polling during import.
+   */
+  async getJobStatus(jobId: string): Promise<JobStatusDto> {
+    return apiGet<JobStatusDto>(`ingestion/jobs/${jobId}`);
+  },
 } as const;
+
+/**
+ * Job status response from ingestion API.
+ */
+export interface JobStatusDto {
+  id: string;
+  status: 'queued' | 'processing' | 'ready' | 'failed';
+  errorMessage: string | null;
+  updatedAt: string | null;
+}
