@@ -69,8 +69,8 @@ export function MediaCardServer(props: MediaCardServerProps) {
     </CardPoster>
   );
 
-  // CardBookmark is a client component - will be hydrated and interactive
-  const overlaySlot = <CardBookmark />;
+  // CardBookmark is a client component - self-contained with API integration
+  const overlaySlot = <CardBookmark mediaItemId={id} />;
 
   return (
     <CardLayout href={href} as="article" poster={posterSlot} overlay={overlaySlot}>
