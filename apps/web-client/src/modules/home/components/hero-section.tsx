@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Play, TrendingUp, Star, Activity } from 'lucide-react';
-import type { PrimaryCta } from '@/shared/types';
+import { type PrimaryCta, PRIMARY_CTA } from '@/shared/types';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import { Button } from '@/shared/ui';
 import type { MediaCardServerProps } from './media-card/media-card-server';
@@ -134,7 +134,7 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
             >
               <Link href={href}>
                 <Play className="w-6 h-6 fill-current mr-3" />
-                {ctaType === 'CONTINUE'
+                {ctaType === PRIMARY_CTA.CONTINUE
                   ? dict.card.cta.continue
                   : dict.card.cta.details}
               </Link>

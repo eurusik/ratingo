@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import type { components } from '@ratingo/api-contract';
 import { toast } from 'sonner';
-import type { PrimaryCta } from '@/shared/types';
+import { type PrimaryCta, PRIMARY_CTA } from '@/shared/types';
 import type { SavedItemList } from '@/core/api';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { DataVerdictServer, type DataVerdictServerProps } from './data-verdict-server';
@@ -59,16 +59,16 @@ export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProp
   const handleCtaAction = () => {
     if (!ctaProps || isMutating) return;
 
-    const primaryCta = ctaProps.primaryCta ?? 'SAVE';
+    const primaryCta = ctaProps.primaryCta ?? PRIMARY_CTA.SAVE;
     
     // Show login modal for guests
-    if (!isAuthenticated && primaryCta === 'SAVE') {
+    if (!isAuthenticated && primaryCta === PRIMARY_CTA.SAVE) {
       openLogin();
       return;
     }
     
     switch (primaryCta) {
-      case 'SAVE':
+      case PRIMARY_CTA.SAVE:
         if (isSaved) {
           unsaveItem(
             { mediaItemId, list: DEFAULT_LIST, context: CTA_CONTEXT },
@@ -87,10 +87,10 @@ export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProp
           );
         }
         break;
-      case 'CONTINUE':
+      case PRIMARY_CTA.CONTINUE:
         // TODO: Navigate to continue point
         break;
-      case 'OPEN':
+      case PRIMARY_CTA.OPEN:
         // TODO: Navigate to details/episodes
         break;
     }

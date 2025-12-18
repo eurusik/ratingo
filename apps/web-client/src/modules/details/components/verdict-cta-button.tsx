@@ -7,11 +7,9 @@
 
 import type { components } from '@ratingo/api-contract';
 import { Bookmark, Check, ArrowRight, Info } from 'lucide-react';
+import { type PrimaryCta, PRIMARY_CTA } from '@/shared/types';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
-
-/** Primary CTA type from API. */
-type PrimaryCta = components['schemas']['CardMetaDto']['primaryCta'];
 
 /** Verdict hint key from API. */
 type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
@@ -42,7 +40,7 @@ interface VerdictCtaButtonProps {
 }
 
 export function VerdictCtaButton({
-  primaryCta = 'SAVE',
+  primaryCta = PRIMARY_CTA.SAVE,
   continuePoint,
   isSaved = false,
   isLoading = false,
@@ -53,7 +51,7 @@ export function VerdictCtaButton({
   onSave,
 }: VerdictCtaButtonProps) {
   // Show skeleton while loading save status
-  if (isLoading && primaryCta === 'SAVE') {
+  if (isLoading && primaryCta === PRIMARY_CTA.SAVE) {
     return (
       <div className="flex items-center justify-between w-full mt-4 pt-4 border-t border-zinc-800/50 -mx-5 px-5 -mb-5 pb-5">
         <div className="flex flex-col gap-1.5">
@@ -66,13 +64,13 @@ export function VerdictCtaButton({
   }
   const handleClick = () => {
     switch (primaryCta) {
-      case 'SAVE':
+      case PRIMARY_CTA.SAVE:
         onSave?.();
         break;
-      case 'CONTINUE':
+      case PRIMARY_CTA.CONTINUE:
         // TODO: Navigate to continue point
         break;
-      case 'OPEN':
+      case PRIMARY_CTA.OPEN:
         // TODO: Navigate to details/episodes
         break;
     }
@@ -80,14 +78,14 @@ export function VerdictCtaButton({
 
   // CTA config based on primaryCta type
   const ctaTypeConfig = {
-    SAVE: {
+    [PRIMARY_CTA.SAVE]: {
       icon: isSaved ? Check : Bookmark,
       label: isSaved ? dict.details.saved : dict.details.save,
       iconColor: isSaved ? 'text-green-500' : 'text-zinc-500 group-hover:text-zinc-300',
       iconBg: isSaved ? 'bg-green-500/20' : 'bg-zinc-800 group-hover:bg-zinc-700',
       showHint: !isSaved,
     },
-    CONTINUE: {
+    [PRIMARY_CTA.CONTINUE]: {
       icon: ArrowRight,
       label: continuePoint 
         ? `${dict.details.continue} S${continuePoint.season}E${continuePoint.episode}`
@@ -96,7 +94,7 @@ export function VerdictCtaButton({
       iconBg: 'bg-green-500/20',
       showHint: false,
     },
-    OPEN: {
+    [PRIMARY_CTA.OPEN]: {
       icon: Info,
       label: dict.card.cta.details,
       iconColor: 'text-blue-400',
@@ -105,7 +103,7 @@ export function VerdictCtaButton({
     },
   } as const;
 
-  const config = ctaTypeConfig[primaryCta];
+  const config = ctaTypeConfig[primaryCta!];
   const CtaIcon = config.icon;
 
   // Dynamic CTA gradient based on verdict type
@@ -132,7 +130,7 @@ export function VerdictCtaButton({
       <div className="flex flex-col items-start">
         <span className={cn(
           'text-sm font-medium',
-          primaryCta === 'SAVE' && isSaved ? 'text-green-400' : 'text-zinc-200'
+          primaryCta === PRIMARY_CTA.SAVE && isSaved ? 'text-green-400' : 'text-zinc-200'
         )}>
           {config.label}
         </span>

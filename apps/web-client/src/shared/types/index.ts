@@ -13,3 +13,5 @@ export type {
   CastMemberDto,
   CrewMemberDto,
 } from './api';
+
+export { PRIMARY_CTA } from './api';

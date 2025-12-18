@@ -20,6 +20,13 @@ export type PrimaryCta = components['schemas']['CardMetaDto']['primaryCta'];
 export type ContinuePointDto = components['schemas']['ContinuePointDto'];
 export type ShowProgressDto = components['schemas']['ShowProgressDto'];
 
+/** Primary CTA constants - use instead of magic strings */
+export const PRIMARY_CTA = {
+  SAVE: 'SAVE',
+  CONTINUE: 'CONTINUE',
+  OPEN: 'OPEN',
+} as const satisfies Record<string, NonNullable<PrimaryCta>>;
+
 // Content types
 export type GenreDto = components['schemas']['GenreDto'];
 export type VideoDto = components['schemas']['VideoDto'];
