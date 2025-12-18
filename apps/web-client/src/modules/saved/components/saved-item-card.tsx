@@ -8,9 +8,9 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import Image from 'next/image';
-import { Trash2, ArrowRight, Sparkles } from 'lucide-react';
+import { Trash2, ArrowLeftRight, Sparkles } from 'lucide-react';
 import { cn } from '@/shared/utils';
-import { Button } from '@/shared/ui';
+import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 
 interface SavedItemCardProps {
@@ -89,32 +89,47 @@ export function SavedItemCard({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 mt-2">
-          {onMove && moveLabel && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onMove}
-              className="h-7 px-2 text-xs text-zinc-400 hover:text-zinc-100"
-            >
-              <ArrowRight className="w-3 h-3 mr-1" />
-              {moveLabel}
-            </Button>
-          )}
-          {onRemove && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onRemove}
-              disabled={isRemoving}
-              className={cn(
-                "h-7 px-2 text-xs",
-                "text-zinc-500 hover:text-red-400 hover:bg-red-400/10"
-              )}
-            >
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          )}
+        <div className="flex items-center gap-1 mt-2">
+          <TooltipProvider delayDuration={300}>
+            {onMove && moveLabel && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onMove}
+                    className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
+                  >
+                    <ArrowLeftRight className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{moveLabel}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            {onRemove && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onRemove}
+                    disabled={isRemoving}
+                    className={cn(
+                      "h-7 w-7",
+                      "text-zinc-500 hover:text-red-400 hover:bg-red-400/10"
+                    )}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>{dict.saved.actions.remove}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </TooltipProvider>
         </div>
       </div>
     </div>
