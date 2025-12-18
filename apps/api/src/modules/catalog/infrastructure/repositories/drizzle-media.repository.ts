@@ -309,13 +309,13 @@ export class DrizzleMediaRepository implements IMediaRepository {
   }
 
   /**
-   * Searches for media items using full-text search.
+   * Searches for media items using trigram similarity (pg_trgm).
+   * Supports fuzzy matching and works well with any language including Ukrainian.
    */
   async search(query: string, limit: number): Promise<LocalSearchResult[]> {
     try {
-      // Create tsquery: 'word1 & word2:*' for partial matching
-      const formattedQuery = query.trim().split(/\s+/).join(' & ') + ':*';
-      const sqlQuery = sql`to_tsquery('simple', ${formattedQuery})`;
+      const searchTerm = query.trim();
+      const likePattern = `%${searchTerm}%`;
 
       return await this.db
         .select({
@@ -334,10 +334,22 @@ export class DrizzleMediaRepository implements IMediaRepository {
         .where(
           and(
             sql`${schema.mediaItems.deletedAt} IS NULL`,
-            sql`${schema.mediaItems.searchVector} @@ ${sqlQuery}`,
+            sql`(
+              ${schema.mediaItems.title} ILIKE ${likePattern}
+              OR ${schema.mediaItems.originalTitle} ILIKE ${likePattern}
+              OR ${schema.mediaItems.title} % ${searchTerm}
+              OR ${schema.mediaItems.originalTitle} % ${searchTerm}
+            )`,
           ),
         )
-        .orderBy(desc(schema.mediaItems.popularity))
+        .orderBy(
+          // Order by similarity score (higher = better match)
+          sql`GREATEST(
+            similarity(${schema.mediaItems.title}, ${searchTerm}),
+            similarity(COALESCE(${schema.mediaItems.originalTitle}, ''), ${searchTerm})
+          ) DESC`,
+          desc(schema.mediaItems.popularity),
+        )
         .limit(limit);
     } catch (error) {
       this.logger.error(`Failed to search media for "${query}": ${error.message}`);
