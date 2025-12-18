@@ -10,7 +10,7 @@ import type { components } from '@ratingo/api-contract';
 import { toast } from 'sonner';
 import type { PrimaryCta } from '@/shared/types';
 import type { SavedItemList } from '@/core/api';
-import { useAuth } from '@/core/auth';
+import { useAuth, useAuthModalStore } from '@/core/auth';
 import { DataVerdictServer, type DataVerdictServerProps } from './data-verdict-server';
 import { useSaveStatus, useSaveItem, useUnsaveItem } from '@/core/query';
 
@@ -38,6 +38,7 @@ interface DataVerdictProps extends Omit<DataVerdictServerProps, 'ctaProps'> {
 
 export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProps) {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const openLogin = useAuthModalStore((s) => s.openLogin);
   const [isHydrated, setIsHydrated] = useState(false);
   
   useEffect(() => {
@@ -59,6 +60,12 @@ export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProp
     if (!ctaProps || isMutating) return;
 
     const primaryCta = ctaProps.primaryCta ?? 'SAVE';
+    
+    // Show login modal for guests
+    if (!isAuthenticated && primaryCta === 'SAVE') {
+      openLogin();
+      return;
+    }
     
     switch (primaryCta) {
       case 'SAVE':

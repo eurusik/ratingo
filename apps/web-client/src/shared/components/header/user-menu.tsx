@@ -6,7 +6,7 @@
 'use client';
 
 import { User, LogOut, Settings, Bookmark } from 'lucide-react';
-import { useAuth } from '@/core/auth';
+import { useAuth, useAuthModalStore } from '@/core/auth';
 import { useTranslation } from '@/shared/i18n';
 import {
   Button,
@@ -20,12 +20,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/shared/ui';
-import { AuthModal, useAuthModal } from '@/modules/auth';
 
 export function UserMenu() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { dict } = useTranslation();
-  const { isOpen, mode, openLogin, close } = useAuthModal();
+  const openLogin = useAuthModalStore((s) => s.openLogin);
 
   const handleLogout = async () => {
     await logout();
@@ -39,12 +38,9 @@ export function UserMenu() {
 
   if (!isAuthenticated) {
     return (
-      <>
-        <Button onClick={openLogin}>
-          {dict.auth.login}
-        </Button>
-        <AuthModal isOpen={isOpen} onClose={close} initialMode={mode} />
-      </>
+      <Button onClick={openLogin}>
+        {dict.auth.login}
+      </Button>
     );
   }
 
