@@ -12,8 +12,6 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
 import { ImportStatus, ImportResult } from '../../domain/types/import.types';
 
-export { ImportStatus, ImportResult };
-
 /**
  * Service for on-demand import of media from TMDB.
  * Used when user clicks on a search result that's not yet in our database.

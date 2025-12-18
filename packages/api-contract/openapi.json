@@ -1063,6 +1063,144 @@
         ]
       }
     },
+    "/api/catalog/import/movie/{tmdbId}": {
+      "post": {
+        "operationId": "CatalogSearchController_importMovie",
+        "summary": "Import a movie from TMDB on-demand",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ImportResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/import/show/{tmdbId}": {
+      "post": {
+        "operationId": "CatalogSearchController_importShow",
+        "summary": "Import a show from TMDB on-demand",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ImportResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/import/status/{tmdbId}": {
+      "get": {
+        "operationId": "CatalogSearchController_checkImportStatus",
+        "summary": "Check import status by TMDB ID",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ImportResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
     "/api/user-media/continue": {
       "get": {
         "operationId": "UserMediaController_listContinue",
@@ -4930,6 +5068,50 @@
           "query",
           "local",
           "tmdb"
+        ]
+      },
+      "ImportResultDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "exists",
+              "importing",
+              "ready",
+              "failed",
+              "not_found"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "tmdbId": {
+            "type": "number"
+          },
+          "ingestionStatus": {
+            "type": "string",
+            "enum": [
+              "importing",
+              "ready",
+              "failed"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "type",
+          "tmdbId"
         ]
       },
       "SetUserMediaStateDto": {

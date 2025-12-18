@@ -201,6 +201,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/import/movie/{tmdbId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import a movie from TMDB on-demand */
+        post: operations["CatalogSearchController_importMovie"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/import/show/{tmdbId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import a show from TMDB on-demand */
+        post: operations["CatalogSearchController_importShow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/import/status/{tmdbId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check import status by TMDB ID */
+        get: operations["CatalogSearchController_checkImportStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user-media/continue": {
         parameters: {
             query?: never;
@@ -1582,6 +1633,17 @@ export interface components {
             local: components["schemas"]["SearchItemDto"][];
             tmdb: components["schemas"]["SearchItemDto"][];
         };
+        ImportResultDto: {
+            /** @enum {string} */
+            status: "exists" | "importing" | "ready" | "failed" | "not_found";
+            id?: string;
+            slug?: string;
+            /** @enum {string} */
+            type: "movie" | "show";
+            tmdbId: number;
+            /** @enum {string} */
+            ingestionStatus?: "importing" | "ready" | "failed";
+        };
         SetUserMediaStateDto: {
             /**
              * @example watching
@@ -2584,6 +2646,81 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["SearchResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    CatalogSearchController_importMovie: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tmdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImportResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    CatalogSearchController_importShow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tmdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImportResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    CatalogSearchController_checkImportStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tmdbId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImportResultDto"];
                     };
                 };
             };

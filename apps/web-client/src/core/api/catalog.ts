@@ -122,35 +122,38 @@ export type NewOnDigitalMoviesDto = GetData<'/api/catalog/movies/new-on-digital'
 export type SearchDto = GetData<'/api/catalog/search'>;
 
 /**
- * Media type enum.
+ * Import result DTO from api-contract.
  */
-export enum MediaType {
-  MOVIE = 'movie',
-  SHOW = 'show',
-}
+export type ImportResultDto = components['schemas']['ImportResultDto'];
 
 /**
- * Status of an import operation.
+ * Import status type (derived from API schema).
  */
-export enum ImportStatus {
-  EXISTS = 'exists',
-  IMPORTING = 'importing',
-  READY = 'ready',
-  FAILED = 'failed',
-  NOT_FOUND = 'not_found',
-}
+export type ImportStatus = ImportResultDto['status'];
 
 /**
- * Import result from on-demand TMDB import.
+ * Media type (derived from API schema).
  */
-export interface ImportResultDto {
-  status: ImportStatus;
-  id?: string;
-  slug?: string;
-  type: MediaType;
-  tmdbId: number;
-  ingestionStatus?: string;
-}
+export type MediaType = 'movie' | 'show';
+
+/**
+ * Import status constants for type-safe comparisons.
+ */
+export const ImportStatus = {
+  EXISTS: 'exists' as const,
+  IMPORTING: 'importing' as const,
+  READY: 'ready' as const,
+  FAILED: 'failed' as const,
+  NOT_FOUND: 'not_found' as const,
+};
+
+/**
+ * Media type constants for type-safe comparisons.
+ */
+export const MediaType = {
+  MOVIE: 'movie' as const,
+  SHOW: 'show' as const,
+};
 
 /**
  * Catalog API client.
