@@ -96,7 +96,33 @@
     "login": "Sign in",
     "register": "Sign up",
     "logout": "Sign out",
-    "guest": "Guest"
+    "guest": "Guest",
+    "loginTitle": "Sign in",
+    "registerTitle": "Sign up",
+    "loginSubtitle": "Sign in to save movies and shows",
+    "registerSubtitle": "Create an account to save movies and shows",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "username": "Username",
+    "loggingIn": "Signing in...",
+    "registering": "Signing up...",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "saved": "Saved",
+    "settings": "Settings",
+    "validation": {
+      "emailInvalid": "Invalid email format",
+      "passwordMin": "Minimum 6 characters",
+      "usernameMin": "Minimum 3 characters",
+      "usernameMax": "Maximum 20 characters",
+      "usernameFormat": "Only letters, numbers and _",
+      "passwordMismatch": "Passwords don't match"
+    },
+    "errors": {
+      "loginFailed": "Login failed",
+      "registerFailed": "Registration failed"
+    }
   },
   "nav": {
     "home": "Home",

@@ -4,22 +4,25 @@
 
 import { cache } from 'react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import type { Route } from 'next';
-import { Tv, ArrowLeft, Share2 } from 'lucide-react';
+import { Tv } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
 import { createMediaMetadata, createNotFoundMetadata } from '@/shared/utils';
 import { catalogApi, type ShowDetailsDto } from '@/core/api';
 import {
   DetailsHero,
+  DetailsContent,
+  DetailsPageClient,
+  SuitableForTags,
+  OverviewSection,
+  TrailersSection,
+  CastCrewSection,
+  ProvidersSection,
+  NotFoundView,
   ShowStatus,
-  ProvidersList,
   DataVerdict,
-  TrailersCarousel,
-  CastCarousel,
-  CrewCarousel,
   type BadgeKey,
 } from '@/modules/details';
+import { Separator } from '@/shared/ui';
 
 /**
  * Cached show fetcher - deduplicates requests within same render.
@@ -122,89 +125,61 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
   const apiShow = await getShow(slug);
   
   if (!apiShow) {
-    // Show not found or API error
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Tv className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">{dict.errors.notFound}</h1>
-          <Link href={'/' as Route} className="text-blue-400 hover:text-blue-300">
-            ← {dict.details.backToHome}
-          </Link>
-        </div>
-      </main>
+      <NotFoundView
+        icon={Tv}
+        message={dict.errors.notFound}
+        backLabel={dict.details.backToHome}
+      />
     );
   }
 
   // Enrich with computed fields
   const show = enrichShowDetails(apiShow);
 
-  return (
-    <main className="min-h-screen">
-      {/* 0. App bar */}
-      <header className="sticky top-0 z-50 bg-transparent backdrop-blur border-b border-zinc-800">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link
-            href={'/' as Route}
-            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="text-sm">{dict.details.backToHome}</span>
-          </Link>
-          <button className="text-zinc-400 hover:text-white transition-colors p-2">
-            <Share2 className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
+  // Get verdict message
+  const verdictMessage = apiShow.verdict?.messageKey
+    ? dict.details.verdict.show[apiShow.verdict.messageKey as keyof typeof dict.details.verdict.show] || ''
+    : null;
 
-      {/* 1. Hero with Quick Pitch - FULL WIDTH */}
-      <DetailsHero
+  // Get status hint context
+  const verdictContext = apiShow.statusHint?.messageKey 
+    ? dict.details.verdict.showStatusHint[apiShow.statusHint.messageKey as keyof typeof dict.details.verdict.showStatusHint]
+    : apiShow.verdict?.context || undefined;
+
+  return (
+    <DetailsPageClient breadcrumb={dict.browse.shows.title} backUrl="/browse/shows">
+      <main className="min-h-screen">
+        <DetailsHero
         title={show.title}
-        originalTitle={show.originalTitle ?? undefined}
-        poster={(show.poster ?? undefined) as any}
-        backdrop={(show.backdrop ?? undefined) as any}
+        originalTitle={show.originalTitle}
+        poster={show.poster}
+        backdrop={show.backdrop}
         releaseDate={show.releaseDate}
-        genres={show.genres ?? []}
-        stats={(show.stats ?? undefined) as any}
-        externalRatings={(show.externalRatings ?? undefined) as any}
+        genres={show.genres}
+        stats={show.stats}
+        externalRatings={show.externalRatings}
         badgeKey={show.badgeKey}
         rank={show.rank}
         quickPitch={show.quickPitch}
         dict={dict}
       />
 
-      <div className="bg-zinc-950">
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <DetailsContent>
+        <SuitableForTags 
+          tags={show.suitableFor} 
+          label={dict.details.quickPitch.suitable} 
+        />
 
-        {/* 1. "Suitable for" tags - FIRST, before verdict */}
-        {show.suitableFor && show.suitableFor.length > 0 && (
-          <section className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-zinc-500 uppercase tracking-wider">
-              {dict.details.quickPitch.suitable}:
-            </span>
-            {show.suitableFor.map((tag) => (
-              <span
-                key={tag}
-                className="px-3 py-1 text-xs font-medium text-zinc-300 bg-zinc-800/60 rounded-full border border-zinc-700/50"
-              >
-                {tag}
-              </span>
-            ))}
-          </section>
-        )}
-
-        {/* 2. Data Verdict with integrated CTA - Details only */}
-        {apiShow.verdict?.messageKey && (
+        {apiShow.verdict?.messageKey && verdictMessage && (
           <DataVerdict
             mediaItemId={show.id}
-            type={apiShow.verdict.type as any}
-            message={dict.details.verdict.show[apiShow.verdict.messageKey as keyof typeof dict.details.verdict.show] || ''}
-            context={apiShow.statusHint?.messageKey 
-              ? dict.details.verdict.showStatusHint[apiShow.statusHint.messageKey as keyof typeof dict.details.verdict.showStatusHint]
-              : apiShow.verdict.context || undefined}
+            type={apiShow.verdict.type}
+            message={verdictMessage}
+            context={verdictContext}
             showCta
             ctaProps={{
-              hintKey: apiShow.verdict.hintKey as any,
+              hintKey: apiShow.verdict.hintKey,
               primaryCta: show.card?.primaryCta,
               continuePoint: show.card?.continue,
             }}
@@ -212,36 +187,19 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           />
         )}
 
-        {/* 3. Full Overview - Complete description */}
-        <section id="overview-section" className="space-y-2 scroll-mt-8">
-          <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-            {dict.details.overview.title}
-          </h3>
-          <p className="text-base md:text-lg text-zinc-300 leading-relaxed">
-            {show.overview}
-          </p>
-        </section>
+        <OverviewSection 
+          title={dict.details.overview.title} 
+          overview={show.overview} 
+        />
 
-        {/* Divider */}
-        <div className="border-t border-zinc-800/50 my-12" />
+        <Separator className="my-12 bg-zinc-800/50" />
 
-        {/* 5. Trailers carousel */}
-        {show.videos && show.videos.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-              {dict.details.trailer.sectionTitle}
-            </h2>
-            <TrailersCarousel
-              videos={show.videos}
-              primaryTrailer={show.videos.find(v => v.key === show.primaryTrailerKey)}
-            />
-          </section>
-        )}
+        <TrailersSection
+          title={dict.details.trailer.sectionTitle}
+          videos={show.videos}
+          primaryTrailerKey={show.primaryTrailerKey}
+        />
 
-        {/* Divider */}
-        <div className="border-t border-zinc-800/50 my-12" />
-
-        {/* 6. Show status - Episodes section */}
         <section className="space-y-4">
           <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
             {dict.details.showStatus.sectionTitle}
@@ -254,42 +212,20 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           />
         </section>
 
-        {/* Divider */}
-        <div className="border-t border-zinc-800/50 my-12" />
+        <Separator className="my-12 bg-zinc-800/50" />
 
-        {/* 7. Cast & Crew - Combined section */}
-        {((show.credits?.cast && show.credits.cast.length > 0) || 
-          (show.credits?.crew && show.credits.crew.length > 0)) && (
-          <div className="space-y-8">
-            {/* Cast */}
-            {show.credits?.cast && show.credits.cast.length > 0 && (
-              <CastCarousel
-                cast={show.credits.cast as any}
-                crew={(show.credits.crew || []) as any}
-              />
-            )}
+        <CastCrewSection 
+          cast={show.credits?.cast} 
+          crew={show.credits?.crew} 
+        />
 
-            {/* Crew */}
-            {show.credits?.crew && show.credits.crew.length > 0 && (
-              <CrewCarousel crew={show.credits.crew as any} />
-            )}
-          </div>
-        )}
-
-        {/* Divider */}
-        <div className="border-t border-zinc-800/50 my-12" />
-
-        {/* 8. Where to watch */}
-        {show.availability && (
-          <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-              {dict.details.providers.title}
-            </h2>
-            <ProvidersList providers={show.availability} dict={dict} />
-          </section>
-        )}
-      </div>
-      </div>
-    </main>
+        <ProvidersSection
+          title={dict.details.providers.title}
+          availability={show.availability}
+          dict={dict}
+        />
+      </DetailsContent>
+      </main>
+    </DetailsPageClient>
   );
 }

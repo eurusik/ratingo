@@ -7,6 +7,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { AppProviders } from '@/core/providers';
+import { Header, HeaderContextProvider } from '@/shared/components';
+import { getDictionary } from '@/shared/i18n';
 import './globals.css';
 
 const inter = Inter({
@@ -15,18 +17,19 @@ const inter = Inter({
   variable: '--font-inter',
 });
 
+const dict = getDictionary('uk');
+
 export const metadata: Metadata = {
   title: {
-    default: 'Ratingo — Трендові серіали та фільми',
+    default: dict.meta.defaultTitle,
     template: '%s | Ratingo',
   },
-  description:
-    'Відкривайте найпопулярніші серіали та фільми з рейтингами TMDB, Trakt та IMDb. Актуальні тренди, найближчі епізоди та детальна інформація.',
+  description: dict.meta.defaultDescription,
   keywords: [
-    'серіали',
-    'фільми',
-    'тренди',
-    'рейтинги',
+    dict.meta.keywords.shows,
+    dict.meta.keywords.movies,
+    dict.meta.keywords.trending,
+    dict.meta.keywords.ratings,
     'TMDB',
     'Trakt',
     'IMDb',
@@ -40,14 +43,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'uk_UA',
     url: '/',
-    title: 'Ratingo — Трендові серіали та фільми',
-    description: 'Відкривайте найпопулярніші серіали та фільми з рейтингами TMDB, Trakt та IMDb',
+    title: dict.meta.defaultTitle,
+    description: dict.meta.defaultDescription,
     siteName: 'Ratingo',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Ratingo — Трендові серіали та фільми',
-    description: 'Відкривайте найпопулярніші серіали та фільми з рейтингами TMDB, Trakt та IMDb',
+    title: dict.meta.defaultTitle,
+    description: dict.meta.defaultDescription,
   },
   robots: {
     index: true,
@@ -76,7 +79,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="uk" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-zinc-950 font-sans antialiased" suppressHydrationWarning>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          <HeaderContextProvider>
+            <Header />
+            <main className="pt-16">{children}</main>
+          </HeaderContextProvider>
+        </AppProviders>
       </body>
     </html>
   );

@@ -142,7 +142,7 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BrowsePageHeader
           title={title}
-          subtitle={`${total} результатів`}
+          subtitle={dict.browse.resultsCount.replace('{count}', total.toString())}
           backLabel={dict.browse.backToHome}
         />
 

@@ -80,7 +80,7 @@ export default async function HomePage() {
         <HeroSection
           item={{
             ...top3Cards[0],
-            backdrop: (heroItems[0] as any)?.backdrop ?? null,
+            backdrop: (heroItems[0] as { backdrop?: { small: string; medium: string; large: string; original: string } | null })?.backdrop ?? null,
           }}
           locale="uk"
         />
@@ -141,7 +141,7 @@ export default async function HomePage() {
           <div className="relative flex justify-center">
             <span className="bg-zinc-950 px-4 text-sm text-zinc-500 flex items-center gap-2">
               <Film className="w-4 h-4" />
-              Фільми
+              {dict.mediaType.movies}
             </span>
           </div>
         </div>

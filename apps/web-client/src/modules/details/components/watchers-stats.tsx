@@ -8,7 +8,7 @@ import { TrendingUp, Users } from 'lucide-react';
 import type { Stats } from '../types';
 
 interface WatchersStatsProps {
-  stats: Stats;
+  stats?: Stats | null;
   dict: {
     watchingNow: string;
     totalWatchers: string;
@@ -16,8 +16,8 @@ interface WatchersStatsProps {
 }
 
 export function WatchersStats({ stats, dict }: WatchersStatsProps) {
-  const hasLiveWatchers = stats.liveWatchers != null && stats.liveWatchers > 0;
-  const hasTotalWatchers = stats.totalWatchers != null && stats.totalWatchers > 0;
+  const hasLiveWatchers = stats?.liveWatchers != null && stats.liveWatchers > 0;
+  const hasTotalWatchers = stats?.totalWatchers != null && stats.totalWatchers > 0;
 
   if (!hasLiveWatchers && !hasTotalWatchers) {
     return null;

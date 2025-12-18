@@ -9,6 +9,7 @@ import { useEffect } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslation } from '@/shared/i18n';
+import { Button, Alert, AlertDescription } from '@/shared/ui';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -43,27 +44,25 @@ export default function Error({ error, reset }: ErrorProps) {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
-            onClick={reset}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
+          <Button onClick={reset}>
+            <RefreshCw className="w-4 h-4 mr-2" />
             {t('error.tryAgain')}
-          </button>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors"
-          >
-            <Home className="w-4 h-4" />
-            {t('common.home')}
-          </Link>
+          </Button>
+          <Button variant="secondary" asChild>
+            <Link href="/">
+              <Home className="w-4 h-4 mr-2" />
+              {t('common.home')}
+            </Link>
+          </Button>
         </div>
 
         {/* Error digest (for debugging) */}
         {error.digest && (
-          <p className="mt-8 text-xs text-zinc-600">
-            {t('error.errorCode')}: {error.digest}
-          </p>
+          <Alert variant="destructive" className="mt-8 bg-zinc-900/50 border-zinc-800">
+            <AlertDescription className="text-xs text-zinc-500">
+              {t('error.errorCode')}: {error.digest}
+            </AlertDescription>
+          </Alert>
         )}
       </div>
     </div>

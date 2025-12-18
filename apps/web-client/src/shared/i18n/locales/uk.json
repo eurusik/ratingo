@@ -59,7 +59,8 @@
     },
     "loading": "Завантаження...",
     "noResults": "Нічого не знайдено",
-    "backToHome": "На головну"
+    "backToHome": "На головну",
+    "resultsCount": "{count} результатів"
   },
   "card": {
     "cta": {
@@ -96,7 +97,33 @@
     "login": "Увійти",
     "register": "Реєстрація",
     "logout": "Вийти",
-    "guest": "Гість"
+    "guest": "Гість",
+    "loginTitle": "Вхід",
+    "registerTitle": "Реєстрація",
+    "loginSubtitle": "Увійдіть щоб зберігати фільми та серіали",
+    "registerSubtitle": "Створіть акаунт щоб зберігати фільми та серіали",
+    "email": "Email",
+    "password": "Пароль",
+    "confirmPassword": "Підтвердіть пароль",
+    "username": "Імʼя користувача",
+    "loggingIn": "Вхід...",
+    "registering": "Реєстрація...",
+    "noAccount": "Немає акаунту?",
+    "hasAccount": "Вже є акаунт?",
+    "saved": "Збережене",
+    "settings": "Налаштування",
+    "validation": {
+      "emailInvalid": "Невірний формат email",
+      "passwordMin": "Мінімум 6 символів",
+      "usernameMin": "Мінімум 3 символи",
+      "usernameMax": "Максимум 20 символів",
+      "usernameFormat": "Тільки латинські букви, цифри та _",
+      "passwordMismatch": "Паролі не співпадають"
+    },
+    "errors": {
+      "loginFailed": "Помилка входу",
+      "registerFailed": "Помилка реєстрації"
+    }
   },
   "nav": {
     "home": "Головна",
@@ -280,6 +307,26 @@
   },
   "meta": {
     "siteName": "Ratingo",
-    "description": "Швидкий спосіб зрозуміти, що дивитись зараз"
+    "description": "Швидкий спосіб зрозуміти, що дивитись зараз",
+    "defaultTitle": "Ratingo — Трендові серіали та фільми",
+    "defaultDescription": "Відкривайте найпопулярніші серіали та фільми з рейтингами TMDB, Trakt та IMDb. Актуальні тренди, найближчі епізоди та детальна інформація.",
+    "keywords": {
+      "shows": "серіали",
+      "movies": "фільми",
+      "trending": "тренди",
+      "ratings": "рейтинги"
+    }
+  },
+  "mediaType": {
+    "movie": "Фільм",
+    "show": "Серіал",
+    "movies": "Фільми",
+    "shows": "Серіали"
+  },
+  "seo": {
+    "notFound": {
+      "movie": "Фільм не знайдено",
+      "show": "Серіал не знайдено"
+    }
   }
 }

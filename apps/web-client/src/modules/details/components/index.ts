@@ -13,6 +13,18 @@ export { DataVerdict, type DataVerdictProps } from './data-verdict';
 export { VerdictCtaButton } from './verdict-cta-button';
 export { TrailersCarousel, type TrailersCarouselProps } from './trailers-carousel';
 export { CastCarousel, CrewCarousel, type CastCarouselProps } from './cast-carousel';
+export { DetailsLayout, type DetailsLayoutProps } from './details-layout';
+export { DetailsHeader } from './details-header';
+export { DetailsPageClient } from './details-page-client';
+export { 
+  SuitableForTags,
+  OverviewSection,
+  TrailersSection,
+  CastCrewSection,
+  ProvidersSection,
+  DetailsContent,
+} from './details-sections';
+export { NotFoundView } from './not-found-view';
 
 // Atomic components for Hero section
 export { RatingBadge } from './rating-badge';

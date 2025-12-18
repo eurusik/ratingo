@@ -5,10 +5,9 @@
 
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
 import { Carousel } from '@/shared/components/carousel';
 import { useTranslation } from '@/shared/i18n';
+import { Avatar, AvatarImage, AvatarFallback } from '@/shared/ui';
 import type { CastMember, CrewMember } from '../types';
 
 export interface CastCarouselProps {
@@ -24,8 +23,6 @@ function PersonAvatar({
   person: { name: string; profilePath: string | null }; 
   role: string;
 }) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  
   const getProfileUrl = (path: string | null) => {
     if (!path) return null;
     return `https://image.tmdb.org/t/p/w185${path}`;
@@ -59,27 +56,12 @@ function PersonAvatar({
   return (
     <div className="flex-shrink-0 w-20 space-y-2">
       {/* Photo */}
-      <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-zinc-800 transition-colors opacity-90">
-        {/* Avatar background - always visible */}
-        <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${getColorFromName(person.name)}`}>
-          <span className="text-2xl font-bold text-white">
-            {getInitials(person.name)}
-          </span>
-        </div>
-        
-        {/* Image overlay - only if loaded successfully */}
-        {profileUrl && (
-          <Image
-            src={profileUrl}
-            alt={person.name}
-            fill
-            className={`object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-            sizes="80px"
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setImageLoaded(false)}
-          />
-        )}
-      </div>
+      <Avatar className="w-20 h-20 border-2 border-zinc-800 opacity-90">
+        {profileUrl && <AvatarImage src={profileUrl} alt={person.name} />}
+        <AvatarFallback className={`bg-gradient-to-br ${getColorFromName(person.name)} text-2xl font-bold text-white`}>
+          {getInitials(person.name)}
+        </AvatarFallback>
+      </Avatar>
 
       {/* Name & Role */}
       <div className="text-center">

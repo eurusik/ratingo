@@ -10,6 +10,7 @@ import type { Route } from 'next';
 import { Play, TrendingUp, Star, Activity } from 'lucide-react';
 import type { PrimaryCta } from '@/shared/types';
 import { getDictionary, type Locale } from '@/shared/i18n';
+import { Button } from '@/shared/ui';
 import type { MediaCardServerProps } from './media-card/media-card-server';
 
 interface HeroSectionProps {
@@ -126,17 +127,18 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
 
           {/* CTA - Single button */}
           <div className="flex items-center gap-4">
-            <Link
-              href={href}
-              className="inline-flex items-center gap-3 bg-white text-zinc-950 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-zinc-100 transition-colors shadow-xl"
+            <Button
+              size="lg"
+              className="bg-white text-zinc-950 hover:bg-zinc-100 px-8 py-6 text-lg shadow-xl"
+              asChild
             >
-              <Play className="w-6 h-6 fill-current" />
-              <span>
+              <Link href={href}>
+                <Play className="w-6 h-6 fill-current mr-3" />
                 {ctaType === 'CONTINUE'
                   ? dict.card.cta.continue
                   : dict.card.cta.details}
-              </span>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

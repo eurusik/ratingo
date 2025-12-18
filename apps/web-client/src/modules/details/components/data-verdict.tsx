@@ -5,10 +5,12 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import type { components } from '@ratingo/api-contract';
 import { toast } from 'sonner';
 import type { PrimaryCta } from '@/shared/types';
 import type { SavedItemList } from '@/core/api';
+import { useAuth } from '@/core/auth';
 import { DataVerdictServer, type DataVerdictServerProps } from './data-verdict-server';
 import { useSaveStatus, useSaveItem, useUnsaveItem } from '@/core/query';
 
@@ -35,18 +37,26 @@ interface DataVerdictProps extends Omit<DataVerdictServerProps, 'ctaProps'> {
 }
 
 export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProps) {
-  const { data: saveStatus } = useSaveStatus(mediaItemId, {
-    enabled: !!mediaItemId,
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const [isHydrated, setIsHydrated] = useState(false);
+  
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+  
+  const { data: saveStatus, isFetched } = useSaveStatus(mediaItemId, {
+    enabled: isAuthenticated && !!mediaItemId,
   });
   
   const { mutate: saveItem, isPending: isSaving } = useSaveItem();
   const { mutate: unsaveItem, isPending: isUnsaving } = useUnsaveItem();
 
   const isSaved = saveStatus?.isForLater ?? false;
-  const isLoading = isSaving || isUnsaving;
+  const isMutating = isSaving || isUnsaving;
+  const isCtaLoading = !isHydrated || isAuthLoading || (isAuthenticated && !isFetched);
 
   const handleCtaAction = () => {
-    if (!ctaProps || isLoading) return;
+    if (!ctaProps || isMutating) return;
 
     const primaryCta = ctaProps.primaryCta ?? 'SAVE';
     
@@ -85,6 +95,7 @@ export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProp
       ctaProps={ctaProps ? {
         ...ctaProps,
         isSaved,
+        isLoading: isCtaLoading,
         onSave: handleCtaAction,
       } : undefined}
     />

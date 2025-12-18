@@ -21,11 +21,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shar
 export interface DetailsHeroProps {
   title: string;
   originalTitle?: string | null;
-  poster: ImageSet;
+  poster?: ImageSet | null;
   backdrop?: ImageSet | null;
   releaseDate: string;
-  genres: Genre[];
-  stats: Stats;
+  genres?: Genre[] | null;
+  stats?: Stats | null;
   externalRatings?: ExternalRatings | null;
   badgeKey?: BadgeKey | null;
   rank?: number;
@@ -49,9 +49,9 @@ export function DetailsHero({
   quickPitch,
   dict,
 }: DetailsHeroProps) {
-  const rating = stats.qualityScore;
+  const rating = stats?.qualityScore;
   const imdbRating = externalRatings?.imdb?.rating;
-  const isClassicCase = rating != null && rating >= 80 && stats.liveWatchers != null && stats.liveWatchers < 100;
+  const isClassicCase = rating != null && rating >= 80 && stats?.liveWatchers != null && stats.liveWatchers < 100;
 
   // Compute badge labels and tooltips
   const getQualityBadgeProps = (score: number) => {
@@ -78,14 +78,16 @@ export function DetailsHero({
           {/* Poster - LARGE & PROMINENT */}
           <div className="flex-shrink-0 w-32 md:w-48 lg:w-56">
             <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-zinc-800 shadow-2xl ring-1 ring-white/20">
-              <Image
-                src={poster.large}
-                alt={title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 128px, (max-width: 1024px) 192px, 224px"
-                priority
-              />
+              {poster?.large && (
+                <Image
+                  src={poster.large}
+                  alt={title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 128px, (max-width: 1024px) 192px, 224px"
+                  priority
+                />
+              )}
             </div>
           </div>
 
@@ -103,7 +105,7 @@ export function DetailsHero({
 
             {/* Meta line */}
             <p className="text-sm md:text-base text-zinc-300">
-              {formatYear(releaseDate)} • {genres.map(g => g.name).join(', ')}
+              {formatYear(releaseDate)}{genres && genres.length > 0 && ` • ${genres.map(g => g.name).join(', ')}`}
             </p>
 
             {/* Ratings and stats - VERTICAL LAYOUT */}
@@ -186,15 +188,15 @@ export function DetailsHero({
               </div>
 
               {/* Quality & Popularity badges */}
-              {(stats.qualityScore != null && stats.qualityScore >= 65) || (stats.popularityScore != null && stats.popularityScore >= 40) ? (
+              {(stats?.qualityScore != null && stats.qualityScore >= 65) || (stats?.popularityScore != null && stats.popularityScore >= 40) ? (
                 <div className="flex items-center gap-3 flex-wrap">
-                  {stats.qualityScore != null && stats.qualityScore >= 65 && (
+                  {stats?.qualityScore != null && stats.qualityScore >= 65 && (
                     <QualityBadge 
                       score={stats.qualityScore} 
                       {...getQualityBadgeProps(stats.qualityScore)}
                     />
                   )}
-                  {stats.popularityScore != null && stats.popularityScore >= 40 && (
+                  {stats?.popularityScore != null && stats.popularityScore >= 40 && (
                     <PopularityBadge 
                       score={stats.popularityScore} 
                       {...getPopularityBadgeProps(stats.popularityScore)}

@@ -36,6 +36,7 @@ export interface DataVerdictServerProps {
   /** CTA configuration. */
   ctaProps?: {
     isSaved?: boolean;
+    isLoading?: boolean;
     hasNewEpisodes?: boolean;
     hintKey?: VerdictHintKey;
     primaryCta?: PrimaryCta;
@@ -165,6 +166,7 @@ export function DataVerdictServer({
               primaryCta={ctaProps.primaryCta}
               continuePoint={ctaProps.continuePoint}
               isSaved={ctaProps.isSaved}
+              isLoading={ctaProps.isLoading}
               hasNewEpisodes={ctaProps.hasNewEpisodes}
               hintKey={ctaProps.hintKey}
               verdictType={type}

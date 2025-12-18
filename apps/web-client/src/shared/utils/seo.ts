@@ -1,10 +1,9 @@
 /**
- * SEO utilities for generating metadata.
- *
- * Provides helper functions to create consistent metadata across pages.
+ * SEO utilities for metadata generation.
  */
 
 import type { Metadata } from 'next';
+import { getDictionary } from '@/shared/i18n';
 
 /** Media item for SEO metadata generation. */
 export interface SeoMediaItem {
@@ -84,9 +83,10 @@ export function createMediaMetadata(
  * @returns Next.js Metadata object
  */
 export function createNotFoundMetadata(type: 'show' | 'movie'): Metadata {
-  const label = type === 'show' ? 'Серіал' : 'Фільм';
+  const dict = getDictionary('uk');
+  const title = dict.seo.notFound[type];
   return {
-    title: `${label} не знайдено`,
-    description: `${label} не знайдено на Ratingo`,
+    title,
+    description: title,
   };
 }

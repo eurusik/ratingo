@@ -4,24 +4,27 @@
  */
 
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import type { Route } from 'next';
-import { ArrowLeft, Film, Share2 } from 'lucide-react';
+import { Film } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
 import { createMediaMetadata, createNotFoundMetadata } from '@/shared/utils';
 import { catalogApi, type MovieDetailsDto } from '@/core/api';
 import {
   DetailsHero,
+  DetailsContent,
+  DetailsPageClient,
+  SuitableForTags,
+  OverviewSection,
+  TrailersSection,
+  CastCrewSection,
+  ProvidersSection,
+  NotFoundView,
   DataVerdict,
   MovieRelease,
-  ProvidersList,
-  TrailersCarousel,
-  CastCarousel,
-  CrewCarousel,
   type BadgeKey,
   type MovieVerdict,
   type MovieVerdictMessageKey,
 } from '@/modules/details';
+import { Separator } from '@/shared/ui';
 
 // ISR: Revalidate every hour
 export const revalidate = 3600;
@@ -111,131 +114,77 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
   let apiMovie: MovieDetailsDto;
   try {
     apiMovie = await catalogApi.getMovieBySlug(slug);
-  } catch (error) {
-    // Movie not found or API error
+  } catch {
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Film className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">{dict.errors.notFound}</h1>
-          <Link href={'/' as Route} className="text-blue-400 hover:text-blue-300">
-            ← {dict.details.backToHome}
-          </Link>
-        </div>
-      </main>
+      <NotFoundView
+        icon={Film}
+        message={dict.errors.notFound}
+        backLabel={dict.details.backToHome}
+      />
     );
   }
 
   // Enrich with computed fields
   const movie = enrichMovieDetails(apiMovie);
 
-  return (
-    <main className="min-h-screen">
-      {/* 0. App bar */}
-      <header className="sticky top-0 z-50 bg-transparent backdrop-blur border-b border-zinc-800">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link
-            href={'/' as Route}
-            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="text-sm">{dict.details.backToHome}</span>
-          </Link>
-          <button className="text-zinc-400 hover:text-white transition-colors p-2">
-            <Share2 className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
+  // Get verdict for rendering
+  const verdict = (movie as { verdict?: MovieVerdict }).verdict;
+  const verdictMessage = verdict?.messageKey 
+    ? dict.details.verdict.movie[verdict.messageKey as MovieVerdictMessageKey]
+    : null;
 
-      {/* 1. Hero with Quick Pitch - FULL WIDTH */}
-      <DetailsHero
+  return (
+    <DetailsPageClient breadcrumb={dict.browse.movies.title} backUrl="/browse/movies">
+      <main className="min-h-screen">
+        <DetailsHero
         title={movie.title}
-        originalTitle={movie.originalTitle ?? undefined}
-        poster={(movie.poster ?? undefined) as any}
-        backdrop={(movie.backdrop ?? undefined) as any}
+        originalTitle={movie.originalTitle}
+        poster={movie.poster}
+        backdrop={movie.backdrop}
         releaseDate={movie.releaseDate}
-        genres={movie.genres ?? []}
-        stats={(movie.stats ?? undefined) as any}
-        externalRatings={(movie.externalRatings ?? undefined) as any}
+        genres={movie.genres}
+        stats={movie.stats}
+        externalRatings={movie.externalRatings}
         badgeKey={movie.badgeKey}
         rank={movie.rank}
         quickPitch={movie.quickPitch}
         dict={dict}
       />
 
-      <div className="bg-zinc-950">
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <DetailsContent>
+        <SuitableForTags 
+          tags={movie.suitableFor} 
+          label={dict.details.quickPitch.suitable} 
+        />
 
-        {/* 1. "Suitable for" tags */}
-        {movie.suitableFor && movie.suitableFor.length > 0 && (
-          <section className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-zinc-500 uppercase tracking-wider">
-              {dict.details.quickPitch.suitable}:
-            </span>
-            {movie.suitableFor.map((tag) => (
-              <span
-                key={tag}
-                className="px-3 py-1 text-xs font-medium text-zinc-300 bg-zinc-800/60 rounded-full border border-zinc-700/50"
-              >
-                {tag}
-              </span>
-            ))}
-          </section>
+        {verdict && verdictMessage && (
+          <DataVerdict
+            mediaItemId={movie.id}
+            type={verdict.type}
+            message={verdictMessage}
+            context={verdict.context ?? undefined}
+            showCta
+            ctaProps={{
+              hintKey: verdict.hintKey,
+              primaryCta: movie.card?.primaryCta,
+            }}
+            dict={dict}
+          />
         )}
 
-        {/* 2. Data Verdict with CTA */}
-        {(() => {
-          // Use verdict from API (backend-computed)
-          const verdict = (movie as { verdict?: MovieVerdict }).verdict;
-          if (!verdict || !verdict.messageKey) return null;
-          
-          const message = dict.details.verdict.movie[verdict.messageKey as MovieVerdictMessageKey];
-          return (
-            <DataVerdict
-              mediaItemId={movie.id}
-              type={verdict.type}
-              message={message}
-              context={verdict.context ?? undefined}
-              showCta
-              ctaProps={{
-                hintKey: verdict.hintKey,
-                primaryCta: movie.card?.primaryCta,
-              }}
-              dict={dict}
-            />
-          );
-        })()}
+        <OverviewSection 
+          title={dict.details.overview.title} 
+          overview={movie.overview} 
+        />
 
-        {/* 3. Full Overview */}
-        <section id="overview-section" className="space-y-2 scroll-mt-8">
-          <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-            {dict.details.overview.title}
-          </h3>
-          <p className="text-base md:text-lg text-zinc-300 leading-relaxed">
-            {movie.overview}
-          </p>
-        </section>
+        <Separator className="my-12 bg-zinc-800/50" />
 
-        {/* Divider */}
-        <div className="border-t border-zinc-800/50 my-12" />
+        <TrailersSection
+          title={dict.details.trailer.sectionTitle}
+          videos={movie.videos}
+          primaryTrailerKey={movie.primaryTrailerKey}
+        />
 
-        {/* 4. Trailers carousel */}
-        {movie.videos && movie.videos.length > 0 && (
-          <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-              {dict.details.trailer.sectionTitle}
-            </h2>
-            <TrailersCarousel
-              videos={movie.videos}
-              primaryTrailer={movie.videos.find(v => v.key === movie.primaryTrailerKey)}
-            />
-          </section>
-        )}
-
-        {/* Divider */}
-        <div className="border-t border-zinc-800/50 my-12" />
-
-        {/* 5. Movie release & runtime */}
         <MovieRelease
           releaseDate={movie.releaseDate}
           digitalReleaseDate={movie.digitalReleaseDate ?? undefined}
@@ -243,42 +192,20 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           dict={dict}
         />
 
-        {/* Divider */}
-        <div className="border-t border-zinc-800/50 my-12" />
+        <Separator className="my-12 bg-zinc-800/50" />
 
-        {/* 6. Cast & Crew */}
-        {((movie.credits?.cast && movie.credits.cast.length > 0) || 
-          (movie.credits?.crew && movie.credits.crew.length > 0)) && (
-          <div className="space-y-8">
-            {/* Cast */}
-            {movie.credits?.cast && movie.credits.cast.length > 0 && (
-              <CastCarousel
-                cast={movie.credits.cast as any}
-                crew={(movie.credits.crew || []) as any}
-              />
-            )}
+        <CastCrewSection 
+          cast={movie.credits?.cast} 
+          crew={movie.credits?.crew} 
+        />
 
-            {/* Crew */}
-            {movie.credits?.crew && movie.credits.crew.length > 0 && (
-              <CrewCarousel crew={movie.credits.crew as any} />
-            )}
-          </div>
-        )}
-
-        {/* Divider */}
-        <div className="border-t border-zinc-800/50 my-12" />
-
-        {/* 7. Where to watch */}
-        {movie.availability && (
-          <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-              {dict.details.providers.title}
-            </h2>
-            <ProvidersList providers={movie.availability} dict={dict} />
-          </section>
-        )}
-      </div>
-      </div>
-    </main>
+        <ProvidersSection
+          title={dict.details.providers.title}
+          availability={movie.availability}
+          dict={dict}
+        />
+      </DetailsContent>
+      </main>
+    </DetailsPageClient>
   );
 }

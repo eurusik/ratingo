@@ -27,6 +27,8 @@ interface VerdictCtaButtonProps {
   continuePoint?: { season: number; episode: number } | null;
   /** Is already saved. */
   isSaved?: boolean;
+  /** Is loading save status. */
+  isLoading?: boolean;
   /** Has new episodes. */
   hasNewEpisodes?: boolean;
   /** Custom hint key. */
@@ -43,12 +45,25 @@ export function VerdictCtaButton({
   primaryCta = 'SAVE',
   continuePoint,
   isSaved = false,
+  isLoading = false,
   hasNewEpisodes,
   hintKey,
   verdictType,
   dict,
   onSave,
 }: VerdictCtaButtonProps) {
+  // Show skeleton while loading save status
+  if (isLoading && primaryCta === 'SAVE') {
+    return (
+      <div className="flex items-center justify-between w-full mt-4 pt-4 border-t border-zinc-800/50 -mx-5 px-5 -mb-5 pb-5">
+        <div className="flex flex-col gap-1.5">
+          <div className="h-4 w-20 bg-zinc-800 rounded animate-pulse" />
+          <div className="h-3 w-32 bg-zinc-800/60 rounded animate-pulse" />
+        </div>
+        <div className="w-8 h-8 rounded-full bg-zinc-800 animate-pulse" />
+      </div>
+    );
+  }
   const handleClick = () => {
     switch (primaryCta) {
       case 'SAVE':

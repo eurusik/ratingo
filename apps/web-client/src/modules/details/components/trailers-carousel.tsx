@@ -6,8 +6,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, X } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { Carousel } from '@/shared/components/carousel';
+import { Dialog, DialogContent } from '@/shared/ui';
 import type { Video } from '../types';
 
 export interface TrailersCarouselProps {
@@ -72,35 +73,22 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
         ))}
       </Carousel>
 
-      {/* Modal */}
-      {selectedVideo && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setSelectedVideo(null)}
-        >
-          <div
-            className="relative w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button
-              onClick={() => setSelectedVideo(null)}
-              className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors"
-            >
-              <X className="w-5 h-5 text-white" />
-            </button>
-
-            {/* YouTube iframe */}
-            <iframe
-              src={`https://www.youtube.com/embed/${selectedVideo.key}?autoplay=1`}
-              title={selectedVideo.name}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full"
-            />
+      {/* Video Modal */}
+      <Dialog open={!!selectedVideo} onOpenChange={(open) => !open && setSelectedVideo(null)}>
+        <DialogContent className="max-w-4xl p-0 bg-black border-zinc-800 overflow-hidden">
+          <div className="aspect-video">
+            {selectedVideo && (
+              <iframe
+                src={`https://www.youtube.com/embed/${selectedVideo.key}?autoplay=1`}
+                title={selectedVideo.name}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              />
+            )}
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
