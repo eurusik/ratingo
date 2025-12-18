@@ -15,6 +15,7 @@ import { cn } from '@/shared/utils';
 import { useScrollPosition } from '@/shared/hooks';
 import { useHeaderContext } from './header-context';
 import { UserMenu } from './user-menu';
+import { SearchCommand } from './search-command';
 
 export function Header() {
   const { dict } = useTranslation();
@@ -74,8 +75,11 @@ export function Header() {
           </Link>
         </nav>
 
-        {/* Right: Auth */}
-        <UserMenu />
+        {/* Right: Search + Auth */}
+        <div className="flex items-center gap-2">
+          <SearchCommand />
+          <UserMenu />
+        </div>
       </div>
     </header>
   );

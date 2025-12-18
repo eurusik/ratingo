@@ -10,6 +10,14 @@
     "back": "Back",
     "home": "Go home"
   },
+  "search": {
+    "placeholder": "Search...",
+    "hint": "Enter movie or show title",
+    "noResults": "Nothing found",
+    "inCatalog": "In catalog",
+    "fromTmdb": "Not yet added",
+    "notImported": "coming soon"
+  },
   "error": {
     "title": "Something went wrong",
     "description": "An error occurred while loading the page. Try refreshing or go back to home.",
@@ -59,7 +67,8 @@
     },
     "loading": "Loading...",
     "noResults": "Nothing found",
-    "backToHome": "Back to home"
+    "backToHome": "Back to home",
+    "resultsCount": "{count} results"
   },
   "card": {
     "cta": {
@@ -277,7 +286,10 @@
         "mixedReviews": "Opinions are divided",
         "belowAverage": "Lots of mixed reactions",
         "poorRatings": "Most viewers were disappointed",
-        "earlyReviews": "Ratings still forming"
+        "earlyReviews": "Ratings still forming",
+        "steadyInterest": "Still popular over time",
+        "classicChoice": "Time-tested choice",
+        "timelessFavorite": "A classic that's still loved"
       },
       "show": {
         "cancelled": "Series cancelled",
@@ -291,7 +303,10 @@
         "risingHype": "Rapidly gaining interest",
         "earlyReviews": "Ratings still forming",
         "mixedReviews": "Opinions are divided",
-        "noConsensusYet": "Ratings still forming"
+        "noConsensusYet": "Ratings still forming",
+        "steadyInterest": "Still popular over time",
+        "classicSeries": "A classic of the genre",
+        "timelessFavorite": "A series that's still loved"
       },
       "showStatusHint": {
         "newSeason": "New season is out",
@@ -306,6 +321,26 @@
   },
   "meta": {
     "siteName": "Ratingo",
-    "description": "Quick way to decide what to watch now"
+    "description": "Quick way to decide what to watch now",
+    "defaultTitle": "Ratingo — Trending Shows and Movies",
+    "defaultDescription": "Discover the most popular shows and movies with TMDB, Trakt and IMDb ratings. Current trends, upcoming episodes and detailed information.",
+    "keywords": {
+      "shows": "shows",
+      "movies": "movies",
+      "trending": "trending",
+      "ratings": "ratings"
+    }
+  },
+  "mediaType": {
+    "movie": "Movie",
+    "show": "Show",
+    "movies": "Movies",
+    "shows": "Shows"
+  },
+  "seo": {
+    "notFound": {
+      "movie": "Movie not found",
+      "show": "Show not found"
+    }
   }
 }
