@@ -205,11 +205,17 @@ export class TmdbAdapter implements IMetadataProvider {
    * @returns {Promise<any[]>} Search results
    */
   public async searchMulti(query: string, page = 1): Promise<any[]> {
-    const data = await this.fetch('/search/multi', {
-      query,
-      page: page.toString(),
-      include_adult: 'false',
-    });
+    // Search without language restriction to find movies by any title
+    // Import will still fetch Ukrainian data via getMovie/getShow
+    const data = await this.fetch(
+      '/search/multi',
+      {
+        query,
+        page: page.toString(),
+        include_adult: 'false',
+      },
+      { skipLanguage: true },
+    );
 
     return (data.results || [])
       .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
@@ -227,12 +233,18 @@ export class TmdbAdapter implements IMetadataProvider {
   /**
    * Helper method to perform fetch requests with default headers and params.
    */
-  private async fetch(endpoint: string, params: Record<string, string> = {}): Promise<any> {
+  private async fetch(
+    endpoint: string,
+    params: Record<string, string> = {},
+    options: { skipLanguage?: boolean } = {},
+  ): Promise<any> {
     const url = new URL(`${this.config.apiUrl}${endpoint}`);
 
     // Default params
     url.searchParams.append('api_key', this.config.apiKey);
-    url.searchParams.append('language', this.DEFAULT_LANG);
+    if (!options.skipLanguage) {
+      url.searchParams.append('language', this.DEFAULT_LANG);
+    }
 
     // Custom params
     Object.entries(params).forEach(([key, value]) => {
