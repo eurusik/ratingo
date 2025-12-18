@@ -16,8 +16,7 @@
     "noResults": "Нічого не знайдено",
     "inCatalog": "У каталозі",
     "fromTmdb": "Ще не додано",
-    "notImported": "додати",
-    "noUkrainian": "немає укр. локалізації"
+    "notImported": "клікни щоб додати"
   },
   "import": {
     "importing": "Додаємо...",

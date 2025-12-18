@@ -16,8 +16,7 @@
     "noResults": "Nothing found",
     "inCatalog": "In catalog",
     "fromTmdb": "Not yet added",
-    "notImported": "add",
-    "noUkrainian": "no Ukrainian localization"
+    "notImported": "click to add"
   },
   "import": {
     "importing": "Adding...",
