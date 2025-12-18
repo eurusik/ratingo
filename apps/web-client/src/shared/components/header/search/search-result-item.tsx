@@ -69,7 +69,7 @@ export function SearchResultItem({
         <span className={`truncate ${isLocal ? 'font-medium' : ''}`}>{title}</span>
         <span className="text-xs text-zinc-500 flex items-center gap-1.5">
           <TypeIcon className="h-3 w-3" />
-          {year && <span>{year}</span>}
+          {year && year > 0 && <span>{year}</span>}
           {isLocal && rating && rating > 0 && (
             <>
               <span>•</span>
