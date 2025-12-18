@@ -90,16 +90,4 @@ export class CatalogSearchController {
   async importShow(@Param('tmdbId') tmdbId: string): Promise<ImportResult> {
     return this.catalogImportService.importMedia(parseInt(tmdbId, 10), MediaType.SHOW);
   }
-
-  /**
-   * Checks import status of a media item by TMDB ID.
-   * Used for polling during import.
-   */
-  @Get('import/status/:tmdbId')
-  @ApiOperation({ summary: 'Check import status by TMDB ID' })
-  @ApiParam({ name: 'tmdbId', type: Number })
-  @ApiResponse({ status: 200, type: ImportResultDto })
-  async checkImportStatus(@Param('tmdbId') tmdbId: string): Promise<ImportResult | null> {
-    return this.catalogImportService.checkStatus(parseInt(tmdbId, 10));
-  }
 }

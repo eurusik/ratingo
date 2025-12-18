@@ -25,6 +25,7 @@ export default function ImportPage({ params }: ImportPageProps) {
   const poster = searchParams.get('poster') || '';
   const year = searchParams.get('year') || '';
   const jobId = searchParams.get('jobId') || '';
+  const slug = searchParams.get('slug') || '';
 
   // Poll job status every 2 seconds
   const { data: jobStatus } = useQuery({
@@ -41,24 +42,9 @@ export default function ImportPage({ params }: ImportPageProps) {
     },
   });
 
-  // Fallback: poll import status if no jobId (for backward compatibility)
-  const { data: importStatus } = useQuery({
-    queryKey: ['import-status', tmdbId],
-    queryFn: () => catalogApi.checkImportStatus(tmdbId),
-    enabled: !jobId && tmdbId > 0,
-    refetchInterval: (query) => {
-      const data = query.state.data;
-      if (data?.status === 'ready' || data?.status === 'failed') {
-        return false;
-      }
-      return 2000;
-    },
-  });
-
   // Determine current status
-  const isReady = jobStatus?.status === 'ready' || importStatus?.status === 'ready';
-  const isFailed = jobStatus?.status === 'failed' || importStatus?.status === 'failed';
-  const slug = importStatus?.slug;
+  const isReady = jobStatus?.status === 'ready';
+  const isFailed = jobStatus?.status === 'failed';
 
   // Redirect when import is complete
   useEffect(() => {

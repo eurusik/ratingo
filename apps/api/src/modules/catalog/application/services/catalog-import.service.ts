@@ -96,31 +96,4 @@ export class CatalogImportService {
       jobId: job.id,
     };
   }
-
-  /**
-   * Checks the import status of a media item by TMDB ID.
-   */
-  async checkStatus(tmdbId: number): Promise<ImportResult | null> {
-    const existing = await this.mediaRepository.findByTmdbId(tmdbId);
-
-    if (!existing) {
-      return null;
-    }
-
-    let status: ImportStatus = ImportStatus.IMPORTING;
-    if (existing.ingestionStatus === IngestionStatus.READY) {
-      status = ImportStatus.READY;
-    } else if (existing.ingestionStatus === IngestionStatus.FAILED) {
-      status = ImportStatus.FAILED;
-    }
-
-    return {
-      status,
-      id: existing.id,
-      slug: existing.slug,
-      type: existing.type,
-      tmdbId,
-      ingestionStatus: existing.ingestionStatus,
-    };
-  }
 }

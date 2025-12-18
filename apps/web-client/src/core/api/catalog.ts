@@ -311,13 +311,6 @@ export const catalogApi = {
   },
 
   /**
-   * Checks import status by TMDB ID.
-   */
-  async checkImportStatus(tmdbId: number): Promise<ImportResultDto | null> {
-    return apiGet<ImportResultDto | null>(`catalog/import/status/${tmdbId}`);
-  },
-
-  /**
    * Checks ingestion job status by job ID.
    * Use this for polling during import.
    */
