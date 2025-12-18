@@ -115,7 +115,7 @@ export function SearchCommand() {
                     isLocal={false}
                     isImporting={importingTmdbId === item.tmdbId}
                     notImportedLabel={dict.search.notImported}
-                    onSelect={() => handleImport(item.tmdbId, item.type as MediaType)}
+                    onSelect={() => handleImport(item.tmdbId, item.type as MediaType, item.title, item.poster?.small, item.year ?? undefined)}
                   />
                 ))}
               </CommandGroup>

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 import { Loader2, Film, Tv, CheckCircle, XCircle } from 'lucide-react';
 
 import { catalogApi, ImportStatus } from '@/core/api/catalog';
@@ -20,6 +21,9 @@ export default function ImportPage({ params }: ImportPageProps) {
   // Unwrap params (Next.js 15 async params)
   const tmdbId = parseInt((params as any).tmdbId || '0', 10);
   const type = (searchParams.get('type') as 'movie' | 'show') || 'movie';
+  const title = searchParams.get('title') || '';
+  const poster = searchParams.get('poster') || '';
+  const year = searchParams.get('year') || '';
 
   // Poll for import status every 2 seconds
   const { data: status, isLoading } = useQuery({
@@ -45,31 +49,56 @@ export default function ImportPage({ params }: ImportPageProps) {
   }, [status, router]);
 
   const Icon = type === 'movie' ? Film : Tv;
+  const typeLabel = type === 'movie' ? dict.mediaType?.movie : dict.mediaType?.show;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-950">
       <div className="flex flex-col items-center gap-6 p-8 max-w-md text-center">
-        {/* Icon */}
+        {/* Poster or Icon */}
         <div className="relative">
-          <div className="w-20 h-20 rounded-full bg-zinc-900 flex items-center justify-center">
-            <Icon className="w-10 h-10 text-zinc-400" />
-          </div>
-          {status?.status === ImportStatus.IMPORTING && (
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-zinc-950 flex items-center justify-center">
-              <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+          {poster ? (
+            <div className="relative w-32 h-48 rounded-lg overflow-hidden shadow-2xl">
+              <Image
+                src={poster}
+                alt={title}
+                fill
+                className="object-cover"
+              />
+              {/* Status overlay */}
+              {status?.status === ImportStatus.IMPORTING && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="w-32 h-48 rounded-lg bg-zinc-900 flex items-center justify-center">
+              <Icon className="w-12 h-12 text-zinc-600" />
             </div>
           )}
+          {/* Status badge */}
           {status?.status === ImportStatus.READY && (
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-zinc-950 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-green-500" />
+            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shadow-lg">
+              <CheckCircle className="w-6 h-6 text-white" />
             </div>
           )}
           {status?.status === ImportStatus.FAILED && (
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-zinc-950 flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-red-500" />
+            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-red-500 flex items-center justify-center shadow-lg">
+              <XCircle className="w-6 h-6 text-white" />
             </div>
           )}
         </div>
+
+        {/* Title and meta */}
+        {title && (
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold text-zinc-100">{title}</h2>
+            <p className="text-sm text-zinc-500">
+              {typeLabel}
+              {year && ` • ${year}`}
+            </p>
+          </div>
+        )}
 
         {/* Status text */}
         <div className="space-y-2">
@@ -86,12 +115,12 @@ export default function ImportPage({ params }: ImportPageProps) {
           </p>
         </div>
 
-        {/* Skeleton cards */}
+        {/* Progress indicator */}
         {status?.status === ImportStatus.IMPORTING && (
-          <div className="w-full space-y-3 mt-4">
-            <div className="h-4 bg-zinc-800 rounded animate-pulse w-3/4 mx-auto" />
-            <div className="h-4 bg-zinc-800 rounded animate-pulse w-1/2 mx-auto" />
-            <div className="h-4 bg-zinc-800 rounded animate-pulse w-2/3 mx-auto" />
+          <div className="w-full max-w-xs">
+            <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+              <div className="h-full bg-amber-500 rounded-full animate-pulse w-2/3" />
+            </div>
           </div>
         )}
 

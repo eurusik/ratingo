@@ -50,6 +50,13 @@ export function useSearch() {
   // Import TMDB item
   const [importingTmdbId, setImportingTmdbId] = useState<number | null>(null);
 
+  // Store item info for redirect
+  const [importingItem, setImportingItem] = useState<{
+    title: string;
+    poster?: string;
+    year?: number;
+  } | null>(null);
+
   const importMutation = useMutation({
     mutationFn: async ({ tmdbId, type }: { tmdbId: number; type: MediaType }) => {
       return type === MediaType.MOVIE
@@ -64,18 +71,28 @@ export function useSearch() {
       } else if (result.status === ImportStatus.IMPORTING || result.status === ImportStatus.EXISTS) {
         setOpen(false);
         setQuery('');
-        router.push(`/import/${result.tmdbId}?type=${result.type}` as any);
+        // Pass title and poster via query params for better UX
+        const params = new URLSearchParams({
+          type: result.type,
+          title: importingItem?.title || '',
+          ...(importingItem?.poster && { poster: importingItem.poster }),
+          ...(importingItem?.year && { year: String(importingItem.year) }),
+        });
+        router.push(`/import/${result.tmdbId}?${params.toString()}` as any);
       }
       setImportingTmdbId(null);
+      setImportingItem(null);
     },
     onError: () => {
       setImportingTmdbId(null);
+      setImportingItem(null);
     },
   });
 
   const handleImport = useCallback(
-    (tmdbId: number, type: MediaType) => {
+    (tmdbId: number, type: MediaType, title: string, poster?: string, year?: number) => {
       setImportingTmdbId(tmdbId);
+      setImportingItem({ title, poster, year });
       importMutation.mutate({ tmdbId, type });
     },
     [importMutation],
