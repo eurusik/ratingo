@@ -173,10 +173,13 @@ export class TmdbMapper {
       }
     }
 
+    // Filter releases to only UA/US to reduce data size
+    const filteredReleases = allReleases.filter((r) => r.country === 'UA' || r.country === 'US');
+
     return {
       theatricalReleaseDate,
       digitalReleaseDate,
-      releases: allReleases,
+      releases: filteredReleases,
     };
   }
 
