@@ -43,6 +43,7 @@ export class PersistenceMapper {
 
   static toMediaItemUpdate(media: NormalizedMedia): Partial<MediaItemInsert> {
     const update: Partial<MediaItemInsert> = {
+      imdbId: media.externalIds.imdbId || null,
       title: media.title,
       originalTitle: media.originalTitle,
       slug: media.slug,
