@@ -26,81 +26,80 @@ export function DetailsSkeleton({
 }: DetailsSkeletonProps) {
   return (
     <main className="min-h-screen bg-zinc-950">
-      {/* Hero section skeleton */}
-      <div className="relative">
+      {/* Hero section skeleton - matches DetailsHero layout */}
+      <section className="relative min-h-[70vh] md:min-h-[60vh] flex items-end">
         {/* Backdrop skeleton */}
-        <div className="absolute inset-0 h-[70vh] bg-gradient-to-b from-zinc-900 to-zinc-950">
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 to-zinc-950">
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent" />
         </div>
 
-        {/* Hero content */}
-        <div className="relative z-10 container mx-auto px-4 pt-24 pb-8">
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* Poster */}
-            <div className="flex-shrink-0 mx-auto md:mx-0">
-              <div className="relative w-48 md:w-64 aspect-[2/3] rounded-xl overflow-hidden shadow-2xl bg-zinc-800">
-                {poster ? (
-                  <>
-                    <Image
-                      src={poster}
-                      alt={title}
-                      fill
-                      className="object-cover"
-                      priority
-                    />
-                    {/* Import overlay */}
-                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3">
+        {/* Hero content - same max-w-4xl as DetailsHero */}
+        <div className="relative w-full pb-8 pt-32 md:pt-48">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="flex gap-6 md:gap-10 items-end">
+              {/* Poster - same sizes as DetailsHero */}
+              <div className="flex-shrink-0 w-32 md:w-48 lg:w-56">
+                <div className="aspect-[2/3] relative rounded-xl overflow-hidden bg-zinc-800 shadow-2xl ring-1 ring-white/20">
+                  {poster ? (
+                    <>
+                      <Image
+                        src={poster}
+                        alt={title}
+                        fill
+                        className="object-cover"
+                        priority
+                      />
+                      {/* Import overlay */}
+                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3">
+                        <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+                        <span className="text-sm font-medium text-white">{statusMessage}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                       <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-                      <span className="text-sm font-medium text-white">{statusMessage}</span>
+                      <span className="text-sm font-medium text-zinc-300">{statusMessage}</span>
                     </div>
-                  </>
-                ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-                    <span className="text-sm font-medium text-zinc-300">{statusMessage}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 flex flex-col justify-end gap-4">
-              {/* Title */}
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-                  {title || <div className="h-10 bg-zinc-800 rounded animate-pulse w-64" />}
-                </h1>
-                {year && (
-                  <p className="text-zinc-400 text-lg">{year}</p>
-                )}
-              </div>
-
-              {/* Import status banner */}
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 flex items-center gap-3">
-                <Loader2 className="w-5 h-5 animate-spin text-amber-500 shrink-0" />
-                <div>
-                  <p className="text-amber-500 font-medium">{statusMessage}</p>
-                  <p className="text-zinc-400 text-sm">{statusHint}</p>
+                  )}
                 </div>
               </div>
 
-              {/* Skeleton ratings */}
-              <div className="flex gap-4">
-                <div className="h-12 w-20 bg-zinc-800 rounded animate-pulse" />
-                <div className="h-12 w-20 bg-zinc-800 rounded animate-pulse" />
-                <div className="h-12 w-20 bg-zinc-800 rounded animate-pulse" />
-              </div>
+              {/* Info - same structure as DetailsHero */}
+              <div className="flex-1 min-w-0 space-y-4 md:space-y-5">
+                {/* Title */}
+                <div>
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-lg">
+                    {title || <span className="inline-block h-10 bg-zinc-800 rounded animate-pulse w-64" />}
+                  </h1>
+                </div>
 
-              {/* Skeleton genres */}
-              <div className="flex gap-2">
-                <div className="h-6 w-16 bg-zinc-800 rounded-full animate-pulse" />
-                <div className="h-6 w-20 bg-zinc-800 rounded-full animate-pulse" />
-                <div className="h-6 w-14 bg-zinc-800 rounded-full animate-pulse" />
+                {/* Meta line */}
+                {year ? (
+                  <p className="text-sm md:text-base text-zinc-300">{year}</p>
+                ) : (
+                  <div className="h-5 bg-zinc-800 rounded animate-pulse w-32" />
+                )}
+
+                {/* Import status banner */}
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin text-amber-500 shrink-0" />
+                  <div>
+                    <p className="text-amber-500 font-medium">{statusMessage}</p>
+                    <p className="text-zinc-400 text-sm">{statusHint}</p>
+                  </div>
+                </div>
+
+                {/* Skeleton ratings */}
+                <div className="flex flex-wrap gap-2">
+                  <div className="h-8 w-16 bg-zinc-800 rounded animate-pulse" />
+                  <div className="h-8 w-20 bg-zinc-800 rounded animate-pulse" />
+                  <div className="h-8 w-16 bg-zinc-800 rounded animate-pulse" />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Content section skeleton - same max-w-4xl as DetailsContent */}
       <div className="bg-zinc-950">
