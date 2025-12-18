@@ -27,21 +27,24 @@ export type CrewMember = CrewMemberDto;
 export type { BadgeKey };
 
 /**
- * Verdict types from backend API.
- * These match the backend VerdictDto structure.
+ * Verdict types from api-contract.
  */
-import type { VerdictType } from './components/data-verdict-server';
+import type { components } from '@ratingo/api-contract';
 
-export type VerdictHintKey =
-  | 'newEpisodes'
-  | 'afterAllEpisodes'
-  | 'whenOnStreaming'
-  | 'notifyNewEpisode'
-  | 'general'
-  | 'forLater'
-  | 'notifyRelease'
-  | 'decideToWatch';
+export type MovieVerdictDto = components['schemas']['MovieVerdictDto'];
+export type ShowVerdictDto = components['schemas']['ShowVerdictDto'];
+export type VerdictHintKey = MovieVerdictDto['hintKey'];
 
+// Re-export VerdictType from data-verdict-server for backward compatibility
+export type { VerdictType } from './components/data-verdict-server';
+
+// Alias for backward compatibility
+export type MovieVerdict = MovieVerdictDto;
+
+/**
+ * Movie verdict message keys.
+ * Derived from API but kept as explicit union for i18n type safety.
+ */
 export type MovieVerdictMessageKey =
   | 'upcomingHit'
   | 'justReleased'
@@ -55,11 +58,7 @@ export type MovieVerdictMessageKey =
   | 'mixedReviews'
   | 'belowAverage'
   | 'poorRatings'
-  | 'earlyReviews';
-
-export interface MovieVerdict {
-  type: VerdictType;
-  messageKey: MovieVerdictMessageKey | null;
-  context?: string | null;
-  hintKey: VerdictHintKey;
-}
+  | 'earlyReviews'
+  | 'steadyInterest'
+  | 'classicChoice'
+  | 'timelessFavorite';
