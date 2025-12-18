@@ -181,6 +181,34 @@ describe('ScoreCalculatorService', () => {
       expect(result.freshnessScore).toBe(mockConfig.normalization.freshnessMinFloor * 100);
     });
 
+    it('should handle releaseDate as string (ISO format)', () => {
+      const input: ScoreInput = {
+        tmdbPopularity: 100,
+        traktWatchers: 500,
+        imdbRating: 7.0,
+        releaseDate: '2024-01-15' as any, // String instead of Date
+      };
+
+      const result = service.calculate(input);
+
+      expect(result.freshnessScore).toBeGreaterThanOrEqual(0);
+      expect(result.freshnessScore).toBeLessThanOrEqual(100);
+    });
+
+    it('should handle invalid releaseDate string gracefully', () => {
+      const input: ScoreInput = {
+        tmdbPopularity: 100,
+        traktWatchers: 500,
+        imdbRating: 7.0,
+        releaseDate: 'invalid-date' as any, // Invalid string
+      };
+
+      const result = service.calculate(input);
+
+      // Should use minimum floor for invalid date
+      expect(result.freshnessScore).toBe(mockConfig.normalization.freshnessMinFloor * 100);
+    });
+
     it('should normalize ratings from different scales', () => {
       // MC and RT are 0-100, IMDb and Trakt are 0-10
       const input: ScoreInput = {

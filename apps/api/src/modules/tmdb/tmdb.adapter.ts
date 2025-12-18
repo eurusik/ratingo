@@ -205,8 +205,6 @@ export class TmdbAdapter implements IMetadataProvider {
    * @returns {Promise<any[]>} Search results
    */
   public async searchMulti(query: string, page = 1): Promise<any[]> {
-    // Search without language restriction to find movies by any title
-    // Import will still fetch Ukrainian data via getMovie/getShow
     const data = await this.fetch(
       '/search/multi',
       {

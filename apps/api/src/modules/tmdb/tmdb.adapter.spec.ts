@@ -8,16 +8,12 @@ import { TmdbApiException } from '@/common/exceptions';
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// Mock TmdbMapper
+// Mock TmdbMapper - can be configured per test
+const mockToDomain = jest.fn();
+
 jest.mock('./mappers/tmdb.mapper', () => ({
   TmdbMapper: {
-    toDomain: jest.fn((data, type) => ({
-      type,
-      title: data.title || data.name,
-      externalIds: { tmdbId: data.id },
-      popularity: data.popularity,
-      credits: { cast: [], crew: [] },
-    })),
+    toDomain: (data: any, type: any) => mockToDomain(data, type),
   },
 }));
 
@@ -31,6 +27,15 @@ describe('TmdbAdapter', () => {
 
   beforeEach(async () => {
     mockFetch.mockReset();
+    mockToDomain.mockReset();
+    // Default mock implementation
+    mockToDomain.mockImplementation((data, type) => ({
+      type,
+      title: data.title || data.name,
+      externalIds: { tmdbId: data.id },
+      popularity: data.popularity,
+      credits: { cast: [], crew: [] },
+    }));
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [TmdbAdapter, { provide: tmdbConfig.KEY, useValue: mockConfig }],
@@ -96,6 +101,50 @@ describe('TmdbAdapter', () => {
 
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('append_to_response='));
     });
+
+    it('should return fallback object when mapper returns null (no localization)', async () => {
+      const mockMovieData = {
+        id: 12345,
+        title: 'Nosferatu',
+        original_title: 'Nosferatu',
+        imdb_id: 'tt1234567',
+        poster_path: '/poster.jpg',
+        backdrop_path: '/backdrop.jpg',
+        vote_average: 7.5,
+        vote_count: 1000,
+        popularity: 50,
+        release_date: '2024-12-25',
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockMovieData),
+      });
+
+      // Mapper returns null (no Ukrainian localization)
+      mockToDomain.mockReturnValue(null);
+
+      const result = await adapter.getMovie(12345);
+
+      expect(result).not.toBeNull();
+      expect(result?.title).toBe('Nosferatu');
+      expect(result?.externalIds.tmdbId).toBe(12345);
+      expect(result?.type).toBe(MediaType.MOVIE);
+      expect(result?.posterPath).toBe('/poster.jpg');
+    });
+
+    it('should return null when TMDB returns no data', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(null),
+      });
+
+      mockToDomain.mockReturnValue(null);
+
+      const result = await adapter.getMovie(99999);
+
+      expect(result).toBeNull();
+    });
   });
 
   describe('getShow', () => {
@@ -138,6 +187,36 @@ describe('TmdbAdapter', () => {
       });
 
       await expect(adapter.getShow(1000)).rejects.toThrow(TmdbApiException);
+    });
+
+    it('should return fallback object when mapper returns null (no localization)', async () => {
+      const mockShowData = {
+        id: 54321,
+        name: 'Some Show',
+        original_name: 'Original Show Name',
+        poster_path: '/show-poster.jpg',
+        backdrop_path: '/show-backdrop.jpg',
+        vote_average: 8.0,
+        vote_count: 500,
+        popularity: 75,
+        first_air_date: '2024-01-01',
+        external_ids: { imdb_id: 'tt9999999' },
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockShowData),
+      });
+
+      mockToDomain.mockReturnValue(null);
+
+      const result = await adapter.getShow(54321);
+
+      expect(result).not.toBeNull();
+      expect(result?.title).toBe('Some Show');
+      expect(result?.externalIds.tmdbId).toBe(54321);
+      expect(result?.type).toBe(MediaType.SHOW);
+      expect(result?.releaseDate).toBe('2024-01-01');
     });
   });
 
@@ -335,6 +414,51 @@ describe('TmdbAdapter', () => {
       expect(result[1].type).toBe(MediaType.SHOW);
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/search/multi'));
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('query=test'));
+    });
+
+    it('should search without language parameter (multi-language search)', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ results: [] }),
+      });
+
+      await adapter.searchMulti('Mission Impossible');
+
+      // Should NOT include language parameter for multi-language search
+      expect(mockFetch).toHaveBeenCalledWith(expect.not.stringContaining('language='));
+    });
+
+    it('should map all required fields from search results', async () => {
+      const mockResults = {
+        results: [
+          {
+            id: 123,
+            media_type: 'movie',
+            title: 'Test Movie',
+            original_title: 'Original Title',
+            release_date: '2024-01-15',
+            poster_path: '/poster.jpg',
+            vote_average: 8.5,
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResults),
+      });
+
+      const result = await adapter.searchMulti('test');
+
+      expect(result[0]).toEqual({
+        externalIds: { tmdbId: 123 },
+        type: MediaType.MOVIE,
+        title: 'Test Movie',
+        originalTitle: 'Original Title',
+        releaseDate: '2024-01-15',
+        posterPath: '/poster.jpg',
+        rating: 8.5,
+      });
     });
   });
 

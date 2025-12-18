@@ -10,6 +10,7 @@ import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 describe('IngestionController', () => {
   let controller: IngestionController;
   let mockQueue: any;
+  let mockMediaRepo: any;
 
   beforeEach(async () => {
     mockQueue = {
@@ -17,8 +18,8 @@ describe('IngestionController', () => {
     };
 
     const mockSyncService = {}; // Not used directly in controller methods we test
-    const mockMediaRepo = {
-      findByTmdbId: jest.fn().mockResolvedValue(null),
+    mockMediaRepo = {
+      findByTmdbId: jest.fn().mockResolvedValue(null), // Default: not found
       upsertStub: jest.fn().mockResolvedValue({ id: 'stub-1', slug: 'stub-slug' }),
     };
     const mockTmdbAdapter = {
@@ -168,6 +169,26 @@ describe('IngestionController', () => {
       const res = await controller.getJobStatus('job-42');
       expect(res.status).toBe('ready');
       expect(res.updatedAt).toBe(new Date(finishedOn).toISOString());
+    });
+
+    it('returns slug when job is completed and has tmdbId', async () => {
+      const finishedOn = Date.now();
+      mockQueue.getJob = jest
+        .fn()
+        .mockResolvedValue(makeJob('completed', { finishedOn, data: { tmdbId: 550 } }));
+      // Mock findByTmdbId to return media with slug
+      mockMediaRepo.findByTmdbId.mockResolvedValue({ id: 'media-1', slug: 'test-movie-slug' });
+
+      const res = await controller.getJobStatus('job-42');
+      expect(res.status).toBe('ready');
+      expect(res.slug).toBe('test-movie-slug');
+    });
+
+    it('returns null slug when job is not completed', async () => {
+      mockQueue.getJob = jest.fn().mockResolvedValue(makeJob('active', { data: { tmdbId: 550 } }));
+      const res = await controller.getJobStatus('job-42');
+      expect(res.status).toBe('processing');
+      expect(res.slug).toBeNull();
     });
 
     it('maps failed to failed and returns errorMessage', async () => {
