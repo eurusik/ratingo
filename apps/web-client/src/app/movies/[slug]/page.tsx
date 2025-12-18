@@ -162,6 +162,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
             mediaItemId={movie.id}
             type={verdict.type}
             message={verdictMessage}
+            messageKey={verdict.messageKey}
             context={verdict.context ?? undefined}
             showCta
             ctaProps={{

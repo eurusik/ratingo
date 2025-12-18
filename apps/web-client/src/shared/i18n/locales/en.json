@@ -128,6 +128,7 @@
     "hasAccount": "Already have an account?",
     "saved": "Saved",
     "settings": "Settings",
+    "notifications": "Notifications",
     "validation": {
       "emailInvalid": "Invalid email format",
       "passwordMin": "Minimum 6 characters",
@@ -349,6 +350,65 @@
     "notFound": {
       "movie": "Movie not found",
       "show": "Show not found"
+    }
+  },
+  "saved": {
+    "title": "Saved",
+    "tabs": {
+      "forLater": "For Later",
+      "considering": "Considering",
+      "notifications": "Notifications"
+    },
+    "empty": {
+      "forLater": {
+        "title": "Nothing here yet",
+        "description": "Save movies and shows you definitely want to watch"
+      },
+      "considering": {
+        "title": "Nothing here yet",
+        "description": "Add content you're still deciding on"
+      },
+      "notifications": {
+        "title": "No active notifications",
+        "description": "Subscribe to releases or new seasons to stay updated"
+      }
+    },
+    "actions": {
+      "remove": "Remove",
+      "moveToForLater": "Move to For Later",
+      "moveToConsidering": "Move to Considering",
+      "unsubscribe": "Unsubscribe"
+    },
+    "trigger": {
+      "release": "Release",
+      "new_season": "New Season",
+      "on_streaming": "On Streaming"
+    },
+    "reason": {
+      "label": "Saved from",
+      "trendingNow": "Trending",
+      "risingHype": "Rising interest",
+      "criticsLoved": "Critics loved",
+      "strongRatings": "Strong ratings",
+      "decentRatings": "Decent ratings",
+      "mixedReviews": "Mixed reviews",
+      "newSeason": "New season",
+      "nowStreaming": "New on streaming",
+      "upcomingHit": "Upcoming hit",
+      "justReleased": "Just released",
+      "steadyInterest": "Steady interest",
+      "classicChoice": "Classic",
+      "timelessFavorite": "Timeless favorite"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No new notifications",
+    "viewAll": "View all",
+    "events": {
+      "newSeason": "New season released",
+      "onStreaming": "Available on streaming",
+      "released": "Released"
     }
   }
 }

@@ -16,6 +16,7 @@ export interface UserSavedItem {
   userId: string;
   mediaItemId: string;
   list: SavedItemList;
+  reasonKey: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -57,7 +57,7 @@ export class SavedItemsService {
       );
     }
 
-    const item = await this.savedItemRepo.upsert({ userId, mediaItemId, list });
+    const item = await this.savedItemRepo.upsert({ userId, mediaItemId, list, reasonKey });
 
     const action =
       list === SAVED_ITEM_LIST.FOR_LATER

@@ -16,6 +16,7 @@ import { useScrollPosition } from '@/shared/hooks';
 import { useHeaderContext } from './header-context';
 import { UserMenu } from './user-menu';
 import { SearchCommand } from './search';
+import { NotificationBell } from './notification-bell';
 
 export function Header() {
   const { dict } = useTranslation();
@@ -75,9 +76,10 @@ export function Header() {
           </Link>
         </nav>
 
-        {/* Right: Search + Auth */}
+        {/* Right: Search + Notifications + Auth */}
         <div className="flex items-center gap-2">
           <SearchCommand />
+          <NotificationBell />
           <UserMenu />
         </div>
       </div>

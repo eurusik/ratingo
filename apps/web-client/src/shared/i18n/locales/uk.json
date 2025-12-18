@@ -128,6 +128,7 @@
     "hasAccount": "Вже є акаунт?",
     "saved": "Збережене",
     "settings": "Налаштування",
+    "notifications": "Сповіщення",
     "validation": {
       "emailInvalid": "Невірний формат email",
       "passwordMin": "Мінімум 6 символів",
@@ -349,6 +350,65 @@
     "notFound": {
       "movie": "Фільм не знайдено",
       "show": "Серіал не знайдено"
+    }
+  },
+  "saved": {
+    "title": "Збережене",
+    "tabs": {
+      "forLater": "На потім",
+      "considering": "Роздумую",
+      "notifications": "Сповіщення"
+    },
+    "empty": {
+      "forLater": {
+        "title": "Тут поки порожньо",
+        "description": "Зберігайте фільми та серіали, які точно хочете подивитись"
+      },
+      "considering": {
+        "title": "Тут поки порожньо",
+        "description": "Додавайте контент, щодо якого ще не вирішили"
+      },
+      "notifications": {
+        "title": "Немає активних сповіщень",
+        "description": "Підписуйтесь на реліз або новий сезон, щоб не пропустити"
+      }
+    },
+    "actions": {
+      "remove": "Видалити",
+      "moveToForLater": "Перемістити в «На потім»",
+      "moveToConsidering": "Перемістити в «Роздумую»",
+      "unsubscribe": "Відписатись"
+    },
+    "trigger": {
+      "release": "Реліз",
+      "new_season": "Новий сезон",
+      "on_streaming": "На стрімінгу"
+    },
+    "reason": {
+      "label": "Збережено через",
+      "trendingNow": "Трендинг",
+      "risingHype": "Зростаючий інтерес",
+      "criticsLoved": "Високі оцінки",
+      "strongRatings": "Хороші рейтинги",
+      "decentRatings": "Непогані рейтинги",
+      "mixedReviews": "Змішані відгуки",
+      "newSeason": "Новий сезон",
+      "nowStreaming": "Нове на стрімінгу",
+      "upcomingHit": "Очікуваний хіт",
+      "justReleased": "Щойно вийшов",
+      "steadyInterest": "Стабільний інтерес",
+      "classicChoice": "Класика",
+      "timelessFavorite": "Улюблена класика"
+    }
+  },
+  "notifications": {
+    "title": "Сповіщення",
+    "empty": "Немає нових сповіщень",
+    "viewAll": "Перейти до всіх",
+    "events": {
+      "newSeason": "Вийшов новий сезон",
+      "onStreaming": "Доступно на стрімінгу",
+      "released": "Вийшов у прокат"
     }
   }
 }

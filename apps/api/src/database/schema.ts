@@ -1,6 +1,7 @@
 import {
   pgTable,
   text,
+  varchar,
   integer,
   bigint,
   doublePrecision,
@@ -542,6 +543,9 @@ export const userSavedItems = pgTable(
 
     // List type: for_later (trending/new) or considering (mixed/decent ratings)
     list: savedItemListEnum('list').notNull(),
+
+    // Reason why item was saved (verdict key)
+    reasonKey: varchar('reason_key', { length: 64 }),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

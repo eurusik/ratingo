@@ -40,3 +40,5 @@ export {
   CommandShortcut,
   CommandSeparator,
 } from './command';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from './popover';

@@ -14,6 +14,7 @@ export interface UpsertSavedItemData {
   userId: string;
   mediaItemId: string;
   list: SavedItemList;
+  reasonKey?: string | null;
 }
 
 /**

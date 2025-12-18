@@ -62,6 +62,14 @@ export class SavedItemResponseDto {
   @ApiProperty({ enum: SAVED_ITEM_LIST_VALUES, example: 'for_later' })
   list: SavedItemList;
 
+  @ApiProperty({
+    example: 'trendingNow',
+    required: false,
+    nullable: true,
+    description: 'Verdict/reason that triggered the save action',
+  })
+  reasonKey: string | null;
+
   @ApiProperty({ example: '2024-01-15T10:30:00.000Z' })
   createdAt: Date;
 }

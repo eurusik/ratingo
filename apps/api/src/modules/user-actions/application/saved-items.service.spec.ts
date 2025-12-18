@@ -69,6 +69,7 @@ describe('SavedItemsService', () => {
         userId: 'user-id-1',
         mediaItemId: 'media-id-1',
         list: SAVED_ITEM_LIST.FOR_LATER,
+        reasonKey: 'trendingNow',
       });
       expect(actionRepo.create).toHaveBeenCalledWith({
         userId: 'user-id-1',

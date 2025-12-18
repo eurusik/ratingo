@@ -27,6 +27,8 @@ export interface DataVerdictServerProps {
   type: VerdictType;
   /** Main verdict message. */
   message: string;
+  /** Verdict message key (for reasonKey when saving). */
+  messageKey?: string | null;
   /** Confidence level (for future use). */
   confidence?: ConfidenceLevel;
   /** Additional context text. */

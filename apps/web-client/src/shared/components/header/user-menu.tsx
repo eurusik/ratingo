@@ -5,6 +5,8 @@
 
 'use client';
 
+import Link from 'next/link';
+import type { Route } from 'next';
 import { User, LogOut, Settings, Bookmark } from 'lucide-react';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { useTranslation } from '@/shared/i18n';
@@ -64,9 +66,11 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-zinc-800" />
-        <DropdownMenuItem className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100">
-          <Bookmark className="w-4 h-4 mr-2" />
-          {dict.auth.saved}
+        <DropdownMenuItem asChild className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100">
+          <Link href={'/saved' as Route}>
+            <Bookmark className="w-4 h-4 mr-2" />
+            {dict.auth.saved}
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100">
           <Settings className="w-4 h-4 mr-2" />

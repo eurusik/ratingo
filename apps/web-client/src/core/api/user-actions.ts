@@ -21,9 +21,26 @@ export type SubscriptionTrigger = components['schemas']['SubscribeDto']['trigger
 export type MediaSaveStatusDto = components['schemas']['MediaSaveStatusDto'];
 export type SaveActionResultDto = components['schemas']['SaveActionResultDto'];
 export type UnsaveActionResultDto = components['schemas']['UnsaveActionResultDto'];
+export type SavedItemWithMediaResponseDto = components['schemas']['SavedItemWithMediaResponseDto'];
 export type MediaSubscriptionStatusDto = components['schemas']['MediaSubscriptionStatusDto'];
 export type SubscribeActionResultDto = components['schemas']['SubscribeActionResultDto'];
 export type UnsubscribeActionResultDto = components['schemas']['UnsubscribeActionResultDto'];
+export type SubscriptionWithMediaResponseDto = components['schemas']['SubscriptionWithMediaResponseDto'];
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+}
+
+export interface ListParams {
+  limit?: number;
+  offset?: number;
+}
 
 export interface SaveItemParams {
   mediaItemId: string;
@@ -126,5 +143,45 @@ export const userActionsApi = {
    */
   async getSubscriptionStatus(mediaItemId: string): Promise<MediaSubscriptionStatusDto> {
     return apiGet<MediaSubscriptionStatusDto>(`me/subscriptions/${mediaItemId}/status`);
+  },
+
+  // --------------------------------------------------------------------------
+  // Lists
+  // --------------------------------------------------------------------------
+
+  /**
+   * Get saved items in "for later" list with media info.
+   *
+   * @param params - Pagination parameters
+   * @returns Paginated saved items
+   */
+  async listForLater(params?: ListParams): Promise<PaginatedResponse<SavedItemWithMediaResponseDto>> {
+    return apiGet<PaginatedResponse<SavedItemWithMediaResponseDto>>('me/saved-items/for-later', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Get saved items in "considering" list with media info.
+   *
+   * @param params - Pagination parameters
+   * @returns Paginated saved items
+   */
+  async listConsidering(params?: ListParams): Promise<PaginatedResponse<SavedItemWithMediaResponseDto>> {
+    return apiGet<PaginatedResponse<SavedItemWithMediaResponseDto>>('me/saved-items/considering', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Get active subscriptions with media info.
+   *
+   * @param params - Pagination parameters
+   * @returns Paginated subscriptions
+   */
+  async listSubscriptions(params?: ListParams): Promise<PaginatedResponse<SubscriptionWithMediaResponseDto>> {
+    return apiGet<PaginatedResponse<SubscriptionWithMediaResponseDto>>('me/subscriptions', {
+      searchParams: params as Record<string, string | number>,
+    });
   },
 } as const;

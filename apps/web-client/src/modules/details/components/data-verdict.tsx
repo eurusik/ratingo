@@ -79,7 +79,12 @@ export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProp
           );
         } else {
           saveItem(
-            { mediaItemId, list: DEFAULT_LIST, context: CTA_CONTEXT },
+            { 
+              mediaItemId, 
+              list: DEFAULT_LIST, 
+              context: CTA_CONTEXT,
+              reasonKey: props.messageKey ?? undefined,
+            },
             {
               onSuccess: () => toast.success(TOAST_MESSAGES.saved),
               onError: () => toast.error(TOAST_MESSAGES.error),

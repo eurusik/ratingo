@@ -118,6 +118,7 @@ export function useSaveItem() {
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
         data.status
       );
+      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },
 
     onError: (_error, variables, context) => {
@@ -174,6 +175,8 @@ export function useUnsaveItem() {
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
         data.status
       );
+      // Invalidate saved items lists so /saved page updates
+      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },
 
     onError: (_error, variables, context) => {

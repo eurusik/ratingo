@@ -39,6 +39,7 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
           userId: data.userId,
           mediaItemId: data.mediaItemId,
           list: data.list,
+          reasonKey: data.reasonKey ?? null,
         })
         .onConflictDoUpdate({
           target: [
@@ -48,6 +49,7 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
           ],
           set: {
             updatedAt: new Date(),
+            reasonKey: data.reasonKey ?? null,
           },
         })
         .returning();
@@ -224,6 +226,7 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
       userId: row.userId,
       mediaItemId: row.mediaItemId,
       list: row.list as SavedItemList,
+      reasonKey: row.reasonKey ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

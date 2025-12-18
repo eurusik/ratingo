@@ -41,6 +41,7 @@ describe('DrizzleUserSavedItemRepository', () => {
     userId: 'user-id-1',
     mediaItemId: 'media-id-1',
     list: 'for_later',
+    reasonKey: null,
     createdAt: new Date('2024-01-15T10:00:00Z'),
     updatedAt: new Date('2024-01-15T10:00:00Z'),
   };
@@ -96,6 +97,7 @@ describe('DrizzleUserSavedItemRepository', () => {
         userId: 'user-id-1',
         mediaItemId: 'media-id-1',
         list: 'for_later',
+        reasonKey: null,
         createdAt: mockSavedItemRow.createdAt,
         updatedAt: mockSavedItemRow.updatedAt,
       });

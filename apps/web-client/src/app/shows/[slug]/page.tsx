@@ -176,6 +176,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             mediaItemId={show.id}
             type={apiShow.verdict.type}
             message={verdictMessage}
+            messageKey={apiShow.verdict.messageKey}
             context={verdictContext}
             showCta
             ctaProps={{
