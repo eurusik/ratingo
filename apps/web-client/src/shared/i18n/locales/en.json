@@ -162,13 +162,11 @@
     "totalWatchers": "watched overall",
     "ratingTooltip": {
       "title": "Ratingo rating",
-      "subtitle": "Combines quality and current interest",
-      "whatItMeans": "How to read:",
-      "description": "High rating → content receives good reviews. Activity now → shows how much people are talking about it today.",
-      "classicCase": "Quality content without current hype",
+      "subtitle": "Quality × Relevance",
+      "description": "Ratingo combines quality ratings and current interest. Shows content value based on how relevant it is right now.",
       "howToRead": "Examples:",
       "exampleHigh": "High rating + low activity → quality content without hype",
-      "exampleTrending": "High rating + high activity → quality content that's trending now"
+      "exampleTrending": "High rating + high activity → quality content that's trending"
     },
     "qualityBadge": {
       "high": "High Quality",
@@ -303,7 +301,7 @@
       "show": {
         "cancelled": "Series cancelled",
         "poorRatings": "Most viewers were disappointed",
-        "belowAverage": "Below average ratings",
+        "belowAverage": "Lots of mixed reactions",
         "criticsLoved": "Critics and audiences loved it",
         "strongRatings": "More liked than not",
         "decentRatings": "Solid pick for the evening",
@@ -393,8 +391,8 @@
       "decentRatings": "Decent ratings",
       "mixedReviews": "Mixed reviews",
       "earlyReviews": "Early reviews",
-      "belowAverage": "Below average",
-      "poorRatings": "Poor ratings",
+      "belowAverage": "Controversial ratings",
+      "poorRatings": "Divisive ratings",
       "longRunning": "Long-running series",
       "cancelled": "Cancelled",
       "newSeason": "New season",

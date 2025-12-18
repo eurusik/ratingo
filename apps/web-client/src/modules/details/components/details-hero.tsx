@@ -51,8 +51,7 @@ export function DetailsHero({
 }: DetailsHeroProps) {
   const rating = stats?.qualityScore;
   const imdbRating = externalRatings?.imdb?.rating;
-  const isClassicCase = rating != null && rating >= 80 && stats?.liveWatchers != null && stats.liveWatchers < 100;
-
+  
   // Compute badge labels and tooltips
   const getQualityBadgeProps = (score: number) => {
     if (score >= 85) return { label: dict.details.qualityBadge.high, tooltip: dict.details.qualityBadgeTooltip.high };
@@ -138,18 +137,10 @@ export function DetailsHero({
                               <p className="text-zinc-400 mt-0.5">{dict.details.ratingTooltip.subtitle}</p>
                             </div>
                             
-                            {/* What it means */}
+                            {/* Description */}
                             <div>
-                              <p className="font-medium text-white mb-1">{dict.details.ratingTooltip.whatItMeans}</p>
                               <p className="text-zinc-300">{dict.details.ratingTooltip.description}</p>
                             </div>
-                            
-                            {/* Classic case hint */}
-                            {isClassicCase && (
-                              <div className="bg-blue-500/10 border border-blue-500/30 rounded px-2 py-1.5">
-                                <p className="text-blue-300 font-medium">💡 {dict.details.ratingTooltip.classicCase}</p>
-                              </div>
-                            )}
                             
                             {/* How to read */}
                             <div>
