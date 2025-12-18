@@ -62,3 +62,14 @@ export const TIME_WINDOWS = {
   /** Days to consider "just released" */
   JUST_RELEASED_DAYS: 30,
 } as const;
+
+/**
+ * Age thresholds for context-aware verdicts.
+ * Content older than these thresholds gets different messaging.
+ */
+export const AGE_THRESHOLDS = {
+  /** Years after which content is considered "older" (no hype language) */
+  OLDER_CONTENT_YEARS: 3,
+  /** Years after which content is considered a "classic" */
+  CLASSIC_YEARS: 10,
+} as const;

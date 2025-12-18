@@ -10,7 +10,12 @@ import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
 import { BADGE_KEY } from '../../cards/domain/card.constants';
 import { MovieVerdictInput, MovieVerdict } from '../domain/movie-verdict.types';
 import { RATING_SOURCE } from '../domain/verdict.types';
-import { CONFIDENCE, RATING_THRESHOLDS, POPULARITY_THRESHOLDS } from '../domain/verdict.constants';
+import {
+  CONFIDENCE,
+  RATING_THRESHOLDS,
+  POPULARITY_THRESHOLDS,
+  AGE_THRESHOLDS,
+} from '../domain/verdict.constants';
 import { formatRatingContext } from '../domain/rating-aggregator';
 
 /**
@@ -34,7 +39,15 @@ export class MovieVerdictService {
    * Computes verdict for a movie.
    */
   compute(input: MovieVerdictInput): MovieVerdict {
-    const { releaseStatus, avgRating, voteCount, ratingSource, badgeKey, popularity } = input;
+    const { releaseStatus, avgRating, voteCount, ratingSource, badgeKey, popularity, releaseDate } =
+      input;
+
+    // Calculate content age in years
+    const contentAgeYears = releaseDate
+      ? (Date.now() - new Date(releaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365)
+      : 0;
+    const isOlderContent = contentAgeYears >= AGE_THRESHOLDS.OLDER_CONTENT_YEARS;
+    const isClassic = contentAgeYears >= AGE_THRESHOLDS.CLASSIC_YEARS;
 
     // Helper to format rating context with correct source label
     const formatContext = (rating: number | null | undefined): string | null => {
@@ -114,7 +127,27 @@ export class MovieVerdictService {
     // ═══════════════════════════════════════════════════════════════
 
     // Trending Now - high current interest
+    // For older content, use age-appropriate messaging
     if (badgeKey === BADGE_KEY.TRENDING || badgeKey === BADGE_KEY.HIT) {
+      if (isClassic && isGoodQuality) {
+        // 10+ years old with good ratings = timeless favorite
+        return {
+          type: 'quality',
+          messageKey: 'timelessFavorite',
+          context: formatContext(avgRating),
+          hintKey: 'forLater',
+        };
+      }
+      if (isOlderContent) {
+        // 3+ years old = steady interest, not "hype"
+        return {
+          type: 'popularity',
+          messageKey: 'steadyInterest',
+          context: formatContext(avgRating),
+          hintKey: 'forLater',
+        };
+      }
+      // Recent content can use "trending now"
       return {
         type: 'popularity',
         messageKey: 'trendingNow',
@@ -154,7 +187,24 @@ export class MovieVerdictService {
     }
 
     // Rising Hype - growing popularity
+    // For older content, frame as "classic choice" not "rising hype"
     if (badgeKey === BADGE_KEY.RISING) {
+      if (isClassic && isGoodQuality) {
+        return {
+          type: 'quality',
+          messageKey: 'classicChoice',
+          context: formatContext(avgRating),
+          hintKey: 'forLater',
+        };
+      }
+      if (isOlderContent) {
+        return {
+          type: 'popularity',
+          messageKey: 'steadyInterest',
+          context: formatContext(avgRating),
+          hintKey: 'forLater',
+        };
+      }
       return {
         type: 'popularity',
         messageKey: 'risingHype',

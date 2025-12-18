@@ -293,6 +293,7 @@ export class CatalogMoviesController {
       ratingSource: bestRatingSource,
       badgeKey: card?.badgeKey ?? null,
       popularity: movie.stats?.popularityScore ?? null,
+      releaseDate: movie.releaseDate ?? null,
     });
 
     return { ...enriched, card, releaseStatus, verdict };

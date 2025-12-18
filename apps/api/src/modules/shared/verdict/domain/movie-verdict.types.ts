@@ -25,6 +25,10 @@ export type MovieVerdictMessageKey =
   | 'belowAverage'
   | 'poorRatings'
   | 'earlyReviews'
+  // Age-aware verdicts for older content
+  | 'steadyInterest'
+  | 'classicChoice'
+  | 'timelessFavorite'
   | null;
 
 /**
@@ -38,6 +42,8 @@ export interface MovieVerdictInput {
   ratingSource?: RatingSourceLabel | null;
   badgeKey?: BadgeKey;
   popularity?: number | null;
+  /** Release date for age-aware verdicts */
+  releaseDate?: Date | null;
 }
 
 /**

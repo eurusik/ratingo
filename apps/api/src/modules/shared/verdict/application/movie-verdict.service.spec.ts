@@ -91,22 +91,24 @@ describe('MovieVerdictService', () => {
   });
 
   describe('quality signals', () => {
-    it('should return trendingNow for TRENDING badge', () => {
+    it('should return trendingNow for TRENDING badge on recent content', () => {
       const result = service.compute({
         badgeKey: BADGE_KEY.TRENDING,
         avgRating: 7.0,
         voteCount: 500,
+        releaseDate: new Date(), // recent release
       });
 
       expect(result.type).toBe('popularity');
       expect(result.messageKey).toBe('trendingNow');
     });
 
-    it('should return trendingNow for HIT badge', () => {
+    it('should return trendingNow for HIT badge on recent content', () => {
       const result = service.compute({
         badgeKey: BADGE_KEY.HIT,
         avgRating: 7.0,
         voteCount: 500,
+        releaseDate: new Date(), // recent release
       });
 
       expect(result.type).toBe('popularity');
@@ -147,15 +149,79 @@ describe('MovieVerdictService', () => {
   });
 
   describe('popularity verdicts', () => {
-    it('should return risingHype for RISING badge when no quality verdict applies', () => {
+    it('should return risingHype for RISING badge on recent content', () => {
       const result = service.compute({
         badgeKey: BADGE_KEY.RISING,
         avgRating: 6.3, // mixed quality range, not decent/strong
         voteCount: 300,
+        releaseDate: new Date(), // recent release
       });
 
       expect(result.type).toBe('popularity');
       expect(result.messageKey).toBe('risingHype');
+    });
+  });
+
+  describe('age-aware verdicts', () => {
+    it('should return steadyInterest for TRENDING badge on older content (3+ years)', () => {
+      const oldDate = new Date();
+      oldDate.setFullYear(oldDate.getFullYear() - 5); // 5 years old
+
+      const result = service.compute({
+        badgeKey: BADGE_KEY.TRENDING,
+        avgRating: 6.8,
+        voteCount: 500,
+        releaseDate: oldDate,
+      });
+
+      expect(result.type).toBe('popularity');
+      expect(result.messageKey).toBe('steadyInterest');
+    });
+
+    it('should return timelessFavorite for TRENDING badge on classic content (10+ years) with good ratings', () => {
+      const classicDate = new Date();
+      classicDate.setFullYear(classicDate.getFullYear() - 15); // 15 years old
+
+      const result = service.compute({
+        badgeKey: BADGE_KEY.TRENDING,
+        avgRating: 7.5,
+        voteCount: 1000,
+        releaseDate: classicDate,
+      });
+
+      expect(result.type).toBe('quality');
+      expect(result.messageKey).toBe('timelessFavorite');
+    });
+
+    it('should return classicChoice for RISING badge on classic content without strong ratings', () => {
+      const classicDate = new Date();
+      classicDate.setFullYear(classicDate.getFullYear() - 12); // 12 years old
+
+      const result = service.compute({
+        badgeKey: BADGE_KEY.RISING,
+        avgRating: 6.3, // below strong threshold but still decent
+        voteCount: 100, // not enough for confident rating
+        releaseDate: classicDate,
+      });
+
+      // Without confident ratings, RISING badge triggers age-aware logic
+      expect(result.type).toBe('popularity');
+      expect(result.messageKey).toBe('steadyInterest');
+    });
+
+    it('should return steadyInterest for RISING badge on older content without strong ratings', () => {
+      const oldDate = new Date();
+      oldDate.setFullYear(oldDate.getFullYear() - 5); // 5 years old
+
+      const result = service.compute({
+        badgeKey: BADGE_KEY.RISING,
+        avgRating: 6.3,
+        voteCount: 300,
+        releaseDate: oldDate,
+      });
+
+      expect(result.type).toBe('popularity');
+      expect(result.messageKey).toBe('steadyInterest');
     });
   });
 
