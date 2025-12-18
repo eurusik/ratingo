@@ -106,7 +106,7 @@ export function SearchCommand() {
                   key={`local-${item.tmdbId}`}
                   value={`${item.title} ${item.year ?? ''}`}
                   onSelect={() => handleSelect(item.slug!, item.type)}
-                  className="gap-3 py-2"
+                  className="gap-3 py-2 cursor-pointer"
                 >
                   {item.poster?.small ? (
                     <Image
