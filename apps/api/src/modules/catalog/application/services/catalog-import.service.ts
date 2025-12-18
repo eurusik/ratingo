@@ -58,6 +58,7 @@ export class CatalogImportService {
         : await this.tmdbAdapter.getShow(tmdbId);
 
     if (!media) {
+      this.logger.warn(`TMDB returned null for ${type} ${tmdbId}`);
       return {
         status: ImportStatus.NOT_FOUND,
         type,

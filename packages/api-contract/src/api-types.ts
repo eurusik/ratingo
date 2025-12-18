@@ -1610,6 +1610,11 @@ export interface components {
              * @example false
              */
             isImported: boolean;
+            /**
+             * @description If false, item has no Ukrainian localization and cannot be imported
+             * @example true
+             */
+            hasUkrainianLocalization: boolean;
         };
         SearchResponseDto: {
             query: string;

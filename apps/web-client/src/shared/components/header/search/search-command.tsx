@@ -115,6 +115,8 @@ export function SearchCommand() {
                     isLocal={false}
                     isImporting={importingTmdbId === item.tmdbId}
                     notImportedLabel={dict.search.notImported}
+                    noUkrainianLabel={dict.search.noUkrainian}
+                    hasUkrainianLocalization={item.hasUkrainianLocalization}
                     onSelect={() => handleImport(item.tmdbId, item.type as MediaType, item.title, item.poster?.small, item.year ?? undefined)}
                   />
                 ))}

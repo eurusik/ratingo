@@ -174,15 +174,25 @@ export class ScoreCalculatorService {
    * Calculates freshness score with exponential decay and minimum floor.
    * Ensures classics don't fall to zero.
    */
-  private calculateFreshness(releaseDate?: Date | null, decayDays = 180, minFloor = 0.2): number {
+  private calculateFreshness(
+    releaseDate?: Date | string | null,
+    decayDays = 180,
+    minFloor = 0.2,
+  ): number {
     if (!releaseDate) {
       return minFloor; // Unknown release date = treat as old
+    }
+
+    // Ensure releaseDate is a Date object
+    const date = releaseDate instanceof Date ? releaseDate : new Date(releaseDate);
+    if (isNaN(date.getTime())) {
+      return minFloor; // Invalid date = treat as old
     }
 
     const now = new Date();
     const daysSinceRelease = Math.max(
       0,
-      Math.floor((now.getTime() - releaseDate.getTime()) / (1000 * 60 * 60 * 24)),
+      Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)),
     );
 
     const expDecay = Math.exp(-daysSinceRelease / decayDays);

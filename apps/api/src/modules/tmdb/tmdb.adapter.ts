@@ -34,11 +34,35 @@ export class TmdbAdapter implements IMetadataProvider {
         append_to_response: 'credits,videos,release_dates,watch/providers',
         include_video_language: 'uk,en',
       });
-      return TmdbMapper.toDomain(data, MediaType.MOVIE);
+      const result = TmdbMapper.toDomain(data, MediaType.MOVIE);
+      // Fallback: if no localized data, create minimal object for import
+      if (!result && data?.id) {
+        return {
+          externalIds: { tmdbId: data.id, imdbId: data.imdb_id || null },
+          type: MediaType.MOVIE,
+          title: data.title || data.original_title || `TMDB #${tmdbId}`,
+          originalTitle: data.original_title || null,
+          overview: data.overview || null,
+          slug: '',
+          posterPath: data.poster_path || null,
+          backdropPath: data.backdrop_path || null,
+          rating: data.vote_average || 0,
+          voteCount: data.vote_count || 0,
+          popularity: data.popularity || 0,
+          releaseDate: data.release_date || null,
+          genres: [],
+          videos: [],
+          credits: { cast: [], crew: [] },
+          watchProviders: {},
+        } as NormalizedMedia;
+      }
+      return result;
     } catch (error) {
       if (error instanceof TmdbApiException && error.details?.statusCode === 404) {
+        this.logger.warn(`TMDB movie ${tmdbId} not found (404)`);
         return null;
       }
+      this.logger.error(`TMDB getMovie error for ${tmdbId}:`, error);
       throw error;
     }
   }
@@ -53,11 +77,35 @@ export class TmdbAdapter implements IMetadataProvider {
         append_to_response: 'aggregate_credits,videos,content_ratings,watch/providers',
         include_video_language: 'uk,en',
       });
-      return TmdbMapper.toDomain(data, MediaType.SHOW);
+      const result = TmdbMapper.toDomain(data, MediaType.SHOW);
+      // Fallback: if no localized data, create minimal object for import
+      if (!result && data?.id) {
+        return {
+          externalIds: { tmdbId: data.id, imdbId: data.external_ids?.imdb_id || null },
+          type: MediaType.SHOW,
+          title: data.name || data.original_name || `TMDB #${tmdbId}`,
+          originalTitle: data.original_name || null,
+          overview: data.overview || null,
+          slug: '',
+          posterPath: data.poster_path || null,
+          backdropPath: data.backdrop_path || null,
+          rating: data.vote_average || 0,
+          voteCount: data.vote_count || 0,
+          popularity: data.popularity || 0,
+          releaseDate: data.first_air_date || null,
+          genres: [],
+          videos: [],
+          credits: { cast: [], crew: [] },
+          watchProviders: {},
+        } as NormalizedMedia;
+      }
+      return result;
     } catch (error) {
       if (error instanceof TmdbApiException && error.details?.statusCode === 404) {
+        this.logger.warn(`TMDB show ${tmdbId} not found (404)`);
         return null;
       }
+      this.logger.error(`TMDB getShow error for ${tmdbId}:`, error);
       throw error;
     }
   }
@@ -173,6 +221,12 @@ export class TmdbAdapter implements IMetadataProvider {
         releaseDate: item.release_date || item.first_air_date,
         posterPath: item.poster_path,
         rating: item.vote_average,
+        // Check if Ukrainian localization exists (title and overview)
+        hasUkrainianLocalization: !!(
+          (item.title || item.name) &&
+          item.overview &&
+          item.overview.trim() !== ''
+        ),
       }));
   }
 
