@@ -122,10 +122,21 @@ export type NewOnDigitalMoviesDto = GetData<'/api/catalog/movies/new-on-digital'
 export type SearchDto = GetData<'/api/catalog/search'>;
 
 /**
+ * Status of an import operation.
+ */
+export enum ImportStatus {
+  EXISTS = 'exists',
+  IMPORTING = 'importing',
+  READY = 'ready',
+  FAILED = 'failed',
+  NOT_FOUND = 'not_found',
+}
+
+/**
  * Import result from on-demand TMDB import.
  */
 export interface ImportResultDto {
-  status: 'exists' | 'importing' | 'ready' | 'failed' | 'not_found';
+  status: ImportStatus;
   id?: string;
   slug?: string;
   type: 'movie' | 'show';

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
 
-import { catalogApi } from '@/core/api/catalog';
+import { catalogApi, ImportStatus } from '@/core/api/catalog';
 import { queryKeys } from '@/core/query/keys';
 
 /**
@@ -57,11 +57,11 @@ export function useSearch() {
         : catalogApi.importShow(tmdbId);
     },
     onSuccess: (result) => {
-      if (result.status === 'ready' && result.slug) {
+      if (result.status === ImportStatus.READY && result.slug) {
         setOpen(false);
         setQuery('');
         router.push(result.type === 'movie' ? `/movies/${result.slug}` : `/shows/${result.slug}`);
-      } else if (result.status === 'importing' || result.status === 'exists') {
+      } else if (result.status === ImportStatus.IMPORTING || result.status === ImportStatus.EXISTS) {
         setOpen(false);
         setQuery('');
         router.push(`/import/${result.tmdbId}?type=${result.type}` as any);

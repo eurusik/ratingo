@@ -13,6 +13,7 @@ import { CatalogSearchService } from '../../application/services/catalog-search.
 import {
   CatalogImportService,
   ImportResult,
+  ImportStatus,
 } from '../../application/services/catalog-import.service';
 import { SearchResponseDto } from '../dtos/search.dto';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
@@ -20,8 +21,8 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 class ImportResultDto implements ImportResult {
-  @ApiProperty({ enum: ['exists', 'importing', 'ready', 'failed', 'not_found'] })
-  status: 'exists' | 'importing' | 'ready' | 'failed' | 'not_found';
+  @ApiProperty({ enum: ImportStatus })
+  status: ImportStatus;
 
   @ApiProperty({ required: false })
   id?: string;

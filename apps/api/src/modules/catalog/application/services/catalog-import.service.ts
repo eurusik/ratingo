@@ -11,8 +11,19 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
 
+/**
+ * Status of an import operation.
+ */
+export enum ImportStatus {
+  EXISTS = 'exists',
+  IMPORTING = 'importing',
+  READY = 'ready',
+  FAILED = 'failed',
+  NOT_FOUND = 'not_found',
+}
+
 export interface ImportResult {
-  status: 'exists' | 'importing' | 'ready' | 'failed' | 'not_found';
+  status: ImportStatus;
   id?: string;
   slug?: string;
   type: MediaType;
@@ -47,7 +58,10 @@ export class CatalogImportService {
 
     if (existing) {
       return {
-        status: existing.ingestionStatus === IngestionStatus.READY ? 'ready' : 'importing',
+        status:
+          existing.ingestionStatus === IngestionStatus.READY
+            ? ImportStatus.READY
+            : ImportStatus.IMPORTING,
         id: existing.id,
         slug: existing.slug,
         type: existing.type,
@@ -64,7 +78,7 @@ export class CatalogImportService {
 
     if (!media) {
       return {
-        status: 'not_found',
+        status: ImportStatus.NOT_FOUND,
         type,
         tmdbId,
       };
@@ -92,7 +106,7 @@ export class CatalogImportService {
     this.logger.log(`Queued import for ${type} ${tmdbId}: ${media.title}`);
 
     return {
-      status: 'importing',
+      status: ImportStatus.IMPORTING,
       id: stub.id,
       slug: stub.slug,
       type,
@@ -111,11 +125,11 @@ export class CatalogImportService {
       return null;
     }
 
-    let status: ImportResult['status'] = 'importing';
+    let status: ImportStatus = ImportStatus.IMPORTING;
     if (existing.ingestionStatus === IngestionStatus.READY) {
-      status = 'ready';
+      status = ImportStatus.READY;
     } else if (existing.ingestionStatus === IngestionStatus.FAILED) {
-      status = 'failed';
+      status = ImportStatus.FAILED;
     }
 
     return {
