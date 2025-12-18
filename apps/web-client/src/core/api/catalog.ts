@@ -122,6 +122,14 @@ export type NewOnDigitalMoviesDto = GetData<'/api/catalog/movies/new-on-digital'
 export type SearchDto = GetData<'/api/catalog/search'>;
 
 /**
+ * Media type enum.
+ */
+export enum MediaType {
+  MOVIE = 'movie',
+  SHOW = 'show',
+}
+
+/**
  * Status of an import operation.
  */
 export enum ImportStatus {
@@ -139,7 +147,7 @@ export interface ImportResultDto {
   status: ImportStatus;
   id?: string;
   slug?: string;
-  type: 'movie' | 'show';
+  type: MediaType;
   tmdbId: number;
   ingestionStatus?: string;
 }

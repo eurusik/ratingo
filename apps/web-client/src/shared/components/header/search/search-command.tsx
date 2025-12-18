@@ -12,6 +12,7 @@ import {
   CommandSeparator,
 } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
+import { MediaType } from '@/core/api/catalog';
 import { useSearch } from './use-search';
 import { SearchResultItem } from './search-result-item';
 
@@ -92,7 +93,7 @@ export function SearchCommand() {
                   posterUrl={item.poster?.small}
                   slug={item.slug}
                   isLocal
-                  onSelect={() => handleSelect(item.slug!, item.type)}
+                  onSelect={() => handleSelect(item.slug!, item.type as MediaType)}
                 />
               ))}
             </CommandGroup>
@@ -114,7 +115,7 @@ export function SearchCommand() {
                     isLocal={false}
                     isImporting={importingTmdbId === item.tmdbId}
                     notImportedLabel={dict.search.notImported}
-                    onSelect={() => handleImport(item.tmdbId, item.type)}
+                    onSelect={() => handleImport(item.tmdbId, item.type as MediaType)}
                   />
                 ))}
               </CommandGroup>

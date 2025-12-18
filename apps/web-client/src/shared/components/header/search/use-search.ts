@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
 
-import { catalogApi, ImportStatus } from '@/core/api/catalog';
+import { catalogApi, ImportStatus, MediaType } from '@/core/api/catalog';
 import { queryKeys } from '@/core/query/keys';
 
 /**
@@ -39,10 +39,10 @@ export function useSearch() {
 
   // Navigate to local item
   const handleSelect = useCallback(
-    (slug: string, type: 'movie' | 'show') => {
+    (slug: string, type: MediaType) => {
       setOpen(false);
       setQuery('');
-      router.push(type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`);
+      router.push(type === MediaType.MOVIE ? `/movies/${slug}` : `/shows/${slug}`);
     },
     [router],
   );
@@ -51,8 +51,8 @@ export function useSearch() {
   const [importingTmdbId, setImportingTmdbId] = useState<number | null>(null);
 
   const importMutation = useMutation({
-    mutationFn: async ({ tmdbId, type }: { tmdbId: number; type: 'movie' | 'show' }) => {
-      return type === 'movie'
+    mutationFn: async ({ tmdbId, type }: { tmdbId: number; type: MediaType }) => {
+      return type === MediaType.MOVIE
         ? catalogApi.importMovie(tmdbId)
         : catalogApi.importShow(tmdbId);
     },
@@ -60,7 +60,7 @@ export function useSearch() {
       if (result.status === ImportStatus.READY && result.slug) {
         setOpen(false);
         setQuery('');
-        router.push(result.type === 'movie' ? `/movies/${result.slug}` : `/shows/${result.slug}`);
+        router.push(result.type === MediaType.MOVIE ? `/movies/${result.slug}` : `/shows/${result.slug}`);
       } else if (result.status === ImportStatus.IMPORTING || result.status === ImportStatus.EXISTS) {
         setOpen(false);
         setQuery('');
@@ -74,7 +74,7 @@ export function useSearch() {
   });
 
   const handleImport = useCallback(
-    (tmdbId: number, type: 'movie' | 'show') => {
+    (tmdbId: number, type: MediaType) => {
       setImportingTmdbId(tmdbId);
       importMutation.mutate({ tmdbId, type });
     },
