@@ -9,7 +9,7 @@
  */
 
 import type { GetData, GetJson, GetArrayItem, components } from '@ratingo/api-contract';
-import { apiGet } from './client';
+import { apiGet, apiPost } from './client';
 
 /**
  * Pagination params for list endpoints.
@@ -120,6 +120,18 @@ export type NewOnDigitalMoviesDto = GetData<'/api/catalog/movies/new-on-digital'
  * Search response.
  */
 export type SearchDto = GetData<'/api/catalog/search'>;
+
+/**
+ * Import result from on-demand TMDB import.
+ */
+export interface ImportResultDto {
+  status: 'exists' | 'importing' | 'ready' | 'failed' | 'not_found';
+  id?: string;
+  slug?: string;
+  type: 'movie' | 'show';
+  tmdbId: number;
+  ingestionStatus?: string;
+}
 
 /**
  * Catalog API client.
@@ -257,5 +269,26 @@ export const catalogApi = {
     return apiGet<NewEpisodesDto>('catalog/shows/new-episodes', {
       searchParams: params as Record<string, string | number>,
     });
+  },
+
+  /**
+   * Triggers on-demand import of a movie from TMDB.
+   */
+  async importMovie(tmdbId: number): Promise<ImportResultDto> {
+    return apiPost<ImportResultDto>(`catalog/import/movie/${tmdbId}`);
+  },
+
+  /**
+   * Triggers on-demand import of a show from TMDB.
+   */
+  async importShow(tmdbId: number): Promise<ImportResultDto> {
+    return apiPost<ImportResultDto>(`catalog/import/show/${tmdbId}`);
+  },
+
+  /**
+   * Checks import status by TMDB ID.
+   */
+  async checkImportStatus(tmdbId: number): Promise<ImportResultDto | null> {
+    return apiGet<ImportResultDto | null>(`catalog/import/status/${tmdbId}`);
   },
 } as const;

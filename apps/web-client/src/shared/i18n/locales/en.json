@@ -16,7 +16,15 @@
     "noResults": "Nothing found",
     "inCatalog": "In catalog",
     "fromTmdb": "Not yet added",
-    "notImported": "coming soon"
+    "notImported": "add"
+  },
+  "import": {
+    "importing": "Adding...",
+    "importingHint": "Gathering information from various sources",
+    "ready": "Done!",
+    "redirecting": "Redirecting...",
+    "failed": "Failed to add",
+    "failedHint": "Try again later or choose different content"
   },
   "error": {
     "title": "Something went wrong",

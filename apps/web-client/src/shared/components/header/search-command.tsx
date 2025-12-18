@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Search, Film, Tv, Loader2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Search, Film, Tv, Loader2, Download } from 'lucide-react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
 
 import { Button } from '@/shared/ui';
@@ -56,6 +56,43 @@ export function SearchCommand() {
       router.push(type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`);
     },
     [router]
+  );
+
+  // Import mutation for TMDB items
+  const [importingTmdbId, setImportingTmdbId] = useState<number | null>(null);
+
+  const importMutation = useMutation({
+    mutationFn: async ({ tmdbId, type }: { tmdbId: number; type: 'movie' | 'show' }) => {
+      const result = type === 'movie'
+        ? await catalogApi.importMovie(tmdbId)
+        : await catalogApi.importShow(tmdbId);
+      return result;
+    },
+    onSuccess: (result) => {
+      if (result.status === 'ready' && result.slug) {
+        // Already imported, navigate directly
+        setOpen(false);
+        setQuery('');
+        router.push(result.type === 'movie' ? `/movies/${result.slug}` : `/shows/${result.slug}`);
+      } else if (result.status === 'importing' || result.status === 'exists') {
+        // Navigate to import page with polling
+        setOpen(false);
+        setQuery('');
+        router.push(`/import/${result.tmdbId}?type=${result.type}` as any);
+      }
+      setImportingTmdbId(null);
+    },
+    onError: () => {
+      setImportingTmdbId(null);
+    },
+  });
+
+  const handleImport = useCallback(
+    (tmdbId: number, type: 'movie' | 'show') => {
+      setImportingTmdbId(tmdbId);
+      importMutation.mutate({ tmdbId, type });
+    },
+    [importMutation]
   );
 
   const hasResults = (data?.local?.length ?? 0) > 0 || (data?.tmdb?.length ?? 0) > 0;
@@ -152,45 +189,54 @@ export function SearchCommand() {
             <>
               {data?.local && data.local.length > 0 && <CommandSeparator />}
               <CommandGroup heading={dict.search.fromTmdb}>
-                {data.tmdb.slice(0, 5).map((item) => (
-                  <CommandItem
-                    key={`tmdb-${item.tmdbId}`}
-                    value={`${item.title} ${item.year ?? ''} tmdb`}
-                    disabled
-                    className="gap-3 py-2 opacity-60"
-                  >
-                    {item.poster?.small ? (
-                      <Image
-                        src={item.poster.small}
-                        alt={item.title}
-                        width={32}
-                        height={48}
-                        className="rounded object-cover"
-                      />
-                    ) : (
-                      <div className="w-8 h-12 bg-zinc-800 rounded flex items-center justify-center">
-                        {item.type === 'movie' ? (
-                          <Film className="h-4 w-4 text-zinc-600" />
-                        ) : (
-                          <Tv className="h-4 w-4 text-zinc-600" />
-                        )}
+                {data.tmdb.slice(0, 5).map((item) => {
+                  const isImporting = importingTmdbId === item.tmdbId;
+                  return (
+                    <CommandItem
+                      key={`tmdb-${item.tmdbId}`}
+                      value={`${item.title} ${item.year ?? ''} tmdb`}
+                      onSelect={() => handleImport(item.tmdbId, item.type)}
+                      disabled={isImporting}
+                      className="gap-3 py-2 cursor-pointer"
+                    >
+                      {item.poster?.small ? (
+                        <Image
+                          src={item.poster.small}
+                          alt={item.title}
+                          width={32}
+                          height={48}
+                          className="rounded object-cover"
+                        />
+                      ) : (
+                        <div className="w-8 h-12 bg-zinc-800 rounded flex items-center justify-center">
+                          {item.type === 'movie' ? (
+                            <Film className="h-4 w-4 text-zinc-600" />
+                          ) : (
+                            <Tv className="h-4 w-4 text-zinc-600" />
+                          )}
+                        </div>
+                      )}
+                      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                        <span className="truncate">{item.title}</span>
+                        <span className="text-xs text-zinc-500 flex items-center gap-1.5">
+                          {item.type === 'movie' ? (
+                            <Film className="h-3 w-3" />
+                          ) : (
+                            <Tv className="h-3 w-3" />
+                          )}
+                          {item.year && <span>{item.year}</span>}
+                          <span>•</span>
+                          <span className="text-amber-500">{dict.search.notImported}</span>
+                        </span>
                       </div>
-                    )}
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      <span className="truncate">{item.title}</span>
-                      <span className="text-xs text-zinc-500 flex items-center gap-1.5">
-                        {item.type === 'movie' ? (
-                          <Film className="h-3 w-3" />
-                        ) : (
-                          <Tv className="h-3 w-3" />
-                        )}
-                        {item.year && <span>{item.year}</span>}
-                        <span>•</span>
-                        <span className="text-zinc-600">{dict.search.notImported}</span>
-                      </span>
-                    </div>
-                  </CommandItem>
-                ))}
+                      {isImporting ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-zinc-400 shrink-0" />
+                      ) : (
+                        <Download className="h-4 w-4 text-zinc-500 shrink-0" />
+                      )}
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </>
           )}

@@ -25,7 +25,10 @@ import { MovieListingsQuery } from './infrastructure/queries/movie-listings.quer
 // Query Objects - Mixed Media
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
 import { CatalogSearchService } from './application/services/catalog-search.service';
+import { CatalogImportService } from './application/services/catalog-import.service';
 import { TmdbModule } from '../tmdb/tmdb.module';
+import { BullModule } from '@nestjs/bullmq';
+import { INGESTION_QUEUE } from '../ingestion/ingestion.constants';
 import { UserMediaModule } from '../user-media/user-media.module';
 import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
 import { CardsModule } from '../shared/cards/cards.module';
@@ -34,10 +37,16 @@ import { CardsModule } from '../shared/cards/cards.module';
  * Catalog module.
  */
 @Module({
-  imports: [TmdbModule, UserMediaModule, CardsModule],
+  imports: [
+    TmdbModule,
+    UserMediaModule,
+    CardsModule,
+    BullModule.registerQueue({ name: INGESTION_QUEUE }),
+  ],
   controllers: [CatalogMoviesController, CatalogShowsController, CatalogSearchController],
   providers: [
     CatalogSearchService,
+    CatalogImportService,
     CatalogUserStateEnricher,
     // Query Objects - Shows
     TrendingShowsQuery,
