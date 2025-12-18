@@ -15,7 +15,7 @@ import { cn } from '@/shared/utils';
 import { useScrollPosition } from '@/shared/hooks';
 import { useHeaderContext } from './header-context';
 import { UserMenu } from './user-menu';
-import { SearchCommand } from './search-command';
+import { SearchCommand } from './search';
 
 export function Header() {
   const { dict } = useTranslation();
