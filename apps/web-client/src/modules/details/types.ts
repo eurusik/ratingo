@@ -30,7 +30,7 @@ export type { BadgeKey };
  * Verdict types from backend API.
  * These match the backend VerdictDto structure.
  */
-import type { VerdictType } from './components/data-verdict';
+import type { VerdictType } from './components/data-verdict-server';
 
 export type VerdictHintKey =
   | 'newEpisodes'

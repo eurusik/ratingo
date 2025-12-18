@@ -470,3 +470,160 @@ export const mediaWatchersSnapshotsRelations = relations(mediaWatchersSnapshots,
     references: [mediaItems.id],
   }),
 }));
+
+// --- USER ACTIONS & SAVED ITEMS (Event Layer) ---
+
+/**
+ * Saved item list types.
+ */
+export const savedItemListEnum = pgEnum('saved_item_list', ['for_later', 'considering']);
+
+/**
+ * Subscription trigger types.
+ */
+export const subscriptionTriggerEnum = pgEnum('subscription_trigger', [
+  'release',
+  'new_season',
+  'on_streaming',
+]);
+
+/**
+ * USER MEDIA ACTIONS (Event Log)
+ * Tracks all user interactions with media for analytics and history.
+ */
+export const userMediaActions = pgTable(
+  'user_media_actions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    mediaItemId: uuid('media_item_id')
+      .references(() => mediaItems.id, { onDelete: 'cascade' })
+      .notNull(),
+
+    // Action type: save_for_later, consider, subscribe, unsubscribe, start_watching, mark_completed, etc.
+    action: text('action').notNull(),
+
+    // Where the action originated: verdict, card, details, hero, section:trending, etc.
+    context: text('context'),
+
+    // Verdict/reason that triggered the action: trendingNow, newSeason, criticsLoved, mixedReviews, etc.
+    reasonKey: text('reason_key'),
+
+    // Flexible payload for additional details without migrations
+    payload: jsonb('payload').$type<Record<string, unknown> | null>().default(null),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    userIdx: index('user_media_actions_user_idx').on(t.userId),
+    mediaIdx: index('user_media_actions_media_idx').on(t.mediaItemId),
+    actionIdx: index('user_media_actions_action_idx').on(t.action),
+    createdAtIdx: index('user_media_actions_created_at_idx').on(t.createdAt),
+  }),
+);
+
+/**
+ * USER SAVED ITEMS (Projection)
+ * Current state of saved items per user.
+ */
+export const userSavedItems = pgTable(
+  'user_saved_items',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    mediaItemId: uuid('media_item_id')
+      .references(() => mediaItems.id, { onDelete: 'cascade' })
+      .notNull(),
+
+    // List type: for_later (trending/new) or considering (mixed/decent ratings)
+    list: savedItemListEnum('list').notNull(),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    uniqUserMediaList: uniqueIndex('user_saved_items_user_media_list_uniq').on(
+      t.userId,
+      t.mediaItemId,
+      t.list,
+    ),
+    userIdx: index('user_saved_items_user_idx').on(t.userId),
+    userListIdx: index('user_saved_items_user_list_idx').on(t.userId, t.list),
+  }),
+);
+
+/**
+ * USER SUBSCRIPTIONS (Notifications)
+ * Tracks user subscriptions for release/season notifications.
+ */
+export const userSubscriptions = pgTable(
+  'user_subscriptions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    mediaItemId: uuid('media_item_id')
+      .references(() => mediaItems.id, { onDelete: 'cascade' })
+      .notNull(),
+
+    // What triggers the notification: release, new_season, on_streaming
+    trigger: subscriptionTriggerEnum('trigger').notNull(),
+
+    // Notification channel (for future: email, push, telegram)
+    channel: text('channel').default('push'),
+
+    isActive: boolean('is_active').default(true).notNull(),
+    lastNotifiedAt: timestamp('last_notified_at'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    uniqUserMediaTriggerChannel: uniqueIndex(
+      'user_subscriptions_user_media_trigger_channel_uniq',
+    ).on(t.userId, t.mediaItemId, t.trigger, t.channel),
+    userIdx: index('user_subscriptions_user_idx').on(t.userId),
+    userActiveIdx: index('user_subscriptions_user_active_idx').on(t.userId, t.isActive),
+    triggerIdx: index('user_subscriptions_trigger_idx').on(t.trigger),
+  }),
+);
+
+// --- RELATIONS FOR NEW TABLES ---
+
+export const userMediaActionsRelations = relations(userMediaActions, ({ one }) => ({
+  user: one(users, {
+    fields: [userMediaActions.userId],
+    references: [users.id],
+  }),
+  media: one(mediaItems, {
+    fields: [userMediaActions.mediaItemId],
+    references: [mediaItems.id],
+  }),
+}));
+
+export const userSavedItemsRelations = relations(userSavedItems, ({ one }) => ({
+  user: one(users, {
+    fields: [userSavedItems.userId],
+    references: [users.id],
+  }),
+  media: one(mediaItems, {
+    fields: [userSavedItems.mediaItemId],
+    references: [mediaItems.id],
+  }),
+}));
+
+export const userSubscriptionsRelations = relations(userSubscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [userSubscriptions.userId],
+    references: [users.id],
+  }),
+  media: one(mediaItems, {
+    fields: [userSubscriptions.mediaItemId],
+    references: [mediaItems.id],
+  }),
+}));

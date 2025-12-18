@@ -41,14 +41,14 @@ export interface SearchParams extends PaginationParams {
 }
 
 /**
- * Show details by slug.
+ * Show details by slug (unwrapped from {success, data}).
  */
-export type ShowDetailsDto = GetJson<'/api/catalog/shows/{slug}'>;
+export type ShowDetailsDto = GetData<'/api/catalog/shows/{slug}'>;
 
 /**
- * Movie details by slug.
+ * Movie details by slug (unwrapped from {success, data}).
  */
-export type MovieDetailsDto = GetJson<'/api/catalog/movies/{slug}'>;
+export type MovieDetailsDto = GetData<'/api/catalog/movies/{slug}'>;
 
 /**
  * Hero block data (array unwrapped from {success, data} by apiGet).

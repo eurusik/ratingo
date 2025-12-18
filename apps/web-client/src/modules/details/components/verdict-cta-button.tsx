@@ -5,27 +5,38 @@
 
 'use client';
 
+import type { components } from '@ratingo/api-contract';
 import { Bookmark, Check, ArrowRight, Info } from 'lucide-react';
-import type { PrimaryCta } from '@/shared/types';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
-type VerdictType = 'season_comparison' | 'user_context' | 'general' | 'quality' | 'popularity' | 'release' | 'warning';
+
+/** Primary CTA type from API. */
+type PrimaryCta = components['schemas']['CardMetaDto']['primaryCta'];
+
+/** Verdict hint key from API. */
+type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
+
+/** Verdict type from API + UI-only variants. */
+type ApiVerdictType = components['schemas']['MovieVerdictDto']['type'];
+type VerdictType = ApiVerdictType | 'season_comparison' | 'user_context';
 
 interface VerdictCtaButtonProps {
-  /** CTA type from card metadata */
+  /** CTA type from card metadata. */
   primaryCta?: PrimaryCta;
-  /** Continue point for CONTINUE CTA */
+  /** Continue point for CONTINUE CTA. */
   continuePoint?: { season: number; episode: number } | null;
-  /** Is already saved */
+  /** Is already saved. */
   isSaved?: boolean;
-  /** Has new episodes */
+  /** Has new episodes. */
   hasNewEpisodes?: boolean;
-  /** Custom hint key */
-  hintKey?: 'newEpisodes' | 'afterAllEpisodes' | 'whenOnStreaming' | 'notifyNewEpisode' | 'general' | 'forLater' | 'notifyRelease' | 'decideToWatch';
-  /** Verdict type for styling */
+  /** Custom hint key. */
+  hintKey?: VerdictHintKey;
+  /** Verdict type for styling. */
   verdictType: VerdictType;
-  /** Dictionary for translations */
+  /** Dictionary for translations. */
   dict: ReturnType<typeof getDictionary>;
+  /** Callback for save/unsave action. */
+  onSave?: () => void;
 }
 
 export function VerdictCtaButton({
@@ -36,18 +47,19 @@ export function VerdictCtaButton({
   hintKey,
   verdictType,
   dict,
+  onSave,
 }: VerdictCtaButtonProps) {
-  // Handle CTA click
   const handleClick = () => {
-    // TODO: Implement actual save/continue/open logic
-    console.log('CTA clicked:', primaryCta);
-    
-    if (primaryCta === 'SAVE') {
-      console.log('TODO: Add to watchlist');
-    } else if (primaryCta === 'CONTINUE') {
-      console.log('TODO: Navigate to continue point:', continuePoint);
-    } else if (primaryCta === 'OPEN') {
-      console.log('TODO: Navigate to details/episodes');
+    switch (primaryCta) {
+      case 'SAVE':
+        onSave?.();
+        break;
+      case 'CONTINUE':
+        // TODO: Navigate to continue point
+        break;
+      case 'OPEN':
+        // TODO: Navigate to details/episodes
+        break;
     }
   };
 

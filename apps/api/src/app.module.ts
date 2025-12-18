@@ -14,6 +14,7 @@ import { InsightsModule } from './modules/insights/insights.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { UserMediaModule } from './modules/user-media/user-media.module';
+import { UserActionsModule } from './modules/user-actions/user-actions.module';
 
 import { BullModule } from '@nestjs/bullmq';
 
@@ -79,6 +80,7 @@ import { BullModule } from '@nestjs/bullmq';
     AuthModule,
     UsersModule,
     UserMediaModule,
+    UserActionsModule,
   ],
   controllers: [],
   providers: [],

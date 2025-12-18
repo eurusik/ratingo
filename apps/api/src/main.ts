@@ -15,6 +15,15 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
 
+  // CORS configuration
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN?.split(',') || [
+      'http://localhost:3002',
+      'http://localhost:3000',
+    ],
+    credentials: true,
+  });
+
   // Global configuration
   app.setGlobalPrefix('api');
 
@@ -27,7 +36,7 @@ async function bootstrap(): Promise<void> {
       transformOptions: {
         enableImplicitConversion: true, // Convert string "123" to number 123
       },
-    })
+    }),
   );
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());

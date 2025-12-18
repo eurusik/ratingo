@@ -71,4 +71,23 @@ export const queryKeys = {
     ratings: (username: string, params?: Record<string, unknown>) =>
       ['users', username, 'ratings', params] as const,
   },
+
+  /** User actions (saved items, subscriptions). */
+  userActions: {
+    all: ['user-actions'] as const,
+    savedItems: {
+      all: ['user-actions', 'saved-items'] as const,
+      status: (mediaItemId: string) =>
+        [...queryKeys.userActions.savedItems.all, 'status', mediaItemId] as const,
+      list: (list: string, params?: Record<string, unknown>) =>
+        [...queryKeys.userActions.savedItems.all, 'list', list, params] as const,
+    },
+    subscriptions: {
+      all: ['user-actions', 'subscriptions'] as const,
+      status: (mediaItemId: string) =>
+        [...queryKeys.userActions.subscriptions.all, 'status', mediaItemId] as const,
+      list: (params?: Record<string, unknown>) =>
+        [...queryKeys.userActions.subscriptions.all, 'list', params] as const,
+    },
+  },
 } as const;

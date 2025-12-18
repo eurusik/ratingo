@@ -196,6 +196,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
         {/* 2. Data Verdict with integrated CTA - Details only */}
         {apiShow.verdict?.messageKey && (
           <DataVerdict
+            mediaItemId={show.id}
             type={apiShow.verdict.type as any}
             message={dict.details.verdict.show[apiShow.verdict.messageKey as keyof typeof dict.details.verdict.show] || ''}
             context={apiShow.statusHint?.messageKey 
@@ -203,7 +204,6 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
               : apiShow.verdict.context || undefined}
             showCta
             ctaProps={{
-              isSaved: false,
               hintKey: apiShow.verdict.hintKey as any,
               primaryCta: show.card?.primaryCta,
               continuePoint: show.card?.continue,

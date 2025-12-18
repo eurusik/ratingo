@@ -2,33 +2,21 @@
 
 /**
  * Root application providers.
- *
- * Combines all context providers in correct nesting order.
+ * Combines theme, i18n, query, and toast providers.
  */
 
 import { ThemeProvider } from 'next-themes';
 import NextTopLoader from 'nextjs-toploader';
+import { Toaster } from 'sonner';
 import { QueryProvider } from './query-provider';
 import { I18nProvider, type Locale, DEFAULT_LOCALE } from '@/shared/i18n';
 
 interface AppProvidersProps {
   children: React.ReactNode;
-  /** Current locale (defaults to uk). */
+  /** Current locale. */
   locale?: Locale;
 }
 
-/**
- * Wraps application with all necessary providers.
- *
- * Provider order (outer to inner):
- * 1. ThemeProvider - Theme context
- * 2. I18nProvider - Translation context
- * 3. QueryProvider - TanStack Query context
- *
- * @param props - Component props
- * @param props.children - Child components
- * @param props.locale - Current locale
- */
 export function AppProviders({ children, locale = DEFAULT_LOCALE }: AppProvidersProps) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" disableTransitionOnChange>
@@ -39,6 +27,17 @@ export function AppProviders({ children, locale = DEFAULT_LOCALE }: AppProviders
             height={3}
             showSpinner={false}
             shadow="0 0 10px #3b82f6,0 0 5px #3b82f6"
+          />
+          <Toaster
+            theme="dark"
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: '#18181b',
+                border: '1px solid #27272a',
+                color: '#fafafa',
+              },
+            }}
           />
           {children}
         </QueryProvider>

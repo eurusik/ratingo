@@ -124,6 +124,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/shows/new-episodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Shows with new episodes
+         * @description Returns shows that have aired new episodes recently. One entry per show with the latest episode.
+         */
+        get: operations["CatalogShowsController_getNewEpisodes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/shows/calendar": {
         parameters: {
             query?: never;
@@ -777,6 +797,127 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/saved-items/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save media item to a list (auth: Bearer) */
+        post: operations["SavedItemsController_saveItem"];
+        /** Remove media item from a list (auth: Bearer) */
+        delete: operations["SavedItemsController_unsaveItem"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/{mediaItemId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get save status for media item (auth: Bearer) */
+        get: operations["SavedItemsController_getStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/for-later": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List "for later" saved items (auth: Bearer) */
+        get: operations["SavedItemsController_listForLater"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/considering": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List "considering" saved items (auth: Bearer) */
+        get: operations["SavedItemsController_listConsidering"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/subscriptions/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Subscribe to notifications for media item (auth: Bearer) */
+        post: operations["SubscriptionsController_subscribe"];
+        /** Unsubscribe from notifications for media item (auth: Bearer) */
+        delete: operations["SubscriptionsController_unsubscribe"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/subscriptions/{mediaItemId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get subscription status for media item (auth: Bearer) */
+        get: operations["SubscriptionsController_getStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List active subscriptions (auth: Bearer) */
+        get: operations["SubscriptionsController_listActive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1246,6 +1387,27 @@ export interface components {
         TrendingShowsResponseDto: {
             data: components["schemas"]["ShowTrendingItemDto"][];
             meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        NewEpisodeDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            showId: string;
+            /** @example arcane */
+            slug: string;
+            /** @example Arcane */
+            title: string;
+            /** @example /path/to/poster.jpg */
+            posterPath?: string | null;
+            /** @example 2 */
+            seasonNumber: number;
+            /** @example 5 */
+            episodeNumber: number;
+            /** @example Heavy Is the Crown */
+            episodeTitle: string;
+            /** Format: date-time */
+            airDate: string;
+        };
+        NewEpisodesResponseDto: {
+            data: components["schemas"]["NewEpisodeDto"][];
         };
         CalendarEpisodeDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
@@ -1858,6 +2020,216 @@ export interface components {
             risers: components["schemas"]["RiseFallItemDto"][];
             fallers: components["schemas"]["RiseFallItemDto"][];
         };
+        SaveItemDto: {
+            /**
+             * @description List to save to: for_later or considering
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /**
+             * @description Where the action originated
+             * @example verdict
+             */
+            context?: string;
+            /**
+             * @description Verdict/reason that triggered the action
+             * @example trendingNow
+             */
+            reasonKey?: string;
+        };
+        MediaSaveStatusDto: {
+            /**
+             * @description Is saved in "for later" list
+             * @example true
+             */
+            isForLater: boolean;
+            /**
+             * @description Is saved in "considering" list
+             * @example false
+             */
+            isConsidering: boolean;
+        };
+        SaveActionResultDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /** @description Current save status after action */
+            status: components["schemas"]["MediaSaveStatusDto"];
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        UnsaveItemDto: {
+            /**
+             * @description List to remove from
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /** @example card */
+            context?: string;
+        };
+        UnsaveActionResultDto: {
+            /** @example true */
+            removed: boolean;
+            /** @description Current save status after action */
+            status: components["schemas"]["MediaSaveStatusDto"];
+        };
+        SavedItemWithMediaResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @example {
+             *       "id": "123e4567-e89b-12d3-a456-426614174000",
+             *       "type": "movie",
+             *       "title": "Inception",
+             *       "slug": "inception-2010",
+             *       "poster": {
+             *         "w92": "...",
+             *         "w185": "...",
+             *         "w342": "...",
+             *         "w500": "...",
+             *         "w780": "...",
+             *         "original": "..."
+             *       }
+             *     }
+             */
+            mediaSummary: Record<string, never>;
+        };
+        SubscribeDto: {
+            /**
+             * @description Trigger type: release, new_season, or on_streaming
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "on_streaming";
+            /**
+             * @description Where the action originated
+             * @example verdict
+             */
+            context?: string;
+            /**
+             * @description Verdict/reason that triggered the action
+             * @example upcomingHit
+             */
+            reasonKey?: string;
+        };
+        MediaSubscriptionStatusDto: {
+            /**
+             * @description Active subscription triggers
+             * @example [
+             *       "release"
+             *     ]
+             */
+            triggers: string[];
+            /**
+             * @description Has active release subscription
+             * @example true
+             */
+            hasRelease: boolean;
+            /**
+             * @description Has active new season subscription
+             * @example false
+             */
+            hasNewSeason: boolean;
+            /**
+             * @description Has active on streaming subscription
+             * @example false
+             */
+            hasOnStreaming: boolean;
+        };
+        SubscribeActionResultDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "on_streaming";
+            /** @example true */
+            isActive: boolean;
+            /** @description Current subscription status after action */
+            status: components["schemas"]["MediaSubscriptionStatusDto"];
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        UnsubscribeDto: {
+            /**
+             * @description Trigger type to unsubscribe from
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "on_streaming";
+            /** @example card */
+            context?: string;
+        };
+        UnsubscribeActionResultDto: {
+            /** @example true */
+            unsubscribed: boolean;
+            /** @description Current subscription status after action */
+            status: components["schemas"]["MediaSubscriptionStatusDto"];
+        };
+        SubscriptionWithMediaResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "on_streaming";
+            /** @example true */
+            isActive: boolean;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @example {
+             *       "id": "123e4567-e89b-12d3-a456-426614174000",
+             *       "type": "movie",
+             *       "title": "Inception",
+             *       "slug": "inception-2010",
+             *       "poster": {
+             *         "w92": "...",
+             *         "w185": "...",
+             *         "w342": "...",
+             *         "w500": "...",
+             *         "w780": "...",
+             *         "original": "..."
+             *       }
+             *     }
+             */
+            mediaSummary: Record<string, never>;
+        };
     };
     responses: never;
     parameters: never;
@@ -1901,7 +2273,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
                 };
             };
         };
@@ -1940,7 +2316,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
                 };
             };
         };
@@ -1981,7 +2361,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
                 };
             };
         };
@@ -2022,7 +2406,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
                 };
             };
         };
@@ -2043,7 +2431,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MovieResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MovieResponseDto"];
+                    };
                 };
             };
         };
@@ -2082,7 +2474,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TrendingShowsResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["TrendingShowsResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    CatalogShowsController_getNewEpisodes: {
+        parameters: {
+            query?: {
+                /** @description Number of days to look back (default: 7). */
+                days?: number;
+                /** @description Max number of shows to return (default: 20). */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["NewEpisodesResponseDto"];
+                    };
                 };
             };
         };
@@ -2106,7 +2530,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CalendarResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["CalendarResponseDto"];
+                    };
                 };
             };
         };
@@ -2127,7 +2555,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ShowResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ShowResponseDto"];
+                    };
                 };
             };
         };
@@ -2148,7 +2580,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SearchResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SearchResponseDto"];
+                    };
                 };
             };
         };
@@ -2173,7 +2609,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMediaStateDto"][];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"][];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -2203,7 +2643,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMediaStateDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -2237,7 +2681,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMediaStateDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -2269,7 +2717,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMediaStateDto"][];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"][];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -2299,7 +2751,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2322,7 +2778,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2345,7 +2805,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2368,7 +2832,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2392,7 +2860,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthTokensDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
                 };
             };
         };
@@ -2416,7 +2888,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthTokensDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
                 };
             };
             /** @description Invalid credentials */
@@ -2447,7 +2923,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthTokensDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
                 };
             };
         };
@@ -2484,7 +2964,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MeDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MeDto"];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -2576,7 +3060,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AvatarUploadUrlDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AvatarUploadUrlDto"];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -2627,7 +3115,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2652,7 +3144,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2677,7 +3173,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2700,12 +3200,16 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        id?: string;
-                        /** @enum {string} */
-                        status?: "queued" | "processing" | "ready" | "failed";
-                        errorMessage?: string | null;
-                        /** Format: date-time */
-                        updatedAt?: string | null;
+                        /** @enum {boolean} */
+                        success: true;
+                        data: {
+                            id?: string;
+                            /** @enum {string} */
+                            status?: "queued" | "processing" | "ready" | "failed";
+                            errorMessage?: string | null;
+                            /** Format: date-time */
+                            updatedAt?: string | null;
+                        };
                     };
                 };
             };
@@ -2973,7 +3477,265 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RiseFallResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["RiseFallResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_saveItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveItemDto"];
+            };
+        };
+        responses: {
+            /** @description Item saved with current status */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SaveActionResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_unsaveItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnsaveItemDto"];
+            };
+        };
+        responses: {
+            /** @description Item removed with current status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnsaveActionResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_getStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MediaSaveStatusDto"];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_listForLater: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_listConsidering: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+                    };
+                };
+            };
+        };
+    };
+    SubscriptionsController_subscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscribeDto"];
+            };
+        };
+        responses: {
+            /** @description Subscribed with current status */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SubscribeActionResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    SubscriptionsController_unsubscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnsubscribeDto"];
+            };
+        };
+        responses: {
+            /** @description Unsubscribed with current status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnsubscribeActionResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    SubscriptionsController_getStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MediaSubscriptionStatusDto"];
+                    };
+                };
+            };
+        };
+    };
+    SubscriptionsController_listActive: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SubscriptionWithMediaResponseDto"][];
+                    };
                 };
             };
         };

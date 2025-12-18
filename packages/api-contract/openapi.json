@@ -133,7 +133,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -276,7 +291,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -428,7 +458,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -580,7 +625,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -612,7 +672,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MovieResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MovieResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -755,7 +830,79 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TrendingShowsResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TrendingShowsResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/shows/new-episodes": {
+      "get": {
+        "operationId": "CatalogShowsController_getNewEpisodes",
+        "summary": "Shows with new episodes",
+        "description": "Returns shows that have aired new episodes recently. One entry per show with the latest episode.",
+        "parameters": [
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "description": "Number of days to look back (default: 7).",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max number of shows to return (default: 20).",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/NewEpisodesResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -797,7 +944,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CalendarResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CalendarResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -829,7 +991,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ShowResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ShowResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -860,7 +1037,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SearchResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SearchResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -901,9 +1093,24 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserMediaStateDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserMediaStateDto"
+                      }
+                    }
                   }
                 }
               }
@@ -944,7 +1151,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserMediaStateDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserMediaStateDto"
+                    }
+                  }
                 }
               }
             }
@@ -992,7 +1214,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserMediaStateDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserMediaStateDto"
+                    }
+                  }
                 }
               }
             }
@@ -1041,9 +1278,24 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserMediaStateDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserMediaStateDto"
+                      }
+                    }
                   }
                 }
               }
@@ -1107,7 +1359,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -1167,7 +1434,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -1227,7 +1509,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -1287,7 +1584,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -1324,7 +1636,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokensDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokensDto"
+                    }
+                  }
                 }
               }
             }
@@ -1356,7 +1683,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokensDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokensDto"
+                    }
+                  }
                 }
               }
             }
@@ -1391,7 +1733,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthTokensDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokensDto"
+                    }
+                  }
                 }
               }
             }
@@ -1433,7 +1790,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MeDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MeDto"
+                    }
+                  }
                 }
               }
             }
@@ -1551,7 +1923,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AvatarUploadUrlDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AvatarUploadUrlDto"
+                    }
+                  }
                 }
               }
             }
@@ -1646,7 +2033,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -1709,7 +2111,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -1772,7 +2189,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -1803,27 +2235,42 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
                   "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
+                    "success": {
+                      "type": "boolean",
                       "enum": [
-                        "queued",
-                        "processing",
-                        "ready",
-                        "failed"
+                        true
                       ]
                     },
-                    "errorMessage": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "nullable": true
+                    "data": {
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "processing",
+                            "ready",
+                            "failed"
+                          ]
+                        },
+                        "errorMessage": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        }
+                      }
                     }
                   }
                 }
@@ -2194,7 +2641,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RiseFallResponseDto"
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RiseFallResponseDto"
+                    }
+                  }
                 }
               }
             }
@@ -2202,6 +2664,540 @@
         },
         "tags": [
           "Public: Insights"
+        ]
+      }
+    },
+    "/api/me/saved-items/{mediaItemId}": {
+      "post": {
+        "operationId": "SavedItemsController_saveItem",
+        "summary": "Save media item to a list (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item saved with current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SaveActionResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "SavedItemsController_unsaveItem",
+        "summary": "Remove media item from a list (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnsaveItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Item removed with current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UnsaveActionResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-items/{mediaItemId}/status": {
+      "get": {
+        "operationId": "SavedItemsController_getStatus",
+        "summary": "Get save status for media item (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MediaSaveStatusDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-items/for-later": {
+      "get": {
+        "operationId": "SavedItemsController_listForLater",
+        "summary": "List \"for later\" saved items (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-items/considering": {
+      "get": {
+        "operationId": "SavedItemsController_listConsidering",
+        "summary": "List \"considering\" saved items (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/subscriptions/{mediaItemId}": {
+      "post": {
+        "operationId": "SubscriptionsController_subscribe",
+        "summary": "Subscribe to notifications for media item (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscribeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscribed with current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SubscribeActionResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "SubscriptionsController_unsubscribe",
+        "summary": "Unsubscribe from notifications for media item (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnsubscribeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unsubscribed with current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UnsubscribeActionResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/subscriptions/{mediaItemId}/status": {
+      "get": {
+        "operationId": "SubscriptionsController_getStatus",
+        "summary": "Get subscription status for media item (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/subscriptions": {
+      "get": {
+        "operationId": "SubscriptionsController_listActive",
+        "summary": "List active subscriptions (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SubscriptionWithMediaResponseDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       }
     }
@@ -3356,6 +4352,67 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "NewEpisodeDto": {
+        "type": "object",
+        "properties": {
+          "showId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "slug": {
+            "type": "string",
+            "example": "arcane"
+          },
+          "title": {
+            "type": "string",
+            "example": "Arcane"
+          },
+          "posterPath": {
+            "type": "string",
+            "example": "/path/to/poster.jpg",
+            "nullable": true
+          },
+          "seasonNumber": {
+            "type": "number",
+            "example": 2
+          },
+          "episodeNumber": {
+            "type": "number",
+            "example": 5
+          },
+          "episodeTitle": {
+            "type": "string",
+            "example": "Heavy Is the Crown"
+          },
+          "airDate": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "showId",
+          "slug",
+          "title",
+          "seasonNumber",
+          "episodeNumber",
+          "episodeTitle",
+          "airDate"
+        ]
+      },
+      "NewEpisodesResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NewEpisodeDto"
+            }
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "CalendarEpisodeDto": {
@@ -4867,6 +5924,395 @@
           "metric",
           "risers",
           "fallers"
+        ]
+      },
+      "SaveItemDto": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later",
+            "description": "List to save to: for_later or considering"
+          },
+          "context": {
+            "type": "string",
+            "example": "verdict",
+            "description": "Where the action originated"
+          },
+          "reasonKey": {
+            "type": "string",
+            "example": "trendingNow",
+            "description": "Verdict/reason that triggered the action"
+          }
+        },
+        "required": [
+          "list"
+        ]
+      },
+      "MediaSaveStatusDto": {
+        "type": "object",
+        "properties": {
+          "isForLater": {
+            "type": "boolean",
+            "example": true,
+            "description": "Is saved in \"for later\" list"
+          },
+          "isConsidering": {
+            "type": "boolean",
+            "example": false,
+            "description": "Is saved in \"considering\" list"
+          }
+        },
+        "required": [
+          "isForLater",
+          "isConsidering"
+        ]
+      },
+      "SaveActionResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later"
+          },
+          "status": {
+            "description": "Current save status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSaveStatusDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "list",
+          "status",
+          "createdAt"
+        ]
+      },
+      "UnsaveItemDto": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later",
+            "description": "List to remove from"
+          },
+          "context": {
+            "type": "string",
+            "example": "card"
+          }
+        },
+        "required": [
+          "list"
+        ]
+      },
+      "UnsaveActionResultDto": {
+        "type": "object",
+        "properties": {
+          "removed": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "description": "Current save status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSaveStatusDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "removed",
+          "status"
+        ]
+      },
+      "SavedItemWithMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "mediaSummary": {
+            "type": "object",
+            "example": {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "movie",
+              "title": "Inception",
+              "slug": "inception-2010",
+              "poster": {
+                "w92": "...",
+                "w185": "...",
+                "w342": "...",
+                "w500": "...",
+                "w780": "...",
+                "original": "..."
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "list",
+          "createdAt",
+          "mediaSummary"
+        ]
+      },
+      "SubscribeDto": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "on_streaming"
+            ],
+            "example": "release",
+            "description": "Trigger type: release, new_season, or on_streaming"
+          },
+          "context": {
+            "type": "string",
+            "example": "verdict",
+            "description": "Where the action originated"
+          },
+          "reasonKey": {
+            "type": "string",
+            "example": "upcomingHit",
+            "description": "Verdict/reason that triggered the action"
+          }
+        },
+        "required": [
+          "trigger"
+        ]
+      },
+      "MediaSubscriptionStatusDto": {
+        "type": "object",
+        "properties": {
+          "triggers": {
+            "example": [
+              "release"
+            ],
+            "description": "Active subscription triggers",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hasRelease": {
+            "type": "boolean",
+            "example": true,
+            "description": "Has active release subscription"
+          },
+          "hasNewSeason": {
+            "type": "boolean",
+            "example": false,
+            "description": "Has active new season subscription"
+          },
+          "hasOnStreaming": {
+            "type": "boolean",
+            "example": false,
+            "description": "Has active on streaming subscription"
+          }
+        },
+        "required": [
+          "triggers",
+          "hasRelease",
+          "hasNewSeason",
+          "hasOnStreaming"
+        ]
+      },
+      "SubscribeActionResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "on_streaming"
+            ],
+            "example": "release"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "description": "Current subscription status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "trigger",
+          "isActive",
+          "status",
+          "createdAt"
+        ]
+      },
+      "UnsubscribeDto": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "on_streaming"
+            ],
+            "example": "release",
+            "description": "Trigger type to unsubscribe from"
+          },
+          "context": {
+            "type": "string",
+            "example": "card"
+          }
+        },
+        "required": [
+          "trigger"
+        ]
+      },
+      "UnsubscribeActionResultDto": {
+        "type": "object",
+        "properties": {
+          "unsubscribed": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "description": "Current subscription status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "unsubscribed",
+          "status"
+        ]
+      },
+      "SubscriptionWithMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "on_streaming"
+            ],
+            "example": "release"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "mediaSummary": {
+            "type": "object",
+            "example": {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "movie",
+              "title": "Inception",
+              "slug": "inception-2010",
+              "poster": {
+                "w92": "...",
+                "w185": "...",
+                "w342": "...",
+                "w500": "...",
+                "w780": "...",
+                "original": "..."
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "trigger",
+          "isActive",
+          "createdAt",
+          "mediaSummary"
         ]
       }
     }

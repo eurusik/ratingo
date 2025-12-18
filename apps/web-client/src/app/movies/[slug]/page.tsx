@@ -192,12 +192,12 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           const message = dict.details.verdict.movie[verdict.messageKey as MovieVerdictMessageKey];
           return (
             <DataVerdict
+              mediaItemId={movie.id}
               type={verdict.type}
               message={message}
               context={verdict.context ?? undefined}
               showCta
               ctaProps={{
-                isSaved: false,
                 hintKey: verdict.hintKey,
                 primaryCta: movie.card?.primaryCta,
               }}
