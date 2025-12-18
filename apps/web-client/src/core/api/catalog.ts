@@ -37,7 +37,7 @@ export interface TrendingMoviesParams extends PaginationParams {
  * Search query params.
  */
 export interface SearchParams extends PaginationParams {
-  q: string;
+  query: string;
 }
 
 /**

@@ -44,7 +44,7 @@ export function SearchCommand() {
   // Search query
   const { data, isLoading } = useQuery({
     queryKey: queryKeys.search.results(debouncedQuery),
-    queryFn: () => catalogApi.search({ q: debouncedQuery }),
+    queryFn: () => catalogApi.search({ query: debouncedQuery }),
     enabled: debouncedQuery.length >= 2,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
