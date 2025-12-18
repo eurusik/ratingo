@@ -16,8 +16,6 @@ interface SearchResultItemProps {
   isLocal: boolean;
   isImporting?: boolean;
   notImportedLabel?: string;
-  noUkrainianLabel?: string;
-  hasUkrainianLocalization?: boolean;
   onSelect: () => void;
 }
 
@@ -34,20 +32,17 @@ export function SearchResultItem({
   isLocal,
   isImporting,
   notImportedLabel,
-  noUkrainianLabel,
-  hasUkrainianLocalization = true,
   onSelect,
 }: SearchResultItemProps) {
-  const canImport = isLocal || hasUkrainianLocalization;
   const TypeIcon = type === 'movie' ? Film : Tv;
 
   return (
     <CommandItem
       key={`${isLocal ? 'local' : 'tmdb'}-${tmdbId}`}
       value={`${title} ${year ?? ''} ${isLocal ? '' : 'tmdb'}`}
-      onSelect={canImport ? onSelect : undefined}
-      disabled={isImporting || !canImport}
-      className={`gap-3 py-2 ${canImport ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+      onSelect={onSelect}
+      disabled={isImporting}
+      className="gap-3 py-2 cursor-pointer"
     >
       {/* Poster */}
       {posterUrl ? (
@@ -76,13 +71,7 @@ export function SearchResultItem({
               <span>★ {rating.toFixed(1)}</span>
             </>
           )}
-          {!isLocal && !hasUkrainianLocalization && noUkrainianLabel && (
-            <>
-              <span>•</span>
-              <span className="text-red-400">{noUkrainianLabel}</span>
-            </>
-          )}
-          {!isLocal && hasUkrainianLocalization && notImportedLabel && (
+          {!isLocal && notImportedLabel && (
             <>
               <span>•</span>
               <span className="text-amber-500">{notImportedLabel}</span>
@@ -92,7 +81,7 @@ export function SearchResultItem({
       </div>
 
       {/* Import indicator */}
-      {!isLocal && canImport && (
+      {!isLocal && (
         isImporting ? (
           <Loader2 className="h-4 w-4 animate-spin text-zinc-400 shrink-0" />
         ) : (

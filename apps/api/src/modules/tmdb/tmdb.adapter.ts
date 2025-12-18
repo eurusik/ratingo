@@ -221,12 +221,6 @@ export class TmdbAdapter implements IMetadataProvider {
         releaseDate: item.release_date || item.first_air_date,
         posterPath: item.poster_path,
         rating: item.vote_average,
-        // Check if Ukrainian localization exists (title and overview)
-        hasUkrainianLocalization: !!(
-          (item.title || item.name) &&
-          item.overview &&
-          item.overview.trim() !== ''
-        ),
       }));
   }
 

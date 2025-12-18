@@ -59,7 +59,6 @@ export class CatalogSearchService {
         poster: ImageMapper.toPoster(r.posterPath),
         rating: r.rating || 0,
         isImported: true,
-        hasUkrainianLocalization: true, // Already imported = has localization
       }));
 
       // Filter and map TMDB results
@@ -75,7 +74,6 @@ export class CatalogSearchService {
           poster: ImageMapper.toPoster(r.posterPath),
           rating: r.rating || 0,
           isImported: false,
-          hasUkrainianLocalization: r.hasUkrainianLocalization ?? false,
         }))
         // Limit TMDB results to avoid overwhelming the client
         .slice(0, 10);

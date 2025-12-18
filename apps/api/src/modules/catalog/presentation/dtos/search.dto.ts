@@ -46,12 +46,6 @@ export class SearchItemDto {
     description: 'If true, this TMDB item already exists in local DB',
   })
   isImported?: boolean;
-
-  @ApiProperty({
-    example: true,
-    description: 'If false, item has no Ukrainian localization and cannot be imported',
-  })
-  hasUkrainianLocalization?: boolean;
 }
 
 export class SearchResponseDto {
