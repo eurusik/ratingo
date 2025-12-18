@@ -14,6 +14,7 @@ import {
   RATING_THRESHOLDS,
   SPREAD_THRESHOLDS,
   TIME_WINDOWS,
+  AGE_THRESHOLDS,
 } from '../domain/verdict.constants';
 import { aggregateRatings, formatRatingContext } from '../domain/rating-aggregator';
 
@@ -34,7 +35,14 @@ export class ShowVerdictService {
    * Computes verdict for a show.
    */
   compute(input: ShowVerdictInput): ShowVerdictResult {
-    const { status, externalRatings, badgeKey, totalSeasons, lastAirDate } = input;
+    const { status, externalRatings, badgeKey, totalSeasons, lastAirDate, firstAirDate } = input;
+
+    // Calculate content age in years
+    const contentAgeYears = firstAirDate
+      ? (Date.now() - new Date(firstAirDate).getTime()) / (1000 * 60 * 60 * 24 * 365)
+      : 0;
+    const isOlderContent = contentAgeYears >= AGE_THRESHOLDS.OLDER_CONTENT_YEARS;
+    const isClassic = contentAgeYears >= AGE_THRESHOLDS.CLASSIC_YEARS;
 
     // Aggregate ratings from all sources
     const { consensusRating, spread, totalVotes, ratingsCount, primarySource } =
@@ -189,7 +197,33 @@ export class ShowVerdictService {
     // ═══════════════════════════════════════════════════════════════
 
     // Trending Now - high current interest
+    // For older content, use age-appropriate messaging
     if (badgeKey === BADGE_KEY.TRENDING || badgeKey === BADGE_KEY.HIT) {
+      if (isClassic && isGoodQuality) {
+        // 10+ years old with good ratings = timeless favorite
+        return buildResult(
+          {
+            type: 'quality',
+            messageKey: 'timelessFavorite',
+            context: formatContext(consensusRating),
+            hintKey: 'forLater',
+          },
+          false,
+        );
+      }
+      if (isOlderContent) {
+        // 3+ years old = steady interest, not "hype"
+        return buildResult(
+          {
+            type: 'popularity',
+            messageKey: 'steadyInterest',
+            context: formatContext(consensusRating),
+            hintKey: 'forLater',
+          },
+          false,
+        );
+      }
+      // Recent content can use "trending now"
       return buildResult(
         {
           type: 'popularity',
@@ -260,7 +294,31 @@ export class ShowVerdictService {
     // PRIORITY 6: POPULARITY
     // ═══════════════════════════════════════════════════════════════
 
+    // Rising Hype - growing popularity
+    // For older content, frame as "classic series" not "rising hype"
     if (badgeKey === BADGE_KEY.RISING) {
+      if (isClassic && isGoodQuality) {
+        return buildResult(
+          {
+            type: 'quality',
+            messageKey: 'classicSeries',
+            context: formatContext(consensusRating),
+            hintKey: 'forLater',
+          },
+          false,
+        );
+      }
+      if (isOlderContent) {
+        return buildResult(
+          {
+            type: 'popularity',
+            messageKey: 'steadyInterest',
+            context: formatContext(consensusRating),
+            hintKey: 'forLater',
+          },
+          false,
+        );
+      }
       return buildResult(
         {
           type: 'popularity',

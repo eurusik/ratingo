@@ -229,6 +229,7 @@ export class CatalogShowsController {
       popularity: show.stats?.popularityScore ?? null,
       totalSeasons: show.totalSeasons,
       lastAirDate: show.lastAirDate,
+      firstAirDate: show.releaseDate ?? null,
     });
 
     return { ...enriched, card, verdict, statusHint };

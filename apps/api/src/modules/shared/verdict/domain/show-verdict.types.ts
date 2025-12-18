@@ -24,6 +24,10 @@ export type ShowQualityVerdictKey =
   | 'earlyReviews'
   | 'mixedReviews'
   | 'noConsensusYet'
+  // Age-aware verdicts for older content
+  | 'steadyInterest'
+  | 'classicSeries'
+  | 'timelessFavorite'
   | null;
 
 /**
@@ -41,6 +45,8 @@ export interface ShowVerdictInput {
   popularity?: number | null;
   totalSeasons?: number | null;
   lastAirDate?: Date | null;
+  /** First air date for age-aware verdicts */
+  firstAirDate?: Date | null;
 }
 
 /**

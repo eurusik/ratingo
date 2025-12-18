@@ -295,7 +295,10 @@
         "risingHype": "Швидко набирає інтерес",
         "earlyReviews": "Рейтинги ще формуються",
         "mixedReviews": "Думки розділились",
-        "noConsensusYet": "Оцінки ще нестабільні"
+        "noConsensusYet": "Оцінки ще нестабільні",
+        "steadyInterest": "Залишається популярним з часом",
+        "classicSeries": "Класика серіального жанру",
+        "timelessFavorite": "Серіал, який досі люблять"
       },
       "showStatusHint": {
         "newSeason": "Новий сезон вже вийшов",

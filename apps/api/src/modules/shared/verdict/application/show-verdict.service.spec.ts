@@ -89,20 +89,22 @@ describe('ShowVerdictService', () => {
   });
 
   describe('quality signals', () => {
-    it('should return trendingNow for TRENDING badge', () => {
+    it('should return trendingNow for TRENDING badge on recent content', () => {
       const result = service.compute({
         badgeKey: BADGE_KEY.TRENDING,
         externalRatings: { imdb: { rating: 7.5, voteCount: 500 } },
+        firstAirDate: new Date(), // recent show
       });
 
       expect(result.verdict.type).toBe('popularity');
       expect(result.verdict.messageKey).toBe('trendingNow');
     });
 
-    it('should return trendingNow for HIT badge', () => {
+    it('should return trendingNow for HIT badge on recent content', () => {
       const result = service.compute({
         badgeKey: BADGE_KEY.HIT,
         externalRatings: { imdb: { rating: 7.5, voteCount: 500 } },
+        firstAirDate: new Date(), // recent show
       });
 
       expect(result.verdict.type).toBe('popularity');
@@ -172,14 +174,59 @@ describe('ShowVerdictService', () => {
   });
 
   describe('popularity verdicts', () => {
-    it('should return risingHype for RISING badge', () => {
+    it('should return risingHype for RISING badge on recent content', () => {
       const result = service.compute({
         badgeKey: BADGE_KEY.RISING,
         externalRatings: { imdb: { rating: 6.8, voteCount: 100 } },
+        firstAirDate: new Date(), // recent show
       });
 
       expect(result.verdict.type).toBe('popularity');
       expect(result.verdict.messageKey).toBe('risingHype');
+    });
+  });
+
+  describe('age-aware verdicts', () => {
+    it('should return steadyInterest for TRENDING badge on older content (3+ years)', () => {
+      const oldDate = new Date();
+      oldDate.setFullYear(oldDate.getFullYear() - 5); // 5 years old
+
+      const result = service.compute({
+        badgeKey: BADGE_KEY.TRENDING,
+        externalRatings: { imdb: { rating: 6.8, voteCount: 500 } },
+        firstAirDate: oldDate,
+      });
+
+      expect(result.verdict.type).toBe('popularity');
+      expect(result.verdict.messageKey).toBe('steadyInterest');
+    });
+
+    it('should return timelessFavorite for TRENDING badge on classic content (10+ years) with good ratings', () => {
+      const classicDate = new Date();
+      classicDate.setFullYear(classicDate.getFullYear() - 15); // 15 years old
+
+      const result = service.compute({
+        badgeKey: BADGE_KEY.TRENDING,
+        externalRatings: { imdb: { rating: 7.5, voteCount: 1000 } },
+        firstAirDate: classicDate,
+      });
+
+      expect(result.verdict.type).toBe('quality');
+      expect(result.verdict.messageKey).toBe('timelessFavorite');
+    });
+
+    it('should return steadyInterest for RISING badge on older content', () => {
+      const oldDate = new Date();
+      oldDate.setFullYear(oldDate.getFullYear() - 5); // 5 years old
+
+      const result = service.compute({
+        badgeKey: BADGE_KEY.RISING,
+        externalRatings: { imdb: { rating: 6.3, voteCount: 100 } },
+        firstAirDate: oldDate,
+      });
+
+      expect(result.verdict.type).toBe('popularity');
+      expect(result.verdict.messageKey).toBe('steadyInterest');
     });
   });
 
