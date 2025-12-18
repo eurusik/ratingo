@@ -89,6 +89,22 @@ describe('PersistenceMapper', () => {
     expect(res.releaseDate).toBeNull();
   });
 
+  it('toMediaItemUpdate should include imdbId', () => {
+    const res = PersistenceMapper.toMediaItemUpdate({
+      ...baseMedia,
+      externalIds: { tmdbId: 1, imdbId: 'tt9999999' },
+    } as any);
+    expect(res.imdbId).toBe('tt9999999');
+  });
+
+  it('toMediaItemUpdate should handle null imdbId', () => {
+    const res = PersistenceMapper.toMediaItemUpdate({
+      ...baseMedia,
+      externalIds: { tmdbId: 1, imdbId: null },
+    } as any);
+    expect(res.imdbId).toBeNull();
+  });
+
   it('toMediaStatsInsert should return null when ratingoScore undefined', () => {
     const resNull = PersistenceMapper.toMediaStatsInsert('m1', {
       ...baseMedia,
