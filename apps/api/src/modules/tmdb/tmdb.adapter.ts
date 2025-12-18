@@ -205,15 +205,13 @@ export class TmdbAdapter implements IMetadataProvider {
    * @returns {Promise<any[]>} Search results
    */
   public async searchMulti(query: string, page = 1): Promise<any[]> {
-    const data = await this.fetch(
-      '/search/multi',
-      {
-        query,
-        page: page.toString(),
-        include_adult: 'false',
-      },
-      { skipLanguage: true },
-    );
+    // TMDB search works with any language query but returns localized titles
+    // when language param is set. We keep uk-UA to get Ukrainian titles.
+    const data = await this.fetch('/search/multi', {
+      query,
+      page: page.toString(),
+      include_adult: 'false',
+    });
 
     return (data.results || [])
       .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')

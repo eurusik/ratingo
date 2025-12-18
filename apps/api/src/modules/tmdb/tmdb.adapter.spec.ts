@@ -416,16 +416,16 @@ describe('TmdbAdapter', () => {
       expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('query=test'));
     });
 
-    it('should search without language parameter (multi-language search)', async () => {
+    it('should search with Ukrainian language for localized titles', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ results: [] }),
       });
 
-      await adapter.searchMulti('Mission Impossible');
+      await adapter.searchMulti('Ходячі мерці');
 
-      // Should NOT include language parameter for multi-language search
-      expect(mockFetch).toHaveBeenCalledWith(expect.not.stringContaining('language='));
+      // Should include language=uk-UA to get Ukrainian titles in results
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('language=uk-UA'));
     });
 
     it('should map all required fields from search results', async () => {
