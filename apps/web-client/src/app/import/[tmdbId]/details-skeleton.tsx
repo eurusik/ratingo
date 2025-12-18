@@ -102,8 +102,9 @@ export function DetailsSkeleton({
         </div>
       </div>
 
-      {/* Content section skeleton */}
-      <div className="container mx-auto px-4 py-8">
+      {/* Content section skeleton - same max-w-4xl as DetailsContent */}
+      <div className="bg-zinc-950">
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Quick pitch skeleton */}
         <div className="mb-8">
           <div className="h-4 bg-zinc-800 rounded animate-pulse w-3/4 mb-2" />
@@ -155,6 +156,7 @@ export function DetailsSkeleton({
             ))}
           </div>
         </div>
+      </div>
       </div>
     </main>
   );
