@@ -10,26 +10,9 @@ import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
+import { ImportStatus, ImportResult } from '../../domain/types/import.types';
 
-/**
- * Status of an import operation.
- */
-export enum ImportStatus {
-  EXISTS = 'exists',
-  IMPORTING = 'importing',
-  READY = 'ready',
-  FAILED = 'failed',
-  NOT_FOUND = 'not_found',
-}
-
-export interface ImportResult {
-  status: ImportStatus;
-  id?: string;
-  slug?: string;
-  type: MediaType;
-  tmdbId: number;
-  ingestionStatus?: IngestionStatus;
-}
+export { ImportStatus, ImportResult };
 
 /**
  * Service for on-demand import of media from TMDB.

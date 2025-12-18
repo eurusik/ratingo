@@ -10,11 +10,8 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiParam, ApiProperty } from '@nestjs/swagger';
 import { CatalogSearchService } from '../../application/services/catalog-search.service';
-import {
-  CatalogImportService,
-  ImportResult,
-  ImportStatus,
-} from '../../application/services/catalog-import.service';
+import { CatalogImportService } from '../../application/services/catalog-import.service';
+import { ImportResult, ImportStatus } from '../../domain/types/import.types';
 import { SearchResponseDto } from '../dtos/search.dto';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { MediaType } from '../../../../common/enums/media-type.enum';
