@@ -2,6 +2,7 @@ import {
   pgTable,
   text,
   integer,
+  bigint,
   doublePrecision,
   timestamp,
   boolean,
@@ -176,8 +177,8 @@ export const movies = pgTable(
       .unique(),
 
     runtime: integer('runtime'),
-    budget: integer('budget'),
-    revenue: integer('revenue'),
+    budget: bigint('budget', { mode: 'number' }),
+    revenue: bigint('revenue', { mode: 'number' }),
     status: text('status'),
 
     // Release dates (denormalized for fast queries)
