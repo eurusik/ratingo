@@ -66,6 +66,7 @@ export class PersistenceMapper {
       videos: media.videos || null,
       credits: media.credits || null,
       watchProviders: media.watchProviders || null,
+      releaseDate: media.releaseDate,
       updatedAt: new Date(),
     };
 
