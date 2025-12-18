@@ -41,7 +41,7 @@ export function SavedItemCard({
   isRemoving,
 }: SavedItemCardProps) {
   const { dict } = useTranslation();
-  const href = type === 'movie' ? `/movie/${slug}` : `/show/${slug}`;
+  const href = type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`;
   const year = releaseDate ? new Date(releaseDate).getFullYear() : null;
   
   const reasonLabel = reasonKey && dict.saved.reason[reasonKey as keyof typeof dict.saved.reason];

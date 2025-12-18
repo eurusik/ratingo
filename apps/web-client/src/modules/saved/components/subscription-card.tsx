@@ -36,7 +36,7 @@ export function SubscriptionCard({
   isUnsubscribing,
 }: SubscriptionCardProps) {
   const { dict } = useTranslation();
-  const href = type === 'movie' ? `/movie/${slug}` : `/show/${slug}`;
+  const href = type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`;
 
   const triggerLabels: Record<SubscriptionTrigger, string> = {
     release: dict.saved.trigger.release,
