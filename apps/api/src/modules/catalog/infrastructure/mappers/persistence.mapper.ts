@@ -81,7 +81,6 @@ export class PersistenceMapper {
       imdbId: media.externalIds.imdbId || null,
       title: media.title,
       originalTitle: media.originalTitle,
-      slug: media.slug,
       overview: media.overview,
       ingestionStatus: media.ingestionStatus,
       rating: media.rating,
