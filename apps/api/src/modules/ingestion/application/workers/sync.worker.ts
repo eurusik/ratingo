@@ -176,7 +176,8 @@ export class SyncWorker extends WorkerHost {
   private async processTrendingDispatcher(pages = 5, syncStats = true): Promise<void> {
     const dispatcherStartedAt = new Date();
     // Use hour-based window for deduplication (allows 1 run per hour per type/page)
-    const window = dispatcherStartedAt.toISOString().slice(0, 13); // YYYY-MM-DDTHH
+    // Format: YYYYMMDDHH (no colons - BullMQ doesn't allow them in jobId)
+    const window = dispatcherStartedAt.toISOString().slice(0, 13).replace(/[-T]/g, '');
     this.logger.log(`Starting trending dispatcher (pages: ${pages}, syncStats: ${syncStats})...`);
 
     const types: MediaType[] = [MediaType.MOVIE, MediaType.SHOW];
@@ -187,7 +188,7 @@ export class SyncWorker extends WorkerHost {
         jobs.push({
           name: IngestionJob.SYNC_TRENDING_PAGE,
           data: { type, page },
-          opts: { jobId: `trending:${type}:${page}:${window}` },
+          opts: { jobId: `trending_${type}_${page}_${window}` },
         });
       }
     }
@@ -205,7 +206,7 @@ export class SyncWorker extends WorkerHost {
           limit: expectedLimit,
         },
         {
-          jobId: `trending-stats:${window}`,
+          jobId: `trending-stats_${window}`,
           delay: 3 * 60 * 1000, // 3 minutes delay
         },
       );
