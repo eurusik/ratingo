@@ -195,6 +195,7 @@ class InMemorySavedItemRepository implements IUserSavedItemRepository {
       userId: data.userId,
       mediaItemId: data.mediaItemId,
       list: data.list,
+      reasonKey: data.reasonKey ?? null,
       createdAt: new Date(),
       updatedAt: new Date(),
       mediaSummary: this.makeSummary(data.mediaItemId),
@@ -230,6 +231,20 @@ class InMemorySavedItemRepository implements IUserSavedItemRepository {
     return this.items
       .filter((i) => i.userId === userId && i.mediaItemId === mediaItemId)
       .map((i) => i.list);
+  }
+
+  async findListsForMediaBatch(
+    userId: string,
+    mediaItemIds: string[],
+  ): Promise<Map<string, SavedItemList[]>> {
+    const result = new Map<string, SavedItemList[]>();
+    for (const mediaItemId of mediaItemIds) {
+      const lists = this.items
+        .filter((i) => i.userId === userId && i.mediaItemId === mediaItemId)
+        .map((i) => i.list);
+      result.set(mediaItemId, lists);
+    }
+    return result;
   }
 
   async listWithMedia(userId: string, list: SavedItemList, limit = 20, offset = 0): Promise<any[]> {
@@ -500,6 +515,83 @@ describe('User Actions E2E', () => {
         .send({ list: 'for_later' });
 
       expect(res.status).toBe(401);
+    });
+
+    describe('Batch Status', () => {
+      it('should get batch status for multiple media items', async () => {
+        const token = await registerAndLogin('batch1');
+        const mediaId1 = 'batch-media-1';
+        const mediaId2 = 'batch-media-2';
+        const mediaId3 = 'batch-media-3';
+
+        // Save mediaId1 to for_later
+        await request(app.getHttpServer())
+          .post(`${savedItemsUrl}/${mediaId1}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ list: 'for_later' });
+
+        // Save mediaId2 to considering
+        await request(app.getHttpServer())
+          .post(`${savedItemsUrl}/${mediaId2}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ list: 'considering' });
+
+        // mediaId3 not saved
+
+        const res = await request(app.getHttpServer())
+          .get(`${savedItemsUrl}/status/batch`)
+          .query({ ids: `${mediaId1},${mediaId2},${mediaId3}` })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.statuses).toBeDefined();
+        expect(res.body.data.statuses[mediaId1]).toEqual({
+          isForLater: true,
+          isConsidering: false,
+        });
+        expect(res.body.data.statuses[mediaId2]).toEqual({
+          isForLater: false,
+          isConsidering: true,
+        });
+        expect(res.body.data.statuses[mediaId3]).toEqual({
+          isForLater: false,
+          isConsidering: false,
+        });
+      });
+
+      it('should return empty statuses for empty ids', async () => {
+        const token = await registerAndLogin('batch2');
+
+        const res = await request(app.getHttpServer())
+          .get(`${savedItemsUrl}/status/batch`)
+          .query({ ids: '' })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.statuses).toEqual({});
+      });
+
+      it('should limit to 100 ids', async () => {
+        const token = await registerAndLogin('batch3');
+        const manyIds = Array.from({ length: 150 }, (_, i) => `media-${i}`).join(',');
+
+        const res = await request(app.getHttpServer())
+          .get(`${savedItemsUrl}/status/batch`)
+          .query({ ids: manyIds })
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        // Should only have 100 entries max
+        expect(Object.keys(res.body.data.statuses).length).toBeLessThanOrEqual(100);
+      });
+
+      it('should require authentication for batch status', async () => {
+        const res = await request(app.getHttpServer())
+          .get(`${savedItemsUrl}/status/batch`)
+          .query({ ids: 'media-1,media-2' });
+
+        expect(res.status).toBe(401);
+      });
     });
   });
 
