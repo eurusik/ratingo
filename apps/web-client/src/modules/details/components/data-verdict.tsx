@@ -32,6 +32,8 @@ interface DataVerdictProps extends Omit<DataVerdictServerProps, 'ctaProps'> {
   hasStreamingProviders?: boolean;
   /** For shows: current production status (Returning Series, Ended, etc.) */
   showStatus?: ShowStatus;
+  /** For shows: whether there's an upcoming air date (nextAirDate in future). */
+  hasUpcomingAirDate?: boolean;
   ctaProps?: {
     hasNewEpisodes?: boolean;
     hintKey?: VerdictHintKey;
@@ -40,7 +42,7 @@ interface DataVerdictProps extends Omit<DataVerdictServerProps, 'ctaProps'> {
   };
 }
 
-export function DataVerdict({ mediaItemId, mediaType, isReleased = false, hasStreamingProviders = false, showStatus, ctaProps, ...props }: DataVerdictProps) {
+export function DataVerdict({ mediaItemId, mediaType, isReleased = false, hasStreamingProviders = false, showStatus, hasUpcomingAirDate = false, ctaProps, ...props }: DataVerdictProps) {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const openLogin = useAuthModalStore((s) => s.openLogin);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -66,7 +68,7 @@ export function DataVerdict({ mediaItemId, mediaType, isReleased = false, hasStr
   const isMutating = isSaving || isUnsaving;
   const isCtaLoading = !isHydrated || isAuthLoading || (isAuthenticated && !isFetched);
   
-  const subscriptionTrigger = getSubscriptionTrigger({ mediaType, isReleased, hasStreamingProviders, showStatus });
+  const subscriptionTrigger = getSubscriptionTrigger({ mediaType, isReleased, hasStreamingProviders, showStatus, hasUpcomingAirDate });
   const isSubscribed = subscriptionTrigger 
     ? (subscriptionStatus?.triggers?.includes(subscriptionTrigger) ?? false)
     : false;

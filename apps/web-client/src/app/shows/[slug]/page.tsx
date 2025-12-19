@@ -176,6 +176,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             mediaItemId={show.id}
             mediaType="show"
             showStatus={show.status}
+            hasUpcomingAirDate={!!show.nextAirDate && new Date(show.nextAirDate) > new Date()}
             type={apiShow.verdict.type}
             message={verdictMessage}
             messageKey={apiShow.verdict.messageKey}
