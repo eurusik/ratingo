@@ -1,6 +1,7 @@
 /**
  * Minimalist bookmark icon for media cards.
  * Self-contained with API integration.
+ * Uses SavedStatusProvider context for batch status fetching (no N+1 queries).
  */
 
 'use client';
@@ -9,7 +10,8 @@ import { Bookmark } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/shared/utils';
 import { useAuth, useAuthModalStore } from '@/core/auth';
-import { useSaveStatus, useSaveItem, useUnsaveItem } from '@/core/query';
+import { useSaveItem, useUnsaveItem } from '@/core/query';
+import { useSavedStatusContext } from '@/core/saved-status';
 
 const DEFAULT_LIST = 'for_later' as const;
 
@@ -39,6 +41,7 @@ interface CardBookmarkProps {
 /**
  * Minimalist bookmark icon - appears on hover.
  * If mediaItemId is provided, handles save/unsave automatically.
+ * Reads status from SavedStatusProvider context (batch fetched).
  */
 export function CardBookmark({ 
   mediaItemId, 
@@ -49,16 +52,16 @@ export function CardBookmark({
 }: CardBookmarkProps) {
   const { isAuthenticated } = useAuth();
   const openLogin = useAuthModalStore((s) => s.openLogin);
-
-  const { data: saveStatus } = useSaveStatus(mediaItemId ?? '', {
-    enabled: isAuthenticated && !!mediaItemId,
-  });
+  
+  // Use context for batch status (no individual API calls)
+  const statusContext = useSavedStatusContext();
+  const contextStatus = mediaItemId ? statusContext?.getStatus(mediaItemId) : undefined;
 
   const { mutate: saveItem, isPending: isSaving } = useSaveItem();
   const { mutate: unsaveItem, isPending: isUnsaving } = useUnsaveItem();
 
-  // Use prop if provided, otherwise use API status
-  const isBookmarked = isBookmarkedProp ?? saveStatus?.isForLater ?? false;
+  // Priority: prop > context > false
+  const isBookmarked = isBookmarkedProp ?? contextStatus?.isForLater ?? false;
   const isMutating = isSaving || isUnsaving;
 
   const handleClick = (e: React.MouseEvent) => {
@@ -86,7 +89,10 @@ export function CardBookmark({
       unsaveItem(
         { mediaItemId, list: DEFAULT_LIST, context: 'card' },
         {
-          onSuccess: () => toast.success('Видалено зі збережених'),
+          onSuccess: () => {
+            toast.success('Видалено зі збережених');
+            statusContext?.invalidate();
+          },
           onError: () => toast.error('Не вдалося видалити'),
         }
       );
@@ -99,7 +105,10 @@ export function CardBookmark({
           reasonKey: listContext ? LIST_CONTEXT_TO_REASON[listContext] : undefined,
         },
         {
-          onSuccess: () => toast.success('Збережено'),
+          onSuccess: () => {
+            toast.success('Збережено');
+            statusContext?.invalidate();
+          },
           onError: () => toast.error('Не вдалося зберегти'),
         }
       );

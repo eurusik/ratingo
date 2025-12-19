@@ -41,14 +41,14 @@ export interface SearchParams extends PaginationParams {
 }
 
 /**
- * Show details by slug (unwrapped from {success, data}).
+ * Show details by slug (returns ShowResponseDto directly, not wrapped).
  */
-export type ShowDetailsDto = GetData<'/api/catalog/shows/{slug}'>;
+export type ShowDetailsDto = GetJson<'/api/catalog/shows/{slug}'>;
 
 /**
- * Movie details by slug (unwrapped from {success, data}).
+ * Movie details by slug (returns MovieResponseDto directly, not wrapped).
  */
-export type MovieDetailsDto = GetData<'/api/catalog/movies/{slug}'>;
+export type MovieDetailsDto = GetJson<'/api/catalog/movies/{slug}'>;
 
 /**
  * Hero block data (array unwrapped from {success, data} by apiGet).
@@ -117,9 +117,9 @@ export type NewReleasesMoviesDto = GetData<'/api/catalog/movies/new-releases'>;
 export type NewOnDigitalMoviesDto = GetData<'/api/catalog/movies/new-on-digital'>;
 
 /**
- * Search response.
+ * Search response (returns directly, not wrapped in data).
  */
-export type SearchDto = GetData<'/api/catalog/search'>;
+export type SearchDto = GetJson<'/api/catalog/search'>;
 
 /**
  * Import result DTO from api-contract.

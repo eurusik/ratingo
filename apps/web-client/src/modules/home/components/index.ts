@@ -4,3 +4,4 @@ export { Top3SectionServer } from './top3-section-server';
 export { HeroSection } from './hero-section';
 export { TrendingCarousel } from './trending-carousel';
 export { NewEpisodeCard } from './new-episode-card';
+export { MediaCardsWithStatus } from './media-cards-with-status';

@@ -220,6 +220,51 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
     }
   }
 
+  /**
+   * Gets lists for multiple media items in batch.
+   *
+   * @param {string} userId - User identifier
+   * @param {string[]} mediaItemIds - Media item identifiers
+   * @returns {Promise<Map<string, SavedItemList[]>>} Map of mediaItemId to lists
+   */
+  async findListsForMediaBatch(
+    userId: string,
+    mediaItemIds: string[],
+  ): Promise<Map<string, SavedItemList[]>> {
+    if (mediaItemIds.length === 0) {
+      return new Map();
+    }
+
+    try {
+      const rows = await this.db
+        .select({
+          mediaItemId: schema.userSavedItems.mediaItemId,
+          list: schema.userSavedItems.list,
+        })
+        .from(schema.userSavedItems)
+        .where(
+          and(
+            eq(schema.userSavedItems.userId, userId),
+            sql`${schema.userSavedItems.mediaItemId} = ANY(${mediaItemIds})`,
+          ),
+        );
+
+      const result = new Map<string, SavedItemList[]>();
+      for (const row of rows) {
+        const lists = result.get(row.mediaItemId) ?? [];
+        lists.push(row.list as SavedItemList);
+        result.set(row.mediaItemId, lists);
+      }
+      return result;
+    } catch (error) {
+      this.logger.error(`findListsForMediaBatch failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to get batch save status', {
+        userId,
+        count: mediaItemIds.length,
+      });
+    }
+  }
+
   private mapRow(row: typeof schema.userSavedItems.$inferSelect): UserSavedItem {
     return {
       id: row.id,

@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import type { MediaCardServerProps } from '@/modules/home';
-import { MediaCardServer, HeroSection, Top3SectionServer, TrendingCarousel, NewEpisodeCard } from '@/modules/home';
+import { MediaCardServer, HeroSection, Top3SectionServer, TrendingCarousel, NewEpisodeCard, MediaCardsWithStatus } from '@/modules/home';
 import { getDictionary } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
 import { TrendingUp, Clapperboard, Sparkles, Film, Tv } from 'lucide-react';
@@ -12,8 +12,10 @@ import { TrendingUp, Clapperboard, Sparkles, Film, Tv } from 'lucide-react';
 /** Map API item to MediaCardServerProps */
 function toCardProps(item: Record<string, unknown>, type: 'show' | 'movie'): MediaCardServerProps {
   const card = item.card as Record<string, unknown> | undefined;
+  // Use mediaItemId for saving (foreign key to media_items), fallback to id for shows
+  const mediaItemId = (item.mediaItemId as string) ?? (item.id as string);
   return {
-    id: item.id as string,
+    id: mediaItemId,
     slug: item.slug as string,
     type,
     title: item.title as string,
@@ -75,7 +77,17 @@ export default async function HomePage() {
   const heroIds = new Set((heroItems ?? []).map((item) => item.id));
   const catalogCards = showCards.filter(card => !heroIds.has(card.id));
 
+  // Collect all media item IDs for batch status fetching
+  const allMediaItemIds = [
+    ...top3Cards.map(c => c.id),
+    ...catalogCards.map(c => c.id),
+    ...trendingMovieCards.map(c => c.id),
+    ...nowPlayingCards.map(c => c.id),
+    ...newDigitalCards.map(c => c.id),
+  ].filter(Boolean);
+
   return (
+    <MediaCardsWithStatus mediaItemIds={allMediaItemIds}>
     <main className="min-h-screen">
       {/* Hero Banner - Top 1 */}
       {top3Cards[0] && (
@@ -224,5 +236,6 @@ export default async function HomePage() {
         )}
       </div>
     </main>
+    </MediaCardsWithStatus>
   );
 }

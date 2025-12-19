@@ -109,6 +109,23 @@ export const userActionsApi = {
     return apiGet<MediaSaveStatusDto>(`me/saved-items/${mediaItemId}/status`);
   },
 
+  /**
+   * Get save status for multiple media items in batch.
+   * More efficient than calling getSaveStatus for each item.
+   *
+   * @param mediaItemIds - Array of media item IDs (max 100)
+   * @returns Map of mediaItemId to save status
+   */
+  async getBatchSaveStatus(mediaItemIds: string[]): Promise<Record<string, MediaSaveStatusDto>> {
+    if (mediaItemIds.length === 0) return {};
+    const ids = mediaItemIds.slice(0, 100).join(',');
+    const response = await apiGet<{ statuses: Record<string, MediaSaveStatusDto> }>(
+      'me/saved-items/status/batch',
+      { searchParams: { ids } }
+    );
+    return response.statuses;
+  },
+
   // --------------------------------------------------------------------------
   // Subscriptions
   // --------------------------------------------------------------------------

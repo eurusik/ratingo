@@ -54,7 +54,7 @@ interface MovieDetailsPageProps {
 /**
  * Extended movie type with computed fields for UI.
  */
-interface EnrichedMovieDetails extends MovieDetailsDto {
+type EnrichedMovieDetails = MovieDetailsDto & {
   quickPitch: string;
   suitableFor: string[];
   badgeKey?: BadgeKey;
@@ -62,7 +62,7 @@ interface EnrichedMovieDetails extends MovieDetailsDto {
   primaryTrailerKey?: string;
   releaseDate: string;
   digitalReleaseDate?: string | null;
-}
+};
 
 /**
  * Enriches API response with computed UI fields.

@@ -139,4 +139,28 @@ export class SavedItemsService {
     ]);
     return { total, data };
   }
+
+  /**
+   * Gets save status for multiple media items in batch.
+   *
+   * @param {string} userId - User identifier
+   * @param {string[]} mediaItemIds - Media item identifiers
+   * @returns {Promise<Record<string, { isForLater: boolean; isConsidering: boolean }>>} Status map
+   */
+  async getBatchStatus(
+    userId: string,
+    mediaItemIds: string[],
+  ): Promise<Record<string, { isForLater: boolean; isConsidering: boolean }>> {
+    const listsMap = await this.savedItemRepo.findListsForMediaBatch(userId, mediaItemIds);
+
+    const result: Record<string, { isForLater: boolean; isConsidering: boolean }> = {};
+    for (const mediaItemId of mediaItemIds) {
+      const lists = listsMap.get(mediaItemId) ?? [];
+      result[mediaItemId] = {
+        isForLater: lists.includes(SAVED_ITEM_LIST.FOR_LATER),
+        isConsidering: lists.includes(SAVED_ITEM_LIST.CONSIDERING),
+      };
+    }
+    return result;
+  }
 }

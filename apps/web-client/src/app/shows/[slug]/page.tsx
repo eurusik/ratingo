@@ -63,7 +63,7 @@ interface ShowDetailsPageProps {
 /**
  * Extended show type with computed fields for UI.
  */
-interface EnrichedShowDetails extends ShowDetailsDto {
+type EnrichedShowDetails = ShowDetailsDto & {
   quickPitch: string;
   suitableFor: string[];
   badgeKey?: BadgeKey;

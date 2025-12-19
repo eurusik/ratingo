@@ -849,6 +849,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/saved-items/status/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get save status for multiple media items (auth: Bearer) */
+        get: operations["SavedItemsController_getBatchStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/saved-items/{mediaItemId}/status": {
         parameters: {
             query?: never;
@@ -2131,6 +2148,22 @@ export interface components {
             /** @description Current save status after action */
             status: components["schemas"]["MediaSaveStatusDto"];
         };
+        BatchStatusResponseDto: {
+            /**
+             * @description Map of mediaItemId to save status
+             * @example {
+             *       "id1": {
+             *         "isForLater": true,
+             *         "isConsidering": false
+             *       },
+             *       "id2": {
+             *         "isForLater": false,
+             *         "isConsidering": true
+             *       }
+             *     }
+             */
+            statuses: Record<string, never>;
+        };
         SavedItemWithMediaResponseDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
             id: string;
@@ -2141,6 +2174,11 @@ export interface components {
              * @enum {string}
              */
             list: "for_later" | "considering";
+            /**
+             * @description Verdict/reason that triggered the save action
+             * @example trendingNow
+             */
+            reasonKey?: string | null;
             /**
              * Format: date-time
              * @example 2024-01-15T10:30:00.000Z
@@ -2320,11 +2358,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMovieResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
                 };
             };
         };
@@ -2363,11 +2397,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMovieResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
                 };
             };
         };
@@ -2408,11 +2438,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMovieResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
                 };
             };
         };
@@ -2453,11 +2479,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMovieResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
                 };
             };
         };
@@ -2478,11 +2500,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MovieResponseDto"];
-                    };
+                    "application/json": components["schemas"]["MovieResponseDto"];
                 };
             };
         };
@@ -2521,11 +2539,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["TrendingShowsResponseDto"];
-                    };
+                    "application/json": components["schemas"]["TrendingShowsResponseDto"];
                 };
             };
         };
@@ -2549,11 +2563,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["NewEpisodesResponseDto"];
-                    };
+                    "application/json": components["schemas"]["NewEpisodesResponseDto"];
                 };
             };
         };
@@ -2577,11 +2587,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["CalendarResponseDto"];
-                    };
+                    "application/json": components["schemas"]["CalendarResponseDto"];
                 };
             };
         };
@@ -2602,11 +2608,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["ShowResponseDto"];
-                    };
+                    "application/json": components["schemas"]["ShowResponseDto"];
                 };
             };
         };
@@ -2627,11 +2629,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SearchResponseDto"];
-                    };
+                    "application/json": components["schemas"]["SearchResponseDto"];
                 };
             };
         };
@@ -2652,11 +2650,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["ImportResultDto"];
-                    };
+                    "application/json": components["schemas"]["ImportResultDto"];
                 };
             };
         };
@@ -2677,11 +2671,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["ImportResultDto"];
-                    };
+                    "application/json": components["schemas"]["ImportResultDto"];
                 };
             };
         };
@@ -2706,11 +2696,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UserMediaStateDto"][];
-                    };
+                    "application/json": components["schemas"]["UserMediaStateDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -2740,11 +2726,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UserMediaStateDto"];
-                    };
+                    "application/json": components["schemas"]["UserMediaStateDto"];
                 };
             };
             /** @description Unauthorized */
@@ -2778,11 +2760,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UserMediaStateDto"];
-                    };
+                    "application/json": components["schemas"]["UserMediaStateDto"];
                 };
             };
             /** @description Unauthorized */
@@ -2814,11 +2792,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UserMediaStateDto"][];
-                    };
+                    "application/json": components["schemas"]["UserMediaStateDto"][];
                 };
             };
             /** @description Unauthorized */
@@ -2848,11 +2822,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
                 };
             };
         };
@@ -2875,11 +2845,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
                 };
             };
         };
@@ -2902,11 +2868,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
                 };
             };
         };
@@ -2929,11 +2891,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
                 };
             };
         };
@@ -2957,11 +2915,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthTokensDto"];
-                    };
+                    "application/json": components["schemas"]["AuthTokensDto"];
                 };
             };
         };
@@ -2985,11 +2939,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthTokensDto"];
-                    };
+                    "application/json": components["schemas"]["AuthTokensDto"];
                 };
             };
             /** @description Invalid credentials */
@@ -3020,11 +2970,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AuthTokensDto"];
-                    };
+                    "application/json": components["schemas"]["AuthTokensDto"];
                 };
             };
         };
@@ -3061,11 +3007,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MeDto"];
-                    };
+                    "application/json": components["schemas"]["MeDto"];
                 };
             };
             /** @description Unauthorized */
@@ -3157,11 +3099,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["AvatarUploadUrlDto"];
-                    };
+                    "application/json": components["schemas"]["AvatarUploadUrlDto"];
                 };
             };
             /** @description Unauthorized */
@@ -3212,11 +3150,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
                 };
             };
         };
@@ -3241,11 +3175,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
                 };
             };
         };
@@ -3270,11 +3200,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
-                    };
+                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
                 };
             };
         };
@@ -3297,18 +3223,14 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: {
-                            id?: string;
-                            /** @enum {string} */
-                            status?: "queued" | "processing" | "ready" | "failed";
-                            errorMessage?: string | null;
-                            /** Format: date-time */
-                            updatedAt?: string | null;
-                            /** @description Media slug (available when status is ready) */
-                            slug?: string | null;
-                        };
+                        id?: string;
+                        /** @enum {string} */
+                        status?: "queued" | "processing" | "ready" | "failed";
+                        errorMessage?: string | null;
+                        /** Format: date-time */
+                        updatedAt?: string | null;
+                        /** @description Media slug (available when status is ready) */
+                        slug?: string | null;
                     };
                 };
             };
@@ -3576,11 +3498,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["RiseFallResponseDto"];
-                    };
+                    "application/json": components["schemas"]["RiseFallResponseDto"];
                 };
             };
         };
@@ -3607,11 +3525,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SaveActionResultDto"];
-                    };
+                    "application/json": components["schemas"]["SaveActionResultDto"];
                 };
             };
         };
@@ -3638,11 +3552,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UnsaveActionResultDto"];
-                    };
+                    "application/json": components["schemas"]["UnsaveActionResultDto"];
+                };
+            };
+        };
+    };
+    SavedItemsController_getBatchStatus: {
+        parameters: {
+            query: {
+                /** @description Comma-separated list of media item UUIDs (max 100) */
+                ids: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchStatusResponseDto"];
                 };
             };
         };
@@ -3664,11 +3596,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MediaSaveStatusDto"];
-                    };
+                    "application/json": components["schemas"]["MediaSaveStatusDto"];
                 };
             };
         };
@@ -3690,11 +3618,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
-                    };
+                    "application/json": components["schemas"]["SavedItemWithMediaResponseDto"][];
                 };
             };
         };
@@ -3716,11 +3640,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
-                    };
+                    "application/json": components["schemas"]["SavedItemWithMediaResponseDto"][];
                 };
             };
         };
@@ -3747,11 +3667,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SubscribeActionResultDto"];
-                    };
+                    "application/json": components["schemas"]["SubscribeActionResultDto"];
                 };
             };
         };
@@ -3778,11 +3694,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UnsubscribeActionResultDto"];
-                    };
+                    "application/json": components["schemas"]["UnsubscribeActionResultDto"];
                 };
             };
         };
@@ -3804,11 +3716,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MediaSubscriptionStatusDto"];
-                    };
+                    "application/json": components["schemas"]["MediaSubscriptionStatusDto"];
                 };
             };
         };
@@ -3830,11 +3738,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SubscriptionWithMediaResponseDto"][];
-                    };
+                    "application/json": components["schemas"]["SubscriptionWithMediaResponseDto"][];
                 };
             };
         };

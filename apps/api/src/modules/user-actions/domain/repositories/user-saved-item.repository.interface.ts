@@ -96,4 +96,16 @@ export interface IUserSavedItemRepository {
    * @returns {Promise<number>} Count
    */
   count(userId: string, list: SavedItemList): Promise<number>;
+
+  /**
+   * Gets lists for multiple media items in batch.
+   *
+   * @param {string} userId - User identifier
+   * @param {string[]} mediaItemIds - Media item identifiers
+   * @returns {Promise<Map<string, SavedItemList[]>>} Map of mediaItemId to lists
+   */
+  findListsForMediaBatch(
+    userId: string,
+    mediaItemIds: string[],
+  ): Promise<Map<string, SavedItemList[]>>;
 }

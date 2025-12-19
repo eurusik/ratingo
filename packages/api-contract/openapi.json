@@ -133,22 +133,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
                 }
               }
             }
@@ -291,22 +276,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
                 }
               }
             }
@@ -458,22 +428,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
                 }
               }
             }
@@ -625,22 +580,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMovieResponseDto"
                 }
               }
             }
@@ -672,22 +612,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/MovieResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MovieResponseDto"
                 }
               }
             }
@@ -830,22 +755,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/TrendingShowsResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/TrendingShowsResponseDto"
                 }
               }
             }
@@ -887,22 +797,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/NewEpisodesResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/NewEpisodesResponseDto"
                 }
               }
             }
@@ -944,22 +839,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/CalendarResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/CalendarResponseDto"
                 }
               }
             }
@@ -991,22 +871,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/ShowResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/ShowResponseDto"
                 }
               }
             }
@@ -1037,22 +902,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/SearchResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/SearchResponseDto"
                 }
               }
             }
@@ -1083,22 +933,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/ImportResultDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/ImportResultDto"
                 }
               }
             }
@@ -1129,22 +964,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/ImportResultDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/ImportResultDto"
                 }
               }
             }
@@ -1185,24 +1005,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/UserMediaStateDto"
-                      }
-                    }
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserMediaStateDto"
                   }
                 }
               }
@@ -1243,22 +1048,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/UserMediaStateDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/UserMediaStateDto"
                 }
               }
             }
@@ -1306,22 +1096,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/UserMediaStateDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/UserMediaStateDto"
                 }
               }
             }
@@ -1370,24 +1145,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/UserMediaStateDto"
-                      }
-                    }
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserMediaStateDto"
                   }
                 }
               }
@@ -1451,22 +1211,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
                 }
               }
             }
@@ -1526,22 +1271,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
                 }
               }
             }
@@ -1601,22 +1331,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
                 }
               }
             }
@@ -1676,22 +1391,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
                 }
               }
             }
@@ -1728,22 +1428,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/AuthTokensDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthTokensDto"
                 }
               }
             }
@@ -1775,22 +1460,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/AuthTokensDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthTokensDto"
                 }
               }
             }
@@ -1825,22 +1495,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/AuthTokensDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AuthTokensDto"
                 }
               }
             }
@@ -1882,22 +1537,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/MeDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MeDto"
                 }
               }
             }
@@ -2015,22 +1655,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/AvatarUploadUrlDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/AvatarUploadUrlDto"
                 }
               }
             }
@@ -2125,22 +1750,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
                 }
               }
             }
@@ -2203,22 +1813,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
                 }
               }
             }
@@ -2281,22 +1876,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/PaginatedPublicUserMediaResponseDto"
                 }
               }
             }
@@ -2327,47 +1907,32 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
                   "properties": {
-                    "success": {
-                      "type": "boolean",
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
                       "enum": [
-                        true
+                        "queued",
+                        "processing",
+                        "ready",
+                        "failed"
                       ]
                     },
-                    "data": {
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "queued",
-                            "processing",
-                            "ready",
-                            "failed"
-                          ]
-                        },
-                        "errorMessage": {
-                          "type": "string",
-                          "nullable": true
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "nullable": true
-                        },
-                        "slug": {
-                          "type": "string",
-                          "nullable": true,
-                          "description": "Media slug (available when status is ready)"
-                        }
-                      }
+                    "errorMessage": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
+                    },
+                    "slug": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Media slug (available when status is ready)"
                     }
                   }
                 }
@@ -2738,22 +2303,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/RiseFallResponseDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/RiseFallResponseDto"
                 }
               }
             }
@@ -2795,22 +2345,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/SaveActionResultDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/SaveActionResultDto"
                 }
               }
             }
@@ -2855,22 +2390,45 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/UnsaveActionResultDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/UnsaveActionResultDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-items/status/batch": {
+      "get": {
+        "operationId": "SavedItemsController_getBatchStatus",
+        "summary": "Get save status for multiple media items (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "ids",
+            "required": true,
+            "in": "query",
+            "description": "Comma-separated list of media item UUIDs (max 100)",
+            "schema": {
+              "example": "id1,id2,id3",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchStatusResponseDto"
                 }
               }
             }
@@ -2907,22 +2465,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/MediaSaveStatusDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MediaSaveStatusDto"
                 }
               }
             }
@@ -2966,24 +2509,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
-                      }
-                    }
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
                   }
                 }
               }
@@ -3028,24 +2556,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
-                      }
-                    }
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
                   }
                 }
               }
@@ -3093,22 +2606,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/SubscribeActionResultDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/SubscribeActionResultDto"
                 }
               }
             }
@@ -3153,22 +2651,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/UnsubscribeActionResultDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/UnsubscribeActionResultDto"
                 }
               }
             }
@@ -3205,22 +2688,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
-                    }
-                  }
+                  "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
                 }
               }
             }
@@ -3264,24 +2732,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/SubscriptionWithMediaResponseDto"
-                      }
-                    }
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubscriptionWithMediaResponseDto"
                   }
                 }
               }
@@ -6200,6 +5653,28 @@
           "status"
         ]
       },
+      "BatchStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "statuses": {
+            "type": "object",
+            "example": {
+              "id1": {
+                "isForLater": true,
+                "isConsidering": false
+              },
+              "id2": {
+                "isForLater": false,
+                "isConsidering": true
+              }
+            },
+            "description": "Map of mediaItemId to save status"
+          }
+        },
+        "required": [
+          "statuses"
+        ]
+      },
       "SavedItemWithMediaResponseDto": {
         "type": "object",
         "properties": {
@@ -6218,6 +5693,12 @@
               "considering"
             ],
             "example": "for_later"
+          },
+          "reasonKey": {
+            "type": "string",
+            "example": "trendingNow",
+            "nullable": true,
+            "description": "Verdict/reason that triggered the save action"
           },
           "createdAt": {
             "format": "date-time",

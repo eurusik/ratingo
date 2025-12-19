@@ -138,3 +138,29 @@ export class UnsaveActionResultDto {
   @ApiProperty({ description: 'Current save status after action' })
   status: MediaSaveStatusDto;
 }
+
+/**
+ * Query DTO for batch status request.
+ */
+export class BatchStatusQueryDto {
+  @ApiProperty({
+    example: 'id1,id2,id3',
+    description: 'Comma-separated list of media item UUIDs (max 100)',
+  })
+  @IsString()
+  ids: string;
+}
+
+/**
+ * Response DTO for batch status.
+ */
+export class BatchStatusResponseDto {
+  @ApiProperty({
+    example: {
+      id1: { isForLater: true, isConsidering: false },
+      id2: { isForLater: false, isConsidering: true },
+    },
+    description: 'Map of mediaItemId to save status',
+  })
+  statuses: Record<string, MediaSaveStatusDto>;
+}

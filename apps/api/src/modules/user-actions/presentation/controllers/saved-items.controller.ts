@@ -29,6 +29,8 @@ import {
   MediaSaveStatusDto,
   SaveActionResultDto,
   UnsaveActionResultDto,
+  BatchStatusQueryDto,
+  BatchStatusResponseDto,
 } from '../dto/saved-items.dto';
 import { SAVED_ITEM_LIST, SavedItemList } from '../../domain/entities/user-saved-item.entity';
 
@@ -102,6 +104,22 @@ export class SavedItemsController {
         isConsidering: lists.includes(SAVED_ITEM_LIST.CONSIDERING),
       },
     };
+  }
+
+  /**
+   * Gets save status for multiple media items in batch.
+   * More efficient than calling /status for each item individually.
+   */
+  @Get('status/batch')
+  @ApiOperation({ summary: 'Get save status for multiple media items (auth: Bearer)' })
+  @ApiOkResponse({ type: BatchStatusResponseDto })
+  async getBatchStatus(
+    @CurrentUser() user: { id: string },
+    @Query() query: BatchStatusQueryDto,
+  ): Promise<BatchStatusResponseDto> {
+    const ids = query.ids.split(',').filter(Boolean).slice(0, 100);
+    const statuses = await this.savedItemsService.getBatchStatus(user.id, ids);
+    return { statuses };
   }
 
   /**
