@@ -5,6 +5,13 @@ import { InferInsertModel } from 'drizzle-orm';
 type MediaItemInsert = InferInsertModel<typeof schema.mediaItems>;
 type MediaStatsInsert = InferInsertModel<typeof schema.mediaStats>;
 
+/**
+ * Filters out undefined values from an object.
+ * Prevents "No values to set" error in Drizzle upserts.
+ */
+const pickDefined = <T extends Record<string, unknown>>(obj: T): Partial<T> =>
+  Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as Partial<T>;
+
 export class PersistenceMapper {
   static toMediaItemInsert(media: NormalizedMedia): MediaItemInsert {
     return {
@@ -136,7 +143,7 @@ export class PersistenceMapper {
   }
 
   static toMovieUpdate(details: any): Partial<InferInsertModel<typeof schema.movies>> {
-    return {
+    const update = pickDefined({
       runtime: details.runtime,
       budget: details.budget,
       revenue: details.revenue,
@@ -144,7 +151,12 @@ export class PersistenceMapper {
       theatricalReleaseDate: details.theatricalReleaseDate,
       digitalReleaseDate: details.digitalReleaseDate,
       releases: details.releases,
-    };
+    });
+    // Ensure at least one field for upsert
+    if (Object.keys(update).length === 0) {
+      return { runtime: null };
+    }
+    return update;
   }
 
   static toShowInsert(mediaId: string, details: any): InferInsertModel<typeof schema.shows> {
@@ -159,13 +171,18 @@ export class PersistenceMapper {
   }
 
   static toShowUpdate(details: any): Partial<InferInsertModel<typeof schema.shows>> {
-    return {
+    const update = pickDefined({
       totalSeasons: details.totalSeasons,
       totalEpisodes: details.totalEpisodes,
       lastAirDate: details.lastAirDate,
       nextAirDate: details.nextAirDate,
       status: details.status,
-    };
+    });
+    // Ensure at least one field for upsert
+    if (Object.keys(update).length === 0) {
+      return { totalSeasons: null };
+    }
+    return update;
   }
 
   static toSeasonInsert(showId: string, season: any): InferInsertModel<typeof schema.seasons> {
@@ -182,14 +199,19 @@ export class PersistenceMapper {
   }
 
   static toSeasonUpdate(season: any): Partial<InferInsertModel<typeof schema.seasons>> {
-    return {
+    const update = pickDefined({
       tmdbId: season.tmdbId,
       name: season.name,
       overview: season.overview,
       posterPath: season.posterPath,
       airDate: season.airDate,
       episodeCount: season.episodeCount,
-    };
+    });
+    // Ensure at least one field for upsert
+    if (Object.keys(update).length === 0) {
+      return { episodeCount: null };
+    }
+    return update;
   }
 
   static toEpisodeInsert(
@@ -212,7 +234,7 @@ export class PersistenceMapper {
   }
 
   static toEpisodeUpdate(episode: any): Partial<InferInsertModel<typeof schema.episodes>> {
-    return {
+    const update = pickDefined({
       tmdbId: episode.tmdbId,
       title: episode.title,
       overview: episode.overview,
@@ -220,6 +242,11 @@ export class PersistenceMapper {
       runtime: episode.runtime,
       stillPath: episode.stillPath,
       voteAverage: episode.rating,
-    };
+    });
+    // Ensure at least one field for upsert
+    if (Object.keys(update).length === 0) {
+      return { runtime: null };
+    }
+    return update;
   }
 }
