@@ -44,6 +44,12 @@ export interface DataVerdictServerProps {
     primaryCta?: PrimaryCta;
     continuePoint?: { season: number; episode: number } | null;
     onSave?: () => void;
+    // Subscription props
+    mediaType?: 'movie' | 'show';
+    subscriptionTrigger?: 'release' | 'new_season' | 'on_streaming' | null;
+    isSubscribed?: boolean;
+    isSubscriptionLoading?: boolean;
+    onSubscriptionToggle?: () => void;
   };
   /** Translation dictionary. */
   dict: ReturnType<typeof getDictionary>;
@@ -174,6 +180,11 @@ export function DataVerdictServer({
               verdictType={type}
               dict={dict}
               onSave={ctaProps.onSave}
+              mediaType={ctaProps.mediaType}
+              subscriptionTrigger={ctaProps.subscriptionTrigger}
+              isSubscribed={ctaProps.isSubscribed}
+              isSubscriptionLoading={ctaProps.isSubscriptionLoading}
+              onSubscriptionToggle={ctaProps.onSubscriptionToggle}
             />
           )}
         </div>

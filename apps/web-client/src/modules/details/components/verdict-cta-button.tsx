@@ -6,10 +6,12 @@
 'use client';
 
 import type { components } from '@ratingo/api-contract';
-import { Bookmark, Check, ArrowRight, Info } from 'lucide-react';
+import { Bookmark, Check, ArrowRight, Info, Bell, BellOff } from 'lucide-react';
+import { SUBSCRIPTION_TRIGGER } from '@/core/query';
 import { type PrimaryCta, PRIMARY_CTA } from '@/shared/types';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
+import type { SubscriptionTrigger } from '@/core/api';
 
 /** Verdict hint key from API. */
 type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
@@ -37,6 +39,16 @@ interface VerdictCtaButtonProps {
   dict: ReturnType<typeof getDictionary>;
   /** Callback for save/unsave action. */
   onSave?: () => void;
+  /** Media type for subscription trigger label. */
+  mediaType?: 'movie' | 'show';
+  /** Specific subscription trigger to show. Null means no subscription available. */
+  subscriptionTrigger?: SubscriptionTrigger | null;
+  /** Is subscribed to notifications. */
+  isSubscribed?: boolean;
+  /** Is subscription loading. */
+  isSubscriptionLoading?: boolean;
+  /** Callback for subscription toggle. */
+  onSubscriptionToggle?: () => void;
 }
 
 export function VerdictCtaButton({
@@ -49,6 +61,11 @@ export function VerdictCtaButton({
   verdictType,
   dict,
   onSave,
+  mediaType,
+  subscriptionTrigger,
+  isSubscribed = false,
+  isSubscriptionLoading = false,
+  onSubscriptionToggle,
 }: VerdictCtaButtonProps) {
   // Show skeleton while loading save status
   if (isLoading && primaryCta === PRIMARY_CTA.SAVE) {
@@ -117,42 +134,86 @@ export function VerdictCtaButton({
     warning: 'bg-gradient-to-r from-orange-500/10 via-transparent to-transparent border-orange-500/20 hover:border-orange-500/30 hover:from-orange-500/15',
   };
 
+  // Subscription label based on trigger (passed from parent)
+  // If subscriptionTrigger is null, subscription is not available for this item
+  const subscriptionLabel = subscriptionTrigger 
+    ? dict.saved.trigger[subscriptionTrigger]
+    : null;
+
   return (
-    <button
-      onClick={handleClick}
-      className={cn(
-        'group flex items-center justify-between w-full mt-4 pt-4 border-t',
-        '-mx-5 px-5 -mb-5 pb-5 rounded-b-2xl',
-        ctaGradientClasses[verdictType],
-        'transition-all'
-      )}
-    >
-      <div className="flex flex-col items-start">
-        <span className={cn(
-          'text-sm font-medium',
-          primaryCta === PRIMARY_CTA.SAVE && isSaved ? 'text-green-400' : 'text-zinc-200'
-        )}>
-          {config.label}
-        </span>
-        {config.showHint && (
-          <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
-            {hintKey 
-              ? dict.details.cta.saveHint[hintKey]
-              : hasNewEpisodes
-                ? dict.details.cta.saveHint.newEpisodes
-                : dict.details.cta.saveHint.general}
-          </span>
+    <>
+      <button
+        onClick={handleClick}
+        className={cn(
+          'group flex items-center justify-between w-full mt-4 pt-4 border-t',
+          '-mx-5 px-5 -mb-5 pb-5 rounded-b-2xl',
+          ctaGradientClasses[verdictType],
+          'transition-all'
         )}
-      </div>
-      <div className={cn(
-        'w-8 h-8 rounded-full flex items-center justify-center transition-all',
-        config.iconBg
-      )}>
-        <CtaIcon className={cn(
-          'w-4 h-4 transition-all',
-          config.iconColor
-        )} />
-      </div>
-    </button>
+      >
+        <div className="flex flex-col items-start">
+          <span className={cn(
+            'text-sm font-medium',
+            primaryCta === PRIMARY_CTA.SAVE && isSaved ? 'text-green-400' : 'text-zinc-200'
+          )}>
+            {config.label}
+          </span>
+          {config.showHint && (
+            <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
+              {hintKey 
+                ? dict.details.cta.saveHint[hintKey]
+                : hasNewEpisodes
+                  ? dict.details.cta.saveHint.newEpisodes
+                  : dict.details.cta.saveHint.general}
+            </span>
+          )}
+          {/* Subscription toggle - inline when saved and subscription is available */}
+          {isSaved && primaryCta === PRIMARY_CTA.SAVE && onSubscriptionToggle && subscriptionLabel && (
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSubscriptionToggle();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                  onSubscriptionToggle();
+                }
+              }}
+              className={cn(
+                'flex items-center gap-1.5 mt-1.5 text-left transition-colors cursor-pointer',
+                isSubscriptionLoading && 'opacity-50 pointer-events-none'
+              )}
+            >
+              {isSubscribed ? (
+                <Bell className="w-3 h-3 text-emerald-400" />
+              ) : (
+                <BellOff className="w-3 h-3 text-zinc-500" />
+              )}
+              <span className={cn(
+                'text-xs transition-colors',
+                isSubscribed ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-400'
+              )}>
+                {isSubscribed 
+                  ? `${subscriptionLabel} ✓`
+                  : `${dict.saved.actions.subscribe}: ${subscriptionLabel}`
+                }
+              </span>
+            </div>
+          )}
+        </div>
+        <div className={cn(
+          'w-8 h-8 rounded-full flex items-center justify-center transition-all',
+          config.iconBg
+        )}>
+          <CtaIcon className={cn(
+            'w-4 h-4 transition-all',
+            config.iconColor
+          )} />
+        </div>
+      </button>
+    </>
   );
 }

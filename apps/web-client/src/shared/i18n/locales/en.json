@@ -375,7 +375,13 @@
       "remove": "Remove",
       "moveToForLater": "Move to For Later",
       "moveToConsidering": "Move to Considering",
+      "subscribe": "Notify",
       "unsubscribe": "Unsubscribe"
+    },
+    "toast": {
+      "saved": "Saved",
+      "unsaved": "Removed from saved",
+      "error": "Failed to save"
     },
     "trigger": {
       "release": "Release",

@@ -375,7 +375,13 @@
       "remove": "Видалити",
       "moveToForLater": "Перемістити в «На потім»",
       "moveToConsidering": "Перемістити в «Роздумую»",
+      "subscribe": "Сповістити",
       "unsubscribe": "Відписатись"
+    },
+    "toast": {
+      "saved": "Збережено",
+      "unsaved": "Видалено зі збережених",
+      "error": "Не вдалося зберегти"
     },
     "trigger": {
       "release": "Реліз",

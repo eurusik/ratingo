@@ -174,6 +174,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
         {apiShow.verdict?.messageKey && verdictMessage && (
           <DataVerdict
             mediaItemId={show.id}
+            mediaType="show"
             type={apiShow.verdict.type}
             message={verdictMessage}
             messageKey={apiShow.verdict.messageKey}

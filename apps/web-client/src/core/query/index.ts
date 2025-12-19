@@ -8,4 +8,5 @@ export {
   useSubscriptionStatus,
   useSubscribe,
   useUnsubscribe,
+  SUBSCRIPTION_TRIGGER,
 } from './user-actions';

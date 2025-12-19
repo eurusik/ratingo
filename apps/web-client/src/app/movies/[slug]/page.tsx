@@ -160,6 +160,9 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
         {verdict && verdictMessage && (
           <DataVerdict
             mediaItemId={movie.id}
+            mediaType="movie"
+            isReleased={!!movie.releaseDate && new Date(movie.releaseDate) <= new Date()}
+            hasStreamingProviders={!!(movie.availability?.stream?.length || movie.availability?.rent?.length || movie.availability?.buy?.length)}
             type={verdict.type}
             message={verdictMessage}
             messageKey={verdict.messageKey}

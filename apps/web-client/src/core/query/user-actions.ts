@@ -35,7 +35,7 @@ const SAVED_ITEM_LIST: { FOR_LATER: SavedItemList; CONSIDERING: SavedItemList } 
   CONSIDERING: 'considering',
 };
 
-const SUBSCRIPTION_TRIGGER: {
+export const SUBSCRIPTION_TRIGGER: {
   RELEASE: SubscriptionTrigger;
   NEW_SEASON: SubscriptionTrigger;
   ON_STREAMING: SubscriptionTrigger;

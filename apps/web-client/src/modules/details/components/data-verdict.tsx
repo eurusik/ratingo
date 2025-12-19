@@ -12,22 +12,24 @@ import { type PrimaryCta, PRIMARY_CTA } from '@/shared/types';
 import type { SavedItemList } from '@/core/api';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { DataVerdictServer, type DataVerdictServerProps } from './data-verdict-server';
-import { useSaveStatus, useSaveItem, useUnsaveItem } from '@/core/query';
+import { useSaveStatus, useSaveItem, useUnsaveItem, useSubscriptionStatus, useSubscribe, useUnsubscribe } from '@/core/query';
+import { getSubscriptionTrigger } from '../utils';
 
 type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
 
 const DEFAULT_LIST: SavedItemList = 'for_later';
 const CTA_CONTEXT = 'verdict';
 
-const TOAST_MESSAGES = {
-  saved: 'Збережено',
-  unsaved: 'Видалено зі збережених',
-  error: 'Не вдалося зберегти',
-} as const;
 
 interface DataVerdictProps extends Omit<DataVerdictServerProps, 'ctaProps'> {
   /** Media item ID for fetching save status. */
   mediaItemId: string;
+  /** Media type for subscription trigger selection. */
+  mediaType: 'movie' | 'show';
+  /** Whether the movie is already released (releaseDate in past). */
+  isReleased?: boolean;
+  /** Whether the movie has streaming providers available. */
+  hasStreamingProviders?: boolean;
   ctaProps?: {
     hasNewEpisodes?: boolean;
     hintKey?: VerdictHintKey;
@@ -36,7 +38,7 @@ interface DataVerdictProps extends Omit<DataVerdictServerProps, 'ctaProps'> {
   };
 }
 
-export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProps) {
+export function DataVerdict({ mediaItemId, mediaType, isReleased = false, hasStreamingProviders = false, ctaProps, ...props }: DataVerdictProps) {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const openLogin = useAuthModalStore((s) => s.openLogin);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -49,12 +51,34 @@ export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProp
     enabled: isAuthenticated && !!mediaItemId,
   });
   
+  const { data: subscriptionStatus } = useSubscriptionStatus(mediaItemId, {
+    enabled: isAuthenticated && !!mediaItemId,
+  });
+  
   const { mutate: saveItem, isPending: isSaving } = useSaveItem();
   const { mutate: unsaveItem, isPending: isUnsaving } = useUnsaveItem();
+  const { mutate: subscribe, isPending: isSubscribing } = useSubscribe();
+  const { mutate: unsubscribe, isPending: isUnsubscribing } = useUnsubscribe();
 
   const isSaved = saveStatus?.isForLater ?? false;
   const isMutating = isSaving || isUnsaving;
   const isCtaLoading = !isHydrated || isAuthLoading || (isAuthenticated && !isFetched);
+  
+  const subscriptionTrigger = getSubscriptionTrigger({ mediaType, isReleased, hasStreamingProviders });
+  const isSubscribed = subscriptionTrigger 
+    ? (subscriptionStatus?.triggers?.includes(subscriptionTrigger) ?? false)
+    : false;
+  const isSubscriptionMutating = isSubscribing || isUnsubscribing;
+  
+  const handleSubscriptionToggle = () => {
+    if (isSubscriptionMutating || !subscriptionTrigger) return;
+    
+    if (isSubscribed) {
+      unsubscribe({ mediaItemId, trigger: subscriptionTrigger, context: CTA_CONTEXT });
+    } else {
+      subscribe({ mediaItemId, trigger: subscriptionTrigger, context: CTA_CONTEXT });
+    }
+  };
 
   const handleCtaAction = () => {
     if (!ctaProps || isMutating) return;
@@ -73,8 +97,8 @@ export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProp
           unsaveItem(
             { mediaItemId, list: DEFAULT_LIST, context: CTA_CONTEXT },
             {
-              onSuccess: () => toast.success(TOAST_MESSAGES.unsaved),
-              onError: () => toast.error(TOAST_MESSAGES.error),
+              onSuccess: () => toast.success(props.dict.saved.toast.unsaved),
+              onError: () => toast.error(props.dict.saved.toast.error),
             }
           );
         } else {
@@ -86,8 +110,8 @@ export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProp
               reasonKey: props.messageKey ?? undefined,
             },
             {
-              onSuccess: () => toast.success(TOAST_MESSAGES.saved),
-              onError: () => toast.error(TOAST_MESSAGES.error),
+              onSuccess: () => toast.success(props.dict.saved.toast.saved),
+              onError: () => toast.error(props.dict.saved.toast.error),
             }
           );
         }
@@ -109,6 +133,12 @@ export function DataVerdict({ mediaItemId, ctaProps, ...props }: DataVerdictProp
         isSaved,
         isLoading: isCtaLoading,
         onSave: handleCtaAction,
+        // Subscription props
+        mediaType,
+        subscriptionTrigger,
+        isSubscribed,
+        isSubscriptionLoading: isSubscriptionMutating,
+        onSubscriptionToggle: handleSubscriptionToggle,
       } : undefined}
     />
   );

@@ -68,8 +68,8 @@ export function NotificationBell() {
                   poster: Record<string, string> | null;
                 };
                 const href = media.type === 'movie' 
-                  ? `/movie/${media.slug}` 
-                  : `/show/${media.slug}`;
+                  ? `/movies/${media.slug}` 
+                  : `/shows/${media.slug}`;
                 
                 const triggerLabel = {
                   release: dict.notifications.events.released,
