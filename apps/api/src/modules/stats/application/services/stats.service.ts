@@ -207,13 +207,21 @@ export class StatsService {
     let fetched = 0;
     let skipped = 0;
     let notFound = 0;
+    const notFoundExamples: { tmdbId: number; type: string }[] = [];
 
-    for (const [, watchers] of watchersMap) {
+    for (const [tmdbId, watchers] of watchersMap) {
       if (watchers === null) {
         skipped++; // Transient error
       } else if (watchers === 0) {
         notFound++; // Not found in Trakt (or genuinely 0 watchers)
         fetched++;
+        // Collect first 5 notFound examples for debugging
+        if (notFoundExamples.length < 5) {
+          const item = dbItems.find((i) => i.tmdbId === tmdbId);
+          if (item) {
+            notFoundExamples.push({ tmdbId, type: item.type });
+          }
+        }
       } else {
         fetched++;
       }
@@ -222,6 +230,11 @@ export class StatsService {
     this.logger.log(
       `Trakt watchers: requested=${requested}, fetched=${fetched}, skipped=${skipped}, notFound=${notFound}`,
     );
+
+    // Log notFound examples for debugging Trakt matching issues
+    if (notFoundExamples.length > 0) {
+      this.logger.debug(`Trakt notFound examples: ${JSON.stringify(notFoundExamples)}`);
+    }
 
     // 3. Get score data for items we'll update (exclude errors)
     const itemsToUpdate = dbItems.filter((i) => watchersMap.get(i.tmdbId) !== null);
