@@ -29,6 +29,11 @@ export interface SavedItemWithMedia extends UserSavedItem {
     poster: ImageDto | null;
     releaseDate?: Date | null;
   };
+  /**
+   * Active subscription triggers for this media item.
+   * Empty array if no active subscriptions.
+   */
+  activeSubscriptionTriggers: string[];
 }
 
 /**

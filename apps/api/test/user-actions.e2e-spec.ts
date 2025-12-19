@@ -157,7 +157,7 @@ class InMemoryUserMediaActionRepository implements IUserMediaActionRepository {
   }
 }
 
-type SavedItemWithMedia = UserSavedItem & {
+type SavedItemWithMediaInternal = UserSavedItem & {
   mediaSummary: {
     id: string;
     type: MediaType;
@@ -169,7 +169,12 @@ type SavedItemWithMedia = UserSavedItem & {
 };
 
 class InMemorySavedItemRepository implements IUserSavedItemRepository {
-  private items: SavedItemWithMedia[] = [];
+  private items: SavedItemWithMediaInternal[] = [];
+  private subscriptionRepo: InMemorySubscriptionRepository | null = null;
+
+  setSubscriptionRepo(repo: InMemorySubscriptionRepository) {
+    this.subscriptionRepo = repo;
+  }
 
   private makeSummary(mediaItemId: string) {
     return {
@@ -190,7 +195,7 @@ class InMemorySavedItemRepository implements IUserSavedItemRepository {
       existing.updatedAt = new Date();
       return existing;
     }
-    const item: SavedItemWithMedia = {
+    const item: SavedItemWithMediaInternal = {
       id: `saved-${this.items.length + 1}`,
       userId: data.userId,
       mediaItemId: data.mediaItemId,
@@ -247,11 +252,38 @@ class InMemorySavedItemRepository implements IUserSavedItemRepository {
     return result;
   }
 
-  async listWithMedia(userId: string, list: SavedItemList, limit = 20, offset = 0): Promise<any[]> {
-    return this.items
-      .filter((i) => i.userId === userId && i.list === list)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(offset, offset + limit);
+  async listWithMedia(
+    userId: string,
+    list: SavedItemList,
+    limit?: number | null,
+    offset?: number | null,
+  ): Promise<any[]> {
+    const actualLimit = typeof limit === 'number' && !isNaN(limit) ? limit : 20;
+    const actualOffset = typeof offset === 'number' && !isNaN(offset) ? offset : 0;
+
+    // Filter items for this user and list
+    const filtered = this.items.filter((i) => i.userId === userId && i.list === list);
+
+    // Sort by createdAt desc and apply pagination
+    const sorted = [...filtered].sort((a, b) => {
+      const timeA = a.createdAt?.getTime() ?? 0;
+      const timeB = b.createdAt?.getTime() ?? 0;
+      return timeB - timeA;
+    });
+    const paginated = sorted.slice(actualOffset, actualOffset + actualLimit);
+
+    // Enrich with active subscription triggers
+    const result = [];
+    for (const item of paginated) {
+      const triggers = this.subscriptionRepo
+        ? await this.subscriptionRepo.findActiveTriggersForMedia(userId, item.mediaItemId)
+        : [];
+      result.push({
+        ...item,
+        activeSubscriptionTriggers: triggers,
+      });
+    }
+    return result;
   }
 
   async count(userId: string, list: SavedItemList): Promise<number> {
@@ -394,6 +426,14 @@ describe('User Actions E2E', () => {
   };
 
   beforeAll(async () => {
+    // Create instances to link them (shared across all tests)
+    const usersRepo = new InMemoryUsersRepository();
+    const refreshTokensRepo = new InMemoryRefreshTokensRepository();
+    const mediaActionRepo = new InMemoryUserMediaActionRepository();
+    const savedItemRepo = new InMemorySavedItemRepository();
+    const subscriptionRepo = new InMemorySubscriptionRepository();
+    savedItemRepo.setSubscriptionRepo(subscriptionRepo);
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({ isGlobal: true, load: [authConfig], ignoreEnvFile: true }),
@@ -403,17 +443,17 @@ describe('User Actions E2E', () => {
       ],
     })
       .overrideProvider(USERS_REPOSITORY)
-      .useClass(InMemoryUsersRepository)
+      .useValue(usersRepo)
       .overrideProvider(REFRESH_TOKENS_REPOSITORY)
-      .useClass(InMemoryRefreshTokensRepository)
+      .useValue(refreshTokensRepo)
       .overrideProvider(DATABASE_CONNECTION)
       .useValue({})
       .overrideProvider(USER_MEDIA_ACTION_REPOSITORY)
-      .useClass(InMemoryUserMediaActionRepository)
+      .useValue(mediaActionRepo)
       .overrideProvider(USER_SAVED_ITEM_REPOSITORY)
-      .useClass(InMemorySavedItemRepository)
+      .useValue(savedItemRepo)
       .overrideProvider(USER_SUBSCRIPTION_REPOSITORY)
-      .useClass(InMemorySubscriptionRepository)
+      .useValue(subscriptionRepo)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -515,6 +555,129 @@ describe('User Actions E2E', () => {
         .send({ list: 'for_later' });
 
       expect(res.status).toBe(401);
+    });
+
+    describe('Active Subscription Triggers in List', () => {
+      it('should return empty triggers when no subscriptions', async () => {
+        const token = await registerAndLogin('triggers1');
+        const mediaItemId = 'triggers-media-1';
+
+        // Save item without subscription
+        const saveRes = await request(app.getHttpServer())
+          .post(`${savedItemsUrl}/${mediaItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ list: 'for_later' });
+
+        expect(saveRes.status).toBe(201);
+        expect(saveRes.body.data.list).toBe('for_later');
+
+        const res = await request(app.getHttpServer())
+          .get(`${savedItemsUrl}/for-later`)
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.data.length).toBeGreaterThan(0);
+        const item = res.body.data.data[0]; // Get first item (most recent)
+        expect(item.activeSubscriptionTriggers).toEqual([]);
+      });
+
+      it('should return single trigger when one subscription active', async () => {
+        const token = await registerAndLogin('triggers2');
+        const mediaItemId = 'triggers-media-2';
+
+        // Save item
+        const saveRes = await request(app.getHttpServer())
+          .post(`${savedItemsUrl}/${mediaItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ list: 'for_later' });
+
+        expect(saveRes.status).toBe(201);
+
+        // Subscribe to release
+        await request(app.getHttpServer())
+          .post(`${subscriptionsUrl}/${mediaItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ trigger: 'release' });
+
+        const res = await request(app.getHttpServer())
+          .get(`${savedItemsUrl}/for-later`)
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.data.length).toBeGreaterThan(0);
+        const item = res.body.data.data[0];
+        expect(item.activeSubscriptionTriggers).toContain('release');
+        expect(item.activeSubscriptionTriggers).toHaveLength(1);
+      });
+
+      it('should return multiple triggers when multiple subscriptions active', async () => {
+        const token = await registerAndLogin('triggers3');
+        const mediaItemId = 'triggers-media-3';
+
+        // Save item
+        const saveRes = await request(app.getHttpServer())
+          .post(`${savedItemsUrl}/${mediaItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ list: 'for_later' });
+
+        expect(saveRes.status).toBe(201);
+
+        // Subscribe to release and new_season
+        await request(app.getHttpServer())
+          .post(`${subscriptionsUrl}/${mediaItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ trigger: 'release' });
+
+        await request(app.getHttpServer())
+          .post(`${subscriptionsUrl}/${mediaItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ trigger: 'new_season' });
+
+        const res = await request(app.getHttpServer())
+          .get(`${savedItemsUrl}/for-later`)
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.data.length).toBeGreaterThan(0);
+        const item = res.body.data.data[0];
+        // Check as set (order-independent)
+        expect(new Set(item.activeSubscriptionTriggers)).toEqual(
+          new Set(['release', 'new_season']),
+        );
+      });
+
+      it('should not include inactive subscriptions', async () => {
+        const token = await registerAndLogin('triggers4');
+        const mediaItemId = 'triggers-media-4';
+
+        // Save item
+        const saveRes = await request(app.getHttpServer())
+          .post(`${savedItemsUrl}/${mediaItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ list: 'for_later' });
+
+        expect(saveRes.status).toBe(201);
+
+        // Subscribe then unsubscribe
+        await request(app.getHttpServer())
+          .post(`${subscriptionsUrl}/${mediaItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ trigger: 'release' });
+
+        await request(app.getHttpServer())
+          .delete(`${subscriptionsUrl}/${mediaItemId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .send({ trigger: 'release' });
+
+        const res = await request(app.getHttpServer())
+          .get(`${savedItemsUrl}/for-later`)
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.data.data.length).toBeGreaterThan(0);
+        const item = res.body.data.data[0];
+        expect(item.activeSubscriptionTriggers).toEqual([]);
+      });
     });
 
     describe('Batch Status', () => {

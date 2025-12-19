@@ -149,13 +149,13 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
   }
 
   /**
-   * Lists saved items with media summary.
+   * Lists saved items with media summary and active subscription triggers.
    *
    * @param {string} userId - User identifier
    * @param {SavedItemList} list - List type
    * @param {number} limit - Page size
    * @param {number} offset - Offset
-   * @returns {Promise<SavedItemWithMedia[]>} Items with media
+   * @returns {Promise<SavedItemWithMedia[]>} Items with media and subscription triggers
    */
   async listWithMedia(
     userId: string,
@@ -164,6 +164,22 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
     offset = 0,
   ): Promise<SavedItemWithMedia[]> {
     try {
+      // Subquery to aggregate active subscription triggers per media item
+      const subscriptionTriggersSubquery = this.db
+        .select({
+          mediaItemId: schema.userSubscriptions.mediaItemId,
+          triggers: sql<string[]>`array_agg(${schema.userSubscriptions.trigger})`.as('triggers'),
+        })
+        .from(schema.userSubscriptions)
+        .where(
+          and(
+            eq(schema.userSubscriptions.userId, userId),
+            eq(schema.userSubscriptions.isActive, true),
+          ),
+        )
+        .groupBy(schema.userSubscriptions.mediaItemId)
+        .as('sub_triggers');
+
       const rows = await this.db
         .select({
           item: schema.userSavedItems,
@@ -175,9 +191,14 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
             posterPath: schema.mediaItems.posterPath,
             releaseDate: schema.mediaItems.releaseDate,
           },
+          triggers: subscriptionTriggersSubquery.triggers,
         })
         .from(schema.userSavedItems)
         .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userSavedItems.mediaItemId))
+        .leftJoin(
+          subscriptionTriggersSubquery,
+          eq(subscriptionTriggersSubquery.mediaItemId, schema.userSavedItems.mediaItemId),
+        )
         .where(and(eq(schema.userSavedItems.userId, userId), eq(schema.userSavedItems.list, list)))
         .orderBy(desc(schema.userSavedItems.createdAt))
         .limit(limit)
@@ -193,6 +214,7 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
           poster: ImageMapper.toPoster(r.media.posterPath),
           releaseDate: r.media.releaseDate,
         },
+        activeSubscriptionTriggers: r.triggers ?? [],
       }));
     } catch (error) {
       this.logger.error(`listWithMedia failed: ${error.message}`, error.stack);

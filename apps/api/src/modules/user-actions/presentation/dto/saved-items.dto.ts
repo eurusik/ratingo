@@ -95,6 +95,14 @@ export class SavedItemWithMediaResponseDto extends SavedItemResponseDto {
     poster: Record<string, string> | null;
     releaseDate?: Date | null;
   };
+
+  @ApiProperty({
+    example: ['release', 'new_season'],
+    description:
+      'Active subscription triggers for this media item. Empty array if no subscriptions.',
+    type: [String],
+  })
+  activeSubscriptionTriggers: string[];
 }
 
 /**

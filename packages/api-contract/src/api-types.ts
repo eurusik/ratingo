@@ -2201,6 +2201,14 @@ export interface components {
              *     }
              */
             mediaSummary: Record<string, never>;
+            /**
+             * @description Active subscription triggers for this media item. Empty array if no subscriptions.
+             * @example [
+             *       "release",
+             *       "new_season"
+             *     ]
+             */
+            activeSubscriptionTriggers: string[];
         };
         SubscribeDto: {
             /**
@@ -2358,7 +2366,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
                 };
             };
         };
@@ -2397,7 +2409,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
                 };
             };
         };
@@ -2438,7 +2454,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
                 };
             };
         };
@@ -2479,7 +2499,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
                 };
             };
         };
@@ -2500,7 +2524,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MovieResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MovieResponseDto"];
+                    };
                 };
             };
         };
@@ -2539,7 +2567,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TrendingShowsResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["TrendingShowsResponseDto"];
+                    };
                 };
             };
         };
@@ -2563,7 +2595,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NewEpisodesResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["NewEpisodesResponseDto"];
+                    };
                 };
             };
         };
@@ -2587,7 +2623,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CalendarResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["CalendarResponseDto"];
+                    };
                 };
             };
         };
@@ -2608,7 +2648,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ShowResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ShowResponseDto"];
+                    };
                 };
             };
         };
@@ -2629,7 +2673,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SearchResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SearchResponseDto"];
+                    };
                 };
             };
         };
@@ -2650,7 +2698,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ImportResultDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImportResultDto"];
+                    };
                 };
             };
         };
@@ -2671,7 +2723,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ImportResultDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImportResultDto"];
+                    };
                 };
             };
         };
@@ -2696,7 +2752,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMediaStateDto"][];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"][];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -2726,7 +2786,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMediaStateDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -2760,7 +2824,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMediaStateDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -2792,7 +2860,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMediaStateDto"][];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"][];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -2822,7 +2894,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2845,7 +2921,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2868,7 +2948,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2891,7 +2975,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -2915,7 +3003,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthTokensDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
                 };
             };
         };
@@ -2939,7 +3031,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthTokensDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
                 };
             };
             /** @description Invalid credentials */
@@ -2970,7 +3066,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthTokensDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AuthTokensDto"];
+                    };
                 };
             };
         };
@@ -3007,7 +3107,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MeDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MeDto"];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -3099,7 +3203,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AvatarUploadUrlDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AvatarUploadUrlDto"];
+                    };
                 };
             };
             /** @description Unauthorized */
@@ -3150,7 +3258,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -3175,7 +3287,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -3200,7 +3316,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
                 };
             };
         };
@@ -3223,14 +3343,18 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        id?: string;
-                        /** @enum {string} */
-                        status?: "queued" | "processing" | "ready" | "failed";
-                        errorMessage?: string | null;
-                        /** Format: date-time */
-                        updatedAt?: string | null;
-                        /** @description Media slug (available when status is ready) */
-                        slug?: string | null;
+                        /** @enum {boolean} */
+                        success: true;
+                        data: {
+                            id?: string;
+                            /** @enum {string} */
+                            status?: "queued" | "processing" | "ready" | "failed";
+                            errorMessage?: string | null;
+                            /** Format: date-time */
+                            updatedAt?: string | null;
+                            /** @description Media slug (available when status is ready) */
+                            slug?: string | null;
+                        };
                     };
                 };
             };
@@ -3498,7 +3622,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RiseFallResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["RiseFallResponseDto"];
+                    };
                 };
             };
         };
@@ -3525,7 +3653,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SaveActionResultDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SaveActionResultDto"];
+                    };
                 };
             };
         };
@@ -3552,7 +3684,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UnsaveActionResultDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnsaveActionResultDto"];
+                    };
                 };
             };
         };
@@ -3574,7 +3710,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BatchStatusResponseDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["BatchStatusResponseDto"];
+                    };
                 };
             };
         };
@@ -3596,7 +3736,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MediaSaveStatusDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MediaSaveStatusDto"];
+                    };
                 };
             };
         };
@@ -3618,7 +3762,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SavedItemWithMediaResponseDto"][];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+                    };
                 };
             };
         };
@@ -3640,7 +3788,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SavedItemWithMediaResponseDto"][];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+                    };
                 };
             };
         };
@@ -3667,7 +3819,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SubscribeActionResultDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SubscribeActionResultDto"];
+                    };
                 };
             };
         };
@@ -3694,7 +3850,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UnsubscribeActionResultDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnsubscribeActionResultDto"];
+                    };
                 };
             };
         };
@@ -3716,7 +3876,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MediaSubscriptionStatusDto"];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MediaSubscriptionStatusDto"];
+                    };
                 };
             };
         };
@@ -3738,7 +3902,11 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SubscriptionWithMediaResponseDto"][];
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SubscriptionWithMediaResponseDto"][];
+                    };
                 };
             };
         };
