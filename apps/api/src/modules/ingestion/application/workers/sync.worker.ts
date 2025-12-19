@@ -175,16 +175,19 @@ export class SyncWorker extends WorkerHost {
    */
   private async processTrendingDispatcher(pages = 5, syncStats = true): Promise<void> {
     const dispatcherStartedAt = new Date();
+    // Use hour-based window for deduplication (allows 1 run per hour per type/page)
+    const window = dispatcherStartedAt.toISOString().slice(0, 13); // YYYY-MM-DDTHH
     this.logger.log(`Starting trending dispatcher (pages: ${pages}, syncStats: ${syncStats})...`);
 
     const types: MediaType[] = [MediaType.MOVIE, MediaType.SHOW];
-    const jobs: { name: string; data: any }[] = [];
+    const jobs: { name: string; data: any; opts?: { jobId: string } }[] = [];
 
     for (const type of types) {
       for (let page = 1; page <= pages; page++) {
         jobs.push({
           name: IngestionJob.SYNC_TRENDING_PAGE,
           data: { type, page },
+          opts: { jobId: `trending:${type}:${page}:${window}` },
         });
       }
     }
@@ -202,6 +205,7 @@ export class SyncWorker extends WorkerHost {
           limit: expectedLimit,
         },
         {
+          jobId: `trending-stats:${window}`,
           delay: 3 * 60 * 1000, // 3 minutes delay
         },
       );
