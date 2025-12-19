@@ -1,6 +1,5 @@
 export { MediaCard, type MediaCardProps } from './media-card';
 export { MediaCardServer, type MediaCardServerProps } from './media-card-server';
-export { MediaCardWithBookmark } from './media-card-with-bookmark';
 export { CardLayout, cardContainerStyles, cardTitleStyles, type CardLayoutProps } from './card-layout';
 export { CardPoster } from './card-poster';
 export { CardRating } from './card-rating';

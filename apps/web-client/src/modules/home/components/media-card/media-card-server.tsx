@@ -28,6 +28,8 @@ export interface MediaCardServerProps {
   badgeKey?: BadgeKey | null;
   rank?: number;
   locale?: Locale;
+  /** List context from API (TRENDING_LIST, etc.) - used to derive reasonKey. */
+  listContext?: string | null;
 }
 
 /**
@@ -48,6 +50,7 @@ export function MediaCardServer(props: MediaCardServerProps) {
     rank,
     badgeKey,
     locale = 'uk',
+    listContext,
   } = props;
 
   const dict = getDictionary(locale);
@@ -70,7 +73,7 @@ export function MediaCardServer(props: MediaCardServerProps) {
   );
 
   // CardBookmark is a client component - self-contained with API integration
-  const overlaySlot = <CardBookmark mediaItemId={id} />;
+  const overlaySlot = <CardBookmark mediaItemId={id} listContext={listContext} />;
 
   return (
     <CardLayout href={href} as="article" poster={posterSlot} overlay={overlaySlot}>

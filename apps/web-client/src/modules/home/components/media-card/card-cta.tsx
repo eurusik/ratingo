@@ -13,11 +13,22 @@ import { useSaveStatus, useSaveItem, useUnsaveItem } from '@/core/query';
 
 const DEFAULT_LIST = 'for_later' as const;
 
+/** Map listContext to reasonKey for saved items */
+const LIST_CONTEXT_TO_REASON: Record<string, string> = {
+  TRENDING_LIST: 'trendingNow',
+  NEW_RELEASES_LIST: 'justReleased',
+  IN_THEATERS_LIST: 'justReleased',
+  NEW_ON_STREAMING_LIST: 'nowStreaming',
+  CONTINUE_LIST: 'trendingNow',
+  USER_LIBRARY: 'trendingNow',
+  DEFAULT: 'trendingNow',
+};
+
 interface CardBookmarkProps {
   /** Media item ID for API calls. */
   mediaItemId?: string;
-  /** Verdict key for reasonKey when saving. */
-  verdictKey?: string | null;
+  /** List context from API (TRENDING_LIST, etc.) - used to derive reasonKey. */
+  listContext?: string | null;
   /** Manual override: Whether item is bookmarked. */
   isBookmarked?: boolean;
   /** Manual override: Click handler. */
@@ -31,7 +42,7 @@ interface CardBookmarkProps {
  */
 export function CardBookmark({ 
   mediaItemId, 
-  verdictKey,
+  listContext,
   isBookmarked: isBookmarkedProp, 
   onClick: onClickProp, 
   className 
@@ -85,7 +96,7 @@ export function CardBookmark({
           mediaItemId, 
           list: DEFAULT_LIST, 
           context: 'card',
-          reasonKey: verdictKey ?? undefined,
+          reasonKey: listContext ? LIST_CONTEXT_TO_REASON[listContext] : undefined,
         },
         {
           onSuccess: () => toast.success('Збережено'),

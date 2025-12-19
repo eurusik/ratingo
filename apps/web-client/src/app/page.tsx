@@ -11,6 +11,7 @@ import { TrendingUp, Clapperboard, Sparkles, Film, Tv } from 'lucide-react';
 
 /** Map API item to MediaCardServerProps */
 function toCardProps(item: Record<string, unknown>, type: 'show' | 'movie'): MediaCardServerProps {
+  const card = item.card as Record<string, unknown> | undefined;
   return {
     id: item.id as string,
     slug: item.slug as string,
@@ -21,7 +22,8 @@ function toCardProps(item: Record<string, unknown>, type: 'show' | 'movie'): Med
     externalRatings: (item.externalRatings as MediaCardServerProps['externalRatings']) ?? undefined,
     showProgress: (item.showProgress as MediaCardServerProps['showProgress']) ?? undefined,
     releaseDate: (item.releaseDate as string) ?? undefined,
-    badgeKey: ((item.card as Record<string, unknown>)?.badgeKey as MediaCardServerProps['badgeKey']) ?? undefined,
+    badgeKey: (card?.badgeKey as MediaCardServerProps['badgeKey']) ?? undefined,
+    listContext: (card?.listContext as string) ?? undefined,
   };
 }
 
