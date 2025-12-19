@@ -53,6 +53,20 @@ export class PersistenceMapper {
   }
 
   static toMediaItemUpdate(media: NormalizedMedia): Partial<MediaItemInsert> {
+    const releaseDate =
+      media.releaseDate instanceof Date
+        ? media.releaseDate
+        : media.releaseDate
+          ? new Date(media.releaseDate)
+          : null;
+
+    const trendingUpdatedAt =
+      media.trendingUpdatedAt instanceof Date
+        ? media.trendingUpdatedAt
+        : media.trendingUpdatedAt
+          ? new Date(media.trendingUpdatedAt)
+          : new Date();
+
     const update: Partial<MediaItemInsert> = {
       imdbId: media.externalIds.imdbId || null,
       title: media.title,
@@ -60,45 +74,32 @@ export class PersistenceMapper {
       slug: media.slug,
       overview: media.overview,
       ingestionStatus: media.ingestionStatus,
-
       rating: media.rating,
       voteCount: media.voteCount,
       popularity: media.popularity,
-
-      // External ratings
       ratingImdb: media.ratingImdb,
       voteCountImdb: media.voteCountImdb,
       ratingTrakt: media.ratingTrakt,
       voteCountTrakt: media.voteCountTrakt,
       ratingMetacritic: media.ratingMetacritic,
       ratingRottenTomatoes: media.ratingRottenTomatoes,
-
       posterPath: media.posterPath,
       backdropPath: media.backdropPath,
       videos: media.videos || null,
       credits: media.credits || null,
       watchProviders: media.watchProviders || null,
-      releaseDate:
-        media.releaseDate instanceof Date
-          ? media.releaseDate
-          : media.releaseDate
-            ? new Date(media.releaseDate)
-            : null,
+      releaseDate,
       updatedAt: new Date(),
+      ...(media.trendingScore !== undefined && {
+        trendingScore: media.trendingScore,
+        trendingUpdatedAt,
+      }),
     };
 
-    // Only update trendingScore if provided (to avoid resetting it if missing)
-    if (media.trendingScore !== undefined) {
-      update.trendingScore = media.trendingScore;
-      update.trendingUpdatedAt =
-        media.trendingUpdatedAt instanceof Date
-          ? media.trendingUpdatedAt
-          : media.trendingUpdatedAt
-            ? new Date(media.trendingUpdatedAt)
-            : new Date();
-    }
-
-    return update;
+    // Filter out undefined values to prevent "No values to set" error
+    return Object.fromEntries(
+      Object.entries(update).filter(([, v]) => v !== undefined),
+    ) as Partial<MediaItemInsert>;
   }
 
   static toMediaStatsInsert(mediaId: string, media: NormalizedMedia): MediaStatsInsert | null {
