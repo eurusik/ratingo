@@ -59,23 +59,31 @@ describe('IngestionController', () => {
   });
 
   describe('syncTrending', () => {
-    it('should queue trending sync job', async () => {
-      await controller.syncTrending({ page: 2, syncStats: false });
+    it('should queue trending sync job with query params', async () => {
+      await controller.syncTrending('2', undefined, 'false', undefined, {});
 
-      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_FULL, {
-        page: 2,
+      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_DISPATCHER, {
+        pages: 2,
         syncStats: false,
-        type: undefined,
       });
     });
 
-    it('should queue trending sync job with type', async () => {
-      await controller.syncTrending({ page: 1, syncStats: true, type: MediaType.SHOW });
+    it('should queue legacy trending sync job with page query', async () => {
+      await controller.syncTrending(undefined, '1', undefined, MediaType.SHOW, {});
 
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_FULL, {
         page: 1,
         syncStats: true,
         type: MediaType.SHOW,
+      });
+    });
+
+    it('should use default pages=5 when not specified', async () => {
+      await controller.syncTrending(undefined, undefined, undefined, undefined, {});
+
+      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_DISPATCHER, {
+        pages: 5,
+        syncStats: true,
       });
     });
   });

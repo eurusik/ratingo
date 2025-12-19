@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Body,
+  Query,
   HttpCode,
   HttpStatus,
   Get,
@@ -272,38 +273,48 @@ export class IngestionController {
       'Syncs trending content from TMDB using dispatcher pattern. Queues page jobs for movies and shows. With syncStats=true (default), also updates Trakt stats after ingestion.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
-  async syncTrending(@Body() dto: SyncTrendingDto) {
+  async syncTrending(
+    @Query('pages') pagesQuery?: string,
+    @Query('page') pageQuery?: string,
+    @Query('syncStats') syncStatsQuery?: string,
+    @Query('type') typeQuery?: string,
+    @Body() dto?: SyncTrendingDto,
+  ) {
+    // Merge query params with body (query takes precedence for convenience)
+    const pages = pagesQuery ? parseInt(pagesQuery, 10) : dto?.pages;
+    const page = pageQuery ? parseInt(pageQuery, 10) : dto?.page;
+    const syncStats = syncStatsQuery !== 'false' && dto?.syncStats !== false; // default true
+    const type = (typeQuery as MediaType) || dto?.type;
+
     // Validate: page and pages are mutually exclusive
-    if (dto.page && dto.pages) {
+    if (page && pages) {
       throw new BadRequestException(
         'Cannot specify both "page" and "pages". Use "pages" for dispatcher mode (recommended) or "page" for legacy single-page mode.',
       );
     }
 
-    const syncStats = dto.syncStats !== false; // default true
-
     // Legacy single-page mode (deprecated) - only if page is explicitly set
-    if (dto.page) {
+    if (page) {
       const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_FULL, {
-        page: dto.page,
+        page,
         syncStats,
-        type: dto.type,
+        type,
       });
 
       return {
         status: 'queued',
         jobId: job.id,
         mode: 'legacy',
-        page: dto.page,
+        page,
         syncStats,
-        type: dto.type,
+        type,
       };
     }
 
     // Dispatcher mode (default and recommended)
-    const pages = dto.pages || 5;
+    const pagesCount = pages || 5;
     const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_DISPATCHER, {
-      pages,
+      pages: pagesCount,
       syncStats,
     });
 
@@ -311,8 +322,8 @@ export class IngestionController {
       status: 'queued',
       jobId: job.id,
       mode: 'dispatcher',
-      pages,
-      maxItems: pages * 20 * 2, // pages × 20 items × 2 types (upper bound)
+      pages: pagesCount,
+      maxItems: pagesCount * 20 * 2, // pages × 20 items × 2 types (upper bound)
       syncStats,
     };
   }

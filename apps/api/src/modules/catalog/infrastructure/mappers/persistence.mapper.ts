@@ -14,14 +14,17 @@ const pickDefined = <T extends Record<string, unknown>>(obj: T): Partial<T> =>
 
 export class PersistenceMapper {
   static toMediaItemInsert(media: NormalizedMedia): MediaItemInsert {
+    // Ensure slug is never empty (required by UNIQUE NOT NULL constraint)
+    const slug = media.slug?.trim() || `${media.type}-${media.externalIds.tmdbId}`;
+
     return {
       type: media.type,
       tmdbId: media.externalIds.tmdbId,
       imdbId: media.externalIds.imdbId || null,
-      title: media.title,
+      title: media.title || media.originalTitle || `Untitled ${media.externalIds.tmdbId}`,
       originalTitle: media.originalTitle,
-      slug: media.slug,
-      overview: media.overview,
+      slug,
+      overview: media.overview || null,
       ingestionStatus: media.ingestionStatus,
       posterPath: media.posterPath,
       backdropPath: media.backdropPath,

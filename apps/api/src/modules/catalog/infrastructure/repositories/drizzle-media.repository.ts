@@ -198,11 +198,19 @@ export class DrizzleMediaRepository implements IMediaRepository {
             });
         }
       });
-    } catch (error) {
-      this.logger.error(`Failed to upsert media ${media.title}: ${error.message}`);
+    } catch (error: any) {
+      this.logger.error(`Failed to upsert media ${media.title}`, {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        constraint: error.constraint,
+        tmdbId: media.externalIds.tmdbId,
+      });
       throw new DatabaseException(`Failed to upsert media: ${error.message}`, {
         tmdbId: media.externalIds.tmdbId,
         title: media.title,
+        code: error.code,
+        constraint: error.constraint,
       });
     }
   }
