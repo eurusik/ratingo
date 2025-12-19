@@ -2,17 +2,15 @@ import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { ConfigType } from '@nestjs/config';
 import { Queue } from 'bullmq';
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
-import schedulerConfig from '../../../../config/scheduler.config';
+import { INGESTION_QUEUE } from '../../ingestion.constants';
+import schedulerConfig, { ScheduledJobConfig } from '../../../../config/scheduler.config';
 
 /**
  * Scheduler service for automated ingestion jobs.
  * Uses BullMQ repeatable jobs for cron-based scheduling.
  *
- * Schedules:
- * - Tracked shows sync: twice daily (8:00 and 20:00 UTC)
- * - Daily snapshots: once daily (3:00 UTC)
- * - Trending sync: every 6 hours
+ * All jobs are configured via scheduler.config.ts with env overrides.
+ * Format: SCHEDULER_INGESTION_{JOB_NAME}_{ENABLED|PATTERN}
  */
 @Injectable()
 export class IngestionSchedulerService implements OnModuleInit {
@@ -44,69 +42,32 @@ export class IngestionSchedulerService implements OnModuleInit {
       // Remove existing repeatable jobs to prevent duplicates
       await this.cleanupExistingRepeatableJobs();
 
-      const { trackedShows, snapshots, trending, timezone } = this.config;
+      const { jobs, timezone } = this.config;
+      let scheduled = 0;
+      let skipped = 0;
 
-      // Tracked shows sync
-      if (trackedShows.enabled) {
-        await this.ingestionQueue.add(
-          IngestionJob.SYNC_TRACKED_SHOWS,
-          {},
-          {
-            repeat: {
-              pattern: trackedShows.pattern,
-              tz: timezone,
-            },
-            jobId: trackedShows.jobId,
-            removeOnComplete: 100,
-            removeOnFail: 50,
+      for (const job of jobs) {
+        if (!job.enabled) {
+          this.logger.log(`[${job.name}] DISABLED`);
+          skipped++;
+          continue;
+        }
+
+        await this.ingestionQueue.add(job.jobType, job.data || {}, {
+          repeat: {
+            pattern: job.pattern,
+            tz: timezone,
           },
-        );
-        this.logger.log(`Scheduled: Tracked shows sync (${trackedShows.pattern} ${timezone})`);
-      } else {
-        this.logger.log('Tracked shows sync: DISABLED');
+          jobId: job.jobId,
+          removeOnComplete: 100,
+          removeOnFail: 50,
+        });
+
+        this.logger.log(`[${job.name}] Scheduled: ${job.pattern} ${timezone}`);
+        scheduled++;
       }
 
-      // Daily snapshots
-      if (snapshots.enabled) {
-        await this.ingestionQueue.add(
-          IngestionJob.SYNC_SNAPSHOTS,
-          {},
-          {
-            repeat: {
-              pattern: snapshots.pattern,
-              tz: timezone,
-            },
-            jobId: snapshots.jobId,
-            removeOnComplete: 100,
-            removeOnFail: 50,
-          },
-        );
-        this.logger.log(`Scheduled: Daily snapshots sync (${snapshots.pattern} ${timezone})`);
-      } else {
-        this.logger.log('Daily snapshots sync: DISABLED');
-      }
-
-      // Trending sync
-      if (trending.enabled) {
-        await this.ingestionQueue.add(
-          IngestionJob.SYNC_TRENDING_FULL,
-          { page: 1, syncStats: true },
-          {
-            repeat: {
-              pattern: trending.pattern,
-              tz: timezone,
-            },
-            jobId: trending.jobId,
-            removeOnComplete: 100,
-            removeOnFail: 50,
-          },
-        );
-        this.logger.log(`Scheduled: Trending sync (${trending.pattern} ${timezone})`);
-      } else {
-        this.logger.log('Trending sync: DISABLED');
-      }
-
-      this.logger.log('All repeatable ingestion jobs configured');
+      this.logger.log(`Repeatable jobs configured: ${scheduled} scheduled, ${skipped} disabled`);
     } catch (error) {
       this.logger.error(`Failed to setup repeatable jobs: ${error.message}`);
     }
@@ -114,18 +75,29 @@ export class IngestionSchedulerService implements OnModuleInit {
 
   /**
    * Cleans up existing repeatable jobs with our jobIds to prevent duplicates.
+   * Logs pattern changes for debugging.
    * Only removes jobs that we manage (by jobId from config).
    */
   private async cleanupExistingRepeatableJobs(): Promise<void> {
     const existingJobs = await this.ingestionQueue.getRepeatableJobs();
-    const { trackedShows, snapshots, trending } = this.config;
-    const ourJobIds = [trackedShows.jobId, snapshots.jobId, trending.jobId];
+    const configJobsMap = new Map(this.config.jobs.map((j) => [j.jobId, j]));
 
     let removed = 0;
-    for (const job of existingJobs) {
-      // Check if this is one of our managed jobs
-      if (ourJobIds.some((id) => job.key.includes(id))) {
-        await this.ingestionQueue.removeRepeatableByKey(job.key);
+    for (const existingJob of existingJobs) {
+      // Find matching config job by jobId
+      const configJob = Array.from(configJobsMap.values()).find((cj) =>
+        existingJob.key.includes(cj.jobId),
+      );
+
+      if (configJob) {
+        // Log if pattern changed
+        if (existingJob.pattern !== configJob.pattern) {
+          this.logger.warn(
+            `[${configJob.name}] Pattern changed: "${existingJob.pattern}" → "${configJob.pattern}"`,
+          );
+        }
+
+        await this.ingestionQueue.removeRepeatableByKey(existingJob.key);
         removed++;
       }
     }

@@ -12,13 +12,23 @@ export enum IngestionJob {
   SYNC_SHOW = 'sync-show',
   SYNC_NOW_PLAYING = 'sync-now-playing',
   SYNC_NEW_RELEASES = 'sync-new-releases',
-  SYNC_TRENDING_FULL = 'sync-trending-full',
   UPDATE_NOW_PLAYING_FLAGS = 'update-now-playing-flags',
   SYNC_SNAPSHOTS = 'sync-snapshots',
+
   /** Dispatcher job: fetches tracked show IDs and queues batch jobs */
   SYNC_TRACKED_SHOWS = 'sync-tracked-shows',
   /** Batch job: syncs a chunk of tracked shows with diff detection */
   SYNC_TRACKED_SHOW_BATCH = 'sync-tracked-show-batch',
+
+  /** Dispatcher job: queues page jobs for trending movies and shows */
+  SYNC_TRENDING_DISPATCHER = 'sync-trending-dispatcher',
+  /** Page job: syncs one page of trending items */
+  SYNC_TRENDING_PAGE = 'sync-trending-page',
+  /** Stats job: syncs Trakt stats after all trending pages complete */
+  SYNC_TRENDING_STATS = 'sync-trending-stats',
+
+  /** @deprecated Use SYNC_TRENDING_DISPATCHER instead */
+  SYNC_TRENDING_FULL = 'sync-trending-full',
 }
 
 /**

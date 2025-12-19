@@ -7,6 +7,7 @@ import {
   Get,
   Param,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -47,7 +48,22 @@ class SyncDto {
 }
 
 class SyncTrendingDto {
-  @ApiProperty({ example: 1, description: 'Page number', default: 1, required: false })
+  @ApiProperty({
+    example: 5,
+    description: 'Number of pages to sync (20 items per page). Use this for dispatcher mode.',
+    default: 5,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  pages?: number;
+
+  @ApiProperty({
+    example: 1,
+    description: 'Single page number (deprecated, use pages instead)',
+    required: false,
+  })
   @IsOptional()
   @IsNumber()
   @Min(1)
@@ -64,7 +80,7 @@ class SyncTrendingDto {
 
   @ApiProperty({
     enum: MediaType,
-    description: 'Sync only specific media type (movie or show)',
+    description: 'Sync only specific media type (movie or show). Only for legacy single-page mode.',
     required: false,
   })
   @IsOptional()
@@ -253,26 +269,51 @@ export class IngestionController {
   @ApiOperation({
     summary: 'Trigger sync for trending movies and shows',
     description:
-      'Syncs trending content from TMDB. With syncStats=true (default), also updates Trakt stats after ingestion.',
+      'Syncs trending content from TMDB using dispatcher pattern. Queues page jobs for movies and shows. With syncStats=true (default), also updates Trakt stats after ingestion.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncTrending(@Body() dto: SyncTrendingDto) {
-    const page = dto.page || 1;
+    // Validate: page and pages are mutually exclusive
+    if (dto.page && dto.pages) {
+      throw new BadRequestException(
+        'Cannot specify both "page" and "pages". Use "pages" for dispatcher mode (recommended) or "page" for legacy single-page mode.',
+      );
+    }
+
     const syncStats = dto.syncStats !== false; // default true
 
-    // Queue full trending sync job (ingestion + stats)
-    const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_FULL, {
-      page,
+    // Legacy single-page mode (deprecated) - only if page is explicitly set
+    if (dto.page) {
+      const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_FULL, {
+        page: dto.page,
+        syncStats,
+        type: dto.type,
+      });
+
+      return {
+        status: 'queued',
+        jobId: job.id,
+        mode: 'legacy',
+        page: dto.page,
+        syncStats,
+        type: dto.type,
+      };
+    }
+
+    // Dispatcher mode (default and recommended)
+    const pages = dto.pages || 5;
+    const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_DISPATCHER, {
+      pages,
       syncStats,
-      type: dto.type,
     });
 
     return {
       status: 'queued',
       jobId: job.id,
-      page,
+      mode: 'dispatcher',
+      pages,
+      maxItems: pages * 20 * 2, // pages × 20 items × 2 types (upper bound)
       syncStats,
-      type: dto.type,
     };
   }
 

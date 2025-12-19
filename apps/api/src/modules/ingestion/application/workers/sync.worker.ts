@@ -67,6 +67,7 @@ export class SyncWorker extends WorkerHost {
         region?: string;
         daysBack?: number;
         page?: number;
+        pages?: number;
         syncStats?: boolean;
         type?: MediaType;
       },
@@ -90,7 +91,17 @@ export class SyncWorker extends WorkerHost {
         case IngestionJob.SYNC_NEW_RELEASES:
           await this.processNewReleases(job.data.region, job.data.daysBack);
           break;
+        case IngestionJob.SYNC_TRENDING_DISPATCHER:
+          await this.processTrendingDispatcher(job.data.pages, job.data.syncStats);
+          break;
+        case IngestionJob.SYNC_TRENDING_PAGE:
+          await this.processTrendingPage(job.data.type, job.data.page);
+          break;
+        case IngestionJob.SYNC_TRENDING_STATS:
+          await this.processTrendingStats();
+          break;
         case IngestionJob.SYNC_TRENDING_FULL:
+          // @deprecated - kept for backward compatibility
           await this.processTrendingFull(job.data.page, job.data.syncStats, job.data.type);
           break;
         case IngestionJob.UPDATE_NOW_PLAYING_FLAGS:
@@ -153,6 +164,86 @@ export class SyncWorker extends WorkerHost {
     }
 
     this.logger.log(`Full trending sync complete: ${items.length} items processed`);
+  }
+
+  /**
+   * Trending dispatcher: queues page jobs for movies and shows.
+   * Each page job syncs 20 items from TMDB trending.
+   * Stats job is queued separately after all page jobs.
+   */
+  private async processTrendingDispatcher(pages = 5, syncStats = true): Promise<void> {
+    this.logger.log(`Starting trending dispatcher (pages: ${pages}, syncStats: ${syncStats})...`);
+
+    const types: MediaType[] = [MediaType.MOVIE, MediaType.SHOW];
+    const jobs: { name: string; data: any }[] = [];
+
+    for (const type of types) {
+      for (let page = 1; page <= pages; page++) {
+        jobs.push({
+          name: IngestionJob.SYNC_TRENDING_PAGE,
+          data: { type, page },
+        });
+      }
+    }
+
+    await this.ingestionQueue.addBulk(jobs);
+
+    // Queue stats job separately (runs after page jobs complete)
+    if (syncStats) {
+      await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_STATS, {});
+      this.logger.log('Queued trending stats job');
+    }
+
+    this.logger.log(
+      `Trending dispatcher complete: ${jobs.length} page jobs queued (${pages} pages × 2 types)`,
+    );
+  }
+
+  /**
+   * Syncs Trakt stats for trending items.
+   * Should be called after all trending page jobs complete.
+   */
+  private async processTrendingStats(): Promise<void> {
+    this.logger.log('Syncing Trakt stats for trending items...');
+    await this.statsService.syncTrendingStats();
+    this.logger.log('Trending stats sync complete');
+  }
+
+  /**
+   * Trending page job: syncs one page of trending items.
+   * Processes items sequentially with rate limiting.
+   */
+  private async processTrendingPage(type: MediaType, page: number): Promise<void> {
+    this.logger.log(`Processing trending page: ${type} page ${page}...`);
+
+    const items = await this.syncService.getTrending(page, type);
+    this.logger.log(`Found ${items.length} trending ${type}s on page ${page}`);
+
+    let synced = 0;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const trendingScore = 10000 - ((page - 1) * 20 + i);
+
+      try {
+        if (item.type === MediaType.MOVIE) {
+          await this.syncService.syncMovie(item.tmdbId, trendingScore);
+        } else {
+          await this.syncService.syncShow(item.tmdbId, trendingScore);
+        }
+        synced++;
+
+        // Rate limiting
+        if (i < items.length - 1) {
+          await this.delay(TMDB_REQUEST_DELAY_MS);
+        }
+      } catch (error) {
+        this.logger.error(`Failed to sync ${item.type} ${item.tmdbId}: ${error.message}`);
+      }
+    }
+
+    this.logger.log(
+      `Trending page complete: ${type} page ${page}, ${synced}/${items.length} synced`,
+    );
   }
 
   /**
