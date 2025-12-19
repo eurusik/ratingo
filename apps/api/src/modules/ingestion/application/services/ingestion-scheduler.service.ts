@@ -36,6 +36,13 @@ export class IngestionSchedulerService implements OnModuleInit {
    * Removes existing jobs first to prevent duplicates on restart.
    */
   private async setupRepeatableJobs(): Promise<void> {
+    // Check master switch first
+    if (!this.config.enabled) {
+      this.logger.warn('Scheduler DISABLED (SCHEDULER_ENABLED=false)');
+      await this.cleanupExistingRepeatableJobs();
+      return;
+    }
+
     this.logger.log('Setting up repeatable ingestion jobs...');
 
     try {

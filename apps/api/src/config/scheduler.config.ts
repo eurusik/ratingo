@@ -22,6 +22,8 @@ export interface ScheduledJobConfig {
  * Full scheduler configuration.
  */
 export interface SchedulerConfig {
+  /** Master switch to enable/disable all scheduled jobs */
+  enabled: boolean;
   /** Timezone for all scheduled jobs */
   timezone: string;
   /** List of scheduled jobs */
@@ -111,6 +113,7 @@ function buildJobConfig(defaultJob: Omit<ScheduledJobConfig, 'enabled'>): Schedu
 export default registerAs(
   'scheduler',
   (): SchedulerConfig => ({
+    enabled: process.env.SCHEDULER_ENABLED !== 'false', // Enabled by default
     timezone: process.env.SCHEDULER_TIMEZONE || 'UTC',
     jobs: DEFAULT_JOBS.map(buildJobConfig),
   }),
