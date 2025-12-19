@@ -13,7 +13,7 @@ import type { SavedItemList } from '@/core/api';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { DataVerdictServer, type DataVerdictServerProps } from './data-verdict-server';
 import { useSaveStatus, useSaveItem, useUnsaveItem, useSubscriptionStatus, useSubscribe, useUnsubscribe } from '@/core/query';
-import { getSubscriptionTrigger } from '../utils';
+import { getSubscriptionTrigger, type ShowStatus } from '../utils';
 
 type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
 
@@ -30,6 +30,8 @@ interface DataVerdictProps extends Omit<DataVerdictServerProps, 'ctaProps'> {
   isReleased?: boolean;
   /** Whether the movie has streaming providers available. */
   hasStreamingProviders?: boolean;
+  /** For shows: current production status (Returning Series, Ended, etc.) */
+  showStatus?: ShowStatus;
   ctaProps?: {
     hasNewEpisodes?: boolean;
     hintKey?: VerdictHintKey;
@@ -38,7 +40,7 @@ interface DataVerdictProps extends Omit<DataVerdictServerProps, 'ctaProps'> {
   };
 }
 
-export function DataVerdict({ mediaItemId, mediaType, isReleased = false, hasStreamingProviders = false, ctaProps, ...props }: DataVerdictProps) {
+export function DataVerdict({ mediaItemId, mediaType, isReleased = false, hasStreamingProviders = false, showStatus, ctaProps, ...props }: DataVerdictProps) {
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const openLogin = useAuthModalStore((s) => s.openLogin);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -64,7 +66,7 @@ export function DataVerdict({ mediaItemId, mediaType, isReleased = false, hasStr
   const isMutating = isSaving || isUnsaving;
   const isCtaLoading = !isHydrated || isAuthLoading || (isAuthenticated && !isFetched);
   
-  const subscriptionTrigger = getSubscriptionTrigger({ mediaType, isReleased, hasStreamingProviders });
+  const subscriptionTrigger = getSubscriptionTrigger({ mediaType, isReleased, hasStreamingProviders, showStatus });
   const isSubscribed = subscriptionTrigger 
     ? (subscriptionStatus?.triggers?.includes(subscriptionTrigger) ?? false)
     : false;
