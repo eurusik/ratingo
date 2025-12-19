@@ -66,14 +66,8 @@ export function SavedList({ list }: SavedListProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {items.map((item) => {
-        const media = item.mediaSummary as unknown as {
-          id: string;
-          type: 'movie' | 'show';
-          title: string;
-          slug: string;
-          poster: Record<string, string> | null;
-          releaseDate?: string | null;
-        };
+        const media = item.mediaSummary;
+        const poster = media.poster as Record<string, string> | null;
         
         return (
           <SavedItemCard
@@ -81,11 +75,12 @@ export function SavedList({ list }: SavedListProps) {
             id={item.id}
             mediaItemId={item.mediaItemId}
             title={media.title}
-            type={media.type}
+            type={media.type as 'movie' | 'show'}
             slug={media.slug}
-            posterUrl={media.poster?.small ?? null}
+            posterUrl={poster?.small ?? null}
             releaseDate={media.releaseDate}
-            reasonKey={(item as unknown as { reasonKey?: string | null }).reasonKey}
+            reasonKey={item.reasonKey}
+            activeSubscriptionTriggers={item.activeSubscriptionTriggers}
             onRemove={() => handleRemove(item.mediaItemId)}
             onMove={() => handleMove(item.mediaItemId)}
             moveLabel={isForLater 

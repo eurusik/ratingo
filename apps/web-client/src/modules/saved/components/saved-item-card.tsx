@@ -8,7 +8,7 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import Image from 'next/image';
-import { Trash2, ArrowLeftRight, Sparkles } from 'lucide-react';
+import { Trash2, ArrowLeftRight, Sparkles, Bell } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { Button, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
@@ -22,6 +22,7 @@ interface SavedItemCardProps {
   posterUrl: string | null;
   releaseDate?: string | null;
   reasonKey?: string | null;
+  activeSubscriptionTriggers?: string[];
   onRemove?: () => void;
   onMove?: () => void;
   moveLabel?: string;
@@ -35,6 +36,7 @@ export function SavedItemCard({
   posterUrl,
   releaseDate,
   reasonKey,
+  activeSubscriptionTriggers = [],
   onRemove,
   onMove,
   moveLabel,
@@ -84,6 +86,16 @@ export function SavedItemCard({
             <p className="text-xs text-zinc-600 mt-1 flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-amber-500/70" />
               <span>{dict.saved.reason.label}: {reasonLabel}</span>
+            </p>
+          )}
+          {activeSubscriptionTriggers.length > 0 && (
+            <p className="text-xs text-emerald-500/80 mt-1 flex items-center gap-1">
+              <Bell className="w-3 h-3" />
+              <span>
+                {activeSubscriptionTriggers
+                  .map((t) => dict.saved.trigger[t as keyof typeof dict.saved.trigger])
+                  .join(', ')}
+              </span>
             </p>
           )}
         </div>
