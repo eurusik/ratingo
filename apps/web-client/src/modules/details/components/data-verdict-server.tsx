@@ -5,7 +5,7 @@
 
 import type { components } from '@ratingo/api-contract';
 import { Info, TrendingDown, User, Star, Flame, Calendar, AlertTriangle } from 'lucide-react';
-import type { PrimaryCta } from '@/shared/types';
+import type { PrimaryCta, SubscriptionTrigger, SubscriptionUnavailableReason } from '@/shared/types';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
 import { VerdictCtaButton } from './verdict-cta-button';
@@ -45,9 +45,8 @@ export interface DataVerdictServerProps {
     continuePoint?: { season: number; episode: number } | null;
     onSave?: () => void;
     // Subscription props
-    mediaType?: 'movie' | 'show';
-    subscriptionTrigger?: 'release' | 'new_season' | 'on_streaming' | null;
-    subscriptionUnavailableReason?: 'ended' | 'canceled' | 'no_date' | 'already_available' | null;
+    subscriptionTrigger?: SubscriptionTrigger | null;
+    subscriptionUnavailableReason?: SubscriptionUnavailableReason;
     isSubscribed?: boolean;
     isSubscriptionLoading?: boolean;
     onSubscriptionToggle?: () => void;
@@ -181,7 +180,6 @@ export function DataVerdictServer({
               verdictType={type}
               dict={dict}
               onSave={ctaProps.onSave}
-              mediaType={ctaProps.mediaType}
               subscriptionTrigger={ctaProps.subscriptionTrigger}
               subscriptionUnavailableReason={ctaProps.subscriptionUnavailableReason}
               isSubscribed={ctaProps.isSubscribed}

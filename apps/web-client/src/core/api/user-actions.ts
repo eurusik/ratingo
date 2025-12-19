@@ -16,7 +16,10 @@ import { apiGet, apiPost, apiDelete } from './client';
 // ============================================================================
 
 export type SavedItemList = components['schemas']['SaveItemDto']['list'];
-export type SubscriptionTrigger = components['schemas']['SubscribeDto']['trigger'];
+
+// Import and re-export SubscriptionTrigger from shared/types
+import type { SubscriptionTrigger } from '@/shared/types';
+export type { SubscriptionTrigger };
 
 export type MediaSaveStatusDto = components['schemas']['MediaSaveStatusDto'];
 export type SaveActionResultDto = components['schemas']['SaveActionResultDto'];

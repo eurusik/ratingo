@@ -32,3 +32,15 @@ export type GenreDto = components['schemas']['GenreDto'];
 export type VideoDto = components['schemas']['VideoDto'];
 export type CastMemberDto = components['schemas']['CastMemberDto'];
 export type CrewMemberDto = components['schemas']['CrewMemberDto'];
+
+// Media types
+export type MediaType = 'movie' | 'show';
+
+// Show status (from ShowResponseDto) - includes null for unknown status
+export type ShowStatus = components['schemas']['ShowResponseDto']['status'];
+
+// Subscription types (from SubscribeDto)
+export type SubscriptionTrigger = components['schemas']['SubscribeDto']['trigger'];
+
+/** Reason why subscription is unavailable (null when subscription is available) */
+export type SubscriptionUnavailableReason = 'ended' | 'canceled' | 'no_date' | 'already_available' | null;

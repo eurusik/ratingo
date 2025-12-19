@@ -11,8 +11,7 @@ import { Bell, BellOff } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { Button, Badge } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
-
-type SubscriptionTrigger = 'release' | 'new_season' | 'on_streaming';
+import type { SubscriptionTrigger, MediaType } from '@/shared/types';
 
 interface SubscriptionCardProps {
   id: string;

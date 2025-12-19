@@ -8,10 +8,9 @@
 import type { components } from '@ratingo/api-contract';
 import { Bookmark, Check, ArrowRight, Info, Bell, BellOff } from 'lucide-react';
 import { SUBSCRIPTION_TRIGGER } from '@/core/query';
-import { type PrimaryCta, PRIMARY_CTA } from '@/shared/types';
+import { type PrimaryCta, PRIMARY_CTA, type SubscriptionTrigger, type SubscriptionUnavailableReason } from '@/shared/types';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
-import type { SubscriptionTrigger } from '@/core/api';
 
 /** Verdict hint key from API. */
 type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
@@ -40,11 +39,10 @@ interface VerdictCtaButtonProps {
   /** Callback for save/unsave action. */
   onSave?: () => void;
   /** Media type for subscription trigger label. */
-  mediaType?: 'movie' | 'show';
   /** Specific subscription trigger to show. Null means no subscription available. */
   subscriptionTrigger?: SubscriptionTrigger | null;
   /** Reason why subscription is unavailable (for tooltip). */
-  subscriptionUnavailableReason?: 'ended' | 'canceled' | 'no_date' | 'already_available' | null;
+  subscriptionUnavailableReason?: SubscriptionUnavailableReason;
   /** Is subscribed to notifications. */
   isSubscribed?: boolean;
   /** Is subscription loading. */
@@ -63,7 +61,6 @@ export function VerdictCtaButton({
   verdictType,
   dict,
   onSave,
-  mediaType,
   subscriptionTrigger,
   subscriptionUnavailableReason,
   isSubscribed = false,

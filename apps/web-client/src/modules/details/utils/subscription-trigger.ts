@@ -12,15 +12,15 @@
  *   - Ended / Canceled → null (no new content expected)
  */
 
-export type SubscriptionTrigger = 'release' | 'new_season' | 'on_streaming';
-
-export type ShowStatus = 'Returning Series' | 'Planned' | 'In Production' | 'Ended' | 'Canceled' | 'Pilot' | null;
-
-/** Reason why subscription is unavailable */
-export type SubscriptionUnavailableReason = 'ended' | 'canceled' | 'no_date' | 'already_available' | null;
+import type { 
+  MediaType, 
+  ShowStatus, 
+  SubscriptionTrigger, 
+  SubscriptionUnavailableReason 
+} from '@/shared/types';
 
 interface GetSubscriptionTriggerParams {
-  mediaType: 'movie' | 'show';
+  mediaType: MediaType;
   /** For movies: whether releaseDate is in the past */
   isReleased?: boolean;
   /** For movies: whether streaming providers are available */

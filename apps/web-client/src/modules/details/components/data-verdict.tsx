@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import type { components } from '@ratingo/api-contract';
 import { toast } from 'sonner';
-import { type PrimaryCta, PRIMARY_CTA } from '@/shared/types';
+import { type PrimaryCta, PRIMARY_CTA, type MediaType } from '@/shared/types';
 import type { SavedItemList } from '@/core/api';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { DataVerdictServer, type DataVerdictServerProps } from './data-verdict-server';
@@ -25,7 +25,7 @@ interface DataVerdictProps extends Omit<DataVerdictServerProps, 'ctaProps'> {
   /** Media item ID for fetching save status. */
   mediaItemId: string;
   /** Media type for subscription trigger selection. */
-  mediaType: 'movie' | 'show';
+  mediaType: MediaType;
   /** Whether the movie is already released (releaseDate in past). */
   isReleased?: boolean;
   /** Whether the movie has streaming providers available. */
@@ -138,7 +138,6 @@ export function DataVerdict({ mediaItemId, mediaType, isReleased = false, hasStr
         isLoading: isCtaLoading,
         onSave: handleCtaAction,
         // Subscription props
-        mediaType,
         subscriptionTrigger,
         subscriptionUnavailableReason: unavailableReason,
         isSubscribed,

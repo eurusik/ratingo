@@ -6,6 +6,7 @@
 
 import { useTranslation } from '@/shared/i18n';
 import { Skeleton } from '@/shared/ui';
+import type { SubscriptionTrigger } from '@/shared/types';
 import { useSubscriptions, useUnsubscribe } from '../hooks';
 import { SubscriptionCard } from './subscription-card';
 import { EmptyState } from './empty-state';
@@ -15,7 +16,7 @@ export function SubscriptionsList() {
   const { data, isLoading } = useSubscriptions();
   const unsubscribeMutation = useUnsubscribe();
 
-  const handleUnsubscribe = (mediaItemId: string, trigger: 'release' | 'new_season' | 'on_streaming') => {
+  const handleUnsubscribe = (mediaItemId: string, trigger: SubscriptionTrigger) => {
     unsubscribeMutation.mutate({ mediaItemId, trigger, context: 'saved-page' });
   };
 

@@ -12,6 +12,10 @@ export type {
   VideoDto,
   CastMemberDto,
   CrewMemberDto,
+  MediaType,
+  ShowStatus,
+  SubscriptionTrigger,
+  SubscriptionUnavailableReason,
 } from './api';
 
 export { PRIMARY_CTA } from './api';
