@@ -13,7 +13,7 @@ import type { SavedItemList } from '@/core/api';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { DataVerdictServer, type DataVerdictServerProps } from './data-verdict-server';
 import { useSaveStatus, useSaveItem, useUnsaveItem, useSubscriptionStatus, useSubscribe, useUnsubscribe } from '@/core/query';
-import { getSubscriptionTrigger, type ShowStatus } from '../utils';
+import { getSubscriptionTrigger, type ShowStatus, type SubscriptionUnavailableReason } from '../utils';
 
 type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
 
@@ -68,7 +68,7 @@ export function DataVerdict({ mediaItemId, mediaType, isReleased = false, hasStr
   const isMutating = isSaving || isUnsaving;
   const isCtaLoading = !isHydrated || isAuthLoading || (isAuthenticated && !isFetched);
   
-  const subscriptionTrigger = getSubscriptionTrigger({ mediaType, isReleased, hasStreamingProviders, showStatus, hasUpcomingAirDate });
+  const { trigger: subscriptionTrigger, unavailableReason } = getSubscriptionTrigger({ mediaType, isReleased, hasStreamingProviders, showStatus, hasUpcomingAirDate });
   const isSubscribed = subscriptionTrigger 
     ? (subscriptionStatus?.triggers?.includes(subscriptionTrigger) ?? false)
     : false;
@@ -140,6 +140,7 @@ export function DataVerdict({ mediaItemId, mediaType, isReleased = false, hasStr
         // Subscription props
         mediaType,
         subscriptionTrigger,
+        subscriptionUnavailableReason: unavailableReason,
         isSubscribed,
         isSubscriptionLoading: isSubscriptionMutating,
         onSubscriptionToggle: handleSubscriptionToggle,

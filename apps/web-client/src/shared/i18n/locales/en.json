@@ -385,14 +385,20 @@
     },
     "trigger": {
       "release": "Release",
-      "new_season": "New Season",
-      "on_streaming": "On Streaming"
+      "new_season": "New season",
+      "on_streaming": "On streaming"
+    },
+    "unavailable": {
+      "no_date": "Next season date not announced yet",
+      "ended": "Series has ended",
+      "canceled": "Series was canceled",
+      "has_streaming": "Already available on streaming"
     },
     "reason": {
-      "label": "Saved from",
+      "label": "Saved because",
       "trendingNow": "Trending",
       "risingHype": "Rising interest",
-      "criticsLoved": "Critics loved",
+      "criticsLoved": "High ratings",
       "strongRatings": "Strong ratings",
       "decentRatings": "Decent ratings",
       "mixedReviews": "Mixed reviews",

@@ -1,1 +1,1 @@
-export { getSubscriptionTrigger, type SubscriptionTrigger, type ShowStatus } from './subscription-trigger';
+export { getSubscriptionTrigger, type SubscriptionTrigger, type ShowStatus, type SubscriptionUnavailableReason } from './subscription-trigger';

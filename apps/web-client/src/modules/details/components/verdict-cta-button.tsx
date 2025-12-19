@@ -43,6 +43,8 @@ interface VerdictCtaButtonProps {
   mediaType?: 'movie' | 'show';
   /** Specific subscription trigger to show. Null means no subscription available. */
   subscriptionTrigger?: SubscriptionTrigger | null;
+  /** Reason why subscription is unavailable (for tooltip). */
+  subscriptionUnavailableReason?: 'ended' | 'canceled' | 'no_date' | 'has_streaming' | null;
   /** Is subscribed to notifications. */
   isSubscribed?: boolean;
   /** Is subscription loading. */
@@ -63,6 +65,7 @@ export function VerdictCtaButton({
   onSave,
   mediaType,
   subscriptionTrigger,
+  subscriptionUnavailableReason,
   isSubscribed = false,
   isSubscriptionLoading = false,
   onSubscriptionToggle,
@@ -200,6 +203,15 @@ export function VerdictCtaButton({
                   ? `${subscriptionLabel} ✓`
                   : `${dict.saved.actions.subscribe}: ${subscriptionLabel}`
                 }
+              </span>
+            </div>
+          )}
+          {/* Show hint when subscription is unavailable (e.g., Planned/Pilot without date) */}
+          {isSaved && primaryCta === PRIMARY_CTA.SAVE && !subscriptionLabel && subscriptionUnavailableReason === 'no_date' && (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <BellOff className="w-3 h-3 text-zinc-600" />
+              <span className="text-xs text-zinc-600">
+                {dict.saved.unavailable.no_date}
               </span>
             </div>
           )}

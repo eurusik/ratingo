@@ -16,6 +16,9 @@ export type SubscriptionTrigger = 'release' | 'new_season' | 'on_streaming';
 
 export type ShowStatus = 'Returning Series' | 'Planned' | 'In Production' | 'Ended' | 'Canceled' | 'Pilot' | null;
 
+/** Reason why subscription is unavailable */
+export type SubscriptionUnavailableReason = 'ended' | 'canceled' | 'no_date' | 'has_streaming' | null;
+
 interface GetSubscriptionTriggerParams {
   mediaType: 'movie' | 'show';
   /** For movies: whether releaseDate is in the past */
@@ -28,42 +31,54 @@ interface GetSubscriptionTriggerParams {
   hasUpcomingAirDate?: boolean;
 }
 
+interface SubscriptionTriggerResult {
+  trigger: SubscriptionTrigger | null;
+  unavailableReason: SubscriptionUnavailableReason;
+}
+
 export function getSubscriptionTrigger({
   mediaType,
   isReleased = false,
   hasStreamingProviders = false,
   showStatus,
   hasUpcomingAirDate = false,
-}: GetSubscriptionTriggerParams): SubscriptionTrigger | null {
+}: GetSubscriptionTriggerParams): SubscriptionTriggerResult {
   if (mediaType === 'show') {
-    // Ended/Canceled - no subscription
-    if (showStatus === 'Ended' || showStatus === 'Canceled') {
-      return null;
+    // Ended - no subscription
+    if (showStatus === 'Ended') {
+      return { trigger: null, unavailableReason: 'ended' };
+    }
+    
+    // Canceled - no subscription
+    if (showStatus === 'Canceled') {
+      return { trigger: null, unavailableReason: 'canceled' };
     }
     
     // Returning Series / In Production - always show subscription
     if (showStatus === 'Returning Series' || showStatus === 'In Production') {
-      return 'new_season';
+      return { trigger: 'new_season', unavailableReason: null };
     }
     
     // Planned / Pilot - only if there's an upcoming air date
     if (showStatus === 'Planned' || showStatus === 'Pilot') {
-      return hasUpcomingAirDate ? 'new_season' : null;
+      return hasUpcomingAirDate 
+        ? { trigger: 'new_season', unavailableReason: null }
+        : { trigger: null, unavailableReason: 'no_date' };
     }
     
     // Unknown status (null) - show subscription if has upcoming date, otherwise assume ongoing
-    return hasUpcomingAirDate || !showStatus ? 'new_season' : null;
+    return { trigger: 'new_season', unavailableReason: null };
   }
 
   // Movie logic
   if (!isReleased) {
-    return 'release';
+    return { trigger: 'release', unavailableReason: null };
   }
 
   if (!hasStreamingProviders) {
-    return 'on_streaming';
+    return { trigger: 'on_streaming', unavailableReason: null };
   }
 
   // Movie is released and has streaming providers - no subscription needed
-  return null;
+  return { trigger: null, unavailableReason: 'has_streaming' };
 }

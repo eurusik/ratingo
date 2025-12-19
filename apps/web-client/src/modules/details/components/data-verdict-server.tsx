@@ -47,6 +47,7 @@ export interface DataVerdictServerProps {
     // Subscription props
     mediaType?: 'movie' | 'show';
     subscriptionTrigger?: 'release' | 'new_season' | 'on_streaming' | null;
+    subscriptionUnavailableReason?: 'ended' | 'canceled' | 'no_date' | 'has_streaming' | null;
     isSubscribed?: boolean;
     isSubscriptionLoading?: boolean;
     onSubscriptionToggle?: () => void;
@@ -182,6 +183,7 @@ export function DataVerdictServer({
               onSave={ctaProps.onSave}
               mediaType={ctaProps.mediaType}
               subscriptionTrigger={ctaProps.subscriptionTrigger}
+              subscriptionUnavailableReason={ctaProps.subscriptionUnavailableReason}
               isSubscribed={ctaProps.isSubscribed}
               isSubscriptionLoading={ctaProps.isSubscriptionLoading}
               onSubscriptionToggle={ctaProps.onSubscriptionToggle}
