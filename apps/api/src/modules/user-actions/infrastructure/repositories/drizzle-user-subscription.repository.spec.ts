@@ -8,6 +8,7 @@ const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
   const thenable: any = {};
   const chainMethods = [
     'select',
+    'selectDistinct',
     'from',
     'where',
     'limit',
@@ -45,6 +46,8 @@ describe('DrizzleUserSubscriptionRepository', () => {
     channel: 'push',
     isActive: true,
     lastNotifiedAt: null,
+    lastNotifiedEpisodeKey: null,
+    lastNotifiedSeasonNumber: null,
     createdAt: new Date('2024-01-15T10:00:00Z'),
     updatedAt: new Date('2024-01-15T10:00:00Z'),
   };
@@ -78,6 +81,7 @@ describe('DrizzleUserSubscriptionRepository', () => {
 
     db = {
       select: jest.fn().mockReturnValue(selectChain),
+      selectDistinct: jest.fn().mockReturnValue(selectChain),
       insert: jest.fn().mockReturnValue(insertChain),
       update: jest.fn().mockReturnValue(updateChain),
     };
@@ -109,6 +113,8 @@ describe('DrizzleUserSubscriptionRepository', () => {
         channel: 'push',
         isActive: true,
         lastNotifiedAt: null,
+        lastNotifiedEpisodeKey: null,
+        lastNotifiedSeasonNumber: null,
         createdAt: mockSubscriptionRow.createdAt,
         updatedAt: mockSubscriptionRow.updatedAt,
       });
@@ -286,6 +292,47 @@ describe('DrizzleUserSubscriptionRepository', () => {
       repository = module.get(DrizzleUserSubscriptionRepository);
 
       await expect(repository.markNotified('sub-id-1')).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('findTrackedShowTmdbIds', () => {
+    it('should return array of tmdbIds for tracked shows', async () => {
+      const module = await setup({
+        resolveSelect: [{ tmdbId: 12345 }, { tmdbId: 67890 }],
+      });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      const result = await repository.findTrackedShowTmdbIds();
+
+      expect(result).toEqual([12345, 67890]);
+      expect(db.selectDistinct).toHaveBeenCalled();
+    });
+
+    it('should return empty array when no tracked shows', async () => {
+      const module = await setup({ resolveSelect: [] });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      const result = await repository.findTrackedShowTmdbIds();
+
+      expect(result).toEqual([]);
+    });
+
+    it('should filter out null tmdbIds', async () => {
+      const module = await setup({
+        resolveSelect: [{ tmdbId: 12345 }, { tmdbId: null }, { tmdbId: 67890 }],
+      });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      const result = await repository.findTrackedShowTmdbIds();
+
+      expect(result).toEqual([12345, 67890]);
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const module = await setup({ reject: new Error('DB error') });
+      repository = module.get(DrizzleUserSubscriptionRepository);
+
+      await expect(repository.findTrackedShowTmdbIds()).rejects.toThrow(DatabaseException);
     });
   });
 });

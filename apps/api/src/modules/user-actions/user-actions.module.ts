@@ -12,6 +12,7 @@ import { DrizzleUserSubscriptionRepository } from './infrastructure/repositories
 
 import { SavedItemsService } from './application/saved-items.service';
 import { SubscriptionsService } from './application/subscriptions.service';
+import { SubscriptionTriggerService } from './application/subscription-trigger.service';
 
 import { SavedItemsController } from './presentation/controllers/saved-items.controller';
 import { SubscriptionsController } from './presentation/controllers/subscriptions.controller';
@@ -29,6 +30,7 @@ import { SubscriptionsController } from './presentation/controllers/subscription
   providers: [
     SavedItemsService,
     SubscriptionsService,
+    SubscriptionTriggerService,
     {
       provide: USER_MEDIA_ACTION_REPOSITORY,
       useClass: DrizzleUserMediaActionRepository,
@@ -43,6 +45,11 @@ import { SubscriptionsController } from './presentation/controllers/subscription
     },
   ],
   controllers: [SavedItemsController, SubscriptionsController],
-  exports: [SavedItemsService, SubscriptionsService],
+  exports: [
+    SavedItemsService,
+    SubscriptionsService,
+    SubscriptionTriggerService,
+    USER_SUBSCRIPTION_REPOSITORY,
+  ],
 })
 export class UserActionsModule {}

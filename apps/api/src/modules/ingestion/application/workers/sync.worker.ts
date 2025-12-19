@@ -4,12 +4,23 @@ import { Job, Queue } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { SyncMediaService } from '../services/sync-media.service';
 import { SnapshotsService } from '../services/snapshots.service';
+import { TrackedSyncService } from '../services/tracked-sync.service';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
+import {
+  INGESTION_QUEUE,
+  IngestionJob,
+  TRACKED_SHOWS_CHUNK_SIZE,
+  TMDB_REQUEST_DELAY_MS,
+} from '../../ingestion.constants';
 import {
   IMovieRepository,
   MOVIE_REPOSITORY,
 } from '../../../catalog/domain/repositories/movie.repository.interface';
+import {
+  IUserSubscriptionRepository,
+  USER_SUBSCRIPTION_REPOSITORY,
+} from '../../../user-actions/domain/repositories/user-subscription.repository.interface';
+import { SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
 import { StatsService } from '../../../stats/application/services/stats.service';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
@@ -26,10 +37,14 @@ export class SyncWorker extends WorkerHost {
   constructor(
     private readonly syncService: SyncMediaService,
     private readonly snapshotsService: SnapshotsService,
+    private readonly trackedSyncService: TrackedSyncService,
+    private readonly subscriptionTriggerService: SubscriptionTriggerService,
     private readonly tmdbAdapter: TmdbAdapter,
     private readonly statsService: StatsService,
     @Inject(MOVIE_REPOSITORY)
     private readonly movieRepository: IMovieRepository,
+    @Inject(USER_SUBSCRIPTION_REPOSITORY)
+    private readonly subscriptionRepository: IUserSubscriptionRepository,
     @InjectQueue(INGESTION_QUEUE)
     private readonly ingestionQueue: Queue,
   ) {
@@ -47,6 +62,7 @@ export class SyncWorker extends WorkerHost {
     job: Job<
       {
         tmdbId?: number;
+        tmdbIds?: number[];
         trendingScore?: number;
         region?: string;
         daysBack?: number;
@@ -82,6 +98,12 @@ export class SyncWorker extends WorkerHost {
           break;
         case IngestionJob.SYNC_SNAPSHOTS:
           await this.snapshotsService.syncDailySnapshots();
+          break;
+        case IngestionJob.SYNC_TRACKED_SHOWS:
+          await this.processTrackedShowsDispatcher();
+          break;
+        case IngestionJob.SYNC_TRACKED_SHOW_BATCH:
+          await this.processTrackedShowBatch(job.data.tmdbIds!);
           break;
         default:
           this.logger.warn(`Unknown job type: ${job.name}`);
@@ -196,5 +218,87 @@ export class SyncWorker extends WorkerHost {
     await this.ingestionQueue.addBulk(jobs);
 
     this.logger.log(`New releases sync complete: ${tmdbIds.length} movies queued`);
+  }
+
+  /**
+   * Dispatcher job: fetches tracked show IDs and queues batch jobs.
+   * Chunks the IDs to avoid memory issues with large addBulk calls.
+   */
+  private async processTrackedShowsDispatcher(): Promise<void> {
+    this.logger.log('Starting tracked shows sync dispatcher...');
+
+    // Get all tracked show TMDB IDs
+    const tmdbIds = await this.subscriptionRepository.findTrackedShowTmdbIds();
+    this.logger.log(`Found ${tmdbIds.length} tracked shows to sync`);
+
+    if (tmdbIds.length === 0) return;
+
+    // Chunk into batches and queue batch jobs
+    const chunks: number[][] = [];
+    for (let i = 0; i < tmdbIds.length; i += TRACKED_SHOWS_CHUNK_SIZE) {
+      chunks.push(tmdbIds.slice(i, i + TRACKED_SHOWS_CHUNK_SIZE));
+    }
+
+    // Queue batch jobs in smaller addBulk calls to avoid memory issues
+    const BULK_LIMIT = 10;
+    for (let i = 0; i < chunks.length; i += BULK_LIMIT) {
+      const batchChunks = chunks.slice(i, i + BULK_LIMIT);
+      const jobs = batchChunks.map((chunkTmdbIds) => ({
+        name: IngestionJob.SYNC_TRACKED_SHOW_BATCH,
+        data: { tmdbIds: chunkTmdbIds },
+      }));
+      await this.ingestionQueue.addBulk(jobs);
+    }
+
+    this.logger.log(
+      `Tracked shows dispatcher complete: ${chunks.length} batch jobs queued for ${tmdbIds.length} shows`,
+    );
+  }
+
+  /**
+   * Batch job: syncs a chunk of tracked shows with diff detection.
+   * Processes shows sequentially with rate limiting to respect TMDB limits.
+   */
+  private async processTrackedShowBatch(tmdbIds: number[]): Promise<void> {
+    this.logger.log(`Processing tracked show batch: ${tmdbIds.length} shows`);
+
+    let processed = 0;
+    let withChanges = 0;
+
+    for (const tmdbId of tmdbIds) {
+      try {
+        const diff = await this.trackedSyncService.syncShowWithDiff(tmdbId);
+
+        if (diff.hasChanges) {
+          withChanges++;
+          // Process diff and generate notification events
+          const events = await this.subscriptionTriggerService.handleShowDiff(diff);
+          if (events.length > 0) {
+            this.logger.log(`Show ${tmdbId}: ${events.length} notifications generated`);
+          }
+        }
+
+        processed++;
+
+        // Rate limiting: delay between TMDB API calls
+        if (processed < tmdbIds.length) {
+          await this.delay(TMDB_REQUEST_DELAY_MS);
+        }
+      } catch (error) {
+        this.logger.error(`Failed to sync tracked show ${tmdbId}: ${error.message}`);
+        // Continue with next show
+      }
+    }
+
+    this.logger.log(
+      `Tracked show batch complete: ${processed}/${tmdbIds.length} processed, ${withChanges} with changes`,
+    );
+  }
+
+  /**
+   * Simple delay helper for rate limiting.
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql, isNull, notInArray, inArray } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
@@ -14,6 +14,7 @@ import {
 } from '../../domain/entities/user-subscription.entity';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { ImageMapper } from '../../../catalog/infrastructure/mappers/image.mapper';
 
 /**
@@ -270,6 +271,46 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     }
   }
 
+  /**
+   * Finds TMDB IDs of shows that need tracking (have active subscriptions).
+   * Filters: active subscription, show type, not ended/canceled, valid tmdbId.
+   *
+   * @returns {Promise<number[]>} Array of TMDB IDs
+   */
+  async findTrackedShowTmdbIds(): Promise<number[]> {
+    try {
+      const rows = await this.db
+        .selectDistinct({ tmdbId: schema.mediaItems.tmdbId })
+        .from(schema.userSubscriptions)
+        .innerJoin(
+          schema.mediaItems,
+          eq(schema.mediaItems.id, schema.userSubscriptions.mediaItemId),
+        )
+        .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+        .where(
+          and(
+            // Active subscriptions only
+            eq(schema.userSubscriptions.isActive, true),
+            // Show-related triggers
+            inArray(schema.userSubscriptions.trigger, ['new_season', 'new_episode']),
+            // Only shows
+            eq(schema.mediaItems.type, MediaType.SHOW),
+            // Not ended or canceled (status is in shows table)
+            sql`${schema.shows.status} NOT IN (${ShowStatus.ENDED}, ${ShowStatus.CANCELED})`,
+            // Valid tmdbId
+            sql`${schema.mediaItems.tmdbId} IS NOT NULL`,
+            // Not soft-deleted
+            isNull(schema.mediaItems.deletedAt),
+          ),
+        );
+
+      return rows.map((r) => r.tmdbId).filter((id): id is number => id !== null);
+    } catch (error) {
+      this.logger.error(`findTrackedShowTmdbIds failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to find tracked show TMDB IDs');
+    }
+  }
+
   private mapRow(row: typeof schema.userSubscriptions.$inferSelect): UserSubscription {
     return {
       id: row.id,
@@ -279,6 +320,8 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
       channel: row.channel ?? 'push',
       isActive: row.isActive,
       lastNotifiedAt: row.lastNotifiedAt,
+      lastNotifiedEpisodeKey: row.lastNotifiedEpisodeKey,
+      lastNotifiedSeasonNumber: row.lastNotifiedSeasonNumber,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

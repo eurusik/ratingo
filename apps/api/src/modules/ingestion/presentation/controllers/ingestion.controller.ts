@@ -371,4 +371,26 @@ export class IngestionController {
       jobId: job.id,
     };
   }
+
+  /**
+   * Queues tracked shows sync job.
+   * Syncs shows that have active subscriptions (new_season, new_episode triggers).
+   *
+   * @returns {Promise<any>} Queueing result with jobId
+   */
+  @Post('shows/tracked')
+  @ApiOperation({
+    summary: 'Trigger tracked shows sync',
+    description:
+      'Syncs shows that have active subscriptions. Detects new episodes/seasons and triggers notifications.',
+  })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async syncTrackedShows() {
+    const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRACKED_SHOWS, {});
+
+    return {
+      status: 'queued',
+      jobId: job.id,
+    };
+  }
 }

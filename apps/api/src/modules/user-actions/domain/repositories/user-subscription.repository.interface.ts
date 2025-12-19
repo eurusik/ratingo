@@ -105,4 +105,12 @@ export interface IUserSubscriptionRepository {
    * @returns {Promise<void>}
    */
   markNotified(subscriptionId: string): Promise<void>;
+
+  /**
+   * Finds TMDB IDs of shows that need tracking (have active subscriptions).
+   * Filters: active subscription, show type, not ended/canceled, valid tmdbId.
+   *
+   * @returns {Promise<number[]>} Array of TMDB IDs
+   */
+  findTrackedShowTmdbIds(): Promise<number[]>;
 }

@@ -336,6 +336,8 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
       channel: data.channel ?? 'push',
       isActive: true,
       lastNotifiedAt: null,
+      lastNotifiedEpisodeKey: null,
+      lastNotifiedSeasonNumber: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       mediaSummary: this.makeSummary(data.mediaItemId),
@@ -403,6 +405,11 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
       sub.lastNotifiedAt = new Date();
       sub.updatedAt = new Date();
     }
+  }
+
+  async findTrackedShowTmdbIds(): Promise<number[]> {
+    // In-memory stub: returns empty array (no real media items to track)
+    return [];
   }
 }
 

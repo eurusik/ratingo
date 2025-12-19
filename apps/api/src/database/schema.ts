@@ -482,11 +482,18 @@ export const savedItemListEnum = pgEnum('saved_item_list', ['for_later', 'consid
 
 /**
  * Subscription trigger types.
+ * - release: Movie release notification
+ * - new_season: New season of a show
+ * - new_episode: New episode aired
+ * - on_streaming: Available on streaming platform
+ * - status_changed: Show status changed (e.g., renewed, canceled)
  */
 export const subscriptionTriggerEnum = pgEnum('subscription_trigger', [
   'release',
   'new_season',
+  'new_episode',
   'on_streaming',
+  'status_changed',
 ]);
 
 /**
@@ -584,6 +591,10 @@ export const userSubscriptions = pgTable(
 
     isActive: boolean('is_active').default(true).notNull(),
     lastNotifiedAt: timestamp('last_notified_at'),
+
+    // Dedup markers to prevent duplicate notifications
+    lastNotifiedEpisodeKey: text('last_notified_episode_key'), // e.g., 'S2E5'
+    lastNotifiedSeasonNumber: integer('last_notified_season_number'),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
