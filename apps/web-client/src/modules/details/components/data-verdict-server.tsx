@@ -47,7 +47,7 @@ export interface DataVerdictServerProps {
     // Subscription props
     mediaType?: 'movie' | 'show';
     subscriptionTrigger?: 'release' | 'new_season' | 'on_streaming' | null;
-    subscriptionUnavailableReason?: 'ended' | 'canceled' | 'no_date' | 'has_streaming' | null;
+    subscriptionUnavailableReason?: 'ended' | 'canceled' | 'no_date' | 'already_available' | null;
     isSubscribed?: boolean;
     isSubscriptionLoading?: boolean;
     onSubscriptionToggle?: () => void;

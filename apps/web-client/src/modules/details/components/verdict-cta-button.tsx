@@ -44,7 +44,7 @@ interface VerdictCtaButtonProps {
   /** Specific subscription trigger to show. Null means no subscription available. */
   subscriptionTrigger?: SubscriptionTrigger | null;
   /** Reason why subscription is unavailable (for tooltip). */
-  subscriptionUnavailableReason?: 'ended' | 'canceled' | 'no_date' | 'has_streaming' | null;
+  subscriptionUnavailableReason?: 'ended' | 'canceled' | 'no_date' | 'already_available' | null;
   /** Is subscribed to notifications. */
   isSubscribed?: boolean;
   /** Is subscription loading. */
@@ -206,14 +206,26 @@ export function VerdictCtaButton({
               </span>
             </div>
           )}
-          {/* Show hint when subscription is unavailable (e.g., Planned/Pilot without date) */}
-          {isSaved && primaryCta === PRIMARY_CTA.SAVE && !subscriptionLabel && subscriptionUnavailableReason === 'no_date' && (
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <BellOff className="w-3 h-3 text-zinc-600" />
-              <span className="text-xs text-zinc-600">
-                {dict.saved.unavailable.no_date}
+          {/* Disabled subscription button when unavailable (e.g., Planned/Pilot without date) */}
+          {isSaved && primaryCta === PRIMARY_CTA.SAVE && !subscriptionLabel && subscriptionUnavailableReason && (
+            <button
+              type="button"
+              disabled
+              title={dict.saved.unavailable[subscriptionUnavailableReason]}
+              onClick={() => {
+                // TODO: Track subscription_unavailable_click when analytics is implemented
+                console.debug('[Analytics] subscription_unavailable_click', { reason: subscriptionUnavailableReason });
+              }}
+              className="flex items-center gap-1.5 mt-1.5 text-zinc-600 cursor-not-allowed opacity-60"
+            >
+              <BellOff className="w-3 h-3" />
+              <span className="text-xs">
+                {subscriptionUnavailableReason === 'already_available' 
+                  ? `✓ ${dict.saved.unavailable.already_available}`
+                  : dict.saved.actions.subscribe
+                }
               </span>
-            </div>
+            </button>
           )}
         </div>
         <div className={cn(

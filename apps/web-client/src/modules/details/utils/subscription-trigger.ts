@@ -17,7 +17,7 @@ export type SubscriptionTrigger = 'release' | 'new_season' | 'on_streaming';
 export type ShowStatus = 'Returning Series' | 'Planned' | 'In Production' | 'Ended' | 'Canceled' | 'Pilot' | null;
 
 /** Reason why subscription is unavailable */
-export type SubscriptionUnavailableReason = 'ended' | 'canceled' | 'no_date' | 'has_streaming' | null;
+export type SubscriptionUnavailableReason = 'ended' | 'canceled' | 'no_date' | 'already_available' | null;
 
 interface GetSubscriptionTriggerParams {
   mediaType: 'movie' | 'show';
@@ -80,5 +80,5 @@ export function getSubscriptionTrigger({
   }
 
   // Movie is released and has streaming providers - no subscription needed
-  return { trigger: null, unavailableReason: 'has_streaming' };
+  return { trigger: null, unavailableReason: 'already_available' };
 }

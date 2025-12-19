@@ -392,7 +392,7 @@
       "no_date": "Next season date not announced yet",
       "ended": "Series has ended",
       "canceled": "Series was canceled",
-      "has_streaming": "Already available on streaming"
+      "already_available": "Already available"
     },
     "reason": {
       "label": "Saved because",
