@@ -278,6 +278,7 @@ export class IngestionController {
     @Query('page') pageQuery?: string,
     @Query('syncStats') syncStatsQuery?: string,
     @Query('type') typeQuery?: string,
+    @Query('force') forceQuery?: string,
     @Body() dto?: SyncTrendingDto,
   ) {
     // Merge query params with body (query takes precedence for convenience)
@@ -285,6 +286,7 @@ export class IngestionController {
     const page = pageQuery ? parseInt(pageQuery, 10) : dto?.page;
     const syncStats = syncStatsQuery !== 'false' && dto?.syncStats !== false; // default true
     const type = (typeQuery as MediaType) || dto?.type;
+    const force = forceQuery === 'true';
 
     // Validate: page and pages are mutually exclusive
     if (page && pages) {
@@ -316,6 +318,7 @@ export class IngestionController {
     const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_DISPATCHER, {
       pages: pagesCount,
       syncStats,
+      force, // Pass force flag to bypass dedupe
     });
 
     return {
@@ -325,6 +328,7 @@ export class IngestionController {
       pages: pagesCount,
       maxItems: pagesCount * 20 * 2, // pages × 20 items × 2 types (upper bound)
       syncStats,
+      force,
     };
   }
 

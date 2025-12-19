@@ -60,16 +60,17 @@ describe('IngestionController', () => {
 
   describe('syncTrending', () => {
     it('should queue trending sync job with query params', async () => {
-      await controller.syncTrending('2', undefined, 'false', undefined, {});
+      await controller.syncTrending('2', undefined, 'false', undefined, undefined, {});
 
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_DISPATCHER, {
         pages: 2,
         syncStats: false,
+        force: false,
       });
     });
 
     it('should queue legacy trending sync job with page query', async () => {
-      await controller.syncTrending(undefined, '1', undefined, MediaType.SHOW, {});
+      await controller.syncTrending(undefined, '1', undefined, MediaType.SHOW, undefined, {});
 
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_FULL, {
         page: 1,
@@ -79,11 +80,22 @@ describe('IngestionController', () => {
     });
 
     it('should use default pages=5 when not specified', async () => {
-      await controller.syncTrending(undefined, undefined, undefined, undefined, {});
+      await controller.syncTrending(undefined, undefined, undefined, undefined, undefined, {});
 
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_DISPATCHER, {
         pages: 5,
         syncStats: true,
+        force: false,
+      });
+    });
+
+    it('should bypass dedupe when force=true', async () => {
+      await controller.syncTrending('1', undefined, undefined, undefined, 'true', {});
+
+      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_DISPATCHER, {
+        pages: 1,
+        syncStats: true,
+        force: true,
       });
     });
   });

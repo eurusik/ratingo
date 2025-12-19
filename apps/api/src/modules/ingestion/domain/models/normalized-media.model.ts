@@ -143,6 +143,8 @@ export interface NormalizedMedia {
 
   /** Synthetic score for sorting trending lists. Null if not in trends. */
   trendingScore?: number;
+  /** Position in TMDB trending list (1 = top). Null if not in trends. */
+  trendingRank?: number;
   /** When last updated by trending sync */
   trendingUpdatedAt?: Date;
 

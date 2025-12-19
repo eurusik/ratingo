@@ -228,6 +228,15 @@ export class TrendingMoviesQuery {
     const dir = order === 'asc' ? sql`asc` : sql`desc`;
     const nullsLast = sql`NULLS LAST`;
 
+    if (sort === 'trending') {
+      // TMDB trending order: lower rank = higher position
+      // For desc: rank 1 first (ASC), for asc: rank 1 last (DESC)
+      const rankDir = order === 'desc' ? sql`asc` : sql`desc`;
+      return [
+        sql`${schema.mediaItems.trendingRank} ${rankDir} ${nullsLast}`,
+        sql`${schema.mediaItems.id} desc`,
+      ];
+    }
     if (sort === 'ratingo') {
       return [sql`${schema.mediaStats.ratingoScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
     }

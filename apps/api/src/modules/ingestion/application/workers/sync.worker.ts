@@ -69,6 +69,7 @@ export class SyncWorker extends WorkerHost {
         page?: number;
         pages?: number;
         syncStats?: boolean;
+        force?: boolean;
         type?: MediaType;
         since?: string;
         limit?: number;
@@ -82,10 +83,10 @@ export class SyncWorker extends WorkerHost {
     try {
       switch (job.name) {
         case IngestionJob.SYNC_MOVIE:
-          await this.syncService.syncMovie(job.data.tmdbId!, job.data.trendingScore);
+          await this.syncService.syncMovie(job.data.tmdbId!);
           break;
         case IngestionJob.SYNC_SHOW:
-          await this.syncService.syncShow(job.data.tmdbId!, job.data.trendingScore);
+          await this.syncService.syncShow(job.data.tmdbId!);
           break;
         case IngestionJob.SYNC_NOW_PLAYING:
           await this.processNowPlaying(job.data.region);
@@ -94,7 +95,7 @@ export class SyncWorker extends WorkerHost {
           await this.processNewReleases(job.data.region, job.data.daysBack);
           break;
         case IngestionJob.SYNC_TRENDING_DISPATCHER:
-          await this.processTrendingDispatcher(job.data.pages, job.data.syncStats);
+          await this.processTrendingDispatcher(job.data.pages, job.data.syncStats, job.data.force);
           break;
         case IngestionJob.SYNC_TRENDING_PAGE:
           await this.processTrendingPage(job.data.type, job.data.page);
@@ -145,13 +146,15 @@ export class SyncWorker extends WorkerHost {
     // Sync each item sequentially
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      const trendingScore = 10000 - ((page - 1) * 20 + i);
+      const rank = (page - 1) * 20 + i + 1;
+      const score = 10000 - rank + 1;
+      const trending = { score, rank };
 
       try {
         if (item.type === MediaType.MOVIE) {
-          await this.syncService.syncMovie(item.tmdbId, trendingScore);
+          await this.syncService.syncMovie(item.tmdbId, trending);
         } else {
-          await this.syncService.syncShow(item.tmdbId, trendingScore);
+          await this.syncService.syncShow(item.tmdbId, trending);
         }
       } catch (error) {
         this.logger.error(`Failed to sync ${item.type} ${item.tmdbId}: ${error.message}`);
@@ -173,12 +176,21 @@ export class SyncWorker extends WorkerHost {
    * Each page job syncs 20 items from TMDB trending.
    * Stats job is queued separately with delay to ensure page jobs complete first.
    */
-  private async processTrendingDispatcher(pages = 5, syncStats = true): Promise<void> {
+  private async processTrendingDispatcher(
+    pages = 5,
+    syncStats = true,
+    force = false,
+  ): Promise<void> {
     const dispatcherStartedAt = new Date();
     // Use hour-based window for deduplication (allows 1 run per hour per type/page)
     // Format: YYYYMMDDHH (no colons - BullMQ doesn't allow them in jobId)
-    const window = dispatcherStartedAt.toISOString().slice(0, 13).replace(/[-T]/g, '');
-    this.logger.log(`Starting trending dispatcher (pages: ${pages}, syncStats: ${syncStats})...`);
+    // If force=true, add timestamp to bypass dedupe
+    const window = force
+      ? dispatcherStartedAt.getTime().toString()
+      : dispatcherStartedAt.toISOString().slice(0, 13).replace(/[-T]/g, '');
+    this.logger.log(
+      `Starting trending dispatcher (pages: ${pages}, syncStats: ${syncStats}, force: ${force})...`,
+    );
 
     const types: MediaType[] = [MediaType.MOVIE, MediaType.SHOW];
     const jobs: { name: string; data: any; opts?: { jobId: string } }[] = [];
@@ -249,13 +261,15 @@ export class SyncWorker extends WorkerHost {
     let synced = 0;
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      const trendingScore = 10000 - ((page - 1) * 20 + i);
+      const rank = (page - 1) * 20 + i + 1; // 1-indexed position in TMDB trending
+      const score = 10000 - rank + 1; // Higher score = higher rank
+      const trending = { score, rank };
 
       try {
         if (item.type === MediaType.MOVIE) {
-          await this.syncService.syncMovie(item.tmdbId, trendingScore);
+          await this.syncService.syncMovie(item.tmdbId, trending);
         } else {
-          await this.syncService.syncShow(item.tmdbId, trendingScore);
+          await this.syncService.syncShow(item.tmdbId, trending);
         }
         synced++;
 

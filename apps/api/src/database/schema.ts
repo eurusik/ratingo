@@ -80,6 +80,7 @@ export const mediaItems = pgTable(
 
     // Metrics (Denormalized for speed)
     trendingScore: doublePrecision('trending_score').default(0),
+    trendingRank: integer('trending_rank'), // Position in TMDB trending list (1 = top)
     trendingUpdatedAt: timestamp('trending_updated_at'), // When last updated by trending sync
     popularity: doublePrecision('popularity').default(0),
 
@@ -111,6 +112,7 @@ export const mediaItems = pgTable(
     typeIdx: index('media_type_idx').on(t.type),
     imdbIdx: index('media_imdb_idx').on(t.imdbId),
     trendingIdx: index('media_trending_idx').on(t.trendingScore),
+    trendingRankIdx: index('media_trending_rank_idx').on(t.trendingRank),
     popularityIdx: index('media_popularity_idx').on(t.popularity),
     releaseDateIdx: index('media_release_date_idx').on(t.releaseDate),
     slugIdx: uniqueIndex('media_slug_idx').on(t.slug),

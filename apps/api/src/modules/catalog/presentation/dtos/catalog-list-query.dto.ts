@@ -42,6 +42,7 @@ class YearExclusiveConstraint implements ValidatorConstraintInterface {
 }
 
 export const CATALOG_SORT = {
+  TRENDING: 'trending',
   POPULARITY: 'popularity',
   RATINGO: 'ratingo',
   RELEASE_DATE: 'releaseDate',
@@ -83,13 +84,13 @@ export class CatalogListQueryDto {
 
   @ApiPropertyOptional({
     enum: CATALOG_SORT_VALUES,
-    default: CATALOG_SORT.POPULARITY,
+    default: CATALOG_SORT.TRENDING,
     description:
-      'popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore',
+      'trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore',
   })
   @IsOptional()
   @IsIn(CATALOG_SORT_VALUES)
-  sort: CatalogSort = CATALOG_SORT.POPULARITY;
+  sort: CatalogSort = CATALOG_SORT.TRENDING;
 
   @ApiPropertyOptional({
     enum: SORT_ORDER,

@@ -138,16 +138,17 @@ describe('SyncMediaService', () => {
       );
     });
 
-    it('should sync with trending score when provided', async () => {
+    it('should sync with trending data when provided', async () => {
       tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
       omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
 
-      await service.syncMovie(550, 0.95);
+      await service.syncMovie(550, { score: 9999, rank: 1 });
 
       expect(mediaRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          trendingScore: 0.95,
+          trendingScore: 9999,
+          trendingRank: 1,
         }),
       );
     });

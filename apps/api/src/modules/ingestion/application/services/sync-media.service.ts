@@ -38,22 +38,25 @@ export class SyncMediaService {
    * Synchronizes a movie by TMDB ID.
    *
    * @param {number} tmdbId - TMDB ID of the movie
-   * @param {number} trendingScore - Optional trending rank for sorting
+   * @param {object} trending - Optional trending data for sorting
    * @returns {Promise<void>} Nothing
    */
-  public async syncMovie(tmdbId: number, trendingScore?: number): Promise<void> {
-    await this.processMedia(tmdbId, MediaType.MOVIE, trendingScore);
+  public async syncMovie(
+    tmdbId: number,
+    trending?: { score: number; rank: number },
+  ): Promise<void> {
+    await this.processMedia(tmdbId, MediaType.MOVIE, trending);
   }
 
   /**
    * Synchronizes a show by TMDB ID.
    *
    * @param {number} tmdbId - TMDB ID of the show
-   * @param {number} trendingScore - Optional trending rank for sorting
+   * @param {object} trending - Optional trending data for sorting
    * @returns {Promise<void>} Nothing
    */
-  public async syncShow(tmdbId: number, trendingScore?: number): Promise<void> {
-    await this.processMedia(tmdbId, MediaType.SHOW, trendingScore);
+  public async syncShow(tmdbId: number, trending?: { score: number; rank: number }): Promise<void> {
+    await this.processMedia(tmdbId, MediaType.SHOW, trending);
   }
 
   /**
@@ -70,7 +73,7 @@ export class SyncMediaService {
   private async processMedia(
     tmdbId: number,
     type: MediaType,
-    trendingScore?: number,
+    trending?: { score: number; rank: number },
   ): Promise<void> {
     this.logger.debug(`Syncing ${type} ${tmdbId}...`);
 
@@ -179,8 +182,9 @@ export class SyncMediaService {
       ]);
 
       // Merge Data
-      if (trendingScore !== undefined) {
-        media.trendingScore = trendingScore;
+      if (trending !== undefined) {
+        media.trendingScore = trending.score;
+        media.trendingRank = trending.rank;
         media.trendingUpdatedAt = new Date();
       }
 

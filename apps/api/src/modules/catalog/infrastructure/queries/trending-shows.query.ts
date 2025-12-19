@@ -280,6 +280,12 @@ export class TrendingShowsQuery {
   private buildOrderBy(sort: CatalogSort | undefined, order: SortOrder) {
     const dir = order === 'asc' ? sql`ASC` : sql`DESC`;
     switch (sort) {
+      case 'trending': {
+        // TMDB trending order: lower rank = higher position
+        // For desc: rank 1 first (ASC), for asc: rank 1 last (DESC)
+        const rankDir = order === 'desc' ? sql`ASC` : sql`DESC`;
+        return sql`mi.trending_rank ${rankDir} NULLS LAST, mi.id DESC`;
+      }
       case 'ratingo':
         return sql`ms.ratingo_score ${dir} NULLS LAST, mi.id DESC`;
       case 'releaseDate':

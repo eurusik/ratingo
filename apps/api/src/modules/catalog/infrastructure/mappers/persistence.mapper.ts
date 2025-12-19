@@ -37,6 +37,7 @@ export class PersistenceMapper {
       voteCount: media.voteCount,
       popularity: media.popularity,
       trendingScore: media.trendingScore ?? 0,
+      trendingRank: media.trendingRank ?? null,
       trendingUpdatedAt:
         media.trendingUpdatedAt instanceof Date
           ? media.trendingUpdatedAt
@@ -101,6 +102,7 @@ export class PersistenceMapper {
       updatedAt: new Date(),
       ...(media.trendingScore !== undefined && {
         trendingScore: media.trendingScore,
+        trendingRank: media.trendingRank ?? null,
         trendingUpdatedAt,
       }),
     };
