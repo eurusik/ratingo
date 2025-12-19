@@ -279,4 +279,102 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
       return null;
     }
   }
+
+  /**
+   * Gets watchers count for multiple movies by TMDB IDs.
+   * Uses concurrency limit to avoid rate limiting.
+   *
+   * Returns null for items that failed due to transient errors (429, 5xx, network).
+   * Returns 0 for items not found in Trakt (404).
+   * This allows caller to skip updating stats for failed items (preserving old data).
+   *
+   * @param {number[]} tmdbIds - TMDB IDs
+   * @param {number} concurrency - Max concurrent requests (default: 3)
+   * @returns {Promise<Map<number, number | null>>} Map of tmdbId -> watchers (null = error, skip update)
+   */
+  async getMovieWatchersByTmdbIds(
+    tmdbIds: number[],
+    concurrency = 3,
+  ): Promise<Map<number, number | null>> {
+    const result = new Map<number, number | null>();
+    if (tmdbIds.length === 0) return result;
+
+    // Process in batches with concurrency limit
+    for (let i = 0; i < tmdbIds.length; i += concurrency) {
+      const batch = tmdbIds.slice(i, i + concurrency);
+      const promises = batch.map(async (tmdbId) => {
+        try {
+          const data = await this.getMovieRatingsByTmdbId(tmdbId);
+          // null from getMovieRatingsByTmdbId means not found (404) -> 0 watchers
+          // actual data -> use watchers value
+          return { tmdbId, watchers: data?.watchers ?? 0, success: true };
+        } catch (error: any) {
+          // Transient errors (rate limit, network, 5xx) -> null (skip update)
+          const status = error?.response?.status;
+          if (status === 429 || status >= 500 || !status) {
+            this.logger.warn(`Transient error for movie ${tmdbId}: ${error.message || error}`);
+            return { tmdbId, watchers: null, success: false };
+          }
+          // Other errors (4xx except 404) -> treat as not found
+          return { tmdbId, watchers: 0, success: true };
+        }
+      });
+
+      const batchResults = await Promise.all(promises);
+      for (const { tmdbId, watchers } of batchResults) {
+        result.set(tmdbId, watchers);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Gets watchers count for multiple shows by TMDB IDs.
+   * Uses concurrency limit to avoid rate limiting.
+   *
+   * Returns null for items that failed due to transient errors (429, 5xx, network).
+   * Returns 0 for items not found in Trakt (404).
+   * This allows caller to skip updating stats for failed items (preserving old data).
+   *
+   * @param {number[]} tmdbIds - TMDB IDs
+   * @param {number} concurrency - Max concurrent requests (default: 3)
+   * @returns {Promise<Map<number, number | null>>} Map of tmdbId -> watchers (null = error, skip update)
+   */
+  async getShowWatchersByTmdbIds(
+    tmdbIds: number[],
+    concurrency = 3,
+  ): Promise<Map<number, number | null>> {
+    const result = new Map<number, number | null>();
+    if (tmdbIds.length === 0) return result;
+
+    // Process in batches with concurrency limit
+    for (let i = 0; i < tmdbIds.length; i += concurrency) {
+      const batch = tmdbIds.slice(i, i + concurrency);
+      const promises = batch.map(async (tmdbId) => {
+        try {
+          const data = await this.getShowRatingsByTmdbId(tmdbId);
+          // null from getShowRatingsByTmdbId means not found (404) -> 0 watchers
+          // actual data -> use watchers value
+          return { tmdbId, watchers: data?.watchers ?? 0, success: true };
+        } catch (error: any) {
+          // Transient errors (rate limit, network, 5xx) -> null (skip update)
+          const status = error?.response?.status;
+          if (status === 429 || status >= 500 || !status) {
+            this.logger.warn(`Transient error for show ${tmdbId}: ${error.message || error}`);
+            return { tmdbId, watchers: null, success: false };
+          }
+          // Other errors (4xx except 404) -> treat as not found
+          return { tmdbId, watchers: 0, success: true };
+        }
+      });
+
+      const batchResults = await Promise.all(promises);
+      for (const { tmdbId, watchers } of batchResults) {
+        result.set(tmdbId, watchers);
+      }
+    }
+
+    return result;
+  }
 }

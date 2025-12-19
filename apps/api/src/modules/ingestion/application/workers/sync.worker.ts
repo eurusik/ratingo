@@ -70,6 +70,8 @@ export class SyncWorker extends WorkerHost {
         pages?: number;
         syncStats?: boolean;
         type?: MediaType;
+        since?: string;
+        limit?: number;
       },
       any,
       string
@@ -98,7 +100,7 @@ export class SyncWorker extends WorkerHost {
           await this.processTrendingPage(job.data.type, job.data.page);
           break;
         case IngestionJob.SYNC_TRENDING_STATS:
-          await this.processTrendingStats();
+          await this.processTrendingStats(job.data.since, job.data.limit);
           break;
         case IngestionJob.SYNC_TRENDING_FULL:
           // @deprecated - kept for backward compatibility
@@ -169,9 +171,10 @@ export class SyncWorker extends WorkerHost {
   /**
    * Trending dispatcher: queues page jobs for movies and shows.
    * Each page job syncs 20 items from TMDB trending.
-   * Stats job is queued separately after all page jobs.
+   * Stats job is queued separately with delay to ensure page jobs complete first.
    */
   private async processTrendingDispatcher(pages = 5, syncStats = true): Promise<void> {
+    const dispatcherStartedAt = new Date();
     this.logger.log(`Starting trending dispatcher (pages: ${pages}, syncStats: ${syncStats})...`);
 
     const types: MediaType[] = [MediaType.MOVIE, MediaType.SHOW];
@@ -188,10 +191,21 @@ export class SyncWorker extends WorkerHost {
 
     await this.ingestionQueue.addBulk(jobs);
 
-    // Queue stats job separately (runs after page jobs complete)
+    // Queue stats job with delay to ensure page jobs complete first
+    // Stats job will query items by trendingUpdatedAt >= since
     if (syncStats) {
-      await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_STATS, {});
-      this.logger.log('Queued trending stats job');
+      const expectedLimit = pages * 20 * 2; // pages × 20 items × 2 types
+      await this.ingestionQueue.add(
+        IngestionJob.SYNC_TRENDING_STATS,
+        {
+          since: dispatcherStartedAt.toISOString(),
+          limit: expectedLimit,
+        },
+        {
+          delay: 3 * 60 * 1000, // 3 minutes delay
+        },
+      );
+      this.logger.log(`Queued trending stats job (delay: 3min, limit: ${expectedLimit})`);
     }
 
     this.logger.log(
@@ -200,13 +214,21 @@ export class SyncWorker extends WorkerHost {
   }
 
   /**
-   * Syncs Trakt stats for trending items.
-   * Should be called after all trending page jobs complete.
+   * Syncs Trakt stats for recently updated trending items.
+   * Queries items by trendingUpdatedAt >= since.
    */
-  private async processTrendingStats(): Promise<void> {
-    this.logger.log('Syncing Trakt stats for trending items...');
-    await this.statsService.syncTrendingStats();
-    this.logger.log('Trending stats sync complete');
+  private async processTrendingStats(since?: string, limit?: number): Promise<void> {
+    const sinceDate = since ? new Date(since) : undefined;
+    this.logger.log(
+      `Syncing Trakt stats for trending items (since: ${sinceDate?.toISOString() || 'all'}, limit: ${limit || 'default'})...`,
+    );
+
+    const result = await this.statsService.syncTrendingStatsForUpdatedItems({
+      since: sinceDate,
+      limit: limit || 200,
+    });
+
+    this.logger.log(`Trending stats sync complete: ${result.movies} movies, ${result.shows} shows`);
   }
 
   /**

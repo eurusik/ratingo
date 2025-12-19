@@ -130,6 +130,29 @@ export interface IMediaRepository {
    * @returns {Promise<LocalSearchResult[]>} Search results
    */
   search(query: string, limit: number): Promise<LocalSearchResult[]>;
+
+  /**
+   * Retrieves media items updated by trending sync since a given date.
+   * Used by stats sync to get items that were recently synced.
+   *
+   * @param {object} options - Query options
+   * @param {Date} options.since - Only items updated after this date
+   * @param {number} options.limit - Max items to return
+   * @returns {Promise<TrendingUpdatedItem[]>} Items with tmdbId and type
+   */
+  findTrendingUpdatedItems(options: {
+    since?: Date;
+    limit: number;
+  }): Promise<TrendingUpdatedItem[]>;
+}
+
+/**
+ * Item returned by findTrendingUpdatedItems.
+ */
+export interface TrendingUpdatedItem {
+  id: string;
+  tmdbId: number;
+  type: MediaType;
 }
 
 /**

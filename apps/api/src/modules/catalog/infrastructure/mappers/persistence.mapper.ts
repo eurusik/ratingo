@@ -27,6 +27,12 @@ export class PersistenceMapper {
       voteCount: media.voteCount,
       popularity: media.popularity,
       trendingScore: media.trendingScore ?? 0,
+      trendingUpdatedAt:
+        media.trendingUpdatedAt instanceof Date
+          ? media.trendingUpdatedAt
+          : media.trendingUpdatedAt
+            ? new Date(media.trendingUpdatedAt)
+            : null,
 
       // External Ratings
       ratingImdb: media.ratingImdb,
@@ -36,7 +42,12 @@ export class PersistenceMapper {
       ratingMetacritic: media.ratingMetacritic,
       ratingRottenTomatoes: media.ratingRottenTomatoes,
 
-      releaseDate: media.releaseDate,
+      releaseDate:
+        media.releaseDate instanceof Date
+          ? media.releaseDate
+          : media.releaseDate
+            ? new Date(media.releaseDate)
+            : null,
       updatedAt: new Date(),
     };
   }
@@ -67,13 +78,24 @@ export class PersistenceMapper {
       videos: media.videos || null,
       credits: media.credits || null,
       watchProviders: media.watchProviders || null,
-      releaseDate: media.releaseDate,
+      releaseDate:
+        media.releaseDate instanceof Date
+          ? media.releaseDate
+          : media.releaseDate
+            ? new Date(media.releaseDate)
+            : null,
       updatedAt: new Date(),
     };
 
     // Only update trendingScore if provided (to avoid resetting it if missing)
     if (media.trendingScore !== undefined) {
       update.trendingScore = media.trendingScore;
+      update.trendingUpdatedAt =
+        media.trendingUpdatedAt instanceof Date
+          ? media.trendingUpdatedAt
+          : media.trendingUpdatedAt
+            ? new Date(media.trendingUpdatedAt)
+            : new Date();
     }
 
     return update;

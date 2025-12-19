@@ -143,6 +143,8 @@ export interface NormalizedMedia {
 
   /** Synthetic score for sorting trending lists. Null if not in trends. */
   trendingScore?: number;
+  /** When last updated by trending sync */
+  trendingUpdatedAt?: Date;
 
   // Ratingo Score (calculated)
   ratingoScore?: number; // Main composite score (0-1)

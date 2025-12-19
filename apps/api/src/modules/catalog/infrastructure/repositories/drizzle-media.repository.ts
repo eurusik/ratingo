@@ -21,7 +21,7 @@ import {
   SHOW_REPOSITORY,
 } from '../../domain/repositories/show.repository.interface';
 import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
-import { eq, inArray, sql, and, desc } from 'drizzle-orm';
+import { eq, inArray, sql, and, desc, gt, gte, isNull, isNotNull } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions';
@@ -354,6 +354,49 @@ export class DrizzleMediaRepository implements IMediaRepository {
     } catch (error) {
       this.logger.error(`Failed to search media for "${query}": ${error.message}`);
       return [];
+    }
+  }
+
+  /**
+   * Retrieves media items updated by trending sync since a given date.
+   * Used by stats sync to get items that were recently synced.
+   */
+  async findTrendingUpdatedItems(options: {
+    since?: Date;
+    limit: number;
+  }): Promise<{ id: string; tmdbId: number; type: MediaType }[]> {
+    try {
+      const conditions = [
+        isNull(schema.mediaItems.deletedAt),
+        gt(schema.mediaItems.trendingScore, 0),
+        isNotNull(schema.mediaItems.tmdbId),
+      ];
+
+      if (options.since) {
+        conditions.push(gte(schema.mediaItems.trendingUpdatedAt, options.since));
+      }
+
+      const rows = await this.db
+        .select({
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          type: schema.mediaItems.type,
+        })
+        .from(schema.mediaItems)
+        .where(and(...conditions))
+        .orderBy(desc(schema.mediaItems.trendingScore))
+        .limit(options.limit);
+
+      return rows
+        .filter((r) => r.tmdbId !== null)
+        .map((r) => ({
+          id: r.id,
+          tmdbId: r.tmdbId!,
+          type: r.type,
+        }));
+    } catch (error) {
+      this.logger.error(`Failed to find trending updated items: ${error.message}`);
+      throw new DatabaseException('Failed to find trending updated items');
     }
   }
 }

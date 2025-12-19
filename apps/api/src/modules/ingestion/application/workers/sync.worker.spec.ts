@@ -2,21 +2,28 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SyncWorker } from './sync.worker';
 import { SyncMediaService } from '../services/sync-media.service';
 import { SnapshotsService } from '../services/snapshots.service';
+import { TrackedSyncService } from '../services/tracked-sync.service';
 import { TmdbAdapter } from '@/modules/tmdb/tmdb.adapter';
 import { getQueueToken } from '@nestjs/bullmq';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { Job } from 'bullmq';
 import { StatsService } from '../../../stats/application/services/stats.service';
+import { SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
 import { MOVIE_REPOSITORY } from '../../../catalog/domain/repositories/movie.repository.interface';
+import { USER_SUBSCRIPTION_REPOSITORY } from '../../../user-actions/domain/repositories/user-subscription.repository.interface';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('SyncWorker', () => {
   let worker: SyncWorker;
   let syncService: any;
   let snapshotsService: any;
+  let trackedSyncService: any;
   let tmdbAdapter: any;
   let ingestionQueue: any;
   let movieRepository: any;
   let statsService: any;
+  let subscriptionTriggerService: any;
+  let userSubscriptionRepository: any;
 
   beforeEach(async () => {
     syncService = {
@@ -27,6 +34,10 @@ describe('SyncWorker', () => {
 
     snapshotsService = {
       syncDailySnapshots: jest.fn(),
+    };
+
+    trackedSyncService = {
+      syncTrackedShows: jest.fn(),
     };
 
     tmdbAdapter = {
@@ -45,6 +56,16 @@ describe('SyncWorker', () => {
 
     statsService = {
       syncTrendingStats: jest.fn(),
+      syncTrendingStatsForUpdatedItems: jest.fn(),
+    };
+
+    subscriptionTriggerService = {
+      handleNewEpisode: jest.fn(),
+      handleNewSeason: jest.fn(),
+    };
+
+    userSubscriptionRepository = {
+      findTrackedShowTmdbIds: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -52,9 +73,12 @@ describe('SyncWorker', () => {
         SyncWorker,
         { provide: SyncMediaService, useValue: syncService },
         { provide: SnapshotsService, useValue: snapshotsService },
+        { provide: TrackedSyncService, useValue: trackedSyncService },
+        { provide: SubscriptionTriggerService, useValue: subscriptionTriggerService },
         { provide: TmdbAdapter, useValue: tmdbAdapter },
         { provide: StatsService, useValue: statsService },
         { provide: MOVIE_REPOSITORY, useValue: movieRepository },
+        { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: userSubscriptionRepository },
         { provide: getQueueToken(INGESTION_QUEUE), useValue: ingestionQueue },
       ],
     }).compile();
@@ -207,6 +231,148 @@ describe('SyncWorker', () => {
       const job = { name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 550 }, id: 'err-1' } as Job;
 
       await expect(worker.process(job)).rejects.toThrow(error);
+    });
+  });
+
+  describe('processTrendingDispatcher', () => {
+    it('should queue page jobs for movies and shows', async () => {
+      const job = {
+        name: IngestionJob.SYNC_TRENDING_DISPATCHER,
+        data: { pages: 2, syncStats: true },
+        id: 'disp-1',
+      } as Job;
+
+      await worker.process(job);
+
+      // Should queue 2 pages × 2 types = 4 page jobs via addBulk
+      expect(ingestionQueue.addBulk).toHaveBeenCalledTimes(1);
+      expect(ingestionQueue.addBulk).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: IngestionJob.SYNC_TRENDING_PAGE,
+            data: { page: 1, type: MediaType.MOVIE },
+          }),
+          expect.objectContaining({
+            name: IngestionJob.SYNC_TRENDING_PAGE,
+            data: { page: 1, type: MediaType.SHOW },
+          }),
+          expect.objectContaining({
+            name: IngestionJob.SYNC_TRENDING_PAGE,
+            data: { page: 2, type: MediaType.MOVIE },
+          }),
+          expect.objectContaining({
+            name: IngestionJob.SYNC_TRENDING_PAGE,
+            data: { page: 2, type: MediaType.SHOW },
+          }),
+        ]),
+      );
+      // Stats job queued via add with delay
+      expect(ingestionQueue.add).toHaveBeenCalledWith(
+        IngestionJob.SYNC_TRENDING_STATS,
+        expect.objectContaining({ since: expect.any(String), limit: expect.any(Number) }),
+        expect.objectContaining({ delay: expect.any(Number) }),
+      );
+    });
+
+    it('should not queue stats job if syncStats is false', async () => {
+      const job = {
+        name: IngestionJob.SYNC_TRENDING_DISPATCHER,
+        data: { pages: 1, syncStats: false },
+        id: 'disp-2',
+      } as Job;
+
+      await worker.process(job);
+
+      // Should queue only page jobs, no stats job
+      const statsJobCalls = (ingestionQueue.add as jest.Mock).mock.calls.filter(
+        (call: any[]) => call[0] === IngestionJob.SYNC_TRENDING_STATS,
+      );
+      expect(statsJobCalls).toHaveLength(0);
+    });
+  });
+
+  describe('processTrendingPage', () => {
+    it('should sync trending items for a specific page and type', async () => {
+      const mockItems = [
+        { tmdbId: 100, type: MediaType.MOVIE },
+        { tmdbId: 200, type: MediaType.MOVIE },
+      ];
+      syncService.getTrending.mockResolvedValue(mockItems);
+
+      const job = {
+        name: IngestionJob.SYNC_TRENDING_PAGE,
+        data: { page: 1, type: MediaType.MOVIE, baseScore: 10000 },
+        id: 'page-1',
+      } as Job;
+
+      await worker.process(job);
+
+      expect(syncService.getTrending).toHaveBeenCalledWith(1, MediaType.MOVIE);
+      expect(syncService.syncMovie).toHaveBeenCalledTimes(2);
+    });
+
+    it('should continue processing if one item fails', async () => {
+      const mockItems = [
+        { tmdbId: 100, type: MediaType.MOVIE },
+        { tmdbId: 200, type: MediaType.MOVIE },
+      ];
+      syncService.getTrending.mockResolvedValue(mockItems);
+      syncService.syncMovie
+        .mockRejectedValueOnce(new Error('First failed'))
+        .mockResolvedValueOnce(undefined);
+
+      const job = {
+        name: IngestionJob.SYNC_TRENDING_PAGE,
+        data: { page: 1, type: MediaType.MOVIE, baseScore: 10000 },
+        id: 'page-2',
+      } as Job;
+
+      await worker.process(job);
+
+      expect(syncService.syncMovie).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('processTrendingStats', () => {
+    it('should call statsService.syncTrendingStatsForUpdatedItems with since and limit', async () => {
+      statsService.syncTrendingStatsForUpdatedItems = jest.fn().mockResolvedValue({
+        movies: 50,
+        shows: 50,
+      });
+
+      const since = new Date().toISOString();
+      const job = {
+        name: IngestionJob.SYNC_TRENDING_STATS,
+        data: { since, limit: 200 },
+        id: 'stats-1',
+      } as Job;
+
+      await worker.process(job);
+
+      expect(statsService.syncTrendingStatsForUpdatedItems).toHaveBeenCalledWith({
+        since: expect.any(Date),
+        limit: 200,
+      });
+    });
+
+    it('should use default limit if not provided', async () => {
+      statsService.syncTrendingStatsForUpdatedItems = jest.fn().mockResolvedValue({
+        movies: 10,
+        shows: 10,
+      });
+
+      const job = {
+        name: IngestionJob.SYNC_TRENDING_STATS,
+        data: {},
+        id: 'stats-2',
+      } as Job;
+
+      await worker.process(job);
+
+      expect(statsService.syncTrendingStatsForUpdatedItems).toHaveBeenCalledWith({
+        since: undefined,
+        limit: 200,
+      });
     });
   });
 });

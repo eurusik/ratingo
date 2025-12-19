@@ -181,6 +181,7 @@ export class SyncMediaService {
       // Merge Data
       if (trendingScore !== undefined) {
         media.trendingScore = trendingScore;
+        media.trendingUpdatedAt = new Date();
       }
 
       if (traktRating) {

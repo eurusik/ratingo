@@ -80,6 +80,7 @@ export const mediaItems = pgTable(
 
     // Metrics (Denormalized for speed)
     trendingScore: doublePrecision('trending_score').default(0),
+    trendingUpdatedAt: timestamp('trending_updated_at'), // When last updated by trending sync
     popularity: doublePrecision('popularity').default(0),
 
     // Primary Rating (usually TMDB vote_average)
