@@ -245,7 +245,10 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
         .where(
           and(
             eq(schema.userSavedItems.userId, userId),
-            sql`${schema.userSavedItems.mediaItemId} = ANY(${mediaItemIds})`,
+            sql`${schema.userSavedItems.mediaItemId} = ANY(ARRAY[${sql.join(
+              mediaItemIds.map((id) => sql`${id}::uuid`),
+              sql`, `,
+            )}])`,
           ),
         );
 
