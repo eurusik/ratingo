@@ -96,10 +96,15 @@ export class PersistenceMapper {
       }),
     };
 
-    // Filter out undefined values to prevent "No values to set" error
-    return Object.fromEntries(
+    // Filter out undefined values
+    const filtered = Object.fromEntries(
       Object.entries(update).filter(([, v]) => v !== undefined),
     ) as Partial<MediaItemInsert>;
+
+    // Always ensure updatedAt is present to prevent "No values to set" error
+    filtered.updatedAt = new Date();
+
+    return filtered;
   }
 
   static toMediaStatsInsert(mediaId: string, media: NormalizedMedia): MediaStatsInsert | null {
