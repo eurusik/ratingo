@@ -12,6 +12,12 @@ import { SubscriptionTriggerService } from '../../../user-actions/application/su
 import { MOVIE_REPOSITORY } from '../../../catalog/domain/repositories/movie.repository.interface';
 import { USER_SUBSCRIPTION_REPOSITORY } from '../../../user-actions/domain/repositories/user-subscription.repository.interface';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
+
+// Cleanup rate limiter interval to prevent Jest from hanging
+afterAll(() => {
+  destroyTraktRateLimiter();
+});
 
 describe('SyncWorker', () => {
   let worker: SyncWorker;
@@ -48,6 +54,7 @@ describe('SyncWorker', () => {
     ingestionQueue = {
       add: jest.fn(),
       addBulk: jest.fn(),
+      getJob: jest.fn(),
     };
 
     movieRepository = {
@@ -93,14 +100,14 @@ describe('SyncWorker', () => {
       expect(syncService.syncMovie).toHaveBeenCalledWith(550, undefined);
     });
 
-    it('should process SYNC_SHOW job', async () => {
+    it('should process SYNC_SHOW job with trending data', async () => {
       const job = {
         name: IngestionJob.SYNC_SHOW,
-        data: { tmdbId: 100, trendingScore: 0.5 },
+        data: { tmdbId: 100, trending: { score: 9999, rank: 2 } },
         id: '2',
       } as Job;
       await worker.process(job);
-      expect(syncService.syncShow).toHaveBeenCalledWith(100, 0.5);
+      expect(syncService.syncShow).toHaveBeenCalledWith(100, { score: 9999, rank: 2 });
     });
 
     it('should process UPDATE_NOW_PLAYING_FLAGS', async () => {
@@ -184,9 +191,9 @@ describe('SyncWorker', () => {
       await worker.process(job);
 
       expect(syncService.getTrending).toHaveBeenCalledWith(1, undefined);
-      // Score = 10000 - ((1-1)*20 + i) -> 10000, 9999
-      expect(syncService.syncMovie).toHaveBeenCalledWith(100, 10000);
-      expect(syncService.syncShow).toHaveBeenCalledWith(200, 9999);
+      // Now uses trending object with score and rank
+      expect(syncService.syncMovie).toHaveBeenCalledWith(100, { score: 10000, rank: 1 });
+      expect(syncService.syncShow).toHaveBeenCalledWith(200, { score: 9999, rank: 2 });
       expect(statsService.syncTrendingStats).toHaveBeenCalled();
     });
 
@@ -292,44 +299,70 @@ describe('SyncWorker', () => {
   });
 
   describe('processTrendingPage', () => {
-    it('should sync trending items for a specific page and type', async () => {
+    it('should enqueue sync jobs for new trending items', async () => {
       const mockItems = [
         { tmdbId: 100, type: MediaType.MOVIE },
         { tmdbId: 200, type: MediaType.MOVIE },
       ];
       syncService.getTrending.mockResolvedValue(mockItems);
+      ingestionQueue.getJob.mockResolvedValue(null); // No existing jobs
 
       const job = {
         name: IngestionJob.SYNC_TRENDING_PAGE,
-        data: { page: 1, type: MediaType.MOVIE, baseScore: 10000 },
+        data: { page: 1, type: MediaType.MOVIE },
         id: 'page-1',
       } as Job;
 
       await worker.process(job);
 
       expect(syncService.getTrending).toHaveBeenCalledWith(1, MediaType.MOVIE);
-      expect(syncService.syncMovie).toHaveBeenCalledTimes(2);
+      // Enqueues jobs one by one with dedupe check
+      expect(ingestionQueue.add).toHaveBeenCalledTimes(2);
+      expect(ingestionQueue.add).toHaveBeenCalledWith(
+        IngestionJob.SYNC_MOVIE,
+        expect.objectContaining({ tmdbId: 100, trending: { score: 10000, rank: 1 } }),
+        expect.objectContaining({ jobId: expect.stringContaining('movie_100_') }),
+      );
     });
 
-    it('should continue processing if one item fails', async () => {
+    it('should skip already queued items (dedupe)', async () => {
       const mockItems = [
         { tmdbId: 100, type: MediaType.MOVIE },
         { tmdbId: 200, type: MediaType.MOVIE },
       ];
       syncService.getTrending.mockResolvedValue(mockItems);
-      syncService.syncMovie
-        .mockRejectedValueOnce(new Error('First failed'))
-        .mockResolvedValueOnce(undefined);
+      // First item exists, second doesn't
+      ingestionQueue.getJob.mockResolvedValueOnce({ id: 'existing' }).mockResolvedValueOnce(null);
 
       const job = {
         name: IngestionJob.SYNC_TRENDING_PAGE,
-        data: { page: 1, type: MediaType.MOVIE, baseScore: 10000 },
+        data: { page: 1, type: MediaType.MOVIE },
         id: 'page-2',
       } as Job;
 
       await worker.process(job);
 
-      expect(syncService.syncMovie).toHaveBeenCalledTimes(2);
+      // Only 1 job enqueued (second item), first was deduped
+      expect(ingestionQueue.add).toHaveBeenCalledTimes(1);
+      expect(ingestionQueue.add).toHaveBeenCalledWith(
+        IngestionJob.SYNC_MOVIE,
+        expect.objectContaining({ tmdbId: 200 }),
+        expect.any(Object),
+      );
+    });
+
+    it('should not enqueue jobs if no items found', async () => {
+      syncService.getTrending.mockResolvedValue([]);
+
+      const job = {
+        name: IngestionJob.SYNC_TRENDING_PAGE,
+        data: { page: 1, type: MediaType.MOVIE },
+        id: 'page-3',
+      } as Job;
+
+      await worker.process(job);
+
+      expect(ingestionQueue.add).not.toHaveBeenCalled();
     });
   });
 

@@ -130,7 +130,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           overview: null,
         })
         .onConflictDoUpdate({
-          target: schema.mediaItems.tmdbId,
+          target: [schema.mediaItems.type, schema.mediaItems.tmdbId], // Composite key: type + tmdb_id
           set: {
             title: payload.title,
             slug: payload.slug,
@@ -161,7 +161,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           .insert(schema.mediaItems)
           .values(PersistenceMapper.toMediaItemInsert(media))
           .onConflictDoUpdate({
-            target: schema.mediaItems.tmdbId,
+            target: [schema.mediaItems.type, schema.mediaItems.tmdbId], // Composite key: type + tmdb_id
             set: PersistenceMapper.toMediaItemUpdate(media),
           })
           .returning({ id: schema.mediaItems.id });

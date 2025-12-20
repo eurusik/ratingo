@@ -247,8 +247,12 @@ export class TmdbAdapter implements IMetadataProvider {
       url.searchParams.append(key, value);
     });
 
+    // AbortController for 15s timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
-      const res = await fetch(url.toString());
+      const res = await fetch(url.toString(), { signal: controller.signal });
 
       if (!res.ok) {
         if (res.status === 404) {
@@ -260,8 +264,14 @@ export class TmdbAdapter implements IMetadataProvider {
       return await res.json();
     } catch (error) {
       if (error instanceof TmdbApiException) throw error;
+      if (error.name === 'AbortError') {
+        this.logger.warn(`TMDB request timeout: ${endpoint}`);
+        throw new TmdbApiException('Request timeout', 408);
+      }
       this.logger.error(`TMDB Request Failed: ${error.message}`, error.stack);
       throw new TmdbApiException('Failed to communicate with TMDB', 500);
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 }

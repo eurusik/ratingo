@@ -62,7 +62,7 @@ export const mediaItems = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     type: mediaTypeEnum('type').notNull(),
     // External IDs (Canonical)
-    tmdbId: integer('tmdb_id').unique().notNull(),
+    tmdbId: integer('tmdb_id').notNull(), // Unique per type, not globally
     imdbId: text('imdb_id'),
 
     // Basic Info
@@ -109,7 +109,8 @@ export const mediaItems = pgTable(
     deletedAt: timestamp('deleted_at'), // Soft delete support
   },
   (t) => ({
-    typeIdx: index('media_type_idx').on(t.type),
+    // Composite unique: same tmdb_id can exist for movie AND show
+    typeTmdbIdx: uniqueIndex('media_type_tmdb_idx').on(t.type, t.tmdbId),
     imdbIdx: index('media_imdb_idx').on(t.imdbId),
     trendingIdx: index('media_trending_idx').on(t.trendingScore),
     trendingRankIdx: index('media_trending_rank_idx').on(t.trendingRank),

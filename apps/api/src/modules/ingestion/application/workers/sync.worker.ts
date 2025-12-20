@@ -63,7 +63,7 @@ export class SyncWorker extends WorkerHost {
       {
         tmdbId?: number;
         tmdbIds?: number[];
-        trendingScore?: number;
+        trending?: { score: number; rank: number }; // For trending items
         region?: string;
         daysBack?: number;
         page?: number;
@@ -83,10 +83,10 @@ export class SyncWorker extends WorkerHost {
     try {
       switch (job.name) {
         case IngestionJob.SYNC_MOVIE:
-          await this.syncService.syncMovie(job.data.tmdbId!);
+          await this.syncService.syncMovie(job.data.tmdbId!, job.data.trending);
           break;
         case IngestionJob.SYNC_SHOW:
-          await this.syncService.syncShow(job.data.tmdbId!);
+          await this.syncService.syncShow(job.data.tmdbId!, job.data.trending);
           break;
         case IngestionJob.SYNC_NOW_PLAYING:
           await this.processNowPlaying(job.data.region);
@@ -249,8 +249,11 @@ export class SyncWorker extends WorkerHost {
   }
 
   /**
-   * Trending page job: syncs one page of trending items.
-   * Processes items sequentially with rate limiting.
+   * Trending page job: fetches trending list and enqueues individual sync jobs.
+   * Does NOT sync items inline - delegates to SYNC_MOVIE/SYNC_SHOW jobs.
+   * This keeps the job short and prevents lock expiry issues.
+   *
+   * Uses jobId dedupe: same item won't be synced twice in the same day (UTC).
    */
   private async processTrendingPage(type: MediaType, page: number): Promise<void> {
     this.logger.log(`Processing trending page: ${type} page ${page}...`);
@@ -258,32 +261,39 @@ export class SyncWorker extends WorkerHost {
     const items = await this.syncService.getTrending(page, type);
     this.logger.log(`Found ${items.length} trending ${type}s on page ${page}`);
 
-    let synced = 0;
+    if (items.length === 0) return;
+
+    // Day key in UTC for consistent dedupe across timezones
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD UTC
+
+    // Check which jobs already exist (dedupe)
+    let enqueued = 0;
+    let deduped = 0;
+
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const rank = (page - 1) * 20 + i + 1; // 1-indexed position in TMDB trending
       const score = 10000 - rank + 1; // Higher score = higher rank
       const trending = { score, rank };
 
-      try {
-        if (item.type === MediaType.MOVIE) {
-          await this.syncService.syncMovie(item.tmdbId, trending);
-        } else {
-          await this.syncService.syncShow(item.tmdbId, trending);
-        }
-        synced++;
+      const jobId = `${item.type}_${item.tmdbId}_${today}`;
+      const jobName =
+        item.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
 
-        // Rate limiting
-        if (i < items.length - 1) {
-          await this.delay(TMDB_REQUEST_DELAY_MS);
-        }
-      } catch (error) {
-        this.logger.error(`Failed to sync ${item.type} ${item.tmdbId}: ${error.message}`);
+      // Check if job already exists
+      const existingJob = await this.ingestionQueue.getJob(jobId);
+      if (existingJob) {
+        deduped++;
+        continue;
       }
+
+      // Enqueue new job
+      await this.ingestionQueue.add(jobName, { tmdbId: item.tmdbId, trending }, { jobId });
+      enqueued++;
     }
 
     this.logger.log(
-      `Trending page complete: ${type} page ${page}, ${synced}/${items.length} synced`,
+      `Trending page complete: ${type} page ${page}, enqueued=${enqueued}, deduped=${deduped}`,
     );
   }
 

@@ -45,13 +45,28 @@ export class OmdbAdapter {
       url.searchParams.set(key, value);
     });
 
-    const response = await fetch(url.toString());
+    // AbortController for 10s timeout (OMDb is best-effort, don't block long)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    if (!response.ok) {
-      throw new OmdbApiException(`${response.status} ${response.statusText}`, response.status);
+    try {
+      const response = await fetch(url.toString(), { signal: controller.signal });
+
+      if (!response.ok) {
+        throw new OmdbApiException(`${response.status} ${response.statusText}`, response.status);
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof OmdbApiException) throw error;
+      if (error.name === 'AbortError') {
+        this.logger.warn('OMDb request timeout');
+        throw new OmdbApiException('Request timeout', 408);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return response.json();
   }
 
   /**

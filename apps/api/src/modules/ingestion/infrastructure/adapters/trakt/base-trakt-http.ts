@@ -94,6 +94,14 @@ class RateLimiter {
 // Max queue: 100 requests, timeout: 30 seconds
 const sharedLimiter = new RateLimiter(3, 333, 100, 30000);
 
+/**
+ * Cleanup function for tests - stops the rate limiter interval.
+ * Call this in afterAll() to prevent Jest from hanging.
+ */
+export function destroyTraktRateLimiter(): void {
+  sharedLimiter.destroy();
+}
+
 @Injectable()
 export class BaseTraktHttp {
   protected readonly logger = new Logger(BaseTraktHttp.name);
@@ -130,27 +138,43 @@ export class BaseTraktHttp {
       ...options.headers,
     };
 
+    // AbortController for 15s timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     const makeReq = async () =>
       fetch(url, {
         ...options,
         headers,
+        signal: controller.signal,
       });
 
-    let response = await makeReq();
+    try {
+      let response = await makeReq();
 
-    if (response.status === 429) {
-      const ra = response.headers.get('Retry-After');
-      const ms = Math.max(0, Math.round((parseFloat(String(ra || '10')) || 10) * 1000));
-      this.logger.warn(`Rate limited by Trakt. Waiting ${ms}ms...`);
-      await new Promise((r) => setTimeout(r, ms));
-      // No re-acquire needed - we already "paid" with Retry-After wait
-      response = await makeReq();
+      if (response.status === 429) {
+        const ra = response.headers.get('Retry-After');
+        const ms = Math.max(0, Math.round((parseFloat(String(ra || '10')) || 10) * 1000));
+        this.logger.warn(`Rate limited by Trakt. Waiting ${ms}ms...`);
+        await new Promise((r) => setTimeout(r, ms));
+        // No re-acquire needed - we already "paid" with Retry-After wait
+        response = await makeReq();
+      }
+
+      if (!response.ok) {
+        throw new TraktApiException(`${response.status} ${response.statusText}`, response.status);
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof TraktApiException) throw error;
+      if (error.name === 'AbortError') {
+        this.logger.warn(`Trakt request timeout: ${endpoint}`);
+        throw new TraktApiException('Request timeout', 408);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    if (!response.ok) {
-      throw new TraktApiException(`${response.status} ${response.statusText}`, response.status);
-    }
-
-    return response.json();
   }
 }
