@@ -254,21 +254,25 @@ export class SyncWorker extends WorkerHost {
    * This keeps the job short and prevents lock expiry issues.
    *
    * Uses jobId dedupe: same item won't be synced twice in the same day (UTC).
+   * Note: force flag on dispatcher bypasses page dedupe, but item dedupe always applies.
    */
   private async processTrendingPage(type: MediaType, page: number): Promise<void> {
     this.logger.log(`Processing trending page: ${type} page ${page}...`);
 
     const items = await this.syncService.getTrending(page, type);
-    this.logger.log(`Found ${items.length} trending ${type}s on page ${page}`);
 
-    if (items.length === 0) return;
+    if (items.length === 0) {
+      this.logger.log(`Trending page ${type} page ${page}: found=0`);
+      return;
+    }
 
     // Day key in UTC for consistent dedupe across timezones
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD UTC
 
-    // Check which jobs already exist (dedupe)
+    // Track enqueued vs deduped with sample IDs
     let enqueued = 0;
     let deduped = 0;
+    const enqueuedIds: number[] = [];
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
@@ -280,7 +284,7 @@ export class SyncWorker extends WorkerHost {
       const jobName =
         item.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
 
-      // Check if job already exists
+      // Check if job already exists (item dedupe - always applies)
       const existingJob = await this.ingestionQueue.getJob(jobId);
       if (existingJob) {
         deduped++;
@@ -290,10 +294,13 @@ export class SyncWorker extends WorkerHost {
       // Enqueue new job
       await this.ingestionQueue.add(jobName, { tmdbId: item.tmdbId, trending }, { jobId });
       enqueued++;
+      if (enqueuedIds.length < 5) enqueuedIds.push(item.tmdbId); // Sample up to 5 IDs
     }
 
+    // Single summary log line
+    const sampleIds = enqueuedIds.length > 0 ? `, sample=[${enqueuedIds.join(',')}]` : '';
     this.logger.log(
-      `Trending page complete: ${type} page ${page}, enqueued=${enqueued}, deduped=${deduped}`,
+      `Trending page ${type} page ${page}: found=${items.length}, enqueued=${enqueued}, deduped=${deduped}${sampleIds}`,
     );
   }
 
