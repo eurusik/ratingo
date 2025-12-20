@@ -271,7 +271,7 @@ export function ClientShowDetail({ show }: { show: any }) {
                             return (
                               <div
                                 key={bucket}
-                                className="flex flex-col items-center"
+                                className="flex-1 flex flex-col items-center"
                                 title={tooltip}
                               >
                                 <div className="w-4 bg-blue-600 rounded-t" style={{ height }} />
