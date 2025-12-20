@@ -120,7 +120,10 @@ export class OmdbAdapter {
 
       return { imdbRating, imdbVotes, rottenTomatoes, metacritic, metascore };
     } catch (error) {
-      this.logger.warn(`Failed to get aggregated ratings for ${imdbId}: ${error}`);
+      // Best-effort: log warning but don't fail the job
+      const status =
+        error instanceof OmdbApiException ? (error.details as any)?.statusCode : 'unknown';
+      this.logger.warn(`OMDb enrichment skipped for ${imdbId} (status=${status})`);
       return {
         imdbRating: null,
         imdbVotes: null,
