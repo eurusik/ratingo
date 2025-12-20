@@ -175,6 +175,11 @@ export class SyncWorker extends WorkerHost {
    * Trending dispatcher: queues page jobs for movies and shows.
    * Each page job syncs 20 items from TMDB trending.
    * Stats job is queued separately with delay to ensure page jobs complete first.
+   *
+   * Dedupe strategy:
+   * - Page jobs: hour-based window (YYYYMMDDHH) - 1 run per hour
+   * - Item jobs: day-based (type_tmdbId_YYYYMMDD) - 1 sync per day
+   * - force=true: bypasses PAGE dedupe only; item dedupe always applies
    */
   private async processTrendingDispatcher(
     pages = 5,
@@ -182,9 +187,9 @@ export class SyncWorker extends WorkerHost {
     force = false,
   ): Promise<void> {
     const dispatcherStartedAt = new Date();
-    // Use hour-based window for deduplication (allows 1 run per hour per type/page)
+    // Page-level dedupe: hour-based window (allows 1 run per hour per type/page)
     // Format: YYYYMMDDHH (no colons - BullMQ doesn't allow them in jobId)
-    // If force=true, add timestamp to bypass dedupe
+    // force=true → bypass page dedupe (item dedupe still applies)
     const window = force
       ? dispatcherStartedAt.getTime().toString()
       : dispatcherStartedAt.toISOString().slice(0, 13).replace(/[-T]/g, '');
