@@ -20,6 +20,11 @@ import { IngestionSchedulerService } from './application/services/ingestion-sche
 import omdbConfig from '../../config/omdb.config';
 import schedulerConfig from '../../config/scheduler.config';
 import { SyncWorker } from './application/workers/sync.worker';
+import { SnapshotsPipeline } from './application/pipelines/snapshots.pipeline';
+import { TrendingPipeline } from './application/pipelines/trending.pipeline';
+import { TrackedShowsPipeline } from './application/pipelines/tracked-shows.pipeline';
+import { NowPlayingPipeline } from './application/pipelines/now-playing.pipeline';
+import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeline';
 
 /**
  * Ingestion module.
@@ -58,6 +63,12 @@ import { SyncWorker } from './application/workers/sync.worker';
     SyncWorker,
     SnapshotsService,
     IngestionSchedulerService,
+    // Pipeline classes
+    SnapshotsPipeline,
+    TrendingPipeline,
+    TrackedShowsPipeline,
+    NowPlayingPipeline,
+    NewReleasesPipeline,
   ],
   exports: [SyncMediaService, TraktRatingsAdapter, TraktListsAdapter, SnapshotsService],
 })
