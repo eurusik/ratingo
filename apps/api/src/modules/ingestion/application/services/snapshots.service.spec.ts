@@ -15,13 +15,35 @@ describe('SnapshotsService', () => {
       getShowRatingsByTmdbId: jest.fn(),
     };
 
+    const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
+      const thenable: any = {};
+      const chainMethods = [
+        'select',
+        'from',
+        'where',
+        'limit',
+        'insert',
+        'values',
+        'onConflictDoUpdate',
+      ];
+      chainMethods.forEach((m) => {
+        thenable[m] = jest.fn().mockReturnValue(thenable);
+      });
+
+      if (rejectWith) {
+        thenable.then = (_res: any, rej: any) => Promise.reject(rejectWith).catch(rej);
+      } else {
+        thenable.then = (res: any) => Promise.resolve(resolveWith).then(res);
+      }
+      return thenable;
+    };
+
+    const selectChain = createThenable();
+    const insertChain = createThenable(undefined);
+
     db = {
-      select: jest.fn().mockReturnThis(),
-      from: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      values: jest.fn().mockReturnThis(),
-      onConflictDoUpdate: jest.fn().mockResolvedValue(undefined),
+      select: jest.fn().mockReturnValue(selectChain),
+      insert: jest.fn().mockReturnValue(insertChain),
     };
 
     const testingModule: TestingModule = await Test.createTestingModule({
@@ -41,7 +63,8 @@ describe('SnapshotsService', () => {
 
   describe('syncSnapshotItem', () => {
     it('should upsert snapshot for movie', async () => {
-      db.where.mockResolvedValueOnce([{ tmdbId: 101, type: MediaType.MOVIE }]);
+      (db.select() as any).then = (res: any) =>
+        Promise.resolve([{ tmdbId: 101, type: MediaType.MOVIE }]).then(res);
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ totalWatchers: 500 });
 
       await service.syncSnapshotItem('media-1', new Date('2025-01-01T00:00:00.000Z'), 'global');
@@ -50,7 +73,7 @@ describe('SnapshotsService', () => {
       expect(traktAdapter.getShowRatingsByTmdbId).not.toHaveBeenCalled();
 
       expect(db.insert).toHaveBeenCalledTimes(1);
-      expect(db.values).toHaveBeenCalledWith(
+      expect((db.insert() as any).values).toHaveBeenCalledWith(
         expect.objectContaining({
           mediaItemId: 'media-1',
           totalWatchers: 500,
@@ -60,7 +83,8 @@ describe('SnapshotsService', () => {
     });
 
     it('should upsert snapshot for show', async () => {
-      db.where.mockResolvedValueOnce([{ tmdbId: 202, type: MediaType.SHOW }]);
+      (db.select() as any).then = (res: any) =>
+        Promise.resolve([{ tmdbId: 202, type: MediaType.SHOW }]).then(res);
       traktAdapter.getShowRatingsByTmdbId.mockResolvedValue({ totalWatchers: 1000 });
 
       await service.syncSnapshotItem('media-2', new Date('2025-01-01T00:00:00.000Z'), 'global');
@@ -69,7 +93,7 @@ describe('SnapshotsService', () => {
       expect(traktAdapter.getMovieRatingsByTmdbId).not.toHaveBeenCalled();
 
       expect(db.insert).toHaveBeenCalledTimes(1);
-      expect(db.values).toHaveBeenCalledWith(
+      expect((db.insert() as any).values).toHaveBeenCalledWith(
         expect.objectContaining({
           mediaItemId: 'media-2',
           totalWatchers: 1000,
@@ -79,7 +103,7 @@ describe('SnapshotsService', () => {
     });
 
     it('should skip when media item is not found', async () => {
-      db.where.mockResolvedValueOnce([]);
+      (db.select() as any).then = (res: any) => Promise.resolve([]).then(res);
 
       await service.syncSnapshotItem('missing', new Date('2025-01-01T00:00:00.000Z'), 'global');
 
@@ -89,7 +113,8 @@ describe('SnapshotsService', () => {
     });
 
     it('should rethrow API errors (so worker can retry)', async () => {
-      db.where.mockResolvedValueOnce([{ tmdbId: 101, type: MediaType.MOVIE }]);
+      (db.select() as any).then = (res: any) =>
+        Promise.resolve([{ tmdbId: 101, type: MediaType.MOVIE }]).then(res);
       traktAdapter.getMovieRatingsByTmdbId.mockRejectedValue(new Error('API Error'));
 
       await expect(

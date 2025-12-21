@@ -34,6 +34,12 @@ class RateLimiter {
         this.processQueue();
       }
     }, this.refillIntervalMs);
+
+    // Allow Node process (and Jest) to exit even if this interval is still active.
+    // The limiter is best-effort; keeping the process alive is not desired.
+    if (this._intervalId && typeof (this._intervalId as any).unref === 'function') {
+      (this._intervalId as any).unref();
+    }
   }
 
   private processQueue(): void {

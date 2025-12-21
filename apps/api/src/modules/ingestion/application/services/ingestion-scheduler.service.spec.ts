@@ -17,6 +17,7 @@ describe('IngestionSchedulerService', () => {
     };
 
     config = {
+      enabled: true,
       timezone: 'UTC',
       jobs: [
         {

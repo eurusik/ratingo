@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogSearchController } from './catalog.search.controller';
 import { CatalogSearchService } from '../../application/services/catalog-search.service';
+import { CatalogImportService } from '../../application/services/catalog-import.service';
 
 describe('CatalogSearchController', () => {
   let controller: CatalogSearchController;
@@ -9,10 +10,17 @@ describe('CatalogSearchController', () => {
     search: jest.fn(),
   };
 
+  const catalogImportService = {
+    importMedia: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CatalogSearchController],
-      providers: [{ provide: CatalogSearchService, useValue: catalogSearchService }],
+      providers: [
+        { provide: CatalogSearchService, useValue: catalogSearchService },
+        { provide: CatalogImportService, useValue: catalogImportService },
+      ],
     }).compile();
 
     controller = module.get(CatalogSearchController);

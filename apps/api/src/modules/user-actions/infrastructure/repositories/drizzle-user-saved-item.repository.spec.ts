@@ -10,6 +10,8 @@ const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
     'select',
     'from',
     'where',
+    'groupBy',
+    'as',
     'limit',
     'offset',
     'orderBy',
@@ -19,6 +21,7 @@ const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
     'onConflictDoUpdate',
     'delete',
     'innerJoin',
+    'leftJoin',
   ];
   chainMethods.forEach((m) => {
     thenable[m] = jest.fn().mockReturnValue(thenable);

@@ -63,7 +63,10 @@ describe('OmdbAdapter', () => {
 
       await adapter.getAggregatedRatings('tt0137523', MediaType.MOVIE);
 
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('type=movie'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('type=movie'),
+        expect.anything(),
+      );
     });
 
     it('should use correct type mapping for shows', async () => {
@@ -74,7 +77,10 @@ describe('OmdbAdapter', () => {
 
       await adapter.getAggregatedRatings('tt0903747', MediaType.SHOW);
 
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('type=series'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('type=series'),
+        expect.anything(),
+      );
     });
 
     it('should include IMDb ID in request', async () => {
@@ -85,7 +91,10 @@ describe('OmdbAdapter', () => {
 
       await adapter.getAggregatedRatings('tt0137523', MediaType.MOVIE);
 
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('i=tt0137523'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('i=tt0137523'),
+        expect.anything(),
+      );
     });
 
     it('should handle N/A values', async () => {
