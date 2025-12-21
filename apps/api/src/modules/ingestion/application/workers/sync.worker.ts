@@ -13,6 +13,10 @@ import {
   TMDB_REQUEST_DELAY_MS,
 } from '../../ingestion.constants';
 import {
+  IMediaRepository,
+  MEDIA_REPOSITORY,
+} from '../../../catalog/domain/repositories/media.repository.interface';
+import {
   IMovieRepository,
   MOVIE_REPOSITORY,
 } from '../../../catalog/domain/repositories/movie.repository.interface';
@@ -24,6 +28,8 @@ import { SubscriptionTriggerService } from '../../../user-actions/application/su
 import { StatsService } from '../../../stats/application/services/stats.service';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
+import { formatUtcDayId, utcDateFromDayId } from '@/common/utils/date.util';
+
 /**
  * Background worker responsible for processing sync jobs from the Queue.
  * Handles movie/show sync and now playing/new releases batch jobs.
@@ -33,6 +39,14 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 @Processor(INGESTION_QUEUE, { concurrency: 5 })
 export class SyncWorker extends WorkerHost {
   private readonly logger = new Logger(SyncWorker.name);
+  private readonly CHECK_CONCURRENCY = 50; // Limit parallel Redis checks
+
+  private normalizeSnapshotRegion(region?: string): string {
+    if (!region) return 'global';
+    if (region.toLowerCase() === 'global') return 'global';
+    const sanitized = region.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+    return sanitized.length > 0 ? sanitized : 'global';
+  }
 
   constructor(
     private readonly syncService: SyncMediaService,
@@ -41,6 +55,8 @@ export class SyncWorker extends WorkerHost {
     private readonly subscriptionTriggerService: SubscriptionTriggerService,
     private readonly tmdbAdapter: TmdbAdapter,
     private readonly statsService: StatsService,
+    @Inject(MEDIA_REPOSITORY)
+    private readonly mediaRepository: IMediaRepository,
     @Inject(MOVIE_REPOSITORY)
     private readonly movieRepository: IMovieRepository,
     @Inject(USER_SUBSCRIPTION_REPOSITORY)
@@ -73,6 +89,8 @@ export class SyncWorker extends WorkerHost {
         type?: MediaType;
         since?: string;
         limit?: number;
+        mediaItemId?: string;
+        dayId?: string;
       },
       any,
       string
@@ -94,11 +112,21 @@ export class SyncWorker extends WorkerHost {
         case IngestionJob.SYNC_NEW_RELEASES:
           await this.processNewReleases(job.data.region, job.data.daysBack);
           break;
+        case IngestionJob.UPDATE_NOW_PLAYING_FLAGS:
+          await this.updateNowPlayingFlags(job.data.region);
+          break;
+        case IngestionJob.SYNC_SNAPSHOTS:
+        case IngestionJob.SYNC_SNAPSHOTS_DISPATCHER:
+          await this.processSnapshotsDispatcher(job.data.region);
+          break;
+        case IngestionJob.SYNC_SNAPSHOT_ITEM:
+          await this.processSnapshotItem(job.data.mediaItemId, job.data.dayId, job.data.region);
+          break;
         case IngestionJob.SYNC_TRENDING_DISPATCHER:
           await this.processTrendingDispatcher(job.data.pages, job.data.syncStats, job.data.force);
           break;
         case IngestionJob.SYNC_TRENDING_PAGE:
-          await this.processTrendingPage(job.data.type, job.data.page);
+          await this.processTrendingPage(job.data.type!, job.data.page!);
           break;
         case IngestionJob.SYNC_TRENDING_STATS:
           await this.processTrendingStats(job.data.since, job.data.limit);
@@ -106,12 +134,6 @@ export class SyncWorker extends WorkerHost {
         case IngestionJob.SYNC_TRENDING_FULL:
           // @deprecated - kept for backward compatibility
           await this.processTrendingFull(job.data.page, job.data.syncStats, job.data.type);
-          break;
-        case IngestionJob.UPDATE_NOW_PLAYING_FLAGS:
-          await this.updateNowPlayingFlags(job.data.region);
-          break;
-        case IngestionJob.SYNC_SNAPSHOTS:
-          await this.snapshotsService.syncDailySnapshots();
           break;
         case IngestionJob.SYNC_TRACKED_SHOWS:
           await this.processTrackedShowsDispatcher();
@@ -126,6 +148,109 @@ export class SyncWorker extends WorkerHost {
       this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
       throw error;
     }
+  }
+
+  /**
+   * Snapshot Dispatcher:
+   * 1. Iterates over ALL media items using cursor pagination.
+   * 2. Checks if snapshot job already exists for today (dedupe).
+   * 3. Enqueues SYNC_SNAPSHOT_ITEM jobs in batches.
+   */
+  private async processSnapshotsDispatcher(region = 'global'): Promise<void> {
+    const normalizedRegion = this.normalizeSnapshotRegion(region);
+    const today = formatUtcDayId();
+    const BATCH_SIZE = 500; // Database page size
+    let cursor: string | undefined;
+
+    let found = 0;
+    let enqueued = 0;
+    let deduped = 0;
+
+    this.logger.log(
+      `Starting snapshots dispatcher (region: ${normalizedRegion}, date: ${today})...`,
+    );
+
+    // Loop until no more items
+    while (true) {
+      const ids = await this.mediaRepository.findIdsForSnapshots({
+        limit: BATCH_SIZE,
+        cursor,
+      });
+
+      if (ids.length === 0) break;
+
+      found += ids.length;
+      cursor = ids[ids.length - 1]; // Update cursor for next page
+
+      // Prepare batch of jobs
+      const jobsToAdd: any[] = [];
+      const enqueuedIds: string[] = [];
+
+      // Chunk for parallel Redis checks (dedupe)
+      for (let i = 0; i < ids.length; i += this.CHECK_CONCURRENCY) {
+        const chunk = ids.slice(i, i + this.CHECK_CONCURRENCY);
+
+        const chunkChecks = await Promise.all(
+          chunk.map(async (mediaItemId) => {
+            const jobId = `snapshot_${mediaItemId}_${today}_${normalizedRegion}`;
+            const existing = await this.ingestionQueue.getJob(jobId);
+            return { mediaItemId, existing, jobId };
+          }),
+        );
+
+        for (const { mediaItemId, existing, jobId } of chunkChecks) {
+          if (existing) {
+            deduped++;
+            continue;
+          }
+
+          jobsToAdd.push({
+            name: IngestionJob.SYNC_SNAPSHOT_ITEM,
+            data: { mediaItemId, region: normalizedRegion, dayId: today },
+            opts: { jobId },
+          });
+          enqueuedIds.push(mediaItemId);
+        }
+      }
+
+      // Add to queue
+      if (jobsToAdd.length > 0) {
+        await this.ingestionQueue.addBulk(jobsToAdd);
+        enqueued += jobsToAdd.length;
+      }
+
+      const sampleIds =
+        enqueuedIds.length > 0 ? `, sample=[${enqueuedIds.slice(0, 3).join(',')}]` : '';
+      this.logger.log(
+        `Snapshots dispatcher progress: found=${found}, enqueued=${enqueued}, deduped=${deduped}${sampleIds}`,
+      );
+    }
+
+    this.logger.log(
+      `Snapshots dispatcher complete: found=${found}, enqueued=${enqueued}, deduped=${deduped}`,
+    );
+  }
+
+  /**
+   * Syncs a single snapshot item.
+   * Wrapper around service call.
+   */
+  private async processSnapshotItem(
+    mediaItemId: string,
+    dayId: string,
+    region: string,
+  ): Promise<void> {
+    const normalizedRegion = this.normalizeSnapshotRegion(region);
+    let snapshotDate: Date;
+    try {
+      snapshotDate = utcDateFromDayId(dayId);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Unknown dayId parsing error';
+      throw new Error(
+        `Invalid snapshot dayId payload (mediaItemId=${mediaItemId}, region=${normalizedRegion}, dayId=${dayId}): ${message}`,
+      );
+    }
+    await this.snapshotsService.syncSnapshotItem(mediaItemId, snapshotDate, normalizedRegion);
   }
 
   /**
@@ -272,46 +397,62 @@ export class SyncWorker extends WorkerHost {
     }
 
     // Day key in UTC for consistent dedupe across timezones
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD UTC
+    const today = formatUtcDayId();
 
-    // Track enqueued vs deduped with sample IDs
-    let enqueued = 0;
     let deduped = 0;
+    const jobsToAdd: any[] = [];
     const enqueuedIds: number[] = [];
 
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const rank = (page - 1) * 20 + i + 1; // 1-indexed position in TMDB trending
-      const score = 10000 - rank + 1; // Higher score = higher rank
-      const trending = { score, rank };
+    // Chunk for parallel checks to avoid Redis pressure
+    for (let i = 0; i < items.length; i += this.CHECK_CONCURRENCY) {
+      const chunk = items.slice(i, i + this.CHECK_CONCURRENCY);
+      const chunkChecks = await Promise.all(
+        chunk.map(async (item, chunkIndex) => {
+          const originalIndex = i + chunkIndex;
+          const jobId = `${item.type}_${item.tmdbId}_${today}`;
+          const existing = await this.ingestionQueue.getJob(jobId);
+          return { item, i: originalIndex, existing, jobId };
+        }),
+      );
 
-      const jobId = `${item.type}_${item.tmdbId}_${today}`;
-      const jobName =
-        item.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
+      for (const { item, i, existing, jobId } of chunkChecks) {
+        if (existing) {
+          deduped++;
+          continue;
+        }
 
-      // Check if job already exists (item dedupe - always applies)
-      const existingJob = await this.ingestionQueue.getJob(jobId);
-      if (existingJob) {
-        deduped++;
-        continue;
+        const rank = (page - 1) * 20 + i + 1; // 1-indexed position in TMDB trending
+        const score = 10000 - rank + 1; // Higher score = higher rank
+        const trending = { score, rank };
+        const jobName =
+          item.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
+
+        jobsToAdd.push({
+          name: jobName,
+          data: { tmdbId: item.tmdbId, trending },
+          opts: { jobId },
+        });
+        enqueuedIds.push(item.tmdbId);
       }
+    }
 
-      // Enqueue new job
-      await this.ingestionQueue.add(jobName, { tmdbId: item.tmdbId, trending }, { jobId });
-      enqueued++;
-      if (enqueuedIds.length < 5) enqueuedIds.push(item.tmdbId); // Sample up to 5 IDs
+    if (jobsToAdd.length > 0) {
+      await this.ingestionQueue.addBulk(jobsToAdd);
     }
 
     // Single summary log line
-    const sampleIds = enqueuedIds.length > 0 ? `, sample=[${enqueuedIds.join(',')}]` : '';
+    const sampleIds =
+      enqueuedIds.length > 0 ? `, sample=[${enqueuedIds.slice(0, 5).join(',')}]` : '';
     this.logger.log(
-      `Trending page ${type} page ${page}: found=${items.length}, enqueued=${enqueued}, deduped=${deduped}${sampleIds}`,
+      `Trending page ${type} page ${page}: found=${items.length}, enqueued=${jobsToAdd.length}, deduped=${deduped}${sampleIds}`,
     );
   }
 
   /**
    * Syncs now playing movies from TMDB (ingestion only).
    * Does NOT update isNowPlaying flags - use UPDATE_NOW_PLAYING_FLAGS for that.
+   *
+   * Uses jobId dedupe: same movie won't be synced twice in the same day (UTC).
    */
   private async processNowPlaying(region = 'UA'): Promise<void> {
     this.logger.log(`Syncing now playing movies (region: ${region})...`);
@@ -321,14 +462,48 @@ export class SyncWorker extends WorkerHost {
 
     if (tmdbIds.length === 0) return;
 
-    // Queue sync jobs for each movie
-    const jobs = tmdbIds.map((tmdbId) => ({
-      name: IngestionJob.SYNC_MOVIE,
-      data: { tmdbId },
-    }));
-    await this.ingestionQueue.addBulk(jobs);
+    // Day key in UTC for consistent dedupe across timezones
+    const today = formatUtcDayId();
 
-    this.logger.log(`Now playing ingestion complete: ${tmdbIds.length} movies queued`);
+    let deduped = 0;
+    const jobsToAdd: any[] = [];
+    const enqueuedIds: number[] = [];
+
+    // Chunk for parallel checks to avoid Redis pressure
+    for (let i = 0; i < tmdbIds.length; i += this.CHECK_CONCURRENCY) {
+      const chunk = tmdbIds.slice(i, i + this.CHECK_CONCURRENCY);
+      const chunkChecks = await Promise.all(
+        chunk.map(async (tmdbId) => {
+          const jobId = `movie_${tmdbId}_${today}`;
+          const existing = await this.ingestionQueue.getJob(jobId);
+          return { tmdbId, existing, jobId };
+        }),
+      );
+
+      for (const { tmdbId, existing, jobId } of chunkChecks) {
+        if (existing) {
+          deduped++;
+          continue;
+        }
+
+        jobsToAdd.push({
+          name: IngestionJob.SYNC_MOVIE,
+          data: { tmdbId },
+          opts: { jobId },
+        });
+        enqueuedIds.push(tmdbId);
+      }
+    }
+
+    if (jobsToAdd.length > 0) {
+      await this.ingestionQueue.addBulk(jobsToAdd);
+    }
+
+    const sampleIds =
+      enqueuedIds.length > 0 ? `, sample=[${enqueuedIds.slice(0, 5).join(',')}]` : '';
+    this.logger.log(
+      `Now playing ingestion complete: found=${tmdbIds.length}, enqueued=${jobsToAdd.length}, deduped=${deduped}${sampleIds}`,
+    );
   }
 
   /**
@@ -336,7 +511,9 @@ export class SyncWorker extends WorkerHost {
    * - Sets isNowPlaying = true for movies in the list that exist in DB
    * - Sets isNowPlaying = false for movies no longer in the list
    *
-   * Should be run AFTER SYNC_NOW_PLAYING has completed (e.g., 5-10 min later).
+   * Safety mechanism:
+   * Checks if TMDB items exist in DB. If missing, queues SYNC_MOVIE jobs (best-effort).
+   * This ensures we don't have "now playing" movies that are missing from the catalog.
    */
   private async updateNowPlayingFlags(region = 'UA'): Promise<void> {
     this.logger.log(`Updating now playing flags (region: ${region})...`);
@@ -345,33 +522,105 @@ export class SyncWorker extends WorkerHost {
     const tmdbIds = await this.tmdbAdapter.getNowPlayingIds(region);
     this.logger.log(`Found ${tmdbIds.length} now playing movies in TMDB`);
 
+    if (tmdbIds.length === 0) {
+      await this.movieRepository.setNowPlaying([]);
+      return;
+    }
+
+    // Check which ones exist in DB
+    const existingItems = await this.mediaRepository.findManyByTmdbIds(tmdbIds);
+    const existingTmdbIds = new Set(existingItems.map((i) => i.tmdbId));
+    const missingIds = tmdbIds.filter((id) => !existingTmdbIds.has(id));
+
+    this.logger.log(
+      `Now playing stats: TMDB=${tmdbIds.length}, DB=${existingItems.length}, Missing=${missingIds.length}`,
+    );
+
+    // Queue sync for missing items (best-effort)
+    if (missingIds.length > 0) {
+      this.logger.warn(
+        `Found ${missingIds.length} now playing movies missing from DB. Queueing sync...`,
+      );
+
+      const today = formatUtcDayId();
+      const jobs = missingIds.map((tmdbId) => ({
+        name: IngestionJob.SYNC_MOVIE,
+        data: { tmdbId },
+        opts: { jobId: `movie_${tmdbId}_${today}` }, // Dedupe with daily sync
+      }));
+
+      await this.ingestionQueue.addBulk(jobs);
+    }
+
     // Update flags in DB (sets true for those in list, false for others)
     await this.movieRepository.setNowPlaying(tmdbIds);
 
-    this.logger.log(`Now playing flags updated for ${tmdbIds.length} movies`);
+    this.logger.log(
+      `Now playing flags updated for ${tmdbIds.length} movies (effective: ${existingItems.length})`,
+    );
   }
 
   /**
    * Syncs new theatrical releases from TMDB.
    * Uses discover endpoint with release date filters.
+   *
+   * Dedupe strategy:
+   * - Dispatcher job: deduplicated by region/daysBack/date (unless force=true)
+   * - Item jobs: deduplicated by movie_id/date (movie_{tmdbId}_{YYYYMMDD})
    */
   private async processNewReleases(region = 'UA', daysBack = 30): Promise<void> {
     this.logger.log(`Syncing new releases (region: ${region}, daysBack: ${daysBack})...`);
 
     // Get IDs from TMDB discover
     const tmdbIds = await this.tmdbAdapter.getNewReleaseIds(daysBack, region);
-    this.logger.log(`Found ${tmdbIds.length} new releases`);
 
-    if (tmdbIds.length === 0) return;
+    if (tmdbIds.length === 0) {
+      this.logger.log(`New releases: found=0`);
+      return;
+    }
 
-    // Queue sync jobs for each movie
-    const jobs = tmdbIds.map((tmdbId) => ({
-      name: IngestionJob.SYNC_MOVIE,
-      data: { tmdbId },
-    }));
-    await this.ingestionQueue.addBulk(jobs);
+    // Day key in UTC for consistent dedupe
+    const today = formatUtcDayId();
 
-    this.logger.log(`New releases sync complete: ${tmdbIds.length} movies queued`);
+    let deduped = 0;
+    const jobsToAdd: any[] = [];
+    const enqueuedIds: number[] = [];
+
+    // Chunk for parallel checks to avoid Redis pressure
+    for (let i = 0; i < tmdbIds.length; i += this.CHECK_CONCURRENCY) {
+      const chunk = tmdbIds.slice(i, i + this.CHECK_CONCURRENCY);
+      const chunkChecks = await Promise.all(
+        chunk.map(async (tmdbId) => {
+          const jobId = `movie_${tmdbId}_${today}`;
+          const existing = await this.ingestionQueue.getJob(jobId);
+          return { tmdbId, existing, jobId };
+        }),
+      );
+
+      for (const { tmdbId, existing, jobId } of chunkChecks) {
+        if (existing) {
+          deduped++;
+          continue;
+        }
+
+        jobsToAdd.push({
+          name: IngestionJob.SYNC_MOVIE,
+          data: { tmdbId },
+          opts: { jobId },
+        });
+        enqueuedIds.push(tmdbId);
+      }
+    }
+
+    if (jobsToAdd.length > 0) {
+      await this.ingestionQueue.addBulk(jobsToAdd);
+    }
+
+    const sampleIds =
+      enqueuedIds.slice(0, 5).length > 0 ? `, sample=[${enqueuedIds.slice(0, 5).join(',')}]` : '';
+    this.logger.log(
+      `New releases region=${region} daysBack=${daysBack}: found=${tmdbIds.length}, enqueued=${jobsToAdd.length}, deduped=${deduped}${sampleIds}`,
+    );
   }
 
   /**

@@ -6,11 +6,18 @@ import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
+import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
+
+// Cleanup rate limiter interval to prevent Jest from hanging
+afterAll(() => {
+  destroyTraktRateLimiter();
+});
 
 describe('IngestionController', () => {
   let controller: IngestionController;
   let mockQueue: any;
   let mockMediaRepo: any;
+  let moduleRef: TestingModule;
 
   beforeEach(async () => {
     mockQueue = {
@@ -27,7 +34,7 @@ describe('IngestionController', () => {
       getShow: jest.fn().mockResolvedValue(null),
     };
 
-    const module: TestingModule = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       controllers: [IngestionController],
       providers: [
         { provide: getQueueToken(INGESTION_QUEUE), useValue: mockQueue },
@@ -37,7 +44,11 @@ describe('IngestionController', () => {
       ],
     }).compile();
 
-    controller = module.get<IngestionController>(IngestionController);
+    controller = moduleRef.get<IngestionController>(IngestionController);
+  });
+
+  afterEach(async () => {
+    await moduleRef?.close();
   });
 
   describe('sync', () => {
@@ -122,19 +133,29 @@ describe('IngestionController', () => {
     it('should queue new releases sync job', async () => {
       await controller.syncNewReleases({ region: 'UA', daysBack: 60 });
 
-      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_NEW_RELEASES, {
-        region: 'UA',
-        daysBack: 60,
-      });
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        IngestionJob.SYNC_NEW_RELEASES,
+        {
+          region: 'UA',
+          daysBack: 60,
+          force: false,
+        },
+        expect.any(Object),
+      );
     });
 
     it('should use default values when not provided', async () => {
       await controller.syncNewReleases({});
 
-      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_NEW_RELEASES, {
-        region: 'UA',
-        daysBack: 30,
-      });
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        IngestionJob.SYNC_NEW_RELEASES,
+        {
+          region: 'UA',
+          daysBack: 30,
+          force: false,
+        },
+        expect.any(Object),
+      );
     });
   });
 
@@ -152,7 +173,37 @@ describe('IngestionController', () => {
     it('should queue snapshots sync job', async () => {
       await controller.syncSnapshots();
 
-      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_SNAPSHOTS, {});
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        IngestionJob.SYNC_SNAPSHOTS_DISPATCHER,
+        {
+          region: 'global',
+        },
+        expect.objectContaining({ jobId: expect.stringMatching(/^snapshots_global_\d{8}$/) }),
+      );
+    });
+
+    it('should queue snapshots dispatcher with region from query', async () => {
+      await controller.syncSnapshots('UA');
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        IngestionJob.SYNC_SNAPSHOTS_DISPATCHER,
+        {
+          region: 'UA',
+        },
+        expect.objectContaining({ jobId: expect.stringMatching(/^snapshots_UA_\d{8}$/) }),
+      );
+    });
+
+    it('should queue snapshots dispatcher with force=true (unique jobId)', async () => {
+      await controller.syncSnapshots('UA', 'true');
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        IngestionJob.SYNC_SNAPSHOTS_DISPATCHER,
+        {
+          region: 'UA',
+        },
+        expect.objectContaining({ jobId: expect.stringMatching(/^snapshots_UA_\d+$/) }),
+      );
     });
   });
 

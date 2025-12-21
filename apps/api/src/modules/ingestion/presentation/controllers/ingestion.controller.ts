@@ -27,6 +27,7 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import slugify from 'slugify';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { ApiOkResponse } from '@nestjs/swagger';
+import { formatUtcDayId } from '@/common/utils/date.util';
 
 class SyncDto {
   @ApiProperty({ example: 550, description: 'TMDB ID of the media' })
@@ -115,6 +116,15 @@ class SyncNewReleasesDto {
   @IsNumber()
   @Min(1)
   daysBack?: number;
+
+  @ApiProperty({
+    example: false,
+    description: 'Force re-sync even if job already exists for today',
+    required: false,
+    default: false,
+  })
+  @IsOptional()
+  force?: boolean;
 }
 
 /**
@@ -395,16 +405,35 @@ export class IngestionController {
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncNewReleases(@Body() dto: SyncNewReleasesDto) {
-    const job = await this.ingestionQueue.add(IngestionJob.SYNC_NEW_RELEASES, {
-      region: dto.region || 'UA',
-      daysBack: dto.daysBack || 30,
-    });
+    const region = dto.region || 'UA';
+    const daysBack = dto.daysBack || 30;
+    const force = dto.force || false;
+
+    // Deduplication logic: one job per region/daysBack per day
+    // jobId: new_releases_UA_30_20231025
+    const today = formatUtcDayId();
+    const jobId = `new_releases_${region}_${daysBack}_${today}`;
+
+    // If force is true, we don't set jobId so BullMQ creates a new unique ID
+    const jobOptions = force ? {} : { jobId };
+
+    const job = await this.ingestionQueue.add(
+      IngestionJob.SYNC_NEW_RELEASES,
+      {
+        region,
+        daysBack,
+        force,
+      },
+      jobOptions,
+    );
 
     return {
       status: 'queued',
       jobId: job.id,
-      region: dto.region || 'UA',
-      daysBack: dto.daysBack || 30,
+      region,
+      daysBack,
+      force,
+      deduped: !force && job.id === jobId,
     };
   }
 
@@ -419,12 +448,33 @@ export class IngestionController {
     description: 'Updates daily watcher counts for all media items from Trakt.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
-  async syncSnapshots() {
-    const job = await this.ingestionQueue.add(IngestionJob.SYNC_SNAPSHOTS, {});
+  async syncSnapshots(@Query('region') region?: string, @Query('force') force?: string) {
+    const normalizedRegion = (() => {
+      if (!region) return 'global';
+      if (region.toLowerCase() === 'global') return 'global';
+      const sanitized = region.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+      return sanitized.length > 0 ? sanitized : 'global';
+    })();
+
+    const isForce = force === 'true';
+    const dayId = formatUtcDayId();
+    const window = isForce ? Date.now().toString() : dayId;
+    const jobId = `snapshots_${normalizedRegion}_${window}`;
+
+    const job = await this.ingestionQueue.add(
+      IngestionJob.SYNC_SNAPSHOTS_DISPATCHER,
+      {
+        region: normalizedRegion,
+      },
+      { jobId },
+    );
 
     return {
       status: 'queued',
       jobId: job.id,
+      jobType: IngestionJob.SYNC_SNAPSHOTS_DISPATCHER,
+      region: normalizedRegion,
+      force: isForce,
     };
   }
 

@@ -4,7 +4,7 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { isNull } from 'drizzle-orm';
+import { isNull, eq } from 'drizzle-orm';
 
 /**
  * Service for managing daily snapshots of media metrics.
@@ -23,88 +23,70 @@ export class SnapshotsService {
   ) {}
 
   /**
-   * Syncs daily watchers snapshots for all media items.
+   * Syncs a single watcher snapshot for a specific media item.
    *
-   * Iterates over all non-deleted media items, fetches current watchers stats
-   * from Trakt, and upserts a snapshot row per (media, date, region).
-   * Designed to be run once per day by a cron job and to be idempotent for
-   * the same UTC day.
+   * Fetches current watchers stats from Trakt and upserts a snapshot row.
+   * Designed to be idempotent for the same UTC day.
    *
-   * @returns {Promise<void>} Nothing
+   * @param mediaItemId - The ID of the media item to sync
+   * @param snapshotDate - The normalized date for the snapshot (00:00 UTC)
+   * @param region - The region code (default: 'global')
    */
-  async syncDailySnapshots() {
-    this.logger.log('Starting daily snapshots sync...');
+  async syncSnapshotItem(
+    mediaItemId: string,
+    snapshotDate: Date,
+    region = 'global',
+  ): Promise<void> {
+    try {
+      // 1. Get minimal media info to know which Trakt endpoint to call
+      const items = await this.db
+        .select({
+          tmdbId: schema.mediaItems.tmdbId,
+          type: schema.mediaItems.type,
+        })
+        .from(schema.mediaItems)
+        .where(eq(schema.mediaItems.id, mediaItemId))
+        .limit(1);
 
-    // Fetch all active media items
-    // TODO: In the future, filter by status or popularity to save API calls
-    const items = await this.db
-      .select({
-        id: schema.mediaItems.id,
-        tmdbId: schema.mediaItems.tmdbId,
-        type: schema.mediaItems.type,
-      })
-      .from(schema.mediaItems)
-      .where(isNull(schema.mediaItems.deletedAt));
-
-    this.logger.log(`Found ${items.length} items to sync.`);
-
-    // Normalize date to start of day to ensure unique constraint works per day
-    const snapshotDate = new Date();
-    snapshotDate.setUTCHours(0, 0, 0, 0);
-
-    let processed = 0;
-    let updated = 0;
-    const BATCH_SIZE = 10;
-
-    for (let i = 0; i < items.length; i += BATCH_SIZE) {
-      const batch = items.slice(i, i + BATCH_SIZE);
-
-      await Promise.allSettled(
-        batch.map(async (item) => {
-          try {
-            let stats = null;
-            if (item.type === MediaType.MOVIE) {
-              stats = await this.traktAdapter.getMovieRatingsByTmdbId(item.tmdbId);
-            } else {
-              stats = await this.traktAdapter.getShowRatingsByTmdbId(item.tmdbId);
-            }
-
-            if (stats) {
-              // Insert or update snapshot for today
-              await this.db
-                .insert(schema.mediaWatchersSnapshots)
-                .values({
-                  mediaItemId: item.id,
-                  snapshotDate: snapshotDate,
-                  totalWatchers: stats.totalWatchers,
-                  region: 'global',
-                })
-                .onConflictDoUpdate({
-                  target: [
-                    schema.mediaWatchersSnapshots.mediaItemId,
-                    schema.mediaWatchersSnapshots.snapshotDate,
-                    schema.mediaWatchersSnapshots.region,
-                  ],
-                  set: {
-                    totalWatchers: stats.totalWatchers,
-                  },
-                });
-              updated++;
-            }
-          } catch (e) {
-            this.logger.warn(
-              `Failed to sync snapshot for item ${item.id} (TMDB ${item.tmdbId}): ${e.message} \nFull Error: ${JSON.stringify(e)}`,
-            );
-          }
-        }),
-      );
-
-      processed += batch.length;
-      if (processed % 50 === 0) {
-        this.logger.log(`Processed ${processed}/${items.length} items...`);
+      if (!items.length) {
+        this.logger.warn(`Media item ${mediaItemId} not found for snapshot sync.`);
+        return;
       }
-    }
 
-    this.logger.log(`Daily snapshots sync complete. Updated ${updated} snapshots.`);
+      const item = items[0];
+      let stats = null;
+
+      // 2. Fetch stats from Trakt
+      if (item.type === MediaType.MOVIE) {
+        stats = await this.traktAdapter.getMovieRatingsByTmdbId(item.tmdbId);
+      } else {
+        stats = await this.traktAdapter.getShowRatingsByTmdbId(item.tmdbId);
+      }
+
+      if (stats) {
+        // 3. Upsert snapshot
+        await this.db
+          .insert(schema.mediaWatchersSnapshots)
+          .values({
+            mediaItemId,
+            snapshotDate,
+            totalWatchers: stats.totalWatchers,
+            region,
+          })
+          .onConflictDoUpdate({
+            target: [
+              schema.mediaWatchersSnapshots.mediaItemId,
+              schema.mediaWatchersSnapshots.snapshotDate,
+              schema.mediaWatchersSnapshots.region,
+            ],
+            set: {
+              totalWatchers: stats.totalWatchers,
+            },
+          });
+      }
+    } catch (e) {
+      this.logger.warn(`Failed to sync snapshot for item ${mediaItemId}: ${e.message}`);
+      throw e; // Rethrow so worker can retry
+    }
   }
 }

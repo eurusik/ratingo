@@ -10,6 +10,10 @@ import { Job } from 'bullmq';
 import { StatsService } from '../../../stats/application/services/stats.service';
 import { SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
 import { MOVIE_REPOSITORY } from '../../../catalog/domain/repositories/movie.repository.interface';
+import {
+  MEDIA_REPOSITORY,
+  IMediaRepository,
+} from '../../../catalog/domain/repositories/media.repository.interface';
 import { USER_SUBSCRIPTION_REPOSITORY } from '../../../user-actions/domain/repositories/user-subscription.repository.interface';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
@@ -27,6 +31,7 @@ describe('SyncWorker', () => {
   let tmdbAdapter: any;
   let ingestionQueue: any;
   let movieRepository: any;
+  let mediaRepository: any;
   let statsService: any;
   let subscriptionTriggerService: any;
   let userSubscriptionRepository: any;
@@ -35,11 +40,11 @@ describe('SyncWorker', () => {
     syncService = {
       syncMovie: jest.fn(),
       syncShow: jest.fn(),
-      getTrending: jest.fn(),
+      getTrending: jest.fn().mockResolvedValue([]),
     };
 
     snapshotsService = {
-      syncDailySnapshots: jest.fn(),
+      syncSnapshotItem: jest.fn(),
     };
 
     trackedSyncService = {
@@ -47,8 +52,8 @@ describe('SyncWorker', () => {
     };
 
     tmdbAdapter = {
-      getNowPlayingIds: jest.fn(),
-      getNewReleaseIds: jest.fn(),
+      getNowPlayingIds: jest.fn().mockResolvedValue([]),
+      getNewReleaseIds: jest.fn().mockResolvedValue([]),
     };
 
     ingestionQueue = {
@@ -61,9 +66,14 @@ describe('SyncWorker', () => {
       setNowPlaying: jest.fn(),
     };
 
+    mediaRepository = {
+      findManyByTmdbIds: jest.fn().mockResolvedValue([]),
+      findIdsForSnapshots: jest.fn().mockResolvedValue([]),
+    };
+
     statsService = {
       syncTrendingStats: jest.fn(),
-      syncTrendingStatsForUpdatedItems: jest.fn(),
+      syncTrendingStatsForUpdatedItems: jest.fn().mockResolvedValue({ movies: 0, shows: 0 }),
     };
 
     subscriptionTriggerService = {
@@ -72,7 +82,7 @@ describe('SyncWorker', () => {
     };
 
     userSubscriptionRepository = {
-      findTrackedShowTmdbIds: jest.fn(),
+      findTrackedShowTmdbIds: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -85,6 +95,7 @@ describe('SyncWorker', () => {
         { provide: TmdbAdapter, useValue: tmdbAdapter },
         { provide: StatsService, useValue: statsService },
         { provide: MOVIE_REPOSITORY, useValue: movieRepository },
+        { provide: MEDIA_REPOSITORY, useValue: mediaRepository },
         { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: userSubscriptionRepository },
         { provide: getQueueToken(INGESTION_QUEUE), useValue: ingestionQueue },
       ],
@@ -110,8 +121,16 @@ describe('SyncWorker', () => {
       expect(syncService.syncShow).toHaveBeenCalledWith(100, { score: 9999, rank: 2 });
     });
 
-    it('should process UPDATE_NOW_PLAYING_FLAGS', async () => {
+    it('should process UPDATE_NOW_PLAYING_FLAGS and queue missing movies', async () => {
+      // Mock TMDB returns [1, 2, 3]
       tmdbAdapter.getNowPlayingIds.mockResolvedValue([1, 2, 3]);
+
+      // Mock DB has only [1, 2] (3 is missing)
+      mediaRepository.findManyByTmdbIds.mockResolvedValue([
+        { tmdbId: 1, id: 'id-1' },
+        { tmdbId: 2, id: 'id-2' },
+      ]);
+
       const job = {
         name: IngestionJob.UPDATE_NOW_PLAYING_FLAGS,
         data: { region: 'UA' },
@@ -121,34 +140,88 @@ describe('SyncWorker', () => {
       await worker.process(job);
 
       expect(tmdbAdapter.getNowPlayingIds).toHaveBeenCalledWith('UA');
+      expect(mediaRepository.findManyByTmdbIds).toHaveBeenCalledWith([1, 2, 3]);
+
+      // Should queue sync for missing ID 3 with dedupe jobId
+      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
+        expect.objectContaining({
+          name: IngestionJob.SYNC_MOVIE,
+          data: { tmdbId: 3 },
+          opts: expect.objectContaining({ jobId: expect.stringMatching(/^movie_3_\d{8}$/) }),
+        }),
+      ]);
+
+      // Should call setNowPlaying with all IDs
       expect(movieRepository.setNowPlaying).toHaveBeenCalledWith([1, 2, 3]);
     });
 
-    it('should process SYNC_SNAPSHOTS job', async () => {
+    it('should process SYNC_SNAPSHOTS job as dispatcher', async () => {
       const job = { name: IngestionJob.SYNC_SNAPSHOTS, data: {}, id: '5' } as Job;
       await worker.process(job);
-      expect(snapshotsService.syncDailySnapshots).toHaveBeenCalled();
+      expect(mediaRepository.findIdsForSnapshots).toHaveBeenCalled();
     });
   });
 
   describe('processNowPlaying (private)', () => {
-    it('should sync now playing movies (via job processing)', async () => {
+    it('should sync now playing movies with jobId dedupe', async () => {
       tmdbAdapter.getNowPlayingIds.mockResolvedValue([10, 20]);
+      ingestionQueue.getJob.mockResolvedValue(null); // No existing jobs
       const job = { name: IngestionJob.SYNC_NOW_PLAYING, data: { region: 'US' }, id: '4' } as Job;
 
       await worker.process(job);
 
       expect(tmdbAdapter.getNowPlayingIds).toHaveBeenCalledWith('US');
+
+      // Should check for existing jobs
+      expect(ingestionQueue.getJob).toHaveBeenCalledTimes(2);
+
+      // Should add jobs with jobId for dedupe via addBulk
+      expect(ingestionQueue.addBulk).toHaveBeenCalledTimes(1);
       expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
-        { name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 10 } },
-        { name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 20 } },
+        expect.objectContaining({
+          name: IngestionJob.SYNC_MOVIE,
+          data: { tmdbId: 10 },
+          opts: expect.objectContaining({ jobId: expect.stringMatching(/^movie_10_\d{8}$/) }),
+        }),
+        expect.objectContaining({
+          name: IngestionJob.SYNC_MOVIE,
+          data: { tmdbId: 20 },
+          opts: expect.objectContaining({ jobId: expect.stringMatching(/^movie_20_\d{8}$/) }),
+        }),
+      ]);
+    });
+
+    it('should skip already queued movies (dedupe)', async () => {
+      tmdbAdapter.getNowPlayingIds.mockResolvedValue([10, 20]);
+      // Mock: job for tmdbId=10 already exists
+      ingestionQueue.getJob.mockImplementation((jobId: string) => {
+        if (jobId.includes('movie_10_')) {
+          return Promise.resolve({ id: 'existing-job' } as Job);
+        }
+        return Promise.resolve(null);
+      });
+      const job = { name: IngestionJob.SYNC_NOW_PLAYING, data: { region: 'US' }, id: '4' } as Job;
+
+      await worker.process(job);
+
+      // Should only add job for tmdbId=20 (10 is deduped)
+      expect(ingestionQueue.addBulk).toHaveBeenCalledTimes(1);
+      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
+        expect.objectContaining({
+          name: IngestionJob.SYNC_MOVIE,
+          data: { tmdbId: 20 },
+          opts: expect.objectContaining({ jobId: expect.stringMatching(/^movie_20_\d{8}$/) }),
+        }),
       ]);
     });
   });
 
   describe('processNewReleases', () => {
-    it('should queue new releases sync jobs', async () => {
+    it('should queue new releases sync jobs with dedupe', async () => {
       tmdbAdapter.getNewReleaseIds.mockResolvedValue([30, 40]);
+      // Mock no existing jobs
+      ingestionQueue.getJob.mockResolvedValue(null);
+
       const job = {
         name: IngestionJob.SYNC_NEW_RELEASES,
         data: { region: 'GB', daysBack: 60 },
@@ -158,10 +231,70 @@ describe('SyncWorker', () => {
       await worker.process(job);
 
       expect(tmdbAdapter.getNewReleaseIds).toHaveBeenCalledWith(60, 'GB');
+
+      // Verify dedupe checks
+      expect(ingestionQueue.getJob).toHaveBeenCalledTimes(2);
+      expect(ingestionQueue.getJob).toHaveBeenCalledWith(expect.stringMatching(/^movie_30_\d{8}$/));
+      expect(ingestionQueue.getJob).toHaveBeenCalledWith(expect.stringMatching(/^movie_40_\d{8}$/));
+
+      // Verify bulk add with jobIds
       expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
-        { name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 30 } },
-        { name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 40 } },
+        expect.objectContaining({
+          name: IngestionJob.SYNC_MOVIE,
+          data: { tmdbId: 30 },
+          opts: expect.objectContaining({ jobId: expect.stringMatching(/^movie_30_\d{8}$/) }),
+        }),
+        expect.objectContaining({
+          name: IngestionJob.SYNC_MOVIE,
+          data: { tmdbId: 40 },
+          opts: expect.objectContaining({ jobId: expect.stringMatching(/^movie_40_\d{8}$/) }),
+        }),
       ]);
+    });
+
+    it('should skip already queued releases (dedupe)', async () => {
+      tmdbAdapter.getNewReleaseIds.mockResolvedValue([30, 40]);
+
+      // Mock job 30 exists, 40 does not
+      ingestionQueue.getJob.mockImplementation((jobId: string) => {
+        if (jobId.includes('movie_30_')) return Promise.resolve({ id: 'existing' } as Job);
+        return Promise.resolve(null);
+      });
+
+      const job = {
+        name: IngestionJob.SYNC_NEW_RELEASES,
+        data: { region: 'GB', daysBack: 60 },
+        id: '6',
+      } as Job;
+
+      await worker.process(job);
+
+      // Should add only 40
+      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
+        expect.objectContaining({
+          name: IngestionJob.SYNC_MOVIE,
+          data: { tmdbId: 40 },
+          opts: expect.objectContaining({ jobId: expect.stringMatching(/^movie_40_\d{8}$/) }),
+        }),
+      ]);
+    });
+
+    it('should not call addBulk if all releases are already queued (full dedupe)', async () => {
+      tmdbAdapter.getNewReleaseIds.mockResolvedValue([30, 40]);
+
+      // Mock both jobs exist
+      ingestionQueue.getJob.mockResolvedValue({ id: 'existing' } as Job);
+
+      const job = {
+        name: IngestionJob.SYNC_NEW_RELEASES,
+        data: { region: 'GB', daysBack: 60 },
+        id: '6-dedupe',
+      } as Job;
+
+      await worker.process(job);
+
+      expect(ingestionQueue.getJob).toHaveBeenCalledTimes(2);
+      expect(ingestionQueue.addBulk).not.toHaveBeenCalled();
     });
 
     it('should do nothing if no new releases found', async () => {
@@ -171,6 +304,117 @@ describe('SyncWorker', () => {
       await worker.process(job);
 
       expect(ingestionQueue.addBulk).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('processSnapshotsDispatcher', () => {
+    it('should queue snapshot item jobs with cursor pagination', async () => {
+      // Mock repository returning IDs in 2 pages
+      mediaRepository.findIdsForSnapshots
+        .mockResolvedValueOnce(['id-1', 'id-2']) // Page 1
+        .mockResolvedValueOnce(['id-3']) // Page 2
+        .mockResolvedValueOnce([]); // Done
+
+      ingestionQueue.getJob.mockResolvedValue(null); // No existing jobs
+
+      const job = {
+        name: IngestionJob.SYNC_SNAPSHOTS_DISPATCHER,
+        data: { region: 'global' },
+        id: 'snap-disp-1',
+      } as Job;
+
+      await worker.process(job);
+
+      // Should call findIdsForSnapshots 3 times (page 1, page 2, empty)
+      expect(mediaRepository.findIdsForSnapshots).toHaveBeenCalledTimes(3);
+      expect(mediaRepository.findIdsForSnapshots).toHaveBeenNthCalledWith(1, {
+        limit: 500,
+        cursor: undefined,
+      });
+      expect(mediaRepository.findIdsForSnapshots).toHaveBeenNthCalledWith(2, {
+        limit: 500,
+        cursor: 'id-2',
+      });
+      expect(mediaRepository.findIdsForSnapshots).toHaveBeenNthCalledWith(3, {
+        limit: 500,
+        cursor: 'id-3',
+      });
+
+      // Should add jobs in bulk (once per non-empty page)
+      expect(ingestionQueue.addBulk).toHaveBeenCalledTimes(2);
+
+      // Check first batch
+      expect(ingestionQueue.addBulk).toHaveBeenNthCalledWith(1, [
+        expect.objectContaining({
+          name: IngestionJob.SYNC_SNAPSHOT_ITEM,
+          data: expect.objectContaining({ mediaItemId: 'id-1', region: 'global' }),
+          opts: expect.objectContaining({
+            jobId: expect.stringMatching(/^snapshot_id-1_\d{8}_global$/),
+          }),
+        }),
+        expect.objectContaining({
+          name: IngestionJob.SYNC_SNAPSHOT_ITEM,
+          data: expect.objectContaining({ mediaItemId: 'id-2', region: 'global' }),
+          opts: expect.objectContaining({
+            jobId: expect.stringMatching(/^snapshot_id-2_\d{8}_global$/),
+          }),
+        }),
+      ]);
+
+      // Check second batch
+      expect(ingestionQueue.addBulk).toHaveBeenNthCalledWith(2, [
+        expect.objectContaining({
+          name: IngestionJob.SYNC_SNAPSHOT_ITEM,
+          data: expect.objectContaining({ mediaItemId: 'id-3', region: 'global' }),
+        }),
+      ]);
+    });
+
+    it('should skip already queued snapshot items (dedupe)', async () => {
+      mediaRepository.findIdsForSnapshots
+        .mockResolvedValueOnce(['id-1', 'id-2'])
+        .mockResolvedValueOnce([]);
+
+      // Mock: id-1 exists, id-2 does not
+      ingestionQueue.getJob.mockImplementation((jobId: string) => {
+        if (jobId.includes('snapshot_id-1_')) return Promise.resolve({ id: 'existing' } as Job);
+        return Promise.resolve(null);
+      });
+
+      const job = {
+        name: IngestionJob.SYNC_SNAPSHOTS_DISPATCHER,
+        data: { region: 'global' },
+        id: 'snap-disp-2',
+      } as Job;
+
+      await worker.process(job);
+
+      // Should only add id-2
+      expect(ingestionQueue.addBulk).toHaveBeenCalledTimes(1);
+      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
+        expect.objectContaining({
+          name: IngestionJob.SYNC_SNAPSHOT_ITEM,
+          data: expect.objectContaining({ mediaItemId: 'id-2' }),
+        }),
+      ]);
+    });
+  });
+
+  describe('processSnapshotItem', () => {
+    it('should call service to sync snapshot', async () => {
+      const job = {
+        name: IngestionJob.SYNC_SNAPSHOT_ITEM,
+        data: { mediaItemId: 'uuid-123', dayId: '20231225', region: 'global' },
+        id: 'snap-item-1',
+      } as Job;
+
+      await worker.process(job);
+
+      expect(snapshotsService.syncSnapshotItem).toHaveBeenCalledWith(
+        'uuid-123',
+        new Date(Date.UTC(2023, 11, 25)), // 2023-12-25
+        'global',
+      );
     });
   });
 
@@ -316,13 +560,24 @@ describe('SyncWorker', () => {
       await worker.process(job);
 
       expect(syncService.getTrending).toHaveBeenCalledWith(1, MediaType.MOVIE);
-      // Enqueues jobs one by one with dedupe check
-      expect(ingestionQueue.add).toHaveBeenCalledTimes(2);
-      expect(ingestionQueue.add).toHaveBeenCalledWith(
-        IngestionJob.SYNC_MOVIE,
-        expect.objectContaining({ tmdbId: 100, trending: { score: 10000, rank: 1 } }),
-        expect.objectContaining({ jobId: expect.stringContaining('movie_100_') }),
-      );
+
+      // Should check for existing jobs
+      expect(ingestionQueue.getJob).toHaveBeenCalledTimes(2);
+
+      // Enqueues jobs via addBulk
+      expect(ingestionQueue.addBulk).toHaveBeenCalledTimes(1);
+      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
+        expect.objectContaining({
+          name: IngestionJob.SYNC_MOVIE,
+          data: expect.objectContaining({ tmdbId: 100, trending: { score: 10000, rank: 1 } }),
+          opts: expect.objectContaining({ jobId: expect.stringContaining('movie_100_') }),
+        }),
+        expect.objectContaining({
+          name: IngestionJob.SYNC_MOVIE,
+          data: expect.objectContaining({ tmdbId: 200, trending: { score: 9999, rank: 2 } }),
+          opts: expect.objectContaining({ jobId: expect.stringContaining('movie_200_') }),
+        }),
+      ]);
     });
 
     it('should skip already queued items (dedupe)', async () => {
@@ -331,8 +586,14 @@ describe('SyncWorker', () => {
         { tmdbId: 200, type: MediaType.MOVIE },
       ];
       syncService.getTrending.mockResolvedValue(mockItems);
-      // First item exists, second doesn't
-      ingestionQueue.getJob.mockResolvedValueOnce({ id: 'existing' }).mockResolvedValueOnce(null);
+
+      // Mock: job for 100 exists, 200 does not
+      ingestionQueue.getJob.mockImplementation((jobId: string) => {
+        if (jobId.includes('movie_100_')) {
+          return Promise.resolve({ id: 'existing' } as Job);
+        }
+        return Promise.resolve(null);
+      });
 
       const job = {
         name: IngestionJob.SYNC_TRENDING_PAGE,
@@ -343,12 +604,14 @@ describe('SyncWorker', () => {
       await worker.process(job);
 
       // Only 1 job enqueued (second item), first was deduped
-      expect(ingestionQueue.add).toHaveBeenCalledTimes(1);
-      expect(ingestionQueue.add).toHaveBeenCalledWith(
-        IngestionJob.SYNC_MOVIE,
-        expect.objectContaining({ tmdbId: 200 }),
-        expect.any(Object),
-      );
+      expect(ingestionQueue.addBulk).toHaveBeenCalledTimes(1);
+      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
+        expect.objectContaining({
+          name: IngestionJob.SYNC_MOVIE,
+          data: expect.objectContaining({ tmdbId: 200 }),
+          opts: expect.any(Object),
+        }),
+      ]);
     });
 
     it('should not enqueue jobs if no items found', async () => {
@@ -362,7 +625,7 @@ describe('SyncWorker', () => {
 
       await worker.process(job);
 
-      expect(ingestionQueue.add).not.toHaveBeenCalled();
+      expect(ingestionQueue.addBulk).not.toHaveBeenCalled();
     });
   });
 

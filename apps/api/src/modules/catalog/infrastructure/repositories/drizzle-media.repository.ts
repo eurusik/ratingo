@@ -407,4 +407,29 @@ export class DrizzleMediaRepository implements IMediaRepository {
       throw new DatabaseException('Failed to find trending updated items');
     }
   }
+
+  /**
+   * Retrieves IDs of active media items for snapshots sync with cursor pagination.
+   */
+  async findIdsForSnapshots(options: { cursor?: string; limit: number }): Promise<string[]> {
+    try {
+      const conditions = [isNull(schema.mediaItems.deletedAt)];
+
+      if (options.cursor) {
+        conditions.push(gt(schema.mediaItems.id, options.cursor));
+      }
+
+      const rows = await this.db
+        .select({ id: schema.mediaItems.id })
+        .from(schema.mediaItems)
+        .where(and(...conditions))
+        .orderBy(schema.mediaItems.id)
+        .limit(options.limit);
+
+      return rows.map((r) => r.id);
+    } catch (error) {
+      this.logger.error(`Failed to find IDs for snapshots: ${error.message}`);
+      throw new DatabaseException('Failed to find IDs for snapshots');
+    }
+  }
 }

@@ -15,6 +15,11 @@ export enum IngestionJob {
   UPDATE_NOW_PLAYING_FLAGS = 'update-now-playing-flags',
   SYNC_SNAPSHOTS = 'sync-snapshots',
 
+  /** Dispatcher job: iterates over all media and queues item jobs */
+  SYNC_SNAPSHOTS_DISPATCHER = 'sync-snapshots-dispatcher',
+  /** Item job: syncs watchers snapshot for a single media item */
+  SYNC_SNAPSHOT_ITEM = 'sync-snapshot-item',
+
   /** Dispatcher job: fetches tracked show IDs and queues batch jobs */
   SYNC_TRACKED_SHOWS = 'sync-tracked-shows',
   /** Batch job: syncs a chunk of tracked shows with diff detection */

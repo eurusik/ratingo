@@ -144,6 +144,16 @@ export interface IMediaRepository {
     since?: Date;
     limit: number;
   }): Promise<TrendingUpdatedItem[]>;
+
+  /**
+   * Retrieves IDs of active media items for snapshots sync with cursor pagination.
+   *
+   * @param {object} options - Pagination options
+   * @param {string} options.cursor - Last processed ID (exclusive)
+   * @param {number} options.limit - Number of IDs to fetch
+   * @returns {Promise<string[]>} List of media item IDs
+   */
+  findIdsForSnapshots(options: { cursor?: string; limit: number }): Promise<string[]>;
 }
 
 /**
