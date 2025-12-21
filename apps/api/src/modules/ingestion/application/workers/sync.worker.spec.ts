@@ -48,7 +48,7 @@ describe('SyncWorker', () => {
     };
 
     trackedSyncService = {
-      syncTrackedShows: jest.fn(),
+      syncShowWithDiff: jest.fn(),
     };
 
     tmdbAdapter = {
@@ -77,8 +77,7 @@ describe('SyncWorker', () => {
     };
 
     subscriptionTriggerService = {
-      handleNewEpisode: jest.fn(),
-      handleNewSeason: jest.fn(),
+      handleShowDiff: jest.fn(),
     };
 
     userSubscriptionRepository = {
@@ -487,6 +486,8 @@ describe('SyncWorker', () => {
 
   describe('processTrendingDispatcher', () => {
     it('should queue page jobs for movies and shows', async () => {
+      ingestionQueue.getJob.mockResolvedValue(null);
+
       const job = {
         name: IngestionJob.SYNC_TRENDING_DISPATCHER,
         data: { pages: 2, syncStats: true },
@@ -517,6 +518,9 @@ describe('SyncWorker', () => {
           }),
         ]),
       );
+
+      // Pre-dedupe checks should happen for each page job
+      expect(ingestionQueue.getJob).toHaveBeenCalledTimes(4);
       // Stats job queued via add with delay
       expect(ingestionQueue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_TRENDING_STATS,
@@ -526,6 +530,8 @@ describe('SyncWorker', () => {
     });
 
     it('should not queue stats job if syncStats is false', async () => {
+      ingestionQueue.getJob.mockResolvedValue(null);
+
       const job = {
         name: IngestionJob.SYNC_TRENDING_DISPATCHER,
         data: { pages: 1, syncStats: false },
@@ -539,6 +545,9 @@ describe('SyncWorker', () => {
         (call: any[]) => call[0] === IngestionJob.SYNC_TRENDING_STATS,
       );
       expect(statsJobCalls).toHaveLength(0);
+
+      // Page job should still be pre-checked
+      expect(ingestionQueue.getJob).toHaveBeenCalledTimes(2);
     });
   });
 

@@ -491,12 +491,26 @@ export class IngestionController {
       'Syncs shows that have active subscriptions. Detects new episodes/seasons and triggers notifications.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
-  async syncTrackedShows() {
-    const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRACKED_SHOWS, {});
+  async syncTrackedShows(@Query('force') force?: string) {
+    const isForce = force === 'true';
+    const startedAt = new Date();
+    const window = isForce
+      ? startedAt.getTime().toString()
+      : startedAt.toISOString().slice(0, 13).replace(/[-T]/g, '');
+    const jobId = `tracked_shows_${window}`;
+
+    const job = await this.ingestionQueue.add(
+      IngestionJob.SYNC_TRACKED_SHOWS,
+      { window },
+      { jobId },
+    );
 
     return {
       status: 'queued',
       jobId: job.id,
+      jobType: IngestionJob.SYNC_TRACKED_SHOWS,
+      window,
+      force: isForce,
     };
   }
 }

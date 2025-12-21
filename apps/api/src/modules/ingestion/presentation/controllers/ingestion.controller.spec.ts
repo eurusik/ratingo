@@ -47,6 +47,28 @@ describe('IngestionController', () => {
     controller = moduleRef.get<IngestionController>(IngestionController);
   });
 
+  describe('syncTrackedShows', () => {
+    it('should queue tracked shows dispatcher with hour window jobId', async () => {
+      await controller.syncTrackedShows();
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        IngestionJob.SYNC_TRACKED_SHOWS,
+        expect.objectContaining({ window: expect.any(String) }),
+        expect.objectContaining({ jobId: expect.stringMatching(/^tracked_shows_\d{10}$/) }),
+      );
+    });
+
+    it('should queue tracked shows dispatcher with force=true (unique jobId)', async () => {
+      await controller.syncTrackedShows('true');
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        IngestionJob.SYNC_TRACKED_SHOWS,
+        expect.objectContaining({ window: expect.any(String) }),
+        expect.objectContaining({ jobId: expect.stringMatching(/^tracked_shows_\d+$/) }),
+      );
+    });
+  });
+
   afterEach(async () => {
     await moduleRef?.close();
   });

@@ -2,6 +2,7 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { SyncMediaService } from '../services/sync-media.service';
 import { SnapshotsService } from '../services/snapshots.service';
 import { TrackedSyncService } from '../services/tracked-sync.service';
@@ -89,6 +90,7 @@ export class SyncWorker extends WorkerHost {
         type?: MediaType;
         since?: string;
         limit?: number;
+        window?: string;
         mediaItemId?: string;
         dayId?: string;
       },
@@ -97,7 +99,6 @@ export class SyncWorker extends WorkerHost {
     >,
   ): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
-
     try {
       switch (job.name) {
         case IngestionJob.SYNC_MOVIE:
@@ -136,7 +137,7 @@ export class SyncWorker extends WorkerHost {
           await this.processTrendingFull(job.data.page, job.data.syncStats, job.data.type);
           break;
         case IngestionJob.SYNC_TRACKED_SHOWS:
-          await this.processTrackedShowsDispatcher();
+          await this.processTrackedShowsDispatcher(job.data.window);
           break;
         case IngestionJob.SYNC_TRACKED_SHOW_BATCH:
           await this.processTrackedShowBatch(job.data.tmdbIds!);
@@ -335,7 +336,41 @@ export class SyncWorker extends WorkerHost {
       }
     }
 
-    await this.ingestionQueue.addBulk(jobs);
+    let deduped = 0;
+    const jobsToAdd: typeof jobs = [];
+    const enqueuedSample: string[] = [];
+
+    // Explicit pre-dedupe: skip enqueue if page job already exists
+    for (let i = 0; i < jobs.length; i += this.CHECK_CONCURRENCY) {
+      const chunk = jobs.slice(i, i + this.CHECK_CONCURRENCY);
+      const chunkChecks = await Promise.all(
+        chunk.map(async (j) => {
+          const jobId = j.opts?.jobId;
+          if (!jobId) return { j, existing: null };
+          const existing = await this.ingestionQueue.getJob(jobId);
+          return { j, existing };
+        }),
+      );
+
+      for (const { j, existing } of chunkChecks) {
+        if (existing) {
+          deduped++;
+          continue;
+        }
+        jobsToAdd.push(j);
+        const id = j.opts?.jobId;
+        if (id && enqueuedSample.length < 3) enqueuedSample.push(id);
+      }
+    }
+
+    if (jobsToAdd.length > 0) {
+      await this.ingestionQueue.addBulk(jobsToAdd);
+    }
+
+    const sampleStr = enqueuedSample.length ? `, sample=[${enqueuedSample.join(',')}]` : '';
+    this.logger.log(
+      `Trending dispatcher progress: found=${jobs.length}, enqueued=${jobsToAdd.length}, deduped=${deduped}${sampleStr}`,
+    );
 
     // Queue stats job with delay to ensure page jobs complete first
     // Stats job will query items by trendingUpdatedAt >= since
@@ -356,7 +391,7 @@ export class SyncWorker extends WorkerHost {
     }
 
     this.logger.log(
-      `Trending dispatcher complete: ${jobs.length} page jobs queued (${pages} pages × 2 types)`,
+      `Trending dispatcher complete: found=${jobs.length}, enqueued=${jobsToAdd.length}, deduped=${deduped}`,
     );
   }
 
@@ -627,8 +662,14 @@ export class SyncWorker extends WorkerHost {
    * Dispatcher job: fetches tracked show IDs and queues batch jobs.
    * Chunks the IDs to avoid memory issues with large addBulk calls.
    */
-  private async processTrackedShowsDispatcher(): Promise<void> {
+  private async processTrackedShowsDispatcher(window?: string): Promise<void> {
     this.logger.log('Starting tracked shows sync dispatcher...');
+
+    const dispatcherStartedAt = new Date();
+    const effectiveWindow =
+      typeof window === 'string' && window.length > 0
+        ? window
+        : dispatcherStartedAt.toISOString().slice(0, 13).replace(/[-T]/g, '');
 
     // Get all tracked show TMDB IDs
     const tmdbIds = await this.subscriptionRepository.findTrackedShowTmdbIds();
@@ -644,17 +685,57 @@ export class SyncWorker extends WorkerHost {
 
     // Queue batch jobs in smaller addBulk calls to avoid memory issues
     const BULK_LIMIT = 10;
+    let deduped = 0;
+    let enqueued = 0;
+    const makeChunkHash = (ids: number[]) =>
+      createHash('sha1').update(ids.join(',')).digest('hex').slice(0, 12);
     for (let i = 0; i < chunks.length; i += BULK_LIMIT) {
       const batchChunks = chunks.slice(i, i + BULK_LIMIT);
-      const jobs = batchChunks.map((chunkTmdbIds) => ({
-        name: IngestionJob.SYNC_TRACKED_SHOW_BATCH,
-        data: { tmdbIds: chunkTmdbIds },
-      }));
-      await this.ingestionQueue.addBulk(jobs);
+
+      const candidateJobs = batchChunks.map((chunkTmdbIds) => {
+        const jobId = `tracked_batch_${effectiveWindow}_${makeChunkHash(chunkTmdbIds)}`;
+        return {
+          name: IngestionJob.SYNC_TRACKED_SHOW_BATCH,
+          data: { tmdbIds: chunkTmdbIds },
+          opts: { jobId },
+        };
+      });
+
+      const jobsToAdd: any[] = [];
+      const sample: string[] = [];
+
+      for (let j = 0; j < candidateJobs.length; j += this.CHECK_CONCURRENCY) {
+        const chunk = candidateJobs.slice(j, j + this.CHECK_CONCURRENCY);
+        const checks = await Promise.all(
+          chunk.map(async (c) => {
+            const existing = await this.ingestionQueue.getJob(c.opts.jobId);
+            return { c, existing };
+          }),
+        );
+
+        for (const { c, existing } of checks) {
+          if (existing) {
+            deduped++;
+            continue;
+          }
+          jobsToAdd.push(c);
+          if (sample.length < 3) sample.push(c.opts.jobId);
+        }
+      }
+
+      if (jobsToAdd.length > 0) {
+        await this.ingestionQueue.addBulk(jobsToAdd);
+        enqueued += jobsToAdd.length;
+      }
+
+      const sampleStr = sample.length ? `, sample=[${sample.join(',')}]` : '';
+      this.logger.log(
+        `Tracked shows dispatcher progress: batches=${chunks.length}, shows=${tmdbIds.length}, enqueued=${enqueued}, deduped=${deduped}${sampleStr}`,
+      );
     }
 
     this.logger.log(
-      `Tracked shows dispatcher complete: ${chunks.length} batch jobs queued for ${tmdbIds.length} shows`,
+      `Tracked shows dispatcher complete: batches=${chunks.length}, shows=${tmdbIds.length}, enqueued=${enqueued}, deduped=${deduped}`,
     );
   }
 
