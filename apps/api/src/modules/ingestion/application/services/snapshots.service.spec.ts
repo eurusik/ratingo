@@ -39,44 +39,64 @@ describe('SnapshotsService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('syncDailySnapshots', () => {
-    it('should fetch active items and sync stats', async () => {
-      // Mock DB fetching items
-      const mockItems = [
-        { id: '1', tmdbId: 101, type: MediaType.MOVIE },
-        { id: '2', tmdbId: 202, type: MediaType.SHOW },
-      ];
-      db.where.mockResolvedValueOnce(mockItems);
-
-      // Mock Trakt responses
+  describe('syncSnapshotItem', () => {
+    it('should upsert snapshot for movie', async () => {
+      db.where.mockResolvedValueOnce([{ tmdbId: 101, type: MediaType.MOVIE }]);
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue({ totalWatchers: 500 });
-      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue({ totalWatchers: 1000 });
 
-      await service.syncDailySnapshots();
+      await service.syncSnapshotItem('media-1', new Date('2025-01-01T00:00:00.000Z'), 'global');
 
-      expect(db.select).toHaveBeenCalled();
-      expect(db.from).toHaveBeenCalled();
-
-      // Check movie sync
       expect(traktAdapter.getMovieRatingsByTmdbId).toHaveBeenCalledWith(101);
+      expect(traktAdapter.getShowRatingsByTmdbId).not.toHaveBeenCalled();
 
-      // Check show sync
-      expect(traktAdapter.getShowRatingsByTmdbId).toHaveBeenCalledWith(202);
-
-      // Check DB inserts
-      expect(db.insert).toHaveBeenCalledTimes(2); // One per batch item
+      expect(db.insert).toHaveBeenCalledTimes(1);
+      expect(db.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mediaItemId: 'media-1',
+          totalWatchers: 500,
+          region: 'global',
+        }),
+      );
     });
 
-    it('should handle API errors gracefully', async () => {
-      const mockItems = [{ id: '1', tmdbId: 101, type: MediaType.MOVIE }];
-      db.where.mockResolvedValueOnce(mockItems);
+    it('should upsert snapshot for show', async () => {
+      db.where.mockResolvedValueOnce([{ tmdbId: 202, type: MediaType.SHOW }]);
+      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue({ totalWatchers: 1000 });
 
+      await service.syncSnapshotItem('media-2', new Date('2025-01-01T00:00:00.000Z'), 'global');
+
+      expect(traktAdapter.getShowRatingsByTmdbId).toHaveBeenCalledWith(202);
+      expect(traktAdapter.getMovieRatingsByTmdbId).not.toHaveBeenCalled();
+
+      expect(db.insert).toHaveBeenCalledTimes(1);
+      expect(db.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mediaItemId: 'media-2',
+          totalWatchers: 1000,
+          region: 'global',
+        }),
+      );
+    });
+
+    it('should skip when media item is not found', async () => {
+      db.where.mockResolvedValueOnce([]);
+
+      await service.syncSnapshotItem('missing', new Date('2025-01-01T00:00:00.000Z'), 'global');
+
+      expect(traktAdapter.getMovieRatingsByTmdbId).not.toHaveBeenCalled();
+      expect(traktAdapter.getShowRatingsByTmdbId).not.toHaveBeenCalled();
+      expect(db.insert).not.toHaveBeenCalled();
+    });
+
+    it('should rethrow API errors (so worker can retry)', async () => {
+      db.where.mockResolvedValueOnce([{ tmdbId: 101, type: MediaType.MOVIE }]);
       traktAdapter.getMovieRatingsByTmdbId.mockRejectedValue(new Error('API Error'));
 
-      await service.syncDailySnapshots();
+      await expect(
+        service.syncSnapshotItem('media-1', new Date('2025-01-01T00:00:00.000Z'), 'global'),
+      ).rejects.toThrow('API Error');
 
-      expect(traktAdapter.getMovieRatingsByTmdbId).toHaveBeenCalledWith(101);
-      expect(db.insert).not.toHaveBeenCalled(); // Should skip insert on error
+      expect(db.insert).not.toHaveBeenCalled();
     });
   });
 });
