@@ -61,11 +61,21 @@ describe('TmdbAdapter', () => {
 
       expect(result).not.toBeNull();
       expect(result?.title).toBe('Fight Club');
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/movie/550'));
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('api_key=test-api-key'));
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('language=uk-UA'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/movie/550'),
+        expect.anything(),
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('api_key=test-api-key'),
+        expect.anything(),
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('language=uk-UA'),
+        expect.anything(),
+      );
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('include_video_language=uk%2Cen'),
+        expect.anything(),
       );
     });
 
@@ -99,7 +109,10 @@ describe('TmdbAdapter', () => {
 
       await adapter.getMovie(550);
 
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('append_to_response='));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('append_to_response='),
+        expect.anything(),
+      );
     });
 
     it('should return fallback object when mapper returns null (no localization)', async () => {
@@ -164,7 +177,10 @@ describe('TmdbAdapter', () => {
 
       expect(result).not.toBeNull();
       expect(result?.title).toBe('Breaking Bad');
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/tv/1000'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/tv/1000'),
+        expect.anything(),
+      );
     });
 
     it('should return null when show not found', async () => {
@@ -252,7 +268,10 @@ describe('TmdbAdapter', () => {
 
       await adapter.getTrending(1, MediaType.MOVIE);
 
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/trending/movie/day'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/trending/movie/day'),
+        expect.anything(),
+      );
     });
 
     it('should use tv endpoint when type is SHOW', async () => {
@@ -263,7 +282,10 @@ describe('TmdbAdapter', () => {
 
       await adapter.getTrending(1, MediaType.SHOW);
 
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/trending/tv/day'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/trending/tv/day'),
+        expect.anything(),
+      );
     });
 
     it('should use correct endpoint', async () => {
@@ -274,8 +296,11 @@ describe('TmdbAdapter', () => {
 
       await adapter.getTrending(2);
 
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/trending/all/day'));
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/trending/all/day'),
+        expect.anything(),
+      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'), expect.anything());
     });
 
     it('should use default page 1', async () => {
@@ -286,7 +311,7 @@ describe('TmdbAdapter', () => {
 
       await adapter.getTrending();
 
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'));
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'), expect.anything());
     });
 
     it('should handle empty results', async () => {
@@ -339,8 +364,8 @@ describe('TmdbAdapter', () => {
       expect(result).toHaveLength(4);
       expect(result).toEqual([101, 102, 103, 104]);
       expect(mockFetch).toHaveBeenCalledTimes(2);
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'));
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'));
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'), expect.anything());
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'), expect.anything());
     });
 
     it('should stop early if total_pages < limit', async () => {
@@ -386,9 +411,12 @@ describe('TmdbAdapter', () => {
       const result = await adapter.getNewReleaseIds(30, 'UA');
 
       expect(result).toEqual([201, 202]);
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/discover/movie'));
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'));
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/discover/movie'),
+        expect.anything(),
+      );
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=1'), expect.anything());
+      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('page=2'), expect.anything());
     });
   });
 
@@ -412,8 +440,14 @@ describe('TmdbAdapter', () => {
       expect(result).toHaveLength(2);
       expect(result[0].type).toBe(MediaType.MOVIE);
       expect(result[1].type).toBe(MediaType.SHOW);
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/search/multi'));
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('query=test'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/search/multi'),
+        expect.anything(),
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('query=test'),
+        expect.anything(),
+      );
     });
 
     it('should search with Ukrainian language for localized titles', async () => {
@@ -425,7 +459,10 @@ describe('TmdbAdapter', () => {
       await adapter.searchMulti('Ходячі мерці');
 
       // Should include language=uk-UA to get Ukrainian titles in results
-      expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('language=uk-UA'));
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('language=uk-UA'),
+        expect.anything(),
+      );
     });
 
     it('should map all required fields from search results', async () => {

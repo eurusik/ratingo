@@ -145,6 +145,8 @@ export class TmdbAdapter implements IMetadataProvider {
    */
   public async getNowPlayingIds(region = DEFAULT_REGION): Promise<number[]> {
     const ids: number[] = [];
+    let pagesFetched = 0;
+    let totalPages = 0;
 
     // Fetch all pages (with safety limit to prevent infinite loops)
     for (let page = 1; page <= this.MAX_PAGES; page++) {
@@ -156,9 +158,16 @@ export class TmdbAdapter implements IMetadataProvider {
       const pageIds = (data.results || []).map((m: any) => m.id);
       ids.push(...pageIds);
 
+      pagesFetched = page;
+      totalPages = data.total_pages;
+
       // Stop if we've reached the last page
       if (page >= data.total_pages) break;
     }
+
+    this.logger.log(
+      `now_playing region=${region} pagesFetched=${pagesFetched} totalPages=${totalPages} idsFound=${ids.length}`,
+    );
 
     return ids;
   }
@@ -175,6 +184,8 @@ export class TmdbAdapter implements IMetadataProvider {
     const now = new Date();
     const cutoff = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
     const ids: number[] = [];
+    let pagesFetched = 0;
+    let totalPages = 0;
 
     // Fetch all pages (with safety limit)
     for (let page = 1; page <= this.MAX_PAGES; page++) {
@@ -190,9 +201,22 @@ export class TmdbAdapter implements IMetadataProvider {
       const pageIds = (data.results || []).map((m: any) => m.id);
       ids.push(...pageIds);
 
+      pagesFetched = page;
+      totalPages = data.total_pages;
+
       // Stop if we've reached the last page
       if (page >= data.total_pages) break;
     }
+
+    if (totalPages > this.MAX_PAGES) {
+      this.logger.warn(
+        `New releases limit reached: fetched ${this.MAX_PAGES} pages, but total is ${totalPages}. Some releases may be missed.`,
+      );
+    }
+
+    this.logger.log(
+      `new_releases region=${region} daysBack=${daysBack} pagesFetched=${pagesFetched} totalPages=${totalPages} idsFound=${ids.length}`,
+    );
 
     return ids;
   }
