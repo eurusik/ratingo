@@ -302,7 +302,8 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
             // Not soft-deleted
             isNull(schema.mediaItems.deletedAt),
           ),
-        );
+        )
+        .orderBy(schema.mediaItems.tmdbId);
 
       return rows.map((r) => r.tmdbId).filter((id): id is number => id !== null);
     } catch (error) {
