@@ -13,7 +13,13 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
  * @returns {Promise<void>}
  */
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter({
+      // Trust proxy headers for correct IP detection behind reverse proxies (nginx, Cloudflare, etc.)
+      trustProxy: true,
+    }),
+  );
 
   // CORS configuration
   app.enableCors({

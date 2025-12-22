@@ -24,14 +24,19 @@ import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
 import { NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.query';
 import { ShowResponseDto } from '../dtos/show-response.dto';
 import { DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
-import { MediaType } from '../../../../common/enums/media-type.enum';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import { normalizeListQuery } from '../utils/query-normalizer';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
-import { computeShowVerdict, RATING_SOURCE } from '../../../shared/verdict';
+import { computeShowVerdict } from '../../../shared/verdict';
+import {
+  CATALOG_DEFAULT_LIMIT,
+  CATALOG_DEFAULT_OFFSET,
+  CATALOG_DEFAULT_CALENDAR_DAYS,
+} from '../../../../common/constants';
+import { isNewRelease, hasRecentEpisode } from '../../../../common/utils/media.utils';
 
 /**
  * Public show catalog endpoints (trending, calendar, details).
@@ -40,10 +45,6 @@ import { computeShowVerdict, RATING_SOURCE } from '../../../shared/verdict';
 @UseGuards(OptionalJwtAuthGuard)
 @Controller('catalog/shows')
 export class CatalogShowsController {
-  private static readonly DEFAULT_CALENDAR_DAYS = 7;
-  private static readonly DEFAULT_LIMIT = 20;
-  private static readonly DEFAULT_OFFSET = 0;
-
   /**
    * Public show catalog endpoints (trending, calendar, details).
    */
@@ -78,8 +79,8 @@ export class CatalogShowsController {
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.TRENDING_LIST,
     });
-    const limit = normalizedQuery.limit ?? CatalogShowsController.DEFAULT_LIMIT;
-    const offset = normalizedQuery.offset ?? CatalogShowsController.DEFAULT_OFFSET;
+    const limit = normalizedQuery.limit ?? CATALOG_DEFAULT_LIMIT;
+    const offset = normalizedQuery.offset ?? CATALOG_DEFAULT_OFFSET;
     const total = shows.total ?? shows.length;
 
     return {
@@ -156,7 +157,7 @@ export class CatalogShowsController {
   @ApiOkResponse({ type: CalendarResponseDto })
   async getCalendar(
     @Query('startDate') startDateString?: string,
-    @Query('days', new DefaultValuePipe(CatalogShowsController.DEFAULT_CALENDAR_DAYS), ParseIntPipe)
+    @Query('days', new DefaultValuePipe(CATALOG_DEFAULT_CALENDAR_DAYS), ParseIntPipe)
     days?: number,
   ): Promise<CalendarResponseDto> {
     const start = startDateString ? new Date(startDateString) : new Date();
@@ -166,9 +167,7 @@ export class CatalogShowsController {
 
     const end = new Date(start);
     const daysToAdd =
-      typeof days === 'number' && !Number.isNaN(days)
-        ? days
-        : CatalogShowsController.DEFAULT_CALENDAR_DAYS;
+      typeof days === 'number' && !Number.isNaN(days) ? days : CATALOG_DEFAULT_CALENDAR_DAYS;
 
     if (daysToAdd < 0) {
       throw new BadRequestException('days must be greater than or equal to 0');
@@ -212,8 +211,8 @@ export class CatalogShowsController {
         hasUserEntry: Boolean(enriched.userState),
         userState: enriched.userState?.state ?? null,
         continuePoint: extractContinuePoint(enriched.userState?.progress ?? null),
-        hasNewEpisode: this.hasNewEpisode(show),
-        isNewRelease: this.isNewRelease(show.releaseDate),
+        hasNewEpisode: hasRecentEpisode(show.nextAirDate),
+        isNewRelease: isNewRelease(show.releaseDate),
         isHit: isHitQuality(show.externalRatings),
         trendDelta: null,
         isTrending: false,
@@ -233,47 +232,6 @@ export class CatalogShowsController {
     });
 
     return { ...enriched, card, verdict, statusHint };
-  }
-
-  /**
-   * Gets the best available rating source (IMDb > Trakt > TMDB).
-   */
-  private getBestRating(
-    ratings: {
-      imdb?: { rating: number; voteCount?: number | null } | null;
-      trakt?: { rating: number; voteCount?: number | null } | null;
-      tmdb?: { rating: number; voteCount?: number | null } | null;
-    } | null,
-  ): {
-    rating: { rating: number; voteCount?: number | null } | null;
-    source: (typeof RATING_SOURCE)[keyof typeof RATING_SOURCE] | null;
-  } {
-    if (ratings?.imdb) return { rating: ratings.imdb, source: RATING_SOURCE.IMDB };
-    if (ratings?.trakt) return { rating: ratings.trakt, source: RATING_SOURCE.TRAKT };
-    if (ratings?.tmdb) return { rating: ratings.tmdb, source: RATING_SOURCE.TMDB };
-    return { rating: null, source: null };
-  }
-
-  /**
-   * Checks if show has a new episode (nextAirDate in the past week).
-   */
-  private hasNewEpisode(show: ShowDetails): boolean {
-    if (!show.nextAirDate) return false;
-    const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const nextAir = new Date(show.nextAirDate);
-    return nextAir >= weekAgo && nextAir <= now;
-  }
-
-  /**
-   * Checks if show is a new release (within 14 days).
-   */
-  private isNewRelease(releaseDate: Date | null): boolean {
-    if (!releaseDate) return false;
-    const now = new Date();
-    const diffMs = now.getTime() - new Date(releaseDate).getTime();
-    const diffDays = diffMs / (1000 * 60 * 60 * 24);
-    return diffDays >= 0 && diffDays <= 14;
   }
 
   /**

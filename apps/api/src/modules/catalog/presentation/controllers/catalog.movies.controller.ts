@@ -30,6 +30,13 @@ import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
 import { computeReleaseStatus } from '../../domain/utils/release-status.utils';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
 import { computeMovieVerdict, MovieVerdict, RATING_SOURCE } from '../../../shared/verdict';
+import {
+  CATALOG_DEFAULT_LIMIT,
+  CATALOG_DEFAULT_OFFSET,
+  CATALOG_DEFAULT_NEW_RELEASE_DAYS,
+  CATALOG_DEFAULT_DIGITAL_DAYS,
+} from '../../../../common/constants';
+import { getBestRating, isNewRelease } from '../../../../common/utils/media.utils';
 
 /**
  * Public movie catalog endpoints (trending, listings, details).
@@ -38,11 +45,6 @@ import { computeMovieVerdict, MovieVerdict, RATING_SOURCE } from '../../../share
 @UseGuards(OptionalJwtAuthGuard)
 @Controller('catalog/movies')
 export class CatalogMoviesController {
-  private static readonly DEFAULT_LIMIT = 20;
-  private static readonly DEFAULT_OFFSET = 0;
-  private static readonly DEFAULT_NEW_RELEASE_DAYS = 30;
-  private static readonly DEFAULT_DIGITAL_DAYS = 14;
-
   /**
    * Public movie catalog endpoints (trending, listings, details).
    */
@@ -72,8 +74,8 @@ export class CatalogMoviesController {
   ): Promise<PaginatedMovieResponseDto> {
     const normalizedQuery = normalizeListQuery(query);
     const movies = await this.movieRepository.findTrending(normalizedQuery);
-    const limit = normalizedQuery.limit ?? CatalogMoviesController.DEFAULT_LIMIT;
-    const offset = normalizedQuery.offset ?? CatalogMoviesController.DEFAULT_OFFSET;
+    const limit = normalizedQuery.limit ?? CATALOG_DEFAULT_LIMIT;
+    const offset = normalizedQuery.offset ?? CATALOG_DEFAULT_OFFSET;
     const total = movies.total ?? movies.length;
     const data = await this.catalogUserListEnrich(user, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
@@ -111,10 +113,7 @@ export class CatalogMoviesController {
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
     const normalizedQuery = normalizeListQuery(query);
-    const {
-      limit = CatalogMoviesController.DEFAULT_LIMIT,
-      offset = CatalogMoviesController.DEFAULT_OFFSET,
-    } = normalizedQuery;
+    const { limit = CATALOG_DEFAULT_LIMIT, offset = CATALOG_DEFAULT_OFFSET } = normalizedQuery;
     const movies = await this.movieRepository.findNowPlaying({ ...normalizedQuery, limit, offset });
     const data = await this.catalogUserListEnrich(user, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
@@ -152,14 +151,11 @@ export class CatalogMoviesController {
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
     const normalizedQuery = normalizeListQuery(query);
-    const {
-      limit = CatalogMoviesController.DEFAULT_LIMIT,
-      offset = CatalogMoviesController.DEFAULT_OFFSET,
-    } = normalizedQuery;
+    const { limit = CATALOG_DEFAULT_LIMIT, offset = CATALOG_DEFAULT_OFFSET } = normalizedQuery;
     const daysBack =
       normalizedQuery.daysBack !== undefined && normalizedQuery.daysBack > 0
         ? normalizedQuery.daysBack
-        : CatalogMoviesController.DEFAULT_NEW_RELEASE_DAYS;
+        : CATALOG_DEFAULT_NEW_RELEASE_DAYS;
     const movies = await this.movieRepository.findNewReleases({
       ...normalizedQuery,
       limit,
@@ -201,14 +197,11 @@ export class CatalogMoviesController {
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
     const normalizedQuery = normalizeListQuery(query);
-    const {
-      limit = CatalogMoviesController.DEFAULT_LIMIT,
-      offset = CatalogMoviesController.DEFAULT_OFFSET,
-    } = normalizedQuery;
+    const { limit = CATALOG_DEFAULT_LIMIT, offset = CATALOG_DEFAULT_OFFSET } = normalizedQuery;
     const daysBack =
       normalizedQuery.daysBack !== undefined && normalizedQuery.daysBack > 0
         ? normalizedQuery.daysBack
-        : CatalogMoviesController.DEFAULT_DIGITAL_DAYS;
+        : CATALOG_DEFAULT_DIGITAL_DAYS;
     const movies = await this.movieRepository.findNewOnDigital({
       ...normalizedQuery,
       limit,
@@ -266,7 +259,7 @@ export class CatalogMoviesController {
         userState: enriched.userState?.state ?? null,
         continuePoint: extractContinuePoint(enriched.userState?.progress ?? null),
         hasNewEpisode: false, // Movies don't have episodes
-        isNewRelease: this.isNewRelease(movie.releaseDate),
+        isNewRelease: isNewRelease(movie.releaseDate),
         isHit: isHitQuality(movie.externalRatings),
         trendDelta: null,
         isTrending: false,
@@ -283,7 +276,7 @@ export class CatalogMoviesController {
 
     // Compute verdict for details page
     const ratings = movie.externalRatings;
-    const { rating: bestRating, source: bestRatingSource } = this.getBestRating(ratings);
+    const { rating: bestRating, source: bestRatingSource } = getBestRating(ratings);
 
     const verdict = computeMovieVerdict({
       releaseStatus,
@@ -297,36 +290,6 @@ export class CatalogMoviesController {
     });
 
     return { ...enriched, card, releaseStatus, verdict };
-  }
-
-  /**
-   * Gets the best available rating source (IMDb > Trakt > TMDB).
-   */
-  private getBestRating(
-    ratings: {
-      imdb?: { rating: number; voteCount?: number } | null;
-      trakt?: { rating: number; voteCount?: number } | null;
-      tmdb?: { rating: number; voteCount?: number } | null;
-    } | null,
-  ): {
-    rating: { rating: number; voteCount?: number } | null;
-    source: (typeof RATING_SOURCE)[keyof typeof RATING_SOURCE] | null;
-  } {
-    if (ratings?.imdb) return { rating: ratings.imdb, source: RATING_SOURCE.IMDB };
-    if (ratings?.trakt) return { rating: ratings.trakt, source: RATING_SOURCE.TRAKT };
-    if (ratings?.tmdb) return { rating: ratings.tmdb, source: RATING_SOURCE.TMDB };
-    return { rating: null, source: null };
-  }
-
-  /**
-   * Checks if movie is a new release (within 14 days).
-   */
-  private isNewRelease(releaseDate: Date | null): boolean {
-    if (!releaseDate) return false;
-    const now = new Date();
-    const diffMs = now.getTime() - new Date(releaseDate).getTime();
-    const diffDays = diffMs / (1000 * 60 * 60 * 24);
-    return diffDays >= 0 && diffDays <= 14;
   }
 
   /**

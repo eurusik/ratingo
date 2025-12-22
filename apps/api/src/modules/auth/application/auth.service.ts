@@ -22,6 +22,14 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
+/**
+ * Client metadata for token binding.
+ */
+export interface ClientMeta {
+  userAgent: string | null;
+  ip: string | null;
+}
+
 interface JwtPayload {
   sub: string;
   email: string;
@@ -58,9 +66,15 @@ export class AuthService {
    * @param {string} email - User email
    * @param {string} username - Username
    * @param {string} password - Plain password
+   * @param {ClientMeta} clientMeta - Client metadata for token binding
    * @returns {Promise<AuthTokens>} Access and refresh tokens
    */
-  async register(email: string, username: string, password: string): Promise<AuthTokens> {
+  async register(
+    email: string,
+    username: string,
+    password: string,
+    clientMeta?: ClientMeta,
+  ): Promise<AuthTokens> {
     const existing = await this.usersService.getByEmail(email);
     if (existing) {
       throw new ConflictException('Email already in use');
@@ -76,7 +90,7 @@ export class AuthService {
       username,
       passwordHash,
     });
-    return this.issueTokens(user);
+    return this.issueTokens(user, clientMeta);
   }
 
   /**
@@ -84,9 +98,10 @@ export class AuthService {
    *
    * @param {string} email - User email
    * @param {string} password - Plain password
+   * @param {ClientMeta} clientMeta - Client metadata for token binding
    * @returns {Promise<AuthTokens>} Access and refresh tokens
    */
-  async login(email: string, password: string): Promise<AuthTokens> {
+  async login(email: string, password: string, clientMeta?: ClientMeta): Promise<AuthTokens> {
     const user = await this.usersService.getByEmail(email);
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
@@ -95,16 +110,17 @@ export class AuthService {
     if (!match) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return this.issueTokens(user);
+    return this.issueTokens(user, clientMeta);
   }
 
   /**
    * Issues new tokens based on refresh token.
    *
    * @param {string} refreshToken - Provided refresh token
+   * @param {ClientMeta} clientMeta - Client metadata for token binding
    * @returns {Promise<AuthTokens>} Access and refresh tokens
    */
-  async refresh(refreshToken: string): Promise<AuthTokens> {
+  async refresh(refreshToken: string, clientMeta?: ClientMeta): Promise<AuthTokens> {
     let payload: RefreshPayload;
     try {
       payload = await this.jwtService.verifyAsync<RefreshPayload>(refreshToken, {
@@ -133,7 +149,7 @@ export class AuthService {
 
     // rotate: revoke old, issue new
     await this.refreshTokensRepository.revoke(stored.id);
-    return this.issueTokens(user);
+    return this.issueTokens(user, clientMeta);
   }
 
   /**
@@ -146,7 +162,7 @@ export class AuthService {
     await this.refreshTokensRepository.revokeAllForUser(userId);
   }
 
-  private async issueTokens(user: User): Promise<AuthTokens> {
+  private async issueTokens(user: User, clientMeta?: ClientMeta): Promise<AuthTokens> {
     const accessPayload: JwtPayload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = await this.jwtService.signAsync(accessPayload, {
       secret: this.config.accessTokenSecret,
@@ -167,8 +183,8 @@ export class AuthService {
       id: jti,
       userId: user.id,
       tokenHash: refreshTokenHash,
-      userAgent: null,
-      ip: null,
+      userAgent: clientMeta?.userAgent ?? null,
+      ip: clientMeta?.ip ?? null,
       expiresAt,
       revokedAt: null,
     });

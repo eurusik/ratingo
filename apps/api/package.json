@@ -23,9 +23,9 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@fastify/static": "^7.0.4",
     "@aws-sdk/client-s3": "^3.888.0",
     "@aws-sdk/s3-request-presigner": "^3.888.0",
+    "@fastify/static": "^7.0.4",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",
@@ -34,6 +34,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-fastify": "^10.0.0",
     "@nestjs/swagger": "^7.0.0",
+    "@nestjs/throttler": "^6.5.0",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.65.1",
     "class-transformer": "^0.5.1",
