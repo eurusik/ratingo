@@ -73,10 +73,10 @@ export class AuthController {
 
   /**
    * Registers a new user.
-   * Rate limited: 5 requests per minute.
+   * Rate limited: 10 requests per minute (inline limit for brute-force protection).
    */
   @Post('register')
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Register new user' })
   @ApiBody({ type: RegisterDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
@@ -94,12 +94,12 @@ export class AuthController {
 
   /**
    * Authenticates user with email/password.
-   * Rate limited: 5 requests per minute to prevent brute-force.
+   * Rate limited: 10 requests per minute to prevent brute-force.
    */
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Login with email/password' })
   @ApiBody({ type: LoginDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
@@ -113,10 +113,10 @@ export class AuthController {
 
   /**
    * Refreshes tokens using valid refresh token.
-   * Rate limited: 10 requests per minute.
+   * Rate limited: 30 requests per minute (higher to avoid breaking sessions).
    */
   @Post('refresh')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'Refresh tokens' })
   @ApiBody({ type: RefreshDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
@@ -128,11 +128,10 @@ export class AuthController {
 
   /**
    * Logs out user by revoking all refresh tokens.
-   * Rate limited: 30 requests per minute.
+   * Uses strict tier (120 req/min) - normal mutation rate.
    */
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'Logout (revoke refresh tokens)' })
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -143,11 +142,10 @@ export class AuthController {
 
   /**
    * Returns current authenticated user (basic payload).
-   * Rate limited: 60 requests per minute (soft limit for authenticated users).
+   * Uses default throttler (600 req/min) - normal browsing.
    */
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOkResponse({ description: 'Current authenticated user', type: MeDto })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'Get current user profile' })

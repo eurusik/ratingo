@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { ThrottlerException } from '@nestjs/throttler';
 import { FastifyReply } from 'fastify';
 import { AppException } from '../exceptions/app.exception';
 import { ErrorCode } from '../enums/error-code.enum';
@@ -67,6 +68,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
             message: exception.message,
             statusCode: exception.getStatus(),
             details: exception.details,
+          },
+        },
+      };
+    }
+
+    // Handle ThrottlerException explicitly (rate limiting)
+    if (exception instanceof ThrottlerException) {
+      return {
+        statusCode: HttpStatus.TOO_MANY_REQUESTS,
+        errorResponse: {
+          success: false,
+          error: {
+            code: ErrorCode.RATE_LIMITED,
+            message: 'Too many requests. Please try again later.',
+            statusCode: HttpStatus.TOO_MANY_REQUESTS,
           },
         },
       };
@@ -161,6 +177,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       [HttpStatus.UNAUTHORIZED]: ErrorCode.UNAUTHORIZED,
       [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
       [HttpStatus.NOT_FOUND]: ErrorCode.RESOURCE_NOT_FOUND,
+      [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.RATE_LIMITED,
       [HttpStatus.CONFLICT]: ErrorCode.UNKNOWN_ERROR,
     };
     return map[status] ?? ErrorCode.UNKNOWN_ERROR;

@@ -12,6 +12,9 @@ export enum ErrorCode {
   STATS_NOT_FOUND = 'STATS_NOT_FOUND',
   RESOURCE_NOT_FOUND = 'RESOURCE_NOT_FOUND',
 
+  // Rate limiting (429)
+  RATE_LIMITED = 'RATE_LIMITED',
+
   // External API errors (502/503)
   TMDB_API_ERROR = 'TMDB_API_ERROR',
   TRAKT_API_ERROR = 'TRAKT_API_ERROR',

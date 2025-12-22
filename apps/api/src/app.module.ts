@@ -31,7 +31,9 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
  */
 @Module({
   imports: [
-    // Rate Limiting - Global protection against DDoS/brute-force
+    // Rate Limiting - Tiered protection
+    // Note: 'auth' and 'refresh' tiers are applied explicitly via @Throttle() decorator
+    // on auth routes. All other routes use method-based selection (GET=default, mutations=strict)
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -39,13 +41,23 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
         throttlers: [
           {
             name: 'default',
-            ttl: config.get('THROTTLE_TTL', 60000),
-            limit: config.get('THROTTLE_LIMIT', 100),
+            ttl: 60000, // 1 minute window
+            limit: config.get('THROTTLE_LIMIT', 600), // 600 req/min (10 rps) - browsing
+            // Skip 'default' tier for mutation methods (they use 'strict')
+            skipIf: (context) => {
+              const req = context.switchToHttp().getRequest();
+              return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
+            },
           },
           {
-            name: 'auth',
-            ttl: 60000, // 1 minute
-            limit: 5, // 5 attempts per minute for auth endpoints
+            name: 'strict',
+            ttl: 60000,
+            limit: 120, // 120 req/min - mutations (POST/PATCH/DELETE)
+            // Skip 'strict' tier for read methods (they use 'default')
+            skipIf: (context) => {
+              const req = context.switchToHttp().getRequest();
+              return ['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+            },
           },
         ],
       }),
@@ -85,8 +97,7 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
         BCRYPT_SALT_ROUNDS: Joi.number().default(12),
 
         // Rate Limiting
-        THROTTLE_TTL: Joi.number().default(60000),
-        THROTTLE_LIMIT: Joi.number().default(100),
+        THROTTLE_LIMIT: Joi.number().default(600),
       }),
       validationOptions: {
         allowUnknown: true, // Allow other env vars
