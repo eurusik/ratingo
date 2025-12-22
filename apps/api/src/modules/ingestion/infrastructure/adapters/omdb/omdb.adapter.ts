@@ -3,6 +3,22 @@ import { ConfigType } from '@nestjs/config';
 import omdbConfig from '../../../../../config/omdb.config';
 import { MediaType } from '../../../../../common/enums/media-type.enum';
 import { OmdbApiException } from '../../../../../common/exceptions/external-api.exception';
+import {
+  ResilientHttpClient,
+  RetryConfig,
+  HttpError,
+} from '../../../../../common/http/resilient-http.client';
+
+/**
+ * OMDb-specific retry configuration.
+ * Best-effort enrichment - don't block too long.
+ */
+const OMDB_RETRY_CONFIG: Partial<RetryConfig> = {
+  maxRetries: 2,
+  baseDelayMs: 500,
+  maxTotalTimeMs: 15000, // 15s total budget (best-effort)
+  timeoutMs: 10000,
+};
 
 /**
  * Adapter for OMDb API.
@@ -11,6 +27,7 @@ import { OmdbApiException } from '../../../../../common/exceptions/external-api.
 @Injectable()
 export class OmdbAdapter {
   private readonly logger = new Logger(OmdbAdapter.name);
+  private readonly httpClient: ResilientHttpClient;
 
   // OMDb specific constants
   private readonly NA_VALUE = 'N/A';
@@ -26,10 +43,12 @@ export class OmdbAdapter {
   constructor(
     @Inject(omdbConfig.KEY)
     private readonly config: ConfigType<typeof omdbConfig>,
-  ) {}
+  ) {
+    this.httpClient = new ResilientHttpClient(OMDB_RETRY_CONFIG);
+  }
 
   /**
-   * Internal helper to make requests to OMDb.
+   * Internal helper to make requests to OMDb with retry logic.
    *
    * @param {Record<string, string>} params - Query parameters
    * @returns {Promise<T>} Typed response
@@ -45,28 +64,25 @@ export class OmdbAdapter {
       url.searchParams.set(key, value);
     });
 
-    // AbortController for 10s timeout (OMDb is best-effort, don't block long)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const result = await this.httpClient.get<T>(url.toString());
 
-    try {
-      const response = await fetch(url.toString(), { signal: controller.signal });
+    if (!result.success) {
+      const error = result.error;
 
-      if (!response.ok) {
-        throw new OmdbApiException(`${response.status} ${response.statusText}`, response.status);
+      if (error instanceof HttpError) {
+        throw new OmdbApiException(error.message, error.status);
       }
 
-      return response.json();
-    } catch (error) {
-      if (error instanceof OmdbApiException) throw error;
-      if (error.name === 'AbortError') {
-        this.logger.warn('OMDb request timeout');
-        throw new OmdbApiException('Request timeout', 408);
+      // Network/timeout errors after all retries
+      if (result.isRetryable) {
+        this.logger.warn(`OMDb request failed after ${result.attempts} attempts`);
+        throw new OmdbApiException('Failed to communicate with OMDb after retries', 503);
       }
-      throw error;
-    } finally {
-      clearTimeout(timeoutId);
+
+      throw new OmdbApiException('Failed to communicate with OMDb', 500);
     }
+
+    return result.data as T;
   }
 
   /**

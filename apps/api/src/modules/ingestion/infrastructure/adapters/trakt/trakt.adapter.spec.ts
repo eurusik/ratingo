@@ -8,6 +8,60 @@ import { TraktApiException } from '@/common/exceptions';
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
+// Mock ResilientHttpClient to disable retries in tests
+jest.mock('@/common/http/resilient-http.client', () => {
+  const original = jest.requireActual('@/common/http/resilient-http.client');
+  return {
+    ...original,
+    ResilientHttpClient: class MockResilientHttpClient {
+      async fetch<T>(
+        url: string,
+        options?: RequestInit,
+      ): Promise<{
+        data: T | null;
+        success: boolean;
+        attempts: number;
+        error?: Error;
+        isRetryable?: boolean;
+      }> {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) {
+            const error = new original.HttpError(
+              `${response.status} ${response.statusText}`,
+              response.status,
+              response.headers,
+            );
+            return {
+              data: null,
+              success: false,
+              attempts: 1,
+              error,
+              isRetryable: original.isRetryableError(error),
+            };
+          }
+          const data = await response.json();
+          return { data, success: true, attempts: 1 };
+        } catch (error: any) {
+          return {
+            data: null,
+            success: false,
+            attempts: 1,
+            error,
+            isRetryable: true,
+          };
+        }
+      }
+      async get<T>(url: string, headers?: HeadersInit) {
+        return this.fetch<T>(url, { method: 'GET', headers });
+      }
+    },
+    HttpError: original.HttpError,
+    isRetryableError: original.isRetryableError,
+    parseRetryAfter: original.parseRetryAfter,
+  };
+});
+
 describe('Trakt adapters', () => {
   let ratingsAdapter: TraktRatingsAdapter;
   let listsAdapter: TraktListsAdapter;
@@ -213,42 +267,22 @@ describe('Trakt adapters', () => {
     });
   });
 
-  describe('base http rate limiting (lists)', () => {
-    it('should retry after rate limit (429)', async () => {
-      // First call returns 429
-      mockFetch
-        .mockResolvedValueOnce({
-          ok: false,
-          status: 429,
-          statusText: 'Too Many Requests',
-          headers: new Map([['Retry-After', '0.1']]), // 100ms
-        })
-        // Second call succeeds
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve([]),
-        });
-
-      // Mock headers.get
-      mockFetch
-        .mockImplementationOnce(() =>
-          Promise.resolve({
-            ok: false,
-            status: 429,
-            statusText: 'Too Many Requests',
-            headers: { get: () => '0.1' },
-          }),
-        )
-        .mockImplementationOnce(() =>
-          Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve([{ movie: { ids: { tmdb: 1 } } }]),
-          }),
-        );
+  describe('error handling for rate limits', () => {
+    it('should handle 429 rate limit and return empty array', async () => {
+      // ResilientHttpClient handles retries internally, but if all retries fail
+      // the adapter should gracefully return empty array
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 429,
+        statusText: 'Too Many Requests',
+        headers: { get: () => '1' },
+      });
 
       const result = await listsAdapter.getTrendingMoviesWithWatchers(1);
 
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      // Should return empty array on rate limit (graceful degradation)
+      expect(result).toEqual([]);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
 

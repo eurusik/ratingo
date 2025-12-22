@@ -2,6 +2,23 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import traktConfig from '../../../../../config/trakt.config';
 import { TraktApiException } from '../../../../../common/exceptions/external-api.exception';
+import {
+  ResilientHttpClient,
+  RetryConfig,
+  HttpError,
+  parseRetryAfter,
+} from '../../../../../common/http/resilient-http.client';
+
+/**
+ * Trakt-specific retry configuration.
+ * Conservative retries due to strict rate limits.
+ */
+const TRAKT_RETRY_CONFIG: Partial<RetryConfig> = {
+  maxRetries: 2,
+  baseDelayMs: 2000, // Longer base delay for Trakt
+  maxTotalTimeMs: 30000,
+  timeoutMs: 15000,
+};
 
 /**
  * Token bucket rate limiter with timeout and max queue size.
@@ -111,6 +128,7 @@ export function destroyTraktRateLimiter(): void {
 @Injectable()
 export class BaseTraktHttp {
   protected readonly logger = new Logger(BaseTraktHttp.name);
+  private readonly httpClient: ResilientHttpClient;
 
   constructor(
     @Inject(traktConfig.KEY)
@@ -119,10 +137,11 @@ export class BaseTraktHttp {
     if (!this.config.clientId) {
       throw new TraktApiException('Client ID is not configured');
     }
+    this.httpClient = new ResilientHttpClient(TRAKT_RETRY_CONFIG);
   }
 
   /**
-   * Generic fetch wrapper with automatic rate limit handling.
+   * Generic fetch wrapper with automatic rate limit handling and retry logic.
    * Uses shared rate limiter to ensure max 3 req/s across all Trakt calls.
    *
    * @param {string} endpoint - API endpoint starting with slash (e.g., '/shows/trending')
@@ -144,43 +163,30 @@ export class BaseTraktHttp {
       ...options.headers,
     };
 
-    // AbortController for 15s timeout to prevent hanging requests
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const result = await this.httpClient.fetch<T>(url, { ...options, headers });
 
-    const makeReq = async () =>
-      fetch(url, {
-        ...options,
-        headers,
-        signal: controller.signal,
-      });
+    if (!result.success) {
+      const error = result.error;
 
-    try {
-      let response = await makeReq();
-
-      if (response.status === 429) {
-        const ra = response.headers.get('Retry-After');
-        const ms = Math.max(0, Math.round((parseFloat(String(ra || '10')) || 10) * 1000));
-        this.logger.warn(`Rate limited by Trakt. Waiting ${ms}ms...`);
-        await new Promise((r) => setTimeout(r, ms));
-        // No re-acquire needed - we already "paid" with Retry-After wait
-        response = await makeReq();
+      if (error instanceof HttpError) {
+        // Special handling for 429 - already retried with Retry-After
+        if (error.status === 429) {
+          this.logger.warn(
+            `Trakt rate limit exceeded after ${result.attempts} attempts: ${endpoint}`,
+          );
+        }
+        throw new TraktApiException(error.message, error.status);
       }
 
-      if (!response.ok) {
-        throw new TraktApiException(`${response.status} ${response.statusText}`, response.status);
+      // Network/timeout errors after all retries
+      if (result.isRetryable) {
+        this.logger.error(`Trakt request failed after ${result.attempts} attempts: ${endpoint}`);
+        throw new TraktApiException('Failed to communicate with Trakt after retries', 503);
       }
 
-      return response.json();
-    } catch (error) {
-      if (error instanceof TraktApiException) throw error;
-      if (error.name === 'AbortError') {
-        this.logger.warn(`Trakt request timeout: ${endpoint}`);
-        throw new TraktApiException('Request timeout', 408);
-      }
-      throw error;
-    } finally {
-      clearTimeout(timeoutId);
+      throw new TraktApiException('Failed to communicate with Trakt', 500);
     }
+
+    return result.data as T;
   }
 }

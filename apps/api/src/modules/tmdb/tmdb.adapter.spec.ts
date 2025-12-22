@@ -17,6 +17,59 @@ jest.mock('./mappers/tmdb.mapper', () => ({
   },
 }));
 
+// Mock ResilientHttpClient to disable retries in tests
+jest.mock('@/common/http/resilient-http.client', () => {
+  const original = jest.requireActual('@/common/http/resilient-http.client');
+  return {
+    ...original,
+    ResilientHttpClient: class MockResilientHttpClient {
+      async fetch<T>(
+        url: string,
+        options?: RequestInit,
+      ): Promise<{
+        data: T | null;
+        success: boolean;
+        attempts: number;
+        error?: Error;
+        isRetryable?: boolean;
+      }> {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) {
+            const error = new original.HttpError(
+              `${response.status} ${response.statusText}`,
+              response.status,
+              response.headers,
+            );
+            return {
+              data: null,
+              success: false,
+              attempts: 1,
+              error,
+              isRetryable: original.isRetryableError(error),
+            };
+          }
+          const data = await response.json();
+          return { data, success: true, attempts: 1 };
+        } catch (error: any) {
+          return {
+            data: null,
+            success: false,
+            attempts: 1,
+            error,
+            isRetryable: true,
+          };
+        }
+      }
+      async get<T>(url: string, headers?: HeadersInit) {
+        return this.fetch<T>(url, { method: 'GET', headers });
+      }
+    },
+    HttpError: original.HttpError,
+    isRetryableError: original.isRetryableError,
+  };
+});
+
 describe('TmdbAdapter', () => {
   let adapter: TmdbAdapter;
 

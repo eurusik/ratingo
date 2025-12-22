@@ -7,6 +7,22 @@ import tmdbConfig from '../../config/tmdb.config';
 import { MediaType } from '../../common/enums/media-type.enum';
 import { TmdbApiException } from '../../common/exceptions/external-api.exception';
 import { DEFAULT_REGION, DEFAULT_LANGUAGE } from '../../common/constants';
+import {
+  ResilientHttpClient,
+  RetryConfig,
+  HttpError,
+} from '../../common/http/resilient-http.client';
+
+/**
+ * TMDB-specific retry configuration.
+ * More aggressive retries since TMDB is critical for sync.
+ */
+const TMDB_RETRY_CONFIG: Partial<RetryConfig> = {
+  maxRetries: 3,
+  baseDelayMs: 1000,
+  maxTotalTimeMs: 45000, // 45s total budget
+  timeoutMs: 15000,
+};
 
 /**
  * Implementation of MetadataProvider for The Movie Database (TMDB) API v3.
@@ -18,11 +34,14 @@ export class TmdbAdapter implements IMetadataProvider {
   private readonly logger = new Logger(TmdbAdapter.name);
   private readonly DEFAULT_LANG = DEFAULT_LANGUAGE;
   private readonly MAX_PAGES = 10; // Safety limit to prevent infinite loops
+  private readonly httpClient: ResilientHttpClient;
 
   constructor(
     @Inject(tmdbConfig.KEY)
     private readonly config: ConfigType<typeof tmdbConfig>,
-  ) {}
+  ) {
+    this.httpClient = new ResilientHttpClient(TMDB_RETRY_CONFIG);
+  }
 
   /**
    * Fetches full movie details including credits and videos in a single request.
@@ -251,7 +270,8 @@ export class TmdbAdapter implements IMetadataProvider {
   }
 
   /**
-   * Helper method to perform fetch requests with default headers and params.
+   * Helper method to perform fetch requests with retry logic.
+   * Uses ResilientHttpClient for automatic retries with exponential backoff.
    */
   private async fetch(
     endpoint: string,
@@ -271,31 +291,27 @@ export class TmdbAdapter implements IMetadataProvider {
       url.searchParams.append(key, value);
     });
 
-    // AbortController for 15s timeout to prevent hanging requests
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const result = await this.httpClient.get<any>(url.toString());
 
-    try {
-      const res = await fetch(url.toString(), { signal: controller.signal });
+    if (!result.success) {
+      const error = result.error;
 
-      if (!res.ok) {
-        if (res.status === 404) {
+      if (error instanceof HttpError) {
+        if (error.status === 404) {
           throw new TmdbApiException('Resource not found', 404);
         }
-        throw new TmdbApiException(`${res.status} ${res.statusText}`, res.status);
+        throw new TmdbApiException(error.message, error.status);
       }
 
-      return await res.json();
-    } catch (error) {
-      if (error instanceof TmdbApiException) throw error;
-      if (error.name === 'AbortError') {
-        this.logger.warn(`TMDB request timeout: ${endpoint}`);
-        throw new TmdbApiException('Request timeout', 408);
+      // Network/timeout errors after all retries
+      if (result.isRetryable) {
+        this.logger.error(`TMDB request failed after ${result.attempts} attempts: ${endpoint}`);
+        throw new TmdbApiException('Failed to communicate with TMDB after retries', 503);
       }
-      this.logger.error(`TMDB Request Failed: ${error.message}`, error.stack);
+
       throw new TmdbApiException('Failed to communicate with TMDB', 500);
-    } finally {
-      clearTimeout(timeoutId);
     }
+
+    return result.data;
   }
 }
