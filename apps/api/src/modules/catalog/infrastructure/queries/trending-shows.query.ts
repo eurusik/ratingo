@@ -63,6 +63,10 @@ export class TrendingShowsQuery {
     try {
       const whereConditions: SQL[] = [sql`mi.type = ${MediaType.SHOW}`, sql`mi.deleted_at IS NULL`];
 
+      // Filter out items with no quality score (no ratings from any source)
+      // This prevents "junk" items from appearing in trending even if they have trending_rank
+      whereConditions.push(sql`ms.quality_score > 0`);
+
       if (minRatingo !== undefined) {
         whereConditions.push(sql`ms.ratingo_score >= ${minRatingo}`);
       }
@@ -283,8 +287,9 @@ export class TrendingShowsQuery {
       case 'trending': {
         // TMDB trending order: lower rank = higher position
         // For desc: rank 1 first (ASC), for asc: rank 1 last (DESC)
+        // Fallback to ratingo_score for items without trending_rank
         const rankDir = order === 'desc' ? sql`ASC` : sql`DESC`;
-        return sql`mi.trending_rank ${rankDir} NULLS LAST, mi.id DESC`;
+        return sql`mi.trending_rank ${rankDir} NULLS LAST, ms.ratingo_score DESC NULLS LAST, mi.id DESC`;
       }
       case 'ratingo':
         return sql`ms.ratingo_score ${dir} NULLS LAST, mi.id DESC`;

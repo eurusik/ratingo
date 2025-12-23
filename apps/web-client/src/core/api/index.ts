@@ -3,3 +3,4 @@ export { ApiError, type ApiErrorDetail } from './error';
 export * from './catalog';
 export * from './user-actions';
 export * from './auth';
+export * from './users';

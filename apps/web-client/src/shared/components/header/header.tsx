@@ -31,9 +31,8 @@ export function Header() {
       className={cn(
         'fixed top-0 left-0 right-0 z-40',
         'transition-all duration-300',
-        isScrolled
-          ? 'bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/80'
-          : 'bg-transparent'
+        'bg-zinc-950/95 backdrop-blur-xl',
+        isScrolled && 'border-b border-zinc-800/80'
       )}
     >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-6">

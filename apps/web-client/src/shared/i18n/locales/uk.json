@@ -425,5 +425,77 @@
       "onStreaming": "Доступно на стрімінгу",
       "released": "Вийшов у прокат"
     }
+  },
+  "settings": {
+    "title": "Налаштування",
+    "tabs": {
+      "profile": "Профіль",
+      "privacy": "Приватність",
+      "security": "Безпека"
+    },
+    "profile": {
+      "title": "Інформація профілю",
+      "username": "Імʼя користувача",
+      "usernameHint": "Зміна імені вплине на URL вашого профілю",
+      "bio": "Про себе",
+      "bioPlaceholder": "Розкажіть про себе...",
+      "location": "Місцезнаходження",
+      "locationPlaceholder": "Київ, Україна",
+      "website": "Вебсайт",
+      "websitePlaceholder": "https://example.com",
+      "language": "Мова",
+      "region": "Регіон"
+    },
+    "avatar": {
+      "change": "Змінити фото",
+      "uploading": "Завантаження...",
+      "maxSize": "Максимум 5 МБ",
+      "formats": "JPG, PNG або WebP",
+      "squareHint": "Рекомендуємо квадратне зображення для кращого результату"
+    },
+    "privacy": {
+      "title": "Налаштування приватності",
+      "publicProfile": "Публічний профіль",
+      "publicProfileHint": "Інші користувачі зможуть бачити ваш профіль",
+      "privateProfileNote": "Ваш профіль прихований від інших користувачів",
+      "showHistory": "Показувати історію переглядів",
+      "showRatings": "Показувати мої оцінки",
+      "allowFollowers": "Дозволити підписки"
+    },
+    "security": {
+      "title": "Зміна пароля",
+      "currentPassword": "Поточний пароль",
+      "newPassword": "Новий пароль",
+      "confirmPassword": "Підтвердіть пароль",
+      "changePassword": "Змінити пароль"
+    },
+    "validation": {
+      "usernameMin": "Мінімум 3 символи",
+      "usernameMax": "Максимум 20 символів",
+      "usernameFormat": "Тільки латинські букви, цифри та _",
+      "bioMax": "Максимум 500 символів",
+      "locationMax": "Максимум 100 символів",
+      "websiteInvalid": "Невірний формат URL",
+      "currentPasswordRequired": "Введіть поточний пароль",
+      "passwordMin": "Мінімум 8 символів",
+      "passwordMismatch": "Паролі не співпадають"
+    },
+    "saved": "Збережено",
+    "saving": "Збереження...",
+    "errors": {
+      "saveFailed": "Не вдалося зберегти",
+      "uploadFailed": "Не вдалося завантажити фото",
+      "wrongPassword": "Невірний поточний пароль",
+      "usernameTaken": "Це імʼя вже зайнято",
+      "invalidFileType": "Підтримуються тільки JPG, PNG та WebP",
+      "fileTooLarge": "Файл занадто великий. Максимум 5 МБ"
+    },
+    "confirmUsernameChange": {
+      "title": "Зміна імені користувача",
+      "message": "Це змінить URL вашого публічного профілю. Старі посилання перестануть працювати. Продовжити?",
+      "cancel": "Скасувати",
+      "confirm": "Підтвердити"
+    },
+    "unsavedChanges": "У вас є незбережені зміни. Ви впевнені, що хочете вийти?"
   }
 }

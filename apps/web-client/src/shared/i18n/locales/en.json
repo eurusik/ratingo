@@ -425,5 +425,77 @@
       "onStreaming": "Available on streaming",
       "released": "Released"
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "profile": "Profile",
+      "privacy": "Privacy",
+      "security": "Security"
+    },
+    "profile": {
+      "title": "Profile Information",
+      "username": "Username",
+      "usernameHint": "Changing your username will affect your profile URL",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell us about yourself...",
+      "location": "Location",
+      "locationPlaceholder": "Kyiv, Ukraine",
+      "website": "Website",
+      "websitePlaceholder": "https://example.com",
+      "language": "Language",
+      "region": "Region"
+    },
+    "avatar": {
+      "change": "Change photo",
+      "uploading": "Uploading...",
+      "maxSize": "Maximum 5 MB",
+      "formats": "JPG, PNG or WebP",
+      "squareHint": "We recommend square images for best results"
+    },
+    "privacy": {
+      "title": "Privacy Settings",
+      "publicProfile": "Public profile",
+      "publicProfileHint": "Other users will be able to see your profile",
+      "privateProfileNote": "Your profile is hidden from other users",
+      "showHistory": "Show watch history",
+      "showRatings": "Show my ratings",
+      "allowFollowers": "Allow followers"
+    },
+    "security": {
+      "title": "Change Password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "changePassword": "Change password"
+    },
+    "validation": {
+      "usernameMin": "Minimum 3 characters",
+      "usernameMax": "Maximum 20 characters",
+      "usernameFormat": "Only letters, numbers and _",
+      "bioMax": "Maximum 500 characters",
+      "locationMax": "Maximum 100 characters",
+      "websiteInvalid": "Invalid URL format",
+      "currentPasswordRequired": "Enter current password",
+      "passwordMin": "Minimum 8 characters",
+      "passwordMismatch": "Passwords don't match"
+    },
+    "saved": "Saved",
+    "saving": "Saving...",
+    "errors": {
+      "saveFailed": "Failed to save",
+      "uploadFailed": "Failed to upload photo",
+      "wrongPassword": "Incorrect current password",
+      "usernameTaken": "This username is already taken",
+      "invalidFileType": "Only JPG, PNG and WebP are supported",
+      "fileTooLarge": "File is too large. Maximum 5 MB"
+    },
+    "confirmUsernameChange": {
+      "title": "Change Username",
+      "message": "This will change your public profile URL. Old links will stop working. Continue?",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?"
   }
 }

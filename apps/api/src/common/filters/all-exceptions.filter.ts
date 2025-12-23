@@ -126,7 +126,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
           errorResponse: {
             success: false,
             error: {
-              code: status === 400 ? ErrorCode.VALIDATION_ERROR : ErrorCode.UNKNOWN_ERROR,
+              code:
+                status === 400 ? ErrorCode.VALIDATION_ERROR : this.mapHttpStatusToErrorCode(status),
               message: messages.join(', '),
               statusCode: status,
               details: { errors: messages },
@@ -174,11 +175,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   private mapHttpStatusToErrorCode(status: number): ErrorCode {
     const map: Record<number, ErrorCode> = {
+      [HttpStatus.BAD_REQUEST]: ErrorCode.VALIDATION_ERROR,
       [HttpStatus.UNAUTHORIZED]: ErrorCode.UNAUTHORIZED,
       [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
       [HttpStatus.NOT_FOUND]: ErrorCode.RESOURCE_NOT_FOUND,
+      [HttpStatus.CONFLICT]: ErrorCode.VALIDATION_ERROR,
       [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.RATE_LIMITED,
-      [HttpStatus.CONFLICT]: ErrorCode.UNKNOWN_ERROR,
+      [HttpStatus.INTERNAL_SERVER_ERROR]: ErrorCode.INTERNAL_ERROR,
+      [HttpStatus.BAD_GATEWAY]: ErrorCode.EXTERNAL_API_ERROR,
+      [HttpStatus.SERVICE_UNAVAILABLE]: ErrorCode.SERVICE_UNAVAILABLE,
+      [HttpStatus.GATEWAY_TIMEOUT]: ErrorCode.EXTERNAL_API_ERROR,
     };
     return map[status] ?? ErrorCode.UNKNOWN_ERROR;
   }

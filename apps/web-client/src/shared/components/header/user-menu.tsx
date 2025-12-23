@@ -72,9 +72,11 @@ export function UserMenu() {
             {dict.auth.saved}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100">
-          <Settings className="w-4 h-4 mr-2" />
-          {dict.auth.settings}
+        <DropdownMenuItem asChild className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100">
+          <Link href={'/settings' as Route}>
+            <Settings className="w-4 h-4 mr-2" />
+            {dict.auth.settings}
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-zinc-800" />
         <DropdownMenuItem
