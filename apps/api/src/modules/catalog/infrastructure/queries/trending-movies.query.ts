@@ -113,10 +113,6 @@ export class TrendingMoviesQuery {
     try {
       const conditions: any[] = [isNotNull(schema.mediaStats.popularityScore)];
 
-      // Filter out items with no quality score (no ratings from any source)
-      // This prevents "junk" items from appearing in trending even if they have trending_rank
-      conditions.push(gte(schema.mediaStats.qualityScore, 0.01));
-
       if (minRatingo !== undefined) {
         conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
       }
@@ -235,11 +231,9 @@ export class TrendingMoviesQuery {
     if (sort === 'trending') {
       // TMDB trending order: lower rank = higher position
       // For desc: rank 1 first (ASC), for asc: rank 1 last (DESC)
-      // Fallback to ratingo_score for items without trending_rank
       const rankDir = order === 'desc' ? sql`asc` : sql`desc`;
       return [
         sql`${schema.mediaItems.trendingRank} ${rankDir} ${nullsLast}`,
-        sql`${schema.mediaStats.ratingoScore} desc ${nullsLast}`,
         sql`${schema.mediaItems.id} desc`,
       ];
     }
