@@ -43,13 +43,15 @@ export class SyncMediaService {
    *
    * @param {number} tmdbId - TMDB ID of the movie
    * @param {object} trending - Optional trending data for sorting
+   * @param {string} jobId - Optional job ID for log correlation
    * @returns {Promise<void>} Nothing
    */
   public async syncMovie(
     tmdbId: number,
     trending?: { score: number; rank: number },
+    jobId?: string,
   ): Promise<void> {
-    await this.processMedia(tmdbId, MediaType.MOVIE, trending);
+    await this.processMedia(tmdbId, MediaType.MOVIE, trending, jobId);
   }
 
   /**
@@ -57,10 +59,15 @@ export class SyncMediaService {
    *
    * @param {number} tmdbId - TMDB ID of the show
    * @param {object} trending - Optional trending data for sorting
+   * @param {string} jobId - Optional job ID for log correlation
    * @returns {Promise<void>} Nothing
    */
-  public async syncShow(tmdbId: number, trending?: { score: number; rank: number }): Promise<void> {
-    await this.processMedia(tmdbId, MediaType.SHOW, trending);
+  public async syncShow(
+    tmdbId: number,
+    trending?: { score: number; rank: number },
+    jobId?: string,
+  ): Promise<void> {
+    await this.processMedia(tmdbId, MediaType.SHOW, trending, jobId);
   }
 
   /**
@@ -78,8 +85,10 @@ export class SyncMediaService {
     tmdbId: number,
     type: MediaType,
     trending?: { score: number; rank: number },
+    jobId?: string,
   ): Promise<void> {
-    this.logger.debug(`Syncing ${type} ${tmdbId}...`);
+    const logPrefix = `[${type}:${tmdbId}${jobId ? ` job:${jobId}` : ''}]`;
+    this.logger.debug(`${logPrefix} Syncing...`);
 
     try {
       // Mark as importing
@@ -92,7 +101,7 @@ export class SyncMediaService {
           : await this.tmdbAdapter.getShow(tmdbId);
 
       if (!media) {
-        this.logger.warn(`${type} ${tmdbId} not found in TMDB`);
+        this.logger.warn(`${logPrefix} Not found in TMDB`);
         await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
         return;
       }
@@ -170,7 +179,7 @@ export class SyncMediaService {
             }
           }
         } catch (err) {
-          this.logger.warn(`TVMaze sync failed for ${media.title}: ${err.message}`);
+          this.logger.warn(`${logPrefix} TVMaze sync failed: ${err.message}`);
         }
       }
 
@@ -236,24 +245,24 @@ export class SyncMediaService {
           const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId);
           if (mediaItem) {
             await this.catalogEvaluationService.evaluateOne(mediaItem.id);
-            this.logger.debug(`Evaluated catalog eligibility for ${media.title}`);
+            this.logger.debug(`${logPrefix} Evaluated catalog eligibility`);
           }
         } catch (evalError) {
           // Don't fail sync if evaluation fails - log and continue
-          this.logger.warn(`Catalog evaluation failed for ${media.title}: ${evalError.message}`);
+          this.logger.warn(`${logPrefix} Catalog evaluation failed: ${evalError.message}`);
         }
       }
 
       this.logger.log(
-        `Synced ${type}: ${media.title} (Ratingo: ${(scores.ratingoScore * 100).toFixed(1)})`,
+        `${logPrefix} Synced: ${media.title} (Ratingo: ${(scores.ratingoScore * 100).toFixed(1)})`,
       );
     } catch (error) {
-      this.logger.error(`Failed to sync ${type} ${tmdbId}: ${error.message}`, error.stack);
+      this.logger.error(`${logPrefix} Failed: ${error.message}`, error.stack);
       try {
         await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
       } catch (statusError) {
         this.logger.warn(
-          `Failed to mark ${type} ${tmdbId} as failed: ${(statusError as Error).message}`,
+          `${logPrefix} Failed to mark as failed: ${(statusError as Error).message}`,
         );
       }
       throw error; // Let BullMQ retry

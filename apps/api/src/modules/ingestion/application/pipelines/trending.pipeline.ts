@@ -88,13 +88,14 @@ export class TrendingPipeline {
   /**
    * Processes a single trending page: fetches items and enqueues sync jobs.
    */
-  async processPage(type: MediaType, page: number): Promise<void> {
-    this.logger.log(`Processing trending page: ${type} page ${page}...`);
+  async processPage(type: MediaType, page: number, jobId?: string): Promise<void> {
+    const logPrefix = `[${type}:p${page}${jobId ? ` job:${jobId}` : ''}]`;
+    this.logger.log(`${logPrefix} Processing...`);
 
     const items = await this.syncService.getTrending(page, type);
 
     if (items.length === 0) {
-      this.logger.log(`Trending page ${type} page ${page}: found=0`);
+      this.logger.log(`${logPrefix} found=0`);
       return;
     }
 
@@ -128,7 +129,7 @@ export class TrendingPipeline {
       enqueuedIds.slice(0, 5).length > 0 ? `, sample=[${enqueuedIds.slice(0, 5).join(',')}]` : '';
 
     this.logger.log(
-      `Trending page ${type} page ${page}: found=${items.length}, enqueued=${jobsToAdd.length}, deduped=${deduped}${sampleIds}`,
+      `${logPrefix} found=${items.length}, enqueued=${jobsToAdd.length}, deduped=${deduped}${sampleIds}`,
     );
   }
 

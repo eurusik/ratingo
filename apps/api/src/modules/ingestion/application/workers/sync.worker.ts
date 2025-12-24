@@ -32,6 +32,14 @@ export class SyncWorker extends WorkerHost {
   }
 
   /**
+   * Extracts short job ID for logging (last 8 chars or full if shorter).
+   */
+  private shortJobId(jobId: string | undefined): string {
+    if (!jobId) return 'unknown';
+    return jobId.length > 12 ? jobId.slice(-8) : jobId;
+  }
+
+  /**
    * Routes jobs to appropriate pipeline handlers.
    * BullMQ handles concurrency and retries automatically.
    */
@@ -58,15 +66,16 @@ export class SyncWorker extends WorkerHost {
       string
     >,
   ): Promise<void> {
-    this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
+    const jid = this.shortJobId(job.id);
+    this.logger.debug(`[job:${jid}] Processing ${job.name}`);
     try {
       switch (job.name) {
         // Direct sync jobs
         case IngestionJob.SYNC_MOVIE:
-          await this.syncService.syncMovie(job.data.tmdbId!, job.data.trending);
+          await this.syncService.syncMovie(job.data.tmdbId!, job.data.trending, jid);
           break;
         case IngestionJob.SYNC_SHOW:
-          await this.syncService.syncShow(job.data.tmdbId!, job.data.trending);
+          await this.syncService.syncShow(job.data.tmdbId!, job.data.trending, jid);
           break;
 
         // Snapshots pipeline
@@ -87,7 +96,7 @@ export class SyncWorker extends WorkerHost {
           await this.trendingPipeline.dispatch(job.data.pages, job.data.syncStats, job.data.force);
           break;
         case IngestionJob.SYNC_TRENDING_PAGE:
-          await this.trendingPipeline.processPage(job.data.type!, job.data.page!);
+          await this.trendingPipeline.processPage(job.data.type!, job.data.page!, jid);
           break;
         case IngestionJob.SYNC_TRENDING_STATS:
           await this.trendingPipeline.processStats(job.data.since, job.data.limit);
@@ -119,10 +128,10 @@ export class SyncWorker extends WorkerHost {
           break;
 
         default:
-          this.logger.warn(`Unknown job type: ${job.name}`);
+          this.logger.warn(`[job:${jid}] Unknown job type: ${job.name}`);
       }
     } catch (error) {
-      this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
+      this.logger.error(`[job:${jid}] Failed: ${error.message}`, error.stack);
       throw error;
     }
   }

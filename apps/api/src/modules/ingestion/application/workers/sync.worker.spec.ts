@@ -73,19 +73,23 @@ describe('SyncWorker', () => {
 
   describe('process - direct sync jobs', () => {
     it('should process SYNC_MOVIE job', async () => {
-      const job = { name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 550 }, id: '1' } as Job;
+      const job = { name: IngestionJob.SYNC_MOVIE, data: { tmdbId: 550 }, id: 'test-job-1' } as Job;
       await worker.process(job);
-      expect(syncService.syncMovie).toHaveBeenCalledWith(550, undefined);
+      expect(syncService.syncMovie).toHaveBeenCalledWith(550, undefined, 'test-job-1');
     });
 
     it('should process SYNC_SHOW job with trending data', async () => {
       const job = {
         name: IngestionJob.SYNC_SHOW,
         data: { tmdbId: 100, trending: { score: 9999, rank: 2 } },
-        id: '2',
+        id: 'test-job-2',
       } as Job;
       await worker.process(job);
-      expect(syncService.syncShow).toHaveBeenCalledWith(100, { score: 9999, rank: 2 });
+      expect(syncService.syncShow).toHaveBeenCalledWith(
+        100,
+        { score: 9999, rank: 2 },
+        'test-job-2',
+      );
     });
   });
 
@@ -126,10 +130,10 @@ describe('SyncWorker', () => {
       const job = {
         name: IngestionJob.SYNC_TRENDING_PAGE,
         data: { type: MediaType.MOVIE, page: 1 },
-        id: '6',
+        id: 'trending-page-6',
       } as Job;
       await worker.process(job);
-      expect(trendingPipeline.processPage).toHaveBeenCalledWith(MediaType.MOVIE, 1);
+      expect(trendingPipeline.processPage).toHaveBeenCalledWith(MediaType.MOVIE, 1, 'g-page-6');
     });
 
     it('should delegate SYNC_TRENDING_STATS to trending pipeline', async () => {
@@ -227,7 +231,7 @@ describe('SyncWorker', () => {
 
       await worker.process(job);
 
-      expect(loggerSpy).toHaveBeenCalledWith('Unknown job type: UNKNOWN_JOB');
+      expect(loggerSpy).toHaveBeenCalledWith('[job:unknown-1] Unknown job type: UNKNOWN_JOB');
     });
   });
 });
