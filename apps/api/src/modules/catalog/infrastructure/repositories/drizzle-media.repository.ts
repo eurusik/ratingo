@@ -29,6 +29,11 @@ import { DatabaseException } from '../../../../common/exceptions';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { HeroMediaQuery } from '../queries/hero-media.query';
 import { HeroMediaItem, LocalSearchResult } from '../../domain/models/hero-media.model';
+import {
+  EligibilityStatus,
+  EvaluationReason,
+  DEFAULT_POLICY_VERSION,
+} from '../../../catalog-policy/domain/constants/evaluation.constants';
 
 /**
  * Drizzle ORM implementation of the Media Repository.
@@ -197,6 +202,21 @@ export class DrizzleMediaRepository implements IMediaRepository {
               },
             });
         }
+
+        // Upsert Catalog Evaluation (PENDING by default)
+        // Design Decision DD-3: Every media_item MUST have a corresponding evaluation record
+        // This ensures the 1:1 invariant and prevents items from being "stuck" without evaluation
+        await tx
+          .insert(schema.mediaCatalogEvaluations)
+          .values({
+            mediaItemId: mediaId,
+            status: EligibilityStatus.PENDING,
+            policyVersion: DEFAULT_POLICY_VERSION,
+            reasons: [EvaluationReason.NO_ACTIVE_POLICY],
+            relevanceScore: 0,
+            evaluatedAt: null, // NULL for pending items
+          })
+          .onConflictDoNothing(); // If already exists, don't overwrite (evaluation job will update it)
       });
     } catch (error: any) {
       this.logger.error(`Failed to upsert media ${media.title}`, {

@@ -165,6 +165,11 @@ export interface NormalizedMedia {
   status?: string | null;
   isAdult: boolean;
 
+  /** Origin countries (ISO 3166-1 alpha-2 codes) - for catalog policy */
+  originCountries?: string[] | null;
+  /** Original language (ISO 639-1 code) - for catalog policy */
+  originalLanguage?: string | null;
+
   details?: {
     runtime?: number | null;
     budget?: number | null;

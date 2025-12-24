@@ -11,6 +11,22 @@ import { MediaType } from '../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../common/enums/video.enum';
 import { DEFAULT_REGION } from '../../../common/constants';
 import slugify from 'slugify';
+import {
+  normalizeOriginCountries,
+  normalizeOriginalLanguage,
+} from '../../catalog-policy/domain/utils/country-language.util';
+import {
+  TmdbMediaResponse,
+  TmdbMovieResponse,
+  TmdbShowResponse,
+  TmdbCastMember,
+  TmdbCrewMember,
+  TmdbCreator,
+  TmdbVideo,
+  TmdbWatchProvider,
+  TmdbSeason,
+  TmdbReleaseDatesCountry,
+} from '../types/tmdb-api.types';
 
 /**
  * Pure utility class to transform raw TMDB JSON responses into the internal NormalizedMedia format.
@@ -21,9 +37,9 @@ export class TmdbMapper {
    * Converts raw TMDB API response to our Domain Model.
    * Returns null if content is missing essential localized data (e.g. overview).
    */
-  static toDomain(data: any, type: MediaType): NormalizedMedia | null {
+  static toDomain(data: TmdbMediaResponse, type: MediaType): NormalizedMedia | null {
     const isMovie = type === MediaType.MOVIE;
-    const title = isMovie ? data.title : data.name;
+    const title = isMovie ? (data as TmdbMovieResponse).title : (data as TmdbShowResponse).name;
     const overview = data.overview;
 
     if (!title || title.trim() === '' || !overview || overview.trim() === '') {
@@ -33,13 +49,20 @@ export class TmdbMapper {
     const media: NormalizedMedia = {
       externalIds: {
         tmdbId: data.id,
-        imdbId: data.imdb_id || data.external_ids?.imdb_id || null,
+        imdbId:
+          data.external_ids?.imdb_id ||
+          (isMovie ? (data as TmdbMovieResponse).imdb_id : null) ||
+          null,
       },
       type,
-      title: isMovie ? data.title : data.name,
-      originalTitle: isMovie ? data.original_title : data.original_name,
+      title: isMovie ? (data as TmdbMovieResponse).title : (data as TmdbShowResponse).name,
+      originalTitle: isMovie
+        ? (data as TmdbMovieResponse).original_title
+        : (data as TmdbShowResponse).original_name,
       overview: data.overview || null,
-      slug: this.generateSlug(isMovie ? data.title : data.name),
+      slug: this.generateSlug(
+        isMovie ? (data as TmdbMovieResponse).title : (data as TmdbShowResponse).name,
+      ),
 
       posterPath: data.poster_path || null,
       backdropPath: data.backdrop_path || null,
@@ -48,14 +71,30 @@ export class TmdbMapper {
       voteCount: data.vote_count || 0,
       popularity: data.popularity || 0,
 
-      releaseDate:
-        data.release_date || data.first_air_date
-          ? new Date(data.release_date || data.first_air_date)
-          : null,
-      status: data.status || null,
+      releaseDate: (
+        isMovie
+          ? (data as TmdbMovieResponse).release_date
+          : (data as TmdbShowResponse).first_air_date
+      )
+        ? new Date(
+            isMovie
+              ? (data as TmdbMovieResponse).release_date!
+              : (data as TmdbShowResponse).first_air_date!,
+          )
+        : null,
+      status: (data as TmdbMovieResponse | TmdbShowResponse).status || null,
       isAdult: data.adult || false,
 
-      genres: (data.genres || []).map((g: any) => ({
+      // Origin metadata for catalog policy
+      // Movies: production_countries, Shows: origin_country
+      originCountries: normalizeOriginCountries(
+        isMovie
+          ? (data as TmdbMovieResponse).production_countries?.map((c) => c.iso_3166_1)
+          : (data as TmdbShowResponse).origin_country,
+      ),
+      originalLanguage: normalizeOriginalLanguage(data.original_language),
+
+      genres: (data.genres || []).map((g) => ({
         tmdbId: g.id,
         name: g.name,
         slug: this.generateSlug(g.name),
@@ -69,23 +108,25 @@ export class TmdbMapper {
     };
 
     if (isMovie) {
-      const releaseDates = this.extractReleaseDates(data);
+      const movieData = data as TmdbMovieResponse;
+      const releaseDates = this.extractReleaseDates(movieData);
       media.details = {
-        runtime: data.runtime,
-        budget: data.budget,
-        revenue: data.revenue,
-        status: data.status || null,
+        runtime: movieData.runtime,
+        budget: movieData.budget,
+        revenue: movieData.revenue,
+        status: movieData.status || null,
         theatricalReleaseDate: releaseDates.theatricalReleaseDate,
         digitalReleaseDate: releaseDates.digitalReleaseDate,
         releases: releaseDates.releases,
       };
     } else {
+      const showData = data as TmdbShowResponse;
       media.details = {
-        totalSeasons: data.number_of_seasons,
-        totalEpisodes: data.number_of_episodes,
-        lastAirDate: data.last_air_date ? new Date(data.last_air_date) : null,
-        status: data.status || null,
-        seasons: this.extractSeasons(data.seasons),
+        totalSeasons: showData.number_of_seasons,
+        totalEpisodes: showData.number_of_episodes,
+        lastAirDate: showData.last_air_date ? new Date(showData.last_air_date) : null,
+        status: showData.status || null,
+        seasons: this.extractSeasons(showData.seasons),
       };
     }
 
@@ -106,7 +147,7 @@ export class TmdbMapper {
    * Priority: US > UA > first available country.
    * TMDB release types: 1=Premiere, 2=Theatrical (limited), 3=Theatrical, 4=Digital, 5=Physical, 6=TV
    */
-  private static extractReleaseDates(data: any): {
+  private static extractReleaseDates(data: TmdbMovieResponse): {
     theatricalReleaseDate: Date | null;
     digitalReleaseDate: Date | null;
     releases: Array<{ country: string; type: number; date: string; certification?: string }>;
@@ -183,31 +224,33 @@ export class TmdbMapper {
     };
   }
 
-  private static extractCredits(data: any, type: MediaType): Credits {
+  private static extractCredits(data: TmdbMediaResponse, type: MediaType): Credits {
     const credits: Credits = { cast: [], crew: [] };
     const isMovie = type === MediaType.MOVIE;
 
     if (isMovie) {
-      const rawCast = data.credits?.cast || [];
-      const rawCrew = data.credits?.crew || [];
+      const movieData = data as TmdbMovieResponse;
+      const rawCast = movieData.credits?.cast || [];
+      const rawCrew = movieData.credits?.crew || [];
 
       credits.cast = this.processCast(rawCast, true);
 
       // Movies: Filter Directors
       const processedCrew = new Map<number, CrewMember>();
       rawCrew
-        .filter((c: any) => c.job === 'Director')
-        .forEach((c: any) => this.addCrewMember(processedCrew, c, 'Director'));
+        .filter((c) => c.job === 'Director')
+        .forEach((c) => this.addCrewMember(processedCrew, c, 'Director'));
       credits.crew = Array.from(processedCrew.values());
     } else {
-      const rawCast = data.aggregate_credits?.cast || [];
+      const showData = data as TmdbShowResponse;
+      const rawCast = showData.aggregate_credits?.cast || [];
 
       credits.cast = this.processCast(rawCast, false);
 
       // Shows: Creators (from created_by)
       const processedCrew = new Map<number, CrewMember>();
-      if (Array.isArray(data.created_by)) {
-        data.created_by.forEach((c: any) => this.addCrewMember(processedCrew, c, 'Creator'));
+      if (Array.isArray(showData.created_by)) {
+        showData.created_by.forEach((c) => this.addCrewMember(processedCrew, c, 'Creator'));
       }
       credits.crew = Array.from(processedCrew.values());
     }
@@ -215,15 +258,15 @@ export class TmdbMapper {
     return credits;
   }
 
-  private static processCast(rawCast: any[], isMovie: boolean): CastMember[] {
+  private static processCast(rawCast: TmdbCastMember[], isMovie: boolean): CastMember[] {
     return rawCast
-      .sort((a: any, b: any) => {
+      .sort((a: TmdbCastMember, b: TmdbCastMember) => {
         const orderA = a.order ?? 999;
         const orderB = b.order ?? 999;
         return orderA - orderB;
       })
       .slice(0, 10)
-      .map((c: any, index: number) => ({
+      .map((c: TmdbCastMember, index: number) => ({
         tmdbId: c.id,
         name: c.name,
         character: isMovie ? c.character : c.roles?.[0]?.character || 'Unknown',
@@ -232,13 +275,22 @@ export class TmdbMapper {
       }));
   }
 
-  private static addCrewMember(map: Map<number, CrewMember>, c: any, job: string) {
+  private static addCrewMember(
+    map: Map<number, CrewMember>,
+    c: TmdbCrewMember | TmdbCreator,
+    job: string,
+  ) {
     if (!map.has(c.id)) {
       map.set(c.id, {
         tmdbId: c.id,
         name: c.name,
         job: job,
-        department: c.department || (job === 'Creator' ? 'Writing' : 'Directing'),
+        department:
+          'department' in c
+            ? c.department || (job === 'Creator' ? 'Writing' : 'Directing')
+            : job === 'Creator'
+              ? 'Writing'
+              : 'Directing',
         profilePath: c.profile_path,
       });
     }
@@ -248,7 +300,7 @@ export class TmdbMapper {
    * Extracts seasons from TMDB API response.
    * Filters out "Specials" (season 0) and maps to NormalizedSeason format.
    */
-  private static extractSeasons(seasons: any[] | undefined): Array<{
+  private static extractSeasons(seasons: TmdbSeason[] | undefined): Array<{
     tmdbId: number;
     number: number;
     name: string | null;
@@ -263,8 +315,8 @@ export class TmdbMapper {
     }
 
     return seasons
-      .filter((s: any) => s.season_number > 0) // Exclude "Specials" (season 0)
-      .map((s: any) => ({
+      .filter((s: TmdbSeason) => s.season_number > 0) // Exclude "Specials" (season 0)
+      .map((s: TmdbSeason) => ({
         tmdbId: s.id,
         number: s.season_number,
         name: s.name || null,
@@ -276,7 +328,7 @@ export class TmdbMapper {
       }));
   }
 
-  private static extractVideos(data: any): NormalizedVideo[] {
+  private static extractVideos(data: TmdbMediaResponse): NormalizedVideo[] {
     const results = data.videos?.results;
     if (!Array.isArray(results) || results.length === 0) {
       return [];
@@ -284,12 +336,12 @@ export class TmdbMapper {
 
     return results
       .filter(
-        (v: any) =>
+        (v: TmdbVideo) =>
           v.site === VideoSiteEnum.YOUTUBE &&
           (v.type === VideoTypeEnum.TRAILER || v.type === VideoTypeEnum.TEASER) &&
           (v.iso_639_1 === VideoLanguageEnum.EN || v.iso_639_1 === VideoLanguageEnum.UK),
       )
-      .sort((a: any, b: any) => {
+      .sort((a: TmdbVideo, b: TmdbVideo) => {
         // Language Priority: UK > Others
         const isUkA = a.iso_639_1 === VideoLanguageEnum.UK;
         const isUkB = b.iso_639_1 === VideoLanguageEnum.UK;
@@ -313,7 +365,7 @@ export class TmdbMapper {
         return dateB - dateA;
       })
       .slice(0, 3) // Take top 3
-      .map((v: any) => ({
+      .map((v: TmdbVideo) => ({
         key: v.key,
         name: v.name,
         site: v.site as VideoSiteEnum,
@@ -327,7 +379,7 @@ export class TmdbMapper {
   /** Allowed regions for watch providers - UA primary, US fallback */
   private static readonly ALLOWED_REGIONS = [DEFAULT_REGION, 'US'];
 
-  private static extractProviders(data: any): WatchProvidersMap | null {
+  private static extractProviders(data: TmdbMediaResponse): WatchProvidersMap | null {
     const results = data['watch/providers']?.results;
     if (!results || typeof results !== 'object') return null;
 
@@ -350,9 +402,11 @@ export class TmdbMapper {
     return Object.keys(map).length > 0 ? map : null;
   }
 
-  private static mapProviderList(list: any[]): WatchProvider[] | undefined {
+  private static mapProviderList(
+    list: TmdbWatchProvider[] | undefined,
+  ): WatchProvider[] | undefined {
     if (!Array.isArray(list) || list.length === 0) return undefined;
-    return list.map((p) => ({
+    return list.map((p: TmdbWatchProvider) => ({
       providerId: p.provider_id,
       name: p.provider_name,
       logoPath: p.logo_path,

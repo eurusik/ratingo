@@ -13,6 +13,7 @@ import {
   pgEnum,
   uuid,
   customType,
+  primaryKey,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import {
@@ -38,6 +39,18 @@ export const userMediaStatusEnum = pgEnum('user_media_status', [
   'dropped',
 ]);
 export const ingestionStatusEnum = pgEnum('ingestion_status', ['importing', 'ready', 'failed']);
+export const eligibilityStatusEnum = pgEnum('eligibility_status', [
+  'pending',
+  'eligible',
+  'ineligible',
+  'review',
+]);
+export const evaluationRunStatusEnum = pgEnum('evaluation_run_status', [
+  'pending',
+  'running',
+  'completed',
+  'failed',
+]);
 
 // --- SHARED TYPES ---
 
@@ -98,6 +111,8 @@ export const mediaItems = pgTable(
 
     // Metadata
     releaseDate: timestamp('release_date'),
+    originCountries: jsonb('origin_countries').$type<string[] | null>().default(null),
+    originalLanguage: text('original_language'),
     ingestionStatus: ingestionStatusEnum('ingestion_status').default('ready').notNull(),
 
     // Full Text Search Vector (auto-generated)
@@ -647,3 +662,127 @@ export const userSubscriptionsRelations = relations(userSubscriptions, ({ one })
     references: [mediaItems.id],
   }),
 }));
+
+// --- CATALOG POLICY ENGINE ---
+
+/**
+ * PolicyConfig type for catalog_policies.policy jsonb field
+ */
+export interface PolicyConfig {
+  allowedCountries: string[];
+  blockedCountries: string[];
+  blockedCountryMode: 'ANY' | 'MAJORITY';
+  allowedLanguages: string[];
+  blockedLanguages: string[];
+  globalProviders: string[];
+  breakoutRules: BreakoutRule[];
+  eligibilityMode: 'STRICT' | 'RELAXED';
+  homepage: {
+    minRelevanceScore: number;
+  };
+}
+
+export interface BreakoutRule {
+  id: string;
+  name: string;
+  priority: number;
+  requirements: {
+    minImdbVotes?: number;
+    minTraktVotes?: number;
+    minQualityScoreNormalized?: number;
+    requireAnyOfProviders?: string[];
+    requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[];
+  };
+}
+
+/**
+ * CATALOG POLICIES (Versioned)
+ * Stores versioned catalog filtering policies
+ */
+export const catalogPolicies = pgTable(
+  'catalog_policies',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    version: integer('version').notNull(),
+    isActive: boolean('is_active').default(false).notNull(),
+    policy: jsonb('policy').$type<PolicyConfig>().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    activatedAt: timestamp('activated_at'),
+  },
+  (t) => ({
+    // Partial unique index on constant (1) where active - ensures only one active
+    // SQL: CREATE UNIQUE INDEX catalog_policies_single_active ON catalog_policies ((1)) WHERE is_active = true;
+    // Note: This index is created via raw SQL migration, not Drizzle
+    versionIdx: index('catalog_policies_version_idx').on(t.version),
+  }),
+);
+
+/**
+ * MEDIA CATALOG EVALUATIONS
+ * Stores evaluation results for each media item based on catalog policy.
+ *
+ * Key invariant: (media_item_id, policy_version) = unique evaluation
+ * This enables storing evaluation history per policy version.
+ */
+export const mediaCatalogEvaluations = pgTable(
+  'media_catalog_evaluations',
+  {
+    mediaItemId: uuid('media_item_id')
+      .references(() => mediaItems.id, { onDelete: 'cascade' })
+      .notNull(),
+    status: eligibilityStatusEnum('status').default('pending').notNull(),
+    reasons: text('reasons').array().default([]).notNull(),
+    relevanceScore: integer('relevance_score').default(0).notNull(),
+    policyVersion: integer('policy_version').default(0).notNull(), // 0 = no policy / pending seed
+    breakoutRuleId: text('breakout_rule_id'),
+    evaluatedAt: timestamp('evaluated_at'), // NULL for pending, set when actually evaluated
+  },
+  (t) => ({
+    // Composite primary key: (media_item_id, policy_version)
+    pk: primaryKey({ columns: [t.mediaItemId, t.policyVersion] }),
+    statusIdx: index('media_catalog_eval_status_idx').on(t.status),
+    statusRelevanceIdx: index('media_catalog_eval_status_relevance_idx').on(
+      t.status,
+      t.relevanceScore,
+    ),
+    policyVersionIdx: index('media_catalog_eval_policy_version_idx').on(t.policyVersion),
+    // Additional indexes added via migration 0014:
+    // - media_catalog_eval_policy_status_relevance_idx (policy_version, status, relevance_score DESC)
+    // - media_catalog_eval_item_version_idx (media_item_id, policy_version DESC)
+  }),
+);
+
+/**
+ * CATALOG EVALUATION RUNS
+ * Tracks RE_EVALUATE_CATALOG job runs for monitoring and resumability
+ */
+export const catalogEvaluationRuns = pgTable(
+  'catalog_evaluation_runs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    policyVersion: integer('policy_version').notNull(),
+    status: evaluationRunStatusEnum('status').default('pending').notNull(),
+    startedAt: timestamp('started_at').defaultNow().notNull(),
+    finishedAt: timestamp('finished_at'),
+    cursor: text('cursor'),
+    counters: jsonb('counters')
+      .$type<{
+        processed: number;
+        eligible: number;
+        ineligible: number;
+        review: number;
+        reasonBreakdown: Record<string, number>;
+      }>()
+      .default({
+        processed: 0,
+        eligible: 0,
+        ineligible: 0,
+        review: 0,
+        reasonBreakdown: {},
+      }),
+  },
+  (t) => ({
+    policyVersionIdx: index('catalog_eval_runs_policy_version_idx').on(t.policyVersion),
+    statusIdx: index('catalog_eval_runs_status_idx').on(t.status),
+  }),
+);

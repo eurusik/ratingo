@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { CatalogModule } from '../catalog/catalog.module';
+import { CatalogPolicyModule } from '../catalog-policy/catalog-policy.module';
 import { StatsModule } from '../stats/stats.module';
 import { TmdbModule } from '../tmdb/tmdb.module';
 import { UserActionsModule } from '../user-actions/user-actions.module';
@@ -32,6 +33,7 @@ import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeli
 @Module({
   imports: [
     CatalogModule,
+    CatalogPolicyModule,
     TmdbModule,
     forwardRef(() => StatsModule),
     forwardRef(() => UserActionsModule),

@@ -8,6 +8,7 @@ describe('TmdbMapper', () => {
     id: 550,
     title: 'Fight Club',
     original_title: 'Fight Club',
+    original_language: 'en',
     overview: 'A ticking-time-bomb insomniac...',
     poster_path: '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg',
     backdrop_path: '/hZkgoQYus5vegHoetLkCJzb17zJ.jpg',
@@ -55,8 +56,10 @@ describe('TmdbMapper', () => {
     id: 1396,
     name: 'Breaking Bad',
     original_name: 'Breaking Bad',
+    original_language: 'en',
     overview: 'High school chemistry teacher...',
     poster_path: '/ggFHVNu6YYI5L9pRwOAyqJenX5p.jpg',
+    backdrop_path: '/backdrop.jpg',
     vote_average: 9.5,
     vote_count: 10000,
     popularity: 300.5,
@@ -65,6 +68,8 @@ describe('TmdbMapper', () => {
     number_of_seasons: 5,
     number_of_episodes: 62,
     status: 'Ended',
+    adult: false,
+    origin_country: ['US'],
     genres: [{ id: 18, name: 'Drama' }],
     'watch/providers': {
       results: {
@@ -108,7 +113,7 @@ describe('TmdbMapper', () => {
             cast: [],
             crew: [],
           }),
-        })
+        }),
       );
 
       expect(result?.genres).toHaveLength(1);
@@ -121,7 +126,7 @@ describe('TmdbMapper', () => {
         expect.objectContaining({
           providerId: 8,
           name: 'Netflix',
-        })
+        }),
       );
     });
 
@@ -145,7 +150,7 @@ describe('TmdbMapper', () => {
             cast: [],
             crew: [],
           }),
-        })
+        }),
       );
 
       expect(result?.watchProviders).toBeDefined();
@@ -386,6 +391,7 @@ describe('TmdbMapper', () => {
               type: 'Trailer',
               official: true,
               iso_639_1: 'en',
+              iso_3166_1: 'US',
               published_at: '2020-01-01',
             },
             {
@@ -395,6 +401,7 @@ describe('TmdbMapper', () => {
               type: 'Trailer',
               official: false,
               iso_639_1: 'en',
+              iso_3166_1: 'US',
               published_at: '2022-01-01',
             },
             {
@@ -404,6 +411,7 @@ describe('TmdbMapper', () => {
               type: 'Trailer',
               official: false,
               iso_639_1: 'uk',
+              iso_3166_1: 'UA',
               published_at: '2021-01-01',
             },
             {
@@ -413,6 +421,7 @@ describe('TmdbMapper', () => {
               type: 'Trailer',
               official: true,
               iso_639_1: 'en',
+              iso_3166_1: 'US',
               published_at: '2023-01-01',
             },
             {
@@ -422,6 +431,7 @@ describe('TmdbMapper', () => {
               type: 'Trailer',
               official: true,
               iso_639_1: 'uk',
+              iso_3166_1: 'UA',
               published_at: '2021-06-01',
             },
           ],
@@ -454,6 +464,7 @@ describe('TmdbMapper', () => {
               type: 'Teaser',
               official: true,
               iso_639_1: 'en',
+              iso_3166_1: 'US',
               published_at: '2023-01-01',
             },
             {
@@ -463,6 +474,7 @@ describe('TmdbMapper', () => {
               type: 'Trailer',
               official: true,
               iso_639_1: 'en',
+              iso_3166_1: 'US',
               published_at: '2023-01-01',
             },
           ],

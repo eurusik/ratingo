@@ -1,0 +1,116 @@
+/**
+ * Catalog Policy Service
+ *
+ * Application service for managing catalog policies.
+ * Provides high-level operations with validation and business logic.
+ */
+
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
+import {
+  ICatalogPolicyRepository,
+  CATALOG_POLICY_REPOSITORY,
+} from '../../infrastructure/repositories/catalog-policy.repository';
+import { CatalogPolicy, PolicyConfig } from '../../domain/types/policy.types';
+import { validatePolicyOrThrow } from '../../domain/validation/policy.schema';
+
+@Injectable()
+export class CatalogPolicyService {
+  private readonly logger = new Logger(CatalogPolicyService.name);
+
+  constructor(
+    @Inject(CATALOG_POLICY_REPOSITORY)
+    private readonly policyRepository: ICatalogPolicyRepository,
+  ) {}
+
+  /**
+   * Gets the active policy or throws if none exists.
+   *
+   * Design Decision DD-2: Active policy always exists after seed.
+   * This method should never throw in production after initial setup.
+   */
+  async getActiveOrThrow(): Promise<CatalogPolicy> {
+    const policy = await this.policyRepository.findActive();
+
+    if (!policy) {
+      throw new NotFoundException('No active policy found. Please seed the default policy first.');
+    }
+
+    return policy;
+  }
+
+  /**
+   * Gets the active policy or null if none exists.
+   * Use this for graceful handling during initial setup.
+   */
+  async getActive(): Promise<CatalogPolicy | null> {
+    return this.policyRepository.findActive();
+  }
+
+  /**
+   * Gets a policy by version number.
+   */
+  async getByVersion(version: number): Promise<CatalogPolicy | null> {
+    return this.policyRepository.findByVersion(version);
+  }
+
+  /**
+   * Creates a new policy draft (not activated).
+   * Validates and normalizes the policy configuration.
+   *
+   * @param rawPolicy - Raw policy configuration (will be validated and normalized)
+   * @returns Created policy with auto-incremented version
+   */
+  async createDraft(rawPolicy: unknown): Promise<CatalogPolicy> {
+    // Validate and normalize
+    const validatedPolicy = validatePolicyOrThrow(rawPolicy);
+
+    // Create in repository
+    const created = await this.policyRepository.create(validatedPolicy);
+
+    this.logger.log(`Created policy draft v${created.version}`);
+
+    return created;
+  }
+
+  /**
+   * Activates a policy by ID.
+   * Deactivates the previous active policy in a transaction.
+   *
+   * @param id - Policy ID to activate
+   */
+  async activate(id: string): Promise<CatalogPolicy> {
+    await this.policyRepository.activate(id);
+
+    // Fetch the activated policy to return
+    const policies = await this.policyRepository.findAll();
+    const activated = policies.find((p) => p.id === id);
+
+    if (!activated) {
+      throw new NotFoundException(`Policy ${id} not found after activation`);
+    }
+
+    this.logger.log(`Activated policy v${activated.version}`);
+
+    return activated;
+  }
+
+  /**
+   * Creates and immediately activates a new policy.
+   * Convenience method for common use case.
+   *
+   * @param rawPolicy - Raw policy configuration
+   * @returns Activated policy
+   */
+  async createAndActivate(rawPolicy: unknown): Promise<CatalogPolicy> {
+    const draft = await this.createDraft(rawPolicy);
+    return this.activate(draft.id);
+  }
+
+  /**
+   * Lists all policies ordered by version descending.
+   */
+  async listAll(): Promise<CatalogPolicy[]> {
+    return this.policyRepository.findAll();
+  }
+}

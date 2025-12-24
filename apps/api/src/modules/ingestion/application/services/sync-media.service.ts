@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
@@ -11,6 +11,7 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ScoreCalculatorService, ScoreInput } from '../../../shared/score-calculator';
 import { NormalizedSeason, NormalizedEpisode } from '../../domain/models/normalized-media.model';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { CatalogEvaluationService } from '../../../catalog-policy/application/services/catalog-evaluation.service';
 
 /**
  * Application Service responsible for orchestrating the sync process.
@@ -32,6 +33,9 @@ export class SyncMediaService {
 
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
+
+    @Optional()
+    private readonly catalogEvaluationService?: CatalogEvaluationService,
   ) {}
 
   /**
@@ -225,6 +229,21 @@ export class SyncMediaService {
       // Persist
       await this.mediaRepository.upsert(media);
       await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.READY);
+
+      // Trigger catalog evaluation (if service available)
+      if (this.catalogEvaluationService) {
+        try {
+          const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId);
+          if (mediaItem) {
+            await this.catalogEvaluationService.evaluateOne(mediaItem.id);
+            this.logger.debug(`Evaluated catalog eligibility for ${media.title}`);
+          }
+        } catch (evalError) {
+          // Don't fail sync if evaluation fails - log and continue
+          this.logger.warn(`Catalog evaluation failed for ${media.title}: ${evalError.message}`);
+        }
+      }
+
       this.logger.log(
         `Synced ${type}: ${media.title} (Ratingo: ${(scores.ratingoScore * 100).toFixed(1)})`,
       );

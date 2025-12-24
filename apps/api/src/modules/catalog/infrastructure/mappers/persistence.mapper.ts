@@ -59,6 +59,11 @@ export class PersistenceMapper {
           : media.releaseDate
             ? new Date(media.releaseDate)
             : null,
+
+      // Origin metadata for catalog policy
+      originCountries: media.originCountries || null,
+      originalLanguage: media.originalLanguage || null,
+
       updatedAt: new Date(),
     };
   }
@@ -99,6 +104,8 @@ export class PersistenceMapper {
       credits: media.credits || null,
       watchProviders: media.watchProviders || null,
       releaseDate,
+      originCountries: media.originCountries || null,
+      originalLanguage: media.originalLanguage || null,
       updatedAt: new Date(),
       ...(media.trendingScore !== undefined && {
         trendingScore: media.trendingScore,
