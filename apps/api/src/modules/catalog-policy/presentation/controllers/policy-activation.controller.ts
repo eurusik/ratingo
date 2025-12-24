@@ -6,20 +6,17 @@
  */
 
 import { Controller, Post, Get, Param, Body, HttpCode, HttpStatus, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import { DiffService } from '../../application/services/diff.service';
-
-// DTOs
-class PrepareOptionsDto {
-  batchSize?: number;
-  concurrency?: number;
-}
-
-class PromoteOptionsDto {
-  coverageThreshold?: number;
-  maxErrors?: number;
-}
+import {
+  PrepareOptionsDto,
+  PromoteOptionsDto,
+  PrepareResponseDto,
+  RunStatusDto,
+  ActionResponseDto,
+  DiffReportDto,
+} from '../dto/policy-activation.dto';
 
 @ApiTags('Admin - Policy Activation')
 @Controller('admin/catalog-policies')
@@ -51,10 +48,15 @@ export class PolicyActivationController {
     required: false,
     description: 'Optional batch size and concurrency settings',
   })
+  @ApiResponse({
+    status: 202,
+    description: 'Policy preparation started',
+    type: PrepareResponseDto,
+  })
   async preparePolicy(
     @Param('id') policyId: string,
     @Body() options?: PrepareOptionsDto,
-  ): Promise<{ runId: string; status: string; message: string }> {
+  ): Promise<PrepareResponseDto> {
     const result = await this.policyActivationService.preparePolicy(policyId, options);
 
     return {
@@ -79,8 +81,36 @@ export class PolicyActivationController {
     description: 'Run ID to check',
     type: String,
   })
-  async getRunStatus(@Param('runId') runId: string) {
-    return this.policyActivationService.getRunStatus(runId);
+  @ApiResponse({
+    status: 200,
+    description: 'Run status and progress',
+    type: RunStatusDto,
+  })
+  async getRunStatus(@Param('runId') runId: string): Promise<RunStatusDto> {
+    const runStatus = await this.policyActivationService.getRunStatus(runId);
+
+    return {
+      id: runStatus.id,
+      targetPolicyId: runStatus.targetPolicyId,
+      targetPolicyVersion: runStatus.targetPolicyVersion,
+      status: runStatus.status,
+      progress: {
+        processed: runStatus.processed,
+        total: runStatus.totalReadySnapshot,
+        eligible: runStatus.eligible,
+        ineligible: runStatus.ineligible,
+        pending: runStatus.pending,
+        errors: runStatus.errors,
+      },
+      startedAt: runStatus.startedAt,
+      finishedAt: runStatus.finishedAt,
+      promotedAt: runStatus.promotedAt,
+      promotedBy: runStatus.promotedBy,
+      readyToPromote: runStatus.readyToPromote,
+      blockingReasons: runStatus.blockingReasons,
+      coverage: runStatus.coverage,
+      errorSample: [], // TODO: Map from runStatus.errorSample when available
+    };
   }
 
   /**
@@ -104,10 +134,15 @@ export class PolicyActivationController {
     required: false,
     description: 'Optional coverage and error thresholds (defaults: 100% coverage, 0 errors)',
   })
+  @ApiResponse({
+    status: 201,
+    description: 'Promotion result',
+    type: ActionResponseDto,
+  })
   async promoteRun(
     @Param('runId') runId: string,
     @Body() options?: PromoteOptionsDto,
-  ): Promise<{ success: boolean; error?: string; message?: string }> {
+  ): Promise<ActionResponseDto> {
     const result = await this.policyActivationService.promoteRun(runId, options);
 
     if (result.success) {
@@ -136,9 +171,12 @@ export class PolicyActivationController {
     description: 'Run ID to cancel',
     type: String,
   })
-  async cancelRun(
-    @Param('runId') runId: string,
-  ): Promise<{ success: boolean; error?: string; message?: string }> {
+  @ApiResponse({
+    status: 201,
+    description: 'Cancellation result',
+    type: ActionResponseDto,
+  })
+  async cancelRun(@Param('runId') runId: string): Promise<ActionResponseDto> {
     const result = await this.policyActivationService.cancelRun(runId);
 
     if (result.success) {
@@ -173,8 +211,76 @@ export class PolicyActivationController {
     required: false,
     type: Number,
   })
-  async getDiff(@Param('runId') runId: string, @Query('sampleSize') sampleSize?: string) {
+  @ApiResponse({
+    status: 200,
+    description: 'Diff report',
+    type: DiffReportDto,
+  })
+  async getDiff(
+    @Param('runId') runId: string,
+    @Query('sampleSize') sampleSize?: string,
+  ): Promise<DiffReportDto> {
     const size = sampleSize ? parseInt(sampleSize, 10) : 50;
-    return this.diffService.computeDiff(runId, size);
+    const diffReport = await this.diffService.computeDiff(runId, size);
+
+    return {
+      runId: diffReport.runId,
+      targetPolicyVersion: diffReport.targetPolicyVersion,
+      currentPolicyVersion: diffReport.currentPolicyVersion,
+      counts: {
+        regressions: diffReport.counts.regressions,
+        improvements: diffReport.counts.improvements,
+        netChange: diffReport.counts.improvements - diffReport.counts.regressions,
+      },
+      topRegressions: diffReport.topRegressions.map((item) => ({
+        mediaItemId: item.mediaItemId,
+        title: item.title || 'Unknown',
+        reason: `Status change: ${item.oldStatus} → ${item.newStatus}`,
+      })),
+      topImprovements: diffReport.topImprovements.map((item) => ({
+        mediaItemId: item.mediaItemId,
+        title: item.title || 'Unknown',
+        reason: `Status change: ${item.oldStatus} → ${item.newStatus}`,
+      })),
+    };
   }
 }
+// TODO: Add these endpoints when needed
+
+/**
+ * GET /admin/catalog-policies
+ * Gets list of all policies.
+ */
+// @Get()
+// @ApiOperation({
+//   summary: 'Get list of policies',
+//   description: 'Returns list of all catalog policies with their status and metadata.',
+// })
+// @ApiResponse({
+//   status: 200,
+//   description: 'List of policies',
+//   type: PoliciesListDto,
+// })
+// async getPolicies(): Promise<PoliciesListDto> {
+//   // TODO: Implement
+//   throw new Error('Not implemented');
+// }
+
+/**
+ * GET /admin/catalog-policy-runs
+ * Gets list of all evaluation runs.
+ */
+// @Get('/runs')
+// @ApiOperation({
+//   summary: 'Get list of evaluation runs',
+//   description: 'Returns list of all evaluation runs with their status and progress.',
+// })
+// @ApiResponse({
+//   status: 200,
+//   description: 'List of evaluation runs',
+//   type: RunsListDto,
+// })
+// async getRuns(): Promise<RunsListDto> {
+//   // TODO: Implement
+//   throw new Error('Not implemented');
+// }
