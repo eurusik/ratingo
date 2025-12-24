@@ -20,6 +20,7 @@ import { MovieWithMedia, WithTotal } from '../../domain/repositories/movie.repos
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { CatalogSort, SortOrder, VoteSource } from '../../presentation/dtos/catalog-list-query.dto';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
  * Type of movie listing to fetch.
@@ -100,6 +101,7 @@ export class MovieListingsQuery {
 
   /**
    * Executes the movie listings query.
+   * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
    * @param {MovieListingType} type - Type of listing (now_playing, new_releases, new_on_digital)
    * @param {MovieListingOptions} options - Query options (limit, offset, daysBack)
@@ -144,6 +146,10 @@ export class MovieListingsQuery {
         .select(this.selectFields)
         .from(schema.movies)
         .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+        )
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(and(...conditions))
         .orderBy(...orderBy)
@@ -181,7 +187,14 @@ export class MovieListingsQuery {
     yearTo?: number,
   ) {
     const now = new Date();
-    const conditions: any[] = [];
+    const conditions: any[] = [
+      // Eligibility filter: only show ELIGIBLE items
+      eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+      // Ready filter: only show items with ready ingestion status
+      eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+      // Not deleted filter
+      isNull(schema.mediaItems.deletedAt),
+    ];
 
     // Release date filters
     if (year !== undefined) {
@@ -306,6 +319,10 @@ export class MovieListingsQuery {
       .select({ total: sql<number>`count(*)` })
       .from(schema.movies)
       .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+      .innerJoin(
+        schema.mediaCatalogEvaluations,
+        eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+      )
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(and(...conditions));
     return Number(total ?? 0);

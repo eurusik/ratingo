@@ -16,6 +16,8 @@ import { AllExceptionsFilter } from '../../src/common/filters/all-exceptions.fil
 import { PolicyActivationController } from '../../src/modules/catalog-policy/presentation/controllers/policy-activation.controller';
 import { PolicyActivationService } from '../../src/modules/catalog-policy/application/services/policy-activation.service';
 import { DiffService } from '../../src/modules/catalog-policy/application/services/diff.service';
+import { DryRunService } from '../../src/modules/catalog-policy/application/services/dry-run.service';
+import { CatalogPolicyService } from '../../src/modules/catalog-policy/application/services/catalog-policy.service';
 import { CATALOG_POLICY_QUEUE } from '../../src/modules/catalog-policy/catalog-policy.constants';
 import {
   ICatalogPolicyRepository,
@@ -200,6 +202,12 @@ class InMemoryRunRepository implements ICatalogEvaluationRunRepository {
     return this.runs.filter((r) => r.status === status);
   }
 
+  async findAll(options?: { limit?: number; offset?: number }): Promise<CatalogEvaluationRun[]> {
+    const limit = options?.limit ?? 20;
+    const offset = options?.offset ?? 0;
+    return this.runs.slice(offset, offset + limit);
+  }
+
   // Test helper
   clear(): void {
     this.runs = [];
@@ -370,6 +378,8 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
     providers: [
       PolicyActivationService,
       DiffService,
+      DryRunService,
+      CatalogPolicyService,
       { provide: CATALOG_POLICY_REPOSITORY, useValue: policyRepo },
       { provide: CATALOG_EVALUATION_RUN_REPOSITORY, useValue: runRepo },
       { provide: MEDIA_CATALOG_EVALUATION_REPOSITORY, useValue: evaluationRepo },

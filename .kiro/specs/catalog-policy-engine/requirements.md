@@ -19,7 +19,11 @@ Catalog Policy Engine — система для керування публіч�
 - **Global_Provider**: Стрімінг-платформа з глобальним покриттям (Netflix, Max, AppleTV, Prime, Disney)
 - **Global_Signals**: Формалізовані метрики для визначення "глобальної релевантності": minImdbVotes, minTraktVotes, minQualityScore, requireAnyOfProviders, requireAnyOfRatingsPresent
 - **Evaluation_Reason**: Ключ-причина рішення політики (BLOCKED_COUNTRY, BREAKOUT_ALLOWED, MISSING_GLOBAL_SIGNALS, тощо) — зберігається як ключ, людські описи в i18n
-- **Catalog_Evaluation_Run**: Запис про виконання RE_EVALUATE_CATALOG job з progress tracking, counters, resumability
+- **Catalog_Evaluation_Run**: Запис про виконання RE_EVALUATE_CATALOG job з progress tracking, counters, resumability — статуси: RUNNING, PREPARED, PROMOTED, CANCELED, FAILED
+- **Policy_Status**: Статус політики в lifecycle: draft (чернетка), active (активна), archived (зарезервовано для майбутнього)
+- **Run_Status**: Статус evaluation run: running (виконується), prepared (готовий до promote), promoted (активовано), canceled (скасовано), failed (помилка)
+- **Admin API**: REST API endpoints для адміністративного інтерфейсу з повним доступом до policies та runs
+- **Backend Driven Permission**: Логіка дозволів (canPromote, canCancel) обчислюється на backend, UI не приймає рішення самостійно
 
 ## Requirements
 
@@ -161,9 +165,75 @@ Catalog Policy Engine — система для керування публіч�
 
 #### Acceptance Criteria
 
-1. THE System SHALL create catalog_evaluation_runs table with fields: id, policyVersion, status (enum: PENDING/RUNNING/COMPLETED/FAILED), startedAt, finishedAt, cursor (text for resumability), counters (jsonb: processed, eligible, ineligible, review, reasonBreakdown)
+1. THE System SHALL create catalog_evaluation_runs table with fields: id, policyVersion, status (enum: RUNNING/PREPARED/PROMOTED/CANCELED/FAILED), startedAt, finishedAt, cursor (text for resumability), counters (jsonb: processed, eligible, ineligible, review, reasonBreakdown)
 2. WHEN RE_EVALUATE_CATALOG job starts, THE System SHALL create catalog_evaluation_runs record with status=RUNNING
 3. WHEN RE_EVALUATE_CATALOG job processes a batch, THE System SHALL update cursor and counters in catalog_evaluation_runs
 4. IF RE_EVALUATE_CATALOG job fails, THE System SHALL set status=FAILED and preserve cursor for resumability
-5. WHEN RE_EVALUATE_CATALOG job completes, THE System SHALL set status=COMPLETED and finishedAt timestamp
+5. WHEN RE_EVALUATE_CATALOG job completes successfully, THE System SHALL set status=PREPARED and finishedAt timestamp
 6. THE System SHALL expose admin endpoint to view evaluation run history and trigger resume for failed runs
+
+### Requirement 12: Admin API - Catalog Policies Listing
+
+**User Story:** As an admin user, I want to view and filter catalog policies, so that I can navigate between policies, select policies for preparation, and understand policy status without loading heavy details.
+
+#### Acceptance Criteria
+
+1. THE System SHALL expose GET /api/admin/catalog-policies endpoint with query parameters: page (number, default 1), pageSize (number, default 20, max 100), search (string), status (enum: draft/active), sortBy (enum: updatedAt/createdAt/name, default updatedAt), order (enum: asc/desc, default desc)
+2. WHEN request is valid, THE System SHALL return response with items array and pagination object containing page, pageSize, total
+3. THE System SHALL include in each policy item: id, name, description, status, version, lastPreparedRunId (nullable), createdAt, updatedAt, updatedBy (object with id and name)
+4. THE System SHALL set lastPreparedRunId to reference the most recent run with status prepared for this policy
+5. THE System SHALL NOT include rules, conditions, or diff data in list response
+6. WHEN search parameter is provided, THE System SHALL filter policies by name or description using case-insensitive partial match
+7. WHEN status parameter is provided, THE System SHALL filter policies by exact status match (draft maps to isActive=false, active maps to isActive=true)
+8. WHEN sortBy and order parameters are provided, THE System SHALL sort results accordingly
+9. WHEN page or pageSize parameters are invalid (negative, zero, or pageSize > 100), THE System SHALL return 400 Bad Request
+10. WHEN user lacks admin permissions, THE System SHALL return 401 Unauthorized or 403 Forbidden
+11. THE System SHALL reserve archived status for future use (soft-delete feature)
+
+### Requirement 13: Admin API - Evaluation Runs Listing
+
+**User Story:** As an admin user, I want to view and filter evaluation runs, so that I can audit policy changes, track run progress, and quickly access run details for promote/cancel actions.
+
+#### Acceptance Criteria
+
+1. THE System SHALL expose GET /api/admin/catalog-policies/runs endpoint with query parameters: policyId (string), status (enum: prepared/promoted/canceled/failed/running), page (number, default 1), pageSize (number, default 20, max 100), sortBy (enum: createdAt/finishedAt, default createdAt), order (enum: asc/desc, default desc)
+2. WHEN request is valid, THE System SHALL return response with items array and pagination object containing page, pageSize, total
+3. THE System SHALL include in each run item: runId, policyId, policyName, policyVersion, status, createdAt, finishedAt (nullable), createdBy (object with id and name), hasDiff (boolean), canPromote (boolean), canCancel (boolean)
+4. THE System SHALL compute hasDiff by checking if diff data exists for the run (not based on status alone)
+5. THE System SHALL compute canPromote based on run status and business rules (backend-driven permission)
+6. THE System SHALL set canCancel to true only when status is running or prepared
+7. WHEN policyId parameter is provided, THE System SHALL filter runs by exact policy ID match
+8. WHEN status parameter is provided, THE System SHALL filter runs by exact status match
+9. WHEN finishedAt is null, THE Run SHALL be in running or prepared status
+10. WHEN page, pageSize, or status parameters are invalid, THE System SHALL return 400 Bad Request
+11. WHEN user lacks admin permissions, THE System SHALL return 401 Unauthorized or 403 Forbidden
+
+### Requirement 14: Status Model Alignment
+
+**User Story:** As a developer, I want consistent status enums across policy and run entities, so that I can build reliable state machines and UI components.
+
+#### Acceptance Criteria
+
+1. THE Catalog_Policy SHALL support status values: draft, active, archived
+2. THE Catalog_Evaluation_Run SHALL support status values: running, prepared, promoted, canceled, failed
+3. WHEN run status is running, THE System SHALL allow transition to prepared or failed
+4. WHEN run status is prepared, THE System SHALL allow transition to promoted, canceled, or failed
+5. THE System SHALL NOT allow direct transition from running to promoted
+6. THE System SHALL enforce status transitions via application logic and database constraints
+7. WHEN run completes successfully, THE System SHALL set status to prepared (not completed) to indicate readiness for promotion
+
+
+### Requirement 15: Run Status Model Migration
+
+**User Story:** As a developer, I want consistent run status enums across database and application layers, so that I can implement reliable state machines without confusion.
+
+#### Acceptance Criteria
+
+1. THE System SHALL migrate catalog_evaluation_runs.status enum from legacy values (pending, running, completed, failed) to new values (running, prepared, promoted, canceled, failed)
+2. THE System SHALL remove pending status (runs start directly in running state)
+3. THE System SHALL replace completed status with prepared status (indicates ready for promotion)
+4. THE System SHALL add promoted status (terminal state after successful activation)
+5. THE System SHALL add canceled status (terminal state after user cancellation)
+6. THE System SHALL update all existing runs with status=completed to status=prepared during migration
+7. THE System SHALL ensure no code references legacy status values after migration
+8. THE System SHALL update database constraints and indexes to reflect new status enum

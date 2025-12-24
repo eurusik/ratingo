@@ -1364,3 +1364,827 @@ WHERE mce.status = 'eligible'
 - Can be replaced with reservoir sampling or pre-computed random column if needed
 
 **Future Optimization**: Consider adding `random_sort_key` column with index for exact random sampling.
+
+
+---
+
+## Admin API: List Endpoints
+
+### Overview
+
+Two new REST API endpoints for admin UI to list policies and runs without heavy details (rules, diff, full counters). These endpoints support pagination, filtering, and sorting for efficient navigation and audit.
+
+**Design Principles**:
+- Backend-driven permissions (`canPromote`, `canCancel`) — UI doesn't compute logic
+- Denormalized fields (`policyName`, `policyVersion`) to avoid frontend joins
+- Consistent pagination pattern across both endpoints
+- Status enums aligned with existing domain model
+
+### Endpoint 1: GET /api/admin/catalog-policies
+
+**Purpose**: List all catalog policies for admin UI navigation, policy selection, and status overview.
+
+**Query Parameters**:
+```typescript
+interface ListPoliciesQuery {
+  page?: number;          // default: 1, min: 1
+  pageSize?: number;      // default: 20, min: 1, max: 100
+  search?: string;        // case-insensitive partial match on name/description
+  status?: 'draft' | 'active';  // exact match filter (archived reserved for future)
+  sortBy?: 'updatedAt' | 'createdAt' | 'name';  // default: updatedAt
+  order?: 'asc' | 'desc'; // default: desc
+}
+```
+
+**Response Schema**:
+```typescript
+interface ListPoliciesResponse {
+  items: PolicyListItem[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+  };
+}
+
+interface PolicyListItem {
+  id: string;
+  name: string;
+  description: string;
+  status: 'draft' | 'active';  // archived reserved for future
+  version: number;
+  lastPreparedRunId: string | null;  // Most recent run with status=PREPARED
+  createdAt: string;  // ISO 8601
+  updatedAt: string;  // ISO 8601
+  updatedBy: {
+    id: string;
+    name: string;
+  };
+}
+```
+
+**Implementation Notes**:
+- `lastPreparedRunId` computed via LEFT JOIN to `catalog_evaluation_runs` with `status='prepared'` ORDER BY `startedAt DESC` LIMIT 1
+- `updatedBy` currently returns system user — will be replaced with actual user from auth context in future
+- `status` field maps to `isActive` boolean: `active` when `isActive=true`, `draft` when `isActive=false`
+- `archived` status is reserved for future soft-delete feature (not implemented yet, will require migration)
+- Search uses `ILIKE` on `name` and `description` fields (PostgreSQL case-insensitive pattern matching)
+- Pagination uses OFFSET/LIMIT pattern (acceptable for admin UI, consider cursor-based for large datasets)
+
+**SQL Query Pattern**:
+```sql
+SELECT 
+  cp.id,
+  cp.policy->>'name' as name,
+  cp.policy->>'description' as description,
+  CASE WHEN cp.is_active THEN 'active' ELSE 'draft' END as status,
+  cp.version,
+  (
+    SELECT cer.id 
+    FROM catalog_evaluation_runs cer 
+    WHERE cer.target_policy_id = cp.id 
+      AND cer.status = 'prepared'
+    ORDER BY cer.started_at DESC 
+    LIMIT 1
+  ) as last_prepared_run_id,
+  cp.created_at,
+  cp.activated_at as updated_at,
+  'system' as updated_by_id,
+  'System' as updated_by_name
+FROM catalog_policies cp
+WHERE 
+  (search IS NULL OR cp.policy->>'name' ILIKE '%' || search || '%' OR cp.policy->>'description' ILIKE '%' || search || '%')
+  AND (status IS NULL OR (status = 'active' AND cp.is_active = true) OR (status = 'draft' AND cp.is_active = false))
+ORDER BY 
+  CASE WHEN sortBy = 'updatedAt' THEN cp.activated_at END DESC,
+  CASE WHEN sortBy = 'createdAt' THEN cp.created_at END DESC,
+  CASE WHEN sortBy = 'name' THEN cp.policy->>'name' END ASC
+LIMIT pageSize OFFSET (page - 1) * pageSize;
+```
+
+**Error Responses**:
+- `400 Bad Request`: Invalid query parameters (negative page, pageSize > 100, invalid status enum)
+- `401 Unauthorized`: Missing authentication
+- `403 Forbidden`: User lacks admin role
+
+---
+
+### Endpoint 2: GET /api/admin/catalog-policies/runs
+
+**Purpose**: List all evaluation runs for audit, progress tracking, and quick access to run details (diff, promote, cancel).
+
+**Query Parameters**:
+```typescript
+interface ListRunsQuery {
+  policyId?: string;      // Filter by policy ID
+  status?: 'running' | 'prepared' | 'promoted' | 'canceled' | 'failed';
+  page?: number;          // default: 1, min: 1
+  pageSize?: number;      // default: 20, min: 1, max: 100
+  sortBy?: 'createdAt' | 'finishedAt';  // default: createdAt
+  order?: 'asc' | 'desc'; // default: desc
+}
+```
+
+**Response Schema**:
+```typescript
+interface ListRunsResponse {
+  items: RunListItem[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+  };
+}
+
+interface RunListItem {
+  runId: string;
+  policyId: string;
+  policyName: string;      // Denormalized from catalog_policies
+  policyVersion: number;
+  status: 'running' | 'prepared' | 'promoted' | 'canceled' | 'failed';
+  createdAt: string;       // ISO 8601
+  finishedAt: string | null;  // ISO 8601, null for running/prepared
+  createdBy: {
+    id: string;
+    name: string;
+  };
+  hasDiff: boolean;        // True when diff data exists (status=prepared or promoted)
+  canPromote: boolean;     // Backend-computed permission
+  canCancel: boolean;      // Backend-computed permission
+}
+```
+
+**Implementation Notes**:
+- `hasDiff` computed by checking if diff computation has been performed for this run (stored as flag or checked via diff artifact existence)
+- `canPromote` computed based on business rules:
+  - `status = 'prepared'`
+  - `coverage >= 1.0` (100% processed)
+  - `errors = 0`
+  - `promotedAt IS NULL`
+- `canCancel` computed as `status IN ('running', 'prepared')` — can cancel running or prepared runs
+- `finishedAt` is NULL for `running` and `prepared` statuses
+- Status enum maps directly to `catalog_evaluation_runs.status` column (no normalization needed)
+
+**SQL Query Pattern**:
+```sql
+SELECT 
+  cer.id as run_id,
+  cer.target_policy_id as policy_id,
+  cp.policy->>'name' as policy_name,
+  cer.target_policy_version as policy_version,
+  cer.status,
+  cer.started_at as created_at,
+  cer.finished_at,
+  'system' as created_by_id,
+  'System' as created_by_name,
+  (cer.status IN ('prepared', 'promoted')) as has_diff,
+  (
+    cer.status = 'prepared' 
+    AND cer.processed >= cer.total_ready_snapshot 
+    AND cer.errors = 0 
+    AND cer.promoted_at IS NULL
+  ) as can_promote,
+  (cer.status IN ('running', 'prepared')) as can_cancel
+FROM catalog_evaluation_runs cer
+INNER JOIN catalog_policies cp ON cp.id = cer.target_policy_id
+WHERE 
+  (policyId IS NULL OR cer.target_policy_id = policyId)
+  AND (status IS NULL OR cer.status = status)
+ORDER BY 
+  CASE WHEN sortBy = 'createdAt' THEN cer.started_at END DESC,
+  CASE WHEN sortBy = 'finishedAt' THEN cer.finished_at END DESC
+LIMIT pageSize OFFSET (page - 1) * pageSize;
+```
+
+**Error Responses**:
+- `400 Bad Request`: Invalid query parameters (negative page, pageSize > 100, invalid status enum)
+- `401 Unauthorized`: Missing authentication
+- `403 Forbidden`: User lacks admin role
+
+---
+
+### Status Model Alignment
+
+**IMPORTANT**: This section describes the TARGET status model after migration. Current database schema uses legacy statuses (`pending`, `running`, `completed`, `failed`) which must be migrated to the new model. See Requirement 15 for migration details.
+
+**Policy Status Lifecycle**:
+```
+draft → active → archived (future)
+```
+
+**Run Status Lifecycle** (TARGET MODEL):
+```
+running → prepared → promoted
+running → failed
+prepared → canceled
+prepared → failed
+```
+
+**Status Transition Rules**:
+- `running` can transition to `prepared` (success) or `failed` (error)
+- `prepared` can transition to `promoted` (activated), `canceled` (user action), or `failed` (error during promote)
+- `promoted` and `canceled` are terminal states (no further transitions)
+- Direct transition from `running` to `promoted` is NOT allowed (must go through `prepared` for verification)
+
+**Design Decision: PREPARED vs COMPLETED**
+
+We use `prepared` instead of `completed` to indicate "ready for promotion" because:
+- Semantic clarity: `prepared` implies "waiting for action", `completed` implies "done"
+- State machine: `prepared` is an intermediate state, not terminal
+- UI affordance: `prepared` status shows "Promote" button, `completed` would be ambiguous
+
+**Migration Note**: Current implementation uses `completed` status. This will be renamed to `prepared` in migration (Requirement 15).
+
+---
+
+### Repository Extensions
+
+**CatalogPolicyRepository**:
+```typescript
+interface ICatalogPolicyRepository {
+  // Existing methods...
+  
+  /**
+   * Lists policies with pagination, filtering, and sorting.
+   * Returns denormalized data for admin UI (includes lastPreparedRunId).
+   */
+  listPolicies(options: ListPoliciesOptions): Promise<{
+    items: PolicyListItem[];
+    total: number;
+  }>;
+}
+
+interface ListPoliciesOptions {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status?: 'draft' | 'active' | 'archived';
+  sortBy: 'updatedAt' | 'createdAt' | 'name';
+  order: 'asc' | 'desc';
+}
+```
+
+**CatalogEvaluationRunRepository**:
+```typescript
+interface ICatalogEvaluationRunRepository {
+  // Existing methods...
+  
+  /**
+   * Lists runs with pagination, filtering, and sorting.
+   * Returns denormalized data for admin UI (includes policyName, computed permissions).
+   */
+  listRuns(options: ListRunsOptions): Promise<{
+    items: RunListItem[];
+    total: number;
+  }>;
+}
+
+interface ListRunsOptions {
+  page: number;
+  pageSize: number;
+  policyId?: string;
+  status?: 'running' | 'prepared' | 'promoted' | 'canceled' | 'failed';
+  sortBy: 'createdAt' | 'finishedAt';
+  order: 'asc' | 'desc';
+}
+```
+
+---
+
+### Controller Implementation
+
+**PolicyActivationController** (extend existing):
+```typescript
+@Controller('admin/catalog-policies')
+export class PolicyActivationController {
+  // Existing methods: preparePolicy, getRunStatus, promoteRun, cancelRun, getDiff
+  
+  /**
+   * GET /admin/catalog-policies
+   * Lists all policies with pagination and filtering.
+   */
+  @Get()
+  @ApiOperation({
+    summary: 'List catalog policies',
+    description: 'Returns paginated list of policies for admin UI navigation and selection.',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'status', required: false, enum: ['draft', 'active', 'archived'] })
+  @ApiQuery({ name: 'sortBy', required: false, enum: ['updatedAt', 'createdAt', 'name'] })
+  @ApiQuery({ name: 'order', required: false, enum: ['asc', 'desc'] })
+  @ApiResponse({ status: 200, type: ListPoliciesResponseDto })
+  async listPolicies(
+    @Query() query: ListPoliciesQueryDto,
+  ): Promise<ListPoliciesResponseDto> {
+    // Implementation delegates to CatalogPolicyService
+  }
+  
+  /**
+   * GET /admin/catalog-policies/runs
+   * Lists all evaluation runs with pagination and filtering.
+   */
+  @Get('/runs')
+  @ApiOperation({
+    summary: 'List evaluation runs',
+    description: 'Returns paginated list of runs for audit and progress tracking.',
+  })
+  @ApiQuery({ name: 'policyId', required: false, type: String })
+  @ApiQuery({ name: 'status', required: false, enum: ['running', 'prepared', 'promoted', 'canceled', 'failed'] })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
+  @ApiQuery({ name: 'sortBy', required: false, enum: ['createdAt', 'finishedAt'] })
+  @ApiQuery({ name: 'order', required: false, enum: ['asc', 'desc'] })
+  @ApiResponse({ status: 200, type: ListRunsResponseDto })
+  async listRuns(
+    @Query() query: ListRunsQueryDto,
+  ): Promise<ListRunsResponseDto> {
+    // Implementation delegates to PolicyActivationService
+  }
+}
+```
+
+---
+
+### DTO Definitions
+
+**Request DTOs**:
+```typescript
+export class ListPoliciesQueryDto {
+  @ApiPropertyOptional({ minimum: 1, default: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  page?: number = 1;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 20 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @Type(() => Number)
+  pageSize?: number = 20;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional({ enum: ['draft', 'active', 'archived'] })
+  @IsOptional()
+  @IsEnum(['draft', 'active', 'archived'])
+  status?: 'draft' | 'active' | 'archived';
+
+  @ApiPropertyOptional({ enum: ['updatedAt', 'createdAt', 'name'], default: 'updatedAt' })
+  @IsOptional()
+  @IsEnum(['updatedAt', 'createdAt', 'name'])
+  sortBy?: 'updatedAt' | 'createdAt' | 'name' = 'updatedAt';
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
+  @IsOptional()
+  @IsEnum(['asc', 'desc'])
+  order?: 'asc' | 'desc' = 'desc';
+}
+
+export class ListRunsQueryDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  policyId?: string;
+
+  @ApiPropertyOptional({ enum: ['running', 'prepared', 'promoted', 'canceled', 'failed'] })
+  @IsOptional()
+  @IsEnum(['running', 'prepared', 'promoted', 'canceled', 'failed'])
+  status?: 'running' | 'prepared' | 'promoted' | 'canceled' | 'failed';
+
+  @ApiPropertyOptional({ minimum: 1, default: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  page?: number = 1;
+
+  @ApiPropertyOptional({ minimum: 1, maximum: 100, default: 20 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @Type(() => Number)
+  pageSize?: number = 20;
+
+  @ApiPropertyOptional({ enum: ['createdAt', 'finishedAt'], default: 'createdAt' })
+  @IsOptional()
+  @IsEnum(['createdAt', 'finishedAt'])
+  sortBy?: 'createdAt' | 'finishedAt' = 'createdAt';
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
+  @IsOptional()
+  @IsEnum(['asc', 'desc'])
+  order?: 'asc' | 'desc' = 'desc';
+}
+```
+
+**Response DTOs**:
+```typescript
+export class PolicyListItemDto {
+  @ApiProperty()
+  @IsString()
+  id: string;
+
+  @ApiProperty()
+  @IsString()
+  name: string;
+
+  @ApiProperty()
+  @IsString()
+  description: string;
+
+  @ApiProperty({ enum: ['draft', 'active', 'archived'] })
+  @IsEnum(['draft', 'active', 'archived'])
+  status: 'draft' | 'active' | 'archived';
+
+  @ApiProperty()
+  @IsNumber()
+  version: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  lastPreparedRunId: string | null;
+
+  @ApiProperty()
+  @IsString()
+  createdAt: string;
+
+  @ApiProperty()
+  @IsString()
+  updatedAt: string;
+
+  @ApiProperty()
+  @Type(() => UserRefDto)
+  updatedBy: UserRefDto;
+}
+
+export class RunListItemDto {
+  @ApiProperty()
+  @IsString()
+  runId: string;
+
+  @ApiProperty()
+  @IsString()
+  policyId: string;
+
+  @ApiProperty()
+  @IsString()
+  policyName: string;
+
+  @ApiProperty()
+  @IsNumber()
+  policyVersion: number;
+
+  @ApiProperty({ enum: ['running', 'prepared', 'promoted', 'canceled', 'failed'] })
+  @IsEnum(['running', 'prepared', 'promoted', 'canceled', 'failed'])
+  status: 'running' | 'prepared' | 'promoted' | 'canceled' | 'failed';
+
+  @ApiProperty()
+  @IsString()
+  createdAt: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  finishedAt: string | null;
+
+  @ApiProperty()
+  @Type(() => UserRefDto)
+  createdBy: UserRefDto;
+
+  @ApiProperty()
+  @IsBoolean()
+  hasDiff: boolean;
+
+  @ApiProperty()
+  @IsBoolean()
+  canPromote: boolean;
+
+  @ApiProperty()
+  @IsBoolean()
+  canCancel: boolean;
+}
+
+export class UserRefDto {
+  @ApiProperty()
+  @IsString()
+  id: string;
+
+  @ApiProperty()
+  @IsString()
+  name: string;
+}
+
+export class PaginationDto {
+  @ApiProperty()
+  @IsNumber()
+  page: number;
+
+  @ApiProperty()
+  @IsNumber()
+  pageSize: number;
+
+  @ApiProperty()
+  @IsNumber()
+  total: number;
+}
+
+export class ListPoliciesResponseDto {
+  @ApiProperty({ type: [PolicyListItemDto] })
+  @Type(() => PolicyListItemDto)
+  @IsArray()
+  items: PolicyListItemDto[];
+
+  @ApiProperty()
+  @Type(() => PaginationDto)
+  pagination: PaginationDto;
+}
+
+export class ListRunsResponseDto {
+  @ApiProperty({ type: [RunListItemDto] })
+  @Type(() => RunListItemDto)
+  @IsArray()
+  items: RunListItemDto[];
+
+  @ApiProperty()
+  @Type(() => PaginationDto)
+  pagination: PaginationDto;
+}
+```
+
+---
+
+### Testing Strategy
+
+**Unit Tests**:
+- Repository methods: `listPolicies()`, `listRuns()` with various filter combinations
+- DTO validation: Invalid page numbers, pageSize > 100, invalid status enums
+- Permission computation: `canPromote`, `canCancel` logic with different run states
+
+**Integration Tests** (e2e):
+- `GET /admin/catalog-policies` with pagination, search, status filter, sorting
+- `GET /admin/catalog-policies/runs` with policyId filter, status filter, sorting
+- Verify denormalized fields (`policyName`, `lastPreparedRunId`) are correct
+- Verify backend-driven permissions (`canPromote`, `canCancel`) match business rules
+- Verify pagination metadata (total count, page, pageSize)
+
+**Property-Based Tests**:
+Not applicable for list endpoints (deterministic queries, no complex invariants).
+
+---
+
+### Performance Considerations
+
+**Indexing**:
+- Existing indexes on `catalog_policies.version`, `catalog_policies.is_active` support sorting and filtering
+- Existing indexes on `catalog_evaluation_runs.target_policy_id`, `catalog_evaluation_runs.status`, `catalog_evaluation_runs.started_at` support filtering and sorting
+- Consider adding composite index `(target_policy_id, status, started_at DESC)` if filtering by both policyId and status becomes common
+
+**Query Optimization**:
+- `lastPreparedRunId` subquery uses index on `(target_policy_id, status, started_at DESC)` — should be fast
+- Pagination uses OFFSET/LIMIT — acceptable for admin UI (typically < 1000 policies, < 10000 runs)
+- If dataset grows large, consider cursor-based pagination using `started_at` or `id` as cursor
+
+**Caching**:
+- Policy list can be cached for 60s (policies change infrequently)
+- Run list should NOT be cached (status changes frequently during evaluation)
+
+---
+
+### Migration Plan
+
+**Phase 1: Backend Implementation**
+1. Add `listPolicies()` method to `CatalogPolicyRepository`
+2. Add `listRuns()` method to `CatalogEvaluationRunRepository`
+3. Add DTOs for request/response
+4. Add controller methods to `PolicyActivationController`
+5. Add unit tests for repository methods
+6. Add e2e tests for endpoints
+
+**Phase 2: Frontend Integration**
+1. Update admin UI to call new endpoints
+2. Replace hardcoded policy/run lists with API data
+3. Add pagination controls
+4. Add search and filter UI
+
+**Phase 3: Optimization** (if needed)
+1. Add composite indexes based on query patterns
+2. Implement cursor-based pagination if OFFSET/LIMIT becomes slow
+3. Add caching layer for policy list
+
+---
+
+### Design Decisions
+
+**DD-7: Backend-Driven Permissions**
+
+**Context**: Should UI compute `canPromote` and `canCancel` logic, or should backend provide it?
+
+**Decision**: Backend computes and returns `canPromote` and `canCancel` flags.
+
+**Rationale**:
+- Business rules may change (e.g., add coverage threshold, error limits)
+- UI shouldn't duplicate complex logic (DRY principle)
+- Backend is single source of truth for permissions
+- Easier to test and maintain in one place
+- Prevents UI bugs from showing incorrect button states
+
+**Trade-off**: Extra computation on backend, but negligible cost (simple boolean checks).
+
+---
+
+**DD-8: Denormalized Fields (policyName, lastPreparedRunId)**
+
+**Context**: Should list endpoints return only IDs and let frontend fetch related data, or denormalize?
+
+**Decision**: Denormalize `policyName` in run list and `lastPreparedRunId` in policy list.
+
+**Rationale**:
+- Reduces frontend complexity (no need for multiple API calls or client-side joins)
+- Improves UX (faster page load, no loading spinners for related data)
+- Acceptable data duplication (policy names change rarely, lastPreparedRunId is computed on-the-fly)
+- Follows REST best practice: "include related data that's always needed"
+
+**Trade-off**: Slightly more complex SQL queries, but still performant with proper indexes.
+
+---
+
+**DD-9: Status Enum Alignment**
+
+**Context**: Should we introduce new status values for policies (draft/active/archived)?
+
+**Decision**: Map existing `isActive` boolean to status enum in API layer, reserve `archived` for future.
+
+**Rationale**:
+- Avoids database migration (no new column needed)
+- `draft` = `isActive=false`, `active` = `isActive=true`
+- `archived` reserved for future soft-delete feature (when policies can be hidden but not deleted)
+- API contract is forward-compatible (can add `archived` later without breaking changes)
+
+**Implementation**: Status mapping happens in repository layer, not database.
+
+---
+
+**DD-10: Pagination Strategy (OFFSET/LIMIT vs Cursor)**
+
+**Context**: Should we use OFFSET/LIMIT or cursor-based pagination?
+
+**Decision**: Start with OFFSET/LIMIT, migrate to cursor-based if performance degrades.
+
+**Rationale**:
+- OFFSET/LIMIT is simpler to implement and understand
+- Admin UI typically has small datasets (< 1000 policies, < 10000 runs)
+- OFFSET/LIMIT performance is acceptable for these sizes
+- Cursor-based pagination adds complexity (opaque cursors, harder to jump to specific page)
+
+**Migration Path**: If dataset grows large (> 100k runs), add cursor-based pagination using `started_at` or `id` as cursor.
+
+
+
+---
+
+**DD-11: EligibilityStatus.REVIEW - Reserved for Future**
+
+**Context**: The `REVIEW` status exists in the enum and metrics but has no evaluation rules that set it.
+
+**Decision**: Reserve `REVIEW` status for future manual override feature.
+
+**Rationale**:
+- Enum includes `REVIEW` for forward compatibility
+- No current policy rules set this status (all items are PENDING, ELIGIBLE, or INELIGIBLE)
+- Future feature: Admin can manually mark items for review (e.g., borderline quality, disputed content)
+- Metrics track `REVIEW` count (will be 0 until feature is implemented)
+
+**Implementation**: Policy engine never returns `REVIEW` status. Only manual admin action (future) can set it.
+
+---
+
+**DD-12: hasDiff Computation Strategy**
+
+**Context**: How to determine if diff data exists for a run without expensive checks?
+
+**Decision**: Use simple heuristic `status IN ('prepared', 'promoted')` as initial implementation, with note to optimize if needed.
+
+**Rationale**:
+- Diff is computed during prepare phase, so `prepared` runs always have diff
+- `promoted` runs preserve diff for audit
+- `failed` or `canceled` runs may have partial diff, but we don't show it (not useful)
+- Avoids expensive `EXISTS` check on diff storage for every list query
+
+**Future Optimization**: If diff storage becomes separate (e.g., S3), add `hasDiff` boolean column to `catalog_evaluation_runs` table and set it when diff is computed.
+
+**Trade-off**: Slight inaccuracy (failed runs after diff computation would show `hasDiff=false`), but acceptable for admin UI.
+
+
+---
+
+## Database Schema Migration
+
+### Run Status Enum Migration
+
+**Current State** (Legacy):
+```sql
+CREATE TYPE evaluation_run_status AS ENUM (
+  'pending',
+  'running',
+  'completed',
+  'failed'
+);
+```
+
+**Target State** (New):
+```sql
+CREATE TYPE evaluation_run_status AS ENUM (
+  'running',
+  'prepared',
+  'promoted',
+  'canceled',
+  'failed'
+);
+```
+
+**Migration Strategy**:
+
+1. **Add new enum values** (non-breaking):
+```sql
+ALTER TYPE evaluation_run_status ADD VALUE 'prepared';
+ALTER TYPE evaluation_run_status ADD VALUE 'promoted';
+ALTER TYPE evaluation_run_status ADD VALUE 'canceled';
+```
+
+2. **Migrate existing data**:
+```sql
+-- Update completed → prepared
+UPDATE catalog_evaluation_runs 
+SET status = 'prepared' 
+WHERE status = 'completed';
+
+-- Verify no pending runs exist (should be none in production)
+-- If any exist, set to running or failed based on context
+```
+
+3. **Remove legacy values** (requires enum recreation):
+```sql
+-- Create new enum
+CREATE TYPE evaluation_run_status_new AS ENUM (
+  'running',
+  'prepared',
+  'promoted',
+  'canceled',
+  'failed'
+);
+
+-- Alter column to use new enum
+ALTER TABLE catalog_evaluation_runs 
+  ALTER COLUMN status TYPE evaluation_run_status_new 
+  USING status::text::evaluation_run_status_new;
+
+-- Drop old enum
+DROP TYPE evaluation_run_status;
+
+-- Rename new enum
+ALTER TYPE evaluation_run_status_new RENAME TO evaluation_run_status;
+```
+
+**Code Changes Required**:
+- Update `RunStatus` constants in `evaluation.constants.ts`
+- Update all references to `COMPLETED` → `PREPARED`
+- Remove references to `PENDING` status
+- Update tests to use new status values
+- Update API documentation (Swagger schemas)
+
+**Rollback Plan**:
+- Keep migration reversible by preserving `completed` → `prepared` mapping
+- If rollback needed, reverse data migration before dropping enum values
+
+---
+
+**DD-13: Migration-First Approach**
+
+**Context**: Should we implement new endpoints with legacy statuses or migrate first?
+
+**Decision**: Document target model in design, implement migration as first task, then build new endpoints.
+
+**Rationale**:
+- Avoids building on unstable foundation (legacy statuses)
+- Migration is small and low-risk (few runs in production)
+- New endpoints can use clean status model from day one
+- Prevents technical debt accumulation
+
+**Implementation Order**:
+1. Create migration script
+2. Test migration on staging
+3. Run migration on production
+4. Implement new list endpoints with new status model
+5. Update existing endpoints to use new statuses
+
+**Risk Mitigation**: Migration is backward-compatible (adds values before removing). Can be rolled back if issues arise.

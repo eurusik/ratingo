@@ -2,12 +2,13 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 import { CreditsMapper } from '../mappers/credits.mapper';
 import { ImageMapper } from '../mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
  * Fetches complete movie details by slug.
@@ -28,9 +29,10 @@ export class MovieDetailsQuery {
 
   /**
    * Executes the movie details query.
+   * Returns null for INELIGIBLE or PENDING media (404 behavior).
    *
    * @param {string} slug - URL-friendly movie identifier
-   * @returns {Promise<any | null>} Full movie details or null if not found
+   * @returns {Promise<any | null>} Full movie details or null if not found/not eligible
    * @throws {DatabaseException} When database query fails
    */
   async execute(slug: string): Promise<any | null> {
@@ -74,9 +76,23 @@ export class MovieDetailsQuery {
           totalWatchers: schema.mediaStats.totalWatchers,
         })
         .from(schema.mediaItems)
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+        )
         .leftJoin(schema.movies, eq(schema.mediaItems.id, schema.movies.mediaItemId))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-        .where(eq(schema.mediaItems.slug, slug))
+        .where(
+          and(
+            eq(schema.mediaItems.slug, slug),
+            // Eligibility filter: only show ELIGIBLE items
+            eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+            // Ready filter: only show items with ready ingestion status
+            eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+            // Not deleted filter
+            isNull(schema.mediaItems.deletedAt),
+          ),
+        )
         .limit(1);
 
       if (result.length === 0) return null;

@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq, gte, lte, desc, isNotNull, inArray, and, exists, sql } from 'drizzle-orm';
+import { eq, gte, lte, desc, isNotNull, inArray, and, exists, sql, isNull } from 'drizzle-orm';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import type {
@@ -17,6 +17,7 @@ import {
   SORT_ORDER,
   VOTE_SOURCE,
 } from '../../presentation/dtos/catalog-list-query.dto';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 /**
  * Options for trending movies query.
@@ -90,6 +91,7 @@ export class TrendingMoviesQuery {
 
   /**
    * Executes the trending movies query.
+   * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
    * @param {TrendingMoviesOptions} options - Query options (limit, offset, filters)
    * @returns {Promise<any[]>} List of trending movies with stats and genres
@@ -111,7 +113,15 @@ export class TrendingMoviesQuery {
     } = options;
 
     try {
-      const conditions: any[] = [isNotNull(schema.mediaStats.popularityScore)];
+      const conditions: any[] = [
+        isNotNull(schema.mediaStats.popularityScore),
+        // Eligibility filter: only show ELIGIBLE items
+        eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+        // Ready filter: only show items with ready ingestion status
+        eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+        // Not deleted filter
+        isNull(schema.mediaItems.deletedAt),
+      ];
 
       if (minRatingo !== undefined) {
         conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
@@ -170,6 +180,10 @@ export class TrendingMoviesQuery {
         .select(this.selectFields)
         .from(schema.movies)
         .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+        )
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(and(...conditions))
         .orderBy(...this.buildOrder(sort, order))
@@ -257,6 +271,10 @@ export class TrendingMoviesQuery {
       .select({ total: sql<number>`count(*)` })
       .from(schema.movies)
       .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+      .innerJoin(
+        schema.mediaCatalogEvaluations,
+        eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+      )
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(and(...conditions));
     return Number(total ?? 0);

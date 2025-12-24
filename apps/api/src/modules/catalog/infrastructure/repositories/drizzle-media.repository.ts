@@ -339,6 +339,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
   /**
    * Searches for media items using trigram similarity (pg_trgm).
    * Supports fuzzy matching and works well with any language including Ukrainian.
+   * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    */
   async search(query: string, limit: number): Promise<LocalSearchResult[]> {
     try {
@@ -359,9 +360,17 @@ export class DrizzleMediaRepository implements IMediaRepository {
           ingestionStatus: schema.mediaItems.ingestionStatus,
         })
         .from(schema.mediaItems)
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+        )
         .where(
           and(
             sql`${schema.mediaItems.deletedAt} IS NULL`,
+            // Eligibility filter: only show ELIGIBLE items
+            eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+            // Ready filter: only show items with ready ingestion status
+            eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
             sql`(
               ${schema.mediaItems.title} ILIKE ${likePattern}
               OR ${schema.mediaItems.originalTitle} ILIKE ${likePattern}

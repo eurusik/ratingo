@@ -25,25 +25,58 @@ export const DIFF_STATUS_NONE = 'none' as const;
 
 /**
  * Evaluation Run Status Values
+ *
+ * Status lifecycle: running → prepared → promoted | cancelled | failed
+ *
+ * - RUNNING: Evaluation in progress
+ * - PREPARED: Evaluation complete, ready for promotion (replaces legacy 'completed'/'success')
+ * - PROMOTED: Policy activated, terminal state
+ * - CANCELLED: User cancelled, terminal state
+ * - FAILED: Error occurred, terminal state
  */
 export const RunStatus = {
-  PENDING: 'pending',
   RUNNING: 'running',
-  SUCCESS: 'success',
+  PREPARED: 'prepared',
   FAILED: 'failed',
   CANCELLED: 'cancelled',
   PROMOTED: 'promoted',
-  /** Legacy status - mapped to SUCCESS in read layer */
+  /** @deprecated Legacy status - use PREPARED instead. Kept for backward compatibility during migration. */
+  PENDING: 'pending',
+  /** @deprecated Legacy status - use PREPARED instead. Kept for backward compatibility during migration. */
+  SUCCESS: 'success',
+  /** @deprecated Legacy status - use PREPARED instead. Kept for backward compatibility during migration. */
   COMPLETED: 'completed',
 } as const;
 
 export type RunStatusType = (typeof RunStatus)[keyof typeof RunStatus];
 
+/** Active (non-deprecated) run status values */
+export type ActiveRunStatusType = 'running' | 'prepared' | 'failed' | 'cancelled' | 'promoted';
+
 /** Run statuses that indicate the run is finished and can be diffed */
-export const DIFFABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.SUCCESS, RunStatus.PROMOTED];
+export const DIFFABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.PREPARED, RunStatus.PROMOTED];
 
 /** Run statuses that indicate the run can be cancelled */
-export const CANCELLABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.RUNNING];
+export const CANCELLABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.RUNNING, RunStatus.PREPARED];
+
+/** Run statuses that indicate the run can be promoted */
+export const PROMOTABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.PREPARED];
+
+/**
+ * Normalizes legacy status values to current status values.
+ * Use this when reading from database to handle legacy data.
+ */
+export function normalizeRunStatus(status: string): ActiveRunStatusType {
+  switch (status) {
+    case 'pending':
+      return 'running';
+    case 'completed':
+    case 'success':
+      return 'prepared';
+    default:
+      return status as ActiveRunStatusType;
+  }
+}
 
 /**
  * Evaluation Reason Keys

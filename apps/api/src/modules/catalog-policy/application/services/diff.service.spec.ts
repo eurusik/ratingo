@@ -65,7 +65,7 @@ describe('DiffService', () => {
       await expect(service.computeDiff('non-existent')).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException when run is not success or promoted', async () => {
+    it('should throw BadRequestException when run is not prepared or promoted', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
         status: 'running',
@@ -75,10 +75,10 @@ describe('DiffService', () => {
       await expect(service.computeDiff('run-1')).rejects.toThrow(BadRequestException);
     });
 
-    it('should allow diff for success status', async () => {
+    it('should allow diff for prepared status', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         targetPolicyVersion: 2,
       });
       mockPolicyRepository.findActive.mockResolvedValue({
@@ -137,7 +137,7 @@ describe('DiffService', () => {
     it('should handle no active policy (first policy)', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         targetPolicyVersion: 1,
       });
       mockPolicyRepository.findActive.mockResolvedValue(null);
@@ -161,7 +161,7 @@ describe('DiffService', () => {
     it('should return counts from database', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         targetPolicyVersion: 2,
       });
       mockPolicyRepository.findActive.mockResolvedValue({
@@ -234,7 +234,7 @@ describe('DiffService', () => {
     it('should return sample items', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         targetPolicyVersion: 2,
       });
       mockPolicyRepository.findActive.mockResolvedValue({
@@ -286,7 +286,7 @@ describe('DiffService', () => {
     it('should respect sampleSize parameter', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         targetPolicyVersion: 2,
       });
       mockPolicyRepository.findActive.mockResolvedValue({

@@ -169,7 +169,7 @@ export class PolicyActivationService {
     // Calculate readyToPromote and blockingReasons
     const blockingReasons: BlockingReason[] = [];
 
-    if (run.status !== RunStatusEnum.SUCCESS) {
+    if (run.status !== RunStatusEnum.PREPARED) {
       blockingReasons.push('RUN_NOT_SUCCESS');
     }
 
@@ -210,7 +210,7 @@ export class PolicyActivationService {
 
   /**
    * Phase 2: Promote run to activate policy
-   * Verifies run is SUCCESS and meets thresholds, then atomically switches active policy.
+   * Verifies run is PREPARED and meets thresholds, then atomically switches active policy.
    *
    * @param runId - Run ID to promote
    * @param options - Coverage and error thresholds
@@ -229,11 +229,11 @@ export class PolicyActivationService {
       return { success: false, error: `Run ${runId} not found` };
     }
 
-    // 2. Verify status=SUCCESS
-    if (run.status !== RunStatusEnum.SUCCESS) {
+    // 2. Verify status=PREPARED
+    if (run.status !== RunStatusEnum.PREPARED) {
       return {
         success: false,
-        error: `Run status is ${run.status}, expected ${RunStatusEnum.SUCCESS}`,
+        error: `Run status is ${run.status}, expected ${RunStatusEnum.PREPARED}`,
       };
     }
 

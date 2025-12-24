@@ -2,7 +2,7 @@
  * Catalog Evaluation Run Repository Tests
  *
  * Unit tests for repository methods including:
- * - normalizeStatus (completed → success mapping)
+ * - normalizeStatus (legacy status mapping: completed/success → prepared, pending → running)
  * - incrementCounters (atomic SQL operations)
  * - recordError (atomic error recording)
  *
@@ -71,25 +71,36 @@ describe('CatalogEvaluationRunRepository', () => {
   describe('normalizeStatus', () => {
     /**
      * Tests for legacy status mapping.
-     * 'completed' (legacy) should be mapped to 'success' (current).
+     * - 'completed' (legacy) → 'prepared' (current)
+     * - 'success' (legacy) → 'prepared' (current)
+     * - 'pending' (legacy) → 'running' (current)
      */
 
-    it('should map "completed" to "success"', async () => {
+    it('should map "completed" to "prepared"', async () => {
       const mockRow = createMockRow({ status: 'completed' });
       mockDb.limit.mockResolvedValue([mockRow]);
 
       const result = await repository.findById('run-123');
 
-      expect(result?.status).toBe('success');
+      expect(result?.status).toBe('prepared');
     });
 
-    it('should keep "success" as "success"', async () => {
+    it('should map "success" to "prepared"', async () => {
       const mockRow = createMockRow({ status: 'success' });
       mockDb.limit.mockResolvedValue([mockRow]);
 
       const result = await repository.findById('run-123');
 
-      expect(result?.status).toBe('success');
+      expect(result?.status).toBe('prepared');
+    });
+
+    it('should map "pending" to "running"', async () => {
+      const mockRow = createMockRow({ status: 'pending' });
+      mockDb.limit.mockResolvedValue([mockRow]);
+
+      const result = await repository.findById('run-123');
+
+      expect(result?.status).toBe('running');
     });
 
     it('should keep "running" as "running"', async () => {
@@ -99,6 +110,15 @@ describe('CatalogEvaluationRunRepository', () => {
       const result = await repository.findById('run-123');
 
       expect(result?.status).toBe('running');
+    });
+
+    it('should keep "prepared" as "prepared"', async () => {
+      const mockRow = createMockRow({ status: 'prepared' });
+      mockDb.limit.mockResolvedValue([mockRow]);
+
+      const result = await repository.findById('run-123');
+
+      expect(result?.status).toBe('prepared');
     });
 
     it('should keep "cancelled" as "cancelled"', async () => {

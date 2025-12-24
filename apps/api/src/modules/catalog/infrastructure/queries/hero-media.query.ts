@@ -2,8 +2,9 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq, desc, and, lte, isNotNull, gte, inArray } from 'drizzle-orm';
+import { eq, desc, and, lte, isNotNull, gte, inArray, isNull } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { ImageMapper } from '../mappers/image.mapper';
 import {
   HERO_MIN_POPULARITY_SCORE,
@@ -40,6 +41,7 @@ export class HeroMediaQuery {
 
   /**
    * Executes the hero media query.
+   * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
    * @param {HeroMediaOptions} options - Query options (limit, optional type filter)
    * @returns {Promise<HeroMediaItem[]>} List of hero-worthy media items
@@ -56,6 +58,12 @@ export class HeroMediaQuery {
         isNotNull(schema.mediaItems.backdropPath),
         gte(schema.mediaStats.qualityScore, HERO_MIN_QUALITY_SCORE),
         gte(schema.mediaStats.popularityScore, HERO_MIN_POPULARITY_SCORE),
+        // Eligibility filter: only show ELIGIBLE items
+        eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+        // Ready filter: only show items with ready ingestion status
+        eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+        // Not deleted filter
+        isNull(schema.mediaItems.deletedAt),
       ];
 
       if (type) {
@@ -90,6 +98,10 @@ export class HeroMediaQuery {
           ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
         })
         .from(schema.mediaItems)
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+        )
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(and(...whereConditions))
         .orderBy(desc(schema.mediaStats.popularityScore), desc(schema.mediaStats.ratingoScore))

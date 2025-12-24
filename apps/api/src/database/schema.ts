@@ -46,13 +46,15 @@ export const eligibilityStatusEnum = pgEnum('eligibility_status', [
   'review',
 ]);
 export const evaluationRunStatusEnum = pgEnum('evaluation_run_status', [
-  'pending',
   'running',
-  'completed', // Legacy, use 'success' for new runs
+  'prepared',
   'failed',
-  'success',
   'cancelled',
   'promoted',
+  // Legacy values - kept for backward compatibility during migration
+  'pending', // @deprecated - use 'running'
+  'completed', // @deprecated - use 'prepared'
+  'success', // @deprecated - use 'prepared'
 ]);
 
 // --- SHARED TYPES ---

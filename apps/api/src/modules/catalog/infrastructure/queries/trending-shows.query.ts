@@ -40,6 +40,7 @@ export class TrendingShowsQuery {
 
   /**
    * Executes the trending shows query.
+   * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
    * @param {TrendingShowsOptions} options - Query options (limit, offset, filters)
    * @returns {Promise<WithTotal<TrendingShowItem>>} List of trending shows with stats and progress
@@ -61,7 +62,14 @@ export class TrendingShowsQuery {
     } = options;
 
     try {
-      const whereConditions: SQL[] = [sql`mi.type = ${MediaType.SHOW}`, sql`mi.deleted_at IS NULL`];
+      const whereConditions: SQL[] = [
+        sql`mi.type = ${MediaType.SHOW}`,
+        sql`mi.deleted_at IS NULL`,
+        // Eligibility filter: only show ELIGIBLE items
+        sql`mce.status = 'eligible'`,
+        // Ready filter: only show items with ready ingestion status
+        sql`mi.ingestion_status = ${IngestionStatus.READY}`,
+      ];
 
       if (minRatingo !== undefined) {
         whereConditions.push(sql`ms.ratingo_score >= ${minRatingo}`);
@@ -150,6 +158,7 @@ export class TrendingShowsQuery {
 
         FROM ${schema.mediaItems} mi
         JOIN ${schema.shows} s ON s.media_item_id = mi.id
+        JOIN ${schema.mediaCatalogEvaluations} mce ON mce.media_item_id = mi.id
         LEFT JOIN ${schema.mediaStats} ms ON ms.media_item_id = mi.id
         
         LEFT JOIN LATERAL (
@@ -173,6 +182,7 @@ export class TrendingShowsQuery {
         SELECT COUNT(*)::int AS total
         FROM ${schema.mediaItems} mi
         JOIN ${schema.shows} s ON s.media_item_id = mi.id
+        JOIN ${schema.mediaCatalogEvaluations} mce ON mce.media_item_id = mi.id
         LEFT JOIN ${schema.mediaStats} ms ON ms.media_item_id = mi.id
         WHERE ${whereSql}
       `;

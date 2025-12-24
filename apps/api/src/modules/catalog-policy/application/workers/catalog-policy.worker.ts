@@ -115,9 +115,9 @@ export class CatalogPolicyWorker extends WorkerHost {
       const batch = await this.fetchBatch(run.snapshotCutoff!, batchSize, cursor);
 
       if (batch.length === 0) {
-        // All items processed - mark run as SUCCESS
+        // All items processed - mark run as PREPARED (ready for promotion)
         await this.runRepository.update(runId, {
-          status: RunStatus.SUCCESS,
+          status: RunStatus.PREPARED,
           finishedAt: new Date(),
         });
 

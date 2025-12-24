@@ -93,7 +93,7 @@ describe('Policy Activation Flow (e2e)', () => {
       expect(res.body.data.coverage).toBe(0.5); // 50/100
     });
 
-    it('should show readyToPromote when run is successful', async () => {
+    it('should show readyToPromote when run is prepared', async () => {
       const policy = await ctx.policyRepo.create(createTestPolicy());
 
       const run = await ctx.runRepo.create({
@@ -103,9 +103,9 @@ describe('Policy Activation Flow (e2e)', () => {
         snapshotCutoff: new Date(),
       });
 
-      // Complete the run
+      // Complete the run - mark as PREPARED (ready for promotion)
       await ctx.runRepo.update(run.id, {
-        status: RunStatus.SUCCESS,
+        status: RunStatus.PREPARED,
         finishedAt: new Date(),
       });
       await ctx.runRepo.incrementCounters(run.id, {
@@ -116,7 +116,7 @@ describe('Policy Activation Flow (e2e)', () => {
 
       const res = await ctx.get(`/runs/${run.id}`).expect(200);
 
-      expect(res.body.data.status).toBe('success');
+      expect(res.body.data.status).toBe('prepared');
       expect(res.body.data.readyToPromote).toBe(true);
       expect(res.body.data.coverage).toBe(1);
     });
@@ -144,7 +144,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const res = await ctx.post(`/runs/${run.id}/promote`).expect(201);
 
       expect(res.body.data.success).toBe(false);
-      expect(res.body.data.error).toContain('expected success');
+      expect(res.body.data.error).toContain('expected prepared');
     });
 
     it('should reject promotion with insufficient coverage', async () => {
@@ -157,7 +157,7 @@ describe('Policy Activation Flow (e2e)', () => {
         snapshotCutoff: new Date(),
       });
 
-      await ctx.runRepo.update(run.id, { status: RunStatus.SUCCESS });
+      await ctx.runRepo.update(run.id, { status: RunStatus.PREPARED });
       await ctx.runRepo.incrementCounters(run.id, { processed: 50 }); // Only 50%
 
       const res = await ctx.post(`/runs/${run.id}/promote`).expect(201);
@@ -166,7 +166,7 @@ describe('Policy Activation Flow (e2e)', () => {
       expect(res.body.data.error).toContain('Coverage');
     });
 
-    it('should promote successful run and activate policy', async () => {
+    it('should promote prepared run and activate policy', async () => {
       // Create active policy v1
       const v1 = await ctx.policyRepo.create(
         createTestPolicy({ allowedCountries: ['US'], allowedLanguages: ['en'] }),
@@ -178,7 +178,7 @@ describe('Policy Activation Flow (e2e)', () => {
         createTestPolicy({ allowedCountries: ['UA', 'US'], allowedLanguages: ['uk', 'en'] }),
       );
 
-      // Create successful run for v2
+      // Create prepared run for v2
       const run = await ctx.runRepo.create({
         targetPolicyId: v2.id,
         targetPolicyVersion: v2.version,
@@ -186,7 +186,7 @@ describe('Policy Activation Flow (e2e)', () => {
         snapshotCutoff: new Date(),
       });
 
-      await ctx.runRepo.update(run.id, { status: RunStatus.SUCCESS });
+      await ctx.runRepo.update(run.id, { status: RunStatus.PREPARED });
       await ctx.runRepo.incrementCounters(run.id, {
         processed: 100,
         eligible: 80,
@@ -218,7 +218,7 @@ describe('Policy Activation Flow (e2e)', () => {
       expect(res.body.data.error).toContain('not found');
     });
 
-    it('should reject cancellation of non-running run', async () => {
+    it('should reject cancellation of non-cancellable run', async () => {
       const policy = await ctx.policyRepo.create(createTestPolicy());
 
       const run = await ctx.runRepo.create({
@@ -228,7 +228,8 @@ describe('Policy Activation Flow (e2e)', () => {
         snapshotCutoff: new Date(),
       });
 
-      await ctx.runRepo.update(run.id, { status: RunStatus.SUCCESS });
+      // Mark as promoted (terminal state, cannot cancel)
+      await ctx.runRepo.update(run.id, { status: RunStatus.PROMOTED });
 
       const res = await ctx.post(`/runs/${run.id}/cancel`).expect(201);
 
@@ -245,6 +246,29 @@ describe('Policy Activation Flow (e2e)', () => {
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
+
+      const res = await ctx.post(`/runs/${run.id}/cancel`).expect(201);
+
+      expect(res.body.data.success).toBe(true);
+      expect(res.body.data.message).toContain('cancelled');
+
+      // Verify run is cancelled
+      const updatedRun = await ctx.runRepo.findById(run.id);
+      expect(updatedRun!.status).toBe(RunStatus.CANCELLED);
+    });
+
+    it('should cancel prepared run', async () => {
+      const policy = await ctx.policyRepo.create(createTestPolicy());
+
+      const run = await ctx.runRepo.create({
+        targetPolicyId: policy.id,
+        targetPolicyVersion: policy.version,
+        totalReadySnapshot: 100,
+        snapshotCutoff: new Date(),
+      });
+
+      // Mark as prepared (can still be cancelled)
+      await ctx.runRepo.update(run.id, { status: RunStatus.PREPARED });
 
       const res = await ctx.post(`/runs/${run.id}/cancel`).expect(201);
 
@@ -299,7 +323,7 @@ describe('Policy Activation Flow (e2e)', () => {
         snapshotCutoff: new Date(),
       });
 
-      await ctx.runRepo.update(run.id, { status: RunStatus.SUCCESS });
+      await ctx.runRepo.update(run.id, { status: RunStatus.PREPARED });
 
       // Setup mock DB results for diff computation
       ctx.mockDb._setWhereResults([

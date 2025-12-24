@@ -9,7 +9,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { PolicyActivationService, RunStatus, BlockingReason } from './policy-activation.service';
+import { PolicyActivationService } from './policy-activation.service';
 import { CATALOG_POLICY_REPOSITORY } from '../../infrastructure/repositories/catalog-policy.repository';
 import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../infrastructure/repositories/catalog-evaluation-run.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
@@ -151,7 +151,7 @@ describe('PolicyActivationService', () => {
         id: 'run-1',
         targetPolicyId: 'policy-1',
         targetPolicyVersion: 2,
-        status: 'success',
+        status: 'prepared',
         totalReadySnapshot: 0,
         processed: 0,
         eligible: 0,
@@ -174,16 +174,16 @@ describe('PolicyActivationService', () => {
     /**
      * Property 12: Ready To Promote Flag
      *
-     * readyToPromote = status=SUCCESS AND coverage >= threshold AND errors <= max
+     * readyToPromote = status=PREPARED AND coverage >= threshold AND errors <= max
      *
      * Validates: Requirements 3.9
      */
-    it('should be true only when status=success, coverage=100%, errors=0', async () => {
+    it('should be true only when status=prepared, coverage=100%, errors=0', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
         targetPolicyId: 'policy-1',
         targetPolicyVersion: 2,
-        status: 'success',
+        status: 'prepared',
         totalReadySnapshot: 1000,
         processed: 1000,
         eligible: 900,
@@ -202,7 +202,7 @@ describe('PolicyActivationService', () => {
       expect(result.blockingReasons).toEqual([]);
     });
 
-    it('should be false when status is not success', async () => {
+    it('should be false when status is not prepared', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
         targetPolicyId: 'policy-1',
@@ -231,7 +231,7 @@ describe('PolicyActivationService', () => {
         id: 'run-1',
         targetPolicyId: 'policy-1',
         targetPolicyVersion: 2,
-        status: 'success',
+        status: 'prepared',
         totalReadySnapshot: 1000,
         processed: 999,
         eligible: 899,
@@ -255,7 +255,7 @@ describe('PolicyActivationService', () => {
         id: 'run-1',
         targetPolicyId: 'policy-1',
         targetPolicyVersion: 2,
-        status: 'success',
+        status: 'prepared',
         totalReadySnapshot: 1000,
         processed: 1000,
         eligible: 899,
@@ -329,7 +329,7 @@ describe('PolicyActivationService', () => {
     /**
      * Property 7: Promote Status Validation
      *
-     * Promote only allowed when status=SUCCESS
+     * Promote only allowed when status=PREPARED
      *
      * Validates: Requirements 3.1, 3.2, 3.8
      */
@@ -342,7 +342,7 @@ describe('PolicyActivationService', () => {
       expect(result.error).toContain('not found');
     });
 
-    it('should fail when status is not success', async () => {
+    it('should fail when status is not prepared', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
         status: 'running',
@@ -362,7 +362,7 @@ describe('PolicyActivationService', () => {
     it('should fail when coverage below threshold', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         totalReadySnapshot: 1000,
         processed: 900,
         errors: 0,
@@ -379,7 +379,7 @@ describe('PolicyActivationService', () => {
     it('should fail when errors exceed threshold', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         totalReadySnapshot: 1000,
         processed: 1000,
         errors: 5,
@@ -396,7 +396,7 @@ describe('PolicyActivationService', () => {
     it('should fail when already promoted', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         totalReadySnapshot: 1000,
         processed: 1000,
         errors: 0,
@@ -413,7 +413,7 @@ describe('PolicyActivationService', () => {
     it('should succeed and activate policy when all conditions met', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         totalReadySnapshot: 1000,
         processed: 1000,
         errors: 0,
@@ -439,7 +439,7 @@ describe('PolicyActivationService', () => {
     it('should allow custom coverage threshold', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         totalReadySnapshot: 1000,
         processed: 950,
         errors: 0,
@@ -458,7 +458,7 @@ describe('PolicyActivationService', () => {
     it('should allow custom error threshold', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'prepared',
         totalReadySnapshot: 1000,
         processed: 1000,
         errors: 5,
@@ -485,16 +485,16 @@ describe('PolicyActivationService', () => {
       expect(result.error).toContain('not found');
     });
 
-    it('should fail when run is not running', async () => {
+    it('should fail when run is in terminal state', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
-        status: 'success',
+        status: 'promoted',
       });
 
       const result = await service.cancelRun('run-1');
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('can only cancel running runs');
+      expect(result.error).toContain('can only cancel');
     });
 
     it('should succeed when run is running', async () => {

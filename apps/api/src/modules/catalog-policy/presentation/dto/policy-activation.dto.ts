@@ -511,3 +511,111 @@ export class RunsListDto {
   @IsArray()
   data: EvaluationRunDto[];
 }
+
+/**
+ * Create Policy Request DTO
+ */
+export class CreatePolicyDto {
+  @ApiProperty({
+    description: 'Allowed countries (ISO 3166-1 alpha-2 codes)',
+    example: ['US', 'GB', 'CA', 'AU', 'UA'],
+    isArray: true,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  allowedCountries: string[];
+
+  @ApiProperty({
+    description: 'Blocked countries (ISO 3166-1 alpha-2 codes)',
+    example: ['RU', 'BY'],
+    isArray: true,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  blockedCountries: string[];
+
+  @ApiPropertyOptional({
+    description: 'Blocked country mode',
+    example: 'ANY',
+    enum: ['ANY', 'MAJORITY'],
+  })
+  @IsOptional()
+  @IsEnum(['ANY', 'MAJORITY'])
+  blockedCountryMode?: 'ANY' | 'MAJORITY';
+
+  @ApiProperty({
+    description: 'Allowed languages (ISO 639-1 codes)',
+    example: ['en', 'uk', 'de', 'fr'],
+    isArray: true,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  allowedLanguages: string[];
+
+  @ApiProperty({
+    description: 'Blocked languages (ISO 639-1 codes)',
+    example: ['ru'],
+    isArray: true,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  blockedLanguages: string[];
+
+  @ApiPropertyOptional({
+    description: 'Global streaming providers',
+    example: ['netflix', 'max', 'appletv', 'prime', 'disney'],
+    isArray: true,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  globalProviders?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Breakout rules for exceptions',
+    isArray: true,
+  })
+  @IsOptional()
+  @IsArray()
+  breakoutRules?: any[];
+
+  @ApiPropertyOptional({
+    description: 'Eligibility mode',
+    example: 'STRICT',
+    enum: ['STRICT', 'RELAXED'],
+  })
+  @IsOptional()
+  @IsEnum(['STRICT', 'RELAXED'])
+  eligibilityMode?: 'STRICT' | 'RELAXED';
+
+  @ApiPropertyOptional({
+    description: 'Homepage configuration',
+    example: { minRelevanceScore: 50 },
+  })
+  @IsOptional()
+  homepage?: { minRelevanceScore?: number };
+}
+
+export class CreatePolicyResponseDto {
+  @ApiProperty({
+    description: 'Created policy ID',
+    example: 'policy-123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsString()
+  id: string;
+
+  @ApiProperty({
+    description: 'Policy version',
+    example: 2,
+  })
+  @IsNumber()
+  version: number;
+
+  @ApiProperty({
+    description: 'Human-readable message',
+    example:
+      'Policy v2 created successfully. Use POST /admin/catalog-policies/:id/prepare to start evaluation.',
+  })
+  @IsString()
+  message: string;
+}

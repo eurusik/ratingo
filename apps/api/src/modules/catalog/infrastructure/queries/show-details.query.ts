@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and, isNull } from 'drizzle-orm';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { ShowDetails } from '../../domain/repositories/show.repository.interface';
 import { CreditsMapper } from '../mappers/credits.mapper';
@@ -30,9 +30,10 @@ export class ShowDetailsQuery {
 
   /**
    * Executes the show details query.
+   * Returns null for INELIGIBLE or PENDING media (404 behavior).
    *
    * @param {string} slug - URL-friendly show identifier
-   * @returns {Promise<ShowDetails | null>} Full show details or null if not found
+   * @returns {Promise<ShowDetails | null>} Full show details or null if not found/not eligible
    * @throws {DatabaseException} When database query fails
    */
   async execute(slug: string): Promise<ShowDetails | null> {
@@ -77,9 +78,23 @@ export class ShowDetailsQuery {
           showId: schema.shows.id,
         })
         .from(schema.mediaItems)
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+        )
         .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-        .where(eq(schema.mediaItems.slug, slug))
+        .where(
+          and(
+            eq(schema.mediaItems.slug, slug),
+            // Eligibility filter: only show ELIGIBLE items
+            eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+            // Ready filter: only show items with ready ingestion status
+            eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+            // Not deleted filter
+            isNull(schema.mediaItems.deletedAt),
+          ),
+        )
         .limit(1);
 
       if (result.length === 0) return null;

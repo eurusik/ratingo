@@ -123,6 +123,11 @@ export interface ICatalogEvaluationRunRepository {
    * Finds runs by status.
    */
   findByStatus(status: string): Promise<CatalogEvaluationRun[]>;
+
+  /**
+   * Finds all runs with optional pagination.
+   */
+  findAll(options?: { limit?: number; offset?: number }): Promise<CatalogEvaluationRun[]>;
 }
 
 @Injectable()
@@ -238,6 +243,25 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
     } catch (error) {
       this.logger.error(`Failed to find runs with status ${status}`, error);
       throw new DatabaseException(`Failed to find runs with status ${status}`, error);
+    }
+  }
+
+  async findAll(options?: { limit?: number; offset?: number }): Promise<CatalogEvaluationRun[]> {
+    const limit = options?.limit ?? 20;
+    const offset = options?.offset ?? 0;
+
+    try {
+      const result = await this.db
+        .select()
+        .from(schema.catalogEvaluationRuns)
+        .orderBy(desc(schema.catalogEvaluationRuns.startedAt))
+        .limit(limit)
+        .offset(offset);
+
+      return result.map((row) => this.mapToEntity(row));
+    } catch (error) {
+      this.logger.error('Failed to find all runs', error);
+      throw new DatabaseException('Failed to find all runs', error);
     }
   }
 
@@ -375,11 +399,21 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
   }
 
   /**
-   * Normalizes legacy status values.
-   * Maps 'completed' (legacy) to 'success' (current).
+   * Normalizes legacy status values to current status values.
+   * Maps legacy statuses to their modern equivalents:
+   * - 'completed' → 'prepared'
+   * - 'success' → 'prepared'
+   * - 'pending' → 'running'
    */
   private normalizeStatus(status: string): RunStatusType {
-    if (status === RunStatus.COMPLETED) return RunStatus.SUCCESS;
-    return status as RunStatusType;
+    switch (status) {
+      case 'completed':
+      case 'success':
+        return RunStatus.PREPARED;
+      case 'pending':
+        return RunStatus.RUNNING;
+      default:
+        return status as RunStatusType;
+    }
   }
 }

@@ -138,11 +138,18 @@ export interface MediaCatalogEvaluation {
 
 /**
  * Catalog evaluation run entity (database model)
+ *
+ * Status lifecycle: RUNNING → PREPARED → PROMOTED | CANCELLED | FAILED
+ * - RUNNING: Evaluation in progress
+ * - PREPARED: Evaluation complete, ready for promotion
+ * - PROMOTED: Policy activated, terminal state
+ * - CANCELLED: User cancelled, terminal state
+ * - FAILED: Error occurred, terminal state
  */
 export interface CatalogEvaluationRun {
   id: string;
   policyVersion: number;
-  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'PROMOTED';
+  status: 'RUNNING' | 'PREPARED' | 'FAILED' | 'CANCELLED' | 'PROMOTED';
   startedAt: Date;
   finishedAt: Date | null;
   cursor: string | null;
