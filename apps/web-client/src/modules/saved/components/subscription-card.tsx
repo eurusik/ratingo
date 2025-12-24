@@ -40,7 +40,9 @@ export function SubscriptionCard({
   const triggerLabels: Record<SubscriptionTrigger, string> = {
     release: dict.saved.trigger.release,
     new_season: dict.saved.trigger.new_season,
+    new_episode: dict.saved.trigger.new_episode,
     on_streaming: dict.saved.trigger.on_streaming,
+    status_changed: dict.saved.trigger.status_changed,
   };
 
   return (

@@ -386,7 +386,9 @@
     "trigger": {
       "release": "Реліз",
       "new_season": "Новий сезон",
-      "on_streaming": "На стрімінгу"
+      "new_episode": "Новий епізод",
+      "on_streaming": "На стрімінгу",
+      "status_changed": "Зміна статусу"
     },
     "unavailable": {
       "no_date": "Дата наступного сезону ще не оголошена",
@@ -422,8 +424,10 @@
     "viewAll": "Перейти до всіх",
     "events": {
       "newSeason": "Вийшов новий сезон",
+      "newEpisode": "Вийшов новий епізод",
       "onStreaming": "Доступно на стрімінгу",
-      "released": "Вийшов у прокат"
+      "released": "Вийшов у прокат",
+      "statusChanged": "Змінився статус"
     }
   },
   "settings": {
@@ -497,5 +501,160 @@
       "confirm": "Підтвердити"
     },
     "unsavedChanges": "У вас є незбережені зміни. Ви впевнені, що хочете вийти?"
+  },
+  "admin": {
+    "navigation": {
+      "title": "Навігація",
+      "policies": "Політики",
+      "runs": "Запуски оцінювання"
+    },
+    "policies": {
+      "title": "Політики каталогу",
+      "description": "Управління політиками фільтрації та валідації контенту",
+      "newPolicy": "Нова політика",
+      "columns": {
+        "name": "Назва",
+        "version": "Версія",
+        "status": "Статус",
+        "updated": "Оновлено"
+      },
+      "status": {
+        "active": "Активна",
+        "inactive": "Неактивна"
+      },
+      "actions": {
+        "view": "Переглянути",
+        "prepare": "Підготувати"
+      },
+      "confirmPrepare": {
+        "title": "Підготувати оцінювання політики",
+        "description": "Ви впевнені, що хочете розпочати оцінювання для \"{policyName}\"? Це створить новий запуск оцінювання.",
+        "confirm": "Підготувати"
+      },
+      "toast": {
+        "prepareSuccess": "Оцінювання політики розпочато успішно",
+        "prepareFailed": "Не вдалося розпочати оцінювання політики"
+      }
+    },
+    "policyDetail": {
+      "tabs": {
+        "runs": "Запуски",
+        "policy": "Політика"
+      },
+      "runsTable": {
+        "runId": "ID запуску",
+        "status": "Статус",
+        "progress": "Прогрес",
+        "started": "Розпочато",
+        "finished": "Завершено"
+      },
+      "policyInfo": {
+        "description": "Опис",
+        "rules": "Правила",
+        "version": "Версія",
+        "status": "Статус"
+      },
+      "actions": {
+        "viewDetails": "Переглянути деталі"
+      }
+    },
+    "runs": {
+      "title": "Запуски оцінювання",
+      "description": "Моніторинг та управління запусками оцінювання політик",
+      "columns": {
+        "runId": "ID запуску",
+        "policy": "Політика",
+        "status": "Статус",
+        "progress": "Прогрес",
+        "started": "Розпочато",
+        "duration": "Тривалість"
+      },
+      "progress": {
+        "eligible": "підходить",
+        "ineligible": "не підходить",
+        "pending": "очікує",
+        "errors": "помилки"
+      },
+      "filters": {
+        "status": "Статус",
+        "policy": "Політика",
+        "allStatuses": "Всі статуси",
+        "allPolicies": "Всі політики",
+        "running": "Виконується",
+        "success": "Успішно",
+        "failed": "Помилка",
+        "promoted": "Просунуто",
+        "contentFiltering": "Політика фільтрації контенту",
+        "ratingValidation": "Політика валідації рейтингів",
+        "userModeration": "Політика модерації користувачів"
+      },
+      "duration": {
+        "running": "виконується",
+        "minutes": "хв"
+      }
+    },
+    "runDetail": {
+      "actions": {
+        "promote": "Просунути",
+        "cancel": "Скасувати"
+      },
+      "progress": {
+        "title": "Прогрес",
+        "complete": "завершено"
+      },
+      "tabs": {
+        "diff": "Зміни",
+        "errors": "Помилки"
+      },
+      "diff": {
+        "title": "Підсумок змін",
+        "added": "додано",
+        "modified": "змінено",
+        "removed": "видалено",
+        "itemDetails": "Деталі елемента"
+      },
+      "errors": {
+        "title": "Зразки помилок",
+        "found": "помилок знайдено під час оцінювання",
+        "occurrences": "випадків",
+        "details": "Деталі помилки",
+        "stackTrace": "Стек трейс"
+      },
+      "confirmPromote": {
+        "title": "Просунути запуск",
+        "description": "Ви впевнені, що хочете просунути цей запуск? Це застосує всі зміни до продакшн середовища.",
+        "confirmText": "ПРОСУНУТИ",
+        "confirm": "Просунути"
+      },
+      "confirmCancel": {
+        "title": "Скасувати запуск",
+        "description": "Ви впевнені, що хочете скасувати цей запущений процес оцінювання? Цю дію неможливо скасувати.",
+        "confirm": "Скасувати запуск"
+      },
+      "toast": {
+        "promoteSuccess": "Запуск просунуто успішно",
+        "promoteFailed": "Не вдалося просунути запуск",
+        "cancelSuccess": "Запуск скасовано успішно",
+        "cancelFailed": "Не вдалося скасувати запуск"
+      },
+      "tooltip": {
+        "cannotPromote": "Неможливо просунути через:",
+        "coverageThreshold": "Поріг покриття не досягнуто ({current}% < {required}%)",
+        "errorsFound": "Знайдено {count} помилок під час оцінювання"
+      }
+    },
+    "common": {
+      "search": "Пошук...",
+      "select": "Обрати",
+      "noData": "Немає даних",
+      "loading": "Завантаження...",
+      "error": "Помилка завантаження даних",
+      "tryAgain": "Спробувати знову",
+      "copy": "Копіювати",
+      "copied": "Скопійовано",
+      "jsonData": "JSON дані",
+      "copyToClipboard": "JSON скопійовано в буфер обміну",
+      "copyFailed": "Не вдалося скопіювати JSON"
+    }
   }
 }

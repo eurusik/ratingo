@@ -386,7 +386,9 @@
     "trigger": {
       "release": "Release",
       "new_season": "New season",
-      "on_streaming": "On streaming"
+      "new_episode": "New episode",
+      "on_streaming": "On streaming",
+      "status_changed": "Status changed"
     },
     "unavailable": {
       "no_date": "Next season date not announced yet",
@@ -422,8 +424,10 @@
     "viewAll": "View all",
     "events": {
       "newSeason": "New season released",
+      "newEpisode": "New episode released",
       "onStreaming": "Available on streaming",
-      "released": "Released"
+      "released": "Released",
+      "statusChanged": "Status changed"
     }
   },
   "settings": {
@@ -497,5 +501,160 @@
       "confirm": "Confirm"
     },
     "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?"
+  },
+  "admin": {
+    "navigation": {
+      "title": "Navigation",
+      "policies": "Policies",
+      "runs": "Evaluation Runs"
+    },
+    "policies": {
+      "title": "Catalog Policies",
+      "description": "Manage content filtering and validation policies",
+      "newPolicy": "New Policy",
+      "columns": {
+        "name": "Name",
+        "version": "Version",
+        "status": "Status",
+        "updated": "Updated"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "actions": {
+        "view": "View",
+        "prepare": "Prepare"
+      },
+      "confirmPrepare": {
+        "title": "Prepare Policy Evaluation",
+        "description": "Are you sure you want to start evaluation for \"{policyName}\"? This will create a new evaluation run.",
+        "confirm": "Prepare"
+      },
+      "toast": {
+        "prepareSuccess": "Policy evaluation started successfully",
+        "prepareFailed": "Failed to start policy evaluation"
+      }
+    },
+    "policyDetail": {
+      "tabs": {
+        "runs": "Runs",
+        "policy": "Policy"
+      },
+      "runsTable": {
+        "runId": "Run ID",
+        "status": "Status",
+        "progress": "Progress",
+        "started": "Started",
+        "finished": "Finished"
+      },
+      "policyInfo": {
+        "description": "Description",
+        "rules": "Rules",
+        "version": "Version",
+        "status": "Status"
+      },
+      "actions": {
+        "viewDetails": "View Details"
+      }
+    },
+    "runs": {
+      "title": "Evaluation Runs",
+      "description": "Monitor and manage policy evaluation runs",
+      "columns": {
+        "runId": "Run ID",
+        "policy": "Policy",
+        "status": "Status",
+        "progress": "Progress",
+        "started": "Started",
+        "duration": "Duration"
+      },
+      "progress": {
+        "eligible": "eligible",
+        "ineligible": "ineligible",
+        "pending": "pending",
+        "errors": "errors"
+      },
+      "filters": {
+        "status": "Status",
+        "policy": "Policy",
+        "allStatuses": "All Statuses",
+        "allPolicies": "All Policies",
+        "running": "Running",
+        "success": "Success",
+        "failed": "Failed",
+        "promoted": "Promoted",
+        "contentFiltering": "Content Filtering Policy",
+        "ratingValidation": "Rating Validation Policy",
+        "userModeration": "User Moderation Policy"
+      },
+      "duration": {
+        "running": "running",
+        "minutes": "m"
+      }
+    },
+    "runDetail": {
+      "actions": {
+        "promote": "Promote",
+        "cancel": "Cancel"
+      },
+      "progress": {
+        "title": "Progress",
+        "complete": "complete"
+      },
+      "tabs": {
+        "diff": "Diff",
+        "errors": "Errors"
+      },
+      "diff": {
+        "title": "Changes Summary",
+        "added": "added",
+        "modified": "modified",
+        "removed": "removed",
+        "itemDetails": "Item Details"
+      },
+      "errors": {
+        "title": "Error Samples",
+        "found": "errors found during evaluation",
+        "occurrences": "occurrences",
+        "details": "Error Details",
+        "stackTrace": "Stack Trace"
+      },
+      "confirmPromote": {
+        "title": "Promote Run",
+        "description": "Are you sure you want to promote this run? This will apply all changes to the production environment.",
+        "confirmText": "PROMOTE",
+        "confirm": "Promote"
+      },
+      "confirmCancel": {
+        "title": "Cancel Run",
+        "description": "Are you sure you want to cancel this running evaluation? This action cannot be undone.",
+        "confirm": "Cancel Run"
+      },
+      "toast": {
+        "promoteSuccess": "Run promoted successfully",
+        "promoteFailed": "Failed to promote run",
+        "cancelSuccess": "Run cancelled successfully",
+        "cancelFailed": "Failed to cancel run"
+      },
+      "tooltip": {
+        "cannotPromote": "Cannot promote due to:",
+        "coverageThreshold": "Coverage threshold not met ({current}% < {required}%)",
+        "errorsFound": "Found {count} errors during evaluation"
+      }
+    },
+    "common": {
+      "search": "Search...",
+      "select": "Select",
+      "noData": "No data available",
+      "loading": "Loading...",
+      "error": "Error loading data",
+      "tryAgain": "Try again",
+      "copy": "Copy",
+      "copied": "Copied",
+      "jsonData": "JSON Data",
+      "copyToClipboard": "JSON copied to clipboard",
+      "copyFailed": "Failed to copy JSON"
+    }
   }
 }

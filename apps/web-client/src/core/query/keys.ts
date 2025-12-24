@@ -90,4 +90,18 @@ export const queryKeys = {
         [...queryKeys.userActions.subscriptions.all, 'list', params] as const,
     },
   },
+
+  /** Admin queries. */
+  admin: {
+    all: ['admin'] as const,
+    policies: {
+      all: ['admin', 'policies'] as const,
+      detail: (policyId: string) => [...queryKeys.admin.policies.all, 'detail', policyId] as const,
+    },
+    runs: {
+      all: ['admin', 'runs'] as const,
+      status: (runId: string) => [...queryKeys.admin.runs.all, 'status', runId] as const,
+      diff: (runId: string, sampleSize: number) => [...queryKeys.admin.runs.all, 'diff', runId, sampleSize] as const,
+    },
+  },
 } as const;

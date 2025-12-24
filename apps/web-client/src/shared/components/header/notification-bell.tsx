@@ -74,7 +74,9 @@ export function NotificationBell() {
                 const triggerLabel = {
                   release: dict.notifications.events.released,
                   new_season: dict.notifications.events.newSeason,
+                  new_episode: dict.notifications.events.newEpisode,
                   on_streaming: dict.notifications.events.onStreaming,
+                  status_changed: dict.notifications.events.statusChanged,
                 }[item.trigger];
 
                 return (

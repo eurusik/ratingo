@@ -4,3 +4,4 @@ export * from './catalog';
 export * from './user-actions';
 export * from './auth';
 export * from './users';
+export * from './admin';
