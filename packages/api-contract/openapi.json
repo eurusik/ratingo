@@ -2622,6 +2622,148 @@
         ]
       }
     },
+    "/api/admin/catalog-policies": {
+      "get": {
+        "operationId": "PolicyActivationController_getPolicies",
+        "summary": "Get list of policies",
+        "description": "Returns list of all catalog policies with their status and metadata.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of policies",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PoliciesListDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      },
+      "post": {
+        "operationId": "PolicyActivationController_createPolicy",
+        "summary": "Create new policy",
+        "description": "Creates a new policy draft with auto-incremented version. The policy is NOT activated automatically. Use POST /:id/prepare to start evaluation.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Policy configuration",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePolicyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Policy created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CreatePolicyResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      }
+    },
+    "/api/admin/catalog-policies/runs": {
+      "get": {
+        "operationId": "PolicyActivationController_getRuns",
+        "summary": "Get list of evaluation runs",
+        "description": "Returns list of all evaluation runs with their status and progress.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of runs to return (default: 20)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset for pagination (default: 0)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of evaluation runs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RunsListDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      }
+    },
     "/api/admin/catalog-policies/{id}/prepare": {
       "post": {
         "operationId": "PolicyActivationController_preparePolicy",
@@ -2881,6 +3023,104 @@
                     },
                     "data": {
                       "$ref": "#/components/schemas/DiffReportDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      }
+    },
+    "/api/admin/catalog-policies/dry-run": {
+      "post": {
+        "operationId": "PolicyActivationController_executeDryRun",
+        "summary": "Execute dry-run evaluation",
+        "description": "Evaluates media items against a proposed policy WITHOUT persisting results. Supports multiple selection modes: sample (random), top (by popularity), byType, byCountry. Limits: max 10000 items, 60s timeout.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Proposed policy and dry-run options",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DryRunRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dry-run results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/DryRunResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      }
+    },
+    "/api/admin/catalog-policies/dry-run/diff": {
+      "post": {
+        "operationId": "PolicyActivationController_executeDryRunDiff",
+        "summary": "Execute dry-run with diff",
+        "description": "Same as dry-run but also includes comparison against current active policy version.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Proposed policy and dry-run options",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DryRunRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dry-run results with current policy version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/DryRunResponseDto"
                     }
                   }
                 }
@@ -6201,55 +6441,195 @@
           }
         }
       },
-      "PrepareOptionsDto": {
+      "PolicyDto": {
         "type": "object",
         "properties": {
-          "batchSize": {
-            "type": "number",
-            "description": "Batch size for processing items",
-            "example": 500,
-            "minimum": 1,
-            "maximum": 1000
-          },
-          "concurrency": {
-            "type": "number",
-            "description": "Number of concurrent workers",
-            "example": 10,
-            "minimum": 1,
-            "maximum": 50
-          }
-        }
-      },
-      "PrepareResponseDto": {
-        "type": "object",
-        "properties": {
-          "runId": {
+          "id": {
             "type": "string",
-            "description": "ID of the created evaluation run",
-            "example": "run-123e4567-e89b-12d3-a456-426614174000"
+            "description": "Policy ID",
+            "example": "policy-123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Policy name",
+            "example": "Content Filtering Policy"
+          },
+          "version": {
+            "type": "string",
+            "description": "Policy version",
+            "example": "1.0"
           },
           "status": {
             "type": "string",
-            "description": "Current status of the run",
-            "example": "running",
+            "description": "Policy status",
+            "example": "active",
             "enum": [
-              "pending",
-              "running",
-              "success",
-              "failed",
-              "cancelled",
-              "promoted"
+              "active",
+              "inactive"
             ]
+          },
+          "description": {
+            "type": "string",
+            "description": "Policy description",
+            "example": "Filters content based on quality and popularity thresholds"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the policy was last updated",
+            "example": "2024-12-20T10:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "version",
+          "status",
+          "updatedAt"
+        ]
+      },
+      "PoliciesListDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "List of policies",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PolicyDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "CreatePolicyDto": {
+        "type": "object",
+        "properties": {
+          "allowedCountries": {
+            "description": "Allowed countries (ISO 3166-1 alpha-2 codes)",
+            "example": [
+              "US",
+              "GB",
+              "CA",
+              "AU",
+              "UA"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "blockedCountries": {
+            "description": "Blocked countries (ISO 3166-1 alpha-2 codes)",
+            "example": [
+              "RU",
+              "BY"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "blockedCountryMode": {
+            "type": "string",
+            "description": "Blocked country mode",
+            "example": "ANY",
+            "enum": [
+              "ANY",
+              "MAJORITY"
+            ]
+          },
+          "allowedLanguages": {
+            "description": "Allowed languages (ISO 639-1 codes)",
+            "example": [
+              "en",
+              "uk",
+              "de",
+              "fr"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "blockedLanguages": {
+            "description": "Blocked languages (ISO 639-1 codes)",
+            "example": [
+              "ru"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "globalProviders": {
+            "description": "Global streaming providers",
+            "example": [
+              "netflix",
+              "max",
+              "appletv",
+              "prime",
+              "disney"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "breakoutRules": {
+            "description": "Breakout rules for exceptions",
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "eligibilityMode": {
+            "type": "string",
+            "description": "Eligibility mode",
+            "example": "STRICT",
+            "enum": [
+              "STRICT",
+              "RELAXED"
+            ]
+          },
+          "homepage": {
+            "type": "object",
+            "description": "Homepage configuration",
+            "example": {
+              "minRelevanceScore": 50
+            }
+          }
+        },
+        "required": [
+          "allowedCountries",
+          "blockedCountries",
+          "allowedLanguages",
+          "blockedLanguages"
+        ]
+      },
+      "CreatePolicyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Created policy ID",
+            "example": "policy-123e4567-e89b-12d3-a456-426614174000"
+          },
+          "version": {
+            "type": "number",
+            "description": "Policy version",
+            "example": 2
           },
           "message": {
             "type": "string",
             "description": "Human-readable message",
-            "example": "Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress."
+            "example": "Policy v2 created successfully. Use POST /admin/catalog-policies/:id/prepare to start evaluation."
           }
         },
         "required": [
-          "runId",
-          "status",
+          "id",
+          "version",
           "message"
         ]
       },
@@ -6294,6 +6674,137 @@
           "ineligible",
           "pending",
           "errors"
+        ]
+      },
+      "EvaluationRunDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Run ID",
+            "example": "run-123e4567-e89b-12d3-a456-426614174000"
+          },
+          "policyId": {
+            "type": "string",
+            "description": "Policy ID",
+            "example": "policy-456e7890-f12a-34b5-c678-901234567890"
+          },
+          "policyName": {
+            "type": "string",
+            "description": "Policy name",
+            "example": "Content Filtering Policy"
+          },
+          "status": {
+            "type": "string",
+            "description": "Run status",
+            "example": "running",
+            "enum": [
+              "running",
+              "prepared",
+              "failed",
+              "cancelled",
+              "promoted"
+            ]
+          },
+          "progress": {
+            "description": "Progress statistics",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProgressStatsDto"
+              }
+            ]
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the run started",
+            "example": "2024-12-20T14:00:00Z"
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the run finished",
+            "example": "2024-12-20T14:30:00Z"
+          },
+          "readyToPromote": {
+            "type": "boolean",
+            "description": "Whether the run is ready to be promoted",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "policyId",
+          "policyName",
+          "status",
+          "progress",
+          "startedAt"
+        ]
+      },
+      "RunsListDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "List of evaluation runs",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvaluationRunDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "PrepareOptionsDto": {
+        "type": "object",
+        "properties": {
+          "batchSize": {
+            "type": "number",
+            "description": "Batch size for processing items",
+            "example": 500,
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "concurrency": {
+            "type": "number",
+            "description": "Number of concurrent workers",
+            "example": 10,
+            "minimum": 1,
+            "maximum": 50
+          }
+        }
+      },
+      "PrepareResponseDto": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "ID of the created evaluation run",
+            "example": "run-123e4567-e89b-12d3-a456-426614174000"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the run",
+            "example": "running",
+            "enum": [
+              "running",
+              "prepared",
+              "failed",
+              "cancelled",
+              "promoted"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message",
+            "example": "Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress."
+          }
+        },
+        "required": [
+          "runId",
+          "status",
+          "message"
         ]
       },
       "ErrorSampleDto": {
@@ -6348,9 +6859,8 @@
             "description": "Current run status",
             "example": "running",
             "enum": [
-              "pending",
               "running",
-              "success",
+              "prepared",
               "failed",
               "cancelled",
               "promoted"
@@ -6566,6 +7076,284 @@
           "counts",
           "topRegressions",
           "topImprovements"
+        ]
+      },
+      "DryRunOptionsDto": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "description": "Selection mode for items to evaluate",
+            "example": "sample",
+            "enum": [
+              "sample",
+              "top",
+              "byType",
+              "byCountry"
+            ]
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of items to evaluate (default: 1000, max: 10000)",
+            "example": 1000,
+            "minimum": 1,
+            "maximum": 10000
+          },
+          "mediaType": {
+            "type": "string",
+            "description": "Media type filter (required for byType mode)",
+            "example": "movie",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "country": {
+            "type": "string",
+            "description": "Country filter (ISO 3166-1 alpha-2, required for byCountry mode)",
+            "example": "US"
+          },
+          "samplePercent": {
+            "type": "number",
+            "description": "Sample percentage for sample mode (1-100)",
+            "example": 10,
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "DryRunRequestDto": {
+        "type": "object",
+        "properties": {
+          "policy": {
+            "description": "Proposed policy configuration to test",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreatePolicyDto"
+              }
+            ]
+          },
+          "options": {
+            "description": "Dry-run options",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DryRunOptionsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "policy",
+          "options"
+        ]
+      },
+      "ReasonBreakdownDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Evaluation reason",
+            "example": "ALLOWED_COUNTRY"
+          },
+          "count": {
+            "type": "number",
+            "description": "Count of items with this reason",
+            "example": 500
+          }
+        },
+        "required": [
+          "reason",
+          "count"
+        ]
+      },
+      "DryRunSummaryDto": {
+        "type": "object",
+        "properties": {
+          "totalEvaluated": {
+            "type": "number",
+            "description": "Total items evaluated",
+            "example": 1000
+          },
+          "eligible": {
+            "type": "number",
+            "description": "Items that would be eligible",
+            "example": 750
+          },
+          "ineligible": {
+            "type": "number",
+            "description": "Items that would be ineligible",
+            "example": 200
+          },
+          "pending": {
+            "type": "number",
+            "description": "Items that would be pending",
+            "example": 40
+          },
+          "review": {
+            "type": "number",
+            "description": "Items that would need review",
+            "example": 10
+          },
+          "newlyEligible": {
+            "type": "number",
+            "description": "Items that would become newly eligible",
+            "example": 50
+          },
+          "newlyIneligible": {
+            "type": "number",
+            "description": "Items that would become newly ineligible",
+            "example": 25
+          },
+          "unchanged": {
+            "type": "number",
+            "description": "Items with unchanged status",
+            "example": 925
+          },
+          "reasonBreakdown": {
+            "description": "Breakdown of evaluation reasons",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReasonBreakdownDto"
+            }
+          },
+          "executionTimeMs": {
+            "type": "number",
+            "description": "Execution time in milliseconds",
+            "example": 1500
+          },
+          "mode": {
+            "type": "string",
+            "description": "Selection mode used",
+            "example": "sample",
+            "enum": [
+              "sample",
+              "top",
+              "byType",
+              "byCountry"
+            ]
+          },
+          "limit": {
+            "type": "number",
+            "description": "Item limit used",
+            "example": 1000
+          }
+        },
+        "required": [
+          "totalEvaluated",
+          "eligible",
+          "ineligible",
+          "pending",
+          "review",
+          "newlyEligible",
+          "newlyIneligible",
+          "unchanged",
+          "reasonBreakdown",
+          "executionTimeMs",
+          "mode",
+          "limit"
+        ]
+      },
+      "DryRunItemResultDto": {
+        "type": "object",
+        "properties": {
+          "mediaItemId": {
+            "type": "string",
+            "description": "Media item ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "title": {
+            "type": "string",
+            "description": "Media item title",
+            "example": "The Matrix"
+          },
+          "currentStatus": {
+            "type": "string",
+            "description": "Current eligibility status (null if not evaluated)",
+            "example": "ELIGIBLE",
+            "enum": [
+              "PENDING",
+              "ELIGIBLE",
+              "INELIGIBLE",
+              "REVIEW"
+            ]
+          },
+          "proposedStatus": {
+            "type": "string",
+            "description": "Proposed eligibility status under new policy",
+            "example": "ELIGIBLE",
+            "enum": [
+              "PENDING",
+              "ELIGIBLE",
+              "INELIGIBLE",
+              "REVIEW"
+            ]
+          },
+          "reasons": {
+            "description": "Evaluation reasons",
+            "example": [
+              "ALLOWED_COUNTRY",
+              "ALLOWED_LANGUAGE"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "relevanceScore": {
+            "type": "number",
+            "description": "Relevance score (0-100)",
+            "example": 75
+          },
+          "breakoutRuleId": {
+            "type": "string",
+            "description": "Breakout rule ID if applicable",
+            "example": "GLOBAL_HIT"
+          },
+          "statusChanged": {
+            "type": "boolean",
+            "description": "Whether status changed from current",
+            "example": false
+          }
+        },
+        "required": [
+          "mediaItemId",
+          "title",
+          "proposedStatus",
+          "reasons",
+          "relevanceScore",
+          "statusChanged"
+        ]
+      },
+      "DryRunResponseDto": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "description": "Dry-run summary",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DryRunSummaryDto"
+              }
+            ]
+          },
+          "items": {
+            "description": "Individual item results",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DryRunItemResultDto"
+            }
+          },
+          "currentPolicyVersion": {
+            "type": "number",
+            "description": "Current active policy version (for diff mode)",
+            "example": 1
+          }
+        },
+        "required": [
+          "summary",
+          "items"
         ]
       },
       "SaveItemDto": {

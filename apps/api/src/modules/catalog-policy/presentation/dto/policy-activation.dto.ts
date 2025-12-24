@@ -70,9 +70,9 @@ export class PrepareResponseDto {
   @ApiProperty({
     description: 'Current status of the run',
     example: 'running',
-    enum: ['pending', 'running', 'success', 'failed', 'cancelled', 'promoted'],
+    enum: ['running', 'prepared', 'failed', 'cancelled', 'promoted'],
   })
-  @IsEnum(['pending', 'running', 'success', 'failed', 'cancelled', 'promoted'])
+  @IsEnum(['running', 'prepared', 'failed', 'cancelled', 'promoted'])
   status: string;
 
   @ApiProperty({
@@ -183,9 +183,9 @@ export class RunStatusDto {
   @ApiProperty({
     description: 'Current run status',
     example: 'running',
-    enum: ['pending', 'running', 'success', 'failed', 'cancelled', 'promoted'],
+    enum: ['running', 'prepared', 'failed', 'cancelled', 'promoted'],
   })
-  @IsEnum(['pending', 'running', 'success', 'failed', 'cancelled', 'promoted'])
+  @IsEnum(['running', 'prepared', 'failed', 'cancelled', 'promoted'])
   status: string;
 
   @ApiProperty({
@@ -454,9 +454,9 @@ export class EvaluationRunDto {
   @ApiProperty({
     description: 'Run status',
     example: 'running',
-    enum: ['running', 'success', 'failed', 'cancelled', 'promoted'],
+    enum: ['running', 'prepared', 'failed', 'cancelled', 'promoted'],
   })
-  @IsEnum(['running', 'success', 'failed', 'cancelled', 'promoted'])
+  @IsEnum(['running', 'prepared', 'failed', 'cancelled', 'promoted'])
   status: string;
 
   @ApiProperty({

@@ -714,6 +714,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/catalog-policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get list of policies
+         * @description Returns list of all catalog policies with their status and metadata.
+         */
+        get: operations["PolicyActivationController_getPolicies"];
+        put?: never;
+        /**
+         * Create new policy
+         * @description Creates a new policy draft with auto-incremented version. The policy is NOT activated automatically. Use POST /:id/prepare to start evaluation.
+         */
+        post: operations["PolicyActivationController_createPolicy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get list of evaluation runs
+         * @description Returns list of all evaluation runs with their status and progress.
+         */
+        get: operations["PolicyActivationController_getRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/catalog-policies/{id}/prepare": {
         parameters: {
             query?: never;
@@ -808,6 +852,46 @@ export interface paths {
         get: operations["PolicyActivationController_getDiff"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/dry-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute dry-run evaluation
+         * @description Evaluates media items against a proposed policy WITHOUT persisting results. Supports multiple selection modes: sample (random), top (by popularity), byType, byCountry. Limits: max 10000 items, 60s timeout.
+         */
+        post: operations["PolicyActivationController_executeDryRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/dry-run/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Execute dry-run with diff
+         * @description Same as dry-run but also includes comparison against current active policy version.
+         */
+        post: operations["PolicyActivationController_executeDryRunDiff"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2074,33 +2158,128 @@ export interface components {
              */
             force: boolean;
         };
-        PrepareOptionsDto: {
+        PolicyDto: {
             /**
-             * @description Batch size for processing items
-             * @example 500
+             * @description Policy ID
+             * @example policy-123e4567-e89b-12d3-a456-426614174000
              */
-            batchSize?: number;
+            id: string;
             /**
-             * @description Number of concurrent workers
-             * @example 10
+             * @description Policy name
+             * @example Content Filtering Policy
              */
-            concurrency?: number;
-        };
-        PrepareResponseDto: {
+            name: string;
             /**
-             * @description ID of the created evaluation run
-             * @example run-123e4567-e89b-12d3-a456-426614174000
+             * @description Policy version
+             * @example 1.0
              */
-            runId: string;
+            version: string;
             /**
-             * @description Current status of the run
-             * @example running
+             * @description Policy status
+             * @example active
              * @enum {string}
              */
-            status: "pending" | "running" | "success" | "failed" | "cancelled" | "promoted";
+            status: "active" | "inactive";
+            /**
+             * @description Policy description
+             * @example Filters content based on quality and popularity thresholds
+             */
+            description?: string;
+            /**
+             * Format: date-time
+             * @description When the policy was last updated
+             * @example 2024-12-20T10:00:00Z
+             */
+            updatedAt: string;
+        };
+        PoliciesListDto: {
+            /** @description List of policies */
+            data: components["schemas"]["PolicyDto"][];
+        };
+        CreatePolicyDto: {
+            /**
+             * @description Allowed countries (ISO 3166-1 alpha-2 codes)
+             * @example [
+             *       "US",
+             *       "GB",
+             *       "CA",
+             *       "AU",
+             *       "UA"
+             *     ]
+             */
+            allowedCountries: unknown[][];
+            /**
+             * @description Blocked countries (ISO 3166-1 alpha-2 codes)
+             * @example [
+             *       "RU",
+             *       "BY"
+             *     ]
+             */
+            blockedCountries: unknown[][];
+            /**
+             * @description Blocked country mode
+             * @example ANY
+             * @enum {string}
+             */
+            blockedCountryMode?: "ANY" | "MAJORITY";
+            /**
+             * @description Allowed languages (ISO 639-1 codes)
+             * @example [
+             *       "en",
+             *       "uk",
+             *       "de",
+             *       "fr"
+             *     ]
+             */
+            allowedLanguages: unknown[][];
+            /**
+             * @description Blocked languages (ISO 639-1 codes)
+             * @example [
+             *       "ru"
+             *     ]
+             */
+            blockedLanguages: unknown[][];
+            /**
+             * @description Global streaming providers
+             * @example [
+             *       "netflix",
+             *       "max",
+             *       "appletv",
+             *       "prime",
+             *       "disney"
+             *     ]
+             */
+            globalProviders?: unknown[][];
+            /** @description Breakout rules for exceptions */
+            breakoutRules?: unknown[][];
+            /**
+             * @description Eligibility mode
+             * @example STRICT
+             * @enum {string}
+             */
+            eligibilityMode?: "STRICT" | "RELAXED";
+            /**
+             * @description Homepage configuration
+             * @example {
+             *       "minRelevanceScore": 50
+             *     }
+             */
+            homepage?: Record<string, never>;
+        };
+        CreatePolicyResponseDto: {
+            /**
+             * @description Created policy ID
+             * @example policy-123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description Policy version
+             * @example 2
+             */
+            version: number;
             /**
              * @description Human-readable message
-             * @example Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress.
+             * @example Policy v2 created successfully. Use POST /admin/catalog-policies/:id/prepare to start evaluation.
              */
             message: string;
         };
@@ -2135,6 +2314,82 @@ export interface components {
              * @example 50
              */
             errors: number;
+        };
+        EvaluationRunDto: {
+            /**
+             * @description Run ID
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description Policy ID
+             * @example policy-456e7890-f12a-34b5-c678-901234567890
+             */
+            policyId: string;
+            /**
+             * @description Policy name
+             * @example Content Filtering Policy
+             */
+            policyName: string;
+            /**
+             * @description Run status
+             * @example running
+             * @enum {string}
+             */
+            status: "running" | "prepared" | "failed" | "cancelled" | "promoted";
+            /** @description Progress statistics */
+            progress: components["schemas"]["ProgressStatsDto"];
+            /**
+             * Format: date-time
+             * @description When the run started
+             * @example 2024-12-20T14:00:00Z
+             */
+            startedAt: string;
+            /**
+             * Format: date-time
+             * @description When the run finished
+             * @example 2024-12-20T14:30:00Z
+             */
+            finishedAt?: string;
+            /**
+             * @description Whether the run is ready to be promoted
+             * @example true
+             */
+            readyToPromote?: boolean;
+        };
+        RunsListDto: {
+            /** @description List of evaluation runs */
+            data: components["schemas"]["EvaluationRunDto"][];
+        };
+        PrepareOptionsDto: {
+            /**
+             * @description Batch size for processing items
+             * @example 500
+             */
+            batchSize?: number;
+            /**
+             * @description Number of concurrent workers
+             * @example 10
+             */
+            concurrency?: number;
+        };
+        PrepareResponseDto: {
+            /**
+             * @description ID of the created evaluation run
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            runId: string;
+            /**
+             * @description Current status of the run
+             * @example running
+             * @enum {string}
+             */
+            status: "running" | "prepared" | "failed" | "cancelled" | "promoted";
+            /**
+             * @description Human-readable message
+             * @example Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress.
+             */
+            message: string;
         };
         ErrorSampleDto: {
             /**
@@ -2176,7 +2431,7 @@ export interface components {
              * @example running
              * @enum {string}
              */
-            status: "pending" | "running" | "success" | "failed" | "cancelled" | "promoted";
+            status: "running" | "prepared" | "failed" | "cancelled" | "promoted";
             /** @description Progress statistics */
             progress: components["schemas"]["ProgressStatsDto"];
             /**
@@ -2307,6 +2562,171 @@ export interface components {
             topRegressions: components["schemas"]["DiffSampleDto"][];
             /** @description Sample items being added to catalog */
             topImprovements: components["schemas"]["DiffSampleDto"][];
+        };
+        DryRunOptionsDto: {
+            /**
+             * @description Selection mode for items to evaluate
+             * @example sample
+             * @enum {string}
+             */
+            mode: "sample" | "top" | "byType" | "byCountry";
+            /**
+             * @description Maximum number of items to evaluate (default: 1000, max: 10000)
+             * @example 1000
+             */
+            limit?: number;
+            /**
+             * @description Media type filter (required for byType mode)
+             * @example movie
+             * @enum {string}
+             */
+            mediaType?: "movie" | "show";
+            /**
+             * @description Country filter (ISO 3166-1 alpha-2, required for byCountry mode)
+             * @example US
+             */
+            country?: string;
+            /**
+             * @description Sample percentage for sample mode (1-100)
+             * @example 10
+             */
+            samplePercent?: number;
+        };
+        DryRunRequestDto: {
+            /** @description Proposed policy configuration to test */
+            policy: components["schemas"]["CreatePolicyDto"];
+            /** @description Dry-run options */
+            options: components["schemas"]["DryRunOptionsDto"];
+        };
+        ReasonBreakdownDto: {
+            /**
+             * @description Evaluation reason
+             * @example ALLOWED_COUNTRY
+             */
+            reason: string;
+            /**
+             * @description Count of items with this reason
+             * @example 500
+             */
+            count: number;
+        };
+        DryRunSummaryDto: {
+            /**
+             * @description Total items evaluated
+             * @example 1000
+             */
+            totalEvaluated: number;
+            /**
+             * @description Items that would be eligible
+             * @example 750
+             */
+            eligible: number;
+            /**
+             * @description Items that would be ineligible
+             * @example 200
+             */
+            ineligible: number;
+            /**
+             * @description Items that would be pending
+             * @example 40
+             */
+            pending: number;
+            /**
+             * @description Items that would need review
+             * @example 10
+             */
+            review: number;
+            /**
+             * @description Items that would become newly eligible
+             * @example 50
+             */
+            newlyEligible: number;
+            /**
+             * @description Items that would become newly ineligible
+             * @example 25
+             */
+            newlyIneligible: number;
+            /**
+             * @description Items with unchanged status
+             * @example 925
+             */
+            unchanged: number;
+            /** @description Breakdown of evaluation reasons */
+            reasonBreakdown: components["schemas"]["ReasonBreakdownDto"][];
+            /**
+             * @description Execution time in milliseconds
+             * @example 1500
+             */
+            executionTimeMs: number;
+            /**
+             * @description Selection mode used
+             * @example sample
+             * @enum {string}
+             */
+            mode: "sample" | "top" | "byType" | "byCountry";
+            /**
+             * @description Item limit used
+             * @example 1000
+             */
+            limit: number;
+        };
+        DryRunItemResultDto: {
+            /**
+             * @description Media item ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            mediaItemId: string;
+            /**
+             * @description Media item title
+             * @example The Matrix
+             */
+            title: string;
+            /**
+             * @description Current eligibility status (null if not evaluated)
+             * @example ELIGIBLE
+             * @enum {string}
+             */
+            currentStatus?: "PENDING" | "ELIGIBLE" | "INELIGIBLE" | "REVIEW";
+            /**
+             * @description Proposed eligibility status under new policy
+             * @example ELIGIBLE
+             * @enum {string}
+             */
+            proposedStatus: "PENDING" | "ELIGIBLE" | "INELIGIBLE" | "REVIEW";
+            /**
+             * @description Evaluation reasons
+             * @example [
+             *       "ALLOWED_COUNTRY",
+             *       "ALLOWED_LANGUAGE"
+             *     ]
+             */
+            reasons: unknown[][];
+            /**
+             * @description Relevance score (0-100)
+             * @example 75
+             */
+            relevanceScore: number;
+            /**
+             * @description Breakout rule ID if applicable
+             * @example GLOBAL_HIT
+             */
+            breakoutRuleId?: string;
+            /**
+             * @description Whether status changed from current
+             * @example false
+             */
+            statusChanged: boolean;
+        };
+        DryRunResponseDto: {
+            /** @description Dry-run summary */
+            summary: components["schemas"]["DryRunSummaryDto"];
+            /** @description Individual item results */
+            items: components["schemas"]["DryRunItemResultDto"][];
+            /**
+             * @description Current active policy version (for diff mode)
+             * @example 1
+             */
+            currentPolicyVersion?: number;
         };
         SaveItemDto: {
             /**
@@ -3896,6 +4316,88 @@ export interface operations {
             };
         };
     };
+    PolicyActivationController_getPolicies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of policies */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PoliciesListDto"];
+                    };
+                };
+            };
+        };
+    };
+    PolicyActivationController_createPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Policy configuration */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePolicyDto"];
+            };
+        };
+        responses: {
+            /** @description Policy created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["CreatePolicyResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    PolicyActivationController_getRuns: {
+        parameters: {
+            query?: {
+                /** @description Number of runs to return (default: 20) */
+                limit?: number;
+                /** @description Offset for pagination (default: 0) */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of evaluation runs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["RunsListDto"];
+                    };
+                };
+            };
+        };
+    };
     PolicyActivationController_preparePolicy: {
         parameters: {
             query?: never;
@@ -4039,6 +4541,64 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["DiffReportDto"];
+                    };
+                };
+            };
+        };
+    };
+    PolicyActivationController_executeDryRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Proposed policy and dry-run options */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DryRunRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Dry-run results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["DryRunResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    PolicyActivationController_executeDryRunDiff: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Proposed policy and dry-run options */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DryRunRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Dry-run results with current policy version */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["DryRunResponseDto"];
                     };
                 };
             };

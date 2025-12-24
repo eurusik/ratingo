@@ -85,11 +85,11 @@ describe('Policy Activation Flow (e2e)', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.data.id).toBe(run.id);
       expect(res.body.data.status).toBe('running');
-      expect(res.body.data.totalReadySnapshot).toBe(100);
-      expect(res.body.data.processed).toBe(50);
-      expect(res.body.data.eligible).toBe(30);
-      expect(res.body.data.ineligible).toBe(15);
-      expect(res.body.data.pending).toBe(5);
+      expect(res.body.data.progress.total).toBe(100);
+      expect(res.body.data.progress.processed).toBe(50);
+      expect(res.body.data.progress.eligible).toBe(30);
+      expect(res.body.data.progress.ineligible).toBe(15);
+      expect(res.body.data.progress.pending).toBe(5);
       expect(res.body.data.coverage).toBe(0.5); // 50/100
     });
 
