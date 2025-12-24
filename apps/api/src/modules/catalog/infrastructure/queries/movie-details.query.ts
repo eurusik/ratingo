@@ -76,9 +76,13 @@ export class MovieDetailsQuery {
           totalWatchers: schema.mediaStats.totalWatchers,
         })
         .from(schema.mediaItems)
+        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
         .innerJoin(
           schema.mediaCatalogEvaluations,
-          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+          and(
+            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+          ),
         )
         .leftJoin(schema.movies, eq(schema.mediaItems.id, schema.movies.mediaItemId))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))

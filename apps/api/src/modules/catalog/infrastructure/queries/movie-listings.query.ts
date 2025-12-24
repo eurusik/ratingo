@@ -146,9 +146,13 @@ export class MovieListingsQuery {
         .select(this.selectFields)
         .from(schema.movies)
         .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
         .innerJoin(
           schema.mediaCatalogEvaluations,
-          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+          and(
+            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+          ),
         )
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(and(...conditions))
@@ -319,9 +323,13 @@ export class MovieListingsQuery {
       .select({ total: sql<number>`count(*)` })
       .from(schema.movies)
       .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+      .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
       .innerJoin(
         schema.mediaCatalogEvaluations,
-        eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+        and(
+          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+          eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+        ),
       )
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(and(...conditions));

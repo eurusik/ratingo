@@ -78,9 +78,13 @@ export class ShowDetailsQuery {
           showId: schema.shows.id,
         })
         .from(schema.mediaItems)
+        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
         .innerJoin(
           schema.mediaCatalogEvaluations,
-          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+          and(
+            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+          ),
         )
         .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))

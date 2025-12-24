@@ -158,7 +158,10 @@ export class TrendingShowsQuery {
 
         FROM ${schema.mediaItems} mi
         JOIN ${schema.shows} s ON s.media_item_id = mi.id
-        JOIN ${schema.mediaCatalogEvaluations} mce ON mce.media_item_id = mi.id
+        JOIN ${schema.catalogPolicies} cp ON cp.is_active = true
+        JOIN ${schema.mediaCatalogEvaluations} mce 
+          ON mce.media_item_id = mi.id 
+          AND mce.policy_version = cp.version
         LEFT JOIN ${schema.mediaStats} ms ON ms.media_item_id = mi.id
         
         LEFT JOIN LATERAL (
@@ -182,7 +185,10 @@ export class TrendingShowsQuery {
         SELECT COUNT(*)::int AS total
         FROM ${schema.mediaItems} mi
         JOIN ${schema.shows} s ON s.media_item_id = mi.id
-        JOIN ${schema.mediaCatalogEvaluations} mce ON mce.media_item_id = mi.id
+        JOIN ${schema.catalogPolicies} cp ON cp.is_active = true
+        JOIN ${schema.mediaCatalogEvaluations} mce 
+          ON mce.media_item_id = mi.id 
+          AND mce.policy_version = cp.version
         LEFT JOIN ${schema.mediaStats} ms ON ms.media_item_id = mi.id
         WHERE ${whereSql}
       `;
