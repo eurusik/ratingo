@@ -32,10 +32,11 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
             "schema": {
-              "default": "popularity",
+              "default": "trending",
               "enum": [
+                "trending",
                 "popularity",
                 "ratingo",
                 "releaseDate",
@@ -190,10 +191,11 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
             "schema": {
-              "default": "popularity",
+              "default": "trending",
               "enum": [
+                "trending",
                 "popularity",
                 "ratingo",
                 "releaseDate",
@@ -348,10 +350,11 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
             "schema": {
-              "default": "popularity",
+              "default": "trending",
               "enum": [
+                "trending",
                 "popularity",
                 "ratingo",
                 "releaseDate",
@@ -515,10 +518,11 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
             "schema": {
-              "default": "popularity",
+              "default": "trending",
               "enum": [
+                "trending",
                 "popularity",
                 "ratingo",
                 "releaseDate",
@@ -729,10 +733,11 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
             "schema": {
-              "default": "popularity",
+              "default": "trending",
               "enum": [
+                "trending",
                 "popularity",
                 "ratingo",
                 "releaseDate",
@@ -1747,6 +1752,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Too many registration attempts"
           }
         },
         "tags": [
@@ -1797,6 +1805,9 @@
           },
           "401": {
             "description": "Invalid credentials"
+          },
+          "429": {
+            "description": "Too many login attempts"
           }
         },
         "tags": [
@@ -1844,6 +1855,9 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Too many refresh attempts"
           }
         },
         "tags": [
@@ -2409,8 +2423,49 @@
       "post": {
         "operationId": "IngestionController_syncTrending",
         "summary": "Trigger sync for trending movies and shows",
-        "description": "Syncs trending content from TMDB. With syncStats=true (default), also updates Trakt stats after ingestion.",
-        "parameters": [],
+        "description": "Syncs trending content from TMDB using dispatcher pattern. Queues page jobs for movies and shows. With syncStats=true (default), also updates Trakt stats after ingestion.",
+        "parameters": [
+          {
+            "name": "pages",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "syncStats",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "force",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2514,7 +2569,24 @@
         "operationId": "IngestionController_syncSnapshots",
         "summary": "Trigger daily watchers snapshots sync",
         "description": "Updates daily watcher counts for all media items from Trakt.",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "region",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "force",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "202": {
             "description": ""
@@ -2522,6 +2594,302 @@
         },
         "tags": [
           "Service: Ingestion"
+        ]
+      }
+    },
+    "/api/ingestion/shows/tracked": {
+      "post": {
+        "operationId": "IngestionController_syncTrackedShows",
+        "summary": "Trigger tracked shows sync",
+        "description": "Syncs shows that have active subscriptions. Detects new episodes/seasons and triggers notifications.",
+        "parameters": [
+          {
+            "name": "force",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ]
+      }
+    },
+    "/api/admin/catalog-policies/{id}/prepare": {
+      "post": {
+        "operationId": "PolicyActivationController_preparePolicy",
+        "summary": "Prepare policy for activation",
+        "description": "Creates an evaluation run and starts background job to pre-compute evaluations for all media items. Returns immediately with run ID for tracking progress.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Policy ID to prepare",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "description": "Optional batch size and concurrency settings",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrepareOptionsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Policy preparation started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PrepareResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      }
+    },
+    "/api/admin/catalog-policies/runs/{runId}": {
+      "get": {
+        "operationId": "PolicyActivationController_getRunStatus",
+        "summary": "Get run status and progress",
+        "description": "Returns detailed status of an evaluation run including progress, counters, and readyToPromote flag.",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "description": "Run ID to check",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Run status and progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RunStatusDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      }
+    },
+    "/api/admin/catalog-policies/runs/{runId}/promote": {
+      "post": {
+        "operationId": "PolicyActivationController_promoteRun",
+        "summary": "Promote run to activate policy",
+        "description": "Verifies run is successful and meets thresholds, then atomically activates the policy. This makes the new policy version active for the public catalog.",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "description": "Run ID to promote",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "description": "Optional coverage and error thresholds (defaults: 100% coverage, 0 errors)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromoteOptionsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Promotion result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ActionResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      }
+    },
+    "/api/admin/catalog-policies/runs/{runId}/cancel": {
+      "post": {
+        "operationId": "PolicyActivationController_cancelRun",
+        "summary": "Cancel running evaluation",
+        "description": "Cancels a running evaluation. Item jobs already in queue will be skipped. Preserves cursor and counters for potential resume.",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "description": "Run ID to cancel",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Cancellation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ActionResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      }
+    },
+    "/api/admin/catalog-policies/runs/{runId}/diff": {
+      "get": {
+        "operationId": "PolicyActivationController_getDiff",
+        "summary": "Get diff report",
+        "description": "Computes differences between current active policy and the prepared run. Shows regressions (items leaving catalog) and improvements (items entering catalog).",
+        "parameters": [
+          {
+            "name": "runId",
+            "required": true,
+            "in": "path",
+            "description": "Run ID to compute diff for",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sampleSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of sample items to return (default: 50)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Diff report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/DiffReportDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
         ]
       }
     },
@@ -2661,106 +3029,6 @@
         },
         "tags": [
           "Public: Stats"
-        ]
-      }
-    },
-    "/api/home/hero": {
-      "get": {
-        "operationId": "HomeController_getHero",
-        "summary": "Get Hero block items (Top 4 hottest media)",
-        "parameters": [
-          {
-            "name": "type",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "enum": [
-                "movie",
-                "show"
-              ],
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "default": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/HeroItemDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Home"
-        ]
-      }
-    },
-    "/api/insights/movements": {
-      "get": {
-        "operationId": "InsightsController_getMovements",
-        "summary": "Get biggest risers and fallers",
-        "description": "Returns media items with the biggest change in watchers count over the specified window.",
-        "parameters": [
-          {
-            "name": "window",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "default": "30d",
-              "enum": [
-                "30d",
-                "90d",
-                "365d"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "default": 5,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/RiseFallResponseDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Public: Insights"
         ]
       }
     },
@@ -3348,6 +3616,106 @@
           {
             "bearer": []
           }
+        ]
+      }
+    },
+    "/api/home/hero": {
+      "get": {
+        "operationId": "HomeController_getHero",
+        "summary": "Get Hero block items (Top 4 hottest media)",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HeroItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Home"
+        ]
+      }
+    },
+    "/api/insights/movements": {
+      "get": {
+        "operationId": "InsightsController_getMovements",
+        "summary": "Get biggest risers and fallers",
+        "description": "Returns media items with the biggest change in watchers count over the specified window.",
+        "parameters": [
+          {
+            "name": "window",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "30d",
+              "enum": [
+                "30d",
+                "90d",
+                "365d"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 5,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RiseFallResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Insights"
         ]
       }
     }
@@ -5772,11 +6140,16 @@
       "SyncTrendingDto": {
         "type": "object",
         "properties": {
+          "pages": {
+            "type": "number",
+            "example": 5,
+            "description": "Number of pages to sync (20 items per page). Use this for dispatcher mode.",
+            "default": 5
+          },
           "page": {
             "type": "number",
             "example": 1,
-            "description": "Page number",
-            "default": 1
+            "description": "Single page number (deprecated, use pages instead)"
           },
           "syncStats": {
             "type": "boolean",
@@ -5790,7 +6163,7 @@
               "movie",
               "show"
             ],
-            "description": "Sync only specific media type (movie or show)"
+            "description": "Sync only specific media type (movie or show). Only for legacy single-page mode."
           }
         }
       },
@@ -5819,8 +6192,818 @@
             "example": 30,
             "description": "Days to look back",
             "default": 30
+          },
+          "force": {
+            "type": "boolean",
+            "example": false,
+            "description": "Force re-sync even if job already exists for today",
+            "default": false
           }
         }
+      },
+      "PrepareOptionsDto": {
+        "type": "object",
+        "properties": {
+          "batchSize": {
+            "type": "number",
+            "description": "Batch size for processing items",
+            "example": 500,
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "concurrency": {
+            "type": "number",
+            "description": "Number of concurrent workers",
+            "example": 10,
+            "minimum": 1,
+            "maximum": 50
+          }
+        }
+      },
+      "PrepareResponseDto": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "ID of the created evaluation run",
+            "example": "run-123e4567-e89b-12d3-a456-426614174000"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the run",
+            "example": "running",
+            "enum": [
+              "pending",
+              "running",
+              "success",
+              "failed",
+              "cancelled",
+              "promoted"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message",
+            "example": "Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress."
+          }
+        },
+        "required": [
+          "runId",
+          "status",
+          "message"
+        ]
+      },
+      "ProgressStatsDto": {
+        "type": "object",
+        "properties": {
+          "processed": {
+            "type": "number",
+            "description": "Number of items processed",
+            "example": 750
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of items to process",
+            "example": 1200
+          },
+          "eligible": {
+            "type": "number",
+            "description": "Number of eligible items",
+            "example": 600
+          },
+          "ineligible": {
+            "type": "number",
+            "description": "Number of ineligible items",
+            "example": 100
+          },
+          "pending": {
+            "type": "number",
+            "description": "Number of pending items",
+            "example": 450
+          },
+          "errors": {
+            "type": "number",
+            "description": "Number of errors encountered",
+            "example": 50
+          }
+        },
+        "required": [
+          "processed",
+          "total",
+          "eligible",
+          "ineligible",
+          "pending",
+          "errors"
+        ]
+      },
+      "ErrorSampleDto": {
+        "type": "object",
+        "properties": {
+          "mediaItemId": {
+            "type": "string",
+            "description": "Media item ID that caused the error",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message",
+            "example": "Missing origin country data"
+          },
+          "stack": {
+            "type": "string",
+            "description": "Error stack trace"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "When the error occurred",
+            "example": "2024-12-20T14:30:00Z"
+          }
+        },
+        "required": [
+          "mediaItemId",
+          "error",
+          "timestamp"
+        ]
+      },
+      "RunStatusDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Run ID",
+            "example": "run-123e4567-e89b-12d3-a456-426614174000"
+          },
+          "targetPolicyId": {
+            "type": "string",
+            "description": "Target policy ID",
+            "example": "policy-456e7890-f12a-34b5-c678-901234567890"
+          },
+          "targetPolicyVersion": {
+            "type": "number",
+            "description": "Target policy version",
+            "example": 2
+          },
+          "status": {
+            "type": "string",
+            "description": "Current run status",
+            "example": "running",
+            "enum": [
+              "pending",
+              "running",
+              "success",
+              "failed",
+              "cancelled",
+              "promoted"
+            ]
+          },
+          "progress": {
+            "description": "Progress statistics",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProgressStatsDto"
+              }
+            ]
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the run started",
+            "example": "2024-12-20T14:00:00Z"
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the run finished",
+            "example": "2024-12-20T14:30:00Z"
+          },
+          "promotedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the run was promoted",
+            "example": "2024-12-20T15:00:00Z"
+          },
+          "promotedBy": {
+            "type": "string",
+            "description": "Who promoted the run",
+            "example": "admin@example.com"
+          },
+          "readyToPromote": {
+            "type": "boolean",
+            "description": "Whether the run is ready to be promoted",
+            "example": true
+          },
+          "blockingReasons": {
+            "description": "Reasons why the run cannot be promoted (if any)",
+            "example": [
+              "COVERAGE_NOT_MET"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "coverage": {
+            "type": "number",
+            "description": "Coverage percentage (0.0 to 1.0)",
+            "example": 0.95
+          },
+          "errorSample": {
+            "description": "Sample of errors encountered",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorSampleDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "targetPolicyId",
+          "targetPolicyVersion",
+          "status",
+          "progress",
+          "startedAt",
+          "readyToPromote",
+          "blockingReasons",
+          "coverage",
+          "errorSample"
+        ]
+      },
+      "PromoteOptionsDto": {
+        "type": "object",
+        "properties": {
+          "coverageThreshold": {
+            "type": "number",
+            "description": "Coverage threshold (0.0 to 1.0)",
+            "example": 1,
+            "minimum": 0,
+            "maximum": 1
+          },
+          "maxErrors": {
+            "type": "number",
+            "description": "Maximum allowed errors",
+            "example": 0,
+            "minimum": 0
+          }
+        }
+      },
+      "ActionResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the action was successful",
+            "example": true
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if action failed",
+            "example": "Run is not ready to promote: coverage threshold not met"
+          },
+          "message": {
+            "type": "string",
+            "description": "Success message",
+            "example": "Policy activated successfully"
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "DiffCountsDto": {
+        "type": "object",
+        "properties": {
+          "regressions": {
+            "type": "number",
+            "description": "Number of items that will be removed from catalog",
+            "example": 25
+          },
+          "improvements": {
+            "type": "number",
+            "description": "Number of items that will be added to catalog",
+            "example": 150
+          },
+          "netChange": {
+            "type": "number",
+            "description": "Net change in catalog size",
+            "example": 125
+          }
+        },
+        "required": [
+          "regressions",
+          "improvements",
+          "netChange"
+        ]
+      },
+      "DiffSampleDto": {
+        "type": "object",
+        "properties": {
+          "mediaItemId": {
+            "type": "string",
+            "description": "Media item ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "title": {
+            "type": "string",
+            "description": "Media item title",
+            "example": "The Matrix"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for the change",
+            "example": "Quality threshold updated"
+          }
+        },
+        "required": [
+          "mediaItemId",
+          "title",
+          "reason"
+        ]
+      },
+      "DiffReportDto": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "Run ID",
+            "example": "run-123e4567-e89b-12d3-a456-426614174000"
+          },
+          "targetPolicyVersion": {
+            "type": "number",
+            "description": "Target policy version",
+            "example": 2
+          },
+          "currentPolicyVersion": {
+            "type": "number",
+            "description": "Current active policy version",
+            "example": 1
+          },
+          "counts": {
+            "description": "Summary of changes",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DiffCountsDto"
+              }
+            ]
+          },
+          "topRegressions": {
+            "description": "Sample items being removed from catalog",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiffSampleDto"
+            }
+          },
+          "topImprovements": {
+            "description": "Sample items being added to catalog",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiffSampleDto"
+            }
+          }
+        },
+        "required": [
+          "runId",
+          "targetPolicyVersion",
+          "counts",
+          "topRegressions",
+          "topImprovements"
+        ]
+      },
+      "SaveItemDto": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later",
+            "description": "List to save to: for_later or considering"
+          },
+          "context": {
+            "type": "string",
+            "example": "verdict",
+            "description": "Where the action originated"
+          },
+          "reasonKey": {
+            "type": "string",
+            "example": "trendingNow",
+            "description": "Verdict/reason that triggered the action"
+          }
+        },
+        "required": [
+          "list"
+        ]
+      },
+      "MediaSaveStatusDto": {
+        "type": "object",
+        "properties": {
+          "isForLater": {
+            "type": "boolean",
+            "example": true,
+            "description": "Is saved in \"for later\" list"
+          },
+          "isConsidering": {
+            "type": "boolean",
+            "example": false,
+            "description": "Is saved in \"considering\" list"
+          }
+        },
+        "required": [
+          "isForLater",
+          "isConsidering"
+        ]
+      },
+      "SaveActionResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later"
+          },
+          "status": {
+            "description": "Current save status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSaveStatusDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "list",
+          "status",
+          "createdAt"
+        ]
+      },
+      "UnsaveItemDto": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later",
+            "description": "List to remove from"
+          },
+          "context": {
+            "type": "string",
+            "example": "card"
+          }
+        },
+        "required": [
+          "list"
+        ]
+      },
+      "UnsaveActionResultDto": {
+        "type": "object",
+        "properties": {
+          "removed": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "description": "Current save status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSaveStatusDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "removed",
+          "status"
+        ]
+      },
+      "BatchStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "statuses": {
+            "type": "object",
+            "example": {
+              "id1": {
+                "isForLater": true,
+                "isConsidering": false
+              },
+              "id2": {
+                "isForLater": false,
+                "isConsidering": true
+              }
+            },
+            "description": "Map of mediaItemId to save status"
+          }
+        },
+        "required": [
+          "statuses"
+        ]
+      },
+      "SavedItemWithMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later"
+          },
+          "reasonKey": {
+            "type": "string",
+            "example": "trendingNow",
+            "nullable": true,
+            "description": "Verdict/reason that triggered the save action"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "mediaSummary": {
+            "type": "object",
+            "example": {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "movie",
+              "title": "Inception",
+              "slug": "inception-2010",
+              "poster": {
+                "w92": "...",
+                "w185": "...",
+                "w342": "...",
+                "w500": "...",
+                "w780": "...",
+                "original": "..."
+              }
+            }
+          },
+          "activeSubscriptionTriggers": {
+            "example": [
+              "release",
+              "new_season"
+            ],
+            "description": "Active subscription triggers for this media item. Empty array if no subscriptions.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "list",
+          "createdAt",
+          "mediaSummary",
+          "activeSubscriptionTriggers"
+        ]
+      },
+      "SubscribeDto": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "new_episode",
+              "on_streaming",
+              "status_changed"
+            ],
+            "example": "release",
+            "description": "Trigger type: release, new_season, or on_streaming"
+          },
+          "context": {
+            "type": "string",
+            "example": "verdict",
+            "description": "Where the action originated"
+          },
+          "reasonKey": {
+            "type": "string",
+            "example": "upcomingHit",
+            "description": "Verdict/reason that triggered the action"
+          }
+        },
+        "required": [
+          "trigger"
+        ]
+      },
+      "MediaSubscriptionStatusDto": {
+        "type": "object",
+        "properties": {
+          "triggers": {
+            "example": [
+              "release"
+            ],
+            "description": "Active subscription triggers",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hasRelease": {
+            "type": "boolean",
+            "example": true,
+            "description": "Has active release subscription"
+          },
+          "hasNewSeason": {
+            "type": "boolean",
+            "example": false,
+            "description": "Has active new season subscription"
+          },
+          "hasOnStreaming": {
+            "type": "boolean",
+            "example": false,
+            "description": "Has active on streaming subscription"
+          }
+        },
+        "required": [
+          "triggers",
+          "hasRelease",
+          "hasNewSeason",
+          "hasOnStreaming"
+        ]
+      },
+      "SubscribeActionResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "new_episode",
+              "on_streaming",
+              "status_changed"
+            ],
+            "example": "release"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "description": "Current subscription status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "trigger",
+          "isActive",
+          "status",
+          "createdAt"
+        ]
+      },
+      "UnsubscribeDto": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "new_episode",
+              "on_streaming",
+              "status_changed"
+            ],
+            "example": "release",
+            "description": "Trigger type to unsubscribe from"
+          },
+          "context": {
+            "type": "string",
+            "example": "card"
+          }
+        },
+        "required": [
+          "trigger"
+        ]
+      },
+      "UnsubscribeActionResultDto": {
+        "type": "object",
+        "properties": {
+          "unsubscribed": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "description": "Current subscription status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "unsubscribed",
+          "status"
+        ]
+      },
+      "SubscriptionWithMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "new_episode",
+              "on_streaming",
+              "status_changed"
+            ],
+            "example": "release"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "mediaSummary": {
+            "type": "object",
+            "example": {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "movie",
+              "title": "Inception",
+              "slug": "inception-2010",
+              "poster": {
+                "w92": "...",
+                "w185": "...",
+                "w342": "...",
+                "w500": "...",
+                "w780": "...",
+                "original": "..."
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "trigger",
+          "isActive",
+          "createdAt",
+          "mediaSummary"
+        ]
       },
       "HeroStatsDto": {
         "type": "object",
@@ -6122,435 +7305,6 @@
           "metric",
           "risers",
           "fallers"
-        ]
-      },
-      "SaveItemDto": {
-        "type": "object",
-        "properties": {
-          "list": {
-            "type": "string",
-            "enum": [
-              "for_later",
-              "considering"
-            ],
-            "example": "for_later",
-            "description": "List to save to: for_later or considering"
-          },
-          "context": {
-            "type": "string",
-            "example": "verdict",
-            "description": "Where the action originated"
-          },
-          "reasonKey": {
-            "type": "string",
-            "example": "trendingNow",
-            "description": "Verdict/reason that triggered the action"
-          }
-        },
-        "required": [
-          "list"
-        ]
-      },
-      "MediaSaveStatusDto": {
-        "type": "object",
-        "properties": {
-          "isForLater": {
-            "type": "boolean",
-            "example": true,
-            "description": "Is saved in \"for later\" list"
-          },
-          "isConsidering": {
-            "type": "boolean",
-            "example": false,
-            "description": "Is saved in \"considering\" list"
-          }
-        },
-        "required": [
-          "isForLater",
-          "isConsidering"
-        ]
-      },
-      "SaveActionResultDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "mediaItemId": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "list": {
-            "type": "string",
-            "enum": [
-              "for_later",
-              "considering"
-            ],
-            "example": "for_later"
-          },
-          "status": {
-            "description": "Current save status after action",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MediaSaveStatusDto"
-              }
-            ]
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2024-01-15T10:30:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "mediaItemId",
-          "list",
-          "status",
-          "createdAt"
-        ]
-      },
-      "UnsaveItemDto": {
-        "type": "object",
-        "properties": {
-          "list": {
-            "type": "string",
-            "enum": [
-              "for_later",
-              "considering"
-            ],
-            "example": "for_later",
-            "description": "List to remove from"
-          },
-          "context": {
-            "type": "string",
-            "example": "card"
-          }
-        },
-        "required": [
-          "list"
-        ]
-      },
-      "UnsaveActionResultDto": {
-        "type": "object",
-        "properties": {
-          "removed": {
-            "type": "boolean",
-            "example": true
-          },
-          "status": {
-            "description": "Current save status after action",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MediaSaveStatusDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "removed",
-          "status"
-        ]
-      },
-      "BatchStatusResponseDto": {
-        "type": "object",
-        "properties": {
-          "statuses": {
-            "type": "object",
-            "example": {
-              "id1": {
-                "isForLater": true,
-                "isConsidering": false
-              },
-              "id2": {
-                "isForLater": false,
-                "isConsidering": true
-              }
-            },
-            "description": "Map of mediaItemId to save status"
-          }
-        },
-        "required": [
-          "statuses"
-        ]
-      },
-      "SavedItemWithMediaResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "mediaItemId": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "list": {
-            "type": "string",
-            "enum": [
-              "for_later",
-              "considering"
-            ],
-            "example": "for_later"
-          },
-          "reasonKey": {
-            "type": "string",
-            "example": "trendingNow",
-            "nullable": true,
-            "description": "Verdict/reason that triggered the save action"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2024-01-15T10:30:00.000Z"
-          },
-          "mediaSummary": {
-            "type": "object",
-            "example": {
-              "id": "123e4567-e89b-12d3-a456-426614174000",
-              "type": "movie",
-              "title": "Inception",
-              "slug": "inception-2010",
-              "poster": {
-                "w92": "...",
-                "w185": "...",
-                "w342": "...",
-                "w500": "...",
-                "w780": "...",
-                "original": "..."
-              }
-            }
-          },
-          "activeSubscriptionTriggers": {
-            "example": [
-              "release",
-              "new_season"
-            ],
-            "description": "Active subscription triggers for this media item. Empty array if no subscriptions.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "id",
-          "mediaItemId",
-          "list",
-          "createdAt",
-          "mediaSummary",
-          "activeSubscriptionTriggers"
-        ]
-      },
-      "SubscribeDto": {
-        "type": "object",
-        "properties": {
-          "trigger": {
-            "type": "string",
-            "enum": [
-              "release",
-              "new_season",
-              "on_streaming"
-            ],
-            "example": "release",
-            "description": "Trigger type: release, new_season, or on_streaming"
-          },
-          "context": {
-            "type": "string",
-            "example": "verdict",
-            "description": "Where the action originated"
-          },
-          "reasonKey": {
-            "type": "string",
-            "example": "upcomingHit",
-            "description": "Verdict/reason that triggered the action"
-          }
-        },
-        "required": [
-          "trigger"
-        ]
-      },
-      "MediaSubscriptionStatusDto": {
-        "type": "object",
-        "properties": {
-          "triggers": {
-            "example": [
-              "release"
-            ],
-            "description": "Active subscription triggers",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "hasRelease": {
-            "type": "boolean",
-            "example": true,
-            "description": "Has active release subscription"
-          },
-          "hasNewSeason": {
-            "type": "boolean",
-            "example": false,
-            "description": "Has active new season subscription"
-          },
-          "hasOnStreaming": {
-            "type": "boolean",
-            "example": false,
-            "description": "Has active on streaming subscription"
-          }
-        },
-        "required": [
-          "triggers",
-          "hasRelease",
-          "hasNewSeason",
-          "hasOnStreaming"
-        ]
-      },
-      "SubscribeActionResultDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "mediaItemId": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "trigger": {
-            "type": "string",
-            "enum": [
-              "release",
-              "new_season",
-              "on_streaming"
-            ],
-            "example": "release"
-          },
-          "isActive": {
-            "type": "boolean",
-            "example": true
-          },
-          "status": {
-            "description": "Current subscription status after action",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
-              }
-            ]
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2024-01-15T10:30:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "mediaItemId",
-          "trigger",
-          "isActive",
-          "status",
-          "createdAt"
-        ]
-      },
-      "UnsubscribeDto": {
-        "type": "object",
-        "properties": {
-          "trigger": {
-            "type": "string",
-            "enum": [
-              "release",
-              "new_season",
-              "on_streaming"
-            ],
-            "example": "release",
-            "description": "Trigger type to unsubscribe from"
-          },
-          "context": {
-            "type": "string",
-            "example": "card"
-          }
-        },
-        "required": [
-          "trigger"
-        ]
-      },
-      "UnsubscribeActionResultDto": {
-        "type": "object",
-        "properties": {
-          "unsubscribed": {
-            "type": "boolean",
-            "example": true
-          },
-          "status": {
-            "description": "Current subscription status after action",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "unsubscribed",
-          "status"
-        ]
-      },
-      "SubscriptionWithMediaResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "mediaItemId": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "trigger": {
-            "type": "string",
-            "enum": [
-              "release",
-              "new_season",
-              "on_streaming"
-            ],
-            "example": "release"
-          },
-          "isActive": {
-            "type": "boolean",
-            "example": true
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2024-01-15T10:30:00.000Z"
-          },
-          "mediaSummary": {
-            "type": "object",
-            "example": {
-              "id": "123e4567-e89b-12d3-a456-426614174000",
-              "type": "movie",
-              "title": "Inception",
-              "slug": "inception-2010",
-              "poster": {
-                "w92": "...",
-                "w185": "...",
-                "w342": "...",
-                "w500": "...",
-                "w780": "...",
-                "original": "..."
-              }
-            }
-          }
-        },
-        "required": [
-          "id",
-          "mediaItemId",
-          "trigger",
-          "isActive",
-          "createdAt",
-          "mediaSummary"
         ]
       }
     }

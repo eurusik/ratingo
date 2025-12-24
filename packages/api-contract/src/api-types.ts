@@ -605,7 +605,7 @@ export interface paths {
         put?: never;
         /**
          * Trigger sync for trending movies and shows
-         * @description Syncs trending content from TMDB. With syncStats=true (default), also updates Trakt stats after ingestion.
+         * @description Syncs trending content from TMDB using dispatcher pattern. Queues page jobs for movies and shows. With syncStats=true (default), also updates Trakt stats after ingestion.
          */
         post: operations["IngestionController_syncTrending"];
         delete?: never;
@@ -688,6 +688,126 @@ export interface paths {
          * @description Updates daily watcher counts for all media items from Trakt.
          */
         post: operations["IngestionController_syncSnapshots"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ingestion/shows/tracked": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger tracked shows sync
+         * @description Syncs shows that have active subscriptions. Detects new episodes/seasons and triggers notifications.
+         */
+        post: operations["IngestionController_syncTrackedShows"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/{id}/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Prepare policy for activation
+         * @description Creates an evaluation run and starts background job to pre-compute evaluations for all media items. Returns immediately with run ID for tracking progress.
+         */
+        post: operations["PolicyActivationController_preparePolicy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get run status and progress
+         * @description Returns detailed status of an evaluation run including progress, counters, and readyToPromote flag.
+         */
+        get: operations["PolicyActivationController_getRunStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs/{runId}/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Promote run to activate policy
+         * @description Verifies run is successful and meets thresholds, then atomically activates the policy. This makes the new policy version active for the public catalog.
+         */
+        post: operations["PolicyActivationController_promoteRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs/{runId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel running evaluation
+         * @description Cancels a running evaluation. Item jobs already in queue will be skipped. Preserves cursor and counters for potential resume.
+         */
+        post: operations["PolicyActivationController_cancelRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs/{runId}/diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get diff report
+         * @description Computes differences between current active policy and the prepared run. Shows regressions (items leaving catalog) and improvements (items entering catalog).
+         */
+        get: operations["PolicyActivationController_getDiff"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -786,43 +906,6 @@ export interface paths {
          * @description Returns pre-calculated drop-off analysis including drop-off point, engagement metrics, and insights.
          */
         get: operations["StatsController_getDropOffAnalysis"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/home/hero": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Hero block items (Top 4 hottest media) */
-        get: operations["HomeController_getHero"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/insights/movements": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get biggest risers and fallers
-         * @description Returns media items with the biggest change in watchers count over the specified window.
-         */
-        get: operations["InsightsController_getMovements"];
         put?: never;
         post?: never;
         delete?: never;
@@ -961,6 +1044,43 @@ export interface paths {
         };
         /** List active subscriptions (auth: Bearer) */
         get: operations["SubscriptionsController_listActive"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/home/hero": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Hero block items (Top 4 hottest media) */
+        get: operations["HomeController_getHero"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/insights/movements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get biggest risers and fallers
+         * @description Returns media items with the biggest change in watchers count over the specified window.
+         */
+        get: operations["InsightsController_getMovements"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1904,11 +2024,16 @@ export interface components {
         };
         SyncTrendingDto: {
             /**
-             * @description Page number
-             * @default 1
+             * @description Number of pages to sync (20 items per page). Use this for dispatcher mode.
+             * @default 5
+             * @example 5
+             */
+            pages: number;
+            /**
+             * @description Single page number (deprecated, use pages instead)
              * @example 1
              */
-            page: number;
+            page?: number;
             /**
              * @description Also sync Trakt stats after ingestion
              * @default true
@@ -1916,7 +2041,7 @@ export interface components {
              */
             syncStats: boolean;
             /**
-             * @description Sync only specific media type (movie or show)
+             * @description Sync only specific media type (movie or show). Only for legacy single-page mode.
              * @enum {string}
              */
             type?: "movie" | "show";
@@ -1942,6 +2067,485 @@ export interface components {
              * @example 30
              */
             daysBack: number;
+            /**
+             * @description Force re-sync even if job already exists for today
+             * @default false
+             * @example false
+             */
+            force: boolean;
+        };
+        PrepareOptionsDto: {
+            /**
+             * @description Batch size for processing items
+             * @example 500
+             */
+            batchSize?: number;
+            /**
+             * @description Number of concurrent workers
+             * @example 10
+             */
+            concurrency?: number;
+        };
+        PrepareResponseDto: {
+            /**
+             * @description ID of the created evaluation run
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            runId: string;
+            /**
+             * @description Current status of the run
+             * @example running
+             * @enum {string}
+             */
+            status: "pending" | "running" | "success" | "failed" | "cancelled" | "promoted";
+            /**
+             * @description Human-readable message
+             * @example Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress.
+             */
+            message: string;
+        };
+        ProgressStatsDto: {
+            /**
+             * @description Number of items processed
+             * @example 750
+             */
+            processed: number;
+            /**
+             * @description Total number of items to process
+             * @example 1200
+             */
+            total: number;
+            /**
+             * @description Number of eligible items
+             * @example 600
+             */
+            eligible: number;
+            /**
+             * @description Number of ineligible items
+             * @example 100
+             */
+            ineligible: number;
+            /**
+             * @description Number of pending items
+             * @example 450
+             */
+            pending: number;
+            /**
+             * @description Number of errors encountered
+             * @example 50
+             */
+            errors: number;
+        };
+        ErrorSampleDto: {
+            /**
+             * @description Media item ID that caused the error
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            mediaItemId: string;
+            /**
+             * @description Error message
+             * @example Missing origin country data
+             */
+            error: string;
+            /** @description Error stack trace */
+            stack?: string;
+            /**
+             * @description When the error occurred
+             * @example 2024-12-20T14:30:00Z
+             */
+            timestamp: string;
+        };
+        RunStatusDto: {
+            /**
+             * @description Run ID
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description Target policy ID
+             * @example policy-456e7890-f12a-34b5-c678-901234567890
+             */
+            targetPolicyId: string;
+            /**
+             * @description Target policy version
+             * @example 2
+             */
+            targetPolicyVersion: number;
+            /**
+             * @description Current run status
+             * @example running
+             * @enum {string}
+             */
+            status: "pending" | "running" | "success" | "failed" | "cancelled" | "promoted";
+            /** @description Progress statistics */
+            progress: components["schemas"]["ProgressStatsDto"];
+            /**
+             * Format: date-time
+             * @description When the run started
+             * @example 2024-12-20T14:00:00Z
+             */
+            startedAt: string;
+            /**
+             * Format: date-time
+             * @description When the run finished
+             * @example 2024-12-20T14:30:00Z
+             */
+            finishedAt?: string;
+            /**
+             * Format: date-time
+             * @description When the run was promoted
+             * @example 2024-12-20T15:00:00Z
+             */
+            promotedAt?: string;
+            /**
+             * @description Who promoted the run
+             * @example admin@example.com
+             */
+            promotedBy?: string;
+            /**
+             * @description Whether the run is ready to be promoted
+             * @example true
+             */
+            readyToPromote: boolean;
+            /**
+             * @description Reasons why the run cannot be promoted (if any)
+             * @example [
+             *       "COVERAGE_NOT_MET"
+             *     ]
+             */
+            blockingReasons: unknown[][];
+            /**
+             * @description Coverage percentage (0.0 to 1.0)
+             * @example 0.95
+             */
+            coverage: number;
+            /** @description Sample of errors encountered */
+            errorSample: components["schemas"]["ErrorSampleDto"][];
+        };
+        PromoteOptionsDto: {
+            /**
+             * @description Coverage threshold (0.0 to 1.0)
+             * @example 1
+             */
+            coverageThreshold?: number;
+            /**
+             * @description Maximum allowed errors
+             * @example 0
+             */
+            maxErrors?: number;
+        };
+        ActionResponseDto: {
+            /**
+             * @description Whether the action was successful
+             * @example true
+             */
+            success: boolean;
+            /**
+             * @description Error message if action failed
+             * @example Run is not ready to promote: coverage threshold not met
+             */
+            error?: string;
+            /**
+             * @description Success message
+             * @example Policy activated successfully
+             */
+            message?: string;
+        };
+        DiffCountsDto: {
+            /**
+             * @description Number of items that will be removed from catalog
+             * @example 25
+             */
+            regressions: number;
+            /**
+             * @description Number of items that will be added to catalog
+             * @example 150
+             */
+            improvements: number;
+            /**
+             * @description Net change in catalog size
+             * @example 125
+             */
+            netChange: number;
+        };
+        DiffSampleDto: {
+            /**
+             * @description Media item ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            mediaItemId: string;
+            /**
+             * @description Media item title
+             * @example The Matrix
+             */
+            title: string;
+            /**
+             * @description Reason for the change
+             * @example Quality threshold updated
+             */
+            reason: string;
+        };
+        DiffReportDto: {
+            /**
+             * @description Run ID
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            runId: string;
+            /**
+             * @description Target policy version
+             * @example 2
+             */
+            targetPolicyVersion: number;
+            /**
+             * @description Current active policy version
+             * @example 1
+             */
+            currentPolicyVersion?: number;
+            /** @description Summary of changes */
+            counts: components["schemas"]["DiffCountsDto"];
+            /** @description Sample items being removed from catalog */
+            topRegressions: components["schemas"]["DiffSampleDto"][];
+            /** @description Sample items being added to catalog */
+            topImprovements: components["schemas"]["DiffSampleDto"][];
+        };
+        SaveItemDto: {
+            /**
+             * @description List to save to: for_later or considering
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /**
+             * @description Where the action originated
+             * @example verdict
+             */
+            context?: string;
+            /**
+             * @description Verdict/reason that triggered the action
+             * @example trendingNow
+             */
+            reasonKey?: string;
+        };
+        MediaSaveStatusDto: {
+            /**
+             * @description Is saved in "for later" list
+             * @example true
+             */
+            isForLater: boolean;
+            /**
+             * @description Is saved in "considering" list
+             * @example false
+             */
+            isConsidering: boolean;
+        };
+        SaveActionResultDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /** @description Current save status after action */
+            status: components["schemas"]["MediaSaveStatusDto"];
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        UnsaveItemDto: {
+            /**
+             * @description List to remove from
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /** @example card */
+            context?: string;
+        };
+        UnsaveActionResultDto: {
+            /** @example true */
+            removed: boolean;
+            /** @description Current save status after action */
+            status: components["schemas"]["MediaSaveStatusDto"];
+        };
+        BatchStatusResponseDto: {
+            /**
+             * @description Map of mediaItemId to save status
+             * @example {
+             *       "id1": {
+             *         "isForLater": true,
+             *         "isConsidering": false
+             *       },
+             *       "id2": {
+             *         "isForLater": false,
+             *         "isConsidering": true
+             *       }
+             *     }
+             */
+            statuses: Record<string, never>;
+        };
+        SavedItemWithMediaResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /**
+             * @description Verdict/reason that triggered the save action
+             * @example trendingNow
+             */
+            reasonKey?: string | null;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @example {
+             *       "id": "123e4567-e89b-12d3-a456-426614174000",
+             *       "type": "movie",
+             *       "title": "Inception",
+             *       "slug": "inception-2010",
+             *       "poster": {
+             *         "w92": "...",
+             *         "w185": "...",
+             *         "w342": "...",
+             *         "w500": "...",
+             *         "w780": "...",
+             *         "original": "..."
+             *       }
+             *     }
+             */
+            mediaSummary: Record<string, never>;
+            /**
+             * @description Active subscription triggers for this media item. Empty array if no subscriptions.
+             * @example [
+             *       "release",
+             *       "new_season"
+             *     ]
+             */
+            activeSubscriptionTriggers: string[];
+        };
+        SubscribeDto: {
+            /**
+             * @description Trigger type: release, new_season, or on_streaming
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /**
+             * @description Where the action originated
+             * @example verdict
+             */
+            context?: string;
+            /**
+             * @description Verdict/reason that triggered the action
+             * @example upcomingHit
+             */
+            reasonKey?: string;
+        };
+        MediaSubscriptionStatusDto: {
+            /**
+             * @description Active subscription triggers
+             * @example [
+             *       "release"
+             *     ]
+             */
+            triggers: string[];
+            /**
+             * @description Has active release subscription
+             * @example true
+             */
+            hasRelease: boolean;
+            /**
+             * @description Has active new season subscription
+             * @example false
+             */
+            hasNewSeason: boolean;
+            /**
+             * @description Has active on streaming subscription
+             * @example false
+             */
+            hasOnStreaming: boolean;
+        };
+        SubscribeActionResultDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /** @example true */
+            isActive: boolean;
+            /** @description Current subscription status after action */
+            status: components["schemas"]["MediaSubscriptionStatusDto"];
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        UnsubscribeDto: {
+            /**
+             * @description Trigger type to unsubscribe from
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /** @example card */
+            context?: string;
+        };
+        UnsubscribeActionResultDto: {
+            /** @example true */
+            unsubscribed: boolean;
+            /** @description Current subscription status after action */
+            status: components["schemas"]["MediaSubscriptionStatusDto"];
+        };
+        SubscriptionWithMediaResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /** @example true */
+            isActive: boolean;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @example {
+             *       "id": "123e4567-e89b-12d3-a456-426614174000",
+             *       "type": "movie",
+             *       "title": "Inception",
+             *       "slug": "inception-2010",
+             *       "poster": {
+             *         "w92": "...",
+             *         "w185": "...",
+             *         "w342": "...",
+             *         "w500": "...",
+             *         "w780": "...",
+             *         "original": "..."
+             *       }
+             *     }
+             */
+            mediaSummary: Record<string, never>;
         };
         HeroStatsDto: {
             /** @example 85.5 */
@@ -2084,245 +2688,6 @@ export interface components {
             risers: components["schemas"]["RiseFallItemDto"][];
             fallers: components["schemas"]["RiseFallItemDto"][];
         };
-        SaveItemDto: {
-            /**
-             * @description List to save to: for_later or considering
-             * @example for_later
-             * @enum {string}
-             */
-            list: "for_later" | "considering";
-            /**
-             * @description Where the action originated
-             * @example verdict
-             */
-            context?: string;
-            /**
-             * @description Verdict/reason that triggered the action
-             * @example trendingNow
-             */
-            reasonKey?: string;
-        };
-        MediaSaveStatusDto: {
-            /**
-             * @description Is saved in "for later" list
-             * @example true
-             */
-            isForLater: boolean;
-            /**
-             * @description Is saved in "considering" list
-             * @example false
-             */
-            isConsidering: boolean;
-        };
-        SaveActionResultDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            id: string;
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            mediaItemId: string;
-            /**
-             * @example for_later
-             * @enum {string}
-             */
-            list: "for_later" | "considering";
-            /** @description Current save status after action */
-            status: components["schemas"]["MediaSaveStatusDto"];
-            /**
-             * Format: date-time
-             * @example 2024-01-15T10:30:00.000Z
-             */
-            createdAt: string;
-        };
-        UnsaveItemDto: {
-            /**
-             * @description List to remove from
-             * @example for_later
-             * @enum {string}
-             */
-            list: "for_later" | "considering";
-            /** @example card */
-            context?: string;
-        };
-        UnsaveActionResultDto: {
-            /** @example true */
-            removed: boolean;
-            /** @description Current save status after action */
-            status: components["schemas"]["MediaSaveStatusDto"];
-        };
-        BatchStatusResponseDto: {
-            /**
-             * @description Map of mediaItemId to save status
-             * @example {
-             *       "id1": {
-             *         "isForLater": true,
-             *         "isConsidering": false
-             *       },
-             *       "id2": {
-             *         "isForLater": false,
-             *         "isConsidering": true
-             *       }
-             *     }
-             */
-            statuses: Record<string, never>;
-        };
-        SavedItemWithMediaResponseDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            id: string;
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            mediaItemId: string;
-            /**
-             * @example for_later
-             * @enum {string}
-             */
-            list: "for_later" | "considering";
-            /**
-             * @description Verdict/reason that triggered the save action
-             * @example trendingNow
-             */
-            reasonKey?: string | null;
-            /**
-             * Format: date-time
-             * @example 2024-01-15T10:30:00.000Z
-             */
-            createdAt: string;
-            /**
-             * @example {
-             *       "id": "123e4567-e89b-12d3-a456-426614174000",
-             *       "type": "movie",
-             *       "title": "Inception",
-             *       "slug": "inception-2010",
-             *       "poster": {
-             *         "w92": "...",
-             *         "w185": "...",
-             *         "w342": "...",
-             *         "w500": "...",
-             *         "w780": "...",
-             *         "original": "..."
-             *       }
-             *     }
-             */
-            mediaSummary: Record<string, never>;
-            /**
-             * @description Active subscription triggers for this media item. Empty array if no subscriptions.
-             * @example [
-             *       "release",
-             *       "new_season"
-             *     ]
-             */
-            activeSubscriptionTriggers: string[];
-        };
-        SubscribeDto: {
-            /**
-             * @description Trigger type: release, new_season, or on_streaming
-             * @example release
-             * @enum {string}
-             */
-            trigger: "release" | "new_season" | "on_streaming";
-            /**
-             * @description Where the action originated
-             * @example verdict
-             */
-            context?: string;
-            /**
-             * @description Verdict/reason that triggered the action
-             * @example upcomingHit
-             */
-            reasonKey?: string;
-        };
-        MediaSubscriptionStatusDto: {
-            /**
-             * @description Active subscription triggers
-             * @example [
-             *       "release"
-             *     ]
-             */
-            triggers: string[];
-            /**
-             * @description Has active release subscription
-             * @example true
-             */
-            hasRelease: boolean;
-            /**
-             * @description Has active new season subscription
-             * @example false
-             */
-            hasNewSeason: boolean;
-            /**
-             * @description Has active on streaming subscription
-             * @example false
-             */
-            hasOnStreaming: boolean;
-        };
-        SubscribeActionResultDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            id: string;
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            mediaItemId: string;
-            /**
-             * @example release
-             * @enum {string}
-             */
-            trigger: "release" | "new_season" | "on_streaming";
-            /** @example true */
-            isActive: boolean;
-            /** @description Current subscription status after action */
-            status: components["schemas"]["MediaSubscriptionStatusDto"];
-            /**
-             * Format: date-time
-             * @example 2024-01-15T10:30:00.000Z
-             */
-            createdAt: string;
-        };
-        UnsubscribeDto: {
-            /**
-             * @description Trigger type to unsubscribe from
-             * @example release
-             * @enum {string}
-             */
-            trigger: "release" | "new_season" | "on_streaming";
-            /** @example card */
-            context?: string;
-        };
-        UnsubscribeActionResultDto: {
-            /** @example true */
-            unsubscribed: boolean;
-            /** @description Current subscription status after action */
-            status: components["schemas"]["MediaSubscriptionStatusDto"];
-        };
-        SubscriptionWithMediaResponseDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            id: string;
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            mediaItemId: string;
-            /**
-             * @example release
-             * @enum {string}
-             */
-            trigger: "release" | "new_season" | "on_streaming";
-            /** @example true */
-            isActive: boolean;
-            /**
-             * Format: date-time
-             * @example 2024-01-15T10:30:00.000Z
-             */
-            createdAt: string;
-            /**
-             * @example {
-             *       "id": "123e4567-e89b-12d3-a456-426614174000",
-             *       "type": "movie",
-             *       "title": "Inception",
-             *       "slug": "inception-2010",
-             *       "poster": {
-             *         "w92": "...",
-             *         "w185": "...",
-             *         "w342": "...",
-             *         "w500": "...",
-             *         "w780": "...",
-             *         "original": "..."
-             *       }
-             *     }
-             */
-            mediaSummary: Record<string, never>;
-        };
     };
     responses: never;
     parameters: never;
@@ -2337,8 +2702,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
-                sort?: "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
                 genres?: string;
@@ -2380,8 +2745,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
-                sort?: "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
                 genres?: string;
@@ -2423,8 +2788,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
-                sort?: "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
                 genres?: string;
@@ -2468,8 +2833,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
-                sort?: "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
                 genres?: string;
@@ -2538,8 +2903,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
-                sort?: "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
                 genres?: string;
@@ -3010,6 +3375,13 @@ export interface operations {
                     };
                 };
             };
+            /** @description Too many registration attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     AuthController_login: {
@@ -3045,6 +3417,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Too many login attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     AuthController_refresh: {
@@ -3072,6 +3451,13 @@ export interface operations {
                         data: components["schemas"]["AuthTokensDto"];
                     };
                 };
+            };
+            /** @description Too many refresh attempts */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -3383,7 +3769,13 @@ export interface operations {
     };
     IngestionController_syncTrending: {
         parameters: {
-            query?: never;
+            query: {
+                pages: string;
+                page: string;
+                syncStats: string;
+                type: string;
+                force: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3467,7 +3859,10 @@ export interface operations {
     };
     IngestionController_syncSnapshots: {
         parameters: {
-            query?: never;
+            query: {
+                region: string;
+                force: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3479,6 +3874,173 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    IngestionController_syncTrackedShows: {
+        parameters: {
+            query: {
+                force: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PolicyActivationController_preparePolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Policy ID to prepare */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Optional batch size and concurrency settings */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PrepareOptionsDto"];
+            };
+        };
+        responses: {
+            /** @description Policy preparation started */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PrepareResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    PolicyActivationController_getRunStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Run ID to check */
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Run status and progress */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["RunStatusDto"];
+                    };
+                };
+            };
+        };
+    };
+    PolicyActivationController_promoteRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Run ID to promote */
+                runId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Optional coverage and error thresholds (defaults: 100% coverage, 0 errors) */
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PromoteOptionsDto"];
+            };
+        };
+        responses: {
+            /** @description Promotion result */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ActionResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    PolicyActivationController_cancelRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Run ID to cancel */
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cancellation result */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ActionResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    PolicyActivationController_getDiff: {
+        parameters: {
+            query?: {
+                /** @description Number of sample items to return (default: 50) */
+                sampleSize?: number;
+            };
+            header?: never;
+            path: {
+                /** @description Run ID to compute diff for */
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Diff report */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["DiffReportDto"];
+                    };
+                };
             };
         };
     };
@@ -3581,53 +4143,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    HomeController_getHero: {
-        parameters: {
-            query?: {
-                type?: "movie" | "show";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HeroItemDto"][];
-                };
-            };
-        };
-    };
-    InsightsController_getMovements: {
-        parameters: {
-            query?: {
-                window?: "30d" | "90d" | "365d";
-                limit?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["RiseFallResponseDto"];
-                    };
-                };
             };
         };
     };
@@ -3906,6 +4421,53 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["SubscriptionWithMediaResponseDto"][];
+                    };
+                };
+            };
+        };
+    };
+    HomeController_getHero: {
+        parameters: {
+            query?: {
+                type?: "movie" | "show";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeroItemDto"][];
+                };
+            };
+        };
+    };
+    InsightsController_getMovements: {
+        parameters: {
+            query?: {
+                window?: "30d" | "90d" | "365d";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["RiseFallResponseDto"];
                     };
                 };
             };
