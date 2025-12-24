@@ -48,8 +48,11 @@ export const eligibilityStatusEnum = pgEnum('eligibility_status', [
 export const evaluationRunStatusEnum = pgEnum('evaluation_run_status', [
   'pending',
   'running',
-  'completed',
+  'completed', // Legacy, use 'success' for new runs
   'failed',
+  'success',
+  'cancelled',
+  'promoted',
 ]);
 
 // --- SHARED TYPES ---
@@ -755,6 +758,7 @@ export const mediaCatalogEvaluations = pgTable(
 /**
  * CATALOG EVALUATION RUNS
  * Tracks RE_EVALUATE_CATALOG job runs for monitoring and resumability
+ * Extended for Policy Activation Flow (Prepare → Promote)
  */
 export const catalogEvaluationRuns = pgTable(
   'catalog_evaluation_runs',
@@ -780,9 +784,33 @@ export const catalogEvaluationRuns = pgTable(
         review: 0,
         reasonBreakdown: {},
       }),
+    // Policy Activation Flow fields
+    targetPolicyId: uuid('target_policy_id').references(() => catalogPolicies.id),
+    targetPolicyVersion: integer('target_policy_version'),
+    totalReadySnapshot: integer('total_ready_snapshot').default(0),
+    snapshotCutoff: timestamp('snapshot_cutoff'),
+    processed: integer('processed').default(0),
+    eligible: integer('eligible').default(0),
+    ineligible: integer('ineligible').default(0),
+    pending: integer('pending').default(0),
+    errors: integer('errors').default(0),
+    errorSample: jsonb('error_sample')
+      .$type<
+        Array<{
+          mediaItemId: string;
+          error: string;
+          stack?: string;
+          timestamp: string;
+        }>
+      >()
+      .default([]),
+    promotedAt: timestamp('promoted_at'),
+    promotedBy: text('promoted_by'),
   },
   (t) => ({
     policyVersionIdx: index('catalog_eval_runs_policy_version_idx').on(t.policyVersion),
     statusIdx: index('catalog_eval_runs_status_idx').on(t.status),
+    targetPolicyIdx: index('catalog_eval_runs_target_policy_idx').on(t.targetPolicyId),
+    // Note: Partial unique index for running runs created via raw SQL migration
   }),
 );

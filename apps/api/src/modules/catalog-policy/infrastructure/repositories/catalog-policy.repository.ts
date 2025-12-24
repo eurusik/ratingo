@@ -23,6 +23,11 @@ export interface ICatalogPolicyRepository {
   findActive(): Promise<CatalogPolicy | null>;
 
   /**
+   * Finds a policy by ID.
+   */
+  findById(id: string): Promise<CatalogPolicy | null>;
+
+  /**
    * Finds a policy by version number.
    */
   findByVersion(version: number): Promise<CatalogPolicy | null>;
@@ -73,6 +78,25 @@ export class CatalogPolicyRepository implements ICatalogPolicyRepository {
     } catch (error) {
       this.logger.error('Failed to find active policy', error);
       throw new DatabaseException('Failed to find active policy', error);
+    }
+  }
+
+  async findById(id: string): Promise<CatalogPolicy | null> {
+    try {
+      const result = await this.db
+        .select()
+        .from(schema.catalogPolicies)
+        .where(eq(schema.catalogPolicies.id, id))
+        .limit(1);
+
+      if (result.length === 0) {
+        return null;
+      }
+
+      return this.mapToEntity(result[0]);
+    } catch (error) {
+      this.logger.error(`Failed to find policy ${id}`, error);
+      throw new DatabaseException(`Failed to find policy ${id}`, error);
     }
   }
 

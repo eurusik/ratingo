@@ -142,7 +142,7 @@ export interface MediaCatalogEvaluation {
 export interface CatalogEvaluationRun {
   id: string;
   policyVersion: number;
-  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'PROMOTED';
   startedAt: Date;
   finishedAt: Date | null;
   cursor: string | null;

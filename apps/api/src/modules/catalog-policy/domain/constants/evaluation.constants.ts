@@ -1,12 +1,12 @@
 /**
  * Catalog Policy Evaluation Constants
  *
- * Centralized constants for eligibility statuses and evaluation reasons
+ * Centralized constants for eligibility statuses, run statuses, and evaluation reasons
  * to avoid magic strings throughout the codebase.
  */
 
 /**
- * Eligibility Status Values
+ * Eligibility Status Values (stored in DB)
  */
 export const EligibilityStatus = {
   PENDING: 'pending',
@@ -16,6 +16,34 @@ export const EligibilityStatus = {
 } as const;
 
 export type EligibilityStatusType = (typeof EligibilityStatus)[keyof typeof EligibilityStatus];
+
+/**
+ * Virtual status for diff comparisons - item doesn't exist in evaluation set.
+ * NOT stored in DB, only used in diff logic.
+ */
+export const DIFF_STATUS_NONE = 'none' as const;
+
+/**
+ * Evaluation Run Status Values
+ */
+export const RunStatus = {
+  PENDING: 'pending',
+  RUNNING: 'running',
+  SUCCESS: 'success',
+  FAILED: 'failed',
+  CANCELLED: 'cancelled',
+  PROMOTED: 'promoted',
+  /** Legacy status - mapped to SUCCESS in read layer */
+  COMPLETED: 'completed',
+} as const;
+
+export type RunStatusType = (typeof RunStatus)[keyof typeof RunStatus];
+
+/** Run statuses that indicate the run is finished and can be diffed */
+export const DIFFABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.SUCCESS, RunStatus.PROMOTED];
+
+/** Run statuses that indicate the run can be cancelled */
+export const CANCELLABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.RUNNING];
 
 /**
  * Evaluation Reason Keys
