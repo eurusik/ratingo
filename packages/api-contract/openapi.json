@@ -6645,6 +6645,47 @@
           "minRelevanceScore"
         ]
       },
+      "GlobalRequirementsDto": {
+        "type": "object",
+        "properties": {
+          "minImdbVotes": {
+            "type": "number",
+            "description": "Minimum IMDb votes required (integer)",
+            "example": 3000,
+            "minimum": 0
+          },
+          "minTraktVotes": {
+            "type": "number",
+            "description": "Minimum Trakt votes required (integer)",
+            "example": 1000,
+            "minimum": 0
+          },
+          "minQualityScoreNormalized": {
+            "type": "number",
+            "description": "Minimum quality score normalized (0-1)",
+            "example": 0.6,
+            "minimum": 0,
+            "maximum": 1
+          },
+          "requireAnyOfRatingsPresent": {
+            "type": "array",
+            "description": "At least one of these rating sources must be present",
+            "example": [
+              "imdb",
+              "metacritic"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "imdb",
+                "metacritic",
+                "rt",
+                "trakt"
+              ]
+            }
+          }
+        }
+      },
       "PolicyConfigDto": {
         "type": "object",
         "properties": {
@@ -6740,6 +6781,14 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/HomepageConfigDto"
+              }
+            ]
+          },
+          "globalRequirements": {
+            "description": "Global quality gate requirements (all conditions combined with AND)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GlobalRequirementsDto"
               }
             ]
           }
@@ -6909,6 +6958,14 @@
             "example": {
               "minRelevanceScore": 50
             }
+          },
+          "globalRequirements": {
+            "description": "Global quality gate requirements (all conditions combined with AND)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GlobalRequirementsDto"
+              }
+            ]
           }
         },
         "required": [

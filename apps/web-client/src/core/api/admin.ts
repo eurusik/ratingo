@@ -41,6 +41,14 @@ export interface HomepageConfig {
   minRelevanceScore: number
 }
 
+/** Global requirements type. */
+export interface GlobalRequirements {
+  minImdbVotes?: number
+  minTraktVotes?: number
+  minQualityScoreNormalized?: number
+  requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[]
+}
+
 /** Create policy request type (manual, because generated types are broken). */
 export interface CreatePolicyRequest {
   allowedCountries: string[]
@@ -52,6 +60,7 @@ export interface CreatePolicyRequest {
   breakoutRules?: BreakoutRule[]
   eligibilityMode?: EligibilityMode
   homepage?: { minRelevanceScore?: number }
+  globalRequirements?: GlobalRequirements
 }
 
 /** Policy config type. */
@@ -65,6 +74,7 @@ export interface PolicyConfigDto {
   breakoutRules: BreakoutRule[]
   eligibilityMode: EligibilityMode
   homepage: HomepageConfig
+  globalRequirements?: GlobalRequirements
 }
 
 /** Policy detail DTO type. */

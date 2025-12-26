@@ -3,13 +3,15 @@
 import { useState } from 'react'
 import { Button } from '@/shared/ui/button'
 import { Loader2, Save, X } from 'lucide-react'
-import type { PolicyConfigDto, BreakoutRule, BlockedCountryMode, EligibilityMode } from '@/core/api/admin'
+import type { PolicyConfigDto, BreakoutRule, BlockedCountryMode, EligibilityMode, GlobalRequirements } from '@/core/api/admin'
+import type { PolicyFormLabels } from './labels.types'
 import {
   CountriesEditor,
   LanguagesEditor,
   ProvidersEditor,
   SettingsEditor,
   BreakoutRulesEditor,
+  GlobalRequirementsEditor,
 } from './editors'
 
 export interface PolicyFormData {
@@ -22,7 +24,22 @@ export interface PolicyFormData {
   breakoutRules: BreakoutRule[]
   eligibilityMode: EligibilityMode
   homepage: { minRelevanceScore: number }
+  globalRequirements?: GlobalRequirements
 }
+
+// Type-safe field keys
+const FORM_FIELDS = {
+  allowedCountries: 'allowedCountries',
+  blockedCountries: 'blockedCountries',
+  blockedCountryMode: 'blockedCountryMode',
+  allowedLanguages: 'allowedLanguages',
+  blockedLanguages: 'blockedLanguages',
+  globalProviders: 'globalProviders',
+  breakoutRules: 'breakoutRules',
+  eligibilityMode: 'eligibilityMode',
+  homepage: 'homepage',
+  globalRequirements: 'globalRequirements',
+} as const satisfies Record<keyof PolicyFormData, keyof PolicyFormData>
 
 interface PolicyEditFormProps {
   initialConfig: PolicyConfigDto
@@ -30,65 +47,7 @@ interface PolicyEditFormProps {
   onCancel: () => void
   isSaving?: boolean
   showActions?: boolean
-  labels?: {
-    save?: string
-    saving?: string
-    cancel?: string
-    countries?: {
-      title?: string
-      description?: string
-      allowed?: string
-      blocked?: string
-      allowedPlaceholder?: string
-      blockedPlaceholder?: string
-    }
-    languages?: {
-      title?: string
-      description?: string
-      allowed?: string
-      blocked?: string
-      allowedPlaceholder?: string
-      blockedPlaceholder?: string
-    }
-    providers?: {
-      title?: string
-      description?: string
-      placeholder?: string
-      searchPlaceholder?: string
-      emptyText?: string
-    }
-    settings?: {
-      title?: string
-      description?: string
-      eligibilityMode?: string
-      eligibilityModeHint?: string
-      strictLabel?: string
-      strictDescription?: string
-      relaxedLabel?: string
-      relaxedDescription?: string
-      blockedCountryMode?: string
-      blockedCountryModeHint?: string
-      anyLabel?: string
-      anyDescription?: string
-      majorityLabel?: string
-      majorityDescription?: string
-      minRelevanceScore?: string
-      minRelevanceScoreHint?: string
-    }
-    breakoutRules?: {
-      title?: string
-      description?: string
-      addRule?: string
-      priority?: string
-      ruleName?: string
-      minImdbVotes?: string
-      minTraktVotes?: string
-      minQualityScore?: string
-      providers?: string
-      ratings?: string
-      providerPlaceholder?: string
-    }
-  }
+  labels?: PolicyFormLabels
 }
 
 /**
@@ -115,6 +74,7 @@ export function PolicyEditForm({
     breakoutRules: initialConfig.breakoutRules,
     eligibilityMode: initialConfig.eligibilityMode,
     homepage: { minRelevanceScore: initialConfig.homepage.minRelevanceScore },
+    globalRequirements: initialConfig.globalRequirements,
   })
 
   const handleSave = async () => {
@@ -156,15 +116,15 @@ export function PolicyEditForm({
         <CountriesEditor
           allowedCountries={formData.allowedCountries}
           blockedCountries={formData.blockedCountries}
-          onAllowedChange={(v) => updateField('allowedCountries', v)}
-          onBlockedChange={(v) => updateField('blockedCountries', v)}
+          onAllowedChange={(v) => updateField(FORM_FIELDS.allowedCountries, v)}
+          onBlockedChange={(v) => updateField(FORM_FIELDS.blockedCountries, v)}
           labels={labels?.countries}
         />
         <LanguagesEditor
           allowedLanguages={formData.allowedLanguages}
           blockedLanguages={formData.blockedLanguages}
-          onAllowedChange={(v) => updateField('allowedLanguages', v)}
-          onBlockedChange={(v) => updateField('blockedLanguages', v)}
+          onAllowedChange={(v) => updateField(FORM_FIELDS.allowedLanguages, v)}
+          onBlockedChange={(v) => updateField(FORM_FIELDS.blockedLanguages, v)}
           labels={labels?.languages}
         />
       </div>
@@ -172,25 +132,31 @@ export function PolicyEditForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ProvidersEditor
           providers={formData.globalProviders}
-          onChange={(v) => updateField('globalProviders', v)}
+          onChange={(v) => updateField(FORM_FIELDS.globalProviders, v)}
           labels={labels?.providers}
         />
         <SettingsEditor
           eligibilityMode={formData.eligibilityMode}
           blockedCountryMode={formData.blockedCountryMode}
           minRelevanceScore={formData.homepage.minRelevanceScore}
-          onEligibilityModeChange={(v) => updateField('eligibilityMode', v)}
-          onBlockedCountryModeChange={(v) => updateField('blockedCountryMode', v)}
+          onEligibilityModeChange={(v) => updateField(FORM_FIELDS.eligibilityMode, v)}
+          onBlockedCountryModeChange={(v) => updateField(FORM_FIELDS.blockedCountryMode, v)}
           onMinRelevanceScoreChange={(v) =>
-            updateField('homepage', { minRelevanceScore: v })
+            updateField(FORM_FIELDS.homepage, { minRelevanceScore: v })
           }
           labels={labels?.settings}
         />
       </div>
 
+      <GlobalRequirementsEditor
+        globalRequirements={formData.globalRequirements}
+        onChange={(v) => updateField(FORM_FIELDS.globalRequirements, v)}
+        labels={labels?.globalRequirements}
+      />
+
       <BreakoutRulesEditor
         rules={formData.breakoutRules}
-        onChange={(v) => updateField('breakoutRules', v)}
+        onChange={(v) => updateField(FORM_FIELDS.breakoutRules, v)}
         labels={labels?.breakoutRules}
       />
     </div>

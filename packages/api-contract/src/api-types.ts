@@ -2264,6 +2264,31 @@ export interface components {
              */
             minRelevanceScore: number;
         };
+        GlobalRequirementsDto: {
+            /**
+             * @description Minimum IMDb votes required (integer)
+             * @example 3000
+             */
+            minImdbVotes?: number;
+            /**
+             * @description Minimum Trakt votes required (integer)
+             * @example 1000
+             */
+            minTraktVotes?: number;
+            /**
+             * @description Minimum quality score normalized (0-1)
+             * @example 0.6
+             */
+            minQualityScoreNormalized?: number;
+            /**
+             * @description At least one of these rating sources must be present
+             * @example [
+             *       "imdb",
+             *       "metacritic"
+             *     ]
+             */
+            requireAnyOfRatingsPresent?: ("imdb" | "metacritic" | "rt" | "trakt")[];
+        };
         PolicyConfigDto: {
             /**
              * @description Allowed countries (ISO 3166-1 alpha-2 codes)
@@ -2328,6 +2353,8 @@ export interface components {
             eligibilityMode: "STRICT" | "RELAXED";
             /** @description Homepage configuration */
             homepage: components["schemas"]["HomepageConfigDto"];
+            /** @description Global quality gate requirements (all conditions combined with AND) */
+            globalRequirements?: components["schemas"]["GlobalRequirementsDto"];
         };
         PolicyDetailDto: {
             /**
@@ -2435,6 +2462,8 @@ export interface components {
              *     }
              */
             homepage?: Record<string, never>;
+            /** @description Global quality gate requirements (all conditions combined with AND) */
+            globalRequirements?: components["schemas"]["GlobalRequirementsDto"];
         };
         CreatePolicyResponseDto: {
             /**

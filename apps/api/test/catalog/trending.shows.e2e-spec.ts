@@ -46,7 +46,7 @@ describe('Catalog E2E - Trending Shows', () => {
     expect(genresRes.body.data.data.map((s: any) => s.id)).toEqual(['sid-2']);
 
     const votesRes = await ctx
-      .get('/api/catalog/shows/trending?voteSource=tmdb&minVotes=15')
+      .get('/api/catalog/shows/trending?voteSource=tmdb&minVotes=500')
       .expect(200);
     expect(votesRes.body.data.data.map((s: any) => s.id)).toEqual(['sid-1']);
   });

@@ -6,6 +6,15 @@ import { Button } from '@/shared/ui/button'
 import { Loader2, Play, Pencil } from 'lucide-react'
 import { POLICY_STATUS } from '@/modules/admin/types'
 
+export interface PolicyHeaderLabels {
+  active: string
+  inactive: string
+  lastUpdated: string
+  prepare: string
+  preparing: string
+  edit?: string
+}
+
 interface PolicyHeaderProps {
   name: string
   version: string
@@ -15,14 +24,7 @@ interface PolicyHeaderProps {
   onEdit?: () => void
   isPreparing: boolean
   isEditing?: boolean
-  labels: {
-    active: string
-    inactive: string
-    lastUpdated: string
-    prepare: string
-    preparing: string
-    edit?: string
-  }
+  labels: PolicyHeaderLabels
 }
 
 /**

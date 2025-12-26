@@ -84,16 +84,16 @@ export default function PolicyDraftPage() {
   }
 
   const config = basePolicy?.config ?? EMPTY_POLICY_CONFIG
-  const labels = dict.admin.policyDraft
+  const formLabels = dict.admin.policyDetail.form
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <DraftHeader
         baseVersion={basePolicy?.version}
         labels={{
-          title: labels.title,
-          basedOn: labels.basedOn,
-          fromScratch: labels.fromScratch,
+          title: dict.admin.policyDraft.title,
+          basedOn: dict.admin.policyDraft.basedOn,
+          fromScratch: dict.admin.policyDraft.fromScratch,
         }}
       />
 
@@ -102,65 +102,7 @@ export default function PolicyDraftPage() {
         onSave={handleSave}
         onCancel={handleCancel}
         isSaving={createPolicy.isPending}
-        labels={{
-          save: labels.save,
-          saving: labels.saving,
-          cancel: dict.admin.common.cancel,
-          countries: {
-            title: dict.admin.policyDetail.config.countries,
-            description: dict.admin.policyDetail.config.countriesDescription,
-            allowed: dict.admin.policyDetail.config.allowed,
-            blocked: dict.admin.policyDetail.config.blocked,
-            allowedPlaceholder: dict.admin.policyDetail.config.allowedCountryPlaceholder,
-            blockedPlaceholder: dict.admin.policyDetail.config.blockedCountryPlaceholder,
-          },
-          languages: {
-            title: dict.admin.policyDetail.config.languages,
-            description: dict.admin.policyDetail.config.languagesDescription,
-            allowed: dict.admin.policyDetail.config.allowed,
-            blocked: dict.admin.policyDetail.config.blocked,
-            allowedPlaceholder: dict.admin.policyDetail.config.allowedLanguagePlaceholder,
-            blockedPlaceholder: dict.admin.policyDetail.config.blockedLanguagePlaceholder,
-          },
-          providers: {
-            title: dict.admin.policyDetail.config.providers,
-            description: dict.admin.policyDetail.config.providersDescription,
-            placeholder: dict.admin.policyDetail.config.providersPlaceholder,
-            searchPlaceholder: dict.admin.policyDetail.config.providersSearchPlaceholder,
-            emptyText: dict.admin.policyDetail.config.providersEmptyText,
-          },
-          settings: {
-            title: dict.admin.policyDetail.config.settings,
-            description: dict.admin.policyDetail.config.settingsDescription,
-            eligibilityMode: dict.admin.policyDetail.config.eligibilityMode,
-            eligibilityModeHint: dict.admin.policyDetail.config.eligibilityModeHint,
-            strictLabel: dict.admin.policyDetail.config.strictLabel,
-            strictDescription: dict.admin.policyDetail.config.strictDescription,
-            relaxedLabel: dict.admin.policyDetail.config.relaxedLabel,
-            relaxedDescription: dict.admin.policyDetail.config.relaxedDescription,
-            blockedCountryMode: dict.admin.policyDetail.config.blockedCountryMode,
-            blockedCountryModeHint: dict.admin.policyDetail.config.blockedCountryModeHint,
-            anyLabel: dict.admin.policyDetail.config.anyLabel,
-            anyDescription: dict.admin.policyDetail.config.anyDescription,
-            majorityLabel: dict.admin.policyDetail.config.majorityLabel,
-            majorityDescription: dict.admin.policyDetail.config.majorityDescription,
-            minRelevanceScore: dict.admin.policyDetail.config.minRelevanceScore,
-            minRelevanceScoreHint: dict.admin.policyDetail.config.minRelevanceScoreHint,
-          },
-          breakoutRules: {
-            title: dict.admin.policyDetail.config.breakoutRules,
-            description: dict.admin.policyDetail.config.breakoutRulesDescription,
-            priority: dict.admin.policyDetail.config.priority,
-            addRule: dict.admin.policyDetail.config.addRule,
-            ruleName: dict.admin.policyDetail.config.ruleName,
-            minImdbVotes: dict.admin.policyDetail.config.minImdbVotes,
-            minTraktVotes: dict.admin.policyDetail.config.minTraktVotes,
-            minQualityScore: dict.admin.policyDetail.config.minQualityScore,
-            providers: dict.admin.policyDetail.config.requiredProviders,
-            ratings: dict.admin.policyDetail.config.requiredRatings,
-            providerPlaceholder: dict.admin.policyDetail.config.providerPlaceholder,
-          },
-        }}
+        labels={formLabels}
       />
     </div>
   )

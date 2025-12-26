@@ -10,20 +10,22 @@ import {
 import { Button } from '@/shared/ui/button'
 import { FileText, FilePlus } from 'lucide-react'
 
+export interface NewPolicyDialogLabels {
+  title: string
+  description: string
+  fromActive: string
+  fromActiveHint: string
+  fromScratch: string
+  recommended: string
+}
+
 interface NewPolicyDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreateFromActive: () => void
   onCreateFromScratch: () => void
   activeVersion?: string
-  labels: {
-    title: string
-    description: string
-    fromActive: string
-    fromActiveHint: string
-    fromScratch: string
-    recommended: string
-  }
+  labels: NewPolicyDialogLabels
 }
 
 /**

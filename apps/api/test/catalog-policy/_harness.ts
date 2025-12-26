@@ -332,6 +332,8 @@ class MockQueue {
 function createMockDb() {
   let whereResults: any[] = [];
   let whereCallIndex = 0;
+  let executeResults: any[] = [];
+  let executeCallIndex = 0;
 
   return {
     select: jest.fn().mockReturnThis(),
@@ -343,14 +345,25 @@ function createMockDb() {
       return Promise.resolve(result);
     }),
     limit: jest.fn().mockResolvedValue([]),
+    execute: jest.fn().mockImplementation(async () => {
+      const result = executeResults[executeCallIndex] ?? { rows: [] };
+      executeCallIndex++;
+      return result;
+    }),
     // Helper to set results for tests
     _setWhereResults(results: any[]) {
       whereResults = results;
       whereCallIndex = 0;
     },
+    _setExecuteResults(results: any[]) {
+      executeResults = results;
+      executeCallIndex = 0;
+    },
     _reset() {
       whereResults = [];
       whereCallIndex = 0;
+      executeResults = [];
+      executeCallIndex = 0;
     },
   };
 }

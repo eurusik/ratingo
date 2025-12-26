@@ -58,7 +58,9 @@ describe('Catalog E2E - Movies Listings', () => {
     expect(
       within7.body.data.data.every(
         (m: any) =>
-          m.card && m.card.badgeKey === 'NEW_RELEASE' && m.card.listContext === 'NEW_RELEASES_LIST',
+          m.card &&
+          m.card.badgeKey === 'NEW_ON_STREAMING' &&
+          m.card.listContext === 'NEW_ON_STREAMING_LIST',
       ),
     ).toBe(true);
 
@@ -69,7 +71,9 @@ describe('Catalog E2E - Movies Listings', () => {
     expect(
       filtered.body.data.data.every(
         (m: any) =>
-          m.card && m.card.badgeKey === 'NEW_RELEASE' && m.card.listContext === 'NEW_RELEASES_LIST',
+          m.card &&
+          m.card.badgeKey === 'NEW_ON_STREAMING' &&
+          m.card.listContext === 'NEW_ON_STREAMING_LIST',
       ),
     ).toBe(true);
   });

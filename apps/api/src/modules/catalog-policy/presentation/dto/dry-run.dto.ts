@@ -17,7 +17,7 @@ import {
   Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreatePolicyDto } from './policy-activation.dto';
+import { CreatePolicyDto } from './index';
 
 /**
  * Dry-run mode selection.

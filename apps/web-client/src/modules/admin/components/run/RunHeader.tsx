@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip'
 import { StatusBadge } from '@/modules/admin'
 import { RUN_STATUS } from '@/modules/admin/types'
+import type { RunHeaderLabels } from './labels.types'
 
 interface RunHeaderProps {
   id: string
@@ -16,14 +17,7 @@ interface RunHeaderProps {
   isMutating: boolean
   onPromote: () => void
   onCancel: () => void
-  labels: {
-    title: string
-    policy: string
-    started: string
-    promote: string
-    cancel: string
-    blockingReasonsTitle: string
-  }
+  labels: RunHeaderLabels
 }
 
 /**

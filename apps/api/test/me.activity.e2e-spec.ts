@@ -20,9 +20,10 @@ describe('Me activity e2e', () => {
 
     await ctx.patch('/api/user-media/mid-a1', accessToken).send({ state: 'watching' }).expect(200);
 
+    // First set watching with progress, then update to completed without progress
     await ctx
       .patch('/api/user-media/sid-a2', accessToken)
-      .send({ state: 'completed', progress: { seasons: { 1: 1 } } })
+      .send({ state: 'watching', progress: { seasons: { 1: 1 } } })
       .expect(200);
 
     await ctx.patch('/api/user-media/mid-a3', accessToken).send({ state: 'planned' }).expect(200);

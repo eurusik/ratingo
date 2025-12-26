@@ -567,7 +567,14 @@
       "notFound": "Політику не знайдено",
       "notFoundDescription": "Політика з ID {id} не існує",
       "backToPolicies": "Назад до політик",
-      "lastUpdated": "Останнє оновлення",
+      "header": {
+        "active": "Активна",
+        "inactive": "Неактивна",
+        "lastUpdated": "Останнє оновлення",
+        "prepare": "Підготувати",
+        "preparing": "Підготовка...",
+        "edit": "Редагувати"
+      },
       "actions": {
         "prepare": "Підготувати",
         "preparing": "Підготовка...",
@@ -599,52 +606,81 @@
         "status": "Статус"
       },
       "config": {
-        "countries": "Країни",
-        "countriesDescription": "Контент буде доступний тільки для вибраних країн",
-        "languages": "Мови",
-        "languagesDescription": "Фільтрація контенту за оригінальною мовою",
-        "allowed": "Дозволені",
-        "blocked": "Заблоковані",
-        "allowedCountryPlaceholder": "Додати код країни (напр., US, UA)",
-        "blockedCountryPlaceholder": "Додати заблоковану країну",
-        "allowedLanguagePlaceholder": "Додати код мови (напр., en, uk)",
-        "blockedLanguagePlaceholder": "Додати заблоковану мову",
         "othersExcluded": "Інші країни",
         "othersLanguagesExcluded": "Інші мови",
-        "excludedFromCatalog": "Виключені з каталогу",
-        "blockedMode": "Режим блокування",
-        "blockedCountryMode": "Режим блокування країн",
-        "providers": "Глобальні провайдери",
-        "providersDescription": "Контент з цих платформ потрапить в каталог",
-        "providersPlaceholder": "Обрати або додати провайдера...",
-        "providersSearchPlaceholder": "Пошук провайдерів...",
-        "providersEmptyText": "Провайдерів не знайдено в каталозі",
-        "settings": "Налаштування",
-        "settingsDescription": "Налаштування оцінювання контенту",
-        "eligibilityMode": "Режим відповідності",
-        "eligibilityModeHint": "Визначає наскільки суворо перевіряються умови",
-        "strictLabel": "Суворий",
-        "strictDescription": "Всі умови мають виконуватись",
-        "relaxedLabel": "М'який",
-        "relaxedDescription": "Частина умов може бути пропущена",
-        "blockedCountryModeHint": "Як обробляти контент з заблокованих країн",
-        "anyLabel": "Будь-яка",
-        "anyDescription": "Блокувати якщо доступно в будь-якій забороненій країні",
-        "majorityLabel": "Більшість",
-        "majorityDescription": "Блокувати тільки якщо більшість країн заборонені",
-        "minRelevanceScore": "Мін. оцінка релевантності",
-        "minRelevanceScoreHint": "Мінімальний бал (0-100) для показу на головній",
-        "breakoutRules": "Правила винятків",
-        "breakoutRulesDescription": "Винятки для якісного контенту, що обходять основні правила",
-        "priority": "Пріоритет",
-        "addRule": "Додати правило",
-        "ruleName": "Назва правила",
-        "minImdbVotes": "Мін. голосів IMDb",
-        "minTraktVotes": "Мін. голосів Trakt",
-        "minQualityScore": "Мін. якість %",
-        "requiredProviders": "Потрібні провайдери (будь-який з)",
-        "requiredRatings": "Потрібні рейтинги (будь-який з)",
-        "providerPlaceholder": "Додати провайдера (напр., netflix)"
+        "excludedFromCatalog": "Виключені з каталогу"
+      },
+      "form": {
+        "save": "Зберегти як нову версію",
+        "saving": "Збереження...",
+        "cancel": "Скасувати",
+        "countries": {
+          "title": "Країни",
+          "description": "Контент буде доступний тільки для вибраних країн",
+          "allowed": "Дозволені",
+          "blocked": "Заблоковані",
+          "allowedPlaceholder": "Додати код країни (напр., US, UA)",
+          "blockedPlaceholder": "Додати заблоковану країну"
+        },
+        "languages": {
+          "title": "Мови",
+          "description": "Фільтрація контенту за оригінальною мовою",
+          "allowed": "Дозволені",
+          "blocked": "Заблоковані",
+          "allowedPlaceholder": "Додати код мови (напр., en, uk)",
+          "blockedPlaceholder": "Додати заблоковану мову"
+        },
+        "providers": {
+          "title": "Глобальні провайдери",
+          "description": "Контент з цих платформ потрапить в каталог",
+          "placeholder": "Обрати або додати провайдера...",
+          "searchPlaceholder": "Пошук провайдерів...",
+          "emptyText": "Провайдерів не знайдено в каталозі"
+        },
+        "settings": {
+          "title": "Налаштування",
+          "description": "Налаштування оцінювання контенту",
+          "eligibilityMode": "Режим відповідності",
+          "eligibilityModeHint": "Визначає наскільки суворо перевіряються умови",
+          "strictLabel": "Суворий",
+          "strictDescription": "Всі умови мають виконуватись",
+          "relaxedLabel": "М'який",
+          "relaxedDescription": "Частина умов може бути пропущена",
+          "blockedCountryMode": "Режим блокування країн",
+          "blockedCountryModeHint": "Як обробляти контент з заблокованих країн",
+          "anyLabel": "Будь-яка",
+          "anyDescription": "Блокувати якщо доступно в будь-якій забороненій країні",
+          "majorityLabel": "Більшість",
+          "majorityDescription": "Блокувати тільки якщо більшість країн заборонені",
+          "minRelevanceScore": "Мін. оцінка релевантності",
+          "minRelevanceScoreHint": "Мінімальний бал (0-100) для показу на головній"
+        },
+        "breakoutRules": {
+          "title": "Правила винятків",
+          "description": "Винятки для якісного контенту, що обходять основні правила",
+          "priority": "Пріоритет",
+          "addRule": "Додати правило",
+          "ruleName": "Назва правила",
+          "minImdbVotes": "Мін. голосів IMDb",
+          "minTraktVotes": "Мін. голосів Trakt",
+          "minQualityScore": "Мін. якість %",
+          "providers": "Потрібні провайдери (будь-який з)",
+          "ratings": "Потрібні рейтинги (будь-який з)",
+          "providerPlaceholder": "Додати провайдера (напр., netflix)"
+        },
+        "globalRequirements": {
+          "title": "Глобальний поріг якості",
+          "description": "Мінімальні вимоги до якості, яким має відповідати весь контент",
+          "minImdbVotes": "Мін. голосів IMDb",
+          "minImdbVotesHint": "Мінімальна кількість голосів на IMDb",
+          "minTraktVotes": "Мін. голосів Trakt",
+          "minTraktVotesHint": "Мінімальна кількість голосів на Trakt",
+          "minQualityScore": "Мін. оцінка якості",
+          "minQualityScoreHint": "Мінімальна оцінка якості (діапазон 0-1)",
+          "requireRatings": "Обов'язкові джерела рейтингів",
+          "requireRatingsHint": "Контент повинен мати хоча б одне з цих джерел рейтингів",
+          "addRating": "Додати джерело рейтингу..."
+        }
       },
       "toast": {
         "prepareSuccess": "Оцінювання політики розпочато",
@@ -687,9 +723,32 @@
       }
     },
     "runDetail": {
-      "title": "Деталі запуску",
-      "policy": "Політика",
-      "started": "Розпочато",
+      "header": {
+        "title": "Деталі запуску",
+        "policy": "Політика",
+        "started": "Розпочато",
+        "promote": "Просунути",
+        "cancel": "Скасувати",
+        "blockingReasonsTitle": "Неможливо просунути через:"
+      },
+      "diffTab": {
+        "title": "Підсумок змін",
+        "regressions": "регресії",
+        "improvements": "покращення",
+        "netChange": "Чиста зміна",
+        "topRegressions": "Топ регресій (виходять з каталогу)",
+        "topImprovements": "Топ покращень (входять в каталог)",
+        "mediaId": "ID",
+        "statusChange": "Зміна статусу",
+        "loading": "Завантаження..."
+      },
+      "errorsTab": {
+        "title": "Зразки помилок",
+        "found": "помилок знайдено під час оцінювання",
+        "noData": "Немає даних",
+        "mediaId": "ID",
+        "stackTrace": "Стек трейс"
+      },
       "actions": {
         "promote": "Просунути",
         "cancel": "Скасувати",
@@ -711,22 +770,11 @@
         "errors": "Помилки"
       },
       "diff": {
-        "title": "Підсумок змін",
-        "regressions": "регресії",
-        "improvements": "покращення",
-        "netChange": "Чиста зміна",
-        "topRegressions": "Топ регресій (виходять з каталогу)",
-        "topImprovements": "Топ покращень (входять в каталог)",
-        "statusChange": "Зміна статусу",
-        "mediaId": "ID",
         "notAvailable": "Diff доступний тільки для статусу 'prepared'"
       },
       "errors": {
-        "title": "Зразки помилок",
-        "found": "помилок знайдено під час оцінювання",
         "occurrences": "випадків",
         "details": "Деталі помилки",
-        "stackTrace": "Стек трейс",
         "affectedItems": "Уражені елементи",
         "showMore": "Показати більше",
         "showLess": "Показати менше"

@@ -24,7 +24,7 @@ import {
   DiffReportDto,
   RunsListDto,
   EvaluationRunDto,
-} from '../dto/policy-activation.dto';
+} from '../dto';
 
 @ApiTags('Admin - Policy Activation')
 @Controller('admin/catalog-policies/runs')

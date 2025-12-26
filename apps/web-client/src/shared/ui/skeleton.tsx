@@ -6,7 +6,7 @@
 
 import { cn } from '@/shared/utils';
 
-interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {}
+type SkeletonProps = React.HTMLAttributes<HTMLDivElement>
 
 /**
  * Animated skeleton placeholder.

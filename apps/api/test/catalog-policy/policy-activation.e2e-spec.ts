@@ -444,37 +444,34 @@ describe('Policy Activation Flow (e2e)', () => {
       await ctx.runRepo.update(run.id, { status: RunStatus.PREPARED });
 
       // Setup mock DB results for diff computation
+      // First, set execute results for computeCountsSQL
+      ctx.mockDb._setExecuteResults([
+        [
+          {
+            regressions: '1',
+            improvements: '1',
+            unchanged: '0',
+            still_ineligible: '0',
+          },
+        ],
+      ]);
+
+      // Then set where results for getSampleItems
       ctx.mockDb._setWhereResults([
-        // Old evals (v1)
-        [
-          { mediaItemId: 'item-1', status: 'eligible' },
-          { mediaItemId: 'item-2', status: 'ineligible' },
-        ],
-        // New evals (v2)
-        [
-          { mediaItemId: 'item-1', status: 'ineligible' }, // regression
-          { mediaItemId: 'item-2', status: 'eligible' }, // improvement
-        ],
         // Old evals for regressions sample
         [
           { mediaItemId: 'item-1', status: 'eligible' },
           { mediaItemId: 'item-2', status: 'ineligible' },
         ],
         // New evals with join for regressions
-        [
-          { mediaItemId: 'item-1', status: 'ineligible', title: 'Movie 1', trendingScore: 100 },
-          { mediaItemId: 'item-2', status: 'eligible', title: 'Movie 2', trendingScore: 90 },
-        ],
+        [{ mediaItemId: 'item-1', status: 'ineligible', title: 'Movie 1', trendingScore: 100 }],
         // Old evals for improvements sample
         [
           { mediaItemId: 'item-1', status: 'eligible' },
           { mediaItemId: 'item-2', status: 'ineligible' },
         ],
         // New evals with join for improvements
-        [
-          { mediaItemId: 'item-1', status: 'ineligible', title: 'Movie 1', trendingScore: 100 },
-          { mediaItemId: 'item-2', status: 'eligible', title: 'Movie 2', trendingScore: 90 },
-        ],
+        [{ mediaItemId: 'item-2', status: 'eligible', title: 'Movie 2', trendingScore: 90 }],
       ]);
 
       const res = await ctx.get(`/runs/${run.id}/diff`).expect(200);

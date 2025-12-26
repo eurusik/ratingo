@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Badge } from '@/shared/ui/badge'
 import type { PolicyConfigDto } from '@/core/api/admin'
 import { POLICY_STATUS } from '@/modules/admin/types'
+import type { PolicyFormLabels, ConfigViewLabels, PolicyInfoLabels, StatusLabels } from './labels.types'
 import {
   CountriesCard,
   LanguagesCard,
   ProvidersCard,
   SettingsCard,
   BreakoutRulesCard,
-  type ConfigLabels,
 } from './PolicyConfigCards'
 import { PolicyEditForm, type PolicyFormData } from './PolicyEditForm'
 
@@ -23,21 +23,10 @@ interface PolicyConfigTabProps {
   onCancelEdit?: () => void
   isSaving?: boolean
   labels: {
-    config?: ConfigLabels
-    policyInfo: {
-      title: string
-      version: string
-      status: string
-    }
-    statusLabels: {
-      active: string
-      inactive: string
-    }
-    edit?: {
-      save?: string
-      saving?: string
-      cancel?: string
-    }
+    config?: ConfigViewLabels
+    form?: PolicyFormLabels
+    policyInfo: PolicyInfoLabels
+    statusLabels: StatusLabels
   }
 }
 
@@ -77,63 +66,7 @@ export function PolicyConfigTab({
         onSave={onSave}
         onCancel={onCancelEdit}
         isSaving={isSaving}
-        labels={{
-          ...labels.edit,
-          countries: {
-            title: labels.config?.countries,
-            description: labels.config?.countriesDescription,
-            allowed: labels.config?.allowed,
-            blocked: labels.config?.blocked,
-            allowedPlaceholder: labels.config?.allowedCountryPlaceholder,
-            blockedPlaceholder: labels.config?.blockedCountryPlaceholder,
-          },
-          languages: {
-            title: labels.config?.languages,
-            description: labels.config?.languagesDescription,
-            allowed: labels.config?.allowed,
-            blocked: labels.config?.blocked,
-            allowedPlaceholder: labels.config?.allowedLanguagePlaceholder,
-            blockedPlaceholder: labels.config?.blockedLanguagePlaceholder,
-          },
-          providers: {
-            title: labels.config?.providers,
-            description: labels.config?.providersDescription,
-            placeholder: labels.config?.providersPlaceholder,
-            searchPlaceholder: labels.config?.providersSearchPlaceholder,
-            emptyText: labels.config?.providersEmptyText,
-          },
-          settings: {
-            title: labels.config?.settings,
-            description: labels.config?.settingsDescription,
-            eligibilityMode: labels.config?.eligibilityMode,
-            eligibilityModeHint: labels.config?.eligibilityModeHint,
-            strictLabel: labels.config?.strictLabel,
-            strictDescription: labels.config?.strictDescription,
-            relaxedLabel: labels.config?.relaxedLabel,
-            relaxedDescription: labels.config?.relaxedDescription,
-            blockedCountryMode: labels.config?.blockedCountryMode,
-            blockedCountryModeHint: labels.config?.blockedCountryModeHint,
-            anyLabel: labels.config?.anyLabel,
-            anyDescription: labels.config?.anyDescription,
-            majorityLabel: labels.config?.majorityLabel,
-            majorityDescription: labels.config?.majorityDescription,
-            minRelevanceScore: labels.config?.minRelevanceScore,
-            minRelevanceScoreHint: labels.config?.minRelevanceScoreHint,
-          },
-          breakoutRules: {
-            title: labels.config?.breakoutRules,
-            description: labels.config?.breakoutRulesDescription,
-            priority: labels.config?.priority,
-            addRule: labels.config?.addRule,
-            ruleName: labels.config?.ruleName,
-            minImdbVotes: labels.config?.minImdbVotes,
-            minTraktVotes: labels.config?.minTraktVotes,
-            minQualityScore: labels.config?.minQualityScore,
-            providers: labels.config?.requiredProviders,
-            ratings: labels.config?.requiredRatings,
-            providerPlaceholder: labels.config?.providerPlaceholder,
-          },
-        }}
+        labels={labels.form}
       />
     )
   }

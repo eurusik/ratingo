@@ -4,21 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { CheckCircle, XCircle } from 'lucide-react'
 import type { DiffReportDto } from '@/core/api/admin'
 import { DiffItemList } from './DiffItemList'
+import type { RunDiffLabels } from './labels.types'
 
 interface RunDiffTabProps {
   diffReport: DiffReportDto | undefined
   isLoading: boolean
-  labels: {
-    title: string
-    regressions: string
-    improvements: string
-    netChange: string
-    topRegressions: string
-    topImprovements: string
-    mediaId: string
-    statusChange: string
-    loading: string
-  }
+  labels: RunDiffLabels
 }
 
 /**

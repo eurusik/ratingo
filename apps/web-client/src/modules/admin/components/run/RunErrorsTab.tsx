@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { ErrorItem } from './ErrorItem'
+import type { RunErrorsLabels } from './labels.types'
 
 interface ErrorSample {
   mediaItemId: string
@@ -14,13 +15,7 @@ interface ErrorSample {
 interface RunErrorsTabProps {
   errors: ErrorSample[]
   totalErrors: number
-  labels: {
-    title: string
-    found: string
-    noData: string
-    mediaId: string
-    stackTrace: string
-  }
+  labels: RunErrorsLabels
 }
 
 /**

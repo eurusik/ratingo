@@ -243,8 +243,10 @@ describe('User Media e2e', () => {
   const baseUrl = '/api/auth';
   const mediaUrl = '/api/user-media';
   const registerAndLogin = async (suffix = '') => {
-    const email = `media${suffix}${Date.now()}@example.com`;
-    const username = `media${suffix}${Date.now()}`;
+    const ts = Date.now().toString().slice(-8);
+    const sfx = suffix.slice(0, 6);
+    const email = `m${sfx}${ts}@example.com`;
+    const username = `m${sfx}${ts}`;
     const password = 'S3curePassw0rd';
     const reg = await request(app.getHttpServer())
       .post(`${baseUrl}/register`)

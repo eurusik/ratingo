@@ -2,63 +2,16 @@
 
 import { Globe, Languages, Tv, Settings, Shield } from 'lucide-react'
 import type { PolicyConfigDto } from '@/core/api/admin'
+import type { ConfigViewLabels } from './labels.types'
 import { ConfigCard } from './ConfigCard'
 import { AllowedBlockedList } from './AllowedBlockedList'
 import { BadgeList } from './BadgeList'
 import { SettingRow } from './SettingRow'
 import { BreakoutRuleItem } from './BreakoutRuleItem'
 
-export interface ConfigLabels {
-  countries?: string
-  countriesDescription?: string
-  languages?: string
-  languagesDescription?: string
-  allowed?: string
-  blocked?: string
-  allowedCountryPlaceholder?: string
-  blockedCountryPlaceholder?: string
-  allowedLanguagePlaceholder?: string
-  blockedLanguagePlaceholder?: string
-  othersExcluded?: string
-  othersLanguagesExcluded?: string
-  excludedFromCatalog?: string
-  blockedCountryMode?: string
-  blockedCountryModeHint?: string
-  anyLabel?: string
-  anyDescription?: string
-  majorityLabel?: string
-  majorityDescription?: string
-  providers?: string
-  providersDescription?: string
-  providersPlaceholder?: string
-  providersSearchPlaceholder?: string
-  providersEmptyText?: string
-  settings?: string
-  settingsDescription?: string
-  eligibilityMode?: string
-  eligibilityModeHint?: string
-  strictLabel?: string
-  strictDescription?: string
-  relaxedLabel?: string
-  relaxedDescription?: string
-  minRelevanceScore?: string
-  minRelevanceScoreHint?: string
-  breakoutRules?: string
-  breakoutRulesDescription?: string
-  priority?: string
-  addRule?: string
-  ruleName?: string
-  minImdbVotes?: string
-  minTraktVotes?: string
-  minQualityScore?: string
-  requiredProviders?: string
-  requiredRatings?: string
-  providerPlaceholder?: string
-}
-
 interface PolicyConfigCardsProps {
   config: PolicyConfigDto
-  labels?: ConfigLabels
+  labels?: ConfigViewLabels
 }
 
 /**

@@ -88,14 +88,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
         onPrepare={handlePrepare}
         onEdit={handleEdit}
         isPreparing={preparePolicy.isPending}
-        labels={{
-          active: dict.admin.policies.status.active,
-          inactive: dict.admin.policies.status.inactive,
-          lastUpdated: dict.admin.policyDetail.lastUpdated,
-          prepare: dict.admin.policyDetail.actions.prepare,
-          preparing: dict.admin.policyDetail.actions.preparing,
-          edit: dict.admin.policyDetail.actions.edit ?? 'Edit',
-        }}
+        labels={dict.admin.policyDetail.header}
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -121,6 +114,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
             status={policy.status}
             labels={{
               config: dict.admin.policyDetail.config,
+              form: dict.admin.policyDetail.form,
               policyInfo: dict.admin.policyDetail.policyInfo,
               statusLabels: dict.admin.policies.status,
             }}

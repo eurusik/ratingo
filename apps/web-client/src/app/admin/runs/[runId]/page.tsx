@@ -113,14 +113,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
         isMutating={isMutating}
         onPromote={() => setConfirmDialog({ open: true, type: 'promote' })}
         onCancel={() => setConfirmDialog({ open: true, type: 'cancel' })}
-        labels={{
-          title: dict.admin.runDetail.title,
-          policy: dict.admin.runDetail.policy,
-          started: dict.admin.runDetail.started,
-          promote: dict.admin.runDetail.actions.promote,
-          cancel: dict.admin.runDetail.actions.cancel,
-          blockingReasonsTitle: dict.admin.runDetail.blockingReasons.title,
-        }}
+        labels={dict.admin.runDetail.header}
       />
 
       <ProgressWithStats stats={run.progress} />
@@ -158,17 +151,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
             <RunDiffTab
               diffReport={diffReport}
               isLoading={diffLoading}
-              labels={{
-                title: dict.admin.runDetail.diff.title,
-                regressions: dict.admin.runDetail.diff.regressions,
-                improvements: dict.admin.runDetail.diff.improvements,
-                netChange: dict.admin.runDetail.diff.netChange,
-                topRegressions: dict.admin.runDetail.diff.topRegressions,
-                topImprovements: dict.admin.runDetail.diff.topImprovements,
-                mediaId: dict.admin.runDetail.diff.mediaId,
-                statusChange: dict.admin.runDetail.diff.statusChange,
-                loading: dict.admin.common.loading,
-              }}
+              labels={dict.admin.runDetail.diffTab}
             />
           )}
         </TabsContent>
@@ -177,13 +160,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
           <RunErrorsTab
             errors={run.errorSample || []}
             totalErrors={run.progress.errors}
-            labels={{
-              title: dict.admin.runDetail.errors.title,
-              found: dict.admin.runDetail.errors.found,
-              noData: dict.admin.common.noData,
-              mediaId: dict.admin.runDetail.diff.mediaId,
-              stackTrace: dict.admin.runDetail.errors.stackTrace,
-            }}
+            labels={dict.admin.runDetail.errorsTab}
           />
         </TabsContent>
       </Tabs>

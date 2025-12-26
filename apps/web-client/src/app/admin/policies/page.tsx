@@ -180,14 +180,7 @@ export default function PoliciesPage() {
         onCreateFromActive={handleCreateFromActive}
         onCreateFromScratch={handleCreateFromScratch}
         activeVersion={activePolicy?.version}
-        labels={{
-          title: dict.admin.policies.newPolicyDialog.title,
-          description: dict.admin.policies.newPolicyDialog.description,
-          fromActive: dict.admin.policies.newPolicyDialog.fromActive,
-          fromActiveHint: dict.admin.policies.newPolicyDialog.fromActiveHint,
-          fromScratch: dict.admin.policies.newPolicyDialog.fromScratch,
-          recommended: dict.admin.policies.newPolicyDialog.recommended,
-        }}
+        labels={dict.admin.policies.newPolicyDialog}
       />
     </div>
   )
