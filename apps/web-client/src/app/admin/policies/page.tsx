@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/card'
 import { Button } from '../../../shared/ui/button'
 import { Badge } from '../../../shared/ui/badge'
@@ -10,9 +11,10 @@ import { DataTableColumnDef } from '../../../modules/admin/types'
 import { useTranslation } from '../../../shared/i18n'
 import { toast } from 'sonner'
 import { usePolicies, usePreparePolicy } from '../../../core/query'
-import { type Policy } from '../../../core/api'
+import { type PolicyDto } from '../../../core/api/admin'
 
 export default function PoliciesPage() {
+  const router = useRouter()
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
     policyId?: string
@@ -20,10 +22,10 @@ export default function PoliciesPage() {
   }>({ open: false })
   
   const { dict } = useTranslation()
-  const { data: policies = [], isLoading, error } = usePolicies()
+  const { data: policies = [], isLoading, error, refetch } = usePolicies()
   const preparePolicyMutation = usePreparePolicy()
 
-  const columns: DataTableColumnDef<Policy>[] = [
+  const columns: DataTableColumnDef<PolicyDto>[] = [
     {
       id: 'name',
       header: dict.admin.policies.columns.name,
@@ -91,8 +93,8 @@ export default function PoliciesPage() {
       
       toast.success(dict.admin.policies.toast.prepareSuccess)
       
-      // TODO: Navigate to run page
-      // router.push(`/admin/runs/${result.runId}`)
+      // Navigate to run detail page
+      router.push(`/admin/runs/${result.runId}`)
       
       setConfirmDialog({ open: false })
       
@@ -102,12 +104,12 @@ export default function PoliciesPage() {
     }
   }
 
-  const rowActions = (policy: Policy) => [
+  const rowActions = (policy: PolicyDto) => [
     {
       label: dict.admin.policies.actions.view,
       onClick: () => {
-        // TODO: Navigate to policy detail
-        // router.push(`/admin/policies/${policy.id}`)
+        // Navigate to policy detail
+        router.push(`/admin/policies/${policy.id}`)
       }
     },
     {

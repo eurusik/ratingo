@@ -15,133 +15,67 @@ import {
   JsonViewer,
   DataTable 
 } from '@/modules/admin'
-import { RunStatus, RunStatusType, BlockingReason, ProgressStats, DataTableColumnDef } from '@/modules/admin/types'
+import { DataTableColumnDef } from '@/modules/admin/types'
 import { toast } from 'sonner'
+import { useRunStatus, useRunDiff, usePromoteRun, useCancelRun } from '@/core/query/admin'
+import { type RunStatusDto, type DiffReportDto } from '@/core/api/admin'
 
-interface RunDetail {
-  id: string
-  policyName: string
-  status: RunStatusType
-  progress: ProgressStats
-  startedAt: string
-  finishedAt?: string
-  readyToPromote: boolean
-  blockingReasons: BlockingReason[]
+// Blocking reason messages mapping
+const BLOCKING_REASON_MESSAGES: Record<string, string> = {
+  RUN_NOT_SUCCESS: 'Run ще не завершився',
+  COVERAGE_NOT_MET: 'Coverage < 100%',
+  ERRORS_EXCEEDED: 'Є помилки (errors > 0)',
+  ALREADY_PROMOTED: 'Run вже промоутнутий',
 }
-
-interface DiffItem {
-  id: string
-  type: 'added' | 'removed' | 'modified'
-  name: string
-  details: any
-}
-
-interface ErrorSample {
-  id: string
-  message: string
-  count: number
-  details: any
-  stackTrace?: string
-}
-
-// Mock data
-const mockRun: RunDetail = {
-  id: 'run-002',
-  policyName: 'Rating Validation Policy',
-  status: RunStatus.RUNNING,
-  progress: {
-    processed: 750,
-    total: 1200,
-    eligible: 600,
-    ineligible: 100,
-    pending: 450,
-    errors: 50
-  },
-  startedAt: '2024-12-20T14:00:00Z',
-  readyToPromote: false,
-  blockingReasons: [
-    {
-      type: 'coverage',
-      message: 'Coverage threshold not met (62.5% < 80%)',
-      details: { current: 62.5, required: 80 }
-    },
-    {
-      type: 'errors',
-      message: '50 errors found during evaluation',
-      details: { errorCount: 50, maxAllowed: 10 }
-    }
-  ]
-}
-
-const mockDiffItems: DiffItem[] = [
-  {
-    id: '1',
-    type: 'added',
-    name: 'Movie: The Matrix Resurrections',
-    details: { rating: 6.8, genre: 'Sci-Fi' }
-  },
-  {
-    id: '2',
-    type: 'modified',
-    name: 'Movie: Dune',
-    details: { oldRating: 8.0, newRating: 8.2 }
-  },
-  {
-    id: '3',
-    type: 'removed',
-    name: 'Movie: Old Title',
-    details: { reason: 'No longer available' }
-  }
-]
-
-const mockErrors: ErrorSample[] = [
-  {
-    id: '1',
-    message: 'Invalid rating format',
-    count: 25,
-    details: { field: 'rating', expectedFormat: 'number', receivedFormat: 'string' },
-    stackTrace: 'ValidationError: Invalid rating format\n  at validateRating (validator.js:42)\n  at processMovie (processor.js:18)'
-  },
-  {
-    id: '2',
-    message: 'Missing required field: genre',
-    count: 15,
-    details: { field: 'genre', movieId: 'movie-123' }
-  },
-  {
-    id: '3',
-    message: 'API timeout',
-    count: 10,
-    details: { timeout: 5000, endpoint: '/api/movies/validate' }
-  }
-]
 
 export default function RunDetailPage({ params }: { params: { runId: string } }) {
-  const [run] = useState<RunDetail>(mockRun)
-  const [diffItems] = useState<DiffItem[]>(mockDiffItems)
-  const [errors] = useState<ErrorSample[]>(mockErrors)
-  const [expandedErrors, setExpandedErrors] = useState<Set<string>>(new Set())
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean
     type?: 'promote' | 'cancel'
   }>({ open: false })
+  const [expandedErrors, setExpandedErrors] = useState<Set<string>>(new Set())
+
+  // Fetch run status with polling
+  const { data: run, isLoading, error } = useRunStatus({
+    runId: params.runId,
+    autoRefresh: true,
+    refreshInterval: 5000,
+  })
+
+  // Fetch diff only when status is 'prepared'
+  const { data: diffReport } = useRunDiff({
+    runId: params.runId,
+    sampleSize: 50,
+    enabled: run?.status === 'prepared',
+  })
+
+  // Mutations
+  const promoteRunMutation = usePromoteRun()
+  const cancelRunMutation = useCancelRun()
 
   const handlePromote = async () => {
+    if (!run) return
+
     try {
-      // TODO: Replace with real API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await promoteRunMutation.mutateAsync({
+        runId: params.runId,
+        policyId: run.targetPolicyId,
+      })
       toast.success('Run promoted successfully')
+      setConfirmDialog({ open: false })
     } catch (error) {
+      console.error('Failed to promote run:', error)
       toast.error('Failed to promote run')
     }
   }
 
   const handleCancel = async () => {
     try {
-      // TODO: Replace with real API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await cancelRunMutation.mutateAsync(params.runId)
       toast.success('Run cancelled successfully')
+      setConfirmDialog({ open: false })
     } catch (error) {
+      console.error('Failed to cancel run:', error)
       toast.error('Failed to cancel run')
     }
   }
@@ -156,44 +90,44 @@ export default function RunDetailPage({ params }: { params: { runId: string } })
     setExpandedErrors(newExpanded)
   }
 
-  const diffColumns: DataTableColumnDef<DiffItem>[] = [
-    {
-      id: 'type',
-      header: 'Type',
-      cell: ({ row }) => {
-        const { type } = row.original
-        const variants = {
-          added: { variant: 'default' as const, icon: CheckCircle, color: 'text-green-600' },
-          modified: { variant: 'outline' as const, icon: AlertTriangle, color: 'text-yellow-600' },
-          removed: { variant: 'destructive' as const, icon: XCircle, color: 'text-red-600' }
-        }
-        const config = variants[type]
-        const Icon = config.icon
-        
-        return (
-          <Badge variant={config.variant} className="flex items-center gap-1 w-fit">
-            <Icon className={`h-3 w-3 ${config.color}`} />
-            {type}
-          </Badge>
-        )
-      }
-    },
-    {
-      id: 'name',
-      header: 'Item',
-      accessorKey: 'name',
-      cell: ({ row }) => (
-        <div className="font-medium">{row.original.name}</div>
-      )
-    },
-    {
-      id: 'details',
-      header: 'Details',
-      cell: ({ row }) => (
-        <JsonViewer data={row.original.details} title="Item Details" />
-      )
+  // Map blocking reason codes to human messages
+  const getBlockingReasonMessages = (reasons: unknown[][] | null | undefined): string[] => {
+    if (!reasons || reasons.length === 0) {
+      return ['Run is not ready for promotion']
     }
-  ]
+    // Flatten and convert to strings
+    const codes = reasons.flat().filter((r): r is string => typeof r === 'string')
+    return codes.map(code => BLOCKING_REASON_MESSAGES[code] || code)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">Loading run details...</div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error || !run) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-destructive">
+              {error?.message || 'Run not found'}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const isMutating = promoteRunMutation.isPending || cancelRunMutation.isPending
+  const blockingMessages = getBlockingReasonMessages(run.blockingReasons)
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -207,14 +141,15 @@ export default function RunDetailPage({ params }: { params: { runId: string } })
                 <StatusBadge status={run.status} />
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Policy: {run.policyName} • Started: {new Date(run.startedAt).toLocaleString('uk-UA')}
+                Policy: {run.targetPolicyId} • Started: {new Date(run.startedAt).toLocaleString('uk-UA')}
               </p>
             </div>
             <div className="flex items-center space-x-2">
-              {run.status === RunStatus.RUNNING && (
+              {run.status === 'running' && (
                 <Button
                   variant="destructive"
                   onClick={() => setConfirmDialog({ open: true, type: 'cancel' })}
+                  disabled={isMutating}
                 >
                   Cancel
                 </Button>
@@ -224,7 +159,7 @@ export default function RunDetailPage({ params }: { params: { runId: string } })
                   <TooltipTrigger asChild>
                     <div>
                       <Button
-                        disabled={!run.readyToPromote}
+                        disabled={!run.readyToPromote || isMutating}
                         onClick={() => setConfirmDialog({ open: true, type: 'promote' })}
                       >
                         Promote
@@ -235,8 +170,8 @@ export default function RunDetailPage({ params }: { params: { runId: string } })
                     <TooltipContent>
                       <div className="space-y-1">
                         <p className="font-medium">Cannot promote due to:</p>
-                        {run.blockingReasons.map((reason, index) => (
-                          <p key={index} className="text-sm">• {reason.message}</p>
+                        {blockingMessages.map((message, index) => (
+                          <p key={index} className="text-sm">• {message}</p>
                         ))}
                       </div>
                     </TooltipContent>
@@ -254,8 +189,13 @@ export default function RunDetailPage({ params }: { params: { runId: string } })
       {/* Tabs */}
       <Tabs defaultValue="diff" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="diff">Diff</TabsTrigger>
-          <TabsTrigger value="errors">
+          <TabsTrigger value="diff" disabled={run.status !== 'prepared'}>
+            Diff
+            {run.status !== 'prepared' && (
+              <span className="ml-2 text-xs text-muted-foreground">(available when prepared)</span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="errors" disabled={run.progress.errors === 0}>
             Errors
             {run.progress.errors > 0 && (
               <Badge variant="destructive" className="ml-2 h-5 text-xs">
@@ -266,31 +206,64 @@ export default function RunDetailPage({ params }: { params: { runId: string } })
         </TabsList>
 
         <TabsContent value="diff" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Changes Summary</CardTitle>
-              <div className="flex space-x-4 text-sm text-muted-foreground">
-                <span className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
-                  {diffItems.filter(item => item.type === 'added').length} added
-                </span>
-                <span className="flex items-center">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600 mr-1" />
-                  {diffItems.filter(item => item.type === 'modified').length} modified
-                </span>
-                <span className="flex items-center">
-                  <XCircle className="h-4 w-4 text-red-600 mr-1" />
-                  {diffItems.filter(item => item.type === 'removed').length} removed
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <DataTable
-                data={diffItems}
-                columns={diffColumns}
-              />
-            </CardContent>
-          </Card>
+          {diffReport ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Changes Summary</CardTitle>
+                <div className="flex space-x-4 text-sm text-muted-foreground">
+                  <span className="flex items-center">
+                    <XCircle className="h-4 w-4 text-red-600 mr-1" />
+                    {diffReport.counts.regressions} regressions
+                  </span>
+                  <span className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
+                    {diffReport.counts.improvements} improvements
+                  </span>
+                  <span className="flex items-center">
+                    Net change: {diffReport.counts.netChange > 0 ? '+' : ''}{diffReport.counts.netChange}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {diffReport.topRegressions.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium mb-2 text-red-600">Top Regressions (leaving catalog)</h3>
+                    <div className="space-y-2">
+                      {diffReport.topRegressions.map((item, idx) => (
+                        <div key={idx} className="p-3 border rounded-lg bg-red-50 dark:bg-red-950/20">
+                          <div className="font-medium">{item.title}</div>
+                          <div className="text-sm text-muted-foreground">ID: {item.mediaItemId}</div>
+                          <div className="text-sm">{item.reason}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {diffReport.topImprovements.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium mb-2 text-green-600">Top Improvements (entering catalog)</h3>
+                    <div className="space-y-2">
+                      {diffReport.topImprovements.map((item, idx) => (
+                        <div key={idx} className="p-3 border rounded-lg bg-green-50 dark:bg-green-950/20">
+                          <div className="font-medium">{item.title}</div>
+                          <div className="text-sm text-muted-foreground">ID: {item.mediaItemId}</div>
+                          <div className="text-sm">{item.reason}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center text-muted-foreground">
+                  Loading diff report...
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="errors" className="space-y-4">
@@ -303,41 +276,40 @@ export default function RunDetailPage({ params }: { params: { runId: string } })
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {errors.map((error) => (
-                  <CollapsiblePrimitive.Root key={error.id}>
+                {run.errorSample.map((error, idx) => (
+                  <CollapsiblePrimitive.Root key={idx}>
                     <CollapsiblePrimitive.Trigger
                       className="flex items-center justify-between w-full p-4 border rounded-lg hover:bg-muted/50"
-                      onClick={() => toggleErrorExpansion(error.id)}
+                      onClick={() => toggleErrorExpansion(String(idx))}
                     >
                       <div className="flex items-center space-x-3">
-                        {expandedErrors.has(error.id) ? (
+                        {expandedErrors.has(String(idx)) ? (
                           <ChevronDown className="h-4 w-4" />
                         ) : (
                           <ChevronRight className="h-4 w-4" />
                         )}
                         <div className="text-left">
-                          <div className="font-medium">{error.message}</div>
+                          <div className="font-medium">{error.error}</div>
                           <div className="text-sm text-muted-foreground">
-                            {error.count} occurrences
+                            Media ID: {error.mediaItemId}
                           </div>
                         </div>
                       </div>
-                      <Badge variant="destructive">{error.count}</Badge>
                     </CollapsiblePrimitive.Trigger>
                     <CollapsiblePrimitive.Content className="px-4 pb-4">
                       <div className="space-y-4 mt-4">
-                        <JsonViewer 
-                          data={error.details} 
-                          title="Error Details"
-                        />
-                        {error.stackTrace && (
+                        <div className="text-sm">
+                          <div><strong>Media ID:</strong> {error.mediaItemId}</div>
+                          <div><strong>Timestamp:</strong> {error.timestamp}</div>
+                        </div>
+                        {error.stack && (
                           <Card>
                             <CardHeader>
                               <CardTitle className="text-base">Stack Trace</CardTitle>
                             </CardHeader>
                             <CardContent>
                               <pre className="text-xs bg-muted p-4 rounded-md overflow-auto whitespace-pre-wrap">
-                                {error.stackTrace}
+                                {error.stack}
                               </pre>
                             </CardContent>
                           </Card>

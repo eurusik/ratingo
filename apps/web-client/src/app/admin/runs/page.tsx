@@ -1,22 +1,31 @@
 "use client"
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/card'
 import { Badge } from '../../../shared/ui/badge'
 import { Progress } from '../../../shared/ui/progress'
-import { DataTable, StatusBadge, FilterBar } from '../../../modules/admin'
-import { DataTableColumnDef, RunStatus, FilterConfig } from '../../../modules/admin/types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../shared/ui/select'
+import { DataTable, StatusBadge } from '../../../modules/admin'
+import { DataTableColumnDef } from '../../../modules/admin/types'
 import { useTranslation } from '../../../shared/i18n'
-import { useRuns } from '../../../core/query'
-import { type EvaluationRun } from '../../../core/api'
+import { useFilteredRuns } from '../../../core/query/admin'
+import { type EvaluationRunDto } from '../../../core/api/admin'
 
 export default function RunsPage() {
-  const [searchValue, setSearchValue] = useState('')
+  const router = useRouter()
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const { dict } = useTranslation()
   
-  const { data: runs = [], isLoading, error } = useRuns()
+  const { data: runs = [], isLoading, error } = useFilteredRuns(statusFilter)
 
-  const columns: DataTableColumnDef<EvaluationRun>[] = [
+  const columns: DataTableColumnDef<EvaluationRunDto>[] = [
     {
       id: 'id',
       header: dict.admin.runs.columns.runId,
@@ -107,7 +116,7 @@ export default function RunsPage() {
         const end = row.original.finishedAt ? new Date(row.original.finishedAt) : new Date()
         const duration = Math.round((end.getTime() - start.getTime()) / 1000 / 60) // minutes
         
-        if (row.original.status === RunStatus.RUNNING) {
+        if (row.original.status === 'running') {
           return <span className="text-muted-foreground">{duration}{dict.admin.runs.duration.minutes} ({dict.admin.runs.duration.running})</span>
         }
         
@@ -116,41 +125,9 @@ export default function RunsPage() {
     }
   ]
 
-  const filters: FilterConfig[] = [
-    {
-      key: 'status',
-      label: dict.admin.runs.filters.status || 'Status',
-      type: 'select',
-      options: [
-        { label: dict.admin.runs.filters.allStatuses, value: 'all' },
-        { label: dict.admin.runs.filters.running, value: RunStatus.RUNNING },
-        { label: dict.admin.runs.filters.success, value: RunStatus.SUCCESS },
-        { label: dict.admin.runs.filters.failed, value: RunStatus.FAILED },
-        { label: dict.admin.runs.filters.promoted, value: RunStatus.PROMOTED }
-      ]
-    },
-    {
-      key: 'policy',
-      label: dict.admin.runs.filters.policy || 'Policy',
-      type: 'select',
-      options: [
-        { label: dict.admin.runs.filters.allPolicies, value: 'all' },
-        { label: dict.admin.runs.filters.contentFiltering || 'Content Filtering Policy', value: 'content-filtering' },
-        { label: dict.admin.runs.filters.ratingValidation || 'Rating Validation Policy', value: 'rating-validation' },
-        { label: dict.admin.runs.filters.userModeration || 'User Moderation Policy', value: 'user-moderation' }
-      ]
-    }
-  ]
-
-  const handleRunClick = (run: EvaluationRun) => {
-    // TODO: Navigate to run detail
-    // router.push(`/admin/runs/${run.id}`)
+  const handleRunClick = (run: EvaluationRunDto) => {
+    router.push(`/admin/runs/${run.id}`)
   }
-
-  const filteredRuns = runs.filter(run => 
-    run.policyName.toLowerCase().includes(searchValue.toLowerCase()) ||
-    run.id.toLowerCase().includes(searchValue.toLowerCase())
-  )
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -162,14 +139,24 @@ export default function RunsPage() {
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <FilterBar
-            searchValue={searchValue}
-            onSearchChange={setSearchValue}
-            filters={filters}
-          />
+          <div className="flex items-center gap-4">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder={dict.admin.runs.filters.status || 'Filter by status'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{dict.admin.runs.filters.allStatuses}</SelectItem>
+                <SelectItem value="running">{dict.admin.runs.filters.running}</SelectItem>
+                <SelectItem value="prepared">{dict.admin.runs.filters.success}</SelectItem>
+                <SelectItem value="failed">{dict.admin.runs.filters.failed}</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="promoted">{dict.admin.runs.filters.promoted}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           
           <DataTable
-            data={filteredRuns}
+            data={runs}
             columns={columns}
             loading={isLoading}
             error={error?.message}
