@@ -11,13 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/select'
+import type { BlockedCountryMode, EligibilityMode } from '@/core/api/admin'
 
 interface SettingsEditorProps {
-  eligibilityMode: 'STRICT' | 'RELAXED'
-  blockedCountryMode: 'ANY' | 'MAJORITY'
+  eligibilityMode: EligibilityMode
+  blockedCountryMode: BlockedCountryMode
   minRelevanceScore: number
-  onEligibilityModeChange: (value: 'STRICT' | 'RELAXED') => void
-  onBlockedCountryModeChange: (value: 'ANY' | 'MAJORITY') => void
+  onEligibilityModeChange: (value: EligibilityMode) => void
+  onBlockedCountryModeChange: (value: BlockedCountryMode) => void
   onMinRelevanceScoreChange: (value: number) => void
   labels?: {
     title?: string

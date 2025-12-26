@@ -338,3 +338,584 @@ describe('Policy Engine - Property-Based Tests', () => {
     });
   });
 });
+
+/**
+ * Global Quality Gate Property Tests
+ * Feature: global-quality-gate
+ */
+describe('Global Quality Gate Properties', () => {
+  /**
+   * Property 1: IMDb Votes Threshold Enforcement
+   * Feature: global-quality-gate, Property 1: IMDb votes below threshold → INELIGIBLE
+   * Validates: Requirements 1.2, 1.7
+   */
+  it('Property 1: should enforce minImdbVotes threshold', () => {
+    fc.assert(
+      fc.property(
+        fc.nat({ max: 100000 }), // threshold
+        fc.option(fc.nat({ max: 100000 })), // actual votes (can be null)
+        (threshold, votes) => {
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            globalRequirements: {
+              minImdbVotes: threshold,
+            },
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['US'],
+              originalLanguage: 'en',
+              watchProviders: null,
+              voteCountImdb: votes,
+              voteCountTrakt: null,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+            },
+            stats: null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          // If votes is null or less than threshold, should be INELIGIBLE
+          if (votes === null || votes < threshold) {
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+            expect(result.globalGateDetails?.failedChecks).toContain('minImdbVotes');
+          } else {
+            // If votes meets threshold, should be ELIGIBLE
+            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * Property 2: Trakt Votes Threshold Enforcement
+   * Feature: global-quality-gate, Property 2: Trakt votes below threshold → INELIGIBLE
+   * Validates: Requirements 1.3, 1.8
+   */
+  it('Property 2: should enforce minTraktVotes threshold', () => {
+    fc.assert(
+      fc.property(fc.nat({ max: 50000 }), fc.option(fc.nat({ max: 50000 })), (threshold, votes) => {
+        const policy: PolicyConfig = {
+          allowedCountries: ['US'],
+          blockedCountries: [],
+          blockedCountryMode: 'ANY',
+          allowedLanguages: ['en'],
+          blockedLanguages: [],
+          globalProviders: [],
+          breakoutRules: [],
+          eligibilityMode: 'STRICT',
+          homepage: { minRelevanceScore: 50 },
+          globalRequirements: {
+            minTraktVotes: threshold,
+          },
+        };
+
+        const input: PolicyEngineInput = {
+          mediaItem: {
+            id: 'test',
+            originCountries: ['US'],
+            originalLanguage: 'en',
+            watchProviders: null,
+            voteCountImdb: null,
+            voteCountTrakt: votes,
+            ratingImdb: null,
+            ratingMetacritic: null,
+            ratingRottenTomatoes: null,
+            ratingTrakt: null,
+          },
+          stats: null,
+        };
+
+        const result = evaluateEligibility(input, policy);
+
+        if (votes === null || votes < threshold) {
+          expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+          expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+          expect(result.globalGateDetails?.failedChecks).toContain('minTraktVotes');
+        } else {
+          expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+          expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+        }
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * Property 3: Quality Score Threshold Enforcement
+   * Feature: global-quality-gate, Property 3: Quality score below threshold → INELIGIBLE
+   * Validates: Requirements 1.4, 1.9
+   */
+  it('Property 3: should enforce minQualityScoreNormalized threshold', () => {
+    fc.assert(
+      fc.property(
+        fc.double({ min: 0, max: 1 }),
+        fc.option(fc.double({ min: 0, max: 1 })),
+        (threshold, score) => {
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            globalRequirements: {
+              minQualityScoreNormalized: threshold,
+            },
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['US'],
+              originalLanguage: 'en',
+              watchProviders: null,
+              voteCountImdb: null,
+              voteCountTrakt: null,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+            },
+            stats:
+              score !== null
+                ? {
+                    qualityScore: score,
+                    popularityScore: null,
+                    freshnessScore: null,
+                    ratingoScore: null,
+                  }
+                : null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          if (score === null || score < threshold) {
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+            expect(result.globalGateDetails?.failedChecks).toContain('minQualityScoreNormalized');
+          } else {
+            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * Property 4: Rating Presence Check
+   * Feature: global-quality-gate, Property 4: At least one rating must be present
+   * Validates: Requirements 1.5, 1.10
+   */
+  it('Property 4: should enforce requireAnyOfRatingsPresent', () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom('imdb', 'metacritic', 'rt', 'trakt'),
+        fc.boolean(),
+        (requiredRating, hasRating) => {
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            globalRequirements: {
+              requireAnyOfRatingsPresent: [requiredRating],
+            },
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['US'],
+              originalLanguage: 'en',
+              watchProviders: null,
+              voteCountImdb: null,
+              voteCountTrakt: null,
+              ratingImdb: requiredRating === 'imdb' && hasRating ? 7.5 : null,
+              ratingMetacritic: requiredRating === 'metacritic' && hasRating ? 75 : null,
+              ratingRottenTomatoes: requiredRating === 'rt' && hasRating ? 85 : null,
+              ratingTrakt: requiredRating === 'trakt' && hasRating ? 8.0 : null,
+            },
+            stats: null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          if (!hasRating) {
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+            expect(result.globalGateDetails?.failedChecks).toContain('requireAnyOfRatingsPresent');
+          } else {
+            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * Property 5: AND Logic for Multiple Requirements
+   * Feature: global-quality-gate, Property 5: All requirements must pass
+   * Validates: Requirements 1.6
+   */
+  it('Property 5: should enforce AND logic for multiple requirements', () => {
+    fc.assert(
+      fc.property(
+        fc.nat({ max: 50000 }),
+        fc.nat({ max: 25000 }),
+        fc.option(fc.nat({ max: 50000 })),
+        fc.option(fc.nat({ max: 25000 })),
+        (imdbThreshold, traktThreshold, imdbVotes, traktVotes) => {
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            globalRequirements: {
+              minImdbVotes: imdbThreshold,
+              minTraktVotes: traktThreshold,
+            },
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['US'],
+              originalLanguage: 'en',
+              watchProviders: null,
+              voteCountImdb: imdbVotes,
+              voteCountTrakt: traktVotes,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+            },
+            stats: null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          const imdbPasses = imdbVotes !== null && imdbVotes >= imdbThreshold;
+          const traktPasses = traktVotes !== null && traktVotes >= traktThreshold;
+
+          // Both must pass for ELIGIBLE
+          if (imdbPasses && traktPasses) {
+            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+          } else {
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+            expect(result.globalGateDetails).toBeDefined();
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * Property 6: Global Gate Precedes Access Filters
+   * Feature: global-quality-gate, Property 6: Global gate is checked before access filters
+   * Validates: Requirements 2.1, 2.2, 3.2, 3.3
+   */
+  it('Property 6: should check global gate before access filters for non-blocked content', () => {
+    fc.assert(
+      fc.property(
+        fc.nat({ max: 100000 }),
+        fc.option(fc.nat({ max: 100000 })),
+        (threshold, votes) => {
+          const policy: PolicyConfig = {
+            allowedCountries: ['US', 'GB'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            globalRequirements: {
+              minImdbVotes: threshold,
+            },
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['US'], // Allowed
+              originalLanguage: 'en', // Allowed
+              watchProviders: null,
+              voteCountImdb: votes,
+              voteCountTrakt: null,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+            },
+            stats: null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          // If gate fails, should be INELIGIBLE with MISSING_GLOBAL_SIGNALS
+          // even though content is allowed
+          if (votes === null || votes < threshold) {
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+            expect(result.reasons).not.toContain('ALLOWED_COUNTRY');
+          } else {
+            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+            expect(result.reasons).toContain('ALLOWED_COUNTRY');
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * Property 7: Backward Compatibility
+   * Feature: global-quality-gate, Property 7: Policies without globalRequirements work unchanged
+   * Validates: Requirements 2.4, 4.1, 4.2, 4.3
+   */
+  it('Property 7: should skip global gate when not configured', () => {
+    fc.assert(
+      fc.property(
+        fc.option(fc.nat({ max: 100000 })),
+        fc.option(fc.nat({ max: 50000 })),
+        fc.option(fc.double({ min: 0, max: 1 })),
+        (imdbVotes, traktVotes, qualityScore) => {
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            // No globalRequirements configured
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['US'],
+              originalLanguage: 'en',
+              watchProviders: null,
+              voteCountImdb: imdbVotes,
+              voteCountTrakt: traktVotes,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+            },
+            stats:
+              qualityScore !== null
+                ? {
+                    qualityScore,
+                    popularityScore: null,
+                    freshnessScore: null,
+                    ratingoScore: null,
+                  }
+                : null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          // Should be ELIGIBLE regardless of votes/quality (gate skipped)
+          expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+          expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+          expect(result.globalGateDetails).toBeUndefined();
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * Property 8: Breakout Rules Cannot Bypass Global Gate
+   * Feature: global-quality-gate, Property 8: Blocked content must pass gate to use breakout
+   * Validates: Requirements 2.5
+   */
+  it('Property 8: should prevent breakout when global gate fails', () => {
+    fc.assert(
+      fc.property(
+        fc.nat({ max: 100000 }),
+        fc.nat({ max: 50000 }),
+        fc.option(fc.nat({ max: 100000 })),
+        (gateThreshold, breakoutThreshold, votes) => {
+          // Ensure gate threshold is higher than breakout threshold
+          fc.pre(gateThreshold > breakoutThreshold);
+
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: ['RU'],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [
+              {
+                id: 'breakout-1',
+                name: 'Breakout Rule',
+                priority: 1,
+                requirements: {
+                  minImdbVotes: breakoutThreshold,
+                },
+              },
+            ],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            globalRequirements: {
+              minImdbVotes: gateThreshold,
+            },
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['RU'], // Blocked
+              originalLanguage: 'en',
+              watchProviders: null,
+              voteCountImdb: votes,
+              voteCountTrakt: null,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+            },
+            stats: null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          const passesGate = votes !== null && votes >= gateThreshold;
+          const passesBreakout = votes !== null && votes >= breakoutThreshold;
+
+          if (!passesGate) {
+            // Gate fails → INELIGIBLE with BLOCKED reason, breakout not attempted
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('BLOCKED_COUNTRY');
+            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+            expect(result.breakoutRuleId).toBeNull();
+            expect(result.globalGateDetails).toBeDefined();
+          } else if (passesBreakout) {
+            // Gate passes AND breakout passes → ELIGIBLE
+            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+            expect(result.reasons).toContain('BREAKOUT_ALLOWED');
+            expect(result.breakoutRuleId).toBe('breakout-1');
+          } else {
+            // Gate passes but breakout fails → INELIGIBLE with BLOCKED reason
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('BLOCKED_COUNTRY');
+            expect(result.breakoutRuleId).toBeNull();
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * Property 10: Reason Precedence Determinism
+   * Feature: global-quality-gate, Property 10: Blocked content shows BLOCKED reason, not MISSING_GLOBAL_SIGNALS
+   * Validates: Requirements 2.1, 3.3
+   */
+  it('Property 10: should use BLOCKED reason for blocked content that fails gate', () => {
+    fc.assert(
+      fc.property(
+        fc.nat({ max: 100000 }),
+        fc.option(fc.nat({ max: 100000 })),
+        (threshold, votes) => {
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: ['RU', 'CN'],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: ['ru'],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            globalRequirements: {
+              minImdbVotes: threshold,
+            },
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['RU'], // Blocked
+              originalLanguage: 'ru', // Blocked
+              watchProviders: null,
+              voteCountImdb: votes,
+              voteCountTrakt: null,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+            },
+            stats: null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          const passesGate = votes !== null && votes >= threshold;
+
+          if (!passesGate) {
+            // Blocked AND gate fails → BLOCKED reason takes precedence
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('BLOCKED_COUNTRY');
+            expect(result.reasons).toContain('BLOCKED_LANGUAGE');
+            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+            expect(result.globalGateDetails).toBeDefined();
+            expect(result.globalGateDetails?.failedChecks).toContain('minImdbVotes');
+          } else {
+            // Blocked but gate passes → still INELIGIBLE with BLOCKED reason
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('BLOCKED_COUNTRY');
+            expect(result.reasons).toContain('BLOCKED_LANGUAGE');
+            expect(result.globalGateDetails).toBeUndefined();
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});

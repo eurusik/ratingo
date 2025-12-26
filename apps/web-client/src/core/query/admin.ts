@@ -32,6 +32,21 @@ export function usePolicies(enabled = true) {
 }
 
 /**
+ * Returns the active policy from the policies list.
+ *
+ * @returns Active policy or undefined
+ */
+export function useActivePolicy() {
+  const { data: policies, ...rest } = usePolicies()
+  
+  const activePolicy = useMemo(() => {
+    return policies?.find((p) => p.status === 'active')
+  }, [policies])
+
+  return { ...rest, data: activePolicy }
+}
+
+/**
  * Fetches a single policy with full configuration.
  *
  * @param policyId - Policy ID to fetch

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/shared/ui/button'
 import { Loader2, Save, X } from 'lucide-react'
-import type { PolicyConfigDto, BreakoutRule } from '@/core/api/admin'
+import type { PolicyConfigDto, BreakoutRule, BlockedCountryMode, EligibilityMode } from '@/core/api/admin'
 import {
   CountriesEditor,
   LanguagesEditor,
@@ -15,12 +15,12 @@ import {
 export interface PolicyFormData {
   allowedCountries: string[]
   blockedCountries: string[]
-  blockedCountryMode: 'ANY' | 'MAJORITY'
+  blockedCountryMode: BlockedCountryMode
   allowedLanguages: string[]
   blockedLanguages: string[]
   globalProviders: string[]
   breakoutRules: BreakoutRule[]
-  eligibilityMode: 'STRICT' | 'RELAXED'
+  eligibilityMode: EligibilityMode
   homepage: { minRelevanceScore: number }
 }
 
@@ -29,33 +29,64 @@ interface PolicyEditFormProps {
   onSave: (data: PolicyFormData) => Promise<void>
   onCancel: () => void
   isSaving?: boolean
+  showActions?: boolean
   labels?: {
     save?: string
     saving?: string
     cancel?: string
     countries?: {
       title?: string
+      description?: string
       allowed?: string
       blocked?: string
+      allowedPlaceholder?: string
+      blockedPlaceholder?: string
     }
     languages?: {
       title?: string
+      description?: string
       allowed?: string
       blocked?: string
+      allowedPlaceholder?: string
+      blockedPlaceholder?: string
     }
     providers?: {
       title?: string
+      description?: string
+      placeholder?: string
+      searchPlaceholder?: string
+      emptyText?: string
     }
     settings?: {
       title?: string
+      description?: string
       eligibilityMode?: string
+      eligibilityModeHint?: string
+      strictLabel?: string
+      strictDescription?: string
+      relaxedLabel?: string
+      relaxedDescription?: string
       blockedCountryMode?: string
+      blockedCountryModeHint?: string
+      anyLabel?: string
+      anyDescription?: string
+      majorityLabel?: string
+      majorityDescription?: string
       minRelevanceScore?: string
+      minRelevanceScoreHint?: string
     }
     breakoutRules?: {
       title?: string
+      description?: string
       addRule?: string
       priority?: string
+      ruleName?: string
+      minImdbVotes?: string
+      minTraktVotes?: string
+      minQualityScore?: string
+      providers?: string
+      ratings?: string
+      providerPlaceholder?: string
     }
   }
 }
@@ -71,6 +102,7 @@ export function PolicyEditForm({
   onSave,
   onCancel,
   isSaving = false,
+  showActions = true,
   labels,
 }: PolicyEditFormProps) {
   const [formData, setFormData] = useState<PolicyFormData>({
@@ -98,25 +130,27 @@ export function PolicyEditForm({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onCancel} disabled={isSaving}>
-          <X className="h-4 w-4 mr-2" />
-          {labels?.cancel ?? 'Cancel'}
-        </Button>
-        <Button onClick={handleSave} disabled={isSaving}>
-          {isSaving ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              {labels?.saving ?? 'Saving...'}
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4 mr-2" />
-              {labels?.save ?? 'Save as New Version'}
-            </>
-          )}
-        </Button>
-      </div>
+      {showActions && (
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onCancel} disabled={isSaving}>
+            <X className="h-4 w-4 mr-2" />
+            {labels?.cancel ?? 'Cancel'}
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {labels?.saving ?? 'Saving...'}
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                {labels?.save ?? 'Save as New Version'}
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <CountriesEditor

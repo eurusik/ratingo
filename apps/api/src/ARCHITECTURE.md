@@ -24,33 +24,54 @@ apps/api/src/
 ├── main.ts                 # Entry point
 ├── app.module.ts           # Root module
 ├── config/                 # Environment configs
+│   ├── auth.config.ts      # JWT & bcrypt settings
+│   ├── omdb.config.ts      # OMDb API config
+│   ├── scheduler.config.ts # Cron scheduler config
+│   ├── score.config.ts     # Ratingo Score weights
+│   ├── tmdb.config.ts      # TMDB API config
+│   └── trakt.config.ts     # Trakt API config
 ├── database/               # Drizzle schema + migrations
-├── common/                 # Shared utilities, filters, interceptors
+├── common/                 # Shared utilities
+│   ├── enums/              # Error codes, media types, statuses
+│   ├── exceptions/         # Custom exceptions (App, Database, Validation, NotFound)
+│   ├── filters/            # Global exception filter
+│   ├── guards/             # ThrottlerRealIpGuard (Cloudflare support)
+│   ├── http/               # ResilientHttpClient (retry, circuit breaker)
+│   ├── interceptors/       # Response & Performance interceptors
+│   ├── interfaces/         # API response interface
+│   └── utils/              # Date & media utilities
+├── scripts/                # CLI scripts (OpenAPI generation)
 └── modules/
     ├── auth/               # Authentication (JWT)
-    ├── users/              # User accounts
-    ├── user-media/         # User watch state
+    ├── users/              # User accounts & profiles
+    ├── user-media/         # User watch state & ratings
+    ├── user-actions/       # Saved items, subscriptions, action log
     ├── catalog/            # Movies/shows catalog
+    ├── catalog-policy/     # Catalog eligibility engine
     ├── ingestion/          # Data import from external APIs
-    ├── stats/              # Statistics & ratings
-    ├── insights/           # Trend analytics
+    ├── stats/              # Statistics & ratings sync
+    ├── insights/           # Trend analytics (risers/fallers)
     ├── home/               # Homepage (hero block)
     ├── tmdb/               # TMDB adapter
-    └── shared/             # Shared services (ScoreCalculator, DropOffAnalyzer)
+    └── shared/             # Shared services
+        ├── cards/          # Card rendering service
+        ├── drop-off-analyzer/  # Show drop-off analysis
+        ├── score-calculator/   # Ratingo Score calculation
+        └── verdict/        # Media verdict generation
 ```
 
 ---
 
 ## Module Layers
 
-Each module has 4 layers:
+Each module follows Clean Architecture with 4 layers:
 
 ```
 module/
-├── presentation/     # Controllers, DTOs, Swagger
-├── application/      # Services (business logic)
-├── domain/           # Interfaces, entities, DI tokens
-└── infrastructure/   # Repositories (Drizzle), adapters (HTTP)
+├── presentation/     # Controllers, DTOs, Swagger decorators
+├── application/      # Services (business logic), workers, pipelines
+├── domain/           # Interfaces, entities, DI tokens, validation
+└── infrastructure/   # Repositories (Drizzle), adapters (HTTP clients)
 ```
 
 **Rule**: `domain/` has no Nest/Drizzle dependencies — pure interfaces only.
@@ -60,55 +81,102 @@ module/
 ## Core Modules
 
 ### Auth
-- JWT access/refresh tokens
+- JWT access/refresh tokens with rotation
 - Strategies: `JwtStrategy`, `LocalStrategy`
 - Guards: `JwtAuthGuard`, `OptionalJwtAuthGuard`
+- Token storage in `refresh_tokens` table
 
 ### Users
-- Profile CRUD
-- Public profiles with privacy policy
+- Profile CRUD with privacy settings
+- Public profiles with configurable visibility
 - Avatar uploads (S3 presigned URL)
+- Settings: `isProfilePublic`, `showWatchHistory`, `showRatings`, `allowFollowers`
 
 ### UserMedia
 - Watch state: `planned`, `watching`, `completed`, `dropped`
-- Ratings, notes, progress
+- Ratings (0-100 scale), notes, progress tracking
+- Stored in `user_media_state` table
+
+### UserActions
+- **Saved Items**: `for_later`, `considering` lists with reason tracking
+- **Subscriptions**: Notifications for `release`, `new_season`, `new_episode`, `on_streaming`, `status_changed`
+- **Action Log**: Event sourcing for all user interactions (`user_media_actions`)
 
 ### Catalog
 - Public movies/shows catalog
 - Trending, now-playing, new releases
-- Search (local + TMDB)
+- Search (local full-text + TMDB fallback)
 - Episode calendar
+- Watch providers by region
+
+### CatalogPolicy
+- **Policy Engine**: Versioned eligibility rules for catalog filtering
+- **Evaluation**: Country/language filtering, breakout rules, relevance scoring
+- **Activation Flow**: Prepare → Dry Run → Promote workflow
+- **Services**: DiffService, DryRunService, RunAggregationService, RunFinalizeService
+- **Background Jobs**: RE_EVALUATE_ALL, EVALUATE_CATALOG_ITEM, WATCHDOG
 
 ### Ingestion
 - Metadata import from TMDB
 - Enrichment: TVMaze (episodes), Trakt/OMDb (ratings)
 - Ratingo Score calculation
+- **Pipelines**: TrendingPipeline, SnapshotsPipeline, TrackedShowsPipeline, NowPlayingPipeline, NewReleasesPipeline
 - BullMQ worker for background jobs
 
 ### Stats
 - Stats sync from Trakt
 - Show drop-off analysis
+- Watchers snapshots for trend analysis
 
 ### Insights
 - Analytics: risers/fallers by period
+- Based on `media_watchers_snapshots` time-series data
+
+### Shared Services
+- **ScoreCalculator**: Ratingo Score (quality + popularity + freshness)
+- **DropOffAnalyzer**: Show engagement analysis
+- **Verdict**: Media verdict generation for UI
+- **Cards**: Card rendering service
 
 ---
 
 ## Database (Drizzle)
 
-Main tables:
+### Core Tables
 
 | Table | Purpose |
 |-------|---------|
-| `media_items` | Base movie/show info |
-| `media_stats` | Fast-changing stats (watchers, scores) |
-| `movies` | Movie details |
-| `shows` | Show details |
+| `media_items` | Base movie/show info with full-text search |
+| `media_stats` | Fast-changing stats (watchers, Ratingo Score) |
+| `movies` | Movie details (runtime, budget, releases) |
+| `shows` | Show details (seasons, episodes, drop-off analysis) |
 | `seasons`, `episodes` | Show structure |
-| `genres` | Genres |
-| `users` | Users |
-| `user_media_state` | Watch state |
-| `media_watchers_snapshots` | Historical snapshots for Insights |
+| `genres`, `media_genres` | Genre taxonomy |
+
+### User Tables
+
+| Table | Purpose |
+|-------|---------|
+| `users` | User accounts with privacy settings |
+| `user_media_state` | Watch state & ratings |
+| `user_media_actions` | Action event log |
+| `user_saved_items` | Saved items projection |
+| `user_subscriptions` | Notification subscriptions |
+| `refresh_tokens` | JWT refresh token storage |
+
+### Catalog Policy Tables
+
+| Table | Purpose |
+|-------|---------|
+| `catalog_policies` | Versioned policy configurations |
+| `media_catalog_evaluations` | Evaluation results per media item |
+| `catalog_evaluation_runs` | Run tracking for prepare/promote flow |
+
+### Analytics Tables
+
+| Table | Purpose |
+|-------|---------|
+| `media_watchers_snapshots` | Daily watchers time-series |
 
 ---
 
@@ -118,20 +186,39 @@ Main tables:
 
 | Queue | Purpose |
 |-------|---------|
-| `ingestion` | Movie/show import |
-| `stats-queue` | Stats sync |
+| `ingestion` | Movie/show import, trending sync |
+| `stats-queue` | Stats sync, drop-off analysis |
+| `catalog-policy-queue` | Policy evaluation, re-evaluation |
 
-### Job Types
+### Ingestion Jobs
 
-**Ingestion:**
-- `SYNC_MOVIE` / `SYNC_SHOW` — single item sync
-- `SYNC_TRENDING` — batch trending import
-- `SYNC_NOW_PLAYING` — now playing movies
-- `SYNC_SNAPSHOTS` — daily snapshots
+| Job | Purpose |
+|-----|---------|
+| `SYNC_MOVIE` / `SYNC_SHOW` | Single item sync |
+| `SYNC_TRENDING_DISPATCHER` | Queue trending page jobs |
+| `SYNC_TRENDING_PAGE` | Sync one page of trending |
+| `SYNC_TRENDING_STATS` | Sync Trakt stats after trending |
+| `SYNC_NOW_PLAYING` | Now playing movies |
+| `SYNC_NEW_RELEASES` | New digital releases |
+| `SYNC_TRACKED_SHOWS` | Dispatcher for tracked shows |
+| `SYNC_TRACKED_SHOW_BATCH` | Batch sync with diff detection |
+| `SYNC_SNAPSHOTS_DISPATCHER` | Queue snapshot jobs |
+| `SYNC_SNAPSHOT_ITEM` | Single item snapshot |
 
-**Stats:**
-- `SYNC_TRENDING` — stats update
-- `ANALYZE_DROP_OFF` — show drop-off analysis
+### Stats Jobs
+
+| Job | Purpose |
+|-----|---------|
+| `SYNC_TRENDING` | Stats update |
+| `ANALYZE_DROP_OFF` | Show drop-off analysis |
+
+### Catalog Policy Jobs
+
+| Job | Purpose |
+|-----|---------|
+| `RE_EVALUATE_ALL` | Re-evaluate entire catalog |
+| `EVALUATE_CATALOG_ITEM` | Evaluate single item |
+| `WATCHDOG` | Monitor stuck runs |
 
 ---
 
@@ -143,6 +230,15 @@ Main tables:
 | **Trakt** | Ratings, watchers, trending lists |
 | **OMDb** | IMDb/Rotten Tomatoes/Metacritic ratings |
 | **TVMaze** | Show episode schedule |
+
+### Adapters
+
+```
+infrastructure/adapters/
+├── omdb/           # OmdbAdapter
+├── trakt/          # TraktRatingsAdapter, TraktListsAdapter
+└── tvmaze/         # TvMazeAdapter
+```
 
 ---
 
@@ -178,41 +274,83 @@ POST /ingestion/sync { tmdbId, type }
          │
          ├──► ScoreCalculator: calculate Ratingo Score
          │
+         ├──► CatalogEvaluationService: evaluate eligibility
+         │
          ├──► DB: upsert NormalizedMedia
          │
          └──► DB: status = READY
 ```
 
-### 2. Stats Sync
+### 2. Trending Sync (Pipeline)
 
 ```
-POST /stats/sync
+POST /ingestion/trending
          │
          ▼
-    ┌─────────────┐
-    │ BullMQ Job  │
-    └─────────────┘
+    ┌───────────────────────┐
+    │ SYNC_TRENDING_DISPATCHER │
+    └───────────────────────┘
+         │
+         ├──► Queue SYNC_TRENDING_PAGE jobs (pages 1-N)
          │
          ▼
-    ┌──────────────┐
-    │ StatsWorker  │
-    └──────────────┘
+    ┌───────────────────┐
+    │ SYNC_TRENDING_PAGE │ (parallel)
+    └───────────────────┘
          │
-         ▼
-    ┌──────────────┐
-    │ StatsService │
-    └──────────────┘
+         ├──► TMDB: fetch trending page
          │
-         ├──► Trakt: trending movies + shows
+         ├──► Upsert media items
          │
-         ├──► DB: find local media items
-         │
-         ├──► ScoreCalculator: recalculate scores
-         │
-         └──► DB: bulk upsert stats
+         └──► On last page: queue SYNC_TRENDING_STATS
+                    │
+                    ▼
+              ┌──────────────────┐
+              │ SYNC_TRENDING_STATS │
+              └──────────────────┘
+                    │
+                    └──► Trakt: sync stats for all trending items
 ```
 
-### 3. Authentication
+### 3. Policy Activation Flow
+
+```
+POST /catalog-policy/activate { policyId }
+         │
+         ▼
+    ┌─────────────────────┐
+    │ PolicyActivationService │
+    └─────────────────────┘
+         │
+         ├──► Create evaluation run (status: running)
+         │
+         ├──► Queue RE_EVALUATE_ALL job
+         │
+         ▼
+    ┌─────────────────────┐
+    │ CatalogPolicyWorker │
+    └─────────────────────┘
+         │
+         ├──► Iterate all READY media items
+         │
+         ├──► PolicyEngine.evaluate() for each
+         │
+         ├──► Store evaluations with new policy version
+         │
+         └──► Run status: prepared
+                    │
+                    ▼
+         GET /catalog-policy/runs/:id/diff
+                    │
+                    └──► DiffService: compare old vs new evaluations
+                              │
+                              ▼
+                    POST /catalog-policy/runs/:id/promote
+                              │
+                              └──► Activate policy, update public view
+```
+
+### 4. Authentication
 
 ```
 POST /auth/login { email, password }
@@ -242,6 +380,20 @@ POST /auth/refresh { refreshToken }
          │
          └──► Issue new token pair
 ```
+
+---
+
+## Rate Limiting
+
+Global rate limiting with tiered protection:
+
+| Tier | Limit | Methods | Purpose |
+|------|-------|---------|---------|
+| `default` | 600 req/min | GET, HEAD, OPTIONS | Browsing |
+| `strict` | 120 req/min | POST, PUT, PATCH, DELETE | Mutations |
+| `auth` | Applied via @Throttle() | Auth routes | Login/register |
+
+Uses `ThrottlerRealIpGuard` for Cloudflare/proxy support.
 
 ---
 
@@ -276,6 +428,7 @@ POST /auth/refresh { refreshToken }
 - **Services** — business logic, orchestration
 - **Repositories** — DB access via Drizzle
 - **Adapters** — HTTP clients for external APIs
+- **Pipelines** — Multi-step background job orchestration
 - **Domain** — pure interfaces, no framework dependencies
 
 ---
@@ -295,7 +448,7 @@ POST /auth/refresh { refreshToken }
 1. Add job type to `*.constants.ts`
 2. Register queue via `BullModule.registerQueue()`
 3. Add producer (controller/service) with `@InjectQueue()`
-4. Add handler in worker
+4. Add handler in worker or create a pipeline class
 
 ### Add a New External API
 
@@ -303,6 +456,13 @@ POST /auth/refresh { refreshToken }
 2. Create adapter in `infrastructure/adapters/`
 3. Inject into orchestration service
 
+### Add a New Pipeline
+
+1. Create pipeline class in `application/pipelines/`
+2. Define dispatcher job (queues child jobs)
+3. Define item/page jobs (process chunks)
+4. Register in module providers
+
 ---
 
-*Generated from `apps/api/src` codebase*
+*Last updated: December 2024*

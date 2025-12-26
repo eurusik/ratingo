@@ -26,6 +26,8 @@ export {
   PolicyRunsTab,
   PolicyConfigTab,
   PolicyEditForm,
+  NewPolicyDialog,
+  DraftHeader,
   type PolicyFormData,
 } from './components/policy'
 

@@ -541,6 +541,25 @@
       "toast": {
         "prepareSuccess": "Policy evaluation started successfully",
         "prepareFailed": "Failed to start policy evaluation"
+      },
+      "newPolicyDialog": {
+        "title": "New Policy",
+        "description": "Choose how to create a new policy",
+        "fromActive": "Based on active policy",
+        "fromActiveHint": "Start with current settings and modify",
+        "fromScratch": "From scratch",
+        "recommended": "Recommended"
+      }
+    },
+    "policyDraft": {
+      "title": "New Policy (Draft)",
+      "basedOn": "Based on",
+      "fromScratch": "From scratch",
+      "save": "Save as New Version",
+      "saving": "Saving...",
+      "toast": {
+        "success": "New policy version created",
+        "failed": "Failed to save policy"
       }
     },
     "policyDetail": {

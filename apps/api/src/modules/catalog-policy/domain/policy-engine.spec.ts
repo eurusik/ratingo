@@ -557,6 +557,130 @@ describe('Policy Engine', () => {
     });
   });
 
+  describe('evaluateEligibility - Global Quality Gate', () => {
+    it('should return INELIGIBLE with BLOCKED reason when blocked content fails global gate (breakout not attempted)', () => {
+      // This is a critical business invariant:
+      // Blocked content that fails global gate should return BLOCKED reason
+      // and NOT attempt breakout evaluation
+      const policy = createPolicy({
+        blockedCountries: ['RU'],
+        globalRequirements: {
+          minImdbVotes: 50000,
+        },
+        breakoutRules: [
+          {
+            id: 'global-hit',
+            name: 'Global Hit',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 10000, // Lower threshold - would match if evaluated
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['RU'], // Blocked
+          voteCountImdb: 20000, // Meets breakout (10k) but NOT global gate (50k)
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      // Should be INELIGIBLE with BLOCKED_COUNTRY reason
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+
+      // Breakout should NOT be applied (not attempted)
+      expect(result.breakoutRuleId).toBeNull();
+
+      // Should include globalGateDetails showing which checks failed
+      expect(result.globalGateDetails).toBeDefined();
+      expect(result.globalGateDetails?.failedChecks).toContain('minImdbVotes');
+    });
+
+    it('should return INELIGIBLE with MISSING_GLOBAL_SIGNALS when non-blocked content fails global gate', () => {
+      const policy = createPolicy({
+        globalRequirements: {
+          minImdbVotes: 50000,
+        },
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US'], // Allowed
+          originalLanguage: 'en', // Allowed
+          voteCountImdb: 10000, // Does NOT meet global gate
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+      expect(result.breakoutRuleId).toBeNull();
+      expect(result.globalGateDetails).toBeDefined();
+      expect(result.globalGateDetails?.failedChecks).toContain('minImdbVotes');
+    });
+
+    it('should allow breakout when blocked content passes global gate', () => {
+      const policy = createPolicy({
+        blockedCountries: ['RU'],
+        globalRequirements: {
+          minImdbVotes: 10000,
+        },
+        breakoutRules: [
+          {
+            id: 'global-hit',
+            name: 'Global Hit',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 50000,
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['RU'], // Blocked
+          voteCountImdb: 60000, // Meets both global gate (10k) AND breakout (50k)
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      // Should be ELIGIBLE via breakout (gate passed)
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.reasons).toEqual(['BREAKOUT_ALLOWED']);
+      expect(result.breakoutRuleId).toBe('global-hit');
+      expect(result.globalGateDetails).toBeUndefined();
+    });
+
+    it('should skip global gate when not configured (backward compatibility)', () => {
+      const policy = createPolicy({
+        // No globalRequirements configured
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US'],
+          originalLanguage: 'en',
+          voteCountImdb: 0, // Would fail gate if configured
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      // Should be ELIGIBLE (gate skipped)
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.reasons).toContain('ALLOWED_COUNTRY');
+      expect(result.globalGateDetails).toBeUndefined();
+    });
+  });
+
   describe('computeRelevance', () => {
     it('should return 0 when stats is null', () => {
       const policy = createPolicy();

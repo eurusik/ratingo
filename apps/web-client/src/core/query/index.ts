@@ -12,6 +12,7 @@ export {
 } from './user-actions';
 export {
   usePolicies,
+  useActivePolicy,
   useRuns,
   useRunStatus,
   useRunDiff,

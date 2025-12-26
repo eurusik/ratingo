@@ -29,6 +29,50 @@ export interface Evaluation {
   status: EligibilityStatusType;
   reasons: EvaluationReason[];
   breakoutRuleId: string | null;
+  /**
+   * Diagnostic details when global gate check was performed.
+   * Present ONLY when:
+   * - status = INELIGIBLE AND reasons includes MISSING_GLOBAL_SIGNALS, OR
+   * - status = INELIGIBLE AND content is blocked but gate also failed
+   * Otherwise undefined.
+   */
+  globalGateDetails?: GlobalGateDetails;
+}
+
+/**
+ * Valid rating source identifiers.
+ */
+export type RatingSource = 'imdb' | 'metacritic' | 'rt' | 'trakt';
+
+/**
+ * Global quality gate requirements.
+ * All configured conditions are combined with AND logic.
+ */
+export interface GlobalRequirements {
+  /** Minimum IMDb votes required. Missing votes = fail. */
+  minImdbVotes?: number;
+
+  /** Minimum Trakt votes required. Missing votes = fail. */
+  minTraktVotes?: number;
+
+  /** Minimum quality score normalized (0-1). Missing score = fail. */
+  minQualityScoreNormalized?: number;
+
+  /** At least one of these rating sources must be present (non-null, valid number). */
+  requireAnyOfRatingsPresent?: RatingSource[];
+}
+
+/**
+ * Diagnostic details for global gate failures.
+ */
+export interface GlobalGateDetails {
+  /** List of checks that failed */
+  failedChecks: (
+    | 'minImdbVotes'
+    | 'minTraktVotes'
+    | 'minQualityScoreNormalized'
+    | 'requireAnyOfRatingsPresent'
+  )[];
 }
 
 /**
@@ -48,7 +92,7 @@ export interface BreakoutRule {
     minTraktVotes?: number;
     minQualityScoreNormalized?: number;
     requireAnyOfProviders?: string[];
-    requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[];
+    requireAnyOfRatingsPresent?: RatingSource[];
   };
 }
 
@@ -72,6 +116,10 @@ export interface PolicyConfig {
   homepage: {
     minRelevanceScore: number;
   };
+  /**
+   * Optional global quality gate. If not set, gate is skipped.
+   */
+  globalRequirements?: GlobalRequirements;
 }
 
 /**

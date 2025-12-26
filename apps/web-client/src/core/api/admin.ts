@@ -13,6 +13,12 @@ import type { components } from '@ratingo/api-contract'
 /** Policy DTO from API contract. */
 export type PolicyDto = components['schemas']['PolicyDto']
 
+/** Blocked country mode enum from API contract. */
+export type BlockedCountryMode = components['schemas']['PolicyConfigDto']['blockedCountryMode']
+
+/** Eligibility mode enum from API contract. */
+export type EligibilityMode = components['schemas']['PolicyConfigDto']['eligibilityMode']
+
 /** Breakout rule requirements type. */
 export interface BreakoutRuleRequirements {
   minImdbVotes?: number
@@ -35,16 +41,29 @@ export interface HomepageConfig {
   minRelevanceScore: number
 }
 
+/** Create policy request type (manual, because generated types are broken). */
+export interface CreatePolicyRequest {
+  allowedCountries: string[]
+  blockedCountries: string[]
+  blockedCountryMode?: BlockedCountryMode
+  allowedLanguages: string[]
+  blockedLanguages: string[]
+  globalProviders?: string[]
+  breakoutRules?: BreakoutRule[]
+  eligibilityMode?: EligibilityMode
+  homepage?: { minRelevanceScore?: number }
+}
+
 /** Policy config type. */
 export interface PolicyConfigDto {
   allowedCountries: string[]
   blockedCountries: string[]
-  blockedCountryMode: 'ANY' | 'MAJORITY'
+  blockedCountryMode: BlockedCountryMode
   allowedLanguages: string[]
   blockedLanguages: string[]
   globalProviders: string[]
   breakoutRules: BreakoutRule[]
-  eligibilityMode: 'STRICT' | 'RELAXED'
+  eligibilityMode: EligibilityMode
   homepage: HomepageConfig
 }
 
@@ -164,7 +183,7 @@ export class AdminApiClient {
    * @param body - Policy configuration
    * @returns Created policy response with ID and version
    */
-  async createPolicy(body: CreatePolicyDto): Promise<CreatePolicyResponseDto> {
+  async createPolicy(body: CreatePolicyRequest): Promise<CreatePolicyResponseDto> {
     return apiPost<CreatePolicyResponseDto>('admin/catalog-policies', body)
   }
 

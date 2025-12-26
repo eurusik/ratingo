@@ -2,16 +2,16 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/card'
-import { Button } from '../../../shared/ui/button'
-import { Badge } from '../../../shared/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
+import { Button } from '@/shared/ui/button'
+import { Badge } from '@/shared/ui/badge'
 import { Plus, Play } from 'lucide-react'
-import { DataTable, StatusBadge, ConfirmActionDialog } from '../../../modules/admin'
-import { DataTableColumnDef, POLICY_STATUS } from '../../../modules/admin/types'
-import { useTranslation } from '../../../shared/i18n'
+import { DataTable, ConfirmActionDialog, NewPolicyDialog } from '@/modules/admin'
+import { DataTableColumnDef, POLICY_STATUS } from '@/modules/admin/types'
+import { useTranslation } from '@/shared/i18n'
 import { toast } from 'sonner'
-import { usePolicies, usePreparePolicy } from '../../../core/query'
-import { type PolicyDto } from '../../../core/api/admin'
+import { usePolicies, useActivePolicy, usePreparePolicy } from '@/core/query'
+import { type PolicyDto } from '@/core/api/admin'
 
 // Helper to get badge variant for policy status
 const getPolicyBadgeVariant = (status: string) => {
@@ -25,9 +25,11 @@ export default function PoliciesPage() {
     policyId?: string
     policyName?: string
   }>({ open: false })
+  const [newPolicyDialog, setNewPolicyDialog] = useState(false)
   
   const { dict } = useTranslation()
-  const { data: policies = [], isLoading, error, refetch } = usePolicies()
+  const { data: policies = [], isLoading, error } = usePolicies()
+  const { data: activePolicy } = useActivePolicy()
   const preparePolicyMutation = usePreparePolicy()
 
   const columns: DataTableColumnDef<PolicyDto>[] = [
@@ -83,9 +85,22 @@ export default function PoliciesPage() {
   }
 
   const handleNewPolicy = () => {
-    // TODO: Navigate to new policy creation page or open modal
-    // For now, show a placeholder toast
-    toast.info('Функціональність створення нової політики буде додана пізніше')
+    // If no active policy, go directly to draft from scratch
+    if (!activePolicy) {
+      router.push('/admin/policies/draft')
+      return
+    }
+    setNewPolicyDialog(true)
+  }
+
+  const handleCreateFromActive = () => {
+    setNewPolicyDialog(false)
+    router.push(`/admin/policies/draft?base=${activePolicy?.id}`)
+  }
+
+  const handleCreateFromScratch = () => {
+    setNewPolicyDialog(false)
+    router.push('/admin/policies/draft')
   }
 
   const handleConfirmPrepare = async () => {
@@ -157,6 +172,22 @@ export default function PoliciesPage() {
         description={dict.admin.policies.confirmPrepare.description.replace('{policyName}', confirmDialog.policyName || '')}
         confirmText={dict.admin.policies.confirmPrepare.confirm}
         onConfirm={handleConfirmPrepare}
+      />
+
+      <NewPolicyDialog
+        open={newPolicyDialog}
+        onOpenChange={setNewPolicyDialog}
+        onCreateFromActive={handleCreateFromActive}
+        onCreateFromScratch={handleCreateFromScratch}
+        activeVersion={activePolicy?.version}
+        labels={{
+          title: dict.admin.policies.newPolicyDialog.title,
+          description: dict.admin.policies.newPolicyDialog.description,
+          fromActive: dict.admin.policies.newPolicyDialog.fromActive,
+          fromActiveHint: dict.admin.policies.newPolicyDialog.fromActiveHint,
+          fromScratch: dict.admin.policies.newPolicyDialog.fromScratch,
+          recommended: dict.admin.policies.newPolicyDialog.recommended,
+        }}
       />
     </div>
   )
