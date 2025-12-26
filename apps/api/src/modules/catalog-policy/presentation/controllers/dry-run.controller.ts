@@ -1,8 +1,7 @@
 /**
  * Dry-Run Controller
  *
- * Admin API endpoints for dry-run operations.
- * Handles policy testing without persisting results.
+ * Admin endpoints for testing policy changes without persisting results.
  */
 
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
@@ -17,8 +16,10 @@ export class DryRunController {
   constructor(private readonly dryRunService: DryRunService) {}
 
   /**
-   * POST /admin/catalog-policies/dry-run
-   * Executes a dry-run evaluation against a proposed policy.
+   * Executes dry-run evaluation against a proposed policy.
+   *
+   * @param dto - Proposed policy and dry-run options
+   * @returns Dry-run results with summary and item details
    */
   @Post()
   @HttpCode(HttpStatus.OK)

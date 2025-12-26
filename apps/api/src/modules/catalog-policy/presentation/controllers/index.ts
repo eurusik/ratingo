@@ -1,7 +1,5 @@
 /**
- * Controllers Index
- *
- * Re-exports all controllers for the catalog-policy module.
+ * Controllers - Public API
  */
 
 export { PolicyController } from './policy.controller';

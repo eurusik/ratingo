@@ -1,3 +1,9 @@
+/**
+ * Breakout Rule DTOs
+ *
+ * Request DTOs for breakout rule configuration in policies.
+ */
+
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
@@ -19,8 +25,8 @@ export const VALID_RATING_SOURCES = ['imdb', 'metacritic', 'rt', 'trakt'] as con
 export type RatingSource = (typeof VALID_RATING_SOURCES)[number];
 
 /**
- * DTO for breakout rule requirements.
- * Defines the conditions that must be met for a breakout rule to apply.
+ * Breakout rule requirements DTO.
+ * Defines conditions that must be met for a breakout rule to apply.
  */
 export class BreakoutRuleRequirementsDto {
   @ApiPropertyOptional({
@@ -79,8 +85,8 @@ export class BreakoutRuleRequirementsDto {
 }
 
 /**
- * DTO for breakout rule configuration.
- * Breakout rules allow blocked content to become eligible under specific conditions.
+ * Breakout rule configuration DTO.
+ * Allows blocked content to become eligible under specific conditions.
  */
 export class BreakoutRuleDto {
   @ApiProperty({

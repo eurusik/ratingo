@@ -1,8 +1,7 @@
 /**
  * Policy Controller
  *
- * Admin API endpoints for policy CRUD operations.
- * Handles policy listing, creation, and preparation.
+ * Admin endpoints for policy management (CRUD operations).
  */
 
 import { Controller, Post, Get, Param, Body, HttpCode, HttpStatus, Inject } from '@nestjs/common';
@@ -33,8 +32,9 @@ export class PolicyController {
   ) {}
 
   /**
-   * GET /admin/catalog-policies
    * Gets list of all policies.
+   *
+   * @returns List of policies with metadata
    */
   @Get()
   @ApiOperation({
@@ -64,8 +64,10 @@ export class PolicyController {
   }
 
   /**
-   * POST /admin/catalog-policies
    * Creates a new policy draft.
+   *
+   * @param dto - Policy configuration
+   * @returns Created policy ID and version
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -95,8 +97,11 @@ export class PolicyController {
   }
 
   /**
-   * POST /admin/catalog-policies/:id/prepare
-   * Prepares a policy for activation by pre-computing all evaluations.
+   * Prepares policy for activation by pre-computing evaluations.
+   *
+   * @param policyId - Policy ID to prepare
+   * @param options - Batch size and concurrency settings
+   * @returns Run ID for tracking progress
    */
   @Post(':id/prepare')
   @HttpCode(HttpStatus.ACCEPTED)

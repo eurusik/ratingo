@@ -1,11 +1,8 @@
 /**
- * Background worker for catalog policy evaluation jobs.
+ * Background Worker for Catalog Policy Evaluation
  *
  * Handles RE_EVALUATE_ALL (batch orchestration), EVALUATE_CATALOG_ITEM (single item),
- * and WATCHDOG (stale run finalization).
- *
- * Counters are derived from evaluations table, not incremented per job.
- * Concurrency: 1 for orchestrator, 10 for item evaluation.
+ * and WATCHDOG (stale run finalization) jobs.
  */
 
 import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
@@ -100,7 +97,11 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
     }
   }
 
-  /** Routes jobs to appropriate handlers. */
+  /**
+   * Routes jobs to appropriate handlers.
+   *
+   * @param job - BullMQ job to process
+   */
   async process(job: Job): Promise<void> {
     this.logger.debug(`Processing job ${job.id} of type ${job.name}`);
 
@@ -130,8 +131,7 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
   /**
    * Orchestrates batch evaluation for a run.
    *
-   * Dispatches EVALUATE_CATALOG_ITEM jobs for all items in snapshot.
-   * Watchdog finalizes if orchestrator fails after dispatch.
+   * @param payload - Job payload with run ID and policy version
    */
   private async handleReEvaluateAll(payload: ReEvaluateAllPayload): Promise<void> {
     const { runId, policyVersion, batchSize = 500 } = payload;
@@ -216,19 +216,9 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
   }
 
   /**
-   * EVALUATE_CATALOG_ITEM job handler
-   * Evaluates a single media item and writes evaluation with run_id.
+   * Evaluates single media item and writes result.
    *
-   * Architecture (v2):
-   * - Writes evaluation with run_id (idempotent via UNIQUE constraint)
-   * - Does NOT increment counters (counters are derived from evaluations)
-   * - Errors are recorded in run's error_sample
-   */
-  /**
-   * Evaluates single media item and writes result with run_id.
-   *
-   * Skips if run cancelled. Records errors in run's error_sample.
-   * Does not throw - continues processing other items on failure.
+   * @param payload - Job payload with media item ID
    */
   private async handleEvaluateCatalogItem(payload: EvaluateCatalogItemPayload): Promise<void> {
     const { runId, policyVersion, mediaItemId } = payload;
@@ -274,6 +264,7 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
    * @param snapshotCutoff - Only items updated before this date
    * @param batchSize - Max items to fetch
    * @param cursor - Last item ID for pagination
+   * @returns Array of media item IDs
    */
   private async fetchBatch(
     snapshotCutoff: Date,
@@ -302,9 +293,6 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
 
   /**
    * Checks for stale runs and finalizes them.
-   *
-   * Safety net ensuring runs complete even if orchestrator fails.
-   * Runs every minute via scheduled job.
    */
   private async handleWatchdog(): Promise<void> {
     this.logger.debug('Watchdog checking for stale runs...');

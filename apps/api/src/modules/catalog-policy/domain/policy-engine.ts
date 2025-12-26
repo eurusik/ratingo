@@ -17,17 +17,12 @@ import { EligibilityStatus } from './constants/evaluation.constants';
 /**
  * Evaluates media eligibility based on policy rules.
  *
- * Order of checks:
- * 1. Missing data checks (originCountries, originalLanguage) → PENDING (not INELIGIBLE)
- * 2. Blocked checks (country, language)
- * 3. Breakout checks (by priority)
- * 4. Neutral checks (not in allowed/blocked)
- * 5. Allowed checks (whitelist)
- *
- * Design Decision DD-1: Missing metadata returns PENDING (not INELIGIBLE) because:
- * - Data may be populated later via subsequent syncs
- * - INELIGIBLE implies "consciously blocked by policy"
- * - PENDING allows admin to distinguish "needs data" vs "blocked"
+ * Evaluation order:
+ * 1. Missing data → PENDING
+ * 2. Blocked checks
+ * 3. Breakout rules
+ * 4. Neutral checks
+ * 5. Allowed checks
  *
  * @param input - Media item data and stats
  * @param policy - Active policy configuration
@@ -99,14 +94,10 @@ export function evaluateEligibility(input: PolicyEngineInput, policy: PolicyConf
 /**
  * Checks if media is blocked by country or language rules.
  *
- * Design Decision DD-5: MAJORITY mode tie-breaker
- * - For 1-2 countries: fallback to ANY mode (any blocked country = blocked)
- * - For 3+ countries: use majority rule
- *
  * @param mediaItem - Media item data
  * @param policy - Policy configuration
  * @param reasons - Array to accumulate reasons (mutated)
- * @returns true if blocked, false otherwise
+ * @returns True if blocked
  */
 function checkBlocked(
   mediaItem: PolicyEngineInput['mediaItem'],
@@ -159,7 +150,7 @@ function checkBlocked(
  * @param mediaItem - Media item data
  * @param policy - Policy configuration
  * @param reasons - Array to accumulate reasons (mutated)
- * @returns true if neutral, false otherwise
+ * @returns True if neutral
  */
 function checkNeutral(
   mediaItem: PolicyEngineInput['mediaItem'],
@@ -193,7 +184,6 @@ function checkNeutral(
 
 /**
  * Finds the first matching breakout rule by priority.
- * Breakout rules are already sorted by priority in the policy (via validation).
  *
  * @param input - Media item data and stats
  * @param policy - Policy configuration
@@ -216,8 +206,8 @@ function findMatchingBreakoutRule(
  *
  * @param input - Media item data and stats
  * @param rule - Breakout rule to check
- * @param policy - Policy configuration (for globalProviders)
- * @returns true if all requirements are met
+ * @param policy - Policy configuration
+ * @returns True if all requirements are met
  */
 function matchesBreakoutRule(
   input: PolicyEngineInput,
@@ -276,8 +266,8 @@ function matchesBreakoutRule(
  *
  * @param mediaItem - Media item data
  * @param requiredProviders - List of required provider names
- * @param policy - Policy configuration (for globalProviders)
- * @returns true if any required provider is present
+ * @param policy - Policy configuration
+ * @returns True if any required provider is present
  */
 function hasAnyProvider(
   mediaItem: PolicyEngineInput['mediaItem'],
@@ -317,7 +307,7 @@ function hasAnyProvider(
  *
  * @param mediaItem - Media item data
  * @param requiredRatings - List of required rating sources
- * @returns true if any required rating is present
+ * @returns True if any required rating is present
  */
 function hasAnyRating(
   mediaItem: PolicyEngineInput['mediaItem'],
@@ -345,11 +335,10 @@ function hasAnyRating(
 /**
  * Computes relevance score (0-100) for homepage ranking.
  *
- * Formula: weighted average of qualityScore, popularityScore, freshnessScore
- * All input scores are normalized to 0-1 range, output is scaled to 0-100.
+ * Uses weighted average: quality 40%, popularity 40%, freshness 20%.
  *
  * @param input - Media item data and stats
- * @param policy - Policy configuration (currently unused, for future extensions)
+ * @param policy - Policy configuration
  * @returns Relevance score in range [0, 100]
  */
 export function computeRelevance(input: PolicyEngineInput, policy: PolicyConfig): number {
@@ -388,8 +377,6 @@ export function computeRelevance(input: PolicyEngineInput, policy: PolicyConfig)
 
 /**
  * Returns human-readable descriptions for evaluation reasons.
- *
- * Note: i18n is not supported - all descriptions are in English.
  *
  * @param reasons - List of evaluation reasons
  * @returns Dictionary of reason descriptions

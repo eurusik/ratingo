@@ -27,8 +27,11 @@ export class CatalogPolicyService {
   /**
    * Gets the active policy or throws if none exists.
    *
-   * Design Decision DD-2: Active policy always exists after seed.
-   * This method should never throw in production after initial setup.
+   * @returns Active policy
+   * @throws {NotFoundException} If no active policy found
+   *
+   * @example
+   * const policy = await service.getActiveOrThrow();
    */
   async getActiveOrThrow(): Promise<CatalogPolicy> {
     const policy = await this.policyRepository.findActive();
@@ -42,7 +45,8 @@ export class CatalogPolicyService {
 
   /**
    * Gets the active policy or null if none exists.
-   * Use this for graceful handling during initial setup.
+   *
+   * @returns Active policy or null
    */
   async getActive(): Promise<CatalogPolicy | null> {
     return this.policyRepository.findActive();
@@ -50,16 +54,18 @@ export class CatalogPolicyService {
 
   /**
    * Gets a policy by version number.
+   *
+   * @param version - Policy version number
+   * @returns Policy or null if not found
    */
   async getByVersion(version: number): Promise<CatalogPolicy | null> {
     return this.policyRepository.findByVersion(version);
   }
 
   /**
-   * Creates a new policy draft (not activated).
-   * Validates and normalizes the policy configuration.
+   * Creates a new policy draft.
    *
-   * @param rawPolicy - Raw policy configuration (will be validated and normalized)
+   * @param rawPolicy - Raw policy configuration (will be validated)
    * @returns Created policy with auto-incremented version
    * @throws {BadRequestException} If policy validation fails
    */
@@ -88,9 +94,10 @@ export class CatalogPolicyService {
 
   /**
    * Activates a policy by ID.
-   * Deactivates the previous active policy in a transaction.
    *
    * @param id - Policy ID to activate
+   * @returns Activated policy
+   * @throws {NotFoundException} If policy not found
    */
   async activate(id: string): Promise<CatalogPolicy> {
     await this.policyRepository.activate(id);
@@ -110,7 +117,6 @@ export class CatalogPolicyService {
 
   /**
    * Creates and immediately activates a new policy.
-   * Convenience method for common use case.
    *
    * @param rawPolicy - Raw policy configuration
    * @returns Activated policy
@@ -122,6 +128,8 @@ export class CatalogPolicyService {
 
   /**
    * Lists all policies ordered by version descending.
+   *
+   * @returns List of all policies
    */
   async listAll(): Promise<CatalogPolicy[]> {
     return this.policyRepository.findAll();

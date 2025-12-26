@@ -1,4 +1,10 @@
 /**
+ * Catalog Policy Constants
+ *
+ * Queue and job type definitions for background processing.
+ */
+
+/**
  * Queue name for catalog policy background jobs.
  */
 export const CATALOG_POLICY_QUEUE = 'catalog-policy-queue';

@@ -1,4 +1,6 @@
-/** Domain Errors - Public API */
+/**
+ * Domain Errors - Public API
+ */
 export {
   InvalidEligibilityStatusError,
   InvalidBreakoutRuleError,

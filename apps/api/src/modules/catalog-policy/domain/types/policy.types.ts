@@ -1,10 +1,14 @@
 /**
  * Catalog Policy Engine - Domain Types
+ *
+ * Core type definitions for policy configuration and evaluation results.
  */
 
 import { EligibilityStatusType } from '../constants/evaluation.constants';
 
-/** Evaluation reason codes. */
+/**
+ * Evaluation reason codes.
+ */
 export type EvaluationReason =
   | 'MISSING_ORIGIN_COUNTRY'
   | 'MISSING_ORIGINAL_LANGUAGE'
@@ -18,18 +22,26 @@ export type EvaluationReason =
   | 'ALLOWED_LANGUAGE'
   | 'NO_ACTIVE_POLICY';
 
-/** Result of evaluating a media item against a policy. */
+/**
+ * Result of evaluating a media item against a policy.
+ */
 export interface Evaluation {
   status: EligibilityStatusType;
   reasons: EvaluationReason[];
   breakoutRuleId: string | null;
 }
 
-/** Breakout rule configuration. Allows blocked content to become eligible. */
+/**
+ * Breakout rule configuration.
+ * Allows blocked content to become eligible under specific conditions.
+ */
 export interface BreakoutRule {
   id: string;
   name: string;
-  /** Lower number = higher priority */
+  /**
+   * Priority of the rule.
+   * Lower number = higher priority.
+   */
   priority: number;
   requirements: {
     minImdbVotes?: number;
@@ -40,7 +52,9 @@ export interface BreakoutRule {
   };
 }
 
-/** Policy configuration defining catalog eligibility rules. */
+/**
+ * Policy configuration defining catalog eligibility rules.
+ */
 export interface PolicyConfig {
   allowedCountries: string[];
   blockedCountries: string[];
@@ -49,14 +63,20 @@ export interface PolicyConfig {
   blockedLanguages: string[];
   globalProviders: string[];
   breakoutRules: BreakoutRule[];
-  /** STRICT = country AND language must be allowed. */
+  /**
+   * Eligibility mode.
+   * STRICT = country AND language must be allowed.
+   * RELAXED = country OR language must be allowed.
+   */
   eligibilityMode: 'STRICT' | 'RELAXED';
   homepage: {
     minRelevanceScore: number;
   };
 }
 
-/** Watch providers map structure. */
+/**
+ * Watch providers map structure.
+ */
 export interface WatchProvidersMap {
   [region: string]: {
     link: string | null;
@@ -68,7 +88,9 @@ export interface WatchProvidersMap {
   };
 }
 
-/** Input data for policy engine evaluation. */
+/**
+ * Input data for policy engine evaluation.
+ */
 export interface PolicyEngineInput {
   mediaItem: {
     id: string;
@@ -90,7 +112,9 @@ export interface PolicyEngineInput {
   } | null;
 }
 
-/** Catalog policy entity (database model). */
+/**
+ * Catalog policy entity (database model).
+ */
 export interface CatalogPolicy {
   id: string;
   version: number;
@@ -100,7 +124,9 @@ export interface CatalogPolicy {
   activatedAt: Date | null;
 }
 
-/** Media catalog evaluation entity (database model). */
+/**
+ * Media catalog evaluation entity (database model).
+ */
 export interface MediaCatalogEvaluation {
   mediaItemId: string;
   status: EligibilityStatusType;
@@ -109,7 +135,10 @@ export interface MediaCatalogEvaluation {
   policyVersion: number;
   breakoutRuleId: string | null;
   evaluatedAt: Date;
-  /** Links evaluation to specific run. NULL for legacy/manual evaluations. */
+  /**
+   * Links evaluation to specific run.
+   * NULL for legacy/manual evaluations.
+   */
   runId?: string;
 }
 

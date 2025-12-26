@@ -1,8 +1,12 @@
 /**
  * Ingestion Status Constants
+ *
+ * Defines status values for media item ingestion process.
  */
 
-/** Ingestion status values (stored in DB). */
+/**
+ * Ingestion status values (stored in DB).
+ */
 export const IngestionStatus = {
   READY: 'ready',
   PENDING: 'pending',

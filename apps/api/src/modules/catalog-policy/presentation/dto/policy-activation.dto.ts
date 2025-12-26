@@ -1,3 +1,9 @@
+/**
+ * Policy Activation DTOs
+ *
+ * Request and response DTOs for two-phase policy activation flow.
+ */
+
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsOptional,
@@ -13,7 +19,8 @@ import { Type } from 'class-transformer';
 import { BreakoutRuleDto } from './breakout-rule.dto';
 
 /**
- * Request DTOs
+ * Prepare options DTO.
+ * Configuration for policy preparation phase.
  */
 export class PrepareOptionsDto {
   @ApiPropertyOptional({
@@ -37,6 +44,10 @@ export class PrepareOptionsDto {
   concurrency?: number;
 }
 
+/**
+ * Promote options DTO.
+ * Thresholds for policy promotion validation.
+ */
 export class PromoteOptionsDto {
   @ApiPropertyOptional({
     description: 'Coverage threshold (0.0 to 1.0)',
@@ -59,7 +70,8 @@ export class PromoteOptionsDto {
 }
 
 /**
- * Response DTOs
+ * Prepare response DTO.
+ * Returns run ID for tracking preparation progress.
  */
 export class PrepareResponseDto {
   @ApiProperty({
@@ -86,6 +98,10 @@ export class PrepareResponseDto {
   message: string;
 }
 
+/**
+ * Progress statistics DTO.
+ * Tracks evaluation progress for a run.
+ */
 export class ProgressStatsDto {
   @ApiProperty({
     description: 'Number of items processed',
@@ -130,6 +146,10 @@ export class ProgressStatsDto {
   errors: number;
 }
 
+/**
+ * Error sample DTO.
+ * Represents a single error encountered during evaluation.
+ */
 export class ErrorSampleDto {
   @ApiProperty({
     description: 'Media item ID that caused the error',
@@ -160,6 +180,10 @@ export class ErrorSampleDto {
   timestamp: string;
 }
 
+/**
+ * Run status DTO.
+ * Complete status information for an evaluation run.
+ */
 export class RunStatusDto {
   @ApiProperty({
     description: 'Run ID',
@@ -263,6 +287,10 @@ export class RunStatusDto {
   errorSample: ErrorSampleDto[];
 }
 
+/**
+ * Action response DTO.
+ * Generic response for promote/cancel actions.
+ */
 export class ActionResponseDto {
   @ApiProperty({
     description: 'Whether the action was successful',
@@ -288,6 +316,10 @@ export class ActionResponseDto {
   message?: string;
 }
 
+/**
+ * Diff sample DTO.
+ * Represents a single item in diff report.
+ */
 export class DiffSampleDto {
   @ApiProperty({
     description: 'Media item ID',
@@ -311,6 +343,10 @@ export class DiffSampleDto {
   reason: string;
 }
 
+/**
+ * Diff counts DTO.
+ * Summary of changes between policies.
+ */
 export class DiffCountsDto {
   @ApiProperty({
     description: 'Number of items that will be removed from catalog',
@@ -334,6 +370,10 @@ export class DiffCountsDto {
   netChange: number;
 }
 
+/**
+ * Diff report DTO.
+ * Complete diff report between current and target policy.
+ */
 export class DiffReportDto {
   @ApiProperty({
     description: 'Run ID',
@@ -382,7 +422,8 @@ export class DiffReportDto {
 }
 
 /**
- * Additional DTOs for future endpoints
+ * Policy DTO.
+ * Basic policy information for listing.
  */
 export class PolicyDto {
   @ApiProperty({
@@ -431,6 +472,10 @@ export class PolicyDto {
   updatedAt: Date;
 }
 
+/**
+ * Evaluation run DTO.
+ * Basic run information for listing.
+ */
 export class EvaluationRunDto {
   @ApiProperty({
     description: 'Run ID',
@@ -494,6 +539,10 @@ export class EvaluationRunDto {
   readyToPromote?: boolean;
 }
 
+/**
+ * Policies list DTO.
+ * Wrapper for policy list response.
+ */
 export class PoliciesListDto {
   @ApiProperty({
     description: 'List of policies',
@@ -504,6 +553,10 @@ export class PoliciesListDto {
   data: PolicyDto[];
 }
 
+/**
+ * Runs list DTO.
+ * Wrapper for evaluation runs list response.
+ */
 export class RunsListDto {
   @ApiProperty({
     description: 'List of evaluation runs',
@@ -515,7 +568,8 @@ export class RunsListDto {
 }
 
 /**
- * Create Policy Request DTO
+ * Create policy DTO.
+ * Request body for creating a new policy.
  */
 export class CreatePolicyDto {
   @ApiProperty({
@@ -601,6 +655,10 @@ export class CreatePolicyDto {
   homepage?: { minRelevanceScore?: number };
 }
 
+/**
+ * Create policy response DTO.
+ * Returns created policy ID and version.
+ */
 export class CreatePolicyResponseDto {
   @ApiProperty({
     description: 'Created policy ID',

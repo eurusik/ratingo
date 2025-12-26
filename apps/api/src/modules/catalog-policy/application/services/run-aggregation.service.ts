@@ -2,10 +2,6 @@
  * Run Aggregation Service
  *
  * Provides derived counters from evaluations table (source of truth).
- * Replaces incrementCounters approach with aggregate queries.
- *
- * Key principle: counters are NEVER incremented by jobs.
- * They are always computed from actual evaluation records.
  */
 
 import { Injectable, Logger, Inject } from '@nestjs/common';
@@ -34,7 +30,9 @@ export class RunAggregationService {
 
   /**
    * Aggregates counters from evaluations table for a specific run.
-   * This is the source of truth - not the cached counters in catalog_evaluation_runs.
+   *
+   * @param runId - Run identifier
+   * @returns Aggregated counters
    */
   async aggregateCounters(runId: string): Promise<AggregatedCounters> {
     const result = await this.db
@@ -65,8 +63,10 @@ export class RunAggregationService {
   }
 
   /**
-   * Syncs cached counters in catalog_evaluation_runs with actual aggregated values.
-   * Call this periodically or after batch completion.
+   * Syncs cached counters with actual aggregated values.
+   *
+   * @param runId - Run identifier
+   * @returns Synced counters
    */
   async syncRunCounters(runId: string): Promise<AggregatedCounters> {
     const counters = await this.aggregateCounters(runId);

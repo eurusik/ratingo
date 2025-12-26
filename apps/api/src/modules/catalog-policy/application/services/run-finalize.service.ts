@@ -1,8 +1,7 @@
 /**
- * Handles finalization of evaluation runs.
+ * Run Finalization Service
  *
- * Determines completion based on evaluation count vs total_ready_snapshot.
- * Uses transactional status transitions with WHERE guards for idempotency.
+ * Handles finalization of evaluation runs based on completion status.
  */
 
 import { Injectable, Logger, Inject } from '@nestjs/common';
@@ -39,10 +38,6 @@ export class RunFinalizeService {
 
   /**
    * Attempts to finalize a run if all items processed.
-   *
-   * Aggregates counters, compares with total_ready_snapshot,
-   * transitions status from 'running' to 'prepared' if complete.
-   * Idempotent - safe to call multiple times.
    *
    * @param runId - Run identifier
    * @returns Finalization result with status and counters
@@ -157,10 +152,7 @@ export class RunFinalizeService {
   /**
    * Finds and finalizes stale running runs.
    *
-   * Watchdog function - call periodically (e.g., every minute).
-   * Run is stale if running longer than maxAgeMinutes.
-   *
-   * @param maxAgeMinutes - Max age before run is considered stale (default: 5)
+   * @param maxAgeMinutes - Max age before run is considered stale
    * @returns Array of finalization results
    */
   async finalizeStaleRuns(maxAgeMinutes: number = 5): Promise<FinalizeResult[]> {

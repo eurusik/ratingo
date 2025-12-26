@@ -1,8 +1,7 @@
 /**
  * Run Controller
  *
- * Admin API endpoints for evaluation run management.
- * Handles run listing, status checking, promotion, cancellation, and diff reports.
+ * Admin endpoints for evaluation run management.
  */
 
 import { Controller, Post, Get, Param, Body, Query, Inject } from '@nestjs/common';
@@ -40,8 +39,11 @@ export class RunController {
   ) {}
 
   /**
-   * GET /admin/catalog-policies/runs
    * Gets list of all evaluation runs.
+   *
+   * @param limitStr - Number of runs to return
+   * @param offsetStr - Offset for pagination
+   * @returns List of evaluation runs
    */
   @Get()
   @ApiOperation({
@@ -105,8 +107,10 @@ export class RunController {
   }
 
   /**
-   * GET /admin/catalog-policies/runs/:runId
-   * Gets the status and progress of an evaluation run.
+   * Gets status and progress of an evaluation run.
+   *
+   * @param runId - Run ID to check
+   * @returns Run status with progress and counters
    */
   @Get(':runId')
   @ApiOperation({
@@ -152,8 +156,11 @@ export class RunController {
   }
 
   /**
-   * POST /admin/catalog-policies/runs/:runId/promote
-   * Promotes a successful run by activating the policy.
+   * Promotes run by activating the policy.
+   *
+   * @param runId - Run ID to promote
+   * @param options - Coverage and error thresholds
+   * @returns Promotion result
    */
   @Post(':runId/promote')
   @ApiOperation({
@@ -194,8 +201,10 @@ export class RunController {
   }
 
   /**
-   * POST /admin/catalog-policies/runs/:runId/cancel
    * Cancels a running evaluation.
+   *
+   * @param runId - Run ID to cancel
+   * @returns Cancellation result
    */
   @Post(':runId/cancel')
   @ApiOperation({
@@ -228,8 +237,11 @@ export class RunController {
   }
 
   /**
-   * GET /admin/catalog-policies/runs/:runId/diff
-   * Gets diff report showing what will change when policy is promoted.
+   * Gets diff report showing catalog changes.
+   *
+   * @param runId - Run ID to compute diff for
+   * @param sampleSize - Number of sample items to return
+   * @returns Diff report with regressions and improvements
    */
   @Get(':runId/diff')
   @ApiOperation({

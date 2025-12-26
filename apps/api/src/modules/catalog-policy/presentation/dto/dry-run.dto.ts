@@ -1,7 +1,8 @@
 /**
  * Dry-Run DTOs
  *
- * Request and response DTOs for the dry-run endpoint.
+ * Request and response DTOs for policy dry-run testing.
+ * Allows testing policy changes without persisting results.
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -19,12 +20,13 @@ import { Type } from 'class-transformer';
 import { CreatePolicyDto } from './policy-activation.dto';
 
 /**
- * Dry-run mode selection
+ * Dry-run mode selection.
  */
 export type DryRunModeType = 'sample' | 'top' | 'byType' | 'byCountry';
 
 /**
- * Dry-run options
+ * Dry-run options DTO.
+ * Configuration for dry-run evaluation.
  */
 export class DryRunOptionsDto {
   @ApiProperty({
@@ -78,7 +80,8 @@ export class DryRunOptionsDto {
 }
 
 /**
- * Dry-run request body
+ * Dry-run request DTO.
+ * Request body for dry-run evaluation.
  */
 export class DryRunRequestDto {
   @ApiProperty({
@@ -99,7 +102,8 @@ export class DryRunRequestDto {
 }
 
 /**
- * Single item result in dry-run response
+ * Dry-run item result DTO.
+ * Single item evaluation result in dry-run response.
  */
 export class DryRunItemResultDto {
   @ApiProperty({
@@ -165,7 +169,8 @@ export class DryRunItemResultDto {
 }
 
 /**
- * Reason breakdown in summary
+ * Reason breakdown DTO.
+ * Count of items by evaluation reason.
  */
 export class ReasonBreakdownDto {
   @ApiProperty({
@@ -184,7 +189,8 @@ export class ReasonBreakdownDto {
 }
 
 /**
- * Dry-run summary
+ * Dry-run summary DTO.
+ * Aggregated statistics for dry-run evaluation.
  */
 export class DryRunSummaryDto {
   @ApiProperty({
@@ -275,7 +281,8 @@ export class DryRunSummaryDto {
 }
 
 /**
- * Dry-run response
+ * Dry-run response DTO.
+ * Complete dry-run evaluation results.
  */
 export class DryRunResponseDto {
   @ApiProperty({
