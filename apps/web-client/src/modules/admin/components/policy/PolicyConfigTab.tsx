@@ -31,6 +31,17 @@ interface PolicyConfigTabProps {
   }
 }
 
+/**
+ * Displays policy configuration tab.
+ * 
+ * Shows config cards (countries, languages, providers, settings, breakout rules)
+ * or fallback info card if config is missing.
+ *
+ * @param config - Policy configuration (optional)
+ * @param version - Policy version
+ * @param status - Policy status
+ * @param labels - Localized labels
+ */
 export function PolicyConfigTab({ config, version, status, labels }: PolicyConfigTabProps) {
   if (!config) {
     return <PolicyInfoFallback version={version} status={status} labels={labels} />

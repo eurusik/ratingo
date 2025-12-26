@@ -9,7 +9,14 @@ interface AllowedBlockedListProps {
 }
 
 /**
- * Displays allowed/blocked items with badges
+ * Displays allowed/blocked items with color-coded badges.
+ * 
+ * Shows two sections: allowed items (green) and blocked items (red).
+ * Empty blocked list displays placeholder.
+ *
+ * @param allowed - Array of allowed item codes
+ * @param blocked - Array of blocked item codes
+ * @param labels - Localized labels for sections
  */
 export function AllowedBlockedList({ allowed, blocked, labels }: AllowedBlockedListProps) {
   return (

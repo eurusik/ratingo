@@ -27,6 +27,14 @@ interface PolicyConfigCardsProps {
   labels?: ConfigLabels
 }
 
+/**
+ * Displays policy countries configuration card.
+ * 
+ * Shows allowed and blocked countries with ISO codes.
+ *
+ * @param config - Policy configuration
+ * @param labels - Localized labels
+ */
 export function CountriesCard({ config, labels }: PolicyConfigCardsProps) {
   return (
     <ConfigCard title={labels?.countries ?? 'Countries'} icon={Globe} contentClassName="space-y-3">
@@ -42,6 +50,14 @@ export function CountriesCard({ config, labels }: PolicyConfigCardsProps) {
   )
 }
 
+/**
+ * Displays policy languages configuration card.
+ * 
+ * Shows allowed and blocked languages with ISO codes.
+ *
+ * @param config - Policy configuration
+ * @param labels - Localized labels
+ */
 export function LanguagesCard({ config, labels }: PolicyConfigCardsProps) {
   return (
     <ConfigCard title={labels?.languages ?? 'Languages'} icon={Languages} contentClassName="space-y-3">
@@ -57,6 +73,14 @@ export function LanguagesCard({ config, labels }: PolicyConfigCardsProps) {
   )
 }
 
+/**
+ * Displays global streaming providers card.
+ * 
+ * Shows list of provider names as badges.
+ *
+ * @param config - Policy configuration
+ * @param labels - Localized labels
+ */
 export function ProvidersCard({ config, labels }: PolicyConfigCardsProps) {
   return (
     <ConfigCard title={labels?.providers ?? 'Global Providers'} icon={Tv}>
@@ -65,6 +89,14 @@ export function ProvidersCard({ config, labels }: PolicyConfigCardsProps) {
   )
 }
 
+/**
+ * Displays policy settings card.
+ * 
+ * Shows eligibility mode, blocked country mode, and min relevance score.
+ *
+ * @param config - Policy configuration
+ * @param labels - Localized labels
+ */
 export function SettingsCard({ config, labels }: PolicyConfigCardsProps) {
   return (
     <ConfigCard title={labels?.settings ?? 'Settings'} icon={Settings} contentClassName="space-y-2">
@@ -86,6 +118,15 @@ export function SettingsCard({ config, labels }: PolicyConfigCardsProps) {
   )
 }
 
+/**
+ * Displays breakout rules card.
+ * 
+ * Shows list of exception rules with requirements.
+ * Returns null if no rules configured.
+ *
+ * @param config - Policy configuration
+ * @param labels - Localized labels
+ */
 export function BreakoutRulesCard({ config, labels }: PolicyConfigCardsProps) {
   if (config.breakoutRules.length === 0) return null
 

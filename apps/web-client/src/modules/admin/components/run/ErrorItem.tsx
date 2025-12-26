@@ -19,6 +19,17 @@ interface ErrorItemProps {
   }
 }
 
+/**
+ * Displays collapsible error item.
+ * 
+ * Shows error message and media ID in collapsed state.
+ * Expands to show full details including stack trace.
+ *
+ * @param error - Error details
+ * @param isExpanded - Whether item is expanded
+ * @param onToggle - Callback for expand/collapse
+ * @param labels - Localized labels
+ */
 export function ErrorItem({ error, isExpanded, onToggle, labels }: ErrorItemProps) {
   return (
     <CollapsiblePrimitive.Root open={isExpanded}>

@@ -11,7 +11,11 @@ interface SettingRowProps {
 }
 
 /**
- * Single setting row with label and badge value
+ * Displays single setting row with label and badge value.
+ * 
+ * @param label - Setting label text
+ * @param value - Setting value to display in badge
+ * @param variant - Badge color variant
  */
 export function SettingRow({ label, value, variant = 'secondary' }: SettingRowProps) {
   return (

@@ -25,6 +25,15 @@ interface PolicyRunsTabProps {
   }
 }
 
+/**
+ * Displays policy evaluation runs tab.
+ * 
+ * Shows table of runs with status, progress, and timestamps.
+ * Includes empty state when no runs exist.
+ *
+ * @param runs - Array of evaluation runs
+ * @param labels - Localized labels for table
+ */
 export function PolicyRunsTab({ runs, labels }: PolicyRunsTabProps) {
   const router = useRouter()
 

@@ -21,6 +21,16 @@ interface RunDiffTabProps {
   }
 }
 
+/**
+ * Displays run diff report tab.
+ * 
+ * Shows summary counts and lists of regressions/improvements.
+ * Displays loading state while fetching data.
+ *
+ * @param diffReport - Diff report data
+ * @param isLoading - Whether data is loading
+ * @param labels - Localized labels
+ */
 export function RunDiffTab({ diffReport, isLoading, labels }: RunDiffTabProps) {
   if (isLoading || !diffReport) {
     return (

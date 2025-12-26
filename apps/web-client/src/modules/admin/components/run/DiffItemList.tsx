@@ -13,6 +13,16 @@ interface DiffItemListProps {
   }
 }
 
+/**
+ * Displays list of diff items (regressions or improvements).
+ * 
+ * Shows media items with title, ID, and status change reason.
+ * Color-coded by variant (red for regressions, green for improvements).
+ *
+ * @param items - Array of diff samples
+ * @param variant - Display variant (regression/improvement)
+ * @param labels - Localized labels
+ */
 export function DiffItemList({ items, variant, labels }: DiffItemListProps) {
   if (items.length === 0) return null
 

@@ -22,6 +22,20 @@ interface PolicyHeaderProps {
   }
 }
 
+/**
+ * Displays policy header with status and actions.
+ * 
+ * Shows policy name, version, status badge, last updated date,
+ * and prepare button.
+ *
+ * @param name - Policy name
+ * @param version - Policy version number
+ * @param status - Policy status (active/inactive)
+ * @param lastUpdated - Last update timestamp
+ * @param onPrepare - Callback for prepare action
+ * @param isPreparing - Whether prepare is in progress
+ * @param labels - Localized labels
+ */
 export function PolicyHeader({
   name,
   version,

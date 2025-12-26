@@ -23,6 +23,16 @@ interface RunErrorsTabProps {
   }
 }
 
+/**
+ * Displays run errors tab.
+ * 
+ * Shows list of error samples with expand/collapse functionality.
+ * Displays empty state when no errors exist.
+ *
+ * @param errors - Array of error samples
+ * @param totalErrors - Total error count
+ * @param labels - Localized labels
+ */
 export function RunErrorsTab({ errors, totalErrors, labels }: RunErrorsTabProps) {
   const [expandedErrors, setExpandedErrors] = useState<Set<number>>(new Set())
 

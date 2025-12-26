@@ -11,7 +11,11 @@ interface BadgeListProps {
 }
 
 /**
- * List of badges with empty state
+ * Displays list of items as badges with optional empty state.
+ * 
+ * @param items - Array of items to display
+ * @param variant - Badge color variant
+ * @param emptyText - Text to show when list is empty
  */
 export function BadgeList({ items, variant = 'secondary', emptyText = '—' }: BadgeListProps) {
   if (items.length === 0) {

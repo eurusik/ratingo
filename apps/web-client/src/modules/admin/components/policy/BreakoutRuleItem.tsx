@@ -9,7 +9,13 @@ interface BreakoutRuleItemProps {
 }
 
 /**
- * Single breakout rule display
+ * Displays single breakout rule with requirements.
+ * 
+ * Shows rule name, priority badge, and formatted requirements
+ * (votes, quality score, providers, ratings).
+ *
+ * @param rule - Breakout rule configuration
+ * @param priorityLabel - Localized label for priority
  */
 export function BreakoutRuleItem({ rule, priorityLabel }: BreakoutRuleItemProps) {
   const { requirements } = rule

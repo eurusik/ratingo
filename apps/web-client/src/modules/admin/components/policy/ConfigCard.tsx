@@ -11,7 +11,14 @@ interface ConfigCardProps {
 }
 
 /**
- * Base card wrapper for config sections
+ * Base card wrapper for policy config sections.
+ * 
+ * Provides consistent styling with icon, title, and content area.
+ *
+ * @param title - Card title text
+ * @param icon - Lucide icon component
+ * @param children - Card content
+ * @param contentClassName - Optional CSS classes for content area
  */
 export function ConfigCard({ title, icon: Icon, children, contentClassName }: ConfigCardProps) {
   return (

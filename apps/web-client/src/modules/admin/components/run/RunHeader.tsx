@@ -26,6 +26,23 @@ interface RunHeaderProps {
   }
 }
 
+/**
+ * Displays run header with status and action buttons.
+ * 
+ * Shows run ID, status badge, policy info, timestamps,
+ * and promote/cancel buttons with blocking reasons tooltip.
+ *
+ * @param id - Run ID
+ * @param status - Run status
+ * @param targetPolicyId - Target policy ID
+ * @param startedAt - Run start timestamp
+ * @param readyToPromote - Whether run can be promoted
+ * @param blockingMessages - Reasons why promotion is blocked
+ * @param isMutating - Whether mutation is in progress
+ * @param onPromote - Callback for promote action
+ * @param onCancel - Callback for cancel action
+ * @param labels - Localized labels
+ */
 export function RunHeader({
   id,
   status,
