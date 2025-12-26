@@ -1,6 +1,6 @@
 /**
- * Admin API client for catalog policies and evaluation runs
- * Uses generated types from @ratingo/api-contract
+ * Admin API client for catalog policies and evaluation runs.
+ * Uses generated types from @ratingo/api-contract.
  */
 
 import { apiGet, apiPost } from './client'
@@ -9,188 +9,201 @@ import type { components } from '@ratingo/api-contract'
 // ============================================================================
 // Types from API contract (generated)
 // ============================================================================
-export type PrepareResponse = components['schemas']['PrepareResponseDto']
-export type RunStatusResponse = components['schemas']['RunStatusDto']
-export type ActionResponse = components['schemas']['ActionResponseDto']
-export type DiffReport = components['schemas']['DiffReportDto']
-export type ProgressStats = components['schemas']['ProgressStatsDto']
+
+/** Policy DTO from API contract. */
+export type PolicyDto = components['schemas']['PolicyDto']
+
+/** Evaluation run DTO from API contract. */
+export type EvaluationRunDto = components['schemas']['EvaluationRunDto']
+
+/** Run status DTO with detailed progress from API contract. */
+export type RunStatusDto = components['schemas']['RunStatusDto']
+
+/** Prepare response DTO from API contract. */
+export type PrepareResponseDto = components['schemas']['PrepareResponseDto']
+
+/** Action response DTO from API contract. */
+export type ActionResponseDto = components['schemas']['ActionResponseDto']
+
+/** Diff report DTO from API contract. */
+export type DiffReportDto = components['schemas']['DiffReportDto']
+
+/** Progress statistics DTO from API contract. */
+export type ProgressStatsDto = components['schemas']['ProgressStatsDto']
+
+/** Create policy request DTO from API contract. */
+export type CreatePolicyDto = components['schemas']['CreatePolicyDto']
+
+/** Create policy response DTO from API contract. */
+export type CreatePolicyResponseDto = components['schemas']['CreatePolicyResponseDto']
+
+/** Policies list response DTO from API contract. */
+export type PoliciesListDto = components['schemas']['PoliciesListDto']
+
+/** Runs list response DTO from API contract. */
+export type RunsListDto = components['schemas']['RunsListDto']
 
 // ============================================================================
-// Admin domain types
+// Status constants and helpers
 // ============================================================================
 
-/** Run status values */
-export type RunStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled' | 'promoted'
+/** Terminal statuses where polling should stop. */
+export const TERMINAL_STATUSES = ['prepared', 'failed', 'cancelled', 'promoted'] as const
 
-/** Policy status values */
+/** Terminal status type. */
+export type TerminalStatus = (typeof TERMINAL_STATUSES)[number]
+
+/** Non-terminal statuses where polling should continue. */
+export const NON_TERMINAL_STATUSES = ['running'] as const
+
+/** Non-terminal status type. */
+export type NonTerminalStatus = (typeof NON_TERMINAL_STATUSES)[number]
+
+/** All run status values. */
+export type RunStatus = TerminalStatus | NonTerminalStatus
+
+/** Policy status values. */
 export type PolicyStatus = 'active' | 'inactive'
 
-/** Progress statistics for evaluation runs */
-export interface RunProgress {
-  processed: number
-  total: number
-  eligible: number
-  ineligible: number
-  pending: number
-  errors: number
-}
-
-/** Policy entity */
-export interface Policy {
-  id: string
-  name: string
-  version: string
-  status: PolicyStatus
-  description?: string
-  updatedAt: string
-}
-
-/** Evaluation run entity */
-export interface EvaluationRun {
-  id: string
-  policyId: string
-  policyName: string
-  status: RunStatus
-  progress: RunProgress
-  startedAt: string
-  finishedAt?: string
-  readyToPromote?: boolean
+/**
+ * Checks if a run status is terminal.
+ * 
+ * Terminal statuses indicate the run has finished and polling should stop.
+ *
+ * @param status - Run status to check
+ * @returns True if status is terminal
+ */
+export function isTerminalStatus(status: string): status is TerminalStatus {
+  return TERMINAL_STATUSES.includes(status as TerminalStatus)
 }
 
 // ============================================================================
 // API Client
 // ============================================================================
 
+/**
+ * Admin API client for catalog policy management.
+ * 
+ * Provides methods for managing policies and evaluation runs through
+ * the two-phase activation process (Prepare → Promote).
+ */
 export class AdminApiClient {
+  // -------------------------------------------------------------------------
   // Policies
-  async getPolicies(): Promise<Policy[]> {
-    // TODO: Implement when API endpoint is available
-    // For now, return mock data
-    return [
-      {
-        id: 'content-filtering-v1',
-        name: 'Content Filtering Policy',
-        version: '1.0',
-        status: 'active',
-        description: 'Filters content based on quality and popularity thresholds',
-        updatedAt: '2024-12-20T10:00:00Z'
-      },
-      {
-        id: 'rating-validation-v1',
-        name: 'Rating Validation Policy',
-        version: '1.0',
-        status: 'inactive',
-        description: 'Validates content ratings from multiple sources',
-        updatedAt: '2024-12-19T15:30:00Z'
-      },
-      {
-        id: 'user-moderation-v1',
-        name: 'User Moderation Policy',
-        version: '1.0',
-        status: 'inactive',
-        description: 'Moderates user-generated content and reviews',
-        updatedAt: '2024-12-18T09:15:00Z'
-      }
-    ]
+  // -------------------------------------------------------------------------
+
+  /**
+   * Gets all policies.
+   *
+   * @returns List of all policies
+   */
+  async getPolicies(): Promise<PolicyDto[]> {
+    const response = await apiGet<PoliciesListDto>('admin/catalog-policies')
+    return response.data
   }
 
-  async preparePolicy(policyId: string, options?: { batchSize?: number; concurrency?: number }): Promise<PrepareResponse> {
-    return apiPost<PrepareResponse>(`admin/catalog-policies/${policyId}/prepare`, options)
+  /**
+   * Creates a new policy.
+   *
+   * @param body - Policy configuration
+   * @returns Created policy response with ID and version
+   */
+  async createPolicy(body: CreatePolicyDto): Promise<CreatePolicyResponseDto> {
+    return apiPost<CreatePolicyResponseDto>('admin/catalog-policies', body)
   }
 
+  /**
+   * Starts policy evaluation (prepare phase).
+   * 
+   * Creates an evaluation run to test policy changes without activating them.
+   *
+   * @param policyId - Policy ID to prepare
+   * @param options - Optional batch size and concurrency settings
+   * @returns Prepare response with run ID and status
+   */
+  async preparePolicy(
+    policyId: string,
+    options?: { batchSize?: number; concurrency?: number }
+  ): Promise<PrepareResponseDto> {
+    return apiPost<PrepareResponseDto>(`admin/catalog-policies/${policyId}/prepare`, options)
+  }
+
+  // -------------------------------------------------------------------------
   // Evaluation Runs
-  async getRuns(): Promise<EvaluationRun[]> {
-    // TODO: Implement when API endpoint is available
-    // For now, return mock data based on real API structure
-    return [
-      {
-        id: 'run-001',
-        policyId: 'content-filtering-v1',
-        policyName: 'Content Filtering Policy',
-        status: 'success',
-        progress: {
-          processed: 1000,
-          total: 1000,
-          eligible: 850,
-          ineligible: 100,
-          pending: 0,
-          errors: 50
-        },
-        startedAt: '2024-12-20T10:30:00Z',
-        finishedAt: '2024-12-20T11:15:00Z',
-        readyToPromote: true
-      },
-      {
-        id: 'run-002',
-        policyId: 'rating-validation-v1',
-        policyName: 'Rating Validation Policy',
-        status: 'running',
-        progress: {
-          processed: 750,
-          total: 1200,
-          eligible: 600,
-          ineligible: 100,
-          pending: 450,
-          errors: 50
-        },
-        startedAt: '2024-12-20T14:00:00Z',
-        readyToPromote: false
-      },
-      {
-        id: 'run-003',
-        policyId: 'user-moderation-v1',
-        policyName: 'User Moderation Policy',
-        status: 'failed',
-        progress: {
-          processed: 300,
-          total: 800,
-          eligible: 200,
-          ineligible: 50,
-          pending: 500,
-          errors: 50
-        },
-        startedAt: '2024-12-19T16:30:00Z',
-        finishedAt: '2024-12-19T16:45:00Z',
-        readyToPromote: false
-      },
-      {
-        id: 'run-004',
-        policyId: 'content-filtering-v1',
-        policyName: 'Content Filtering Policy',
-        status: 'promoted',
-        progress: {
-          processed: 2000,
-          total: 2000,
-          eligible: 1800,
-          ineligible: 150,
-          pending: 0,
-          errors: 50
-        },
-        startedAt: '2024-12-18T09:00:00Z',
-        finishedAt: '2024-12-18T10:30:00Z',
-        readyToPromote: false
-      }
-    ]
+  // -------------------------------------------------------------------------
+
+  /**
+   * Gets all evaluation runs.
+   * 
+   * MVP: Fetches all runs with large limit for client-side filtering.
+   * Avoids pagination + client-side filter trap.
+   *
+   * @param params - Optional limit parameter (default: 1000)
+   * @returns List of all evaluation runs
+   */
+  async getRuns(params?: { limit?: number }): Promise<EvaluationRunDto[]> {
+    const limit = params?.limit ?? 1000
+    const response = await apiGet<RunsListDto>('admin/catalog-policies/runs', {
+      searchParams: { limit },
+    })
+    return response.data
   }
 
-  async getRunStatus(runId: string): Promise<RunStatusResponse> {
-    return apiGet<RunStatusResponse>(`admin/catalog-policies/runs/${runId}`)
+  /**
+   * Gets run status with detailed progress.
+   *
+   * @param runId - Run ID to check
+   * @returns Run status with progress, counters, and readyToPromote flag
+   */
+  async getRunStatus(runId: string): Promise<RunStatusDto> {
+    return apiGet<RunStatusDto>(`admin/catalog-policies/runs/${runId}`)
   }
 
-  async promoteRun(runId: string, options?: { coverageThreshold?: number; maxErrors?: number }): Promise<ActionResponse> {
-    return apiPost<ActionResponse>(`admin/catalog-policies/runs/${runId}/promote`, options)
+  /**
+   * Promotes a prepared run to activate the policy.
+   * 
+   * Verifies run is successful and meets thresholds, then atomically
+   * activates the policy. Idempotent - safe to call multiple times.
+   *
+   * @param runId - Run ID to promote
+   * @param options - Optional coverage threshold and max errors
+   * @returns Action response with success status
+   */
+  async promoteRun(
+    runId: string,
+    options?: { coverageThreshold?: number; maxErrors?: number }
+  ): Promise<ActionResponseDto> {
+    return apiPost<ActionResponseDto>(`admin/catalog-policies/runs/${runId}/promote`, options)
   }
 
-  async cancelRun(runId: string): Promise<ActionResponse> {
-    return apiPost<ActionResponse>(`admin/catalog-policies/runs/${runId}/cancel`)
+  /**
+   * Cancels a running or prepared evaluation.
+   * 
+   * Idempotent - safe to call multiple times.
+   *
+   * @param runId - Run ID to cancel
+   * @returns Action response with success status
+   */
+  async cancelRun(runId: string): Promise<ActionResponseDto> {
+    return apiPost<ActionResponseDto>(`admin/catalog-policies/runs/${runId}/cancel`)
   }
 
-  async getRunDiff(runId: string, sampleSize = 50): Promise<DiffReport> {
-    return apiGet<DiffReport>(`admin/catalog-policies/runs/${runId}/diff`, {
-      searchParams: { sampleSize }
+  /**
+   * Gets diff report for a prepared run.
+   * 
+   * Shows what will change when policy is promoted: regressions (items
+   * leaving catalog) and improvements (items entering catalog).
+   *
+   * @param runId - Run ID to get diff for
+   * @param sampleSize - Max items per category (default: 50)
+   * @returns Diff report with counts and sample items
+   */
+  async getRunDiff(runId: string, sampleSize = 50): Promise<DiffReportDto> {
+    return apiGet<DiffReportDto>(`admin/catalog-policies/runs/${runId}/diff`, {
+      searchParams: { sampleSize },
     })
   }
 }
 
-// Export singleton instance
+/** Singleton admin API client instance. */
 export const adminApi = new AdminApiClient()
