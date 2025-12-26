@@ -2,41 +2,26 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
-import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
-import { DataTable, StatusBadge } from '@/modules/admin'
-import { DataTableColumnDef, POLICY_STATUS } from '@/modules/admin/types'
-import { Progress } from '@/shared/ui/progress'
+import { PolicyHeader, PolicyRunsTab, PolicyConfigTab } from '@/modules/admin'
 import { usePolicyDetail, useRunsByPolicy, usePreparePolicy } from '@/core/query/admin'
-import type { BreakoutRule } from '@/core/api/admin'
-import { Loader2, AlertCircle, Play, Globe, Languages, Tv, Shield, Settings } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from '@/shared/i18n'
-import type { components } from '@ratingo/api-contract'
-
-type EvaluationRunDto = components['schemas']['EvaluationRunDto']
-
-// Helper to get badge variant for policy status
-const getPolicyBadgeVariant = (status: string) => {
-  return status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary'
-}
 
 export default function PolicyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { dict } = useTranslation()
   const resolvedParams = React.use(params)
   const policyId = resolvedParams.id
-  
+
   const { data: policy, isLoading: policyLoading, error: policyError, refetch: refetchPolicy } = usePolicyDetail(policyId)
   const { data: runs, isLoading: runsLoading, error: runsError, refetch: refetchRuns } = useRunsByPolicy(policyId)
   const preparePolicy = usePreparePolicy()
 
-  // Handle prepare action
   const handlePrepare = async () => {
     if (!policy) return
-
     try {
       await preparePolicy.mutateAsync({ policyId: policy.id })
       toast.success(dict.admin.policyDetail.toast.prepareSuccess)
@@ -45,7 +30,6 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
     }
   }
 
-  // Loading state
   if (policyLoading || runsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -54,7 +38,6 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
     )
   }
 
-  // Error state
   if (policyError || runsError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -65,17 +48,13 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
             {policyError?.message || runsError?.message || dict.admin.common.error}
           </p>
         </div>
-        <Button onClick={() => {
-          refetchPolicy()
-          refetchRuns()
-        }}>
+        <Button onClick={() => { refetchPolicy(); refetchRuns() }}>
           {dict.admin.common.tryAgain}
         </Button>
       </div>
     )
   }
 
-  // Policy not found
   if (!policy) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -93,115 +72,24 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
     )
   }
 
-  const runsColumns: DataTableColumnDef<EvaluationRunDto>[] = [
-    {
-      id: 'id',
-      header: dict.admin.policyDetail.runsTable.runId,
-      accessorKey: 'id',
-      cell: ({ row }) => (
-        <code className="text-sm bg-muted px-2 py-1 rounded">
-          {row.original.id}
-        </code>
-      )
-    },
-    {
-      id: 'status',
-      header: dict.admin.policyDetail.runsTable.status,
-      accessorKey: 'status',
-      cell: ({ row }) => (
-        <StatusBadge status={row.original.status} />
-      )
-    },
-    {
-      id: 'progress',
-      header: dict.admin.policyDetail.runsTable.progress,
-      cell: ({ row }) => {
-        const { processed, total } = row.original.progress
-        const percentage = Math.round((processed / total) * 100)
-        return (
-          <div className="w-24">
-            <Progress value={percentage} className="h-2" />
-            <div className="text-xs text-muted-foreground mt-1">
-              {processed}/{total}
-            </div>
-          </div>
-        )
-      }
-    },
-    {
-      id: 'startedAt',
-      header: dict.admin.policyDetail.runsTable.started,
-      accessorKey: 'startedAt',
-      cell: ({ row }) => {
-        const date = new Date(row.original.startedAt)
-        return date.toLocaleDateString('uk-UA', {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      }
-    },
-    {
-      id: 'finishedAt',
-      header: dict.admin.policyDetail.runsTable.finished,
-      accessorKey: 'finishedAt',
-      cell: ({ row }) => {
-        if (!row.original.finishedAt) return '-'
-        const date = new Date(row.original.finishedAt)
-        return date.toLocaleDateString('uk-UA', {
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      }
-    }
-  ]
-
-  const handleRunClick = (run: EvaluationRunDto) => {
-    router.push(`/admin/runs/${run.id}`)
-  }
-
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      {/* Policy Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-3">
-                {policy.name}
-                <Badge variant="outline">v{policy.version}</Badge>
-                <Badge variant={getPolicyBadgeVariant(policy.status)}>
-                  {policy.status === POLICY_STATUS.ACTIVE ? dict.admin.policies.status.active : dict.admin.policies.status.inactive}
-                </Badge>
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {dict.admin.policyDetail.lastUpdated}: {new Date(policy.activatedAt ?? policy.createdAt).toLocaleDateString('uk-UA')}
-              </p>
-            </div>
-            <Button 
-              onClick={handlePrepare} 
-              disabled={preparePolicy.isPending}
-            >
-              {preparePolicy.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {dict.admin.policyDetail.actions.preparing}
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  {dict.admin.policyDetail.actions.prepare}
-                </>
-              )}
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
+      <PolicyHeader
+        name={policy.name}
+        version={policy.version}
+        status={policy.status}
+        lastUpdated={policy.activatedAt ?? policy.createdAt}
+        onPrepare={handlePrepare}
+        isPreparing={preparePolicy.isPending}
+        labels={{
+          active: dict.admin.policies.status.active,
+          inactive: dict.admin.policies.status.inactive,
+          lastUpdated: dict.admin.policyDetail.lastUpdated,
+          prepare: dict.admin.policyDetail.actions.prepare,
+          preparing: dict.admin.policyDetail.actions.preparing,
+        }}
+      />
 
-      {/* Tabs */}
       <Tabs defaultValue="runs" className="space-y-4">
         <TabsList>
           <TabsTrigger value="runs">{dict.admin.policyDetail.tabs.runs}</TabsTrigger>
@@ -209,245 +97,26 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
         </TabsList>
 
         <TabsContent value="runs" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{dict.admin.policyDetail.runsTable.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {dict.admin.policyDetail.runsTable.description}
-              </p>
-            </CardHeader>
-            <CardContent>
-              {!runs || runs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>{dict.admin.policyDetail.runsTable.empty}</p>
-                  <p className="text-sm mt-1">{dict.admin.policyDetail.runsTable.emptyHint}</p>
-                </div>
-              ) : (
-                <DataTable
-                  data={runs}
-                  columns={runsColumns}
-                  rowActions={(run) => [
-                    {
-                      label: dict.admin.policyDetail.actions.viewDetails,
-                      onClick: () => handleRunClick(run)
-                    }
-                  ]}
-                />
-              )}
-            </CardContent>
-          </Card>
+          <PolicyRunsTab
+            runs={runs}
+            labels={{
+              ...dict.admin.policyDetail.runsTable,
+              viewDetails: dict.admin.policyDetail.actions.viewDetails,
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="policy" className="space-y-4">
-          {/* Configuration Overview */}
-          {policy.config && (
-            <>
-              {/* Countries & Languages */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Globe className="h-4 w-4" />
-                      {dict.admin.policyDetail.config?.countries ?? 'Countries'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <h4 className="text-sm font-medium text-green-600 mb-1">
-                        {dict.admin.policyDetail.config?.allowed ?? 'Allowed'} ({policy.config.allowedCountries.length})
-                      </h4>
-                      <div className="flex flex-wrap gap-1">
-                        {policy.config.allowedCountries.map((code: string) => (
-                          <Badge key={code} variant="outline" className="text-xs">
-                            {code}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-red-600 mb-1">
-                        {dict.admin.policyDetail.config?.blocked ?? 'Blocked'} ({policy.config.blockedCountries.length})
-                      </h4>
-                      <div className="flex flex-wrap gap-1">
-                        {policy.config.blockedCountries.length > 0 ? (
-                          policy.config.blockedCountries.map((code: string) => (
-                            <Badge key={code} variant="destructive" className="text-xs">
-                              {code}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-muted-foreground">—</span>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Languages className="h-4 w-4" />
-                      {dict.admin.policyDetail.config?.languages ?? 'Languages'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div>
-                      <h4 className="text-sm font-medium text-green-600 mb-1">
-                        {dict.admin.policyDetail.config?.allowed ?? 'Allowed'} ({policy.config.allowedLanguages.length})
-                      </h4>
-                      <div className="flex flex-wrap gap-1">
-                        {policy.config.allowedLanguages.map((code: string) => (
-                          <Badge key={code} variant="outline" className="text-xs">
-                            {code}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-red-600 mb-1">
-                        {dict.admin.policyDetail.config?.blocked ?? 'Blocked'} ({policy.config.blockedLanguages.length})
-                      </h4>
-                      <div className="flex flex-wrap gap-1">
-                        {policy.config.blockedLanguages.length > 0 ? (
-                          policy.config.blockedLanguages.map((code: string) => (
-                            <Badge key={code} variant="destructive" className="text-xs">
-                              {code}
-                            </Badge>
-                          ))
-                        ) : (
-                          <span className="text-sm text-muted-foreground">—</span>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Providers & Mode */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Tv className="h-4 w-4" />
-                      {dict.admin.policyDetail.config?.providers ?? 'Global Providers'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-1">
-                      {policy.config.globalProviders.length > 0 ? (
-                        policy.config.globalProviders.map((provider: string) => (
-                          <Badge key={provider} variant="secondary" className="text-xs">
-                            {provider}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      {dict.admin.policyDetail.config?.settings ?? 'Settings'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        {dict.admin.policyDetail.config?.eligibilityMode ?? 'Eligibility Mode'}
-                      </span>
-                      <Badge variant={policy.config.eligibilityMode === 'STRICT' ? 'default' : 'secondary'}>
-                        {policy.config.eligibilityMode}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        {dict.admin.policyDetail.config?.blockedCountryMode ?? 'Blocked Country Mode'}
-                      </span>
-                      <Badge variant="secondary">
-                        {policy.config.blockedCountryMode}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">
-                        {dict.admin.policyDetail.config?.minRelevanceScore ?? 'Min Relevance Score'}
-                      </span>
-                      <Badge variant="outline">{policy.config.homepage.minRelevanceScore}</Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Breakout Rules */}
-              {policy.config.breakoutRules.length > 0 && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      {dict.admin.policyDetail.config?.breakoutRules ?? 'Breakout Rules'} ({policy.config.breakoutRules.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {policy.config.breakoutRules.map((rule: BreakoutRule) => (
-                        <div key={rule.id} className="p-3 border rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-medium text-sm">{rule.name}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {dict.admin.policyDetail.config?.priority ?? 'Priority'}: {rule.priority}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                            {rule.requirements.minImdbVotes && (
-                              <span>IMDb votes ≥ {rule.requirements.minImdbVotes.toLocaleString()}</span>
-                            )}
-                            {rule.requirements.minTraktVotes && (
-                              <span>Trakt votes ≥ {rule.requirements.minTraktVotes.toLocaleString()}</span>
-                            )}
-                            {rule.requirements.minQualityScoreNormalized && (
-                              <span>Quality ≥ {(rule.requirements.minQualityScoreNormalized * 100).toFixed(0)}%</span>
-                            )}
-                            {rule.requirements.requireAnyOfProviders && rule.requirements.requireAnyOfProviders.length > 0 && (
-                              <span>Providers: {rule.requirements.requireAnyOfProviders.join(', ')}</span>
-                            )}
-                            {rule.requirements.requireAnyOfRatingsPresent && rule.requirements.requireAnyOfRatingsPresent.length > 0 && (
-                              <span>Ratings: {rule.requirements.requireAnyOfRatingsPresent.join(', ')}</span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </>
-          )}
-
-          {/* Fallback if no config */}
-          {!policy.config && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{dict.admin.policyDetail.policyInfo.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                  <div>
-                    <h4 className="text-sm font-medium">{dict.admin.policyDetail.policyInfo.version}</h4>
-                    <p className="text-sm text-muted-foreground">{policy.version}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium">{dict.admin.policyDetail.policyInfo.status}</h4>
-                    <Badge variant={getPolicyBadgeVariant(policy.status)} className="mt-1">
-                      {policy.status === POLICY_STATUS.ACTIVE ? dict.admin.policies.status.active : dict.admin.policies.status.inactive}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <PolicyConfigTab
+            config={policy.config}
+            version={policy.version}
+            status={policy.status}
+            labels={{
+              config: dict.admin.policyDetail.config,
+              policyInfo: dict.admin.policyDetail.policyInfo,
+              statusLabels: dict.admin.policies.status,
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>
