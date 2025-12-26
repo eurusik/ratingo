@@ -56,9 +56,14 @@ export class CatalogEvaluationService {
    *
    * @param mediaItemId - ID of the media item to evaluate
    * @param policyVersion - Optional specific policy version (defaults to active)
+   * @param runId - Optional run ID for tracking (links evaluation to specific run)
    * @returns Evaluation result with change detection
    */
-  async evaluateOne(mediaItemId: string, policyVersion?: number): Promise<EvaluationResult> {
+  async evaluateOne(
+    mediaItemId: string,
+    policyVersion?: number,
+    runId?: string,
+  ): Promise<EvaluationResult> {
     // Get policy
     const policy = policyVersion
       ? await this.policyService.getByVersion(policyVersion)
@@ -90,9 +95,10 @@ export class CatalogEvaluationService {
       policyVersion: policy.version,
       breakoutRuleId: evalResult.breakoutRuleId,
       evaluatedAt: new Date(),
+      runId, // Link to specific run for counter aggregation
     };
 
-    // Persist
+    // Persist (idempotent via UNIQUE constraint on run_id + media_item_id)
     const saved = await this.evaluationRepository.upsert(evaluation);
 
     // Detect change

@@ -13,6 +13,11 @@ import { toast } from 'sonner'
 import { usePolicies, usePreparePolicy } from '../../../core/query'
 import { type PolicyDto } from '../../../core/api/admin'
 
+// Helper to get badge variant for policy status
+const getPolicyBadgeVariant = (status: string) => {
+  return status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary'
+}
+
 export default function PoliciesPage() {
   const router = useRouter()
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -47,7 +52,7 @@ export default function PoliciesPage() {
       header: dict.admin.policies.columns.status,
       accessorKey: 'status',
       cell: ({ row }) => (
-        <Badge variant={row.original.status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary'}>
+        <Badge variant={getPolicyBadgeVariant(row.original.status)}>
           {row.original.status === POLICY_STATUS.ACTIVE ? dict.admin.policies.status.active : dict.admin.policies.status.inactive}
         </Badge>
       )

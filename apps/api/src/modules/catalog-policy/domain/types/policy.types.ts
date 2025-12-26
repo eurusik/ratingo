@@ -134,6 +134,8 @@ export interface MediaCatalogEvaluation {
   policyVersion: number;
   breakoutRuleId: string | null;
   evaluatedAt: Date;
+  /** Links evaluation to specific run for counter aggregation. NULL for legacy/manual evaluations. */
+  runId?: string;
 }
 
 /**

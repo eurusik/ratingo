@@ -741,6 +741,9 @@ export const mediaCatalogEvaluations = pgTable(
     policyVersion: integer('policy_version').default(0).notNull(), // 0 = no policy / pending seed
     breakoutRuleId: text('breakout_rule_id'),
     evaluatedAt: timestamp('evaluated_at'), // NULL for pending, set when actually evaluated
+    // Links evaluation to specific run for accurate counter aggregation
+    // NULL for legacy evaluations or manual updates
+    runId: uuid('run_id').references(() => catalogEvaluationRuns.id, { onDelete: 'set null' }),
   },
   (t) => ({
     // Composite primary key: (media_item_id, policy_version)
@@ -751,9 +754,11 @@ export const mediaCatalogEvaluations = pgTable(
       t.relevanceScore,
     ),
     policyVersionIdx: index('media_catalog_eval_policy_version_idx').on(t.policyVersion),
+    runIdIdx: index('media_catalog_eval_run_id_idx').on(t.runId),
     // Additional indexes added via migration 0014:
     // - media_catalog_eval_policy_status_relevance_idx (policy_version, status, relevance_score DESC)
     // - media_catalog_eval_item_version_idx (media_item_id, policy_version DESC)
+    // Unique constraint for idempotent upserts per run (added in migration 0019)
   }),
 );
 

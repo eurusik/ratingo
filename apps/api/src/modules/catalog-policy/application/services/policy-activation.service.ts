@@ -30,6 +30,7 @@ import {
   RunStatusType,
   CANCELLABLE_RUN_STATUSES,
 } from '../../domain/constants/evaluation.constants';
+import { RunAggregationService } from './run-aggregation.service';
 
 export interface PrepareOptions {
   batchSize?: number; // default: 500
@@ -80,6 +81,7 @@ export class PolicyActivationService {
     private readonly runRepository: ICatalogEvaluationRunRepository,
     @InjectQueue(CATALOG_POLICY_QUEUE)
     private readonly catalogQueue: Queue,
+    private readonly aggregationService: RunAggregationService,
   ) {}
 
   /**
@@ -128,7 +130,7 @@ export class PolicyActivationService {
       snapshotCutoff,
     });
 
-    // 6. Queue RE_EVALUATE_ALL job
+    // 6. Queue RE_EVALUATE_ALL job with retries
     await this.catalogQueue.add(
       CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
       {
@@ -138,6 +140,12 @@ export class PolicyActivationService {
       },
       {
         jobId: `reeval:${policy.version}:${run.id}`,
+        attempts: 5,
+        backoff: {
+          type: 'exponential',
+          delay: 5000, // 5s, 10s, 20s, 40s, 80s
+        },
+        removeOnFail: false, // Keep failed jobs for debugging
       },
     );
 
@@ -154,6 +162,9 @@ export class PolicyActivationService {
   /**
    * Get run status with progress and readyToPromote flag.
    *
+   * For running runs, returns live aggregated counters from evaluations table.
+   * For completed runs, returns cached counters from run record.
+   *
    * @param runId - Run ID to check
    * @returns Run status with computed flags
    */
@@ -163,26 +174,42 @@ export class PolicyActivationService {
       throw new NotFoundException(`Run ${runId} not found`);
     }
 
+    // For running runs, get live counters from evaluations table (source of truth)
+    // For completed runs, use cached counters
+    let counters = {
+      processed: run.processed,
+      eligible: run.eligible,
+      ineligible: run.ineligible,
+      pending: run.pending,
+      errors: run.errors,
+    };
+
+    if (run.status === RunStatusEnum.RUNNING) {
+      // Live aggregate for running runs
+      const liveCounters = await this.aggregationService.aggregateCounters(runId);
+      counters = liveCounters;
+    }
+
     // Calculate coverage
-    const coverage = run.totalReadySnapshot > 0 ? run.processed / run.totalReadySnapshot : 0;
+    const coverage = run.totalReadySnapshot > 0 ? counters.processed / run.totalReadySnapshot : 0;
 
     // Calculate readyToPromote and blockingReasons
-    const blockingReasons: BlockingReason[] = [];
+    const blockingReasons: BlockingReasonType[] = [];
 
     if (run.status !== RunStatusEnum.PREPARED) {
-      blockingReasons.push('RUN_NOT_SUCCESS');
+      blockingReasons.push(BlockingReasonCode.RUN_NOT_SUCCESS);
     }
 
     if (coverage < 1.0) {
-      blockingReasons.push('COVERAGE_NOT_MET');
+      blockingReasons.push(BlockingReasonCode.COVERAGE_NOT_MET);
     }
 
-    if (run.errors > 0) {
-      blockingReasons.push('ERRORS_EXCEEDED');
+    if (counters.errors > 0) {
+      blockingReasons.push(BlockingReasonCode.ERRORS_EXCEEDED);
     }
 
     if (run.promotedAt !== null) {
-      blockingReasons.push('ALREADY_PROMOTED');
+      blockingReasons.push(BlockingReasonCode.ALREADY_PROMOTED);
     }
 
     const readyToPromote = blockingReasons.length === 0;
@@ -193,11 +220,11 @@ export class PolicyActivationService {
       targetPolicyVersion: run.targetPolicyVersion!,
       status: run.status,
       totalReadySnapshot: run.totalReadySnapshot,
-      processed: run.processed,
-      eligible: run.eligible,
-      ineligible: run.ineligible,
-      pending: run.pending,
-      errors: run.errors,
+      processed: counters.processed,
+      eligible: counters.eligible,
+      ineligible: counters.ineligible,
+      pending: counters.pending,
+      errors: counters.errors,
       startedAt: run.startedAt,
       finishedAt: run.finishedAt,
       promotedAt: run.promotedAt,

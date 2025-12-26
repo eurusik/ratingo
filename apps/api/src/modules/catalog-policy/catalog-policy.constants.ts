@@ -9,4 +9,5 @@ export const CATALOG_POLICY_QUEUE = 'catalog-policy-queue';
 export const CATALOG_POLICY_JOBS = {
   RE_EVALUATE_ALL: 're-evaluate-all',
   EVALUATE_CATALOG_ITEM: 'evaluate-catalog-item',
+  WATCHDOG: 'watchdog',
 } as const;

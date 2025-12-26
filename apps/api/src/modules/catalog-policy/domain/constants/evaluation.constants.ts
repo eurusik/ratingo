@@ -63,6 +63,20 @@ export const CANCELLABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.RUNNING, Run
 export const PROMOTABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.PREPARED];
 
 /**
+ * Blocking Reason Codes
+ *
+ * Reasons why a run cannot be promoted.
+ */
+export const BlockingReasonCode = {
+  RUN_NOT_SUCCESS: 'RUN_NOT_SUCCESS',
+  COVERAGE_NOT_MET: 'COVERAGE_NOT_MET',
+  ERRORS_EXCEEDED: 'ERRORS_EXCEEDED',
+  ALREADY_PROMOTED: 'ALREADY_PROMOTED',
+} as const;
+
+export type BlockingReasonType = (typeof BlockingReasonCode)[keyof typeof BlockingReasonCode];
+
+/**
  * Normalizes legacy status values to current status values.
  * Use this when reading from database to handle legacy data.
  */

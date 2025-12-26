@@ -98,6 +98,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
           policyVersion: evaluation.policyVersion,
           breakoutRuleId: evaluation.breakoutRuleId,
           evaluatedAt: evaluation.evaluatedAt,
+          runId: evaluation.runId,
         })
         .onConflictDoUpdate({
           target: [
@@ -110,6 +111,9 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
             relevanceScore: evaluation.relevanceScore,
             breakoutRuleId: evaluation.breakoutRuleId,
             evaluatedAt: evaluation.evaluatedAt,
+            // New run_id always wins (this is "who last evaluated")
+            // If evaluation.runId is undefined, we keep existing via COALESCE
+            runId: evaluation.runId ?? sql`${schema.mediaCatalogEvaluations.runId}`,
           },
         })
         .returning();
@@ -135,6 +139,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
         policyVersion: e.policyVersion,
         breakoutRuleId: e.breakoutRuleId,
         evaluatedAt: e.evaluatedAt,
+        runId: e.runId,
       }));
 
       const result = await this.db
@@ -151,6 +156,8 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
             relevanceScore: sql`excluded.relevance_score`,
             breakoutRuleId: sql`excluded.breakout_rule_id`,
             evaluatedAt: sql`excluded.evaluated_at`,
+            // New run_id wins, but NULL keeps existing
+            runId: sql`COALESCE(excluded.run_id, ${schema.mediaCatalogEvaluations.runId})`,
           },
         })
         .returning({ mediaItemId: schema.mediaCatalogEvaluations.mediaItemId });
@@ -304,6 +311,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
       policyVersion: row.policyVersion,
       breakoutRuleId: row.breakoutRuleId,
       evaluatedAt: row.evaluatedAt,
+      runId: row.runId ?? undefined,
     };
   }
 }

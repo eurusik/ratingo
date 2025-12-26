@@ -39,6 +39,8 @@ import { CatalogEvaluationService } from './application/services/catalog-evaluat
 import { PolicyActivationService } from './application/services/policy-activation.service';
 import { DiffService } from './application/services/diff.service';
 import { DryRunService } from './application/services/dry-run.service';
+import { RunAggregationService } from './application/services/run-aggregation.service';
+import { RunFinalizeService } from './application/services/run-finalize.service';
 
 // Workers
 import { CatalogPolicyWorker } from './application/workers/catalog-policy.worker';
@@ -81,6 +83,8 @@ import { PolicyActivationController } from './presentation/controllers/policy-ac
     PolicyActivationService,
     DiffService,
     DryRunService,
+    RunAggregationService,
+    RunFinalizeService,
     // Workers
     CatalogPolicyWorker,
   ],

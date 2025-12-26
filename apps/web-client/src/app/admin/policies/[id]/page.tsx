@@ -18,6 +18,11 @@ import type { components } from '@ratingo/api-contract'
 type EvaluationRunDto = components['schemas']['EvaluationRunDto']
 type PolicyDto = components['schemas']['PolicyDto']
 
+// Helper to get badge variant for policy status
+const getPolicyBadgeVariant = (status: string) => {
+  return status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary'
+}
+
 export default function PolicyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const { dict } = useTranslation()
@@ -170,7 +175,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
               <CardTitle className="flex items-center gap-3">
                 {policy.name}
                 <Badge variant="outline">v{policy.version}</Badge>
-                <Badge variant={policy.status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary'}>
+                <Badge variant={getPolicyBadgeVariant(policy.status)}>
                   {policy.status === POLICY_STATUS.ACTIVE ? dict.admin.policies.status.active : dict.admin.policies.status.inactive}
                 </Badge>
               </CardTitle>
@@ -257,7 +262,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
                 </div>
                 <div>
                   <h4 className="text-sm font-medium">{dict.admin.policyDetail.policyInfo.status}</h4>
-                  <Badge variant={policy.status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary'} className="mt-1">
+                  <Badge variant={getPolicyBadgeVariant(policy.status)} className="mt-1">
                     {policy.status === POLICY_STATUS.ACTIVE ? dict.admin.policies.status.active : dict.admin.policies.status.inactive}
                   </Badge>
                 </div>
