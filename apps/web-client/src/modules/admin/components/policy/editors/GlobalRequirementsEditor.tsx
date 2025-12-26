@@ -13,10 +13,10 @@ import {
 } from '@/shared/ui/select'
 import { Badge } from '@/shared/ui/badge'
 import { X } from 'lucide-react'
-import type { components } from '@ratingo/api-contract'
+import type { GlobalRequirements } from '@/core/api/admin'
 
-type GlobalRequirements = components['schemas']['GlobalRequirementsDto']
-type RatingSource = NonNullable<GlobalRequirements['requireAnyOfRatingsPresent']>[number]
+type RatingSource = 'imdb' | 'metacritic' | 'rt' | 'trakt'
+type VoteSource = 'imdb' | 'trakt'
 
 interface GlobalRequirementsEditorProps {
   globalRequirements?: GlobalRequirements
@@ -24,15 +24,15 @@ interface GlobalRequirementsEditorProps {
   labels?: {
     title?: string
     description?: string
-    minImdbVotes?: string
-    minImdbVotesHint?: string
-    minTraktVotes?: string
-    minTraktVotesHint?: string
     minQualityScore?: string
     minQualityScoreHint?: string
     requireRatings?: string
     requireRatingsHint?: string
     addRating?: string
+    minVotesAnyOf?: string
+    minVotesAnyOfHint?: string
+    minVotesThreshold?: string
+    voteSources?: string
   }
 }
 
@@ -43,15 +43,13 @@ const RATING_SOURCE_LABELS: Record<RatingSource, string> = {
   trakt: 'Trakt',
 }
 
-const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt']
+const VOTE_SOURCE_LABELS: Record<VoteSource, string> = {
+  imdb: 'IMDb',
+  trakt: 'Trakt',
+}
 
-// Type-safe field keys derived from the schema
-const FIELD_KEYS = {
-  minImdbVotes: 'minImdbVotes',
-  minTraktVotes: 'minTraktVotes',
-  minQualityScoreNormalized: 'minQualityScoreNormalized',
-  requireAnyOfRatingsPresent: 'requireAnyOfRatingsPresent',
-} as const satisfies Record<keyof GlobalRequirements, keyof GlobalRequirements>
+const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt']
+const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt']
 
 /** Editor for global quality gate requirements. */
 export function GlobalRequirementsEditor({
@@ -83,14 +81,51 @@ export function GlobalRequirementsEditor({
   const addRatingSource = (source: RatingSource) => {
     const current = globalRequirements?.requireAnyOfRatingsPresent || []
     if (!current.includes(source)) {
-      updateField(FIELD_KEYS.requireAnyOfRatingsPresent, [...current, source])
+      updateField('requireAnyOfRatingsPresent', [...current, source])
     }
   }
 
   const removeRatingSource = (source: RatingSource) => {
     const current = globalRequirements?.requireAnyOfRatingsPresent || []
     const updated = current.filter((s) => s !== source)
-    updateField(FIELD_KEYS.requireAnyOfRatingsPresent, updated.length > 0 ? updated : undefined)
+    updateField('requireAnyOfRatingsPresent', updated.length > 0 ? updated : undefined)
+  }
+
+  const toggleVoteSource = (source: VoteSource, checked: boolean) => {
+    const current = globalRequirements?.minVotesAnyOf
+    const currentSources = current?.sources || []
+    
+    let newSources: VoteSource[]
+    if (checked) {
+      newSources = [...currentSources, source]
+    } else {
+      newSources = currentSources.filter((s) => s !== source)
+    }
+    
+    if (newSources.length === 0) {
+      updateField('minVotesAnyOf', undefined)
+    } else {
+      updateField('minVotesAnyOf', {
+        sources: newSources,
+        min: current?.min ?? 0,
+      })
+    }
+  }
+
+  const updateMinVotes = (min: number | undefined) => {
+    const current = globalRequirements?.minVotesAnyOf
+    if (min === undefined || min === 0) {
+      if (!current?.sources?.length) {
+        updateField('minVotesAnyOf', undefined)
+      } else {
+        updateField('minVotesAnyOf', { ...current, min: min ?? 0 })
+      }
+    } else {
+      updateField('minVotesAnyOf', {
+        sources: current?.sources || ['imdb', 'trakt'],
+        min,
+      })
+    }
   }
 
   const availableRatingSources = RATING_SOURCES.filter(
@@ -108,44 +143,6 @@ export function GlobalRequirementsEditor({
       contentClassName="space-y-4"
     >
       <div className="space-y-2">
-        <Label>{labels?.minImdbVotes ?? 'Min IMDb Votes'}</Label>
-        <Input
-          type="number"
-          min={0}
-          step={1}
-          value={globalRequirements?.minImdbVotes ?? ''}
-          onChange={(e) => {
-            const value = e.target.value === '' ? undefined : Number(e.target.value)
-            updateField(FIELD_KEYS.minImdbVotes, value)
-          }}
-          placeholder="e.g., 3000"
-          className="h-9"
-        />
-        <p className="text-xs text-muted-foreground">
-          {labels?.minImdbVotesHint ?? 'Minimum number of IMDb votes required'}
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <Label>{labels?.minTraktVotes ?? 'Min Trakt Votes'}</Label>
-        <Input
-          type="number"
-          min={0}
-          step={1}
-          value={globalRequirements?.minTraktVotes ?? ''}
-          onChange={(e) => {
-            const value = e.target.value === '' ? undefined : Number(e.target.value)
-            updateField(FIELD_KEYS.minTraktVotes, value)
-          }}
-          placeholder="e.g., 1000"
-          className="h-9"
-        />
-        <p className="text-xs text-muted-foreground">
-          {labels?.minTraktVotesHint ?? 'Minimum number of Trakt votes required'}
-        </p>
-      </div>
-
-      <div className="space-y-2">
         <Label>{labels?.minQualityScore ?? 'Min Quality Score'}</Label>
         <Input
           type="number"
@@ -155,7 +152,7 @@ export function GlobalRequirementsEditor({
           value={globalRequirements?.minQualityScoreNormalized ?? ''}
           onChange={(e) => {
             const value = e.target.value === '' ? undefined : Number(e.target.value)
-            updateField(FIELD_KEYS.minQualityScoreNormalized, value)
+            updateField('minQualityScoreNormalized', value)
           }}
           placeholder="e.g., 0.6"
           className="h-9"
@@ -197,7 +194,41 @@ export function GlobalRequirementsEditor({
         )}
         <p className="text-xs text-muted-foreground">
           {labels?.requireRatingsHint ??
-            'Content must have at least one of these rating sources'}
+            'Content must have at least one of these rating sources (OR logic)'}
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>{labels?.minVotesAnyOf ?? 'Min Votes (Any Source)'}</Label>
+        <div className="flex gap-4 items-center mb-2">
+          {VOTE_SOURCES.map((source) => (
+            <label key={source} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={globalRequirements?.minVotesAnyOf?.sources?.includes(source) ?? false}
+                onChange={(e) => toggleVoteSource(source, e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              {VOTE_SOURCE_LABELS[source]}
+            </label>
+          ))}
+        </div>
+        <Input
+          type="number"
+          min={0}
+          step={100}
+          value={globalRequirements?.minVotesAnyOf?.min ?? ''}
+          onChange={(e) => {
+            const value = e.target.value === '' ? undefined : Number(e.target.value)
+            updateMinVotes(value)
+          }}
+          placeholder="e.g., 3000"
+          className="h-9"
+          disabled={!globalRequirements?.minVotesAnyOf?.sources?.length}
+        />
+        <p className="text-xs text-muted-foreground">
+          {labels?.minVotesAnyOfHint ??
+            'Passes if ANY selected source has enough votes. Robust to missing data.'}
         </p>
       </div>
     </ConfigCard>

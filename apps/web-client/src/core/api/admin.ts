@@ -41,12 +41,17 @@ export interface HomepageConfig {
   minRelevanceScore: number
 }
 
+/** Min votes any-of configuration type. */
+export interface MinVotesAnyOf {
+  sources: ('imdb' | 'trakt')[]
+  min: number
+}
+
 /** Global requirements type. */
 export interface GlobalRequirements {
-  minImdbVotes?: number
-  minTraktVotes?: number
   minQualityScoreNormalized?: number
   requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[]
+  minVotesAnyOf?: MinVotesAnyOf
 }
 
 /** Create policy request type (manual, because generated types are broken). */

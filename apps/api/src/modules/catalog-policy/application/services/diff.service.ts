@@ -37,6 +37,13 @@ export interface DiffCounts {
   stillIneligible: number;
 }
 
+export interface ReasonBreakdown {
+  /** Breakdown of regression reasons */
+  regressionReasons: Record<string, number>;
+  /** Breakdown of improvement reasons */
+  improvementReasons: Record<string, number>;
+}
+
 export interface DiffSample {
   mediaItemId: string;
   title: string | null;
@@ -54,6 +61,8 @@ export interface DiffReport {
   topRegressions: DiffSample[];
   /** Top improvements by trendingScore (items entering catalog) */
   topImprovements: DiffSample[];
+  /** Breakdown of reasons for regressions and improvements */
+  reasonBreakdown?: ReasonBreakdown;
 }
 
 /**
@@ -147,6 +156,12 @@ export class DiffService {
       sampleSize,
     );
 
+    // 6. Compute reason breakdown
+    const reasonBreakdown = await this.computeReasonBreakdown(
+      run.targetPolicyVersion!,
+      currentPolicyVersion,
+    );
+
     return {
       runId,
       targetPolicyVersion: run.targetPolicyVersion!,
@@ -154,6 +169,7 @@ export class DiffService {
       counts,
       topRegressions,
       topImprovements,
+      reasonBreakdown,
     };
   }
 
@@ -317,5 +333,80 @@ export class DiffService {
 
     // Sort by trendingScore DESC and limit
     return samples.sort((a, b) => (b.trendingScore ?? 0) - (a.trendingScore ?? 0)).slice(0, limit);
+  }
+
+  /**
+   * Computes breakdown of reasons for regressions and improvements.
+   *
+   * @param newVersion - Target policy version
+   * @param currentVersion - Current active policy version (NULL if no active policy)
+   * @returns Reason breakdown for regressions and improvements
+   */
+  private async computeReasonBreakdown(
+    newVersion: number,
+    currentVersion: number | null,
+  ): Promise<ReasonBreakdown> {
+    // Handle NULL currentVersion - when no current policy, old_evals is empty
+    const currentVersionFilter =
+      currentVersion !== null ? sql`policy_version = ${currentVersion}` : sql`FALSE`;
+
+    // Query to get reasons for regressions (eligible → ineligible)
+    const result = await this.db.execute<{
+      diff_type: string;
+      reason: string;
+      count: string;
+    }>(sql`
+      WITH old_evals AS (
+        SELECT media_item_id, status 
+        FROM media_catalog_evaluations 
+        WHERE ${currentVersionFilter}
+      ),
+      new_evals AS (
+        SELECT media_item_id, status, reasons
+        FROM media_catalog_evaluations 
+        WHERE policy_version = ${newVersion}
+      ),
+      diff AS (
+        SELECT 
+          COALESCE(o.status::text, ${DIFF_STATUS_NONE}) as old_status,
+          COALESCE(n.status::text, ${DIFF_STATUS_NONE}) as new_status,
+          n.reasons
+        FROM old_evals o
+        FULL OUTER JOIN new_evals n ON o.media_item_id = n.media_item_id
+      ),
+      regressions AS (
+        SELECT unnest(reasons) as reason
+        FROM diff
+        WHERE old_status = ${EligibilityStatus.ELIGIBLE} 
+          AND new_status IN (${EligibilityStatus.INELIGIBLE}, ${EligibilityStatus.PENDING}, ${DIFF_STATUS_NONE})
+      ),
+      improvements AS (
+        SELECT unnest(reasons) as reason
+        FROM diff
+        WHERE old_status IN (${EligibilityStatus.INELIGIBLE}, ${EligibilityStatus.PENDING}, ${DIFF_STATUS_NONE})
+          AND new_status = ${EligibilityStatus.ELIGIBLE}
+      )
+      SELECT 'regression' as diff_type, reason, COUNT(*)::int as count
+      FROM regressions
+      GROUP BY reason
+      UNION ALL
+      SELECT 'improvement' as diff_type, reason, COUNT(*)::int as count
+      FROM improvements
+      GROUP BY reason
+    `);
+
+    const regressionReasons: Record<string, number> = {};
+    const improvementReasons: Record<string, number> = {};
+
+    for (const row of result) {
+      const count = parseInt(row.count, 10);
+      if (row.diff_type === 'regression') {
+        regressionReasons[row.reason] = count;
+      } else {
+        improvementReasons[row.reason] = count;
+      }
+    }
+
+    return { regressionReasons, improvementReasons };
   }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { Globe, Languages, Tv, Settings, Shield } from 'lucide-react'
+import { Globe, Languages, Tv, Settings, Shield, Filter } from 'lucide-react'
 import type { PolicyConfigDto } from '@/core/api/admin'
 import type { ConfigViewLabels } from './labels.types'
 import { ConfigCard } from './ConfigCard'
@@ -130,6 +130,63 @@ export function BreakoutRulesCard({ config, labels }: PolicyConfigCardsProps) {
           <BreakoutRuleItem key={rule.id} rule={rule} priorityLabel={labels?.priority} />
         ))}
       </div>
+    </ConfigCard>
+  )
+}
+
+/**
+ * Displays global quality gate requirements card.
+ * 
+ * Shows minimum thresholds for quality score, required ratings,
+ * and minimum votes from any source.
+ * Returns null if no global requirements configured.
+ *
+ * @param config - Policy configuration
+ * @param labels - Localized labels
+ */
+export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProps) {
+  const req = config.globalRequirements
+  if (!req) return null
+
+  const hasAnyRequirement = 
+    (req.minQualityScoreNormalized && req.minQualityScoreNormalized > 0) ||
+    (req.requireAnyOfRatingsPresent && req.requireAnyOfRatingsPresent.length > 0) ||
+    (req.minVotesAnyOf && req.minVotesAnyOf.min > 0)
+
+  if (!hasAnyRequirement) return null
+
+  return (
+    <ConfigCard 
+      title={labels?.globalRequirements ?? 'Global Quality Gate'} 
+      icon={Filter}
+      contentClassName="space-y-2"
+    >
+      {req.minQualityScoreNormalized && req.minQualityScoreNormalized > 0 && (
+        <SettingRow
+          label={labels?.minQualityScore ?? 'Min Quality Score'}
+          value={req.minQualityScoreNormalized}
+          variant="outline"
+        />
+      )}
+      {req.minVotesAnyOf && req.minVotesAnyOf.min > 0 && (
+        <div className="pt-1">
+          <p className="text-sm text-muted-foreground mb-1">
+            {labels?.minVotesAnyOf ?? 'Min Votes (Any Source)'}
+          </p>
+          <div className="flex items-center gap-2">
+            <BadgeList items={req.minVotesAnyOf.sources.map(s => s.toUpperCase())} />
+            <span className="text-sm">≥ {req.minVotesAnyOf.min.toLocaleString()}</span>
+          </div>
+        </div>
+      )}
+      {req.requireAnyOfRatingsPresent && req.requireAnyOfRatingsPresent.length > 0 && (
+        <div className="pt-1">
+          <p className="text-sm text-muted-foreground mb-1">
+            {labels?.requireRatings ?? 'Required Ratings (any of)'}
+          </p>
+          <BadgeList items={req.requireAnyOfRatingsPresent} />
+        </div>
+      )}
     </ConfigCard>
   )
 }

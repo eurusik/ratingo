@@ -45,21 +45,38 @@ export interface Evaluation {
 export type RatingSource = 'imdb' | 'metacritic' | 'rt' | 'trakt';
 
 /**
+ * Valid vote source identifiers.
+ */
+export type VoteSource = 'imdb' | 'trakt';
+
+/**
  * Global quality gate requirements.
  * All configured conditions are combined with AND logic.
  */
 export interface GlobalRequirements {
-  /** Minimum IMDb votes required. Missing votes = fail. */
-  minImdbVotes?: number;
-
-  /** Minimum Trakt votes required. Missing votes = fail. */
-  minTraktVotes?: number;
-
-  /** Minimum quality score normalized (0-1). Missing score = fail. */
+  /**
+   * Minimum quality score normalized (0-1).
+   * Missing score = fail.
+   */
   minQualityScoreNormalized?: number;
 
-  /** At least one of these rating sources must be present (non-null, valid number). */
+  /**
+   * At least one of these rating sources must be present (non-null, valid number).
+   * OR logic - passes if ANY source has a rating.
+   */
   requireAnyOfRatingsPresent?: RatingSource[];
+
+  /**
+   * Minimum votes from ANY of the specified sources.
+   * OR logic - passes if ANY source meets the threshold.
+   * More robust than per-source minimums when data is incomplete.
+   *
+   * @example { sources: ['imdb', 'trakt'], min: 3000 }
+   */
+  minVotesAnyOf?: {
+    sources: VoteSource[];
+    min: number;
+  };
 }
 
 /**
@@ -67,12 +84,7 @@ export interface GlobalRequirements {
  */
 export interface GlobalGateDetails {
   /** List of checks that failed */
-  failedChecks: (
-    | 'minImdbVotes'
-    | 'minTraktVotes'
-    | 'minQualityScoreNormalized'
-    | 'requireAnyOfRatingsPresent'
-  )[];
+  failedChecks: ('minQualityScoreNormalized' | 'requireAnyOfRatingsPresent' | 'minVotesAnyOf')[];
 }
 
 /**

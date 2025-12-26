@@ -23,6 +23,8 @@ export interface RunDiffLabels {
   mediaId: string
   statusChange: string
   loading: string
+  regressionBreakdown?: string
+  improvementBreakdown?: string
 }
 
 export interface RunErrorsLabels {

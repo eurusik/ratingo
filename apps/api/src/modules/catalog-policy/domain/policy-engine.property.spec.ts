@@ -345,16 +345,17 @@ describe('Policy Engine - Property-Based Tests', () => {
  */
 describe('Global Quality Gate Properties', () => {
   /**
-   * Property 1: IMDb Votes Threshold Enforcement
-   * Feature: global-quality-gate, Property 1: IMDb votes below threshold → INELIGIBLE
+   * Property 1: minVotesAnyOf Threshold Enforcement (OR logic)
+   * Feature: global-quality-gate, Property 1: Votes below threshold on ALL sources → INELIGIBLE
    * Validates: Requirements 1.2, 1.7
    */
-  it('Property 1: should enforce minImdbVotes threshold', () => {
+  it('Property 1: should enforce minVotesAnyOf threshold with OR logic', () => {
     fc.assert(
       fc.property(
         fc.nat({ max: 100000 }), // threshold
-        fc.option(fc.nat({ max: 100000 })), // actual votes (can be null)
-        (threshold, votes) => {
+        fc.option(fc.nat({ max: 100000 })), // imdb votes (can be null)
+        fc.option(fc.nat({ max: 100000 })), // trakt votes (can be null)
+        (threshold, imdbVotes, traktVotes) => {
           const policy: PolicyConfig = {
             allowedCountries: ['US'],
             blockedCountries: [],
@@ -366,7 +367,7 @@ describe('Global Quality Gate Properties', () => {
             eligibilityMode: 'STRICT',
             homepage: { minRelevanceScore: 50 },
             globalRequirements: {
-              minImdbVotes: threshold,
+              minVotesAnyOf: { sources: ['imdb', 'trakt'], min: threshold },
             },
           };
 
@@ -376,8 +377,8 @@ describe('Global Quality Gate Properties', () => {
               originCountries: ['US'],
               originalLanguage: 'en',
               watchProviders: null,
-              voteCountImdb: votes,
-              voteCountTrakt: null,
+              voteCountImdb: imdbVotes,
+              voteCountTrakt: traktVotes,
               ratingImdb: null,
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
@@ -388,13 +389,16 @@ describe('Global Quality Gate Properties', () => {
 
           const result = evaluateEligibility(input, policy);
 
-          // If votes is null or less than threshold, should be INELIGIBLE
-          if (votes === null || votes < threshold) {
+          // OR logic: passes if ANY source meets threshold
+          const imdbPasses = imdbVotes !== null && imdbVotes >= threshold;
+          const traktPasses = traktVotes !== null && traktVotes >= threshold;
+          const anyPasses = imdbPasses || traktPasses;
+
+          if (!anyPasses) {
             expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
             expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-            expect(result.globalGateDetails?.failedChecks).toContain('minImdbVotes');
+            expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
           } else {
-            // If votes meets threshold, should be ELIGIBLE
             expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
             expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
           }
@@ -405,55 +409,60 @@ describe('Global Quality Gate Properties', () => {
   });
 
   /**
-   * Property 2: Trakt Votes Threshold Enforcement
-   * Feature: global-quality-gate, Property 2: Trakt votes below threshold → INELIGIBLE
+   * Property 2: Single Source minVotesAnyOf
+   * Feature: global-quality-gate, Property 2: Single source check works correctly
    * Validates: Requirements 1.3, 1.8
    */
-  it('Property 2: should enforce minTraktVotes threshold', () => {
+  it('Property 2: should enforce minVotesAnyOf with single source', () => {
     fc.assert(
-      fc.property(fc.nat({ max: 50000 }), fc.option(fc.nat({ max: 50000 })), (threshold, votes) => {
-        const policy: PolicyConfig = {
-          allowedCountries: ['US'],
-          blockedCountries: [],
-          blockedCountryMode: 'ANY',
-          allowedLanguages: ['en'],
-          blockedLanguages: [],
-          globalProviders: [],
-          breakoutRules: [],
-          eligibilityMode: 'STRICT',
-          homepage: { minRelevanceScore: 50 },
-          globalRequirements: {
-            minTraktVotes: threshold,
-          },
-        };
+      fc.property(
+        fc.nat({ max: 50000 }),
+        fc.option(fc.nat({ max: 50000 })),
+        fc.constantFrom('imdb', 'trakt') as fc.Arbitrary<'imdb' | 'trakt'>,
+        (threshold, votes, source) => {
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            globalRequirements: {
+              minVotesAnyOf: { sources: [source], min: threshold },
+            },
+          };
 
-        const input: PolicyEngineInput = {
-          mediaItem: {
-            id: 'test',
-            originCountries: ['US'],
-            originalLanguage: 'en',
-            watchProviders: null,
-            voteCountImdb: null,
-            voteCountTrakt: votes,
-            ratingImdb: null,
-            ratingMetacritic: null,
-            ratingRottenTomatoes: null,
-            ratingTrakt: null,
-          },
-          stats: null,
-        };
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['US'],
+              originalLanguage: 'en',
+              watchProviders: null,
+              voteCountImdb: source === 'imdb' ? votes : null,
+              voteCountTrakt: source === 'trakt' ? votes : null,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+            },
+            stats: null,
+          };
 
-        const result = evaluateEligibility(input, policy);
+          const result = evaluateEligibility(input, policy);
 
-        if (votes === null || votes < threshold) {
-          expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-          expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
-          expect(result.globalGateDetails?.failedChecks).toContain('minTraktVotes');
-        } else {
-          expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-          expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-        }
-      }),
+          if (votes === null || votes < threshold) {
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+            expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
+          } else {
+            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+          }
+        },
+      ),
       { numRuns: 100 },
     );
   });
@@ -583,7 +592,7 @@ describe('Global Quality Gate Properties', () => {
   });
 
   /**
-   * Property 5: AND Logic for Multiple Requirements
+   * Property 5: AND Logic for Multiple Requirements (votes + quality)
    * Feature: global-quality-gate, Property 5: All requirements must pass
    * Validates: Requirements 1.6
    */
@@ -591,10 +600,10 @@ describe('Global Quality Gate Properties', () => {
     fc.assert(
       fc.property(
         fc.nat({ max: 50000 }),
-        fc.nat({ max: 25000 }),
+        fc.double({ min: 0, max: 1, noNaN: true }),
         fc.option(fc.nat({ max: 50000 })),
-        fc.option(fc.nat({ max: 25000 })),
-        (imdbThreshold, traktThreshold, imdbVotes, traktVotes) => {
+        fc.option(fc.double({ min: 0, max: 1, noNaN: true })),
+        (votesThreshold, qualityThreshold, votes, quality) => {
           const policy: PolicyConfig = {
             allowedCountries: ['US'],
             blockedCountries: [],
@@ -606,8 +615,8 @@ describe('Global Quality Gate Properties', () => {
             eligibilityMode: 'STRICT',
             homepage: { minRelevanceScore: 50 },
             globalRequirements: {
-              minImdbVotes: imdbThreshold,
-              minTraktVotes: traktThreshold,
+              minVotesAnyOf: { sources: ['imdb', 'trakt'], min: votesThreshold },
+              minQualityScoreNormalized: qualityThreshold,
             },
           };
 
@@ -617,23 +626,31 @@ describe('Global Quality Gate Properties', () => {
               originCountries: ['US'],
               originalLanguage: 'en',
               watchProviders: null,
-              voteCountImdb: imdbVotes,
-              voteCountTrakt: traktVotes,
+              voteCountImdb: votes,
+              voteCountTrakt: null,
               ratingImdb: null,
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
             },
-            stats: null,
+            stats:
+              quality !== null
+                ? {
+                    qualityScore: quality,
+                    popularityScore: null,
+                    freshnessScore: null,
+                    ratingoScore: null,
+                  }
+                : null,
           };
 
           const result = evaluateEligibility(input, policy);
 
-          const imdbPasses = imdbVotes !== null && imdbVotes >= imdbThreshold;
-          const traktPasses = traktVotes !== null && traktVotes >= traktThreshold;
+          const votesPasses = votes !== null && votes >= votesThreshold;
+          const qualityPasses = quality !== null && quality >= qualityThreshold;
 
           // Both must pass for ELIGIBLE
-          if (imdbPasses && traktPasses) {
+          if (votesPasses && qualityPasses) {
             expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
             expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
           } else {
@@ -669,7 +686,7 @@ describe('Global Quality Gate Properties', () => {
             eligibilityMode: 'STRICT',
             homepage: { minRelevanceScore: 50 },
             globalRequirements: {
-              minImdbVotes: threshold,
+              minVotesAnyOf: { sources: ['imdb'], min: threshold },
             },
           };
 
@@ -803,7 +820,7 @@ describe('Global Quality Gate Properties', () => {
             eligibilityMode: 'STRICT',
             homepage: { minRelevanceScore: 50 },
             globalRequirements: {
-              minImdbVotes: gateThreshold,
+              minVotesAnyOf: { sources: ['imdb'], min: gateThreshold },
             },
           };
 
@@ -874,7 +891,7 @@ describe('Global Quality Gate Properties', () => {
             eligibilityMode: 'STRICT',
             homepage: { minRelevanceScore: 50 },
             globalRequirements: {
-              minImdbVotes: threshold,
+              minVotesAnyOf: { sources: ['imdb'], min: threshold },
             },
           };
 
@@ -905,7 +922,7 @@ describe('Global Quality Gate Properties', () => {
             expect(result.reasons).toContain('BLOCKED_LANGUAGE');
             expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
             expect(result.globalGateDetails).toBeDefined();
-            expect(result.globalGateDetails?.failedChecks).toContain('minImdbVotes');
+            expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
           } else {
             // Blocked but gate passes → still INELIGIBLE with BLOCKED reason
             expect(result.status).toBe(EligibilityStatus.INELIGIBLE);

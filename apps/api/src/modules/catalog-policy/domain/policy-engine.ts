@@ -392,30 +392,7 @@ function checkGlobalRequirements(
   const failedChecks: string[] = [];
   const { mediaItem } = input;
 
-  // Check minImdbVotes (null/undefined = fail)
-  if (requirements.minImdbVotes !== undefined) {
-    if (
-      mediaItem.voteCountImdb === null ||
-      mediaItem.voteCountImdb === undefined ||
-      mediaItem.voteCountImdb < requirements.minImdbVotes
-    ) {
-      failedChecks.push('minImdbVotes');
-    }
-  }
-
-  // Check minTraktVotes (null/undefined = fail)
-  if (requirements.minTraktVotes !== undefined) {
-    if (
-      mediaItem.voteCountTrakt === null ||
-      mediaItem.voteCountTrakt === undefined ||
-      mediaItem.voteCountTrakt < requirements.minTraktVotes
-    ) {
-      failedChecks.push('minTraktVotes');
-    }
-  }
-
   // Check minQualityScoreNormalized (null/undefined = fail)
-  // NOTE: Uses existing `qualityScore` field which is already normalized 0-1
   if (requirements.minQualityScoreNormalized !== undefined) {
     const qualityScore = input.stats?.qualityScore;
     if (
@@ -427,13 +404,25 @@ function checkGlobalRequirements(
     }
   }
 
-  // Check requireAnyOfRatingsPresent
+  // Check requireAnyOfRatingsPresent (OR logic)
   if (
     requirements.requireAnyOfRatingsPresent &&
     requirements.requireAnyOfRatingsPresent.length > 0
   ) {
     if (!hasAnyRating(mediaItem, requirements.requireAnyOfRatingsPresent)) {
       failedChecks.push('requireAnyOfRatingsPresent');
+    }
+  }
+
+  // Check minVotesAnyOf (OR logic - passes if ANY source meets threshold)
+  if (requirements.minVotesAnyOf) {
+    const { sources, min } = requirements.minVotesAnyOf;
+    const hasEnoughVotes = sources.some((source) => {
+      const votes = source === 'imdb' ? mediaItem.voteCountImdb : mediaItem.voteCountTrakt;
+      return votes !== null && votes !== undefined && votes >= min;
+    });
+    if (!hasEnoughVotes) {
+      failedChecks.push('minVotesAnyOf');
     }
   }
 

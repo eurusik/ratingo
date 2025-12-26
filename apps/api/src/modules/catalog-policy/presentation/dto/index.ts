@@ -5,7 +5,7 @@
  */
 
 // Global Requirements
-export { GlobalRequirementsDto, RatingSourceEnum } from './global-requirements.dto';
+export { GlobalRequirementsDto } from './global-requirements.dto';
 
 // Policy Configuration
 export { PolicyConfigDto, HomepageConfigDto } from './policy-config.dto';
@@ -25,7 +25,7 @@ export {
 } from './run-actions.dto';
 
 // Diff Reports
-export { DiffReportDto, DiffCountsDto, DiffSampleDto } from './diff-report.dto';
+export { DiffReportDto, DiffCountsDto, DiffSampleDto, ReasonBreakdownDto } from './diff-report.dto';
 
 // Lists
 export { PoliciesListDto, RunsListDto, EvaluationRunDto } from './lists.dto';

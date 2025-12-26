@@ -292,6 +292,7 @@ export class RunController {
         title: item.title || 'Unknown',
         reason: `Status change: ${item.oldStatus} → ${item.newStatus}`,
       })),
+      reasonBreakdown: diffReport.reasonBreakdown,
     };
   }
 }

@@ -608,7 +608,11 @@
       "config": {
         "othersExcluded": "Other countries",
         "othersLanguagesExcluded": "Other languages",
-        "excludedFromCatalog": "Excluded from catalog"
+        "excludedFromCatalog": "Excluded from catalog",
+        "globalRequirements": "Global Quality Gate",
+        "minQualityScore": "Min Quality Score",
+        "requireRatings": "Required Ratings (any of)",
+        "minVotesAnyOf": "Min Votes (Any Source)"
       },
       "form": {
         "save": "Save as New Version",
@@ -671,15 +675,13 @@
         "globalRequirements": {
           "title": "Global Quality Gate",
           "description": "Minimum quality thresholds that all content must meet",
-          "minImdbVotes": "Min IMDb Votes",
-          "minImdbVotesHint": "Minimum number of IMDb votes required",
-          "minTraktVotes": "Min Trakt Votes",
-          "minTraktVotesHint": "Minimum number of Trakt votes required",
           "minQualityScore": "Min Quality Score",
           "minQualityScoreHint": "Minimum quality score (0-1 range)",
           "requireRatings": "Required Rating Sources",
-          "requireRatingsHint": "Content must have at least one of these rating sources",
-          "addRating": "Add rating source..."
+          "requireRatingsHint": "Content must have at least one of these rating sources (OR logic)",
+          "addRating": "Add rating source...",
+          "minVotesAnyOf": "Min Votes (Any Source)",
+          "minVotesAnyOfHint": "Passes if ANY selected source has enough votes. Robust to missing data."
         }
       },
       "toast": {
@@ -740,7 +742,9 @@
         "topImprovements": "Top improvements (entering catalog)",
         "mediaId": "ID",
         "statusChange": "Status change",
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "regressionBreakdown": "Regression Breakdown",
+        "improvementBreakdown": "Improvement Breakdown"
       },
       "errorsTab": {
         "title": "Error Samples",

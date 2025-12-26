@@ -63,6 +63,26 @@ export class DiffCountsDto {
 }
 
 /**
+ * Reason breakdown DTO.
+ * Breakdown of regressions by reason.
+ */
+export class ReasonBreakdownDto {
+  @ApiProperty({
+    description: 'Breakdown of regression reasons',
+    example: { MISSING_GLOBAL_SIGNALS: 150, BLOCKED_COUNTRY: 25, NEUTRAL_LANGUAGE: 10 },
+    additionalProperties: { type: 'number' },
+  })
+  regressionReasons: Record<string, number>;
+
+  @ApiProperty({
+    description: 'Breakdown of improvement reasons',
+    example: { ALLOWED_COUNTRY: 100, BREAKOUT_ALLOWED: 50 },
+    additionalProperties: { type: 'number' },
+  })
+  improvementReasons: Record<string, number>;
+}
+
+/**
  * Diff report DTO.
  * Complete diff report between current and target policy.
  */
@@ -111,4 +131,12 @@ export class DiffReportDto {
   @Type(() => DiffSampleDto)
   @IsArray()
   topImprovements: DiffSampleDto[];
+
+  @ApiPropertyOptional({
+    description: 'Breakdown of reasons for regressions and improvements',
+    type: ReasonBreakdownDto,
+  })
+  @IsOptional()
+  @Type(() => ReasonBreakdownDto)
+  reasonBreakdown?: ReasonBreakdownDto;
 }

@@ -121,6 +121,7 @@ export class PolicyController {
         breakoutRules: policy.policy.breakoutRules,
         eligibilityMode: policy.policy.eligibilityMode,
         homepage: policy.policy.homepage,
+        globalRequirements: policy.policy.globalRequirements,
       },
       createdAt: policy.createdAt,
       activatedAt: policy.activatedAt ?? undefined,

@@ -565,7 +565,7 @@ describe('Policy Engine', () => {
       const policy = createPolicy({
         blockedCountries: ['RU'],
         globalRequirements: {
-          minImdbVotes: 50000,
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
         },
         breakoutRules: [
           {
@@ -598,13 +598,13 @@ describe('Policy Engine', () => {
 
       // Should include globalGateDetails showing which checks failed
       expect(result.globalGateDetails).toBeDefined();
-      expect(result.globalGateDetails?.failedChecks).toContain('minImdbVotes');
+      expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
     });
 
     it('should return INELIGIBLE with MISSING_GLOBAL_SIGNALS when non-blocked content fails global gate', () => {
       const policy = createPolicy({
         globalRequirements: {
-          minImdbVotes: 50000,
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
         },
       });
       const input = createInput({
@@ -622,14 +622,14 @@ describe('Policy Engine', () => {
       expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
       expect(result.breakoutRuleId).toBeNull();
       expect(result.globalGateDetails).toBeDefined();
-      expect(result.globalGateDetails?.failedChecks).toContain('minImdbVotes');
+      expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
     });
 
     it('should allow breakout when blocked content passes global gate', () => {
       const policy = createPolicy({
         blockedCountries: ['RU'],
         globalRequirements: {
-          minImdbVotes: 10000,
+          minVotesAnyOf: { sources: ['imdb'], min: 10000 },
         },
         breakoutRules: [
           {

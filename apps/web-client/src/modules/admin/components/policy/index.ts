@@ -5,6 +5,7 @@ export {
   ProvidersCard,
   SettingsCard,
   BreakoutRulesCard,
+  GlobalRequirementsCard,
 } from './PolicyConfigCards'
 
 // Label types

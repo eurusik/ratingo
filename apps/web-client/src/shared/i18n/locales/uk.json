@@ -608,7 +608,11 @@
       "config": {
         "othersExcluded": "Інші країни",
         "othersLanguagesExcluded": "Інші мови",
-        "excludedFromCatalog": "Виключені з каталогу"
+        "excludedFromCatalog": "Виключені з каталогу",
+        "globalRequirements": "Глобальний поріг якості",
+        "minQualityScore": "Мін. оцінка якості",
+        "requireRatings": "Обов'язкові рейтинги (будь-який з)",
+        "minVotesAnyOf": "Мін. голосів (будь-яке джерело)"
       },
       "form": {
         "save": "Зберегти як нову версію",
@@ -671,15 +675,13 @@
         "globalRequirements": {
           "title": "Глобальний поріг якості",
           "description": "Мінімальні вимоги до якості, яким має відповідати весь контент",
-          "minImdbVotes": "Мін. голосів IMDb",
-          "minImdbVotesHint": "Мінімальна кількість голосів на IMDb",
-          "minTraktVotes": "Мін. голосів Trakt",
-          "minTraktVotesHint": "Мінімальна кількість голосів на Trakt",
           "minQualityScore": "Мін. оцінка якості",
           "minQualityScoreHint": "Мінімальна оцінка якості (діапазон 0-1)",
           "requireRatings": "Обов'язкові джерела рейтингів",
-          "requireRatingsHint": "Контент повинен мати хоча б одне з цих джерел рейтингів",
-          "addRating": "Додати джерело рейтингу..."
+          "requireRatingsHint": "Контент повинен мати хоча б одне з цих джерел рейтингів (OR логіка)",
+          "addRating": "Додати джерело рейтингу...",
+          "minVotesAnyOf": "Мін. голосів (будь-яке джерело)",
+          "minVotesAnyOfHint": "Проходить якщо БУДЬ-ЯКЕ вибране джерело має достатньо голосів. Стійко до відсутніх даних."
         }
       },
       "toast": {
@@ -740,7 +742,9 @@
         "topImprovements": "Топ покращень (входять в каталог)",
         "mediaId": "ID",
         "statusChange": "Зміна статусу",
-        "loading": "Завантаження..."
+        "loading": "Завантаження...",
+        "regressionBreakdown": "Розбивка регресій",
+        "improvementBreakdown": "Розбивка покращень"
       },
       "errorsTab": {
         "title": "Зразки помилок",

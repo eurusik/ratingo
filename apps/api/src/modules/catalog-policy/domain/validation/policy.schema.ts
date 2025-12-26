@@ -25,6 +25,20 @@ const BreakoutRuleSchema = z.object({
 });
 
 /**
+ * Global requirements schema
+ */
+const GlobalRequirementsSchema = z.object({
+  minQualityScoreNormalized: z.number().min(0).max(1).optional(),
+  requireAnyOfRatingsPresent: z.array(z.enum(['imdb', 'metacritic', 'rt', 'trakt'])).optional(),
+  minVotesAnyOf: z
+    .object({
+      sources: z.array(z.enum(['imdb', 'trakt'])).min(1),
+      min: z.number().int().min(0),
+    })
+    .optional(),
+});
+
+/**
  * Policy configuration schema
  */
 const PolicyConfigSchema = z.object({
@@ -47,6 +61,7 @@ const PolicyConfigSchema = z.object({
   homepage: z.object({
     minRelevanceScore: z.number().min(0).max(100, 'Relevance score must be between 0 and 100'),
   }),
+  globalRequirements: GlobalRequirementsSchema.optional(),
 });
 
 /**

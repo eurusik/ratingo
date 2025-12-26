@@ -45,6 +45,7 @@ export default function PolicyDraftPage() {
         breakoutRules: data.breakoutRules,
         eligibilityMode: data.eligibilityMode,
         homepage: data.homepage,
+        globalRequirements: data.globalRequirements,
       })
       
       toast.success(dict.admin.policyDraft.toast.success ?? `Policy v${result.version} created`)

@@ -10,7 +10,11 @@ import 'reflect-metadata';
 import * as fc from 'fast-check';
 import { plainToInstance } from 'class-transformer';
 import { validateSync, ValidationError } from 'class-validator';
-import { GlobalRequirementsDto, RatingSourceEnum } from './global-requirements.dto';
+import { GlobalRequirementsDto, MinVotesAnyOfDto } from './global-requirements.dto';
+import { RatingSource, VoteSource } from '../../domain/types/policy.types';
+
+const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt'];
+const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt'];
 
 describe('GlobalRequirementsDto - Property-Based Tests', () => {
   // Helper to get all validation error messages
@@ -28,16 +32,15 @@ describe('GlobalRequirementsDto - Property-Based Tests', () => {
   };
 
   // Arbitraries for valid data
-  const validRatingSourceArb = fc.constantFrom(
-    RatingSourceEnum.IMDB,
-    RatingSourceEnum.METACRITIC,
-    RatingSourceEnum.RT,
-    RatingSourceEnum.TRAKT,
-  );
+  const validRatingSourceArb = fc.constantFrom(...RATING_SOURCES);
+  const validVoteSourceArb = fc.constantFrom(...VOTE_SOURCES);
+
+  const validMinVotesAnyOfArb = fc.record({
+    sources: fc.array(validVoteSourceArb, { minLength: 1, maxLength: 2 }),
+    min: fc.nat({ max: 1000000 }),
+  });
 
   const validGlobalRequirementsArb = fc.record({
-    minImdbVotes: fc.option(fc.nat({ max: 1000000 }), { nil: undefined }),
-    minTraktVotes: fc.option(fc.nat({ max: 100000 }), { nil: undefined }),
     minQualityScoreNormalized: fc.option(fc.double({ min: 0, max: 1, noNaN: true }), {
       nil: undefined,
     }),
@@ -45,6 +48,7 @@ describe('GlobalRequirementsDto - Property-Based Tests', () => {
       fc.array(validRatingSourceArb, { minLength: 1, maxLength: 4 }),
       { nil: undefined },
     ),
+    minVotesAnyOf: fc.option(validMinVotesAnyOfArb, { nil: undefined }),
   });
 
   /**
@@ -79,90 +83,6 @@ describe('GlobalRequirementsDto - Property-Based Tests', () => {
       const errors = validateSync(dto);
 
       expect(errors.length).toBe(0);
-    });
-
-    it('should reject negative minImdbVotes', () => {
-      fc.assert(
-        fc.property(
-          validGlobalRequirementsArb,
-          fc.integer({ min: -1000000, max: -1 }),
-          (requirementsData, invalidVotes) => {
-            const invalidData = {
-              ...requirementsData,
-              minImdbVotes: invalidVotes,
-            };
-            const dto = plainToInstance(GlobalRequirementsDto, invalidData);
-            const errors = validateSync(dto);
-
-            expect(errors.length).toBeGreaterThan(0);
-            const messages = getValidationMessages(errors);
-            expect(messages.some((m) => m.toLowerCase().includes('min'))).toBe(true);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it('should reject non-integer minImdbVotes', () => {
-      fc.assert(
-        fc.property(
-          validGlobalRequirementsArb,
-          fc.double({ min: 0.1, max: 1000, noInteger: true }),
-          (requirementsData, invalidVotes) => {
-            const invalidData = {
-              ...requirementsData,
-              minImdbVotes: invalidVotes,
-            };
-            const dto = plainToInstance(GlobalRequirementsDto, invalidData);
-            const errors = validateSync(dto);
-
-            expect(errors.length).toBeGreaterThan(0);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it('should reject negative minTraktVotes', () => {
-      fc.assert(
-        fc.property(
-          validGlobalRequirementsArb,
-          fc.integer({ min: -100000, max: -1 }),
-          (requirementsData, invalidVotes) => {
-            const invalidData = {
-              ...requirementsData,
-              minTraktVotes: invalidVotes,
-            };
-            const dto = plainToInstance(GlobalRequirementsDto, invalidData);
-            const errors = validateSync(dto);
-
-            expect(errors.length).toBeGreaterThan(0);
-            const messages = getValidationMessages(errors);
-            expect(messages.some((m) => m.toLowerCase().includes('min'))).toBe(true);
-          },
-        ),
-        { numRuns: 100 },
-      );
-    });
-
-    it('should reject non-integer minTraktVotes', () => {
-      fc.assert(
-        fc.property(
-          validGlobalRequirementsArb,
-          fc.double({ min: 0.1, max: 1000, noInteger: true }),
-          (requirementsData, invalidVotes) => {
-            const invalidData = {
-              ...requirementsData,
-              minTraktVotes: invalidVotes,
-            };
-            const dto = plainToInstance(GlobalRequirementsDto, invalidData);
-            const errors = validateSync(dto);
-
-            expect(errors.length).toBeGreaterThan(0);
-          },
-        ),
-        { numRuns: 100 },
-      );
     });
 
     it('should reject minQualityScoreNormalized > 1', () => {
@@ -206,10 +126,10 @@ describe('GlobalRequirementsDto - Property-Based Tests', () => {
     });
 
     it('should reject invalid rating sources', () => {
-      // Generate invalid rating sources (not in RatingSourceEnum)
+      // Generate invalid rating sources (not in RATING_SOURCES)
       const invalidRatingSourceArb = fc
         .string({ minLength: 1, maxLength: 20 })
-        .filter((s) => s !== 'imdb' && s !== 'metacritic' && s !== 'rt' && s !== 'trakt');
+        .filter((s) => !RATING_SOURCES.includes(s as RatingSource));
 
       fc.assert(
         fc.property(
@@ -239,30 +159,57 @@ describe('GlobalRequirementsDto - Property-Based Tests', () => {
 
       expect(errors.length).toBeGreaterThan(0);
     });
+
+    it('should reject invalid vote sources in minVotesAnyOf', () => {
+      const invalidVoteSourceArb = fc
+        .string({ minLength: 1, maxLength: 20 })
+        .filter((s) => !VOTE_SOURCES.includes(s as VoteSource));
+
+      fc.assert(
+        fc.property(
+          validGlobalRequirementsArb,
+          fc.array(invalidVoteSourceArb, { minLength: 1, maxLength: 2 }),
+          fc.nat({ max: 100000 }),
+          (requirementsData, invalidSources, min) => {
+            const invalidData = {
+              ...requirementsData,
+              minVotesAnyOf: { sources: invalidSources, min },
+            };
+            const dto = plainToInstance(GlobalRequirementsDto, invalidData);
+            const errors = validateSync(dto);
+
+            expect(errors.length).toBeGreaterThan(0);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should reject negative min in minVotesAnyOf', () => {
+      fc.assert(
+        fc.property(
+          validGlobalRequirementsArb,
+          fc.integer({ min: -100000, max: -1 }),
+          (requirementsData, invalidMin) => {
+            const invalidData = {
+              ...requirementsData,
+              minVotesAnyOf: { sources: ['imdb'], min: invalidMin },
+            };
+            const dto = plainToInstance(GlobalRequirementsDto, invalidData);
+            const errors = validateSync(dto);
+
+            expect(errors.length).toBeGreaterThan(0);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
   });
 
   /**
    * Additional validation tests for edge cases
    */
   describe('Edge Cases', () => {
-    it('should accept minImdbVotes = 0', () => {
-      const dto = plainToInstance(GlobalRequirementsDto, {
-        minImdbVotes: 0,
-      });
-      const errors = validateSync(dto);
-
-      expect(errors.length).toBe(0);
-    });
-
-    it('should accept minTraktVotes = 0', () => {
-      const dto = plainToInstance(GlobalRequirementsDto, {
-        minTraktVotes: 0,
-      });
-      const errors = validateSync(dto);
-
-      expect(errors.length).toBe(0);
-    });
-
     it('should accept minQualityScoreNormalized = 0', () => {
       const dto = plainToInstance(GlobalRequirementsDto, {
         minQualityScoreNormalized: 0,
@@ -281,12 +228,42 @@ describe('GlobalRequirementsDto - Property-Based Tests', () => {
       expect(errors.length).toBe(0);
     });
 
+    it('should accept minVotesAnyOf with min = 0', () => {
+      const dto = plainToInstance(GlobalRequirementsDto, {
+        minVotesAnyOf: { sources: ['imdb', 'trakt'], min: 0 },
+      });
+      const errors = validateSync(dto);
+
+      expect(errors.length).toBe(0);
+    });
+
     it('should accept all fields set to valid values', () => {
       const dto = plainToInstance(GlobalRequirementsDto, {
-        minImdbVotes: 3000,
-        minTraktVotes: 1000,
         minQualityScoreNormalized: 0.6,
-        requireAnyOfRatingsPresent: [RatingSourceEnum.IMDB, RatingSourceEnum.METACRITIC],
+        requireAnyOfRatingsPresent: ['imdb', 'metacritic'],
+        minVotesAnyOf: { sources: ['imdb', 'trakt'], min: 3000 },
+      });
+      const errors = validateSync(dto);
+
+      expect(errors.length).toBe(0);
+    });
+  });
+
+  describe('MinVotesAnyOfDto', () => {
+    it('should accept valid minVotesAnyOf', () => {
+      const dto = plainToInstance(MinVotesAnyOfDto, {
+        sources: ['imdb', 'trakt'],
+        min: 5000,
+      });
+      const errors = validateSync(dto);
+
+      expect(errors.length).toBe(0);
+    });
+
+    it('should accept single source', () => {
+      const dto = plainToInstance(MinVotesAnyOfDto, {
+        sources: ['imdb'],
+        min: 1000,
       });
       const errors = validateSync(dto);
 

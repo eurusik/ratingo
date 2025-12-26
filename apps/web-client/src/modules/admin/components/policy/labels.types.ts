@@ -67,15 +67,13 @@ export interface BreakoutRulesLabels {
 export interface GlobalRequirementsLabels {
   title?: string
   description?: string
-  minImdbVotes?: string
-  minImdbVotesHint?: string
-  minTraktVotes?: string
-  minTraktVotesHint?: string
   minQualityScore?: string
   minQualityScoreHint?: string
   requireRatings?: string
   requireRatingsHint?: string
   addRating?: string
+  minVotesAnyOf?: string
+  minVotesAnyOfHint?: string
 }
 
 /** Labels for PolicyEditForm - matches admin.policyDetail.form in JSON */
@@ -99,6 +97,7 @@ export interface ConfigViewLabels {
   providers?: string
   settings?: string
   breakoutRules?: string
+  globalRequirements?: string
   // Shared labels
   allowed?: string
   blocked?: string
@@ -110,6 +109,10 @@ export interface ConfigViewLabels {
   blockedCountryMode?: string
   minRelevanceScore?: string
   priority?: string
+  // Global requirements labels
+  minQualityScore?: string
+  requireRatings?: string
+  minVotesAnyOf?: string
 }
 
 /** Labels for policy info section */
