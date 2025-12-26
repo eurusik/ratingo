@@ -4,7 +4,17 @@
  * Admin endpoints for policy management (CRUD operations).
  */
 
-import { Controller, Post, Get, Param, Body, HttpCode, HttpStatus, Inject } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  NotFoundException,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
@@ -17,6 +27,7 @@ import {
   PrepareResponseDto,
   PoliciesListDto,
   PolicyDto,
+  PolicyDetailDto,
   CreatePolicyDto,
   CreatePolicyResponseDto,
 } from '../dto/policy-activation.dto';
@@ -61,6 +72,59 @@ export class PolicyController {
     }));
 
     return { data };
+  }
+
+  /**
+   * Gets a single policy by ID with full configuration.
+   *
+   * @param policyId - Policy ID
+   * @returns Policy with full configuration
+   */
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get policy details',
+    description: 'Returns a single policy with full configuration settings.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Policy ID',
+    type: String,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Policy details',
+    type: PolicyDetailDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Policy not found',
+  })
+  async getPolicyById(@Param('id') policyId: string): Promise<PolicyDetailDto> {
+    const policy = await this.policyRepository.findById(policyId);
+
+    if (!policy) {
+      throw new NotFoundException(`Policy with ID ${policyId} not found`);
+    }
+
+    return {
+      id: policy.id,
+      name: `Policy v${policy.version}`,
+      version: String(policy.version),
+      status: policy.isActive ? 'active' : 'inactive',
+      config: {
+        allowedCountries: policy.policy.allowedCountries,
+        blockedCountries: policy.policy.blockedCountries,
+        blockedCountryMode: policy.policy.blockedCountryMode,
+        allowedLanguages: policy.policy.allowedLanguages,
+        blockedLanguages: policy.policy.blockedLanguages,
+        globalProviders: policy.policy.globalProviders,
+        breakoutRules: policy.policy.breakoutRules,
+        eligibilityMode: policy.policy.eligibilityMode,
+        homepage: policy.policy.homepage,
+      },
+      createdAt: policy.createdAt,
+      activatedAt: policy.activatedAt ?? undefined,
+    };
   }
 
   /**

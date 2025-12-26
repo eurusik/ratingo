@@ -539,7 +539,7 @@
     "policyDetail": {
       "tabs": {
         "runs": "Runs",
-        "policy": "Policy"
+        "policy": "Configuration"
       },
       "runsTable": {
         "runId": "Run ID",
@@ -553,6 +553,20 @@
         "rules": "Rules",
         "version": "Version",
         "status": "Status"
+      },
+      "config": {
+        "countries": "Countries",
+        "languages": "Languages",
+        "allowed": "Allowed",
+        "blocked": "Blocked",
+        "blockedMode": "Blocked mode",
+        "blockedCountryMode": "Blocked Country Mode",
+        "providers": "Global Providers",
+        "settings": "Settings",
+        "eligibilityMode": "Eligibility Mode",
+        "minRelevanceScore": "Min Relevance Score",
+        "breakoutRules": "Breakout Rules",
+        "priority": "Priority"
       },
       "actions": {
         "viewDetails": "View Details"

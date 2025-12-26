@@ -23,6 +23,124 @@ describe('Policy Activation Flow (e2e)', () => {
     ctx.queue.clear();
   });
 
+  describe('GET /:id', () => {
+    it('should return 404 when policy not found', async () => {
+      const res = await ctx.get('/non-existent-id').expect(404);
+
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('RESOURCE_NOT_FOUND');
+    });
+
+    it('should return policy with full config', async () => {
+      const policyConfig = createTestPolicy({
+        allowedCountries: ['US', 'GB', 'UA'],
+        blockedCountries: ['RU', 'BY'],
+        blockedCountryMode: 'ANY',
+        allowedLanguages: ['en', 'uk'],
+        blockedLanguages: ['ru'],
+        globalProviders: ['netflix', 'prime', 'disney'],
+        eligibilityMode: 'STRICT',
+        homepage: { minRelevanceScore: 50 },
+        breakoutRules: [
+          {
+            id: 'high-quality',
+            name: 'High Quality Exception',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 10000,
+              minQualityScoreNormalized: 0.7,
+            },
+          },
+        ],
+      });
+
+      const policy = await ctx.policyRepo.create(policyConfig);
+
+      const res = await ctx.get(`/${policy.id}`).expect(200);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.id).toBe(policy.id);
+      expect(res.body.data.name).toBe(`Policy v${policy.version}`);
+      expect(res.body.data.version).toBe(String(policy.version));
+      expect(res.body.data.status).toBe('inactive');
+
+      // Verify config
+      const config = res.body.data.config;
+      expect(config).toBeDefined();
+      expect(config.allowedCountries).toEqual(['US', 'GB', 'UA']);
+      expect(config.blockedCountries).toEqual(['RU', 'BY']);
+      expect(config.blockedCountryMode).toBe('ANY');
+      expect(config.allowedLanguages).toEqual(['en', 'uk']);
+      expect(config.blockedLanguages).toEqual(['ru']);
+      expect(config.globalProviders).toEqual(['netflix', 'prime', 'disney']);
+      expect(config.eligibilityMode).toBe('STRICT');
+      expect(config.homepage.minRelevanceScore).toBe(50);
+
+      // Verify breakout rules
+      expect(config.breakoutRules).toHaveLength(1);
+      expect(config.breakoutRules[0].id).toBe('high-quality');
+      expect(config.breakoutRules[0].name).toBe('High Quality Exception');
+      expect(config.breakoutRules[0].priority).toBe(1);
+      expect(config.breakoutRules[0].requirements.minImdbVotes).toBe(10000);
+      expect(config.breakoutRules[0].requirements.minQualityScoreNormalized).toBe(0.7);
+    });
+
+    it('should return active status for activated policy', async () => {
+      const policy = await ctx.policyRepo.create(createTestPolicy());
+      await ctx.policyRepo.activate(policy.id);
+
+      const res = await ctx.get(`/${policy.id}`).expect(200);
+
+      expect(res.body.data.status).toBe('active');
+      expect(res.body.data.activatedAt).toBeDefined();
+    });
+
+    it('should return policy with empty breakout rules', async () => {
+      const policy = await ctx.policyRepo.create(createTestPolicy({ breakoutRules: [] }));
+
+      const res = await ctx.get(`/${policy.id}`).expect(200);
+
+      expect(res.body.data.config.breakoutRules).toEqual([]);
+    });
+
+    it('should return policy with multiple breakout rules', async () => {
+      const policy = await ctx.policyRepo.create(
+        createTestPolicy({
+          breakoutRules: [
+            {
+              id: 'rule-1',
+              name: 'Rule 1',
+              priority: 1,
+              requirements: { minImdbVotes: 5000 },
+            },
+            {
+              id: 'rule-2',
+              name: 'Rule 2',
+              priority: 2,
+              requirements: { requireAnyOfProviders: ['netflix'] },
+            },
+            {
+              id: 'rule-3',
+              name: 'Rule 3',
+              priority: 3,
+              requirements: {
+                minQualityScoreNormalized: 0.8,
+                requireAnyOfRatingsPresent: ['imdb', 'rt'],
+              },
+            },
+          ],
+        }),
+      );
+
+      const res = await ctx.get(`/${policy.id}`).expect(200);
+
+      expect(res.body.data.config.breakoutRules).toHaveLength(3);
+      expect(res.body.data.config.breakoutRules[0].id).toBe('rule-1');
+      expect(res.body.data.config.breakoutRules[1].id).toBe('rule-2');
+      expect(res.body.data.config.breakoutRules[2].id).toBe('rule-3');
+    });
+  });
+
   describe('POST /:id/prepare', () => {
     it('should return 404 when policy not found', async () => {
       const res = await ctx.post('/non-existent-id/prepare').expect(404);

@@ -31,6 +31,22 @@ export function usePolicies(enabled = true) {
   })
 }
 
+/**
+ * Fetches a single policy with full configuration.
+ *
+ * @param policyId - Policy ID to fetch
+ * @param enabled - Whether query is enabled (default: true)
+ * @returns Query result with policy details including config
+ */
+export function usePolicyDetail(policyId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.admin.policies.detail(policyId),
+    queryFn: () => adminApi.getPolicyById(policyId),
+    enabled: enabled && !!policyId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
 // ============================================================================
 // Evaluation runs queries
 // ============================================================================

@@ -556,7 +556,7 @@
       },
       "tabs": {
         "runs": "Запуски",
-        "policy": "Політика"
+        "policy": "Налаштування"
       },
       "runsTable": {
         "title": "Історія запусків оцінювання",
@@ -575,6 +575,20 @@
         "rules": "Правила",
         "version": "Версія",
         "status": "Статус"
+      },
+      "config": {
+        "countries": "Країни",
+        "languages": "Мови",
+        "allowed": "Дозволені",
+        "blocked": "Заблоковані",
+        "blockedMode": "Режим блокування",
+        "blockedCountryMode": "Режим блокування країн",
+        "providers": "Глобальні провайдери",
+        "settings": "Налаштування",
+        "eligibilityMode": "Режим відповідності",
+        "minRelevanceScore": "Мін. оцінка релевантності",
+        "breakoutRules": "Правила винятків",
+        "priority": "Пріоритет"
       },
       "toast": {
         "prepareSuccess": "Оцінювання політики розпочато",

@@ -13,6 +13,52 @@ import type { components } from '@ratingo/api-contract'
 /** Policy DTO from API contract. */
 export type PolicyDto = components['schemas']['PolicyDto']
 
+/** Breakout rule requirements type. */
+export interface BreakoutRuleRequirements {
+  minImdbVotes?: number
+  minTraktVotes?: number
+  minQualityScoreNormalized?: number
+  requireAnyOfProviders?: string[]
+  requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[]
+}
+
+/** Breakout rule type. */
+export interface BreakoutRule {
+  id: string
+  name: string
+  priority: number
+  requirements: BreakoutRuleRequirements
+}
+
+/** Homepage config type. */
+export interface HomepageConfig {
+  minRelevanceScore: number
+}
+
+/** Policy config type. */
+export interface PolicyConfigDto {
+  allowedCountries: string[]
+  blockedCountries: string[]
+  blockedCountryMode: 'ANY' | 'MAJORITY'
+  allowedLanguages: string[]
+  blockedLanguages: string[]
+  globalProviders: string[]
+  breakoutRules: BreakoutRule[]
+  eligibilityMode: 'STRICT' | 'RELAXED'
+  homepage: HomepageConfig
+}
+
+/** Policy detail DTO type. */
+export interface PolicyDetailDto {
+  id: string
+  name: string
+  version: string
+  status: 'active' | 'inactive'
+  config: PolicyConfigDto
+  createdAt: string
+  activatedAt?: string
+}
+
 /** Evaluation run DTO from API contract. */
 export type EvaluationRunDto = components['schemas']['EvaluationRunDto']
 
@@ -100,6 +146,16 @@ export class AdminApiClient {
   async getPolicies(): Promise<PolicyDto[]> {
     const response = await apiGet<PoliciesListDto>('admin/catalog-policies')
     return response.data
+  }
+
+  /**
+   * Gets a single policy with full configuration.
+   *
+   * @param policyId - Policy ID
+   * @returns Policy with full configuration
+   */
+  async getPolicyById(policyId: string): Promise<PolicyDetailDto> {
+    return apiGet<PolicyDetailDto>(`admin/catalog-policies/${policyId}`)
   }
 
   /**

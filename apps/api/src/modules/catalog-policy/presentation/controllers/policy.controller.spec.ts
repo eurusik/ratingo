@@ -3,11 +3,13 @@
  *
  * Unit tests for PolicyController endpoints:
  * - GET /admin/catalog-policies
+ * - GET /admin/catalog-policies/:id
  * - POST /admin/catalog-policies
  * - POST /admin/catalog-policies/:id/prepare
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
 import { PolicyController } from './policy.controller';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
@@ -88,6 +90,133 @@ describe('PolicyController', () => {
       const result = await controller.getPolicies();
 
       expect(result.data).toEqual([]);
+    });
+  });
+
+  describe('getPolicyById', () => {
+    const mockFullPolicy = {
+      id: 'policy-1',
+      version: 2,
+      isActive: true,
+      policy: {
+        allowedCountries: ['US', 'GB', 'UA'],
+        blockedCountries: ['RU', 'BY'],
+        blockedCountryMode: 'ANY',
+        allowedLanguages: ['en', 'uk'],
+        blockedLanguages: ['ru'],
+        globalProviders: ['netflix', 'prime', 'disney'],
+        breakoutRules: [
+          {
+            id: 'high-quality',
+            name: 'High Quality Exception',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 10000,
+              minQualityScoreNormalized: 0.7,
+            },
+          },
+        ],
+        eligibilityMode: 'STRICT',
+        homepage: { minRelevanceScore: 50 },
+      },
+      createdAt: new Date('2024-01-01'),
+      activatedAt: new Date('2024-01-02'),
+    };
+
+    it('should return policy with full config', async () => {
+      mockPolicyRepository.findById.mockResolvedValue(mockFullPolicy);
+
+      const result = await controller.getPolicyById('policy-1');
+
+      expect(result.id).toBe('policy-1');
+      expect(result.name).toBe('Policy v2');
+      expect(result.version).toBe('2');
+      expect(result.status).toBe('active');
+      expect(result.createdAt).toEqual(mockFullPolicy.createdAt);
+      expect(result.activatedAt).toEqual(mockFullPolicy.activatedAt);
+
+      // Verify config is included
+      expect(result.config).toBeDefined();
+      expect(result.config.allowedCountries).toEqual(['US', 'GB', 'UA']);
+      expect(result.config.blockedCountries).toEqual(['RU', 'BY']);
+      expect(result.config.blockedCountryMode).toBe('ANY');
+      expect(result.config.allowedLanguages).toEqual(['en', 'uk']);
+      expect(result.config.blockedLanguages).toEqual(['ru']);
+      expect(result.config.globalProviders).toEqual(['netflix', 'prime', 'disney']);
+      expect(result.config.eligibilityMode).toBe('STRICT');
+      expect(result.config.homepage.minRelevanceScore).toBe(50);
+
+      // Verify breakout rules
+      expect(result.config.breakoutRules).toHaveLength(1);
+      expect(result.config.breakoutRules[0].id).toBe('high-quality');
+      expect(result.config.breakoutRules[0].name).toBe('High Quality Exception');
+      expect(result.config.breakoutRules[0].priority).toBe(1);
+      expect(result.config.breakoutRules[0].requirements.minImdbVotes).toBe(10000);
+    });
+
+    it('should return inactive status for non-active policy', async () => {
+      mockPolicyRepository.findById.mockResolvedValue({
+        ...mockFullPolicy,
+        isActive: false,
+        activatedAt: null,
+      });
+
+      const result = await controller.getPolicyById('policy-1');
+
+      expect(result.status).toBe('inactive');
+      expect(result.activatedAt).toBeUndefined();
+    });
+
+    it('should throw NotFoundException when policy not found', async () => {
+      mockPolicyRepository.findById.mockResolvedValue(null);
+
+      await expect(controller.getPolicyById('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(controller.getPolicyById('non-existent')).rejects.toThrow(
+        'Policy with ID non-existent not found',
+      );
+    });
+
+    it('should handle policy with empty breakout rules', async () => {
+      mockPolicyRepository.findById.mockResolvedValue({
+        ...mockFullPolicy,
+        policy: {
+          ...mockFullPolicy.policy,
+          breakoutRules: [],
+        },
+      });
+
+      const result = await controller.getPolicyById('policy-1');
+
+      expect(result.config.breakoutRules).toEqual([]);
+    });
+
+    it('should handle policy with multiple breakout rules', async () => {
+      mockPolicyRepository.findById.mockResolvedValue({
+        ...mockFullPolicy,
+        policy: {
+          ...mockFullPolicy.policy,
+          breakoutRules: [
+            {
+              id: 'rule-1',
+              name: 'Rule 1',
+              priority: 1,
+              requirements: { minImdbVotes: 5000 },
+            },
+            {
+              id: 'rule-2',
+              name: 'Rule 2',
+              priority: 2,
+              requirements: { requireAnyOfProviders: ['netflix'] },
+            },
+          ],
+        },
+      });
+
+      const result = await controller.getPolicyById('policy-1');
+
+      expect(result.config.breakoutRules).toHaveLength(2);
+      expect(result.config.breakoutRules[0].id).toBe('rule-1');
+      expect(result.config.breakoutRules[1].id).toBe('rule-2');
     });
   });
 
