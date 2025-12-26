@@ -398,37 +398,12 @@
     - _Requirements: 9.5_
 
 - [ ] 17. Observability
-  - [ ] 17.1 Create CatalogMetrics service
-    - Create `apps/api/src/modules/catalog-policy/infrastructure/metrics/catalog-metrics.ts`
-    - Implement ICatalogMetrics interface
-    - _Requirements: 8.1-8.5_
-
-  - [ ] 17.2 Add catalog metrics
-    - catalog_eligible_total (Gauge)
-    - catalog_ineligible_total (Gauge)
-    - catalog_pending_total (Gauge)
-    - catalog_reason_total (Gauge) - current state per reason
-    - catalog_reason_emitted_total (Counter) - event stream per reason
-    - catalog_policy_version_active (Gauge)
-    - catalog_evaluation_duration_ms (Histogram)
-    - _Requirements: 8.1-8.5_
-    - _Design Decision: DD-4 (Two Reason Metrics)_
-
-  - [ ] 17.3 Create CatalogAuditLogger service
-    - Create `apps/api/src/modules/catalog-policy/infrastructure/audit/catalog-audit-logger.ts`
-    - Implement ICatalogAuditLogger interface
-    - _Requirements: 8.6, 8.7_
-
-  - [ ] 17.4 Add audit logging
-    - Log eligibility status changes with mediaId, oldStatus, newStatus, reasons, policyVersion
-    - Log re-evaluation events even without status change ("re-evaluated under policy N")
-    - _Requirements: 8.6, 8.7_
-
-  - [ ] 17.5 Integrate metrics with evaluation jobs
-    - Update gauges after EVALUATE_CATALOG_ITEM and RE_EVALUATE_CATALOG
-    - Emit reason counters on each evaluation
-    - Record evaluation duration
-    - _Requirements: 8.1-8.5_
+  - **See detailed spec:** `.kiro/specs/catalog-observability/`
+  - Implement Prometheus metrics and audit logging for catalog policy engine
+  - Metrics: eligible/ineligible/pending counts, reason breakdown, policy version, evaluation duration
+  - Audit logging: status changes, re-evaluations
+  - _Requirements: 8.1-8.7_
+  - _Spec: catalog-observability (requirements.md, design.md, tasks.md)_
 
 - [x] 18. Create catalog-policy NestJS module
   - Create `apps/api/src/modules/catalog-policy/catalog-policy.module.ts`

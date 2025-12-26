@@ -2,8 +2,9 @@ import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/shared/utils'
 import type { RunStatusType, PolicyStatusType } from '../types'
+import { useTranslation } from '@/shared/i18n'
 
-// Extended badge variants with success variant for status mapping
+// Badge variants with success variant for status mapping
 const statusBadgeVariants = cva(
   'inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
   {
@@ -27,11 +28,12 @@ const statusBadgeVariants = cva(
   }
 )
 
-// Status to variant mapping according to requirements
+// Status to variant mapping
 const statusVariantMap: Record<string, VariantProps<typeof statusBadgeVariants>['variant']> = {
   // RunStatus mapping
   'running': 'default',      // blue styling
-  'success': 'success',      // green styling
+  'prepared': 'success',     // green styling (changed from 'success' status)
+  'success': 'success',      // green styling (legacy support)
   'failed': 'destructive',   // red styling
   'cancelled': 'secondary',  // gray styling
   'promoted': 'outline',     // purple/special styling
@@ -49,9 +51,30 @@ export interface StatusBadgeProps
   variant?: 'default' | 'compact'
 }
 
+/**
+ * Status badge with translated text.
+ * 
+ * @example
+ * <StatusBadge status="running" />
+ */
 function StatusBadge({ className, status, variant = 'default', ...props }: StatusBadgeProps) {
+  const { dict } = useTranslation()
   const badgeVariant = statusVariantMap[status] || 'default'
   const size = variant === 'compact' ? 'compact' : 'default'
+  
+  // Gets translated status text
+  const getStatusText = (status: string): string => {
+    // Check if it's a run status
+    if (status in (dict.admin.policies.runStatus || {})) {
+      return dict.admin.policies.runStatus[status as keyof typeof dict.admin.policies.runStatus]
+    }
+    // Check if it's a policy status
+    if (status in (dict.admin.policies.status || {})) {
+      return dict.admin.policies.status[status as keyof typeof dict.admin.policies.status]
+    }
+    // Fallback to raw status
+    return status
+  }
   
   return (
     <div 
@@ -60,7 +83,7 @@ function StatusBadge({ className, status, variant = 'default', ...props }: Statu
       data-status={status}
       {...props}
     >
-      {status}
+      {getStatusText(status)}
     </div>
   )
 }

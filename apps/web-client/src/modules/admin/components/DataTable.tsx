@@ -295,12 +295,12 @@ function DataTable<T>({
       {pagination && (
         <div className="flex items-center justify-between px-2">
           <div className="flex-1 text-sm text-muted-foreground">
-            Showing {internalPagination.pageIndex * internalPagination.pageSize + 1} to{" "}
+            {dict.admin.common.pagination.showing} {internalPagination.pageIndex * internalPagination.pageSize + 1} {dict.admin.common.pagination.to}{" "}
             {Math.min(
               (internalPagination.pageIndex + 1) * internalPagination.pageSize,
               pagination.total
             )}{" "}
-            of {pagination.total} entries
+            {dict.admin.common.pagination.of} {pagination.total} {dict.admin.common.pagination.entries}
           </div>
           <div className="flex items-center space-x-6 lg:space-x-8">
             <div className="flex items-center space-x-2">
@@ -310,7 +310,7 @@ function DataTable<T>({
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
-                Previous
+                {dict.admin.common.pagination.previous}
               </Button>
               <Button
                 variant="outline"
@@ -318,7 +318,7 @@ function DataTable<T>({
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                Next
+                {dict.admin.common.pagination.next}
               </Button>
             </div>
           </div>

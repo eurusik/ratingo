@@ -7,7 +7,7 @@ import { Button } from '../../../shared/ui/button'
 import { Badge } from '../../../shared/ui/badge'
 import { Plus, Play } from 'lucide-react'
 import { DataTable, StatusBadge, ConfirmActionDialog } from '../../../modules/admin'
-import { DataTableColumnDef } from '../../../modules/admin/types'
+import { DataTableColumnDef, POLICY_STATUS } from '../../../modules/admin/types'
 import { useTranslation } from '../../../shared/i18n'
 import { toast } from 'sonner'
 import { usePolicies, usePreparePolicy } from '../../../core/query'
@@ -47,8 +47,8 @@ export default function PoliciesPage() {
       header: dict.admin.policies.columns.status,
       accessorKey: 'status',
       cell: ({ row }) => (
-        <Badge variant={row.original.status === 'active' ? 'default' : 'secondary'}>
-          {row.original.status === 'active' ? dict.admin.policies.status.active : dict.admin.policies.status.inactive}
+        <Badge variant={row.original.status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary'}>
+          {row.original.status === POLICY_STATUS.ACTIVE ? dict.admin.policies.status.active : dict.admin.policies.status.inactive}
         </Badge>
       )
     },

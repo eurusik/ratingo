@@ -12,9 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../shared/ui/select'
-import { DataTable, StatusBadge } from '../../../modules/admin'
-import { DataTableColumnDef } from '../../../modules/admin/types'
-import { useTranslation } from '../../../shared/i18n'
+import { DataTable, StatusBadge } from '@/modules/admin'
+import { DataTableColumnDef, RUN_STATUS } from '@/modules/admin/types'
+import { useTranslation } from '@/shared/i18n'
 import { useFilteredRuns } from '../../../core/query/admin'
 import { type EvaluationRunDto } from '../../../core/api/admin'
 
@@ -116,7 +116,7 @@ export default function RunsPage() {
         const end = row.original.finishedAt ? new Date(row.original.finishedAt) : new Date()
         const duration = Math.round((end.getTime() - start.getTime()) / 1000 / 60) // minutes
         
-        if (row.original.status === 'running') {
+        if (row.original.status === RUN_STATUS.RUNNING) {
           return <span className="text-muted-foreground">{duration}{dict.admin.runs.duration.minutes} ({dict.admin.runs.duration.running})</span>
         }
         
@@ -147,9 +147,9 @@ export default function RunsPage() {
               <SelectContent>
                 <SelectItem value="all">{dict.admin.runs.filters.allStatuses}</SelectItem>
                 <SelectItem value="running">{dict.admin.runs.filters.running}</SelectItem>
-                <SelectItem value="prepared">{dict.admin.runs.filters.success}</SelectItem>
+                <SelectItem value="prepared">{dict.admin.runs.filters.prepared}</SelectItem>
                 <SelectItem value="failed">{dict.admin.runs.filters.failed}</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="cancelled">{dict.admin.runs.filters.cancelled}</SelectItem>
                 <SelectItem value="promoted">{dict.admin.runs.filters.promoted}</SelectItem>
               </SelectContent>
             </Select>

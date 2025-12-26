@@ -522,6 +522,13 @@
         "active": "Активна",
         "inactive": "Неактивна"
       },
+      "runStatus": {
+        "running": "Виконується",
+        "prepared": "Підготовлено",
+        "failed": "Помилка",
+        "cancelled": "Скасовано",
+        "promoted": "Просунуто"
+      },
       "actions": {
         "view": "Переглянути",
         "prepare": "Підготувати"
@@ -537,25 +544,41 @@
       }
     },
     "policyDetail": {
+      "title": "Деталі політики",
+      "notFound": "Політику не знайдено",
+      "notFoundDescription": "Політика з ID {id} не існує",
+      "backToPolicies": "Назад до політик",
+      "lastUpdated": "Останнє оновлення",
+      "actions": {
+        "prepare": "Підготувати",
+        "preparing": "Підготовка...",
+        "viewDetails": "Переглянути деталі"
+      },
       "tabs": {
         "runs": "Запуски",
         "policy": "Політика"
       },
       "runsTable": {
+        "title": "Історія запусків оцінювання",
+        "description": "Історія запусків оцінювання для цієї політики",
         "runId": "ID запуску",
         "status": "Статус",
         "progress": "Прогрес",
         "started": "Розпочато",
-        "finished": "Завершено"
+        "finished": "Завершено",
+        "empty": "Ще немає запусків оцінювання",
+        "emptyHint": "Натисніть \"Підготувати\" щоб розпочати нове оцінювання"
       },
       "policyInfo": {
+        "title": "Деталі політики",
         "description": "Опис",
         "rules": "Правила",
         "version": "Версія",
         "status": "Статус"
       },
-      "actions": {
-        "viewDetails": "Переглянути деталі"
+      "toast": {
+        "prepareSuccess": "Оцінювання політики розпочато",
+        "prepareFailed": "Не вдалося розпочати оцінювання"
       }
     },
     "runs": {
@@ -581,12 +604,10 @@
         "allStatuses": "Всі статуси",
         "allPolicies": "Всі політики",
         "running": "Виконується",
-        "success": "Успішно",
+        "prepared": "Підготовлено",
         "failed": "Помилка",
-        "promoted": "Просунуто",
-        "contentFiltering": "Політика фільтрації контенту",
-        "ratingValidation": "Політика валідації рейтингів",
-        "userModeration": "Політика модерації користувачів"
+        "cancelled": "Скасовано",
+        "promoted": "Просунуто"
       },
       "duration": {
         "running": "виконується",
@@ -594,13 +615,24 @@
       }
     },
     "runDetail": {
+      "title": "Деталі запуску",
+      "policy": "Політика",
+      "started": "Розпочато",
       "actions": {
         "promote": "Просунути",
-        "cancel": "Скасувати"
+        "cancel": "Скасувати",
+        "promoting": "Просування...",
+        "cancelling": "Скасування..."
       },
       "progress": {
         "title": "Прогрес",
-        "complete": "завершено"
+        "complete": "завершено",
+        "processed": "оброблено",
+        "total": "всього",
+        "eligible": "підходить",
+        "ineligible": "не підходить",
+        "pending": "очікує",
+        "errors": "помилки"
       },
       "tabs": {
         "diff": "Зміни",
@@ -608,39 +640,56 @@
       },
       "diff": {
         "title": "Підсумок змін",
-        "added": "додано",
-        "modified": "змінено",
-        "removed": "видалено",
-        "itemDetails": "Деталі елемента"
+        "regressions": "регресії",
+        "improvements": "покращення",
+        "netChange": "Чиста зміна",
+        "topRegressions": "Топ регресій (виходять з каталогу)",
+        "topImprovements": "Топ покращень (входять в каталог)",
+        "statusChange": "Зміна статусу",
+        "mediaId": "ID",
+        "notAvailable": "Diff доступний тільки для статусу 'prepared'"
       },
       "errors": {
         "title": "Зразки помилок",
         "found": "помилок знайдено під час оцінювання",
         "occurrences": "випадків",
         "details": "Деталі помилки",
-        "stackTrace": "Стек трейс"
+        "stackTrace": "Стек трейс",
+        "affectedItems": "Уражені елементи",
+        "showMore": "Показати більше",
+        "showLess": "Показати менше"
+      },
+      "blockingReasons": {
+        "title": "Неможливо просунути через:",
+        "RUN_NOT_SUCCESS": "Run ще не завершився",
+        "COVERAGE_NOT_MET": "Coverage < 100%",
+        "ERRORS_EXCEEDED": "Є помилки (errors > 0)",
+        "ALREADY_PROMOTED": "Run вже промоутнутий",
+        "default": "Run не готовий до просування"
       },
       "confirmPromote": {
-        "title": "Просунути запуск",
-        "description": "Ви впевнені, що хочете просунути цей запуск? Це застосує всі зміни до продакшн середовища.",
-        "confirmText": "ПРОСУНУТИ",
-        "confirm": "Просунути"
+        "title": "Просунути політику в продакшн",
+        "description": "Ви збираєтесь просунути {policyName} (Run: {runId}) в продакшн.",
+        "warning": "⚠️ Це вплине на продакшн каталог негайно!",
+        "typeToConfirm": "Введіть PROMOTE для підтвердження",
+        "placeholder": "PROMOTE",
+        "cancel": "Скасувати",
+        "confirm": "Просунути в продакшн",
+        "promoting": "Просування..."
       },
       "confirmCancel": {
-        "title": "Скасувати запуск",
-        "description": "Ви впевнені, що хочете скасувати цей запущений процес оцінювання? Цю дію неможливо скасувати.",
-        "confirm": "Скасувати запуск"
+        "title": "Скасувати запуск оцінювання",
+        "description": "Ви збираєтесь скасувати запуск оцінювання для {policyName} (Run: {runId}).",
+        "warning": "⚠️ Цю дію неможливо скасувати. Запуск буде зупинено та позначено як скасований.",
+        "keepRunning": "Продовжити виконання",
+        "confirm": "Скасувати запуск",
+        "cancelling": "Скасування..."
       },
       "toast": {
         "promoteSuccess": "Запуск просунуто успішно",
         "promoteFailed": "Не вдалося просунути запуск",
         "cancelSuccess": "Запуск скасовано успішно",
         "cancelFailed": "Не вдалося скасувати запуск"
-      },
-      "tooltip": {
-        "cannotPromote": "Неможливо просунути через:",
-        "coverageThreshold": "Поріг покриття не досягнуто ({current}% < {required}%)",
-        "errorsFound": "Знайдено {count} помилок під час оцінювання"
       }
     },
     "common": {
@@ -654,7 +703,22 @@
       "copied": "Скопійовано",
       "jsonData": "JSON дані",
       "copyToClipboard": "JSON скопійовано в буфер обміну",
-      "copyFailed": "Не вдалося скопіювати JSON"
+      "copyFailed": "Не вдалося скопіювати JSON",
+      "pagination": {
+        "showing": "Показано",
+        "to": "до",
+        "of": "з",
+        "entries": "записів",
+        "previous": "Попередня",
+        "next": "Наступна"
+      },
+      "confirmDialog": {
+        "cancel": "Скасувати",
+        "typeToConfirm": "Введіть",
+        "toConfirm": "для підтвердження",
+        "errorTyping": "Будь ласка, введіть \"{text}\" для підтвердження",
+        "errorOccurred": "Виникла помилка"
+      }
     }
   }
 }

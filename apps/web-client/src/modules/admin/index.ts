@@ -12,6 +12,8 @@ export { Sidebar, SidebarTrigger } from './components/Sidebar'
 export { ProgressWithStats } from './components/ProgressWithStats'
 export { JsonViewer } from './components/JsonViewer'
 export { RunStatusCard } from './components/RunStatusCard'
+export { PromoteConfirmDialog } from './components/PromoteConfirmDialog'
+export { CancelConfirmDialog } from './components/CancelConfirmDialog'
 
 // Configuration
 export { ADMIN_NAVIGATION, getAdminNavigation } from './config'

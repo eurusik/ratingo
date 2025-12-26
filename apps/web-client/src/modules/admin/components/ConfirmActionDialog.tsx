@@ -17,9 +17,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/shared/ui/alert-dialog'
+import { useTranslation } from '@/shared/i18n'
 
 import { ConfirmActionDialogProps } from '../types'
 
+/**
+ * Confirmation dialog with optional typing requirement.
+ * 
+ * @example
+ * <ConfirmActionDialog
+ *   open={isOpen}
+ *   onOpenChange={setIsOpen}
+ *   title="Delete User"
+ *   confirmText="DELETE"
+ *   requireTyping={true}
+ *   onConfirm={handleDelete}
+ *   variant="destructive"
+ * />
+ */
 function ConfirmActionDialog({
   open,
   onOpenChange,
@@ -30,6 +45,7 @@ function ConfirmActionDialog({
   onConfirm,
   variant = 'default',
 }: ConfirmActionDialogProps) {
+  const { dict } = useTranslation()
   const [isLoading, setIsLoading] = React.useState(false)
   const [typedText, setTypedText] = React.useState('')
   const [error, setError] = React.useState<string | null>(null)
@@ -45,7 +61,7 @@ function ConfirmActionDialog({
 
   const handleConfirm = async () => {
     if (requireTyping && typedText !== confirmText) {
-      setError(`Please type "${confirmText}" to confirm`)
+      setError(dict.admin.common.confirmDialog.errorTyping.replace('{text}', confirmText))
       return
     }
 
@@ -56,7 +72,7 @@ function ConfirmActionDialog({
       await onConfirm()
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : dict.admin.common.confirmDialog.errorOccurred)
     } finally {
       setIsLoading(false)
     }
@@ -82,7 +98,7 @@ function ConfirmActionDialog({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="confirmation">
-                Type <span className="font-mono font-semibold">{confirmText}</span> to confirm:
+                {dict.admin.common.confirmDialog.typeToConfirm} <span className="font-mono font-semibold">{confirmText}</span> {dict.admin.common.confirmDialog.toConfirm}:
               </Label>
               <Input
                 id="confirmation"
@@ -112,7 +128,7 @@ function ConfirmActionDialog({
             onClick={handleCancel}
             disabled={isLoading}
           >
-            Cancel
+            {dict.admin.common.confirmDialog.cancel}
           </AlertDialogCancel>
           <Button
             onClick={handleConfirm}

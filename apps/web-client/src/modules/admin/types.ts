@@ -1,8 +1,8 @@
 /**
- * Admin UI types
+ * Admin UI types.
  * 
- * Domain types (Policy, EvaluationRun, etc.) are in core/api/admin.ts
- * This file contains only UI-specific types (component props, configs)
+ * UI-specific types (component props, configs).
+ * Domain types are in core/api/admin.ts.
  */
 
 import type { ReactNode, HTMLAttributes } from 'react'
@@ -144,33 +144,70 @@ export interface DataTableProps<T> {
 // Status types and constants
 // ============================================================================
 
-export type RunStatusType = 'pending' | 'running' | 'success' | 'failed' | 'cancelled' | 'promoted'
+// Run status type (uses 'prepared' not 'success')
+export type RunStatusType = 'running' | 'prepared' | 'failed' | 'cancelled' | 'promoted'
 export type PolicyStatusType = 'active' | 'inactive'
 
-export const RunStatus = {
-  PENDING: 'pending',
+/**
+ * Run status constants.
+ * 
+ * @example
+ * if (run.status === RUN_STATUS.PREPARED) { ... }
+ */
+export const RUN_STATUS = {
   RUNNING: 'running',
-  SUCCESS: 'success',
+  PREPARED: 'prepared',
   FAILED: 'failed',
   CANCELLED: 'cancelled',
   PROMOTED: 'promoted',
 } as const satisfies Record<string, RunStatusType>
 
-export const PolicyStatus = {
+/**
+ * Policy status constants.
+ * 
+ * @example
+ * if (policy.status === POLICY_STATUS.ACTIVE) { ... }
+ */
+export const POLICY_STATUS = {
   ACTIVE: 'active',
   INACTIVE: 'inactive',
 } as const satisfies Record<string, PolicyStatusType>
 
-// ============================================================================
-// Domain types (used in pages)
-// ============================================================================
+// Terminal statuses (run has finished)
+export const TERMINAL_STATUSES = ['prepared', 'failed', 'cancelled', 'promoted'] as const
 
-export interface BlockingReason {
-  type: 'coverage' | 'errors' | 'status' | 'permissions'
-  message: string
-  details?: Record<string, unknown>
+// Non-terminal statuses (run is in progress)
+export const NON_TERMINAL_STATUSES = ['running'] as const
+
+// Blocking reason codes from backend
+export type BlockingReasonCode = 
+  | 'RUN_NOT_SUCCESS'
+  | 'COVERAGE_NOT_MET'
+  | 'ERRORS_EXCEEDED'
+  | 'ALREADY_PROMOTED'
+
+/**
+ * @deprecated Use i18n translations (dict.admin.runDetail.blockingReasons)
+ */
+export const BLOCKING_REASON_MESSAGES: Record<BlockingReasonCode, string> = {
+  RUN_NOT_SUCCESS: 'Run ще не завершився',
+  COVERAGE_NOT_MET: 'Coverage < 100%',
+  ERRORS_EXCEEDED: 'Є помилки (errors > 0)',
+  ALREADY_PROMOTED: 'Run вже промоутнутий',
 }
 
+/** @deprecated Use RUN_STATUS instead */
+export const RunStatus = RUN_STATUS
+/** @deprecated Use POLICY_STATUS instead */
+export const PolicyStatus = POLICY_STATUS
+
+// ============================================================================
+// Domain types (used in pages) - DEPRECATED
+// ============================================================================
+
+/**
+ * @deprecated Use components['schemas']['ProgressStatsDto'] from @ratingo/api-contract
+ */
 export interface ProgressStats {
   processed: number
   total: number
@@ -178,4 +215,13 @@ export interface ProgressStats {
   ineligible: number
   pending: number
   errors: number
+}
+
+/**
+ * @deprecated Use BlockingReasonCode type instead
+ */
+export interface BlockingReason {
+  type: 'coverage' | 'errors' | 'status' | 'permissions'
+  message: string
+  details?: Record<string, unknown>
 }
