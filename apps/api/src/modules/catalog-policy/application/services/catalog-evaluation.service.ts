@@ -23,6 +23,7 @@ import {
   PolicyEngineInput,
   WatchProvidersMap,
 } from '../../domain/types/policy.types';
+import { EligibilityStatus } from '../../domain/constants/evaluation.constants';
 
 export interface EvaluationResult {
   mediaItemId: string;
@@ -176,18 +177,18 @@ export class CatalogEvaluationService {
 
         evaluations.push(evaluation);
 
-        // Count by status
+        // Count by status using constants
         switch (evalResult.status) {
-          case 'ELIGIBLE':
+          case EligibilityStatus.ELIGIBLE:
             result.eligible++;
             break;
-          case 'INELIGIBLE':
+          case EligibilityStatus.INELIGIBLE:
             result.ineligible++;
             break;
-          case 'PENDING':
+          case EligibilityStatus.PENDING:
             result.pending++;
             break;
-          case 'REVIEW':
+          case EligibilityStatus.REVIEW:
             result.review++;
             break;
         }

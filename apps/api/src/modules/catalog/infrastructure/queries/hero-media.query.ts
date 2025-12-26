@@ -13,6 +13,7 @@ import {
   CLASSIC_YEARS_THRESHOLD,
 } from '../../../../common/constants';
 import { HeroMediaItem, HeroShowProgress } from '../../domain/models/hero-media.model';
+import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
 
 /**
  * Options for hero media query.
@@ -59,7 +60,7 @@ export class HeroMediaQuery {
         gte(schema.mediaStats.qualityScore, HERO_MIN_QUALITY_SCORE),
         gte(schema.mediaStats.popularityScore, HERO_MIN_POPULARITY_SCORE),
         // Eligibility filter: only show ELIGIBLE items
-        eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+        eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
         // Ready filter: only show items with ready ingestion status
         eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
         // Not deleted filter

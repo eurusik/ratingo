@@ -13,6 +13,7 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { eq, sql } from 'drizzle-orm';
+import { EligibilityStatus } from '../../domain/constants/evaluation.constants';
 
 export interface AggregatedCounters {
   processed: number;
@@ -39,9 +40,9 @@ export class RunAggregationService {
     const result = await this.db
       .select({
         processed: sql<number>`COUNT(*)::int`,
-        eligible: sql<number>`COUNT(*) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = 'eligible')::int`,
-        ineligible: sql<number>`COUNT(*) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = 'ineligible')::int`,
-        pending: sql<number>`COUNT(*) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = 'pending')::int`,
+        eligible: sql<number>`COUNT(*) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.ELIGIBLE})::int`,
+        ineligible: sql<number>`COUNT(*) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.INELIGIBLE})::int`,
+        pending: sql<number>`COUNT(*) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.PENDING})::int`,
       })
       .from(schema.mediaCatalogEvaluations)
       .where(eq(schema.mediaCatalogEvaluations.runId, runId));

@@ -19,6 +19,7 @@ import {
   PolicyEngineInput,
   WatchProvidersMap,
 } from '../domain/types/policy.types';
+import { EligibilityStatus } from '../domain/constants/evaluation.constants';
 
 // Configuration
 const BATCH_SIZE = 100;
@@ -124,18 +125,18 @@ async function main() {
 
           evaluations.push(evaluation);
 
-          // Count by status
+          // Count by status using constants
           switch (evalResult.status) {
-            case 'ELIGIBLE':
+            case EligibilityStatus.ELIGIBLE:
               counters.eligible++;
               break;
-            case 'INELIGIBLE':
+            case EligibilityStatus.INELIGIBLE:
               counters.ineligible++;
               break;
-            case 'PENDING':
+            case EligibilityStatus.PENDING:
               counters.pending++;
               break;
-            case 'REVIEW':
+            case EligibilityStatus.REVIEW:
               counters.review++;
               break;
           }
@@ -194,7 +195,7 @@ async function main() {
     const eligibleCount = await db
       .select({ id: schema.mediaCatalogEvaluations.mediaItemId })
       .from(schema.mediaCatalogEvaluations)
-      .where(eq(schema.mediaCatalogEvaluations.status, 'eligible'));
+      .where(eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE));
 
     console.log(`   Eligible items in evaluations: ${eligibleCount.length}`);
   } catch (error) {
@@ -270,7 +271,7 @@ async function bulkUpsertEvaluations(
 
   const values = evaluations.map((e) => ({
     mediaItemId: e.mediaItemId,
-    status: e.status.toLowerCase() as 'pending' | 'eligible' | 'ineligible' | 'review',
+    status: e.status as 'pending' | 'eligible' | 'ineligible' | 'review',
     reasons: e.reasons,
     relevanceScore: e.relevanceScore,
     policyVersion: e.policyVersion,

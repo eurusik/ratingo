@@ -5,7 +5,7 @@
  * Provides high-level operations with validation and business logic.
  */
 
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import {
   ICatalogPolicyRepository,
@@ -13,6 +13,7 @@ import {
 } from '../../infrastructure/repositories/catalog-policy.repository';
 import { CatalogPolicy, PolicyConfig } from '../../domain/types/policy.types';
 import { validatePolicyOrThrow } from '../../domain/validation/policy.schema';
+import { InvalidEligibilityStatusError, InvalidBreakoutRuleError } from '../../domain/errors';
 
 @Injectable()
 export class CatalogPolicyService {
@@ -60,17 +61,29 @@ export class CatalogPolicyService {
    *
    * @param rawPolicy - Raw policy configuration (will be validated and normalized)
    * @returns Created policy with auto-incremented version
+   * @throws {BadRequestException} If policy validation fails
    */
   async createDraft(rawPolicy: unknown): Promise<CatalogPolicy> {
-    // Validate and normalize
-    const validatedPolicy = validatePolicyOrThrow(rawPolicy);
+    try {
+      // Validate and normalize
+      const validatedPolicy = validatePolicyOrThrow(rawPolicy);
 
-    // Create in repository
-    const created = await this.policyRepository.create(validatedPolicy);
+      // Create in repository
+      const created = await this.policyRepository.create(validatedPolicy);
 
-    this.logger.log(`Created policy draft v${created.version}`);
+      this.logger.log(`Created policy draft v${created.version}`);
 
-    return created;
+      return created;
+    } catch (error) {
+      // Map domain errors to HTTP exceptions
+      if (error instanceof InvalidEligibilityStatusError) {
+        throw new BadRequestException(error.message);
+      }
+      if (error instanceof InvalidBreakoutRuleError) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
   }
 
   /**

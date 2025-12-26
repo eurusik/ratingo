@@ -1,13 +1,8 @@
 /**
  * Catalog Policy Evaluation Constants
- *
- * Centralized constants for eligibility statuses, run statuses, and evaluation reasons
- * to avoid magic strings throughout the codebase.
  */
 
-/**
- * Eligibility Status Values (stored in DB)
- */
+/** Eligibility status values (stored in DB). */
 export const EligibilityStatus = {
   PENDING: 'pending',
   ELIGIBLE: 'eligible',
@@ -17,22 +12,16 @@ export const EligibilityStatus = {
 
 export type EligibilityStatusType = (typeof EligibilityStatus)[keyof typeof EligibilityStatus];
 
-/**
- * Virtual status for diff comparisons - item doesn't exist in evaluation set.
- * NOT stored in DB, only used in diff logic.
- */
+/** Virtual status for diff comparisons. NOT stored in DB. */
 export const DIFF_STATUS_NONE = 'none' as const;
 
+/** Combines EligibilityStatusType with DIFF_STATUS_NONE for diff comparisons. */
+export type DiffStatus = EligibilityStatusType | typeof DIFF_STATUS_NONE;
+
 /**
- * Evaluation Run Status Values
+ * Evaluation run status values.
  *
- * Status lifecycle: running → prepared → promoted | cancelled | failed
- *
- * - RUNNING: Evaluation in progress
- * - PREPARED: Evaluation complete, ready for promotion (replaces legacy 'completed'/'success')
- * - PROMOTED: Policy activated, terminal state
- * - CANCELLED: User cancelled, terminal state
- * - FAILED: Error occurred, terminal state
+ * Lifecycle: running → prepared → promoted | cancelled | failed
  */
 export const RunStatus = {
   RUNNING: 'running',
@@ -40,33 +29,22 @@ export const RunStatus = {
   FAILED: 'failed',
   CANCELLED: 'cancelled',
   PROMOTED: 'promoted',
-  /** @deprecated Legacy status - use PREPARED instead. Kept for backward compatibility during migration. */
-  PENDING: 'pending',
-  /** @deprecated Legacy status - use PREPARED instead. Kept for backward compatibility during migration. */
-  SUCCESS: 'success',
-  /** @deprecated Legacy status - use PREPARED instead. Kept for backward compatibility during migration. */
-  COMPLETED: 'completed',
 } as const;
 
 export type RunStatusType = (typeof RunStatus)[keyof typeof RunStatus];
 
-/** Active (non-deprecated) run status values */
 export type ActiveRunStatusType = 'running' | 'prepared' | 'failed' | 'cancelled' | 'promoted';
 
-/** Run statuses that indicate the run is finished and can be diffed */
+/** Run statuses that can be diffed. */
 export const DIFFABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.PREPARED, RunStatus.PROMOTED];
 
-/** Run statuses that indicate the run can be cancelled */
+/** Run statuses that can be cancelled. */
 export const CANCELLABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.RUNNING, RunStatus.PREPARED];
 
-/** Run statuses that indicate the run can be promoted */
+/** Run statuses that can be promoted. */
 export const PROMOTABLE_RUN_STATUSES: RunStatusType[] = [RunStatus.PREPARED];
 
-/**
- * Blocking Reason Codes
- *
- * Reasons why a run cannot be promoted.
- */
+/** Blocking reason codes for run promotion. */
 export const BlockingReasonCode = {
   RUN_NOT_SUCCESS: 'RUN_NOT_SUCCESS',
   COVERAGE_NOT_MET: 'COVERAGE_NOT_MET',
@@ -76,28 +54,7 @@ export const BlockingReasonCode = {
 
 export type BlockingReasonType = (typeof BlockingReasonCode)[keyof typeof BlockingReasonCode];
 
-/**
- * Normalizes legacy status values to current status values.
- * Use this when reading from database to handle legacy data.
- */
-export function normalizeRunStatus(status: string): ActiveRunStatusType {
-  switch (status) {
-    case 'pending':
-      return 'running';
-    case 'completed':
-    case 'success':
-      return 'prepared';
-    default:
-      return status as ActiveRunStatusType;
-  }
-}
-
-/**
- * Evaluation Reason Keys
- *
- * These are stored in the database and used for i18n lookups.
- * Human-readable descriptions are provided via getReasonDescriptions().
- */
+/** Evaluation reason keys (stored in DB). */
 export const EvaluationReason = {
   // Missing data reasons (return PENDING)
   MISSING_ORIGIN_COUNTRY: 'MISSING_ORIGIN_COUNTRY',
@@ -125,7 +82,5 @@ export const EvaluationReason = {
 
 export type EvaluationReasonType = (typeof EvaluationReason)[keyof typeof EvaluationReason];
 
-/**
- * Default policy version for items that haven't been evaluated yet
- */
+/** Default policy version for unevaluated items. */
 export const DEFAULT_POLICY_VERSION = 0;

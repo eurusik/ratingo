@@ -18,6 +18,7 @@ import {
   VOTE_SOURCE,
 } from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
 
 /**
  * Options for trending movies query.
@@ -116,7 +117,7 @@ export class TrendingMoviesQuery {
       const conditions: any[] = [
         isNotNull(schema.mediaStats.popularityScore),
         // Eligibility filter: only show ELIGIBLE items
-        eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+        eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
         // Ready filter: only show items with ready ingestion status
         eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
         // Not deleted filter

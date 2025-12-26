@@ -12,21 +12,11 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { MediaCatalogEvaluation, EligibilityStatus } from '../../domain/types/policy.types';
-import {
-  EligibilityStatus as EligibilityStatusConst,
-  EligibilityStatusType,
-} from '../../domain/constants/evaluation.constants';
+import { MediaCatalogEvaluation } from '../../domain/types/policy.types';
+import { EligibilityStatusType } from '../../domain/constants/evaluation.constants';
 import { DatabaseException } from '../../../../common/exceptions';
 
 export const MEDIA_CATALOG_EVALUATION_REPOSITORY = 'MEDIA_CATALOG_EVALUATION_REPOSITORY';
-
-/**
- * Converts domain EligibilityStatus (UPPERCASE) to DB enum (lowercase)
- */
-function toDbStatus(status: EligibilityStatus): EligibilityStatusType {
-  return status.toLowerCase() as EligibilityStatusType;
-}
 
 export interface IMediaCatalogEvaluationRepository {
   /**
@@ -62,17 +52,19 @@ export interface IMediaCatalogEvaluationRepository {
   ): Promise<MediaCatalogEvaluation[]>;
 
   /**
-   * Finds evaluations by status.
+   * Finds evaluations by status (canonical lowercase).
    */
   findByStatus(
-    status: EligibilityStatus,
+    status: EligibilityStatusType,
     options?: { limit?: number; offset?: number },
   ): Promise<MediaCatalogEvaluation[]>;
 
   /**
    * Counts evaluations by status for a policy version.
    */
-  countByStatusAndPolicyVersion(policyVersion: number): Promise<Record<EligibilityStatus, number>>;
+  countByStatusAndPolicyVersion(
+    policyVersion: number,
+  ): Promise<Record<EligibilityStatusType, number>>;
 }
 
 @Injectable()
@@ -86,13 +78,11 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
 
   async upsert(evaluation: MediaCatalogEvaluation): Promise<MediaCatalogEvaluation> {
     try {
-      const dbStatus = toDbStatus(evaluation.status);
-
       const result = await this.db
         .insert(schema.mediaCatalogEvaluations)
         .values({
           mediaItemId: evaluation.mediaItemId,
-          status: dbStatus,
+          status: evaluation.status,
           reasons: evaluation.reasons,
           relevanceScore: evaluation.relevanceScore,
           policyVersion: evaluation.policyVersion,
@@ -106,7 +96,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
             schema.mediaCatalogEvaluations.policyVersion,
           ],
           set: {
-            status: dbStatus,
+            status: evaluation.status,
             reasons: evaluation.reasons,
             relevanceScore: evaluation.relevanceScore,
             breakoutRuleId: evaluation.breakoutRuleId,
@@ -133,7 +123,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
     try {
       const values = evaluations.map((e) => ({
         mediaItemId: e.mediaItemId,
-        status: toDbStatus(e.status),
+        status: e.status,
         reasons: e.reasons,
         relevanceScore: e.relevanceScore,
         policyVersion: e.policyVersion,
@@ -245,7 +235,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
   }
 
   async findByStatus(
-    status: EligibilityStatus,
+    status: EligibilityStatusType,
     options?: { limit?: number; offset?: number },
   ): Promise<MediaCatalogEvaluation[]> {
     try {
@@ -271,7 +261,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
 
   async countByStatusAndPolicyVersion(
     policyVersion: number,
-  ): Promise<Record<EligibilityStatus, number>> {
+  ): Promise<Record<EligibilityStatusType, number>> {
     try {
       const result = await this.db
         .select({
@@ -282,15 +272,15 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
         .where(eq(schema.mediaCatalogEvaluations.policyVersion, policyVersion))
         .groupBy(schema.mediaCatalogEvaluations.status);
 
-      const counts: Record<EligibilityStatus, number> = {
-        PENDING: 0,
-        ELIGIBLE: 0,
-        INELIGIBLE: 0,
-        REVIEW: 0,
+      const counts: Record<EligibilityStatusType, number> = {
+        pending: 0,
+        eligible: 0,
+        ineligible: 0,
+        review: 0,
       };
 
       for (const row of result) {
-        counts[row.status.toUpperCase() as EligibilityStatus] = row.count;
+        counts[row.status as EligibilityStatusType] = row.count;
       }
 
       return counts;
@@ -305,7 +295,8 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
   ): MediaCatalogEvaluation {
     return {
       mediaItemId: row.mediaItemId,
-      status: row.status.toUpperCase() as EligibilityStatus,
+      // Status is already in canonical lowercase format from DB
+      status: row.status as EligibilityStatusType,
       reasons: row.reasons,
       relevanceScore: row.relevanceScore,
       policyVersion: row.policyVersion,

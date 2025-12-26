@@ -1,10 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MediaCatalogEvaluationRepository } from './media-catalog-evaluation.repository';
-import { MediaCatalogEvaluation, EligibilityStatus } from '../../domain/types/policy.types';
+import { MediaCatalogEvaluation } from '../../domain/types/policy.types';
 import { EligibilityStatusType } from '../../domain/constants/evaluation.constants';
 import { DatabaseException } from '../../../../common/exceptions';
 
-// Test the toDbStatus function indirectly through the repository
+/**
+ * MediaCatalogEvaluationRepository Tests
+ *
+ * Tests repository operations with canonical lowercase status values.
+ * Note: Legacy toDbStatus conversion has been removed - status values
+ * are now stored directly in canonical lowercase format.
+ */
 describe('MediaCatalogEvaluationRepository', () => {
   let repository: MediaCatalogEvaluationRepository;
   let mockDb: any;
@@ -35,12 +41,12 @@ describe('MediaCatalogEvaluationRepository', () => {
     repository = module.get<MediaCatalogEvaluationRepository>(MediaCatalogEvaluationRepository);
   });
 
-  describe('toDbStatus function (tested indirectly)', () => {
-    it('should convert ELIGIBLE to eligible when upserting', async () => {
+  describe('upsert with canonical lowercase status', () => {
+    it('should store eligible status directly', async () => {
       const evaluation: MediaCatalogEvaluation = {
         mediaItemId: 'media-1',
-        status: 'ELIGIBLE' as EligibilityStatus,
-        reasons: ['MEETS_CRITERIA'],
+        status: 'eligible',
+        reasons: ['ALLOWED_COUNTRY'],
         relevanceScore: 85,
         policyVersion: 1,
         evaluatedAt: new Date(),
@@ -51,7 +57,7 @@ describe('MediaCatalogEvaluationRepository', () => {
         {
           mediaItemId: 'media-1',
           status: 'eligible',
-          reasons: ['MEETS_CRITERIA'],
+          reasons: ['ALLOWED_COUNTRY'],
           relevanceScore: 85,
           policyVersion: 1,
           evaluatedAt: new Date(),
@@ -61,7 +67,6 @@ describe('MediaCatalogEvaluationRepository', () => {
 
       await repository.upsert(evaluation);
 
-      // Verify that the status was converted to lowercase for DB storage
       expect(mockDb.values).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'eligible',
@@ -69,11 +74,11 @@ describe('MediaCatalogEvaluationRepository', () => {
       );
     });
 
-    it('should convert INELIGIBLE to ineligible when upserting', async () => {
+    it('should store ineligible status directly', async () => {
       const evaluation: MediaCatalogEvaluation = {
         mediaItemId: 'media-2',
-        status: 'INELIGIBLE' as EligibilityStatus,
-        reasons: ['FAILS_CRITERIA'],
+        status: 'ineligible',
+        reasons: ['BLOCKED_COUNTRY'],
         relevanceScore: 25,
         policyVersion: 1,
         evaluatedAt: new Date(),
@@ -84,7 +89,7 @@ describe('MediaCatalogEvaluationRepository', () => {
         {
           mediaItemId: 'media-2',
           status: 'ineligible',
-          reasons: ['FAILS_CRITERIA'],
+          reasons: ['BLOCKED_COUNTRY'],
           relevanceScore: 25,
           policyVersion: 1,
           evaluatedAt: new Date(),
@@ -101,11 +106,11 @@ describe('MediaCatalogEvaluationRepository', () => {
       );
     });
 
-    it('should convert PENDING to pending when upserting', async () => {
+    it('should store pending status directly', async () => {
       const evaluation: MediaCatalogEvaluation = {
         mediaItemId: 'media-3',
-        status: 'PENDING' as EligibilityStatus,
-        reasons: ['AWAITING_REVIEW'],
+        status: 'pending',
+        reasons: ['MISSING_ORIGIN_COUNTRY'],
         relevanceScore: 50,
         policyVersion: 1,
         evaluatedAt: new Date(),
@@ -116,7 +121,7 @@ describe('MediaCatalogEvaluationRepository', () => {
         {
           mediaItemId: 'media-3',
           status: 'pending',
-          reasons: ['AWAITING_REVIEW'],
+          reasons: ['MISSING_ORIGIN_COUNTRY'],
           relevanceScore: 50,
           policyVersion: 1,
           evaluatedAt: new Date(),
@@ -133,11 +138,11 @@ describe('MediaCatalogEvaluationRepository', () => {
       );
     });
 
-    it('should convert REVIEW to review when upserting', async () => {
+    it('should store review status directly', async () => {
       const evaluation: MediaCatalogEvaluation = {
         mediaItemId: 'media-4',
-        status: 'REVIEW' as EligibilityStatus,
-        reasons: ['NEEDS_MANUAL_REVIEW'],
+        status: 'review',
+        reasons: ['NEUTRAL_COUNTRY'],
         relevanceScore: 60,
         policyVersion: 1,
         evaluatedAt: new Date(),
@@ -148,7 +153,7 @@ describe('MediaCatalogEvaluationRepository', () => {
         {
           mediaItemId: 'media-4',
           status: 'review',
-          reasons: ['NEEDS_MANUAL_REVIEW'],
+          reasons: ['NEUTRAL_COUNTRY'],
           relevanceScore: 60,
           policyVersion: 1,
           evaluatedAt: new Date(),
@@ -164,13 +169,15 @@ describe('MediaCatalogEvaluationRepository', () => {
         }),
       );
     });
+  });
 
-    it('should convert status in bulk upsert operations', async () => {
+  describe('bulkUpsert with canonical lowercase status', () => {
+    it('should store multiple evaluations with canonical status values', async () => {
       const evaluations: MediaCatalogEvaluation[] = [
         {
           mediaItemId: 'media-1',
-          status: 'ELIGIBLE' as EligibilityStatus,
-          reasons: ['MEETS_CRITERIA'],
+          status: 'eligible',
+          reasons: ['ALLOWED_COUNTRY'],
           relevanceScore: 85,
           policyVersion: 1,
           evaluatedAt: new Date(),
@@ -178,8 +185,8 @@ describe('MediaCatalogEvaluationRepository', () => {
         },
         {
           mediaItemId: 'media-2',
-          status: 'INELIGIBLE' as EligibilityStatus,
-          reasons: ['FAILS_CRITERIA'],
+          status: 'ineligible',
+          reasons: ['BLOCKED_COUNTRY'],
           relevanceScore: 25,
           policyVersion: 1,
           evaluatedAt: new Date(),
@@ -191,7 +198,6 @@ describe('MediaCatalogEvaluationRepository', () => {
 
       await repository.bulkUpsert(evaluations);
 
-      // Verify that both statuses were converted to lowercase
       expect(mockDb.values).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({ status: 'eligible' }),
@@ -205,8 +211,8 @@ describe('MediaCatalogEvaluationRepository', () => {
     it('should throw DatabaseException when upsert fails', async () => {
       const evaluation: MediaCatalogEvaluation = {
         mediaItemId: 'media-1',
-        status: 'ELIGIBLE' as EligibilityStatus,
-        reasons: ['MEETS_CRITERIA'],
+        status: 'eligible',
+        reasons: ['ALLOWED_COUNTRY'],
         relevanceScore: 85,
         policyVersion: 1,
         evaluatedAt: new Date(),
@@ -222,8 +228,8 @@ describe('MediaCatalogEvaluationRepository', () => {
       const evaluations: MediaCatalogEvaluation[] = [
         {
           mediaItemId: 'media-1',
-          status: 'ELIGIBLE' as EligibilityStatus,
-          reasons: ['MEETS_CRITERIA'],
+          status: 'eligible',
+          reasons: ['ALLOWED_COUNTRY'],
           relevanceScore: 85,
           policyVersion: 1,
           evaluatedAt: new Date(),

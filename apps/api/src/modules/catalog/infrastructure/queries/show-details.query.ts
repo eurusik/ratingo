@@ -10,6 +10,7 @@ import { ImageMapper } from '../mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
 
 /**
  * Fetches complete TV show details by slug.
@@ -92,7 +93,7 @@ export class ShowDetailsQuery {
           and(
             eq(schema.mediaItems.slug, slug),
             // Eligibility filter: only show ELIGIBLE items
-            eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
             // Ready filter: only show items with ready ingestion status
             eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
             // Not deleted filter

@@ -20,6 +20,7 @@ import {
   CATALOG_SORT,
   SORT_ORDER,
 } from '../../presentation/dtos/catalog-list-query.dto';
+import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
 
 /**
  * Fetches trending TV shows with episode progress.
@@ -66,7 +67,7 @@ export class TrendingShowsQuery {
         sql`mi.type = ${MediaType.SHOW}`,
         sql`mi.deleted_at IS NULL`,
         // Eligibility filter: only show ELIGIBLE items
-        sql`mce.status = 'eligible'`,
+        sql`mce.status = ${EligibilityStatus.ELIGIBLE}`,
         // Ready filter: only show items with ready ingestion status
         sql`mi.ingestion_status = ${IngestionStatus.READY}`,
       ];

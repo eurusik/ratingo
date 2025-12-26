@@ -1,15 +1,13 @@
 /**
  * Policy Engine Property-Based Tests
  *
- * Property-based tests using fast-check to verify universal properties
- * that should hold across all valid inputs.
- *
  * Feature: catalog-policy-engine
  */
 
 import * as fc from 'fast-check';
 import { evaluateEligibility, computeRelevance } from './policy-engine';
 import { PolicyConfig, PolicyEngineInput } from './types/policy.types';
+import { EligibilityStatus, EligibilityStatusType } from './constants/evaluation.constants';
 
 describe('Policy Engine - Property-Based Tests', () => {
   // Arbitraries (generators) for property-based testing
@@ -74,11 +72,52 @@ describe('Policy Engine - Property-Based Tests', () => {
   });
 
   /**
-   * Property 1: Evaluation Determinism
-   *
-   * For any media item and policy, evaluating the same input multiple times
-   * should always produce the same result.
-   *
+   * Property 1: Canonical Lowercase Status
+   * Validates: Requirements 1.2, 1.3
+   */
+  describe('Property: Canonical Lowercase Status', () => {
+    // Canonical lowercase status values
+    const CANONICAL_STATUSES: EligibilityStatusType[] = [
+      EligibilityStatus.PENDING,
+      EligibilityStatus.ELIGIBLE,
+      EligibilityStatus.INELIGIBLE,
+      EligibilityStatus.REVIEW,
+    ];
+
+    it('should always return a canonical lowercase status value', () => {
+      fc.assert(
+        fc.property(policyEngineInputArb, policyConfigArb, (input, policy) => {
+          const result = evaluateEligibility(input, policy);
+
+          // Status must be one of the canonical lowercase values
+          expect(CANONICAL_STATUSES).toContain(result.status);
+
+          // Status must be lowercase (no uppercase characters)
+          expect(result.status).toBe(result.status.toLowerCase());
+
+          // Status must be a string
+          expect(typeof result.status).toBe('string');
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should never return uppercase status values', () => {
+      fc.assert(
+        fc.property(policyEngineInputArb, policyConfigArb, (input, policy) => {
+          const result = evaluateEligibility(input, policy);
+
+          // Explicitly check that uppercase variants are NOT returned
+          const UPPERCASE_STATUSES = ['PENDING', 'ELIGIBLE', 'INELIGIBLE', 'REVIEW'];
+          expect(UPPERCASE_STATUSES).not.toContain(result.status);
+        }),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  /**
+   * Property: Evaluation Determinism
    * Validates: Requirements 3.1, 3.5
    */
   describe('Property 1: Evaluation Determinism', () => {
@@ -121,11 +160,7 @@ describe('Policy Engine - Property-Based Tests', () => {
   });
 
   /**
-   * Property 6: Breakout Rule Priority Ordering
-   *
-   * When multiple breakout rules match, the one with the lowest priority number
-   * (highest priority) should be selected.
-   *
+   * Property: Breakout Rule Priority Ordering
    * Validates: Requirements 4.6
    */
   describe('Property 6: Breakout Rule Priority Ordering', () => {
@@ -175,7 +210,7 @@ describe('Policy Engine - Property-Based Tests', () => {
             const result = evaluateEligibility(blockedInput, policy);
 
             // If eligible via breakout, should use highest priority rule
-            if (result.status === 'ELIGIBLE' && result.breakoutRuleId) {
+            if (result.status === EligibilityStatus.ELIGIBLE && result.breakoutRuleId) {
               expect(result.breakoutRuleId).toBe(expectedRuleId);
             }
           },
@@ -186,10 +221,7 @@ describe('Policy Engine - Property-Based Tests', () => {
   });
 
   /**
-   * Property 7: Relevance Score Range
-   *
-   * For any input, the relevance score should always be in the range [0, 100].
-   *
+   * Property: Relevance Score Range
    * Validates: Requirements 3.2
    */
   describe('Property 7: Relevance Score Range', () => {
@@ -267,9 +299,7 @@ describe('Policy Engine - Property-Based Tests', () => {
   });
 
   /**
-   * Additional Property: Status Consistency
-   *
-   * The evaluation status should be consistent with the reasons provided.
+   * Property: Status Consistency
    */
   describe('Additional Property: Status Consistency', () => {
     it('should have consistent status and reasons', () => {
@@ -278,7 +308,7 @@ describe('Policy Engine - Property-Based Tests', () => {
           const result = evaluateEligibility(input, policy);
 
           // PENDING should have missing data reasons
-          if (result.status === 'PENDING') {
+          if (result.status === EligibilityStatus.PENDING) {
             const hasMissingReason =
               result.reasons.includes('MISSING_ORIGIN_COUNTRY') ||
               result.reasons.includes('MISSING_ORIGINAL_LANGUAGE');
@@ -286,12 +316,12 @@ describe('Policy Engine - Property-Based Tests', () => {
           }
 
           // ELIGIBLE via breakout should have BREAKOUT_ALLOWED reason
-          if (result.status === 'ELIGIBLE' && result.breakoutRuleId) {
+          if (result.status === EligibilityStatus.ELIGIBLE && result.breakoutRuleId) {
             expect(result.reasons).toContain('BREAKOUT_ALLOWED');
           }
 
           // INELIGIBLE should have blocking reasons
-          if (result.status === 'INELIGIBLE') {
+          if (result.status === EligibilityStatus.INELIGIBLE) {
             const hasBlockingReason =
               result.reasons.includes('BLOCKED_COUNTRY') ||
               result.reasons.includes('BLOCKED_LANGUAGE') ||

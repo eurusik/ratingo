@@ -2,7 +2,7 @@
  * Catalog Evaluation Run Repository Tests
  *
  * Unit tests for repository methods including:
- * - normalizeStatus (legacy status mapping: completed/success → prepared, pending → running)
+ * - validateStatus (fail-fast validation: throws InvalidRunStatusError for legacy/unknown values)
  * - incrementCounters (atomic SQL operations)
  * - recordError (atomic error recording)
  *
@@ -15,6 +15,8 @@ import {
   CatalogEvaluationRun,
 } from './catalog-evaluation-run.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import { InvalidRunStatusError } from '../../domain/errors/policy.errors';
+import { DatabaseException } from '../../../../common/exceptions';
 
 describe('CatalogEvaluationRunRepository', () => {
   let repository: CatalogEvaluationRunRepository;
@@ -68,39 +70,70 @@ describe('CatalogEvaluationRunRepository', () => {
     repository = module.get<CatalogEvaluationRunRepository>(CatalogEvaluationRunRepository);
   });
 
-  describe('normalizeStatus', () => {
+  describe('validateStatus (fail-fast)', () => {
     /**
-     * Tests for legacy status mapping.
-     * - 'completed' (legacy) → 'prepared' (current)
-     * - 'success' (legacy) → 'prepared' (current)
-     * - 'pending' (legacy) → 'running' (current)
+     * Tests for fail-fast status validation.
+     * Legacy values ('completed', 'success', 'pending') should throw InvalidRunStatusError.
+     * Valid values: 'running', 'prepared', 'failed', 'cancelled', 'promoted'.
+     *
+     * Note: InvalidRunStatusError is wrapped in DatabaseException by the repository's
+     * error handling. We verify the cause contains the original error.
      */
 
-    it('should map "completed" to "prepared"', async () => {
+    it('should throw DatabaseException with InvalidRunStatusError cause for "completed" (legacy)', async () => {
       const mockRow = createMockRow({ status: 'completed' });
       mockDb.limit.mockResolvedValue([mockRow]);
 
-      const result = await repository.findById('run-123');
+      await expect(repository.findById('run-123')).rejects.toThrow(DatabaseException);
 
-      expect(result?.status).toBe('prepared');
+      try {
+        await repository.findById('run-123');
+      } catch (error) {
+        expect(error.cause).toBeInstanceOf(InvalidRunStatusError);
+        expect(error.cause.message).toContain('completed');
+      }
     });
 
-    it('should map "success" to "prepared"', async () => {
+    it('should throw DatabaseException with InvalidRunStatusError cause for "success" (legacy)', async () => {
       const mockRow = createMockRow({ status: 'success' });
       mockDb.limit.mockResolvedValue([mockRow]);
 
-      const result = await repository.findById('run-123');
+      await expect(repository.findById('run-123')).rejects.toThrow(DatabaseException);
 
-      expect(result?.status).toBe('prepared');
+      try {
+        await repository.findById('run-123');
+      } catch (error) {
+        expect(error.cause).toBeInstanceOf(InvalidRunStatusError);
+        expect(error.cause.message).toContain('success');
+      }
     });
 
-    it('should map "pending" to "running"', async () => {
+    it('should throw DatabaseException with InvalidRunStatusError cause for "pending" (legacy)', async () => {
       const mockRow = createMockRow({ status: 'pending' });
       mockDb.limit.mockResolvedValue([mockRow]);
 
-      const result = await repository.findById('run-123');
+      await expect(repository.findById('run-123')).rejects.toThrow(DatabaseException);
 
-      expect(result?.status).toBe('running');
+      try {
+        await repository.findById('run-123');
+      } catch (error) {
+        expect(error.cause).toBeInstanceOf(InvalidRunStatusError);
+        expect(error.cause.message).toContain('pending');
+      }
+    });
+
+    it('should throw DatabaseException with InvalidRunStatusError cause for unknown status', async () => {
+      const mockRow = createMockRow({ status: 'unknown_status' });
+      mockDb.limit.mockResolvedValue([mockRow]);
+
+      await expect(repository.findById('run-123')).rejects.toThrow(DatabaseException);
+
+      try {
+        await repository.findById('run-123');
+      } catch (error) {
+        expect(error.cause).toBeInstanceOf(InvalidRunStatusError);
+        expect(error.cause.message).toContain('unknown_status');
+      }
     });
 
     it('should keep "running" as "running"', async () => {

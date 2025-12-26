@@ -5,7 +5,7 @@
  * Shows what will change in the catalog when the new policy is promoted.
  */
 
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
@@ -23,6 +23,7 @@ import {
   EligibilityStatus,
   DIFF_STATUS_NONE,
   DIFFABLE_RUN_STATUSES,
+  DiffStatus,
 } from '../../domain/constants/evaluation.constants';
 
 export interface DiffCounts {
@@ -55,10 +56,45 @@ export interface DiffReport {
   topImprovements: DiffSample[];
 }
 
+/**
+ * Checks if a status transition represents a regression (item leaving catalog).
+ *
+ * A regression occurs when an item was ELIGIBLE and becomes INELIGIBLE, PENDING, or is removed.
+ *
+ * @param oldStatus - Previous status (or 'none' if item didn't exist)
+ * @param newStatus - New status (or 'none' if item was removed)
+ * @returns true if this is a regression
+ */
+export function isDiffRegression(oldStatus: DiffStatus, newStatus: DiffStatus): boolean {
+  return (
+    oldStatus === EligibilityStatus.ELIGIBLE &&
+    (newStatus === EligibilityStatus.INELIGIBLE ||
+      newStatus === EligibilityStatus.PENDING ||
+      newStatus === DIFF_STATUS_NONE)
+  );
+}
+
+/**
+ * Checks if a status transition represents an improvement (item entering catalog).
+ *
+ * An improvement occurs when an item was INELIGIBLE, PENDING, or didn't exist
+ * and becomes ELIGIBLE.
+ *
+ * @param oldStatus - Previous status (or 'none' if item didn't exist)
+ * @param newStatus - New status (or 'none' if item was removed)
+ * @returns true if this is an improvement
+ */
+export function isDiffImprovement(oldStatus: DiffStatus, newStatus: DiffStatus): boolean {
+  return (
+    (oldStatus === EligibilityStatus.INELIGIBLE ||
+      oldStatus === EligibilityStatus.PENDING ||
+      oldStatus === DIFF_STATUS_NONE) &&
+    newStatus === EligibilityStatus.ELIGIBLE
+  );
+}
+
 @Injectable()
 export class DiffService {
-  private readonly logger = new Logger(DiffService.name);
-
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
@@ -93,8 +129,8 @@ export class DiffService {
     const activePolicy = await this.policyRepository.findActive();
     const currentPolicyVersion = activePolicy?.version ?? null;
 
-    // 4. Compute aggregated counts
-    const counts = await this.computeCounts(run.targetPolicyVersion!, currentPolicyVersion);
+    // 4. Compute aggregated counts using SQL aggregation
+    const counts = await this.computeCountsSQL(run.targetPolicyVersion!, currentPolicyVersion);
 
     // 5. Get sample items
     const topRegressions = await this.getSampleItems(
@@ -122,99 +158,76 @@ export class DiffService {
   }
 
   /**
-   * Computes aggregated diff counts.
+   * Computes aggregated diff counts using SQL aggregation.
+   *
+   * Uses FULL OUTER JOIN to handle cases where media items exist in one version but not the other
+   * (e.g., new items added, old items deleted between evaluations).
+   *
+   * When currentVersion is NULL (no active policy), old_evals CTE will be empty and all items
+   * from new_evals will be counted as improvements (old_status = 'none').
+   *
+   * @param newVersion - Target policy version
+   * @param currentVersion - Current active policy version (NULL if no active policy)
+   * @returns Aggregated diff counts
    */
-  private async computeCounts(
+  private async computeCountsSQL(
     newVersion: number,
     currentVersion: number | null,
   ): Promise<DiffCounts> {
-    // If no current policy, everything is "new"
-    if (currentVersion === null) {
-      const result = await this.db
-        .select({
-          eligible: sql<number>`COUNT(*) FILTER (WHERE status = 'ELIGIBLE')::int`,
-          ineligible: sql<number>`COUNT(*) FILTER (WHERE status = 'INELIGIBLE')::int`,
-        })
-        .from(schema.mediaCatalogEvaluations)
-        .where(eq(schema.mediaCatalogEvaluations.policyVersion, newVersion));
+    // Handle NULL currentVersion explicitly - WHERE policy_version = NULL returns 0 rows
+    // When no current policy exists, we use FALSE to get an empty result set for old_evals
+    const currentVersionFilter =
+      currentVersion !== null ? sql`policy_version = ${currentVersion}` : sql`FALSE`; // Empty result set when no current policy
 
-      return {
-        regressions: 0,
-        improvements: result[0]?.eligible ?? 0,
-        unchanged: 0,
-        stillIneligible: result[0]?.ineligible ?? 0,
-      };
-    }
+    // Note: Uses idx_media_catalog_evaluations_version_item_status index
+    const result = await this.db.execute<{
+      regressions: string;
+      improvements: string;
+      unchanged: string;
+      still_ineligible: string;
+    }>(sql`
+      WITH old_evals AS (
+        SELECT media_item_id, status 
+        FROM media_catalog_evaluations 
+        WHERE ${currentVersionFilter}
+      ),
+      new_evals AS (
+        SELECT media_item_id, status 
+        FROM media_catalog_evaluations 
+        WHERE policy_version = ${newVersion}
+      ),
+      diff AS (
+        SELECT 
+          COALESCE(o.status::text, ${DIFF_STATUS_NONE}) as old_status,
+          COALESCE(n.status::text, ${DIFF_STATUS_NONE}) as new_status
+        FROM old_evals o
+        FULL OUTER JOIN new_evals n ON o.media_item_id = n.media_item_id
+      )
+      SELECT
+        COUNT(*) FILTER (WHERE old_status = ${EligibilityStatus.ELIGIBLE} AND new_status IN (${EligibilityStatus.INELIGIBLE}, ${EligibilityStatus.PENDING}, ${DIFF_STATUS_NONE}))::int as regressions,
+        COUNT(*) FILTER (WHERE old_status IN (${EligibilityStatus.INELIGIBLE}, ${EligibilityStatus.PENDING}, ${DIFF_STATUS_NONE}) AND new_status = ${EligibilityStatus.ELIGIBLE})::int as improvements,
+        COUNT(*) FILTER (WHERE old_status = ${EligibilityStatus.ELIGIBLE} AND new_status = ${EligibilityStatus.ELIGIBLE})::int as unchanged,
+        COUNT(*) FILTER (WHERE old_status != ${EligibilityStatus.ELIGIBLE} AND new_status != ${EligibilityStatus.ELIGIBLE})::int as still_ineligible
+      FROM diff
+    `);
 
-    // Get old evaluations as a map
-    const oldEvals = await this.db
-      .select({
-        mediaItemId: schema.mediaCatalogEvaluations.mediaItemId,
-        status: schema.mediaCatalogEvaluations.status,
-      })
-      .from(schema.mediaCatalogEvaluations)
-      .where(eq(schema.mediaCatalogEvaluations.policyVersion, currentVersion));
-
-    const oldMap = new Map(oldEvals.map((e) => [e.mediaItemId, e.status]));
-
-    // Get new evaluations
-    const newEvals = await this.db
-      .select({
-        mediaItemId: schema.mediaCatalogEvaluations.mediaItemId,
-        status: schema.mediaCatalogEvaluations.status,
-      })
-      .from(schema.mediaCatalogEvaluations)
-      .where(eq(schema.mediaCatalogEvaluations.policyVersion, newVersion));
-
-    // Compute counts
-    let regressions = 0;
-    let improvements = 0;
-    let unchanged = 0;
-    let stillIneligible = 0;
-
-    const processedIds = new Set<string>();
-
-    for (const newEval of newEvals) {
-      const oldStatus = oldMap.get(newEval.mediaItemId) ?? DIFF_STATUS_NONE;
-      const newStatus = newEval.status;
-      processedIds.add(newEval.mediaItemId);
-
-      const isOldEligible = oldStatus === EligibilityStatus.ELIGIBLE;
-      const isNewEligible = newStatus === EligibilityStatus.ELIGIBLE;
-      const isOldIneligibleOrNone =
-        oldStatus === EligibilityStatus.INELIGIBLE ||
-        oldStatus === EligibilityStatus.PENDING ||
-        oldStatus === DIFF_STATUS_NONE;
-      const isNewIneligibleOrPending =
-        newStatus === EligibilityStatus.INELIGIBLE || newStatus === EligibilityStatus.PENDING;
-
-      if (isOldEligible && isNewIneligibleOrPending) {
-        regressions++;
-      } else if (isOldIneligibleOrNone && isNewEligible) {
-        improvements++;
-      } else if (isOldEligible && isNewEligible) {
-        unchanged++;
-      } else {
-        stillIneligible++;
-      }
-    }
-
-    // Items in old but not in new (regressions if they were ELIGIBLE)
-    for (const [mediaItemId, oldStatus] of oldMap) {
-      if (!processedIds.has(mediaItemId)) {
-        if (oldStatus === EligibilityStatus.ELIGIBLE) {
-          regressions++;
-        } else {
-          stillIneligible++;
-        }
-      }
-    }
-
-    return { regressions, improvements, unchanged, stillIneligible };
+    const row = result[0];
+    return {
+      regressions: parseInt(row?.regressions ?? '0', 10),
+      improvements: parseInt(row?.improvements ?? '0', 10),
+      unchanged: parseInt(row?.unchanged ?? '0', 10),
+      stillIneligible: parseInt(row?.still_ineligible ?? '0', 10),
+    };
   }
 
   /**
-   * Gets sample items for a specific diff type.
+   * Gets sample items for a specific diff type using pagination.
+   *
+   * @param newVersion - Target policy version
+   * @param currentVersion - Current active policy version (NULL if no active policy)
+   * @param type - Type of diff to sample ('regression' or 'improvement')
+   * @param limit - Maximum number of samples to return
+   * @returns Array of diff samples sorted by trendingScore DESC
    */
   private async getSampleItems(
     newVersion: number,
@@ -223,7 +236,7 @@ export class DiffService {
     limit: number,
   ): Promise<DiffSample[]> {
     // Get old evaluations as a map
-    const oldMap = new Map<string, string>();
+    const oldMap = new Map<string, DiffStatus>();
     if (currentVersion !== null) {
       const oldEvals = await this.db
         .select({
@@ -234,7 +247,7 @@ export class DiffService {
         .where(eq(schema.mediaCatalogEvaluations.policyVersion, currentVersion));
 
       for (const e of oldEvals) {
-        oldMap.set(e.mediaItemId, e.status);
+        oldMap.set(e.mediaItemId, e.status as DiffStatus);
       }
     }
 
@@ -253,24 +266,15 @@ export class DiffService {
       )
       .where(eq(schema.mediaCatalogEvaluations.policyVersion, newVersion));
 
-    // Filter and sort
+    // Filter using helper functions and collect samples
     const samples: DiffSample[] = [];
 
     for (const newEval of newEvals) {
-      const oldStatus = oldMap.get(newEval.mediaItemId) ?? DIFF_STATUS_NONE;
-      const newStatus = newEval.status;
+      const oldStatus: DiffStatus = oldMap.get(newEval.mediaItemId) ?? DIFF_STATUS_NONE;
+      const newStatus = newEval.status as DiffStatus;
 
-      const isOldEligible = oldStatus === EligibilityStatus.ELIGIBLE;
-      const isNewEligible = newStatus === EligibilityStatus.ELIGIBLE;
-      const isOldIneligibleOrNone =
-        oldStatus === EligibilityStatus.INELIGIBLE ||
-        oldStatus === EligibilityStatus.PENDING ||
-        oldStatus === DIFF_STATUS_NONE;
-      const isNewIneligibleOrPending =
-        newStatus === EligibilityStatus.INELIGIBLE || newStatus === EligibilityStatus.PENDING;
-
-      const isRegression = isOldEligible && isNewIneligibleOrPending;
-      const isImprovement = isOldIneligibleOrNone && isNewEligible;
+      const isRegression = isDiffRegression(oldStatus, newStatus);
+      const isImprovement = isDiffImprovement(oldStatus, newStatus);
 
       if ((type === 'regression' && isRegression) || (type === 'improvement' && isImprovement)) {
         samples.push({
@@ -283,12 +287,13 @@ export class DiffService {
       }
     }
 
-    // For regressions, also check items in old but not in new
+    // For regressions, also check items in old but not in new (items that were removed)
     if (type === 'regression' && currentVersion !== null) {
       const processedIds = new Set(newEvals.map((e) => e.mediaItemId));
 
       for (const [mediaItemId, oldStatus] of oldMap) {
-        if (!processedIds.has(mediaItemId) && oldStatus === EligibilityStatus.ELIGIBLE) {
+        // Check if this is a regression (item was eligible and is now gone)
+        if (!processedIds.has(mediaItemId) && isDiffRegression(oldStatus, DIFF_STATUS_NONE)) {
           // Get media item info
           const mediaInfo = await this.db
             .select({

@@ -46,7 +46,7 @@ import { RunFinalizeService } from './application/services/run-finalize.service'
 import { CatalogPolicyWorker } from './application/workers/catalog-policy.worker';
 
 // Controllers
-import { PolicyActivationController } from './presentation/controllers/policy-activation.controller';
+import { PolicyController, RunController, DryRunController } from './presentation/controllers';
 
 @Module({
   imports: [
@@ -54,7 +54,7 @@ import { PolicyActivationController } from './presentation/controllers/policy-ac
       name: CATALOG_POLICY_QUEUE,
     }),
   ],
-  controllers: [PolicyActivationController],
+  controllers: [PolicyController, RunController, DryRunController],
   providers: [
     // Repositories
     {

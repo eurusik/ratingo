@@ -8,7 +8,13 @@
  * Phase 2 (Promote): Atomically switch active policy after verification
  */
 
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -29,7 +35,14 @@ import {
   RunStatus as RunStatusEnum,
   RunStatusType,
   CANCELLABLE_RUN_STATUSES,
+  BlockingReasonCode,
+  BlockingReasonType,
 } from '../../domain/constants/evaluation.constants';
+import {
+  InvalidRunStateTransitionError,
+  InvalidEligibilityStatusError,
+  InvalidBreakoutRuleError,
+} from '../../domain/errors';
 import { RunAggregationService } from './run-aggregation.service';
 
 export interface PrepareOptions {
@@ -41,12 +54,6 @@ export interface PromoteOptions {
   coverageThreshold?: number; // default: 1.0 (100%)
   maxErrors?: number; // default: 0
 }
-
-export type BlockingReason =
-  | 'RUN_NOT_SUCCESS'
-  | 'COVERAGE_NOT_MET'
-  | 'ERRORS_EXCEEDED'
-  | 'ALREADY_PROMOTED';
 
 export interface RunStatus {
   id: string;
@@ -64,7 +71,7 @@ export interface RunStatus {
   promotedAt: Date | null;
   promotedBy: string | null;
   readyToPromote: boolean;
-  blockingReasons: BlockingReason[];
+  blockingReasons: BlockingReasonType[];
   coverage: number;
 }
 
@@ -295,7 +302,7 @@ export class PolicyActivationService {
       await this.runRepository.update(run.id, {
         status: RunStatusEnum.PROMOTED,
         promotedAt: new Date(),
-        promotedBy: 'system', // TODO: Get from auth context in Phase C
+        promotedBy: 'system', // Admin user tracking not yet implemented
       });
 
       this.logger.log(`Promoted run ${run.id}: policy v${run.targetPolicyVersion} is now active`);
@@ -339,29 +346,6 @@ export class PolicyActivationService {
   }
 
   /**
-   * Resume a failed run from cursor.
-   *
-   * @param runId - Run ID to resume
-   */
-  async resumeRun(runId: string): Promise<{ runId: string; status: string }> {
-    // TODO: Implement in Phase B
-    throw new Error('Not implemented');
-  }
-
-  /**
-   * List all runs with optional filtering.
-   */
-  async listRuns(options: {
-    status?: string;
-    policyId?: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<any[]> {
-    // TODO: Implement in Phase B
-    throw new Error('Not implemented');
-  }
-
-  /**
    * Helper: Count ready media items at snapshot cutoff.
    */
   private async countReadyMediaItems(snapshotCutoff: Date): Promise<number> {
@@ -377,5 +361,33 @@ export class PolicyActivationService {
       );
 
     return result[0]?.count || 0;
+  }
+
+  /**
+   * Maps domain errors to appropriate NestJS HTTP exceptions.
+   *
+   * Domain errors are thrown by the domain layer for business rule violations.
+   * This method converts them to HTTP-appropriate exceptions for the API layer.
+   *
+   * @param error - The error to map
+   * @throws {BadRequestException} For invalid input errors (InvalidEligibilityStatusError, InvalidBreakoutRuleError)
+   * @throws {ConflictException} For state transition errors (InvalidRunStateTransitionError)
+   * @throws The original error if it's not a domain error
+   */
+  private mapDomainErrorToHttpException(error: unknown): never {
+    if (error instanceof InvalidEligibilityStatusError) {
+      throw new BadRequestException(error.message);
+    }
+
+    if (error instanceof InvalidBreakoutRuleError) {
+      throw new BadRequestException(error.message);
+    }
+
+    if (error instanceof InvalidRunStateTransitionError) {
+      throw new ConflictException(error.message);
+    }
+
+    // Re-throw unknown errors
+    throw error;
   }
 }

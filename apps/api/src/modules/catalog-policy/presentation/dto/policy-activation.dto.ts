@@ -7,8 +7,10 @@ import {
   IsArray,
   IsEnum,
   IsDate,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { BreakoutRuleDto } from './breakout-rule.dto';
 
 /**
  * Request DTOs
@@ -573,11 +575,14 @@ export class CreatePolicyDto {
 
   @ApiPropertyOptional({
     description: 'Breakout rules for exceptions',
+    type: [BreakoutRuleDto],
     isArray: true,
   })
   @IsOptional()
   @IsArray()
-  breakoutRules?: any[];
+  @ValidateNested({ each: true })
+  @Type(() => BreakoutRuleDto)
+  breakoutRules?: BreakoutRuleDto[];
 
   @ApiPropertyOptional({
     description: 'Eligibility mode',

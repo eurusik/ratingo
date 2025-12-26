@@ -12,6 +12,7 @@ import * as schema from '../../../../database/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { DatabaseException } from '../../../../common/exceptions';
 import { RunStatus, RunStatusType } from '../../domain/constants/evaluation.constants';
+import { InvalidRunStatusError } from '../../domain/errors/policy.errors';
 
 export const CATALOG_EVALUATION_RUN_REPOSITORY = 'CATALOG_EVALUATION_RUN_REPOSITORY';
 
@@ -96,15 +97,6 @@ export interface ICatalogEvaluationRunRepository {
    * Atomically increments counters (prevents race conditions).
    */
   incrementCounters(id: string, increments: IncrementCountersInput): Promise<void>;
-
-  /**
-   * Appends error to errorSample (max 10 errors).
-   * @deprecated Use recordError() instead
-   */
-  appendError(
-    id: string,
-    error: { mediaItemId: string; error: string; stack?: string; timestamp: string },
-  ): Promise<void>;
 
   /**
    * Records error atomically: increments errors counter AND appends to errorSample in one UPDATE.
@@ -339,47 +331,11 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
     }
   }
 
-  /**
-   * @deprecated Use recordError() instead for atomic error recording
-   * Appends error to errorSample array (keeps last 10).
-   * Uses SQL array operations to avoid race conditions.
-   */
-  async appendError(
-    id: string,
-    error: { mediaItemId: string; error: string; stack?: string; timestamp: string },
-  ): Promise<void> {
-    try {
-      await this.db
-        .update(schema.catalogEvaluationRuns)
-        .set({
-          errorSample: sql`(
-            SELECT array_to_json(
-              ARRAY(
-                SELECT * FROM (
-                  SELECT jsonb_array_elements(
-                    COALESCE(error_sample, '[]'::jsonb) || ${JSON.stringify(error)}::jsonb
-                  ) 
-                  ORDER BY (value->>'timestamp')::timestamp DESC
-                  LIMIT 10
-                ) t
-              )
-            )::jsonb
-          )`,
-        })
-        .where(eq(schema.catalogEvaluationRuns.id, id));
-
-      this.logger.debug(`Appended error to run ${id}`);
-    } catch (error) {
-      this.logger.error(`Failed to append error to run ${id}`, error);
-      throw new DatabaseException(`Failed to append error to run ${id}`, error);
-    }
-  }
-
   private mapToEntity(row: typeof schema.catalogEvaluationRuns.$inferSelect): CatalogEvaluationRun {
     return {
       id: row.id,
       policyVersion: row.policyVersion,
-      status: this.normalizeStatus(row.status),
+      status: this.validateStatus(row.status),
       startedAt: row.startedAt,
       finishedAt: row.finishedAt,
       cursor: row.cursor,
@@ -399,21 +355,25 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
   }
 
   /**
-   * Normalizes legacy status values to current status values.
-   * Maps legacy statuses to their modern equivalents:
-   * - 'completed' → 'prepared'
-   * - 'success' → 'prepared'
-   * - 'pending' → 'running'
+   * Validates run status is in canonical set.
+   * Throws InvalidRunStatusError for legacy or unknown values.
+   *
+   * Valid values: 'running', 'prepared', 'failed', 'cancelled', 'promoted'.
+   * Legacy values ('pending', 'success', 'completed') must be migrated at DB level.
    */
-  private normalizeStatus(status: string): RunStatusType {
-    switch (status) {
-      case 'completed':
-      case 'success':
-        return RunStatus.PREPARED;
-      case 'pending':
-        return RunStatus.RUNNING;
-      default:
-        return status as RunStatusType;
+  private validateStatus(status: string): RunStatusType {
+    const validStatuses: RunStatusType[] = [
+      RunStatus.RUNNING,
+      RunStatus.PREPARED,
+      RunStatus.FAILED,
+      RunStatus.CANCELLED,
+      RunStatus.PROMOTED,
+    ];
+
+    if (!validStatuses.includes(status as RunStatusType)) {
+      throw new InvalidRunStatusError(status);
     }
+
+    return status as RunStatusType;
   }
 }

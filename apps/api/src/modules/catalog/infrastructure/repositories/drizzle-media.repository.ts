@@ -368,7 +368,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           and(
             sql`${schema.mediaItems.deletedAt} IS NULL`,
             // Eligibility filter: only show ELIGIBLE items
-            eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
             // Ready filter: only show items with ready ingestion status
             eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
             sql`(

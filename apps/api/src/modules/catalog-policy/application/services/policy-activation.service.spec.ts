@@ -10,6 +10,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PolicyActivationService } from './policy-activation.service';
+import { RunAggregationService } from './run-aggregation.service';
 import { CATALOG_POLICY_REPOSITORY } from '../../infrastructure/repositories/catalog-policy.repository';
 import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../infrastructure/repositories/catalog-evaluation-run.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
@@ -22,6 +23,7 @@ describe('PolicyActivationService', () => {
   let mockRunRepository: any;
   let mockQueue: any;
   let mockDb: any;
+  let mockAggregationService: any;
 
   beforeEach(async () => {
     mockPolicyRepository = {
@@ -48,6 +50,16 @@ describe('PolicyActivationService', () => {
       where: jest.fn().mockResolvedValue([{ count: 1000 }]),
     };
 
+    mockAggregationService = {
+      aggregateCounters: jest.fn().mockResolvedValue({
+        processed: 0,
+        eligible: 0,
+        ineligible: 0,
+        pending: 0,
+        errors: 0,
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PolicyActivationService,
@@ -55,6 +67,7 @@ describe('PolicyActivationService', () => {
         { provide: CATALOG_EVALUATION_RUN_REPOSITORY, useValue: mockRunRepository },
         { provide: DATABASE_CONNECTION, useValue: mockDb },
         { provide: getQueueToken(CATALOG_POLICY_QUEUE), useValue: mockQueue },
+        { provide: RunAggregationService, useValue: mockAggregationService },
       ],
     }).compile();
 
@@ -140,6 +153,15 @@ describe('PolicyActivationService', () => {
         promotedBy: null,
       });
 
+      // Mock live counters for running status
+      mockAggregationService.aggregateCounters.mockResolvedValue({
+        processed: 500,
+        eligible: 400,
+        ineligible: 80,
+        pending: 20,
+        errors: 0,
+      });
+
       const result = await service.getRunStatus('run-1');
 
       expect(result.coverage).toBe(0.5);
@@ -218,6 +240,15 @@ describe('PolicyActivationService', () => {
         finishedAt: null,
         promotedAt: null,
         promotedBy: null,
+      });
+
+      // Mock live counters for running status
+      mockAggregationService.aggregateCounters.mockResolvedValue({
+        processed: 1000,
+        eligible: 900,
+        ineligible: 100,
+        pending: 0,
+        errors: 0,
       });
 
       const result = await service.getRunStatus('run-1');
@@ -314,6 +345,15 @@ describe('PolicyActivationService', () => {
         finishedAt: null,
         promotedAt: null,
         promotedBy: null,
+      });
+
+      // Mock live counters for running status
+      mockAggregationService.aggregateCounters.mockResolvedValue({
+        processed: 500,
+        eligible: 400,
+        ineligible: 95,
+        pending: 0,
+        errors: 5,
       });
 
       const result = await service.getRunStatus('run-1');

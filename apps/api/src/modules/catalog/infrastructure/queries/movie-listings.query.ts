@@ -21,6 +21,7 @@ import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { CatalogSort, SortOrder, VoteSource } from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
 
 /**
  * Type of movie listing to fetch.
@@ -193,7 +194,7 @@ export class MovieListingsQuery {
     const now = new Date();
     const conditions: any[] = [
       // Eligibility filter: only show ELIGIBLE items
-      eq(schema.mediaCatalogEvaluations.status, 'eligible'),
+      eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
       // Ready filter: only show items with ready ingestion status
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
       // Not deleted filter

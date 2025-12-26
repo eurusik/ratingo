@@ -7,6 +7,7 @@
 
 import { evaluateEligibility, computeRelevance } from './policy-engine';
 import { PolicyConfig, PolicyEngineInput } from './types/policy.types';
+import { EligibilityStatus } from './constants/evaluation.constants';
 
 describe('Policy Engine', () => {
   // Helper to create a minimal valid policy
@@ -55,7 +56,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('PENDING');
+      expect(result.status).toBe(EligibilityStatus.PENDING);
       expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
@@ -71,7 +72,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('PENDING');
+      expect(result.status).toBe(EligibilityStatus.PENDING);
       expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
@@ -87,7 +88,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('PENDING');
+      expect(result.status).toBe(EligibilityStatus.PENDING);
       expect(result.reasons).toContain('MISSING_ORIGINAL_LANGUAGE');
       expect(result.breakoutRuleId).toBeNull();
     });
@@ -103,7 +104,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('PENDING');
+      expect(result.status).toBe(EligibilityStatus.PENDING);
       expect(result.reasons).toContain('MISSING_ORIGINAL_LANGUAGE');
       expect(result.breakoutRuleId).toBeNull();
     });
@@ -120,7 +121,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('PENDING');
+      expect(result.status).toBe(EligibilityStatus.PENDING);
       // Should return on first missing check (originCountries)
       expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
@@ -138,7 +139,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('PENDING');
+      expect(result.status).toBe(EligibilityStatus.PENDING);
       expect(result.reasons).toEqual(['MISSING_ORIGIN_COUNTRY']);
       expect(result.breakoutRuleId).toBeNull();
     });
@@ -158,7 +159,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
@@ -174,7 +175,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_LANGUAGE');
       expect(result.breakoutRuleId).toBeNull();
     });
@@ -191,7 +192,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
       expect(result.reasons).toContain('BLOCKED_LANGUAGE');
       expect(result.breakoutRuleId).toBeNull();
@@ -210,7 +211,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
     });
 
@@ -227,7 +228,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
     });
 
@@ -244,7 +245,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('ELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
       expect(result.reasons).toContain('ALLOWED_COUNTRY');
     });
 
@@ -262,7 +263,7 @@ describe('Policy Engine', () => {
       const result = evaluateEligibility(input, policy);
 
       // Tie-breaker: fallback to ANY mode = blocked
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
     });
 
@@ -280,7 +281,7 @@ describe('Policy Engine', () => {
       const result = evaluateEligibility(input, policy);
 
       // Tie-breaker: fallback to ANY mode = blocked
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
     });
   });
@@ -309,7 +310,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('ELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
       expect(result.reasons).toEqual(['BREAKOUT_ALLOWED']);
       expect(result.breakoutRuleId).toBe('global-hit');
     });
@@ -342,7 +343,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('ELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
       expect(result.reasons).toEqual(['BREAKOUT_ALLOWED']);
       expect(result.breakoutRuleId).toBe('quality-content');
     });
@@ -378,7 +379,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('ELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
       expect(result.breakoutRuleId).toBe('high-priority');
     });
 
@@ -405,7 +406,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
@@ -440,7 +441,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
@@ -460,7 +461,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('NEUTRAL_COUNTRY');
     });
 
@@ -477,7 +478,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('NEUTRAL_LANGUAGE');
     });
 
@@ -495,7 +496,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('ELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
       expect(result.reasons).toContain('ALLOWED_COUNTRY');
     });
 
@@ -513,7 +514,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('INELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('NEUTRAL_COUNTRY');
       expect(result.reasons).toContain('NEUTRAL_LANGUAGE');
     });
@@ -532,7 +533,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('ELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
       expect(result.reasons).toContain('ALLOWED_COUNTRY');
       expect(result.reasons).toContain('ALLOWED_LANGUAGE');
       expect(result.breakoutRuleId).toBeNull();
@@ -550,7 +551,7 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe('ELIGIBLE');
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
       expect(result.reasons).toContain('ALLOWED_COUNTRY');
       expect(result.reasons).toContain('ALLOWED_LANGUAGE');
     });

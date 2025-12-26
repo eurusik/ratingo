@@ -12,6 +12,7 @@ import {
   PolicyEngineInput,
   BreakoutRule,
 } from './types/policy.types';
+import { EligibilityStatus } from './constants/evaluation.constants';
 
 /**
  * Evaluates media eligibility based on policy rules.
@@ -39,12 +40,12 @@ export function evaluateEligibility(input: PolicyEngineInput, policy: PolicyConf
   // Step 1: Missing data checks → PENDING
   if (!mediaItem.originCountries || mediaItem.originCountries.length === 0) {
     reasons.push('MISSING_ORIGIN_COUNTRY');
-    return { status: 'PENDING', reasons, breakoutRuleId: null };
+    return { status: EligibilityStatus.PENDING, reasons, breakoutRuleId: null };
   }
 
   if (!mediaItem.originalLanguage) {
     reasons.push('MISSING_ORIGINAL_LANGUAGE');
-    return { status: 'PENDING', reasons, breakoutRuleId: null };
+    return { status: EligibilityStatus.PENDING, reasons, breakoutRuleId: null };
   }
 
   // Step 2: Blocked checks
@@ -56,14 +57,14 @@ export function evaluateEligibility(input: PolicyEngineInput, policy: PolicyConf
 
     if (breakoutRule) {
       return {
-        status: 'ELIGIBLE',
+        status: EligibilityStatus.ELIGIBLE,
         reasons: ['BREAKOUT_ALLOWED'],
         breakoutRuleId: breakoutRule.id,
       };
     }
 
     // Blocked without breakout → INELIGIBLE
-    return { status: 'INELIGIBLE', reasons, breakoutRuleId: null };
+    return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
   }
 
   // Step 4: Neutral checks (not in allowed/blocked)
@@ -80,11 +81,11 @@ export function evaluateEligibility(input: PolicyEngineInput, policy: PolicyConf
 
       if (hasAllowedCountry || hasAllowedLanguage) {
         reasons.push('ALLOWED_COUNTRY');
-        return { status: 'ELIGIBLE', reasons, breakoutRuleId: null };
+        return { status: EligibilityStatus.ELIGIBLE, reasons, breakoutRuleId: null };
       }
     }
 
-    return { status: 'INELIGIBLE', reasons, breakoutRuleId: null };
+    return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
   }
 
   // Step 5: Allowed checks (whitelist)
@@ -92,7 +93,7 @@ export function evaluateEligibility(input: PolicyEngineInput, policy: PolicyConf
   reasons.push('ALLOWED_COUNTRY');
   reasons.push('ALLOWED_LANGUAGE');
 
-  return { status: 'ELIGIBLE', reasons, breakoutRuleId: null };
+  return { status: EligibilityStatus.ELIGIBLE, reasons, breakoutRuleId: null };
 }
 
 /**
@@ -388,16 +389,14 @@ export function computeRelevance(input: PolicyEngineInput, policy: PolicyConfig)
 /**
  * Returns human-readable descriptions for evaluation reasons.
  *
+ * Note: i18n is not supported - all descriptions are in English.
+ *
  * @param reasons - List of evaluation reasons
- * @param locale - Locale code (e.g., 'en', 'uk')
  * @returns Dictionary of reason descriptions
  */
 export function getReasonDescriptions(
   reasons: EvaluationReason[],
-  locale: string,
 ): Record<EvaluationReason, string> {
-  // TODO: Implement i18n dictionary lookup
-  // For now, return English descriptions
   const descriptions: Record<EvaluationReason, string> = {
     MISSING_ORIGIN_COUNTRY: 'Origin country information is missing',
     MISSING_ORIGINAL_LANGUAGE: 'Original language information is missing',

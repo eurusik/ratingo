@@ -8,7 +8,7 @@
  * Concurrency: 1 for orchestrator, 10 for item evaluation.
  */
 
-import { Processor, WorkerHost, InjectQueue, OnWorkerEvent } from '@nestjs/bullmq';
+import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Logger, OnModuleInit } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import { Inject } from '@nestjs/common';
@@ -24,6 +24,7 @@ import {
 import { CatalogEvaluationService } from '../services/catalog-evaluation.service';
 import { RunFinalizeService } from '../services/run-finalize.service';
 import { RunStatus } from '../../domain/constants/evaluation.constants';
+import { IngestionStatus } from '../../domain/constants/ingestion.constants';
 
 interface ReEvaluateAllPayload {
   runId: string;
@@ -247,8 +248,17 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
       await this.evaluationService.evaluateOne(mediaItemId, policyVersion, runId);
       this.logger.debug(`Evaluated ${mediaItemId} for run ${runId}`);
     } catch (error) {
-      this.logger.error(`Failed to evaluate ${mediaItemId}`, error);
+      // Log error with full context for debugging
+      this.logger.error(`Failed to evaluate media item`, {
+        runId,
+        policyVersion,
+        mediaItemId,
+        errorMessage: error.message,
+        errorName: error.name,
+      });
+      this.logger.debug(`Stack trace for ${mediaItemId}:`, error.stack);
 
+      // Record error in run's errorSample for visibility in run status
       await this.runRepository.recordError(runId, {
         mediaItemId,
         error: error.message,
@@ -271,7 +281,7 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
     cursor?: string,
   ): Promise<Array<{ id: string }>> {
     const conditions = [
-      eq(schema.mediaItems.ingestionStatus, 'ready'),
+      eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
       isNull(schema.mediaItems.deletedAt),
       lte(schema.mediaItems.updatedAt, snapshotCutoff),
     ];
@@ -317,7 +327,12 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
         }
       }
     } catch (error) {
-      this.logger.error('Watchdog error:', error);
+      // Log watchdog errors with context
+      this.logger.error('Watchdog error during stale run finalization', {
+        errorMessage: error.message,
+        errorName: error.name,
+      });
+      this.logger.debug('Watchdog error stack:', error.stack);
     }
   }
 }

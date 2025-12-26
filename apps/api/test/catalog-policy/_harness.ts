@@ -13,11 +13,16 @@ import * as request from 'supertest';
 import { ResponseInterceptor } from '../../src/common/interceptors/response.interceptor';
 import { AllExceptionsFilter } from '../../src/common/filters/all-exceptions.filter';
 
-import { PolicyActivationController } from '../../src/modules/catalog-policy/presentation/controllers/policy-activation.controller';
+import {
+  PolicyController,
+  RunController,
+  DryRunController,
+} from '../../src/modules/catalog-policy/presentation/controllers';
 import { PolicyActivationService } from '../../src/modules/catalog-policy/application/services/policy-activation.service';
 import { DiffService } from '../../src/modules/catalog-policy/application/services/diff.service';
 import { DryRunService } from '../../src/modules/catalog-policy/application/services/dry-run.service';
 import { CatalogPolicyService } from '../../src/modules/catalog-policy/application/services/catalog-policy.service';
+import { RunAggregationService } from '../../src/modules/catalog-policy/application/services/run-aggregation.service';
 import { CATALOG_POLICY_QUEUE } from '../../src/modules/catalog-policy/catalog-policy.constants';
 import {
   ICatalogPolicyRepository,
@@ -40,11 +45,11 @@ import {
   CatalogPolicy,
   PolicyConfig,
   MediaCatalogEvaluation,
-  EligibilityStatus,
 } from '../../src/modules/catalog-policy/domain/types/policy.types';
 import {
   RunStatus,
   RunStatusType,
+  EligibilityStatusType,
 } from '../../src/modules/catalog-policy/domain/constants/evaluation.constants';
 
 // ============================================================================
@@ -267,7 +272,7 @@ class InMemoryEvaluationRepository implements IMediaCatalogEvaluationRepository 
   }
 
   async findByStatus(
-    status: EligibilityStatus,
+    status: EligibilityStatusType,
     options?: { limit?: number; offset?: number },
   ): Promise<MediaCatalogEvaluation[]> {
     let result = this.evaluations.filter((e) => e.status === status);
@@ -278,12 +283,12 @@ class InMemoryEvaluationRepository implements IMediaCatalogEvaluationRepository 
 
   async countByStatusAndPolicyVersion(
     policyVersion: number,
-  ): Promise<Record<EligibilityStatus, number>> {
-    const counts: Record<EligibilityStatus, number> = {
-      PENDING: 0,
-      ELIGIBLE: 0,
-      INELIGIBLE: 0,
-      REVIEW: 0,
+  ): Promise<Record<EligibilityStatusType, number>> {
+    const counts: Record<EligibilityStatusType, number> = {
+      pending: 0,
+      eligible: 0,
+      ineligible: 0,
+      review: 0,
     };
     for (const e of this.evaluations) {
       if (e.policyVersion === policyVersion) {
@@ -351,6 +356,37 @@ function createMockDb() {
 }
 
 // ============================================================================
+// Mock RunAggregationService
+// ============================================================================
+
+function createMockRunAggregationService(runRepo: InMemoryRunRepository) {
+  return {
+    async aggregateCounters(runId: string) {
+      const run = await runRepo.findById(runId);
+      if (!run) {
+        return {
+          processed: 0,
+          eligible: 0,
+          ineligible: 0,
+          pending: 0,
+          errors: 0,
+        };
+      }
+      return {
+        processed: run.processed,
+        eligible: run.eligible,
+        ineligible: run.ineligible,
+        pending: run.pending,
+        errors: run.errors,
+      };
+    },
+    async syncRunCounters(runId: string) {
+      return this.aggregateCounters(runId);
+    },
+  };
+}
+
+// ============================================================================
 // Test Context
 // ============================================================================
 
@@ -372,14 +408,16 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
   const evaluationRepo = new InMemoryEvaluationRepository();
   const queue = new MockQueue();
   const mockDb = createMockDb();
+  const mockAggregationService = createMockRunAggregationService(runRepo);
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
-    controllers: [PolicyActivationController],
+    controllers: [PolicyController, RunController, DryRunController],
     providers: [
       PolicyActivationService,
       DiffService,
       DryRunService,
       CatalogPolicyService,
+      { provide: RunAggregationService, useValue: mockAggregationService },
       { provide: CATALOG_POLICY_REPOSITORY, useValue: policyRepo },
       { provide: CATALOG_EVALUATION_RUN_REPOSITORY, useValue: runRepo },
       { provide: MEDIA_CATALOG_EVALUATION_REPOSITORY, useValue: evaluationRepo },

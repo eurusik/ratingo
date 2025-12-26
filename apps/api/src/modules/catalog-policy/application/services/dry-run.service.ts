@@ -26,9 +26,12 @@ import {
   PolicyConfig,
   PolicyEngineInput,
   WatchProvidersMap,
-  EligibilityStatus,
   EvaluationReason,
 } from '../../domain/types/policy.types';
+import {
+  EligibilityStatus,
+  EligibilityStatusType,
+} from '../../domain/constants/evaluation.constants';
 import { CatalogPolicyService } from './catalog-policy.service';
 
 /**
@@ -53,8 +56,8 @@ export interface DryRunOptions {
 export interface DryRunItemResult {
   mediaItemId: string;
   title: string;
-  currentStatus: EligibilityStatus | null;
-  proposedStatus: EligibilityStatus;
+  currentStatus: EligibilityStatusType | null;
+  proposedStatus: EligibilityStatusType;
   reasons: EvaluationReason[];
   relevanceScore: number;
   breakoutRuleId: string | null;
@@ -163,20 +166,20 @@ export class DryRunService {
       const currentStatus = currentEval?.status || null;
       const statusChanged = currentStatus !== evalResult.status;
 
-      // Count statuses
+      // Count statuses using constants
       switch (evalResult.status) {
-        case 'ELIGIBLE':
+        case EligibilityStatus.ELIGIBLE:
           eligible++;
-          if (currentStatus && currentStatus !== 'ELIGIBLE') newlyEligible++;
+          if (currentStatus && currentStatus !== EligibilityStatus.ELIGIBLE) newlyEligible++;
           break;
-        case 'INELIGIBLE':
+        case EligibilityStatus.INELIGIBLE:
           ineligible++;
-          if (currentStatus && currentStatus !== 'INELIGIBLE') newlyIneligible++;
+          if (currentStatus && currentStatus !== EligibilityStatus.INELIGIBLE) newlyIneligible++;
           break;
-        case 'PENDING':
+        case EligibilityStatus.PENDING:
           pending++;
           break;
-        case 'REVIEW':
+        case EligibilityStatus.REVIEW:
           review++;
           break;
       }
@@ -191,7 +194,7 @@ export class DryRunService {
       results.push({
         mediaItemId: item.id,
         title: item.title,
-        currentStatus: currentStatus as EligibilityStatus | null,
+        currentStatus: currentStatus as EligibilityStatusType | null,
         proposedStatus: evalResult.status,
         reasons: evalResult.reasons,
         relevanceScore,

@@ -725,33 +725,13 @@ export interface paths {
          * Get list of policies
          * @description Returns list of all catalog policies with their status and metadata.
          */
-        get: operations["PolicyActivationController_getPolicies"];
+        get: operations["PolicyController_getPolicies"];
         put?: never;
         /**
          * Create new policy
          * @description Creates a new policy draft with auto-incremented version. The policy is NOT activated automatically. Use POST /:id/prepare to start evaluation.
          */
-        post: operations["PolicyActivationController_createPolicy"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/admin/catalog-policies/runs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get list of evaluation runs
-         * @description Returns list of all evaluation runs with their status and progress.
-         */
-        get: operations["PolicyActivationController_getRuns"];
-        put?: never;
-        post?: never;
+        post: operations["PolicyController_createPolicy"];
         delete?: never;
         options?: never;
         head?: never;
@@ -771,7 +751,27 @@ export interface paths {
          * Prepare policy for activation
          * @description Creates an evaluation run and starts background job to pre-compute evaluations for all media items. Returns immediately with run ID for tracking progress.
          */
-        post: operations["PolicyActivationController_preparePolicy"];
+        post: operations["PolicyController_preparePolicy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get list of evaluation runs
+         * @description Returns list of all evaluation runs with their status and progress.
+         */
+        get: operations["RunController_getRuns"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -789,7 +789,7 @@ export interface paths {
          * Get run status and progress
          * @description Returns detailed status of an evaluation run including progress, counters, and readyToPromote flag.
          */
-        get: operations["PolicyActivationController_getRunStatus"];
+        get: operations["RunController_getRunStatus"];
         put?: never;
         post?: never;
         delete?: never;
@@ -811,7 +811,7 @@ export interface paths {
          * Promote run to activate policy
          * @description Verifies run is successful and meets thresholds, then atomically activates the policy. This makes the new policy version active for the public catalog.
          */
-        post: operations["PolicyActivationController_promoteRun"];
+        post: operations["RunController_promoteRun"];
         delete?: never;
         options?: never;
         head?: never;
@@ -831,7 +831,7 @@ export interface paths {
          * Cancel running evaluation
          * @description Cancels a running evaluation. Item jobs already in queue will be skipped. Preserves cursor and counters for potential resume.
          */
-        post: operations["PolicyActivationController_cancelRun"];
+        post: operations["RunController_cancelRun"];
         delete?: never;
         options?: never;
         head?: never;
@@ -849,7 +849,7 @@ export interface paths {
          * Get diff report
          * @description Computes differences between current active policy and the prepared run. Shows regressions (items leaving catalog) and improvements (items entering catalog).
          */
-        get: operations["PolicyActivationController_getDiff"];
+        get: operations["RunController_getDiff"];
         put?: never;
         post?: never;
         delete?: never;
@@ -871,7 +871,7 @@ export interface paths {
          * Execute dry-run evaluation
          * @description Evaluates media items against a proposed policy WITHOUT persisting results. Supports multiple selection modes: sample (random), top (by popularity), byType, byCountry. Limits: max 10000 items, 60s timeout.
          */
-        post: operations["PolicyActivationController_executeDryRun"];
+        post: operations["DryRunController_executeDryRun"];
         delete?: never;
         options?: never;
         head?: never;
@@ -891,7 +891,7 @@ export interface paths {
          * Execute dry-run with diff
          * @description Same as dry-run but also includes comparison against current active policy version.
          */
-        post: operations["PolicyActivationController_executeDryRunDiff"];
+        post: operations["DryRunController_executeDryRunDiff"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2283,6 +2283,36 @@ export interface components {
              */
             message: string;
         };
+        PrepareOptionsDto: {
+            /**
+             * @description Batch size for processing items
+             * @example 500
+             */
+            batchSize?: number;
+            /**
+             * @description Number of concurrent workers
+             * @example 10
+             */
+            concurrency?: number;
+        };
+        PrepareResponseDto: {
+            /**
+             * @description ID of the created evaluation run
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            runId: string;
+            /**
+             * @description Current status of the run
+             * @example running
+             * @enum {string}
+             */
+            status: "running" | "prepared" | "failed" | "cancelled" | "promoted";
+            /**
+             * @description Human-readable message
+             * @example Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress.
+             */
+            message: string;
+        };
         ProgressStatsDto: {
             /**
              * @description Number of items processed
@@ -2360,36 +2390,6 @@ export interface components {
         RunsListDto: {
             /** @description List of evaluation runs */
             data: components["schemas"]["EvaluationRunDto"][];
-        };
-        PrepareOptionsDto: {
-            /**
-             * @description Batch size for processing items
-             * @example 500
-             */
-            batchSize?: number;
-            /**
-             * @description Number of concurrent workers
-             * @example 10
-             */
-            concurrency?: number;
-        };
-        PrepareResponseDto: {
-            /**
-             * @description ID of the created evaluation run
-             * @example run-123e4567-e89b-12d3-a456-426614174000
-             */
-            runId: string;
-            /**
-             * @description Current status of the run
-             * @example running
-             * @enum {string}
-             */
-            status: "running" | "prepared" | "failed" | "cancelled" | "promoted";
-            /**
-             * @description Human-readable message
-             * @example Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress.
-             */
-            message: string;
         };
         ErrorSampleDto: {
             /**
@@ -4316,7 +4316,7 @@ export interface operations {
             };
         };
     };
-    PolicyActivationController_getPolicies: {
+    PolicyController_getPolicies: {
         parameters: {
             query?: never;
             header?: never;
@@ -4340,7 +4340,7 @@ export interface operations {
             };
         };
     };
-    PolicyActivationController_createPolicy: {
+    PolicyController_createPolicy: {
         parameters: {
             query?: never;
             header?: never;
@@ -4369,36 +4369,7 @@ export interface operations {
             };
         };
     };
-    PolicyActivationController_getRuns: {
-        parameters: {
-            query?: {
-                /** @description Number of runs to return (default: 20) */
-                limit?: number;
-                /** @description Offset for pagination (default: 0) */
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of evaluation runs */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["RunsListDto"];
-                    };
-                };
-            };
-        };
-    };
-    PolicyActivationController_preparePolicy: {
+    PolicyController_preparePolicy: {
         parameters: {
             query?: never;
             header?: never;
@@ -4430,7 +4401,36 @@ export interface operations {
             };
         };
     };
-    PolicyActivationController_getRunStatus: {
+    RunController_getRuns: {
+        parameters: {
+            query?: {
+                /** @description Number of runs to return (default: 20) */
+                limit?: number;
+                /** @description Offset for pagination (default: 0) */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of evaluation runs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["RunsListDto"];
+                    };
+                };
+            };
+        };
+    };
+    RunController_getRunStatus: {
         parameters: {
             query?: never;
             header?: never;
@@ -4457,7 +4457,7 @@ export interface operations {
             };
         };
     };
-    PolicyActivationController_promoteRun: {
+    RunController_promoteRun: {
         parameters: {
             query?: never;
             header?: never;
@@ -4489,7 +4489,7 @@ export interface operations {
             };
         };
     };
-    PolicyActivationController_cancelRun: {
+    RunController_cancelRun: {
         parameters: {
             query?: never;
             header?: never;
@@ -4516,7 +4516,7 @@ export interface operations {
             };
         };
     };
-    PolicyActivationController_getDiff: {
+    RunController_getDiff: {
         parameters: {
             query?: {
                 /** @description Number of sample items to return (default: 50) */
@@ -4546,7 +4546,7 @@ export interface operations {
             };
         };
     };
-    PolicyActivationController_executeDryRun: {
+    DryRunController_executeDryRun: {
         parameters: {
             query?: never;
             header?: never;
@@ -4575,7 +4575,7 @@ export interface operations {
             };
         };
     };
-    PolicyActivationController_executeDryRunDiff: {
+    DryRunController_executeDryRunDiff: {
         parameters: {
             query?: never;
             header?: never;

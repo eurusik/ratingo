@@ -2624,7 +2624,7 @@
     },
     "/api/admin/catalog-policies": {
       "get": {
-        "operationId": "PolicyActivationController_getPolicies",
+        "operationId": "PolicyController_getPolicies",
         "summary": "Get list of policies",
         "description": "Returns list of all catalog policies with their status and metadata.",
         "parameters": [],
@@ -2660,7 +2660,7 @@
         ]
       },
       "post": {
-        "operationId": "PolicyActivationController_createPolicy",
+        "operationId": "PolicyController_createPolicy",
         "summary": "Create new policy",
         "description": "Creates a new policy draft with auto-incremented version. The policy is NOT activated automatically. Use POST /:id/prepare to start evaluation.",
         "parameters": [],
@@ -2707,66 +2707,9 @@
         ]
       }
     },
-    "/api/admin/catalog-policies/runs": {
-      "get": {
-        "operationId": "PolicyActivationController_getRuns",
-        "summary": "Get list of evaluation runs",
-        "description": "Returns list of all evaluation runs with their status and progress.",
-        "parameters": [
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Number of runs to return (default: 20)",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": false,
-            "in": "query",
-            "description": "Offset for pagination (default: 0)",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of evaluation runs",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/RunsListDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Admin - Policy Activation"
-        ]
-      }
-    },
     "/api/admin/catalog-policies/{id}/prepare": {
       "post": {
-        "operationId": "PolicyActivationController_preparePolicy",
+        "operationId": "PolicyController_preparePolicy",
         "summary": "Prepare policy for activation",
         "description": "Creates an evaluation run and starts background job to pre-compute evaluations for all media items. Returns immediately with run ID for tracking progress.",
         "parameters": [
@@ -2823,9 +2766,66 @@
         ]
       }
     },
+    "/api/admin/catalog-policies/runs": {
+      "get": {
+        "operationId": "RunController_getRuns",
+        "summary": "Get list of evaluation runs",
+        "description": "Returns list of all evaluation runs with their status and progress.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of runs to return (default: 20)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset for pagination (default: 0)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of evaluation runs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/RunsListDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      }
+    },
     "/api/admin/catalog-policies/runs/{runId}": {
       "get": {
-        "operationId": "PolicyActivationController_getRunStatus",
+        "operationId": "RunController_getRunStatus",
         "summary": "Get run status and progress",
         "description": "Returns detailed status of an evaluation run including progress, counters, and readyToPromote flag.",
         "parameters": [
@@ -2873,7 +2873,7 @@
     },
     "/api/admin/catalog-policies/runs/{runId}/promote": {
       "post": {
-        "operationId": "PolicyActivationController_promoteRun",
+        "operationId": "RunController_promoteRun",
         "summary": "Promote run to activate policy",
         "description": "Verifies run is successful and meets thresholds, then atomically activates the policy. This makes the new policy version active for the public catalog.",
         "parameters": [
@@ -2932,7 +2932,7 @@
     },
     "/api/admin/catalog-policies/runs/{runId}/cancel": {
       "post": {
-        "operationId": "PolicyActivationController_cancelRun",
+        "operationId": "RunController_cancelRun",
         "summary": "Cancel running evaluation",
         "description": "Cancels a running evaluation. Item jobs already in queue will be skipped. Preserves cursor and counters for potential resume.",
         "parameters": [
@@ -2980,7 +2980,7 @@
     },
     "/api/admin/catalog-policies/runs/{runId}/diff": {
       "get": {
-        "operationId": "PolicyActivationController_getDiff",
+        "operationId": "RunController_getDiff",
         "summary": "Get diff report",
         "description": "Computes differences between current active policy and the prepared run. Shows regressions (items leaving catalog) and improvements (items entering catalog).",
         "parameters": [
@@ -3037,7 +3037,7 @@
     },
     "/api/admin/catalog-policies/dry-run": {
       "post": {
-        "operationId": "PolicyActivationController_executeDryRun",
+        "operationId": "DryRunController_executeDryRun",
         "summary": "Execute dry-run evaluation",
         "description": "Evaluates media items against a proposed policy WITHOUT persisting results. Supports multiple selection modes: sample (random), top (by popularity), byType, byCountry. Limits: max 10000 items, 60s timeout.",
         "parameters": [],
@@ -3086,7 +3086,7 @@
     },
     "/api/admin/catalog-policies/dry-run/diff": {
       "post": {
-        "operationId": "PolicyActivationController_executeDryRunDiff",
+        "operationId": "DryRunController_executeDryRunDiff",
         "summary": "Execute dry-run with diff",
         "description": "Same as dry-run but also includes comparison against current active policy version.",
         "parameters": [],
@@ -6579,10 +6579,10 @@
           },
           "breakoutRules": {
             "description": "Breakout rules for exceptions",
-            "type": "array",
             "items": {
               "type": "array"
-            }
+            },
+            "type": "array"
           },
           "eligibilityMode": {
             "type": "string",
@@ -6630,6 +6630,57 @@
         "required": [
           "id",
           "version",
+          "message"
+        ]
+      },
+      "PrepareOptionsDto": {
+        "type": "object",
+        "properties": {
+          "batchSize": {
+            "type": "number",
+            "description": "Batch size for processing items",
+            "example": 500,
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "concurrency": {
+            "type": "number",
+            "description": "Number of concurrent workers",
+            "example": 10,
+            "minimum": 1,
+            "maximum": 50
+          }
+        }
+      },
+      "PrepareResponseDto": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "ID of the created evaluation run",
+            "example": "run-123e4567-e89b-12d3-a456-426614174000"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the run",
+            "example": "running",
+            "enum": [
+              "running",
+              "prepared",
+              "failed",
+              "cancelled",
+              "promoted"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message",
+            "example": "Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress."
+          }
+        },
+        "required": [
+          "runId",
+          "status",
           "message"
         ]
       },
@@ -6754,57 +6805,6 @@
         },
         "required": [
           "data"
-        ]
-      },
-      "PrepareOptionsDto": {
-        "type": "object",
-        "properties": {
-          "batchSize": {
-            "type": "number",
-            "description": "Batch size for processing items",
-            "example": 500,
-            "minimum": 1,
-            "maximum": 1000
-          },
-          "concurrency": {
-            "type": "number",
-            "description": "Number of concurrent workers",
-            "example": 10,
-            "minimum": 1,
-            "maximum": 50
-          }
-        }
-      },
-      "PrepareResponseDto": {
-        "type": "object",
-        "properties": {
-          "runId": {
-            "type": "string",
-            "description": "ID of the created evaluation run",
-            "example": "run-123e4567-e89b-12d3-a456-426614174000"
-          },
-          "status": {
-            "type": "string",
-            "description": "Current status of the run",
-            "example": "running",
-            "enum": [
-              "running",
-              "prepared",
-              "failed",
-              "cancelled",
-              "promoted"
-            ]
-          },
-          "message": {
-            "type": "string",
-            "description": "Human-readable message",
-            "example": "Policy preparation started. Use GET /admin/catalog-policy-runs/run-123 to track progress."
-          }
-        },
-        "required": [
-          "runId",
-          "status",
-          "message"
         ]
       },
       "ErrorSampleDto": {

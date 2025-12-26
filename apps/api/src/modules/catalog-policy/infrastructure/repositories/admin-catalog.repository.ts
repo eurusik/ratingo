@@ -17,7 +17,7 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { eq, and, isNull, desc, asc, sql } from 'drizzle-orm';
 import { DatabaseException } from '../../../../common/exceptions';
-import { EligibilityStatus } from '../../domain/types/policy.types';
+import { EligibilityStatusType } from '../../domain/constants/evaluation.constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
 export const ADMIN_CATALOG_REPOSITORY = 'ADMIN_CATALOG_REPOSITORY';
@@ -48,8 +48,8 @@ export interface MediaItemWithEvaluation {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
-  // Evaluation fields
-  eligibilityStatus: EligibilityStatus | null;
+  // Evaluation fields (canonical lowercase status)
+  eligibilityStatus: EligibilityStatusType | null;
   evaluationReasons: string[];
   relevanceScore: number | null;
   policyVersion: number | null;
@@ -61,7 +61,7 @@ export interface AdminQueryOptions {
   limit?: number;
   offset?: number;
   type?: MediaType;
-  eligibilityStatus?: EligibilityStatus;
+  eligibilityStatus?: EligibilityStatusType;
   includeDeleted?: boolean;
   sortBy?: 'createdAt' | 'updatedAt' | 'trendingScore' | 'relevanceScore';
   sortOrder?: 'asc' | 'desc';
@@ -84,14 +84,14 @@ export interface IAdminCatalogRepository {
    * Finds media items by eligibility status.
    */
   findByEligibilityStatus(
-    status: EligibilityStatus,
+    status: EligibilityStatusType,
     options?: AdminQueryOptions,
   ): Promise<MediaItemWithEvaluation[]>;
 
   /**
    * Counts media items by eligibility status.
    */
-  countByEligibilityStatus(): Promise<Record<EligibilityStatus, number>>;
+  countByEligibilityStatus(): Promise<Record<EligibilityStatusType, number>>;
 
   /**
    * Finds media items with specific evaluation reasons.
@@ -174,7 +174,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
       // Apply eligibility status filter (after join)
       if (options?.eligibilityStatus) {
         query = query.where(
-          eq(schema.mediaCatalogEvaluations.status, options.eligibilityStatus.toLowerCase() as any),
+          eq(schema.mediaCatalogEvaluations.status, options.eligibilityStatus as any),
         ) as any;
       }
 
@@ -262,7 +262,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
   }
 
   async findByEligibilityStatus(
-    status: EligibilityStatus,
+    status: EligibilityStatusType,
     options?: AdminQueryOptions,
   ): Promise<MediaItemWithEvaluation[]> {
     return this.findAll({
@@ -271,7 +271,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
     });
   }
 
-  async countByEligibilityStatus(): Promise<Record<EligibilityStatus, number>> {
+  async countByEligibilityStatus(): Promise<Record<EligibilityStatusType, number>> {
     try {
       const result = await this.db
         .select({
@@ -281,15 +281,15 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
         .from(schema.mediaCatalogEvaluations)
         .groupBy(schema.mediaCatalogEvaluations.status);
 
-      const counts: Record<EligibilityStatus, number> = {
-        PENDING: 0,
-        ELIGIBLE: 0,
-        INELIGIBLE: 0,
-        REVIEW: 0,
+      const counts: Record<EligibilityStatusType, number> = {
+        pending: 0,
+        eligible: 0,
+        ineligible: 0,
+        review: 0,
       };
 
       for (const row of result) {
-        const status = row.status.toUpperCase() as EligibilityStatus;
+        const status = row.status as EligibilityStatusType;
         counts[status] = row.count;
       }
 
@@ -390,10 +390,8 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       deletedAt: row.deletedAt,
-      // Evaluation fields
-      eligibilityStatus: row.eligibilityStatus
-        ? (row.eligibilityStatus.toUpperCase() as EligibilityStatus)
-        : null,
+      // Evaluation fields - status is already in canonical lowercase format
+      eligibilityStatus: row.eligibilityStatus as EligibilityStatusType | null,
       evaluationReasons: row.evaluationReasons ?? [],
       relevanceScore: row.relevanceScore,
       policyVersion: row.policyVersion,

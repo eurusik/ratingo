@@ -8,10 +8,11 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { DiffService } from './diff.service';
+import { DiffService, isDiffRegression, isDiffImprovement } from './diff.service';
 import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../infrastructure/repositories/catalog-evaluation-run.repository';
 import { CATALOG_POLICY_REPOSITORY } from '../../infrastructure/repositories/catalog-policy.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import { EligibilityStatus, DIFF_STATUS_NONE } from '../../domain/constants/evaluation.constants';
 
 describe('DiffService', () => {
   let service: DiffService;
@@ -19,6 +20,7 @@ describe('DiffService', () => {
   let mockPolicyRepository: any;
   let mockDb: any;
   let whereResults: any[];
+  let executeResult: any;
 
   beforeEach(async () => {
     mockRunRepository = {
@@ -32,6 +34,9 @@ describe('DiffService', () => {
     // Track which query is being made to return appropriate results
     whereResults = [];
     let whereCallIndex = 0;
+    executeResult = [
+      { regressions: '0', improvements: '0', unchanged: '0', still_ineligible: '0' },
+    ];
 
     // Create a chainable mock that supports all query builder methods
     mockDb = {
@@ -44,6 +49,7 @@ describe('DiffService', () => {
         return Promise.resolve(result);
       }),
       limit: jest.fn().mockResolvedValue([]),
+      execute: jest.fn().mockImplementation(() => Promise.resolve(executeResult)),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -56,6 +62,74 @@ describe('DiffService', () => {
     }).compile();
 
     service = module.get<DiffService>(DiffService);
+  });
+
+  describe('helper functions', () => {
+    describe('isDiffRegression', () => {
+      it('should return true when eligible becomes ineligible', () => {
+        expect(isDiffRegression(EligibilityStatus.ELIGIBLE, EligibilityStatus.INELIGIBLE)).toBe(
+          true,
+        );
+      });
+
+      it('should return true when eligible becomes pending', () => {
+        expect(isDiffRegression(EligibilityStatus.ELIGIBLE, EligibilityStatus.PENDING)).toBe(true);
+      });
+
+      it('should return true when eligible becomes none (removed)', () => {
+        expect(isDiffRegression(EligibilityStatus.ELIGIBLE, DIFF_STATUS_NONE)).toBe(true);
+      });
+
+      it('should return false when eligible stays eligible', () => {
+        expect(isDiffRegression(EligibilityStatus.ELIGIBLE, EligibilityStatus.ELIGIBLE)).toBe(
+          false,
+        );
+      });
+
+      it('should return false when ineligible becomes eligible', () => {
+        expect(isDiffRegression(EligibilityStatus.INELIGIBLE, EligibilityStatus.ELIGIBLE)).toBe(
+          false,
+        );
+      });
+
+      it('should return false when none becomes eligible', () => {
+        expect(isDiffRegression(DIFF_STATUS_NONE, EligibilityStatus.ELIGIBLE)).toBe(false);
+      });
+    });
+
+    describe('isDiffImprovement', () => {
+      it('should return true when ineligible becomes eligible', () => {
+        expect(isDiffImprovement(EligibilityStatus.INELIGIBLE, EligibilityStatus.ELIGIBLE)).toBe(
+          true,
+        );
+      });
+
+      it('should return true when pending becomes eligible', () => {
+        expect(isDiffImprovement(EligibilityStatus.PENDING, EligibilityStatus.ELIGIBLE)).toBe(true);
+      });
+
+      it('should return true when none becomes eligible (new item)', () => {
+        expect(isDiffImprovement(DIFF_STATUS_NONE, EligibilityStatus.ELIGIBLE)).toBe(true);
+      });
+
+      it('should return false when eligible stays eligible', () => {
+        expect(isDiffImprovement(EligibilityStatus.ELIGIBLE, EligibilityStatus.ELIGIBLE)).toBe(
+          false,
+        );
+      });
+
+      it('should return false when eligible becomes ineligible', () => {
+        expect(isDiffImprovement(EligibilityStatus.ELIGIBLE, EligibilityStatus.INELIGIBLE)).toBe(
+          false,
+        );
+      });
+
+      it('should return false when ineligible stays ineligible', () => {
+        expect(isDiffImprovement(EligibilityStatus.INELIGIBLE, EligibilityStatus.INELIGIBLE)).toBe(
+          false,
+        );
+      });
+    });
   });
 
   describe('computeDiff', () => {
@@ -86,16 +160,17 @@ describe('DiffService', () => {
         version: 1,
       });
 
-      // Query sequence:
-      // 1. Old evals for computeCounts
-      // 2. New evals for computeCounts
-      // 3. Old evals for getSampleItems (regressions)
-      // 4. New evals with join for getSampleItems (regressions)
-      // 5. Old evals for getSampleItems (improvements)
-      // 6. New evals with join for getSampleItems (improvements)
+      // SQL aggregation result
+      executeResult = [
+        { regressions: '0', improvements: '0', unchanged: '1', still_ineligible: '0' },
+      ];
+
+      // Query sequence for getSampleItems:
+      // 1. Old evals for getSampleItems (regressions)
+      // 2. New evals with join for getSampleItems (regressions)
+      // 3. Old evals for getSampleItems (improvements)
+      // 4. New evals with join for getSampleItems (improvements)
       whereResults = [
-        [{ mediaItemId: 'item-1', status: 'eligible' }], // old evals
-        [{ mediaItemId: 'item-1', status: 'eligible' }], // new evals
         [{ mediaItemId: 'item-1', status: 'eligible' }], // old evals for regressions
         [{ mediaItemId: 'item-1', status: 'eligible', title: 'Movie 1', trendingScore: 100 }], // new evals with join
         [{ mediaItemId: 'item-1', status: 'eligible' }], // old evals for improvements
@@ -120,9 +195,11 @@ describe('DiffService', () => {
         version: 2,
       });
 
+      executeResult = [
+        { regressions: '0', improvements: '0', unchanged: '0', still_ineligible: '0' },
+      ];
+
       whereResults = [
-        [], // old evals
-        [], // new evals
         [], // old evals for regressions
         [], // new evals with join
         [], // old evals for improvements
@@ -142,9 +219,12 @@ describe('DiffService', () => {
       });
       mockPolicyRepository.findActive.mockResolvedValue(null);
 
-      // When no current policy, computeCounts uses different query
+      // When no current policy, SQL aggregation handles it with FALSE filter
+      executeResult = [
+        { regressions: '0', improvements: '800', unchanged: '0', still_ineligible: '200' },
+      ];
+
       whereResults = [
-        [{ eligible: 800, ineligible: 200 }], // aggregate query for first policy
         [], // old evals for regressions (empty - no current policy)
         [{ mediaItemId: 'item-1', status: 'eligible', title: 'Movie 1', trendingScore: 100 }], // new evals
         [], // old evals for improvements
@@ -169,24 +249,12 @@ describe('DiffService', () => {
         version: 1,
       });
 
-      // Simulate: 2 regressions, 1 improvement, 1 unchanged, 1 stillIneligible
+      // SQL aggregation result: 2 regressions, 1 improvement, 1 unchanged, 1 stillIneligible
+      executeResult = [
+        { regressions: '2', improvements: '1', unchanged: '1', still_ineligible: '1' },
+      ];
+
       whereResults = [
-        // Old evals for computeCounts
-        [
-          { mediaItemId: 'item-1', status: 'eligible' },
-          { mediaItemId: 'item-2', status: 'eligible' },
-          { mediaItemId: 'item-3', status: 'ineligible' },
-          { mediaItemId: 'item-4', status: 'eligible' },
-          { mediaItemId: 'item-5', status: 'ineligible' },
-        ],
-        // New evals for computeCounts
-        [
-          { mediaItemId: 'item-1', status: 'ineligible' }, // regression
-          { mediaItemId: 'item-2', status: 'ineligible' }, // regression
-          { mediaItemId: 'item-3', status: 'eligible' }, // improvement
-          { mediaItemId: 'item-4', status: 'eligible' }, // unchanged
-          { mediaItemId: 'item-5', status: 'ineligible' }, // stillIneligible
-        ],
         // Old evals for getSampleItems (regressions)
         [
           { mediaItemId: 'item-1', status: 'eligible' },
@@ -242,17 +310,11 @@ describe('DiffService', () => {
         version: 1,
       });
 
+      executeResult = [
+        { regressions: '1', improvements: '1', unchanged: '0', still_ineligible: '0' },
+      ];
+
       whereResults = [
-        // Old evals for computeCounts
-        [
-          { mediaItemId: 'item-1', status: 'eligible' },
-          { mediaItemId: 'item-2', status: 'ineligible' },
-        ],
-        // New evals for computeCounts
-        [
-          { mediaItemId: 'item-1', status: 'ineligible' }, // regression
-          { mediaItemId: 'item-2', status: 'eligible' }, // improvement
-        ],
         // Old evals for getSampleItems (regressions)
         [
           { mediaItemId: 'item-1', status: 'eligible' },
@@ -294,9 +356,11 @@ describe('DiffService', () => {
         version: 1,
       });
 
+      executeResult = [
+        { regressions: '0', improvements: '0', unchanged: '0', still_ineligible: '0' },
+      ];
+
       whereResults = [
-        [], // old evals
-        [], // new evals
         [], // old evals for regressions
         [], // new evals with join
         [], // old evals for improvements
@@ -305,7 +369,9 @@ describe('DiffService', () => {
 
       await service.computeDiff('run-1', 10);
 
-      // Verify db.select was called multiple times for the queries
+      // Verify db.execute was called for SQL aggregation
+      expect(mockDb.execute).toHaveBeenCalled();
+      // Verify db.select was called for sample retrieval
       expect(mockDb.select).toHaveBeenCalled();
     });
   });

@@ -1,18 +1,10 @@
 /**
  * Catalog Policy Engine - Domain Types
- *
- * Core type definitions for the policy engine domain.
- * These types represent the business logic layer and are independent of infrastructure.
  */
 
-/**
- * Eligibility status for media items in the catalog
- */
-export type EligibilityStatus = 'PENDING' | 'ELIGIBLE' | 'INELIGIBLE' | 'REVIEW';
+import { EligibilityStatusType } from '../constants/evaluation.constants';
 
-/**
- * Evaluation reasons that explain why a media item has a particular eligibility status
- */
+/** Evaluation reason codes. */
 export type EvaluationReason =
   | 'MISSING_ORIGIN_COUNTRY'
   | 'MISSING_ORIGINAL_LANGUAGE'
@@ -26,36 +18,29 @@ export type EvaluationReason =
   | 'ALLOWED_LANGUAGE'
   | 'NO_ACTIVE_POLICY';
 
-/**
- * Result of evaluating a media item against a policy
- */
+/** Result of evaluating a media item against a policy. */
 export interface Evaluation {
-  status: EligibilityStatus;
+  status: EligibilityStatusType;
   reasons: EvaluationReason[];
   breakoutRuleId: string | null;
 }
 
-/**
- * Breakout rule configuration
- * Breakout rules allow content that would otherwise be blocked to become eligible
- * if it meets certain quality/popularity thresholds
- */
+/** Breakout rule configuration. Allows blocked content to become eligible. */
 export interface BreakoutRule {
   id: string;
   name: string;
-  priority: number; // Lower number = higher priority
+  /** Lower number = higher priority */
+  priority: number;
   requirements: {
     minImdbVotes?: number;
     minTraktVotes?: number;
-    minQualityScoreNormalized?: number; // 0-1 scale
+    minQualityScoreNormalized?: number;
     requireAnyOfProviders?: string[];
     requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[];
   };
 }
 
-/**
- * Policy configuration that defines catalog eligibility rules
- */
+/** Policy configuration defining catalog eligibility rules. */
 export interface PolicyConfig {
   allowedCountries: string[];
   blockedCountries: string[];
@@ -64,17 +49,14 @@ export interface PolicyConfig {
   blockedLanguages: string[];
   globalProviders: string[];
   breakoutRules: BreakoutRule[];
-  // Eligibility mode: STRICT = country AND language must be allowed
-  //                   RELAXED = country OR language allowed (not recommended)
+  /** STRICT = country AND language must be allowed. */
   eligibilityMode: 'STRICT' | 'RELAXED';
   homepage: {
     minRelevanceScore: number;
   };
 }
 
-/**
- * Watch providers map structure (from normalized media model)
- */
+/** Watch providers map structure. */
 export interface WatchProvidersMap {
   [region: string]: {
     link: string | null;
@@ -86,10 +68,7 @@ export interface WatchProvidersMap {
   };
 }
 
-/**
- * Input data for policy engine evaluation
- * Contains all necessary information to evaluate a media item
- */
+/** Input data for policy engine evaluation. */
 export interface PolicyEngineInput {
   mediaItem: {
     id: string;
@@ -111,9 +90,7 @@ export interface PolicyEngineInput {
   } | null;
 }
 
-/**
- * Catalog policy entity (database model)
- */
+/** Catalog policy entity (database model). */
 export interface CatalogPolicy {
   id: string;
   version: number;
@@ -123,30 +100,23 @@ export interface CatalogPolicy {
   activatedAt: Date | null;
 }
 
-/**
- * Media catalog evaluation entity (database model)
- */
+/** Media catalog evaluation entity (database model). */
 export interface MediaCatalogEvaluation {
   mediaItemId: string;
-  status: EligibilityStatus;
+  status: EligibilityStatusType;
   reasons: string[];
   relevanceScore: number;
   policyVersion: number;
   breakoutRuleId: string | null;
   evaluatedAt: Date;
-  /** Links evaluation to specific run for counter aggregation. NULL for legacy/manual evaluations. */
+  /** Links evaluation to specific run. NULL for legacy/manual evaluations. */
   runId?: string;
 }
 
 /**
- * Catalog evaluation run entity (database model)
+ * Catalog evaluation run entity (database model).
  *
- * Status lifecycle: RUNNING → PREPARED → PROMOTED | CANCELLED | FAILED
- * - RUNNING: Evaluation in progress
- * - PREPARED: Evaluation complete, ready for promotion
- * - PROMOTED: Policy activated, terminal state
- * - CANCELLED: User cancelled, terminal state
- * - FAILED: Error occurred, terminal state
+ * Lifecycle: RUNNING → PREPARED → PROMOTED | CANCELLED | FAILED
  */
 export interface CatalogEvaluationRun {
   id: string;
