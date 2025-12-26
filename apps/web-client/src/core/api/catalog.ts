@@ -314,6 +314,16 @@ export const catalogApi = {
   async getJobStatus(jobId: string): Promise<JobStatusDto> {
     return apiGet<JobStatusDto>(`ingestion/jobs/${jobId}`);
   },
+
+  /**
+   * Gets streaming providers in catalog.
+   *
+   * @returns {Promise<ProviderDto[]>} Providers sorted by media count
+   */
+  async getProviders(): Promise<ProviderDto[]> {
+    const response = await apiGet<ProvidersListDto>('catalog/providers');
+    return response.data;
+  },
 } as const;
 
 /**
@@ -325,4 +335,16 @@ export interface JobStatusDto {
   errorMessage: string | null;
   updatedAt: string | null;
   slug: string | null;
+}
+
+/** Provider info from catalog. */
+export interface ProviderDto {
+  id: string;
+  name: string;
+  count: number;
+}
+
+/** Providers list response. */
+export interface ProvidersListDto {
+  data: ProviderDto[];
 }

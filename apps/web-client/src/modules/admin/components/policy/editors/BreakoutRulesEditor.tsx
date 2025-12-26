@@ -15,6 +15,7 @@ interface BreakoutRulesEditorProps {
   onChange: (rules: BreakoutRule[]) => void
   labels?: {
     title?: string
+    description?: string
     addRule?: string
     ruleName?: string
     priority?: string
@@ -23,6 +24,7 @@ interface BreakoutRulesEditorProps {
     minQualityScore?: string
     providers?: string
     ratings?: string
+    providerPlaceholder?: string
   }
 }
 
@@ -75,7 +77,11 @@ export function BreakoutRulesEditor({
   const title = `${labels?.title ?? 'Breakout Rules'} (${rules.length})`
 
   return (
-    <ConfigCard title={title} icon={Shield}>
+    <ConfigCard 
+      title={title} 
+      description={labels?.description ?? 'Exceptions that bypass main policy rules for high-quality content'}
+      icon={Shield}
+    >
       <div className="space-y-3">
         {rules.map((rule) => (
           <div key={rule.id} className="border rounded-lg">
@@ -187,7 +193,7 @@ export function BreakoutRulesEditor({
                     onChange={(providers) =>
                       updateRequirements(rule.id, { requireAnyOfProviders: providers })
                     }
-                    placeholder="Add provider (e.g., netflix)"
+                    placeholder={labels?.providerPlaceholder ?? 'Add provider (e.g., netflix)'}
                     transform={(v) => v.toLowerCase()}
                   />
                 </div>

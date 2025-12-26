@@ -1,26 +1,24 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/ui/card'
 import { LucideIcon } from 'lucide-react'
 
 interface ConfigCardProps {
   title: string
+  description?: string
   icon: LucideIcon
   children: React.ReactNode
   contentClassName?: string
 }
 
-/**
- * Base card wrapper for policy config sections.
- * 
- * Provides consistent styling with icon, title, and content area.
- *
- * @param title - Card title text
- * @param icon - Lucide icon component
- * @param children - Card content
- * @param contentClassName - Optional CSS classes for content area
- */
-export function ConfigCard({ title, icon: Icon, children, contentClassName }: ConfigCardProps) {
+/** Base card wrapper for policy config sections. */
+export function ConfigCard({ 
+  title, 
+  description,
+  icon: Icon, 
+  children, 
+  contentClassName 
+}: ConfigCardProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -28,6 +26,11 @@ export function ConfigCard({ title, icon: Icon, children, contentClassName }: Co
           <Icon className="h-4 w-4" />
           {title}
         </CardTitle>
+        {description && (
+          <CardDescription className="text-xs">
+            {description}
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent className={contentClassName}>
         {children}

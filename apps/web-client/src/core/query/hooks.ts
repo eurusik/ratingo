@@ -9,7 +9,7 @@
  */
 
 import { useQuery, type UseQueryOptions, type UseQueryResult } from '@tanstack/react-query';
-import { catalogApi, type ShowDetailsDto, type TrendingShowsDto, type CalendarResponseDto } from '../api/catalog';
+import { catalogApi, type ShowDetailsDto, type TrendingShowsDto, type CalendarResponseDto, type ProviderDto } from '../api/catalog';
 import { queryKeys } from './keys';
 import type { TrendingShowsParams } from '../api/catalog';
 
@@ -72,6 +72,27 @@ export function useShowCalendar(
   return useQuery({
     queryKey: queryKeys.shows.calendar(params),
     queryFn: () => catalogApi.getShowCalendar(params),
+    ...options,
+  });
+}
+
+
+/**
+ * Gets streaming providers.
+ *
+ * @param {UseQueryOptions} options - Query options
+ * @returns {UseQueryResult<ProviderDto[]>} Providers list
+ *
+ * @example
+ * const { data: providers, isLoading } = useProviders();
+ */
+export function useProviders(
+  options?: Omit<UseQueryOptions<ProviderDto[]>, 'queryKey' | 'queryFn'>
+): UseQueryResult<ProviderDto[]> {
+  return useQuery({
+    queryKey: queryKeys.catalog.providers,
+    queryFn: () => catalogApi.getProviders(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
     ...options,
   });
 }

@@ -6,10 +6,15 @@ import { DrizzleMovieRepository } from './infrastructure/repositories/drizzle-mo
 import { CatalogMoviesController } from './presentation/controllers/catalog.movies.controller';
 import { CatalogShowsController } from './presentation/controllers/catalog.shows.controller';
 import { CatalogSearchController } from './presentation/controllers/catalog.search.controller';
+import { CatalogProvidersController } from './presentation/controllers/catalog.providers.controller';
 import { MEDIA_REPOSITORY } from './domain/repositories/media.repository.interface';
 import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface';
 import { GENRE_REPOSITORY } from './domain/repositories/genre.repository.interface';
 import { MOVIE_REPOSITORY } from './domain/repositories/movie.repository.interface';
+import {
+  ProvidersRepository,
+  PROVIDERS_REPOSITORY,
+} from './infrastructure/repositories/providers.repository';
 
 // Query Objects - Shows
 import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
@@ -43,7 +48,12 @@ import { CardsModule } from '../shared/cards/cards.module';
     CardsModule,
     BullModule.registerQueue({ name: INGESTION_QUEUE }),
   ],
-  controllers: [CatalogMoviesController, CatalogShowsController, CatalogSearchController],
+  controllers: [
+    CatalogMoviesController,
+    CatalogShowsController,
+    CatalogSearchController,
+    CatalogProvidersController,
+  ],
   providers: [
     CatalogSearchService,
     CatalogImportService,
@@ -78,6 +88,10 @@ import { CardsModule } from '../shared/cards/cards.module';
     {
       provide: MOVIE_REPOSITORY,
       useClass: DrizzleMovieRepository,
+    },
+    {
+      provide: PROVIDERS_REPOSITORY,
+      useClass: ProvidersRepository,
     },
   ],
   exports: [MEDIA_REPOSITORY, SHOW_REPOSITORY, GENRE_REPOSITORY, MOVIE_REPOSITORY],

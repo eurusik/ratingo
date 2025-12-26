@@ -12,6 +12,7 @@ interface CountriesEditorProps {
   onBlockedChange: (value: string[]) => void
   labels?: {
     title?: string
+    description?: string
     allowed?: string
     blocked?: string
     allowedPlaceholder?: string
@@ -30,7 +31,12 @@ export function CountriesEditor({
   labels,
 }: CountriesEditorProps) {
   return (
-    <ConfigCard title={labels?.title ?? 'Countries'} icon={Globe} contentClassName="space-y-4">
+    <ConfigCard 
+      title={labels?.title ?? 'Countries'} 
+      description={labels?.description ?? 'Content will only be available in selected countries'}
+      icon={Globe} 
+      contentClassName="space-y-4"
+    >
       <div>
         <Label className="text-green-600">{labels?.allowed ?? 'Allowed'} ({allowedCountries.length})</Label>
         <TagInput

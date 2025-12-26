@@ -21,15 +21,25 @@ interface SettingsEditorProps {
   onMinRelevanceScoreChange: (value: number) => void
   labels?: {
     title?: string
+    description?: string
     eligibilityMode?: string
+    eligibilityModeHint?: string
     blockedCountryMode?: string
+    blockedCountryModeHint?: string
     minRelevanceScore?: string
+    minRelevanceScoreHint?: string
+    strictLabel?: string
+    strictDescription?: string
+    relaxedLabel?: string
+    relaxedDescription?: string
+    anyLabel?: string
+    anyDescription?: string
+    majorityLabel?: string
+    majorityDescription?: string
   }
 }
 
-/**
- * Editor for policy settings (modes and thresholds).
- */
+/** Editor for policy settings (modes and thresholds). */
 export function SettingsEditor({
   eligibilityMode,
   blockedCountryMode,
@@ -40,7 +50,12 @@ export function SettingsEditor({
   labels,
 }: SettingsEditorProps) {
   return (
-    <ConfigCard title={labels?.title ?? 'Settings'} icon={Settings} contentClassName="space-y-4">
+    <ConfigCard 
+      title={labels?.title ?? 'Settings'} 
+      description={labels?.description ?? 'Configure how content is evaluated'}
+      icon={Settings} 
+      contentClassName="space-y-4"
+    >
       <div className="space-y-2">
         <Label>{labels?.eligibilityMode ?? 'Eligibility Mode'}</Label>
         <Select value={eligibilityMode} onValueChange={onEligibilityModeChange}>
@@ -48,10 +63,27 @@ export function SettingsEditor({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="STRICT">STRICT</SelectItem>
-            <SelectItem value="RELAXED">RELAXED</SelectItem>
+            <SelectItem value="STRICT">
+              <div className="flex flex-col items-start">
+                <span>{labels?.strictLabel ?? 'Strict'}</span>
+                <span className="text-xs text-muted-foreground">
+                  {labels?.strictDescription ?? 'All conditions must be met'}
+                </span>
+              </div>
+            </SelectItem>
+            <SelectItem value="RELAXED">
+              <div className="flex flex-col items-start">
+                <span>{labels?.relaxedLabel ?? 'Relaxed'}</span>
+                <span className="text-xs text-muted-foreground">
+                  {labels?.relaxedDescription ?? 'Some conditions can be skipped'}
+                </span>
+              </div>
+            </SelectItem>
           </SelectContent>
         </Select>
+        {labels?.eligibilityModeHint && (
+          <p className="text-xs text-muted-foreground">{labels.eligibilityModeHint}</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -61,10 +93,27 @@ export function SettingsEditor({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ANY">ANY</SelectItem>
-            <SelectItem value="MAJORITY">MAJORITY</SelectItem>
+            <SelectItem value="ANY">
+              <div className="flex flex-col items-start">
+                <span>{labels?.anyLabel ?? 'Any'}</span>
+                <span className="text-xs text-muted-foreground">
+                  {labels?.anyDescription ?? 'Block if available in any blocked country'}
+                </span>
+              </div>
+            </SelectItem>
+            <SelectItem value="MAJORITY">
+              <div className="flex flex-col items-start">
+                <span>{labels?.majorityLabel ?? 'Majority'}</span>
+                <span className="text-xs text-muted-foreground">
+                  {labels?.majorityDescription ?? 'Block only if majority of countries are blocked'}
+                </span>
+              </div>
+            </SelectItem>
           </SelectContent>
         </Select>
+        {labels?.blockedCountryModeHint && (
+          <p className="text-xs text-muted-foreground">{labels.blockedCountryModeHint}</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -77,6 +126,9 @@ export function SettingsEditor({
           onChange={(e) => onMinRelevanceScoreChange(Number(e.target.value))}
           className="h-9"
         />
+        <p className="text-xs text-muted-foreground">
+          {labels?.minRelevanceScoreHint ?? 'Minimum score (0-100) for homepage visibility'}
+        </p>
       </div>
     </ConfigCard>
   )

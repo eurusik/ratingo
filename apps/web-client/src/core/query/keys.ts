@@ -34,6 +34,11 @@ export const queryKeys = {
     detail: (slug: string) => [...queryKeys.movies.all, 'detail', slug] as const,
   },
 
+  /** Catalog-wide queries. */
+  catalog: {
+    providers: ['catalog', 'providers'] as const,
+  },
+
   /** Home page queries. */
   home: {
     hero: (type?: string) => ['home', 'hero', type] as const,

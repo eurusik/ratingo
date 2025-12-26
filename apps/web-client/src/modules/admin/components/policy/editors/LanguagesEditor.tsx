@@ -12,6 +12,7 @@ interface LanguagesEditorProps {
   onBlockedChange: (value: string[]) => void
   labels?: {
     title?: string
+    description?: string
     allowed?: string
     blocked?: string
     allowedPlaceholder?: string
@@ -30,7 +31,12 @@ export function LanguagesEditor({
   labels,
 }: LanguagesEditorProps) {
   return (
-    <ConfigCard title={labels?.title ?? 'Languages'} icon={Languages} contentClassName="space-y-4">
+    <ConfigCard 
+      title={labels?.title ?? 'Languages'} 
+      description={labels?.description ?? 'Filter content by original language'}
+      icon={Languages} 
+      contentClassName="space-y-4"
+    >
       <div>
         <Label className="text-green-600">{labels?.allowed ?? 'Allowed'} ({allowedLanguages.length})</Label>
         <TagInput

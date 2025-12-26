@@ -235,6 +235,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get streaming providers
+         * @description Returns streaming providers (Netflix, Max, etc.) sorted by available titles count.
+         */
+        get: operations["CatalogProvidersController_getProviders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user-media/continue": {
         parameters: {
             query?: never;
@@ -1869,6 +1889,27 @@ export interface components {
             ingestionStatus?: "importing" | "ready" | "failed";
             /** @description Job ID for polling ingestion status */
             jobId?: string;
+        };
+        ProviderDto: {
+            /**
+             * @description Provider ID (lowercase slug)
+             * @example netflix
+             */
+            id: string;
+            /**
+             * @description Provider display name
+             * @example Netflix
+             */
+            name: string;
+            /**
+             * @description Number of media items available
+             * @example 1250
+             */
+            count: number;
+        };
+        ProvidersListDto: {
+            /** @description List of streaming providers */
+            data: components["schemas"]["ProviderDto"][];
         };
         SetUserMediaStateDto: {
             /**
@@ -3641,6 +3682,29 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["ImportResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    CatalogProvidersController_getProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ProvidersListDto"];
                     };
                 };
             };

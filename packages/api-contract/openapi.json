@@ -1160,6 +1160,44 @@
         ]
       }
     },
+    "/api/catalog/providers": {
+      "get": {
+        "operationId": "CatalogProvidersController_getProviders",
+        "summary": "Get streaming providers",
+        "description": "Returns streaming providers (Netflix, Max, etc.) sorted by available titles count.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ProvidersListDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
     "/api/user-media/continue": {
       "get": {
         "operationId": "UserMediaController_listContinue",
@@ -5787,6 +5825,46 @@
           "status",
           "type",
           "tmdbId"
+        ]
+      },
+      "ProviderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "netflix",
+            "description": "Provider ID (lowercase slug)"
+          },
+          "name": {
+            "type": "string",
+            "example": "Netflix",
+            "description": "Provider display name"
+          },
+          "count": {
+            "type": "number",
+            "example": 1250,
+            "description": "Number of media items available"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "count"
+        ]
+      },
+      "ProvidersListDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "List of streaming providers",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderDto"
+            }
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "SetUserMediaStateDto": {
