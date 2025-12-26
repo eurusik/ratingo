@@ -738,6 +738,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/catalog-policies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get policy details
+         * @description Returns a single policy with full configuration settings.
+         */
+        get: operations["PolicyController_getPolicyById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/catalog-policies/{id}/prepare": {
         parameters: {
             query?: never;
@@ -2195,6 +2215,115 @@ export interface components {
         PoliciesListDto: {
             /** @description List of policies */
             data: components["schemas"]["PolicyDto"][];
+        };
+        HomepageConfigDto: {
+            /**
+             * @description Minimum relevance score for homepage items (0-100)
+             * @example 50
+             */
+            minRelevanceScore: number;
+        };
+        PolicyConfigDto: {
+            /**
+             * @description Allowed countries (ISO 3166-1 alpha-2 codes)
+             * @example [
+             *       "US",
+             *       "GB",
+             *       "CA",
+             *       "AU",
+             *       "UA"
+             *     ]
+             */
+            allowedCountries: unknown[][];
+            /**
+             * @description Blocked countries (ISO 3166-1 alpha-2 codes)
+             * @example [
+             *       "RU",
+             *       "BY"
+             *     ]
+             */
+            blockedCountries: unknown[][];
+            /**
+             * @description Blocked country mode
+             * @example ANY
+             * @enum {string}
+             */
+            blockedCountryMode: "ANY" | "MAJORITY";
+            /**
+             * @description Allowed languages (ISO 639-1 codes)
+             * @example [
+             *       "en",
+             *       "uk",
+             *       "de",
+             *       "fr"
+             *     ]
+             */
+            allowedLanguages: unknown[][];
+            /**
+             * @description Blocked languages (ISO 639-1 codes)
+             * @example [
+             *       "ru"
+             *     ]
+             */
+            blockedLanguages: unknown[][];
+            /**
+             * @description Global streaming providers
+             * @example [
+             *       "netflix",
+             *       "max",
+             *       "appletv",
+             *       "prime",
+             *       "disney"
+             *     ]
+             */
+            globalProviders: unknown[][];
+            /** @description Breakout rules for exceptions */
+            breakoutRules: unknown[][];
+            /**
+             * @description Eligibility mode (STRICT = country AND language, RELAXED = country OR language)
+             * @example STRICT
+             * @enum {string}
+             */
+            eligibilityMode: "STRICT" | "RELAXED";
+            /** @description Homepage configuration */
+            homepage: components["schemas"]["HomepageConfigDto"];
+        };
+        PolicyDetailDto: {
+            /**
+             * @description Policy ID
+             * @example policy-123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description Policy name
+             * @example Policy v2
+             */
+            name: string;
+            /**
+             * @description Policy version
+             * @example 2
+             */
+            version: string;
+            /**
+             * @description Policy status
+             * @example active
+             * @enum {string}
+             */
+            status: "active" | "inactive";
+            /** @description Policy configuration */
+            config: components["schemas"]["PolicyConfigDto"];
+            /**
+             * Format: date-time
+             * @description When the policy was created
+             * @example 2024-12-20T10:00:00Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the policy was activated
+             * @example 2024-12-20T12:00:00Z
+             */
+            activatedAt?: string;
         };
         CreatePolicyDto: {
             /**
@@ -4366,6 +4495,40 @@ export interface operations {
                         data: components["schemas"]["CreatePolicyResponseDto"];
                     };
                 };
+            };
+        };
+    };
+    PolicyController_getPolicyById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Policy ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Policy details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PolicyDetailDto"];
+                    };
+                };
+            };
+            /** @description Policy not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

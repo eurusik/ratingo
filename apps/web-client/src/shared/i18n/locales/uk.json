@@ -552,7 +552,10 @@
       "actions": {
         "prepare": "Підготувати",
         "preparing": "Підготовка...",
-        "viewDetails": "Переглянути деталі"
+        "viewDetails": "Переглянути деталі",
+        "edit": "Редагувати",
+        "save": "Зберегти як нову версію",
+        "saving": "Збереження..."
       },
       "tabs": {
         "runs": "Запуски",
@@ -581,6 +584,9 @@
         "languages": "Мови",
         "allowed": "Дозволені",
         "blocked": "Заблоковані",
+        "othersExcluded": "Інші країни",
+        "othersLanguagesExcluded": "Інші мови",
+        "excludedFromCatalog": "Виключені з каталогу",
         "blockedMode": "Режим блокування",
         "blockedCountryMode": "Режим блокування країн",
         "providers": "Глобальні провайдери",
@@ -588,11 +594,14 @@
         "eligibilityMode": "Режим відповідності",
         "minRelevanceScore": "Мін. оцінка релевантності",
         "breakoutRules": "Правила винятків",
-        "priority": "Пріоритет"
+        "priority": "Пріоритет",
+        "addRule": "Додати правило"
       },
       "toast": {
         "prepareSuccess": "Оцінювання політики розпочато",
-        "prepareFailed": "Не вдалося розпочати оцінювання"
+        "prepareFailed": "Не вдалося розпочати оцінювання",
+        "saveSuccess": "Нову версію політики створено",
+        "saveFailed": "Не вдалося зберегти політику"
       }
     },
     "runs": {
@@ -713,6 +722,7 @@
       "loading": "Завантаження...",
       "error": "Помилка завантаження даних",
       "tryAgain": "Спробувати знову",
+      "cancel": "Скасувати",
       "copy": "Копіювати",
       "copied": "Скопійовано",
       "jsonData": "JSON дані",

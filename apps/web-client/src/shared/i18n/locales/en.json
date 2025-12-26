@@ -522,6 +522,13 @@
         "active": "Active",
         "inactive": "Inactive"
       },
+      "runStatus": {
+        "running": "Running",
+        "prepared": "Prepared",
+        "failed": "Failed",
+        "cancelled": "Cancelled",
+        "promoted": "Promoted"
+      },
       "actions": {
         "view": "View",
         "prepare": "Prepare"
@@ -537,18 +544,28 @@
       }
     },
     "policyDetail": {
+      "title": "Policy Details",
+      "notFound": "Policy not found",
+      "notFoundDescription": "Policy with ID {id} does not exist",
+      "backToPolicies": "Back to Policies",
+      "lastUpdated": "Last updated",
       "tabs": {
         "runs": "Runs",
         "policy": "Configuration"
       },
       "runsTable": {
+        "title": "Evaluation Run History",
+        "description": "History of evaluation runs for this policy",
         "runId": "Run ID",
         "status": "Status",
         "progress": "Progress",
         "started": "Started",
-        "finished": "Finished"
+        "finished": "Finished",
+        "empty": "No evaluation runs yet",
+        "emptyHint": "Click \"Prepare\" to start a new evaluation"
       },
       "policyInfo": {
+        "title": "Policy Details",
         "description": "Description",
         "rules": "Rules",
         "version": "Version",
@@ -559,6 +576,9 @@
         "languages": "Languages",
         "allowed": "Allowed",
         "blocked": "Blocked",
+        "othersExcluded": "Other countries",
+        "othersLanguagesExcluded": "Other languages",
+        "excludedFromCatalog": "Excluded from catalog",
         "blockedMode": "Blocked mode",
         "blockedCountryMode": "Blocked Country Mode",
         "providers": "Global Providers",
@@ -566,10 +586,22 @@
         "eligibilityMode": "Eligibility Mode",
         "minRelevanceScore": "Min Relevance Score",
         "breakoutRules": "Breakout Rules",
-        "priority": "Priority"
+        "priority": "Priority",
+        "addRule": "Add Rule"
       },
       "actions": {
-        "viewDetails": "View Details"
+        "viewDetails": "View Details",
+        "prepare": "Prepare",
+        "preparing": "Preparing...",
+        "edit": "Edit",
+        "save": "Save as New Version",
+        "saving": "Saving..."
+      },
+      "toast": {
+        "prepareSuccess": "Policy evaluation started",
+        "prepareFailed": "Failed to start policy evaluation",
+        "saveSuccess": "New policy version created",
+        "saveFailed": "Failed to save policy"
       }
     },
     "runs": {
@@ -595,12 +627,10 @@
         "allStatuses": "All Statuses",
         "allPolicies": "All Policies",
         "running": "Running",
-        "success": "Success",
+        "prepared": "Prepared",
         "failed": "Failed",
-        "promoted": "Promoted",
-        "contentFiltering": "Content Filtering Policy",
-        "ratingValidation": "Rating Validation Policy",
-        "userModeration": "User Moderation Policy"
+        "cancelled": "Cancelled",
+        "promoted": "Promoted"
       },
       "duration": {
         "running": "running",
@@ -608,13 +638,24 @@
       }
     },
     "runDetail": {
+      "title": "Run Details",
+      "policy": "Policy",
+      "started": "Started",
       "actions": {
         "promote": "Promote",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "promoting": "Promoting...",
+        "cancelling": "Cancelling..."
       },
       "progress": {
         "title": "Progress",
-        "complete": "complete"
+        "complete": "complete",
+        "processed": "processed",
+        "total": "total",
+        "eligible": "eligible",
+        "ineligible": "ineligible",
+        "pending": "pending",
+        "errors": "errors"
       },
       "tabs": {
         "diff": "Diff",
@@ -622,39 +663,56 @@
       },
       "diff": {
         "title": "Changes Summary",
-        "added": "added",
-        "modified": "modified",
-        "removed": "removed",
-        "itemDetails": "Item Details"
+        "regressions": "regressions",
+        "improvements": "improvements",
+        "netChange": "Net change",
+        "topRegressions": "Top regressions (leaving catalog)",
+        "topImprovements": "Top improvements (entering catalog)",
+        "statusChange": "Status change",
+        "mediaId": "ID",
+        "notAvailable": "Diff is only available for 'prepared' status"
       },
       "errors": {
         "title": "Error Samples",
         "found": "errors found during evaluation",
         "occurrences": "occurrences",
         "details": "Error Details",
-        "stackTrace": "Stack Trace"
+        "stackTrace": "Stack Trace",
+        "affectedItems": "Affected items",
+        "showMore": "Show more",
+        "showLess": "Show less"
+      },
+      "blockingReasons": {
+        "title": "Cannot promote due to:",
+        "RUN_NOT_SUCCESS": "Run has not finished yet",
+        "COVERAGE_NOT_MET": "Coverage < 100%",
+        "ERRORS_EXCEEDED": "There are errors (errors > 0)",
+        "ALREADY_PROMOTED": "Run is already promoted",
+        "default": "Run is not ready for promotion"
       },
       "confirmPromote": {
-        "title": "Promote Run",
-        "description": "Are you sure you want to promote this run? This will apply all changes to the production environment.",
-        "confirmText": "PROMOTE",
-        "confirm": "Promote"
+        "title": "Promote policy to production",
+        "description": "You are about to promote {policyName} (Run: {runId}) to production.",
+        "warning": "⚠️ This will affect the production catalog immediately!",
+        "typeToConfirm": "Type PROMOTE to confirm",
+        "placeholder": "PROMOTE",
+        "cancel": "Cancel",
+        "confirm": "Promote to production",
+        "promoting": "Promoting..."
       },
       "confirmCancel": {
-        "title": "Cancel Run",
-        "description": "Are you sure you want to cancel this running evaluation? This action cannot be undone.",
-        "confirm": "Cancel Run"
+        "title": "Cancel evaluation run",
+        "description": "You are about to cancel the evaluation run for {policyName} (Run: {runId}).",
+        "warning": "⚠️ This action cannot be undone. The run will be stopped and marked as cancelled.",
+        "keepRunning": "Keep running",
+        "confirm": "Cancel run",
+        "cancelling": "Cancelling..."
       },
       "toast": {
         "promoteSuccess": "Run promoted successfully",
         "promoteFailed": "Failed to promote run",
         "cancelSuccess": "Run cancelled successfully",
         "cancelFailed": "Failed to cancel run"
-      },
-      "tooltip": {
-        "cannotPromote": "Cannot promote due to:",
-        "coverageThreshold": "Coverage threshold not met ({current}% < {required}%)",
-        "errorsFound": "Found {count} errors during evaluation"
       }
     },
     "common": {
@@ -664,11 +722,27 @@
       "loading": "Loading...",
       "error": "Error loading data",
       "tryAgain": "Try again",
+      "cancel": "Cancel",
       "copy": "Copy",
       "copied": "Copied",
       "jsonData": "JSON Data",
       "copyToClipboard": "JSON copied to clipboard",
-      "copyFailed": "Failed to copy JSON"
+      "copyFailed": "Failed to copy JSON",
+      "pagination": {
+        "showing": "Showing",
+        "to": "to",
+        "of": "of",
+        "entries": "entries",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "confirmDialog": {
+        "cancel": "Cancel",
+        "typeToConfirm": "Type",
+        "toConfirm": "to confirm",
+        "errorTyping": "Please type \"{text}\" to confirm",
+        "errorOccurred": "An error occurred"
+      }
     }
   }
 }

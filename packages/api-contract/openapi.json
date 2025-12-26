@@ -2707,6 +2707,57 @@
         ]
       }
     },
+    "/api/admin/catalog-policies/{id}": {
+      "get": {
+        "operationId": "PolicyController_getPolicyById",
+        "summary": "Get policy details",
+        "description": "Returns a single policy with full configuration settings.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Policy ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Policy details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PolicyDetailDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Policy not found"
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ]
+      }
+    },
     "/api/admin/catalog-policies/{id}/prepare": {
       "post": {
         "operationId": "PolicyController_preparePolicy",
@@ -6501,6 +6552,187 @@
         },
         "required": [
           "data"
+        ]
+      },
+      "HomepageConfigDto": {
+        "type": "object",
+        "properties": {
+          "minRelevanceScore": {
+            "type": "number",
+            "description": "Minimum relevance score for homepage items (0-100)",
+            "example": 50
+          }
+        },
+        "required": [
+          "minRelevanceScore"
+        ]
+      },
+      "PolicyConfigDto": {
+        "type": "object",
+        "properties": {
+          "allowedCountries": {
+            "description": "Allowed countries (ISO 3166-1 alpha-2 codes)",
+            "example": [
+              "US",
+              "GB",
+              "CA",
+              "AU",
+              "UA"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "blockedCountries": {
+            "description": "Blocked countries (ISO 3166-1 alpha-2 codes)",
+            "example": [
+              "RU",
+              "BY"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "blockedCountryMode": {
+            "type": "string",
+            "description": "Blocked country mode",
+            "example": "ANY",
+            "enum": [
+              "ANY",
+              "MAJORITY"
+            ]
+          },
+          "allowedLanguages": {
+            "description": "Allowed languages (ISO 639-1 codes)",
+            "example": [
+              "en",
+              "uk",
+              "de",
+              "fr"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "blockedLanguages": {
+            "description": "Blocked languages (ISO 639-1 codes)",
+            "example": [
+              "ru"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "globalProviders": {
+            "description": "Global streaming providers",
+            "example": [
+              "netflix",
+              "max",
+              "appletv",
+              "prime",
+              "disney"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "breakoutRules": {
+            "description": "Breakout rules for exceptions",
+            "items": {
+              "type": "array"
+            },
+            "type": "array"
+          },
+          "eligibilityMode": {
+            "type": "string",
+            "description": "Eligibility mode (STRICT = country AND language, RELAXED = country OR language)",
+            "example": "STRICT",
+            "enum": [
+              "STRICT",
+              "RELAXED"
+            ]
+          },
+          "homepage": {
+            "description": "Homepage configuration",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HomepageConfigDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "allowedCountries",
+          "blockedCountries",
+          "blockedCountryMode",
+          "allowedLanguages",
+          "blockedLanguages",
+          "globalProviders",
+          "breakoutRules",
+          "eligibilityMode",
+          "homepage"
+        ]
+      },
+      "PolicyDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Policy ID",
+            "example": "policy-123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "description": "Policy name",
+            "example": "Policy v2"
+          },
+          "version": {
+            "type": "string",
+            "description": "Policy version",
+            "example": "2"
+          },
+          "status": {
+            "type": "string",
+            "description": "Policy status",
+            "example": "active",
+            "enum": [
+              "active",
+              "inactive"
+            ]
+          },
+          "config": {
+            "description": "Policy configuration",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PolicyConfigDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the policy was created",
+            "example": "2024-12-20T10:00:00Z"
+          },
+          "activatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When the policy was activated",
+            "example": "2024-12-20T12:00:00Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "version",
+          "status",
+          "config",
+          "createdAt"
         ]
       },
       "CreatePolicyDto": {

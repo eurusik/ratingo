@@ -25,6 +25,8 @@ export {
   PolicyHeader,
   PolicyRunsTab,
   PolicyConfigTab,
+  PolicyEditForm,
+  type PolicyFormData,
 } from './components/policy'
 
 // Run components

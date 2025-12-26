@@ -41,7 +41,10 @@ export function RunStatusCard({
     if (!runStatus) return
 
     try {
-      const result = await promoteRunMutation.mutateAsync({ runId })
+      const result = await promoteRunMutation.mutateAsync({ 
+        runId,
+        policyId: runStatus.targetPolicyId 
+      })
       
       if (result.success) {
         toast.success(result.message || dict.admin.runDetail.toast.promoteSuccess)
@@ -183,7 +186,7 @@ export function RunStatusCard({
         {runStatus.blockingReasons.length > 0 && (
           <div className="space-y-2">
             <span className="text-sm font-medium text-destructive">
-              {dict.admin.runDetail.tooltip.cannotPromote}
+              Cannot promote
             </span>
             <ul className="text-sm text-muted-foreground space-y-1">
               {runStatus.blockingReasons.map((reason, index) => (

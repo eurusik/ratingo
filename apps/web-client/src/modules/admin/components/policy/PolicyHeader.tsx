@@ -3,7 +3,7 @@
 import { Card, CardHeader, CardTitle } from '@/shared/ui/card'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
-import { Loader2, Play } from 'lucide-react'
+import { Loader2, Play, Pencil } from 'lucide-react'
 import { POLICY_STATUS } from '@/modules/admin/types'
 
 interface PolicyHeaderProps {
@@ -12,13 +12,16 @@ interface PolicyHeaderProps {
   status: string
   lastUpdated: Date | string
   onPrepare: () => void
+  onEdit?: () => void
   isPreparing: boolean
+  isEditing?: boolean
   labels: {
     active: string
     inactive: string
     lastUpdated: string
     prepare: string
     preparing: string
+    edit?: string
   }
 }
 
@@ -26,14 +29,16 @@ interface PolicyHeaderProps {
  * Displays policy header with status and actions.
  * 
  * Shows policy name, version, status badge, last updated date,
- * and prepare button.
+ * and prepare/edit buttons.
  *
  * @param name - Policy name
  * @param version - Policy version number
  * @param status - Policy status (active/inactive)
  * @param lastUpdated - Last update timestamp
  * @param onPrepare - Callback for prepare action
+ * @param onEdit - Callback for edit action
  * @param isPreparing - Whether prepare is in progress
+ * @param isEditing - Whether currently in edit mode
  * @param labels - Localized labels
  */
 export function PolicyHeader({
@@ -42,7 +47,9 @@ export function PolicyHeader({
   status,
   lastUpdated,
   onPrepare,
+  onEdit,
   isPreparing,
+  isEditing = false,
   labels,
 }: PolicyHeaderProps) {
   const badgeVariant = status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary'
@@ -63,19 +70,27 @@ export function PolicyHeader({
               {labels.lastUpdated}: {date}
             </p>
           </div>
-          <Button onClick={onPrepare} disabled={isPreparing}>
-            {isPreparing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {labels.preparing}
-              </>
-            ) : (
-              <>
-                <Play className="mr-2 h-4 w-4" />
-                {labels.prepare}
-              </>
+          <div className="flex gap-2">
+            {onEdit && !isEditing && (
+              <Button variant="outline" onClick={onEdit}>
+                <Pencil className="mr-2 h-4 w-4" />
+                {labels.edit ?? 'Edit'}
+              </Button>
             )}
-          </Button>
+            <Button onClick={onPrepare} disabled={isPreparing || isEditing}>
+              {isPreparing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {labels.preparing}
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  {labels.prepare}
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </CardHeader>
     </Card>

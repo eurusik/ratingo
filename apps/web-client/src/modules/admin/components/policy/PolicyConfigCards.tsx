@@ -13,6 +13,9 @@ export interface ConfigLabels {
   languages?: string
   allowed?: string
   blocked?: string
+  othersExcluded?: string
+  othersLanguagesExcluded?: string
+  excludedFromCatalog?: string
   blockedCountryMode?: string
   providers?: string
   settings?: string
@@ -20,6 +23,7 @@ export interface ConfigLabels {
   minRelevanceScore?: string
   breakoutRules?: string
   priority?: string
+  addRule?: string
 }
 
 interface PolicyConfigCardsProps {
@@ -44,6 +48,8 @@ export function CountriesCard({ config, labels }: PolicyConfigCardsProps) {
         labels={{
           allowed: labels?.allowed ?? 'Allowed',
           blocked: labels?.blocked ?? 'Blocked',
+          othersExcluded: labels?.othersExcluded ?? 'Other countries',
+          excludedFromCatalog: labels?.excludedFromCatalog ?? 'Excluded from catalog',
         }}
       />
     </ConfigCard>
@@ -67,6 +73,8 @@ export function LanguagesCard({ config, labels }: PolicyConfigCardsProps) {
         labels={{
           allowed: labels?.allowed ?? 'Allowed',
           blocked: labels?.blocked ?? 'Blocked',
+          othersExcluded: labels?.othersLanguagesExcluded ?? 'Other languages',
+          excludedFromCatalog: labels?.excludedFromCatalog ?? 'Excluded from catalog',
         }}
       />
     </ConfigCard>
