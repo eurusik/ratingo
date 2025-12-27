@@ -36,6 +36,9 @@ const GlobalRequirementsSchema = z.object({
       min: z.number().int().min(0),
     })
     .optional(),
+  appliesTo: z
+    .array(z.enum(['catalog', 'homepage', 'trending', 'now_playing', 'new_digital', 'search']))
+    .optional(),
 });
 
 /**

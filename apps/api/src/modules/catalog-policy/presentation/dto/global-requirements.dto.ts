@@ -16,13 +16,23 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { RatingSource, VoteSource } from '../../domain/types/policy.types';
+import { EvaluationContext, RatingSource, VoteSource } from '../../domain/types/policy.types';
 
 /** Valid rating sources for validation */
 const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt'];
 
 /** Valid vote sources for validation */
 const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt'];
+
+/** Valid evaluation contexts for validation */
+const EVALUATION_CONTEXTS: EvaluationContext[] = [
+  'catalog',
+  'homepage',
+  'trending',
+  'now_playing',
+  'new_digital',
+  'search',
+];
 
 /**
  * Min votes any-of configuration DTO.
@@ -86,4 +96,18 @@ export class GlobalRequirementsDto {
   @ValidateNested()
   @Type(() => MinVotesAnyOfDto)
   minVotesAnyOf?: MinVotesAnyOfDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Contexts where global gate applies. ' +
+      "Defaults to ['catalog', 'homepage', 'trending', 'search'] if not specified. " +
+      'Freshness surfaces (now_playing, new_digital) are excluded by default.',
+    example: ['catalog', 'homepage', 'trending', 'search'],
+    enum: EVALUATION_CONTEXTS,
+    isArray: true,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsIn(EVALUATION_CONTEXTS, { each: true })
+  appliesTo?: EvaluationContext[];
 }
