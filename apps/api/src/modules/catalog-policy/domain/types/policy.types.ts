@@ -7,6 +7,26 @@
 import { EligibilityStatusType } from '../constants/evaluation.constants';
 
 /**
+ * Evaluation context for content display surfaces.
+ * Controls context-aware gate application.
+ */
+export type EvaluationContext =
+  | 'catalog' // Main catalog, browse pages
+  | 'homepage' // Homepage recommendations
+  | 'trending' // Trending lists
+  | 'now_playing' // Movies currently in theaters
+  | 'new_digital' // New on digital platforms
+  | 'search'; // Search results
+
+/**
+ * Options for policy evaluation.
+ */
+export interface EvaluationOptions {
+  /** Context where content will be displayed. Defaults to 'catalog' (legacy/batch mode). */
+  context?: EvaluationContext;
+}
+
+/**
  * Evaluation reason codes.
  */
 export type EvaluationReason =
@@ -54,14 +74,11 @@ export type VoteSource = 'imdb' | 'trakt';
  * All configured conditions are combined with AND logic.
  */
 export interface GlobalRequirements {
-  /**
-   * Minimum quality score normalized (0-1).
-   * Missing score = fail.
-   */
+  /** Minimum quality score normalized (0-1). Missing score = fail. */
   minQualityScoreNormalized?: number;
 
   /**
-   * At least one of these rating sources must be present (non-null, valid number).
+   * At least one of these rating sources must be present.
    * OR logic - passes if ANY source has a rating.
    */
   requireAnyOfRatingsPresent?: RatingSource[];
@@ -69,7 +86,6 @@ export interface GlobalRequirements {
   /**
    * Minimum votes from ANY of the specified sources.
    * OR logic - passes if ANY source meets the threshold.
-   * More robust than per-source minimums when data is incomplete.
    *
    * @example { sources: ['imdb', 'trakt'], min: 3000 }
    */
@@ -77,6 +93,12 @@ export interface GlobalRequirements {
     sources: VoteSource[];
     min: number;
   };
+
+  /**
+   * Contexts where global gate applies.
+   * Defaults to ['catalog', 'homepage', 'trending', 'search'].
+   */
+  appliesTo?: EvaluationContext[];
 }
 
 /**

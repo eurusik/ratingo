@@ -34,8 +34,13 @@ export const MOVIE_LISTING_TYPE = {
 export type MovieListingType = (typeof MOVIE_LISTING_TYPE)[keyof typeof MOVIE_LISTING_TYPE];
 
 /**
- * Options for movie listings query.
+ * Eligibility filtering mode for queries.
+ * - 'catalog': Only eligible content (quality-driven surfaces)
+ * - 'freshness': Eligible + ineligible with only MISSING_GLOBAL_SIGNALS
  */
+export type EligibilityMode = 'catalog' | 'freshness';
+
+/** Options for movie listings query. */
 export interface MovieListingOptions {
   limit?: number;
   offset?: number;
@@ -49,13 +54,13 @@ export interface MovieListingOptions {
   year?: number;
   yearFrom?: number;
   yearTo?: number;
+  /** Eligibility filtering mode. Defaults to 'catalog'. */
+  eligibilityMode?: EligibilityMode;
 }
 
 /**
  * Fetches movie listings by type (Now Playing, New Releases, New on Digital).
- *
- * Consolidates similar queries with different filters into a single
- * reusable query object with type-based filtering.
+ * Consolidates similar queries with type-based filtering.
  *
  * @throws {DatabaseException} When database query fails
  */
@@ -102,11 +107,10 @@ export class MovieListingsQuery {
 
   /**
    * Executes the movie listings query.
-   * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
-   * @param {MovieListingType} type - Type of listing (now_playing, new_releases, new_on_digital)
-   * @param {MovieListingOptions} options - Query options (limit, offset, daysBack)
-   * @returns {Promise<MovieWithMedia[]>} List of movies matching the criteria
+   * @param type - Type of listing (now_playing, new_releases, new_on_digital)
+   * @param options - Query options
+   * @returns List of movies with total count
    * @throws {DatabaseException} When database query fails
    */
   async execute(
@@ -126,6 +130,7 @@ export class MovieListingsQuery {
       year,
       yearFrom,
       yearTo,
+      eligibilityMode = 'catalog',
     } = options;
 
     try {
@@ -141,6 +146,7 @@ export class MovieListingsQuery {
         year,
         yearFrom,
         yearTo,
+        eligibilityMode,
       );
 
       const results = await this.db
@@ -175,9 +181,7 @@ export class MovieListingsQuery {
     }
   }
 
-  /**
-   * Builds query conditions and order based on listing type.
-   */
+  /** Builds query conditions and order based on listing type. */
   private buildQueryParams(
     type: MovieListingType,
     daysBack: number | undefined,
@@ -190,16 +194,18 @@ export class MovieListingsQuery {
     year?: number,
     yearFrom?: number,
     yearTo?: number,
+    eligibilityMode: EligibilityMode = 'catalog',
   ) {
     const now = new Date();
     const conditions: any[] = [
-      // Eligibility filter: only show ELIGIBLE items
-      eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
       // Ready filter: only show items with ready ingestion status
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
       // Not deleted filter
       isNull(schema.mediaItems.deletedAt),
     ];
+
+    // Eligibility filter based on mode
+    conditions.push(this.buildEligibilityCondition(eligibilityMode));
 
     // Release date filters
     if (year !== undefined) {
@@ -299,6 +305,27 @@ export class MovieListingsQuery {
     }
   }
 
+  /**
+   * Builds eligibility condition based on mode.
+   * Freshness mode uses whitelist approach - exact array match for safety.
+   */
+  private buildEligibilityCondition(eligibilityMode: EligibilityMode) {
+    if (eligibilityMode === 'freshness') {
+      // Freshness: eligible OR (ineligible with ONLY MISSING_GLOBAL_SIGNALS)
+      // Whitelist approach - exact array match for safety
+      return or(
+        eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+        and(
+          eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.INELIGIBLE),
+          sql`${schema.mediaCatalogEvaluations.reasons} = ARRAY['MISSING_GLOBAL_SIGNALS']::text[]`,
+        ),
+      );
+    }
+
+    // Catalog (default): only eligible
+    return eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE);
+  }
+
   private buildOrder(sort: CatalogSort, order: SortOrder) {
     const dir = order === 'asc' ? sql`asc` : sql`desc`;
     const nullsLast = sql`NULLS LAST`;
@@ -337,9 +364,7 @@ export class MovieListingsQuery {
     return Number(total ?? 0);
   }
 
-  /**
-   * Attaches genres to movies in a single batch query.
-   */
+  /** Attaches genres to movies in a single batch query. */
   private async attachGenres(movies: any[]): Promise<MovieWithMedia[]> {
     if (movies.length === 0) return [];
 

@@ -55,9 +55,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
     private readonly movieListingsQuery: MovieListingsQuery,
   ) {}
 
-  /**
-   * Upserts movie details transactionally.
-   */
+  /** Upserts movie details transactionally. */
   async upsertDetails(
     tx: DatabaseTransaction,
     mediaId: string,
@@ -73,9 +71,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
       });
   }
 
-  /**
-   * Sets isNowPlaying flag for movies.
-   */
+  /** Sets isNowPlaying flag for movies. */
   async setNowPlaying(tmdbIds: number[]): Promise<void> {
     if (tmdbIds.length === 0) {
       this.logger.warn('setNowPlaying called with empty array');
@@ -109,9 +105,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
     });
   }
 
-  /**
-   * Updates release dates for a movie.
-   */
+  /** Updates release dates for a movie. */
   async updateReleaseDates(
     mediaItemId: string,
     data: {
@@ -137,40 +131,36 @@ export class DrizzleMovieRepository implements IMovieRepository {
     }
   }
 
-  /**
-   * Finds full movie details by slug.
-   */
+  /** Finds full movie details by slug. */
   async findBySlug(slug: string): Promise<MovieDetails | null> {
     return this.movieDetailsQuery.execute(slug);
   }
 
-  /**
-   * Finds trending movies sorted by popularity and rating.
-   */
+  /** Finds trending movies sorted by popularity and rating. */
   async findTrending(options: CatalogListQueryDto): Promise<WithTotal<TrendingMovieItem>> {
     const normalized = { ...options, genres: this.normalizeGenres(options.genres) };
     return this.trendingMoviesQuery.execute(normalized) as unknown as WithTotal<TrendingMovieItem>;
   }
 
-  /**
-   * Finds movies currently in theaters (isNowPlaying = true).
-   */
+  /** Finds movies currently in theaters. Uses freshness eligibility mode. */
   async findNowPlaying(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
-    return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NOW_PLAYING, options);
+    return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NOW_PLAYING, {
+      ...options,
+      eligibilityMode: 'freshness',
+    });
   }
 
-  /**
-   * Finds movies recently released in theaters.
-   */
+  /** Finds movies recently released in theaters. Uses catalog eligibility mode. */
   async findNewReleases(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_RELEASES, options);
   }
 
-  /**
-   * Finds movies recently released on digital platforms.
-   */
+  /** Finds movies recently released on digital platforms. Uses freshness eligibility mode. */
   async findNewOnDigital(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
-    return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_ON_DIGITAL, options);
+    return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_ON_DIGITAL, {
+      ...options,
+      eligibilityMode: 'freshness',
+    });
   }
 
   private normalizeGenres(genres?: string | string[]): string[] | undefined {

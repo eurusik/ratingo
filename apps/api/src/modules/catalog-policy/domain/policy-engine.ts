@@ -11,8 +11,33 @@ import {
   PolicyConfig,
   PolicyEngineInput,
   BreakoutRule,
+  EvaluationContext,
+  EvaluationOptions,
+  GlobalRequirements,
 } from './types/policy.types';
 import { EligibilityStatus } from './constants/evaluation.constants';
+
+/**
+ * Default contexts where gate applies when appliesTo not configured.
+ * Quality-driven surfaces that require maturity signals.
+ */
+const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending', 'search'];
+
+/**
+ * Determines if global gate should be applied for given context.
+ *
+ * @param requirements - Global requirements configuration
+ * @param context - Evaluation context (defaults to 'catalog')
+ * @returns True if gate should be applied
+ */
+export function shouldApplyGlobalGate(
+  requirements: GlobalRequirements | undefined,
+  context: EvaluationContext = 'catalog',
+): boolean {
+  if (!requirements) return false;
+  const appliesTo = requirements.appliesTo ?? DEFAULT_QUALITY_CONTEXTS;
+  return appliesTo.includes(context);
+}
 
 /**
  * Evaluates media eligibility based on policy rules.
@@ -25,13 +50,20 @@ import { EligibilityStatus } from './constants/evaluation.constants';
  * 5. Neutral checks
  * 6. Allowed checks
  *
- * @param {PolicyEngineInput} input - Media item data and stats
- * @param {PolicyConfig} policy - Active policy configuration
- * @returns {Evaluation} Evaluation result with status, reasons, breakoutRuleId, and optional globalGateDetails
+ * @param input - Media item data and stats
+ * @param policy - Active policy configuration
+ * @param options - Optional evaluation options (context)
+ * @returns Evaluation result with status, reasons, breakoutRuleId, and optional globalGateDetails
  */
-export function evaluateEligibility(input: PolicyEngineInput, policy: PolicyConfig): Evaluation {
+export function evaluateEligibility(
+  input: PolicyEngineInput,
+  policy: PolicyConfig,
+  options?: EvaluationOptions,
+): Evaluation {
   const { mediaItem } = input;
   const reasons: EvaluationReason[] = [];
+  // Context defaults to 'catalog' for legacy/batch compatibility
+  const context = options?.context ?? 'catalog';
 
   // Step 1: Missing data checks → PENDING
   if (!mediaItem.originCountries || mediaItem.originCountries.length === 0) {
@@ -81,14 +113,15 @@ export function evaluateEligibility(input: PolicyEngineInput, policy: PolicyConf
     return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
   }
 
-  // Step 5: Global Quality Gate for non-blocked content
-  if (policy.globalRequirements) {
+  // Step 5: Global Quality Gate for non-blocked content - NOW CONTEXT AWARE
+  if (shouldApplyGlobalGate(policy.globalRequirements, context)) {
     const gateResult = checkGlobalRequirements(input, policy.globalRequirements);
     if (!gateResult.passes) {
-      reasons.push('MISSING_GLOBAL_SIGNALS');
+      // Contract: reasons = exactly ['MISSING_GLOBAL_SIGNALS']
+      // Diagnostics go to globalGateDetails only
       return {
         status: EligibilityStatus.INELIGIBLE,
-        reasons,
+        reasons: ['MISSING_GLOBAL_SIGNALS'],
         breakoutRuleId: null,
         globalGateDetails: {
           failedChecks: gateResult.failedChecks as any,
@@ -129,10 +162,10 @@ export function evaluateEligibility(input: PolicyEngineInput, policy: PolicyConf
 /**
  * Checks if media is blocked by country or language rules.
  *
- * @param {PolicyEngineInput['mediaItem']} mediaItem - Media item data
- * @param {PolicyConfig} policy - Policy configuration
- * @param {EvaluationReason[]} reasons - Array to accumulate reasons (mutated)
- * @returns {boolean} True if blocked
+ * @param mediaItem - Media item data
+ * @param policy - Policy configuration
+ * @param reasons - Array to accumulate reasons (mutated)
+ * @returns True if blocked
  */
 function checkBlocked(
   mediaItem: PolicyEngineInput['mediaItem'],
@@ -182,10 +215,10 @@ function checkBlocked(
 /**
  * Checks if media is neutral (not in allowed or blocked lists).
  *
- * @param {PolicyEngineInput['mediaItem']} mediaItem - Media item data
- * @param {PolicyConfig} policy - Policy configuration
- * @param {EvaluationReason[]} reasons - Array to accumulate reasons (mutated)
- * @returns {boolean} True if neutral
+ * @param mediaItem - Media item data
+ * @param policy - Policy configuration
+ * @param reasons - Array to accumulate reasons (mutated)
+ * @returns True if neutral
  */
 function checkNeutral(
   mediaItem: PolicyEngineInput['mediaItem'],
@@ -220,9 +253,9 @@ function checkNeutral(
 /**
  * Finds the first matching breakout rule by priority.
  *
- * @param {PolicyEngineInput} input - Media item data and stats
- * @param {PolicyConfig} policy - Policy configuration
- * @returns {BreakoutRule | null} Matching breakout rule or null
+ * @param input - Media item data and stats
+ * @param policy - Policy configuration
+ * @returns Matching breakout rule or null
  */
 function findMatchingBreakoutRule(
   input: PolicyEngineInput,
@@ -239,10 +272,10 @@ function findMatchingBreakoutRule(
 /**
  * Checks if media matches a breakout rule's requirements.
  *
- * @param {PolicyEngineInput} input - Media item data and stats
- * @param {BreakoutRule} rule - Breakout rule to check
- * @param {PolicyConfig} policy - Policy configuration
- * @returns {boolean} True if all requirements are met
+ * @param input - Media item data and stats
+ * @param rule - Breakout rule to check
+ * @param policy - Policy configuration
+ * @returns True if all requirements are met
  */
 function matchesBreakoutRule(
   input: PolicyEngineInput,
@@ -299,10 +332,10 @@ function matchesBreakoutRule(
 /**
  * Checks if media has any of the required providers.
  *
- * @param {PolicyEngineInput['mediaItem']} mediaItem - Media item data
- * @param {string[]} requiredProviders - List of required provider names
- * @param {PolicyConfig} policy - Policy configuration
- * @returns {boolean} True if any required provider is present
+ * @param mediaItem - Media item data
+ * @param requiredProviders - List of required provider names
+ * @param policy - Policy configuration
+ * @returns True if any required provider is present
  */
 function hasAnyProvider(
   mediaItem: PolicyEngineInput['mediaItem'],
@@ -341,9 +374,9 @@ function hasAnyProvider(
  * Checks if media has any of the required ratings.
  * A rating is valid if it's non-null and not NaN.
  *
- * @param {PolicyEngineInput['mediaItem']} mediaItem - Media item data
- * @param {('imdb' | 'metacritic' | 'rt' | 'trakt')[]} requiredRatings - List of required rating sources
- * @returns {boolean} True if any required rating is present
+ * @param mediaItem - Media item data
+ * @param requiredRatings - List of required rating sources
+ * @returns True if any required rating is present
  */
 function hasAnyRating(
   mediaItem: PolicyEngineInput['mediaItem'],
@@ -377,9 +410,9 @@ function hasAnyRating(
  * Checks if media meets global quality requirements.
  * All configured conditions are combined with AND logic.
  *
- * @param {PolicyEngineInput} input - Media item data and stats
- * @param {PolicyConfig['globalRequirements']} requirements - Global requirements configuration
- * @returns {{ passes: boolean; failedChecks: string[] }} Object with pass/fail status and failed checks
+ * @param input - Media item data and stats
+ * @param requirements - Global requirements configuration
+ * @returns Object with pass/fail status and failed checks
  */
 function checkGlobalRequirements(
   input: PolicyEngineInput,
@@ -436,9 +469,9 @@ function checkGlobalRequirements(
  * Computes relevance score (0-100) for homepage ranking.
  * Uses weighted average: quality 40%, popularity 40%, freshness 20%.
  *
- * @param {PolicyEngineInput} input - Media item data and stats
- * @param {PolicyConfig} policy - Policy configuration
- * @returns {number} Relevance score in range [0, 100]
+ * @param input - Media item data and stats
+ * @param policy - Policy configuration
+ * @returns Relevance score in range [0, 100]
  */
 export function computeRelevance(input: PolicyEngineInput, policy: PolicyConfig): number {
   if (!input.stats) {
@@ -477,8 +510,8 @@ export function computeRelevance(input: PolicyEngineInput, policy: PolicyConfig)
 /**
  * Returns human-readable descriptions for evaluation reasons.
  *
- * @param {EvaluationReason[]} reasons - List of evaluation reasons
- * @returns {Record<EvaluationReason, string>} Dictionary of reason descriptions
+ * @param reasons - List of evaluation reasons
+ * @returns Dictionary of reason descriptions
  */
 export function getReasonDescriptions(
   reasons: EvaluationReason[],

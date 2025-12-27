@@ -5,8 +5,13 @@
  * Focus on explicit test cases for readability and edge case coverage.
  */
 
-import { evaluateEligibility, computeRelevance } from './policy-engine';
-import { PolicyConfig, PolicyEngineInput } from './types/policy.types';
+import { evaluateEligibility, computeRelevance, shouldApplyGlobalGate } from './policy-engine';
+import {
+  PolicyConfig,
+  PolicyEngineInput,
+  GlobalRequirements,
+  EvaluationContext,
+} from './types/policy.types';
 import { EligibilityStatus } from './constants/evaluation.constants';
 
 describe('Policy Engine', () => {
@@ -761,6 +766,192 @@ describe('Policy Engine', () => {
       expect(result).toBe(100);
       expect(result).toBeGreaterThanOrEqual(0);
       expect(result).toBeLessThanOrEqual(100);
+    });
+  });
+
+  describe('shouldApplyGlobalGate', () => {
+    it('should return false when requirements is undefined', () => {
+      const result = shouldApplyGlobalGate(undefined, 'catalog');
+      expect(result).toBe(false);
+    });
+
+    it('should use default contexts when appliesTo is not configured', () => {
+      const requirements: GlobalRequirements = {
+        minVotesAnyOf: { sources: ['imdb'], min: 1000 },
+      };
+
+      // Default contexts: catalog, homepage, trending, search
+      expect(shouldApplyGlobalGate(requirements, 'catalog')).toBe(true);
+      expect(shouldApplyGlobalGate(requirements, 'homepage')).toBe(true);
+      expect(shouldApplyGlobalGate(requirements, 'trending')).toBe(true);
+      expect(shouldApplyGlobalGate(requirements, 'search')).toBe(true);
+
+      // Freshness contexts NOT in default
+      expect(shouldApplyGlobalGate(requirements, 'now_playing')).toBe(false);
+      expect(shouldApplyGlobalGate(requirements, 'new_digital')).toBe(false);
+    });
+
+    it('should respect appliesTo configuration', () => {
+      const requirements: GlobalRequirements = {
+        minVotesAnyOf: { sources: ['imdb'], min: 1000 },
+        appliesTo: ['catalog', 'homepage'],
+      };
+
+      expect(shouldApplyGlobalGate(requirements, 'catalog')).toBe(true);
+      expect(shouldApplyGlobalGate(requirements, 'homepage')).toBe(true);
+      expect(shouldApplyGlobalGate(requirements, 'trending')).toBe(false);
+      expect(shouldApplyGlobalGate(requirements, 'search')).toBe(false);
+      expect(shouldApplyGlobalGate(requirements, 'now_playing')).toBe(false);
+    });
+
+    it('should return false for all contexts when appliesTo is empty array', () => {
+      const requirements: GlobalRequirements = {
+        minVotesAnyOf: { sources: ['imdb'], min: 1000 },
+        appliesTo: [],
+      };
+
+      expect(shouldApplyGlobalGate(requirements, 'catalog')).toBe(false);
+      expect(shouldApplyGlobalGate(requirements, 'homepage')).toBe(false);
+      expect(shouldApplyGlobalGate(requirements, 'now_playing')).toBe(false);
+    });
+
+    it('should default to catalog context when not provided', () => {
+      const requirements: GlobalRequirements = {
+        minVotesAnyOf: { sources: ['imdb'], min: 1000 },
+        appliesTo: ['catalog'],
+      };
+
+      expect(shouldApplyGlobalGate(requirements)).toBe(true);
+    });
+  });
+
+  describe('evaluateEligibility - Context-Aware Gate', () => {
+    it('should produce same result with no options as with context=catalog (Property 1)', () => {
+      const policy = createPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
+        },
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US'],
+          originalLanguage: 'en',
+          voteCountImdb: 10000, // Fails gate
+        },
+      });
+
+      const resultNoOptions = evaluateEligibility(input, policy);
+      const resultCatalog = evaluateEligibility(input, policy, { context: 'catalog' });
+
+      expect(resultNoOptions.status).toBe(resultCatalog.status);
+      expect(resultNoOptions.reasons).toEqual(resultCatalog.reasons);
+    });
+
+    it('should skip gate for now_playing context when not in appliesTo (Property 2)', () => {
+      const policy = createPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
+          // Default appliesTo: catalog, homepage, trending, search
+        },
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US'],
+          originalLanguage: 'en',
+          voteCountImdb: 100, // Would fail gate
+        },
+      });
+
+      // Catalog context - gate applies, should fail
+      const catalogResult = evaluateEligibility(input, policy, { context: 'catalog' });
+      expect(catalogResult.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(catalogResult.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+
+      // Now playing context - gate skipped, should pass
+      const nowPlayingResult = evaluateEligibility(input, policy, { context: 'now_playing' });
+      expect(nowPlayingResult.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(nowPlayingResult.reasons).toContain('ALLOWED_COUNTRY');
+    });
+
+    it('should apply gate when context is in appliesTo', () => {
+      const policy = createPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
+          appliesTo: ['catalog', 'now_playing'], // Explicitly include now_playing
+        },
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US'],
+          originalLanguage: 'en',
+          voteCountImdb: 100, // Fails gate
+        },
+      });
+
+      // Now playing context - gate applies because explicitly in appliesTo
+      const result = evaluateEligibility(input, policy, { context: 'now_playing' });
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+    });
+
+    it('should set reasons to exactly [MISSING_GLOBAL_SIGNALS] when gate fails (Property 6)', () => {
+      const policy = createPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
+          minQualityScoreNormalized: 0.5,
+        },
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US'],
+          originalLanguage: 'en',
+          voteCountImdb: 100, // Fails minVotesAnyOf
+        },
+        stats: {
+          qualityScore: 0.1, // Fails minQualityScoreNormalized
+          popularityScore: null,
+          freshnessScore: null,
+          ratingoScore: null,
+        },
+      });
+
+      const result = evaluateEligibility(input, policy, { context: 'catalog' });
+
+      // Contract: reasons must be exactly ['MISSING_GLOBAL_SIGNALS']
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toEqual(['MISSING_GLOBAL_SIGNALS']);
+      expect(result.reasons.length).toBe(1);
+
+      // Diagnostics go to globalGateDetails only
+      expect(result.globalGateDetails).toBeDefined();
+      expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
+      expect(result.globalGateDetails?.failedChecks).toContain('minQualityScoreNormalized');
+    });
+
+    it('should still block content regardless of context (hard blocks override)', () => {
+      const policy = createPolicy({
+        blockedCountries: ['RU'],
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
+        },
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['RU'], // Blocked
+          originalLanguage: 'en',
+          voteCountImdb: 100000, // Passes gate
+        },
+      });
+
+      // Even in now_playing context, blocked content stays blocked
+      const result = evaluateEligibility(input, policy, { context: 'now_playing' });
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
     });
   });
 });
