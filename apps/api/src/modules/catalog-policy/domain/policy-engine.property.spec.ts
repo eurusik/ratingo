@@ -6,7 +6,7 @@
 
 import * as fc from 'fast-check';
 import { evaluateEligibility, computeRelevance } from './policy-engine';
-import { PolicyConfig, PolicyEngineInput } from './types/policy.types';
+import { PolicyConfig, PolicyEngineInput, EvaluationContext } from './types/policy.types';
 import { EligibilityStatus, EligibilityStatusType } from './constants/evaluation.constants';
 
 describe('Policy Engine - Property-Based Tests', () => {
@@ -333,6 +333,166 @@ describe('Policy Engine - Property-Based Tests', () => {
           // Reasons array should not be empty
           expect(result.reasons.length).toBeGreaterThan(0);
         }),
+        { numRuns: 100 },
+      );
+    });
+  });
+});
+
+/**
+ * Context-Aware Eligibility Property Tests
+ * Feature: context-aware-eligibility
+ */
+describe('Context-Aware Eligibility Properties', () => {
+  // Arbitraries for context-aware tests
+  const countryCodeArb = fc.stringMatching(/^[A-Z]{2}$/);
+  const languageCodeArb = fc.stringMatching(/^[a-z]{2}$/);
+
+  const mediaItemArb = fc.record({
+    id: fc.uuid(),
+    originCountries: fc.option(fc.array(countryCodeArb, { minLength: 1, maxLength: 5 })),
+    originalLanguage: fc.option(languageCodeArb),
+    watchProviders: fc.constant(null),
+    voteCountImdb: fc.option(fc.nat({ max: 1000000 })),
+    voteCountTrakt: fc.option(fc.nat({ max: 100000 })),
+    ratingImdb: fc.option(fc.double({ min: 0, max: 10 })),
+    ratingMetacritic: fc.option(fc.nat({ max: 100 })),
+    ratingRottenTomatoes: fc.option(fc.nat({ max: 100 })),
+    ratingTrakt: fc.option(fc.double({ min: 0, max: 10 })),
+  });
+
+  const statsArb = fc.option(
+    fc.record({
+      qualityScore: fc.option(fc.double({ min: 0, max: 1 })),
+      popularityScore: fc.option(fc.double({ min: 0, max: 1 })),
+      freshnessScore: fc.option(fc.double({ min: 0, max: 1 })),
+      ratingoScore: fc.option(fc.double({ min: 0, max: 1 })),
+    }),
+  );
+
+  const policyEngineInputArb = fc.record({
+    mediaItem: mediaItemArb,
+    stats: statsArb,
+  });
+
+  const ALL_CONTEXTS: EvaluationContext[] = [
+    'catalog',
+    'homepage',
+    'trending',
+    'now_playing',
+    'new_digital',
+    'search',
+  ];
+
+  /**
+   * Property 1: No Context Equals Catalog Context
+   * Feature: context-aware-eligibility, Property 1: No Context Equals Catalog Context
+   * Validates: Requirements 1.3
+   *
+   * For any valid PolicyEngineInput and PolicyConfig, calling evaluateEligibility(input, policy)
+   * without options SHALL produce the same result as evaluateEligibility(input, policy, { context: 'catalog' }).
+   */
+  describe('Property 1: No Context Equals Catalog Context', () => {
+    it('should produce identical results when called without options vs with context: catalog', () => {
+      fc.assert(
+        fc.property(
+          policyEngineInputArb,
+          fc.nat({ max: 100000 }), // threshold for gate
+          fc.boolean(), // whether to include globalRequirements
+          fc.subarray(ALL_CONTEXTS, { minLength: 0 }), // appliesTo contexts
+          (input, threshold, includeGlobalReqs, appliesTo) => {
+            const policy: PolicyConfig = {
+              allowedCountries: ['US', 'GB', 'CA'],
+              blockedCountries: ['RU', 'CN'],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en', 'es', 'fr'],
+              blockedLanguages: ['ru'],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              ...(includeGlobalReqs && {
+                globalRequirements: {
+                  minVotesAnyOf: { sources: ['imdb', 'trakt'], min: threshold },
+                  ...(appliesTo.length > 0 && { appliesTo }),
+                },
+              }),
+            };
+
+            // Call without options (legacy mode)
+            const resultWithoutOptions = evaluateEligibility(input, policy);
+
+            // Call with explicit context: 'catalog'
+            const resultWithCatalogContext = evaluateEligibility(input, policy, {
+              context: 'catalog',
+            });
+
+            // Results should be identical
+            expect(resultWithoutOptions.status).toBe(resultWithCatalogContext.status);
+            expect(resultWithoutOptions.reasons).toEqual(resultWithCatalogContext.reasons);
+            expect(resultWithoutOptions.breakoutRuleId).toBe(
+              resultWithCatalogContext.breakoutRuleId,
+            );
+
+            // globalGateDetails should also match
+            if (resultWithoutOptions.globalGateDetails) {
+              expect(resultWithCatalogContext.globalGateDetails).toBeDefined();
+              expect(resultWithoutOptions.globalGateDetails.failedChecks).toEqual(
+                resultWithCatalogContext.globalGateDetails?.failedChecks,
+              );
+            } else {
+              expect(resultWithCatalogContext.globalGateDetails).toBeUndefined();
+            }
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should produce identical results for all input variations without options vs with catalog context', () => {
+      fc.assert(
+        fc.property(
+          policyEngineInputArb,
+          fc.constantFrom('STRICT', 'RELAXED') as fc.Arbitrary<'STRICT' | 'RELAXED'>,
+          fc.array(
+            fc.record({
+              id: fc.string({ minLength: 1, maxLength: 20 }),
+              name: fc.string({ minLength: 1, maxLength: 50 }),
+              priority: fc.nat({ max: 100 }),
+              requirements: fc.record({
+                minImdbVotes: fc.option(fc.nat({ max: 1000000 })),
+              }),
+            }),
+            { maxLength: 3 },
+          ),
+          (input, eligibilityMode, breakoutRules) => {
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: ['RU'],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules,
+              eligibilityMode,
+              homepage: { minRelevanceScore: 50 },
+              globalRequirements: {
+                minVotesAnyOf: { sources: ['imdb'], min: 1000 },
+              },
+            };
+
+            // Call without options
+            const resultWithoutOptions = evaluateEligibility(input, policy);
+
+            // Call with explicit context: 'catalog'
+            const resultWithCatalogContext = evaluateEligibility(input, policy, {
+              context: 'catalog',
+            });
+
+            // All fields should match
+            expect(resultWithoutOptions).toEqual(resultWithCatalogContext);
+          },
+        ),
         { numRuns: 100 },
       );
     });
@@ -867,6 +1027,315 @@ describe('Global Quality Gate Properties', () => {
       ),
       { numRuns: 100 },
     );
+  });
+
+  /**
+   * Property 2: Context-Aware Gate Application
+   * Feature: context-aware-eligibility, Property 2: Context-Aware Gate Application
+   * Validates: Requirements 2.2, 2.3, 2.4, 2.5
+   *
+   * For any PolicyConfig with globalRequirements, and for any EvaluationContext:
+   * - IF context IS in appliesTo (or appliesTo is undefined and context is in default contexts),
+   *   THEN gate SHALL be checked
+   * - IF context is NOT in appliesTo, THEN gate SHALL be skipped and content that would fail
+   *   gate SHALL still be eligible (if not blocked/neutral)
+   */
+  describe('Property 2: Context-Aware Gate Application', () => {
+    const ALL_CONTEXTS: EvaluationContext[] = [
+      'catalog',
+      'homepage',
+      'trending',
+      'now_playing',
+      'new_digital',
+      'search',
+    ];
+    const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = [
+      'catalog',
+      'homepage',
+      'trending',
+      'search',
+    ];
+
+    it('should apply gate when context is in appliesTo (explicit configuration)', () => {
+      fc.assert(
+        fc.property(
+          fc.nat({ max: 100000 }), // threshold
+          fc.option(fc.nat({ max: 100000 })), // votes (can be null or below threshold)
+          fc.subarray(ALL_CONTEXTS, { minLength: 1 }), // appliesTo contexts
+          (threshold, votes, appliesTo) => {
+            // Pick a context that IS in appliesTo
+            const context = appliesTo[0];
+
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: [],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              globalRequirements: {
+                minVotesAnyOf: { sources: ['imdb'], min: threshold },
+                appliesTo,
+              },
+            };
+
+            const input: PolicyEngineInput = {
+              mediaItem: {
+                id: 'test',
+                originCountries: ['US'], // Allowed
+                originalLanguage: 'en', // Allowed
+                watchProviders: null,
+                voteCountImdb: votes,
+                voteCountTrakt: null,
+                ratingImdb: null,
+                ratingMetacritic: null,
+                ratingRottenTomatoes: null,
+                ratingTrakt: null,
+              },
+              stats: null,
+            };
+
+            const result = evaluateEligibility(input, policy, { context });
+
+            const passesGate = votes !== null && votes >= threshold;
+
+            if (passesGate) {
+              // Gate passes → ELIGIBLE
+              expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+              expect(result.reasons).toContain('ALLOWED_COUNTRY');
+            } else {
+              // Gate fails → INELIGIBLE with MISSING_GLOBAL_SIGNALS
+              expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+              expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+            }
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should skip gate when context is NOT in appliesTo (explicit configuration)', () => {
+      fc.assert(
+        fc.property(
+          fc.nat({ max: 100000 }), // threshold
+          fc.option(fc.nat({ max: 100000 })), // votes (can be null or below threshold)
+          fc.subarray(ALL_CONTEXTS, { minLength: 1, maxLength: 3 }), // appliesTo contexts
+          (threshold, votes, appliesTo) => {
+            // Find a context that is NOT in appliesTo
+            const excludedContexts = ALL_CONTEXTS.filter((c) => !appliesTo.includes(c));
+            fc.pre(excludedContexts.length > 0); // Skip if all contexts are in appliesTo
+            const context = excludedContexts[0];
+
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: [],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              globalRequirements: {
+                minVotesAnyOf: { sources: ['imdb'], min: threshold },
+                appliesTo,
+              },
+            };
+
+            const input: PolicyEngineInput = {
+              mediaItem: {
+                id: 'test',
+                originCountries: ['US'], // Allowed
+                originalLanguage: 'en', // Allowed
+                watchProviders: null,
+                voteCountImdb: votes, // May fail gate, but gate should be skipped
+                voteCountTrakt: null,
+                ratingImdb: null,
+                ratingMetacritic: null,
+                ratingRottenTomatoes: null,
+                ratingTrakt: null,
+              },
+              stats: null,
+            };
+
+            const result = evaluateEligibility(input, policy, { context });
+
+            // Gate should be skipped → ELIGIBLE regardless of votes
+            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+            expect(result.reasons).toContain('ALLOWED_COUNTRY');
+            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should use default contexts when appliesTo is not configured', () => {
+      fc.assert(
+        fc.property(
+          fc.nat({ max: 100000 }), // threshold
+          fc.option(fc.nat({ max: 100000 })), // votes
+          fc.constantFrom(...ALL_CONTEXTS), // any context
+          (threshold, votes, context) => {
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: [],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              globalRequirements: {
+                minVotesAnyOf: { sources: ['imdb'], min: threshold },
+                // No appliesTo → defaults to ['catalog', 'homepage', 'trending', 'search']
+              },
+            };
+
+            const input: PolicyEngineInput = {
+              mediaItem: {
+                id: 'test',
+                originCountries: ['US'],
+                originalLanguage: 'en',
+                watchProviders: null,
+                voteCountImdb: votes,
+                voteCountTrakt: null,
+                ratingImdb: null,
+                ratingMetacritic: null,
+                ratingRottenTomatoes: null,
+                ratingTrakt: null,
+              },
+              stats: null,
+            };
+
+            const result = evaluateEligibility(input, policy, { context });
+
+            const isDefaultContext = DEFAULT_QUALITY_CONTEXTS.includes(context);
+            const passesGate = votes !== null && votes >= threshold;
+
+            if (isDefaultContext) {
+              // Gate applies for default contexts
+              if (passesGate) {
+                expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+              } else {
+                expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+                expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+              }
+            } else {
+              // Gate skipped for non-default contexts (now_playing, new_digital)
+              expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+              expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+            }
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should never apply gate when appliesTo is empty array', () => {
+      fc.assert(
+        fc.property(
+          fc.nat({ max: 100000 }), // threshold
+          fc.option(fc.nat({ max: 100000 })), // votes
+          fc.constantFrom(...ALL_CONTEXTS), // any context
+          (threshold, votes, context) => {
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: [],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              globalRequirements: {
+                minVotesAnyOf: { sources: ['imdb'], min: threshold },
+                appliesTo: [], // Empty array = gate never applies
+              },
+            };
+
+            const input: PolicyEngineInput = {
+              mediaItem: {
+                id: 'test',
+                originCountries: ['US'],
+                originalLanguage: 'en',
+                watchProviders: null,
+                voteCountImdb: votes, // May fail gate, but gate should be skipped
+                voteCountTrakt: null,
+                ratingImdb: null,
+                ratingMetacritic: null,
+                ratingRottenTomatoes: null,
+                ratingTrakt: null,
+              },
+              stats: null,
+            };
+
+            const result = evaluateEligibility(input, policy, { context });
+
+            // Gate should never apply → ELIGIBLE regardless of votes
+            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+            expect(result.reasons).toContain('ALLOWED_COUNTRY');
+            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should still block content regardless of context (hard blocks override)', () => {
+      fc.assert(
+        fc.property(
+          fc.nat({ max: 100000 }), // threshold
+          fc.option(fc.nat({ max: 100000 })), // votes
+          fc.constantFrom(...ALL_CONTEXTS), // any context
+          (threshold, votes, context) => {
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: ['RU'],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              globalRequirements: {
+                minVotesAnyOf: { sources: ['imdb'], min: threshold },
+                appliesTo: [], // Gate never applies
+              },
+            };
+
+            const input: PolicyEngineInput = {
+              mediaItem: {
+                id: 'test',
+                originCountries: ['RU'], // Blocked
+                originalLanguage: 'en',
+                watchProviders: null,
+                voteCountImdb: votes,
+                voteCountTrakt: null,
+                ratingImdb: null,
+                ratingMetacritic: null,
+                ratingRottenTomatoes: null,
+                ratingTrakt: null,
+              },
+              stats: null,
+            };
+
+            const result = evaluateEligibility(input, policy, { context });
+
+            // Blocked content stays blocked regardless of context
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('BLOCKED_COUNTRY');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
   });
 
   /**

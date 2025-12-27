@@ -1,6 +1,7 @@
-import { MovieListingsQuery } from './movie-listings.query';
+import { MovieListingsQuery, EligibilityMode } from './movie-listings.query';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ImageMapper } from '../mappers/image.mapper';
+import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
 
 // Simple chainable thenable for Drizzle-like API
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
@@ -300,6 +301,177 @@ describe('MovieListingsQuery', () => {
 
       // Should be empty - movies on streaming are excluded from now_playing
       expect(res).toHaveLength(0);
+    });
+  });
+
+  describe('eligibilityMode filtering', () => {
+    it('should default to catalog mode when eligibilityMode is not specified', async () => {
+      const movies = [
+        {
+          id: 'eligible-movie',
+          mediaItemId: 'mid-eligible',
+          tmdbId: 100,
+          title: 'Eligible Movie',
+          slug: 'eligible-movie',
+          overview: 'An eligible movie',
+          ingestionStatus: 'ready',
+          posterPath: '/p.jpg',
+          backdropPath: '/b.jpg',
+          popularity: 100,
+          releaseDate: new Date('2024-01-01'),
+          theatricalReleaseDate: new Date('2024-01-02'),
+          digitalReleaseDate: null,
+          runtime: 120,
+          ratingoScore: 0.8,
+          qualityScore: 0.7,
+          popularityScore: 0.9,
+          watchersCount: 5,
+          totalWatchers: 10,
+          rating: 8,
+          voteCount: 1000,
+        },
+      ];
+
+      const genres = [{ mediaItemId: 'mid-eligible', id: 'g1', name: 'Action', slug: 'action' }];
+
+      setup([movies, [{ total: 1 }], genres]);
+
+      // Call without eligibilityMode - should default to 'catalog'
+      const res = await query.execute('now_playing', { limit: 10, offset: 0 });
+
+      expect(db.select).toHaveBeenCalledTimes(3);
+      expect(res).toHaveLength(1);
+      expect(res[0].title).toBe('Eligible Movie');
+    });
+
+    it('should filter to only eligible content in catalog mode', async () => {
+      const movies = [
+        {
+          id: 'eligible-movie',
+          mediaItemId: 'mid-eligible',
+          tmdbId: 100,
+          title: 'Eligible Movie',
+          slug: 'eligible-movie',
+          overview: 'An eligible movie',
+          ingestionStatus: 'ready',
+          posterPath: '/p.jpg',
+          backdropPath: '/b.jpg',
+          popularity: 100,
+          releaseDate: new Date('2024-01-01'),
+          theatricalReleaseDate: new Date('2024-01-02'),
+          digitalReleaseDate: null,
+          runtime: 120,
+          ratingoScore: 0.8,
+          qualityScore: 0.7,
+          popularityScore: 0.9,
+          watchersCount: 5,
+          totalWatchers: 10,
+          rating: 8,
+          voteCount: 1000,
+        },
+      ];
+
+      const genres = [{ mediaItemId: 'mid-eligible', id: 'g1', name: 'Action', slug: 'action' }];
+
+      setup([movies, [{ total: 1 }], genres]);
+
+      const res = await query.execute('now_playing', {
+        limit: 10,
+        offset: 0,
+        eligibilityMode: 'catalog',
+      });
+
+      expect(db.select).toHaveBeenCalledTimes(3);
+      expect(res).toHaveLength(1);
+      expect(res[0].title).toBe('Eligible Movie');
+    });
+
+    it('should include ineligible content with only MISSING_GLOBAL_SIGNALS in freshness mode', async () => {
+      // In freshness mode, we expect the query to include:
+      // - eligible content
+      // - ineligible content with reasons = ['MISSING_GLOBAL_SIGNALS']
+      const movies = [
+        {
+          id: 'fresh-movie',
+          mediaItemId: 'mid-fresh',
+          tmdbId: 200,
+          title: 'Fresh Movie Without Signals',
+          slug: 'fresh-movie',
+          overview: 'A fresh movie lacking quality signals',
+          ingestionStatus: 'ready',
+          posterPath: '/p.jpg',
+          backdropPath: '/b.jpg',
+          popularity: 50,
+          releaseDate: new Date('2024-12-01'),
+          theatricalReleaseDate: new Date('2024-12-01'),
+          digitalReleaseDate: null,
+          runtime: 100,
+          ratingoScore: null,
+          qualityScore: null,
+          popularityScore: 0.5,
+          watchersCount: 0,
+          totalWatchers: 0,
+          rating: 0,
+          voteCount: 0,
+        },
+      ];
+
+      const genres = [{ mediaItemId: 'mid-fresh', id: 'g1', name: 'Drama', slug: 'drama' }];
+
+      setup([movies, [{ total: 1 }], genres]);
+
+      const res = await query.execute('now_playing', {
+        limit: 10,
+        offset: 0,
+        eligibilityMode: 'freshness',
+      });
+
+      expect(db.select).toHaveBeenCalledTimes(3);
+      expect(res).toHaveLength(1);
+      expect(res[0].title).toBe('Fresh Movie Without Signals');
+    });
+
+    it('should work with new_on_digital in freshness mode', async () => {
+      const movies = [
+        {
+          id: 'digital-fresh',
+          mediaItemId: 'mid-digital-fresh',
+          tmdbId: 300,
+          title: 'New Digital Release',
+          slug: 'new-digital-release',
+          overview: 'A new digital release',
+          ingestionStatus: 'ready',
+          posterPath: '/p.jpg',
+          backdropPath: '/b.jpg',
+          popularity: 75,
+          releaseDate: new Date('2024-11-01'),
+          theatricalReleaseDate: new Date('2024-09-01'),
+          digitalReleaseDate: new Date(),
+          runtime: 110,
+          ratingoScore: null,
+          qualityScore: null,
+          popularityScore: 0.6,
+          watchersCount: 10,
+          totalWatchers: 50,
+          rating: 0,
+          voteCount: 0,
+        },
+      ];
+
+      const genres = [
+        { mediaItemId: 'mid-digital-fresh', id: 'g1', name: 'Thriller', slug: 'thriller' },
+      ];
+
+      setup([movies, [{ total: 1 }], genres]);
+
+      const res = await query.execute('new_on_digital', {
+        daysBack: 14,
+        eligibilityMode: 'freshness',
+      });
+
+      expect(db.select).toHaveBeenCalledTimes(3);
+      expect(res).toHaveLength(1);
+      expect(res[0].title).toBe('New Digital Release');
     });
   });
 });

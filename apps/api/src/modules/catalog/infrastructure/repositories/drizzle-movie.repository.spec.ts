@@ -54,7 +54,7 @@ describe('DrizzleMovieRepository', () => {
       insert: jest.fn().mockReturnValue(insertChain),
       update: jest.fn().mockReturnValue(updateChain),
       transaction: jest.fn(async (cb: any) =>
-        cb({ select: db.select, insert: db.insert, update: db.update })
+        cb({ select: db.select, insert: db.insert, update: db.update }),
       ),
     };
 
@@ -189,29 +189,72 @@ describe('DrizzleMovieRepository', () => {
       expect(trendingMoviesQuery.execute).toHaveBeenCalled();
     });
 
-    it('findNowPlaying delegates to movieListingsQuery', async () => {
+    it('findNowPlaying delegates to movieListingsQuery with freshness eligibility mode', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleMovieRepository);
 
       const res = await repository.findNowPlaying({} as any);
       expect(res).toEqual(['listings']);
-      expect(movieListingsQuery.execute).toHaveBeenCalledWith('now_playing', {});
+      expect(movieListingsQuery.execute).toHaveBeenCalledWith('now_playing', {
+        eligibilityMode: 'freshness',
+      });
     });
 
-    it('findNewReleases delegates to movieListingsQuery', async () => {
+    it('findNowPlaying passes through options with freshness eligibility mode', async () => {
+      const module: TestingModule = await setup();
+      repository = module.get(DrizzleMovieRepository);
+
+      await repository.findNowPlaying({ limit: 10, offset: 5, daysBack: 7 } as any);
+      expect(movieListingsQuery.execute).toHaveBeenCalledWith('now_playing', {
+        limit: 10,
+        offset: 5,
+        daysBack: 7,
+        eligibilityMode: 'freshness',
+      });
+    });
+
+    it('findNewReleases delegates to movieListingsQuery with catalog eligibility mode (default)', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleMovieRepository);
 
       await repository.findNewReleases({} as any);
+      // findNewReleases uses catalog mode (default) - no eligibilityMode passed
       expect(movieListingsQuery.execute).toHaveBeenCalledWith('new_releases', {});
     });
 
-    it('findNewOnDigital delegates to movieListingsQuery', async () => {
+    it('findNewReleases passes through options without overriding eligibility mode', async () => {
+      const module: TestingModule = await setup();
+      repository = module.get(DrizzleMovieRepository);
+
+      await repository.findNewReleases({ limit: 15, daysBack: 30 } as any);
+      // findNewReleases uses catalog mode (default) - options passed through as-is
+      expect(movieListingsQuery.execute).toHaveBeenCalledWith('new_releases', {
+        limit: 15,
+        daysBack: 30,
+      });
+    });
+
+    it('findNewOnDigital delegates to movieListingsQuery with freshness eligibility mode', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleMovieRepository);
 
       await repository.findNewOnDigital({} as any);
-      expect(movieListingsQuery.execute).toHaveBeenCalledWith('new_on_digital', {});
+      expect(movieListingsQuery.execute).toHaveBeenCalledWith('new_on_digital', {
+        eligibilityMode: 'freshness',
+      });
+    });
+
+    it('findNewOnDigital passes through options with freshness eligibility mode', async () => {
+      const module: TestingModule = await setup();
+      repository = module.get(DrizzleMovieRepository);
+
+      await repository.findNewOnDigital({ limit: 20, offset: 10, daysBack: 14 } as any);
+      expect(movieListingsQuery.execute).toHaveBeenCalledWith('new_on_digital', {
+        limit: 20,
+        offset: 10,
+        daysBack: 14,
+        eligibilityMode: 'freshness',
+      });
     });
   });
 });
