@@ -189,18 +189,18 @@ describe('DrizzleMovieRepository', () => {
       expect(trendingMoviesQuery.execute).toHaveBeenCalled();
     });
 
-    it('findNowPlaying delegates to movieListingsQuery with freshness eligibility mode', async () => {
+    it('findNowPlaying delegates to movieListingsQuery with no eligibility filtering', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleMovieRepository);
 
       const res = await repository.findNowPlaying({} as any);
       expect(res).toEqual(['listings']);
       expect(movieListingsQuery.execute).toHaveBeenCalledWith('now_playing', {
-        eligibilityMode: 'freshness',
+        eligibilityMode: 'none',
       });
     });
 
-    it('findNowPlaying passes through options with freshness eligibility mode', async () => {
+    it('findNowPlaying passes through options with no eligibility filtering', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleMovieRepository);
 
@@ -209,7 +209,7 @@ describe('DrizzleMovieRepository', () => {
         limit: 10,
         offset: 5,
         daysBack: 7,
-        eligibilityMode: 'freshness',
+        eligibilityMode: 'none',
       });
     });
 
@@ -234,17 +234,17 @@ describe('DrizzleMovieRepository', () => {
       });
     });
 
-    it('findNewOnDigital delegates to movieListingsQuery with freshness eligibility mode', async () => {
+    it('findNewOnDigital delegates to movieListingsQuery with no eligibility filtering', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleMovieRepository);
 
       await repository.findNewOnDigital({} as any);
       expect(movieListingsQuery.execute).toHaveBeenCalledWith('new_on_digital', {
-        eligibilityMode: 'freshness',
+        eligibilityMode: 'none',
       });
     });
 
-    it('findNewOnDigital passes through options with freshness eligibility mode', async () => {
+    it('findNewOnDigital passes through options with no eligibility filtering', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleMovieRepository);
 
@@ -253,7 +253,7 @@ describe('DrizzleMovieRepository', () => {
         limit: 20,
         offset: 10,
         daysBack: 14,
-        eligibilityMode: 'freshness',
+        eligibilityMode: 'none',
       });
     });
   });
