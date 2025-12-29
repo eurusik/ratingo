@@ -20,7 +20,11 @@ import { CatalogListQueryDto } from '../../presentation/dtos/catalog-list-query.
 // Query Objects
 import { MovieDetailsQuery } from '../queries/movie-details.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';
-import { MovieListingsQuery, MOVIE_LISTING_TYPE } from '../queries/movie-listings.query';
+import {
+  MovieListingsQuery,
+  MOVIE_LISTING_TYPE,
+  ELIGIBILITY_MODE,
+} from '../queries/movie-listings.query';
 
 type DrizzleTransaction = Parameters<
   Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]
@@ -142,11 +146,11 @@ export class DrizzleMovieRepository implements IMovieRepository {
     return this.trendingMoviesQuery.execute(normalized) as unknown as WithTotal<TrendingMovieItem>;
   }
 
-  /** Finds movies currently in theaters. Uses freshness eligibility mode. */
+  /** Finds movies currently in theaters. No eligibility filtering - show all. */
   async findNowPlaying(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NOW_PLAYING, {
       ...options,
-      eligibilityMode: 'freshness',
+      eligibilityMode: ELIGIBILITY_MODE.NONE,
     });
   }
 

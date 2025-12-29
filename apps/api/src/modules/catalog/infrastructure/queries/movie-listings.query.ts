@@ -37,8 +37,14 @@ export type MovieListingType = (typeof MOVIE_LISTING_TYPE)[keyof typeof MOVIE_LI
  * Eligibility filtering mode for queries.
  * - 'catalog': Only eligible content (quality-driven surfaces)
  * - 'freshness': Eligible + ineligible with only MISSING_GLOBAL_SIGNALS
+ * - 'none': No eligibility filtering (for now_playing - show everything in theaters)
  */
-export type EligibilityMode = 'catalog' | 'freshness';
+export const ELIGIBILITY_MODE = {
+  CATALOG: 'catalog',
+  FRESHNESS: 'freshness',
+  NONE: 'none',
+} as const;
+export type EligibilityMode = (typeof ELIGIBILITY_MODE)[keyof typeof ELIGIBILITY_MODE];
 
 /** Options for movie listings query. */
 export interface MovieListingOptions {
@@ -130,7 +136,7 @@ export class MovieListingsQuery {
       year,
       yearFrom,
       yearTo,
-      eligibilityMode = 'catalog',
+      eligibilityMode = ELIGIBILITY_MODE.CATALOG,
     } = options;
 
     try {
@@ -149,25 +155,41 @@ export class MovieListingsQuery {
         eligibilityMode,
       );
 
-      const results = await this.db
-        .select(this.selectFields)
-        .from(schema.movies)
-        .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
-        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
-        .innerJoin(
-          schema.mediaCatalogEvaluations,
-          and(
-            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
-            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-          ),
-        )
-        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-        .where(and(...conditions))
-        .orderBy(...orderBy)
-        .limit(limit)
-        .offset(offset);
+      let results: any[];
 
-      const total = await this.countTotal(conditions);
+      if (eligibilityMode === ELIGIBILITY_MODE.NONE) {
+        // No eligibility filtering - skip policy/evaluation joins entirely
+        results = await this.db
+          .select(this.selectFields)
+          .from(schema.movies)
+          .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+          .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+          .where(and(...conditions))
+          .orderBy(...orderBy)
+          .limit(limit)
+          .offset(offset);
+      } else {
+        // With eligibility filtering - join policy/evaluation tables
+        results = await this.db
+          .select(this.selectFields)
+          .from(schema.movies)
+          .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+          .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
+          .innerJoin(
+            schema.mediaCatalogEvaluations,
+            and(
+              eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+              eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+            ),
+          )
+          .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+          .where(and(...conditions))
+          .orderBy(...orderBy)
+          .limit(limit)
+          .offset(offset);
+      }
+
+      const total = await this.countTotal(conditions, eligibilityMode);
 
       const items = await this.attachGenres(results);
       const withTotal = items as WithTotal<MovieWithMedia>;
@@ -205,7 +227,10 @@ export class MovieListingsQuery {
     ];
 
     // Eligibility filter based on mode
-    conditions.push(this.buildEligibilityCondition(eligibilityMode));
+    const eligibilityCondition = this.buildEligibilityCondition(eligibilityMode);
+    if (eligibilityCondition) {
+      conditions.push(eligibilityCondition);
+    }
 
     // Release date filters
     if (year !== undefined) {
@@ -308,9 +333,15 @@ export class MovieListingsQuery {
   /**
    * Builds eligibility condition based on mode.
    * Freshness mode uses whitelist approach - exact array match for safety.
+   * None mode returns null (no filtering).
    */
   private buildEligibilityCondition(eligibilityMode: EligibilityMode) {
-    if (eligibilityMode === 'freshness') {
+    if (eligibilityMode === ELIGIBILITY_MODE.NONE) {
+      // No eligibility filtering - show all content
+      return null;
+    }
+
+    if (eligibilityMode === ELIGIBILITY_MODE.FRESHNESS) {
       // Freshness: eligible OR (ineligible with ONLY MISSING_GLOBAL_SIGNALS)
       // Whitelist approach - exact array match for safety
       return or(
@@ -346,7 +377,21 @@ export class MovieListingsQuery {
     return [sql`${schema.mediaStats.popularityScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
   }
 
-  private async countTotal(conditions: any[]): Promise<number> {
+  private async countTotal(
+    conditions: any[],
+    eligibilityMode: EligibilityMode = ELIGIBILITY_MODE.CATALOG,
+  ): Promise<number> {
+    if (eligibilityMode === ELIGIBILITY_MODE.NONE) {
+      // No eligibility filtering - skip policy/evaluation joins
+      const [{ total }] = await this.db
+        .select({ total: sql<number>`count(*)` })
+        .from(schema.movies)
+        .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
+        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .where(and(...conditions));
+      return Number(total ?? 0);
+    }
+
     const [{ total }] = await this.db
       .select({ total: sql<number>`count(*)` })
       .from(schema.movies)
