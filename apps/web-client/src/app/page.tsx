@@ -113,7 +113,7 @@ export default async function HomePage() {
           titleIcon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
           actions={
             <Link
-              href="/browse/trending"
+              href="/browse/shows-trending"
               className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
             >
               {dict.common.showAll} →
@@ -217,7 +217,7 @@ export default async function HomePage() {
             titleIcon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
             actions={
               <Link
-                href="/browse/movies"
+                href="/browse/movies-trending"
                 className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
               >
                 {dict.common.showAll} →

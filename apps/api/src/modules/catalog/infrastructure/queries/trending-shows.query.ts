@@ -72,6 +72,19 @@ export class TrendingShowsQuery {
         sql`mi.ingestion_status = ${IngestionStatus.READY}`,
       ];
 
+      // Trending hard gate: only new content OR actively watched
+      // This prevents old shows with low engagement from appearing in trending
+      if (sort === CATALOG_SORT.TRENDING) {
+        const MIN_FRESHNESS = 50;
+        const MIN_WATCHERS = 10;
+        whereConditions.push(
+          sql`(
+            COALESCE(ms.freshness_score, 0) >= ${MIN_FRESHNESS}
+            OR COALESCE(ms.watchers_count, 0) >= ${MIN_WATCHERS}
+          )`,
+        );
+      }
+
       if (minRatingo !== undefined) {
         whereConditions.push(sql`ms.ratingo_score >= ${minRatingo}`);
       }
@@ -298,10 +311,18 @@ export class TrendingShowsQuery {
     const dir = order === 'asc' ? sql`ASC` : sql`DESC`;
     switch (sort) {
       case 'trending': {
-        // TMDB trending order: lower rank = higher position
-        // For desc: rank 1 first (ASC), for asc: rank 1 last (DESC)
-        const rankDir = order === 'desc' ? sql`ASC` : sql`DESC`;
-        return sql`mi.trending_rank ${rankDir} NULLS LAST, mi.id DESC`;
+        // Combined trending score with live engagement signal
+        // - ratingo (50%): quality baseline
+        // - popularity (20%): long-term engagement
+        // - watchers (25%): live signal with soft saturation w/(w+100)
+        //   Gives smooth curve: 16→13.8, 39→28.1, 100→50, 2000→95
+        // - TMDB (5%): external trending signal (noise only)
+        return sql`(
+          COALESCE(ms.ratingo_score, 0) * 0.50 +
+          COALESCE(ms.popularity_score, 0) * 0.20 +
+          (COALESCE(ms.watchers_count, 0)::float / (COALESCE(ms.watchers_count, 0) + 100)) * 100 * 0.25 +
+          COALESCE(mi.trending_score, 0) / 100.0 * 0.05
+        ) ${dir} NULLS LAST, mi.id DESC`;
       }
       case 'ratingo':
         return sql`ms.ratingo_score ${dir} NULLS LAST, mi.id DESC`;

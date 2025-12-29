@@ -3222,6 +3222,72 @@
         ]
       }
     },
+    "/api/admin/catalog-policies/backfill/content-class": {
+      "post": {
+        "operationId": "BackfillController_backfillContentClass",
+        "summary": "Backfill content_class for all media items",
+        "description": "Classifies all existing media items based on genres and origin metadata. Use dry-run mode to preview changes without updating the database. Set triggerReEvaluation=true to automatically re-evaluate catalog after backfill.",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "required": false,
+            "in": "query",
+            "description": "If true, only simulates changes without updating DB",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "batchSize",
+            "required": false,
+            "in": "query",
+            "description": "Batch size for processing (default: 1000)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "triggerReEvaluation",
+            "required": false,
+            "in": "query",
+            "description": "If true, triggers catalog re-evaluation after backfill completes",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Backfill completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BackfillResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Content Classification"
+        ]
+      }
+    },
     "/api/stats/sync": {
       "post": {
         "operationId": "StatsController_syncTrendingStats",
@@ -6834,6 +6900,24 @@
                 "$ref": "#/components/schemas/GlobalRequirementsDto"
               }
             ]
+          },
+          "excludedContentClasses": {
+            "type": "array",
+            "description": "Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.",
+            "example": [
+              "anime",
+              "reality"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "mainstream",
+                "anime",
+                "documentary",
+                "reality",
+                "kids"
+              ]
+            }
           }
         },
         "required": [
@@ -7009,6 +7093,24 @@
                 "$ref": "#/components/schemas/GlobalRequirementsDto"
               }
             ]
+          },
+          "excludedContentClasses": {
+            "type": "array",
+            "description": "Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.",
+            "example": [
+              "anime",
+              "reality"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "mainstream",
+                "anime",
+                "documentary",
+                "reality",
+                "kids"
+              ]
+            }
           }
         },
         "required": [
@@ -7786,6 +7888,10 @@
           "summary",
           "items"
         ]
+      },
+      "BackfillResponseDto": {
+        "type": "object",
+        "properties": {}
       },
       "SaveItemDto": {
         "type": "object",

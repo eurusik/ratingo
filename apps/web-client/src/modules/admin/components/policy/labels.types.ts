@@ -78,6 +78,21 @@ export interface GlobalRequirementsLabels {
   appliesToHint?: string
 }
 
+export interface ContentClassesLabels {
+  title?: string
+  description?: string
+  hint?: string
+  toggleHint?: string
+  anime?: string
+  animeDescription?: string
+  documentary?: string
+  documentaryDescription?: string
+  reality?: string
+  realityDescription?: string
+  kids?: string
+  kidsDescription?: string
+}
+
 /** Labels for PolicyEditForm - matches admin.policyDetail.form in JSON */
 export interface PolicyFormLabels {
   save?: string
@@ -89,6 +104,7 @@ export interface PolicyFormLabels {
   settings?: SettingsLabels
   breakoutRules?: BreakoutRulesLabels
   globalRequirements?: GlobalRequirementsLabels
+  contentClasses?: ContentClassesLabels
 }
 
 /** Labels for view-only config cards */

@@ -938,6 +938,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/catalog-policies/backfill/content-class": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill content_class for all media items
+         * @description Classifies all existing media items based on genres and origin metadata. Use dry-run mode to preview changes without updating the database. Set triggerReEvaluation=true to automatically re-evaluate catalog after backfill.
+         */
+        post: operations["BackfillController_backfillContentClass"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats/sync": {
         parameters: {
             query?: never;
@@ -2372,6 +2392,14 @@ export interface components {
             homepage: components["schemas"]["HomepageConfigDto"];
             /** @description Global quality gate requirements (all conditions combined with AND) */
             globalRequirements?: components["schemas"]["GlobalRequirementsDto"];
+            /**
+             * @description Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.
+             * @example [
+             *       "anime",
+             *       "reality"
+             *     ]
+             */
+            excludedContentClasses?: ("mainstream" | "anime" | "documentary" | "reality" | "kids")[];
         };
         PolicyDetailDto: {
             /**
@@ -2481,6 +2509,14 @@ export interface components {
             homepage?: Record<string, never>;
             /** @description Global quality gate requirements (all conditions combined with AND) */
             globalRequirements?: components["schemas"]["GlobalRequirementsDto"];
+            /**
+             * @description Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.
+             * @example [
+             *       "anime",
+             *       "reality"
+             *     ]
+             */
+            excludedContentClasses?: ("mainstream" | "anime" | "documentary" | "reality" | "kids")[];
         };
         CreatePolicyResponseDto: {
             /**
@@ -2957,6 +2993,7 @@ export interface components {
              */
             currentPolicyVersion?: number;
         };
+        BackfillResponseDto: Record<string, never>;
         SaveItemDto: {
             /**
              * @description List to save to: for_later or considering
@@ -4885,6 +4922,37 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["DryRunResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    BackfillController_backfillContentClass: {
+        parameters: {
+            query?: {
+                /** @description If true, only simulates changes without updating DB */
+                dryRun?: boolean;
+                /** @description Batch size for processing (default: 1000) */
+                batchSize?: number;
+                /** @description If true, triggers catalog re-evaluation after backfill completes */
+                triggerReEvaluation?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Backfill completed */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["BackfillResponseDto"];
                     };
                 };
             };

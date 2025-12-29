@@ -70,7 +70,11 @@ export interface CreatePolicyRequest {
   eligibilityMode?: EligibilityMode
   homepage?: { minRelevanceScore?: number }
   globalRequirements?: GlobalRequirements
+  excludedContentClasses?: ContentClass[]
 }
+
+/** Content class type. */
+export type ContentClass = 'mainstream' | 'anime' | 'documentary' | 'reality' | 'kids'
 
 /** Policy config type. */
 export interface PolicyConfigDto {
@@ -84,6 +88,7 @@ export interface PolicyConfigDto {
   eligibilityMode: EligibilityMode
   homepage: HomepageConfig
   globalRequirements?: GlobalRequirements
+  excludedContentClasses?: ContentClass[]
 }
 
 /** Policy detail DTO type. */

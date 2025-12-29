@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   // Get title from i18n based on category
   const categoryMap: Record<string, keyof typeof dict.browse> = {
-    'trending': 'trending',
+    'shows-trending': 'trending',
     'shows': 'shows',
     'movies': 'movies',
     'movies-trending': 'moviesTrending',

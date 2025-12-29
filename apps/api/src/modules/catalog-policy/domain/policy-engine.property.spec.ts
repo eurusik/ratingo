@@ -1436,3 +1436,446 @@ describe('Global Quality Gate Properties', () => {
     );
   });
 });
+
+/**
+ * Content Classification Property Tests
+ * Feature: content-classification
+ * Validates: Requirements 3.2, 3.3, 4.1, 4.2, 4.3, 4.4, 4.5
+ */
+describe('Content Classification Properties', () => {
+  const countryCodeArb = fc.stringMatching(/^[A-Z]{2}$/);
+  const languageCodeArb = fc.stringMatching(/^[a-z]{2}$/);
+  const contentClassArb = fc.constantFrom(
+    'mainstream',
+    'anime',
+    'documentary',
+    'reality',
+    'kids',
+  ) as fc.Arbitrary<ContentClass>;
+
+  const mediaItemArb = fc.record({
+    id: fc.uuid(),
+    originCountries: fc.option(fc.array(countryCodeArb, { minLength: 1, maxLength: 5 })),
+    originalLanguage: fc.option(languageCodeArb),
+    watchProviders: fc.constant(null),
+    voteCountImdb: fc.option(fc.nat({ max: 1000000 })),
+    voteCountTrakt: fc.option(fc.nat({ max: 100000 })),
+    ratingImdb: fc.option(fc.double({ min: 0, max: 10 })),
+    ratingMetacritic: fc.option(fc.nat({ max: 100 })),
+    ratingRottenTomatoes: fc.option(fc.nat({ max: 100 })),
+    ratingTrakt: fc.option(fc.double({ min: 0, max: 10 })),
+    contentClass: contentClassArb,
+  });
+
+  const policyEngineInputArb = fc.record({
+    mediaItem: mediaItemArb,
+    stats: fc.option(
+      fc.record({
+        qualityScore: fc.option(fc.double({ min: 0, max: 1 })),
+        popularityScore: fc.option(fc.double({ min: 0, max: 1 })),
+        freshnessScore: fc.option(fc.double({ min: 0, max: 1 })),
+        ratingoScore: fc.option(fc.double({ min: 0, max: 1 })),
+      }),
+    ),
+  });
+
+  /**
+   * Property 2: Content Class Filtering with Breakout Override
+   * Feature: content-classification, Property 2
+   * Validates: Requirements 3.2, 3.3, 4.2, 4.3, 4.4, 4.5
+   */
+  describe('Property 2: Content Class Filtering with Breakout Override', () => {
+    it('should include EXCLUDED_CONTENT_CLASS in reasons when content class is excluded', () => {
+      fc.assert(
+        fc.property(contentClassArb, (excludedClass) => {
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            excludedContentClasses: [excludedClass],
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['US'],
+              originalLanguage: 'en',
+              watchProviders: null,
+              voteCountImdb: null,
+              voteCountTrakt: null,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+              contentClass: excludedClass,
+            },
+            stats: null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          // Excluded content class → INELIGIBLE with EXCLUDED_CONTENT_CLASS
+          expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+          expect(result.reasons).toContain('EXCLUDED_CONTENT_CLASS');
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should NOT include EXCLUDED_CONTENT_CLASS when content class is not excluded', () => {
+      fc.assert(
+        fc.property(contentClassArb, contentClassArb, (excludedClass, mediaClass) => {
+          fc.pre(excludedClass !== mediaClass);
+
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            excludedContentClasses: [excludedClass],
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['US'],
+              originalLanguage: 'en',
+              watchProviders: null,
+              voteCountImdb: null,
+              voteCountTrakt: null,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+              contentClass: mediaClass,
+            },
+            stats: null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          // Non-excluded content class → reasons should NOT contain EXCLUDED_CONTENT_CLASS
+          expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should NOT include EXCLUDED_CONTENT_CLASS when excludedContentClasses is empty', () => {
+      fc.assert(
+        fc.property(contentClassArb, (mediaClass) => {
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            excludedContentClasses: [],
+          };
+
+          const input: PolicyEngineInput = {
+            mediaItem: {
+              id: 'test',
+              originCountries: ['US'],
+              originalLanguage: 'en',
+              watchProviders: null,
+              voteCountImdb: null,
+              voteCountTrakt: null,
+              ratingImdb: null,
+              ratingMetacritic: null,
+              ratingRottenTomatoes: null,
+              ratingTrakt: null,
+              contentClass: mediaClass,
+            },
+            stats: null,
+          };
+
+          const result = evaluateEligibility(input, policy);
+
+          expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should include both EXCLUDED_CONTENT_CLASS and BREAKOUT_ALLOWED when breakout passes', () => {
+      fc.assert(
+        fc.property(
+          contentClassArb,
+          fc.nat({ max: 100000 }),
+          (excludedClass, breakoutThreshold) => {
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: [],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [
+                {
+                  id: 'test-breakout',
+                  name: 'Test Breakout',
+                  priority: 1,
+                  requirements: {
+                    minImdbVotes: breakoutThreshold,
+                  },
+                },
+              ],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              excludedContentClasses: [excludedClass],
+            };
+
+            const input: PolicyEngineInput = {
+              mediaItem: {
+                id: 'test',
+                originCountries: ['US'],
+                originalLanguage: 'en',
+                watchProviders: null,
+                voteCountImdb: breakoutThreshold + 1000, // Passes breakout
+                voteCountTrakt: null,
+                ratingImdb: null,
+                ratingMetacritic: null,
+                ratingRottenTomatoes: null,
+                ratingTrakt: null,
+                contentClass: excludedClass,
+              },
+              stats: null,
+            };
+
+            const result = evaluateEligibility(input, policy);
+
+            // Excluded + breakout passes → ELIGIBLE with both reasons
+            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+            expect(result.reasons).toContain('EXCLUDED_CONTENT_CLASS');
+            expect(result.reasons).toContain('BREAKOUT_ALLOWED');
+            expect(result.breakoutRuleId).toBe('test-breakout');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should return INELIGIBLE with BLOCKED when breakout passes but geo is blocked (hard block)', () => {
+      fc.assert(
+        fc.property(
+          contentClassArb,
+          fc.nat({ max: 100000 }),
+          (excludedClass, breakoutThreshold) => {
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: ['RU'],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [
+                {
+                  id: 'test-breakout',
+                  name: 'Test Breakout',
+                  priority: 1,
+                  requirements: {
+                    minImdbVotes: breakoutThreshold,
+                  },
+                },
+              ],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              excludedContentClasses: [excludedClass],
+            };
+
+            const input: PolicyEngineInput = {
+              mediaItem: {
+                id: 'test',
+                originCountries: ['RU'], // Blocked country
+                originalLanguage: 'en',
+                watchProviders: null,
+                voteCountImdb: breakoutThreshold + 1000, // Passes breakout
+                voteCountTrakt: null,
+                ratingImdb: null,
+                ratingMetacritic: null,
+                ratingRottenTomatoes: null,
+                ratingTrakt: null,
+                contentClass: excludedClass,
+              },
+              stats: null,
+            };
+
+            const result = evaluateEligibility(input, policy);
+
+            // Excluded + breakout + blocked → INELIGIBLE (hard block wins)
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('EXCLUDED_CONTENT_CLASS');
+            expect(result.reasons).toContain('BLOCKED_COUNTRY');
+            expect(result.breakoutRuleId).toBeNull();
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  /**
+   * Property 5: Evaluation Order Invariant
+   * Feature: content-classification, Property 5
+   * Validates: Requirements 4.1
+   */
+  describe('Property 5: Evaluation Order Invariant', () => {
+    it('should return PENDING for missing originCountries regardless of content class', () => {
+      fc.assert(
+        fc.property(
+          contentClassArb,
+          fc.array(contentClassArb, { maxLength: 3 }),
+          (mediaClass, excludedClasses) => {
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: [],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              excludedContentClasses: excludedClasses,
+            };
+
+            const input: PolicyEngineInput = {
+              mediaItem: {
+                id: 'test',
+                originCountries: null, // Missing
+                originalLanguage: 'en',
+                watchProviders: null,
+                voteCountImdb: null,
+                voteCountTrakt: null,
+                ratingImdb: null,
+                ratingMetacritic: null,
+                ratingRottenTomatoes: null,
+                ratingTrakt: null,
+                contentClass: mediaClass,
+              },
+              stats: null,
+            };
+
+            const result = evaluateEligibility(input, policy);
+
+            // Missing data → PENDING regardless of content class
+            expect(result.status).toBe(EligibilityStatus.PENDING);
+            expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
+            expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should return PENDING for empty originCountries regardless of content class', () => {
+      fc.assert(
+        fc.property(
+          contentClassArb,
+          fc.array(contentClassArb, { maxLength: 3 }),
+          (mediaClass, excludedClasses) => {
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: [],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              excludedContentClasses: excludedClasses,
+            };
+
+            const input: PolicyEngineInput = {
+              mediaItem: {
+                id: 'test',
+                originCountries: [], // Empty
+                originalLanguage: 'en',
+                watchProviders: null,
+                voteCountImdb: null,
+                voteCountTrakt: null,
+                ratingImdb: null,
+                ratingMetacritic: null,
+                ratingRottenTomatoes: null,
+                ratingTrakt: null,
+                contentClass: mediaClass,
+              },
+              stats: null,
+            };
+
+            const result = evaluateEligibility(input, policy);
+
+            expect(result.status).toBe(EligibilityStatus.PENDING);
+            expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
+            expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should return PENDING for missing originalLanguage regardless of content class', () => {
+      fc.assert(
+        fc.property(
+          contentClassArb,
+          fc.array(contentClassArb, { maxLength: 3 }),
+          (mediaClass, excludedClasses) => {
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: [],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              excludedContentClasses: excludedClasses,
+            };
+
+            const input: PolicyEngineInput = {
+              mediaItem: {
+                id: 'test',
+                originCountries: ['US'],
+                originalLanguage: null, // Missing
+                watchProviders: null,
+                voteCountImdb: null,
+                voteCountTrakt: null,
+                ratingImdb: null,
+                ratingMetacritic: null,
+                ratingRottenTomatoes: null,
+                ratingTrakt: null,
+                contentClass: mediaClass,
+              },
+              stats: null,
+            };
+
+            const result = evaluateEligibility(input, policy);
+
+            expect(result.status).toBe(EligibilityStatus.PENDING);
+            expect(result.reasons).toContain('MISSING_ORIGINAL_LANGUAGE');
+            expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+  });
+});

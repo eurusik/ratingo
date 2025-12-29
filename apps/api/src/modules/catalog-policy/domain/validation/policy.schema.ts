@@ -7,6 +7,7 @@
 
 import { z } from 'zod';
 import { PolicyConfig, BreakoutRule } from '../types/policy.types';
+import { ContentClass, VALID_CONTENT_CLASSES } from '../classification.service';
 
 /**
  * Breakout rule schema
@@ -65,6 +66,10 @@ const PolicyConfigSchema = z.object({
     minRelevanceScore: z.number().min(0).max(100, 'Relevance score must be between 0 and 100'),
   }),
   globalRequirements: GlobalRequirementsSchema.optional(),
+  excludedContentClasses: z
+    .array(z.enum(VALID_CONTENT_CLASSES as [string, ...string[]]))
+    .optional()
+    .default([]),
 });
 
 /**
@@ -95,6 +100,8 @@ export function validatePolicyOrThrow(policy: unknown): PolicyConfig {
     blockedLanguages: validated.blockedLanguages.map((l) => l.toLowerCase()),
     // Sort breakout rules by priority (ascending - lower number = higher priority)
     breakoutRules: [...validated.breakoutRules].sort((a, b) => a.priority - b.priority),
+    // Pass through excludedContentClasses
+    excludedContentClasses: validated.excludedContentClasses as ContentClass[],
   };
 
   // Additional business logic validations

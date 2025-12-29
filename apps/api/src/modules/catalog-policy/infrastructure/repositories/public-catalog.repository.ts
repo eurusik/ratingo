@@ -132,18 +132,35 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
     const limit = options?.limit ?? 20;
     const offset = options?.offset ?? 0;
 
+    // Trending gate thresholds
+    const MIN_FRESHNESS = 50; // New content (released within ~6 months)
+    const MIN_WATCHERS = 10; // Or actively being watched
+
     try {
       let query = sql`
         SELECT * FROM public_media_items
-        WHERE 1=1
+        WHERE (
+          COALESCE(freshness_score, 0) >= ${MIN_FRESHNESS}
+          OR COALESCE(watchers_count, 0) >= ${MIN_WATCHERS}
+        )
       `;
 
       if (options?.type) {
         query = sql`${query} AND type = ${options.type}`;
       }
 
+      // Combined trending score with live engagement signal
+      // - ratingo (50%): quality baseline
+      // - popularity (20%): long-term engagement
+      // - watchers (25%): live signal with soft saturation w/(w+100)
+      // - TMDB (5%): external trending signal (noise only)
       query = sql`${query} 
-        ORDER BY trending_score DESC NULLS LAST, trending_rank ASC NULLS LAST
+        ORDER BY (
+          COALESCE(ratingo_score, 0) * 0.50 +
+          COALESCE(popularity_score, 0) * 0.20 +
+          (COALESCE(watchers_count, 0)::float / (COALESCE(watchers_count, 0) + 100)) * 100 * 0.25 +
+          COALESCE(trending_score, 0) / 100.0 * 0.05
+        ) DESC NULLS LAST
         LIMIT ${limit} OFFSET ${offset}
       `;
 

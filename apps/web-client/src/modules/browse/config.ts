@@ -14,7 +14,7 @@
 import type { Route } from 'next';
 
 export type BrowseCategory = 
-  | 'trending'           // Shows trending (main)
+  | 'shows-trending'     // Shows trending
   | 'movies-trending'    // Movies trending
   | 'movies-now-playing' // Movies in theaters
   | 'movies-new-releases'// Movies recently released
@@ -43,8 +43,8 @@ export interface CategoryConfig {
  */
 export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
   // Shows
-  trending: {
-    slug: 'trending',
+  'shows-trending': {
+    slug: 'shows-trending',
     titleKey: 'browse.trending.title',
     descriptionKey: 'browse.trending.description',
     apiMethod: 'getTrendingShows',

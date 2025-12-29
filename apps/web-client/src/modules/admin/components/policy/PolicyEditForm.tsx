@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/shared/ui/button'
 import { Loader2, Save, X } from 'lucide-react'
-import type { PolicyConfigDto, BreakoutRule, BlockedCountryMode, EligibilityMode, GlobalRequirements } from '@/core/api/admin'
+import type { PolicyConfigDto, BreakoutRule, BlockedCountryMode, EligibilityMode, GlobalRequirements, ContentClass } from '@/core/api/admin'
 import type { PolicyFormLabels } from './labels.types'
 import {
   CountriesEditor,
@@ -12,6 +12,7 @@ import {
   SettingsEditor,
   BreakoutRulesEditor,
   GlobalRequirementsEditor,
+  ContentClassEditor,
 } from './editors'
 
 export interface PolicyFormData {
@@ -25,6 +26,7 @@ export interface PolicyFormData {
   eligibilityMode: EligibilityMode
   homepage: { minRelevanceScore: number }
   globalRequirements?: GlobalRequirements
+  excludedContentClasses?: ContentClass[]
 }
 
 // Type-safe field keys
@@ -39,6 +41,7 @@ const FORM_FIELDS = {
   eligibilityMode: 'eligibilityMode',
   homepage: 'homepage',
   globalRequirements: 'globalRequirements',
+  excludedContentClasses: 'excludedContentClasses',
 } as const satisfies Record<keyof PolicyFormData, keyof PolicyFormData>
 
 interface PolicyEditFormProps {
@@ -75,6 +78,7 @@ export function PolicyEditForm({
     eligibilityMode: initialConfig.eligibilityMode,
     homepage: { minRelevanceScore: initialConfig.homepage.minRelevanceScore },
     globalRequirements: initialConfig.globalRequirements,
+    excludedContentClasses: (initialConfig.excludedContentClasses ?? []) as ContentClass[],
   })
 
   const handleSave = async () => {
@@ -152,6 +156,12 @@ export function PolicyEditForm({
         globalRequirements={formData.globalRequirements}
         onChange={(v) => updateField(FORM_FIELDS.globalRequirements, v)}
         labels={labels?.globalRequirements}
+      />
+
+      <ContentClassEditor
+        excludedContentClasses={formData.excludedContentClasses ?? []}
+        onChange={(v) => updateField(FORM_FIELDS.excludedContentClasses, v)}
+        labels={labels?.contentClasses}
       />
 
       <BreakoutRulesEditor

@@ -691,6 +691,20 @@
           "freshnessDrivenLabel": "Freshness surfaces",
           "freshnessBadge": "gate off by default",
           "freshnessHint": "Prioritizes recency. New releases may lack ratings/votes."
+        },
+        "contentClasses": {
+          "title": "Content Classes",
+          "description": "Exclude specific content types from catalog",
+          "hint": "Excluded classes can still pass via breakout rules (soft filter)",
+          "toggleHint": "Click to toggle. Red = excluded from catalog.",
+          "anime": "Anime",
+          "animeDescription": "Japanese animation (JP origin + Animation genre)",
+          "documentary": "Documentary",
+          "documentaryDescription": "Documentary films and series",
+          "reality": "Reality",
+          "realityDescription": "Reality TV shows",
+          "kids": "Kids",
+          "kidsDescription": "Content for children"
         }
       },
       "toast": {

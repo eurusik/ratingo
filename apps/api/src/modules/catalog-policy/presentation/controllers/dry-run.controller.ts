@@ -51,6 +51,8 @@ export class DryRunController {
       breakoutRules: dto.policy.breakoutRules || [],
       eligibilityMode: dto.policy.eligibilityMode || 'STRICT',
       homepage: dto.policy.homepage || { minRelevanceScore: 50 },
+      globalRequirements: dto.policy.globalRequirements,
+      excludedContentClasses: dto.policy.excludedContentClasses || [],
     });
 
     // Execute dry-run
@@ -109,6 +111,8 @@ export class DryRunController {
       breakoutRules: dto.policy.breakoutRules || [],
       eligibilityMode: dto.policy.eligibilityMode || 'STRICT',
       homepage: dto.policy.homepage || { minRelevanceScore: 50 },
+      globalRequirements: dto.policy.globalRequirements,
+      excludedContentClasses: dto.policy.excludedContentClasses || [],
     });
 
     // Execute dry-run with diff

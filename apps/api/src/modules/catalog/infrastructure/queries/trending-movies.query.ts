@@ -124,6 +124,19 @@ export class TrendingMoviesQuery {
         isNull(schema.mediaItems.deletedAt),
       ];
 
+      // Trending hard gate: only new content OR actively watched
+      // This prevents old movies with low engagement from appearing in trending
+      if (sort === CATALOG_SORT.TRENDING) {
+        const MIN_FRESHNESS = 50;
+        const MIN_WATCHERS = 10;
+        conditions.push(
+          sql`(
+            COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${MIN_FRESHNESS}
+            OR COALESCE(${schema.mediaStats.watchersCount}, 0) >= ${MIN_WATCHERS}
+          )`,
+        );
+      }
+
       if (minRatingo !== undefined) {
         conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
       }
@@ -248,11 +261,21 @@ export class TrendingMoviesQuery {
     const nullsLast = sql`NULLS LAST`;
 
     if (sort === 'trending') {
-      // TMDB trending order: lower rank = higher position
-      // For desc: rank 1 first (ASC), for asc: rank 1 last (DESC)
-      const rankDir = order === 'desc' ? sql`asc` : sql`desc`;
+      // Movie-specific trending formula (different from shows)
+      // Movies are consumed differently: one-time viewing, short spikes
+      // - ratingo (60%): primary signal (quality + popularity + freshness baked in)
+      // - popularity (25%): mass appeal (pulls blockbusters)
+      // - watchers (10%): light live signal with soft saturation w/(w+300)
+      //   Higher K=300 (vs K=100 for shows) dampens watchers impact
+      //   Curve: 10→3.2, 50→14.3, 100→25, 300→50
+      // - TMDB (5%): external trending signal (secondary)
       return [
-        sql`${schema.mediaItems.trendingRank} ${rankDir} ${nullsLast}`,
+        sql`(
+          COALESCE(${schema.mediaStats.ratingoScore}, 0) * 0.60 +
+          COALESCE(${schema.mediaStats.popularityScore}, 0) * 0.25 +
+          (COALESCE(${schema.mediaStats.watchersCount}, 0)::float / (COALESCE(${schema.mediaStats.watchersCount}, 0) + 300)) * 100 * 0.10 +
+          COALESCE(${schema.mediaItems.trendingScore}, 0) / 100.0 * 0.05
+        ) ${dir} ${nullsLast}`,
         sql`${schema.mediaItems.id} desc`,
       ];
     }

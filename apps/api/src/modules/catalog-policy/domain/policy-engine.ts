@@ -20,6 +20,7 @@ import {
   EvaluationReasonType,
 } from './constants/evaluation.constants';
 import { ContentClass } from './classification.service';
+import { resolveCanonicalProvider } from '../../ingestion/domain/constants/provider-mapping';
 
 /**
  * Default contexts where gate applies when appliesTo not configured.
@@ -423,8 +424,8 @@ function matchesBreakoutRule(
 /**
  * Checks if media has any of the required providers.
  *
- * @param mediaItem - Media item data
- * @param requiredProviders - List of required provider names
+ * @param mediaItem - Media item with watchProviders
+ * @param requiredProviders - Canonical provider IDs (e.g., 'netflix', 'hbo_max')
  * @param policy - Policy configuration
  * @returns True if any required provider is present
  */
@@ -437,11 +438,9 @@ function hasAnyProvider(
     return false;
   }
 
-  // Check all regions in watchProviders
   for (const region of Object.keys(mediaItem.watchProviders)) {
     const regionProviders = mediaItem.watchProviders[region];
 
-    // Check all provider types (flatrate, rent, buy, ads, free)
     const allProviders = [
       ...(regionProviders.flatrate || []),
       ...(regionProviders.rent || []),
@@ -450,9 +449,9 @@ function hasAnyProvider(
       ...(regionProviders.free || []),
     ];
 
-    // Check if any provider matches
     for (const provider of allProviders) {
-      if (requiredProviders.includes(provider.name)) {
+      const canonical = resolveCanonicalProvider(provider.providerId);
+      if (canonical && requiredProviders.includes(canonical)) {
         return true;
       }
     }
