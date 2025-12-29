@@ -108,6 +108,10 @@ describe('PolicyActivationService', () => {
         version: 2,
         isActive: false,
       });
+      mockPolicyRepository.findActive.mockResolvedValue({
+        id: 'active-policy',
+        version: 1,
+      });
       mockRunRepository.findByPolicyId.mockResolvedValue([]);
       mockRunRepository.create.mockResolvedValue({
         id: 'run-123',
@@ -122,6 +126,7 @@ describe('PolicyActivationService', () => {
         expect.objectContaining({
           targetPolicyId: 'policy-1',
           targetPolicyVersion: 2,
+          baselinePolicyVersion: 1,
         }),
       );
       expect(mockQueue.add).toHaveBeenCalled();

@@ -33,6 +33,7 @@ describe('CatalogEvaluationRunRepository', () => {
     counters: { processed: 0, eligible: 0, ineligible: 0, review: 0, reasonBreakdown: {} },
     targetPolicyId: 'policy-1',
     targetPolicyVersion: 2,
+    baselinePolicyVersion: 1,
     totalReadySnapshot: 1000,
     snapshotCutoff: new Date('2024-01-01'),
     processed: 0,
@@ -250,6 +251,7 @@ describe('CatalogEvaluationRunRepository', () => {
       await repository.create({
         targetPolicyId: 'policy-1',
         targetPolicyVersion: 2,
+        baselinePolicyVersion: 1,
         totalReadySnapshot: 1000,
         snapshotCutoff: new Date(),
       });
@@ -261,6 +263,7 @@ describe('CatalogEvaluationRunRepository', () => {
           ineligible: 0,
           pending: 0,
           errors: 0,
+          baselinePolicyVersion: 1,
         }),
       );
     });

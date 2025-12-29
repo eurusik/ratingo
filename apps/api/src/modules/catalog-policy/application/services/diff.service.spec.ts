@@ -154,10 +154,7 @@ describe('DiffService', () => {
         id: 'run-1',
         status: 'prepared',
         targetPolicyVersion: 2,
-      });
-      mockPolicyRepository.findActive.mockResolvedValue({
-        id: 'policy-1',
-        version: 1,
+        baselinePolicyVersion: 1,
       });
 
       // SQL aggregation result
@@ -184,15 +181,12 @@ describe('DiffService', () => {
       expect(result.currentPolicyVersion).toBe(1);
     });
 
-    it('should allow diff for promoted status', async () => {
+    it('should allow diff for promoted status (uses baselinePolicyVersion)', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
         status: 'promoted',
         targetPolicyVersion: 2,
-      });
-      mockPolicyRepository.findActive.mockResolvedValue({
-        id: 'policy-1',
-        version: 2,
+        baselinePolicyVersion: 1, // Captured at run creation, not current active
       });
 
       executeResult = [
@@ -209,14 +203,18 @@ describe('DiffService', () => {
       const result = await service.computeDiff('run-1');
 
       expect(result.runId).toBe('run-1');
+      // Should use baselinePolicyVersion (1), not current active policy
+      expect(result.currentPolicyVersion).toBe(1);
     });
 
-    it('should handle no active policy (first policy)', async () => {
+    it('should handle no baseline policy (first policy)', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
         status: 'prepared',
         targetPolicyVersion: 1,
+        baselinePolicyVersion: null, // No active policy when run was created
       });
+      // Fallback: check current active policy
       mockPolicyRepository.findActive.mockResolvedValue(null);
 
       // When no current policy, SQL aggregation handles it with FALSE filter
@@ -243,10 +241,7 @@ describe('DiffService', () => {
         id: 'run-1',
         status: 'prepared',
         targetPolicyVersion: 2,
-      });
-      mockPolicyRepository.findActive.mockResolvedValue({
-        id: 'policy-1',
-        version: 1,
+        baselinePolicyVersion: 1,
       });
 
       // SQL aggregation result: 2 regressions, 1 improvement, 1 unchanged, 1 stillIneligible
@@ -304,10 +299,7 @@ describe('DiffService', () => {
         id: 'run-1',
         status: 'prepared',
         targetPolicyVersion: 2,
-      });
-      mockPolicyRepository.findActive.mockResolvedValue({
-        id: 'policy-1',
-        version: 1,
+        baselinePolicyVersion: 1,
       });
 
       executeResult = [
@@ -350,10 +342,7 @@ describe('DiffService', () => {
         id: 'run-1',
         status: 'prepared',
         targetPolicyVersion: 2,
-      });
-      mockPolicyRepository.findActive.mockResolvedValue({
-        id: 'policy-1',
-        version: 1,
+        baselinePolicyVersion: 1,
       });
 
       executeResult = [

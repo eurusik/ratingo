@@ -36,6 +36,12 @@ interface GlobalRequirementsEditorProps {
     voteSources?: string
     appliesTo?: string
     appliesToHint?: string
+    qualityDrivenLabel?: string
+    qualityBadge?: string
+    qualityHint?: string
+    freshnessDrivenLabel?: string
+    freshnessBadge?: string
+    freshnessHint?: string
   }
 }
 
@@ -53,7 +59,10 @@ const VOTE_SOURCE_LABELS: Record<VoteSource, string> = {
 
 const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt']
 const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt']
-const EVALUATION_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending', 'now_playing', 'new_digital', 'search']
+// Quality-driven contexts (gate applies by default)
+const QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending']
+// Freshness-driven contexts (gate excluded by default)
+const FRESHNESS_CONTEXTS: EvaluationContext[] = ['now_playing', 'new_digital']
 const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending', 'search']
 
 const CONTEXT_LABELS: Record<EvaluationContext, string> = {
@@ -269,25 +278,64 @@ export function GlobalRequirementsEditor({
         </p>
       </div>
 
-      <div className="space-y-2">
-        <Label>{labels?.appliesTo ?? 'Applies To Contexts'}</Label>
-        <div className="grid grid-cols-2 gap-2">
-          {EVALUATION_CONTEXTS.map((context) => (
-            <label key={context} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={getActiveContexts().includes(context)}
-                onChange={(e) => toggleContext(context, e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              {CONTEXT_LABELS[context]}
-            </label>
-          ))}
+      <div className="space-y-4">
+        <Label>{labels?.appliesTo ?? 'Quality gate applies to'}</Label>
+        
+        {/* Quality surfaces - gate is mandatory */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              {labels?.qualityDrivenLabel ?? 'Quality surfaces'}
+            </p>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              {labels?.qualityBadge ?? 'gate required'}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {QUALITY_CONTEXTS.map((context) => (
+              <label key={context} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={getActiveContexts().includes(context)}
+                  onChange={(e) => toggleContext(context, e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                {CONTEXT_LABELS[context]}
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {labels?.qualityHint ?? 'Only shows content meeting minimum quality standards.'}
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {labels?.appliesToHint ??
-            'Surfaces where quality gate applies. Freshness surfaces (Now Playing, New Digital) are excluded by default.'}
-        </p>
+        
+        {/* Freshness surfaces - gate disabled by default */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <p className="text-xs font-medium text-muted-foreground">
+              {labels?.freshnessDrivenLabel ?? 'Freshness surfaces'}
+            </p>
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+              {labels?.freshnessBadge ?? 'gate off by default'}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {FRESHNESS_CONTEXTS.map((context) => (
+              <label key={context} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={getActiveContexts().includes(context)}
+                  onChange={(e) => toggleContext(context, e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                {CONTEXT_LABELS[context]}
+              </label>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {labels?.freshnessHint ?? 'Prioritizes recency. New releases may lack ratings/votes.'}
+          </p>
+        </div>
       </div>
     </ConfigCard>
   )

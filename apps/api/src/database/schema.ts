@@ -794,6 +794,8 @@ export const catalogEvaluationRuns = pgTable(
     // Policy Activation Flow fields
     targetPolicyId: uuid('target_policy_id').references(() => catalogPolicies.id),
     targetPolicyVersion: integer('target_policy_version'),
+    /** Version of active policy when run was created (for diff calculation) */
+    baselinePolicyVersion: integer('baseline_policy_version'),
     totalReadySnapshot: integer('total_ready_snapshot').default(0),
     snapshotCutoff: timestamp('snapshot_cutoff'),
     processed: integer('processed').default(0),

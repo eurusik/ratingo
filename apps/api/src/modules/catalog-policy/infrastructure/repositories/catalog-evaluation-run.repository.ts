@@ -26,6 +26,8 @@ export interface CatalogEvaluationRun {
   // Policy Activation Flow fields
   targetPolicyId: string | null;
   targetPolicyVersion: number | null;
+  /** Version of active policy when run was created (for diff calculation) */
+  baselinePolicyVersion: number | null;
   totalReadySnapshot: number;
   snapshotCutoff: Date | null;
   processed: number;
@@ -46,6 +48,8 @@ export interface CatalogEvaluationRun {
 export interface CreateRunInput {
   targetPolicyId: string;
   targetPolicyVersion: number;
+  /** Version of active policy when run was created (for diff calculation) */
+  baselinePolicyVersion: number | null;
   totalReadySnapshot: number;
   snapshotCutoff: Date;
 }
@@ -138,6 +142,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
         .values({
           targetPolicyId: input.targetPolicyId,
           targetPolicyVersion: input.targetPolicyVersion,
+          baselinePolicyVersion: input.baselinePolicyVersion,
           policyVersion: input.targetPolicyVersion,
           status: RunStatus.RUNNING,
           totalReadySnapshot: input.totalReadySnapshot,
@@ -341,6 +346,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
       cursor: row.cursor,
       targetPolicyId: row.targetPolicyId,
       targetPolicyVersion: row.targetPolicyVersion,
+      baselinePolicyVersion: row.baselinePolicyVersion,
       totalReadySnapshot: row.totalReadySnapshot ?? 0,
       snapshotCutoff: row.snapshotCutoff,
       processed: row.processed ?? 0,

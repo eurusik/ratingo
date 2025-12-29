@@ -612,7 +612,8 @@
         "globalRequirements": "Global Quality Gate",
         "minQualityScore": "Min Quality Score",
         "requireRatings": "Required Ratings (any of)",
-        "minVotesAnyOf": "Min Votes (Any Source)"
+        "minVotesAnyOf": "Min Votes (Any Source)",
+        "appliesTo": "Applies To"
       },
       "form": {
         "save": "Save as New Version",
@@ -681,7 +682,15 @@
           "requireRatingsHint": "Content must have at least one of these rating sources (OR logic)",
           "addRating": "Add rating source...",
           "minVotesAnyOf": "Min Votes (Any Source)",
-          "minVotesAnyOfHint": "Passes if ANY selected source has enough votes. Robust to missing data."
+          "minVotesAnyOfHint": "Passes if ANY selected source has enough votes. Robust to missing data.",
+          "appliesTo": "Quality gate applies to",
+          "appliesToHint": "Quality gate filters out content without sufficient ratings and votes.",
+          "qualityDrivenLabel": "Quality surfaces",
+          "qualityBadge": "gate required",
+          "qualityHint": "Only shows content meeting minimum quality standards.",
+          "freshnessDrivenLabel": "Freshness surfaces",
+          "freshnessBadge": "gate off by default",
+          "freshnessHint": "Prioritizes recency. New releases may lack ratings/votes."
         }
       },
       "toast": {

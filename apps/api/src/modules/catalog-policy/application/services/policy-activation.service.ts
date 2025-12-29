@@ -127,17 +127,24 @@ export class PolicyActivationService {
     const snapshotCutoff = new Date();
     const totalReadySnapshot = await this.countReadyMediaItems(snapshotCutoff);
 
+    // 5. Get current active policy version for baseline (for diff calculation)
+    // TODO: Wrap in transaction with run creation to prevent race condition
+    // (unlikely in practice since policies change rarely)
+    const activePolicy = await this.policyRepository.findActive();
+    const baselinePolicyVersion = activePolicy?.version ?? null;
+
     this.logger.log(`Preparing policy v${policy.version}: ${totalReadySnapshot} items in snapshot`);
 
-    // 5. Create run with status=RUNNING
+    // 6. Create run with status=RUNNING
     const run = await this.runRepository.create({
       targetPolicyId: policyId,
       targetPolicyVersion: policy.version,
+      baselinePolicyVersion,
       totalReadySnapshot,
       snapshotCutoff,
     });
 
-    // 6. Queue RE_EVALUATE_ALL job with retries
+    // 7. Queue RE_EVALUATE_ALL job with retries
     await this.catalogQueue.add(
       CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
       {

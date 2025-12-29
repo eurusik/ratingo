@@ -114,7 +114,8 @@ export class DiffService {
   ) {}
 
   /**
-   * Computes diff between current active policy and a prepared run.
+   * Computes diff between baseline policy (at run creation) and the prepared run.
+   * Uses baselinePolicyVersion stored in run for consistent historical diff.
    *
    * @param runId - Run ID to compute diff for
    * @param sampleSize - Number of top items to return (default: 50)
@@ -134,9 +135,13 @@ export class DiffService {
       );
     }
 
-    // 3. Get current active policy version
-    const activePolicy = await this.policyRepository.findActive();
-    const currentPolicyVersion = activePolicy?.version ?? null;
+    // 3. Use baselinePolicyVersion from run (captured at run creation time)
+    // Fallback to current active policy for legacy runs without baseline
+    let currentPolicyVersion = run.baselinePolicyVersion ?? null;
+    if (currentPolicyVersion === null) {
+      const activePolicy = await this.policyRepository.findActive();
+      currentPolicyVersion = activePolicy?.version ?? null;
+    }
 
     // 4. Compute aggregated counts using SQL aggregation
     const counts = await this.computeCountsSQL(run.targetPolicyVersion!, currentPolicyVersion);
