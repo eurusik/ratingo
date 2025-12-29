@@ -141,6 +141,7 @@ class InMemoryRunRepository implements ICatalogEvaluationRunRepository {
       cursor: null,
       targetPolicyId: input.targetPolicyId,
       targetPolicyVersion: input.targetPolicyVersion,
+      baselinePolicyVersion: input.baselinePolicyVersion,
       totalReadySnapshot: input.totalReadySnapshot,
       snapshotCutoff: input.snapshotCutoff,
       processed: 0,

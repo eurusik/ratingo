@@ -186,6 +186,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const run = await ctx.runRepo.create({
         targetPolicyId: policy.id,
         targetPolicyVersion: policy.version,
+        baselinePolicyVersion: null,
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
@@ -217,6 +218,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const run = await ctx.runRepo.create({
         targetPolicyId: policy.id,
         targetPolicyVersion: policy.version,
+        baselinePolicyVersion: null,
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
@@ -255,6 +257,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const run = await ctx.runRepo.create({
         targetPolicyId: policy.id,
         targetPolicyVersion: policy.version,
+        baselinePolicyVersion: null,
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
@@ -271,6 +274,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const run = await ctx.runRepo.create({
         targetPolicyId: policy.id,
         targetPolicyVersion: policy.version,
+        baselinePolicyVersion: null,
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
@@ -300,6 +304,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const run = await ctx.runRepo.create({
         targetPolicyId: v2.id,
         targetPolicyVersion: v2.version,
+        baselinePolicyVersion: v1.version,
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
@@ -342,6 +347,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const run = await ctx.runRepo.create({
         targetPolicyId: policy.id,
         targetPolicyVersion: policy.version,
+        baselinePolicyVersion: null,
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
@@ -361,6 +367,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const run = await ctx.runRepo.create({
         targetPolicyId: policy.id,
         targetPolicyVersion: policy.version,
+        baselinePolicyVersion: null,
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
@@ -381,6 +388,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const run = await ctx.runRepo.create({
         targetPolicyId: policy.id,
         targetPolicyVersion: policy.version,
+        baselinePolicyVersion: null,
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
@@ -412,6 +420,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const run = await ctx.runRepo.create({
         targetPolicyId: policy.id,
         targetPolicyVersion: policy.version,
+        baselinePolicyVersion: null,
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
@@ -437,6 +446,7 @@ describe('Policy Activation Flow (e2e)', () => {
       const run = await ctx.runRepo.create({
         targetPolicyId: v2.id,
         targetPolicyVersion: v2.version,
+        baselinePolicyVersion: v1.version,
         totalReadySnapshot: 100,
         snapshotCutoff: new Date(),
       });
