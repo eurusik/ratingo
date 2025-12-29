@@ -10,7 +10,6 @@ import { ImageMapper } from '../mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
 
 /**
  * Fetches complete TV show details by slug.
@@ -31,10 +30,11 @@ export class ShowDetailsQuery {
 
   /**
    * Executes the show details query.
-   * Returns null for INELIGIBLE or PENDING media (404 behavior).
+   * Returns any ready show regardless of eligibility status.
+   * Detail pages should be accessible for all content.
    *
    * @param {string} slug - URL-friendly show identifier
-   * @returns {Promise<ShowDetails | null>} Full show details or null if not found/not eligible
+   * @returns {Promise<ShowDetails | null>} Full show details or null if not found
    * @throws {DatabaseException} When database query fails
    */
   async execute(slug: string): Promise<ShowDetails | null> {
@@ -79,21 +79,11 @@ export class ShowDetailsQuery {
           showId: schema.shows.id,
         })
         .from(schema.mediaItems)
-        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
-        .innerJoin(
-          schema.mediaCatalogEvaluations,
-          and(
-            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
-            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-          ),
-        )
-        .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
+        .innerJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .where(
           and(
             eq(schema.mediaItems.slug, slug),
-            // Eligibility filter: only show ELIGIBLE items
-            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
             // Ready filter: only show items with ready ingestion status
             eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
             // Not deleted filter
