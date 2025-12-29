@@ -74,6 +74,8 @@ export interface GlobalRequirementsLabels {
   addRating?: string
   minVotesAnyOf?: string
   minVotesAnyOfHint?: string
+  appliesTo?: string
+  appliesToHint?: string
 }
 
 /** Labels for PolicyEditForm - matches admin.policyDetail.form in JSON */
@@ -113,6 +115,7 @@ export interface ConfigViewLabels {
   minQualityScore?: string
   requireRatings?: string
   minVotesAnyOf?: string
+  appliesTo?: string
 }
 
 /** Labels for policy info section */

@@ -6645,21 +6645,35 @@
           "minRelevanceScore"
         ]
       },
+      "MinVotesAnyOfDto": {
+        "type": "object",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "description": "Vote sources to check (OR logic)",
+            "example": [
+              "imdb",
+              "trakt"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "imdb",
+                "trakt"
+              ]
+            }
+          },
+          "min": {
+            "type": "number",
+            "description": "Minimum votes threshold",
+            "example": 3000,
+            "minimum": 0
+          }
+        }
+      },
       "GlobalRequirementsDto": {
         "type": "object",
         "properties": {
-          "minImdbVotes": {
-            "type": "number",
-            "description": "Minimum IMDb votes required (integer)",
-            "example": 3000,
-            "minimum": 0
-          },
-          "minTraktVotes": {
-            "type": "number",
-            "description": "Minimum Trakt votes required (integer)",
-            "example": 1000,
-            "minimum": 0
-          },
           "minQualityScoreNormalized": {
             "type": "number",
             "description": "Minimum quality score normalized (0-1)",
@@ -6669,10 +6683,10 @@
           },
           "requireAnyOfRatingsPresent": {
             "type": "array",
-            "description": "At least one of these rating sources must be present",
+            "description": "At least one of these rating sources must be present (OR logic)",
             "example": [
               "imdb",
-              "metacritic"
+              "trakt"
             ],
             "items": {
               "type": "string",
@@ -6681,6 +6695,35 @@
                 "metacritic",
                 "rt",
                 "trakt"
+              ]
+            }
+          },
+          "minVotesAnyOf": {
+            "description": "Minimum votes from ANY of the specified sources (OR logic). Passes if any source meets the threshold. Robust to missing data.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MinVotesAnyOfDto"
+              }
+            ]
+          },
+          "appliesTo": {
+            "type": "array",
+            "description": "Contexts where global gate applies. Defaults to ['catalog', 'homepage', 'trending', 'search'] if not specified. Freshness surfaces (now_playing, new_digital) are excluded by default.",
+            "example": [
+              "catalog",
+              "homepage",
+              "trending",
+              "search"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "catalog",
+                "homepage",
+                "trending",
+                "now_playing",
+                "new_digital",
+                "search"
               ]
             }
           }
@@ -7396,6 +7439,38 @@
           "reason"
         ]
       },
+      "ReasonBreakdownDto": {
+        "type": "object",
+        "properties": {
+          "regressionReasons": {
+            "type": "object",
+            "description": "Breakdown of regression reasons",
+            "example": {
+              "MISSING_GLOBAL_SIGNALS": 150,
+              "BLOCKED_COUNTRY": 25,
+              "NEUTRAL_LANGUAGE": 10
+            },
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "improvementReasons": {
+            "type": "object",
+            "description": "Breakdown of improvement reasons",
+            "example": {
+              "ALLOWED_COUNTRY": 100,
+              "BREAKOUT_ALLOWED": 50
+            },
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "regressionReasons",
+          "improvementReasons"
+        ]
+      },
       "DiffReportDto": {
         "type": "object",
         "properties": {
@@ -7435,6 +7510,14 @@
             "items": {
               "$ref": "#/components/schemas/DiffSampleDto"
             }
+          },
+          "reasonBreakdown": {
+            "description": "Breakdown of reasons for regressions and improvements",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReasonBreakdownDto"
+              }
+            ]
           }
         },
         "required": [
@@ -7515,25 +7598,6 @@
         "required": [
           "policy",
           "options"
-        ]
-      },
-      "ReasonBreakdownDto": {
-        "type": "object",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "description": "Evaluation reason",
-            "example": "ALLOWED_COUNTRY"
-          },
-          "count": {
-            "type": "number",
-            "description": "Count of items with this reason",
-            "example": 500
-          }
-        },
-        "required": [
-          "reason",
-          "count"
         ]
       },
       "DryRunSummaryDto": {

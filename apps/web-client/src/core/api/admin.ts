@@ -47,11 +47,15 @@ export interface MinVotesAnyOf {
   min: number
 }
 
+/** Evaluation context type. */
+export type EvaluationContext = 'catalog' | 'homepage' | 'trending' | 'now_playing' | 'new_digital' | 'search'
+
 /** Global requirements type. */
 export interface GlobalRequirements {
   minQualityScoreNormalized?: number
   requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[]
   minVotesAnyOf?: MinVotesAnyOf
+  appliesTo?: EvaluationContext[]
 }
 
 /** Create policy request type (manual, because generated types are broken). */

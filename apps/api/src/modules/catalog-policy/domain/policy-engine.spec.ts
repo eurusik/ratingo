@@ -503,6 +503,51 @@ describe('Policy Engine', () => {
 
       expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
       expect(result.reasons).toContain('ALLOWED_COUNTRY');
+      expect(result.reasons).not.toContain('ALLOWED_LANGUAGE'); // Only country is allowed
+      expect(result.reasons).not.toContain('NEUTRAL_COUNTRY');
+      expect(result.reasons).not.toContain('NEUTRAL_LANGUAGE');
+    });
+
+    it('should return ELIGIBLE with ALLOWED_LANGUAGE when language is allowed but country is neutral (RELAXED mode)', () => {
+      const policy = createPolicy({
+        eligibilityMode: 'RELAXED',
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['FR'], // Neutral
+          originalLanguage: 'en', // Allowed
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.reasons).toContain('ALLOWED_LANGUAGE');
+      expect(result.reasons).not.toContain('ALLOWED_COUNTRY'); // Only language is allowed
+      expect(result.reasons).not.toContain('NEUTRAL_COUNTRY');
+      expect(result.reasons).not.toContain('NEUTRAL_LANGUAGE');
+    });
+
+    it('should return ELIGIBLE with both reasons when country AND language are allowed (RELAXED mode)', () => {
+      const policy = createPolicy({
+        eligibilityMode: 'RELAXED',
+        allowedCountries: ['US', 'FR'],
+        allowedLanguages: ['en', 'fr'],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['FR'], // Allowed
+          originalLanguage: 'fr', // Allowed (but would be neutral in default policy)
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.reasons).toContain('ALLOWED_COUNTRY');
+      expect(result.reasons).toContain('ALLOWED_LANGUAGE');
     });
 
     it('should return INELIGIBLE when both country and language are neutral (RELAXED mode)', () => {

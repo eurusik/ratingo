@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
@@ -24,7 +25,7 @@ const EMPTY_POLICY_CONFIG: PolicyConfigDto = {
   homepage: { minRelevanceScore: 0 },
 }
 
-export default function PolicyDraftPage() {
+function PolicyDraftContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { dict } = useTranslation()
@@ -106,5 +107,17 @@ export default function PolicyDraftPage() {
         labels={formLabels}
       />
     </div>
+  )
+}
+
+export default function PolicyDraftPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <PolicyDraftContent />
+    </Suspense>
   )
 }

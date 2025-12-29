@@ -17,6 +17,7 @@ import type { GlobalRequirements } from '@/core/api/admin'
 
 type RatingSource = 'imdb' | 'metacritic' | 'rt' | 'trakt'
 type VoteSource = 'imdb' | 'trakt'
+type EvaluationContext = 'catalog' | 'homepage' | 'trending' | 'now_playing' | 'new_digital' | 'search'
 
 interface GlobalRequirementsEditorProps {
   globalRequirements?: GlobalRequirements
@@ -33,6 +34,8 @@ interface GlobalRequirementsEditorProps {
     minVotesAnyOfHint?: string
     minVotesThreshold?: string
     voteSources?: string
+    appliesTo?: string
+    appliesToHint?: string
   }
 }
 
@@ -50,6 +53,17 @@ const VOTE_SOURCE_LABELS: Record<VoteSource, string> = {
 
 const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt']
 const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt']
+const EVALUATION_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending', 'now_playing', 'new_digital', 'search']
+const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending', 'search']
+
+const CONTEXT_LABELS: Record<EvaluationContext, string> = {
+  catalog: 'Catalog',
+  homepage: 'Homepage',
+  trending: 'Trending',
+  now_playing: 'Now Playing',
+  new_digital: 'New on Digital',
+  search: 'Search',
+}
 
 /** Editor for global quality gate requirements. */
 export function GlobalRequirementsEditor({
@@ -131,6 +145,29 @@ export function GlobalRequirementsEditor({
   const availableRatingSources = RATING_SOURCES.filter(
     (source) => !(globalRequirements?.requireAnyOfRatingsPresent || []).includes(source)
   )
+
+  const toggleContext = (context: EvaluationContext, checked: boolean) => {
+    // Get current appliesTo or use defaults
+    const current = globalRequirements?.appliesTo ?? DEFAULT_QUALITY_CONTEXTS
+    
+    let newContexts: EvaluationContext[]
+    if (checked) {
+      newContexts = [...current, context]
+    } else {
+      newContexts = current.filter((c) => c !== context)
+    }
+    
+    // If matches default, remove the field (use implicit default)
+    const isDefault = 
+      newContexts.length === DEFAULT_QUALITY_CONTEXTS.length &&
+      DEFAULT_QUALITY_CONTEXTS.every((c) => newContexts.includes(c))
+    
+    updateField('appliesTo', isDefault ? undefined : newContexts)
+  }
+
+  const getActiveContexts = (): EvaluationContext[] => {
+    return globalRequirements?.appliesTo ?? DEFAULT_QUALITY_CONTEXTS
+  }
 
   return (
     <ConfigCard
@@ -229,6 +266,27 @@ export function GlobalRequirementsEditor({
         <p className="text-xs text-muted-foreground">
           {labels?.minVotesAnyOfHint ??
             'Passes if ANY selected source has enough votes. Robust to missing data.'}
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>{labels?.appliesTo ?? 'Applies To Contexts'}</Label>
+        <div className="grid grid-cols-2 gap-2">
+          {EVALUATION_CONTEXTS.map((context) => (
+            <label key={context} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={getActiveContexts().includes(context)}
+                onChange={(e) => toggleContext(context, e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              {CONTEXT_LABELS[context]}
+            </label>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {labels?.appliesToHint ??
+            'Surfaces where quality gate applies. Freshness surfaces (Now Playing, New Digital) are excluded by default.'}
         </p>
       </div>
     </ConfigCard>

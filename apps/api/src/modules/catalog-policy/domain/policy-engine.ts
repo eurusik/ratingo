@@ -143,8 +143,15 @@ export function evaluateEligibility(
       const hasAllowedLanguage = policy.allowedLanguages.includes(mediaItem.originalLanguage);
 
       if (hasAllowedCountry || hasAllowedLanguage) {
-        reasons.push('ALLOWED_COUNTRY');
-        return { status: EligibilityStatus.ELIGIBLE, reasons, breakoutRuleId: null };
+        // Clear neutral reasons and add actual allowed reasons for accurate audit trail
+        const allowedReasons: EvaluationReason[] = [];
+        if (hasAllowedCountry) allowedReasons.push('ALLOWED_COUNTRY');
+        if (hasAllowedLanguage) allowedReasons.push('ALLOWED_LANGUAGE');
+        return {
+          status: EligibilityStatus.ELIGIBLE,
+          reasons: allowedReasons,
+          breakoutRuleId: null,
+        };
       }
     }
 
@@ -252,6 +259,7 @@ function checkNeutral(
 
 /**
  * Finds the first matching breakout rule by priority.
+ * Rules are sorted by priority (lowest number = highest priority) before evaluation.
  *
  * @param input - Media item data and stats
  * @param policy - Policy configuration
@@ -261,7 +269,10 @@ function findMatchingBreakoutRule(
   input: PolicyEngineInput,
   policy: PolicyConfig,
 ): BreakoutRule | null {
-  for (const rule of policy.breakoutRules) {
+  // Defensive sort: ensure priority order regardless of input array order
+  const sortedRules = [...policy.breakoutRules].sort((a, b) => a.priority - b.priority);
+
+  for (const rule of sortedRules) {
     if (matchesBreakoutRule(input, rule, policy)) {
       return rule;
     }

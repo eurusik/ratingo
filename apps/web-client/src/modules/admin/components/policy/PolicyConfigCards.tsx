@@ -155,6 +155,17 @@ export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProp
 
   if (!hasAnyRequirement) return null
 
+  const DEFAULT_CONTEXTS = ['catalog', 'homepage', 'trending', 'search']
+  const CONTEXT_LABELS: Record<string, string> = {
+    catalog: 'Catalog',
+    homepage: 'Homepage',
+    trending: 'Trending',
+    now_playing: 'Now Playing',
+    new_digital: 'New Digital',
+    search: 'Search',
+  }
+  const activeContexts = req.appliesTo ?? DEFAULT_CONTEXTS
+
   return (
     <ConfigCard 
       title={labels?.globalRequirements ?? 'Global Quality Gate'} 
@@ -187,6 +198,12 @@ export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProp
           <BadgeList items={req.requireAnyOfRatingsPresent} />
         </div>
       )}
+      <div className="pt-1">
+        <p className="text-sm text-muted-foreground mb-1">
+          {labels?.appliesTo ?? 'Applies To'}
+        </p>
+        <BadgeList items={activeContexts.map(c => CONTEXT_LABELS[c] ?? c)} />
+      </div>
     </ConfigCard>
   )
 }

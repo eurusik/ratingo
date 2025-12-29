@@ -2264,30 +2264,47 @@ export interface components {
              */
             minRelevanceScore: number;
         };
-        GlobalRequirementsDto: {
+        MinVotesAnyOfDto: {
             /**
-             * @description Minimum IMDb votes required (integer)
+             * @description Vote sources to check (OR logic)
+             * @example [
+             *       "imdb",
+             *       "trakt"
+             *     ]
+             */
+            sources?: ("imdb" | "trakt")[];
+            /**
+             * @description Minimum votes threshold
              * @example 3000
              */
-            minImdbVotes?: number;
-            /**
-             * @description Minimum Trakt votes required (integer)
-             * @example 1000
-             */
-            minTraktVotes?: number;
+            min?: number;
+        };
+        GlobalRequirementsDto: {
             /**
              * @description Minimum quality score normalized (0-1)
              * @example 0.6
              */
             minQualityScoreNormalized?: number;
             /**
-             * @description At least one of these rating sources must be present
+             * @description At least one of these rating sources must be present (OR logic)
              * @example [
              *       "imdb",
-             *       "metacritic"
+             *       "trakt"
              *     ]
              */
             requireAnyOfRatingsPresent?: ("imdb" | "metacritic" | "rt" | "trakt")[];
+            /** @description Minimum votes from ANY of the specified sources (OR logic). Passes if any source meets the threshold. Robust to missing data. */
+            minVotesAnyOf?: components["schemas"]["MinVotesAnyOfDto"];
+            /**
+             * @description Contexts where global gate applies. Defaults to ['catalog', 'homepage', 'trending', 'search'] if not specified. Freshness surfaces (now_playing, new_digital) are excluded by default.
+             * @example [
+             *       "catalog",
+             *       "homepage",
+             *       "trending",
+             *       "search"
+             *     ]
+             */
+            appliesTo?: ("catalog" | "homepage" | "trending" | "now_playing" | "new_digital" | "search")[];
         };
         PolicyConfigDto: {
             /**
@@ -2739,6 +2756,29 @@ export interface components {
              */
             reason: string;
         };
+        ReasonBreakdownDto: {
+            /**
+             * @description Breakdown of regression reasons
+             * @example {
+             *       "MISSING_GLOBAL_SIGNALS": 150,
+             *       "BLOCKED_COUNTRY": 25,
+             *       "NEUTRAL_LANGUAGE": 10
+             *     }
+             */
+            regressionReasons: {
+                [key: string]: number;
+            };
+            /**
+             * @description Breakdown of improvement reasons
+             * @example {
+             *       "ALLOWED_COUNTRY": 100,
+             *       "BREAKOUT_ALLOWED": 50
+             *     }
+             */
+            improvementReasons: {
+                [key: string]: number;
+            };
+        };
         DiffReportDto: {
             /**
              * @description Run ID
@@ -2761,6 +2801,8 @@ export interface components {
             topRegressions: components["schemas"]["DiffSampleDto"][];
             /** @description Sample items being added to catalog */
             topImprovements: components["schemas"]["DiffSampleDto"][];
+            /** @description Breakdown of reasons for regressions and improvements */
+            reasonBreakdown?: components["schemas"]["ReasonBreakdownDto"];
         };
         DryRunOptionsDto: {
             /**
@@ -2796,18 +2838,6 @@ export interface components {
             policy: components["schemas"]["CreatePolicyDto"];
             /** @description Dry-run options */
             options: components["schemas"]["DryRunOptionsDto"];
-        };
-        ReasonBreakdownDto: {
-            /**
-             * @description Evaluation reason
-             * @example ALLOWED_COUNTRY
-             */
-            reason: string;
-            /**
-             * @description Count of items with this reason
-             * @example 500
-             */
-            count: number;
         };
         DryRunSummaryDto: {
             /**
