@@ -5,7 +5,12 @@
  * Focus on explicit test cases for readability and edge case coverage.
  */
 
-import { evaluateEligibility, computeRelevance, shouldApplyGlobalGate } from './policy-engine';
+import {
+  evaluateEligibility,
+  computeRelevance,
+  shouldApplyGlobalGate,
+  checkContentClassExcluded,
+} from './policy-engine';
 import {
   PolicyConfig,
   PolicyEngineInput,
@@ -13,6 +18,7 @@ import {
   EvaluationContext,
 } from './types/policy.types';
 import { EligibilityStatus } from './constants/evaluation.constants';
+import { ContentClass } from './classification.service';
 
 describe('Policy Engine', () => {
   // Helper to create a minimal valid policy
@@ -44,6 +50,7 @@ describe('Policy Engine', () => {
       ratingMetacritic: null,
       ratingRottenTomatoes: null,
       ratingTrakt: null,
+      contentClass: 'mainstream' as ContentClass,
     },
     stats: null,
     ...overrides,
@@ -997,6 +1004,218 @@ describe('Policy Engine', () => {
       const result = evaluateEligibility(input, policy, { context: 'now_playing' });
       expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
+    });
+  });
+
+  describe('checkContentClassExcluded', () => {
+    it('should return false when excludedClasses is undefined', () => {
+      expect(checkContentClassExcluded('anime', undefined)).toBe(false);
+    });
+
+    it('should return false when excludedClasses is empty array', () => {
+      expect(checkContentClassExcluded('anime', [])).toBe(false);
+    });
+
+    it('should return true when content class is in excluded list', () => {
+      expect(checkContentClassExcluded('anime', ['anime', 'reality'])).toBe(true);
+    });
+
+    it('should return false when content class is not in excluded list', () => {
+      expect(checkContentClassExcluded('mainstream', ['anime', 'reality'])).toBe(false);
+    });
+  });
+
+  describe('evaluateEligibility - Content Class Exclusion', () => {
+    it('should return INELIGIBLE when content class is excluded without breakout', () => {
+      const policy = createPolicy({
+        excludedContentClasses: ['anime'],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          contentClass: 'anime',
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('EXCLUDED_CONTENT_CLASS');
+      expect(result.breakoutRuleId).toBeNull();
+    });
+
+    it('should return ELIGIBLE when content class is not excluded', () => {
+      const policy = createPolicy({
+        excludedContentClasses: ['anime'],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          contentClass: 'mainstream',
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
+    });
+
+    it('should return ELIGIBLE when excludedContentClasses is not configured', () => {
+      const policy = createPolicy();
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          contentClass: 'anime',
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
+    });
+
+    it('should allow breakout to override content class exclusion (SOFT filter)', () => {
+      const policy = createPolicy({
+        excludedContentClasses: ['anime'],
+        breakoutRules: [
+          {
+            id: 'anime-global-hit',
+            name: 'Anime Global Hit',
+            priority: 10,
+            requirements: {
+              minImdbVotes: 50000,
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          contentClass: 'anime',
+          voteCountImdb: 100000, // Meets breakout requirement
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.reasons).toContain('EXCLUDED_CONTENT_CLASS');
+      expect(result.reasons).toContain('BREAKOUT_ALLOWED');
+      expect(result.breakoutRuleId).toBe('anime-global-hit');
+    });
+
+    it('should NOT allow breakout to override hard blocks (BLOCKED_COUNTRY)', () => {
+      const policy = createPolicy({
+        excludedContentClasses: ['anime'],
+        blockedCountries: ['RU'],
+        breakoutRules: [
+          {
+            id: 'anime-global-hit',
+            name: 'Anime Global Hit',
+            priority: 10,
+            requirements: {
+              minImdbVotes: 50000,
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          contentClass: 'anime',
+          originCountries: ['RU'], // Hard blocked
+          voteCountImdb: 100000, // Meets breakout requirement
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('EXCLUDED_CONTENT_CLASS');
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.breakoutRuleId).toBeNull();
+    });
+
+    it('should return PENDING for missing data regardless of content class exclusion', () => {
+      const policy = createPolicy({
+        excludedContentClasses: ['anime'],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          contentClass: 'anime',
+          originCountries: null, // Missing data
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.PENDING);
+      expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
+      expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
+    });
+
+    it('should check global gate before allowing breakout for excluded content', () => {
+      const policy = createPolicy({
+        excludedContentClasses: ['anime'],
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 100000 },
+        },
+        breakoutRules: [
+          {
+            id: 'anime-global-hit',
+            name: 'Anime Global Hit',
+            priority: 10,
+            requirements: {
+              minImdbVotes: 50000, // Lower than global gate
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          contentClass: 'anime',
+          voteCountImdb: 60000, // Meets breakout but NOT global gate
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('EXCLUDED_CONTENT_CLASS');
+      expect(result.globalGateDetails).toBeDefined();
+      expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
+    });
+
+    it('should exclude multiple content classes', () => {
+      const policy = createPolicy({
+        excludedContentClasses: ['anime', 'reality', 'kids'],
+      });
+
+      const animeInput = createInput({
+        mediaItem: { ...createInput().mediaItem, contentClass: 'anime' },
+      });
+      const realityInput = createInput({
+        mediaItem: { ...createInput().mediaItem, contentClass: 'reality' },
+      });
+      const kidsInput = createInput({
+        mediaItem: { ...createInput().mediaItem, contentClass: 'kids' },
+      });
+      const mainstreamInput = createInput({
+        mediaItem: { ...createInput().mediaItem, contentClass: 'mainstream' },
+      });
+      const documentaryInput = createInput({
+        mediaItem: { ...createInput().mediaItem, contentClass: 'documentary' },
+      });
+
+      expect(evaluateEligibility(animeInput, policy).status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(evaluateEligibility(realityInput, policy).status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(evaluateEligibility(kidsInput, policy).status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(evaluateEligibility(mainstreamInput, policy).status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(evaluateEligibility(documentaryInput, policy).status).toBe(EligibilityStatus.ELIGIBLE);
     });
   });
 });

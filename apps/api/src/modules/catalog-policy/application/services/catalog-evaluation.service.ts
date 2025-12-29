@@ -24,6 +24,7 @@ import {
   WatchProvidersMap,
 } from '../../domain/types/policy.types';
 import { EligibilityStatus } from '../../domain/constants/evaluation.constants';
+import { ContentClass, isValidContentClass } from '../../domain/classification.service';
 
 export interface EvaluationResult {
   mediaItemId: string;
@@ -299,6 +300,7 @@ export class CatalogEvaluationService {
         originCountries: schema.mediaItems.originCountries,
         originalLanguage: schema.mediaItems.originalLanguage,
         watchProviders: schema.mediaItems.watchProviders,
+        contentClass: schema.mediaItems.contentClass,
         // Ratings from media_items (external ratings)
         ratingImdb: schema.mediaItems.ratingImdb,
         ratingMetacritic: schema.mediaItems.ratingMetacritic,
@@ -323,6 +325,17 @@ export class CatalogEvaluationService {
 
     const row = result[0];
 
+    // Validate contentClass (safety belt for data integrity)
+    let contentClass: ContentClass = 'mainstream';
+    if (!isValidContentClass(row.contentClass)) {
+      this.logger.error(
+        `Invalid content_class for media ${row.id}: ${row.contentClass}. Defaulting to mainstream.`,
+      );
+      // TODO: Increment catalog_invalid_content_class_total metric
+    } else {
+      contentClass = row.contentClass;
+    }
+
     return {
       mediaItem: {
         id: row.id,
@@ -335,6 +348,7 @@ export class CatalogEvaluationService {
         ratingMetacritic: row.ratingMetacritic,
         ratingRottenTomatoes: row.ratingRottenTomatoes,
         ratingTrakt: row.ratingTrakt,
+        contentClass,
       },
       stats:
         row.qualityScore !== null
@@ -363,6 +377,7 @@ export class CatalogEvaluationService {
         originCountries: schema.mediaItems.originCountries,
         originalLanguage: schema.mediaItems.originalLanguage,
         watchProviders: schema.mediaItems.watchProviders,
+        contentClass: schema.mediaItems.contentClass,
         // Ratings from media_items (external ratings)
         ratingImdb: schema.mediaItems.ratingImdb,
         ratingMetacritic: schema.mediaItems.ratingMetacritic,
@@ -380,28 +395,42 @@ export class CatalogEvaluationService {
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(inArray(schema.mediaItems.id, mediaItemIds));
 
-    return result.map((row) => ({
-      mediaItem: {
-        id: row.id,
-        originCountries: row.originCountries as string[] | null,
-        originalLanguage: row.originalLanguage,
-        watchProviders: row.watchProviders as WatchProvidersMap | null,
-        voteCountImdb: row.voteCountImdb,
-        voteCountTrakt: row.voteCountTrakt,
-        ratingImdb: row.ratingImdb,
-        ratingMetacritic: row.ratingMetacritic,
-        ratingRottenTomatoes: row.ratingRottenTomatoes,
-        ratingTrakt: row.ratingTrakt,
-      },
-      stats:
-        row.qualityScore !== null
-          ? {
-              qualityScore: row.qualityScore,
-              popularityScore: row.popularityScore,
-              freshnessScore: row.freshnessScore,
-              ratingoScore: row.ratingoScore,
-            }
-          : null,
-    }));
+    return result.map((row) => {
+      // Validate contentClass (safety belt for data integrity)
+      let contentClass: ContentClass = 'mainstream';
+      if (!isValidContentClass(row.contentClass)) {
+        this.logger.error(
+          `Invalid content_class for media ${row.id}: ${row.contentClass}. Defaulting to mainstream.`,
+        );
+        // TODO: Increment catalog_invalid_content_class_total metric
+      } else {
+        contentClass = row.contentClass;
+      }
+
+      return {
+        mediaItem: {
+          id: row.id,
+          originCountries: row.originCountries as string[] | null,
+          originalLanguage: row.originalLanguage,
+          watchProviders: row.watchProviders as WatchProvidersMap | null,
+          voteCountImdb: row.voteCountImdb,
+          voteCountTrakt: row.voteCountTrakt,
+          ratingImdb: row.ratingImdb,
+          ratingMetacritic: row.ratingMetacritic,
+          ratingRottenTomatoes: row.ratingRottenTomatoes,
+          ratingTrakt: row.ratingTrakt,
+          contentClass,
+        },
+        stats:
+          row.qualityScore !== null
+            ? {
+                qualityScore: row.qualityScore,
+                popularityScore: row.popularityScore,
+                freshnessScore: row.freshnessScore,
+                ratingoScore: row.ratingoScore,
+              }
+            : null,
+      };
+    });
   }
 }

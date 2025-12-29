@@ -4,7 +4,8 @@
  * Core type definitions for policy configuration and evaluation results.
  */
 
-import { EligibilityStatusType } from '../constants/evaluation.constants';
+import { EligibilityStatusType, EvaluationReasonType } from '../constants/evaluation.constants';
+import { ContentClass } from '../classification.service';
 
 /**
  * Evaluation context for content display surfaces.
@@ -27,27 +28,11 @@ export interface EvaluationOptions {
 }
 
 /**
- * Evaluation reason codes.
- */
-export type EvaluationReason =
-  | 'MISSING_ORIGIN_COUNTRY'
-  | 'MISSING_ORIGINAL_LANGUAGE'
-  | 'BLOCKED_COUNTRY'
-  | 'BLOCKED_LANGUAGE'
-  | 'NEUTRAL_COUNTRY'
-  | 'NEUTRAL_LANGUAGE'
-  | 'MISSING_GLOBAL_SIGNALS'
-  | 'BREAKOUT_ALLOWED'
-  | 'ALLOWED_COUNTRY'
-  | 'ALLOWED_LANGUAGE'
-  | 'NO_ACTIVE_POLICY';
-
-/**
  * Result of evaluating a media item against a policy.
  */
 export interface Evaluation {
   status: EligibilityStatusType;
-  reasons: EvaluationReason[];
+  reasons: EvaluationReasonType[];
   breakoutRuleId: string | null;
   /**
    * Diagnostic details when global gate check was performed.
@@ -154,6 +139,12 @@ export interface PolicyConfig {
    * Optional global quality gate. If not set, gate is skipped.
    */
   globalRequirements?: GlobalRequirements;
+  /**
+   * Content classes to exclude from catalog.
+   * SOFT filter: breakout rules CAN override this exclusion.
+   * Example: ['anime', 'reality'] excludes anime and reality content unless breakout passes.
+   */
+  excludedContentClasses?: ContentClass[];
 }
 
 /**
@@ -185,6 +176,11 @@ export interface PolicyEngineInput {
     ratingMetacritic: number | null;
     ratingRottenTomatoes: number | null;
     ratingTrakt: number | null;
+    /**
+     * Content classification for filtering.
+     * Validated in application layer before engine evaluation.
+     */
+    contentClass: ContentClass;
   };
   stats: {
     qualityScore: number | null;

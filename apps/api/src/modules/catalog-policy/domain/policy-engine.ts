@@ -7,7 +7,6 @@
 
 import {
   Evaluation,
-  EvaluationReason,
   PolicyConfig,
   PolicyEngineInput,
   BreakoutRule,
@@ -15,13 +14,35 @@ import {
   EvaluationOptions,
   GlobalRequirements,
 } from './types/policy.types';
-import { EligibilityStatus } from './constants/evaluation.constants';
+import {
+  EligibilityStatus,
+  EvaluationReason,
+  EvaluationReasonType,
+} from './constants/evaluation.constants';
+import { ContentClass } from './classification.service';
 
 /**
  * Default contexts where gate applies when appliesTo not configured.
  * Quality-driven surfaces that require maturity signals.
  */
 const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending', 'search'];
+
+/**
+ * Checks if content class is excluded by policy.
+ *
+ * @param contentClass - Media item's content class
+ * @param excludedClasses - List of excluded content classes from policy
+ * @returns True if content class is excluded
+ */
+export function checkContentClassExcluded(
+  contentClass: ContentClass,
+  excludedClasses: ContentClass[] | undefined,
+): boolean {
+  if (!excludedClasses || excludedClasses.length === 0) {
+    return false;
+  }
+  return excludedClasses.includes(contentClass);
+}
 
 /**
  * Determines if global gate should be applied for given context.
@@ -44,11 +65,12 @@ export function shouldApplyGlobalGate(
  *
  * Evaluation order:
  * 1. Missing data → PENDING
- * 2. Blocked checks
- * 3. Global quality gate (if configured)
- * 4. Breakout rules
- * 5. Neutral checks
- * 6. Allowed checks
+ * 2. Content class exclusion (SOFT filter - breakout can override)
+ * 3. Blocked checks (HARD filter - breakout cannot override)
+ * 4. Global quality gate (if configured)
+ * 5. Breakout rules
+ * 6. Neutral checks
+ * 7. Allowed checks
  *
  * @param input - Media item data and stats
  * @param policy - Active policy configuration
@@ -61,26 +83,84 @@ export function evaluateEligibility(
   options?: EvaluationOptions,
 ): Evaluation {
   const { mediaItem } = input;
-  const reasons: EvaluationReason[] = [];
+  const reasons: EvaluationReasonType[] = [];
   // Context defaults to 'catalog' for legacy/batch compatibility
   const context = options?.context ?? 'catalog';
 
   // Step 1: Missing data checks → PENDING
   if (!mediaItem.originCountries || mediaItem.originCountries.length === 0) {
-    reasons.push('MISSING_ORIGIN_COUNTRY');
+    reasons.push(EvaluationReason.MISSING_ORIGIN_COUNTRY);
     return { status: EligibilityStatus.PENDING, reasons, breakoutRuleId: null };
   }
 
   if (!mediaItem.originalLanguage) {
-    reasons.push('MISSING_ORIGINAL_LANGUAGE');
+    reasons.push(EvaluationReason.MISSING_ORIGINAL_LANGUAGE);
     return { status: EligibilityStatus.PENDING, reasons, breakoutRuleId: null };
   }
 
-  // Step 2: Blocked checks
+  // Step 2: Content class exclusion check (SOFT filter)
+  const isContentClassExcluded = checkContentClassExcluded(
+    mediaItem.contentClass,
+    policy.excludedContentClasses,
+  );
+
+  // Step 3: Blocked checks (HARD filter)
   const isBlocked = checkBlocked(mediaItem, policy, reasons);
 
+  // Handle excluded content class with breakout opportunity
+  if (isContentClassExcluded) {
+    // Check if breakout can override the exclusion
+    // Global gate must pass first (if configured)
+    if (policy.globalRequirements) {
+      const gateResult = checkGlobalRequirements(input, policy.globalRequirements);
+      if (!gateResult.passes) {
+        // Excluded + gate fail → INELIGIBLE
+        return {
+          status: EligibilityStatus.INELIGIBLE,
+          reasons: [EvaluationReason.EXCLUDED_CONTENT_CLASS],
+          breakoutRuleId: null,
+          globalGateDetails: {
+            failedChecks: gateResult.failedChecks as any,
+          },
+        };
+      }
+    }
+
+    // Check breakout rules
+    const breakoutRule = findMatchingBreakoutRule(input, policy);
+
+    if (breakoutRule) {
+      // Breakout passes - but still need to check hard blocks
+      if (isBlocked) {
+        // Excluded + breakout + blocked → INELIGIBLE (hard block wins)
+        // Include both EXCLUDED_CONTENT_CLASS and BLOCKED_* reasons
+        reasons.unshift(EvaluationReason.EXCLUDED_CONTENT_CLASS);
+        return {
+          status: EligibilityStatus.INELIGIBLE,
+          reasons,
+          breakoutRuleId: null,
+        };
+      }
+
+      // Excluded + breakout + not blocked → ELIGIBLE
+      return {
+        status: EligibilityStatus.ELIGIBLE,
+        reasons: [EvaluationReason.EXCLUDED_CONTENT_CLASS, EvaluationReason.BREAKOUT_ALLOWED],
+        breakoutRuleId: breakoutRule.id,
+      };
+    }
+
+    // Excluded without breakout → INELIGIBLE
+    return {
+      status: EligibilityStatus.INELIGIBLE,
+      reasons: [EvaluationReason.EXCLUDED_CONTENT_CLASS],
+      breakoutRuleId: null,
+    };
+  }
+
+  // Non-excluded content continues with normal flow
   if (isBlocked) {
-    // Step 3: Global Quality Gate for blocked content
+    // Step 4: Global Quality Gate for blocked content
     // Breakout rules require gate to pass
     if (policy.globalRequirements) {
       const gateResult = checkGlobalRequirements(input, policy.globalRequirements);
@@ -98,13 +178,13 @@ export function evaluateEligibility(
       }
     }
 
-    // Step 4: Check breakout rules (gate passed or not configured)
+    // Step 5: Check breakout rules (gate passed or not configured)
     const breakoutRule = findMatchingBreakoutRule(input, policy);
 
     if (breakoutRule) {
       return {
         status: EligibilityStatus.ELIGIBLE,
-        reasons: ['BREAKOUT_ALLOWED'],
+        reasons: [EvaluationReason.BREAKOUT_ALLOWED],
         breakoutRuleId: breakoutRule.id,
       };
     }
@@ -113,7 +193,7 @@ export function evaluateEligibility(
     return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
   }
 
-  // Step 5: Global Quality Gate for non-blocked content - NOW CONTEXT AWARE
+  // Step 6: Global Quality Gate for non-blocked content - NOW CONTEXT AWARE
   if (shouldApplyGlobalGate(policy.globalRequirements, context)) {
     const gateResult = checkGlobalRequirements(input, policy.globalRequirements);
     if (!gateResult.passes) {
@@ -121,7 +201,7 @@ export function evaluateEligibility(
       // Diagnostics go to globalGateDetails only
       return {
         status: EligibilityStatus.INELIGIBLE,
-        reasons: ['MISSING_GLOBAL_SIGNALS'],
+        reasons: [EvaluationReason.MISSING_GLOBAL_SIGNALS],
         breakoutRuleId: null,
         globalGateDetails: {
           failedChecks: gateResult.failedChecks as any,
@@ -130,7 +210,7 @@ export function evaluateEligibility(
     }
   }
 
-  // Step 6: Neutral checks (not in allowed/blocked)
+  // Step 7: Neutral checks (not in allowed/blocked)
   const isNeutral = checkNeutral(mediaItem, policy, reasons);
 
   if (isNeutral) {
@@ -144,9 +224,9 @@ export function evaluateEligibility(
 
       if (hasAllowedCountry || hasAllowedLanguage) {
         // Clear neutral reasons and add actual allowed reasons for accurate audit trail
-        const allowedReasons: EvaluationReason[] = [];
-        if (hasAllowedCountry) allowedReasons.push('ALLOWED_COUNTRY');
-        if (hasAllowedLanguage) allowedReasons.push('ALLOWED_LANGUAGE');
+        const allowedReasons: EvaluationReasonType[] = [];
+        if (hasAllowedCountry) allowedReasons.push(EvaluationReason.ALLOWED_COUNTRY);
+        if (hasAllowedLanguage) allowedReasons.push(EvaluationReason.ALLOWED_LANGUAGE);
         return {
           status: EligibilityStatus.ELIGIBLE,
           reasons: allowedReasons,
@@ -158,10 +238,10 @@ export function evaluateEligibility(
     return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
   }
 
-  // Step 7: Allowed checks (whitelist)
+  // Step 8: Allowed checks (whitelist)
   // If we reach here, content is in allowed lists
-  reasons.push('ALLOWED_COUNTRY');
-  reasons.push('ALLOWED_LANGUAGE');
+  reasons.push(EvaluationReason.ALLOWED_COUNTRY);
+  reasons.push(EvaluationReason.ALLOWED_LANGUAGE);
 
   return { status: EligibilityStatus.ELIGIBLE, reasons, breakoutRuleId: null };
 }
@@ -177,7 +257,7 @@ export function evaluateEligibility(
 function checkBlocked(
   mediaItem: PolicyEngineInput['mediaItem'],
   policy: PolicyConfig,
-  reasons: EvaluationReason[],
+  reasons: EvaluationReasonType[],
 ): boolean {
   let isBlocked = false;
 
@@ -189,7 +269,7 @@ function checkBlocked(
   if (blockedCountries.length > 0) {
     if (policy.blockedCountryMode === 'ANY') {
       // ANY mode: any blocked country = blocked
-      reasons.push('BLOCKED_COUNTRY');
+      reasons.push(EvaluationReason.BLOCKED_COUNTRY);
       isBlocked = true;
     } else {
       // MAJORITY mode with tie-breaker
@@ -197,13 +277,13 @@ function checkBlocked(
 
       // Tie-breaker: for 1-2 countries, fallback to ANY
       if (totalCountries <= 2) {
-        reasons.push('BLOCKED_COUNTRY');
+        reasons.push(EvaluationReason.BLOCKED_COUNTRY);
         isBlocked = true;
       } else {
         // For 3+ countries, use majority rule
         const majority = Math.ceil(totalCountries / 2);
         if (blockedCountries.length >= majority) {
-          reasons.push('BLOCKED_COUNTRY');
+          reasons.push(EvaluationReason.BLOCKED_COUNTRY);
           isBlocked = true;
         }
       }
@@ -212,7 +292,7 @@ function checkBlocked(
 
   // Check blocked language
   if (policy.blockedLanguages.includes(mediaItem.originalLanguage!)) {
-    reasons.push('BLOCKED_LANGUAGE');
+    reasons.push(EvaluationReason.BLOCKED_LANGUAGE);
     isBlocked = true;
   }
 
@@ -230,7 +310,7 @@ function checkBlocked(
 function checkNeutral(
   mediaItem: PolicyEngineInput['mediaItem'],
   policy: PolicyConfig,
-  reasons: EvaluationReason[],
+  reasons: EvaluationReasonType[],
 ): boolean {
   let isNeutral = false;
 
@@ -240,7 +320,7 @@ function checkNeutral(
   );
 
   if (hasNeutralCountry) {
-    reasons.push('NEUTRAL_COUNTRY');
+    reasons.push(EvaluationReason.NEUTRAL_COUNTRY);
     isNeutral = true;
   }
 
@@ -250,7 +330,7 @@ function checkNeutral(
     !policy.blockedLanguages.includes(mediaItem.originalLanguage!);
 
   if (isNeutralLanguage) {
-    reasons.push('NEUTRAL_LANGUAGE');
+    reasons.push(EvaluationReason.NEUTRAL_LANGUAGE);
     isNeutral = true;
   }
 
@@ -525,20 +605,23 @@ export function computeRelevance(input: PolicyEngineInput, policy: PolicyConfig)
  * @returns Dictionary of reason descriptions
  */
 export function getReasonDescriptions(
-  reasons: EvaluationReason[],
-): Record<EvaluationReason, string> {
-  const descriptions: Record<EvaluationReason, string> = {
-    MISSING_ORIGIN_COUNTRY: 'Origin country information is missing',
-    MISSING_ORIGINAL_LANGUAGE: 'Original language information is missing',
-    BLOCKED_COUNTRY: 'Content is from a blocked country',
-    BLOCKED_LANGUAGE: 'Content is in a blocked language',
-    NEUTRAL_COUNTRY: 'Content is from a neutral country (not in allowed list)',
-    NEUTRAL_LANGUAGE: 'Content is in a neutral language (not in allowed list)',
-    MISSING_GLOBAL_SIGNALS: 'Content lacks required global signals (ratings, votes, providers)',
-    BREAKOUT_ALLOWED: 'Content meets breakout rule requirements',
-    ALLOWED_COUNTRY: 'Content is from an allowed country',
-    ALLOWED_LANGUAGE: 'Content is in an allowed language',
-    NO_ACTIVE_POLICY: 'No active policy is configured',
+  reasons: EvaluationReasonType[],
+): Record<EvaluationReasonType, string> {
+  const descriptions: Record<EvaluationReasonType, string> = {
+    [EvaluationReason.MISSING_ORIGIN_COUNTRY]: 'Origin country information is missing',
+    [EvaluationReason.MISSING_ORIGINAL_LANGUAGE]: 'Original language information is missing',
+    [EvaluationReason.BLOCKED_COUNTRY]: 'Content is from a blocked country',
+    [EvaluationReason.BLOCKED_LANGUAGE]: 'Content is in a blocked language',
+    [EvaluationReason.NEUTRAL_COUNTRY]: 'Content is from a neutral country (not in allowed list)',
+    [EvaluationReason.NEUTRAL_LANGUAGE]: 'Content is in a neutral language (not in allowed list)',
+    [EvaluationReason.MISSING_GLOBAL_SIGNALS]:
+      'Content lacks required global signals (ratings, votes, providers)',
+    [EvaluationReason.BREAKOUT_ALLOWED]: 'Content meets breakout rule requirements',
+    [EvaluationReason.ALLOWED_COUNTRY]: 'Content is from an allowed country',
+    [EvaluationReason.ALLOWED_LANGUAGE]: 'Content is in an allowed language',
+    [EvaluationReason.NO_ACTIVE_POLICY]: 'No active policy is configured',
+    [EvaluationReason.EXCLUDED_CONTENT_CLASS]: 'Content class is excluded by policy',
+    [EvaluationReason.INVALID_CONTENT_CLASS]: 'Content has invalid or missing content class',
   };
 
   return descriptions;

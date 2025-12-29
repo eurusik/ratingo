@@ -95,6 +95,10 @@ export const EvaluationReason = {
   ALLOWED_COUNTRY: 'ALLOWED_COUNTRY',
   ALLOWED_LANGUAGE: 'ALLOWED_LANGUAGE',
 
+  // Content class reasons
+  EXCLUDED_CONTENT_CLASS: 'EXCLUDED_CONTENT_CLASS',
+  INVALID_CONTENT_CLASS: 'INVALID_CONTENT_CLASS',
+
   // System reasons
   NO_ACTIVE_POLICY: 'NO_ACTIVE_POLICY', // Fallback when no policy exists
 } as const;

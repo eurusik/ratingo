@@ -8,6 +8,7 @@ import * as fc from 'fast-check';
 import { evaluateEligibility, computeRelevance } from './policy-engine';
 import { PolicyConfig, PolicyEngineInput, EvaluationContext } from './types/policy.types';
 import { EligibilityStatus, EligibilityStatusType } from './constants/evaluation.constants';
+import { ContentClass } from './classification.service';
 
 describe('Policy Engine - Property-Based Tests', () => {
   // Arbitraries (generators) for property-based testing
@@ -55,6 +56,13 @@ describe('Policy Engine - Property-Based Tests', () => {
     ratingMetacritic: fc.option(fc.nat({ max: 100 })),
     ratingRottenTomatoes: fc.option(fc.nat({ max: 100 })),
     ratingTrakt: fc.option(fc.double({ min: 0, max: 10 })),
+    contentClass: fc.constantFrom(
+      'mainstream',
+      'anime',
+      'documentary',
+      'reality',
+      'kids',
+    ) as fc.Arbitrary<ContentClass>,
   });
 
   const statsArb = fc.option(
@@ -253,6 +261,7 @@ describe('Policy Engine - Property-Based Tests', () => {
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
+              contentClass: 'mainstream',
             },
             stats: null,
           };
@@ -280,6 +289,7 @@ describe('Policy Engine - Property-Based Tests', () => {
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
+              contentClass: 'mainstream',
             },
             stats: {
               qualityScore: 1.0,
@@ -359,6 +369,13 @@ describe('Context-Aware Eligibility Properties', () => {
     ratingMetacritic: fc.option(fc.nat({ max: 100 })),
     ratingRottenTomatoes: fc.option(fc.nat({ max: 100 })),
     ratingTrakt: fc.option(fc.double({ min: 0, max: 10 })),
+    contentClass: fc.constantFrom(
+      'mainstream',
+      'anime',
+      'documentary',
+      'reality',
+      'kids',
+    ) as fc.Arbitrary<ContentClass>,
   });
 
   const statsArb = fc.option(
@@ -543,6 +560,7 @@ describe('Global Quality Gate Properties', () => {
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
+              contentClass: 'mainstream',
             },
             stats: null,
           };
@@ -607,6 +625,7 @@ describe('Global Quality Gate Properties', () => {
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
+              contentClass: 'mainstream',
             },
             stats: null,
           };
@@ -665,6 +684,7 @@ describe('Global Quality Gate Properties', () => {
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
+              contentClass: 'mainstream',
             },
             stats:
               score !== null
@@ -731,6 +751,7 @@ describe('Global Quality Gate Properties', () => {
               ratingMetacritic: requiredRating === 'metacritic' && hasRating ? 75 : null,
               ratingRottenTomatoes: requiredRating === 'rt' && hasRating ? 85 : null,
               ratingTrakt: requiredRating === 'trakt' && hasRating ? 8.0 : null,
+              contentClass: 'mainstream',
             },
             stats: null,
           };
@@ -792,6 +813,7 @@ describe('Global Quality Gate Properties', () => {
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
+              contentClass: 'mainstream',
             },
             stats:
               quality !== null
@@ -862,6 +884,7 @@ describe('Global Quality Gate Properties', () => {
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
+              contentClass: 'mainstream',
             },
             stats: null,
           };
@@ -921,6 +944,7 @@ describe('Global Quality Gate Properties', () => {
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
+              contentClass: 'mainstream',
             },
             stats:
               qualityScore !== null
@@ -996,6 +1020,7 @@ describe('Global Quality Gate Properties', () => {
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
+              contentClass: 'mainstream',
             },
             stats: null,
           };
@@ -1094,6 +1119,7 @@ describe('Global Quality Gate Properties', () => {
                 ratingMetacritic: null,
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
+                contentClass: 'mainstream',
               },
               stats: null,
             };
@@ -1157,6 +1183,7 @@ describe('Global Quality Gate Properties', () => {
                 ratingMetacritic: null,
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
+                contentClass: 'mainstream',
               },
               stats: null,
             };
@@ -1208,6 +1235,7 @@ describe('Global Quality Gate Properties', () => {
                 ratingMetacritic: null,
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
+                contentClass: 'mainstream',
               },
               stats: null,
             };
@@ -1271,6 +1299,7 @@ describe('Global Quality Gate Properties', () => {
                 ratingMetacritic: null,
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
+                contentClass: 'mainstream',
               },
               stats: null,
             };
@@ -1322,6 +1351,7 @@ describe('Global Quality Gate Properties', () => {
                 ratingMetacritic: null,
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
+                contentClass: 'mainstream',
               },
               stats: null,
             };
@@ -1376,6 +1406,7 @@ describe('Global Quality Gate Properties', () => {
               ratingMetacritic: null,
               ratingRottenTomatoes: null,
               ratingTrakt: null,
+              contentClass: 'mainstream',
             },
             stats: null,
           };

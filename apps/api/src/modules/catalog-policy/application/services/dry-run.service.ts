@@ -26,12 +26,13 @@ import {
   PolicyConfig,
   PolicyEngineInput,
   WatchProvidersMap,
-  EvaluationReason,
 } from '../../domain/types/policy.types';
 import {
   EligibilityStatus,
   EligibilityStatusType,
+  EvaluationReasonType,
 } from '../../domain/constants/evaluation.constants';
+import { ContentClass } from '../../domain/classification.service';
 import { CatalogPolicyService } from './catalog-policy.service';
 
 /**
@@ -58,7 +59,7 @@ export interface DryRunItemResult {
   title: string;
   currentStatus: EligibilityStatusType | null;
   proposedStatus: EligibilityStatusType;
-  reasons: EvaluationReason[];
+  reasons: EvaluationReasonType[];
   relevanceScore: number;
   breakoutRuleId: string | null;
   statusChanged: boolean;
@@ -68,7 +69,7 @@ export interface DryRunItemResult {
  * Reason breakdown in summary
  */
 export interface ReasonBreakdown {
-  reason: EvaluationReason;
+  reason: EvaluationReasonType;
   count: number;
 }
 
@@ -207,7 +208,7 @@ export class DryRunService {
 
     // Build reason breakdown
     const reasonBreakdown: ReasonBreakdown[] = Object.entries(reasonCounts)
-      .map(([reason, count]) => ({ reason: reason as EvaluationReason, count }))
+      .map(([reason, count]) => ({ reason: reason as EvaluationReasonType, count }))
       .sort((a, b) => b.count - a.count);
 
     this.logger.log(
@@ -309,6 +310,7 @@ export class DryRunService {
         mi.origin_countries as "originCountries",
         mi.original_language as "originalLanguage",
         mi.watch_providers as "watchProviders",
+        mi.content_class as "contentClass",
         mi.rating_imdb as "ratingImdb",
         mi.rating_metacritic as "ratingMetacritic",
         mi.rating_rotten_tomatoes as "ratingRottenTomatoes",
@@ -340,6 +342,7 @@ export class DryRunService {
         originCountries: schema.mediaItems.originCountries,
         originalLanguage: schema.mediaItems.originalLanguage,
         watchProviders: schema.mediaItems.watchProviders,
+        contentClass: schema.mediaItems.contentClass,
         ratingImdb: schema.mediaItems.ratingImdb,
         ratingMetacritic: schema.mediaItems.ratingMetacritic,
         ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
@@ -378,6 +381,7 @@ export class DryRunService {
         originCountries: schema.mediaItems.originCountries,
         originalLanguage: schema.mediaItems.originalLanguage,
         watchProviders: schema.mediaItems.watchProviders,
+        contentClass: schema.mediaItems.contentClass,
         ratingImdb: schema.mediaItems.ratingImdb,
         ratingMetacritic: schema.mediaItems.ratingMetacritic,
         ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
@@ -417,6 +421,7 @@ export class DryRunService {
         originCountries: schema.mediaItems.originCountries,
         originalLanguage: schema.mediaItems.originalLanguage,
         watchProviders: schema.mediaItems.watchProviders,
+        contentClass: schema.mediaItems.contentClass,
         ratingImdb: schema.mediaItems.ratingImdb,
         ratingMetacritic: schema.mediaItems.ratingMetacritic,
         ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
@@ -485,6 +490,7 @@ export class DryRunService {
         ratingMetacritic: row.ratingMetacritic,
         ratingRottenTomatoes: row.ratingRottenTomatoes,
         ratingTrakt: row.ratingTrakt,
+        contentClass: row.contentClass as ContentClass,
       },
       stats:
         row.qualityScore !== null
@@ -531,6 +537,7 @@ interface MediaItemRow {
   originCountries: unknown;
   originalLanguage: string | null;
   watchProviders: unknown;
+  contentClass: string;
   ratingImdb: number | null;
   ratingMetacritic: number | null;
   ratingRottenTomatoes: number | null;

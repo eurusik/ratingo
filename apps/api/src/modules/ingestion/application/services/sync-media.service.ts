@@ -12,6 +12,7 @@ import { ScoreCalculatorService, ScoreInput } from '../../../shared/score-calcul
 import { NormalizedSeason, NormalizedEpisode } from '../../domain/models/normalized-media.model';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { CatalogEvaluationService } from '../../../catalog-policy/application/services/catalog-evaluation.service';
+import { classifyContent } from '../../../catalog-policy/domain/classification.service';
 
 /**
  * Application Service responsible for orchestrating the sync process.
@@ -234,6 +235,15 @@ export class SyncMediaService {
       media.popularityScore = scores.popularityScore;
       media.freshnessScore = scores.freshnessScore;
       media.ingestionStatus = IngestionStatus.READY;
+
+      // Classify content based on genres and origin metadata
+      // Extract genreIds from TMDB response (handles both formats)
+      const genreIds = media.genres?.map((g) => g.tmdbId) ?? [];
+      media.contentClass = classifyContent({
+        originCountries: media.originCountries ?? null,
+        originalLanguage: media.originalLanguage ?? null,
+        genreIds,
+      });
 
       // Persist
       await this.mediaRepository.upsert(media);

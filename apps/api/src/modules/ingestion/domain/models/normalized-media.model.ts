@@ -5,6 +5,7 @@ import {
   VideoLanguageEnum,
 } from '../../../../common/enums/video.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { ContentClass } from '../../../catalog-policy/domain/classification.service';
 
 /**
  * Cast member representation in normalized credits.
@@ -169,6 +170,8 @@ export interface NormalizedMedia {
   originCountries?: string[] | null;
   /** Original language (ISO 639-1 code) - for catalog policy */
   originalLanguage?: string | null;
+  /** Content classification for catalog policy filtering */
+  contentClass?: ContentClass;
 
   details?: {
     runtime?: number | null;

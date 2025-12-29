@@ -13,11 +13,13 @@ import {
   IsArray,
   IsNumber,
   ValidateNested,
+  IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PolicyConfigDto } from './policy-config.dto';
 import { BreakoutRuleDto } from './breakout-rule.dto';
 import { GlobalRequirementsDto } from './global-requirements.dto';
+import { ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
 
 /**
  * Policy detail DTO.
@@ -225,6 +227,18 @@ export class CreatePolicyDto {
   @ValidateNested()
   @Type(() => GlobalRequirementsDto)
   globalRequirements?: GlobalRequirementsDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.',
+    example: ['anime', 'reality'],
+    isArray: true,
+    enum: ['mainstream', 'anime', 'documentary', 'reality', 'kids'],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsIn(VALID_CONTENT_CLASSES, { each: true })
+  excludedContentClasses?: ContentClass[];
 }
 
 /**

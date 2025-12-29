@@ -57,6 +57,15 @@ export const evaluationRunStatusEnum = pgEnum('evaluation_run_status', [
   'success', // @deprecated - use 'prepared'
 ]);
 
+// Content classification enum for filtering by content type
+export const contentClassEnum = pgEnum('content_class', [
+  'mainstream',
+  'anime',
+  'documentary',
+  'reality',
+  'kids',
+]);
+
 // --- SHARED TYPES ---
 
 export interface Video {
@@ -120,6 +129,9 @@ export const mediaItems = pgTable(
     originalLanguage: text('original_language'),
     ingestionStatus: ingestionStatusEnum('ingestion_status').default('ready').notNull(),
 
+    // Content classification for policy filtering
+    contentClass: contentClassEnum('content_class').default('mainstream').notNull(),
+
     // Full Text Search Vector (auto-generated)
     searchVector: tsvector('search_vector').generatedAlwaysAs(
       sql`to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(original_title, '') || ' ' || coalesce(overview, ''))`,
@@ -143,6 +155,8 @@ export const mediaItems = pgTable(
       .where(sql`${t.deletedAt} IS NULL`),
     // GIN Index for fast full-text search
     searchIdx: index('media_search_idx').on(t.searchVector),
+    // Index for content class filtering
+    contentClassIdx: index('media_content_class_idx').on(t.contentClass),
   }),
 );
 

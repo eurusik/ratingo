@@ -5,10 +5,19 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsString, IsEnum, IsNumber, IsOptional, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  ValidateNested,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { BreakoutRuleDto } from './breakout-rule.dto';
 import { GlobalRequirementsDto } from './global-requirements.dto';
+import { ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
 
 /**
  * Homepage config DTO.
@@ -115,4 +124,16 @@ export class PolicyConfigDto {
   @ValidateNested()
   @Type(() => GlobalRequirementsDto)
   globalRequirements?: GlobalRequirementsDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.',
+    example: ['anime', 'reality'],
+    isArray: true,
+    enum: ['mainstream', 'anime', 'documentary', 'reality', 'kids'],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsIn(VALID_CONTENT_CLASSES, { each: true })
+  excludedContentClasses?: ContentClass[];
 }
