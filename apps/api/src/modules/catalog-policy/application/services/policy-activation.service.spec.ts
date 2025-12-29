@@ -28,6 +28,7 @@ describe('PolicyActivationService', () => {
   beforeEach(async () => {
     mockPolicyRepository = {
       findById: jest.fn(),
+      findActive: jest.fn(),
       activate: jest.fn(),
     };
 
