@@ -14,7 +14,6 @@ ratingo/
 │   └── web-client/    # Next.js frontend (React, TanStack Query)
 ├── packages/
 │   └── api-contract/  # Shared OpenAPI types (generated from backend)
-└── .kiro/specs/       # Feature specifications
 ```
 
 ---
@@ -852,25 +851,6 @@ Conventional commits enforcement.
 
 ---
 
-## 📋 16. SPECS (`.kiro/specs/`)
-
-Feature specifications for incremental development:
-
-| Spec | Purpose |
-|------|---------|
-| `admin-policy-ui/` | Admin panel for policy management |
-| `admin-ui-shell/` | Admin UI shell/layout |
-| `catalog-observability/` | Metrics and monitoring |
-| `catalog-policy-engine/` | Core policy engine |
-| `catalog-policy-refactoring/` | Policy engine refactoring |
-| `content-classification/` | Content class system |
-| `context-aware-eligibility/` | Context-based evaluation |
-| `global-quality-gate/` | Quality gate requirements |
-| `policy-activation-flow/` | Two-phase activation |
-| `user-settings/` | User settings UI |
-
----
-
 ## 📝 17. DOCUMENTATION STANDARDS
 
 ### TSDoc (`DOCS_STANDARD.md`)
@@ -904,4 +884,3 @@ Feature specifications for incremental development:
 | Frontend Pages | 10 |
 | Frontend Modules | 7 |
 | Configs | 6 |
-| Specs | 10 |
