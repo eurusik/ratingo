@@ -42,8 +42,6 @@ export const RunStatus = {
 
 export type RunStatusType = (typeof RunStatus)[keyof typeof RunStatus];
 
-export type ActiveRunStatusType = 'running' | 'prepared' | 'failed' | 'cancelled' | 'promoted';
-
 /**
  * Run statuses that can be diffed.
  */

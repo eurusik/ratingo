@@ -50,8 +50,7 @@ export class InvalidRunStatusError extends Error {
    * @param status - The invalid status value that was encountered
    */
   constructor(status: string) {
-    // Only canonical (non-deprecated) statuses are valid
-    const validStatuses = ['running', 'prepared', 'failed', 'cancelled', 'promoted'];
+    const validStatuses = Object.values(RunStatus);
     super(
       `Invalid run status: '${status}'. Expected one of: ${validStatuses.join(', ')}. Legacy values must be migrated at database level.`,
     );

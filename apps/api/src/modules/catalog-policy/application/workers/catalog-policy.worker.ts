@@ -21,7 +21,7 @@ import {
 import { CatalogEvaluationService } from '../services/catalog-evaluation.service';
 import { RunFinalizeService } from '../services/run-finalize.service';
 import { RunStatus } from '../../domain/constants/evaluation.constants';
-import { IngestionStatus } from '../../domain/constants/ingestion.constants';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 interface ReEvaluateAllPayload {
   runId: string;

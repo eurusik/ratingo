@@ -4,127 +4,21 @@
  * Normalizes origin countries and original language codes from TMDB API
  * to ensure consistent format for catalog policy evaluation.
  *
- * Requirements: 1.1
+ * Uses format validation (ISO standards) instead of hardcoded lists
+ * to avoid filtering out valid codes from TMDB.
  */
 
-// ISO 3166-1 alpha-2 country codes (subset of most common ones)
-// Full list: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
-const VALID_COUNTRY_CODES = new Set([
-  'US',
-  'GB',
-  'CA',
-  'AU',
-  'NZ',
-  'IE', // English-speaking
-  'DE',
-  'AT',
-  'CH', // German-speaking
-  'FR',
-  'BE',
-  'LU', // French-speaking
-  'ES',
-  'MX',
-  'AR',
-  'CO',
-  'CL',
-  'PE', // Spanish-speaking
-  'IT',
-  'BR',
-  'PT',
-  'NL',
-  'SE',
-  'NO',
-  'DK',
-  'FI',
-  'PL',
-  'CZ',
-  'SK',
-  'RU',
-  'UA',
-  'BY',
-  'KZ', // Eastern Europe
-  'JP',
-  'KR',
-  'CN',
-  'TW',
-  'HK',
-  'SG',
-  'TH',
-  'VN',
-  'IN',
-  'ID',
-  'MY',
-  'PH',
-  'TR',
-  'IL',
-  'SA',
-  'AE',
-  'EG',
-  'ZA',
-  'NG',
-  'KE',
-]);
+/** ISO 3166-1 alpha-2 country code pattern (2 uppercase letters) */
+const COUNTRY_CODE_PATTERN = /^[A-Z]{2}$/;
 
-// ISO 639-1 language codes (subset of most common ones)
-// Full list: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
-const VALID_LANGUAGE_CODES = new Set([
-  'en',
-  'es',
-  'fr',
-  'de',
-  'it',
-  'pt',
-  'ru',
-  'ja',
-  'ko',
-  'zh',
-  'ar',
-  'hi',
-  'bn',
-  'pa',
-  'te',
-  'mr',
-  'ta',
-  'ur',
-  'gu',
-  'kn',
-  'ml',
-  'or',
-  'th',
-  'vi',
-  'id',
-  'ms',
-  'tl',
-  'tr',
-  'fa',
-  'he',
-  'uk',
-  'pl',
-  'nl',
-  'sv',
-  'no',
-  'da',
-  'fi',
-  'cs',
-  'sk',
-  'hu',
-  'ro',
-  'bg',
-  'hr',
-  'sr',
-  'sl',
-  'et',
-  'lv',
-  'lt',
-  'el',
-  'ca',
-]);
+/** ISO 639-1 language code pattern (2 lowercase letters) */
+const LANGUAGE_CODE_PATTERN = /^[a-z]{2}$/;
 
 /**
  * Normalizes origin countries array from TMDB API.
  *
  * - Converts to uppercase (ISO 3166-1 alpha-2 standard)
- * - Filters out invalid/unknown codes
+ * - Validates format (2 uppercase letters)
  * - Removes duplicates
  * - Returns null if input is null/empty
  *
@@ -132,7 +26,8 @@ const VALID_LANGUAGE_CODES = new Set([
  * @returns Normalized array or null
  *
  * @example
- * normalizeOriginCountries(['us', 'gb', 'invalid']) // ['US', 'GB']
+ * normalizeOriginCountries(['us', 'gb']) // ['US', 'GB']
+ * normalizeOriginCountries(['us', 'invalid123']) // ['US']
  * normalizeOriginCountries([]) // null
  * normalizeOriginCountries(null) // null
  */
@@ -143,7 +38,7 @@ export function normalizeOriginCountries(countries: string[] | null | undefined)
 
   const normalized = countries
     .map((code) => code.toUpperCase().trim())
-    .filter((code) => VALID_COUNTRY_CODES.has(code));
+    .filter((code) => COUNTRY_CODE_PATTERN.test(code));
 
   // Remove duplicates
   const unique = Array.from(new Set(normalized));
@@ -155,7 +50,7 @@ export function normalizeOriginCountries(countries: string[] | null | undefined)
  * Normalizes original language code from TMDB API.
  *
  * - Converts to lowercase (ISO 639-1 standard)
- * - Validates against known language codes
+ * - Validates format (2 lowercase letters)
  * - Returns null if invalid or empty
  *
  * @param language - Language code from TMDB (e.g., "EN", "en")
@@ -163,7 +58,7 @@ export function normalizeOriginCountries(countries: string[] | null | undefined)
  *
  * @example
  * normalizeOriginalLanguage('EN') // 'en'
- * normalizeOriginalLanguage('invalid') // null
+ * normalizeOriginalLanguage('invalid123') // null
  * normalizeOriginalLanguage('') // null
  */
 export function normalizeOriginalLanguage(language: string | null | undefined): string | null {
@@ -173,19 +68,25 @@ export function normalizeOriginalLanguage(language: string | null | undefined): 
 
   const normalized = language.toLowerCase().trim();
 
-  return VALID_LANGUAGE_CODES.has(normalized) ? normalized : null;
+  return LANGUAGE_CODE_PATTERN.test(normalized) ? normalized : null;
 }
 
 /**
- * Checks if a country code is valid (for testing/validation).
+ * Checks if a country code has valid format (ISO 3166-1 alpha-2).
+ *
+ * @param code - Country code to validate
+ * @returns True if valid format (2 uppercase letters)
  */
 export function isValidCountryCode(code: string): boolean {
-  return VALID_COUNTRY_CODES.has(code.toUpperCase());
+  return COUNTRY_CODE_PATTERN.test(code.toUpperCase());
 }
 
 /**
- * Checks if a language code is valid (for testing/validation).
+ * Checks if a language code has valid format (ISO 639-1).
+ *
+ * @param code - Language code to validate
+ * @returns True if valid format (2 lowercase letters)
  */
 export function isValidLanguageCode(code: string): boolean {
-  return VALID_LANGUAGE_CODES.has(code.toLowerCase());
+  return LANGUAGE_CODE_PATTERN.test(code.toLowerCase());
 }
