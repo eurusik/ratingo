@@ -4,10 +4,9 @@ import { SyncMediaService } from '../../application/services/sync-media.service'
 import { getQueueToken } from '@nestjs/bullmq';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
-import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
 import { DEFAULT_REGION } from '../../../../common/constants';
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 
 // Cleanup rate limiter interval to prevent Jest from hanging
 afterAll(() => {
@@ -17,22 +16,23 @@ afterAll(() => {
 describe('IngestionController', () => {
   let controller: IngestionController;
   let mockQueue: any;
-  let mockMediaRepo: any;
+  let mockSyncService: any;
   let moduleRef: TestingModule;
 
   beforeEach(async () => {
     mockQueue = {
       add: jest.fn().mockResolvedValue({ id: 'job-1' }),
+      getJob: jest.fn(),
     };
 
-    const mockSyncService = {}; // Not used directly in controller methods we test
-    mockMediaRepo = {
-      findByTmdbId: jest.fn().mockResolvedValue(null), // Default: not found
-      upsertStub: jest.fn().mockResolvedValue({ id: 'stub-1', slug: 'stub-slug' }),
-    };
-    const mockTmdbAdapter = {
-      getMovie: jest.fn().mockResolvedValue(null),
-      getShow: jest.fn().mockResolvedValue(null),
+    mockSyncService = {
+      findExistingMedia: jest.fn().mockResolvedValue(null),
+      createStubForIngestion: jest.fn().mockResolvedValue({
+        id: 'stub-1',
+        slug: 'stub-slug',
+        title: 'Test Movie',
+      }),
+      getSlugByTmdbId: jest.fn().mockResolvedValue(null),
     };
 
     moduleRef = await Test.createTestingModule({
@@ -40,12 +40,67 @@ describe('IngestionController', () => {
       providers: [
         { provide: getQueueToken(INGESTION_QUEUE), useValue: mockQueue },
         { provide: SyncMediaService, useValue: mockSyncService },
-        { provide: MEDIA_REPOSITORY, useValue: mockMediaRepo },
-        { provide: TmdbAdapter, useValue: mockTmdbAdapter },
       ],
     }).compile();
 
     controller = moduleRef.get<IngestionController>(IngestionController);
+  });
+
+  afterEach(async () => {
+    await moduleRef?.close();
+  });
+
+  describe('sync', () => {
+    it('should queue movie sync job', async () => {
+      const dto = { tmdbId: 550, type: MediaType.MOVIE };
+      const res = await controller.sync(dto);
+
+      expect(mockSyncService.findExistingMedia).toHaveBeenCalledWith(550);
+      expect(mockSyncService.createStubForIngestion).toHaveBeenCalledWith(550, MediaType.MOVIE);
+      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_MOVIE, { tmdbId: 550 });
+      expect(res.jobId).toBe('job-1');
+      expect(res.status).toBe('queued');
+    });
+
+    it('should queue show sync job', async () => {
+      const dto = { tmdbId: 100, type: MediaType.SHOW };
+      const res = await controller.sync(dto);
+
+      expect(mockSyncService.createStubForIngestion).toHaveBeenCalledWith(100, MediaType.SHOW);
+      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_SHOW, { tmdbId: 100 });
+      expect(res.jobId).toBe('job-1');
+    });
+
+    it('should return existing media without queueing when not forced', async () => {
+      mockSyncService.findExistingMedia.mockResolvedValue({
+        id: 'existing-1',
+        type: MediaType.MOVIE,
+        slug: 'existing-slug',
+        ingestionStatus: IngestionStatus.READY,
+      });
+
+      const dto = { tmdbId: 550, type: MediaType.MOVIE };
+      const res = await controller.sync(dto);
+
+      expect(res.status).toBe('exists');
+      expect(res.id).toBe('existing-1');
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it('should queue sync when force=true even if exists', async () => {
+      mockSyncService.findExistingMedia.mockResolvedValue({
+        id: 'existing-1',
+        type: MediaType.MOVIE,
+        slug: 'existing-slug',
+        ingestionStatus: IngestionStatus.READY,
+      });
+
+      const dto = { tmdbId: 550, type: MediaType.MOVIE, force: true };
+      const res = await controller.sync(dto);
+
+      expect(res.status).toBe('queued');
+      expect(mockQueue.add).toHaveBeenCalled();
+    });
   });
 
   describe('syncTrackedShows', () => {
@@ -67,28 +122,6 @@ describe('IngestionController', () => {
         expect.objectContaining({ window: expect.any(String) }),
         expect.objectContaining({ jobId: expect.stringMatching(/^tracked_shows_\d+$/) }),
       );
-    });
-  });
-
-  afterEach(async () => {
-    await moduleRef?.close();
-  });
-
-  describe('sync', () => {
-    it('should queue movie sync job', async () => {
-      const dto = { tmdbId: 550, type: MediaType.MOVIE };
-      const res = await controller.sync(dto);
-
-      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_MOVIE, { tmdbId: 550 });
-      expect(res.jobId).toBe('job-1');
-    });
-
-    it('should queue show sync job', async () => {
-      const dto = { tmdbId: 100, type: MediaType.SHOW };
-      const res = await controller.sync(dto);
-
-      expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_SHOW, { tmdbId: 100 });
-      expect(res.jobId).toBe('job-1');
     });
   });
 
@@ -238,6 +271,7 @@ describe('IngestionController', () => {
       finishedOn: null,
       processedOn: null,
       timestamp: Date.now(),
+      data: {},
       ...overrides,
     });
 
@@ -270,12 +304,12 @@ describe('IngestionController', () => {
       mockQueue.getJob = jest
         .fn()
         .mockResolvedValue(makeJob('completed', { finishedOn, data: { tmdbId: 550 } }));
-      // Mock findByTmdbId to return media with slug
-      mockMediaRepo.findByTmdbId.mockResolvedValue({ id: 'media-1', slug: 'test-movie-slug' });
+      mockSyncService.getSlugByTmdbId.mockResolvedValue('test-movie-slug');
 
       const res = await controller.getJobStatus('job-42');
       expect(res.status).toBe('ready');
       expect(res.slug).toBe('test-movie-slug');
+      expect(mockSyncService.getSlugByTmdbId).toHaveBeenCalledWith(550);
     });
 
     it('returns null slug when job is not completed', async () => {

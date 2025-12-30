@@ -5,7 +5,7 @@ import {
   VideoLanguageEnum,
 } from '../../../../common/enums/video.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { ContentClass } from '../../../catalog-policy/domain/classification.service';
+import { ContentClass } from '../../../catalog-policy/public';
 
 /**
  * Cast member representation in normalized credits.

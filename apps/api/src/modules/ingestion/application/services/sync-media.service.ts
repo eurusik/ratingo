@@ -1,18 +1,35 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
-import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
-import {
-  IMediaRepository,
-  MEDIA_REPOSITORY,
-} from '../../../catalog/domain/repositories/media.repository.interface';
+import { IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ScoreCalculatorService, ScoreInput } from '../../../shared/score-calculator';
 import { NormalizedMedia } from '../../domain/models/normalized-media.model';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { CatalogEvaluationService } from '../../../catalog-policy/application/services/catalog-evaluation.service';
-import { classifyContent } from '../../../catalog-policy/domain/classification.service';
+import { classifyContent } from '../../../catalog-policy/public';
+import slugify from 'slugify';
+
+/**
+ * Result of checking if media exists.
+ */
+export interface ExistingMediaResult {
+  id: string;
+  type: MediaType;
+  slug: string;
+  ingestionStatus: IngestionStatus;
+}
+
+/**
+ * Result of creating a media stub for ingestion.
+ */
+export interface MediaStubResult {
+  id: string;
+  slug: string;
+  title: string;
+}
 
 /**
  * Orchestrates media sync from multiple external sources.
@@ -288,5 +305,67 @@ export class SyncMediaService {
     } catch (statusError) {
       this.logger.warn(`${logPrefix} Failed to mark as failed: ${(statusError as Error).message}`);
     }
+  }
+
+  // ============================================================
+  // PUBLIC QUERY METHODS (for controller)
+  // ============================================================
+
+  /**
+   * Checks if media already exists in database.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<ExistingMediaResult | null>} Existing media info or null
+   */
+  public async findExistingMedia(tmdbId: number): Promise<ExistingMediaResult | null> {
+    return this.mediaRepository.findByTmdbId(tmdbId);
+  }
+
+  /**
+   * Gets media slug by TMDB ID.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<string | null>} Slug or null if not found
+   */
+  public async getSlugByTmdbId(tmdbId: number): Promise<string | null> {
+    const media = await this.mediaRepository.findByTmdbId(tmdbId);
+    return media?.slug ?? null;
+  }
+
+  /**
+   * Creates a stub media item and returns info for queueing.
+   * Fetches title from TMDB and generates slug.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @param {MediaType} type - Media type
+   * @returns {Promise<MediaStubResult>} Stub info with id, slug, title
+   */
+  public async createStubForIngestion(tmdbId: number, type: MediaType): Promise<MediaStubResult> {
+    // Fetch title from TMDB
+    const media =
+      type === MediaType.MOVIE
+        ? await this.tmdbAdapter.getMovie(tmdbId)
+        : await this.tmdbAdapter.getShow(tmdbId);
+
+    const title = media?.title || `TMDB #${tmdbId}`;
+    const slug = slugify(title, {
+      lower: true,
+      strict: true,
+      locale: 'uk',
+    });
+
+    const stub = await this.mediaRepository.upsertStub({
+      tmdbId,
+      type,
+      title,
+      slug,
+      ingestionStatus: IngestionStatus.IMPORTING,
+    });
+
+    return {
+      id: stub.id,
+      slug: stub.slug,
+      title,
+    };
   }
 }

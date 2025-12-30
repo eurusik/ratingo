@@ -1,10 +1,7 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { SnapshotsService } from '../services/snapshots.service';
 import { BulkJobService, BulkEnqueueResult } from '../services/bulk-job.service';
-import {
-  IMediaRepository,
-  MEDIA_REPOSITORY,
-} from '../../../catalog/domain/repositories/media.repository.interface';
+import { IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import { IngestionJob, SNAPSHOTS_BATCH_SIZE } from '../../ingestion.constants';
 import { formatUtcDayId, utcDateFromDayId } from '@/common/utils/date.util';
 import { normalizeRegion } from '../helpers/queue.helpers';

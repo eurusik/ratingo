@@ -9,7 +9,6 @@ import {
   Param,
   NotFoundException,
   BadRequestException,
-  Inject,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -18,14 +17,8 @@ import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { SyncMediaService } from '../../application/services/sync-media.service';
 import { DEFAULT_REGION } from '../../../../common/constants';
-import {
-  MEDIA_REPOSITORY,
-  IMediaRepository,
-} from '../../../catalog/domain/repositories/media.repository.interface';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { JobStatus, BULL_STATE_TO_JOB_STATUS } from '../../../../common/enums/job-status.enum';
-import slugify from 'slugify';
-import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { formatUtcDayId } from '@/common/utils/date.util';
 import { SyncDto, SyncTrendingDto, SyncNowPlayingDto, SyncNewReleasesDto } from '../dto';
 import { normalizeRegion } from '../../application/helpers/queue.helpers';
@@ -40,8 +33,6 @@ export class IngestionController {
   constructor(
     @InjectQueue(INGESTION_QUEUE) private readonly ingestionQueue: Queue,
     private readonly syncService: SyncMediaService,
-    @Inject(MEDIA_REPOSITORY) private readonly mediaRepository: IMediaRepository,
-    private readonly tmdbAdapter: TmdbAdapter,
   ) {}
 
   /**
@@ -89,8 +80,7 @@ export class IngestionController {
     // Get slug from DB if job is completed and has tmdbId
     let slug: string | null = null;
     if (status === JobStatus.READY && job.data?.tmdbId) {
-      const media = await this.mediaRepository.findByTmdbId(job.data.tmdbId);
-      slug = media?.slug ?? null;
+      slug = await this.syncService.getSlugByTmdbId(job.data.tmdbId);
     }
 
     return {
@@ -113,7 +103,7 @@ export class IngestionController {
   @HttpCode(HttpStatus.ACCEPTED)
   async sync(@Body() dto: SyncDto) {
     // Check if already in DB
-    const existing = await this.mediaRepository.findByTmdbId(dto.tmdbId);
+    const existing = await this.syncService.findExistingMedia(dto.tmdbId);
     if (existing && !dto.force) {
       return {
         id: existing.id,
@@ -124,24 +114,8 @@ export class IngestionController {
       };
     }
 
-    // Build stub
-    const title =
-      dto.type === MediaType.MOVIE
-        ? (await this.tmdbAdapter.getMovie(dto.tmdbId))?.title
-        : (await this.tmdbAdapter.getShow(dto.tmdbId))?.title;
-    const slug = slugify(title || `tmdb-${dto.tmdbId}`, {
-      lower: true,
-      strict: true,
-      locale: 'uk',
-    });
-
-    const stub = await this.mediaRepository.upsertStub({
-      tmdbId: dto.tmdbId,
-      type: dto.type,
-      title: title || `TMDB #${dto.tmdbId}`,
-      slug,
-      ingestionStatus: IngestionStatus.IMPORTING,
-    });
+    // Create stub for ingestion
+    const stub = await this.syncService.createStubForIngestion(dto.tmdbId, dto.type);
 
     const jobName = dto.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
 

@@ -29,6 +29,8 @@ import { TrendingPipeline } from './application/pipelines/trending.pipeline';
 import { TrackedShowsPipeline } from './application/pipelines/tracked-shows.pipeline';
 import { NowPlayingPipeline } from './application/pipelines/now-playing.pipeline';
 import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeline';
+import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
+import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
 
 /**
  * Ingestion module.
@@ -60,6 +62,12 @@ import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeli
   ],
   controllers: [IngestionController],
   providers: [
+    // Repository bindings
+    {
+      provide: SNAPSHOTS_REPOSITORY,
+      useClass: SnapshotsRepository,
+    },
+    // Adapters
     TraktRatingsAdapter,
     TraktListsAdapter,
     OmdbAdapter,

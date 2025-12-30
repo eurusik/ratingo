@@ -1,10 +1,7 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { BulkJobService } from '../services/bulk-job.service';
-import {
-  IMediaRepository,
-  MEDIA_REPOSITORY,
-} from '../../../catalog/domain/repositories/media.repository.interface';
+import { IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import { IngestionJob } from '../../ingestion.constants';
 import { formatUtcDayId } from '@/common/utils/date.util';
 import { DEFAULT_REGION } from '../../../../common/constants';

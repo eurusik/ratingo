@@ -1,14 +1,12 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { BulkJobService } from '../services/bulk-job.service';
 import {
   IMediaRepository,
   MEDIA_REPOSITORY,
-} from '../../../catalog/domain/repositories/media.repository.interface';
-import {
   IMovieRepository,
   MOVIE_REPOSITORY,
-} from '../../../catalog/domain/repositories/movie.repository.interface';
+} from '../../../catalog/public';
 import { IngestionJob } from '../../ingestion.constants';
 import { DEFAULT_REGION } from '../../../../common/constants';
 

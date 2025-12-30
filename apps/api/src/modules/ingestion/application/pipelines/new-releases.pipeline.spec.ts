@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NewReleasesPipeline } from './new-releases.pipeline';
-import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { BulkJobService } from '../services/bulk-job.service';
-import { MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
+import { MEDIA_REPOSITORY } from '../../../catalog/public';
 import { IngestionJob } from '../../ingestion.constants';
 
 describe('NewReleasesPipeline', () => {
