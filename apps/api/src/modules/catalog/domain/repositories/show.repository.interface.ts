@@ -1,24 +1,20 @@
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { Video } from '../../../../database/schema';
-import {
-  CreditsDto,
-  ImageDto,
-  AvailabilityDto,
-  ExternalRatingsDto,
-  RatingoStatsDto,
-} from '../../presentation/dtos/common.dto';
-import {
-  CatalogListQueryDto,
-  CatalogSort,
-  SortOrder,
-  VoteSource,
-} from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseTransaction } from '../types/transaction.type';
 import type { CardMeta } from '../../../shared/cards/domain/card.types';
+import type { WithTotal, CatalogSort, SortOrder, VoteSource } from '../types/query.types';
+import type {
+  ImageData,
+  VideoData,
+  CreditsData,
+  AvailabilityData,
+  RatingoStats,
+  ExternalRatings,
+  GenreInfo,
+} from '../types/common.types';
 
 /**
  * Options for trending shows query.
@@ -38,11 +34,6 @@ export interface TrendingShowsOptions {
 }
 
 /**
- * Helper type for list queries that also return total count.
- */
-export type WithTotal<T> = T[] & { total?: number };
-
-/**
  * Lightweight trending show item.
  */
 export interface TrendingShowItem {
@@ -55,15 +46,15 @@ export interface TrendingShowItem {
   overview: string | null;
   ingestionStatus: IngestionStatus;
   primaryTrailerKey: string | null;
-  poster: ImageDto | null;
-  backdrop: ImageDto | null;
+  poster: ImageData | null;
+  backdrop: ImageData | null;
   releaseDate: Date | null;
 
   isNew: boolean;
   isClassic: boolean;
 
-  stats: RatingoStatsDto;
-  externalRatings: ExternalRatingsDto;
+  stats: RatingoStats;
+  externalRatings: ExternalRatings;
 
   showProgress: {
     lastAirDate: Date | null;
@@ -99,6 +90,17 @@ export interface CalendarEpisode {
 }
 
 /**
+ * Season info for show details.
+ */
+export interface SeasonInfo {
+  number: number;
+  name: string;
+  episodeCount: number;
+  posterPath: string | null;
+  airDate: Date | null;
+}
+
+/**
  * Full show details.
  */
 export interface ShowDetails {
@@ -109,28 +111,15 @@ export interface ShowDetails {
   slug: string;
   overview: string | null;
   ingestionStatus: IngestionStatus;
-  poster?: ImageDto | null;
-  backdrop?: ImageDto | null;
-  videos?: Video[] | null;
-  primaryTrailer?: Video | null;
-  credits?: CreditsDto | null;
-  availability?: AvailabilityDto | null;
+  poster: ImageData | null;
+  backdrop: ImageData | null;
+  videos: VideoData[] | null;
+  primaryTrailer: VideoData | null;
+  credits: CreditsData | null;
+  availability: AvailabilityData | null;
 
-  stats: {
-    ratingoScore: number | null;
-    qualityScore: number | null;
-    popularityScore: number | null;
-    liveWatchers: number | null;
-    totalWatchers: number | null;
-  };
-
-  externalRatings: {
-    tmdb: { rating: number; voteCount?: number | null } | null;
-    imdb: { rating: number; voteCount?: number | null } | null;
-    trakt: { rating: number; voteCount?: number | null } | null;
-    metacritic: { rating: number; voteCount?: number | null } | null;
-    rottenTomatoes: { rating: number; voteCount?: number | null } | null;
-  };
+  stats: RatingoStats;
+  externalRatings: ExternalRatings;
 
   releaseDate: Date | null;
   totalSeasons: number | null;
@@ -139,31 +128,18 @@ export interface ShowDetails {
   lastAirDate: Date | null;
   nextAirDate: Date | null;
 
-  genres: Array<{ id: string; name: string; slug: string }>;
-
-  seasons: Array<{
-    number: number;
-    name: string;
-    episodeCount: number;
-    posterPath: string | null;
-    airDate: Date | null;
-  }>;
+  genres: GenreInfo[];
+  seasons: SeasonInfo[];
 
   card?: CardMeta;
 }
 
 /**
  * Abstract interface for Show-specific storage operations.
- * Extends catalog functionality with show-specific queries.
  */
 export interface IShowRepository {
   /**
    * Upserts show details (called by orchestrator).
-   *
-   * @param {DatabaseTransaction} tx - Transaction handle
-   * @param {string} mediaId - Media item id
-   * @param {{ totalSeasons?: number | null; totalEpisodes?: number | null; lastAirDate?: Date | null; nextAirDate?: Date | null; status?: string | null; seasons?: NormalizedSeason[] }} details - Details payload
-   * @returns {Promise<void>} Nothing
    */
   upsertDetails(
     tx: DatabaseTransaction,
@@ -180,52 +156,31 @@ export interface IShowRepository {
 
   /**
    * Gets shows for drop-off analysis.
-   * Returns shows that need analysis (no analysis or outdated).
-   *
-   * @param {number} limit - Max shows
-   * @returns {Promise<ShowListItem[]>} Shows list
    */
   findShowsForAnalysis(limit: number): Promise<ShowListItem[]>;
 
   /**
    * Saves drop-off analysis for a show.
-   *
-   * @param {number} tmdbId - TMDB ID
-   * @param {DropOffAnalysis} analysis - Analysis payload
-   * @returns {Promise<void>} Nothing
    */
   saveDropOffAnalysis(tmdbId: number, analysis: DropOffAnalysis): Promise<void>;
 
   /**
    * Gets drop-off analysis for a show by TMDB ID.
-   *
-   * @param {number} tmdbId - TMDB ID
-   * @returns {Promise<DropOffAnalysis | null>} Analysis or null
    */
   getDropOffAnalysis(tmdbId: number): Promise<DropOffAnalysis | null>;
 
   /**
    * Finds episodes airing within a date range for the global calendar.
-   *
-   * @param {Date} startDate - Start date
-   * @param {Date} endDate - End date
-   * @returns {Promise<CalendarEpisode[]>} Episodes list
    */
   findEpisodesByDateRange(startDate: Date, endDate: Date): Promise<CalendarEpisode[]>;
 
   /**
    * Finds trending shows with filtering and pagination.
-   *
-   * @param {TrendingShowsOptions} options - Query options
-   * @returns {Promise<WithTotal<TrendingShowItem>>} Shows list
    */
   findTrending(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>>;
 
   /**
    * Finds full show details by slug.
-   *
-   * @param {string} slug - Show slug
-   * @returns {Promise<ShowDetails | null>} Show details or null
    */
   findBySlug(slug: string): Promise<ShowDetails | null>;
 }

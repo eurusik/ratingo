@@ -7,8 +7,8 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import {
   TrendingShowItem,
   TrendingShowsOptions,
-  WithTotal,
 } from '../../domain/repositories/show.repository.interface';
+import type { WithTotal } from '../../domain/types/query.types';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';

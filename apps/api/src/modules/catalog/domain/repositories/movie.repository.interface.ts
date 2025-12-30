@@ -11,6 +11,10 @@ import type {
   RatingoStats,
   ExternalRatings,
 } from '../types/common.types';
+import type { WithTotal, CatalogSort, SortOrder, VoteSource } from '../types/query.types';
+
+// Re-export query types for convenience
+export type { WithTotal, CatalogSort, SortOrder, VoteSource } from '../types/query.types';
 
 /**
  * Release info for movies (theatrical/digital releases by region).
@@ -50,33 +54,12 @@ export interface MovieWithMedia {
 }
 
 /**
- * Helper type for list queries that also return total count.
- */
-export type WithTotal<T> = T[] & { total?: number };
-
-/**
  * Trending movie item extends base list item with derived flags.
  */
 export type TrendingMovieItem = MovieWithMedia & {
   isNew: boolean;
   isClassic: boolean;
 };
-
-/**
- * Sort options for catalog queries.
- * Using string literals to match presentation layer DTO.
- */
-export type CatalogSort = 'trending' | 'popularity' | 'ratingo' | 'releaseDate' | 'tmdbPopularity';
-
-/**
- * Sort order.
- */
-export type SortOrder = 'asc' | 'desc';
-
-/**
- * Vote source for filtering.
- */
-export type VoteSource = 'tmdb' | 'trakt';
 
 /**
  * Options for now playing query.

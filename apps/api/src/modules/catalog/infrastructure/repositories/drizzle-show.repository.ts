@@ -11,8 +11,8 @@ import {
   ShowListItem,
   TrendingShowItem,
   TrendingShowsOptions,
-  WithTotal,
 } from '../../domain/repositories/show.repository.interface';
+import type { WithTotal } from '../../domain/types/query.types';
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { DatabaseTransaction } from '../../domain/types/transaction.type';
