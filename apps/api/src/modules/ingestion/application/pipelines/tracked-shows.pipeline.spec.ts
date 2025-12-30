@@ -1,47 +1,60 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { TrackedShowsPipeline } from './tracked-shows.pipeline';
 import { TrackedSyncService } from '../services/tracked-sync.service';
+import { BulkJobService } from '../services/bulk-job.service';
 import { SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
 import { USER_SUBSCRIPTION_REPOSITORY } from '../../../user-actions/domain/repositories/user-subscription.repository.interface';
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
+import { IngestionJob } from '../../ingestion.constants';
 
 describe('TrackedShowsPipeline', () => {
   let pipeline: TrackedShowsPipeline;
-  let trackedSyncService: any;
-  let subscriptionTriggerService: any;
+  let trackedSyncService: jest.Mocked<TrackedSyncService>;
+  let bulkJobService: jest.Mocked<BulkJobService>;
+  let subscriptionTriggerService: jest.Mocked<SubscriptionTriggerService>;
   let subscriptionRepository: any;
-  let ingestionQueue: any;
 
   beforeEach(async () => {
-    trackedSyncService = {
+    const mockTrackedSyncService = {
       syncShowWithDiff: jest.fn().mockResolvedValue({ hasChanges: false }),
     };
 
-    subscriptionTriggerService = {
+    const mockBulkJobService = {
+      enqueueBulk: jest.fn().mockResolvedValue({ found: 0, enqueued: 0, deduped: 0 }),
+      enqueueBatch: jest
+        .fn()
+        .mockImplementation(
+          (jobs, logger, context, cumulative = { found: 0, enqueued: 0, deduped: 0 }) =>
+            Promise.resolve({
+              found: cumulative.found + jobs.length,
+              enqueued: cumulative.enqueued + jobs.length,
+              deduped: cumulative.deduped,
+            }),
+        ),
+    };
+
+    const mockSubscriptionTriggerService = {
       handleShowDiff: jest.fn().mockResolvedValue([]),
     };
 
-    subscriptionRepository = {
+    const mockSubscriptionRepository = {
       findTrackedShowTmdbIds: jest.fn().mockResolvedValue([]),
-    };
-
-    ingestionQueue = {
-      getJob: jest.fn().mockResolvedValue(null),
-      addBulk: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TrackedShowsPipeline,
-        { provide: TrackedSyncService, useValue: trackedSyncService },
-        { provide: SubscriptionTriggerService, useValue: subscriptionTriggerService },
-        { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: subscriptionRepository },
-        { provide: getQueueToken(INGESTION_QUEUE), useValue: ingestionQueue },
+        { provide: TrackedSyncService, useValue: mockTrackedSyncService },
+        { provide: BulkJobService, useValue: mockBulkJobService },
+        { provide: SubscriptionTriggerService, useValue: mockSubscriptionTriggerService },
+        { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: mockSubscriptionRepository },
       ],
     }).compile();
 
     pipeline = module.get<TrackedShowsPipeline>(TrackedShowsPipeline);
+    trackedSyncService = module.get(TrackedSyncService);
+    bulkJobService = module.get(BulkJobService);
+    subscriptionTriggerService = module.get(SubscriptionTriggerService);
+    subscriptionRepository = module.get(USER_SUBSCRIPTION_REPOSITORY);
   });
 
   describe('dispatch', () => {
@@ -52,10 +65,7 @@ describe('TrackedShowsPipeline', () => {
       await pipeline.dispatch();
 
       expect(subscriptionRepository.findTrackedShowTmdbIds).toHaveBeenCalled();
-      expect(ingestionQueue.addBulk).toHaveBeenCalled();
-      const addBulkCalls = (ingestionQueue.addBulk as jest.Mock).mock.calls;
-      const totalJobsEnqueued = addBulkCalls.reduce((sum, call) => sum + call[0].length, 0);
-      expect(totalJobsEnqueued).toBe(2); // 100 shows / 50 per chunk = 2 batches
+      expect(bulkJobService.enqueueBatch).toHaveBeenCalled();
     });
 
     it('should use stable hash-based jobIds', async () => {
@@ -63,24 +73,19 @@ describe('TrackedShowsPipeline', () => {
 
       await pipeline.dispatch('2025122119');
 
-      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
-        expect.objectContaining({
-          name: IngestionJob.SYNC_TRACKED_SHOW_BATCH,
-          opts: expect.objectContaining({
-            jobId: expect.stringMatching(/^tracked_batch_2025122119_[a-f0-9]{12}$/),
+      expect(bulkJobService.enqueueBatch).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            name: IngestionJob.SYNC_TRACKED_SHOW_BATCH,
+            opts: expect.objectContaining({
+              jobId: expect.stringMatching(/^tracked_batch_2025122119_[a-f0-9]{12}$/),
+            }),
           }),
-        }),
-      ]);
-    });
-
-    it('should deduplicate batch jobs', async () => {
-      subscriptionRepository.findTrackedShowTmdbIds.mockResolvedValue([1, 2, 3]);
-      ingestionQueue.getJob.mockResolvedValue({ id: 'existing' });
-
-      await pipeline.dispatch();
-
-      expect(ingestionQueue.getJob).toHaveBeenCalled();
-      expect(ingestionQueue.addBulk).not.toHaveBeenCalled();
+        ],
+        expect.any(Object),
+        expect.any(String),
+        expect.any(Object),
+      );
     });
 
     it('should skip if no tracked shows found', async () => {
@@ -88,13 +93,13 @@ describe('TrackedShowsPipeline', () => {
 
       await pipeline.dispatch();
 
-      expect(ingestionQueue.addBulk).not.toHaveBeenCalled();
+      expect(bulkJobService.enqueueBatch).not.toHaveBeenCalled();
     });
   });
 
   describe('processBatch', () => {
     it('should sync shows with diff detection', async () => {
-      trackedSyncService.syncShowWithDiff.mockResolvedValue({ hasChanges: false });
+      trackedSyncService.syncShowWithDiff.mockResolvedValue({ hasChanges: false } as any);
 
       await pipeline.processBatch([100, 200]);
 
@@ -107,8 +112,8 @@ describe('TrackedShowsPipeline', () => {
       trackedSyncService.syncShowWithDiff.mockResolvedValue({
         hasChanges: true,
         mediaItemId: 'show-1',
-      });
-      subscriptionTriggerService.handleShowDiff.mockResolvedValue([{ id: 'event-1' }]);
+      } as any);
+      subscriptionTriggerService.handleShowDiff.mockResolvedValue([{ id: 'event-1' }] as any);
 
       await pipeline.processBatch([100]);
 
@@ -121,7 +126,7 @@ describe('TrackedShowsPipeline', () => {
     it('should continue on error', async () => {
       trackedSyncService.syncShowWithDiff
         .mockRejectedValueOnce(new Error('Sync failed'))
-        .mockResolvedValueOnce({ hasChanges: false });
+        .mockResolvedValueOnce({ hasChanges: false } as any);
 
       await pipeline.processBatch([100, 200]);
 

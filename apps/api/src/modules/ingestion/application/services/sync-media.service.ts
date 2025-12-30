@@ -2,24 +2,26 @@ import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
-import { TvMazeAdapter, TvMazeEpisode } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
+import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import {
   IMediaRepository,
   MEDIA_REPOSITORY,
 } from '../../../catalog/domain/repositories/media.repository.interface';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ScoreCalculatorService, ScoreInput } from '../../../shared/score-calculator';
-import { NormalizedSeason, NormalizedEpisode } from '../../domain/models/normalized-media.model';
+import { NormalizedMedia } from '../../domain/models/normalized-media.model';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { CatalogEvaluationService } from '../../../catalog-policy/application/services/catalog-evaluation.service';
 import { classifyContent } from '../../../catalog-policy/domain/classification.service';
 
 /**
- * Application Service responsible for orchestrating the sync process.
+ * Orchestrates media sync from multiple external sources.
  *
- * Coordinates fetching data from multiple sources (TMDB, Trakt, OMDb, TVMaze),
- * merging metadata, calculating Ratingo scores, and persisting the unified
- * NormalizedMedia entity to the repository.
+ * Fetches data from TMDB, Trakt, OMDb, TVMaze, merges metadata,
+ * calculates Ratingo scores, and persists to database.
+ *
+ * Pipeline: fetchBaseMedia → enrichWithTvMaze → attachExternalRatings →
+ * applyTrending → calculateScores → classifyMedia → persist → evaluateCatalog
  */
 @Injectable()
 export class SyncMediaService {
@@ -29,7 +31,7 @@ export class SyncMediaService {
     private readonly tmdbAdapter: TmdbAdapter,
     private readonly traktRatingsAdapter: TraktRatingsAdapter,
     private readonly omdbAdapter: OmdbAdapter,
-    private readonly tvMazeAdapter: TvMazeAdapter,
+    private readonly tvMazeEnrichment: TvMazeEnrichmentService,
     private readonly scoreCalculator: ScoreCalculatorService,
 
     @Inject(MEDIA_REPOSITORY)
@@ -40,12 +42,11 @@ export class SyncMediaService {
   ) {}
 
   /**
-   * Synchronizes a movie by TMDB ID.
+   * Syncs a movie by TMDB ID.
    *
-   * @param {number} tmdbId - TMDB ID of the movie
-   * @param {object} trending - Optional trending data for sorting
-   * @param {string} jobId - Optional job ID for log correlation
-   * @returns {Promise<void>} Nothing
+   * @param tmdbId - TMDB movie ID
+   * @param trending - Optional trending score and rank
+   * @param jobId - Optional job ID for log correlation
    */
   public async syncMovie(
     tmdbId: number,
@@ -56,12 +57,11 @@ export class SyncMediaService {
   }
 
   /**
-   * Synchronizes a show by TMDB ID.
+   * Syncs a show by TMDB ID.
    *
-   * @param {number} tmdbId - TMDB ID of the show
-   * @param {object} trending - Optional trending data for sorting
-   * @param {string} jobId - Optional job ID for log correlation
-   * @returns {Promise<void>} Nothing
+   * @param tmdbId - TMDB show ID
+   * @param trending - Optional trending score and rank
+   * @param jobId - Optional job ID for log correlation
    */
   public async syncShow(
     tmdbId: number,
@@ -72,16 +72,21 @@ export class SyncMediaService {
   }
 
   /**
-   * Core processing logic: fetches data from all sources concurrently and upserts.
+   * Fetches trending media from TMDB.
    *
-   * 1. Fetches base metadata from TMDB
-   * 2. Enriches with TVMaze episode data (for shows)
-   * 3. Fetches external ratings from Trakt and OMDb (IMDb/Rotten Tomatoes)
-   * 4. Calculates Ratingo score
-   * 5. Upserts NormalizedMedia to database
-   *
-   * @throws Will throw error if TMDB fetch fails or critical data is missing
+   * @param page - Page number (1-based)
+   * @param type - Optional media type filter
+   * @returns Trending items with TMDB IDs
    */
+  public async getTrending(page = 1, type?: MediaType) {
+    return this.tmdbAdapter.getTrending(page, type);
+  }
+
+  // ============================================================
+  // PIPELINE ORCHESTRATOR
+  // ============================================================
+
+  /** Orchestrates all sync pipeline steps. */
   private async processMedia(
     tmdbId: number,
     type: MediaType,
@@ -92,201 +97,196 @@ export class SyncMediaService {
     this.logger.debug(`${logPrefix} Syncing...`);
 
     try {
-      // Mark as importing
       await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.IMPORTING);
 
-      // Fetch Base Metadata from TMDB (Primary Source)
-      const media =
-        type === MediaType.MOVIE
-          ? await this.tmdbAdapter.getMovie(tmdbId)
-          : await this.tmdbAdapter.getShow(tmdbId);
+      // Step 1: Fetch base metadata
+      const baseMedia = await this.fetchBaseMedia(tmdbId, type, logPrefix);
+      if (!baseMedia) return;
 
-      if (!media) {
-        this.logger.warn(`${logPrefix} Not found in TMDB`);
-        await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
-        return;
-      }
+      // Step 2: Enrich with TVMaze (shows only)
+      const enrichedMedia = await this.enrichWithTvMaze(baseMedia, type, logPrefix);
 
-      const imdbId = media.externalIds?.imdbId;
+      // Step 3: Attach external ratings
+      const withRatings = await this.attachExternalRatings(enrichedMedia, tmdbId, type);
 
-      // === TVMAZE ENRICHMENT (Shows only) ===
-      if (type === MediaType.SHOW && imdbId) {
-        try {
-          const tvMazeEpisodes = await this.tvMazeAdapter.getEpisodesByImdbId(imdbId);
+      // Step 4: Apply trending data
+      const withTrending = this.applyTrending(withRatings, trending);
 
-          if (tvMazeEpisodes.length > 0) {
-            // Group TVMaze episodes by season
-            const seasonMap = new Map<number, TvMazeEpisode[]>();
+      // Step 5: Calculate scores
+      const scored = this.calculateScores(withTrending);
 
-            for (const ep of tvMazeEpisodes) {
-              if (!seasonMap.has(ep.seasonNumber)) seasonMap.set(ep.seasonNumber, []);
-              seasonMap.get(ep.seasonNumber).push(ep);
-            }
+      // Step 6: Classify content
+      const classified = this.classifyMedia(scored);
 
-            const mergedSeasons: NormalizedSeason[] = [];
-            const tmdbSeasonMap = new Map<number, NormalizedSeason>();
+      // Step 7: Persist
+      await this.persist(classified, tmdbId);
 
-            if (media.details?.seasons) {
-              for (const s of media.details.seasons) {
-                tmdbSeasonMap.set(s.number, s);
-              }
-            }
-
-            // Iterate over TVMaze seasons (Time Authority)
-            for (const [sNum, eps] of seasonMap.entries()) {
-              const tmdbSeason = tmdbSeasonMap.get(sNum);
-
-              // Map TvMazeEpisode back to NormalizedEpisode (remove seasonNumber)
-              const cleanEpisodes: NormalizedEpisode[] = eps.map((e) => {
-                const { seasonNumber, ...rest } = e;
-                return rest;
-              });
-
-              mergedSeasons.push({
-                number: sNum,
-                // Inherit metadata from TMDB if available
-                tmdbId: tmdbSeason?.tmdbId,
-                name: tmdbSeason?.name,
-                overview: tmdbSeason?.overview,
-                posterPath: tmdbSeason?.posterPath,
-                airDate: tmdbSeason?.airDate,
-                episodeCount: cleanEpisodes.length,
-                episodes: cleanEpisodes,
-              });
-            }
-
-            // Add leftover TMDB seasons (e.g. Specials)
-            if (media.details?.seasons) {
-              for (const s of media.details.seasons) {
-                if (!seasonMap.has(s.number)) {
-                  mergedSeasons.push(s);
-                }
-              }
-            }
-
-            mergedSeasons.sort((a, b) => a.number - b.number);
-
-            if (!media.details) media.details = {};
-            media.details.seasons = mergedSeasons;
-
-            // Calculate Next Air Date
-            const now = new Date();
-            const futureEpisodes = tvMazeEpisodes
-              .filter((e) => e.airDate && e.airDate > now)
-              .sort((a, b) => a.airDate!.getTime() - b.airDate!.getTime());
-
-            if (futureEpisodes.length > 0) {
-              media.details.nextAirDate = futureEpisodes[0].airDate;
-            }
-          }
-        } catch (err) {
-          this.logger.warn(`${logPrefix} TVMaze sync failed: ${err.message}`);
-        }
-      }
-
-      // Enhance with external ratings (Parallel)
-
-      const [traktRating, omdbRatings] = await Promise.all([
-        // Trakt (lookup by TMDB ID, then fetch ratings)
-        type === MediaType.MOVIE
-          ? this.traktRatingsAdapter.getMovieRatingsByTmdbId(tmdbId)
-          : this.traktRatingsAdapter.getShowRatingsByTmdbId(tmdbId),
-        // OMDb (requires IMDb ID)
-        imdbId ? this.omdbAdapter.getAggregatedRatings(imdbId, type) : Promise.resolve(null),
-      ]);
-
-      // Merge Data
-      if (trending !== undefined) {
-        media.trendingScore = trending.score;
-        media.trendingRank = trending.rank;
-        media.trendingUpdatedAt = new Date();
-      }
-
-      if (traktRating) {
-        media.ratingTrakt = traktRating.rating;
-        media.voteCountTrakt = traktRating.votes;
-        media.watchersCount = traktRating.watchers;
-        media.totalWatchers = traktRating.totalWatchers;
-      }
-
-      if (omdbRatings) {
-        media.ratingImdb = omdbRatings.imdbRating;
-        media.voteCountImdb = omdbRatings.imdbVotes;
-        media.ratingMetacritic = omdbRatings.metacritic;
-        media.ratingRottenTomatoes = omdbRatings.rottenTomatoes;
-      }
-
-      // Calculate Ratingo Score
-      const scoreInput: ScoreInput = {
-        tmdbPopularity: media.popularity,
-        traktWatchers: 0, // Will be updated by Stats module
-        imdbRating: media.ratingImdb,
-        traktRating: media.ratingTrakt,
-        metacriticRating: media.ratingMetacritic,
-        rottenTomatoesRating: media.ratingRottenTomatoes,
-        imdbVotes: media.voteCountImdb,
-        traktVotes: media.voteCountTrakt,
-        releaseDate: media.releaseDate,
-      };
-
-      const scores = this.scoreCalculator.calculate(scoreInput);
-      media.ratingoScore = scores.ratingoScore;
-      media.qualityScore = scores.qualityScore;
-      media.popularityScore = scores.popularityScore;
-      media.freshnessScore = scores.freshnessScore;
-      media.ingestionStatus = IngestionStatus.READY;
-
-      // Classify content based on genres and origin metadata
-      // Extract genreIds from TMDB response (handles both formats)
-      const genreIds = media.genres?.map((g) => g.tmdbId) ?? [];
-      media.contentClass = classifyContent({
-        originCountries: media.originCountries ?? null,
-        originalLanguage: media.originalLanguage ?? null,
-        genreIds,
-      });
-
-      // Persist
-      await this.mediaRepository.upsert(media);
-      await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.READY);
-
-      // Trigger catalog evaluation (if service available)
-      if (this.catalogEvaluationService) {
-        try {
-          const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId);
-          if (mediaItem) {
-            await this.catalogEvaluationService.evaluateOne(mediaItem.id);
-            this.logger.debug(`${logPrefix} Evaluated catalog eligibility`);
-          }
-        } catch (evalError) {
-          // Don't fail sync if evaluation fails - log and continue
-          this.logger.warn(`${logPrefix} Catalog evaluation failed: ${evalError.message}`);
-        }
-      }
+      // Step 8: Evaluate catalog eligibility
+      await this.evaluateCatalog(tmdbId, logPrefix);
 
       this.logger.log(
-        `${logPrefix} Synced: ${media.title} (Ratingo: ${(scores.ratingoScore * 100).toFixed(1)})`,
+        `${logPrefix} Synced: ${classified.title} (Ratingo: ${((classified.ratingoScore ?? 0) * 100).toFixed(1)})`,
       );
     } catch (error) {
       this.logger.error(`${logPrefix} Failed: ${error.message}`, error.stack);
-      try {
-        await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
-      } catch (statusError) {
-        this.logger.warn(
-          `${logPrefix} Failed to mark as failed: ${(statusError as Error).message}`,
-        );
-      }
-      throw error; // Let BullMQ retry
+      await this.markAsFailed(tmdbId, logPrefix);
+      throw error;
     }
   }
 
-  /**
-   * Fetches trending media IDs from the provider.
-   *
-   * @param {number} page - Page number to fetch (1-based)
-   * @param {MediaType} type - Optional type filter (movie/show)
-   * @returns {Promise<any>} List of trending items with TMDB IDs
-   */
-  public async getTrending(page = 1, type?: MediaType) {
-    return this.tmdbAdapter.getTrending(page, type);
+  // ============================================================
+  // PIPELINE STEPS
+  // ============================================================
+
+  /** Fetches base metadata from TMDB. Returns null if not found. */
+  private async fetchBaseMedia(
+    tmdbId: number,
+    type: MediaType,
+    logPrefix: string,
+  ): Promise<NormalizedMedia | null> {
+    const media =
+      type === MediaType.MOVIE
+        ? await this.tmdbAdapter.getMovie(tmdbId)
+        : await this.tmdbAdapter.getShow(tmdbId);
+
+    if (!media) {
+      this.logger.warn(`${logPrefix} Not found in TMDB`);
+      await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
+      return null;
+    }
+
+    return media;
+  }
+
+  /** Enriches show with TVMaze episode data. No-op for movies. */
+  private async enrichWithTvMaze(
+    media: NormalizedMedia,
+    type: MediaType,
+    logPrefix: string,
+  ): Promise<NormalizedMedia> {
+    if (type !== MediaType.SHOW) return media;
+
+    try {
+      return await this.tvMazeEnrichment.enrich(media);
+    } catch (err) {
+      this.logger.warn(`${logPrefix} TVMaze enrichment failed: ${err.message}`);
+      return media;
+    }
+  }
+
+  /** Fetches and attaches Trakt + OMDb ratings in parallel. */
+  private async attachExternalRatings(
+    media: NormalizedMedia,
+    tmdbId: number,
+    type: MediaType,
+  ): Promise<NormalizedMedia> {
+    const imdbId = media.externalIds?.imdbId;
+
+    const [traktRating, omdbRatings] = await Promise.all([
+      type === MediaType.MOVIE
+        ? this.traktRatingsAdapter.getMovieRatingsByTmdbId(tmdbId)
+        : this.traktRatingsAdapter.getShowRatingsByTmdbId(tmdbId),
+      imdbId ? this.omdbAdapter.getAggregatedRatings(imdbId, type) : Promise.resolve(null),
+    ]);
+
+    return {
+      ...media,
+      ...(traktRating && {
+        ratingTrakt: traktRating.rating,
+        voteCountTrakt: traktRating.votes,
+        watchersCount: traktRating.watchers,
+        totalWatchers: traktRating.totalWatchers,
+      }),
+      ...(omdbRatings && {
+        ratingImdb: omdbRatings.imdbRating,
+        voteCountImdb: omdbRatings.imdbVotes,
+        ratingMetacritic: omdbRatings.metacritic,
+        ratingRottenTomatoes: omdbRatings.rottenTomatoes,
+      }),
+    };
+  }
+
+  /** Applies trending score and rank if provided. */
+  private applyTrending(
+    media: NormalizedMedia,
+    trending?: { score: number; rank: number },
+  ): NormalizedMedia {
+    if (!trending) return media;
+
+    return {
+      ...media,
+      trendingScore: trending.score,
+      trendingRank: trending.rank,
+      trendingUpdatedAt: new Date(),
+    };
+  }
+
+  /** Calculates Ratingo composite scores. */
+  private calculateScores(media: NormalizedMedia): NormalizedMedia {
+    const scoreInput: ScoreInput = {
+      tmdbPopularity: media.popularity,
+      traktWatchers: 0, // Updated by Stats module
+      imdbRating: media.ratingImdb,
+      traktRating: media.ratingTrakt,
+      metacriticRating: media.ratingMetacritic,
+      rottenTomatoesRating: media.ratingRottenTomatoes,
+      imdbVotes: media.voteCountImdb,
+      traktVotes: media.voteCountTrakt,
+      releaseDate: media.releaseDate,
+    };
+
+    const scores = this.scoreCalculator.calculate(scoreInput);
+
+    return {
+      ...media,
+      ratingoScore: scores.ratingoScore,
+      qualityScore: scores.qualityScore,
+      popularityScore: scores.popularityScore,
+      freshnessScore: scores.freshnessScore,
+      ingestionStatus: IngestionStatus.READY,
+    };
+  }
+
+  /** Classifies content for catalog policy filtering. */
+  private classifyMedia(media: NormalizedMedia): NormalizedMedia {
+    const genreIds = media.genres?.map((g) => g.tmdbId) ?? [];
+
+    return {
+      ...media,
+      contentClass: classifyContent({
+        originCountries: media.originCountries ?? null,
+        originalLanguage: media.originalLanguage ?? null,
+        genreIds,
+      }),
+    };
+  }
+
+  /** Persists media to database. */
+  private async persist(media: NormalizedMedia, tmdbId: number): Promise<void> {
+    await this.mediaRepository.upsert(media);
+  }
+
+  /** Triggers catalog eligibility evaluation if service available. */
+  private async evaluateCatalog(tmdbId: number, logPrefix: string): Promise<void> {
+    if (!this.catalogEvaluationService) return;
+
+    try {
+      const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId);
+      if (mediaItem) {
+        await this.catalogEvaluationService.evaluateOne(mediaItem.id);
+        this.logger.debug(`${logPrefix} Evaluated catalog eligibility`);
+      }
+    } catch (evalError) {
+      this.logger.warn(`${logPrefix} Catalog evaluation failed: ${evalError.message}`);
+    }
+  }
+
+  /** Marks media as failed in database. */
+  private async markAsFailed(tmdbId: number, logPrefix: string): Promise<void> {
+    try {
+      await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
+    } catch (statusError) {
+      this.logger.warn(`${logPrefix} Failed to mark as failed: ${(statusError as Error).message}`);
+    }
   }
 }

@@ -10,6 +10,8 @@ import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
 import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { SyncMediaService } from './application/services/sync-media.service';
 import { TrackedSyncService } from './application/services/tracked-sync.service';
+import { TvMazeEnrichmentService } from './application/services/tvmaze-enrichment.service';
+import { BulkJobService } from './application/services/bulk-job.service';
 import { ConfigModule } from '@nestjs/config';
 import traktConfig from '../../config/trakt.config';
 import { BullModule } from '@nestjs/bullmq';
@@ -60,6 +62,8 @@ import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeli
     TraktListsAdapter,
     OmdbAdapter,
     TvMazeAdapter,
+    TvMazeEnrichmentService,
+    BulkJobService,
     SyncMediaService,
     TrackedSyncService,
     SyncWorker,

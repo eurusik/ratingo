@@ -1,40 +1,42 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { NewReleasesPipeline } from './new-releases.pipeline';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
+import { BulkJobService } from '../services/bulk-job.service';
 import { MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
+import { IngestionJob } from '../../ingestion.constants';
 
 describe('NewReleasesPipeline', () => {
   let pipeline: NewReleasesPipeline;
-  let tmdbAdapter: any;
+  let tmdbAdapter: jest.Mocked<TmdbAdapter>;
+  let bulkJobService: jest.Mocked<BulkJobService>;
   let mediaRepository: any;
-  let ingestionQueue: any;
 
   beforeEach(async () => {
-    tmdbAdapter = {
+    const mockTmdbAdapter = {
       getNewReleaseIds: jest.fn().mockResolvedValue([]),
     };
 
-    mediaRepository = {
-      findManyByTmdbIds: jest.fn().mockResolvedValue([]),
+    const mockBulkJobService = {
+      enqueueBulk: jest.fn().mockResolvedValue({ found: 0, enqueued: 0, deduped: 0 }),
     };
 
-    ingestionQueue = {
-      getJob: jest.fn().mockResolvedValue(null),
-      addBulk: jest.fn().mockResolvedValue([]),
+    const mockMediaRepository = {
+      findManyByTmdbIds: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NewReleasesPipeline,
-        { provide: TmdbAdapter, useValue: tmdbAdapter },
-        { provide: MEDIA_REPOSITORY, useValue: mediaRepository },
-        { provide: getQueueToken(INGESTION_QUEUE), useValue: ingestionQueue },
+        { provide: TmdbAdapter, useValue: mockTmdbAdapter },
+        { provide: BulkJobService, useValue: mockBulkJobService },
+        { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
       ],
     }).compile();
 
     pipeline = module.get<NewReleasesPipeline>(NewReleasesPipeline);
+    tmdbAdapter = module.get(TmdbAdapter);
+    bulkJobService = module.get(BulkJobService);
+    mediaRepository = module.get(MEDIA_REPOSITORY);
   });
 
   describe('sync', () => {
@@ -46,7 +48,7 @@ describe('NewReleasesPipeline', () => {
 
       expect(tmdbAdapter.getNewReleaseIds).toHaveBeenCalledWith(30, 'UA');
       expect(mediaRepository.findManyByTmdbIds).toHaveBeenCalledWith([100, 200, 300]);
-      expect(ingestionQueue.addBulk).toHaveBeenCalledWith(
+      expect(bulkJobService.enqueueBulk).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({
             name: IngestionJob.SYNC_MOVIE,
@@ -57,6 +59,8 @@ describe('NewReleasesPipeline', () => {
             data: { tmdbId: 300 },
           }),
         ]),
+        expect.any(Object),
+        expect.any(String),
       );
     });
 
@@ -65,7 +69,7 @@ describe('NewReleasesPipeline', () => {
 
       await pipeline.sync('UA', 30);
 
-      expect(ingestionQueue.addBulk).not.toHaveBeenCalled();
+      expect(bulkJobService.enqueueBulk).not.toHaveBeenCalled();
     });
 
     it('should skip if all items already exist', async () => {
@@ -74,24 +78,7 @@ describe('NewReleasesPipeline', () => {
 
       await pipeline.sync('UA', 30);
 
-      expect(ingestionQueue.addBulk).not.toHaveBeenCalled();
-    });
-
-    it('should deduplicate jobs before adding', async () => {
-      tmdbAdapter.getNewReleaseIds.mockResolvedValue([100, 200]);
-      mediaRepository.findManyByTmdbIds.mockResolvedValue([]);
-      ingestionQueue.getJob
-        .mockResolvedValueOnce({ id: 'existing-job' })
-        .mockResolvedValueOnce(null);
-
-      await pipeline.sync('UA', 30);
-
-      expect(ingestionQueue.getJob).toHaveBeenCalledTimes(2);
-      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
-        expect.objectContaining({
-          data: { tmdbId: 200 },
-        }),
-      ]);
+      expect(bulkJobService.enqueueBulk).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,41 +1,42 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { TrackedSyncService } from '../services/tracked-sync.service';
+import { BulkJobService, BulkEnqueueResult } from '../services/bulk-job.service';
 import { SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
 import {
   IUserSubscriptionRepository,
   USER_SUBSCRIPTION_REPOSITORY,
 } from '../../../user-actions/domain/repositories/user-subscription.repository.interface';
 import {
-  INGESTION_QUEUE,
   IngestionJob,
   TRACKED_SHOWS_CHUNK_SIZE,
   TMDB_REQUEST_DELAY_MS,
 } from '../../ingestion.constants';
-import { preDedupeBulk, hashIds, formatHourWindow, formatSample } from '../helpers/queue.helpers';
+import { hashIds, formatHourWindow } from '../helpers/queue.helpers';
 
 /**
- * Tracked shows pipeline: syncs shows with active subscriptions,
- * detects diffs (new episodes/seasons), and triggers notifications.
+ * Tracked shows pipeline: syncs shows with active subscriptions.
+ *
+ * Detects diffs (new episodes/seasons) and triggers notifications.
  */
 @Injectable()
 export class TrackedShowsPipeline {
   private readonly logger = new Logger(TrackedShowsPipeline.name);
-  private readonly CHECK_CONCURRENCY = 50;
+  private readonly BULK_LIMIT = 10;
 
   constructor(
     private readonly trackedSyncService: TrackedSyncService,
+    private readonly bulkJobService: BulkJobService,
     private readonly subscriptionTriggerService: SubscriptionTriggerService,
     @Inject(USER_SUBSCRIPTION_REPOSITORY)
     private readonly subscriptionRepository: IUserSubscriptionRepository,
-    @InjectQueue(INGESTION_QUEUE)
-    private readonly ingestionQueue: Queue,
   ) {}
 
   /**
-   * Dispatcher: fetches tracked show IDs and queues batch jobs.
+   * Dispatches batch jobs for tracked shows.
+   *
    * Uses stable hash-based jobIds for deterministic deduplication.
+   *
+   * @param window - Hour window for deduplication (default: current hour)
    */
   async dispatch(window?: string): Promise<void> {
     this.logger.log('Starting tracked shows sync dispatcher...');
@@ -47,50 +48,32 @@ export class TrackedShowsPipeline {
 
     if (tmdbIds.length === 0) return;
 
-    const chunks: number[][] = [];
-    for (let i = 0; i < tmdbIds.length; i += TRACKED_SHOWS_CHUNK_SIZE) {
-      chunks.push(tmdbIds.slice(i, i + TRACKED_SHOWS_CHUNK_SIZE));
-    }
+    const chunks = this.chunkArray(tmdbIds, TRACKED_SHOWS_CHUNK_SIZE);
+    let result: BulkEnqueueResult = { found: 0, enqueued: 0, deduped: 0 };
 
-    const BULK_LIMIT = 10;
-    let deduped = 0;
-    let enqueued = 0;
+    for (let i = 0; i < chunks.length; i += this.BULK_LIMIT) {
+      const batchChunks = chunks.slice(i, i + this.BULK_LIMIT);
 
-    for (let i = 0; i < chunks.length; i += BULK_LIMIT) {
-      const batchChunks = chunks.slice(i, i + BULK_LIMIT);
-
-      const candidateJobs = batchChunks.map((chunkTmdbIds) => ({
+      const jobs = batchChunks.map((chunkTmdbIds) => ({
         name: IngestionJob.SYNC_TRACKED_SHOW_BATCH,
         data: { tmdbIds: chunkTmdbIds },
         opts: { jobId: `tracked_batch_${effectiveWindow}_${hashIds(chunkTmdbIds)}` },
       }));
 
-      const {
-        jobsToAdd,
-        deduped: batchDeduped,
-        sample,
-      } = await preDedupeBulk(candidateJobs, this.ingestionQueue, this.CHECK_CONCURRENCY);
-
-      deduped += batchDeduped;
-
-      if (jobsToAdd.length > 0) {
-        await this.ingestionQueue.addBulk(jobsToAdd);
-        enqueued += jobsToAdd.length;
-      }
-
-      this.logger.log(
-        `Tracked shows dispatcher progress: batches=${chunks.length}, shows=${tmdbIds.length}, enqueued=${enqueued}, deduped=${deduped}${formatSample(sample)}`,
+      result = await this.bulkJobService.enqueueBatch(
+        jobs,
+        this.logger,
+        `Tracked shows (${tmdbIds.length} shows, ${chunks.length} batches)`,
+        result,
       );
     }
 
     this.logger.log(
-      `Tracked shows dispatcher complete: batches=${chunks.length}, shows=${tmdbIds.length}, enqueued=${enqueued}, deduped=${deduped}`,
+      `Tracked shows dispatcher complete: batches=${chunks.length}, shows=${tmdbIds.length}, enqueued=${result.enqueued}, deduped=${result.deduped}`,
     );
   }
 
-  /**
-   * Processes a batch of tracked shows with diff detection and notification triggering.
-   */
+  /** Processes a batch of tracked shows with diff detection. */
   async processBatch(tmdbIds: number[]): Promise<void> {
     this.logger.log(`Processing tracked show batch: ${tmdbIds.length} shows`);
 
@@ -122,6 +105,14 @@ export class TrackedShowsPipeline {
     this.logger.log(
       `Tracked show batch complete: ${processed}/${tmdbIds.length} processed, ${withChanges} with changes`,
     );
+  }
+
+  private chunkArray<T>(array: T[], size: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
   }
 
   private delay(ms: number): Promise<void> {

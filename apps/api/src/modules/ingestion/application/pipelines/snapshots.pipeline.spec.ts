@@ -1,40 +1,52 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { SnapshotsPipeline } from './snapshots.pipeline';
 import { SnapshotsService } from '../services/snapshots.service';
+import { BulkJobService } from '../services/bulk-job.service';
 import { MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
+import { IngestionJob } from '../../ingestion.constants';
 
 describe('SnapshotsPipeline', () => {
   let pipeline: SnapshotsPipeline;
-  let snapshotsService: any;
+  let snapshotsService: jest.Mocked<SnapshotsService>;
+  let bulkJobService: jest.Mocked<BulkJobService>;
   let mediaRepository: any;
-  let ingestionQueue: any;
 
   beforeEach(async () => {
-    snapshotsService = {
+    const mockSnapshotsService = {
       syncSnapshotItem: jest.fn().mockResolvedValue(undefined),
     };
 
-    mediaRepository = {
-      findIdsForSnapshots: jest.fn().mockResolvedValue([]),
+    const mockBulkJobService = {
+      enqueueBulk: jest.fn().mockResolvedValue({ found: 0, enqueued: 0, deduped: 0 }),
+      enqueueBatch: jest
+        .fn()
+        .mockImplementation(
+          (jobs, logger, context, cumulative = { found: 0, enqueued: 0, deduped: 0 }) =>
+            Promise.resolve({
+              found: cumulative.found + jobs.length,
+              enqueued: cumulative.enqueued + jobs.length,
+              deduped: cumulative.deduped,
+            }),
+        ),
     };
 
-    ingestionQueue = {
-      getJob: jest.fn().mockResolvedValue(null),
-      addBulk: jest.fn().mockResolvedValue([]),
+    const mockMediaRepository = {
+      findIdsForSnapshots: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SnapshotsPipeline,
-        { provide: SnapshotsService, useValue: snapshotsService },
-        { provide: MEDIA_REPOSITORY, useValue: mediaRepository },
-        { provide: getQueueToken(INGESTION_QUEUE), useValue: ingestionQueue },
+        { provide: SnapshotsService, useValue: mockSnapshotsService },
+        { provide: BulkJobService, useValue: mockBulkJobService },
+        { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
       ],
     }).compile();
 
     pipeline = module.get<SnapshotsPipeline>(SnapshotsPipeline);
+    snapshotsService = module.get(SnapshotsService);
+    bulkJobService = module.get(BulkJobService);
+    mediaRepository = module.get(MEDIA_REPOSITORY);
   });
 
   describe('dispatch', () => {
@@ -47,31 +59,18 @@ describe('SnapshotsPipeline', () => {
       await pipeline.dispatch('UA');
 
       expect(mediaRepository.findIdsForSnapshots).toHaveBeenCalledTimes(3);
-      expect(ingestionQueue.addBulk).toHaveBeenCalledTimes(2);
-      expect(ingestionQueue.addBulk).toHaveBeenCalledWith(
+      expect(bulkJobService.enqueueBatch).toHaveBeenCalledTimes(2);
+      expect(bulkJobService.enqueueBatch).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({
             name: IngestionJob.SYNC_SNAPSHOT_ITEM,
             data: expect.objectContaining({ mediaItemId: 'id1', region: 'UA' }),
           }),
         ]),
+        expect.any(Object),
+        expect.any(String),
+        expect.any(Object),
       );
-    });
-
-    it('should deduplicate existing jobs', async () => {
-      mediaRepository.findIdsForSnapshots
-        .mockResolvedValueOnce(['id1', 'id2'])
-        .mockResolvedValueOnce([]);
-      ingestionQueue.getJob.mockResolvedValueOnce({ id: 'existing' }).mockResolvedValueOnce(null);
-
-      await pipeline.dispatch('UA');
-
-      expect(ingestionQueue.getJob).toHaveBeenCalledTimes(2);
-      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
-        expect.objectContaining({
-          data: expect.objectContaining({ mediaItemId: 'id2' }),
-        }),
-      ]);
     });
 
     it('should normalize region', async () => {
@@ -79,11 +78,16 @@ describe('SnapshotsPipeline', () => {
 
       await pipeline.dispatch('ua');
 
-      expect(ingestionQueue.addBulk).toHaveBeenCalledWith([
-        expect.objectContaining({
-          data: expect.objectContaining({ region: 'UA' }),
-        }),
-      ]);
+      expect(bulkJobService.enqueueBatch).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            data: expect.objectContaining({ region: 'UA' }),
+          }),
+        ],
+        expect.any(Object),
+        expect.any(String),
+        expect.any(Object),
+      );
     });
 
     it('should handle empty result set', async () => {
@@ -91,7 +95,7 @@ describe('SnapshotsPipeline', () => {
 
       await pipeline.dispatch('UA');
 
-      expect(ingestionQueue.addBulk).not.toHaveBeenCalled();
+      expect(bulkJobService.enqueueBatch).not.toHaveBeenCalled();
     });
   });
 
@@ -108,7 +112,7 @@ describe('SnapshotsPipeline', () => {
 
     it('should throw error for invalid dayId', async () => {
       await expect(pipeline.processItem('media-123', 'invalid', 'UA')).rejects.toThrow(
-        /Invalid snapshot dayId payload/,
+        /Invalid snapshot dayId/,
       );
     });
   });

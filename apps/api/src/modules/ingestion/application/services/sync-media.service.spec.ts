@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SyncMediaService } from './sync-media.service';
+import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '@/modules/tmdb/tmdb.adapter';
 import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
-import { TvMazeAdapter } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -14,7 +14,7 @@ describe('SyncMediaService', () => {
   let tmdbAdapter: jest.Mocked<TmdbAdapter>;
   let traktAdapter: jest.Mocked<TraktRatingsAdapter>;
   let omdbAdapter: jest.Mocked<OmdbAdapter>;
-  let tvMazeAdapter: jest.Mocked<TvMazeAdapter>;
+  let tvMazeEnrichment: jest.Mocked<TvMazeEnrichmentService>;
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
   let mediaRepository: any;
 
@@ -55,8 +55,8 @@ describe('SyncMediaService', () => {
       getAggregatedRatings: jest.fn(),
     };
 
-    const mockTvMazeAdapter = {
-      getEpisodesByImdbId: jest.fn(),
+    const mockTvMazeEnrichment = {
+      enrich: jest.fn().mockImplementation((media) => Promise.resolve(media)),
     };
 
     const mockScoreCalculator = {
@@ -74,7 +74,7 @@ describe('SyncMediaService', () => {
         { provide: TmdbAdapter, useValue: mockTmdbAdapter },
         { provide: TraktRatingsAdapter, useValue: mockTraktAdapter },
         { provide: OmdbAdapter, useValue: mockOmdbAdapter },
-        { provide: TvMazeAdapter, useValue: mockTvMazeAdapter },
+        { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
       ],
@@ -84,7 +84,7 @@ describe('SyncMediaService', () => {
     tmdbAdapter = module.get(TmdbAdapter);
     traktAdapter = module.get(TraktRatingsAdapter);
     omdbAdapter = module.get(OmdbAdapter);
-    tvMazeAdapter = module.get(TvMazeAdapter);
+    tvMazeEnrichment = module.get(TvMazeEnrichmentService);
     scoreCalculator = module.get(ScoreCalculatorService);
     mediaRepository = module.get(MEDIA_REPOSITORY);
   });
@@ -351,6 +351,9 @@ describe('SyncMediaService', () => {
 
   describe('TVMaze enrichment', () => {
     it('should enrich show with TVMaze episodes and calculate nextAirDate', async () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+
       const mockShow = {
         ...mockMedia,
         type: MediaType.SHOW,
@@ -359,50 +362,35 @@ describe('SyncMediaService', () => {
         },
       };
 
+      const enrichedShow = {
+        ...mockShow,
+        details: {
+          ...mockShow.details,
+          seasons: [
+            {
+              number: 1,
+              name: 'Season 1',
+              tmdbId: 101,
+              episodeCount: 2,
+              episodes: [
+                { number: 1, title: 'Ep 1', airDate: new Date('2020-01-01') },
+                { number: 2, title: 'Ep 2', airDate: futureDate },
+              ],
+            },
+          ],
+          nextAirDate: futureDate,
+        },
+      };
+
       tmdbAdapter.getShow.mockResolvedValue(mockShow);
-
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 7); // Next week
-
-      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
-        {
-          seasonNumber: 1,
-          number: 1,
-          title: 'Ep 1',
-          airDate: new Date('2020-01-01'),
-          runtime: 60,
-          overview: 'Overview',
-          stillPath: null,
-          rating: null,
-        },
-        {
-          seasonNumber: 1,
-          number: 2,
-          title: 'Ep 2',
-          airDate: futureDate,
-          runtime: 60,
-          overview: 'Overview 2',
-          stillPath: null,
-          rating: null,
-        },
-      ]);
+      tvMazeEnrichment.enrich.mockResolvedValue(enrichedShow);
 
       await service.syncShow(1000);
 
-      expect(tvMazeAdapter.getEpisodesByImdbId).toHaveBeenCalledWith('tt0137523');
+      expect(tvMazeEnrichment.enrich).toHaveBeenCalledWith(mockShow);
       expect(mediaRepository.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           details: expect.objectContaining({
-            seasons: expect.arrayContaining([
-              expect.objectContaining({
-                number: 1,
-                name: 'Season 1', // Inherited from TMDB
-                episodes: expect.arrayContaining([
-                  expect.objectContaining({ title: 'Ep 1' }),
-                  expect.objectContaining({ title: 'Ep 2' }),
-                ]),
-              }),
-            ]),
             nextAirDate: futureDate,
           }),
         }),
@@ -412,7 +400,7 @@ describe('SyncMediaService', () => {
     it('should handle TVMaze failure gracefully', async () => {
       const mockShow = { ...mockMedia, type: MediaType.SHOW };
       tmdbAdapter.getShow.mockResolvedValue(mockShow);
-      tvMazeAdapter.getEpisodesByImdbId.mockRejectedValue(new Error('TVMaze Down'));
+      tvMazeEnrichment.enrich.mockRejectedValue(new Error('TVMaze Down'));
 
       await service.syncShow(1000);
 
