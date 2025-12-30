@@ -717,7 +717,6 @@ Before adding ANY new entity:
 | `POST /admin/catalog-policies/runs/:id/cancel` | RunController | Cancel run |
 | `GET /admin/catalog-policies/runs/:id/diff` | RunController | Diff between policy versions |
 | `POST /admin/catalog-policies/dry-run` | DryRunController | Preview policy changes |
-| `POST /admin/catalog-policies/backfill/content-class` | BackfillController | Backfill content_class |
 
 ### Service Endpoints (Internal)
 | Route | Controller | Purpose |

@@ -47,7 +47,6 @@ import { CatalogPolicyWorker } from './application/workers/catalog-policy.worker
 
 // Controllers
 import { PolicyController, RunController, DryRunController } from './presentation/controllers';
-import { BackfillController } from './presentation/controllers/backfill.controller';
 
 @Module({
   imports: [
@@ -55,7 +54,7 @@ import { BackfillController } from './presentation/controllers/backfill.controll
       name: CATALOG_POLICY_QUEUE,
     }),
   ],
-  controllers: [PolicyController, RunController, DryRunController, BackfillController],
+  controllers: [PolicyController, RunController, DryRunController],
   providers: [
     // Repositories
     {
