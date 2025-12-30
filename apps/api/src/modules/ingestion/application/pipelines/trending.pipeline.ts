@@ -2,13 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SyncMediaService } from '../services/sync-media.service';
 import { BulkJobService } from '../services/bulk-job.service';
 import { StatsService } from '../../../stats/application/services/stats.service';
-import { IngestionJob } from '../../ingestion.constants';
+import { IngestionJob, TRENDING_STATS_DELAY_MS } from '../../ingestion.constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
 import { formatHourWindow } from '../helpers/queue.helpers';
-
-/** Delay before stats sync job (3 minutes). */
-const STATS_DELAY_MS = 3 * 60 * 1000;
 
 /**
  * Trending pipeline: TMDB trending sync and Trakt stats updates.
@@ -149,7 +146,7 @@ export class TrendingPipeline {
       IngestionJob.SYNC_TRENDING_STATS,
       { since: startedAt.toISOString(), limit: expectedLimit },
       `trending-stats_${window}`,
-      STATS_DELAY_MS,
+      TRENDING_STATS_DELAY_MS,
     );
 
     this.logger.log(`Queued trending stats job (delay: 3min, limit: ${expectedLimit})`);

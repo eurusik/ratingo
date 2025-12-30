@@ -90,3 +90,32 @@ export function formatHourWindow(date: Date = new Date()): string {
 export function formatSample(sample: string[]): string {
   return sample.length > 0 ? `, sample=[${sample.join(',')}]` : '';
 }
+
+/**
+ * Normalizes region string for consistent usage.
+ * Returns 'global' for empty/null values, uppercase for valid regions.
+ *
+ * @param region - Region string to normalize
+ * @returns Normalized region string
+ */
+export function normalizeRegion(region?: string | null): string {
+  if (!region) return 'global';
+  if (region.toLowerCase() === 'global') return 'global';
+  const sanitized = region.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+  return sanitized.length > 0 ? sanitized : 'global';
+}
+
+/**
+ * Splits an array into chunks of specified size.
+ *
+ * @param array - Array to chunk
+ * @param size - Chunk size
+ * @returns Array of chunks
+ */
+export function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}

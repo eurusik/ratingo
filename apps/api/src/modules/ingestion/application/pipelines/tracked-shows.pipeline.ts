@@ -9,9 +9,10 @@ import {
 import {
   IngestionJob,
   TRACKED_SHOWS_CHUNK_SIZE,
+  TRACKED_SHOWS_BULK_LIMIT,
   TMDB_REQUEST_DELAY_MS,
 } from '../../ingestion.constants';
-import { hashIds, formatHourWindow } from '../helpers/queue.helpers';
+import { hashIds, formatHourWindow, chunkArray } from '../helpers/queue.helpers';
 
 /**
  * Tracked shows pipeline: syncs shows with active subscriptions.
@@ -21,7 +22,6 @@ import { hashIds, formatHourWindow } from '../helpers/queue.helpers';
 @Injectable()
 export class TrackedShowsPipeline {
   private readonly logger = new Logger(TrackedShowsPipeline.name);
-  private readonly BULK_LIMIT = 10;
 
   constructor(
     private readonly trackedSyncService: TrackedSyncService,
@@ -48,11 +48,11 @@ export class TrackedShowsPipeline {
 
     if (tmdbIds.length === 0) return;
 
-    const chunks = this.chunkArray(tmdbIds, TRACKED_SHOWS_CHUNK_SIZE);
+    const chunks = chunkArray(tmdbIds, TRACKED_SHOWS_CHUNK_SIZE);
     let result: BulkEnqueueResult = { found: 0, enqueued: 0, deduped: 0 };
 
-    for (let i = 0; i < chunks.length; i += this.BULK_LIMIT) {
-      const batchChunks = chunks.slice(i, i + this.BULK_LIMIT);
+    for (let i = 0; i < chunks.length; i += TRACKED_SHOWS_BULK_LIMIT) {
+      const batchChunks = chunks.slice(i, i + TRACKED_SHOWS_BULK_LIMIT);
 
       const jobs = batchChunks.map((chunkTmdbIds) => ({
         name: IngestionJob.SYNC_TRACKED_SHOW_BATCH,
@@ -105,14 +105,6 @@ export class TrackedShowsPipeline {
     this.logger.log(
       `Tracked show batch complete: ${processed}/${tmdbIds.length} processed, ${withChanges} with changes`,
     );
-  }
-
-  private chunkArray<T>(array: T[], size: number): T[][] {
-    const chunks: T[][] = [];
-    for (let i = 0; i < array.length; i += size) {
-      chunks.push(array.slice(i, i + size));
-    }
-    return chunks;
   }
 
   private delay(ms: number): Promise<void> {

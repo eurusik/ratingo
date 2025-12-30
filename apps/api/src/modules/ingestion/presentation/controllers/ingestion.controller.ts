@@ -28,6 +28,7 @@ import slugify from 'slugify';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { formatUtcDayId } from '@/common/utils/date.util';
 import { SyncDto, SyncTrendingDto, SyncNowPlayingDto, SyncNewReleasesDto } from '../dto';
+import { normalizeRegion } from '../../application/helpers/queue.helpers';
 
 /**
  * Triggers ingestion processes.
@@ -338,22 +339,17 @@ export class IngestionController {
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncSnapshots(@Query('region') region?: string, @Query('force') force?: string) {
-    const normalizedRegion = (() => {
-      if (!region) return 'global';
-      if (region.toLowerCase() === 'global') return 'global';
-      const sanitized = region.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
-      return sanitized.length > 0 ? sanitized : 'global';
-    })();
+    const normalizedRegionValue = normalizeRegion(region);
 
     const isForce = force === 'true';
     const dayId = formatUtcDayId();
     const window = isForce ? Date.now().toString() : dayId;
-    const jobId = `snapshots_${normalizedRegion}_${window}`;
+    const jobId = `snapshots_${normalizedRegionValue}_${window}`;
 
     const job = await this.ingestionQueue.add(
       IngestionJob.SYNC_SNAPSHOTS_DISPATCHER,
       {
-        region: normalizedRegion,
+        region: normalizedRegionValue,
       },
       { jobId },
     );
@@ -362,7 +358,7 @@ export class IngestionController {
       status: 'queued',
       jobId: job.id,
       jobType: IngestionJob.SYNC_SNAPSHOTS_DISPATCHER,
-      region: normalizedRegion,
+      region: normalizedRegionValue,
       force: isForce,
     };
   }

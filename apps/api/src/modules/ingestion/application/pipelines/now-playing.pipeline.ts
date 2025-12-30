@@ -10,6 +10,7 @@ import {
   MOVIE_REPOSITORY,
 } from '../../../catalog/domain/repositories/movie.repository.interface';
 import { IngestionJob } from '../../ingestion.constants';
+import { DEFAULT_REGION } from '../../../../common/constants';
 
 /**
  * Now Playing pipeline: syncs movies currently in theaters.
@@ -32,9 +33,9 @@ export class NowPlayingPipeline {
   /**
    * Syncs now playing movies.
    *
-   * @param region - Region code (default: 'UA')
+   * @param region - Region code (default: DEFAULT_REGION)
    */
-  async sync(region = 'UA'): Promise<void> {
+  async sync(region = DEFAULT_REGION): Promise<void> {
     this.logger.log(`Starting now playing sync (region: ${region})...`);
 
     const tmdbIds = await this.tmdbAdapter.getNowPlayingIds(region);
@@ -60,9 +61,9 @@ export class NowPlayingPipeline {
   /**
    * Updates now_playing flags based on TMDB data.
    *
-   * @param region - Region code (default: 'UA')
+   * @param region - Region code (default: DEFAULT_REGION)
    */
-  async updateFlags(region = 'UA'): Promise<void> {
+  async updateFlags(region = DEFAULT_REGION): Promise<void> {
     this.logger.log(`Updating now playing flags (region: ${region})...`);
 
     const tmdbIds = await this.tmdbAdapter.getNowPlayingIds(region);

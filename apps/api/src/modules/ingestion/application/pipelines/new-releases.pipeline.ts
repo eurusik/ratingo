@@ -7,6 +7,7 @@ import {
 } from '../../../catalog/domain/repositories/media.repository.interface';
 import { IngestionJob } from '../../ingestion.constants';
 import { formatUtcDayId } from '@/common/utils/date.util';
+import { DEFAULT_REGION } from '../../../../common/constants';
 
 /**
  * New Releases pipeline: syncs recently released movies.
@@ -27,10 +28,10 @@ export class NewReleasesPipeline {
   /**
    * Syncs new releases: fetches TMDB IDs and enqueues sync jobs.
    *
-   * @param region - Region code for release dates (default: 'UA')
+   * @param region - Region code for release dates (default: DEFAULT_REGION)
    * @param daysBack - Number of days to look back (default: 30)
    */
-  async sync(region = 'UA', daysBack = 30): Promise<void> {
+  async sync(region = DEFAULT_REGION, daysBack = 30): Promise<void> {
     this.logger.log(`Starting new releases sync (region: ${region}, daysBack: ${daysBack})...`);
 
     const tmdbIds = await this.tmdbAdapter.getNewReleaseIds(daysBack, region);

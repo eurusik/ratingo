@@ -47,3 +47,19 @@ export const TRACKED_SHOWS_CHUNK_SIZE = 50;
  * 300ms delay = ~3.3 req/s = safe margin.
  */
 export const TMDB_REQUEST_DELAY_MS = 300;
+
+/**
+ * Batch size for snapshot dispatcher pagination.
+ */
+export const SNAPSHOTS_BATCH_SIZE = 500;
+
+/**
+ * Bulk limit for tracked shows job enqueueing.
+ */
+export const TRACKED_SHOWS_BULK_LIMIT = 10;
+
+/**
+ * Delay before trending stats sync job (in milliseconds).
+ * Allows time for page jobs to complete before stats aggregation.
+ */
+export const TRENDING_STATS_DELAY_MS = 3 * 60 * 1000;

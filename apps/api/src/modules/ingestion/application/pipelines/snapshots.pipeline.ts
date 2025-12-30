@@ -5,8 +5,9 @@ import {
   IMediaRepository,
   MEDIA_REPOSITORY,
 } from '../../../catalog/domain/repositories/media.repository.interface';
-import { IngestionJob } from '../../ingestion.constants';
+import { IngestionJob, SNAPSHOTS_BATCH_SIZE } from '../../ingestion.constants';
 import { formatUtcDayId, utcDateFromDayId } from '@/common/utils/date.util';
+import { normalizeRegion } from '../helpers/queue.helpers';
 
 /**
  * Snapshots pipeline: daily snapshot sync for all media items.
@@ -16,7 +17,6 @@ import { formatUtcDayId, utcDateFromDayId } from '@/common/utils/date.util';
 @Injectable()
 export class SnapshotsPipeline {
   private readonly logger = new Logger(SnapshotsPipeline.name);
-  private readonly BATCH_SIZE = 500;
 
   constructor(
     private readonly snapshotsService: SnapshotsService,
@@ -31,7 +31,7 @@ export class SnapshotsPipeline {
    * @param region - Region code for snapshots (default: 'global')
    */
   async dispatch(region = 'global'): Promise<void> {
-    const normalizedRegion = this.normalizeRegion(region);
+    const normalizedRegion = normalizeRegion(region);
     const today = formatUtcDayId();
 
     this.logger.log(
@@ -43,7 +43,7 @@ export class SnapshotsPipeline {
 
     while (true) {
       const ids = await this.mediaRepository.findIdsForSnapshots({
-        limit: this.BATCH_SIZE,
+        limit: SNAPSHOTS_BATCH_SIZE,
         cursor,
       });
 
@@ -72,7 +72,7 @@ export class SnapshotsPipeline {
 
   /** Processes a single snapshot item job. */
   async processItem(mediaItemId: string, dayId: string, region: string): Promise<void> {
-    const normalizedRegion = this.normalizeRegion(region);
+    const normalizedRegion = normalizeRegion(region);
 
     let snapshotDate: Date;
     try {
@@ -85,13 +85,5 @@ export class SnapshotsPipeline {
     }
 
     await this.snapshotsService.syncSnapshotItem(mediaItemId, snapshotDate, normalizedRegion);
-  }
-
-  /** Normalizes region string for consistent jobId generation. */
-  private normalizeRegion(region?: string): string {
-    if (!region) return 'global';
-    if (region.toLowerCase() === 'global') return 'global';
-    const sanitized = region.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
-    return sanitized.length > 0 ? sanitized : 'global';
   }
 }
