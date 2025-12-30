@@ -13,33 +13,22 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RunController } from './run.controller';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import { DiffService } from '../../application/services/diff.service';
-import { CATALOG_POLICY_REPOSITORY } from '../../infrastructure/repositories/catalog-policy.repository';
-import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../infrastructure/repositories/catalog-evaluation-run.repository';
 
 describe('RunController', () => {
   let controller: RunController;
   let mockPolicyActivationService: any;
   let mockDiffService: any;
-  let mockPolicyRepository: any;
-  let mockRunRepository: any;
 
   beforeEach(async () => {
     mockPolicyActivationService = {
       getRunStatus: jest.fn(),
       promoteRun: jest.fn(),
       cancelRun: jest.fn(),
+      listRuns: jest.fn(),
     };
 
     mockDiffService = {
       computeDiff: jest.fn(),
-    };
-
-    mockPolicyRepository = {
-      findAll: jest.fn(),
-    };
-
-    mockRunRepository = {
-      findAll: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -47,8 +36,6 @@ describe('RunController', () => {
       providers: [
         { provide: PolicyActivationService, useValue: mockPolicyActivationService },
         { provide: DiffService, useValue: mockDiffService },
-        { provide: CATALOG_POLICY_REPOSITORY, useValue: mockPolicyRepository },
-        { provide: CATALOG_EVALUATION_RUN_REPOSITORY, useValue: mockRunRepository },
       ],
     }).compile();
 
@@ -60,24 +47,24 @@ describe('RunController', () => {
       const mockRuns = [
         {
           id: 'run-1',
-          targetPolicyId: 'policy-1',
-          policyVersion: 2,
+          policyId: 'policy-1',
+          policyName: 'Policy v2',
           status: 'prepared',
-          processed: 1000,
-          totalReadySnapshot: 1000,
-          eligible: 800,
-          ineligible: 150,
-          pending: 50,
-          errors: 0,
+          progress: {
+            processed: 1000,
+            total: 1000,
+            eligible: 800,
+            ineligible: 150,
+            pending: 50,
+            errors: 0,
+          },
           startedAt: new Date('2024-01-01'),
           finishedAt: new Date('2024-01-01'),
+          readyToPromote: true,
         },
       ];
 
-      const mockPolicies = [{ id: 'policy-1', version: 2 }];
-
-      mockRunRepository.findAll.mockResolvedValue(mockRuns);
-      mockPolicyRepository.findAll.mockResolvedValue(mockPolicies);
+      mockPolicyActivationService.listRuns.mockResolvedValue(mockRuns);
 
       const result = await controller.getRuns('10', '0');
 
@@ -100,12 +87,11 @@ describe('RunController', () => {
     });
 
     it('should use default pagination when not provided', async () => {
-      mockRunRepository.findAll.mockResolvedValue([]);
-      mockPolicyRepository.findAll.mockResolvedValue([]);
+      mockPolicyActivationService.listRuns.mockResolvedValue([]);
 
       await controller.getRuns(undefined, undefined);
 
-      expect(mockRunRepository.findAll).toHaveBeenCalledWith({ limit: 20, offset: 0 });
+      expect(mockPolicyActivationService.listRuns).toHaveBeenCalledWith({ limit: 20, offset: 0 });
     });
   });
 

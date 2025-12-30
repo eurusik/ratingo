@@ -13,13 +13,11 @@ import { NotFoundException } from '@nestjs/common';
 import { PolicyController } from './policy.controller';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
-import { CATALOG_POLICY_REPOSITORY } from '../../infrastructure/repositories/catalog-policy.repository';
 
 describe('PolicyController', () => {
   let controller: PolicyController;
   let mockPolicyActivationService: any;
   let mockCatalogPolicyService: any;
-  let mockPolicyRepository: any;
 
   beforeEach(async () => {
     mockPolicyActivationService = {
@@ -28,11 +26,8 @@ describe('PolicyController', () => {
 
     mockCatalogPolicyService = {
       createDraft: jest.fn(),
-    };
-
-    mockPolicyRepository = {
-      findAll: jest.fn(),
-      findById: jest.fn(),
+      listAll: jest.fn(),
+      getById: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -40,7 +35,6 @@ describe('PolicyController', () => {
       providers: [
         { provide: PolicyActivationService, useValue: mockPolicyActivationService },
         { provide: CatalogPolicyService, useValue: mockCatalogPolicyService },
-        { provide: CATALOG_POLICY_REPOSITORY, useValue: mockPolicyRepository },
       ],
     }).compile();
 
@@ -68,7 +62,7 @@ describe('PolicyController', () => {
         },
       ];
 
-      mockPolicyRepository.findAll.mockResolvedValue(mockPolicies);
+      mockCatalogPolicyService.listAll.mockResolvedValue(mockPolicies);
 
       const result = await controller.getPolicies();
 
@@ -85,7 +79,7 @@ describe('PolicyController', () => {
     });
 
     it('should return empty list when no policies exist', async () => {
-      mockPolicyRepository.findAll.mockResolvedValue([]);
+      mockCatalogPolicyService.listAll.mockResolvedValue([]);
 
       const result = await controller.getPolicies();
 
@@ -124,7 +118,7 @@ describe('PolicyController', () => {
     };
 
     it('should return policy with full config', async () => {
-      mockPolicyRepository.findById.mockResolvedValue(mockFullPolicy);
+      mockCatalogPolicyService.getById.mockResolvedValue(mockFullPolicy);
 
       const result = await controller.getPolicyById('policy-1');
 
@@ -155,7 +149,7 @@ describe('PolicyController', () => {
     });
 
     it('should return inactive status for non-active policy', async () => {
-      mockPolicyRepository.findById.mockResolvedValue({
+      mockCatalogPolicyService.getById.mockResolvedValue({
         ...mockFullPolicy,
         isActive: false,
         activatedAt: null,
@@ -168,7 +162,7 @@ describe('PolicyController', () => {
     });
 
     it('should throw NotFoundException when policy not found', async () => {
-      mockPolicyRepository.findById.mockResolvedValue(null);
+      mockCatalogPolicyService.getById.mockResolvedValue(null);
 
       await expect(controller.getPolicyById('non-existent')).rejects.toThrow(NotFoundException);
       await expect(controller.getPolicyById('non-existent')).rejects.toThrow(
@@ -177,7 +171,7 @@ describe('PolicyController', () => {
     });
 
     it('should handle policy with empty breakout rules', async () => {
-      mockPolicyRepository.findById.mockResolvedValue({
+      mockCatalogPolicyService.getById.mockResolvedValue({
         ...mockFullPolicy,
         policy: {
           ...mockFullPolicy.policy,
@@ -191,7 +185,7 @@ describe('PolicyController', () => {
     });
 
     it('should handle policy with multiple breakout rules', async () => {
-      mockPolicyRepository.findById.mockResolvedValue({
+      mockCatalogPolicyService.getById.mockResolvedValue({
         ...mockFullPolicy,
         policy: {
           ...mockFullPolicy.policy,

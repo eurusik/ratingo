@@ -223,20 +223,21 @@ export interface MediaCatalogEvaluation {
 /**
  * Catalog evaluation run entity (database model).
  *
- * Lifecycle: RUNNING → PREPARED → PROMOTED | CANCELLED | FAILED
+ * Lifecycle: running → prepared → promoted | cancelled | failed
+ *
+ * Note: Repository layer (infrastructure) extends this with additional fields.
+ * This is the domain-level representation.
  */
 export interface CatalogEvaluationRun {
   id: string;
   policyVersion: number;
-  status: 'RUNNING' | 'PREPARED' | 'FAILED' | 'CANCELLED' | 'PROMOTED';
+  status: 'running' | 'prepared' | 'failed' | 'cancelled' | 'promoted';
   startedAt: Date;
   finishedAt: Date | null;
   cursor: string | null;
-  counters: {
-    processed: number;
-    eligible: number;
-    ineligible: number;
-    review: number;
-    reasonBreakdown: Record<string, number>;
-  };
+  processed: number;
+  eligible: number;
+  ineligible: number;
+  pending: number;
+  errors: number;
 }

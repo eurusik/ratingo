@@ -34,6 +34,7 @@ import {
 } from '../../domain/constants/evaluation.constants';
 import { InvalidRunStateTransitionError } from '../../domain/errors';
 import { RunAggregationService } from './run-aggregation.service';
+import { CatalogPolicyService } from './catalog-policy.service';
 
 export interface PrepareOptions {
   batchSize?: number; // default: 500
@@ -65,6 +66,24 @@ export interface RunStatus {
   coverage: number;
 }
 
+export interface RunListItem {
+  id: string;
+  policyId: string;
+  policyName: string;
+  status: RunStatusType;
+  progress: {
+    processed: number;
+    total: number;
+    eligible: number;
+    ineligible: number;
+    pending: number;
+    errors: number;
+  };
+  startedAt: Date;
+  finishedAt?: Date;
+  readyToPromote: boolean;
+}
+
 @Injectable()
 export class PolicyActivationService {
   private readonly logger = new Logger(PolicyActivationService.name);
@@ -79,6 +98,7 @@ export class PolicyActivationService {
     @InjectQueue(CATALOG_POLICY_QUEUE)
     private readonly catalogQueue: Queue,
     private readonly aggregationService: RunAggregationService,
+    private readonly catalogPolicyService: CatalogPolicyService,
   ) {}
 
   /**
@@ -363,5 +383,40 @@ export class PolicyActivationService {
     this.logger.log(`Cancelled run ${runId}`);
 
     return { success: true };
+  }
+
+  /**
+   * List all evaluation runs with policy names.
+   *
+   * @param options - Pagination options
+   * @returns List of runs with policy metadata
+   */
+  async listRuns(options?: { limit?: number; offset?: number }): Promise<RunListItem[]> {
+    const runs = await this.runRepository.findAll(options);
+    const policies = await this.catalogPolicyService.listAll();
+    const policyMap = new Map(policies.map((p) => [p.id, p]));
+
+    return runs.map((run) => {
+      const policy = run.targetPolicyId ? policyMap.get(run.targetPolicyId) : null;
+      const isPrepared = run.status === RunStatusEnum.PREPARED;
+
+      return {
+        id: run.id,
+        policyId: run.targetPolicyId || '',
+        policyName: policy ? `Policy v${policy.version}` : `Policy v${run.policyVersion}`,
+        status: run.status,
+        progress: {
+          processed: run.processed,
+          total: run.totalReadySnapshot,
+          eligible: run.eligible,
+          ineligible: run.ineligible,
+          pending: run.pending,
+          errors: run.errors,
+        },
+        startedAt: run.startedAt,
+        finishedAt: run.finishedAt || undefined,
+        readyToPromote: isPrepared && run.errors === 0,
+      };
+    });
   }
 }

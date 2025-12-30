@@ -7,19 +7,22 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
-  IsEnum,
   IsDate,
   IsOptional,
   IsArray,
   IsNumber,
   ValidateNested,
   IsIn,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PolicyConfigDto } from './policy-config.dto';
 import { BreakoutRuleDto } from './breakout-rule.dto';
 import { GlobalRequirementsDto } from './global-requirements.dto';
 import { ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
+import { PolicyStatus, PolicyStatusType } from '../../catalog-policy.constants';
+
+const POLICY_STATUS_VALUES = Object.values(PolicyStatus);
 
 /**
  * Policy detail DTO.
@@ -50,10 +53,10 @@ export class PolicyDetailDto {
   @ApiProperty({
     description: 'Policy status',
     example: 'active',
-    enum: ['active', 'inactive'],
+    enum: POLICY_STATUS_VALUES,
   })
-  @IsEnum(['active', 'inactive'])
-  status: string;
+  @IsIn(POLICY_STATUS_VALUES)
+  status: PolicyStatusType;
 
   @ApiProperty({
     description: 'Policy configuration',
@@ -110,10 +113,10 @@ export class PolicyDto {
   @ApiProperty({
     description: 'Policy status',
     example: 'active',
-    enum: ['active', 'inactive'],
+    enum: POLICY_STATUS_VALUES,
   })
-  @IsEnum(['active', 'inactive'])
-  status: string;
+  @IsIn(POLICY_STATUS_VALUES)
+  status: PolicyStatusType;
 
   @ApiPropertyOptional({
     description: 'Policy description',

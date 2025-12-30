@@ -106,6 +106,42 @@ export interface IAdminCatalogRepository {
 export class AdminCatalogRepository implements IAdminCatalogRepository {
   private readonly logger = new Logger(AdminCatalogRepository.name);
 
+  /**
+   * Shared select fields for media item with evaluation data.
+   * Prevents duplication across query methods.
+   */
+  private readonly selectFields = {
+    // Media item fields
+    id: schema.mediaItems.id,
+    type: schema.mediaItems.type,
+    tmdbId: schema.mediaItems.tmdbId,
+    imdbId: schema.mediaItems.imdbId,
+    title: schema.mediaItems.title,
+    originalTitle: schema.mediaItems.originalTitle,
+    slug: schema.mediaItems.slug,
+    overview: schema.mediaItems.overview,
+    posterPath: schema.mediaItems.posterPath,
+    backdropPath: schema.mediaItems.backdropPath,
+    trendingScore: schema.mediaItems.trendingScore,
+    trendingRank: schema.mediaItems.trendingRank,
+    popularity: schema.mediaItems.popularity,
+    rating: schema.mediaItems.rating,
+    releaseDate: schema.mediaItems.releaseDate,
+    originCountries: schema.mediaItems.originCountries,
+    originalLanguage: schema.mediaItems.originalLanguage,
+    ingestionStatus: schema.mediaItems.ingestionStatus,
+    createdAt: schema.mediaItems.createdAt,
+    updatedAt: schema.mediaItems.updatedAt,
+    deletedAt: schema.mediaItems.deletedAt,
+    // Evaluation fields
+    eligibilityStatus: schema.mediaCatalogEvaluations.status,
+    evaluationReasons: schema.mediaCatalogEvaluations.reasons,
+    relevanceScore: schema.mediaCatalogEvaluations.relevanceScore,
+    policyVersion: schema.mediaCatalogEvaluations.policyVersion,
+    breakoutRuleId: schema.mediaCatalogEvaluations.breakoutRuleId,
+    evaluatedAt: schema.mediaCatalogEvaluations.evaluatedAt,
+  };
+
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
@@ -129,37 +165,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
 
       // Build query
       let query = this.db
-        .select({
-          // Media item fields
-          id: schema.mediaItems.id,
-          type: schema.mediaItems.type,
-          tmdbId: schema.mediaItems.tmdbId,
-          imdbId: schema.mediaItems.imdbId,
-          title: schema.mediaItems.title,
-          originalTitle: schema.mediaItems.originalTitle,
-          slug: schema.mediaItems.slug,
-          overview: schema.mediaItems.overview,
-          posterPath: schema.mediaItems.posterPath,
-          backdropPath: schema.mediaItems.backdropPath,
-          trendingScore: schema.mediaItems.trendingScore,
-          trendingRank: schema.mediaItems.trendingRank,
-          popularity: schema.mediaItems.popularity,
-          rating: schema.mediaItems.rating,
-          releaseDate: schema.mediaItems.releaseDate,
-          originCountries: schema.mediaItems.originCountries,
-          originalLanguage: schema.mediaItems.originalLanguage,
-          ingestionStatus: schema.mediaItems.ingestionStatus,
-          createdAt: schema.mediaItems.createdAt,
-          updatedAt: schema.mediaItems.updatedAt,
-          deletedAt: schema.mediaItems.deletedAt,
-          // Evaluation fields
-          eligibilityStatus: schema.mediaCatalogEvaluations.status,
-          evaluationReasons: schema.mediaCatalogEvaluations.reasons,
-          relevanceScore: schema.mediaCatalogEvaluations.relevanceScore,
-          policyVersion: schema.mediaCatalogEvaluations.policyVersion,
-          breakoutRuleId: schema.mediaCatalogEvaluations.breakoutRuleId,
-          evaluatedAt: schema.mediaCatalogEvaluations.evaluatedAt,
-        })
+        .select(this.selectFields)
         .from(schema.mediaItems)
         .leftJoin(
           schema.mediaCatalogEvaluations,
@@ -211,37 +217,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
   async findById(id: string): Promise<MediaItemWithEvaluation | null> {
     try {
       const result = await this.db
-        .select({
-          // Media item fields
-          id: schema.mediaItems.id,
-          type: schema.mediaItems.type,
-          tmdbId: schema.mediaItems.tmdbId,
-          imdbId: schema.mediaItems.imdbId,
-          title: schema.mediaItems.title,
-          originalTitle: schema.mediaItems.originalTitle,
-          slug: schema.mediaItems.slug,
-          overview: schema.mediaItems.overview,
-          posterPath: schema.mediaItems.posterPath,
-          backdropPath: schema.mediaItems.backdropPath,
-          trendingScore: schema.mediaItems.trendingScore,
-          trendingRank: schema.mediaItems.trendingRank,
-          popularity: schema.mediaItems.popularity,
-          rating: schema.mediaItems.rating,
-          releaseDate: schema.mediaItems.releaseDate,
-          originCountries: schema.mediaItems.originCountries,
-          originalLanguage: schema.mediaItems.originalLanguage,
-          ingestionStatus: schema.mediaItems.ingestionStatus,
-          createdAt: schema.mediaItems.createdAt,
-          updatedAt: schema.mediaItems.updatedAt,
-          deletedAt: schema.mediaItems.deletedAt,
-          // Evaluation fields
-          eligibilityStatus: schema.mediaCatalogEvaluations.status,
-          evaluationReasons: schema.mediaCatalogEvaluations.reasons,
-          relevanceScore: schema.mediaCatalogEvaluations.relevanceScore,
-          policyVersion: schema.mediaCatalogEvaluations.policyVersion,
-          breakoutRuleId: schema.mediaCatalogEvaluations.breakoutRuleId,
-          evaluatedAt: schema.mediaCatalogEvaluations.evaluatedAt,
-        })
+        .select(this.selectFields)
         .from(schema.mediaItems)
         .leftJoin(
           schema.mediaCatalogEvaluations,
@@ -319,37 +295,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
       }
 
       const result = await this.db
-        .select({
-          // Media item fields
-          id: schema.mediaItems.id,
-          type: schema.mediaItems.type,
-          tmdbId: schema.mediaItems.tmdbId,
-          imdbId: schema.mediaItems.imdbId,
-          title: schema.mediaItems.title,
-          originalTitle: schema.mediaItems.originalTitle,
-          slug: schema.mediaItems.slug,
-          overview: schema.mediaItems.overview,
-          posterPath: schema.mediaItems.posterPath,
-          backdropPath: schema.mediaItems.backdropPath,
-          trendingScore: schema.mediaItems.trendingScore,
-          trendingRank: schema.mediaItems.trendingRank,
-          popularity: schema.mediaItems.popularity,
-          rating: schema.mediaItems.rating,
-          releaseDate: schema.mediaItems.releaseDate,
-          originCountries: schema.mediaItems.originCountries,
-          originalLanguage: schema.mediaItems.originalLanguage,
-          ingestionStatus: schema.mediaItems.ingestionStatus,
-          createdAt: schema.mediaItems.createdAt,
-          updatedAt: schema.mediaItems.updatedAt,
-          deletedAt: schema.mediaItems.deletedAt,
-          // Evaluation fields
-          eligibilityStatus: schema.mediaCatalogEvaluations.status,
-          evaluationReasons: schema.mediaCatalogEvaluations.reasons,
-          relevanceScore: schema.mediaCatalogEvaluations.relevanceScore,
-          policyVersion: schema.mediaCatalogEvaluations.policyVersion,
-          breakoutRuleId: schema.mediaCatalogEvaluations.breakoutRuleId,
-          evaluatedAt: schema.mediaCatalogEvaluations.evaluatedAt,
-        })
+        .select(this.selectFields)
         .from(schema.mediaItems)
         .innerJoin(
           schema.mediaCatalogEvaluations,

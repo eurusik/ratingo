@@ -18,6 +18,7 @@ import {
   Credits,
   WatchProvidersMap,
 } from '../../../ingestion/domain/models/normalized-media.model';
+import { TRENDING_GATE } from '../../catalog-policy.constants';
 
 export const PUBLIC_CATALOG_REPOSITORY = 'PUBLIC_CATALOG_REPOSITORY';
 
@@ -132,16 +133,12 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
     const limit = options?.limit ?? 20;
     const offset = options?.offset ?? 0;
 
-    // Trending gate thresholds
-    const MIN_FRESHNESS = 50; // New content (released within ~6 months)
-    const MIN_WATCHERS = 10; // Or actively being watched
-
     try {
       let query = sql`
         SELECT * FROM public_media_items
         WHERE (
-          COALESCE(freshness_score, 0) >= ${MIN_FRESHNESS}
-          OR COALESCE(watchers_count, 0) >= ${MIN_WATCHERS}
+          COALESCE(freshness_score, 0) >= ${TRENDING_GATE.MIN_FRESHNESS_SCORE}
+          OR COALESCE(watchers_count, 0) >= ${TRENDING_GATE.MIN_WATCHERS_COUNT}
         )
       `;
 

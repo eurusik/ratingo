@@ -4,19 +4,10 @@
  * Admin endpoints for evaluation run management.
  */
 
-import { Controller, Post, Get, Param, Body, Query, Inject } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import { DiffService } from '../../application/services/diff.service';
-import {
-  CATALOG_POLICY_REPOSITORY,
-  ICatalogPolicyRepository,
-} from '../../infrastructure/repositories/catalog-policy.repository';
-import {
-  CATALOG_EVALUATION_RUN_REPOSITORY,
-  ICatalogEvaluationRunRepository,
-} from '../../infrastructure/repositories/catalog-evaluation-run.repository';
-import { RunStatus } from '../../domain/constants/evaluation.constants';
 import {
   PromoteOptionsDto,
   RunStatusDto,
@@ -32,10 +23,6 @@ export class RunController {
   constructor(
     private readonly policyActivationService: PolicyActivationService,
     private readonly diffService: DiffService,
-    @Inject(CATALOG_POLICY_REPOSITORY)
-    private readonly policyRepository: ICatalogPolicyRepository,
-    @Inject(CATALOG_EVALUATION_RUN_REPOSITORY)
-    private readonly runRepository: ICatalogEvaluationRunRepository,
   ) {}
 
   /**
@@ -74,34 +61,18 @@ export class RunController {
     const limit = limitStr ? parseInt(limitStr, 10) : 20;
     const offset = offsetStr ? parseInt(offsetStr, 10) : 0;
 
-    const runs = await this.runRepository.findAll({ limit, offset });
+    const runs = await this.policyActivationService.listRuns({ limit, offset });
 
-    // Get all policies to map policy names
-    const policies = await this.policyRepository.findAll();
-    const policyMap = new Map(policies.map((p) => [p.id, p]));
-
-    const data: EvaluationRunDto[] = runs.map((run) => {
-      const policy = run.targetPolicyId ? policyMap.get(run.targetPolicyId) : null;
-      const isPrepared = run.status === RunStatus.PREPARED;
-
-      return {
-        id: run.id,
-        policyId: run.targetPolicyId || '',
-        policyName: policy ? `Policy v${policy.version}` : `Policy v${run.policyVersion}`,
-        status: run.status,
-        progress: {
-          processed: run.processed,
-          total: run.totalReadySnapshot,
-          eligible: run.eligible,
-          ineligible: run.ineligible,
-          pending: run.pending,
-          errors: run.errors,
-        },
-        startedAt: run.startedAt,
-        finishedAt: run.finishedAt || undefined,
-        readyToPromote: isPrepared && run.errors === 0,
-      };
-    });
+    const data: EvaluationRunDto[] = runs.map((run) => ({
+      id: run.id,
+      policyId: run.policyId,
+      policyName: run.policyName,
+      status: run.status,
+      progress: run.progress,
+      startedAt: run.startedAt,
+      finishedAt: run.finishedAt,
+      readyToPromote: run.readyToPromote,
+    }));
 
     return { data };
   }

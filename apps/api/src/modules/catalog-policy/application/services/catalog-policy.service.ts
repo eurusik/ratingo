@@ -53,6 +53,16 @@ export class CatalogPolicyService {
   }
 
   /**
+   * Gets a policy by ID.
+   *
+   * @param id - Policy ID
+   * @returns Policy or null if not found
+   */
+  async getById(id: string): Promise<CatalogPolicy | null> {
+    return this.policyRepository.findById(id);
+  }
+
+  /**
    * Gets a policy by version number.
    *
    * @param version - Policy version number

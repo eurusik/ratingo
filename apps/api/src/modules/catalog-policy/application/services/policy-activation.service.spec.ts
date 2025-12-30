@@ -11,6 +11,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PolicyActivationService } from './policy-activation.service';
 import { RunAggregationService } from './run-aggregation.service';
+import { CatalogPolicyService } from './catalog-policy.service';
 import { CATALOG_POLICY_REPOSITORY } from '../../infrastructure/repositories/catalog-policy.repository';
 import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../infrastructure/repositories/catalog-evaluation-run.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
@@ -24,6 +25,7 @@ describe('PolicyActivationService', () => {
   let mockQueue: any;
   let mockDb: any;
   let mockAggregationService: any;
+  let mockCatalogPolicyService: any;
 
   beforeEach(async () => {
     mockPolicyRepository = {
@@ -36,6 +38,7 @@ describe('PolicyActivationService', () => {
       create: jest.fn(),
       findById: jest.fn(),
       findByPolicyId: jest.fn(),
+      findAll: jest.fn(),
       update: jest.fn(),
       incrementCounters: jest.fn(),
       recordError: jest.fn(),
@@ -83,6 +86,12 @@ describe('PolicyActivationService', () => {
       }),
     };
 
+    mockCatalogPolicyService = {
+      listAll: jest.fn().mockResolvedValue([]),
+      getById: jest.fn(),
+      getActive: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PolicyActivationService,
@@ -91,6 +100,7 @@ describe('PolicyActivationService', () => {
         { provide: DATABASE_CONNECTION, useValue: mockDb },
         { provide: getQueueToken(CATALOG_POLICY_QUEUE), useValue: mockQueue },
         { provide: RunAggregationService, useValue: mockAggregationService },
+        { provide: CatalogPolicyService, useValue: mockCatalogPolicyService },
       ],
     }).compile();
 

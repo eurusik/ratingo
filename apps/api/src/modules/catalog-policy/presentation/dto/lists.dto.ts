@@ -8,57 +8,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsEnum, IsDate, IsBoolean, IsArray, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProgressStatsDto } from './run-status.dto';
+import { PolicyDto } from './policy.dto';
 
-/**
- * Policy DTO.
- * Basic policy information for listing.
- */
-export class PolicyDto {
-  @ApiProperty({
-    description: 'Policy ID',
-    example: 'policy-123e4567-e89b-12d3-a456-426614174000',
-  })
-  @IsString()
-  id: string;
-
-  @ApiProperty({
-    description: 'Policy name',
-    example: 'Content Filtering Policy',
-  })
-  @IsString()
-  name: string;
-
-  @ApiProperty({
-    description: 'Policy version',
-    example: '1.0',
-  })
-  @IsString()
-  version: string;
-
-  @ApiProperty({
-    description: 'Policy status',
-    example: 'active',
-    enum: ['active', 'inactive'],
-  })
-  @IsEnum(['active', 'inactive'])
-  status: string;
-
-  @ApiPropertyOptional({
-    description: 'Policy description',
-    example: 'Filters content based on quality and popularity thresholds',
-  })
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @ApiProperty({
-    description: 'When the policy was last updated',
-    example: '2024-12-20T10:00:00Z',
-  })
-  @Type(() => Date)
-  @IsDate()
-  updatedAt: Date;
-}
+// Re-export PolicyDto for convenience
+export { PolicyDto };
 
 /**
  * Evaluation run DTO.

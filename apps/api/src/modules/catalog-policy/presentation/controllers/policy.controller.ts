@@ -12,16 +12,11 @@ import {
   Body,
   HttpCode,
   HttpStatus,
-  Inject,
   NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
-import {
-  CATALOG_POLICY_REPOSITORY,
-  ICatalogPolicyRepository,
-} from '../../infrastructure/repositories/catalog-policy.repository';
 import {
   PrepareOptionsDto,
   PrepareResponseDto,
@@ -38,8 +33,6 @@ export class PolicyController {
   constructor(
     private readonly policyActivationService: PolicyActivationService,
     private readonly catalogPolicyService: CatalogPolicyService,
-    @Inject(CATALOG_POLICY_REPOSITORY)
-    private readonly policyRepository: ICatalogPolicyRepository,
   ) {}
 
   /**
@@ -58,7 +51,7 @@ export class PolicyController {
     type: PoliciesListDto,
   })
   async getPolicies(): Promise<PoliciesListDto> {
-    const policies = await this.policyRepository.findAll();
+    const policies = await this.catalogPolicyService.listAll();
 
     const data: PolicyDto[] = policies.map((p) => ({
       id: p.id,
@@ -100,7 +93,7 @@ export class PolicyController {
     description: 'Policy not found',
   })
   async getPolicyById(@Param('id') policyId: string): Promise<PolicyDetailDto> {
-    const policy = await this.policyRepository.findById(policyId);
+    const policy = await this.catalogPolicyService.getById(policyId);
 
     if (!policy) {
       throw new NotFoundException(`Policy with ID ${policyId} not found`);

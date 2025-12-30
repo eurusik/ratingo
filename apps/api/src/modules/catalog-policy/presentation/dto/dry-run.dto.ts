@@ -15,6 +15,7 @@ import {
   ValidateNested,
   Min,
   Max,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreatePolicyDto } from './index';
@@ -64,6 +65,9 @@ export class DryRunOptionsDto {
   })
   @IsOptional()
   @IsString()
+  @Matches(/^[A-Z]{2}$/, {
+    message: 'country must be a valid ISO 3166-1 alpha-2 code (e.g., US, GB, UA)',
+  })
   country?: string;
 
   @ApiPropertyOptional({
