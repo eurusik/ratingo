@@ -12,7 +12,7 @@ import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface
 import { GENRE_REPOSITORY } from './domain/repositories/genre.repository.interface';
 import { MOVIE_REPOSITORY } from './domain/repositories/movie.repository.interface';
 import { PROVIDERS_REPOSITORY } from './domain/repositories/providers.repository.interface';
-import { ProvidersRepository } from './infrastructure/repositories/providers.repository';
+import { DrizzleProvidersRepository } from './infrastructure/repositories/providers.repository';
 
 // Query Objects - Shows
 import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
@@ -30,6 +30,7 @@ import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
 
 // Query Objects - Shared
 import { GenreQuery } from './infrastructure/queries/shared/genre.query';
+import { ProvidersQuery } from './infrastructure/queries/providers.query';
 
 import { CatalogSearchService } from './application/services/catalog-search.service';
 import { CatalogImportService } from './application/services/catalog-import.service';
@@ -78,6 +79,7 @@ import { CardsModule } from '../shared/cards/cards.module';
 
     // Query Objects - Shared
     GenreQuery,
+    ProvidersQuery,
 
     // Repositories
     {
@@ -98,7 +100,7 @@ import { CardsModule } from '../shared/cards/cards.module';
     },
     {
       provide: PROVIDERS_REPOSITORY,
-      useClass: ProvidersRepository,
+      useClass: DrizzleProvidersRepository,
     },
   ],
   exports: [MEDIA_REPOSITORY, SHOW_REPOSITORY, GENRE_REPOSITORY, MOVIE_REPOSITORY],

@@ -13,7 +13,7 @@ import {
   ReleaseInfo,
 } from '../../domain/repositories/movie.repository.interface';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
-import { DatabaseTransaction } from '../../domain/types/transaction.type';
+import { DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 // Query Objects
@@ -24,10 +24,6 @@ import {
   MOVIE_LISTING_TYPE,
   ELIGIBILITY_MODE,
 } from '../queries/movie-listings.query';
-
-type DrizzleTransaction = Parameters<
-  Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]
->[0];
 
 /**
  * Movie details payload for upsert operation.
@@ -64,7 +60,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
     mediaId: string,
     details: MovieDetailsPayload,
   ): Promise<void> {
-    const drizzleTx = tx as DrizzleTransaction;
+    const drizzleTx = toDrizzleTx(tx);
     await drizzleTx
       .insert(schema.movies)
       .values(PersistenceMapper.toMovieInsert(mediaId, details))
@@ -127,9 +123,10 @@ export class DrizzleMovieRepository implements IMovieRepository {
         })
         .where(eq(schema.movies.mediaItemId, mediaItemId));
     } catch (error) {
-      this.logger.error(`Failed to update release dates: ${error.message}`, error.stack);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to update release dates: ${message}`);
       throw new DatabaseException('Failed to update release dates', {
-        originalError: error.message,
+        originalError: message,
       });
     }
   }

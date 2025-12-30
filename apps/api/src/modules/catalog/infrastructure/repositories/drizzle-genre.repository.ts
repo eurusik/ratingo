@@ -5,11 +5,11 @@ import * as schema from '../../../../database/schema';
 import { inArray } from 'drizzle-orm';
 import { DatabaseException } from '../../../../common/exceptions';
 import { IGenreRepository, GenreData } from '../../domain/repositories/genre.repository.interface';
-import { DatabaseTransaction } from '../../domain/types/transaction.type';
-
-type DrizzleTransaction = Parameters<
-  Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]
->[0];
+import {
+  DatabaseTransaction,
+  toDrizzleTx,
+  DrizzleTransaction,
+} from '../../domain/types/transaction.type';
 
 /**
  * Drizzle implementation of IGenreRepository.
@@ -31,7 +31,7 @@ export class DrizzleGenreRepository implements IGenreRepository {
   async syncGenres(tx: DatabaseTransaction, mediaId: string, genres: GenreData[]): Promise<void> {
     if (genres.length === 0) return;
 
-    const drizzleTx = tx as DrizzleTransaction;
+    const drizzleTx = toDrizzleTx(tx);
 
     try {
       // Ensure genres exist in registry
@@ -70,8 +70,9 @@ export class DrizzleGenreRepository implements IGenreRepository {
           .onConflictDoNothing();
       }
     } catch (error) {
-      this.logger.error(`Failed to sync genres for media ${mediaId}: ${error.message}`);
-      throw new DatabaseException(`Failed to sync genres: ${error.message}`, { mediaId });
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to sync genres for media ${mediaId}: ${message}`);
+      throw new DatabaseException(`Failed to sync genres: ${message}`, { mediaId });
     }
   }
 }

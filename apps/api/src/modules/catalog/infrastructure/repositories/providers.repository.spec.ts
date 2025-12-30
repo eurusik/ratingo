@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ProvidersRepository } from './providers.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import { DrizzleProvidersRepository } from './providers.repository';
+import { ProvidersQuery } from '../queries/providers.query';
 import { DatabaseException } from '../../../../common/exceptions';
 
-describe('ProvidersRepository', () => {
-  let repository: ProvidersRepository;
-  let db: any;
+describe('DrizzleProvidersRepository', () => {
+  let repository: DrizzleProvidersRepository;
+  let mockProvidersQuery: { execute: jest.Mock };
 
   const setup = (options: { resolveWith?: any[]; rejectWith?: Error } = {}) => {
-    db = {
+    mockProvidersQuery = {
       execute: jest.fn().mockImplementation(() => {
         if (options.rejectWith) {
           return Promise.reject(options.rejectWith);
@@ -18,12 +18,15 @@ describe('ProvidersRepository', () => {
     };
 
     return Test.createTestingModule({
-      providers: [ProvidersRepository, { provide: DATABASE_CONNECTION, useValue: db }],
+      providers: [
+        DrizzleProvidersRepository,
+        { provide: ProvidersQuery, useValue: mockProvidersQuery },
+      ],
     }).compile();
   };
 
   describe('findAllProviders', () => {
-    it('should return mapped providers sorted by count', async () => {
+    it('should return providers from query', async () => {
       const mockResults = [
         { id: 'netflix', name: 'Netflix', count: 150 },
         { id: 'amazon prime video', name: 'Amazon Prime Video', count: 120 },
@@ -31,65 +34,31 @@ describe('ProvidersRepository', () => {
       ];
 
       const module: TestingModule = await setup({ resolveWith: mockResults });
-      repository = module.get(ProvidersRepository);
+      repository = module.get(DrizzleProvidersRepository);
 
       const result = await repository.findAllProviders();
 
-      expect(db.execute).toHaveBeenCalledTimes(1);
+      expect(mockProvidersQuery.execute).toHaveBeenCalledTimes(1);
       expect(result).toHaveLength(3);
       expect(result[0]).toEqual({ id: 'netflix', name: 'Netflix', count: 150 });
-      expect(result[1]).toEqual({
-        id: 'amazon prime video',
-        name: 'Amazon Prime Video',
-        count: 120,
-      });
-      expect(result[2]).toEqual({ id: 'disney plus', name: 'Disney Plus', count: 80 });
     });
 
     it('should return empty array when no providers found', async () => {
       const module: TestingModule = await setup({ resolveWith: [] });
-      repository = module.get(ProvidersRepository);
+      repository = module.get(DrizzleProvidersRepository);
 
       const result = await repository.findAllProviders();
 
-      expect(db.execute).toHaveBeenCalledTimes(1);
+      expect(mockProvidersQuery.execute).toHaveBeenCalledTimes(1);
       expect(result).toEqual([]);
-    });
-
-    it('should handle providers with zero count', async () => {
-      const mockResults = [
-        { id: 'netflix', name: 'Netflix', count: 100 },
-        { id: 'hulu', name: 'Hulu', count: 0 },
-      ];
-
-      const module: TestingModule = await setup({ resolveWith: mockResults });
-      repository = module.get(ProvidersRepository);
-
-      const result = await repository.findAllProviders();
-
-      expect(result).toHaveLength(2);
-      expect(result[1].count).toBe(0);
     });
 
     it('should throw DatabaseException on query failure', async () => {
       const module: TestingModule = await setup({ rejectWith: new Error('Connection failed') });
-      repository = module.get(ProvidersRepository);
+      repository = module.get(DrizzleProvidersRepository);
 
       await expect(repository.findAllProviders()).rejects.toThrow(DatabaseException);
-      expect(db.execute).toHaveBeenCalledTimes(1);
-    });
-
-    it('should map all fields correctly from raw result', async () => {
-      const mockResults = [{ id: 'apple tv', name: 'Apple TV', count: 45 }];
-
-      const module: TestingModule = await setup({ resolveWith: mockResults });
-      repository = module.get(ProvidersRepository);
-
-      const result = await repository.findAllProviders();
-
-      expect(result[0]).toHaveProperty('id', 'apple tv');
-      expect(result[0]).toHaveProperty('name', 'Apple TV');
-      expect(result[0]).toHaveProperty('count', 45);
+      expect(mockProvidersQuery.execute).toHaveBeenCalledTimes(1);
     });
   });
 });

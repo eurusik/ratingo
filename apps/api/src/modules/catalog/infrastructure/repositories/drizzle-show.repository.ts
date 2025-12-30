@@ -15,7 +15,7 @@ import {
 import type { WithTotal } from '../../domain/types/query.types';
 import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
-import { DatabaseTransaction } from '../../domain/types/transaction.type';
+import { DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
 import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
@@ -23,10 +23,6 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
-
-type DrizzleTransaction = Parameters<
-  Parameters<PostgresJsDatabase<typeof schema>['transaction']>[0]
->[0];
 
 /**
  * Show details payload for upsert operation.
@@ -64,7 +60,7 @@ export class DrizzleShowRepository implements IShowRepository {
     mediaId: string,
     details: ShowDetailsPayload,
   ): Promise<void> {
-    const drizzleTx = tx as DrizzleTransaction;
+    const drizzleTx = toDrizzleTx(tx);
     const [show] = await drizzleTx
       .insert(schema.shows)
       .values(PersistenceMapper.toShowInsert(mediaId, details))
@@ -121,12 +117,10 @@ export class DrizzleShowRepository implements IShowRepository {
           ),
         );
     } catch (error) {
-      this.logger.error(
-        `Failed to save drop-off analysis for ${tmdbId}: ${error.message}`,
-        error.stack,
-      );
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to save drop-off analysis for ${tmdbId}: ${message}`);
       throw new DatabaseException(`Failed to save drop-off analysis for ${tmdbId}`, {
-        originalError: error.message,
+        originalError: message,
       });
     }
   }
@@ -169,9 +163,10 @@ export class DrizzleShowRepository implements IShowRepository {
 
       return shows;
     } catch (error) {
-      this.logger.error(`Failed to find shows for analysis: ${error.message}`, error.stack);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to find shows for analysis: ${message}`);
       throw new DatabaseException('Failed to fetch shows for analysis', {
-        originalError: error.message,
+        originalError: message,
       });
     }
   }
@@ -190,12 +185,10 @@ export class DrizzleShowRepository implements IShowRepository {
 
       return result[0]?.dropOffAnalysis || null;
     } catch (error) {
-      this.logger.error(
-        `Failed to get drop-off analysis for ${tmdbId}: ${error.message}`,
-        error.stack,
-      );
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to get drop-off analysis for ${tmdbId}: ${message}`);
       throw new DatabaseException(`Failed to get drop-off analysis for ${tmdbId}`, {
-        originalError: error.message,
+        originalError: message,
       });
     }
   }
