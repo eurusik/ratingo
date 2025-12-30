@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import slugify from 'slugify';
 import {
   IMediaRepository,
   MEDIA_REPOSITORY,
@@ -11,6 +10,15 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
 import { ImportStatus, ImportResult } from '../../domain/types/import.types';
+import { generateSlug } from '../../domain/utils/slug.utils';
+
+/**
+ * Maps MediaType to corresponding IngestionJob.
+ */
+const MEDIA_TYPE_TO_JOB: Record<MediaType, IngestionJob> = {
+  [MediaType.MOVIE]: IngestionJob.SYNC_MOVIE,
+  [MediaType.SHOW]: IngestionJob.SYNC_SHOW,
+};
 
 /**
  * Service for on-demand import of media from TMDB.
@@ -66,11 +74,7 @@ export class CatalogImportService {
       };
     }
 
-    const slug = slugify(media.title || `tmdb-${tmdbId}`, {
-      lower: true,
-      strict: true,
-      locale: 'uk',
-    });
+    const slug = generateSlug(media.title, tmdbId);
 
     // Create stub
     const stub = await this.mediaRepository.upsertStub({
@@ -82,7 +86,7 @@ export class CatalogImportService {
     });
 
     // Queue for full sync
-    const jobName = type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
+    const jobName = MEDIA_TYPE_TO_JOB[type];
     const job = await this.ingestionQueue.add(jobName, { tmdbId });
 
     this.logger.log(`Queued import for ${type} ${tmdbId}: ${media.title} (job: ${job.id})`);

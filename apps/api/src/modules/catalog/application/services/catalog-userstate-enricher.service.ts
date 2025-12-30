@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UserMediaService } from '../../../user-media/application/user-media.service';
-import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
-
-type WithId<T> = T & { id: string; userState?: UserMediaState | null };
+import type { WithUserState, Identifiable } from '../../domain/types/enrichment.types';
 
 /**
  * Application-level enricher for attaching user-specific media state.
@@ -15,10 +13,10 @@ export class CatalogUserStateEnricher {
   /**
    * Enriches a list of items with userState in one batch (no N+1).
    */
-  async enrichList<T extends { id: string }>(
+  async enrichList<T extends Identifiable>(
     userId: string | null | undefined,
-    items: WithId<T>[],
-  ): Promise<WithId<T>[]> {
+    items: WithUserState<T>[],
+  ): Promise<WithUserState<T>[]> {
     if (!userId || !items.length) {
       return items.map((i) => ({ ...i, userState: null }));
     }
@@ -36,10 +34,10 @@ export class CatalogUserStateEnricher {
   /**
    * Enriches a single item with userState.
    */
-  async enrichOne<T extends { id: string }>(
+  async enrichOne<T extends Identifiable>(
     userId: string | null | undefined,
-    item: WithId<T>,
-  ): Promise<WithId<T>> {
+    item: WithUserState<T>,
+  ): Promise<WithUserState<T>> {
     if (!userId) {
       return { ...item, userState: null };
     }

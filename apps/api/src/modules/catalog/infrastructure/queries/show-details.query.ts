@@ -10,6 +10,7 @@ import { ImageMapper } from '../mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { GenreQuery } from './shared/genre.query';
 
 /**
  * Fetches complete TV show details by slug.
@@ -22,11 +23,14 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 @Injectable()
 export class ShowDetailsQuery {
   private readonly logger = new Logger(ShowDetailsQuery.name);
+  private readonly genreQuery: GenreQuery;
 
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
-  ) {}
+  ) {
+    this.genreQuery = new GenreQuery(db);
+  }
 
   /**
    * Executes the show details query.
@@ -96,7 +100,7 @@ export class ShowDetailsQuery {
       const show = result[0];
 
       const [genres, seasons] = await Promise.all([
-        this.fetchGenres(show.id),
+        this.genreQuery.fetchForMediaItem(show.id),
         show.showId ? this.fetchSeasons(show.showId) : Promise.resolve([]),
       ]);
 
@@ -152,21 +156,6 @@ export class ShowDetailsQuery {
       this.logger.error(`Failed to find show by slug ${slug}: ${error.message}`, error.stack);
       throw new DatabaseException(`Failed to fetch show ${slug}`, { originalError: error.message });
     }
-  }
-
-  /**
-   * Fetches genres for a media item.
-   */
-  private async fetchGenres(mediaItemId: string) {
-    return this.db
-      .select({
-        id: schema.genres.id,
-        name: schema.genres.name,
-        slug: schema.genres.slug,
-      })
-      .from(schema.genres)
-      .innerJoin(schema.mediaGenres, eq(schema.genres.id, schema.mediaGenres.genreId))
-      .where(eq(schema.mediaGenres.mediaItemId, mediaItemId));
   }
 
   /**

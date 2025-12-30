@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogMoviesController } from './catalog.movies.controller';
 import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
+import { MovieDetailsService } from '../../application/services/movie-details.service';
 import { NotFoundException } from '@nestjs/common';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 
@@ -10,6 +11,7 @@ describe('CatalogMoviesController', () => {
   let movieRepository: any;
   let userStateEnricher: any;
   let cards: any;
+  let movieDetailsService: any;
 
   beforeEach(async () => {
     const mockMovieRepository = {
@@ -42,12 +44,17 @@ describe('CatalogMoviesController', () => {
       })),
     };
 
+    const mockMovieDetailsService = {
+      getBySlug: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CatalogMoviesController],
       providers: [
         { provide: MOVIE_REPOSITORY, useValue: mockMovieRepository },
         { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
         { provide: CardEnrichmentService, useValue: mockCards },
+        { provide: MovieDetailsService, useValue: mockMovieDetailsService },
       ],
     }).compile();
 
@@ -55,6 +62,7 @@ describe('CatalogMoviesController', () => {
     movieRepository = module.get(MOVIE_REPOSITORY);
     userStateEnricher = module.get(CatalogUserStateEnricher);
     cards = module.get(CardEnrichmentService);
+    movieDetailsService = module.get(MovieDetailsService);
   });
 
   describe('getTrendingMovies', () => {
@@ -98,11 +106,15 @@ describe('CatalogMoviesController', () => {
 
   describe('getMovieBySlug', () => {
     it('returns details with card when found', async () => {
-      const mockMovie = {
+      const mockResult = {
         id: '1',
         title: 'Matrix',
         slug: 'the-matrix',
         releaseDate: null,
+        userState: null,
+        card: { badgeKey: null },
+        releaseStatus: 'released',
+        verdict: { type: 'general', hintKey: 'test', messageKey: 'test' },
         externalRatings: {
           imdb: null,
           tmdb: null,
@@ -111,30 +123,35 @@ describe('CatalogMoviesController', () => {
           rottenTomatoes: null,
         },
       };
-      movieRepository.findBySlug.mockResolvedValue(mockMovie);
+      movieDetailsService.getBySlug.mockResolvedValue(mockResult);
 
       const result = await controller.getMovieBySlug('the-matrix');
 
-      expect(movieRepository.findBySlug).toHaveBeenCalledWith('the-matrix');
+      expect(movieDetailsService.getBySlug).toHaveBeenCalledWith('the-matrix', undefined);
       expect(result.id).toBe('1');
       expect(result.userState).toBeNull();
       expect(result.card).toBeDefined();
-      expect(result.card.badgeKey).toBeNull(); // No badge for default context without signals
+      expect(result.card.badgeKey).toBeNull();
     });
 
     it('throws NotFoundException when not found', async () => {
-      movieRepository.findBySlug.mockResolvedValue(null);
+      movieDetailsService.getBySlug.mockRejectedValue(
+        new NotFoundException('Movie with slug "unknown" not found'),
+      );
       await expect(controller.getMovieBySlug('unknown')).rejects.toThrow(NotFoundException);
     });
 
     it('returns verdict computed from movie data', async () => {
-      const mockMovie = {
+      const mockResult = {
         id: '1',
         title: 'Good Movie',
         slug: 'good-movie',
         releaseDate: new Date('2024-01-01'),
         theatricalReleaseDate: new Date('2024-01-01'),
         digitalReleaseDate: new Date('2024-06-01'),
+        userState: null,
+        card: { badgeKey: null },
+        releaseStatus: 'released',
         stats: {
           ratingoScore: 75,
           qualityScore: 70,
@@ -147,8 +164,9 @@ describe('CatalogMoviesController', () => {
           metacritic: null,
           rottenTomatoes: null,
         },
+        verdict: { type: 'quality', hintKey: 'highRatingo', messageKey: 'highRatingo' },
       };
-      movieRepository.findBySlug.mockResolvedValue(mockMovie);
+      movieDetailsService.getBySlug.mockResolvedValue(mockResult);
 
       const result = await controller.getMovieBySlug('good-movie');
 
@@ -161,25 +179,29 @@ describe('CatalogMoviesController', () => {
     });
 
     it('returns warning verdict for low-rated movie with confident votes', async () => {
-      const mockMovie = {
+      const mockResult = {
         id: '1',
         title: 'Bad Movie',
         slug: 'bad-movie',
         releaseDate: new Date('2024-01-01'),
+        userState: null,
+        card: { badgeKey: null },
+        releaseStatus: 'released',
         stats: {
           ratingoScore: 35,
           qualityScore: 30,
           popularityScore: 20,
         },
         externalRatings: {
-          imdb: { rating: 4.5, voteCount: 500 }, // >= 200 for confidence
+          imdb: { rating: 4.5, voteCount: 500 },
           tmdb: null,
           trakt: null,
           metacritic: null,
           rottenTomatoes: null,
         },
+        verdict: { type: 'warning', hintKey: 'poorRatings', messageKey: 'poorRatings' },
       };
-      movieRepository.findBySlug.mockResolvedValue(mockMovie);
+      movieDetailsService.getBySlug.mockResolvedValue(mockResult);
 
       const result = await controller.getMovieBySlug('bad-movie');
 
@@ -189,14 +211,17 @@ describe('CatalogMoviesController', () => {
 
     it('returns releaseStatus computed from dates', async () => {
       const now = new Date();
-      const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
-      const mockMovie = {
+      const futureDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const mockResult = {
         id: '1',
         title: 'Upcoming Movie',
         slug: 'upcoming-movie',
         releaseDate: futureDate,
         theatricalReleaseDate: futureDate,
         digitalReleaseDate: null,
+        userState: null,
+        card: { badgeKey: null },
+        releaseStatus: 'upcoming',
         stats: { ratingoScore: null },
         externalRatings: {
           imdb: null,
@@ -205,8 +230,9 @@ describe('CatalogMoviesController', () => {
           metacritic: null,
           rottenTomatoes: null,
         },
+        verdict: { type: 'release', hintKey: 'upcoming', messageKey: 'upcoming' },
       };
-      movieRepository.findBySlug.mockResolvedValue(mockMovie);
+      movieDetailsService.getBySlug.mockResolvedValue(mockResult);
 
       const result = await controller.getMovieBySlug('upcoming-movie');
 

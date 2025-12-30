@@ -10,12 +10,11 @@ import {
   NowPlayingOptions,
   TrendingMovieItem,
   WithTotal,
+  ReleaseInfo,
 } from '../../domain/repositories/movie.repository.interface';
-import { ReleaseInfo } from '../../../../database/schema';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { DatabaseTransaction } from '../../domain/types/transaction.type';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { CatalogListQueryDto } from '../../presentation/dtos/catalog-list-query.dto';
 
 // Query Objects
 import { MovieDetailsQuery } from '../queries/movie-details.query';
@@ -141,7 +140,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
   }
 
   /** Finds trending movies sorted by popularity and rating. */
-  async findTrending(options: CatalogListQueryDto): Promise<WithTotal<TrendingMovieItem>> {
+  async findTrending(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>> {
     const normalized = { ...options, genres: this.normalizeGenres(options.genres) };
     return this.trendingMoviesQuery.execute(normalized) as unknown as WithTotal<TrendingMovieItem>;
   }

@@ -268,6 +268,7 @@ export class HeroMediaQuery {
         stats: {
           ratingoScore: item.ratingoScore,
           qualityScore: item.qualityScore,
+          popularityScore: null,
           liveWatchers: item.watchersCount,
           totalWatchers: item.totalWatchers,
         },

@@ -9,6 +9,8 @@ import { ImageMapper } from '../mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { MovieDetails } from '../../domain/repositories/movie.repository.interface';
+import { GenreQuery } from './shared/genre.query';
 
 /**
  * Fetches complete movie details by slug.
@@ -21,11 +23,14 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 @Injectable()
 export class MovieDetailsQuery {
   private readonly logger = new Logger(MovieDetailsQuery.name);
+  private readonly genreQuery: GenreQuery;
 
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
-  ) {}
+  ) {
+    this.genreQuery = new GenreQuery(db);
+  }
 
   /**
    * Executes the movie details query.
@@ -33,10 +38,10 @@ export class MovieDetailsQuery {
    * Detail pages should be accessible for all content.
    *
    * @param {string} slug - URL-friendly movie identifier
-   * @returns {Promise<any | null>} Full movie details or null if not found
+   * @returns {Promise<MovieDetails | null>} Full movie details or null if not found
    * @throws {DatabaseException} When database query fails
    */
-  async execute(slug: string): Promise<any | null> {
+  async execute(slug: string): Promise<MovieDetails | null> {
     try {
       const result = await this.db
         .select({
@@ -93,7 +98,7 @@ export class MovieDetailsQuery {
       if (result.length === 0) return null;
       const movie = result[0];
 
-      const genres = await this.fetchGenres(movie.id);
+      const genres = await this.genreQuery.fetchForMediaItem(movie.id);
 
       return {
         id: movie.id,
@@ -102,7 +107,7 @@ export class MovieDetailsQuery {
         originalTitle: movie.originalTitle,
         slug: movie.slug,
         overview: movie.overview,
-        ingestionStatus: movie.ingestionStatus,
+        ingestionStatus: movie.ingestionStatus as IngestionStatus,
         poster: ImageMapper.toPoster(movie.posterPath),
         backdrop: ImageMapper.toBackdrop(movie.backdropPath),
         releaseDate: movie.releaseDate ?? movie.theatricalReleaseDate ?? null,
@@ -147,20 +152,5 @@ export class MovieDetailsQuery {
         originalError: error.message,
       });
     }
-  }
-
-  /**
-   * Fetches genres for a media item.
-   */
-  private async fetchGenres(mediaItemId: string) {
-    return this.db
-      .select({
-        id: schema.genres.id,
-        name: schema.genres.name,
-        slug: schema.genres.slug,
-      })
-      .from(schema.genres)
-      .innerJoin(schema.mediaGenres, eq(schema.genres.id, schema.mediaGenres.genreId))
-      .where(eq(schema.mediaGenres.mediaItemId, mediaItemId));
   }
 }

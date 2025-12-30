@@ -1,12 +1,12 @@
 import {
   Credits,
-  CastMember,
-  CrewMember,
+  CastMember as TmdbCastMember,
+  CrewMember as TmdbCrewMember,
 } from '../../../ingestion/domain/models/normalized-media.model';
-import { CreditsDto, CastMemberDto, CrewMemberDto } from '../../presentation/dtos/common.dto';
+import type { CreditsData, CastMember, CrewMember } from '../../domain/types/common.types';
 
 export class CreditsMapper {
-  static toDto(credits: Credits | null): CreditsDto | null {
+  static toDto(credits: Credits | null): CreditsData | null {
     if (!credits) return null;
 
     return {
@@ -15,7 +15,7 @@ export class CreditsMapper {
     };
   }
 
-  private static mapCastMember(member: CastMember): CastMemberDto {
+  private static mapCastMember(member: TmdbCastMember): CastMember {
     return {
       tmdbId: member.tmdbId,
       personId: `tmdb:${member.tmdbId}`,
@@ -27,7 +27,7 @@ export class CreditsMapper {
     };
   }
 
-  private static mapCrewMember(member: CrewMember): CrewMemberDto {
+  private static mapCrewMember(member: TmdbCrewMember): CrewMember {
     return {
       tmdbId: member.tmdbId,
       personId: `tmdb:${member.tmdbId}`,

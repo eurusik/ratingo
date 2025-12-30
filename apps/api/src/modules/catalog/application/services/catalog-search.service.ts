@@ -7,6 +7,7 @@ import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { SearchResponseDto, SearchItemDto, SearchSource } from '../../presentation/dtos/search.dto';
 import { ImageMapper } from '../../infrastructure/mappers/image.mapper';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { SEARCH_CONFIG } from '../../domain/constants/catalog.constants';
 
 /**
  * Orchestrates search across local database and TMDB.
@@ -15,8 +16,6 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 @Injectable()
 export class CatalogSearchService {
   private readonly logger = new Logger(CatalogSearchService.name);
-  private readonly SEARCH_RESULTS_LIMIT = 10;
-  private readonly MIN_QUERY_LENGTH = 2;
 
   constructor(
     @Inject(MEDIA_REPOSITORY)
@@ -31,14 +30,14 @@ export class CatalogSearchService {
    * @returns {Promise<SearchResponseDto>} Combined search results split by source
    */
   async search(query: string): Promise<SearchResponseDto> {
-    if (!query || query.trim().length < this.MIN_QUERY_LENGTH) {
+    if (!query || query.trim().length < SEARCH_CONFIG.MIN_QUERY_LENGTH) {
       return { query, local: [], tmdb: [] };
     }
 
     try {
       // Parallel search
       const [localResults, tmdbResultsRaw] = await Promise.all([
-        this.mediaRepository.search(query, this.SEARCH_RESULTS_LIMIT),
+        this.mediaRepository.search(query, SEARCH_CONFIG.RESULTS_LIMIT),
         this.tmdbAdapter.searchMulti(query, 1),
       ]);
 
@@ -75,8 +74,7 @@ export class CatalogSearchService {
           rating: r.rating || 0,
           isImported: false,
         }))
-        // Limit TMDB results to avoid overwhelming the client
-        .slice(0, 10);
+        .slice(0, SEARCH_CONFIG.RESULTS_LIMIT);
 
       return {
         query,

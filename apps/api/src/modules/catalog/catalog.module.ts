@@ -31,6 +31,7 @@ import { MovieListingsQuery } from './infrastructure/queries/movie-listings.quer
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
 import { CatalogSearchService } from './application/services/catalog-search.service';
 import { CatalogImportService } from './application/services/catalog-import.service';
+import { MovieDetailsService } from './application/services/movie-details.service';
 import { TmdbModule } from '../tmdb/tmdb.module';
 import { BullModule } from '@nestjs/bullmq';
 import { INGESTION_QUEUE } from '../ingestion/ingestion.constants';
@@ -58,6 +59,7 @@ import { CardsModule } from '../shared/cards/cards.module';
     CatalogSearchService,
     CatalogImportService,
     CatalogUserStateEnricher,
+    MovieDetailsService,
     // Query Objects - Shows
     TrendingShowsQuery,
     ShowDetailsQuery,

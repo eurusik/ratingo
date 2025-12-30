@@ -1,16 +1,7 @@
-import {
-  Controller,
-  Get,
-  Inject,
-  Param,
-  Query,
-  UseGuards,
-  NotFoundException,
-} from '@nestjs/common';
+import { Controller, Get, Inject, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   IMovieRepository,
-  MovieDetails,
   MOVIE_REPOSITORY,
 } from '../../domain/repositories/movie.repository.interface';
 import { MovieResponseDto } from '../dtos/movie-response.dto';
@@ -18,6 +9,10 @@ import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto'
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
+import {
+  MovieDetailsService,
+  EnrichedMovieDetails,
+} from '../../application/services/movie-details.service';
 import { TrendingMoviesResponseDto } from '../dtos/trending.dto';
 import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
 import { CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-days.dto';
@@ -25,18 +20,12 @@ import { CardEnrichmentService } from '../../../shared/cards/application/card-en
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import { normalizeListQuery } from '../utils/query-normalizer';
-import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
-import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
-import { computeReleaseStatus } from '../../domain/utils/release-status.utils';
-import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import { computeMovieVerdict, MovieVerdict, RATING_SOURCE } from '../../../shared/verdict';
 import {
   CATALOG_DEFAULT_LIMIT,
   CATALOG_DEFAULT_OFFSET,
   CATALOG_DEFAULT_NEW_RELEASE_DAYS,
   CATALOG_DEFAULT_DIGITAL_DAYS,
 } from '../../../../common/constants';
-import { getBestRating, isNewRelease } from '../../../../common/utils/media.utils';
 
 /**
  * Public movie catalog endpoints (trending, listings, details).
@@ -53,6 +42,7 @@ export class CatalogMoviesController {
     private readonly movieRepository: IMovieRepository,
     private readonly userStateEnricher: CatalogUserStateEnricher,
     private readonly cards: CardEnrichmentService,
+    private readonly movieDetailsService: MovieDetailsService,
   ) {}
 
   /**
@@ -230,7 +220,7 @@ export class CatalogMoviesController {
    *
    * @param {string} slug - Movie slug
    * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<MovieResponseDto>} Movie details enriched with user state
+   * @returns {Promise<EnrichedMovieDetails>} Movie details enriched with user state
    */
   @Get(':slug')
   @ApiOperation({
@@ -241,55 +231,8 @@ export class CatalogMoviesController {
   async getMovieBySlug(
     @Param('slug') slug: string,
     @CurrentUser() user?: { id: string } | null,
-  ): Promise<
-    MovieDetails & {
-      userState: UserMediaState | null;
-      releaseStatus: ReleaseStatus;
-      verdict: MovieVerdict;
-    }
-  > {
-    const movie = await this.movieRepository.findBySlug(slug);
-    if (!movie) throw new NotFoundException(`Movie with slug "${slug}" not found`);
-    const enriched = await this.catalogUserOneEnrich(user, movie);
-
-    // Build card metadata for details page
-    const card = buildCardMeta(
-      {
-        hasUserEntry: Boolean(enriched.userState),
-        userState: enriched.userState?.state ?? null,
-        continuePoint: extractContinuePoint(enriched.userState?.progress ?? null),
-        hasNewEpisode: false, // Movies don't have episodes
-        isNewRelease: isNewRelease(movie.releaseDate),
-        isHit: isHitQuality(movie.externalRatings),
-        trendDelta: null,
-        isTrending: false,
-      },
-      CARD_LIST_CONTEXT.DEFAULT,
-    );
-
-    // Compute release status on the backend
-    const releaseStatus = computeReleaseStatus(
-      movie.releaseDate,
-      movie.theatricalReleaseDate,
-      movie.digitalReleaseDate,
-    );
-
-    // Compute verdict for details page
-    const ratings = movie.externalRatings;
-    const { rating: bestRating, source: bestRatingSource } = getBestRating(ratings);
-
-    const verdict = computeMovieVerdict({
-      releaseStatus,
-      ratingoScore: movie.stats?.ratingoScore ?? null,
-      avgRating: bestRating?.rating ?? null,
-      voteCount: bestRating?.voteCount ?? null,
-      ratingSource: bestRatingSource,
-      badgeKey: card?.badgeKey ?? null,
-      popularity: movie.stats?.popularityScore ?? null,
-      releaseDate: movie.releaseDate ?? null,
-    });
-
-    return { ...enriched, card, releaseStatus, verdict };
+  ): Promise<EnrichedMovieDetails> {
+    return this.movieDetailsService.getBySlug(slug, user?.id);
   }
 
   /**

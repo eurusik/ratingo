@@ -1,18 +1,15 @@
 import {
   WatchProvidersMap,
-  WatchProvider,
+  WatchProvider as TmdbWatchProvider,
   WatchProviderRegion,
 } from '../../../ingestion/domain/models/normalized-media.model';
-import {
-  WatchProviderRegionDto,
-  WatchProviderDto,
-  AvailabilityDto,
-} from '../../presentation/dtos/common.dto';
+import type { AvailabilityData, WatchProvider } from '../../domain/types/common.types';
+import { WatchProviderRegionDto } from '../../presentation/dtos/common.dto';
 import { ImageMapper } from './image.mapper';
 
 export class WatchProvidersMapper {
   /**
-   * Maps watch providers to AvailabilityDto with region fallback logic.
+   * Maps watch providers to AvailabilityData with region fallback logic.
    * Priority: UA > US
    *
    * Frontend can use:
@@ -20,7 +17,7 @@ export class WatchProvidersMapper {
    * - isFallback: true if UA unavailable and using US
    * - stream/rent/buy: provider lists to render
    */
-  static toAvailability(map: WatchProvidersMap | null | undefined): AvailabilityDto | null {
+  static toAvailability(map: WatchProvidersMap | null | undefined): AvailabilityData | null {
     if (!map) return null;
 
     const ua = map['UA'];
@@ -52,7 +49,7 @@ export class WatchProvidersMapper {
     if (!map) return null;
     const result: Record<string, WatchProviderRegionDto> = {};
     for (const [country, region] of Object.entries(map)) {
-      result[country] = this.mapRegion(region);
+      result[country] = this.mapRegionDto(region);
     }
     return result;
   }
@@ -63,12 +60,12 @@ export class WatchProvidersMapper {
 
     const ua = map['UA'];
     if (this.hasProviders(ua)) {
-      return this.mapRegion(ua);
+      return this.mapRegionDto(ua);
     }
 
     const us = map['US'];
     if (this.hasProviders(us)) {
-      return this.mapRegion(us);
+      return this.mapRegionDto(us);
     }
 
     return null;
@@ -85,7 +82,9 @@ export class WatchProvidersMapper {
     );
   }
 
-  private static mapRegion(region: WatchProviderRegion): WatchProviderRegionDto {
+  private static mapRegion(
+    region: WatchProviderRegion,
+  ): Omit<AvailabilityData, 'region' | 'isFallback'> {
     return {
       link: region.link,
       stream: region.flatrate?.map(this.mapProvider),
@@ -96,11 +95,22 @@ export class WatchProvidersMapper {
     };
   }
 
-  private static mapProvider = (p: WatchProvider): WatchProviderDto => {
+  private static mapRegionDto(region: WatchProviderRegion): WatchProviderRegionDto {
+    return {
+      link: region.link,
+      stream: region.flatrate?.map(this.mapProvider),
+      rent: region.rent?.map(this.mapProvider),
+      buy: region.buy?.map(this.mapProvider),
+      ads: region.ads?.map(this.mapProvider),
+      free: region.free?.map(this.mapProvider),
+    };
+  }
+
+  private static mapProvider = (p: TmdbWatchProvider): WatchProvider => {
     return {
       providerId: p.providerId,
       name: p.name,
-      logo: ImageMapper.toPoster(p.logoPath), // Reusing poster logic for logos
+      logo: ImageMapper.toPoster(p.logoPath),
       displayPriority: p.displayPriority,
     };
   };

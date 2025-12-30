@@ -1,15 +1,26 @@
-import { ReleaseInfo, Video } from '../../../../database/schema';
-import { CreditsDto, ImageDto, AvailabilityDto } from '../../presentation/dtos/common.dto';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
-import {
-  CatalogListQueryDto,
-  CatalogSort,
-  SortOrder,
-  VoteSource,
-} from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import type { CardMeta } from '../../../shared/cards/domain/card.types';
 import { DatabaseTransaction } from '../types/transaction.type';
+import type {
+  ImageData,
+  VideoData,
+  CreditsData,
+  AvailabilityData,
+  GenreInfo,
+  RatingoStats,
+  ExternalRatings,
+} from '../types/common.types';
+
+/**
+ * Release info for movies (theatrical/digital releases by region).
+ */
+export interface ReleaseInfo {
+  country: string;
+  type: number;
+  date: string;
+  certification?: string;
+}
 
 /**
  * Movie with media item data for catalog queries.
@@ -22,33 +33,20 @@ export interface MovieWithMedia {
   slug: string;
   overview: string | null;
   ingestionStatus: IngestionStatus;
-  poster?: ImageDto | null;
-  backdrop?: ImageDto | null;
+  poster: ImageData | null;
+  backdrop: ImageData | null;
   popularity: number;
   releaseDate: Date | null;
-  videos?: Video[] | null;
+  videos: VideoData[] | null;
 
-  stats: {
-    ratingoScore: number | null;
-    qualityScore: number | null;
-    popularityScore: number | null;
-    liveWatchers: number | null;
-    totalWatchers: number | null;
-  };
-
-  externalRatings: {
-    tmdb: { rating: number; voteCount?: number | null } | null;
-    imdb: { rating: number; voteCount?: number | null } | null;
-    trakt: { rating: number; voteCount?: number | null } | null;
-    metacritic: { rating: number; voteCount?: number | null } | null;
-    rottenTomatoes: { rating: number; voteCount?: number | null } | null;
-  };
+  stats: RatingoStats;
+  externalRatings: ExternalRatings;
 
   theatricalReleaseDate: Date | null;
   digitalReleaseDate: Date | null;
   runtime: number | null;
 
-  genres: Array<{ id: string; name: string; slug: string }>;
+  genres: GenreInfo[];
 }
 
 /**
@@ -63,6 +61,22 @@ export type TrendingMovieItem = MovieWithMedia & {
   isNew: boolean;
   isClassic: boolean;
 };
+
+/**
+ * Sort options for catalog queries.
+ * Using string literals to match presentation layer DTO.
+ */
+export type CatalogSort = 'trending' | 'popularity' | 'ratingo' | 'releaseDate' | 'tmdbPopularity';
+
+/**
+ * Sort order.
+ */
+export type SortOrder = 'asc' | 'desc';
+
+/**
+ * Vote source for filtering.
+ */
+export type VoteSource = 'tmdb' | 'trakt';
 
 /**
  * Options for now playing query.
@@ -85,7 +99,7 @@ export interface NowPlayingOptions {
 }
 
 /**
- * Movie details.
+ * Movie details - full information for detail page.
  */
 export interface MovieDetails {
   id: string;
@@ -95,38 +109,24 @@ export interface MovieDetails {
   slug: string;
   overview: string | null;
   ingestionStatus: IngestionStatus;
-  poster?: ImageDto | null;
-  backdrop?: ImageDto | null;
+  poster: ImageData | null;
+  backdrop: ImageData | null;
   releaseDate: Date | null;
   theatricalReleaseDate: Date | null;
   digitalReleaseDate: Date | null;
-  videos?: Video[] | null;
-  primaryTrailer?: Video | null;
-  credits?: CreditsDto | null;
-  availability?: AvailabilityDto | null;
-
-  stats: {
-    ratingoScore: number | null;
-    qualityScore: number | null;
-    popularityScore: number | null;
-    liveWatchers: number | null;
-    totalWatchers: number | null;
-  };
-
-  externalRatings: {
-    tmdb: { rating: number; voteCount?: number | null } | null;
-    imdb: { rating: number; voteCount?: number | null } | null;
-    trakt: { rating: number; voteCount?: number | null } | null;
-    metacritic: { rating: number; voteCount?: number | null } | null;
-    rottenTomatoes: { rating: number; voteCount?: number | null } | null;
-  };
+  videos: VideoData[] | null;
+  primaryTrailer: VideoData | null;
+  credits: CreditsData | null;
+  availability: AvailabilityData | null;
 
   runtime: number | null;
   budget: number | null;
   revenue: number | null;
   status: MovieStatus | null;
 
-  genres: Array<{ id: string; name: string; slug: string }>;
+  stats: RatingoStats;
+  externalRatings: ExternalRatings;
+  genres: GenreInfo[];
 
   card?: CardMeta;
 }
@@ -137,54 +137,31 @@ export interface MovieDetails {
 export interface IMovieRepository {
   /**
    * Finds movies currently in theaters (isNowPlaying = true).
-   * Data is synced from TMDB /movie/now_playing endpoint.
-   *
-   * @param {NowPlayingOptions} options - Query options
-   * @returns {Promise<MovieWithMedia[]>} Movies list
    */
   findNowPlaying(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds movies recently released in theaters.
-   * Uses theatricalReleaseDate within the specified period.
-   *
-   * @param {NowPlayingOptions} options - Query options
-   * @returns {Promise<MovieWithMedia[]>} Movies list
    */
   findNewReleases(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds movies recently released on digital platforms.
-   * Returns movies with digital release in the last N days.
-   *
-   * @param {NowPlayingOptions} options - Query options
-   * @returns {Promise<MovieWithMedia[]>} Movies list
    */
   findNewOnDigital(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds trending movies sorted by popularity and rating.
-   *
-   * @param {CatalogListQueryDto} options - List query
-   * @returns {Promise<WithTotal<TrendingMovieItem>>} Movies list
    */
-  findTrending(options: CatalogListQueryDto): Promise<WithTotal<TrendingMovieItem>>;
+  findTrending(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>>;
 
   /**
    * Sets isNowPlaying flag for movies.
-   * Called by SYNC_NOW_PLAYING job.
-   *
-   * @param {number[]} tmdbIds - TMDB IDs of movies currently playing
-   * @returns {Promise<void>} Nothing
    */
   setNowPlaying(tmdbIds: number[]): Promise<void>;
 
   /**
    * Updates release dates for a movie.
-   *
-   * @param {string} mediaItemId - Media item id
-   * @param {{ theatricalReleaseDate?: Date | null; digitalReleaseDate?: Date | null; releases?: ReleaseInfo[] }} data - Release dates payload
-   * @returns {Promise<void>} Nothing
    */
   updateReleaseDates(
     mediaItemId: string,
@@ -197,11 +174,6 @@ export interface IMovieRepository {
 
   /**
    * Upserts movie details transactionally.
-   *
-   * @param {DatabaseTransaction} tx - Transaction handle
-   * @param {string} mediaId - Media item id
-   * @param {{ runtime?: number | null; budget?: number | null; revenue?: number | null; status?: string | null; theatricalReleaseDate?: Date | null; digitalReleaseDate?: Date | null; releases?: ReleaseInfo[] }} details - Details payload
-   * @returns {Promise<void>} Nothing
    */
   upsertDetails(
     tx: DatabaseTransaction,
@@ -219,9 +191,6 @@ export interface IMovieRepository {
 
   /**
    * Finds full movie details by slug.
-   *
-   * @param {string} slug - Movie slug
-   * @returns {Promise<MovieDetails | null>} Movie details or null
    */
   findBySlug(slug: string): Promise<MovieDetails | null>;
 }

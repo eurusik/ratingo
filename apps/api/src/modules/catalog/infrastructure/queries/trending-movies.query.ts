@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq, gte, lte, desc, isNotNull, inArray, and, exists, sql, isNull } from 'drizzle-orm';
+import { eq, gte, lte, isNotNull, inArray, and, exists, sql, isNull } from 'drizzle-orm';
 import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import type {
@@ -19,6 +19,13 @@ import {
 } from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
+import {
+  CLASSIC_THRESHOLDS,
+  NEW_RELEASE_THRESHOLDS,
+  TRENDING_THRESHOLDS,
+  MOVIE_TRENDING_WEIGHTS,
+} from '../../domain/constants/catalog.constants';
+import { GenreQuery } from './shared/genre.query';
 
 /**
  * Options for trending movies query.
@@ -48,15 +55,14 @@ export interface TrendingMoviesOptions {
 @Injectable()
 export class TrendingMoviesQuery {
   private readonly logger = new Logger(TrendingMoviesQuery.name);
-  private static readonly YEAR_START_MONTH = 0;
-  private static readonly YEAR_START_DAY = 1;
-  private static readonly CLASSIC_RATINGO_THRESHOLD = 80;
-  private static readonly CLASSIC_WATCHERS_THRESHOLD = 10000;
+  private readonly genreQuery: GenreQuery;
 
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
-  ) {}
+  ) {
+    this.genreQuery = new GenreQuery(db);
+  }
 
   private readonly selectFields = {
     id: schema.movies.id,
@@ -127,12 +133,10 @@ export class TrendingMoviesQuery {
       // Trending hard gate: only new content OR actively watched
       // This prevents old movies with low engagement from appearing in trending
       if (sort === CATALOG_SORT.TRENDING) {
-        const MIN_FRESHNESS = 50;
-        const MIN_WATCHERS = 10;
         conditions.push(
           sql`(
-            COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${MIN_FRESHNESS}
-            OR COALESCE(${schema.mediaStats.watchersCount}, 0) >= ${MIN_WATCHERS}
+            COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}
+            OR COALESCE(${schema.mediaStats.watchersCount}, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS}
           )`,
         );
       }
@@ -228,26 +232,24 @@ export class TrendingMoviesQuery {
   private mapResults(movies: any[]): TrendingMovieItem[] {
     const now = new Date();
     const newReleaseCutoff = new Date(now);
-    newReleaseCutoff.setDate(now.getDate() - 60);
+    newReleaseCutoff.setDate(now.getDate() - NEW_RELEASE_THRESHOLDS.DAYS);
 
     const classicCutoff = new Date(now);
-    classicCutoff.setFullYear(now.getFullYear() - 10);
+    classicCutoff.setFullYear(now.getFullYear() - CLASSIC_THRESHOLDS.YEARS_OLD);
 
     return movies.map((m) => ({
       ...m,
       isNew: m.releaseDate ? m.releaseDate >= newReleaseCutoff : false,
       isClassic: m.releaseDate
         ? m.releaseDate <= classicCutoff ||
-          ((m.stats.ratingoScore || 0) >= TrendingMoviesQuery.CLASSIC_RATINGO_THRESHOLD &&
-            (m.stats.totalWatchers || 0) > TrendingMoviesQuery.CLASSIC_WATCHERS_THRESHOLD)
+          ((m.stats.ratingoScore || 0) >= CLASSIC_THRESHOLDS.RATINGO_SCORE &&
+            (m.stats.totalWatchers || 0) > CLASSIC_THRESHOLDS.TOTAL_WATCHERS)
         : false,
     })) as TrendingMovieItem[];
   }
 
   private buildYearStart(year: number): Date {
-    return new Date(
-      Date.UTC(year, TrendingMoviesQuery.YEAR_START_MONTH, TrendingMoviesQuery.YEAR_START_DAY),
-    );
+    return new Date(Date.UTC(year, 0, 1));
   }
 
   private buildYearRange(year: number): { start: Date; end: Date } {
@@ -263,18 +265,13 @@ export class TrendingMoviesQuery {
     if (sort === 'trending') {
       // Movie-specific trending formula (different from shows)
       // Movies are consumed differently: one-time viewing, short spikes
-      // - ratingo (60%): primary signal (quality + popularity + freshness baked in)
-      // - popularity (25%): mass appeal (pulls blockbusters)
-      // - watchers (10%): light live signal with soft saturation w/(w+300)
-      //   Higher K=300 (vs K=100 for shows) dampens watchers impact
-      //   Curve: 10→3.2, 50→14.3, 100→25, 300→50
-      // - TMDB (5%): external trending signal (secondary)
+      const w = MOVIE_TRENDING_WEIGHTS;
       return [
         sql`(
-          COALESCE(${schema.mediaStats.ratingoScore}, 0) * 0.60 +
-          COALESCE(${schema.mediaStats.popularityScore}, 0) * 0.25 +
-          (COALESCE(${schema.mediaStats.watchersCount}, 0)::float / (COALESCE(${schema.mediaStats.watchersCount}, 0) + 300)) * 100 * 0.10 +
-          COALESCE(${schema.mediaItems.trendingScore}, 0) / 100.0 * 0.05
+          COALESCE(${schema.mediaStats.ratingoScore}, 0) * ${w.RATINGO} +
+          COALESCE(${schema.mediaStats.popularityScore}, 0) * ${w.POPULARITY} +
+          (COALESCE(${schema.mediaStats.watchersCount}, 0)::float / (COALESCE(${schema.mediaStats.watchersCount}, 0) + ${w.WATCHERS_SATURATION_K})) * 100 * ${w.WATCHERS} +
+          COALESCE(${schema.mediaItems.trendingScore}, 0) / 100.0 * ${w.TMDB}
         ) ${dir} ${nullsLast}`,
         sql`${schema.mediaItems.id} desc`,
       ];
@@ -319,23 +316,7 @@ export class TrendingMoviesQuery {
     if (movies.length === 0) return [];
 
     const mediaItemIds = movies.map((m) => m.mediaItemId);
-
-    const genresData = await this.db
-      .select({
-        mediaItemId: schema.mediaGenres.mediaItemId,
-        id: schema.genres.id,
-        name: schema.genres.name,
-        slug: schema.genres.slug,
-      })
-      .from(schema.mediaGenres)
-      .innerJoin(schema.genres, eq(schema.mediaGenres.genreId, schema.genres.id))
-      .where(inArray(schema.mediaGenres.mediaItemId, mediaItemIds));
-
-    const genresMap = new Map<string, any[]>();
-    genresData.forEach((g) => {
-      if (!genresMap.has(g.mediaItemId)) genresMap.set(g.mediaItemId, []);
-      genresMap.get(g.mediaItemId)!.push({ id: g.id, name: g.name, slug: g.slug });
-    });
+    const genresMap = await this.genreQuery.fetchForMediaItems(mediaItemIds);
 
     return movies.map((m) => ({
       id: m.id,

@@ -1,5 +1,5 @@
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageDto, RatingoStatsDto, ExternalRatingsDto } from '../../presentation/dtos/common.dto';
+import type { ImageData, RatingoStats, ExternalRating } from '../types/common.types';
 
 /**
  * Show progress information for hero items.
@@ -24,13 +24,13 @@ export interface HeroMediaItem {
   originalTitle: string | null;
   overview: string | null;
   primaryTrailerKey: string | null;
-  poster: ImageDto | null;
-  backdrop: ImageDto | null;
+  poster: ImageData | null;
+  backdrop: ImageData | null;
   releaseDate: Date | null;
   isNew: boolean;
   isClassic: boolean;
-  stats: RatingoStatsDto;
-  externalRatings: Pick<ExternalRatingsDto, 'tmdb'>;
+  stats: RatingoStats;
+  externalRatings: { tmdb: ExternalRating | null };
   showProgress?: HeroShowProgress | null;
 }
 

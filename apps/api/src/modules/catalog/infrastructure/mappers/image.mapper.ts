@@ -1,9 +1,9 @@
-import { ImageDto } from '../../presentation/dtos/common.dto';
+import type { ImageData } from '../../domain/types/common.types';
 
 const TMDB_BASE_URL = 'https://image.tmdb.org/t/p';
 
 export class ImageMapper {
-  static toPoster(path: string | null): ImageDto | null {
+  static toPoster(path: string | null): ImageData | null {
     if (!path) return null;
     return {
       small: `${TMDB_BASE_URL}/w342${path}`,
@@ -13,7 +13,7 @@ export class ImageMapper {
     };
   }
 
-  static toBackdrop(path: string | null): ImageDto | null {
+  static toBackdrop(path: string | null): ImageData | null {
     if (!path) return null;
     return {
       small: `${TMDB_BASE_URL}/w300${path}`,

@@ -10,3 +10,6 @@ export * from './movie-listings.query';
 
 // Mixed Media Queries
 export * from './hero-media.query';
+
+// Shared utilities
+export * from './shared';
