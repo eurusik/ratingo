@@ -3,7 +3,7 @@
  * Other modules should inject this port, not the concrete service.
  */
 
-import { EligibilityStatusType, EvaluationReasonType } from '../constants/evaluation.constants';
+import { EligibilityStatusType } from '../constants/evaluation.constants';
 
 /** Evaluation context for content display surfaces. */
 export type EvaluationContext =
@@ -28,7 +28,7 @@ export interface EvaluationResult {
   evaluation: {
     mediaItemId: string;
     status: EligibilityStatusType;
-    reasons: EvaluationReasonType[];
+    reasons: string[];
     relevanceScore: number;
     policyVersion: number;
     breakoutRuleId: string | null;
