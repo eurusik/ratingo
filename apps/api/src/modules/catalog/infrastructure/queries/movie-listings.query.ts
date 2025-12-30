@@ -2,26 +2,15 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import {
-  eq,
-  gte,
-  gt,
-  lte,
-  desc,
-  isNotNull,
-  isNull,
-  inArray,
-  and,
-  or,
-  exists,
-  sql,
-} from 'drizzle-orm';
+import { eq, gte, gt, lte, isNotNull, isNull, inArray, and, or, exists, sql } from 'drizzle-orm';
 import { MovieWithMedia, WithTotal } from '../../domain/repositories/movie.repository.interface';
-import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { CatalogSort, SortOrder, VoteSource } from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
+import { GenreQuery } from './shared/genre.query';
+import { movieSelectFields, MovieSelectRow } from './shared/movie-select.fields';
+import { MovieResultMapper } from './shared/movie-result.mapper';
 
 /**
  * Type of movie listing to fetch.
@@ -77,39 +66,8 @@ export class MovieListingsQuery {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly genreQuery: GenreQuery,
   ) {}
-
-  private readonly selectFields = {
-    id: schema.movies.id,
-    mediaItemId: schema.movies.mediaItemId,
-    tmdbId: schema.mediaItems.tmdbId,
-    title: schema.mediaItems.title,
-    slug: schema.mediaItems.slug,
-    overview: schema.mediaItems.overview,
-    ingestionStatus: schema.mediaItems.ingestionStatus,
-    posterPath: schema.mediaItems.posterPath,
-    backdropPath: schema.mediaItems.backdropPath,
-    popularity: schema.mediaItems.popularity,
-    rating: schema.mediaItems.rating,
-    voteCount: schema.mediaItems.voteCount,
-    releaseDate: schema.mediaItems.releaseDate,
-
-    ratingImdb: schema.mediaItems.ratingImdb,
-    voteCountImdb: schema.mediaItems.voteCountImdb,
-    ratingTrakt: schema.mediaItems.ratingTrakt,
-    voteCountTrakt: schema.mediaItems.voteCountTrakt,
-    ratingMetacritic: schema.mediaItems.ratingMetacritic,
-    ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-
-    theatricalReleaseDate: schema.movies.theatricalReleaseDate,
-    digitalReleaseDate: schema.movies.digitalReleaseDate,
-    runtime: schema.movies.runtime,
-    ratingoScore: schema.mediaStats.ratingoScore,
-    qualityScore: schema.mediaStats.qualityScore,
-    popularityScore: schema.mediaStats.popularityScore,
-    watchersCount: schema.mediaStats.watchersCount,
-    totalWatchers: schema.mediaStats.totalWatchers,
-  };
 
   /**
    * Executes the movie listings query.
@@ -158,9 +116,8 @@ export class MovieListingsQuery {
       let results: any[];
 
       if (eligibilityMode === ELIGIBILITY_MODE.NONE) {
-        // No eligibility filtering - skip policy/evaluation joins entirely
         results = await this.db
-          .select(this.selectFields)
+          .select(movieSelectFields)
           .from(schema.movies)
           .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
           .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
@@ -169,9 +126,8 @@ export class MovieListingsQuery {
           .limit(limit)
           .offset(offset);
       } else {
-        // With eligibility filtering - join policy/evaluation tables
         results = await this.db
-          .select(this.selectFields)
+          .select(movieSelectFields)
           .from(schema.movies)
           .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
           .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
@@ -190,8 +146,10 @@ export class MovieListingsQuery {
       }
 
       const total = await this.countTotal(conditions, eligibilityMode);
+      const mediaItemIds = results.map((m) => m.mediaItemId);
+      const genresMap = await this.genreQuery.fetchForMediaItems(mediaItemIds);
 
-      const items = await this.attachGenres(results);
+      const items = MovieResultMapper.mapMany(results as MovieSelectRow[], genresMap);
       const withTotal = items as WithTotal<MovieWithMedia>;
       withTotal.total = total;
       return withTotal;
@@ -220,13 +178,10 @@ export class MovieListingsQuery {
   ) {
     const now = new Date();
     const conditions: any[] = [
-      // Ready filter: only show items with ready ingestion status
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
-      // Not deleted filter
       isNull(schema.mediaItems.deletedAt),
     ];
 
-    // Eligibility filter based on mode
     const eligibilityCondition = this.buildEligibilityCondition(eligibilityMode);
     if (eligibilityCondition) {
       conditions.push(eligibilityCondition);
@@ -291,13 +246,9 @@ export class MovieListingsQuery {
       case 'now_playing':
         conditions.push(
           eq(schema.movies.isNowPlaying, true),
-          // Exclude movies already on streaming
           or(isNull(schema.movies.digitalReleaseDate), gt(schema.movies.digitalReleaseDate, now)),
         );
-        return {
-          conditions,
-          orderBy: this.buildOrder(sort, order),
-        };
+        return { conditions, orderBy: this.buildOrder(sort, order) };
 
       case 'new_releases': {
         const cutoffDate = new Date();
@@ -306,13 +257,9 @@ export class MovieListingsQuery {
           isNotNull(schema.movies.theatricalReleaseDate),
           gte(schema.movies.theatricalReleaseDate, cutoffDate),
           lte(schema.movies.theatricalReleaseDate, now),
-          // Exclude movies already on streaming
           or(isNull(schema.movies.digitalReleaseDate), gt(schema.movies.digitalReleaseDate, now)),
         );
-        return {
-          conditions,
-          orderBy: this.buildOrder(sort, order),
-        };
+        return { conditions, orderBy: this.buildOrder(sort, order) };
       }
 
       case 'new_on_digital': {
@@ -322,28 +269,20 @@ export class MovieListingsQuery {
           gte(schema.movies.digitalReleaseDate, cutoffDate),
           lte(schema.movies.digitalReleaseDate, now),
         );
-        return {
-          conditions,
-          orderBy: this.buildOrder(sort, order),
-        };
+        return { conditions, orderBy: this.buildOrder(sort, order) };
       }
     }
   }
 
   /**
    * Builds eligibility condition based on mode.
-   * Freshness mode uses whitelist approach - exact array match for safety.
-   * None mode returns null (no filtering).
    */
   private buildEligibilityCondition(eligibilityMode: EligibilityMode) {
     if (eligibilityMode === ELIGIBILITY_MODE.NONE) {
-      // No eligibility filtering - show all content
       return null;
     }
 
     if (eligibilityMode === ELIGIBILITY_MODE.FRESHNESS) {
-      // Freshness: eligible OR (ineligible with ONLY MISSING_GLOBAL_SIGNALS)
-      // Whitelist approach - exact array match for safety
       return or(
         eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
         and(
@@ -353,7 +292,6 @@ export class MovieListingsQuery {
       );
     }
 
-    // Catalog (default): only eligible
     return eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE);
   }
 
@@ -373,7 +311,6 @@ export class MovieListingsQuery {
     if (sort === 'tmdbPopularity') {
       return [sql`${schema.mediaItems.popularity} ${dir}`, sql`${schema.mediaItems.id} desc`];
     }
-    // default popularity (aggregated)
     return [sql`${schema.mediaStats.popularityScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
   }
 
@@ -382,7 +319,6 @@ export class MovieListingsQuery {
     eligibilityMode: EligibilityMode = ELIGIBILITY_MODE.CATALOG,
   ): Promise<number> {
     if (eligibilityMode === ELIGIBILITY_MODE.NONE) {
-      // No eligibility filtering - skip policy/evaluation joins
       const [{ total }] = await this.db
         .select({ total: sql<number>`count(*)` })
         .from(schema.movies)
@@ -407,63 +343,5 @@ export class MovieListingsQuery {
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(and(...conditions));
     return Number(total ?? 0);
-  }
-
-  /** Attaches genres to movies in a single batch query. */
-  private async attachGenres(movies: any[]): Promise<MovieWithMedia[]> {
-    if (movies.length === 0) return [];
-
-    const mediaItemIds = movies.map((m) => m.mediaItemId);
-
-    const genresData = await this.db
-      .select({
-        mediaItemId: schema.mediaGenres.mediaItemId,
-        id: schema.genres.id,
-        name: schema.genres.name,
-        slug: schema.genres.slug,
-      })
-      .from(schema.mediaGenres)
-      .innerJoin(schema.genres, eq(schema.mediaGenres.genreId, schema.genres.id))
-      .where(inArray(schema.mediaGenres.mediaItemId, mediaItemIds));
-
-    const genresMap = new Map<string, any[]>();
-    genresData.forEach((g) => {
-      if (!genresMap.has(g.mediaItemId)) genresMap.set(g.mediaItemId, []);
-      genresMap.get(g.mediaItemId)!.push({ id: g.id, name: g.name, slug: g.slug });
-    });
-
-    return movies.map((m) => ({
-      id: m.id,
-      mediaItemId: m.mediaItemId,
-      tmdbId: m.tmdbId,
-      title: m.title,
-      slug: m.slug,
-      overview: m.overview,
-      ingestionStatus: m.ingestionStatus,
-      poster: ImageMapper.toPoster(m.posterPath),
-      backdrop: ImageMapper.toBackdrop(m.backdropPath),
-      popularity: m.popularity,
-      releaseDate: m.releaseDate,
-      theatricalReleaseDate: m.theatricalReleaseDate,
-      digitalReleaseDate: m.digitalReleaseDate,
-      runtime: m.runtime,
-
-      stats: {
-        ratingoScore: m.ratingoScore,
-        qualityScore: m.qualityScore,
-        popularityScore: m.popularityScore,
-        liveWatchers: m.watchersCount,
-        totalWatchers: m.totalWatchers,
-      },
-      externalRatings: {
-        tmdb: { rating: m.rating, voteCount: m.voteCount },
-        imdb: m.ratingImdb ? { rating: m.ratingImdb, voteCount: m.voteCountImdb } : null,
-        trakt: m.ratingTrakt ? { rating: m.ratingTrakt, voteCount: m.voteCountTrakt } : null,
-        metacritic: m.ratingMetacritic ? { rating: m.ratingMetacritic } : null,
-        rottenTomatoes: m.ratingRottenTomatoes ? { rating: m.ratingRottenTomatoes } : null,
-      },
-
-      genres: genresMap.get(m.mediaItemId) || [],
-    })) as MovieWithMedia[];
   }
 }

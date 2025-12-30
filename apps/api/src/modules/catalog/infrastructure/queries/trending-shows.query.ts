@@ -21,6 +21,12 @@ import {
   SORT_ORDER,
 } from '../../presentation/dtos/catalog-list-query.dto';
 import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
+import {
+  TRENDING_THRESHOLDS,
+  SHOW_TRENDING_WEIGHTS,
+  NEW_RELEASE_THRESHOLDS,
+  CLASSIC_THRESHOLDS,
+} from '../../domain/constants/catalog.constants';
 
 /**
  * Fetches trending TV shows with episode progress.
@@ -75,12 +81,10 @@ export class TrendingShowsQuery {
       // Trending hard gate: only new content OR actively watched
       // This prevents old shows with low engagement from appearing in trending
       if (sort === CATALOG_SORT.TRENDING) {
-        const MIN_FRESHNESS = 50;
-        const MIN_WATCHERS = 10;
         whereConditions.push(
           sql`(
-            COALESCE(ms.freshness_score, 0) >= ${MIN_FRESHNESS}
-            OR COALESCE(ms.watchers_count, 0) >= ${MIN_WATCHERS}
+            COALESCE(ms.freshness_score, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}
+            OR COALESCE(ms.watchers_count, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS}
           )`,
         );
       }
@@ -232,10 +236,10 @@ export class TrendingShowsQuery {
   private mapResults(results: any[]): TrendingShowItem[] {
     const now = new Date();
     const newReleaseCutoff = new Date();
-    newReleaseCutoff.setDate(now.getDate() - 30);
+    newReleaseCutoff.setDate(now.getDate() - NEW_RELEASE_THRESHOLDS.DAYS);
 
     const classicCutoff = new Date();
-    classicCutoff.setFullYear(now.getFullYear() - 10);
+    classicCutoff.setFullYear(now.getFullYear() - CLASSIC_THRESHOLDS.YEARS_OLD);
 
     return results.map((row: any) => {
       const releaseDate = row.release_date ? new Date(row.release_date) : null;
@@ -257,7 +261,8 @@ export class TrendingShowsQuery {
         isNew: releaseDate ? releaseDate >= newReleaseCutoff : false,
         isClassic: releaseDate
           ? releaseDate <= classicCutoff ||
-            ((row.ratingo_score || 0) >= 80 && (row.total_watchers || 0) > 10000)
+            ((row.ratingo_score || 0) >= CLASSIC_THRESHOLDS.RATINGO_SCORE &&
+              (row.total_watchers || 0) > CLASSIC_THRESHOLDS.TOTAL_WATCHERS)
           : false,
 
         stats: {
@@ -309,19 +314,16 @@ export class TrendingShowsQuery {
    */
   private buildOrderBy(sort: CatalogSort | undefined, order: SortOrder) {
     const dir = order === 'asc' ? sql`ASC` : sql`DESC`;
+    const w = SHOW_TRENDING_WEIGHTS;
     switch (sort) {
       case 'trending': {
         // Combined trending score with live engagement signal
-        // - ratingo (50%): quality baseline
-        // - popularity (20%): long-term engagement
-        // - watchers (25%): live signal with soft saturation w/(w+100)
-        //   Gives smooth curve: 16→13.8, 39→28.1, 100→50, 2000→95
-        // - TMDB (5%): external trending signal (noise only)
+        // Uses weights from domain constants for consistency
         return sql`(
-          COALESCE(ms.ratingo_score, 0) * 0.50 +
-          COALESCE(ms.popularity_score, 0) * 0.20 +
-          (COALESCE(ms.watchers_count, 0)::float / (COALESCE(ms.watchers_count, 0) + 100)) * 100 * 0.25 +
-          COALESCE(mi.trending_score, 0) / 100.0 * 0.05
+          COALESCE(ms.ratingo_score, 0) * ${w.RATINGO} +
+          COALESCE(ms.popularity_score, 0) * ${w.POPULARITY} +
+          (COALESCE(ms.watchers_count, 0)::float / (COALESCE(ms.watchers_count, 0) + ${w.WATCHERS_SATURATION_K})) * 100 * ${w.WATCHERS} +
+          COALESCE(mi.trending_score, 0) / 100.0 * ${w.TMDB}
         ) ${dir} NULLS LAST, mi.id DESC`;
       }
       case 'ratingo':

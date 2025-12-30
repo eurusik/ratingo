@@ -3,7 +3,6 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { eq, gte, lte, isNotNull, inArray, and, exists, sql, isNull } from 'drizzle-orm';
-import { ImageMapper } from '../mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import type {
   TrendingMovieItem,
@@ -20,12 +19,12 @@ import {
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
 import {
-  CLASSIC_THRESHOLDS,
-  NEW_RELEASE_THRESHOLDS,
   TRENDING_THRESHOLDS,
   MOVIE_TRENDING_WEIGHTS,
 } from '../../domain/constants/catalog.constants';
 import { GenreQuery } from './shared/genre.query';
+import { movieSelectFields, MovieSelectRow } from './shared/movie-select.fields';
+import { MovieResultMapper } from './shared/movie-result.mapper';
 
 /**
  * Options for trending movies query.
@@ -55,53 +54,19 @@ export interface TrendingMoviesOptions {
 @Injectable()
 export class TrendingMoviesQuery {
   private readonly logger = new Logger(TrendingMoviesQuery.name);
-  private readonly genreQuery: GenreQuery;
 
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
-  ) {
-    this.genreQuery = new GenreQuery(db);
-  }
-
-  private readonly selectFields = {
-    id: schema.movies.id,
-    mediaItemId: schema.movies.mediaItemId,
-    tmdbId: schema.mediaItems.tmdbId,
-    title: schema.mediaItems.title,
-    slug: schema.mediaItems.slug,
-    overview: schema.mediaItems.overview,
-    ingestionStatus: schema.mediaItems.ingestionStatus,
-    posterPath: schema.mediaItems.posterPath,
-    backdropPath: schema.mediaItems.backdropPath,
-    popularity: schema.mediaItems.popularity,
-    rating: schema.mediaItems.rating,
-    voteCount: schema.mediaItems.voteCount,
-    releaseDate: schema.mediaItems.releaseDate,
-
-    ratingImdb: schema.mediaItems.ratingImdb,
-    voteCountImdb: schema.mediaItems.voteCountImdb,
-    ratingTrakt: schema.mediaItems.ratingTrakt,
-    voteCountTrakt: schema.mediaItems.voteCountTrakt,
-    ratingMetacritic: schema.mediaItems.ratingMetacritic,
-    ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-
-    theatricalReleaseDate: schema.movies.theatricalReleaseDate,
-    digitalReleaseDate: schema.movies.digitalReleaseDate,
-    runtime: schema.movies.runtime,
-    ratingoScore: schema.mediaStats.ratingoScore,
-    qualityScore: schema.mediaStats.qualityScore,
-    popularityScore: schema.mediaStats.popularityScore,
-    watchersCount: schema.mediaStats.watchersCount,
-    totalWatchers: schema.mediaStats.totalWatchers,
-  };
+    private readonly genreQuery: GenreQuery,
+  ) {}
 
   /**
    * Executes the trending movies query.
    * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
    * @param {TrendingMoviesOptions} options - Query options (limit, offset, filters)
-   * @returns {Promise<any[]>} List of trending movies with stats and genres
+   * @returns {Promise<WithTotal<TrendingMovieItem>>} List of trending movies with stats and genres
    * @throws {DatabaseException} When database query fails
    */
   async execute(options: TrendingMoviesOptions): Promise<WithTotal<TrendingMovieItem>> {
@@ -122,16 +87,12 @@ export class TrendingMoviesQuery {
     try {
       const conditions: any[] = [
         isNotNull(schema.mediaStats.popularityScore),
-        // Eligibility filter: only show ELIGIBLE items
         eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-        // Ready filter: only show items with ready ingestion status
         eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
-        // Not deleted filter
         isNull(schema.mediaItems.deletedAt),
       ];
 
       // Trending hard gate: only new content OR actively watched
-      // This prevents old movies with low engagement from appearing in trending
       if (sort === CATALOG_SORT.TRENDING) {
         conditions.push(
           sql`(
@@ -195,7 +156,7 @@ export class TrendingMoviesQuery {
       }
 
       const results = await this.db
-        .select(this.selectFields)
+        .select(movieSelectFields)
         .from(schema.movies)
         .innerJoin(schema.mediaItems, eq(schema.movies.mediaItemId, schema.mediaItems.id))
         .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
@@ -213,8 +174,10 @@ export class TrendingMoviesQuery {
         .offset(offset);
 
       const total = await this.countTotal(conditions);
-      const moviesWithGenres = await this.attachGenres(results);
-      const mapped = this.mapResults(moviesWithGenres);
+      const mediaItemIds = results.map((m) => m.mediaItemId);
+      const genresMap = await this.genreQuery.fetchForMediaItems(mediaItemIds);
+
+      const mapped = MovieResultMapper.mapManyTrending(results as MovieSelectRow[], genresMap);
       const withTotal = mapped as WithTotal<TrendingMovieItem>;
       withTotal.total = total;
       return withTotal;
@@ -224,28 +187,6 @@ export class TrendingMoviesQuery {
         originalError: error.message,
       });
     }
-  }
-
-  /**
-   * Maps movies with isNew and isClassic flags.
-   */
-  private mapResults(movies: any[]): TrendingMovieItem[] {
-    const now = new Date();
-    const newReleaseCutoff = new Date(now);
-    newReleaseCutoff.setDate(now.getDate() - NEW_RELEASE_THRESHOLDS.DAYS);
-
-    const classicCutoff = new Date(now);
-    classicCutoff.setFullYear(now.getFullYear() - CLASSIC_THRESHOLDS.YEARS_OLD);
-
-    return movies.map((m) => ({
-      ...m,
-      isNew: m.releaseDate ? m.releaseDate >= newReleaseCutoff : false,
-      isClassic: m.releaseDate
-        ? m.releaseDate <= classicCutoff ||
-          ((m.stats.ratingoScore || 0) >= CLASSIC_THRESHOLDS.RATINGO_SCORE &&
-            (m.stats.totalWatchers || 0) > CLASSIC_THRESHOLDS.TOTAL_WATCHERS)
-        : false,
-    })) as TrendingMovieItem[];
   }
 
   private buildYearStart(year: number): Date {
@@ -263,8 +204,6 @@ export class TrendingMoviesQuery {
     const nullsLast = sql`NULLS LAST`;
 
     if (sort === 'trending') {
-      // Movie-specific trending formula (different from shows)
-      // Movies are consumed differently: one-time viewing, short spikes
       const w = MOVIE_TRENDING_WEIGHTS;
       return [
         sql`(
@@ -307,49 +246,5 @@ export class TrendingMoviesQuery {
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(and(...conditions));
     return Number(total ?? 0);
-  }
-
-  /**
-   * Attaches genres to movies in a single batch query.
-   */
-  private async attachGenres(movies: any[]): Promise<any[]> {
-    if (movies.length === 0) return [];
-
-    const mediaItemIds = movies.map((m) => m.mediaItemId);
-    const genresMap = await this.genreQuery.fetchForMediaItems(mediaItemIds);
-
-    return movies.map((m) => ({
-      id: m.id,
-      mediaItemId: m.mediaItemId,
-      tmdbId: m.tmdbId,
-      title: m.title,
-      slug: m.slug,
-      overview: m.overview,
-      ingestionStatus: m.ingestionStatus,
-      poster: ImageMapper.toPoster(m.posterPath),
-      backdrop: ImageMapper.toBackdrop(m.backdropPath),
-      popularity: m.popularity,
-      releaseDate: m.releaseDate,
-      theatricalReleaseDate: m.theatricalReleaseDate,
-      digitalReleaseDate: m.digitalReleaseDate,
-      runtime: m.runtime,
-
-      stats: {
-        ratingoScore: m.ratingoScore,
-        qualityScore: m.qualityScore,
-        popularityScore: m.popularityScore,
-        liveWatchers: m.watchersCount,
-        totalWatchers: m.totalWatchers,
-      },
-      externalRatings: {
-        tmdb: { rating: m.rating, voteCount: m.voteCount },
-        imdb: m.ratingImdb ? { rating: m.ratingImdb, voteCount: m.voteCountImdb } : null,
-        trakt: m.ratingTrakt ? { rating: m.ratingTrakt, voteCount: m.voteCountTrakt } : null,
-        metacritic: m.ratingMetacritic ? { rating: m.ratingMetacritic } : null,
-        rottenTomatoes: m.ratingRottenTomatoes ? { rating: m.ratingRottenTomatoes } : null,
-      },
-
-      genres: genresMap.get(m.mediaItemId) || [],
-    }));
   }
 }

@@ -10,20 +10,10 @@ import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
 import { sql } from 'drizzle-orm';
 import { DatabaseException } from '../../../../common/exceptions';
-
-export const PROVIDERS_REPOSITORY = 'PROVIDERS_REPOSITORY';
-
-/** Provider info with media count. */
-export interface ProviderInfo {
-  id: string;
-  name: string;
-  count: number;
-}
-
-/** Providers repository interface. */
-export interface IProvidersRepository {
-  findAllProviders(): Promise<ProviderInfo[]>;
-}
+import {
+  IProvidersRepository,
+  ProviderInfo,
+} from '../../domain/repositories/providers.repository.interface';
 
 @Injectable()
 export class ProvidersRepository implements IProvidersRepository {

@@ -29,7 +29,14 @@ describe('MovieDetailsQuery', () => {
       }),
     };
 
-    query = new MovieDetailsQuery(db as any);
+    const mockGenreQuery = {
+      fetchForMediaItem: jest.fn().mockImplementation(() => {
+        const genresData = selectQueue.shift() ?? [];
+        return Promise.resolve(genresData);
+      }),
+    };
+
+    query = new MovieDetailsQuery(db as any, mockGenreQuery as any);
   };
 
   // Simple thenable chain for select/from/where/innerJoin/leftJoin/limit
@@ -94,7 +101,7 @@ describe('MovieDetailsQuery', () => {
     const res = await query.execute('title');
 
     expect(res).toBeTruthy();
-    expect(db.select).toHaveBeenCalledTimes(2); // main select + genres
+    expect(db.select).toHaveBeenCalledTimes(1); // main select only (genres via mockGenreQuery)
     expect(res?.id).toBe('m1');
     expect(res?.primaryTrailer).toEqual({ key: 'trailer1' });
     expect(res?.poster).toEqual({ small: 'poster' });

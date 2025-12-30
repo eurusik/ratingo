@@ -6,12 +6,7 @@ import { eq, desc, and, lte, isNotNull, gte, inArray, isNull } from 'drizzle-orm
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { ImageMapper } from '../mappers/image.mapper';
-import {
-  HERO_MIN_POPULARITY_SCORE,
-  HERO_MIN_QUALITY_SCORE,
-  NEW_RELEASE_DAYS_THRESHOLD,
-  CLASSIC_YEARS_THRESHOLD,
-} from '../../../../common/constants';
+import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
 import { HeroMediaItem, HeroShowProgress } from '../../domain/models/hero-media.model';
 import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
 
@@ -57,8 +52,8 @@ export class HeroMediaQuery {
         lte(schema.mediaItems.releaseDate, now),
         isNotNull(schema.mediaItems.posterPath),
         isNotNull(schema.mediaItems.backdropPath),
-        gte(schema.mediaStats.qualityScore, HERO_MIN_QUALITY_SCORE),
-        gte(schema.mediaStats.popularityScore, HERO_MIN_POPULARITY_SCORE),
+        gte(schema.mediaStats.qualityScore, HERO_THRESHOLDS.MIN_QUALITY_SCORE),
+        gte(schema.mediaStats.popularityScore, HERO_THRESHOLDS.MIN_POPULARITY_SCORE),
         // Eligibility filter: only show ELIGIBLE items
         eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
         // Ready filter: only show items with ready ingestion status
@@ -239,10 +234,10 @@ export class HeroMediaQuery {
     now: Date,
   ): HeroMediaItem[] {
     const ninetyDaysAgo = new Date(
-      now.getTime() - NEW_RELEASE_DAYS_THRESHOLD * 24 * 60 * 60 * 1000,
+      now.getTime() - HERO_THRESHOLDS.NEW_RELEASE_DAYS * 24 * 60 * 60 * 1000,
     );
     const fiveYearsAgo = new Date(
-      now.getFullYear() - CLASSIC_YEARS_THRESHOLD,
+      now.getFullYear() - HERO_THRESHOLDS.CLASSIC_YEARS,
       now.getMonth(),
       now.getDate(),
     );

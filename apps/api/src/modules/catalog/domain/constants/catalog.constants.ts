@@ -85,3 +85,18 @@ export const SHOW_TRENDING_WEIGHTS = {
   /** Saturation constant for watchers curve */
   WATCHERS_SATURATION_K: 100,
 } as const;
+
+/**
+ * Hero block thresholds.
+ * Used for selecting high-quality content for homepage hero section.
+ */
+export const HERO_THRESHOLDS = {
+  /** Minimum quality score to appear in hero */
+  MIN_QUALITY_SCORE: 60,
+  /** Minimum popularity score to appear in hero */
+  MIN_POPULARITY_SCORE: 40,
+  /** Days since release to be considered "new" in hero */
+  NEW_RELEASE_DAYS: 90,
+  /** Years since release to be considered "classic" in hero */
+  CLASSIC_YEARS: 5,
+} as const;

@@ -23,14 +23,12 @@ import { GenreQuery } from './shared/genre.query';
 @Injectable()
 export class ShowDetailsQuery {
   private readonly logger = new Logger(ShowDetailsQuery.name);
-  private readonly genreQuery: GenreQuery;
 
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
-  ) {
-    this.genreQuery = new GenreQuery(db);
-  }
+    private readonly genreQuery: GenreQuery,
+  ) {}
 
   /**
    * Executes the show details query.

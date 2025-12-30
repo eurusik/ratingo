@@ -2,6 +2,7 @@
 export * from './trending-shows.query';
 export * from './show-details.query';
 export * from './calendar-episodes.query';
+export * from './new-episodes.query';
 
 // Movie Queries
 export * from './movie-details.query';

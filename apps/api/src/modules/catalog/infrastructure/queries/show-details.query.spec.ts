@@ -45,7 +45,14 @@ describe('ShowDetailsQuery', () => {
       }),
     };
 
-    query = new ShowDetailsQuery(db as any);
+    const mockGenreQuery = {
+      fetchForMediaItem: jest.fn().mockImplementation(() => {
+        const genresData = selectQueue.shift() ?? [];
+        return Promise.resolve(genresData);
+      }),
+    };
+
+    query = new ShowDetailsQuery(db as any, mockGenreQuery as any);
   };
 
   it('should map show details with genres and seasons', async () => {
@@ -109,7 +116,7 @@ describe('ShowDetailsQuery', () => {
 
     const res = await query.execute('show');
 
-    expect(db.select).toHaveBeenCalledTimes(3); // main + genres + seasons
+    expect(db.select).toHaveBeenCalledTimes(2); // main + seasons (genres via mockGenreQuery)
     expect(res?.id).toBe('m1');
     expect(res?.primaryTrailer).toEqual({ key: 'trailer1' });
     expect(res?.poster).toEqual({ small: 'poster' });

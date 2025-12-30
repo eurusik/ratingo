@@ -20,7 +20,7 @@ import { MOVIE_REPOSITORY } from '../../src/modules/catalog/domain/repositories/
 import { SHOW_REPOSITORY } from '../../src/modules/catalog/domain/repositories/show.repository.interface';
 import { MEDIA_REPOSITORY } from '../../src/modules/catalog/domain/repositories/media.repository.interface';
 import { GENRE_REPOSITORY } from '../../src/modules/catalog/domain/repositories/genre.repository.interface';
-import { PROVIDERS_REPOSITORY } from '../../src/modules/catalog/infrastructure/repositories/providers.repository';
+import { PROVIDERS_REPOSITORY } from '../../src/modules/catalog/domain/repositories/providers.repository.interface';
 import { TmdbAdapter } from '../../src/modules/tmdb/tmdb.adapter';
 import { CatalogSearchService } from '../../src/modules/catalog/application/services/catalog-search.service';
 import { FakeMovieRepository, FakeShowRepository } from './_fakes';

@@ -9,7 +9,7 @@ import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   PROVIDERS_REPOSITORY,
   IProvidersRepository,
-} from '../../infrastructure/repositories/providers.repository';
+} from '../../domain/repositories/providers.repository.interface';
 import { ProvidersListDto } from '../dtos/providers.dto';
 
 @ApiTags('Public: Catalog')

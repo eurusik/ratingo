@@ -50,7 +50,19 @@ describe('TrendingMoviesQuery', () => {
       }),
     };
 
-    query = new TrendingMoviesQuery(db as any);
+    const mockGenreQuery = {
+      fetchForMediaItems: jest.fn().mockImplementation((ids: string[]) => {
+        const genresData = selectQueue.shift() ?? [];
+        const map = new Map<string, any[]>();
+        genresData.forEach((g: any) => {
+          if (!map.has(g.mediaItemId)) map.set(g.mediaItemId, []);
+          map.get(g.mediaItemId)!.push({ id: g.id, name: g.name, slug: g.slug });
+        });
+        return Promise.resolve(map);
+      }),
+    };
+
+    query = new TrendingMoviesQuery(db as any, mockGenreQuery as any);
   };
 
   it('should return mapped trending movies with genres and flags', async () => {
@@ -115,12 +127,12 @@ describe('TrendingMoviesQuery', () => {
       { mediaItemId: 'mid2', id: 'g2', name: 'Drama', slug: 'drama' },
     ];
 
-    // main select + count + attachGenres
+    // main select + count (genres fetched via mockGenreQuery)
     setup([movies, [{ total: movies.length }], genres]);
 
     const res = await query.execute({ limit: 5, offset: 0, minRatingo: 50 });
 
-    expect(db.select).toHaveBeenCalledTimes(3);
+    expect(db.select).toHaveBeenCalledTimes(2);
     expect(res).toHaveLength(2);
 
     const newMovie = res.find((m) => m.id === 'row1')!;
@@ -152,11 +164,11 @@ describe('TrendingMoviesQuery', () => {
     ] as any[];
     const genres = [{ mediaItemId: 'mid', id: 'g1', name: 'Action', slug: 'action' }];
 
-    // select for genre subquery, main results, count, attachGenres
+    // select for genre subquery, main results, count (genres fetched via mockGenreQuery)
     setup([[{ id: 'mg' }], movies, [{ total: movies.length }], genres]);
 
     const res = await query.execute({ limit: 1, offset: 0, genres: ['g1'] });
-    expect(db.select).toHaveBeenCalledTimes(4);
+    expect(db.select).toHaveBeenCalledTimes(3);
     expect(res).toHaveLength(1);
     expect(res[0].genres).toHaveLength(1);
   });

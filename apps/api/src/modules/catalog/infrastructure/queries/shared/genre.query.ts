@@ -1,5 +1,7 @@
+import { Inject, Injectable } from '@nestjs/common';
 import { eq, inArray } from 'drizzle-orm';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { DATABASE_CONNECTION } from '../../../../../database/database.module';
 import * as schema from '../../../../../database/schema';
 import type { GenreInfo } from '../../../domain/types/common.types';
 
@@ -7,8 +9,12 @@ import type { GenreInfo } from '../../../domain/types/common.types';
  * Shared genre query utilities.
  * Eliminates duplication between MovieDetailsQuery and ShowDetailsQuery.
  */
+@Injectable()
 export class GenreQuery {
-  constructor(private readonly db: PostgresJsDatabase<typeof schema>) {}
+  constructor(
+    @Inject(DATABASE_CONNECTION)
+    private readonly db: PostgresJsDatabase<typeof schema>,
+  ) {}
 
   /**
    * Fetches genres for a single media item.

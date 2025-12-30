@@ -340,6 +340,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
    * Searches for media items using trigram similarity (pg_trgm).
    * Supports fuzzy matching and works well with any language including Ukrainian.
    * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
+   *
+   * Note: Returns empty array on error (graceful degradation for user-facing search).
    */
   async search(query: string, limit: number): Promise<LocalSearchResult[]> {
     try {

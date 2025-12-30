@@ -7,7 +7,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogProvidersController } from './catalog.providers.controller';
-import { PROVIDERS_REPOSITORY } from '../../infrastructure/repositories/providers.repository';
+import { PROVIDERS_REPOSITORY } from '../../domain/repositories/providers.repository.interface';
 
 describe('CatalogProvidersController', () => {
   let controller: CatalogProvidersController;

@@ -51,7 +51,19 @@ describe('MovieListingsQuery', () => {
       }),
     };
 
-    query = new MovieListingsQuery(db as any);
+    const mockGenreQuery = {
+      fetchForMediaItems: jest.fn().mockImplementation((ids: string[]) => {
+        const genresData = selectQueue.shift() ?? [];
+        const map = new Map<string, any[]>();
+        genresData.forEach((g: any) => {
+          if (!map.has(g.mediaItemId)) map.set(g.mediaItemId, []);
+          map.get(g.mediaItemId)!.push({ id: g.id, name: g.name, slug: g.slug });
+        });
+        return Promise.resolve(map);
+      }),
+    };
+
+    query = new MovieListingsQuery(db as any, mockGenreQuery as any);
   };
 
   it('should return mapped movies with genres (now_playing)', async () => {
@@ -97,7 +109,7 @@ describe('MovieListingsQuery', () => {
 
     const res = await query.execute('now_playing', { limit: 5, offset: 0 });
 
-    expect(db.select).toHaveBeenCalledTimes(3);
+    expect(db.select).toHaveBeenCalledTimes(2);
     expect(res).toHaveLength(1);
     expect(res[0].id).toBe('row1');
     expect(res[0].genres).toHaveLength(2);
@@ -164,7 +176,7 @@ describe('MovieListingsQuery', () => {
 
     const res = await query.execute('new_releases', { daysBack: 10, limit: 2, offset: 1 });
 
-    expect(db.select).toHaveBeenCalledTimes(3);
+    expect(db.select).toHaveBeenCalledTimes(2);
     expect(res).toHaveLength(2);
     expect(res[0].genres[0].slug).toBe('action');
     expect(res[1].genres[0].slug).toBe('drama');
@@ -201,7 +213,7 @@ describe('MovieListingsQuery', () => {
     setup([movies, [{ total: movies.length }], genres]);
 
     const res = await query.execute('new_on_digital', { daysBack: 7 });
-    expect(db.select).toHaveBeenCalledTimes(3);
+    expect(db.select).toHaveBeenCalledTimes(2);
     expect(res[0].genres[0].name).toBe('SciFi');
   });
 
@@ -339,7 +351,7 @@ describe('MovieListingsQuery', () => {
       // Call without eligibilityMode - should default to 'catalog'
       const res = await query.execute('now_playing', { limit: 10, offset: 0 });
 
-      expect(db.select).toHaveBeenCalledTimes(3);
+      expect(db.select).toHaveBeenCalledTimes(2);
       expect(res).toHaveLength(1);
       expect(res[0].title).toBe('Eligible Movie');
     });
@@ -381,7 +393,7 @@ describe('MovieListingsQuery', () => {
         eligibilityMode: 'catalog',
       });
 
-      expect(db.select).toHaveBeenCalledTimes(3);
+      expect(db.select).toHaveBeenCalledTimes(2);
       expect(res).toHaveLength(1);
       expect(res[0].title).toBe('Eligible Movie');
     });
@@ -426,7 +438,7 @@ describe('MovieListingsQuery', () => {
         eligibilityMode: 'freshness',
       });
 
-      expect(db.select).toHaveBeenCalledTimes(3);
+      expect(db.select).toHaveBeenCalledTimes(2);
       expect(res).toHaveLength(1);
       expect(res[0].title).toBe('Fresh Movie Without Signals');
     });
@@ -469,7 +481,7 @@ describe('MovieListingsQuery', () => {
         eligibilityMode: 'freshness',
       });
 
-      expect(db.select).toHaveBeenCalledTimes(3);
+      expect(db.select).toHaveBeenCalledTimes(2);
       expect(res).toHaveLength(1);
       expect(res[0].title).toBe('New Digital Release');
     });

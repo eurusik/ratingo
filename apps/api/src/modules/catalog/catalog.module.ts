@@ -11,10 +11,8 @@ import { MEDIA_REPOSITORY } from './domain/repositories/media.repository.interfa
 import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface';
 import { GENRE_REPOSITORY } from './domain/repositories/genre.repository.interface';
 import { MOVIE_REPOSITORY } from './domain/repositories/movie.repository.interface';
-import {
-  ProvidersRepository,
-  PROVIDERS_REPOSITORY,
-} from './infrastructure/repositories/providers.repository';
+import { PROVIDERS_REPOSITORY } from './domain/repositories/providers.repository.interface';
+import { ProvidersRepository } from './infrastructure/repositories/providers.repository';
 
 // Query Objects - Shows
 import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
@@ -29,6 +27,10 @@ import { MovieListingsQuery } from './infrastructure/queries/movie-listings.quer
 
 // Query Objects - Mixed Media
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
+
+// Query Objects - Shared
+import { GenreQuery } from './infrastructure/queries/shared/genre.query';
+
 import { CatalogSearchService } from './application/services/catalog-search.service';
 import { CatalogImportService } from './application/services/catalog-import.service';
 import { MovieDetailsService } from './application/services/movie-details.service';
@@ -73,6 +75,9 @@ import { CardsModule } from '../shared/cards/cards.module';
 
     // Query Objects - Mixed Media
     HeroMediaQuery,
+
+    // Query Objects - Shared
+    GenreQuery,
 
     // Repositories
     {
