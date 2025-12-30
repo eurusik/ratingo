@@ -1,7 +1,11 @@
-import { BADGE_KEY, BADGE_PRIORITY, CARD_LIST_CONTEXT, PRIMARY_CTA } from './card.constants';
-import type { CardListContext } from './card.constants';
-import type { PrimaryCta } from './card.constants';
-import { USER_MEDIA_STATE } from '../../../user-media/domain/entities/user-media-state.entity';
+import {
+  BADGE_KEY,
+  BADGE_PRIORITY,
+  CARD_LIST_CONTEXT,
+  CARD_USER_STATE,
+  PRIMARY_CTA,
+} from './card.constants';
+import type { CardListContext, PrimaryCta } from './card.constants';
 import type { CardBadge, CardItemSignals, CardMeta } from './card.types';
 
 const BADGE_REASON = {
@@ -50,7 +54,7 @@ export function extractContinuePoint(
  * Selects a single badge for a card based on canonical priority.
  */
 export function selectBadge(signals: CardItemSignals, ctx: CardListContext): CardBadge | null {
-  if (signals.userState === USER_MEDIA_STATE.WATCHING && signals.hasNewEpisode) {
+  if (signals.userState === CARD_USER_STATE.WATCHING && signals.hasNewEpisode) {
     return {
       key: BADGE_KEY.NEW_EPISODE,
       priority: BADGE_PRIORITY.NEW_EPISODE,
@@ -70,7 +74,7 @@ export function selectBadge(signals: CardItemSignals, ctx: CardListContext): Car
     return null;
   }
 
-  if (ctx !== CARD_LIST_CONTEXT.USER_LIBRARY && signals.userState === USER_MEDIA_STATE.PLANNED) {
+  if (ctx !== CARD_LIST_CONTEXT.USER_LIBRARY && signals.userState === CARD_USER_STATE.PLANNED) {
     return {
       key: BADGE_KEY.IN_WATCHLIST,
       priority: BADGE_PRIORITY.IN_WATCHLIST,

@@ -7,8 +7,8 @@
 
 import { Injectable } from '@nestjs/common';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { BADGE_KEY } from '../../cards/domain/card.constants';
 import { ShowVerdictInput, ShowVerdict, ShowVerdictResult } from '../domain/show-verdict.types';
+import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 import {
   CONFIDENCE,
   RATING_THRESHOLDS,
@@ -35,7 +35,8 @@ export class ShowVerdictService {
    * Computes verdict for a show.
    */
   compute(input: ShowVerdictInput): ShowVerdictResult {
-    const { status, externalRatings, badgeKey, totalSeasons, lastAirDate, firstAirDate } = input;
+    const { status, externalRatings, popularitySignal, totalSeasons, lastAirDate, firstAirDate } =
+      input;
 
     // Calculate content age in years
     const contentAgeYears = firstAirDate
@@ -198,7 +199,10 @@ export class ShowVerdictService {
 
     // Trending Now - high current interest
     // For older content, use age-appropriate messaging
-    if (badgeKey === BADGE_KEY.TRENDING || badgeKey === BADGE_KEY.HIT) {
+    if (
+      popularitySignal === POPULARITY_SIGNAL.TRENDING ||
+      popularitySignal === POPULARITY_SIGNAL.HIT
+    ) {
       if (isClassic && isGoodQuality) {
         // 10+ years old with good ratings = timeless favorite
         return buildResult(
@@ -296,7 +300,7 @@ export class ShowVerdictService {
 
     // Rising Hype - growing popularity
     // For older content, frame as "classic series" not "rising hype"
-    if (badgeKey === BADGE_KEY.RISING) {
+    if (popularitySignal === POPULARITY_SIGNAL.RISING) {
       if (isClassic && isGoodQuality) {
         return buildResult(
           {

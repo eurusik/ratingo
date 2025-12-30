@@ -5,6 +5,11 @@
  * and provides user-facing recommendations.
  */
 
+import type { ExternalRatings } from '../../../../common/types/media.types';
+
+// Re-export for convenience within verdict module
+export type { ExternalRatings } from '../../../../common/types/media.types';
+
 /**
  * Verdict type for UI styling.
  */
@@ -33,15 +38,6 @@ export const RATING_SOURCE = {
 } as const;
 
 export type RatingSourceLabel = (typeof RATING_SOURCE)[keyof typeof RATING_SOURCE];
-
-/**
- * External ratings from different sources.
- */
-export interface ExternalRatings {
-  imdb?: { rating: number; voteCount?: number | null } | null;
-  trakt?: { rating: number; voteCount?: number | null } | null;
-  tmdb?: { rating: number; voteCount?: number | null } | null;
-}
 
 /**
  * Aggregated rating data computed from external sources.

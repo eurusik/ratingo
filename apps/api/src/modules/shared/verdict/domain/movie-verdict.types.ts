@@ -5,8 +5,8 @@
  */
 
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import { type BadgeKey } from '../../cards/domain/card.constants';
 import { RatingSourceLabel, BaseVerdict } from './verdict.types';
+import type { PopularitySignal } from './popularity-signal';
 
 /**
  * Message key for i18n lookup on client.
@@ -40,7 +40,8 @@ export interface MovieVerdictInput {
   avgRating?: number | null;
   voteCount?: number | null;
   ratingSource?: RatingSourceLabel | null;
-  badgeKey?: BadgeKey;
+  /** Popularity signal (trending/hit/rising) */
+  popularitySignal?: PopularitySignal;
   popularity?: number | null;
   /** Release date for age-aware verdicts */
   releaseDate?: Date | null;

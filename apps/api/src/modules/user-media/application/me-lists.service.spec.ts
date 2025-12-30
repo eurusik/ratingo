@@ -7,6 +7,13 @@ import {
   USER_MEDIA_WATCHLIST_STATES,
 } from '../domain/entities/user-media-state.entity';
 import { MediaType } from '../../../common/enums/media-type.enum';
+import { CardMeta } from '../../shared/cards/domain/card.types';
+
+const mockCard: CardMeta = {
+  badgeKey: null,
+  primaryCta: 'OPEN',
+  continue: null,
+};
 
 describe('MeListsService', () => {
   let service: MeListsService;
@@ -60,6 +67,7 @@ describe('MeListsService', () => {
             slug: 'test-movie',
             poster: null,
             releaseDate: new Date(),
+            card: mockCard,
           },
         },
       ];
@@ -150,6 +158,7 @@ describe('MeListsService', () => {
             slug: 'movie-1',
             poster: null,
             releaseDate: new Date(),
+            card: mockCard,
           },
         },
       ];
@@ -242,6 +251,7 @@ describe('MeListsService', () => {
             slug: 'watched-movie',
             poster: null,
             releaseDate: new Date(),
+            card: mockCard,
           },
         },
       ];
@@ -333,6 +343,7 @@ describe('MeListsService', () => {
             slug: 'tv-show',
             poster: null,
             releaseDate: new Date(),
+            card: mockCard,
           },
         },
       ];
@@ -384,6 +395,7 @@ describe('MeListsService', () => {
             slug: 'another-show',
             poster: null,
             releaseDate: new Date(),
+            card: mockCard,
           },
         },
       ];

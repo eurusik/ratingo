@@ -1,6 +1,6 @@
 import { MovieVerdictService, computeMovieVerdict } from './movie-verdict.service';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import { BADGE_KEY } from '../../cards/domain/card.constants';
+import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 import { RATING_SOURCE } from '../domain/verdict.types';
 
 describe('MovieVerdictService', () => {
@@ -93,7 +93,7 @@ describe('MovieVerdictService', () => {
   describe('quality signals', () => {
     it('should return trendingNow for TRENDING badge on recent content', () => {
       const result = service.compute({
-        badgeKey: BADGE_KEY.TRENDING,
+        popularitySignal: POPULARITY_SIGNAL.TRENDING,
         avgRating: 7.0,
         voteCount: 500,
         releaseDate: new Date(), // recent release
@@ -105,7 +105,7 @@ describe('MovieVerdictService', () => {
 
     it('should return trendingNow for HIT badge on recent content', () => {
       const result = service.compute({
-        badgeKey: BADGE_KEY.HIT,
+        popularitySignal: POPULARITY_SIGNAL.HIT,
         avgRating: 7.0,
         voteCount: 500,
         releaseDate: new Date(), // recent release
@@ -151,7 +151,7 @@ describe('MovieVerdictService', () => {
   describe('popularity verdicts', () => {
     it('should return risingHype for RISING badge on recent content', () => {
       const result = service.compute({
-        badgeKey: BADGE_KEY.RISING,
+        popularitySignal: POPULARITY_SIGNAL.RISING,
         avgRating: 6.3, // mixed quality range, not decent/strong
         voteCount: 300,
         releaseDate: new Date(), // recent release
@@ -168,7 +168,7 @@ describe('MovieVerdictService', () => {
       oldDate.setFullYear(oldDate.getFullYear() - 5); // 5 years old
 
       const result = service.compute({
-        badgeKey: BADGE_KEY.TRENDING,
+        popularitySignal: POPULARITY_SIGNAL.TRENDING,
         avgRating: 6.8,
         voteCount: 500,
         releaseDate: oldDate,
@@ -183,7 +183,7 @@ describe('MovieVerdictService', () => {
       classicDate.setFullYear(classicDate.getFullYear() - 15); // 15 years old
 
       const result = service.compute({
-        badgeKey: BADGE_KEY.TRENDING,
+        popularitySignal: POPULARITY_SIGNAL.TRENDING,
         avgRating: 7.5,
         voteCount: 1000,
         releaseDate: classicDate,
@@ -198,7 +198,7 @@ describe('MovieVerdictService', () => {
       classicDate.setFullYear(classicDate.getFullYear() - 12); // 12 years old
 
       const result = service.compute({
-        badgeKey: BADGE_KEY.RISING,
+        popularitySignal: POPULARITY_SIGNAL.RISING,
         avgRating: 6.3, // below strong threshold but still decent
         voteCount: 100, // not enough for confident rating
         releaseDate: classicDate,
@@ -214,7 +214,7 @@ describe('MovieVerdictService', () => {
       oldDate.setFullYear(oldDate.getFullYear() - 5); // 5 years old
 
       const result = service.compute({
-        badgeKey: BADGE_KEY.RISING,
+        popularitySignal: POPULARITY_SIGNAL.RISING,
         avgRating: 6.3,
         voteCount: 300,
         releaseDate: oldDate,

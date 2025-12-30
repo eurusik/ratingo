@@ -3,6 +3,13 @@ import { MeListsController } from './me-lists.controller';
 import { MeListsService } from '../../application/me-lists.service';
 import { USER_MEDIA_LIST_SORT } from '../../domain/repositories/user-media-state.repository.interface';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { CardMeta } from '../../../shared/cards/domain/card.types';
+
+const mockCard: CardMeta = {
+  badgeKey: null,
+  primaryCta: 'OPEN',
+  continue: null,
+};
 
 describe('MeListsController', () => {
   let controller: MeListsController;
@@ -16,6 +23,7 @@ describe('MeListsController', () => {
     slug: 'test-movie',
     poster: null,
     releaseDate: new Date('2023-01-01'),
+    card: mockCard,
   };
 
   const mockUserMediaWithSummary = {

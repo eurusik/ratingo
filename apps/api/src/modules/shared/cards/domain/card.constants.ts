@@ -1,4 +1,16 @@
 /**
+ * User state values for card context (decoupled from user-media module).
+ */
+export const CARD_USER_STATE = {
+  WATCHING: 'watching',
+  COMPLETED: 'completed',
+  PLANNED: 'planned',
+  DROPPED: 'dropped',
+} as const;
+
+export type CardUserState = (typeof CARD_USER_STATE)[keyof typeof CARD_USER_STATE];
+
+/**
  * Supported badge keys for media cards.
  */
 export const BADGE_KEY = {

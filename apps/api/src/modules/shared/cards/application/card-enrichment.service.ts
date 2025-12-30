@@ -1,27 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import { USER_MEDIA_STATE } from '../../../user-media/domain/entities/user-media-state.entity';
-import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import type { MediaType } from '../../../../common/enums/media-type.enum';
-import type { ImageDto } from '../../../../common/dtos/image.dto';
+import type { ImageData } from '../../../../common/types';
 import { buildCardMeta, extractContinuePoint } from '../domain/selectors';
-import { CARD_LIST_CONTEXT, CARD_NEW_RELEASE_WINDOW_DAYS } from '../domain/card.constants';
+import {
+  CARD_LIST_CONTEXT,
+  CARD_NEW_RELEASE_WINDOW_DAYS,
+  CARD_USER_STATE,
+} from '../domain/card.constants';
 import type { CardListContext } from '../domain/card.constants';
-import type { CardMeta } from '../domain/card.types';
+import type { CardMeta, CardUserContext } from '../domain/card.types';
 
-export type MediaSummaryWithCard = {
+export type MediaSummary = {
   id: string;
   type: MediaType;
   title: string;
   slug: string;
-  poster: ImageDto | null;
+  poster: ImageData | null;
   releaseDate?: Date | null;
   card?: CardMeta;
 };
 
-export type UserMediaWithSummary = UserMediaState & { mediaSummary: MediaSummaryWithCard };
+/**
+ * Constraint for user media input - must have state, progress, and mediaSummary.
+ */
+export type UserMediaInputConstraint = CardUserContext & { mediaSummary: MediaSummary };
 
 export type CatalogItemWithUserState = {
-  userState?: UserMediaState | null;
+  userState?: CardUserContext | null;
 };
 
 /**
@@ -38,16 +43,16 @@ export class CardEnrichmentService {
    * certain badges in user library, or enforce "continue-first" behavior
    * in continue sections).
    *
-   * @param {UserMediaWithSummary[]} items - User media items with media summary
-   * @param {{ context?: CardListContext } | undefined} opts - Optional enrichment options
-   * @returns {UserMediaWithSummary[]} Enriched items
+   * @param items - User media items with media summary (preserves original type)
+   * @param opts - Optional enrichment options
+   * @returns Enriched items with card metadata added to mediaSummary
    */
-  enrichUserMedia(
-    items: UserMediaWithSummary[],
+  enrichUserMedia<T extends UserMediaInputConstraint>(
+    items: T[],
     opts?: {
       context?: CardListContext;
     },
-  ): UserMediaWithSummary[] {
+  ): Array<T & { mediaSummary: T['mediaSummary'] & { card: CardMeta } }> {
     const ctx = opts?.context ?? CARD_LIST_CONTEXT.DEFAULT;
 
     return items.map((item) => {
@@ -66,7 +71,7 @@ export class CardEnrichmentService {
         ctx,
       );
 
-      if (item.state === USER_MEDIA_STATE.PLANNED) {
+      if (item.state === CARD_USER_STATE.PLANNED) {
         card.continue = null;
       }
 
@@ -121,7 +126,7 @@ export class CardEnrichmentService {
         opts.context,
       );
 
-      if (userState?.state === USER_MEDIA_STATE.PLANNED) {
+      if (userState?.state === CARD_USER_STATE.PLANNED) {
         card.continue = null;
       }
 

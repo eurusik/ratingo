@@ -5,8 +5,8 @@
  */
 
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { type BadgeKey } from '../../cards/domain/card.constants';
 import { ExternalRatings, BaseVerdict } from './verdict.types';
+import type { PopularitySignal } from './popularity-signal';
 
 /**
  * Quality verdict message keys - answer "is it worth it?"
@@ -41,7 +41,8 @@ export type ShowStatusHintKey = 'newSeason' | 'seriesFinale' | null;
 export interface ShowVerdictInput {
   status?: ShowStatus | null;
   externalRatings?: ExternalRatings | null;
-  badgeKey?: BadgeKey;
+  /** Popularity signal (trending/hit/rising) */
+  popularitySignal?: PopularitySignal;
   popularity?: number | null;
   totalSeasons?: number | null;
   lastAirDate?: Date | null;

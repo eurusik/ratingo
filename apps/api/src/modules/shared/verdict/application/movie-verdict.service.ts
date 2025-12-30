@@ -7,8 +7,8 @@
 
 import { Injectable } from '@nestjs/common';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import { BADGE_KEY } from '../../cards/domain/card.constants';
 import { MovieVerdictInput, MovieVerdict } from '../domain/movie-verdict.types';
+import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 import { RATING_SOURCE } from '../domain/verdict.types';
 import {
   CONFIDENCE,
@@ -39,8 +39,15 @@ export class MovieVerdictService {
    * Computes verdict for a movie.
    */
   compute(input: MovieVerdictInput): MovieVerdict {
-    const { releaseStatus, avgRating, voteCount, ratingSource, badgeKey, popularity, releaseDate } =
-      input;
+    const {
+      releaseStatus,
+      avgRating,
+      voteCount,
+      ratingSource,
+      popularitySignal,
+      popularity,
+      releaseDate,
+    } = input;
 
     // Calculate content age in years
     const contentAgeYears = releaseDate
@@ -128,7 +135,10 @@ export class MovieVerdictService {
 
     // Trending Now - high current interest
     // For older content, use age-appropriate messaging
-    if (badgeKey === BADGE_KEY.TRENDING || badgeKey === BADGE_KEY.HIT) {
+    if (
+      popularitySignal === POPULARITY_SIGNAL.TRENDING ||
+      popularitySignal === POPULARITY_SIGNAL.HIT
+    ) {
       if (isClassic && isGoodQuality) {
         // 10+ years old with good ratings = timeless favorite
         return {
@@ -188,7 +198,7 @@ export class MovieVerdictService {
 
     // Rising Hype - growing popularity
     // For older content, frame as "classic choice" not "rising hype"
-    if (badgeKey === BADGE_KEY.RISING) {
+    if (popularitySignal === POPULARITY_SIGNAL.RISING) {
       if (isClassic && isGoodQuality) {
         return {
           type: 'quality',

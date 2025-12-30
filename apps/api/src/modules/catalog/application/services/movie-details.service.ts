@@ -5,15 +5,29 @@ import {
   MovieDetails,
 } from '../../domain/repositories/movie.repository.interface';
 import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
+import { BADGE_KEY, CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
 import { computeReleaseStatus } from '../../domain/utils/release-status.utils';
 import { computeMovieVerdict, MovieVerdict } from '../../../shared/verdict';
+import {
+  POPULARITY_SIGNAL,
+  PopularitySignal,
+} from '../../../shared/verdict/domain/popularity-signal';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
 import { getBestRating, isNewRelease } from '../../../../common/utils/media.utils';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
-import type { CardMeta } from '../../../shared/cards/domain/card.types';
+import type { CardMeta, BadgeKey } from '../../../shared/cards/domain/card.types';
+
+/**
+ * Maps card badge key to verdict popularity signal.
+ */
+function mapBadgeToPopularitySignal(badgeKey: BadgeKey | null | undefined): PopularitySignal {
+  if (badgeKey === BADGE_KEY.TRENDING) return POPULARITY_SIGNAL.TRENDING;
+  if (badgeKey === BADGE_KEY.HIT) return POPULARITY_SIGNAL.HIT;
+  if (badgeKey === BADGE_KEY.RISING) return POPULARITY_SIGNAL.RISING;
+  return null;
+}
 
 /**
  * Result of movie details enrichment.
@@ -114,7 +128,7 @@ export class MovieDetailsService {
       avgRating: bestRating?.rating ?? null,
       voteCount: bestRating?.voteCount ?? null,
       ratingSource: bestRatingSource,
-      badgeKey: card?.badgeKey ?? null,
+      popularitySignal: mapBadgeToPopularitySignal(card?.badgeKey),
       popularity: movie.stats?.popularityScore ?? null,
       releaseDate: movie.releaseDate ?? null,
     });

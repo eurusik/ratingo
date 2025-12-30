@@ -1,5 +1,17 @@
-import type { BadgeKey, CardListContext, PrimaryCta } from './card.constants';
-import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
+import type { BadgeKey, CardListContext, CardUserState, PrimaryCta } from './card.constants';
+
+/**
+ * User context for card rendering (abstraction over user-media state).
+ */
+export interface CardUserContext {
+  state: CardUserState | null;
+  progress: {
+    seasons?: Record<number, number>;
+  } | null;
+}
+
+// Re-export for convenience
+export type { CardUserState, BadgeKey } from './card.constants';
 
 export interface ContinuePoint {
   season: number;
@@ -21,7 +33,7 @@ export interface CardMeta {
 
 export interface CardItemSignals {
   hasUserEntry: boolean;
-  userState?: UserMediaState['state'] | null;
+  userState?: CardUserState | null;
   continuePoint?: ContinuePoint | null;
   hasNewEpisode?: boolean;
   isNewRelease?: boolean;

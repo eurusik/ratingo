@@ -25,18 +25,33 @@ import { NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.quer
 import { ShowResponseDto } from '../dtos/show-response.dto';
 import { DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
+import { BADGE_KEY, CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
+import type { BadgeKey } from '../../../shared/cards/domain/card.types';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import { normalizeListQuery } from '../utils/query-normalizer';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
 import { computeShowVerdict } from '../../../shared/verdict';
 import {
+  POPULARITY_SIGNAL,
+  PopularitySignal,
+} from '../../../shared/verdict/domain/popularity-signal';
+import {
   CATALOG_DEFAULT_LIMIT,
   CATALOG_DEFAULT_OFFSET,
   CATALOG_DEFAULT_CALENDAR_DAYS,
 } from '../../../../common/constants';
 import { isNewRelease, hasRecentEpisode } from '../../../../common/utils/media.utils';
+
+/**
+ * Maps card badge key to verdict popularity signal.
+ */
+function mapBadgeToPopularitySignal(badgeKey: BadgeKey | null | undefined): PopularitySignal {
+  if (badgeKey === BADGE_KEY.TRENDING) return POPULARITY_SIGNAL.TRENDING;
+  if (badgeKey === BADGE_KEY.HIT) return POPULARITY_SIGNAL.HIT;
+  if (badgeKey === BADGE_KEY.RISING) return POPULARITY_SIGNAL.RISING;
+  return null;
+}
 
 /**
  * Public show catalog endpoints (trending, calendar, details).
@@ -224,7 +239,7 @@ export class CatalogShowsController {
     const { verdict, statusHint } = computeShowVerdict({
       status: show.status,
       externalRatings: show.externalRatings,
-      badgeKey: card?.badgeKey ?? null,
+      popularitySignal: mapBadgeToPopularitySignal(card?.badgeKey),
       popularity: show.stats?.popularityScore ?? null,
       totalSeasons: show.totalSeasons,
       lastAirDate: show.lastAirDate,

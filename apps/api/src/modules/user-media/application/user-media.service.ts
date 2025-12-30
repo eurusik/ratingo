@@ -78,22 +78,7 @@ export class UserMediaService {
    *   | null
    * >} State with media summary or null
    */
-  async getStateWithMedia(
-    userId: string,
-    mediaItemId: string,
-  ): Promise<
-    | (UserMediaState & {
-        mediaSummary: {
-          id: string;
-          type: MediaType;
-          title: string;
-          slug: string;
-          poster: ImageDto | null;
-          releaseDate?: Date | null;
-        };
-      })
-    | null
-  > {
+  async getStateWithMedia(userId: string, mediaItemId: string) {
     const item = await this.repo.findOneWithMedia(userId, mediaItemId);
     if (!item) return null;
     return this.cards.enrichUserMedia([item])[0];
@@ -133,25 +118,7 @@ export class UserMediaService {
    *   >
    * >} List of states with media summary
    */
-  async listWithMedia(
-    userId: string,
-    limit = 20,
-    offset = 0,
-    options?: ListWithMediaOptions,
-  ): Promise<
-    Array<
-      UserMediaState & {
-        mediaSummary: {
-          id: string;
-          type: MediaType;
-          title: string;
-          slug: string;
-          poster: ImageDto | null;
-          releaseDate?: Date | null;
-        };
-      }
-    >
-  > {
+  async listWithMedia(userId: string, limit = 20, offset = 0, options?: ListWithMediaOptions) {
     const items = await this.repo.listWithMedia(userId, limit, offset, options);
     return this.cards.enrichUserMedia(items, { context: CARD_LIST_CONTEXT.USER_LIBRARY });
   }

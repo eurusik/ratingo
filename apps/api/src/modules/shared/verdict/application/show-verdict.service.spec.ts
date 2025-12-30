@@ -1,6 +1,6 @@
 import { ShowVerdictService, computeShowVerdict } from './show-verdict.service';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { BADGE_KEY } from '../../cards/domain/card.constants';
+import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
 
 describe('ShowVerdictService', () => {
   let service: ShowVerdictService;
@@ -91,7 +91,7 @@ describe('ShowVerdictService', () => {
   describe('quality signals', () => {
     it('should return trendingNow for TRENDING badge on recent content', () => {
       const result = service.compute({
-        badgeKey: BADGE_KEY.TRENDING,
+        popularitySignal: POPULARITY_SIGNAL.TRENDING,
         externalRatings: { imdb: { rating: 7.5, voteCount: 500 } },
         firstAirDate: new Date(), // recent show
       });
@@ -102,7 +102,7 @@ describe('ShowVerdictService', () => {
 
     it('should return trendingNow for HIT badge on recent content', () => {
       const result = service.compute({
-        badgeKey: BADGE_KEY.HIT,
+        popularitySignal: POPULARITY_SIGNAL.HIT,
         externalRatings: { imdb: { rating: 7.5, voteCount: 500 } },
         firstAirDate: new Date(), // recent show
       });
@@ -176,7 +176,7 @@ describe('ShowVerdictService', () => {
   describe('popularity verdicts', () => {
     it('should return risingHype for RISING badge on recent content', () => {
       const result = service.compute({
-        badgeKey: BADGE_KEY.RISING,
+        popularitySignal: POPULARITY_SIGNAL.RISING,
         externalRatings: { imdb: { rating: 6.8, voteCount: 100 } },
         firstAirDate: new Date(), // recent show
       });
@@ -192,7 +192,7 @@ describe('ShowVerdictService', () => {
       oldDate.setFullYear(oldDate.getFullYear() - 5); // 5 years old
 
       const result = service.compute({
-        badgeKey: BADGE_KEY.TRENDING,
+        popularitySignal: POPULARITY_SIGNAL.TRENDING,
         externalRatings: { imdb: { rating: 6.8, voteCount: 500 } },
         firstAirDate: oldDate,
       });
@@ -206,7 +206,7 @@ describe('ShowVerdictService', () => {
       classicDate.setFullYear(classicDate.getFullYear() - 15); // 15 years old
 
       const result = service.compute({
-        badgeKey: BADGE_KEY.TRENDING,
+        popularitySignal: POPULARITY_SIGNAL.TRENDING,
         externalRatings: { imdb: { rating: 7.5, voteCount: 1000 } },
         firstAirDate: classicDate,
       });
@@ -220,7 +220,7 @@ describe('ShowVerdictService', () => {
       oldDate.setFullYear(oldDate.getFullYear() - 5); // 5 years old
 
       const result = service.compute({
-        badgeKey: BADGE_KEY.RISING,
+        popularitySignal: POPULARITY_SIGNAL.RISING,
         externalRatings: { imdb: { rating: 6.3, voteCount: 100 } },
         firstAirDate: oldDate,
       });
