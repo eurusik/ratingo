@@ -28,7 +28,8 @@ import { DatabaseException } from '../../../../common/exceptions';
 
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { HeroMediaQuery } from '../queries/hero-media.query';
-import { HeroMediaItem, LocalSearchResult } from '../../domain/models/hero-media.model';
+import { HeroMediaItem } from '../../../../common/types/hero-media.types';
+import { LocalSearchResult } from '../../domain/models/search-result.model';
 import {
   EligibilityStatus,
   EvaluationReason,

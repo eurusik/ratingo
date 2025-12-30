@@ -1,9 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  IMediaRepository,
-  MEDIA_REPOSITORY,
-} from '../../catalog/domain/repositories/media.repository.interface';
-import { HeroMediaItem } from '../../catalog/domain/models/hero-media.model';
+import { IHeroRepository, HERO_REPOSITORY } from '../domain/repositories/hero.repository.interface';
+import { HeroMediaItem } from '../../../common/types/hero-media.types';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { HERO_CONFIG } from '../home.constants';
 
@@ -15,8 +12,8 @@ export class HomeService {
   private readonly logger = new Logger(HomeService.name);
 
   constructor(
-    @Inject(MEDIA_REPOSITORY)
-    private readonly mediaRepository: IMediaRepository,
+    @Inject(HERO_REPOSITORY)
+    private readonly heroRepository: IHeroRepository,
   ) {}
 
   /**
@@ -27,7 +24,7 @@ export class HomeService {
    */
   async getHero(type?: MediaType): Promise<HeroMediaItem[]> {
     try {
-      return await this.mediaRepository.findHero(HERO_CONFIG.DEFAULT_LIMIT, type);
+      return await this.heroRepository.findHero(HERO_CONFIG.DEFAULT_LIMIT, type);
     } catch (error) {
       this.logger.error(`Failed to get hero items: ${error.message}`);
       return [];

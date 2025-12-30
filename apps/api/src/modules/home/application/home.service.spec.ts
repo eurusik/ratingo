@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HomeService } from './home.service';
-import { MEDIA_REPOSITORY } from '../../catalog/domain/repositories/media.repository.interface';
+import { HERO_REPOSITORY } from '../domain/repositories/hero.repository.interface';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { HERO_CONFIG } from '../home.constants';
 
 describe('HomeService', () => {
   let service: HomeService;
-  let mediaRepositoryMock: any;
+  let heroRepositoryMock: any;
 
   beforeEach(async () => {
-    mediaRepositoryMock = {
+    heroRepositoryMock = {
       findHero: jest.fn(),
     };
 
@@ -17,8 +17,8 @@ describe('HomeService', () => {
       providers: [
         HomeService,
         {
-          provide: MEDIA_REPOSITORY,
-          useValue: mediaRepositoryMock,
+          provide: HERO_REPOSITORY,
+          useValue: heroRepositoryMock,
         },
       ],
     }).compile();
@@ -100,11 +100,11 @@ describe('HomeService', () => {
     ];
 
     it('should return hero items from repository with configured limit', async () => {
-      mediaRepositoryMock.findHero.mockResolvedValue(mockHeroItems);
+      heroRepositoryMock.findHero.mockResolvedValue(mockHeroItems);
 
       const result = await service.getHero();
 
-      expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(
+      expect(heroRepositoryMock.findHero).toHaveBeenCalledWith(
         HERO_CONFIG.DEFAULT_LIMIT,
         undefined,
       );
@@ -113,11 +113,11 @@ describe('HomeService', () => {
     });
 
     it('should pass type parameter to repository', async () => {
-      mediaRepositoryMock.findHero.mockResolvedValue([mockHeroItems[0]]);
+      heroRepositoryMock.findHero.mockResolvedValue([mockHeroItems[0]]);
 
       const result = await service.getHero(MediaType.MOVIE);
 
-      expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(
+      expect(heroRepositoryMock.findHero).toHaveBeenCalledWith(
         HERO_CONFIG.DEFAULT_LIMIT,
         MediaType.MOVIE,
       );
@@ -126,7 +126,7 @@ describe('HomeService', () => {
     });
 
     it('should return empty array on repository error', async () => {
-      mediaRepositoryMock.findHero.mockRejectedValue(new Error('DB Error'));
+      heroRepositoryMock.findHero.mockRejectedValue(new Error('DB Error'));
 
       const result = await service.getHero();
 

@@ -9,7 +9,7 @@ import {
   UserMediaListSort,
 } from '../../domain/repositories/user-media-state.repository.interface';
 import { UserMediaStateDto } from './user-media-state.dto';
-import { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 

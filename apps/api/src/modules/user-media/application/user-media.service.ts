@@ -8,7 +8,7 @@ import {
 } from '../domain/repositories/user-media-state.repository.interface';
 import { USER_MEDIA_STATE, UserMediaState } from '../domain/entities/user-media-state.entity';
 import { MediaType } from '../../../common/enums/media-type.enum';
-import { ImageDto } from '../../catalog/presentation/dtos/common.dto';
+import { ImageDto } from '../../../common/dtos/image.dto';
 import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
 

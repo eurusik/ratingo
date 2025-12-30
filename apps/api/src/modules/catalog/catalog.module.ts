@@ -32,6 +32,10 @@ import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
 import { GenreQuery } from './infrastructure/queries/shared/genre.query';
 import { ProvidersQuery } from './infrastructure/queries/providers.query';
 
+// Adapters
+import { HeroRepositoryAdapter } from './infrastructure/adapters/hero.repository.adapter';
+import { HERO_REPOSITORY } from '../home/domain/repositories/hero.repository.interface';
+
 import { CatalogSearchService } from './application/services/catalog-search.service';
 import { CatalogImportService } from './application/services/catalog-import.service';
 import { MovieDetailsService } from './application/services/movie-details.service';
@@ -102,7 +106,12 @@ import { CardsModule } from '../shared/cards/cards.module';
       provide: PROVIDERS_REPOSITORY,
       useClass: DrizzleProvidersRepository,
     },
+    // Adapters for other modules
+    {
+      provide: HERO_REPOSITORY,
+      useClass: HeroRepositoryAdapter,
+    },
   ],
-  exports: [MEDIA_REPOSITORY, SHOW_REPOSITORY, GENRE_REPOSITORY, MOVIE_REPOSITORY],
+  exports: [MEDIA_REPOSITORY, SHOW_REPOSITORY, GENRE_REPOSITORY, MOVIE_REPOSITORY, HERO_REPOSITORY],
 })
 export class CatalogModule {}

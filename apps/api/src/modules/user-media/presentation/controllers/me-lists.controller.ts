@@ -10,7 +10,7 @@ import {
 } from '../dto/me-lists.dto';
 import { UserMediaState } from '../../domain/entities/user-media-state.entity';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
 
 type UserMediaWithSummary = UserMediaState & {
   mediaSummary: {

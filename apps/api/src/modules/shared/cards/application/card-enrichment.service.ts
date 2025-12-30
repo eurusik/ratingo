@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { USER_MEDIA_STATE } from '../../../user-media/domain/entities/user-media-state.entity';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import type { MediaType } from '../../../../common/enums/media-type.enum';
-import type { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
+import type { ImageDto } from '../../../../common/dtos/image.dto';
 import { buildCardMeta, extractContinuePoint } from '../domain/selectors';
 import { CARD_LIST_CONTEXT, CARD_NEW_RELEASE_WINDOW_DAYS } from '../domain/card.constants';
 import type { CardListContext } from '../domain/card.constants';

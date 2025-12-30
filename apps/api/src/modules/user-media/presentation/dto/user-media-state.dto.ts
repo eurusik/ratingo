@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserMediaState } from '../../domain/entities/user-media-state.entity';
-import { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
 import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 
 export class UserMediaStateDto implements UserMediaState {

@@ -1,5 +1,5 @@
 import { HeroItemMapper } from './hero-item.mapper';
-import { HeroMediaItem } from '../../../catalog/domain/models/hero-media.model';
+import { HeroMediaItem } from '../../../../common/types/hero-media.types';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
 describe('HeroItemMapper', () => {
@@ -77,11 +77,12 @@ describe('HeroItemMapper', () => {
 
       expect(dto.stats.ratingoScore).toBe(85.5);
       expect(dto.stats.qualityScore).toBe(88.5);
+      expect(dto.stats.popularityScore).toBe(75.0);
       expect(dto.stats.liveWatchers).toBe(100);
       expect(dto.stats.totalWatchers).toBe(5000);
     });
 
-    it('should handle null stats values', () => {
+    it('should preserve null stats values', () => {
       const item = createMockHeroItem({
         stats: {
           ratingoScore: null,
@@ -94,10 +95,10 @@ describe('HeroItemMapper', () => {
 
       const dto = HeroItemMapper.toDto(item);
 
-      expect(dto.stats.ratingoScore).toBe(0);
-      expect(dto.stats.qualityScore).toBe(0);
-      expect(dto.stats.liveWatchers).toBeUndefined();
-      expect(dto.stats.totalWatchers).toBeUndefined();
+      expect(dto.stats.ratingoScore).toBeNull();
+      expect(dto.stats.qualityScore).toBeNull();
+      expect(dto.stats.liveWatchers).toBeNull();
+      expect(dto.stats.totalWatchers).toBeNull();
     });
 
     it('should map all external ratings', () => {
@@ -112,7 +113,7 @@ describe('HeroItemMapper', () => {
       expect(dto.externalRatings?.rottenTomatoes).toEqual({ rating: 85 });
     });
 
-    it('should handle null external ratings', () => {
+    it('should preserve null external ratings', () => {
       const item = createMockHeroItem({
         externalRatings: {
           tmdb: null,
@@ -125,11 +126,11 @@ describe('HeroItemMapper', () => {
 
       const dto = HeroItemMapper.toDto(item);
 
-      expect(dto.externalRatings?.tmdb).toBeUndefined();
-      expect(dto.externalRatings?.imdb).toBeUndefined();
-      expect(dto.externalRatings?.trakt).toBeUndefined();
-      expect(dto.externalRatings?.metacritic).toBeUndefined();
-      expect(dto.externalRatings?.rottenTomatoes).toBeUndefined();
+      expect(dto.externalRatings?.tmdb).toBeNull();
+      expect(dto.externalRatings?.imdb).toBeNull();
+      expect(dto.externalRatings?.trakt).toBeNull();
+      expect(dto.externalRatings?.metacritic).toBeNull();
+      expect(dto.externalRatings?.rottenTomatoes).toBeNull();
     });
 
     it('should use title as originalTitle fallback when null', () => {

@@ -7,7 +7,7 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { ImageMapper } from '../mappers/image.mapper';
 import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
-import { HeroMediaItem, HeroShowProgress } from '../../domain/models/hero-media.model';
+import { HeroMediaItem, HeroShowProgress } from '../../../../common/types/hero-media.types';
 import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
 
 /**

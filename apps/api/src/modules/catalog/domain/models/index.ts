@@ -1,1 +1,1 @@
-export * from './hero-media.model';
+export * from './search-result.model';

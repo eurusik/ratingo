@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ImageDto, ExternalRatingsDto } from '../../../catalog/presentation/dtos/common.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
+import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
 import { IsEnum, IsNumber, IsOptional, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 

@@ -1,7 +1,8 @@
 import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { HeroMediaItem, LocalSearchResult } from '../models/hero-media.model';
+import { HeroMediaItem } from '../../../../common/types/hero-media.types';
+import { LocalSearchResult } from '../models/search-result.model';
 
 /**
  * Data needed for score calculation.

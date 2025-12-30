@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ImageDto, ExternalRatingsDto, RatingoStatsDto } from './common.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
+import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
+import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
 import { OffsetPaginationMetaDto } from './pagination.dto';
 import { CatalogListQueryDto } from './catalog-list-query.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';

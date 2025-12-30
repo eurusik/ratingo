@@ -4,7 +4,7 @@ import {
   OffsetPaginationMetaDto,
   OffsetPaginationQueryDto,
 } from '../../../catalog/presentation/dtos/pagination.dto';
-import { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import {
   UserMediaState,

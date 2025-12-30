@@ -5,6 +5,9 @@ import {
   VideoLanguageEnum,
 } from '../../../../common/enums/video.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { ImageDto } from '../../../../common/dtos/image.dto';
+import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
+import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
 
 export class GenreDto {
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
@@ -124,48 +127,6 @@ export class CreditsDto {
   crew: CrewMemberDto[];
 }
 
-export class RatingoStatsDto {
-  @ApiProperty({
-    example: 85.5,
-    description: 'Composite Hype Score (0-100)',
-    required: false,
-    nullable: true,
-  })
-  ratingoScore?: number | null;
-
-  @ApiProperty({
-    example: 88.5,
-    description: 'Quality Score (0-100)',
-    required: false,
-    nullable: true,
-  })
-  qualityScore?: number | null;
-
-  @ApiProperty({
-    example: 45.2,
-    description: 'Popularity Score (0-100)',
-    required: false,
-    nullable: true,
-  })
-  popularityScore?: number | null;
-
-  @ApiProperty({
-    example: 6,
-    description: 'Number of people watching right now (Live)',
-    required: false,
-    nullable: true,
-  })
-  liveWatchers?: number | null;
-
-  @ApiProperty({
-    example: 6423,
-    description: 'Total unique watchers all time',
-    required: false,
-    nullable: true,
-  })
-  totalWatchers?: number | null;
-}
-
 export class UserMediaStateDto {
   @ApiProperty({ enum: ['watching', 'completed', 'planned', 'dropped'], example: 'watching' })
   state: 'watching' | 'completed' | 'planned' | 'dropped';
@@ -178,57 +139,6 @@ export class UserMediaStateDto {
 
   @ApiProperty({ example: 'Rewatching with friends', required: false, nullable: true })
   notes?: string | null;
-}
-
-export class ExternalRatingItemDto {
-  @ApiProperty({ example: 8.8 })
-  rating: number;
-
-  @ApiProperty({ example: 2000000, required: false, nullable: true })
-  voteCount?: number | null;
-}
-
-export class ExternalRatingsDto {
-  @ApiProperty({ type: ExternalRatingItemDto, required: false, nullable: true })
-  tmdb?: ExternalRatingItemDto | null;
-
-  @ApiProperty({ type: ExternalRatingItemDto, required: false, nullable: true })
-  imdb?: ExternalRatingItemDto | null;
-
-  @ApiProperty({ type: ExternalRatingItemDto, required: false, nullable: true })
-  trakt?: ExternalRatingItemDto | null;
-
-  @ApiProperty({ type: ExternalRatingItemDto, required: false, nullable: true })
-  metacritic?: ExternalRatingItemDto | null;
-
-  @ApiProperty({ type: ExternalRatingItemDto, required: false, nullable: true })
-  rottenTomatoes?: ExternalRatingItemDto | null;
-}
-
-export class ImageDto {
-  @ApiProperty({
-    example: 'https://image.tmdb.org/t/p/w342/abc.jpg',
-    description: 'Small image for cards (w342)',
-  })
-  small: string;
-
-  @ApiProperty({
-    example: 'https://image.tmdb.org/t/p/w500/abc.jpg',
-    description: 'Medium image for details (w500)',
-  })
-  medium: string;
-
-  @ApiProperty({
-    example: 'https://image.tmdb.org/t/p/w780/abc.jpg',
-    description: 'Large image for banners (w780)',
-  })
-  large: string;
-
-  @ApiProperty({
-    example: 'https://image.tmdb.org/t/p/original/abc.jpg',
-    description: 'Original quality image',
-  })
-  original: string;
 }
 
 export class WatchProviderDto {

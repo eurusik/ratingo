@@ -1,47 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
+import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
+import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-
-/**
- * Hero item statistics DTO.
- */
-export class HeroStatsDto {
-  @ApiProperty({ example: 85.5 })
-  ratingoScore: number;
-
-  @ApiProperty({ example: 88.5 })
-  qualityScore: number;
-
-  @ApiProperty({
-    example: 6,
-    description: 'Number of people watching right now (Live)',
-    required: false,
-  })
-  liveWatchers?: number;
-
-  @ApiProperty({ example: 6423, description: 'Total unique watchers all time', required: false })
-  totalWatchers?: number;
-}
-
-/**
- * Hero item external ratings DTO.
- */
-export class HeroExternalRatingsDto {
-  @ApiProperty({ example: { rating: 8.4, voteCount: 20000 }, required: false })
-  tmdb?: { rating: number; voteCount?: number | null };
-
-  @ApiProperty({ example: { rating: 8.7, voteCount: 1500000 }, required: false })
-  imdb?: { rating: number; voteCount?: number | null };
-
-  @ApiProperty({ example: { rating: 8.5, voteCount: 50000 }, required: false })
-  trakt?: { rating: number; voteCount?: number | null };
-
-  @ApiProperty({ example: { rating: 75 }, required: false })
-  metacritic?: { rating: number };
-
-  @ApiProperty({ example: { rating: 85 }, required: false })
-  rottenTomatoes?: { rating: number };
-}
 
 /**
  * Show progress DTO for TV shows.
@@ -106,11 +67,11 @@ export class HeroItemDto {
   @ApiProperty({ type: ImageDto })
   backdrop: ImageDto;
 
-  @ApiProperty({ type: HeroStatsDto })
-  stats: HeroStatsDto;
+  @ApiProperty({ type: RatingoStatsDto })
+  stats: RatingoStatsDto;
 
-  @ApiProperty({ type: HeroExternalRatingsDto, required: false })
-  externalRatings?: HeroExternalRatingsDto;
+  @ApiProperty({ type: ExternalRatingsDto, required: false })
+  externalRatings?: ExternalRatingsDto;
 
   @ApiProperty({ example: '1999-10-15T00:00:00.000Z', nullable: true })
   releaseDate: Date | null;

@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ImageDto, ExternalRatingsDto, RatingoStatsDto, GenreDto } from './common.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
+import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
+import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
+import { GenreDto } from './common.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 
