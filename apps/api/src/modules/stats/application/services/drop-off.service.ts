@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { TraktRatingsAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt-ratings.adapter';
+import { TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../ingestion/domain/ports';
 import { DropOffAnalyzerService, DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import {
   IShowRepository,
@@ -15,8 +15,11 @@ export class DropOffService {
   private readonly logger = new Logger(DropOffService.name);
 
   constructor(
-    private readonly traktAdapter: TraktRatingsAdapter,
+    @Inject(TRAKT_RATINGS_PORT)
+    private readonly traktRatingsPort: TraktRatingsPort,
+
     private readonly dropOffAnalyzer: DropOffAnalyzerService,
+
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
   ) {}
@@ -30,7 +33,7 @@ export class DropOffService {
 
     try {
       // Fetch episode data from Trakt
-      const episodeData = await this.traktAdapter.getShowEpisodesForAnalysis(tmdbId);
+      const episodeData = await this.traktRatingsPort.getShowEpisodesForAnalysis(tmdbId);
       if (!episodeData || !episodeData.seasons.length) {
         this.logger.warn(`No episode data for show ${tmdbId}`);
         return null;

@@ -6,12 +6,14 @@ import {
   TraktEndpoint,
   TRAKT_ENDPOINT,
 } from './interfaces/trakt.types';
+import { TraktListsPort } from '../../../domain/ports/trakt-lists.port';
 
 /**
  * Trakt adapter for trending lists and watchers ranks.
+ * Implements TraktListsPort for DDD compliance.
  */
 @Injectable()
-export class TraktListsAdapter extends BaseTraktHttp {
+export class TraktListsAdapter extends BaseTraktHttp implements TraktListsPort {
   /**
    * Generic method to get trending items with watchers and rank.
    *

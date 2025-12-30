@@ -1,6 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { TraktListsAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt-lists.adapter';
-import { TraktRatingsAdapter } from '../../../ingestion/infrastructure/adapters/trakt/trakt-ratings.adapter';
+import {
+  TraktListsPort,
+  TRAKT_LISTS_PORT,
+  TraktRatingsPort,
+  TRAKT_RATINGS_PORT,
+} from '../../../ingestion/domain/ports';
 import {
   IStatsRepository,
   STATS_REPOSITORY,
@@ -21,8 +25,12 @@ export class StatsService {
   private readonly logger = new Logger(StatsService.name);
 
   constructor(
-    private readonly traktListsAdapter: TraktListsAdapter,
-    private readonly traktRatingsAdapter: TraktRatingsAdapter,
+    @Inject(TRAKT_LISTS_PORT)
+    private readonly traktListsPort: TraktListsPort,
+
+    @Inject(TRAKT_RATINGS_PORT)
+    private readonly traktRatingsPort: TraktRatingsPort,
+
     private readonly scoreCalculator: ScoreCalculatorService,
 
     @Inject(STATS_REPOSITORY)
@@ -47,8 +55,8 @@ export class StatsService {
 
     // Fetch trending from Trakt (parallel)
     const [trendingMovies, trendingShows] = await Promise.all([
-      this.traktListsAdapter.getTrendingMoviesWithWatchers(limit),
-      this.traktListsAdapter.getTrendingShowsWithWatchers(limit),
+      this.traktListsPort.getTrendingMoviesWithWatchers(limit),
+      this.traktListsPort.getTrendingShowsWithWatchers(limit),
     ]);
 
     // Combine all trending items
@@ -189,8 +197,8 @@ export class StatsService {
 
     // 2. Fetch watchers from Trakt by TMDB IDs (batch with concurrency limit)
     const [movieWatchers, showWatchers] = await Promise.all([
-      this.traktRatingsAdapter.getMovieWatchersByTmdbIds(movieItems.map((i) => i.tmdbId)),
-      this.traktRatingsAdapter.getShowWatchersByTmdbIds(showItems.map((i) => i.tmdbId)),
+      this.traktRatingsPort.getMovieWatchersByTmdbIds(movieItems.map((i) => i.tmdbId)),
+      this.traktRatingsPort.getShowWatchersByTmdbIds(showItems.map((i) => i.tmdbId)),
     ]);
 
     // Merge watchers maps (null = transient error, skip update)

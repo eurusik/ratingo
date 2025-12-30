@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StatsService } from './stats.service';
-import { TraktListsAdapter } from '@/modules/ingestion/infrastructure/adapters/trakt/trakt-lists.adapter';
-import { TraktRatingsAdapter } from '@/modules/ingestion/infrastructure/adapters/trakt/trakt-ratings.adapter';
+import { TRAKT_LISTS_PORT, TRAKT_RATINGS_PORT } from '@/modules/ingestion/domain/ports';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { STATS_REPOSITORY } from '../../domain/repositories/stats.repository.interface';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
@@ -9,20 +8,20 @@ import { StatsNotFoundException } from '@/common/exceptions';
 
 describe('StatsService', () => {
   let service: StatsService;
-  let traktAdapter: jest.Mocked<TraktListsAdapter>;
-  let traktRatingsAdapter: jest.Mocked<TraktRatingsAdapter>;
+  let traktListsPort: any;
+  let traktRatingsPort: any;
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
   let statsRepository: any;
   let mediaRepository: any;
 
   beforeEach(async () => {
     // Create mocks
-    const mockTraktAdapter = {
+    const mockTraktListsPort = {
       getTrendingMoviesWithWatchers: jest.fn(),
       getTrendingShowsWithWatchers: jest.fn(),
     };
 
-    const mockTraktRatingsAdapter = {
+    const mockTraktRatingsPort = {
       getMovieWatchersByTmdbIds: jest.fn(),
       getShowWatchersByTmdbIds: jest.fn(),
     };
@@ -45,8 +44,8 @@ describe('StatsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StatsService,
-        { provide: TraktListsAdapter, useValue: mockTraktAdapter },
-        { provide: TraktRatingsAdapter, useValue: mockTraktRatingsAdapter },
+        { provide: TRAKT_LISTS_PORT, useValue: mockTraktListsPort },
+        { provide: TRAKT_RATINGS_PORT, useValue: mockTraktRatingsPort },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: STATS_REPOSITORY, useValue: mockStatsRepository },
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
@@ -54,8 +53,8 @@ describe('StatsService', () => {
     }).compile();
 
     service = module.get<StatsService>(StatsService);
-    traktAdapter = module.get(TraktListsAdapter);
-    traktRatingsAdapter = module.get(TraktRatingsAdapter);
+    traktListsPort = module.get(TRAKT_LISTS_PORT);
+    traktRatingsPort = module.get(TRAKT_RATINGS_PORT);
     scoreCalculator = module.get(ScoreCalculatorService);
     statsRepository = module.get(STATS_REPOSITORY);
     mediaRepository = module.get(MEDIA_REPOSITORY);
@@ -63,8 +62,8 @@ describe('StatsService', () => {
 
   describe('syncTrendingStats', () => {
     it('should return zeros when no trending items', async () => {
-      traktAdapter.getTrendingMoviesWithWatchers.mockResolvedValue([]);
-      traktAdapter.getTrendingShowsWithWatchers.mockResolvedValue([]);
+      traktListsPort.getTrendingMoviesWithWatchers.mockResolvedValue([]);
+      traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([]);
 
       const result = await service.syncTrendingStats();
 
@@ -73,10 +72,10 @@ describe('StatsService', () => {
     });
 
     it('should return zeros when no matching media in database', async () => {
-      traktAdapter.getTrendingMoviesWithWatchers.mockResolvedValue([
+      traktListsPort.getTrendingMoviesWithWatchers.mockResolvedValue([
         { tmdbId: 123, watchers: 100, rank: 1 },
       ]);
-      traktAdapter.getTrendingShowsWithWatchers.mockResolvedValue([]);
+      traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([]);
       mediaRepository.findManyByTmdbIds.mockResolvedValue([]); // No matches
 
       const result = await service.syncTrendingStats();
@@ -87,11 +86,11 @@ describe('StatsService', () => {
 
     it('should sync trending movies and shows', async () => {
       // Setup trending data
-      traktAdapter.getTrendingMoviesWithWatchers.mockResolvedValue([
+      traktListsPort.getTrendingMoviesWithWatchers.mockResolvedValue([
         { tmdbId: 550, watchers: 1000, rank: 1 },
         { tmdbId: 551, watchers: 800, rank: 2 },
       ]);
-      traktAdapter.getTrendingShowsWithWatchers.mockResolvedValue([
+      traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([
         { tmdbId: 1000, watchers: 500, rank: 1 },
       ]);
 
@@ -173,10 +172,10 @@ describe('StatsService', () => {
     });
 
     it('should handle items without score data', async () => {
-      traktAdapter.getTrendingMoviesWithWatchers.mockResolvedValue([
+      traktListsPort.getTrendingMoviesWithWatchers.mockResolvedValue([
         { tmdbId: 550, watchers: 1000, rank: 1 },
       ]);
-      traktAdapter.getTrendingShowsWithWatchers.mockResolvedValue([]);
+      traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([]);
 
       mediaRepository.findManyByTmdbIds.mockResolvedValue([{ id: 'uuid-550', tmdbId: 550 }]);
 
@@ -198,21 +197,21 @@ describe('StatsService', () => {
     });
 
     it('should respect limit parameter', async () => {
-      traktAdapter.getTrendingMoviesWithWatchers.mockResolvedValue([]);
-      traktAdapter.getTrendingShowsWithWatchers.mockResolvedValue([]);
+      traktListsPort.getTrendingMoviesWithWatchers.mockResolvedValue([]);
+      traktListsPort.getTrendingShowsWithWatchers.mockResolvedValue([]);
 
       await service.syncTrendingStats(50);
 
-      expect(traktAdapter.getTrendingMoviesWithWatchers).toHaveBeenCalledWith(50);
-      expect(traktAdapter.getTrendingShowsWithWatchers).toHaveBeenCalledWith(50);
+      expect(traktListsPort.getTrendingMoviesWithWatchers).toHaveBeenCalledWith(50);
+      expect(traktListsPort.getTrendingShowsWithWatchers).toHaveBeenCalledWith(50);
     });
 
     it('should fetch movies and shows in parallel', async () => {
       const moviePromise = new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 50));
       const showPromise = new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 50));
 
-      traktAdapter.getTrendingMoviesWithWatchers.mockReturnValue(moviePromise);
-      traktAdapter.getTrendingShowsWithWatchers.mockReturnValue(showPromise);
+      traktListsPort.getTrendingMoviesWithWatchers.mockReturnValue(moviePromise);
+      traktListsPort.getTrendingShowsWithWatchers.mockReturnValue(showPromise);
 
       const start = Date.now();
       await service.syncTrendingStats();
@@ -256,7 +255,7 @@ describe('StatsService', () => {
       });
 
       expect(result).toEqual({ movies: 0, shows: 0 });
-      expect(traktRatingsAdapter.getMovieWatchersByTmdbIds).not.toHaveBeenCalled();
+      expect(traktRatingsPort.getMovieWatchersByTmdbIds).not.toHaveBeenCalled();
     });
 
     it('should apply safety window to since parameter', async () => {
@@ -281,8 +280,8 @@ describe('StatsService', () => {
       ]);
 
       // Setup watchers from Trakt
-      traktRatingsAdapter.getMovieWatchersByTmdbIds.mockResolvedValue(new Map([[550, 1000]]));
-      traktRatingsAdapter.getShowWatchersByTmdbIds.mockResolvedValue(new Map([[1000, 500]]));
+      traktRatingsPort.getMovieWatchersByTmdbIds.mockResolvedValue(new Map([[550, 1000]]));
+      traktRatingsPort.getShowWatchersByTmdbIds.mockResolvedValue(new Map([[1000, 500]]));
 
       // Setup score data
       mediaRepository.findManyForScoring.mockResolvedValue([
@@ -325,13 +324,13 @@ describe('StatsService', () => {
       ]);
 
       // One success, one error (null)
-      traktRatingsAdapter.getMovieWatchersByTmdbIds.mockResolvedValue(
+      traktRatingsPort.getMovieWatchersByTmdbIds.mockResolvedValue(
         new Map<number, number | null>([
           [550, 1000],
           [551, null], // Transient error
         ]),
       );
-      traktRatingsAdapter.getShowWatchersByTmdbIds.mockResolvedValue(new Map());
+      traktRatingsPort.getShowWatchersByTmdbIds.mockResolvedValue(new Map());
 
       mediaRepository.findManyForScoring.mockResolvedValue([
         { id: 'uuid-1', tmdbId: 550, popularity: 100 },
@@ -363,10 +362,10 @@ describe('StatsService', () => {
         { id: 'uuid-1', tmdbId: 550, type: 'movie' },
       ]);
 
-      traktRatingsAdapter.getMovieWatchersByTmdbIds.mockResolvedValue(
+      traktRatingsPort.getMovieWatchersByTmdbIds.mockResolvedValue(
         new Map([[550, 0]]), // Not found in Trakt
       );
-      traktRatingsAdapter.getShowWatchersByTmdbIds.mockResolvedValue(new Map());
+      traktRatingsPort.getShowWatchersByTmdbIds.mockResolvedValue(new Map());
 
       mediaRepository.findManyForScoring.mockResolvedValue([
         { id: 'uuid-1', tmdbId: 550, popularity: 100 },

@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DropOffService } from './drop-off.service';
-import { TraktRatingsAdapter } from '@/modules/ingestion/infrastructure/adapters/trakt/trakt-ratings.adapter';
+import { TRAKT_RATINGS_PORT } from '@/modules/ingestion/domain/ports';
 import { DropOffAnalyzerService } from '@/modules/shared/drop-off-analyzer';
 import { SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
 
 describe('DropOffService', () => {
   let service: DropOffService;
-  let traktAdapter: jest.Mocked<TraktRatingsAdapter>;
+  let traktRatingsPort: any;
   let dropOffAnalyzer: jest.Mocked<DropOffAnalyzerService>;
   let showRepository: any;
 
   beforeEach(async () => {
-    const mockTraktAdapter = {
+    const mockTraktRatingsPort = {
       getShowEpisodesForAnalysis: jest.fn(),
     };
 
@@ -28,21 +28,21 @@ describe('DropOffService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DropOffService,
-        { provide: TraktRatingsAdapter, useValue: mockTraktAdapter },
+        { provide: TRAKT_RATINGS_PORT, useValue: mockTraktRatingsPort },
         { provide: DropOffAnalyzerService, useValue: mockDropOffAnalyzer },
         { provide: SHOW_REPOSITORY, useValue: mockShowRepository },
       ],
     }).compile();
 
     service = module.get<DropOffService>(DropOffService);
-    traktAdapter = module.get(TraktRatingsAdapter);
+    traktRatingsPort = module.get(TRAKT_RATINGS_PORT);
     dropOffAnalyzer = module.get(DropOffAnalyzerService);
     showRepository = module.get(SHOW_REPOSITORY);
   });
 
   describe('analyzeShow', () => {
     it('should return null when no episode data from Trakt', async () => {
-      traktAdapter.getShowEpisodesForAnalysis.mockResolvedValue(null);
+      traktRatingsPort.getShowEpisodesForAnalysis.mockResolvedValue(null);
 
       const result = await service.analyzeShow(12345);
 
@@ -52,7 +52,7 @@ describe('DropOffService', () => {
     });
 
     it('should return null when seasons array is empty', async () => {
-      traktAdapter.getShowEpisodesForAnalysis.mockResolvedValue({
+      traktRatingsPort.getShowEpisodesForAnalysis.mockResolvedValue({
         traktId: 100,
         seasons: [],
       });
@@ -87,7 +87,7 @@ describe('DropOffService', () => {
         episodesAnalyzed: 2,
       };
 
-      traktAdapter.getShowEpisodesForAnalysis.mockResolvedValue(episodeData);
+      traktRatingsPort.getShowEpisodesForAnalysis.mockResolvedValue(episodeData);
       dropOffAnalyzer.analyze.mockReturnValue(analysisResult);
 
       const result = await service.analyzeShow(12345);
@@ -98,7 +98,7 @@ describe('DropOffService', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      traktAdapter.getShowEpisodesForAnalysis.mockRejectedValue(new Error('API Error'));
+      traktRatingsPort.getShowEpisodesForAnalysis.mockRejectedValue(new Error('API Error'));
 
       const result = await service.analyzeShow(12345);
 
@@ -116,7 +116,7 @@ describe('DropOffService', () => {
       showRepository.findShowsForAnalysis.mockResolvedValue(shows);
 
       // Mock analyzeShow behavior
-      traktAdapter.getShowEpisodesForAnalysis
+      traktRatingsPort.getShowEpisodesForAnalysis
         .mockResolvedValueOnce({
           traktId: 1,
           seasons: [{ number: 1, episodes: [{ number: 1, title: 'Ep1', rating: 8, votes: 1000 }] }],
@@ -152,7 +152,7 @@ describe('DropOffService', () => {
       showRepository.findShowsForAnalysis.mockResolvedValue(shows);
 
       // First succeeds, second fails
-      traktAdapter.getShowEpisodesForAnalysis
+      traktRatingsPort.getShowEpisodesForAnalysis
         .mockResolvedValueOnce({
           traktId: 1,
           seasons: [{ number: 1, episodes: [{ number: 1, title: 'Ep1', rating: 8, votes: 1000 }] }],

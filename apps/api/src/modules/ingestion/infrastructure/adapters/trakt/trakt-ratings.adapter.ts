@@ -13,12 +13,14 @@ import {
   TRAKT_MEDIA_TYPE,
   TRAKT_ENDPOINT,
 } from './interfaces/trakt.types';
+import { TraktRatingsPort } from '../../../domain/ports/trakt-ratings.port';
 
 /**
  * Trakt adapter for ratings, watchers, stats, and episode/season metadata.
+ * Implements TraktRatingsPort for DDD compliance.
  */
 @Injectable()
-export class TraktRatingsAdapter extends BaseTraktHttp {
+export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPort {
   /**
    * Retrieves detailed ratings for a movie.
    *

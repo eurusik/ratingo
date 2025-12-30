@@ -31,6 +31,8 @@ import { NowPlayingPipeline } from './application/pipelines/now-playing.pipeline
 import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeline';
 import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
 import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
+import { TRAKT_RATINGS_PORT } from './domain/ports/trakt-ratings.port';
+import { TRAKT_LISTS_PORT } from './domain/ports/trakt-lists.port';
 
 /**
  * Ingestion module.
@@ -67,7 +69,16 @@ import { SnapshotsRepository } from './infrastructure/repositories/snapshots.rep
       provide: SNAPSHOTS_REPOSITORY,
       useClass: SnapshotsRepository,
     },
-    // Adapters
+    // Port bindings (DDD: domain ports -> infrastructure adapters)
+    {
+      provide: TRAKT_RATINGS_PORT,
+      useClass: TraktRatingsAdapter,
+    },
+    {
+      provide: TRAKT_LISTS_PORT,
+      useClass: TraktListsAdapter,
+    },
+    // Adapters (still exported for internal use within ingestion module)
     TraktRatingsAdapter,
     TraktListsAdapter,
     OmdbAdapter,
@@ -86,6 +97,6 @@ import { SnapshotsRepository } from './infrastructure/repositories/snapshots.rep
     NowPlayingPipeline,
     NewReleasesPipeline,
   ],
-  exports: [SyncMediaService, TraktRatingsAdapter, TraktListsAdapter, SnapshotsService],
+  exports: [SyncMediaService, TRAKT_RATINGS_PORT, TRAKT_LISTS_PORT, SnapshotsService],
 })
 export class IngestionModule {}
