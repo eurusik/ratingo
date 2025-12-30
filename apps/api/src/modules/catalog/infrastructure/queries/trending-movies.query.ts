@@ -17,7 +17,7 @@ import {
   VOTE_SOURCE,
 } from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
+import { EligibilityStatus } from '../../../catalog-policy/public';
 import {
   TRENDING_THRESHOLDS,
   MOVIE_TRENDING_WEIGHTS,

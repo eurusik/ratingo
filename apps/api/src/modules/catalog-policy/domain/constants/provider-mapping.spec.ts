@@ -58,13 +58,19 @@ describe('Provider Mapping', () => {
     });
   });
 
-  describe('PROVIDER_ID_TO_CANONICAL mapping', () => {
-    it('should map all IDs to valid canonical values', () => {
-      const canonicalValues = Object.values(CANONICAL_PROVIDERS);
+  describe('PROVIDER_ID_TO_CANONICAL', () => {
+    it('should map all Netflix variants', () => {
+      expect(PROVIDER_ID_TO_CANONICAL[8]).toBe('netflix');
+    });
 
-      for (const [id, canonical] of Object.entries(PROVIDER_ID_TO_CANONICAL)) {
-        expect(canonicalValues).toContain(canonical);
-      }
+    it('should map all HBO Max variants', () => {
+      expect(PROVIDER_ID_TO_CANONICAL[384]).toBe('hbo_max');
+      expect(PROVIDER_ID_TO_CANONICAL[1899]).toBe('hbo_max');
+    });
+
+    it('should map all Prime Video variants', () => {
+      expect(PROVIDER_ID_TO_CANONICAL[9]).toBe('prime_video');
+      expect(PROVIDER_ID_TO_CANONICAL[119]).toBe('prime_video');
     });
   });
 });

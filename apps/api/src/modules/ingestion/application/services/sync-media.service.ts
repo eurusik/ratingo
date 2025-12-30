@@ -8,8 +8,11 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ScoreCalculatorService, ScoreInput } from '../../../shared/score-calculator';
 import { NormalizedMedia } from '../../domain/models/normalized-media.model';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { CatalogEvaluationService } from '../../../catalog-policy/application/services/catalog-evaluation.service';
-import { classifyContent } from '../../../catalog-policy/public';
+import {
+  ICatalogPolicyEvaluator,
+  CATALOG_POLICY_EVALUATOR,
+  classifyContent,
+} from '../../../catalog-policy/public';
 import slugify from 'slugify';
 
 /**
@@ -55,7 +58,8 @@ export class SyncMediaService {
     private readonly mediaRepository: IMediaRepository,
 
     @Optional()
-    private readonly catalogEvaluationService?: CatalogEvaluationService,
+    @Inject(CATALOG_POLICY_EVALUATOR)
+    private readonly catalogEvaluator?: ICatalogPolicyEvaluator,
   ) {}
 
   /**
@@ -285,12 +289,12 @@ export class SyncMediaService {
 
   /** Triggers catalog eligibility evaluation if service available. */
   private async evaluateCatalog(tmdbId: number, logPrefix: string): Promise<void> {
-    if (!this.catalogEvaluationService) return;
+    if (!this.catalogEvaluator) return;
 
     try {
       const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId);
       if (mediaItem) {
-        await this.catalogEvaluationService.evaluateOne(mediaItem.id);
+        await this.catalogEvaluator.evaluateOne({ mediaItemId: mediaItem.id });
         this.logger.debug(`${logPrefix} Evaluated catalog eligibility`);
       }
     } catch (evalError) {

@@ -14,7 +14,7 @@ import slugify from 'slugify';
 import {
   normalizeOriginCountries,
   normalizeOriginalLanguage,
-} from '../../catalog-policy/domain/utils/country-language.util';
+} from '../utils/normalize-metadata.util';
 import {
   TmdbMediaResponse,
   TmdbMovieResponse,

@@ -20,7 +20,7 @@ import {
   CATALOG_SORT,
   SORT_ORDER,
 } from '../../presentation/dtos/catalog-list-query.dto';
-import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
+import { EligibilityStatus } from '../../../catalog-policy/public';
 import {
   TRENDING_THRESHOLDS,
   SHOW_TRENDING_WEIGHTS,

@@ -3,6 +3,8 @@
  *
  * Application service for evaluating media items against catalog policies.
  * Connects the Policy Engine (pure functions) with the database layer.
+ *
+ * Implements ICatalogPolicyEvaluator port for cross-module usage.
  */
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
@@ -26,12 +28,14 @@ import {
   mapRowsToPolicyEngineInputs,
   POLICY_EVALUATION_SELECT_FIELDS,
 } from '../utils/policy-input.mapper';
+import {
+  ICatalogPolicyEvaluator,
+  EvaluateOneInput,
+  EvaluationResult,
+} from '../../domain/ports/catalog-policy-evaluator.port';
 
-export interface EvaluationResult {
-  mediaItemId: string;
-  evaluation: MediaCatalogEvaluation;
-  changed: boolean;
-}
+// Re-export for backward compatibility
+export { EvaluationResult } from '../../domain/ports/catalog-policy-evaluator.port';
 
 export interface BatchEvaluationResult {
   processed: number;
@@ -43,7 +47,7 @@ export interface BatchEvaluationResult {
 }
 
 @Injectable()
-export class CatalogEvaluationService {
+export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
   private readonly logger = new Logger(CatalogEvaluationService.name);
 
   constructor(
@@ -56,29 +60,44 @@ export class CatalogEvaluationService {
 
   /**
    * Evaluates a single media item against the active (or specified) policy.
+   * Implements ICatalogPolicyEvaluator.evaluateOne
    *
-   * @param mediaItemId - ID of the media item to evaluate
-   * @param policyVersion - Optional specific policy version (defaults to active)
-   * @param runId - Optional run ID for tracking (links evaluation to specific run)
+   * @param input - Evaluation input (object form for port contract)
    * @returns Evaluation result with change detection
+   */
+  async evaluateOne(input: EvaluateOneInput): Promise<EvaluationResult>;
+  /**
+   * @deprecated Use object form: evaluateOne({ mediaItemId, policyVersion, runId })
    */
   async evaluateOne(
     mediaItemId: string,
     policyVersion?: number,
     runId?: string,
+  ): Promise<EvaluationResult>;
+  async evaluateOne(
+    inputOrMediaItemId: EvaluateOneInput | string,
+    policyVersion?: number,
+    runId?: string,
   ): Promise<EvaluationResult> {
+    // Normalize to object form
+    const input: EvaluateOneInput =
+      typeof inputOrMediaItemId === 'string'
+        ? { mediaItemId: inputOrMediaItemId, policyVersion, runId }
+        : inputOrMediaItemId;
+
+    const { mediaItemId } = input;
     // Get policy
-    const policy = policyVersion
-      ? await this.policyService.getByVersion(policyVersion)
+    const policy = input.policyVersion
+      ? await this.policyService.getByVersion(input.policyVersion)
       : await this.policyService.getActiveOrThrow();
 
     if (!policy) {
-      throw new NotFoundException(`Policy version ${policyVersion} not found`);
+      throw new NotFoundException(`Policy version ${input.policyVersion} not found`);
     }
 
     // Get media item data
-    const input = await this.buildPolicyEngineInput(mediaItemId);
-    if (!input) {
+    const engineInput = await this.buildPolicyEngineInput(mediaItemId);
+    if (!engineInput) {
       throw new NotFoundException(`Media item ${mediaItemId} not found`);
     }
 
@@ -86,8 +105,8 @@ export class CatalogEvaluationService {
     const previousEvaluation = await this.evaluationRepository.findByMediaId(mediaItemId);
 
     // Run policy engine
-    const evalResult = evaluateEligibility(input, policy.policy);
-    const relevanceScore = computeRelevance(input, policy.policy);
+    const evalResult = evaluateEligibility(engineInput, policy.policy);
+    const relevanceScore = computeRelevance(engineInput, policy.policy);
 
     // Build evaluation entity
     const evaluation: MediaCatalogEvaluation = {
@@ -98,7 +117,7 @@ export class CatalogEvaluationService {
       policyVersion: policy.version,
       breakoutRuleId: evalResult.breakoutRuleId,
       evaluatedAt: new Date(),
-      runId, // Link to specific run for counter aggregation
+      runId: input.runId, // Link to specific run for counter aggregation
     };
 
     // Persist (idempotent via UNIQUE constraint on run_id + media_item_id)

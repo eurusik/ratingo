@@ -8,7 +8,7 @@
  */
 
 import * as fc from 'fast-check';
-import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
+import { EligibilityStatus } from '../../../catalog-policy/public';
 import { EligibilityMode } from './movie-listings.query';
 
 /**

@@ -20,7 +20,7 @@ import {
   EvaluationReasonType,
 } from './constants/evaluation.constants';
 import { ContentClass } from './classification.service';
-import { resolveCanonicalProvider } from '../../ingestion/domain/constants/provider-mapping';
+import { resolveCanonicalProvider } from './constants/provider-mapping';
 
 /**
  * Default contexts where gate applies when appliesTo not configured.

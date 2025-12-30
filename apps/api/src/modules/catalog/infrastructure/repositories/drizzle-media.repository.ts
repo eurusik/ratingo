@@ -34,7 +34,7 @@ import {
   EligibilityStatus,
   EvaluationReason,
   DEFAULT_POLICY_VERSION,
-} from '../../../catalog-policy/domain/constants/evaluation.constants';
+} from '../../../catalog-policy/public';
 
 /**
  * Drizzle ORM implementation of the Media Repository.

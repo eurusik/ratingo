@@ -11,6 +11,9 @@ import { BullModule } from '@nestjs/bullmq';
 // Constants
 import { CATALOG_POLICY_QUEUE } from './catalog-policy.constants';
 
+// Ports
+import { CATALOG_POLICY_EVALUATOR } from './domain/ports/catalog-policy-evaluator.port';
+
 // Repositories
 import {
   CatalogPolicyRepository,
@@ -80,6 +83,11 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     // Services
     CatalogPolicyService,
     CatalogEvaluationService,
+    // Port binding - other modules inject CATALOG_POLICY_EVALUATOR
+    {
+      provide: CATALOG_POLICY_EVALUATOR,
+      useExisting: CatalogEvaluationService,
+    },
     PolicyActivationService,
     DiffService,
     DryRunService,
@@ -89,7 +97,9 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     CatalogPolicyWorker,
   ],
   exports: [
-    // Export services for use by other modules
+    // Export port token for other modules (preferred way)
+    CATALOG_POLICY_EVALUATOR,
+    // Export services for internal use and backward compatibility
     CatalogPolicyService,
     CatalogEvaluationService,
     PolicyActivationService,

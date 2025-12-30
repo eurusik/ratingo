@@ -6,7 +6,7 @@
  */
 
 import { BreakoutRule } from '../types/policy.types';
-import { CANONICAL_PROVIDERS } from '../../../ingestion/domain/constants/provider-mapping';
+import { CANONICAL_PROVIDERS } from './provider-mapping';
 
 /**
  * Anime Global Hit - allows popular anime on major streaming platforms.

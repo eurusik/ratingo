@@ -73,8 +73,8 @@ export const PROVIDER_ID_TO_CANONICAL: Record<number, CanonicalProviderId> = {
 /**
  * Resolves canonical provider ID from TMDB provider ID.
  *
- * @param tmdbProviderId - TMDB provider ID
- * @returns Canonical ID or undefined if not in whitelist
+ * @param {number} tmdbProviderId - TMDB provider ID
+ * @returns {CanonicalProviderId | undefined} Canonical ID or undefined if not in whitelist
  */
 export function resolveCanonicalProvider(tmdbProviderId: number): CanonicalProviderId | undefined {
   return PROVIDER_ID_TO_CANONICAL[tmdbProviderId];

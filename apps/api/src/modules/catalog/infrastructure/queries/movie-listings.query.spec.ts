@@ -1,7 +1,7 @@
 import { MovieListingsQuery, EligibilityMode } from './movie-listings.query';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ImageMapper } from '../mappers/image.mapper';
-import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
+import { EligibilityStatus } from '../../../catalog-policy/public';
 
 // Simple chainable thenable for Drizzle-like API
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {

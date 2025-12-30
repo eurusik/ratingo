@@ -7,7 +7,7 @@ import { MovieWithMedia, WithTotal } from '../../domain/repositories/movie.repos
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { CatalogSort, SortOrder, VoteSource } from '../../presentation/dtos/catalog-list-query.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { EligibilityStatus } from '../../../catalog-policy/domain/constants/evaluation.constants';
+import { EligibilityStatus } from '../../../catalog-policy/public';
 import { GenreQuery } from './shared/genre.query';
 import { movieSelectFields, MovieSelectRow } from './shared/movie-select.fields';
 import { MovieResultMapper } from './shared/movie-result.mapper';
