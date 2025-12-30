@@ -7,38 +7,16 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags, ApiParam, ApiProperty } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
 import { CatalogSearchService } from '../../application/services/catalog-search.service';
 import { CatalogImportService } from '../../application/services/catalog-import.service';
-import { ImportResult, ImportStatus } from '../../domain/types/import.types';
+import { ImportResult } from '../../domain/types/import.types';
 import { SearchResponseDto } from '../dtos/search.dto';
+import { ImportResultDto } from '../dtos/import-result.dto';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-
-class ImportResultDto implements ImportResult {
-  @ApiProperty({ enum: ImportStatus })
-  status: ImportStatus;
-
-  @ApiProperty({ required: false })
-  id?: string;
-
-  @ApiProperty({ required: false })
-  slug?: string;
-
-  @ApiProperty({ enum: MediaType })
-  type: MediaType;
-
-  @ApiProperty()
-  tmdbId: number;
-
-  @ApiProperty({ required: false, enum: IngestionStatus })
-  ingestionStatus?: IngestionStatus;
-
-  @ApiProperty({ required: false, description: 'Job ID for polling ingestion status' })
-  jobId?: string;
-}
 
 /**
  * Public catalog search endpoints.
@@ -74,8 +52,8 @@ export class CatalogSearchController {
   @ApiParam({ name: 'tmdbId', type: Number })
   @ApiResponse({ status: 202, type: ImportResultDto })
   @HttpCode(HttpStatus.ACCEPTED)
-  async importMovie(@Param('tmdbId') tmdbId: string): Promise<ImportResult> {
-    return this.catalogImportService.importMedia(parseInt(tmdbId, 10), MediaType.MOVIE);
+  async importMovie(@Param('tmdbId', ParseIntPipe) tmdbId: number): Promise<ImportResult> {
+    return this.catalogImportService.importMedia(tmdbId, MediaType.MOVIE);
   }
 
   /**
@@ -87,7 +65,7 @@ export class CatalogSearchController {
   @ApiParam({ name: 'tmdbId', type: Number })
   @ApiResponse({ status: 202, type: ImportResultDto })
   @HttpCode(HttpStatus.ACCEPTED)
-  async importShow(@Param('tmdbId') tmdbId: string): Promise<ImportResult> {
-    return this.catalogImportService.importMedia(parseInt(tmdbId, 10), MediaType.SHOW);
+  async importShow(@Param('tmdbId', ParseIntPipe) tmdbId: number): Promise<ImportResult> {
+    return this.catalogImportService.importMedia(tmdbId, MediaType.SHOW);
   }
 }
