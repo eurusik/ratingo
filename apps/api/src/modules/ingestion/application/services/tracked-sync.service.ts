@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { SyncMediaService } from './sync-media.service';
@@ -114,7 +114,7 @@ export class TrackedSyncService {
         .innerJoin(schema.shows, eq(schema.shows.id, schema.seasons.showId))
         .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.shows.mediaItemId))
         .where(eq(schema.mediaItems.tmdbId, tmdbId))
-        .orderBy(schema.seasons.number, schema.episodes.number)
+        .orderBy(desc(schema.seasons.number), desc(schema.episodes.number))
         .limit(1);
 
       let lastEpisodeKey: string | null = null;
