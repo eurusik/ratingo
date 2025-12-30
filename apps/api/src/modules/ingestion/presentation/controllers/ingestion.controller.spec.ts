@@ -7,6 +7,7 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { MEDIA_REPOSITORY } from '../../../catalog/domain/repositories/media.repository.interface';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
+import { DEFAULT_REGION } from '../../../../common/constants';
 
 // Cleanup rate limiter interval to prevent Jest from hanging
 afterAll(() => {
@@ -146,19 +147,19 @@ describe('IngestionController', () => {
       await controller.syncNowPlaying({});
 
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_NOW_PLAYING, {
-        region: 'UA',
+        region: DEFAULT_REGION,
       });
     });
   });
 
   describe('syncNewReleases', () => {
     it('should queue new releases sync job', async () => {
-      await controller.syncNewReleases({ region: 'UA', daysBack: 60 });
+      await controller.syncNewReleases({ region: DEFAULT_REGION, daysBack: 60 });
 
       expect(mockQueue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_NEW_RELEASES,
         {
-          region: 'UA',
+          region: DEFAULT_REGION,
           daysBack: 60,
           force: false,
         },
@@ -172,7 +173,7 @@ describe('IngestionController', () => {
       expect(mockQueue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_NEW_RELEASES,
         {
-          region: 'UA',
+          region: DEFAULT_REGION,
           daysBack: 30,
           force: false,
         },
@@ -183,10 +184,10 @@ describe('IngestionController', () => {
 
   describe('updateNowPlayingFlags', () => {
     it('should queue flag update job', async () => {
-      await controller.updateNowPlayingFlags({ region: 'UA' });
+      await controller.updateNowPlayingFlags({ region: DEFAULT_REGION });
 
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.UPDATE_NOW_PLAYING_FLAGS, {
-        region: 'UA',
+        region: DEFAULT_REGION,
       });
     });
   });

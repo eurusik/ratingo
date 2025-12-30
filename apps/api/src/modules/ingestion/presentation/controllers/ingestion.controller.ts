@@ -9,123 +9,25 @@ import {
   Param,
   NotFoundException,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { ApiTags, ApiOperation, ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
+import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { SyncMediaService } from '../../application/services/sync-media.service';
 import { DEFAULT_REGION } from '../../../../common/constants';
-import { Inject } from '@nestjs/common';
 import {
   MEDIA_REPOSITORY,
   IMediaRepository,
 } from '../../../catalog/domain/repositories/media.repository.interface';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { JobStatus, BULL_STATE_TO_JOB_STATUS } from '../../../../common/enums/job-status.enum';
 import slugify from 'slugify';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
-import { ApiOkResponse } from '@nestjs/swagger';
 import { formatUtcDayId } from '@/common/utils/date.util';
-
-class SyncDto {
-  @ApiProperty({ example: 550, description: 'TMDB ID of the media' })
-  @IsNumber()
-  @Min(1)
-  tmdbId: number;
-
-  @ApiProperty({ enum: MediaType, example: MediaType.MOVIE })
-  @IsEnum(MediaType)
-  type: MediaType;
-
-  @ApiProperty({
-    example: false,
-    description: 'Force re-sync even if media already exists',
-    required: false,
-    default: false,
-  })
-  @IsOptional()
-  force?: boolean;
-}
-
-class SyncTrendingDto {
-  @ApiProperty({
-    example: 5,
-    description: 'Number of pages to sync (20 items per page). Use this for dispatcher mode.',
-    default: 5,
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  pages?: number;
-
-  @ApiProperty({
-    example: 1,
-    description: 'Single page number (deprecated, use pages instead)',
-    required: false,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  page?: number;
-
-  @ApiProperty({
-    example: true,
-    description: 'Also sync Trakt stats after ingestion',
-    default: true,
-    required: false,
-  })
-  @IsOptional()
-  syncStats?: boolean;
-
-  @ApiProperty({
-    enum: MediaType,
-    description: 'Sync only specific media type (movie or show). Only for legacy single-page mode.',
-    required: false,
-  })
-  @IsOptional()
-  @IsEnum(MediaType)
-  type?: MediaType;
-}
-
-class SyncNowPlayingDto {
-  @ApiProperty({
-    example: DEFAULT_REGION,
-    description: 'Region code (ISO 3166-1)',
-    default: DEFAULT_REGION,
-    required: false,
-  })
-  @IsOptional()
-  region?: string;
-}
-
-class SyncNewReleasesDto {
-  @ApiProperty({
-    example: DEFAULT_REGION,
-    description: 'Region code (ISO 3166-1)',
-    default: DEFAULT_REGION,
-    required: false,
-  })
-  @IsOptional()
-  region?: string;
-
-  @ApiProperty({ example: 30, description: 'Days to look back', default: 30, required: false })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  daysBack?: number;
-
-  @ApiProperty({
-    example: false,
-    description: 'Force re-sync even if job already exists for today',
-    required: false,
-    default: false,
-  })
-  @IsOptional()
-  force?: boolean;
-}
+import { SyncDto, SyncTrendingDto, SyncNowPlayingDto, SyncNewReleasesDto } from '../dto';
 
 /**
  * Triggers ingestion processes.
@@ -134,19 +36,6 @@ class SyncNewReleasesDto {
 @ApiTags('Service: Ingestion')
 @Controller('ingestion')
 export class IngestionController {
-  private static readonly bullStateToPublicStatus: Record<
-    string,
-    'queued' | 'processing' | 'ready' | 'failed'
-  > = {
-    waiting: 'queued',
-    delayed: 'queued',
-    active: 'processing',
-    completed: 'ready',
-    failed: 'failed',
-    paused: 'queued',
-    stalled: 'failed',
-  };
-
   constructor(
     @InjectQueue(INGESTION_QUEUE) private readonly ingestionQueue: Queue,
     private readonly syncService: SyncMediaService,
@@ -187,9 +76,9 @@ export class IngestionController {
 
     const state = await job.getState();
     const status =
-      IngestionController.bullStateToPublicStatus[state] ??
-      IngestionController.bullStateToPublicStatus[job.finishedOn ? 'completed' : 'failed'] ??
-      'failed';
+      BULL_STATE_TO_JOB_STATUS[state] ??
+      BULL_STATE_TO_JOB_STATUS[job.finishedOn ? 'completed' : 'failed'] ??
+      JobStatus.FAILED;
 
     const updatedAt =
       (job.finishedOn ?? job.processedOn ?? job.timestamp)
@@ -198,7 +87,7 @@ export class IngestionController {
 
     // Get slug from DB if job is completed and has tmdbId
     let slug: string | null = null;
-    if (status === 'ready' && job.data?.tmdbId) {
+    if (status === JobStatus.READY && job.data?.tmdbId) {
       const media = await this.mediaRepository.findByTmdbId(job.data.tmdbId);
       slug = media?.slug ?? null;
     }
@@ -357,13 +246,13 @@ export class IngestionController {
   @HttpCode(HttpStatus.ACCEPTED)
   async syncNowPlaying(@Body() dto: SyncNowPlayingDto) {
     const job = await this.ingestionQueue.add(IngestionJob.SYNC_NOW_PLAYING, {
-      region: dto.region || 'UA',
+      region: dto.region || DEFAULT_REGION,
     });
 
     return {
       status: 'queued',
       jobId: job.id,
-      region: dto.region || 'UA',
+      region: dto.region || DEFAULT_REGION,
     };
   }
 
@@ -382,13 +271,13 @@ export class IngestionController {
   @HttpCode(HttpStatus.ACCEPTED)
   async updateNowPlayingFlags(@Body() dto: SyncNowPlayingDto) {
     const job = await this.ingestionQueue.add(IngestionJob.UPDATE_NOW_PLAYING_FLAGS, {
-      region: dto.region || 'UA',
+      region: dto.region || DEFAULT_REGION,
     });
 
     return {
       status: 'queued',
       jobId: job.id,
-      region: dto.region || 'UA',
+      region: dto.region || DEFAULT_REGION,
     };
   }
 
@@ -405,7 +294,7 @@ export class IngestionController {
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncNewReleases(@Body() dto: SyncNewReleasesDto) {
-    const region = dto.region || 'UA';
+    const region = dto.region || DEFAULT_REGION;
     const daysBack = dto.daysBack || 30;
     const force = dto.force || false;
 
