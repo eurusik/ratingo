@@ -1,4 +1,4 @@
-import type { ImageData } from '../types/image.types';
+import type { ImageData } from '../types';
 
 const TMDB_BASE_URL = 'https://image.tmdb.org/t/p';
 

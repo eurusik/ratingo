@@ -1,4 +1,4 @@
-import { ImageData, ExternalRatings } from '../../../../common/types';
+import type { ImageData, ExternalRatings } from '../../../../common/types';
 
 /**
  * Media type for rise/fall items.
