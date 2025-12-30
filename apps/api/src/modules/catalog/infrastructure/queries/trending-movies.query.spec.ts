@@ -1,5 +1,5 @@
 import { TrendingMoviesQuery } from './trending-movies.query';
-import { ImageMapper } from '../mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 // Chainable thenable for Drizzle-like API

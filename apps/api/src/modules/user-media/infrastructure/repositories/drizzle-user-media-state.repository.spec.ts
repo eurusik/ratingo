@@ -1,5 +1,5 @@
 import { DrizzleUserMediaStateRepository } from './drizzle-user-media-state.repository';
-import { ImageMapper } from '../../../catalog/infrastructure/mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 
 describe('DrizzleUserMediaStateRepository', () => {
   const posterPath = '/poster.jpg';

@@ -1,4 +1,4 @@
-import { ImageMapper } from '../../mappers/image.mapper';
+import { ImageMapper } from '../../../../../common/mappers/image.mapper';
 import type { GenreInfo } from '../../../domain/types/common.types';
 import type {
   MovieWithMedia,

@@ -15,7 +15,7 @@ import {
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { ImageMapper } from '../../../catalog/infrastructure/mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 
 /**
  * Drizzle implementation of user subscription repository.

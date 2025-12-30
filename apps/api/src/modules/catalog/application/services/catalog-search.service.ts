@@ -5,7 +5,7 @@ import {
 } from '../../domain/repositories/media.repository.interface';
 import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
 import { SearchResponseDto, SearchItemDto, SearchSource } from '../../presentation/dtos/search.dto';
-import { ImageMapper } from '../../infrastructure/mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { SEARCH_CONFIG } from '../../domain/constants/catalog.constants';
 

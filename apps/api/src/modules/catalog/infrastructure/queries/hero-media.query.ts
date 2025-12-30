@@ -5,7 +5,7 @@ import * as schema from '../../../../database/schema';
 import { eq, desc, and, lte, isNotNull, gte, inArray, isNull } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { ImageMapper } from '../mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
 import { HeroMediaItem, HeroShowProgress } from '../../../../common/types/hero-media.types';
 import { EligibilityStatus } from '../../../catalog-policy/public';

@@ -2,10 +2,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { sql, and, eq, gte, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { InsightsRepository } from '../../domain/repositories/insights.repository.interface';
-import { RiseFallItemDto } from '../../presentation/dtos/insights.dto';
-import { ImageMapper } from '../../../catalog/infrastructure/mappers/image.mapper';
+import { RiseFallItem, RiseFallMediaType } from '../../domain/models/rise-fall.model';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { ExternalRatings } from '../../../../common/types';
 
 /**
  * Drizzle implementation of insights repository.
@@ -27,13 +28,13 @@ export class DrizzleInsightsRepository implements InsightsRepository {
    *
    * @param {number} windowDays - Size of the comparison window in days
    * @param {number} limit - Maximum number of items per list
-   * @returns {Promise<{ risers: RiseFallItemDto[]; fallers: RiseFallItemDto[] }>}
+   * @returns {Promise<{ risers: RiseFallItem[]; fallers: RiseFallItem[] }>}
    *          Lists of biggest risers and fallers by watcher delta
    */
   async getMovements(
     windowDays: number,
     limit: number,
-  ): Promise<{ risers: RiseFallItemDto[]; fallers: RiseFallItemDto[] }> {
+  ): Promise<{ risers: RiseFallItem[]; fallers: RiseFallItem[] }> {
     // Prepare target dates (Midnight UTC)
     const now = new Date();
     now.setUTCHours(0, 0, 0, 0);
@@ -100,7 +101,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
         return {
           id: media.id,
           mediaItemId: media.id,
-          type: media.type,
+          type: media.type as RiseFallMediaType,
           slug: media.slug,
           title: media.title,
           originalTitle: media.originalTitle,
@@ -119,7 +120,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
               rating: Number(media.rating),
               voteCount: Number(media.voteCount),
             },
-          },
+          } as ExternalRatings,
         };
       });
 

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { InsightsService } from './insights.service';
 import { INSIGHTS_REPOSITORY } from '../../domain/repositories/insights.repository.interface';
+import { RiseFallQuery } from '../types/insights.types';
 
 describe('InsightsService', () => {
   let service: InsightsService;
@@ -27,7 +28,7 @@ describe('InsightsService', () => {
       const mockResult = { risers: [], fallers: [] };
       repository.getMovements.mockResolvedValue(mockResult);
 
-      const query = { window: '90d' as const, limit: 10 };
+      const query: RiseFallQuery = { window: '90d', limit: 10 };
       const result = await service.getMovements(query);
 
       expect(repository.getMovements).toHaveBeenCalledWith(90, 10);
@@ -40,14 +41,14 @@ describe('InsightsService', () => {
       });
     });
 
-    it('should use defaults if query params are missing', async () => {
+    it('should use default window days for unknown window', async () => {
       const mockResult = { risers: [], fallers: [] };
       repository.getMovements.mockResolvedValue(mockResult);
 
-      const query = {};
+      const query: RiseFallQuery = { window: '30d', limit: 5 };
       const result = await service.getMovements(query);
 
-      expect(repository.getMovements).toHaveBeenCalledWith(30, 5); // Default 30d, 5 limit
+      expect(repository.getMovements).toHaveBeenCalledWith(30, 5);
       expect(result.window).toBe('30d');
     });
   });

@@ -6,7 +6,7 @@ import { eq, asc, and, isNull } from 'drizzle-orm';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { ShowDetails } from '../../domain/repositories/show.repository.interface';
 import { CreditsMapper } from '../mappers/credits.mapper';
-import { ImageMapper } from '../mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';

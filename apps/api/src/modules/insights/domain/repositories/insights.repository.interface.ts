@@ -1,4 +1,4 @@
-import { RiseFallItemDto } from '../../presentation/dtos/insights.dto';
+import { RiseFallItem } from '../models/rise-fall.model';
 
 /**
  * Repository contract for Insights data.
@@ -9,12 +9,12 @@ export interface InsightsRepository {
    *
    * @param {number} windowDays - Window size in days
    * @param {number} limit - Max items per group
-   * @returns {Promise<{ risers: RiseFallItemDto[]; fallers: RiseFallItemDto[] }>} Movements payload
+   * @returns {Promise<{ risers: RiseFallItem[]; fallers: RiseFallItem[] }>} Movements payload
    */
   getMovements(
     windowDays: number,
     limit: number,
-  ): Promise<{ risers: RiseFallItemDto[]; fallers: RiseFallItemDto[] }>;
+  ): Promise<{ risers: RiseFallItem[]; fallers: RiseFallItem[] }>;
 }
 
 /**

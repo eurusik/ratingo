@@ -1,6 +1,6 @@
 import { MovieListingsQuery, EligibilityMode } from './movie-listings.query';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { ImageMapper } from '../mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { EligibilityStatus } from '../../../catalog-policy/public';
 
 // Simple chainable thenable for Drizzle-like API

@@ -1,6 +1,6 @@
 import { HeroMediaQuery } from './hero-media.query';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 
 // Chainable thenable factory for Drizzle-like API
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {

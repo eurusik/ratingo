@@ -9,7 +9,7 @@ import {
   TrendingShowsOptions,
 } from '../../domain/repositories/show.repository.interface';
 import type { WithTotal } from '../../domain/types/query.types';
-import { ImageMapper } from '../mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import {

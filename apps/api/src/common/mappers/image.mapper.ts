@@ -1,7 +1,11 @@
-import type { ImageData } from '../../domain/types/common.types';
+import type { ImageData } from '../types/image.types';
 
 const TMDB_BASE_URL = 'https://image.tmdb.org/t/p';
 
+/**
+ * Maps TMDB image paths to full URLs with multiple sizes.
+ * Shared utility for all modules working with TMDB images.
+ */
 export class ImageMapper {
   static toPoster(path: string | null): ImageData | null {
     if (!path) return null;

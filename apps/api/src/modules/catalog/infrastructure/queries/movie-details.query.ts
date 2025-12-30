@@ -5,7 +5,7 @@ import * as schema from '../../../../database/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 import { CreditsMapper } from '../mappers/credits.mapper';
-import { ImageMapper } from '../mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';

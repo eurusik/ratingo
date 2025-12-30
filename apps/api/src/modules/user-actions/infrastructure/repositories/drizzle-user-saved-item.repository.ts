@@ -11,7 +11,7 @@ import {
 import { UserSavedItem, SavedItemList } from '../../domain/entities/user-saved-item.entity';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../catalog/infrastructure/mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 
 /**
  * Drizzle implementation of user saved item repository.

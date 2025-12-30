@@ -1,6 +1,6 @@
 import { MovieDetailsQuery } from './movie-details.query';
 import { CreditsMapper } from '../mappers/credits.mapper';
-import { ImageMapper } from '../mappers/image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 

@@ -5,7 +5,7 @@ import {
 } from '../../../ingestion/domain/models/normalized-media.model';
 import type { AvailabilityData, WatchProvider } from '../../domain/types/common.types';
 import { WatchProviderRegionDto } from '../../presentation/dtos/common.dto';
-import { ImageMapper } from './image.mapper';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 
 export class WatchProvidersMapper {
   /**
