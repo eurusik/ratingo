@@ -8,6 +8,7 @@
 import { Logger } from '@nestjs/common';
 import { PolicyEngineInput, WatchProvidersMap } from '../../domain/types/policy.types';
 import { ContentClass, isValidContentClass } from '../../domain/classification.service';
+import * as schema from '../../../../database/schema';
 
 /**
  * Raw media item row from database query.
@@ -32,6 +33,36 @@ export interface MediaItemRow {
   ratingoScore: number | null;
 }
 
+/**
+ * Common SELECT fields for policy evaluation queries.
+ * Used by CatalogEvaluationService and DryRunService.
+ */
+export const POLICY_EVALUATION_SELECT_FIELDS = {
+  id: schema.mediaItems.id,
+  originCountries: schema.mediaItems.originCountries,
+  originalLanguage: schema.mediaItems.originalLanguage,
+  watchProviders: schema.mediaItems.watchProviders,
+  contentClass: schema.mediaItems.contentClass,
+  ratingImdb: schema.mediaItems.ratingImdb,
+  ratingMetacritic: schema.mediaItems.ratingMetacritic,
+  ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+  ratingTrakt: schema.mediaItems.ratingTrakt,
+  voteCountImdb: schema.mediaItems.voteCountImdb,
+  voteCountTrakt: schema.mediaItems.voteCountTrakt,
+  qualityScore: schema.mediaStats.qualityScore,
+  popularityScore: schema.mediaStats.popularityScore,
+  freshnessScore: schema.mediaStats.freshnessScore,
+  ratingoScore: schema.mediaStats.ratingoScore,
+};
+
+/**
+ * Extended SELECT fields including title (for dry-run results).
+ */
+export const POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE = {
+  ...POLICY_EVALUATION_SELECT_FIELDS,
+  title: schema.mediaItems.title,
+};
+
 const DEFAULT_CONTENT_CLASS: ContentClass = 'mainstream';
 
 /**
@@ -52,7 +83,7 @@ export function mapRowToPolicyEngineInput(row: MediaItemRow, logger?: Logger): P
   if (!isValidContentClass(row.contentClass)) {
     if (logger) {
       logger.warn(
-        `Invalid content_class for media ${row.id}: ${row.contentClass}. Defaulting to mainstream. Consider running backfill job.`,
+        `Invalid content_class for media ${row.id}: ${row.contentClass}. Defaulting to mainstream.`,
       );
     }
   } else {

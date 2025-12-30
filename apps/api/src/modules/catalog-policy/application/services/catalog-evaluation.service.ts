@@ -24,6 +24,7 @@ import {
   MediaItemRow,
   mapRowToPolicyEngineInput,
   mapRowsToPolicyEngineInputs,
+  POLICY_EVALUATION_SELECT_FIELDS,
 } from '../utils/policy-input.mapper';
 
 export interface EvaluationResult {
@@ -294,23 +295,7 @@ export class CatalogEvaluationService {
    */
   private async buildPolicyEngineInput(mediaItemId: string): Promise<PolicyEngineInput | null> {
     const result = await this.db
-      .select({
-        id: schema.mediaItems.id,
-        originCountries: schema.mediaItems.originCountries,
-        originalLanguage: schema.mediaItems.originalLanguage,
-        watchProviders: schema.mediaItems.watchProviders,
-        contentClass: schema.mediaItems.contentClass,
-        ratingImdb: schema.mediaItems.ratingImdb,
-        ratingMetacritic: schema.mediaItems.ratingMetacritic,
-        ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-        ratingTrakt: schema.mediaItems.ratingTrakt,
-        voteCountImdb: schema.mediaItems.voteCountImdb,
-        voteCountTrakt: schema.mediaItems.voteCountTrakt,
-        qualityScore: schema.mediaStats.qualityScore,
-        popularityScore: schema.mediaStats.popularityScore,
-        freshnessScore: schema.mediaStats.freshnessScore,
-        ratingoScore: schema.mediaStats.ratingoScore,
-      })
+      .select(POLICY_EVALUATION_SELECT_FIELDS)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(eq(schema.mediaItems.id, mediaItemId))
@@ -332,23 +317,7 @@ export class CatalogEvaluationService {
     }
 
     const result = await this.db
-      .select({
-        id: schema.mediaItems.id,
-        originCountries: schema.mediaItems.originCountries,
-        originalLanguage: schema.mediaItems.originalLanguage,
-        watchProviders: schema.mediaItems.watchProviders,
-        contentClass: schema.mediaItems.contentClass,
-        ratingImdb: schema.mediaItems.ratingImdb,
-        ratingMetacritic: schema.mediaItems.ratingMetacritic,
-        ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-        ratingTrakt: schema.mediaItems.ratingTrakt,
-        voteCountImdb: schema.mediaItems.voteCountImdb,
-        voteCountTrakt: schema.mediaItems.voteCountTrakt,
-        qualityScore: schema.mediaStats.qualityScore,
-        popularityScore: schema.mediaStats.popularityScore,
-        freshnessScore: schema.mediaStats.freshnessScore,
-        ratingoScore: schema.mediaStats.ratingoScore,
-      })
+      .select(POLICY_EVALUATION_SELECT_FIELDS)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(inArray(schema.mediaItems.id, mediaItemIds));

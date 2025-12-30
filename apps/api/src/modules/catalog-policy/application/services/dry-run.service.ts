@@ -29,7 +29,11 @@ import {
   EvaluationReasonType,
 } from '../../domain/constants/evaluation.constants';
 import { CatalogPolicyService } from './catalog-policy.service';
-import { MediaItemRow, mapRowToPolicyEngineInput } from '../utils/policy-input.mapper';
+import {
+  MediaItemRow,
+  mapRowToPolicyEngineInput,
+  POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE,
+} from '../utils/policy-input.mapper';
 
 /**
  * Dry-run selection mode
@@ -337,24 +341,7 @@ export class DryRunService {
    */
   private async fetchTopItems(limit: number): Promise<Array<MediaItemRow>> {
     const result = await this.db
-      .select({
-        id: schema.mediaItems.id,
-        title: schema.mediaItems.title,
-        originCountries: schema.mediaItems.originCountries,
-        originalLanguage: schema.mediaItems.originalLanguage,
-        watchProviders: schema.mediaItems.watchProviders,
-        contentClass: schema.mediaItems.contentClass,
-        ratingImdb: schema.mediaItems.ratingImdb,
-        ratingMetacritic: schema.mediaItems.ratingMetacritic,
-        ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-        ratingTrakt: schema.mediaItems.ratingTrakt,
-        voteCountImdb: schema.mediaItems.voteCountImdb,
-        voteCountTrakt: schema.mediaItems.voteCountTrakt,
-        qualityScore: schema.mediaStats.qualityScore,
-        popularityScore: schema.mediaStats.popularityScore,
-        freshnessScore: schema.mediaStats.freshnessScore,
-        ratingoScore: schema.mediaStats.ratingoScore,
-      })
+      .select(POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(
@@ -376,24 +363,7 @@ export class DryRunService {
     const typeValue = mediaType === 'movie' ? MediaType.MOVIE : MediaType.SHOW;
 
     const result = await this.db
-      .select({
-        id: schema.mediaItems.id,
-        title: schema.mediaItems.title,
-        originCountries: schema.mediaItems.originCountries,
-        originalLanguage: schema.mediaItems.originalLanguage,
-        watchProviders: schema.mediaItems.watchProviders,
-        contentClass: schema.mediaItems.contentClass,
-        ratingImdb: schema.mediaItems.ratingImdb,
-        ratingMetacritic: schema.mediaItems.ratingMetacritic,
-        ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-        ratingTrakt: schema.mediaItems.ratingTrakt,
-        voteCountImdb: schema.mediaItems.voteCountImdb,
-        voteCountTrakt: schema.mediaItems.voteCountTrakt,
-        qualityScore: schema.mediaStats.qualityScore,
-        popularityScore: schema.mediaStats.popularityScore,
-        freshnessScore: schema.mediaStats.freshnessScore,
-        ratingoScore: schema.mediaStats.ratingoScore,
-      })
+      .select(POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(
@@ -416,24 +386,7 @@ export class DryRunService {
     const countryUpper = country.toUpperCase();
 
     const result = await this.db
-      .select({
-        id: schema.mediaItems.id,
-        title: schema.mediaItems.title,
-        originCountries: schema.mediaItems.originCountries,
-        originalLanguage: schema.mediaItems.originalLanguage,
-        watchProviders: schema.mediaItems.watchProviders,
-        contentClass: schema.mediaItems.contentClass,
-        ratingImdb: schema.mediaItems.ratingImdb,
-        ratingMetacritic: schema.mediaItems.ratingMetacritic,
-        ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-        ratingTrakt: schema.mediaItems.ratingTrakt,
-        voteCountImdb: schema.mediaItems.voteCountImdb,
-        voteCountTrakt: schema.mediaItems.voteCountTrakt,
-        qualityScore: schema.mediaStats.qualityScore,
-        popularityScore: schema.mediaStats.popularityScore,
-        freshnessScore: schema.mediaStats.freshnessScore,
-        ratingoScore: schema.mediaStats.ratingoScore,
-      })
+      .select(POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(
