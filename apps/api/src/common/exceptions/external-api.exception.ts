@@ -9,7 +9,7 @@ export class ExternalApiException extends AppException {
   constructor(
     code: ErrorCode = ErrorCode.EXTERNAL_API_ERROR,
     message: string = 'External API error',
-    details?: Record<string, any>
+    details?: Record<string, any>,
   ) {
     super(code, message, HttpStatus.BAD_GATEWAY, details);
   }
@@ -39,5 +39,14 @@ export class TraktApiException extends ExternalApiException {
 export class OmdbApiException extends ExternalApiException {
   constructor(message: string, statusCode?: number) {
     super(ErrorCode.OMDB_API_ERROR, `OMDb API: ${message}`, { statusCode });
+  }
+}
+
+/**
+ * Exception for TVMaze API errors.
+ */
+export class TvMazeApiException extends ExternalApiException {
+  constructor(message: string, statusCode?: number) {
+    super(ErrorCode.TVMAZE_API_ERROR, `TVMaze API: ${message}`, { statusCode });
   }
 }

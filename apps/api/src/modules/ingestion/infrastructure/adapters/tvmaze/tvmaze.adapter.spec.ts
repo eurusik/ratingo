@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TvMazeAdapter } from './tvmaze.adapter';
+import tvmazeConfig from '@/config/tvmaze.config';
 
 // Mock fetch globally
 global.fetch = jest.fn();
@@ -7,11 +8,15 @@ global.fetch = jest.fn();
 describe('TvMazeAdapter', () => {
   let adapter: TvMazeAdapter;
 
+  const mockConfig = {
+    apiUrl: 'https://api.tvmaze.com',
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TvMazeAdapter],
+      providers: [TvMazeAdapter, { provide: tvmazeConfig.KEY, useValue: mockConfig }],
     }).compile();
 
     adapter = module.get<TvMazeAdapter>(TvMazeAdapter);

@@ -21,6 +21,7 @@ import { ScoreCalculatorModule } from '../shared/score-calculator';
 import { SnapshotsService } from './application/services/snapshots.service';
 import { IngestionSchedulerService } from './application/services/ingestion-scheduler.service';
 import omdbConfig from '../../config/omdb.config';
+import tvmazeConfig from '../../config/tvmaze.config';
 import schedulerConfig from '../../config/scheduler.config';
 import { SyncWorker } from './application/workers/sync.worker';
 import { SnapshotsPipeline } from './application/pipelines/snapshots.pipeline';
@@ -42,6 +43,7 @@ import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeli
     ScoreCalculatorModule,
     ConfigModule.forFeature(traktConfig),
     ConfigModule.forFeature(omdbConfig),
+    ConfigModule.forFeature(tvmazeConfig),
     ConfigModule.forFeature(schedulerConfig),
     BullModule.registerQueue({
       name: INGESTION_QUEUE,

@@ -6,7 +6,6 @@ import {
   ResilientHttpClient,
   RetryConfig,
   HttpError,
-  parseRetryAfter,
 } from '../../../../../common/http/resilient-http.client';
 
 /**

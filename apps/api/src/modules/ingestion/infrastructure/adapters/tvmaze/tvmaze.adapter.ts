@@ -1,5 +1,30 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigType } from '@nestjs/config';
 import { NormalizedEpisode } from '../../../domain/models/normalized-media.model';
+import { TvMazeApiException } from '../../../../../common/exceptions/external-api.exception';
+import tvmazeConfig from '../../../../../config/tvmaze.config';
+
+/**
+ * TVMaze API response for show lookup.
+ */
+interface TvMazeShow {
+  id: number;
+  name?: string;
+}
+
+/**
+ * TVMaze API response for episode.
+ */
+interface TvMazeEpisodeResponse {
+  id: number;
+  season: number;
+  number: number;
+  name: string;
+  summary: string | null;
+  airstamp: string | null;
+  runtime: number | null;
+  image: { original: string; medium: string } | null;
+}
 
 /**
  * TVMaze episode with season number.
@@ -14,7 +39,11 @@ export interface TvMazeEpisode extends NormalizedEpisode {
 @Injectable()
 export class TvMazeAdapter {
   private readonly logger = new Logger(TvMazeAdapter.name);
-  private readonly BASE_URL = 'https://api.tvmaze.com';
+
+  constructor(
+    @Inject(tvmazeConfig.KEY)
+    private readonly config: ConfigType<typeof tvmazeConfig>,
+  ) {}
 
   /**
    * Fetches episode schedule from TVMaze using IMDb ID.
@@ -26,14 +55,14 @@ export class TvMazeAdapter {
   async getEpisodesByImdbId(imdbId: string): Promise<TvMazeEpisode[]> {
     try {
       // Lookup Show ID via IMDb ID (Follows redirects)
-      const show = await this.fetch<{ id: number }>(`/lookup/shows?imdb=${imdbId}`);
+      const show = await this.fetch<TvMazeShow>(`/lookup/shows?imdb=${imdbId}`);
 
       if (!show || !show.id) {
         return [];
       }
 
       // Fetch all episodes
-      const episodes = await this.fetch<any[]>(`/shows/${show.id}/episodes`);
+      const episodes = await this.fetch<TvMazeEpisodeResponse[]>(`/shows/${show.id}/episodes`);
 
       if (!Array.isArray(episodes)) return [];
 
@@ -49,9 +78,12 @@ export class TvMazeAdapter {
       }));
     } catch (error) {
       // 404 is common for new shows or shows not in TVMaze
-      if (error.message !== '404') {
-        this.logger.warn(`Failed to sync episodes from TVMaze for ${imdbId}: ${error.message}`);
+      if (error instanceof TvMazeApiException && error.details?.statusCode === 404) {
+        return [];
       }
+      this.logger.warn(
+        `Failed to sync episodes from TVMaze for ${imdbId}: ${(error as Error).message}`,
+      );
       return [];
     }
   }
@@ -63,9 +95,9 @@ export class TvMazeAdapter {
    * @returns {Promise<T>} Parsed JSON response
    */
   private async fetch<T>(endpoint: string): Promise<T> {
-    const res = await fetch(`${this.BASE_URL}${endpoint}`);
+    const res = await fetch(`${this.config.apiUrl}${endpoint}`);
     if (!res.ok) {
-      throw new Error(`${res.status}`);
+      throw new TvMazeApiException(`HTTP ${res.status}`, res.status);
     }
     return res.json();
   }

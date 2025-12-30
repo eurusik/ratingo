@@ -10,6 +10,28 @@ import {
 } from '../../../../../common/http/resilient-http.client';
 
 /**
+ * OMDb API rating source entry.
+ */
+interface OmdbRating {
+  Source: string;
+  Value: string;
+}
+
+/**
+ * OMDb API response for media lookup.
+ */
+interface OmdbResponse {
+  Title?: string;
+  Year?: string;
+  imdbRating?: string;
+  imdbVotes?: string;
+  Metascore?: string;
+  Ratings?: OmdbRating[];
+  Response?: string;
+  Error?: string;
+}
+
+/**
  * OMDb-specific retry configuration.
  * Best-effort enrichment - don't block too long.
  */
@@ -104,7 +126,7 @@ export class OmdbAdapter {
   }> {
     try {
       const omdbType = this.TYPE_MAPPING[type];
-      const data = await this.fetch<any>({ i: imdbId, type: omdbType });
+      const data = await this.fetch<OmdbResponse>({ i: imdbId, type: omdbType });
 
       const imdbRating =
         data.imdbRating && data.imdbRating !== this.NA_VALUE ? parseFloat(data.imdbRating) : null;
@@ -118,13 +140,13 @@ export class OmdbAdapter {
       let metacritic: number | null = null;
 
       if (Array.isArray(data.Ratings)) {
-        const rt = data.Ratings.find((r: any) => r.Source === this.SOURCE_ROTTEN_TOMATOES);
+        const rt = data.Ratings.find((r) => r.Source === this.SOURCE_ROTTEN_TOMATOES);
         if (rt?.Value) {
           const m = rt.Value.match(/(\d+)%/);
           if (m) rottenTomatoes = parseInt(m[1], 10);
         }
 
-        const mc = data.Ratings.find((r: any) => r.Source === this.SOURCE_METACRITIC);
+        const mc = data.Ratings.find((r) => r.Source === this.SOURCE_METACRITIC);
         if (mc?.Value) {
           const m = mc.Value.match(/(\d+)/);
           if (m) metacritic = parseInt(m[1], 10);

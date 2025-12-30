@@ -1,11 +1,50 @@
 import { Injectable } from '@nestjs/common';
 import { BaseTraktHttp } from './base-trakt-http';
+import {
+  TraktTrendingMovie,
+  TraktTrendingShow,
+  TraktEndpoint,
+  TRAKT_ENDPOINT,
+} from './interfaces/trakt.types';
 
 /**
  * Trakt adapter for trending lists and watchers ranks.
  */
 @Injectable()
 export class TraktListsAdapter extends BaseTraktHttp {
+  /**
+   * Generic method to get trending items with watchers and rank.
+   *
+   * @param {'movies' | 'shows'} endpoint - API endpoint type
+   * @param {number} limit - Max items to fetch
+   * @returns {Promise<Array<{ tmdbId: number; watchers: number; rank: number }>>} Trending items
+   */
+  private async getTrendingWithWatchers(
+    endpoint: TraktEndpoint,
+    limit: number,
+  ): Promise<Array<{ tmdbId: number; watchers: number; rank: number }>> {
+    try {
+      const trending = await this.fetch<(TraktTrendingMovie | TraktTrendingShow)[]>(
+        `/${endpoint}/trending?limit=${limit}`,
+      );
+      return trending
+        .map((item, index) => {
+          const media = 'movie' in item ? item.movie : item.show;
+          return {
+            tmdbId: media?.ids?.tmdb,
+            watchers: item.watchers || 0,
+            rank: index + 1,
+          };
+        })
+        .filter(
+          (item): item is { tmdbId: number; watchers: number; rank: number } => !!item.tmdbId,
+        );
+    } catch (error) {
+      this.logger.warn(`Failed to get trending ${endpoint}: ${error}`);
+      return [];
+    }
+  }
+
   /**
    * Gets trending movies with watchers and rank.
    *
@@ -19,19 +58,7 @@ export class TraktListsAdapter extends BaseTraktHttp {
       rank: number;
     }>
   > {
-    try {
-      const trending = await this.fetch<any[]>(`/movies/trending?limit=${limit}`);
-      return trending
-        .map((item, index) => ({
-          tmdbId: item.movie?.ids?.tmdb,
-          watchers: item.watchers || 0,
-          rank: index + 1,
-        }))
-        .filter((item) => item.tmdbId);
-    } catch (error) {
-      this.logger.warn(`Failed to get trending movies: ${error}`);
-      return [];
-    }
+    return this.getTrendingWithWatchers(TRAKT_ENDPOINT.MOVIES, limit);
   }
 
   /**
@@ -47,18 +74,6 @@ export class TraktListsAdapter extends BaseTraktHttp {
       rank: number;
     }>
   > {
-    try {
-      const trending = await this.fetch<any[]>(`/shows/trending?limit=${limit}`);
-      return trending
-        .map((item, index) => ({
-          tmdbId: item.show?.ids?.tmdb,
-          watchers: item.watchers || 0,
-          rank: index + 1,
-        }))
-        .filter((item) => item.tmdbId);
-    } catch (error) {
-      this.logger.warn(`Failed to get trending shows: ${error}`);
-      return [];
-    }
+    return this.getTrendingWithWatchers(TRAKT_ENDPOINT.SHOWS, limit);
   }
 }

@@ -1,6 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { BaseTraktHttp } from './base-trakt-http';
-import { EpisodeData, SeasonData } from './interfaces/trakt.types';
+import {
+  EpisodeData,
+  SeasonData,
+  TraktSearchMovieResult,
+  TraktSearchShowResult,
+  TraktRatingsResponse,
+  TraktStatsResponse,
+  TraktWatchingUser,
+  TraktMediaType,
+  TraktEndpoint,
+  TRAKT_MEDIA_TYPE,
+  TRAKT_ENDPOINT,
+} from './interfaces/trakt.types';
 
 /**
  * Trakt adapter for ratings, watchers, stats, and episode/season metadata.
@@ -11,11 +23,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
    * Retrieves detailed ratings for a movie.
    *
    * @param {string | number} idOrSlug - Trakt ID or slug
-   * @returns {Promise<{ rating: number; votes: number; distribution?: Record<string, number> }>} Movie ratings payload
+   * @returns {Promise<TraktRatingsResponse>} Movie ratings payload
    */
-  async getMovieRatings(
-    idOrSlug: string | number,
-  ): Promise<{ rating: number; votes: number; distribution?: Record<string, number> }> {
+  async getMovieRatings(idOrSlug: string | number): Promise<TraktRatingsResponse> {
     return this.fetch(`/movies/${idOrSlug}/ratings`);
   }
 
@@ -23,11 +33,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
    * Retrieves detailed ratings for a show.
    *
    * @param {string | number} idOrSlug - Trakt ID or slug
-   * @returns {Promise<{ rating: number; votes: number; distribution?: Record<string, number> }>} Show ratings payload
+   * @returns {Promise<TraktRatingsResponse>} Show ratings payload
    */
-  async getShowRatings(
-    idOrSlug: string | number,
-  ): Promise<{ rating: number; votes: number; distribution?: Record<string, number> }> {
+  async getShowRatings(idOrSlug: string | number): Promise<TraktRatingsResponse> {
     return this.fetch(`/shows/${idOrSlug}/ratings`);
   }
 
@@ -39,7 +47,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
    */
   async getMovieWatchers(traktIdOrSlug: string | number): Promise<number> {
     try {
-      const watchers = await this.fetch<any[]>(`/movies/${traktIdOrSlug}/watching`);
+      const watchers = await this.fetch<TraktWatchingUser[]>(`/movies/${traktIdOrSlug}/watching`);
       return watchers.length;
     } catch {
       return 0;
@@ -50,11 +58,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
    * Retrieves full stats for a movie (watchers, plays, collected, etc.)
    *
    * @param {string | number} traktIdOrSlug - Trakt ID or slug
-   * @returns {Promise<{ watchers: number; plays: number; votes: number }>} Movie stats payload
+   * @returns {Promise<TraktStatsResponse>} Movie stats payload
    */
-  async getMovieStats(
-    traktIdOrSlug: string | number,
-  ): Promise<{ watchers: number; plays: number; votes: number }> {
+  async getMovieStats(traktIdOrSlug: string | number): Promise<TraktStatsResponse> {
     try {
       return await this.fetch(`/movies/${traktIdOrSlug}/stats`);
     } catch {
@@ -70,7 +76,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
    */
   async getShowWatchers(traktIdOrSlug: string | number): Promise<number> {
     try {
-      const watchers = await this.fetch<any[]>(`/shows/${traktIdOrSlug}/watching`);
+      const watchers = await this.fetch<TraktWatchingUser[]>(`/shows/${traktIdOrSlug}/watching`);
       return watchers.length;
     } catch {
       return 0;
@@ -81,11 +87,9 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
    * Retrieves full stats for a show.
    *
    * @param {string | number} traktIdOrSlug - Trakt ID or slug
-   * @returns {Promise<{ watchers: number; plays: number; votes: number }>} Show stats payload
+   * @returns {Promise<TraktStatsResponse>} Show stats payload
    */
-  async getShowStats(
-    traktIdOrSlug: string | number,
-  ): Promise<{ watchers: number; plays: number; votes: number }> {
+  async getShowStats(traktIdOrSlug: string | number): Promise<TraktStatsResponse> {
     try {
       return await this.fetch(`/shows/${traktIdOrSlug}/stats`);
     } catch {
@@ -94,26 +98,46 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
   }
 
   /**
-   * Get movie ratings and watchers by TMDB ID.
-   * First looks up the Trakt ID, then fetches ratings and watchers.
+   * Generic method to get ratings by TMDB ID for both movies and shows.
    *
+   * @param {'movie' | 'show'} type - Media type
    * @param {number} tmdbId - TMDB ID
    * @returns {Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null>} Ratings payload or null
    */
-  async getMovieRatingsByTmdbId(
+  private async getRatingsByTmdbId(
+    type: TraktMediaType,
     tmdbId: number,
   ): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
     try {
-      const results = await this.fetch<any[]>(`/search/tmdb/${tmdbId}?type=movie`);
-      if (!results.length || !results[0]?.movie?.ids?.trakt) {
+      const results = await this.fetch<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
+        `/search/tmdb/${tmdbId}?type=${type}`,
+      );
+      const firstResult = results[0];
+      let traktId: number | undefined;
+
+      if (firstResult) {
+        if ('movie' in firstResult) {
+          traktId = firstResult.movie?.ids?.trakt;
+        } else if ('show' in firstResult) {
+          traktId = firstResult.show?.ids?.trakt;
+        }
+      }
+
+      if (!results.length || !traktId) {
         return null;
       }
-      const traktId = results[0].movie.ids.trakt;
+
+      const endpoint: TraktEndpoint =
+        type === TRAKT_MEDIA_TYPE.MOVIE ? TRAKT_ENDPOINT.MOVIES : TRAKT_ENDPOINT.SHOWS;
 
       const [ratingsResult, watchersResult, statsResult] = await Promise.allSettled([
-        this.getMovieRatings(traktId),
-        this.getMovieWatchers(traktId),
-        this.getMovieStats(traktId),
+        this.fetch<TraktRatingsResponse>(`/${endpoint}/${traktId}/ratings`),
+        this.fetch<TraktWatchingUser[]>(`/${endpoint}/${traktId}/watching`)
+          .then((w) => w.length)
+          .catch(() => 0),
+        this.fetch<TraktStatsResponse>(`/${endpoint}/${traktId}/stats`).catch(() => ({
+          watchers: 0,
+        })),
       ]);
 
       if (ratingsResult.status === 'rejected') {
@@ -137,8 +161,19 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
   }
 
   /**
+   * Get movie ratings and watchers by TMDB ID.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null>} Ratings payload or null
+   */
+  async getMovieRatingsByTmdbId(
+    tmdbId: number,
+  ): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
+    return this.getRatingsByTmdbId(TRAKT_MEDIA_TYPE.MOVIE, tmdbId);
+  }
+
+  /**
    * Get show ratings and watchers by TMDB ID.
-   * First looks up the Trakt ID, then fetches ratings.
    *
    * @param {number} tmdbId - TMDB ID
    * @returns {Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null>} Ratings payload or null
@@ -146,37 +181,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
   async getShowRatingsByTmdbId(
     tmdbId: number,
   ): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
-    try {
-      const results = await this.fetch<any[]>(`/search/tmdb/${tmdbId}?type=show`);
-      if (!results.length || !results[0]?.show?.ids?.trakt) {
-        return null;
-      }
-      const traktId = results[0].show.ids.trakt;
-
-      const [ratingsResult, watchersResult, statsResult] = await Promise.allSettled([
-        this.getShowRatings(traktId),
-        this.getShowWatchers(traktId),
-        this.getShowStats(traktId),
-      ]);
-
-      if (ratingsResult.status === 'rejected') {
-        throw ratingsResult.reason;
-      }
-
-      const ratings = ratingsResult.value;
-      const watchers = watchersResult.status === 'fulfilled' ? watchersResult.value : 0;
-      const stats = statsResult.status === 'fulfilled' ? statsResult.value : { watchers: 0 };
-
-      return {
-        rating: ratings.rating,
-        votes: ratings.votes,
-        watchers,
-        totalWatchers: stats.watchers,
-      };
-    } catch (error) {
-      this.logger.warn(`Failed to get Trakt data for TMDB ${tmdbId}: ${error}`);
-      return null;
-    }
+    return this.getRatingsByTmdbId(TRAKT_MEDIA_TYPE.SHOW, tmdbId);
   }
 
   /**
@@ -187,7 +192,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
    */
   async getTraktIdByTmdbId(tmdbId: number): Promise<number | null> {
     try {
-      const results = await this.fetch<any[]>(`/search/tmdb/${tmdbId}?type=show`);
+      const results = await this.fetch<TraktSearchShowResult[]>(`/search/tmdb/${tmdbId}?type=show`);
       return results[0]?.show?.ids?.trakt || null;
     } catch {
       return null;
@@ -281,42 +286,40 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
   }
 
   /**
-   * Gets watchers count for multiple movies by TMDB IDs.
+   * Generic method to get watchers count for multiple items by TMDB IDs.
    * Uses concurrency limit to avoid rate limiting.
    *
    * Returns null for items that failed due to transient errors (429, 5xx, network).
    * Returns 0 for items not found in Trakt (404).
-   * This allows caller to skip updating stats for failed items (preserving old data).
    *
+   * @param {'movie' | 'show'} type - Media type
    * @param {number[]} tmdbIds - TMDB IDs
    * @param {number} concurrency - Max concurrent requests (default: 3)
    * @returns {Promise<Map<number, number | null>>} Map of tmdbId -> watchers (null = error, skip update)
    */
-  async getMovieWatchersByTmdbIds(
+  private async getWatchersByTmdbIds(
+    type: TraktMediaType,
     tmdbIds: number[],
     concurrency = 3,
   ): Promise<Map<number, number | null>> {
     const result = new Map<number, number | null>();
     if (tmdbIds.length === 0) return result;
 
-    // Process in batches with concurrency limit
+    const fetchFn = type === 'movie' ? this.getMovieRatingsByTmdbId : this.getShowRatingsByTmdbId;
+
     for (let i = 0; i < tmdbIds.length; i += concurrency) {
       const batch = tmdbIds.slice(i, i + concurrency);
       const promises = batch.map(async (tmdbId) => {
         try {
-          const data = await this.getMovieRatingsByTmdbId(tmdbId);
-          // null from getMovieRatingsByTmdbId means not found (404) -> 0 watchers
-          // actual data -> use watchers value
-          return { tmdbId, watchers: data?.watchers ?? 0, success: true };
+          const data = await fetchFn.call(this, tmdbId);
+          return { tmdbId, watchers: data?.watchers ?? 0 };
         } catch (error: any) {
-          // Transient errors (rate limit, network, 5xx) -> null (skip update)
           const status = error?.response?.status;
           if (status === 429 || status >= 500 || !status) {
-            this.logger.warn(`Transient error for movie ${tmdbId}: ${error.message || error}`);
-            return { tmdbId, watchers: null, success: false };
+            this.logger.warn(`Transient error for ${type} ${tmdbId}: ${error.message || error}`);
+            return { tmdbId, watchers: null };
           }
-          // Other errors (4xx except 404) -> treat as not found
-          return { tmdbId, watchers: 0, success: true };
+          return { tmdbId, watchers: 0 };
         }
       });
 
@@ -330,12 +333,21 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
   }
 
   /**
-   * Gets watchers count for multiple shows by TMDB IDs.
-   * Uses concurrency limit to avoid rate limiting.
+   * Gets watchers count for multiple movies by TMDB IDs.
    *
-   * Returns null for items that failed due to transient errors (429, 5xx, network).
-   * Returns 0 for items not found in Trakt (404).
-   * This allows caller to skip updating stats for failed items (preserving old data).
+   * @param {number[]} tmdbIds - TMDB IDs
+   * @param {number} concurrency - Max concurrent requests (default: 3)
+   * @returns {Promise<Map<number, number | null>>} Map of tmdbId -> watchers (null = error, skip update)
+   */
+  async getMovieWatchersByTmdbIds(
+    tmdbIds: number[],
+    concurrency = 3,
+  ): Promise<Map<number, number | null>> {
+    return this.getWatchersByTmdbIds(TRAKT_MEDIA_TYPE.MOVIE, tmdbIds, concurrency);
+  }
+
+  /**
+   * Gets watchers count for multiple shows by TMDB IDs.
    *
    * @param {number[]} tmdbIds - TMDB IDs
    * @param {number} concurrency - Max concurrent requests (default: 3)
@@ -345,36 +357,6 @@ export class TraktRatingsAdapter extends BaseTraktHttp {
     tmdbIds: number[],
     concurrency = 3,
   ): Promise<Map<number, number | null>> {
-    const result = new Map<number, number | null>();
-    if (tmdbIds.length === 0) return result;
-
-    // Process in batches with concurrency limit
-    for (let i = 0; i < tmdbIds.length; i += concurrency) {
-      const batch = tmdbIds.slice(i, i + concurrency);
-      const promises = batch.map(async (tmdbId) => {
-        try {
-          const data = await this.getShowRatingsByTmdbId(tmdbId);
-          // null from getShowRatingsByTmdbId means not found (404) -> 0 watchers
-          // actual data -> use watchers value
-          return { tmdbId, watchers: data?.watchers ?? 0, success: true };
-        } catch (error: any) {
-          // Transient errors (rate limit, network, 5xx) -> null (skip update)
-          const status = error?.response?.status;
-          if (status === 429 || status >= 500 || !status) {
-            this.logger.warn(`Transient error for show ${tmdbId}: ${error.message || error}`);
-            return { tmdbId, watchers: null, success: false };
-          }
-          // Other errors (4xx except 404) -> treat as not found
-          return { tmdbId, watchers: 0, success: true };
-        }
-      });
-
-      const batchResults = await Promise.all(promises);
-      for (const { tmdbId, watchers } of batchResults) {
-        result.set(tmdbId, watchers);
-      }
-    }
-
-    return result;
+    return this.getWatchersByTmdbIds(TRAKT_MEDIA_TYPE.SHOW, tmdbIds, concurrency);
   }
 }
