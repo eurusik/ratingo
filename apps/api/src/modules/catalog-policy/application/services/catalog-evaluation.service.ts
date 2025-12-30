@@ -18,13 +18,13 @@ import {
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
 } from '../../infrastructure/repositories/media-catalog-evaluation.repository';
 import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
-import {
-  MediaCatalogEvaluation,
-  PolicyEngineInput,
-  WatchProvidersMap,
-} from '../../domain/types/policy.types';
+import { MediaCatalogEvaluation, PolicyEngineInput } from '../../domain/types/policy.types';
 import { EligibilityStatus } from '../../domain/constants/evaluation.constants';
-import { ContentClass, isValidContentClass } from '../../domain/classification.service';
+import {
+  MediaItemRow,
+  mapRowToPolicyEngineInput,
+  mapRowsToPolicyEngineInputs,
+} from '../utils/policy-input.mapper';
 
 export interface EvaluationResult {
   mediaItemId: string;
@@ -295,20 +295,17 @@ export class CatalogEvaluationService {
   private async buildPolicyEngineInput(mediaItemId: string): Promise<PolicyEngineInput | null> {
     const result = await this.db
       .select({
-        // Media item fields
         id: schema.mediaItems.id,
         originCountries: schema.mediaItems.originCountries,
         originalLanguage: schema.mediaItems.originalLanguage,
         watchProviders: schema.mediaItems.watchProviders,
         contentClass: schema.mediaItems.contentClass,
-        // Ratings from media_items (external ratings)
         ratingImdb: schema.mediaItems.ratingImdb,
         ratingMetacritic: schema.mediaItems.ratingMetacritic,
         ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
         ratingTrakt: schema.mediaItems.ratingTrakt,
         voteCountImdb: schema.mediaItems.voteCountImdb,
         voteCountTrakt: schema.mediaItems.voteCountTrakt,
-        // Stats from media_stats (computed scores)
         qualityScore: schema.mediaStats.qualityScore,
         popularityScore: schema.mediaStats.popularityScore,
         freshnessScore: schema.mediaStats.freshnessScore,
@@ -323,43 +320,7 @@ export class CatalogEvaluationService {
       return null;
     }
 
-    const row = result[0];
-
-    // Validate contentClass (safety belt for data integrity)
-    let contentClass: ContentClass = 'mainstream';
-    if (!isValidContentClass(row.contentClass)) {
-      this.logger.error(
-        `Invalid content_class for media ${row.id}: ${row.contentClass}. Defaulting to mainstream.`,
-      );
-      // TODO: Increment catalog_invalid_content_class_total metric
-    } else {
-      contentClass = row.contentClass;
-    }
-
-    return {
-      mediaItem: {
-        id: row.id,
-        originCountries: row.originCountries as string[] | null,
-        originalLanguage: row.originalLanguage,
-        watchProviders: row.watchProviders as WatchProvidersMap | null,
-        voteCountImdb: row.voteCountImdb,
-        voteCountTrakt: row.voteCountTrakt,
-        ratingImdb: row.ratingImdb,
-        ratingMetacritic: row.ratingMetacritic,
-        ratingRottenTomatoes: row.ratingRottenTomatoes,
-        ratingTrakt: row.ratingTrakt,
-        contentClass,
-      },
-      stats:
-        row.qualityScore !== null
-          ? {
-              qualityScore: row.qualityScore,
-              popularityScore: row.popularityScore,
-              freshnessScore: row.freshnessScore,
-              ratingoScore: row.ratingoScore,
-            }
-          : null,
-    };
+    return mapRowToPolicyEngineInput(result[0] as MediaItemRow, this.logger);
   }
 
   /**
@@ -372,20 +333,17 @@ export class CatalogEvaluationService {
 
     const result = await this.db
       .select({
-        // Media item fields
         id: schema.mediaItems.id,
         originCountries: schema.mediaItems.originCountries,
         originalLanguage: schema.mediaItems.originalLanguage,
         watchProviders: schema.mediaItems.watchProviders,
         contentClass: schema.mediaItems.contentClass,
-        // Ratings from media_items (external ratings)
         ratingImdb: schema.mediaItems.ratingImdb,
         ratingMetacritic: schema.mediaItems.ratingMetacritic,
         ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
         ratingTrakt: schema.mediaItems.ratingTrakt,
         voteCountImdb: schema.mediaItems.voteCountImdb,
         voteCountTrakt: schema.mediaItems.voteCountTrakt,
-        // Stats from media_stats (computed scores)
         qualityScore: schema.mediaStats.qualityScore,
         popularityScore: schema.mediaStats.popularityScore,
         freshnessScore: schema.mediaStats.freshnessScore,
@@ -395,42 +353,6 @@ export class CatalogEvaluationService {
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(inArray(schema.mediaItems.id, mediaItemIds));
 
-    return result.map((row) => {
-      // Validate contentClass (safety belt for data integrity)
-      let contentClass: ContentClass = 'mainstream';
-      if (!isValidContentClass(row.contentClass)) {
-        this.logger.error(
-          `Invalid content_class for media ${row.id}: ${row.contentClass}. Defaulting to mainstream.`,
-        );
-        // TODO: Increment catalog_invalid_content_class_total metric
-      } else {
-        contentClass = row.contentClass;
-      }
-
-      return {
-        mediaItem: {
-          id: row.id,
-          originCountries: row.originCountries as string[] | null,
-          originalLanguage: row.originalLanguage,
-          watchProviders: row.watchProviders as WatchProvidersMap | null,
-          voteCountImdb: row.voteCountImdb,
-          voteCountTrakt: row.voteCountTrakt,
-          ratingImdb: row.ratingImdb,
-          ratingMetacritic: row.ratingMetacritic,
-          ratingRottenTomatoes: row.ratingRottenTomatoes,
-          ratingTrakt: row.ratingTrakt,
-          contentClass,
-        },
-        stats:
-          row.qualityScore !== null
-            ? {
-                qualityScore: row.qualityScore,
-                popularityScore: row.popularityScore,
-                freshnessScore: row.freshnessScore,
-                ratingoScore: row.ratingoScore,
-              }
-            : null,
-      };
-    });
+    return mapRowsToPolicyEngineInputs(result as MediaItemRow[], this.logger);
   }
 }

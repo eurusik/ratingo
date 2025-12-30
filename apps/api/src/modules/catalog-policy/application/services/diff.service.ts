@@ -10,7 +10,7 @@ import { Inject } from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import * as schema from '../../../../database/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, inArray } from 'drizzle-orm';
 import {
   ICatalogEvaluationRunRepository,
   CATALOG_EVALUATION_RUN_REPOSITORY,
@@ -312,25 +312,35 @@ export class DiffService {
     if (type === 'regression' && currentVersion !== null) {
       const processedIds = new Set(newEvals.map((e) => e.mediaItemId));
 
+      // Collect IDs of removed items that were eligible (batch query instead of N+1)
+      const removedEligibleIds: string[] = [];
       for (const [mediaItemId, oldStatus] of oldMap) {
-        // Check if this is a regression (item was eligible and is now gone)
         if (!processedIds.has(mediaItemId) && isDiffRegression(oldStatus, DIFF_STATUS_NONE)) {
-          // Get media item info
-          const mediaInfo = await this.db
-            .select({
-              title: schema.mediaItems.title,
-              trendingScore: schema.mediaItems.trendingScore,
-            })
-            .from(schema.mediaItems)
-            .where(eq(schema.mediaItems.id, mediaItemId))
-            .limit(1);
+          removedEligibleIds.push(mediaItemId);
+        }
+      }
 
+      if (removedEligibleIds.length > 0) {
+        // Batch fetch media info for all removed items
+        const mediaInfoBatch = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            title: schema.mediaItems.title,
+            trendingScore: schema.mediaItems.trendingScore,
+          })
+          .from(schema.mediaItems)
+          .where(inArray(schema.mediaItems.id, removedEligibleIds));
+
+        const mediaInfoMap = new Map(mediaInfoBatch.map((m) => [m.id, m]));
+
+        for (const mediaItemId of removedEligibleIds) {
+          const mediaInfo = mediaInfoMap.get(mediaItemId);
           samples.push({
             mediaItemId,
-            title: mediaInfo[0]?.title ?? null,
-            oldStatus,
+            title: mediaInfo?.title ?? null,
+            oldStatus: oldMap.get(mediaItemId)!,
             newStatus: DIFF_STATUS_NONE,
-            trendingScore: mediaInfo[0]?.trendingScore ?? null,
+            trendingScore: mediaInfo?.trendingScore ?? null,
           });
         }
       }

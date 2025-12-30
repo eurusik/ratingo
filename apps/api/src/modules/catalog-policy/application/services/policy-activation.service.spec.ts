@@ -48,7 +48,29 @@ describe('PolicyActivationService', () => {
     mockDb = {
       select: jest.fn().mockReturnThis(),
       from: jest.fn().mockReturnThis(),
-      where: jest.fn().mockResolvedValue([{ count: 1000 }]),
+      where: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue([{ count: 1000 }]),
+      transaction: jest.fn().mockImplementation(async (callback) => {
+        // Create a mock transaction context that mimics the db interface
+        const txMock = {
+          select: jest.fn().mockReturnThis(),
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          limit: jest.fn().mockResolvedValue([{ version: 1 }]), // active policy
+        };
+        // Override where to return count for the second query (media items count)
+        let callCount = 0;
+        txMock.where.mockImplementation(() => {
+          callCount++;
+          if (callCount === 1) {
+            // First where: active policy query - returns chainable with limit
+            return txMock;
+          }
+          // Second where: count query - returns result directly
+          return Promise.resolve([{ count: 1000 }]);
+        });
+        return callback(txMock);
+      }),
     };
 
     mockAggregationService = {
@@ -109,10 +131,6 @@ describe('PolicyActivationService', () => {
         version: 2,
         isActive: false,
       });
-      mockPolicyRepository.findActive.mockResolvedValue({
-        id: 'active-policy',
-        version: 1,
-      });
       mockRunRepository.findByPolicyId.mockResolvedValue([]);
       mockRunRepository.create.mockResolvedValue({
         id: 'run-123',
@@ -127,7 +145,8 @@ describe('PolicyActivationService', () => {
         expect.objectContaining({
           targetPolicyId: 'policy-1',
           targetPolicyVersion: 2,
-          baselinePolicyVersion: 1,
+          baselinePolicyVersion: 1, // From transaction mock
+          totalReadySnapshot: 1000, // From transaction mock
         }),
       );
       expect(mockQueue.add).toHaveBeenCalled();

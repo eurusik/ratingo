@@ -22,18 +22,14 @@ import { eq, and, isNull, inArray, sql } from 'drizzle-orm';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
 import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
-import {
-  PolicyConfig,
-  PolicyEngineInput,
-  WatchProvidersMap,
-} from '../../domain/types/policy.types';
+import { PolicyConfig, PolicyEngineInput } from '../../domain/types/policy.types';
 import {
   EligibilityStatus,
   EligibilityStatusType,
   EvaluationReasonType,
 } from '../../domain/constants/evaluation.constants';
-import { ContentClass } from '../../domain/classification.service';
 import { CatalogPolicyService } from './catalog-policy.service';
+import { MediaItemRow, mapRowToPolicyEngineInput } from '../utils/policy-input.mapper';
 
 /**
  * Dry-run selection mode
@@ -102,7 +98,12 @@ export interface DryRunResult {
 // Constants
 const MAX_ITEMS = 10000;
 const DEFAULT_LIMIT = 1000;
-const TIMEOUT_MS = 60000;
+
+/**
+ * Timeout for dry-run execution in milliseconds.
+ * Can be overridden via DRY_RUN_TIMEOUT_MS environment variable.
+ */
+const TIMEOUT_MS = parseInt(process.env.DRY_RUN_TIMEOUT_MS || '60000', 10);
 
 @Injectable()
 export class DryRunService {
@@ -159,7 +160,7 @@ export class DryRunService {
         break;
       }
 
-      const input = this.buildPolicyEngineInput(item);
+      const input = mapRowToPolicyEngineInput(item, this.logger);
       const evalResult = evaluateEligibility(input, proposedPolicy);
       const relevanceScore = computeRelevance(input, proposedPolicy);
 
@@ -475,36 +476,6 @@ export class DryRunService {
   }
 
   /**
-   * Build PolicyEngineInput from fetched row
-   */
-  private buildPolicyEngineInput(row: MediaItemRow): PolicyEngineInput {
-    return {
-      mediaItem: {
-        id: row.id,
-        originCountries: row.originCountries as string[] | null,
-        originalLanguage: row.originalLanguage,
-        watchProviders: row.watchProviders as WatchProvidersMap | null,
-        voteCountImdb: row.voteCountImdb,
-        voteCountTrakt: row.voteCountTrakt,
-        ratingImdb: row.ratingImdb,
-        ratingMetacritic: row.ratingMetacritic,
-        ratingRottenTomatoes: row.ratingRottenTomatoes,
-        ratingTrakt: row.ratingTrakt,
-        contentClass: row.contentClass as ContentClass,
-      },
-      stats:
-        row.qualityScore !== null
-          ? {
-              qualityScore: row.qualityScore,
-              popularityScore: row.popularityScore,
-              freshnessScore: row.freshnessScore,
-              ratingoScore: row.ratingoScore,
-            }
-          : null,
-    };
-  }
-
-  /**
    * Build empty result when no items found
    */
   private buildEmptyResult(mode: DryRunMode, limit: number, executionTimeMs: number): DryRunResult {
@@ -526,26 +497,4 @@ export class DryRunService {
       items: [],
     };
   }
-}
-
-/**
- * Internal type for fetched media item rows
- */
-interface MediaItemRow {
-  id: string;
-  title: string;
-  originCountries: unknown;
-  originalLanguage: string | null;
-  watchProviders: unknown;
-  contentClass: string;
-  ratingImdb: number | null;
-  ratingMetacritic: number | null;
-  ratingRottenTomatoes: number | null;
-  ratingTrakt: number | null;
-  voteCountImdb: number | null;
-  voteCountTrakt: number | null;
-  qualityScore: number | null;
-  popularityScore: number | null;
-  freshnessScore: number | null;
-  ratingoScore: number | null;
 }

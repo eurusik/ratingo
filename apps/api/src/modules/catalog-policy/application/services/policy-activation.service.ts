@@ -8,13 +8,7 @@
  * Phase 2 (Promote): Atomically switch active policy after verification
  */
 
-import {
-  Injectable,
-  Logger,
-  BadRequestException,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -38,11 +32,7 @@ import {
   BlockingReasonCode,
   BlockingReasonType,
 } from '../../domain/constants/evaluation.constants';
-import {
-  InvalidRunStateTransitionError,
-  InvalidEligibilityStatusError,
-  InvalidBreakoutRuleError,
-} from '../../domain/errors';
+import { InvalidRunStateTransitionError } from '../../domain/errors';
 import { RunAggregationService } from './run-aggregation.service';
 
 export interface PrepareOptions {
@@ -123,28 +113,51 @@ export class PolicyActivationService {
       );
     }
 
-    // 4. Calculate totalReadySnapshot and snapshotCutoff
+    // 4. Calculate totalReadySnapshot, snapshotCutoff, and create run in transaction
+    // This prevents race condition where active policy changes between baseline capture and run creation
     const snapshotCutoff = new Date();
-    const totalReadySnapshot = await this.countReadyMediaItems(snapshotCutoff);
 
-    // 5. Get current active policy version for baseline (for diff calculation)
-    // TODO: Wrap in transaction with run creation to prevent race condition
-    // (unlikely in practice since policies change rarely)
-    const activePolicy = await this.policyRepository.findActive();
-    const baselinePolicyVersion = activePolicy?.version ?? null;
+    const run = await this.db.transaction(async (tx) => {
+      // Get current active policy version for baseline (for diff calculation)
+      const activePolicyResult = await tx
+        .select({ version: schema.catalogPolicies.version })
+        .from(schema.catalogPolicies)
+        .where(eq(schema.catalogPolicies.isActive, true))
+        .limit(1);
 
-    this.logger.log(`Preparing policy v${policy.version}: ${totalReadySnapshot} items in snapshot`);
+      const baselinePolicyVersion = activePolicyResult[0]?.version ?? null;
 
-    // 6. Create run with status=RUNNING
-    const run = await this.runRepository.create({
-      targetPolicyId: policyId,
-      targetPolicyVersion: policy.version,
-      baselinePolicyVersion,
-      totalReadySnapshot,
-      snapshotCutoff,
+      // Calculate totalReadySnapshot
+      const countResult = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(schema.mediaItems)
+        .where(
+          and(
+            eq(schema.mediaItems.ingestionStatus, 'ready'),
+            isNull(schema.mediaItems.deletedAt),
+            lte(schema.mediaItems.updatedAt, snapshotCutoff),
+          ),
+        );
+
+      const totalReadySnapshot = countResult[0]?.count || 0;
+
+      this.logger.log(
+        `Preparing policy v${policy.version}: ${totalReadySnapshot} items in snapshot`,
+      );
+
+      // Create run with status=RUNNING
+      const runResult = await this.runRepository.create({
+        targetPolicyId: policyId,
+        targetPolicyVersion: policy.version,
+        baselinePolicyVersion,
+        totalReadySnapshot,
+        snapshotCutoff,
+      });
+
+      return runResult;
     });
 
-    // 7. Queue RE_EVALUATE_ALL job with retries
+    // 5. Queue RE_EVALUATE_ALL job with retries
     await this.catalogQueue.add(
       CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
       {
@@ -350,51 +363,5 @@ export class PolicyActivationService {
     this.logger.log(`Cancelled run ${runId}`);
 
     return { success: true };
-  }
-
-  /**
-   * Helper: Count ready media items at snapshot cutoff.
-   */
-  private async countReadyMediaItems(snapshotCutoff: Date): Promise<number> {
-    const result = await this.db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(schema.mediaItems)
-      .where(
-        and(
-          eq(schema.mediaItems.ingestionStatus, 'ready'),
-          isNull(schema.mediaItems.deletedAt),
-          lte(schema.mediaItems.updatedAt, snapshotCutoff),
-        ),
-      );
-
-    return result[0]?.count || 0;
-  }
-
-  /**
-   * Maps domain errors to appropriate NestJS HTTP exceptions.
-   *
-   * Domain errors are thrown by the domain layer for business rule violations.
-   * This method converts them to HTTP-appropriate exceptions for the API layer.
-   *
-   * @param error - The error to map
-   * @throws {BadRequestException} For invalid input errors (InvalidEligibilityStatusError, InvalidBreakoutRuleError)
-   * @throws {ConflictException} For state transition errors (InvalidRunStateTransitionError)
-   * @throws The original error if it's not a domain error
-   */
-  private mapDomainErrorToHttpException(error: unknown): never {
-    if (error instanceof InvalidEligibilityStatusError) {
-      throw new BadRequestException(error.message);
-    }
-
-    if (error instanceof InvalidBreakoutRuleError) {
-      throw new BadRequestException(error.message);
-    }
-
-    if (error instanceof InvalidRunStateTransitionError) {
-      throw new ConflictException(error.message);
-    }
-
-    // Re-throw unknown errors
-    throw error;
   }
 }
