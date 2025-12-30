@@ -2,6 +2,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ImageDto } from '../../../catalog/presentation/dtos/common.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 
+/**
+ * Hero item statistics DTO.
+ */
 export class HeroStatsDto {
   @ApiProperty({ example: 85.5 })
   ratingoScore: number;
@@ -20,23 +23,49 @@ export class HeroStatsDto {
   totalWatchers?: number;
 }
 
+/**
+ * Hero item external ratings DTO.
+ */
 export class HeroExternalRatingsDto {
   @ApiProperty({ example: { rating: 8.4, voteCount: 20000 }, required: false })
-  tmdb?: { rating: number; voteCount?: number };
+  tmdb?: { rating: number; voteCount?: number | null };
 
-  @ApiProperty({ example: { rating: 8.7, voteCount: 1500000 }, required: false, nullable: true })
-  imdb?: { rating: number; voteCount?: number | null } | null;
+  @ApiProperty({ example: { rating: 8.7, voteCount: 1500000 }, required: false })
+  imdb?: { rating: number; voteCount?: number | null };
 
-  @ApiProperty({ example: { rating: 8.5, voteCount: 50000 }, required: false, nullable: true })
-  trakt?: { rating: number; voteCount?: number | null } | null;
+  @ApiProperty({ example: { rating: 8.5, voteCount: 50000 }, required: false })
+  trakt?: { rating: number; voteCount?: number | null };
 
-  @ApiProperty({ example: { rating: 75 }, required: false, nullable: true })
-  metacritic?: { rating: number } | null;
+  @ApiProperty({ example: { rating: 75 }, required: false })
+  metacritic?: { rating: number };
 
-  @ApiProperty({ example: { rating: 85 }, required: false, nullable: true })
-  rottenTomatoes?: { rating: number } | null;
+  @ApiProperty({ example: { rating: 85 }, required: false })
+  rottenTomatoes?: { rating: number };
 }
 
+/**
+ * Show progress DTO for TV shows.
+ */
+export class HeroShowProgressDto {
+  @ApiProperty({ example: 5 })
+  season: number;
+
+  @ApiProperty({ example: 5 })
+  episode: number;
+
+  @ApiProperty({ example: 'S5E5' })
+  label: string;
+
+  @ApiProperty({ example: '2025-12-14T00:00:00.000Z', required: false })
+  lastAirDate?: Date;
+
+  @ApiProperty({ example: '2025-12-21T00:00:00.000Z', required: false })
+  nextAirDate?: Date;
+}
+
+/**
+ * Hero item DTO for homepage hero block.
+ */
 export class HeroItemDto {
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   id: string;
@@ -59,6 +88,7 @@ export class HeroItemDto {
   @ApiProperty({
     example:
       'An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more.',
+    nullable: true,
   })
   overview: string | null;
 
@@ -82,7 +112,7 @@ export class HeroItemDto {
   @ApiProperty({ type: HeroExternalRatingsDto, required: false })
   externalRatings?: HeroExternalRatingsDto;
 
-  @ApiProperty({ example: '1999-10-15T00:00:00.000Z' })
+  @ApiProperty({ example: '1999-10-15T00:00:00.000Z', nullable: true })
   releaseDate: Date | null;
 
   @ApiProperty({ example: false, description: 'True if released within last 90 days' })
@@ -92,15 +122,9 @@ export class HeroItemDto {
   isClassic: boolean;
 
   @ApiProperty({
-    example: { season: 5, episode: 5, label: 'S5E5', lastAirDate: '2025-12-14' },
+    type: HeroShowProgressDto,
     description: 'Progress info for TV Shows (latest aired episode)',
     required: false,
   })
-  showProgress?: {
-    season: number;
-    episode: number;
-    label: string;
-    lastAirDate?: Date | null;
-    nextAirDate?: Date | null;
-  };
+  showProgress?: HeroShowProgressDto;
 }

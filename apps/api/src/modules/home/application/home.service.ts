@@ -3,8 +3,9 @@ import {
   IMediaRepository,
   MEDIA_REPOSITORY,
 } from '../../catalog/domain/repositories/media.repository.interface';
-import { HeroItemDto } from '../presentation/dtos/hero-item.dto';
+import { HeroMediaItem } from '../../catalog/domain/models/hero-media.model';
 import { MediaType } from '../../../common/enums/media-type.enum';
+import { HERO_CONFIG } from '../home.constants';
 
 /**
  * Application service for Home module endpoints.
@@ -21,15 +22,12 @@ export class HomeService {
   /**
    * Returns hero items for the home page.
    *
-   * @param {MediaType} type - Optional media type filter
-   * @returns {Promise<HeroItemDto[]>} Hero items
+   * @param type - Optional media type filter
+   * @returns Hero media items (domain models)
    */
-  async getHero(type?: MediaType): Promise<HeroItemDto[]> {
+  async getHero(type?: MediaType): Promise<HeroMediaItem[]> {
     try {
-      // Get top items from repository
-      const items = await this.mediaRepository.findHero(4, type);
-
-      return items as HeroItemDto[];
+      return await this.mediaRepository.findHero(HERO_CONFIG.DEFAULT_LIMIT, type);
     } catch (error) {
       this.logger.error(`Failed to get hero items: ${error.message}`);
       return [];

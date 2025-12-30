@@ -1,5 +1,5 @@
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import type { ImageData, RatingoStats, ExternalRating } from '../types/common.types';
+import type { ImageData, RatingoStats, ExternalRatings } from '../types/common.types';
 
 /**
  * Show progress information for hero items.
@@ -14,6 +14,7 @@ export interface HeroShowProgress {
 
 /**
  * Hero media item for homepage showcase.
+ * Domain model representing high-quality content for hero section.
  */
 export interface HeroMediaItem {
   id: string;
@@ -30,7 +31,7 @@ export interface HeroMediaItem {
   isNew: boolean;
   isClassic: boolean;
   stats: RatingoStats;
-  externalRatings: { tmdb: ExternalRating | null };
+  externalRatings: ExternalRatings;
   showProgress?: HeroShowProgress | null;
 }
 

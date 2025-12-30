@@ -2,6 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { HomeService } from '../application/home.service';
 import { HeroItemDto } from './dtos/hero-item.dto';
+import { HeroItemMapper } from './mappers/hero-item.mapper';
 import { MediaType } from '../../../common/enums/media-type.enum';
 
 /**
@@ -15,14 +16,15 @@ export class HomeController {
   /**
    * Gets hero block items.
    *
-   * @param {MediaType} type - Optional media type filter
-   * @returns {Promise<HeroItemDto[]>} Hero items
+   * @param type - Optional media type filter
+   * @returns Hero items for homepage
    */
   @Get('hero')
   @ApiOperation({ summary: 'Get Hero block items (Top 4 hottest media)' })
   @ApiQuery({ name: 'type', required: false, enum: MediaType })
   @ApiResponse({ type: [HeroItemDto] })
   async getHero(@Query('type') type?: MediaType): Promise<HeroItemDto[]> {
-    return this.homeService.getHero(type);
+    const items = await this.homeService.getHero(type);
+    return HeroItemMapper.toDtoList(items);
   }
 }

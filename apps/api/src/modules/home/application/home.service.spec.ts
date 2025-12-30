@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HomeService } from './home.service';
 import { MEDIA_REPOSITORY } from '../../catalog/domain/repositories/media.repository.interface';
 import { MediaType } from '../../../common/enums/media-type.enum';
+import { HERO_CONFIG } from '../home.constants';
 
 describe('HomeService', () => {
   let service: HomeService;
@@ -33,32 +34,80 @@ describe('HomeService', () => {
     const mockHeroItems = [
       {
         id: '1',
+        mediaItemId: '1',
         title: 'Movie 1',
+        originalTitle: 'Movie 1',
         type: MediaType.MOVIE,
+        slug: 'movie-1',
         primaryTrailerKey: 'key1',
         isNew: true,
         isClassic: false,
         overview: 'Overview 1',
-        stats: { ratingoScore: 80, qualityScore: 80, liveWatchers: 100, totalWatchers: 1000 },
+        poster: { small: '', medium: '', large: '', original: '' },
+        backdrop: { small: '', medium: '', large: '', original: '' },
+        releaseDate: new Date(),
+        stats: {
+          ratingoScore: 80,
+          qualityScore: 80,
+          popularityScore: 70,
+          liveWatchers: 100,
+          totalWatchers: 1000,
+        },
+        externalRatings: {
+          tmdb: { rating: 8.0, voteCount: 1000 },
+          imdb: null,
+          trakt: null,
+          metacritic: null,
+          rottenTomatoes: null,
+        },
       },
       {
         id: '2',
+        mediaItemId: '2',
         title: 'Show 1',
+        originalTitle: 'Show 1',
         type: MediaType.SHOW,
-        showProgress: { season: 1, episode: 1, label: 'S1E1' },
+        slug: 'show-1',
+        primaryTrailerKey: null,
+        showProgress: {
+          season: 1,
+          episode: 1,
+          label: 'S1E1',
+          lastAirDate: null,
+          nextAirDate: null,
+        },
         isNew: false,
         isClassic: true,
         overview: 'Overview 2',
-        stats: { ratingoScore: 90, qualityScore: 90, liveWatchers: 500, totalWatchers: 5000 },
+        poster: { small: '', medium: '', large: '', original: '' },
+        backdrop: { small: '', medium: '', large: '', original: '' },
+        releaseDate: new Date(),
+        stats: {
+          ratingoScore: 90,
+          qualityScore: 90,
+          popularityScore: 80,
+          liveWatchers: 500,
+          totalWatchers: 5000,
+        },
+        externalRatings: {
+          tmdb: { rating: 9.0, voteCount: 5000 },
+          imdb: { rating: 9.1, voteCount: 10000 },
+          trakt: null,
+          metacritic: null,
+          rottenTomatoes: null,
+        },
       },
     ];
 
-    it('should return hero items from repository with default limit 4', async () => {
+    it('should return hero items from repository with configured limit', async () => {
       mediaRepositoryMock.findHero.mockResolvedValue(mockHeroItems);
 
       const result = await service.getHero();
 
-      expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(4, undefined);
+      expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(
+        HERO_CONFIG.DEFAULT_LIMIT,
+        undefined,
+      );
       expect(result).toEqual(mockHeroItems);
       expect(result[1].showProgress).toBeDefined();
     });
@@ -68,7 +117,10 @@ describe('HomeService', () => {
 
       const result = await service.getHero(MediaType.MOVIE);
 
-      expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(4, MediaType.MOVIE);
+      expect(mediaRepositoryMock.findHero).toHaveBeenCalledWith(
+        HERO_CONFIG.DEFAULT_LIMIT,
+        MediaType.MOVIE,
+      );
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe(MediaType.MOVIE);
     });
