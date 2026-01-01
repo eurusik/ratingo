@@ -10,7 +10,7 @@ import { type ViewerContext } from '../../application/user-profile-visibility.po
 import { UsersService } from '../../application/users.service';
 import {
   type PublicUserMediaListItemDto,
-  type PublicUserMediaListQueryDto,
+  PublicUserMediaListQueryDto,
   PaginatedPublicUserMediaResponseDto,
 } from '../dto/public-user-media.dto';
 import { type PublicUserProfileDto } from '../dto/public-user-profile.dto';

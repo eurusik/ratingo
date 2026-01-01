@@ -11,9 +11,9 @@ import {
   Max,
   Min,
   Validate,
-  type ValidationArguments,
+  ValidationArguments,
   ValidatorConstraint,
-  type ValidatorConstraintInterface,
+  ValidatorConstraintInterface,
 } from 'class-validator';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';

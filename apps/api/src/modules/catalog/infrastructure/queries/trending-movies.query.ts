@@ -25,7 +25,7 @@ import {
   VOTE_SOURCE,
 } from '../../presentation/dtos/catalog-list-query.dto';
 
-import { type GenreQuery } from './shared/genre.query';
+import { GenreQuery } from './shared/genre.query';
 import { MovieResultMapper } from './shared/movie-result.mapper';
 import { movieSelectFields, type MovieSelectRow } from './shared/movie-select.fields';
 

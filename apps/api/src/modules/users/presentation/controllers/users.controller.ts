@@ -20,11 +20,11 @@ import {
 import { AuthService } from '../../../auth/application/auth.service';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
-import { type ChangePasswordDto } from '../../../auth/presentation/dto/change-password.dto';
+import { ChangePasswordDto } from '../../../auth/presentation/dto/change-password.dto';
 import { AvatarUploadService } from '../../application/avatar-upload.service';
 import { UsersService } from '../../application/users.service';
-import { AvatarUploadUrlDto, type CreateAvatarUploadUrlDto } from '../dto/avatar-upload.dto';
-import { type UpdateProfileDto } from '../dto/update-profile.dto';
+import { AvatarUploadUrlDto, CreateAvatarUploadUrlDto } from '../dto/avatar-upload.dto';
+import { UpdateProfileDto } from '../dto/update-profile.dto';
 
 /**
  * Handles authenticated user profile operations.

@@ -29,12 +29,7 @@ import {
   TRENDING_DEFAULT_PAGES,
   TMDB_TRENDING_PAGE_SIZE,
 } from '../../ingestion.constants';
-import {
-  type SyncDto,
-  type SyncTrendingDto,
-  type SyncNowPlayingDto,
-  type SyncNewReleasesDto,
-} from '../dto';
+import { SyncDto, SyncTrendingDto, SyncNowPlayingDto, SyncNewReleasesDto } from '../dto';
 
 /**
  * Triggers ingestion processes.

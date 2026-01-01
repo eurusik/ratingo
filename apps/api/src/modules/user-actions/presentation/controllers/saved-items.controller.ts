@@ -27,13 +27,13 @@ import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard
 import { SavedItemsService } from '../../application/saved-items.service';
 import { SAVED_ITEM_LIST } from '../../domain/entities/user-saved-item.entity';
 import {
-  type SaveItemDto,
-  type UnsaveItemDto,
+  SaveItemDto,
+  UnsaveItemDto,
   SavedItemWithMediaResponseDto,
   MediaSaveStatusDto,
   SaveActionResultDto,
   UnsaveActionResultDto,
-  type BatchStatusQueryDto,
+  BatchStatusQueryDto,
   BatchStatusResponseDto,
 } from '../dto/saved-items.dto';
 

@@ -10,7 +10,7 @@ import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard
 import { MeListsService } from '../../application/me-lists.service';
 import { type UserMediaState } from '../../domain/entities/user-media-state.entity';
 import {
-  type MeUserMediaListQueryDto,
+  MeUserMediaListQueryDto,
   type MeUserMediaListItemDto,
   PaginatedMeUserMediaResponseDto,
 } from '../dto/me-lists.dto';

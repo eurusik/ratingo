@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 
 import { InsightsService } from '../../application/services/insights.service';
 import { type RiseFallQuery } from '../../application/types/insights.types';
-import { type InsightsQueryDto, RiseFallResponseDto } from '../dtos/insights.dto';
+import { InsightsQueryDto, RiseFallResponseDto } from '../dtos/insights.dto';
 
 // Insights query defaults
 const DEFAULT_WINDOW = '30d';

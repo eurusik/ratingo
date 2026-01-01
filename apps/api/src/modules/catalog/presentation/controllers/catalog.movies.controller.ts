@@ -21,8 +21,8 @@ import {
   type IMovieRepository,
   MOVIE_REPOSITORY,
 } from '../../domain/repositories/movie.repository.interface';
-import { type CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-days.dto';
-import { type CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
+import { CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-days.dto';
+import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
 import { MovieResponseDto } from '../dtos/movie-response.dto';
 import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
 import { normalizeListQuery } from '../utils/query-normalizer';

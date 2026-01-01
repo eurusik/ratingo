@@ -27,8 +27,8 @@ import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard
 import { SubscriptionsService } from '../../application/subscriptions.service';
 import { SUBSCRIPTION_TRIGGER } from '../../domain/entities/user-subscription.entity';
 import {
-  type SubscribeDto,
-  type UnsubscribeDto,
+  SubscribeDto,
+  UnsubscribeDto,
   SubscriptionWithMediaResponseDto,
   MediaSubscriptionStatusDto,
   SubscribeActionResultDto,

@@ -41,7 +41,7 @@ import { NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.quer
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
-import { type TrendingShowsQueryDto, TrendingShowsResponseDto } from '../dtos/trending.dto';
+import { TrendingShowsQueryDto, TrendingShowsResponseDto } from '../dtos/trending.dto';
 import { normalizeListQuery } from '../utils/query-normalizer';
 
 /**
