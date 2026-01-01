@@ -16,8 +16,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { authApi, type MeDto, type LoginDto, type RegisterDto } from '../api/auth';
 import { tokenStorage } from './token-storage';
+import { refreshTokens } from './refresh';
 import { setTokenGetter } from '../api/client';
-import { queryKeys } from '../query/keys';
 
 /** Auth context state. */
 interface AuthState {
@@ -73,20 +73,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const me = await authApi.me();
       setUser(me);
     } catch {
-      // Token invalid or expired, try refresh
-      const refreshToken = tokenStorage.getRefreshToken();
-      if (refreshToken) {
-        try {
-          const tokens = await authApi.refresh({ refreshToken });
-          tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
-          const me = await authApi.me();
-          setUser(me);
-        } catch {
-          // Refresh failed, clear tokens
-          tokenStorage.clearTokens();
-          setUser(null);
-        }
-      } else {
+      // Token invalid or expired, try refresh using centralized single-flight refresh
+      try {
+        await refreshTokens();
+        const me = await authApi.me();
+        setUser(me);
+      } catch {
+        // Refresh failed, clear tokens
         tokenStorage.clearTokens();
         setUser(null);
       }

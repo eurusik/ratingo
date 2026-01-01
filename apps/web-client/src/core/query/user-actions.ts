@@ -9,8 +9,6 @@ import {
   userActionsApi,
   type MediaSaveStatusDto,
   type MediaSubscriptionStatusDto,
-  type SaveActionResultDto,
-  type SubscribeActionResultDto,
   type SavedItemList,
   type SubscriptionTrigger,
 } from '../api';
@@ -109,11 +107,28 @@ export function useSaveItem() {
     },
 
     onSuccess: (data, variables) => {
+      // Update individual status cache
       queryClient.setQueryData<MediaSaveStatusDto>(
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
         data.status,
       );
-      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      // Invalidate batch caches (SavedStatusProvider will refetch)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.savedItems.all,
+        predicate: (query) => {
+          // Invalidate batch queries that might contain this item
+          const key = query.queryKey;
+          return Array.isArray(key) && key.includes('batch');
+        },
+      });
+      // Invalidate saved items lists so /saved page updates
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.savedItems.all,
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && key.includes('list');
+        },
+      });
     },
 
     onError: (_error, variables, context) => {
@@ -168,12 +183,28 @@ export function useUnsaveItem() {
     },
 
     onSuccess: (data, variables) => {
+      // Update individual status cache
       queryClient.setQueryData<MediaSaveStatusDto>(
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
         data.status,
       );
+      // Invalidate batch caches (SavedStatusProvider will refetch)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.savedItems.all,
+        predicate: (query) => {
+          // Invalidate batch queries that might contain this item
+          const key = query.queryKey;
+          return Array.isArray(key) && key.includes('batch');
+        },
+      });
       // Invalidate saved items lists so /saved page updates
-      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.savedItems.all,
+        predicate: (query) => {
+          const key = query.queryKey;
+          return Array.isArray(key) && key.includes('list');
+        },
+      });
     },
 
     onError: (_error, variables, context) => {

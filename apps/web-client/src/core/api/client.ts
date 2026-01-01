@@ -4,6 +4,12 @@
  * Uses `ky` for HTTP requests and types from `@ratingo/api-contract`.
  * Supports lazy initialization and token injection for auth.
  *
+ * Features:
+ * - Automatic token injection via beforeRequest hook
+ * - Single-flight token refresh on 401 responses
+ * - Idempotent request retry after successful refresh
+ * - Refresh loop prevention (no retry on refresh endpoint 401)
+ *
  * @example
  * import { apiGet } from '@/core/api';
  * const shows = await apiGet<ShowListItemDto[]>('catalog/shows/trending');
@@ -12,6 +18,8 @@
 import ky, { type Options, type KyInstance } from 'ky';
 import { env } from '../config/env';
 import { ApiError, type ApiErrorDetail } from './error';
+import { refreshTokens, isRefreshEndpoint } from '../auth/refresh';
+import { tokenStorage } from '../auth/token-storage';
 
 /** Token getter function type for auth injection. */
 type TokenGetter = () => string | null;
@@ -35,6 +43,15 @@ interface ApiResponse<T> {
 }
 
 /**
+ * Tracks requests that have already been retried after 401.
+ * Uses WeakSet to allow garbage collection of Request objects.
+ */
+const retriedRequests = new WeakSet<Request>();
+
+/** Idempotent HTTP methods that are safe to retry. */
+const IDEMPOTENT_METHODS = ['GET', 'HEAD'];
+
+/**
  * Creates configured ky instance.
  * Lazy initialized on first request.
  */
@@ -56,9 +73,51 @@ function createClient(): KyInstance {
         },
       ],
       afterResponse: [
-        async (_request, _options, response) => {
-          if (response.status === 401 && typeof window !== 'undefined') {
+        async (request, _options, response) => {
+          // Only handle 401 in browser environment
+          if (response.status !== 401 || typeof window === 'undefined') {
+            return response;
+          }
+
+          // Don't retry refresh endpoint (prevents infinite loop)
+          if (isRefreshEndpoint(request.url)) {
+            tokenStorage.clearTokens();
             window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+            return response;
+          }
+
+          // Don't retry if already retried (prevents infinite retry loop)
+          if (retriedRequests.has(request)) {
+            return response;
+          }
+
+          // Only retry idempotent methods (GET, HEAD)
+          const method = request.method.toUpperCase();
+          if (!IDEMPOTENT_METHODS.includes(method)) {
+            window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+            return response;
+          }
+
+          try {
+            // Single-flight refresh - all concurrent 401s share one refresh
+            await refreshTokens();
+
+            // Mark as retried to prevent infinite retry loop
+            retriedRequests.add(request);
+
+            // Clone request with new token
+            const newRequest = new Request(request, {
+              headers: new Headers(request.headers),
+            });
+            newRequest.headers.set('Authorization', `Bearer ${tokenGetter()}`);
+
+            // Retry the request once with new token
+            return ky(newRequest);
+          } catch {
+            // Refresh failed, logout
+            tokenStorage.clearTokens();
+            window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+            return response;
           }
         },
       ],
@@ -101,6 +160,7 @@ async function handleResponse<T>(promise: Promise<ApiResponse<T>>): Promise<T> {
  * @param path - API endpoint path (without /api prefix)
  * @param options - Additional ky options
  * @returns Response data
+ * @throws {ApiError} When API returns error response
  *
  * @example
  * const shows = await apiGet<ShowListItemDto[]>('catalog/shows/trending', {
@@ -118,6 +178,7 @@ export async function apiGet<T>(path: string, options?: Options): Promise<T> {
  * @param json - Request body
  * @param options - Additional ky options
  * @returns Response data
+ * @throws {ApiError} When API returns error response
  */
 export async function apiPost<T>(path: string, json?: unknown, options?: Options): Promise<T> {
   return handleResponse(
@@ -134,6 +195,7 @@ export async function apiPost<T>(path: string, json?: unknown, options?: Options
  * @param json - Request body
  * @param options - Additional ky options
  * @returns Response data
+ * @throws {ApiError} When API returns error response
  */
 export async function apiPatch<T>(path: string, json?: unknown, options?: Options): Promise<T> {
   return handleResponse(
@@ -150,6 +212,7 @@ export async function apiPatch<T>(path: string, json?: unknown, options?: Option
  * @param json - Request body
  * @param options - Additional ky options
  * @returns Response data
+ * @throws {ApiError} When API returns error response
  */
 export async function apiPut<T>(path: string, json?: unknown, options?: Options): Promise<T> {
   return handleResponse(
@@ -165,6 +228,7 @@ export async function apiPut<T>(path: string, json?: unknown, options?: Options)
  * @param path - API endpoint path
  * @param options - Additional ky options
  * @returns Response data
+ * @throws {ApiError} When API returns error response
  */
 export async function apiDelete<T>(path: string, options?: Options): Promise<T> {
   return handleResponse(getClient().delete(path, options).json<ApiResponse<T>>());

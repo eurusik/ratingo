@@ -1,10 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GlobalRequirementsEditor } from '../GlobalRequirementsEditor';
-import type { components } from '@ratingo/api-contract';
-
-type GlobalRequirements = components['schemas']['GlobalRequirementsDto'];
-type RatingSource = NonNullable<GlobalRequirements['requireAnyOfRatingsPresent']>[number];
+import type { GlobalRequirements } from '@/core/api/admin';
 
 describe('GlobalRequirementsEditor', () => {
   /**
@@ -21,8 +18,7 @@ describe('GlobalRequirementsEditor', () => {
     render(<GlobalRequirementsEditor onChange={onChange} />);
 
     expect(screen.getByText('Global Quality Gate')).toBeInTheDocument();
-    expect(screen.getByText('Min IMDb Votes')).toBeInTheDocument();
-    expect(screen.getByText('Min Trakt Votes')).toBeInTheDocument();
+    expect(screen.getByText('Min Votes (Any Source)')).toBeInTheDocument();
     expect(screen.getByText('Min Quality Score')).toBeInTheDocument();
     expect(screen.getByText('Required Rating Sources')).toBeInTheDocument();
   });
@@ -30,46 +26,24 @@ describe('GlobalRequirementsEditor', () => {
   test('renders with existing values', () => {
     const onChange = jest.fn();
     const existingValues: GlobalRequirements = {
-      minImdbVotes: 3000,
-      minTraktVotes: 1000,
+      minVotesAnyOf: { sources: ['imdb', 'trakt'], min: 3000 },
       minQualityScoreNormalized: 0.6,
       requireAnyOfRatingsPresent: ['imdb', 'metacritic'],
     };
 
     render(<GlobalRequirementsEditor globalRequirements={existingValues} onChange={onChange} />);
 
-    // Check that input fields have the correct values
-    const imdbInput = screen.getByPlaceholderText('e.g., 3000') as HTMLInputElement;
-    const traktInput = screen.getByPlaceholderText('e.g., 1000') as HTMLInputElement;
+    // Check that quality score input has the correct value
     const qualityInput = screen.getByPlaceholderText('e.g., 0.6') as HTMLInputElement;
-
-    expect(imdbInput.value).toBe('3000');
-    expect(traktInput.value).toBe('1000');
     expect(qualityInput.value).toBe('0.6');
 
-    // Check that rating sources are displayed
-    expect(screen.getByText('IMDb')).toBeInTheDocument();
+    // Check that min votes input has the correct value
+    const votesInput = screen.getByPlaceholderText('e.g., 3000') as HTMLInputElement;
+    expect(votesInput.value).toBe('3000');
+
+    // Check that rating sources are displayed (IMDb appears multiple times - in badges and checkboxes)
+    expect(screen.getAllByText('IMDb').length).toBeGreaterThan(0);
     expect(screen.getByText('Metacritic')).toBeInTheDocument();
-  });
-
-  test('updates minImdbVotes on input change', () => {
-    const onChange = jest.fn();
-    render(<GlobalRequirementsEditor onChange={onChange} />);
-
-    const imdbInput = screen.getByPlaceholderText('e.g., 3000');
-    fireEvent.change(imdbInput, { target: { value: '5000' } });
-
-    expect(onChange).toHaveBeenCalledWith({ minImdbVotes: 5000 });
-  });
-
-  test('updates minTraktVotes on input change', () => {
-    const onChange = jest.fn();
-    render(<GlobalRequirementsEditor onChange={onChange} />);
-
-    const traktInput = screen.getByPlaceholderText('e.g., 1000');
-    fireEvent.change(traktInput, { target: { value: '2000' } });
-
-    expect(onChange).toHaveBeenCalledWith({ minTraktVotes: 2000 });
   });
 
   test('updates minQualityScoreNormalized on input change', () => {
@@ -85,13 +59,13 @@ describe('GlobalRequirementsEditor', () => {
   test('clears field when input is empty', () => {
     const onChange = jest.fn();
     const existingValues: GlobalRequirements = {
-      minImdbVotes: 3000,
+      minQualityScoreNormalized: 0.6,
     };
 
     render(<GlobalRequirementsEditor globalRequirements={existingValues} onChange={onChange} />);
 
-    const imdbInput = screen.getByPlaceholderText('e.g., 3000');
-    fireEvent.change(imdbInput, { target: { value: '' } });
+    const qualityInput = screen.getByPlaceholderText('e.g., 0.6');
+    fireEvent.change(qualityInput, { target: { value: '' } });
 
     expect(onChange).toHaveBeenCalledWith(undefined);
   });
@@ -121,7 +95,7 @@ describe('GlobalRequirementsEditor', () => {
 
     render(<GlobalRequirementsEditor globalRequirements={existingValues} onChange={onChange} />);
 
-    // Find the remove button for IMDb (X icon)
+    // Find the remove button for IMDb (X icon in badge)
     const badges = screen.getAllByRole('button');
     const removeButton = badges.find((btn) => btn.textContent?.includes('IMDb'));
 
@@ -156,37 +130,34 @@ describe('GlobalRequirementsEditor', () => {
     const customLabels = {
       title: 'Custom Title',
       description: 'Custom Description',
-      minImdbVotes: 'Custom IMDb Label',
-      minTraktVotes: 'Custom Trakt Label',
       minQualityScore: 'Custom Quality Label',
       requireRatings: 'Custom Ratings Label',
+      minVotesAnyOf: 'Custom Votes Label',
     };
 
     render(<GlobalRequirementsEditor onChange={onChange} labels={customLabels} />);
 
     expect(screen.getByText('Custom Title')).toBeInTheDocument();
     expect(screen.getByText('Custom Description')).toBeInTheDocument();
-    expect(screen.getByText('Custom IMDb Label')).toBeInTheDocument();
-    expect(screen.getByText('Custom Trakt Label')).toBeInTheDocument();
     expect(screen.getByText('Custom Quality Label')).toBeInTheDocument();
     expect(screen.getByText('Custom Ratings Label')).toBeInTheDocument();
+    expect(screen.getByText('Custom Votes Label')).toBeInTheDocument();
   });
 
-  test('handles multiple field updates', () => {
+  test('handles minVotesAnyOf updates', () => {
     const onChange = jest.fn();
     const existingValues: GlobalRequirements = {
-      minImdbVotes: 3000,
+      minVotesAnyOf: { sources: ['imdb'], min: 3000 },
     };
 
     render(<GlobalRequirementsEditor globalRequirements={existingValues} onChange={onChange} />);
 
-    // Update Trakt votes
-    const traktInput = screen.getByPlaceholderText('e.g., 1000');
-    fireEvent.change(traktInput, { target: { value: '2000' } });
+    // Update min votes value
+    const votesInput = screen.getByPlaceholderText('e.g., 3000');
+    fireEvent.change(votesInput, { target: { value: '5000' } });
 
     expect(onChange).toHaveBeenCalledWith({
-      minImdbVotes: 3000,
-      minTraktVotes: 2000,
+      minVotesAnyOf: { sources: ['imdb'], min: 5000 },
     });
   });
 
@@ -202,17 +173,37 @@ describe('GlobalRequirementsEditor', () => {
     expect(qualityInput).toHaveAttribute('step', '0.01');
   });
 
-  test('validates vote counts are non-negative integers', () => {
+  test('validates vote counts input attributes', () => {
+    const onChange = jest.fn();
+    const existingValues: GlobalRequirements = {
+      minVotesAnyOf: { sources: ['imdb'], min: 3000 },
+    };
+
+    render(<GlobalRequirementsEditor globalRequirements={existingValues} onChange={onChange} />);
+
+    const votesInput = screen.getByPlaceholderText('e.g., 3000') as HTMLInputElement;
+
+    // Check that input has min attribute and step
+    expect(votesInput).toHaveAttribute('min', '0');
+    expect(votesInput).toHaveAttribute('step', '100');
+  });
+
+  test('toggles vote source checkbox', () => {
     const onChange = jest.fn();
     render(<GlobalRequirementsEditor onChange={onChange} />);
 
-    const imdbInput = screen.getByPlaceholderText('e.g., 3000') as HTMLInputElement;
-    const traktInput = screen.getByPlaceholderText('e.g., 1000') as HTMLInputElement;
+    // Find IMDb checkbox in the votes section
+    const checkboxes = screen.getAllByRole('checkbox');
+    const imdbCheckbox = checkboxes.find((cb) => {
+      const label = cb.closest('label');
+      return label?.textContent?.includes('IMDb');
+    });
 
-    // Check that inputs have min attribute and step
-    expect(imdbInput).toHaveAttribute('min', '0');
-    expect(imdbInput).toHaveAttribute('step', '1');
-    expect(traktInput).toHaveAttribute('min', '0');
-    expect(traktInput).toHaveAttribute('step', '1');
+    if (imdbCheckbox) {
+      fireEvent.click(imdbCheckbox);
+      expect(onChange).toHaveBeenCalledWith({
+        minVotesAnyOf: { sources: ['imdb'], min: 0 },
+      });
+    }
   });
 });

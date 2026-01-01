@@ -3,11 +3,19 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { fc } from '@fast-check/jest';
 import { DataTable } from '../DataTable';
 import { DataTableColumnDef, DropdownMenuItemProps } from '../../types';
+import { I18nProvider } from '@/shared/i18n/context';
 
 // Clean up after each test to avoid multiple instances
 afterEach(() => {
   cleanup();
 });
+
+// Wrapper with I18nProvider for tests
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <I18nProvider locale="uk">{children}</I18nProvider>
+);
+
+const renderWithI18n = (ui: React.ReactElement) => render(ui, { wrapper: TestWrapper });
 
 // Simple mock data for focused testing
 const createMockData = (count: number) =>
@@ -64,7 +72,7 @@ describe('DataTable Property Tests', () => {
           const data = createMockData(dataCount);
           const onSortingChange = jest.fn();
 
-          const { container } = render(
+          const { container } = renderWithI18n(
             <DataTable data={data} columns={mockColumns} onSortingChange={onSortingChange} />,
           );
 
@@ -95,7 +103,7 @@ describe('DataTable Property Tests', () => {
               hasNext: total > limit,
             };
 
-            const { container } = render(
+            const { container } = renderWithI18n(
               <DataTable
                 data={data}
                 columns={mockColumns}
@@ -104,21 +112,21 @@ describe('DataTable Property Tests', () => {
               />,
             );
 
-            // Should show pagination controls
+            // Should show pagination controls (Ukrainian)
             const paginationButtons = container.querySelectorAll('button');
             const hasNextButton = Array.from(paginationButtons).some(
-              (btn) => btn.textContent === 'Next',
+              (btn) => btn.textContent === 'Наступна',
             );
             const hasPrevButton = Array.from(paginationButtons).some(
-              (btn) => btn.textContent === 'Previous',
+              (btn) => btn.textContent === 'Попередня',
             );
 
             expect(hasNextButton).toBe(true);
             expect(hasPrevButton).toBe(true);
 
-            // Should show pagination info
+            // Should show pagination info (Ukrainian format)
             const paginationInfo = container.textContent;
-            expect(paginationInfo).toMatch(/Showing \d+ to \d+ of \d+ entries/);
+            expect(paginationInfo).toMatch(/Показано \d+ до \d+ з \d+ записів/);
           },
         ),
         { numRuns: 50 },
@@ -130,7 +138,7 @@ describe('DataTable Property Tests', () => {
         fc.property(fc.integer({ min: 1, max: 5 }), (dataCount) => {
           const data = createMockData(dataCount);
 
-          const { container } = render(
+          const { container } = renderWithI18n(
             <DataTable data={data} columns={mockColumns} rowActions={mockRowActions} />,
           );
 
@@ -145,7 +153,7 @@ describe('DataTable Property Tests', () => {
     it('should display loading state with skeleton when loading is true', () => {
       fc.assert(
         fc.property(fc.constant(true), (loading) => {
-          const { container } = render(
+          const { container } = renderWithI18n(
             <DataTable data={[]} columns={mockColumns} loading={loading} />,
           );
 
@@ -165,14 +173,14 @@ describe('DataTable Property Tests', () => {
         fc.property(
           fc.string({ minLength: 5, maxLength: 50 }).filter((s) => s.trim().length > 0),
           (errorMessage) => {
-            const { container } = render(
+            const { container } = renderWithI18n(
               <DataTable data={[]} columns={mockColumns} error={errorMessage} />,
             );
 
             // Should show error message
             const errorContainer = container.querySelector('.text-destructive');
             expect(errorContainer).toBeInTheDocument();
-            expect(container.textContent).toContain('Error loading data');
+            expect(container.textContent).toContain('Помилка завантаження даних');
             expect(container.textContent).toContain(errorMessage);
           },
         ),
@@ -183,12 +191,12 @@ describe('DataTable Property Tests', () => {
     it('should display empty state when data is empty and not loading', () => {
       fc.assert(
         fc.property(fc.constant([]), (emptyData) => {
-          const { container } = render(
+          const { container } = renderWithI18n(
             <DataTable data={[...emptyData]} columns={mockColumns} loading={false} />,
           );
 
-          // Should show empty state
-          expect(container.textContent).toContain('No data available');
+          // Should show empty state (Ukrainian)
+          expect(container.textContent).toContain('Немає даних');
 
           // Should still show table headers
           expect(container.textContent).toContain('Name');
@@ -207,7 +215,7 @@ describe('DataTable Property Tests', () => {
             const trimmedMessage = customMessage.trim();
             const customEmptyState = <div data-testid="custom-empty">{trimmedMessage}</div>;
 
-            const { container } = render(
+            const { container } = renderWithI18n(
               <DataTable
                 data={[]}
                 columns={mockColumns}
@@ -235,7 +243,7 @@ describe('DataTable Property Tests', () => {
           const data = createMockData(dataCount);
           const onSortingChange = jest.fn();
 
-          const { container } = render(
+          const { container } = renderWithI18n(
             <DataTable data={data} columns={mockColumns} onSortingChange={onSortingChange} />,
           );
 
@@ -271,7 +279,7 @@ describe('DataTable Property Tests', () => {
               hasNext: true,
             };
 
-            const { container } = render(
+            const { container } = renderWithI18n(
               <DataTable
                 data={data}
                 columns={mockColumns}
@@ -280,10 +288,10 @@ describe('DataTable Property Tests', () => {
               />,
             );
 
-            // Find and click next button
+            // Find and click next button (Ukrainian)
             const buttons = container.querySelectorAll('button');
             const nextButton = Array.from(buttons).find(
-              (btn) => btn.textContent === 'Next' && !btn.disabled,
+              (btn) => btn.textContent === 'Наступна' && !btn.disabled,
             );
 
             if (nextButton) {

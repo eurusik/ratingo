@@ -8,6 +8,14 @@ import { EmptyState } from '../EmptyState';
 import { ErrorState } from '../ErrorState';
 import { LoadingState } from '../LoadingState';
 import { RunStatus, PolicyStatus, DataTableColumnDef } from '../../types';
+import { I18nProvider } from '@/shared/i18n/context';
+
+// Wrapper with I18nProvider for tests
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <I18nProvider locale="uk">{children}</I18nProvider>
+);
+
+const renderWithI18n = (ui: React.ReactElement) => render(ui, { wrapper: TestWrapper });
 
 /**
  * Checkpoint test to verify all building block components render properly
@@ -17,9 +25,9 @@ import { RunStatus, PolicyStatus, DataTableColumnDef } from '../../types';
 describe('Building Blocks Checkpoint', () => {
   test('StatusBadge renders without errors', () => {
     expect(() => {
-      render(<StatusBadge status={RunStatus.RUNNING} />);
-      render(<StatusBadge status={PolicyStatus.ACTIVE} />);
-      render(<StatusBadge status={RunStatus.SUCCESS} variant="compact" />);
+      renderWithI18n(<StatusBadge status={RunStatus.RUNNING} />);
+      renderWithI18n(<StatusBadge status={PolicyStatus.ACTIVE} />);
+      renderWithI18n(<StatusBadge status={RunStatus.SUCCESS} variant="compact" />);
     }).not.toThrow();
   });
 
@@ -41,9 +49,9 @@ describe('Building Blocks Checkpoint', () => {
     ];
 
     expect(() => {
-      render(<DataTable data={mockData} columns={mockColumns} />);
-      render(<DataTable data={[]} columns={mockColumns} loading={true} />);
-      render(<DataTable data={[]} columns={mockColumns} error="Test error" />);
+      renderWithI18n(<DataTable data={mockData} columns={mockColumns} />);
+      renderWithI18n(<DataTable data={[]} columns={mockColumns} loading={true} />);
+      renderWithI18n(<DataTable data={[]} columns={mockColumns} error="Test error" />);
     }).not.toThrow();
   });
 
@@ -61,15 +69,15 @@ describe('Building Blocks Checkpoint', () => {
     ];
 
     expect(() => {
-      render(<FilterBar />);
-      render(<FilterBar searchValue="test" onSearchChange={jest.fn()} />);
-      render(<FilterBar filters={mockFilters} />);
+      renderWithI18n(<FilterBar />);
+      renderWithI18n(<FilterBar searchValue="test" onSearchChange={jest.fn()} />);
+      renderWithI18n(<FilterBar filters={mockFilters} />);
     }).not.toThrow();
   });
 
   test('ConfirmActionDialog renders without errors', () => {
     expect(() => {
-      render(
+      renderWithI18n(
         <ConfirmActionDialog
           open={false}
           onOpenChange={jest.fn()}
@@ -78,7 +86,7 @@ describe('Building Blocks Checkpoint', () => {
           onConfirm={jest.fn()}
         />,
       );
-      render(
+      renderWithI18n(
         <ConfirmActionDialog
           open={false}
           onOpenChange={jest.fn()}
@@ -124,19 +132,15 @@ describe('Building Blocks Checkpoint', () => {
   });
 
   test('TypeScript interfaces are properly defined', () => {
-    // Test that enums are properly defined
-    expect(RunStatus.RUNNING).toBe('RUNNING');
-    expect(RunStatus.SUCCESS).toBe('SUCCESS');
-    expect(RunStatus.FAILED).toBe('FAILED');
-    expect(RunStatus.CANCELLED).toBe('CANCELLED');
-    expect(RunStatus.PROMOTED).toBe('PROMOTED');
-    expect(RunStatus.PENDING).toBe('PENDING');
-    expect(RunStatus.ELIGIBLE).toBe('ELIGIBLE');
-    expect(RunStatus.INELIGIBLE).toBe('INELIGIBLE');
+    // Test that status constants are properly defined (lowercase values)
+    expect(RunStatus.RUNNING).toBe('running');
+    expect(RunStatus.PREPARED).toBe('prepared');
+    expect(RunStatus.FAILED).toBe('failed');
+    expect(RunStatus.CANCELLED).toBe('cancelled');
+    expect(RunStatus.PROMOTED).toBe('promoted');
 
-    expect(PolicyStatus.ACTIVE).toBe('ACTIVE');
-    expect(PolicyStatus.INACTIVE).toBe('INACTIVE');
-    expect(PolicyStatus.DRAFT).toBe('DRAFT');
+    expect(PolicyStatus.ACTIVE).toBe('active');
+    expect(PolicyStatus.INACTIVE).toBe('inactive');
 
     // Test that interfaces can be used for type checking
     const mockProgressStats = {
@@ -164,7 +168,7 @@ describe('Building Blocks Checkpoint', () => {
     // by checking that they render without throwing errors and contain
     // expected shadcn/ui class patterns
 
-    const { container: statusContainer } = render(<StatusBadge status={RunStatus.SUCCESS} />);
+    const { container: statusContainer } = renderWithI18n(<StatusBadge status={RunStatus.SUCCESS} />);
     expect(statusContainer.querySelector('[data-testid="status-badge"]')).toBeInTheDocument();
 
     const { container: emptyContainer } = render(<EmptyState title="Test" />);

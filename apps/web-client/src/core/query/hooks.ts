@@ -34,7 +34,7 @@ export function useTrendingShows(
   options?: Omit<UseQueryOptions<TrendingShowsDto>, 'queryKey' | 'queryFn'>,
 ): UseQueryResult<TrendingShowsDto> {
   return useQuery({
-    queryKey: queryKeys.shows.trending(params as Record<string, unknown>),
+    queryKey: queryKeys.shows.trending(params?.limit, params?.offset, params?.sort),
     queryFn: () => catalogApi.getTrendingShows(params),
     ...options,
   });
@@ -76,7 +76,7 @@ export function useShowCalendar(
   options?: Omit<UseQueryOptions<CalendarResponseDto>, 'queryKey' | 'queryFn'>,
 ): UseQueryResult<CalendarResponseDto> {
   return useQuery({
-    queryKey: queryKeys.shows.calendar(params),
+    queryKey: queryKeys.shows.calendar(params?.startDate, params?.days),
     queryFn: () => catalogApi.getShowCalendar(params),
     ...options,
   });

@@ -1,8 +1,25 @@
 /**
+ * Creates deterministic hash for batch query key.
+ * Sorts IDs ascending, dedupes, joins with comma separator.
+ *
+ * @param mediaItemIds - Array of media item IDs
+ * @returns Deterministic hash string
+ *
+ * @example
+ * createBatchHash(['c', 'a', 'b', 'a']) // Returns 'a,b,c'
+ */
+export function createBatchHash(mediaItemIds: string[]): string {
+  return [...new Set(mediaItemIds)].sort().join(',');
+}
+
+/**
  * Query key factory for TanStack Query.
  *
  * Centralizes all query keys for consistent cache management.
  * Uses nested structure for fine-grained cache invalidation.
+ *
+ * All query key functions use primitive values only (string, number, null)
+ * to ensure predictable cache hits. Undefined values are normalized to null.
  *
  * @example
  * // Invalidate all shows queries
@@ -15,22 +32,22 @@ export const queryKeys = {
   /** Shows queries. */
   shows: {
     all: ['shows'] as const,
-    trending: (params?: Record<string, unknown>) =>
-      [...queryKeys.shows.all, 'trending', params] as const,
+    trending: (limit?: number, offset?: number, sort?: string) =>
+      [...queryKeys.shows.all, 'trending', limit ?? null, offset ?? null, sort ?? null] as const,
     detail: (slug: string) => [...queryKeys.shows.all, 'detail', slug] as const,
-    calendar: (params?: { startDate?: string; days?: number }) =>
-      [...queryKeys.shows.all, 'calendar', params] as const,
+    calendar: (startDate?: string, days?: number) =>
+      [...queryKeys.shows.all, 'calendar', startDate ?? null, days ?? null] as const,
   },
 
   /** Movies queries. */
   movies: {
     all: ['movies'] as const,
-    trending: (params?: Record<string, unknown>) =>
-      [...queryKeys.movies.all, 'trending', params] as const,
-    nowPlaying: (params?: Record<string, unknown>) =>
-      [...queryKeys.movies.all, 'now-playing', params] as const,
-    newReleases: (params?: Record<string, unknown>) =>
-      [...queryKeys.movies.all, 'new-releases', params] as const,
+    trending: (limit?: number, offset?: number, sort?: string) =>
+      [...queryKeys.movies.all, 'trending', limit ?? null, offset ?? null, sort ?? null] as const,
+    nowPlaying: (limit?: number, offset?: number) =>
+      [...queryKeys.movies.all, 'now-playing', limit ?? null, offset ?? null] as const,
+    newReleases: (limit?: number, offset?: number) =>
+      [...queryKeys.movies.all, 'new-releases', limit ?? null, offset ?? null] as const,
     detail: (slug: string) => [...queryKeys.movies.all, 'detail', slug] as const,
   },
 
@@ -41,7 +58,7 @@ export const queryKeys = {
 
   /** Home page queries. */
   home: {
-    hero: (type?: string) => ['home', 'hero', type] as const,
+    hero: (type?: string) => ['home', 'hero', type ?? null] as const,
   },
 
   /** Search queries. */
@@ -51,8 +68,8 @@ export const queryKeys = {
 
   /** Insights queries. */
   insights: {
-    movements: (params?: { window?: string; limit?: number }) =>
-      ['insights', 'movements', params] as const,
+    movements: (window?: string, limit?: number) =>
+      ['insights', 'movements', window ?? null, limit ?? null] as const,
   },
 
   /** Auth queries. */
@@ -64,17 +81,17 @@ export const queryKeys = {
   userMedia: {
     all: ['user-media'] as const,
     state: (mediaId: string) => [...queryKeys.userMedia.all, 'state', mediaId] as const,
-    myRatings: (params?: Record<string, unknown>) =>
-      [...queryKeys.userMedia.all, 'my-ratings', params] as const,
-    myWatchlist: (params?: Record<string, unknown>) =>
-      [...queryKeys.userMedia.all, 'my-watchlist', params] as const,
+    myRatings: (limit?: number, offset?: number) =>
+      [...queryKeys.userMedia.all, 'my-ratings', limit ?? null, offset ?? null] as const,
+    myWatchlist: (limit?: number, offset?: number) =>
+      [...queryKeys.userMedia.all, 'my-watchlist', limit ?? null, offset ?? null] as const,
   },
 
   /** Public user queries. */
   users: {
     profile: (username: string) => ['users', username] as const,
-    ratings: (username: string, params?: Record<string, unknown>) =>
-      ['users', username, 'ratings', params] as const,
+    ratings: (username: string, limit?: number, offset?: number) =>
+      ['users', username, 'ratings', limit ?? null, offset ?? null] as const,
   },
 
   /** User actions (saved items, subscriptions). */
@@ -84,15 +101,17 @@ export const queryKeys = {
       all: ['user-actions', 'saved-items'] as const,
       status: (mediaItemId: string) =>
         [...queryKeys.userActions.savedItems.all, 'status', mediaItemId] as const,
-      list: (list: string, params?: Record<string, unknown>) =>
-        [...queryKeys.userActions.savedItems.all, 'list', list, params] as const,
+      batch: (mediaIdsHash: string) =>
+        [...queryKeys.userActions.savedItems.all, 'batch', mediaIdsHash] as const,
+      list: (list: string, limit?: number, offset?: number) =>
+        [...queryKeys.userActions.savedItems.all, 'list', list, limit ?? null, offset ?? null] as const,
     },
     subscriptions: {
       all: ['user-actions', 'subscriptions'] as const,
       status: (mediaItemId: string) =>
         [...queryKeys.userActions.subscriptions.all, 'status', mediaItemId] as const,
-      list: (params?: Record<string, unknown>) =>
-        [...queryKeys.userActions.subscriptions.all, 'list', params] as const,
+      list: (limit?: number, offset?: number) =>
+        [...queryKeys.userActions.subscriptions.all, 'list', limit ?? null, offset ?? null] as const,
     },
   },
 

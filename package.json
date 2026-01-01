@@ -35,6 +35,7 @@
     "lint:client": "turbo run lint --filter=web-client",
     "test:all": "turbo run test",
     "test:api": "turbo run test --filter=api -- --runInBand",
+    "test:client": "turbo run test --filter=web-client",
     "format": "prettier --write \"apps/**/*.{ts,tsx,md,json}\"",
     "contracts:openapi": "npm run openapi:generate --workspace=api",
     "contracts:types": "npm run generate:types --workspace=@ratingo/api-contract",

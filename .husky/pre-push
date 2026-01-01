@@ -4,4 +4,5 @@
 turbo run lint --filter=api && \
 npm --prefix apps/api run typecheck && \
 turbo run build --filter=api && \
-turbo run test --filter=api -- --runInBand
+turbo run test --filter=api -- --runInBand && \
+turbo run test --filter=web-client
