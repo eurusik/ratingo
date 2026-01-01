@@ -14,7 +14,7 @@ import {
   formatDateToIso,
 } from '../../domain/interfaces/show-sync-diff.interface';
 
-import { type SyncMediaService } from './sync-media.service';
+import { SyncMediaService } from './sync-media.service';
 
 /**
  * Snapshot of show state before/after sync for diff calculation.

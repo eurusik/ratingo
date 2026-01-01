@@ -11,7 +11,7 @@ import {
   type IProvidersRepository,
   type ProviderInfo,
 } from '../../domain/repositories/providers.repository.interface';
-import { type ProvidersQuery } from '../queries/providers.query';
+import { ProvidersQuery } from '../queries/providers.query';
 
 @Injectable()
 export class DrizzleProvidersRepository implements IProvidersRepository {

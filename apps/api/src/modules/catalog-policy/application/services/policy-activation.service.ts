@@ -36,7 +36,7 @@ import {
 } from '../../infrastructure/repositories/catalog-policy.repository';
 
 import { type CatalogPolicyService } from './catalog-policy.service';
-import { type RunAggregationService } from './run-aggregation.service';
+import { RunAggregationService } from './run-aggregation.service';
 
 // Constants
 const DEFAULT_BATCH_SIZE = 500;

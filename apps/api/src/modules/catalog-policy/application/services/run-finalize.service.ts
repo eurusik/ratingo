@@ -14,7 +14,7 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { RunStatus } from '../../domain/constants/evaluation.constants';
 
-import { type RunAggregationService } from './run-aggregation.service';
+import { RunAggregationService } from './run-aggregation.service';
 
 export interface FinalizeResult {
   runId: string;

@@ -10,13 +10,13 @@ import {
   CATALOG_POLICY_EVALUATOR,
   classifyContent,
 } from '../../../catalog-policy/public';
-import { type ScoreCalculatorService, type ScoreInput } from '../../../shared/score-calculator';
-import { type TmdbAdapter } from '../../../tmdb/public';
+import { ScoreCalculatorService, type ScoreInput } from '../../../shared/score-calculator';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { type NormalizedMedia } from '../../domain/models/normalized-media.model';
-import { type OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
-import { type TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
+import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
+import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 
-import { type TvMazeEnrichmentService } from './tvmaze-enrichment.service';
+import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 
 // Score display multiplier (0-1 to 0-100)
 const SCORE_PERCENT_MULTIPLIER = 100;

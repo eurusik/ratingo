@@ -13,8 +13,8 @@ import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
-import { type CatalogImportService } from '../../application/services/catalog-import.service';
-import { type CatalogSearchService } from '../../application/services/catalog-search.service';
+import { CatalogImportService } from '../../application/services/catalog-import.service';
+import { CatalogSearchService } from '../../application/services/catalog-search.service';
 import { type ImportResult } from '../../domain/types/import.types';
 import { ImportResultDto } from '../dtos/import-result.dto';
 import { SearchResponseDto } from '../dtos/search.dto';

@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { type MediaType } from '../../../../common/enums/media-type.enum';
 import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
 import { type IHeroRepository } from '../../../home/public';
-import { type HeroMediaQuery } from '../queries/hero-media.query';
+import { HeroMediaQuery } from '../queries/hero-media.query';
 
 /**
  * Adapter that implements home module's IHeroRepository interface.

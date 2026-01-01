@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
 
-import { type StatsService } from '../../../stats/public';
+import { StatsService } from '../../../stats/public';
 import {
   IngestionJob,
   TRENDING_STATS_DELAY_MS,
@@ -12,8 +12,8 @@ import {
   TMDB_TRENDING_PAGE_SIZE,
 } from '../../ingestion.constants';
 import { formatHourWindow } from '../helpers/queue.helpers';
-import { type BulkJobService } from '../services/bulk-job.service';
-import { type SyncMediaService } from '../services/sync-media.service';
+import { BulkJobService } from '../services/bulk-job.service';
+import { SyncMediaService } from '../services/sync-media.service';
 
 /**
  * Trending pipeline: TMDB trending sync and Trakt stats updates.

@@ -6,7 +6,7 @@ import { DEFAULT_REGION, CATALOG_DEFAULT_NEW_RELEASE_DAYS } from '../../../../co
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import { type TmdbAdapter } from '../../../tmdb/public';
 import { IngestionJob } from '../../ingestion.constants';
-import { type BulkJobService } from '../services/bulk-job.service';
+import { BulkJobService } from '../services/bulk-job.service';
 
 /**
  * New Releases pipeline: syncs recently released movies.

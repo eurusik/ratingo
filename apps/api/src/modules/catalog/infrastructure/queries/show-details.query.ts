@@ -13,7 +13,7 @@ import { type ShowDetails } from '../../domain/repositories/show.repository.inte
 import { CreditsMapper } from '../mappers/credits.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 
-import { type GenreQuery } from './shared/genre.query';
+import { GenreQuery } from './shared/genre.query';
 
 /**
  * Fetches complete TV show details by slug.

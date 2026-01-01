@@ -8,11 +8,11 @@ import {
   Inject,
 } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
-import { type JwtService } from '@nestjs/jwt';
+import { JwtService } from '@nestjs/jwt';
 
 import { MS_PER_SECOND, MS_PER_MINUTE, MS_PER_HOUR, MS_PER_DAY } from '../../../common/constants';
 import authConfig from '../../../config/auth.config';
-import { type UsersService } from '../../users/application/users.service';
+import { UsersService } from '../../users/application/users.service';
 import { type User } from '../../users/domain/entities/user.entity';
 import {
   type IRefreshTokensRepository,

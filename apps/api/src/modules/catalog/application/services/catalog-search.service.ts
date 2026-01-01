@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { type MediaType } from '../../../../common/enums/media-type.enum';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { type TmdbAdapter } from '../../../tmdb/public';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { SEARCH_CONFIG } from '../../domain/constants/catalog.constants';
 import {
   type IMediaRepository,

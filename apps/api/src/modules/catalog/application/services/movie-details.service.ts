@@ -19,7 +19,7 @@ import {
 } from '../../domain/repositories/movie.repository.interface';
 import { computeReleaseStatus } from '../../domain/utils/release-status.utils';
 
-import { type CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
+import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
 
 /**
  * Maps card badge key to verdict popularity signal.

@@ -5,8 +5,8 @@ import { ApiTags, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { type Queue } from 'bullmq';
 
 import { DEFAULT_BATCH_SIZE, DEFAULT_PAGE_SIZE } from '../../../../common/constants';
-import { type DropOffService } from '../../application/services/drop-off.service';
-import { type StatsService } from '../../application/services/stats.service';
+import { DropOffService } from '../../application/services/drop-off.service';
+import { StatsService } from '../../application/services/stats.service';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 
 /**

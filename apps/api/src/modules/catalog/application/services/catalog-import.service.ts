@@ -6,7 +6,7 @@ import { type Queue } from 'bullmq';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
-import { type TmdbAdapter } from '../../../tmdb/public';
+import { TmdbAdapter } from '../../../tmdb/public';
 import {
   type IMediaRepository,
   MEDIA_REPOSITORY,

@@ -5,9 +5,9 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
-import { type PublicUserMediaService } from '../../application/public-user-media.service';
+import { PublicUserMediaService } from '../../application/public-user-media.service';
 import { type ViewerContext } from '../../application/user-profile-visibility.policy';
-import { type UsersService } from '../../application/users.service';
+import { UsersService } from '../../application/users.service';
 import {
   type PublicUserMediaListItemDto,
   type PublicUserMediaListQueryDto,

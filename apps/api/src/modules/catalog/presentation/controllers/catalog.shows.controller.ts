@@ -20,7 +20,7 @@ import {
 import { isNewRelease, hasRecentEpisode } from '../../../../common/utils/media.utils';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
-import { type CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 import { BADGE_KEY, CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { BadgeKey } from '../../../shared/cards/domain/card.types';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
@@ -31,7 +31,7 @@ import {
   type PopularitySignal,
 } from '../../../shared/verdict/domain/popularity-signal';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
-import { type CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
+import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import {
   type IShowRepository,
   SHOW_REPOSITORY,

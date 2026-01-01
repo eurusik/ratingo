@@ -41,7 +41,7 @@ import {
   POLICY_EVALUATION_SELECT_FIELDS,
 } from '../utils/policy-input.mapper';
 
-import { type CatalogPolicyService } from './catalog-policy.service';
+import { CatalogPolicyService } from './catalog-policy.service';
 
 // Re-export for backward compatibility
 export { EvaluationResult } from '../../domain/ports/catalog-policy-evaluator.port';

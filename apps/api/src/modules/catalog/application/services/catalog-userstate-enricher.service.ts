@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { type UserMediaService } from '../../../user-media/application/user-media.service';
+import { UserMediaService } from '../../../user-media/application/user-media.service';
 import type { WithUserState, Identifiable } from '../../domain/types/enrichment.types';
 
 /**

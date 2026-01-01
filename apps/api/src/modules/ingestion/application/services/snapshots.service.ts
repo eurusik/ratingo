@@ -5,7 +5,7 @@ import {
   type ISnapshotsRepository,
   SNAPSHOTS_REPOSITORY,
 } from '../../domain/repositories/snapshots.repository.interface';
-import { type TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
+import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 
 /**
  * Service for managing daily snapshots of media metrics.

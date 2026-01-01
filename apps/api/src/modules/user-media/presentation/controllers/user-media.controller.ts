@@ -24,7 +24,7 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
-import { type UserMediaService } from '../../application/user-media.service';
+import { UserMediaService } from '../../application/user-media.service';
 import { SetUserMediaStateDto } from '../dto/set-user-media-state.dto';
 import { UserMediaStateDto } from '../dto/user-media-state.dto';
 

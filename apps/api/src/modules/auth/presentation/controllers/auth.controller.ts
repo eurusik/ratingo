@@ -22,9 +22,9 @@ import { Throttle } from '@nestjs/throttler';
 
 import { type FastifyRequest } from 'fastify';
 
-import { type UserMediaService } from '../../../user-media/application/user-media.service';
-import { type UsersService } from '../../../users/application/users.service';
-import { type AuthService } from '../../application/auth.service';
+import { UserMediaService } from '../../../user-media/application/user-media.service';
+import { UsersService } from '../../../users/application/users.service';
+import { AuthService } from '../../application/auth.service';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../infrastructure/guards/jwt-auth.guard';
 import { LocalAuthGuard } from '../../infrastructure/guards/local-auth.guard';

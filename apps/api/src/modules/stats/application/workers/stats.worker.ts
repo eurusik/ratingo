@@ -5,8 +5,8 @@ import { type Job } from 'bullmq';
 
 import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/constants';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
-import { type DropOffService } from '../services/drop-off.service';
-import { type StatsService } from '../services/stats.service';
+import { DropOffService } from '../services/drop-off.service';
+import { StatsService } from '../services/stats.service';
 
 /**
  * Background worker for processing stats-related jobs.

@@ -20,9 +20,9 @@ import {
 import type { WithTotal } from '../../domain/types/query.types';
 import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
-import { type CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
-import { type ShowDetailsQuery } from '../queries/show-details.query';
-import { type TrendingShowsQuery } from '../queries/trending-shows.query';
+import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
+import { ShowDetailsQuery } from '../queries/show-details.query';
+import { TrendingShowsQuery } from '../queries/trending-shows.query';
 
 /**
  * Show details payload for upsert operation.

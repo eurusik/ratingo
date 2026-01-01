@@ -24,7 +24,7 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
-import { type SubscriptionsService } from '../../application/subscriptions.service';
+import { SubscriptionsService } from '../../application/subscriptions.service';
 import { SUBSCRIPTION_TRIGGER } from '../../domain/entities/user-subscription.entity';
 import {
   type SubscribeDto,

@@ -22,7 +22,7 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import { JobStatus, BULL_STATE_TO_JOB_STATUS } from '../../../../common/enums/job-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { normalizeRegion, formatHourWindow } from '../../application/helpers/queue.helpers';
-import { type SyncMediaService } from '../../application/services/sync-media.service';
+import { SyncMediaService } from '../../application/services/sync-media.service';
 import {
   INGESTION_QUEUE,
   IngestionJob,

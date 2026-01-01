@@ -6,12 +6,12 @@ import { type Job } from 'bullmq';
 import { type MediaType } from '@/common/enums/media-type.enum';
 
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
-import { type NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
-import { type NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
-import { type SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
-import { type TrackedShowsPipeline } from '../pipelines/tracked-shows.pipeline';
-import { type TrendingPipeline } from '../pipelines/trending.pipeline';
-import { type SyncMediaService } from '../services/sync-media.service';
+import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
+import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
+import { SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
+import { TrackedShowsPipeline } from '../pipelines/tracked-shows.pipeline';
+import { TrendingPipeline } from '../pipelines/trending.pipeline';
+import { SyncMediaService } from '../services/sync-media.service';
 
 // Job ID formatting constants
 const JOB_ID_MIN_LENGTH = 12;

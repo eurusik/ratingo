@@ -35,7 +35,7 @@ import {
   SHOW_REPOSITORY,
 } from '../../domain/repositories/show.repository.interface';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
-import { type HeroMediaQuery } from '../queries/hero-media.query';
+import { HeroMediaQuery } from '../queries/hero-media.query';
 
 /**
  * Drizzle ORM implementation of the Media Repository.

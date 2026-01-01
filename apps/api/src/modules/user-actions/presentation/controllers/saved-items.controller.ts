@@ -24,7 +24,7 @@ import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/common/constants';
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
-import { type SavedItemsService } from '../../application/saved-items.service';
+import { SavedItemsService } from '../../application/saved-items.service';
 import { SAVED_ITEM_LIST } from '../../domain/entities/user-saved-item.entity';
 import {
   type SaveItemDto,

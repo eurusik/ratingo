@@ -13,7 +13,7 @@ import { type MovieDetails } from '../../domain/repositories/movie.repository.in
 import { CreditsMapper } from '../mappers/credits.mapper';
 import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
 
-import { type GenreQuery } from './shared/genre.query';
+import { GenreQuery } from './shared/genre.query';
 
 /**
  * Fetches complete movie details by slug.

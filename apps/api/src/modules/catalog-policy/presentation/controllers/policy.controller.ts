@@ -16,8 +16,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 
-import { type CatalogPolicyService } from '../../application/services/catalog-policy.service';
-import { type PolicyActivationService } from '../../application/services/policy-activation.service';
+import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
+import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import {
   PrepareOptionsDto,
   PrepareResponseDto,

@@ -8,8 +8,8 @@ import { Controller, Post, Get, Param, Body, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/constants';
-import { type DiffService } from '../../application/services/diff.service';
-import { type PolicyActivationService } from '../../application/services/policy-activation.service';
+import { DiffService } from '../../application/services/diff.service';
+import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import {
   PromoteOptionsDto,
   RunStatusDto,

@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common'
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
-import { type CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
+import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
 import {

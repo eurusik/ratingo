@@ -5,8 +5,8 @@ import { formatUtcDayId, utcDateFromDayId } from '@/common/utils/date.util';
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import { IngestionJob, SNAPSHOTS_BATCH_SIZE } from '../../ingestion.constants';
 import { normalizeRegion } from '../helpers/queue.helpers';
-import { type BulkJobService, type BulkEnqueueResult } from '../services/bulk-job.service';
-import { type SnapshotsService } from '../services/snapshots.service';
+import { BulkJobService, type BulkEnqueueResult } from '../services/bulk-job.service';
+import { SnapshotsService } from '../services/snapshots.service';
 
 /**
  * Snapshots pipeline: daily snapshot sync for all media items.

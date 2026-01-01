@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
-import { type UserMediaService } from '../../user-media/application/user-media.service';
+import { UserMediaService } from '../../user-media/application/user-media.service';
 import {
   USER_MEDIA_HISTORY_STATES,
   USER_MEDIA_WATCHLIST_STATES,
@@ -13,7 +13,7 @@ import {
 } from '../presentation/dto/public-user-media.dto';
 
 import { UserProfileVisibilityPolicy, type ViewerContext } from './user-profile-visibility.policy';
-import { type UsersService } from './users.service';
+import { UsersService } from './users.service';
 
 /**
  * Application service for reading public user media lists with privacy enforcement.

@@ -15,7 +15,7 @@ import {
   type TraktRatingsPort,
   TRAKT_RATINGS_PORT,
 } from '../../../ingestion/public';
-import { type ScoreCalculatorService } from '../../../shared/score-calculator';
+import { ScoreCalculatorService } from '../../../shared/score-calculator';
 import {
   type IStatsRepository,
   type MediaStatsData,

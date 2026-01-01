@@ -23,8 +23,8 @@ import {
   type ICatalogEvaluationRunRepository,
   CATALOG_EVALUATION_RUN_REPOSITORY,
 } from '../../infrastructure/repositories/catalog-evaluation-run.repository';
-import { type CatalogEvaluationService } from '../services/catalog-evaluation.service';
-import { type RunFinalizeService } from '../services/run-finalize.service';
+import { CatalogEvaluationService } from '../services/catalog-evaluation.service';
+import { RunFinalizeService } from '../services/run-finalize.service';
 
 interface ReEvaluateAllPayload {
   runId: string;

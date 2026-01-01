@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 
 import { Strategy } from 'passport-local';
 
-import { type UsersService } from '../../../users/application/users.service';
+import { UsersService } from '../../../users/application/users.service';
 import {
   type PasswordHasher,
   PASSWORD_HASHER,

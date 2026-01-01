@@ -9,12 +9,12 @@ import {
 } from '../../../../common/constants';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
-import { type CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
-import { type CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
+import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import {
-  type MovieDetailsService,
+  MovieDetailsService,
   type EnrichedMovieDetails,
 } from '../../application/services/movie-details.service';
 import {

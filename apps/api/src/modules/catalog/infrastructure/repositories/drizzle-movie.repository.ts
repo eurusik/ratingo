@@ -17,13 +17,13 @@ import {
 } from '../../domain/repositories/movie.repository.interface';
 import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
-import { type MovieDetailsQuery } from '../queries/movie-details.query';
+import { MovieDetailsQuery } from '../queries/movie-details.query';
 import {
-  type MovieListingsQuery,
+  MovieListingsQuery,
   MOVIE_LISTING_TYPE,
   ELIGIBILITY_MODE,
 } from '../queries/movie-listings.query';
-import { type TrendingMoviesQuery } from '../queries/trending-movies.query';
+import { TrendingMoviesQuery } from '../queries/trending-movies.query';
 
 /**
  * Movie details payload for upsert operation.

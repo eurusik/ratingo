@@ -35,7 +35,7 @@ import {
   POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE,
 } from '../utils/policy-input.mapper';
 
-import { type CatalogPolicyService } from './catalog-policy.service';
+import { CatalogPolicyService } from './catalog-policy.service';
 
 /**
  * Dry-run selection mode

@@ -9,7 +9,7 @@ import {
 } from '../../../catalog/public';
 import { type TmdbAdapter } from '../../../tmdb/public';
 import { IngestionJob } from '../../ingestion.constants';
-import { type BulkJobService } from '../services/bulk-job.service';
+import { BulkJobService } from '../services/bulk-job.service';
 
 /**
  * Now Playing pipeline: syncs movies currently in theaters.

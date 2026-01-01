@@ -1,6 +1,6 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
-import { type SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
+import { SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
 import {
   type IUserSubscriptionRepository,
   USER_SUBSCRIPTION_REPOSITORY,
@@ -12,8 +12,8 @@ import {
   TMDB_REQUEST_DELAY_MS,
 } from '../../ingestion.constants';
 import { hashIds, formatHourWindow, chunkArray } from '../helpers/queue.helpers';
-import { type BulkJobService, type BulkEnqueueResult } from '../services/bulk-job.service';
-import { type TrackedSyncService } from '../services/tracked-sync.service';
+import { BulkJobService, type BulkEnqueueResult } from '../services/bulk-job.service';
+import { TrackedSyncService } from '../services/tracked-sync.service';
 
 /**
  * Tracked shows pipeline: syncs shows with active subscriptions.

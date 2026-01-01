@@ -7,7 +7,7 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
-import { type DryRunService } from '../../application/services/dry-run.service';
+import { DryRunService } from '../../application/services/dry-run.service';
 import { validatePolicyOrThrow } from '../../domain/validation/policy.schema';
 import { DryRunRequestDto, DryRunResponseDto } from '../dto/dry-run.dto';
 

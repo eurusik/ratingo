@@ -9,7 +9,7 @@ import {
   type UserMediaListSort,
 } from '../domain/repositories/user-media-state.repository.interface';
 
-import { type UserMediaService } from './user-media.service';
+import { UserMediaService } from './user-media.service';
 
 /**
  * Provides owner-only user media list queries with total counts.
