@@ -4,7 +4,7 @@ import { formatUtcDayId } from '@/common/utils/date.util';
 
 import { DEFAULT_REGION, CATALOG_DEFAULT_NEW_RELEASE_DAYS } from '../../../../common/constants';
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { type TmdbAdapter } from '../../../tmdb/public';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { IngestionJob } from '../../ingestion.constants';
 import { BulkJobService } from '../services/bulk-job.service';
 

@@ -37,7 +37,7 @@ import {
   SHOW_REPOSITORY,
   type CalendarEpisode,
 } from '../../domain/repositories/show.repository.interface';
-import { type NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.query';
+import { NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.query';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';

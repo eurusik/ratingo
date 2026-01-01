@@ -6,7 +6,7 @@ import {
   type NormalizedEpisode,
 } from '../../domain/models/normalized-media.model';
 import {
-  type TvMazeAdapter,
+  TvMazeAdapter,
   type TvMazeEpisode,
 } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
 

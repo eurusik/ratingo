@@ -7,7 +7,7 @@ import {
   type IMovieRepository,
   MOVIE_REPOSITORY,
 } from '../../../catalog/public';
-import { type TmdbAdapter } from '../../../tmdb/public';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { IngestionJob } from '../../ingestion.constants';
 import { BulkJobService } from '../services/bulk-job.service';
 

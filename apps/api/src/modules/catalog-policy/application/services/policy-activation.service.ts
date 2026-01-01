@@ -35,7 +35,7 @@ import {
   CATALOG_POLICY_REPOSITORY,
 } from '../../infrastructure/repositories/catalog-policy.repository';
 
-import { type CatalogPolicyService } from './catalog-policy.service';
+import { CatalogPolicyService } from './catalog-policy.service';
 import { RunAggregationService } from './run-aggregation.service';
 
 // Constants
