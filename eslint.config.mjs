@@ -76,11 +76,9 @@ export default [
       // No throw literals — only Error objects
       'no-throw-literal': 'error',
 
-      // Prefer type imports for cleaner runtime graph
-      '@typescript-eslint/consistent-type-imports': [
-        'warn',
-        { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
-      ],
+      // Disabled: NestJS DI requires real class imports at runtime
+      // Type-only imports break constructor injection
+      '@typescript-eslint/consistent-type-imports': 'off',
 
       // === MAGIC VALUES ===
       // No magic numbers — force extraction to constants
