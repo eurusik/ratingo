@@ -1,10 +1,14 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { type ConfigService } from '@nestjs/config';
+
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+import { PRESIGNED_URL_TTL_SECONDS } from '@/common/constants';
+
 import {
-  IObjectStorageService,
-  PresignedPutUrlResult,
+  type IObjectStorageService,
+  type PresignedPutUrlResult,
 } from '../../domain/services/object-storage.service.interface';
 
 /**
@@ -40,7 +44,7 @@ export class S3ObjectStorageService implements IObjectStorageService {
       throw new ServiceUnavailableException('S3_PUBLIC_BASE_URL is required');
     }
 
-    const expiresIn = options.expiresInSeconds ?? 300;
+    const expiresIn = options.expiresInSeconds ?? PRESIGNED_URL_TTL_SECONDS;
 
     const command = new PutObjectCommand({
       Bucket: bucket,

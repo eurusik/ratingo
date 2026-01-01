@@ -28,7 +28,8 @@ export type SavedItemWithMediaResponseDto = components['schemas']['SavedItemWith
 export type MediaSubscriptionStatusDto = components['schemas']['MediaSubscriptionStatusDto'];
 export type SubscribeActionResultDto = components['schemas']['SubscribeActionResultDto'];
 export type UnsubscribeActionResultDto = components['schemas']['UnsubscribeActionResultDto'];
-export type SubscriptionWithMediaResponseDto = components['schemas']['SubscriptionWithMediaResponseDto'];
+export type SubscriptionWithMediaResponseDto =
+  components['schemas']['SubscriptionWithMediaResponseDto'];
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -124,7 +125,7 @@ export const userActionsApi = {
     const ids = mediaItemIds.slice(0, 100).join(',');
     const response = await apiGet<{ statuses: Record<string, MediaSaveStatusDto> }>(
       'me/saved-items/status/batch',
-      { searchParams: { ids } }
+      { searchParams: { ids } },
     );
     return response.statuses;
   },
@@ -175,7 +176,9 @@ export const userActionsApi = {
    * @param params - Pagination parameters
    * @returns Paginated saved items
    */
-  async listForLater(params?: ListParams): Promise<PaginatedResponse<SavedItemWithMediaResponseDto>> {
+  async listForLater(
+    params?: ListParams,
+  ): Promise<PaginatedResponse<SavedItemWithMediaResponseDto>> {
     return apiGet<PaginatedResponse<SavedItemWithMediaResponseDto>>('me/saved-items/for-later', {
       searchParams: params as Record<string, string | number>,
     });
@@ -187,7 +190,9 @@ export const userActionsApi = {
    * @param params - Pagination parameters
    * @returns Paginated saved items
    */
-  async listConsidering(params?: ListParams): Promise<PaginatedResponse<SavedItemWithMediaResponseDto>> {
+  async listConsidering(
+    params?: ListParams,
+  ): Promise<PaginatedResponse<SavedItemWithMediaResponseDto>> {
     return apiGet<PaginatedResponse<SavedItemWithMediaResponseDto>>('me/saved-items/considering', {
       searchParams: params as Record<string, string | number>,
     });
@@ -199,7 +204,9 @@ export const userActionsApi = {
    * @param params - Pagination parameters
    * @returns Paginated subscriptions
    */
-  async listSubscriptions(params?: ListParams): Promise<PaginatedResponse<SubscriptionWithMediaResponseDto>> {
+  async listSubscriptions(
+    params?: ListParams,
+  ): Promise<PaginatedResponse<SubscriptionWithMediaResponseDto>> {
     return apiGet<PaginatedResponse<SubscriptionWithMediaResponseDto>>('me/subscriptions', {
       searchParams: params as Record<string, string | number>,
     });

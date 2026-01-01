@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+
 import tmdbConfig from '../../config/tmdb.config';
+
 import { TmdbAdapter } from './tmdb.adapter';
 
 /**

@@ -1,20 +1,20 @@
-"use client"
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
-import { CheckCircle, XCircle, BarChart3 } from 'lucide-react'
-import type { DiffReportDto } from '@/core/api/admin'
-import { DiffItemList } from './DiffItemList'
-import type { RunDiffLabels } from './labels.types'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { CheckCircle, XCircle, BarChart3 } from 'lucide-react';
+import type { DiffReportDto } from '@/core/api/admin';
+import { DiffItemList } from './DiffItemList';
+import type { RunDiffLabels } from './labels.types';
 
 interface RunDiffTabProps {
-  diffReport: DiffReportDto | undefined
-  isLoading: boolean
-  labels: RunDiffLabels
+  diffReport: DiffReportDto | undefined;
+  isLoading: boolean;
+  labels: RunDiffLabels;
 }
 
 /**
  * Displays run diff report tab.
- * 
+ *
  * Shows summary counts and lists of regressions/improvements.
  * Displays loading state while fetching data.
  *
@@ -30,10 +30,10 @@ export function RunDiffTab({ diffReport, isLoading, labels }: RunDiffTabProps) {
           <div className="text-center text-muted-foreground">{labels.loading}</div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
-  const { counts, topRegressions, topImprovements, reasonBreakdown } = diffReport
+  const { counts, topRegressions, topImprovements, reasonBreakdown } = diffReport;
 
   return (
     <Card>
@@ -49,7 +49,8 @@ export function RunDiffTab({ diffReport, isLoading, labels }: RunDiffTabProps) {
             {counts.improvements} {labels.improvements}
           </span>
           <span className="flex items-center">
-            {labels.netChange}: {counts.netChange > 0 ? '+' : ''}{counts.netChange}
+            {labels.netChange}: {counts.netChange > 0 ? '+' : ''}
+            {counts.netChange}
           </span>
         </div>
       </CardHeader>
@@ -118,5 +119,5 @@ export function RunDiffTab({ diffReport, isLoading, labels }: RunDiffTabProps) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

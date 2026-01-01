@@ -6,9 +6,9 @@
 
 import {
   EligibilityStatus,
-  EligibilityStatusType,
+  type EligibilityStatusType,
   RunStatus,
-  RunStatusType,
+  type RunStatusType,
 } from '../constants/evaluation.constants';
 import { InvalidEligibilityStatusError } from '../errors/policy.errors';
 

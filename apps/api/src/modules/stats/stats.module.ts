@@ -1,15 +1,17 @@
-import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { StatsController } from './presentation/controllers/stats.controller';
-import { StatsService } from './application/services/stats.service';
-import { DropOffService } from './application/services/drop-off.service';
-import { StatsWorker } from './application/workers/stats.worker';
-import { DrizzleStatsRepository } from './infrastructure/repositories/drizzle-stats.repository';
-import { STATS_REPOSITORY } from './domain/repositories/stats.repository.interface';
+import { Module, forwardRef } from '@nestjs/common';
+
 import { CatalogModule } from '../catalog/catalog.module';
 import { IngestionModule } from '../ingestion/ingestion.module';
-import { ScoreCalculatorModule } from '../shared/score-calculator';
 import { DropOffAnalyzerModule } from '../shared/drop-off-analyzer';
+import { ScoreCalculatorModule } from '../shared/score-calculator';
+
+import { DropOffService } from './application/services/drop-off.service';
+import { StatsService } from './application/services/stats.service';
+import { StatsWorker } from './application/workers/stats.worker';
+import { STATS_REPOSITORY } from './domain/repositories/stats.repository.interface';
+import { DrizzleStatsRepository } from './infrastructure/repositories/drizzle-stats.repository';
+import { StatsController } from './presentation/controllers/stats.controller';
 import { STATS_QUEUE } from './stats.constants';
 
 /**

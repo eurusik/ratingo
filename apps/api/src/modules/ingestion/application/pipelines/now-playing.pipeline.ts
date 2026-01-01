@@ -1,14 +1,15 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { BulkJobService } from '../services/bulk-job.service';
+
+import { DEFAULT_REGION } from '../../../../common/constants';
 import {
-  IMediaRepository,
+  type IMediaRepository,
   MEDIA_REPOSITORY,
-  IMovieRepository,
+  type IMovieRepository,
   MOVIE_REPOSITORY,
 } from '../../../catalog/public';
+import { type TmdbAdapter } from '../../../tmdb/public';
 import { IngestionJob } from '../../ingestion.constants';
-import { DEFAULT_REGION } from '../../../../common/constants';
+import { type BulkJobService } from '../services/bulk-job.service';
 
 /**
  * Now Playing pipeline: syncs movies currently in theaters.

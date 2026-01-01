@@ -1,17 +1,20 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { eq, and, desc } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { SyncMediaService } from './sync-media.service';
 import {
-  ShowSyncDiff,
+  type ShowSyncDiff,
   createEmptyDiff,
   formatEpisodeKey,
   formatSeasonKey,
   formatDateToIso,
 } from '../../domain/interfaces/show-sync-diff.interface';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+
+import { type SyncMediaService } from './sync-media.service';
 
 /**
  * Snapshot of show state before/after sync for diff calculation.

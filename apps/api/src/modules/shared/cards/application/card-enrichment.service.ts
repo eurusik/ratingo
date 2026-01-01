@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+
+import { MS_PER_DAY } from '../../../../common/constants';
 import type { MediaType } from '../../../../common/enums/media-type.enum';
 import type { ImageData } from '../../../../common/types';
-import { buildCardMeta, extractContinuePoint } from '../domain/selectors';
 import {
   CARD_LIST_CONTEXT,
   CARD_NEW_RELEASE_WINDOW_DAYS,
@@ -9,6 +10,7 @@ import {
 } from '../domain/card.constants';
 import type { CardListContext } from '../domain/card.constants';
 import type { CardMeta, CardUserContext } from '../domain/card.types';
+import { buildCardMeta, extractContinuePoint } from '../domain/selectors';
 
 export type MediaSummary = {
   id: string;
@@ -144,7 +146,7 @@ export class CardEnrichmentService {
 
     if (!latest) return false;
     const diffMs = now.getTime() - latest.getTime();
-    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    const diffDays = diffMs / MS_PER_DAY;
     return diffDays >= 0 && diffDays <= CARD_NEW_RELEASE_WINDOW_DAYS;
   }
 }

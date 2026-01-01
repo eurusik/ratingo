@@ -3,7 +3,7 @@
  */
 export const USERS_REPOSITORY = Symbol('USERS_REPOSITORY');
 
-import { User } from '../entities/user.entity';
+import { type User } from '../entities/user.entity';
 
 /**
  * Data shape for creating a user.

@@ -1,14 +1,21 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { SyncMediaService } from '../services/sync-media.service';
+
+import { type Job } from 'bullmq';
+
+import { type MediaType } from '@/common/enums/media-type.enum';
+
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
-import { MediaType } from '@/common/enums/media-type.enum';
-import { SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
-import { TrendingPipeline } from '../pipelines/trending.pipeline';
-import { TrackedShowsPipeline } from '../pipelines/tracked-shows.pipeline';
-import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
-import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
+import { type NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
+import { type NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
+import { type SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
+import { type TrackedShowsPipeline } from '../pipelines/tracked-shows.pipeline';
+import { type TrendingPipeline } from '../pipelines/trending.pipeline';
+import { type SyncMediaService } from '../services/sync-media.service';
+
+// Job ID formatting constants
+const JOB_ID_MIN_LENGTH = 12;
+const JOB_ID_SUFFIX_LENGTH = 8;
 
 /**
  * Thin worker router: delegates all pipeline logic to specialized pipeline classes.
@@ -36,7 +43,7 @@ export class SyncWorker extends WorkerHost {
    */
   private shortJobId(jobId: string | undefined): string {
     if (!jobId) return 'unknown';
-    return jobId.length > 12 ? jobId.slice(-8) : jobId;
+    return jobId.length > JOB_ID_MIN_LENGTH ? jobId.slice(-JOB_ID_SUFFIX_LENGTH) : jobId;
   }
 
   /**
@@ -62,7 +69,7 @@ export class SyncWorker extends WorkerHost {
         mediaItemId?: string;
         dayId?: string;
       },
-      any,
+      unknown,
       string
     >,
   ): Promise<void> {
@@ -131,7 +138,8 @@ export class SyncWorker extends WorkerHost {
           this.logger.warn(`[job:${jid}] Unknown job type: ${job.name}`);
       }
     } catch (error) {
-      this.logger.error(`[job:${jid}] Failed: ${error.message}`, error.stack);
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(`[job:${jid}] Failed: ${err.message}`, err.stack);
       throw error;
     }
   }

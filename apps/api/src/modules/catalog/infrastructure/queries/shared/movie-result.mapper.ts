@@ -1,9 +1,10 @@
 import { ImageMapper } from '../../../../../common/mappers/image.mapper';
-import type { GenreInfo } from '../../../domain/types/common.types';
 import type {
   MovieWithMedia,
   TrendingMovieItem,
 } from '../../../domain/repositories/movie.repository.interface';
+import type { GenreInfo } from '../../../domain/types/common.types';
+
 import type { MovieSelectRow } from './movie-select.fields';
 import { calculateReleaseFlags } from './release-flags.util';
 
@@ -23,7 +24,7 @@ export class MovieResultMapper {
       title: row.title,
       slug: row.slug,
       overview: row.overview,
-      ingestionStatus: row.ingestionStatus as any,
+      ingestionStatus: row.ingestionStatus as MovieWithMedia['ingestionStatus'],
       poster: ImageMapper.toPoster(row.posterPath),
       backdrop: ImageMapper.toBackdrop(row.backdropPath),
       popularity: row.popularity,

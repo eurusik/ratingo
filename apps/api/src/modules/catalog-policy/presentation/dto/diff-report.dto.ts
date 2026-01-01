@@ -5,8 +5,9 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsArray, IsOptional } from 'class-validator';
+
 import { Type } from 'class-transformer';
+import { IsString, IsNumber, IsArray, IsOptional } from 'class-validator';
 
 /**
  * Diff sample DTO.

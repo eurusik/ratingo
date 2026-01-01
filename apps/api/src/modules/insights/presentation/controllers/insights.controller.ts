@@ -1,8 +1,13 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
-import { InsightsService } from '../../application/services/insights.service';
-import { InsightsQueryDto, RiseFallResponseDto } from '../dtos/insights.dto';
-import { RiseFallQuery } from '../../application/types/insights.types';
+
+import { type InsightsService } from '../../application/services/insights.service';
+import { type RiseFallQuery } from '../../application/types/insights.types';
+import { type InsightsQueryDto, RiseFallResponseDto } from '../dtos/insights.dto';
+
+// Insights query defaults
+const DEFAULT_WINDOW = '30d';
+const DEFAULT_LIMIT = 5;
 
 /**
  * Public insights endpoints.
@@ -27,8 +32,8 @@ export class InsightsController {
   @ApiOkResponse({ type: RiseFallResponseDto })
   async getMovements(@Query() dto: InsightsQueryDto): Promise<RiseFallResponseDto> {
     const query: RiseFallQuery = {
-      window: dto.window || '30d',
-      limit: dto.limit || 5,
+      window: dto.window || DEFAULT_WINDOW,
+      limit: dto.limit || DEFAULT_LIMIT,
     };
 
     const result = await this.insightsService.getMovements(query);

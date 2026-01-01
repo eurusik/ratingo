@@ -11,9 +11,7 @@ export default function NotFound() {
       <div className="text-center space-y-6">
         <div className="text-8xl font-bold gradient-text">404</div>
         <h1 className="text-2xl font-semibold text-white">Сторінку не знайдено</h1>
-        <p className="text-zinc-400 max-w-md">
-          Ця сторінка не існує або була переміщена.
-        </p>
+        <p className="text-zinc-400 max-w-md">Ця сторінка не існує або була переміщена.</p>
         <Button variant="outline" asChild>
           <Link href="/">← На головну</Link>
         </Button>

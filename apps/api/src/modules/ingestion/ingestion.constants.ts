@@ -61,5 +61,36 @@ export const TRACKED_SHOWS_BULK_LIMIT = 10;
 /**
  * Delay before trending stats sync job (in milliseconds).
  * Allows time for page jobs to complete before stats aggregation.
+ * 3 minutes = 180000ms
  */
-export const TRENDING_STATS_DELAY_MS = 3 * 60 * 1000;
+export const TRENDING_STATS_DELAY_MS = 180000;
+
+/**
+ * Default number of pages to sync for trending.
+ */
+export const TRENDING_DEFAULT_PAGES = 5;
+
+/**
+ * Default limit for trending stats sync.
+ */
+export const TRENDING_DEFAULT_STATS_LIMIT = 200;
+
+/**
+ * Items per page in TMDB trending API.
+ */
+export const TMDB_TRENDING_PAGE_SIZE = 20;
+
+/**
+ * Default concurrency for Trakt API batch requests.
+ */
+export const TRAKT_BATCH_CONCURRENCY = 3;
+
+/**
+ * Concurrency for job deduplication checks in Redis.
+ */
+export const JOB_DEDUPE_CHECK_CONCURRENCY = 50;
+
+/**
+ * Max seasons to fetch for drop-off analysis.
+ */
+export const MAX_SEASONS_FOR_ANALYSIS = 10;

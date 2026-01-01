@@ -19,18 +19,20 @@ import {
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { FastifyRequest } from 'fastify';
-import { AuthService } from '../../application/auth.service';
-import { RegisterDto } from '../dto/register.dto';
-import { LoginDto } from '../dto/login.dto';
-import { RefreshDto } from '../dto/refresh.dto';
+
+import { type FastifyRequest } from 'fastify';
+
+import { type UserMediaService } from '../../../user-media/application/user-media.service';
+import { type UsersService } from '../../../users/application/users.service';
+import { type AuthService } from '../../application/auth.service';
+import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../infrastructure/guards/jwt-auth.guard';
 import { LocalAuthGuard } from '../../infrastructure/guards/local-auth.guard';
-import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
-import { MeDto } from '../dto/me.dto';
 import { AuthTokensDto } from '../dto/auth-tokens.dto';
-import { UsersService } from '../../../users/application/users.service';
-import { UserMediaService } from '../../../user-media/application/user-media.service';
+import { LoginDto } from '../dto/login.dto';
+import { MeDto } from '../dto/me.dto';
+import { RefreshDto } from '../dto/refresh.dto';
+import { RegisterDto } from '../dto/register.dto';
 
 /**
  * Safely extracts a header value as trimmed string or null.

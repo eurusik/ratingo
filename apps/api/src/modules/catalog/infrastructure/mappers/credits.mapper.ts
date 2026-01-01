@@ -1,8 +1,8 @@
-import {
+import type {
   Credits,
   CastMember as TmdbCastMember,
   CrewMember as TmdbCrewMember,
-} from '../../../ingestion/domain/models/normalized-media.model';
+} from '../../../ingestion/public';
 import type { CreditsData, CastMember, CrewMember } from '../../domain/types/common.types';
 
 export class CreditsMapper {

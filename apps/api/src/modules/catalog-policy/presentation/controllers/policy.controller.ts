@@ -15,13 +15,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
-import { PolicyActivationService } from '../../application/services/policy-activation.service';
-import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
+
+import { type CatalogPolicyService } from '../../application/services/catalog-policy.service';
+import { type PolicyActivationService } from '../../application/services/policy-activation.service';
 import {
   PrepareOptionsDto,
   PrepareResponseDto,
   PoliciesListDto,
-  PolicyDto,
+  type PolicyDto,
   PolicyDetailDto,
   CreatePolicyDto,
   CreatePolicyResponseDto,

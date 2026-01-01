@@ -1,22 +1,22 @@
 /**
  * Determines the appropriate subscription trigger for a media item.
- * 
+ *
  * For movies:
  *   - Not released yet → 'release'
- *   - Released but no streaming → 'on_streaming'  
+ *   - Released but no streaming → 'on_streaming'
  *   - Has streaming providers → null (no subscription needed)
- * 
+ *
  * For shows:
  *   - Returning Series / In Production → 'new_season' (always)
  *   - Planned / Pilot → 'new_season' only if hasUpcomingAirDate
  *   - Ended / Canceled → null (no new content expected)
  */
 
-import type { 
-  MediaType, 
-  ShowStatus, 
-  SubscriptionTrigger, 
-  SubscriptionUnavailableReason 
+import type {
+  MediaType,
+  ShowStatus,
+  SubscriptionTrigger,
+  SubscriptionUnavailableReason,
 } from '@/shared/types';
 
 interface GetSubscriptionTriggerParams {
@@ -48,24 +48,24 @@ export function getSubscriptionTrigger({
     if (showStatus === 'Ended') {
       return { trigger: null, unavailableReason: 'ended' };
     }
-    
+
     // Canceled - no subscription
     if (showStatus === 'Canceled') {
       return { trigger: null, unavailableReason: 'canceled' };
     }
-    
+
     // Returning Series / In Production - always show subscription
     if (showStatus === 'Returning Series' || showStatus === 'In Production') {
       return { trigger: 'new_season', unavailableReason: null };
     }
-    
+
     // Planned / Pilot - only if there's an upcoming air date
     if (showStatus === 'Planned' || showStatus === 'Pilot') {
-      return hasUpcomingAirDate 
+      return hasUpcomingAirDate
         ? { trigger: 'new_season', unavailableReason: null }
         : { trigger: null, unavailableReason: 'no_date' };
     }
-    
+
     // Unknown status (null) - show subscription if has upcoming date, otherwise assume ongoing
     return { trigger: 'new_season', unavailableReason: null };
   }

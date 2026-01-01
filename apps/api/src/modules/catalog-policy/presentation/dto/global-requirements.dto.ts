@@ -5,6 +5,8 @@
  */
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+import { Type } from 'class-transformer';
 import {
   IsOptional,
   IsNumber,
@@ -15,8 +17,12 @@ import {
   Max,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { EvaluationContext, RatingSource, VoteSource } from '../../domain/types/policy.types';
+
+import {
+  type EvaluationContext,
+  type RatingSource,
+  type VoteSource,
+} from '../../domain/types/policy.types';
 
 /** Valid rating sources for validation */
 const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt'];

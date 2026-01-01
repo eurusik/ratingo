@@ -1,48 +1,48 @@
-"use client"
+'use client';
 
-import { Shield } from 'lucide-react'
-import { ConfigCard } from '../ConfigCard'
-import { Label } from '@/shared/ui/label'
-import { Input } from '@/shared/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select'
-import { Badge } from '@/shared/ui/badge'
-import { X } from 'lucide-react'
-import type { GlobalRequirements } from '@/core/api/admin'
+import { Shield } from 'lucide-react';
+import { ConfigCard } from '../ConfigCard';
+import { Label } from '@/shared/ui/label';
+import { Input } from '@/shared/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { Badge } from '@/shared/ui/badge';
+import { X } from 'lucide-react';
+import type { GlobalRequirements } from '@/core/api/admin';
 
-type RatingSource = 'imdb' | 'metacritic' | 'rt' | 'trakt'
-type VoteSource = 'imdb' | 'trakt'
-type EvaluationContext = 'catalog' | 'homepage' | 'trending' | 'now_playing' | 'new_digital' | 'search'
+type RatingSource = 'imdb' | 'metacritic' | 'rt' | 'trakt';
+type VoteSource = 'imdb' | 'trakt';
+type EvaluationContext =
+  | 'catalog'
+  | 'homepage'
+  | 'trending'
+  | 'now_playing'
+  | 'new_digital'
+  | 'search';
 
 interface GlobalRequirementsEditorProps {
-  globalRequirements?: GlobalRequirements
-  onChange: (value: GlobalRequirements | undefined) => void
+  globalRequirements?: GlobalRequirements;
+  onChange: (value: GlobalRequirements | undefined) => void;
   labels?: {
-    title?: string
-    description?: string
-    minQualityScore?: string
-    minQualityScoreHint?: string
-    requireRatings?: string
-    requireRatingsHint?: string
-    addRating?: string
-    minVotesAnyOf?: string
-    minVotesAnyOfHint?: string
-    minVotesThreshold?: string
-    voteSources?: string
-    appliesTo?: string
-    appliesToHint?: string
-    qualityDrivenLabel?: string
-    qualityBadge?: string
-    qualityHint?: string
-    freshnessDrivenLabel?: string
-    freshnessBadge?: string
-    freshnessHint?: string
-  }
+    title?: string;
+    description?: string;
+    minQualityScore?: string;
+    minQualityScoreHint?: string;
+    requireRatings?: string;
+    requireRatingsHint?: string;
+    addRating?: string;
+    minVotesAnyOf?: string;
+    minVotesAnyOfHint?: string;
+    minVotesThreshold?: string;
+    voteSources?: string;
+    appliesTo?: string;
+    appliesToHint?: string;
+    qualityDrivenLabel?: string;
+    qualityBadge?: string;
+    qualityHint?: string;
+    freshnessDrivenLabel?: string;
+    freshnessBadge?: string;
+    freshnessHint?: string;
+  };
 }
 
 const RATING_SOURCE_LABELS: Record<RatingSource, string> = {
@@ -50,20 +50,20 @@ const RATING_SOURCE_LABELS: Record<RatingSource, string> = {
   metacritic: 'Metacritic',
   rt: 'Rotten Tomatoes',
   trakt: 'Trakt',
-}
+};
 
 const VOTE_SOURCE_LABELS: Record<VoteSource, string> = {
   imdb: 'IMDb',
   trakt: 'Trakt',
-}
+};
 
-const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt']
-const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt']
+const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt'];
+const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt'];
 // Quality-driven contexts (gate applies by default)
-const QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending']
+const QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending'];
 // Freshness-driven contexts (gate excluded by default)
-const FRESHNESS_CONTEXTS: EvaluationContext[] = ['now_playing', 'new_digital']
-const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending', 'search']
+const FRESHNESS_CONTEXTS: EvaluationContext[] = ['now_playing', 'new_digital'];
+const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending', 'search'];
 
 const CONTEXT_LABELS: Record<EvaluationContext, string> = {
   catalog: 'Catalog',
@@ -72,7 +72,7 @@ const CONTEXT_LABELS: Record<EvaluationContext, string> = {
   now_playing: 'Now Playing',
   new_digital: 'New on Digital',
   search: 'Search',
-}
+};
 
 /** Editor for global quality gate requirements. */
 export function GlobalRequirementsEditor({
@@ -82,109 +82,106 @@ export function GlobalRequirementsEditor({
 }: GlobalRequirementsEditorProps) {
   const updateField = <K extends keyof GlobalRequirements>(
     field: K,
-    value: GlobalRequirements[K]
+    value: GlobalRequirements[K],
   ) => {
-    const updated = { ...globalRequirements, [field]: value }
-    
+    const updated = { ...globalRequirements, [field]: value };
+
     // Clean up undefined values
     Object.keys(updated).forEach((key) => {
       if (updated[key as keyof GlobalRequirements] === undefined) {
-        delete updated[key as keyof GlobalRequirements]
+        delete updated[key as keyof GlobalRequirements];
       }
-    })
-    
+    });
+
     // If all fields are empty, set to undefined
     if (Object.keys(updated).length === 0) {
-      onChange(undefined)
+      onChange(undefined);
     } else {
-      onChange(updated)
+      onChange(updated);
     }
-  }
+  };
 
   const addRatingSource = (source: RatingSource) => {
-    const current = globalRequirements?.requireAnyOfRatingsPresent || []
+    const current = globalRequirements?.requireAnyOfRatingsPresent || [];
     if (!current.includes(source)) {
-      updateField('requireAnyOfRatingsPresent', [...current, source])
+      updateField('requireAnyOfRatingsPresent', [...current, source]);
     }
-  }
+  };
 
   const removeRatingSource = (source: RatingSource) => {
-    const current = globalRequirements?.requireAnyOfRatingsPresent || []
-    const updated = current.filter((s) => s !== source)
-    updateField('requireAnyOfRatingsPresent', updated.length > 0 ? updated : undefined)
-  }
+    const current = globalRequirements?.requireAnyOfRatingsPresent || [];
+    const updated = current.filter((s) => s !== source);
+    updateField('requireAnyOfRatingsPresent', updated.length > 0 ? updated : undefined);
+  };
 
   const toggleVoteSource = (source: VoteSource, checked: boolean) => {
-    const current = globalRequirements?.minVotesAnyOf
-    const currentSources = current?.sources || []
-    
-    let newSources: VoteSource[]
+    const current = globalRequirements?.minVotesAnyOf;
+    const currentSources = current?.sources || [];
+
+    let newSources: VoteSource[];
     if (checked) {
-      newSources = [...currentSources, source]
+      newSources = [...currentSources, source];
     } else {
-      newSources = currentSources.filter((s) => s !== source)
+      newSources = currentSources.filter((s) => s !== source);
     }
-    
+
     if (newSources.length === 0) {
-      updateField('minVotesAnyOf', undefined)
+      updateField('minVotesAnyOf', undefined);
     } else {
       updateField('minVotesAnyOf', {
         sources: newSources,
         min: current?.min ?? 0,
-      })
+      });
     }
-  }
+  };
 
   const updateMinVotes = (min: number | undefined) => {
-    const current = globalRequirements?.minVotesAnyOf
+    const current = globalRequirements?.minVotesAnyOf;
     if (min === undefined || min === 0) {
       if (!current?.sources?.length) {
-        updateField('minVotesAnyOf', undefined)
+        updateField('minVotesAnyOf', undefined);
       } else {
-        updateField('minVotesAnyOf', { ...current, min: min ?? 0 })
+        updateField('minVotesAnyOf', { ...current, min: min ?? 0 });
       }
     } else {
       updateField('minVotesAnyOf', {
         sources: current?.sources || ['imdb', 'trakt'],
         min,
-      })
+      });
     }
-  }
+  };
 
   const availableRatingSources = RATING_SOURCES.filter(
-    (source) => !(globalRequirements?.requireAnyOfRatingsPresent || []).includes(source)
-  )
+    (source) => !(globalRequirements?.requireAnyOfRatingsPresent || []).includes(source),
+  );
 
   const toggleContext = (context: EvaluationContext, checked: boolean) => {
     // Get current appliesTo or use defaults
-    const current = globalRequirements?.appliesTo ?? DEFAULT_QUALITY_CONTEXTS
-    
-    let newContexts: EvaluationContext[]
+    const current = globalRequirements?.appliesTo ?? DEFAULT_QUALITY_CONTEXTS;
+
+    let newContexts: EvaluationContext[];
     if (checked) {
-      newContexts = [...current, context]
+      newContexts = [...current, context];
     } else {
-      newContexts = current.filter((c) => c !== context)
+      newContexts = current.filter((c) => c !== context);
     }
-    
+
     // If matches default, remove the field (use implicit default)
-    const isDefault = 
+    const isDefault =
       newContexts.length === DEFAULT_QUALITY_CONTEXTS.length &&
-      DEFAULT_QUALITY_CONTEXTS.every((c) => newContexts.includes(c))
-    
-    updateField('appliesTo', isDefault ? undefined : newContexts)
-  }
+      DEFAULT_QUALITY_CONTEXTS.every((c) => newContexts.includes(c));
+
+    updateField('appliesTo', isDefault ? undefined : newContexts);
+  };
 
   const getActiveContexts = (): EvaluationContext[] => {
-    return globalRequirements?.appliesTo ?? DEFAULT_QUALITY_CONTEXTS
-  }
+    return globalRequirements?.appliesTo ?? DEFAULT_QUALITY_CONTEXTS;
+  };
 
   return (
     <ConfigCard
       title={labels?.title ?? 'Global Quality Gate'}
-      description={
-        labels?.description ??
-        'Minimum quality thresholds that all content must meet'
-      }
+      description={labels?.description ?? 'Minimum quality thresholds that all content must meet'}
       icon={Shield}
       contentClassName="space-y-4"
     >
@@ -197,8 +194,8 @@ export function GlobalRequirementsEditor({
           step={0.01}
           value={globalRequirements?.minQualityScoreNormalized ?? ''}
           onChange={(e) => {
-            const value = e.target.value === '' ? undefined : Number(e.target.value)
-            updateField('minQualityScoreNormalized', value)
+            const value = e.target.value === '' ? undefined : Number(e.target.value);
+            updateField('minQualityScoreNormalized', value);
           }}
           placeholder="e.g., 0.6"
           className="h-9"
@@ -265,8 +262,8 @@ export function GlobalRequirementsEditor({
           step={100}
           value={globalRequirements?.minVotesAnyOf?.min ?? ''}
           onChange={(e) => {
-            const value = e.target.value === '' ? undefined : Number(e.target.value)
-            updateMinVotes(value)
+            const value = e.target.value === '' ? undefined : Number(e.target.value);
+            updateMinVotes(value);
           }}
           placeholder="e.g., 3000"
           className="h-9"
@@ -280,7 +277,7 @@ export function GlobalRequirementsEditor({
 
       <div className="space-y-4">
         <Label>{labels?.appliesTo ?? 'Quality gate applies to'}</Label>
-        
+
         {/* Quality surfaces - gate is mandatory */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -308,7 +305,7 @@ export function GlobalRequirementsEditor({
             {labels?.qualityHint ?? 'Only shows content meeting minimum quality standards.'}
           </p>
         </div>
-        
+
         {/* Freshness surfaces - gate disabled by default */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -338,5 +335,5 @@ export function GlobalRequirementsEditor({
         </div>
       </div>
     </ConfigCard>
-  )
+  );
 }

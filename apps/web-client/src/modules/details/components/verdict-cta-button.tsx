@@ -1,6 +1,6 @@
 /**
  * Interactive CTA button for verdict section.
- * 
+ *
  */
 
 'use client';
@@ -8,7 +8,12 @@
 import type { components } from '@ratingo/api-contract';
 import { Bookmark, Check, ArrowRight, Info, Bell, BellOff } from 'lucide-react';
 import { SUBSCRIPTION_TRIGGER } from '@/core/query';
-import { type PrimaryCta, PRIMARY_CTA, type SubscriptionTrigger, type SubscriptionUnavailableReason } from '@/shared/types';
+import {
+  type PrimaryCta,
+  PRIMARY_CTA,
+  type SubscriptionTrigger,
+  type SubscriptionUnavailableReason,
+} from '@/shared/types';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
 
@@ -104,7 +109,7 @@ export function VerdictCtaButton({
     },
     [PRIMARY_CTA.CONTINUE]: {
       icon: ArrowRight,
-      label: continuePoint 
+      label: continuePoint
         ? `${dict.details.continue} S${continuePoint.season}E${continuePoint.episode}`
         : dict.details.continue,
       iconColor: 'text-green-400',
@@ -125,20 +130,25 @@ export function VerdictCtaButton({
 
   // Dynamic CTA gradient based on verdict type
   const ctaGradientClasses: Record<VerdictType, string> = {
-    season_comparison: 'bg-gradient-to-r from-amber-500/10 via-transparent to-transparent border-amber-500/20 hover:border-amber-500/30 hover:from-amber-500/15',
-    user_context: 'bg-gradient-to-r from-blue-500/10 via-transparent to-transparent border-blue-500/20 hover:border-blue-500/30 hover:from-blue-500/15',
-    general: 'bg-gradient-to-r from-zinc-500/10 via-transparent to-transparent border-zinc-500/20 hover:border-zinc-500/30 hover:from-zinc-500/15',
-    quality: 'bg-gradient-to-r from-green-500/10 via-transparent to-transparent border-green-500/20 hover:border-green-500/30 hover:from-green-500/15',
-    popularity: 'bg-gradient-to-r from-purple-500/10 via-transparent to-transparent border-purple-500/20 hover:border-purple-500/30 hover:from-purple-500/15',
-    release: 'bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent border-cyan-500/20 hover:border-cyan-500/30 hover:from-cyan-500/15',
-    warning: 'bg-gradient-to-r from-orange-500/10 via-transparent to-transparent border-orange-500/20 hover:border-orange-500/30 hover:from-orange-500/15',
+    season_comparison:
+      'bg-gradient-to-r from-amber-500/10 via-transparent to-transparent border-amber-500/20 hover:border-amber-500/30 hover:from-amber-500/15',
+    user_context:
+      'bg-gradient-to-r from-blue-500/10 via-transparent to-transparent border-blue-500/20 hover:border-blue-500/30 hover:from-blue-500/15',
+    general:
+      'bg-gradient-to-r from-zinc-500/10 via-transparent to-transparent border-zinc-500/20 hover:border-zinc-500/30 hover:from-zinc-500/15',
+    quality:
+      'bg-gradient-to-r from-green-500/10 via-transparent to-transparent border-green-500/20 hover:border-green-500/30 hover:from-green-500/15',
+    popularity:
+      'bg-gradient-to-r from-purple-500/10 via-transparent to-transparent border-purple-500/20 hover:border-purple-500/30 hover:from-purple-500/15',
+    release:
+      'bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent border-cyan-500/20 hover:border-cyan-500/30 hover:from-cyan-500/15',
+    warning:
+      'bg-gradient-to-r from-orange-500/10 via-transparent to-transparent border-orange-500/20 hover:border-orange-500/30 hover:from-orange-500/15',
   };
 
   // Subscription label based on trigger (passed from parent)
   // If subscriptionTrigger is null, subscription is not available for this item
-  const subscriptionLabel = subscriptionTrigger 
-    ? dict.saved.trigger[subscriptionTrigger]
-    : null;
+  const subscriptionLabel = subscriptionTrigger ? dict.saved.trigger[subscriptionTrigger] : null;
 
   return (
     <>
@@ -148,19 +158,21 @@ export function VerdictCtaButton({
           'group flex items-center justify-between w-full mt-4 pt-4 border-t',
           '-mx-5 px-5 -mb-5 pb-5 rounded-b-2xl',
           ctaGradientClasses[verdictType],
-          'transition-all'
+          'transition-all',
         )}
       >
         <div className="flex flex-col items-start">
-          <span className={cn(
-            'text-sm font-medium',
-            primaryCta === PRIMARY_CTA.SAVE && isSaved ? 'text-green-400' : 'text-zinc-200'
-          )}>
+          <span
+            className={cn(
+              'text-sm font-medium',
+              primaryCta === PRIMARY_CTA.SAVE && isSaved ? 'text-green-400' : 'text-zinc-200',
+            )}
+          >
             {config.label}
           </span>
           {config.showHint && (
             <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
-              {hintKey 
+              {hintKey
                 ? dict.details.cta.saveHint[hintKey]
                 : hasNewEpisodes
                   ? dict.details.cta.saveHint.newEpisodes
@@ -168,71 +180,78 @@ export function VerdictCtaButton({
             </span>
           )}
           {/* Subscription toggle - inline when saved and subscription is available */}
-          {isSaved && primaryCta === PRIMARY_CTA.SAVE && onSubscriptionToggle && subscriptionLabel && (
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSubscriptionToggle();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+          {isSaved &&
+            primaryCta === PRIMARY_CTA.SAVE &&
+            onSubscriptionToggle &&
+            subscriptionLabel && (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
                   e.stopPropagation();
                   onSubscriptionToggle();
-                }
-              }}
-              className={cn(
-                'flex items-center gap-1.5 mt-1.5 text-left transition-colors cursor-pointer',
-                isSubscriptionLoading && 'opacity-50 pointer-events-none'
-              )}
-            >
-              {isSubscribed ? (
-                <Bell className="w-3 h-3 text-emerald-400" />
-              ) : (
-                <BellOff className="w-3 h-3 text-zinc-500" />
-              )}
-              <span className={cn(
-                'text-xs transition-colors',
-                isSubscribed ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-400'
-              )}>
-                {isSubscribed 
-                  ? `${subscriptionLabel} ✓`
-                  : `${dict.saved.actions.subscribe}: ${subscriptionLabel}`
-                }
-              </span>
-            </div>
-          )}
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                    onSubscriptionToggle();
+                  }
+                }}
+                className={cn(
+                  'flex items-center gap-1.5 mt-1.5 text-left transition-colors cursor-pointer',
+                  isSubscriptionLoading && 'opacity-50 pointer-events-none',
+                )}
+              >
+                {isSubscribed ? (
+                  <Bell className="w-3 h-3 text-emerald-400" />
+                ) : (
+                  <BellOff className="w-3 h-3 text-zinc-500" />
+                )}
+                <span
+                  className={cn(
+                    'text-xs transition-colors',
+                    isSubscribed ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-400',
+                  )}
+                >
+                  {isSubscribed
+                    ? `${subscriptionLabel} ✓`
+                    : `${dict.saved.actions.subscribe}: ${subscriptionLabel}`}
+                </span>
+              </div>
+            )}
           {/* Disabled subscription button when unavailable (e.g., Planned/Pilot without date) */}
-          {isSaved && primaryCta === PRIMARY_CTA.SAVE && !subscriptionLabel && subscriptionUnavailableReason && (
-            <button
-              type="button"
-              disabled
-              title={dict.saved.unavailable[subscriptionUnavailableReason]}
-              onClick={() => {
-                // TODO: Track subscription_unavailable_click when analytics is implemented
-                console.debug('[Analytics] subscription_unavailable_click', { reason: subscriptionUnavailableReason });
-              }}
-              className="flex items-center gap-1.5 mt-1.5 text-zinc-600 cursor-not-allowed opacity-60"
-            >
-              <BellOff className="w-3 h-3" />
-              <span className="text-xs">
-                {subscriptionUnavailableReason === 'already_available' 
-                  ? `✓ ${dict.saved.unavailable.already_available}`
-                  : dict.saved.actions.subscribe
-                }
-              </span>
-            </button>
-          )}
+          {isSaved &&
+            primaryCta === PRIMARY_CTA.SAVE &&
+            !subscriptionLabel &&
+            subscriptionUnavailableReason && (
+              <button
+                type="button"
+                disabled
+                title={dict.saved.unavailable[subscriptionUnavailableReason]}
+                onClick={() => {
+                  // TODO: Track subscription_unavailable_click when analytics is implemented
+                  console.debug('[Analytics] subscription_unavailable_click', {
+                    reason: subscriptionUnavailableReason,
+                  });
+                }}
+                className="flex items-center gap-1.5 mt-1.5 text-zinc-600 cursor-not-allowed opacity-60"
+              >
+                <BellOff className="w-3 h-3" />
+                <span className="text-xs">
+                  {subscriptionUnavailableReason === 'already_available'
+                    ? `✓ ${dict.saved.unavailable.already_available}`
+                    : dict.saved.actions.subscribe}
+                </span>
+              </button>
+            )}
         </div>
-        <div className={cn(
-          'w-8 h-8 rounded-full flex items-center justify-center transition-all',
-          config.iconBg
-        )}>
-          <CtaIcon className={cn(
-            'w-4 h-4 transition-all',
-            config.iconColor
-          )} />
+        <div
+          className={cn(
+            'w-8 h-8 rounded-full flex items-center justify-center transition-all',
+            config.iconBg,
+          )}
+        >
+          <CtaIcon className={cn('w-4 h-4 transition-all', config.iconColor)} />
         </div>
       </button>
     </>

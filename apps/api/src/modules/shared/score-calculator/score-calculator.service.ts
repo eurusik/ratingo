@@ -1,6 +1,13 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
+import { type ConfigType } from '@nestjs/config';
+
+import { MS_PER_DAY } from '../../../common/constants';
 import scoreConfig from '../../../config/score.config';
+
+// Rating scale constants
+const RATING_SCALE_MAX = 10;
+const PERCENT_SCALE = 100;
+const NEUTRAL_RATING_DEFAULT = 5.0;
 
 /**
  * Input data for score calculation.
@@ -88,7 +95,7 @@ export class ScoreCalculatorService {
       input.metacriticRating,
       input.rottenTomatoesRating,
     );
-    const avgRatingNorm = this.clamp(avgRating / 10, 0, 1);
+    const avgRatingNorm = this.clamp(avgRating / RATING_SCALE_MAX, 0, 1);
 
     const totalVotes = (input.imdbVotes || 0) + (input.traktVotes || 0);
     const voteConfidenceNorm = this.clamp(
@@ -124,19 +131,19 @@ export class ScoreCalculatorService {
 
     // Return scores normalized to 0-100 range
     return {
-      ratingoScore: this.clamp(ratingoScore * 100, 0, 100),
+      ratingoScore: this.clamp(ratingoScore * PERCENT_SCALE, 0, PERCENT_SCALE),
       qualityScore: this.clamp(
-        (qualityScore / (weights.avgRating + weights.voteConfidence)) * 100,
+        (qualityScore / (weights.avgRating + weights.voteConfidence)) * PERCENT_SCALE,
         0,
-        100,
+        PERCENT_SCALE,
       ),
       popularityScore: this.clamp(
-        (popularityScore / (weights.tmdbPopularity + weights.traktWatchers)) * 100,
+        (popularityScore / (weights.tmdbPopularity + weights.traktWatchers)) * PERCENT_SCALE,
         0,
-        100,
+        PERCENT_SCALE,
       ),
-      freshnessScore: this.clamp(freshnessNorm * 100, 0, 100),
-      avgRating: this.clamp(avgRating, 0, 10), // Pure rating without confidence
+      freshnessScore: this.clamp(freshnessNorm * PERCENT_SCALE, 0, PERCENT_SCALE),
+      avgRating: this.clamp(avgRating, 0, RATING_SCALE_MAX), // Pure rating without confidence
       totalVotes,
     };
   }
@@ -156,14 +163,17 @@ export class ScoreCalculatorService {
     const sources: RatingSource[] = [
       { value: imdbRating, weight: ratingWeights.imdb },
       { value: traktRating, weight: ratingWeights.trakt },
-      { value: mcRating ? mcRating / 10 : null, weight: ratingWeights.metacritic },
-      { value: rtRating ? rtRating / 10 : null, weight: ratingWeights.rottenTomatoes },
+      { value: mcRating ? mcRating / RATING_SCALE_MAX : null, weight: ratingWeights.metacritic },
+      {
+        value: rtRating ? rtRating / RATING_SCALE_MAX : null,
+        weight: ratingWeights.rottenTomatoes,
+      },
     ];
 
     const active = sources.filter((s) => typeof s.value === 'number' && s.value !== null);
 
     if (active.length === 0) {
-      return 5.0; // Neutral default
+      return NEUTRAL_RATING_DEFAULT; // Neutral default
     }
 
     const totalWeight = active.reduce((sum, s) => sum + s.weight, 0);
@@ -190,10 +200,7 @@ export class ScoreCalculatorService {
     }
 
     const now = new Date();
-    const daysSinceRelease = Math.max(
-      0,
-      Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)),
-    );
+    const daysSinceRelease = Math.max(0, Math.floor((now.getTime() - date.getTime()) / MS_PER_DAY));
 
     const expDecay = Math.exp(-daysSinceRelease / decayDays);
     return this.clamp(Math.max(expDecay, minFloor), 0, 1);

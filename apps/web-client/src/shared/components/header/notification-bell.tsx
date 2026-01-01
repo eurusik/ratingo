@@ -41,23 +41,16 @@ export function NotificationBell() {
           <span className="sr-only">{dict.notifications.title}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent 
-        align="end" 
-        className="w-80 p-0 bg-zinc-900 border-zinc-800"
-      >
+      <PopoverContent align="end" className="w-80 p-0 bg-zinc-900 border-zinc-800">
         <div className="p-3 border-b border-zinc-800">
           <h3 className="font-medium text-zinc-100">{dict.notifications.title}</h3>
         </div>
-        
+
         <div className="max-h-80 overflow-y-auto">
           {isLoading ? (
-            <div className="p-4 text-center text-zinc-500 text-sm">
-              ...
-            </div>
+            <div className="p-4 text-center text-zinc-500 text-sm">...</div>
           ) : subscriptions.length === 0 ? (
-            <div className="p-4 text-center text-zinc-500 text-sm">
-              {dict.notifications.empty}
-            </div>
+            <div className="p-4 text-center text-zinc-500 text-sm">{dict.notifications.empty}</div>
           ) : (
             <div className="divide-y divide-zinc-800">
               {subscriptions.slice(0, 5).map((item) => {
@@ -67,10 +60,9 @@ export function NotificationBell() {
                   slug: string;
                   poster: Record<string, string> | null;
                 };
-                const href = media.type === 'movie' 
-                  ? `/movies/${media.slug}` 
-                  : `/shows/${media.slug}`;
-                
+                const href =
+                  media.type === 'movie' ? `/movies/${media.slug}` : `/shows/${media.slug}`;
+
                 const triggerLabel = {
                   release: dict.notifications.events.released,
                   new_season: dict.notifications.events.newSeason,
@@ -102,9 +94,7 @@ export function NotificationBell() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-zinc-400">{triggerLabel}</p>
-                      <p className="text-sm font-medium text-zinc-100 truncate">
-                        {media.title}
-                      </p>
+                      <p className="text-sm font-medium text-zinc-100 truncate">{media.title}</p>
                     </div>
                   </Link>
                 );
@@ -115,10 +105,7 @@ export function NotificationBell() {
 
         <div className="p-2 border-t border-zinc-800">
           <Link href={'/saved?tab=notifications' as Route}>
-            <Button 
-              variant="ghost" 
-              className="w-full text-sm text-zinc-400 hover:text-white"
-            >
+            <Button variant="ghost" className="w-full text-sm text-zinc-400 hover:text-white">
               {dict.notifications.viewAll}
             </Button>
           </Link>

@@ -1,12 +1,14 @@
 import { Injectable, Inject } from '@nestjs/common';
+
 import { eq } from 'drizzle-orm';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
-  ISnapshotsRepository,
-  MediaItemForSnapshot,
-  SnapshotUpsertData,
+  type ISnapshotsRepository,
+  type MediaItemForSnapshot,
+  type SnapshotUpsertData,
 } from '../../domain/repositories/snapshots.repository.interface';
 
 /**

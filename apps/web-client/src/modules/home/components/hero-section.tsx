@@ -30,17 +30,8 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
 
   if (!item) return null;
 
-  const {
-    slug,
-    type,
-    title,
-    poster,
-    stats,
-    externalRatings,
-    showProgress,
-    badgeKey,
-    ctaType,
-  } = item;
+  const { slug, type, title, poster, stats, externalRatings, showProgress, badgeKey, ctaType } =
+    item;
 
   // Use backdrop if available, otherwise poster
   const backdrop = 'backdrop' in item ? item.backdrop : null;
@@ -54,14 +45,7 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
       {/* Background Image */}
       {heroImage && (
         <div className="absolute inset-0">
-          <Image
-            src={heroImage}
-            alt={title}
-            fill
-            className="object-cover"
-            priority
-            sizes="100vw"
-          />
+          <Image src={heroImage} alt={title} fill className="object-cover" priority sizes="100vw" />
           {/* Gradient overlays */}
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-transparent to-zinc-950/80" />
@@ -78,11 +62,7 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
               <span>№1 {dict.home.sections.trending || 'у трендах'}</span>
             </div>
 
-            {showProgress && (
-              <div className="text-zinc-300 text-sm">
-                {showProgress.label}
-              </div>
-            )}
+            {showProgress && <div className="text-zinc-300 text-sm">{showProgress.label}</div>}
           </div>
 
           {/* Title */}
@@ -96,7 +76,9 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
             {stats?.qualityScore && (
               <div className="flex items-center gap-2 text-white">
                 <Activity className="w-5 h-5 text-blue-400" />
-                <span className="text-xl font-semibold">{(stats.qualityScore / 10).toFixed(1)}</span>
+                <span className="text-xl font-semibold">
+                  {(stats.qualityScore / 10).toFixed(1)}
+                </span>
               </div>
             )}
 
@@ -104,13 +86,17 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
             {externalRatings?.imdb ? (
               <div className="flex items-center gap-2 text-white">
                 <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span className="text-xl font-semibold">{externalRatings.imdb.rating.toFixed(1)}</span>
+                <span className="text-xl font-semibold">
+                  {externalRatings.imdb.rating.toFixed(1)}
+                </span>
                 <span className="text-sm text-zinc-400">IMDb</span>
               </div>
             ) : externalRatings?.tmdb ? (
               <div className="flex items-center gap-2 text-white">
                 <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                <span className="text-xl font-semibold">{externalRatings.tmdb.rating.toFixed(1)}</span>
+                <span className="text-xl font-semibold">
+                  {externalRatings.tmdb.rating.toFixed(1)}
+                </span>
                 <span className="text-sm text-zinc-400">TMDB</span>
               </div>
             ) : null}
@@ -134,9 +120,7 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
             >
               <Link href={href}>
                 <Play className="w-6 h-6 fill-current mr-3" />
-                {ctaType === PRIMARY_CTA.CONTINUE
-                  ? dict.card.cta.continue
-                  : dict.card.cta.details}
+                {ctaType === PRIMARY_CTA.CONTINUE ? dict.card.cta.continue : dict.card.cta.details}
               </Link>
             </Button>
           </div>

@@ -1,47 +1,59 @@
-"use client"
+'use client';
 
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
-import { Button } from '@/shared/ui/button'
-import { PolicyHeader, PolicyRunsTab, PolicyConfigTab } from '@/modules/admin'
-import { usePolicyDetail, useRunsByPolicy, usePreparePolicy } from '@/core/query/admin'
-import { Loader2, AlertCircle } from 'lucide-react'
-import { toast } from 'sonner'
-import { useTranslation } from '@/shared/i18n'
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import { Button } from '@/shared/ui/button';
+import { PolicyHeader, PolicyRunsTab, PolicyConfigTab } from '@/modules/admin';
+import { usePolicyDetail, useRunsByPolicy, usePreparePolicy } from '@/core/query/admin';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { useTranslation } from '@/shared/i18n';
 
 export default function PolicyDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const router = useRouter()
-  const { dict } = useTranslation()
-  const resolvedParams = React.use(params)
-  const policyId = resolvedParams.id
+  const router = useRouter();
+  const { dict } = useTranslation();
+  const resolvedParams = React.use(params);
+  const policyId = resolvedParams.id;
 
-  const [activeTab, setActiveTab] = useState('runs')
+  const [activeTab, setActiveTab] = useState('runs');
 
-  const { data: policy, isLoading: policyLoading, error: policyError, refetch: refetchPolicy } = usePolicyDetail(policyId)
-  const { data: runs, isLoading: runsLoading, error: runsError, refetch: refetchRuns } = useRunsByPolicy(policyId)
-  const preparePolicy = usePreparePolicy()
+  const {
+    data: policy,
+    isLoading: policyLoading,
+    error: policyError,
+    refetch: refetchPolicy,
+  } = usePolicyDetail(policyId);
+  const {
+    data: runs,
+    isLoading: runsLoading,
+    error: runsError,
+    refetch: refetchRuns,
+  } = useRunsByPolicy(policyId);
+  const preparePolicy = usePreparePolicy();
 
   const handlePrepare = async () => {
-    if (!policy) return
+    if (!policy) return;
     try {
-      await preparePolicy.mutateAsync({ policyId: policy.id })
-      toast.success(dict.admin.policyDetail.toast.prepareSuccess)
+      await preparePolicy.mutateAsync({ policyId: policy.id });
+      toast.success(dict.admin.policyDetail.toast.prepareSuccess);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : dict.admin.policyDetail.toast.prepareFailed)
+      toast.error(
+        error instanceof Error ? error.message : dict.admin.policyDetail.toast.prepareFailed,
+      );
     }
-  }
+  };
 
   const handleEdit = () => {
-    router.push(`/admin/policies/draft?base=${policyId}`)
-  }
+    router.push(`/admin/policies/draft?base=${policyId}`);
+  };
 
   if (policyLoading || runsLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
-    )
+    );
   }
 
   if (policyError || runsError) {
@@ -54,11 +66,16 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
             {policyError?.message || runsError?.message || dict.admin.common.error}
           </p>
         </div>
-        <Button onClick={() => { refetchPolicy(); refetchRuns() }}>
+        <Button
+          onClick={() => {
+            refetchPolicy();
+            refetchRuns();
+          }}
+        >
           {dict.admin.common.tryAgain}
         </Button>
       </div>
-    )
+    );
   }
 
   if (!policy) {
@@ -75,7 +92,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
           {dict.admin.policyDetail.backToPolicies}
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -122,5 +139,5 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

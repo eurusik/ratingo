@@ -5,10 +5,11 @@
  * Used by CatalogEvaluationService and DryRunService.
  */
 
-import { Logger } from '@nestjs/common';
-import { PolicyEngineInput, WatchProvidersMap } from '../../domain/types/policy.types';
-import { ContentClass, isValidContentClass } from '../../domain/classification.service';
+import { type Logger } from '@nestjs/common';
+
 import * as schema from '../../../../database/schema';
+import { type ContentClass, isValidContentClass } from '../../domain/classification.service';
+import { type PolicyEngineInput, type WatchProvidersMap } from '../../domain/types/policy.types';
 
 /**
  * Raw media item row from database query.
@@ -80,14 +81,15 @@ const DEFAULT_CONTENT_CLASS: ContentClass = 'mainstream';
 export function mapRowToPolicyEngineInput(row: MediaItemRow, logger?: Logger): PolicyEngineInput {
   // Validate contentClass with fallback
   let contentClass: ContentClass = DEFAULT_CONTENT_CLASS;
-  if (!isValidContentClass(row.contentClass)) {
+  const { contentClass: rowContentClass } = row;
+  if (!isValidContentClass(rowContentClass)) {
     if (logger) {
       logger.warn(
-        `Invalid content_class for media ${row.id}: ${row.contentClass}. Defaulting to mainstream.`,
+        `Invalid content_class for media ${row.id}: ${rowContentClass}. Defaulting to mainstream.`,
       );
     }
   } else {
-    contentClass = row.contentClass;
+    contentClass = rowContentClass;
   }
 
   return {

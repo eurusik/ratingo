@@ -6,17 +6,25 @@
  */
 
 import { Injectable } from '@nestjs/common';
+
+import { MS_PER_DAY, MS_PER_YEAR } from '../../../../common/constants';
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { ShowVerdictInput, ShowVerdict, ShowVerdictResult } from '../domain/show-verdict.types';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
+import { aggregateRatings, formatRatingContext } from '../domain/rating-aggregator';
+import {
+  type ShowVerdictInput,
+  type ShowVerdict,
+  type ShowVerdictResult,
+} from '../domain/show-verdict.types';
 import {
   CONFIDENCE,
   RATING_THRESHOLDS,
   SPREAD_THRESHOLDS,
   TIME_WINDOWS,
   AGE_THRESHOLDS,
+  SHOW_THRESHOLDS,
+  VERDICT_DEFAULTS,
 } from '../domain/verdict.constants';
-import { aggregateRatings, formatRatingContext } from '../domain/rating-aggregator';
 
 /**
  * Show Verdict Service
@@ -40,7 +48,7 @@ export class ShowVerdictService {
 
     // Calculate content age in years
     const contentAgeYears = firstAirDate
-      ? (Date.now() - new Date(firstAirDate).getTime()) / (1000 * 60 * 60 * 24 * 365)
+      ? (Date.now() - new Date(firstAirDate).getTime()) / MS_PER_YEAR
       : 0;
     const isOlderContent = contentAgeYears >= AGE_THRESHOLDS.OLDER_CONTENT_YEARS;
     const isClassic = contentAgeYears >= AGE_THRESHOLDS.CLASSIC_YEARS;
@@ -71,23 +79,31 @@ export class ShowVerdictService {
         totalVotes >= CONFIDENCE.MIN_VOTES_FOR_SPREAD_MATTERS);
 
     // Quality thresholds (based on consensusRating)
-    const isPoorQuality = hasConfidentRating && (consensusRating ?? 10) < RATING_THRESHOLDS.POOR;
+    const isPoorQuality =
+      hasConfidentRating &&
+      (consensusRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_HIGH) < RATING_THRESHOLDS.POOR;
     const isBelowAverage =
-      hasConfidentRating && (consensusRating ?? 10) < RATING_THRESHOLDS.BELOW_AVERAGE;
-    const isMixedQuality = hasConfidentRating && (consensusRating ?? 10) < RATING_THRESHOLDS.MIXED;
+      hasConfidentRating &&
+      (consensusRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_HIGH) < RATING_THRESHOLDS.BELOW_AVERAGE;
+    const isMixedQuality =
+      hasConfidentRating &&
+      (consensusRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_HIGH) < RATING_THRESHOLDS.MIXED;
     const isDecentQuality =
       hasConfidentRating &&
-      (consensusRating ?? 0) >= RATING_THRESHOLDS.DECENT &&
-      (consensusRating ?? 0) < RATING_THRESHOLDS.STRONG;
-    const isGoodQuality = hasConfidentRating && (consensusRating ?? 0) >= RATING_THRESHOLDS.STRONG;
+      (consensusRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_LOW) >= RATING_THRESHOLDS.DECENT &&
+      (consensusRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_LOW) < RATING_THRESHOLDS.STRONG;
+    const isGoodQuality =
+      hasConfidentRating &&
+      (consensusRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_LOW) >= RATING_THRESHOLDS.STRONG;
     const isCriticsLoved =
-      (consensusRating ?? 0) >= RATING_THRESHOLDS.CRITICS_LOVED &&
+      (consensusRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_LOW) >=
+        RATING_THRESHOLDS.CRITICS_LOVED &&
       totalVotes >= CONFIDENCE.MIN_VOTES_FOR_CRITICS_LOVED &&
       !hasHighSpread;
 
     // Long running: 5+ seasons with at least decent quality
     const isLongRunning =
-      (totalSeasons ?? 0) >= 5 &&
+      (totalSeasons ?? 0) >= SHOW_THRESHOLDS.LONG_RUNNING_SEASONS &&
       !isCancelled &&
       (consensusRating ?? 0) >= RATING_THRESHOLDS.DECENT;
 
@@ -96,7 +112,7 @@ export class ShowVerdictService {
       if (!lastAirDate || !isReturning) return false;
       const now = new Date();
       const diffMs = now.getTime() - new Date(lastAirDate).getTime();
-      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      const diffDays = diffMs / MS_PER_DAY;
       return diffDays >= 0 && diffDays <= TIME_WINDOWS.NEW_SEASON_DAYS;
     })();
 
@@ -179,18 +195,17 @@ export class ShowVerdictService {
           },
           false,
         );
-      } else {
-        // Low votes + high spread = too early to tell
-        return buildResult(
-          {
-            type: 'general',
-            messageKey: 'noConsensusYet',
-            context: formatContext(consensusRating),
-            hintKey: 'decideToWatch',
-          },
-          false,
-        );
       }
+      // Low votes + high spread = too early to tell
+      return buildResult(
+        {
+          type: 'general',
+          messageKey: 'noConsensusYet',
+          context: formatContext(consensusRating),
+          hintKey: 'decideToWatch',
+        },
+        false,
+      );
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -339,7 +354,9 @@ export class ShowVerdictService {
     // ═══════════════════════════════════════════════════════════════
 
     if (hasAnyRatings && !hasConfidentRating) {
-      const isEarlyBadRating = (consensusRating ?? 10) < RATING_THRESHOLDS.BELOW_AVERAGE;
+      const isEarlyBadRating =
+        (consensusRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_HIGH) <
+        RATING_THRESHOLDS.BELOW_AVERAGE;
 
       if (isEarlyBadRating) {
         return buildResult(

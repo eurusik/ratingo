@@ -66,7 +66,7 @@ describe('DrizzleStatsRepository', () => {
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
 
       await expect(repository.upsert({ mediaItemId: '1', watchersCount: 0 })).rejects.toThrow(
-        DatabaseException
+        DatabaseException,
       );
     });
   });
@@ -114,7 +114,7 @@ describe('DrizzleStatsRepository', () => {
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
 
       await expect(repository.bulkUpsert([{ mediaItemId: '1', watchersCount: 0 }])).rejects.toThrow(
-        DatabaseException
+        DatabaseException,
       );
     });
   });

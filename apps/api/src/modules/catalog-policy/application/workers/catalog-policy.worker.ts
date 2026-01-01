@@ -6,22 +6,25 @@
  */
 
 import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
-import { Logger, OnModuleInit } from '@nestjs/common';
-import { Job, Queue } from 'bullmq';
+import { Logger, type OnModuleInit } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
+import { type Job, type Queue } from 'bullmq';
 import { eq, and, isNull, lte, gt } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
+import { RunStatus } from '../../domain/constants/evaluation.constants';
+import { RunNotFoundError } from '../../domain/errors';
 import {
-  ICatalogEvaluationRunRepository,
+  type ICatalogEvaluationRunRepository,
   CATALOG_EVALUATION_RUN_REPOSITORY,
 } from '../../infrastructure/repositories/catalog-evaluation-run.repository';
-import { CatalogEvaluationService } from '../services/catalog-evaluation.service';
-import { RunFinalizeService } from '../services/run-finalize.service';
-import { RunStatus } from '../../domain/constants/evaluation.constants';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { type CatalogEvaluationService } from '../services/catalog-evaluation.service';
+import { type RunFinalizeService } from '../services/run-finalize.service';
 
 interface ReEvaluateAllPayload {
   runId: string;
@@ -35,6 +38,10 @@ interface EvaluateCatalogItemPayload {
   policyVersion: number;
   mediaItemId: string;
 }
+
+// Worker constants
+const ERROR_STACK_MAX_LENGTH = 500;
+const STALE_RUN_MAX_AGE_MINUTES = 5;
 
 @Processor(CATALOG_POLICY_QUEUE, { concurrency: 1 })
 export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
@@ -140,7 +147,7 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
 
     const run = await this.runRepository.findById(runId);
     if (!run) {
-      throw new Error(`Run ${runId} not found`);
+      throw new RunNotFoundError(runId);
     }
 
     if (run.status === RunStatus.CANCELLED) {
@@ -148,7 +155,7 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
       return;
     }
 
-    let cursor: string | undefined = payload.cursor;
+    let { cursor } = payload;
     let totalDispatched = 0;
 
     while (true) {
@@ -162,28 +169,7 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
 
       if (batch.length === 0) {
         // All items dispatched - attempt to finalize
-        // Note: finalize may not complete if jobs are still processing
-        // Watchdog will handle finalization if needed
-        this.logger.log(
-          `All ${totalDispatched} jobs dispatched for run ${runId}, attempting finalize...`,
-        );
-
-        try {
-          const result = await this.finalizeService.finalizeRun(runId);
-          if (result.finalized) {
-            this.logger.log(
-              `Run ${runId} finalized: ${result.counters?.processed}/${result.counters?.total}`,
-            );
-          } else {
-            this.logger.log(`Run ${runId} not ready for finalization: ${result.reason}`);
-          }
-        } catch (error) {
-          // Finalize failure is not critical - watchdog will retry
-          this.logger.warn(
-            `Finalize attempt failed for run ${runId}, watchdog will retry: ${error.message}`,
-          );
-        }
-
+        await this.attemptFinalization(runId, totalDispatched);
         return;
       }
 
@@ -216,6 +202,32 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
   }
 
   /**
+   * Attempts to finalize a run after all jobs are dispatched.
+   * Finalize failure is not critical - watchdog will retry.
+   */
+  private async attemptFinalization(runId: string, totalDispatched: number): Promise<void> {
+    this.logger.log(
+      `All ${totalDispatched} jobs dispatched for run ${runId}, attempting finalize...`,
+    );
+
+    try {
+      const result = await this.finalizeService.finalizeRun(runId);
+      if (result.finalized) {
+        this.logger.log(
+          `Run ${runId} finalized: ${result.counters?.processed}/${result.counters?.total}`,
+        );
+      } else {
+        this.logger.log(`Run ${runId} not ready for finalization: ${result.reason}`);
+      }
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.logger.warn(
+        `Finalize attempt failed for run ${runId}, watchdog will retry: ${err.message}`,
+      );
+    }
+  }
+
+  /**
    * Evaluates single media item and writes result.
    *
    * @param payload - Job payload with media item ID
@@ -237,22 +249,23 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
     try {
       await this.evaluationService.evaluateOne(mediaItemId, policyVersion, runId);
       this.logger.debug(`Evaluated ${mediaItemId} for run ${runId}`);
-    } catch (error) {
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
       // Log error with full context for debugging
       this.logger.error(`Failed to evaluate media item`, {
         runId,
         policyVersion,
         mediaItemId,
-        errorMessage: error.message,
-        errorName: error.name,
+        errorMessage: err.message,
+        errorName: err.name,
       });
-      this.logger.debug(`Stack trace for ${mediaItemId}:`, error.stack);
+      this.logger.debug(`Stack trace for ${mediaItemId}:`, err.stack);
 
       // Record error in run's errorSample for visibility in run status
       await this.runRepository.recordError(runId, {
         mediaItemId,
-        error: error.message,
-        stack: error.stack?.substring(0, 500),
+        error: err.message,
+        stack: err.stack?.substring(0, ERROR_STACK_MAX_LENGTH),
         timestamp: new Date().toISOString(),
       });
     }
@@ -298,29 +311,35 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
     this.logger.debug('Watchdog checking for stale runs...');
 
     try {
-      const results = await this.finalizeService.finalizeStaleRuns(5);
-
-      if (results.length > 0) {
-        const finalized = results.filter((r) => r.finalized);
-        const pending = results.filter((r) => !r.finalized);
-
-        if (finalized.length > 0) {
-          this.logger.log(`Watchdog finalized ${finalized.length} runs`);
-        }
-
-        if (pending.length > 0) {
-          this.logger.debug(
-            `Watchdog found ${pending.length} runs still processing: ${pending.map((r) => r.reason).join(', ')}`,
-          );
-        }
-      }
-    } catch (error) {
-      // Log watchdog errors with context
+      const results = await this.finalizeService.finalizeStaleRuns(STALE_RUN_MAX_AGE_MINUTES);
+      this.logWatchdogResults(results);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
       this.logger.error('Watchdog error during stale run finalization', {
-        errorMessage: error.message,
-        errorName: error.name,
+        errorMessage: err.message,
+        errorName: err.name,
       });
-      this.logger.debug('Watchdog error stack:', error.stack);
+      this.logger.debug('Watchdog error stack:', err.stack);
+    }
+  }
+
+  /**
+   * Logs watchdog finalization results.
+   */
+  private logWatchdogResults(results: Array<{ finalized: boolean; reason?: string }>): void {
+    if (results.length === 0) return;
+
+    const finalized = results.filter((r) => r.finalized);
+    const pending = results.filter((r) => !r.finalized);
+
+    if (finalized.length > 0) {
+      this.logger.log(`Watchdog finalized ${finalized.length} runs`);
+    }
+
+    if (pending.length > 0) {
+      this.logger.debug(
+        `Watchdog found ${pending.length} runs still processing: ${pending.map((r) => r.reason).join(', ')}`,
+      );
     }
   }
 }

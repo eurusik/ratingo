@@ -37,16 +37,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // Get title from i18n based on category
   const categoryMap: Record<string, keyof typeof dict.browse> = {
     'shows-trending': 'trending',
-    'shows': 'shows',
-    'movies': 'movies',
+    shows: 'shows',
+    movies: 'movies',
     'movies-trending': 'moviesTrending',
     'movies-now-playing': 'moviesNowPlaying',
     'movies-new-releases': 'moviesNewReleases',
     'movies-digital': 'moviesDigital',
   };
   const browseKey = categoryMap[category];
-  const browseDict = browseKey ? dict.browse[browseKey] as { title: string; description: string } : undefined;
-  
+  const browseDict = browseKey
+    ? (dict.browse[browseKey] as { title: string; description: string })
+    : undefined;
+
   const title = browseDict?.title || category;
   const description = browseDict?.description || '';
 
@@ -70,22 +72,25 @@ async function fetchInitialData(category: BrowseCategory, page: number = 1) {
   try {
     const offset = (page - 1) * config.pageSize;
     const params = { offset, limit: config.pageSize };
-    
+
     // Call the appropriate API method based on category config
     const apiMethod = catalogApi[config.apiMethod];
-    const response = await apiMethod(params) as unknown as {
+    const response = (await apiMethod(params)) as unknown as {
       data: Array<{
         id: string;
         slug: string;
         title: string;
         poster?: { small: string; medium: string; large: string; original: string } | null;
         stats?: { qualityScore?: number | null; liveWatchers?: number | null } | null;
-        externalRatings?: { imdb?: { rating: number } | null; tmdb?: { rating: number } | null } | null;
+        externalRatings?: {
+          imdb?: { rating: number } | null;
+          tmdb?: { rating: number } | null;
+        } | null;
         releaseDate?: string | null;
       }>;
       meta: { total?: number };
     };
-    
+
     const items: MediaCardServerProps[] = response.data.map((item) => ({
       id: item.id,
       slug: item.slug,
@@ -112,7 +117,7 @@ async function fetchInitialData(category: BrowseCategory, page: number = 1) {
 export default async function BrowsePage({ params, searchParams }: PageProps) {
   const { category } = await params;
   const { page: pageParam } = await searchParams;
-  
+
   const config = getCategoryConfig(category);
   if (!config) {
     notFound();
@@ -120,21 +125,23 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
 
   const page = Math.max(1, parseInt(pageParam || '1', 10));
   const { items, total, hasMore } = await fetchInitialData(category as BrowseCategory, page);
-  
+
   const dict = getDictionary('uk');
-  
+
   // Get title from i18n - map category slug to i18n key
   const categoryMap: Record<string, keyof typeof dict.browse> = {
-    'trending': 'trending',
-    'shows': 'shows',
-    'movies': 'movies',
+    trending: 'trending',
+    shows: 'shows',
+    movies: 'movies',
     'movies-trending': 'moviesTrending',
     'movies-now-playing': 'moviesNowPlaying',
     'movies-new-releases': 'moviesNewReleases',
     'movies-digital': 'moviesDigital',
   };
   const browseKey = categoryMap[category];
-  const browseDict = browseKey ? dict.browse[browseKey] as { title: string; description: string } : undefined;
+  const browseDict = browseKey
+    ? (dict.browse[browseKey] as { title: string; description: string })
+    : undefined;
   const title = browseDict?.title || category;
 
   return (

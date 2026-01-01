@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { HttpStatus, Logger } from '@nestjs/common';
 
 /**
  * Configuration for retry behavior.
@@ -30,23 +30,23 @@ export interface FetchResult<T> {
  * HTTP status codes that are retryable.
  */
 const RETRYABLE_STATUS_CODES = new Set([
-  408, // Request Timeout
-  429, // Too Many Requests
-  500, // Internal Server Error
-  502, // Bad Gateway
-  503, // Service Unavailable
-  504, // Gateway Timeout
+  HttpStatus.REQUEST_TIMEOUT,
+  HttpStatus.TOO_MANY_REQUESTS,
+  HttpStatus.INTERNAL_SERVER_ERROR,
+  HttpStatus.BAD_GATEWAY,
+  HttpStatus.SERVICE_UNAVAILABLE,
+  HttpStatus.GATEWAY_TIMEOUT,
 ]);
 
 /**
  * HTTP status codes that should NOT be retried.
  */
 const NON_RETRYABLE_STATUS_CODES = new Set([
-  400, // Bad Request
-  401, // Unauthorized
-  403, // Forbidden
-  404, // Not Found
-  422, // Unprocessable Entity
+  HttpStatus.BAD_REQUEST,
+  HttpStatus.UNAUTHORIZED,
+  HttpStatus.FORBIDDEN,
+  HttpStatus.NOT_FOUND,
+  HttpStatus.UNPROCESSABLE_ENTITY,
 ]);
 
 /**
@@ -60,16 +60,24 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
 };
 
 /**
+ * Error with optional status and headers for retry logic.
+ */
+export interface RetryableError extends Error {
+  status?: number;
+  headers?: Headers;
+}
+
+/**
  * Checks if an error/status is retryable.
  */
-export function isRetryableError(error: any): boolean {
+export function isRetryableError(error: Partial<RetryableError>): boolean {
   // Network errors (no response)
   if (!error.status && error.name !== 'AbortError') {
     return true;
   }
 
   // Timeout
-  if (error.name === 'AbortError' || error.status === 408) {
+  if (error.name === 'AbortError' || error.status === HttpStatus.REQUEST_TIMEOUT) {
     return true;
   }
 
@@ -185,19 +193,22 @@ export class ResilientHttpClient {
       try {
         const data = await this.doFetch<T>(url, options);
         return { data, success: true, attempts };
-      } catch (error: any) {
-        lastError = error;
+      } catch (error: unknown) {
+        const retryableError = error as Partial<RetryableError>;
+        lastError = error instanceof Error ? error : new Error(String(error));
 
-        const isRetryable = isRetryableError(error);
+        const canRetry = isRetryableError(retryableError);
 
         // Don't retry non-retryable errors
-        if (!isRetryable) {
-          this.logger.debug(`Non-retryable error (${error.status || error.name}): ${url}`);
+        if (!canRetry) {
+          this.logger.debug(
+            `Non-retryable error (${retryableError.status || retryableError.name}): ${url}`,
+          );
           return {
             data: null,
             success: false,
             attempts,
-            error,
+            error: lastError,
             isRetryable: false,
           };
         }
@@ -208,16 +219,8 @@ export class ResilientHttpClient {
           break;
         }
 
-        // Calculate delay
-        let delayMs = calculateBackoffDelay(attempt, this.config.baseDelayMs);
-
-        // Respect Retry-After header for 429
-        if (error.status === 429 && error.headers) {
-          const retryAfterMs = parseRetryAfter(error.headers);
-          if (retryAfterMs !== null) {
-            delayMs = Math.max(delayMs, retryAfterMs);
-          }
-        }
+        // Calculate delay with Retry-After header support
+        const delayMs = this.calculateRetryDelay(retryableError, attempt, startTime);
 
         // Check if delay would exceed time budget
         const remainingTime = this.config.maxTotalTimeMs - (Date.now() - startTime);
@@ -229,7 +232,7 @@ export class ResilientHttpClient {
         }
 
         this.logger.debug(
-          `Retry ${attempt + 1}/${this.config.maxRetries} after ${delayMs}ms (${error.status || error.name}): ${url}`,
+          `Retry ${attempt + 1}/${this.config.maxRetries} after ${delayMs}ms (${retryableError.status || retryableError.name}): ${url}`,
         );
 
         await sleep(delayMs);
@@ -243,6 +246,27 @@ export class ResilientHttpClient {
       error: lastError,
       isRetryable: lastError ? isRetryableError(lastError) : undefined,
     };
+  }
+
+  /**
+   * Calculates retry delay, respecting Retry-After header for 429 responses.
+   */
+  private calculateRetryDelay(
+    error: Partial<RetryableError>,
+    attempt: number,
+    _startTime: number,
+  ): number {
+    let delayMs = calculateBackoffDelay(attempt, this.config.baseDelayMs);
+
+    // Respect Retry-After header for 429
+    if (error.status === HttpStatus.TOO_MANY_REQUESTS && error.headers) {
+      const retryAfterMs = parseRetryAfter(error.headers);
+      if (retryAfterMs !== null) {
+        delayMs = Math.max(delayMs, retryAfterMs);
+      }
+    }
+
+    return delayMs;
   }
 
   /**
@@ -267,8 +291,8 @@ export class ResilientHttpClient {
       }
 
       return response.json();
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'AbortError') {
         throw new HttpError('Request timeout', 408);
       }
       throw error;
@@ -287,7 +311,7 @@ export class ResilientHttpClient {
   /**
    * Convenience method for POST requests.
    */
-  async post<T>(url: string, body: any, headers?: HeadersInit): Promise<FetchResult<T>> {
+  async post<T>(url: string, body: unknown, headers?: HeadersInit): Promise<FetchResult<T>> {
     return this.fetch<T>(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },

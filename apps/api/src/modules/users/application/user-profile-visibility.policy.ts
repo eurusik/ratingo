@@ -1,4 +1,4 @@
-import { User, USER_ROLE } from '../domain/entities/user.entity';
+import { type User, USER_ROLE } from '../domain/entities/user.entity';
 
 export type ViewerContext =
   | {

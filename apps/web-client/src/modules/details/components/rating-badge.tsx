@@ -22,7 +22,9 @@ export function RatingBadge({ source, rating, isPercentage = false }: RatingBadg
 
   return (
     <div className="flex items-center gap-1.5 bg-zinc-900/60 backdrop-blur-sm px-2.5 py-1 rounded-lg">
-      <span className={`text-[10px] font-bold text-${config.color} bg-${config.bgColor} px-1 py-0.5 rounded`}>
+      <span
+        className={`text-[10px] font-bold text-${config.color} bg-${config.bgColor} px-1 py-0.5 rounded`}
+      >
         {source}
       </span>
       <span className="text-sm font-semibold text-zinc-300">{formattedRating}</span>

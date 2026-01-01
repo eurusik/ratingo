@@ -23,16 +23,7 @@ interface HorizontalCardProps extends Omit<MediaCardServerProps, 'badgeKey'> {
  * Layout: [Rank] [Poster] | Title, Rating, Year →
  */
 export function HorizontalCard(props: HorizontalCardProps) {
-  const {
-    slug,
-    type,
-    title,
-    poster,
-    stats,
-    releaseDate,
-    rank,
-    locale = 'uk',
-  } = props;
+  const { slug, type, title, poster, stats, releaseDate, rank, locale = 'uk' } = props;
 
   const dict = getDictionary(locale);
   const href = (type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`) as Route;
@@ -43,7 +34,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
   // Rank colors
   const rankColors: Record<number, string> = {
     2: 'bg-zinc-400 text-zinc-900', // Silver
-    3: 'bg-amber-700 text-white',   // Bronze
+    3: 'bg-amber-700 text-white', // Bronze
   };
 
   return (
@@ -53,7 +44,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
         'group flex items-stretch gap-4 p-3 rounded-xl',
         'bg-[#111113] border border-zinc-800/50',
         'hover:border-zinc-700 hover:bg-zinc-900/80',
-        'transition-all duration-200'
+        'transition-all duration-200',
       )}
     >
       {/* Rank Badge */}
@@ -62,7 +53,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
           className={cn(
             'w-8 h-8 rounded-full flex items-center justify-center',
             'font-bold text-sm',
-            rankColors[rank] || 'bg-zinc-700 text-white'
+            rankColors[rank] || 'bg-zinc-700 text-white',
           )}
         >
           {rank}
@@ -72,13 +63,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
       {/* Poster */}
       <div className="relative w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-zinc-800">
         {posterUrl ? (
-          <Image
-            src={posterUrl}
-            alt={title}
-            fill
-            className="object-cover"
-            sizes="64px"
-          />
+          <Image src={posterUrl} alt={title} fill className="object-cover" sizes="64px" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
             {dict.card.noPoster}

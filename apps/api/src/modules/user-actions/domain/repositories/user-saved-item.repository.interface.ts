@@ -1,6 +1,6 @@
-import { UserSavedItem, SavedItemList } from '../entities/user-saved-item.entity';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageDto } from '../../../../common/dtos/image.dto';
+import { type ImageDto } from '../../../../common/dtos/image.dto';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type UserSavedItem, type SavedItemList } from '../entities/user-saved-item.entity';
 
 /**
  * Injection token for user saved item repository.

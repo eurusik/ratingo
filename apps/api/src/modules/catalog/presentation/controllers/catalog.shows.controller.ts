@@ -8,40 +8,41 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import {
-  IShowRepository,
-  SHOW_REPOSITORY,
-  CalendarEpisode,
-  ShowDetails,
-} from '../../domain/repositories/show.repository.interface';
-import { TrendingShowsQueryDto, TrendingShowsResponseDto } from '../dtos/trending.dto';
-import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
-import { CalendarResponseDto } from '../dtos/calendar-response.dto';
-import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
-import { NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.query';
-import { ShowResponseDto } from '../dtos/show-response.dto';
 import { DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
-import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
-import { BADGE_KEY, CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
-import type { BadgeKey } from '../../../shared/cards/domain/card.types';
-import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
-import { normalizeListQuery } from '../utils/query-normalizer';
-import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
-import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
-import { computeShowVerdict } from '../../../shared/verdict';
-import {
-  POPULARITY_SIGNAL,
-  PopularitySignal,
-} from '../../../shared/verdict/domain/popularity-signal';
+import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+
 import {
   CATALOG_DEFAULT_LIMIT,
   CATALOG_DEFAULT_OFFSET,
   CATALOG_DEFAULT_CALENDAR_DAYS,
+  DEFAULT_PAGE_SIZE,
 } from '../../../../common/constants';
 import { isNewRelease, hasRecentEpisode } from '../../../../common/utils/media.utils';
+import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
+import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { type CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import { BADGE_KEY, CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
+import type { BadgeKey } from '../../../shared/cards/domain/card.types';
+import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
+import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
+import { computeShowVerdict } from '../../../shared/verdict';
+import {
+  POPULARITY_SIGNAL,
+  type PopularitySignal,
+} from '../../../shared/verdict/domain/popularity-signal';
+import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
+import { type CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
+import {
+  type IShowRepository,
+  SHOW_REPOSITORY,
+  type CalendarEpisode,
+} from '../../domain/repositories/show.repository.interface';
+import { type NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.query';
+import { CalendarResponseDto } from '../dtos/calendar-response.dto';
+import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
+import { ShowResponseDto } from '../dtos/show-response.dto';
+import { type TrendingShowsQueryDto, TrendingShowsResponseDto } from '../dtos/trending.dto';
+import { normalizeListQuery } from '../utils/query-normalizer';
 
 /**
  * Maps card badge key to verdict popularity signal.
@@ -138,8 +139,8 @@ export class CatalogShowsController {
   })
   @ApiOkResponse({ type: NewEpisodesResponseDto })
   async getNewEpisodes(
-    @Query('days', new DefaultValuePipe(7), ParseIntPipe) days: number,
-    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('days', new DefaultValuePipe(CATALOG_DEFAULT_CALENDAR_DAYS), ParseIntPipe) days: number,
+    @Query('limit', new DefaultValuePipe(DEFAULT_PAGE_SIZE), ParseIntPipe) limit: number,
   ): Promise<NewEpisodesResponseDto> {
     const episodes = await this.newEpisodesQuery.execute(days, limit);
     return { data: episodes };
@@ -282,10 +283,12 @@ export class CatalogShowsController {
    * Groups calendar episodes by air date.
    *
    * @param {CalendarEpisode[]} episodes - Episodes to group
-   * @returns {any[]} Days list
+   * @returns {Array<{ date: string; episodes: CalendarEpisode[] }>} Days list
    */
-  private groupEpisodesByDate(episodes: CalendarEpisode[]) {
-    const map = new Map<string, any[]>();
+  private groupEpisodesByDate(
+    episodes: CalendarEpisode[],
+  ): Array<{ date: string; episodes: CalendarEpisode[] }> {
+    const map = new Map<string, CalendarEpisode[]>();
 
     for (const ep of episodes) {
       const dateKey = ep.airDate.toISOString().split('T')[0];
@@ -293,13 +296,13 @@ export class CatalogShowsController {
       map.get(dateKey)!.push(ep);
     }
 
-    const result = [];
+    const result: Array<{ date: string; episodes: CalendarEpisode[] }> = [];
     const sortedKeys = Array.from(map.keys()).sort();
 
     for (const date of sortedKeys) {
       result.push({
         date,
-        episodes: map.get(date),
+        episodes: map.get(date)!,
       });
     }
 

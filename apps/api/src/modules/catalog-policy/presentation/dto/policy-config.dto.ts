@@ -5,6 +5,8 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsString,
@@ -14,10 +16,11 @@ import {
   ValidateNested,
   IsIn,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+
+import { type ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
+
 import { BreakoutRuleDto } from './breakout-rule.dto';
 import { GlobalRequirementsDto } from './global-requirements.dto';
-import { ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
 
 /**
  * Homepage config DTO.

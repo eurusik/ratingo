@@ -56,7 +56,9 @@ export function MovieRelease({
               <Clapperboard className="w-4 h-4 text-zinc-500" />
               <Tv className="w-4 h-4 text-zinc-500" />
             </div>
-            <span>{dict.details.movieRelease.combinedRelease} {formatDate(releaseDate)}</span>
+            <span>
+              {dict.details.movieRelease.combinedRelease} {formatDate(releaseDate)}
+            </span>
           </div>
         )}
 
@@ -64,7 +66,9 @@ export function MovieRelease({
         {!datesMatch && releaseDate && (
           <div className="flex items-center gap-2 text-zinc-300">
             <Clapperboard className="w-4 h-4 text-zinc-500" />
-            <span>{dict.details.movieRelease.theaterPrefix} {formatDate(releaseDate)}</span>
+            <span>
+              {dict.details.movieRelease.theaterPrefix} {formatDate(releaseDate)}
+            </span>
           </div>
         )}
 
@@ -72,7 +76,9 @@ export function MovieRelease({
         {!datesMatch && digitalReleaseDate && (
           <div className="flex items-center gap-2 text-zinc-300">
             <Tv className="w-4 h-4 text-zinc-500" />
-            <span>{dict.details.movieRelease.digitalPrefix} {formatDate(digitalReleaseDate)}</span>
+            <span>
+              {dict.details.movieRelease.digitalPrefix} {formatDate(digitalReleaseDate)}
+            </span>
           </div>
         )}
 

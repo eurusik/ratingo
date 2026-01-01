@@ -1,9 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
+
 import {
   INSIGHTS_REPOSITORY,
-  InsightsRepository,
+  type InsightsRepository,
 } from '../../domain/repositories/insights.repository.interface';
-import { RiseFallQuery, RiseFallResult } from '../types/insights.types';
+import { type RiseFallQuery, type RiseFallResult } from '../types/insights.types';
+
+// Window size mappings in days
+const WINDOW_DAYS = {
+  '30d': 30,
+  '90d': 90,
+  '365d': 365,
+} as const;
+
+const DEFAULT_WINDOW_DAYS = 30;
 
 /**
  * Provides insights about watcher movements for media.
@@ -25,13 +35,7 @@ export class InsightsService {
    * @returns {Promise<RiseFallResult>} Movements data for the given window
    */
   async getMovements(query: RiseFallQuery): Promise<RiseFallResult> {
-    const windowMap: Record<string, number> = {
-      '30d': 30,
-      '90d': 90,
-      '365d': 365,
-    };
-
-    const windowDays = windowMap[query.window] || 30;
+    const windowDays = WINDOW_DAYS[query.window as keyof typeof WINDOW_DAYS] || DEFAULT_WINDOW_DAYS;
 
     const { risers, fallers } = await this.insightsRepository.getMovements(windowDays, query.limit);
 

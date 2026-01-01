@@ -5,4 +5,7 @@ export {
   InvalidEligibilityStatusError,
   InvalidBreakoutRuleError,
   InvalidRunStateTransitionError,
+  RunNotFoundError,
+  PolicyNotFoundError,
+  PolicyValidationError,
 } from './policy.errors';

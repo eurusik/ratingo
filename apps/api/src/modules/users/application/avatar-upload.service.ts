@@ -1,10 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
-import {
-  IObjectStorageService,
-  OBJECT_STORAGE_SERVICE,
-  PresignedPutUrlResult,
-} from '../domain/services/object-storage.service.interface';
 import { randomUUID } from 'crypto';
+
+import { Inject, Injectable } from '@nestjs/common';
+
+import {
+  type IObjectStorageService,
+  OBJECT_STORAGE_SERVICE,
+} from '../domain/services/object-storage.service.interface';
 
 const AVATAR_CONTENT_TYPES = {
   'image/jpeg': 'jpg',

@@ -74,9 +74,7 @@ export function SearchCommand() {
 
           {/* Hint */}
           {debouncedQuery.length < 2 && (
-            <div className="py-6 text-center text-sm text-zinc-500">
-              {dict.search.hint}
-            </div>
+            <div className="py-6 text-center text-sm text-zinc-500">{dict.search.hint}</div>
           )}
 
           {/* Local results */}
@@ -115,7 +113,15 @@ export function SearchCommand() {
                     isLocal={false}
                     isImporting={importingTmdbId === item.tmdbId}
                     notImportedLabel={dict.search.notImported}
-                    onSelect={() => handleImport(item.tmdbId, item.type as MediaType, item.title, item.poster?.small, item.year ?? undefined)}
+                    onSelect={() =>
+                      handleImport(
+                        item.tmdbId,
+                        item.type as MediaType,
+                        item.title,
+                        item.poster?.small,
+                        item.year ?? undefined,
+                      )
+                    }
                   />
                 ))}
               </CommandGroup>

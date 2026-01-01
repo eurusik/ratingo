@@ -4,9 +4,10 @@
  * Types for movie verdict computation.
  */
 
-import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import { RatingSourceLabel, BaseVerdict } from './verdict.types';
+import { type ReleaseStatus } from '../../../../common/enums/release-status.enum';
+
 import type { PopularitySignal } from './popularity-signal';
+import { type RatingSourceLabel, type BaseVerdict } from './verdict.types';
 
 /**
  * Message key for i18n lookup on client.

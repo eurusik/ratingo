@@ -37,10 +37,7 @@ export function SavedStatusProvider({ mediaItemIds, children }: SavedStatusProvi
   const queryClient = useQueryClient();
 
   // Dedupe and filter empty IDs
-  const uniqueIds = useMemo(() => 
-    [...new Set(mediaItemIds.filter(Boolean))],
-    [mediaItemIds]
-  );
+  const uniqueIds = useMemo(() => [...new Set(mediaItemIds.filter(Boolean))], [mediaItemIds]);
 
   // Batch fetch all statuses in one request
   const { data: statuses, isLoading } = useQuery({
@@ -55,7 +52,7 @@ export function SavedStatusProvider({ mediaItemIds, children }: SavedStatusProvi
     (mediaItemId: string): MediaSaveStatusDto | undefined => {
       return statuses?.[mediaItemId];
     },
-    [statuses]
+    [statuses],
   );
 
   const invalidate = useCallback(() => {
@@ -65,14 +62,10 @@ export function SavedStatusProvider({ mediaItemIds, children }: SavedStatusProvi
 
   const value = useMemo(
     () => ({ getStatus, isLoading, invalidate }),
-    [getStatus, isLoading, invalidate]
+    [getStatus, isLoading, invalidate],
   );
 
-  return (
-    <SavedStatusContext.Provider value={value}>
-      {children}
-    </SavedStatusContext.Provider>
-  );
+  return <SavedStatusContext.Provider value={value}>{children}</SavedStatusContext.Provider>;
 }
 
 /**

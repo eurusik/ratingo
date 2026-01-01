@@ -1,8 +1,9 @@
-import { NormalizedMedia } from '@/modules/ingestion/domain/models/normalized-media.model';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { HeroMediaItem } from '../../../../common/types/hero-media.types';
-import { LocalSearchResult } from '../models/search-result.model';
+import type { NormalizedMedia } from '@/modules/ingestion/public';
+
+import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
+import { type LocalSearchResult } from '../models/search-result.model';
 
 /**
  * Data needed for score calculation.

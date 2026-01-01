@@ -1,12 +1,13 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
-import traktConfig from '../../../../../config/trakt.config';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { type ConfigType } from '@nestjs/config';
+
 import { TraktApiException } from '../../../../../common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
-  RetryConfig,
+  type RetryConfig,
   HttpError,
 } from '../../../../../common/http/resilient-http.client';
+import traktConfig from '../../../../../config/trakt.config';
 
 /**
  * Trakt-specific retry configuration.
@@ -18,6 +19,12 @@ const TRAKT_RETRY_CONFIG: Partial<RetryConfig> = {
   maxTotalTimeMs: 30000,
   timeoutMs: 15000,
 };
+
+// Rate limiter configuration
+const RATE_LIMITER_MAX_TOKENS = 3;
+const RATE_LIMITER_REFILL_INTERVAL_MS = 333; // ~3 req/s
+const RATE_LIMITER_MAX_QUEUE_SIZE = 100;
+const RATE_LIMITER_ACQUIRE_TIMEOUT_MS = 30000;
 
 /**
  * Token bucket rate limiter with timeout and max queue size.
@@ -33,10 +40,10 @@ class RateLimiter {
   private _intervalId: NodeJS.Timeout | null = null;
 
   constructor(
-    private readonly maxTokens: number = 3,
-    private readonly refillIntervalMs: number = 333, // Refill 1 token every 333ms = ~3/sec (smoother)
-    private readonly maxQueueSize: number = 100,
-    private readonly acquireTimeoutMs: number = 30000, // 30 seconds
+    private readonly maxTokens: number = RATE_LIMITER_MAX_TOKENS,
+    private readonly refillIntervalMs: number = RATE_LIMITER_REFILL_INTERVAL_MS,
+    private readonly maxQueueSize: number = RATE_LIMITER_MAX_QUEUE_SIZE,
+    private readonly acquireTimeoutMs: number = RATE_LIMITER_ACQUIRE_TIMEOUT_MS,
   ) {
     this.tokens = maxTokens;
     this.startRefillInterval();
@@ -53,8 +60,8 @@ class RateLimiter {
 
     // Allow Node process (and Jest) to exit even if this interval is still active.
     // The limiter is best-effort; keeping the process alive is not desired.
-    if (this._intervalId && typeof (this._intervalId as any).unref === 'function') {
-      (this._intervalId as any).unref();
+    if (this._intervalId && typeof this._intervalId.unref === 'function') {
+      this._intervalId.unref();
     }
   }
 
@@ -85,7 +92,7 @@ class RateLimiter {
 
     // Check queue size limit
     if (this.queue.length >= this.maxQueueSize) {
-      throw new Error(
+      throw new TraktApiException(
         `Rate limiter queue full (${this.maxQueueSize}). Too many concurrent requests.`,
       );
     }
@@ -114,7 +121,12 @@ class RateLimiter {
 
 // Shared limiter: ~3 requests per second (1 token every 333ms, max 3 tokens)
 // Max queue: 100 requests, timeout: 30 seconds
-const sharedLimiter = new RateLimiter(3, 333, 100, 30000);
+const sharedLimiter = new RateLimiter(
+  RATE_LIMITER_MAX_TOKENS,
+  RATE_LIMITER_REFILL_INTERVAL_MS,
+  RATE_LIMITER_MAX_QUEUE_SIZE,
+  RATE_LIMITER_ACQUIRE_TIMEOUT_MS,
+);
 
 /**
  * Cleanup function for tests - stops the rate limiter interval.
@@ -165,11 +177,11 @@ export class BaseTraktHttp {
     const result = await this.httpClient.fetch<T>(url, { ...options, headers });
 
     if (!result.success) {
-      const error = result.error;
+      const { error } = result;
 
       if (error instanceof HttpError) {
         // Special handling for 429 - already retried with Retry-After
-        if (error.status === 429) {
+        if (error.status === HttpStatus.TOO_MANY_REQUESTS) {
           this.logger.warn(
             `Trakt rate limit exceeded after ${result.attempts} attempts: ${endpoint}`,
           );
@@ -180,10 +192,16 @@ export class BaseTraktHttp {
       // Network/timeout errors after all retries
       if (result.isRetryable) {
         this.logger.error(`Trakt request failed after ${result.attempts} attempts: ${endpoint}`);
-        throw new TraktApiException('Failed to communicate with Trakt after retries', 503);
+        throw new TraktApiException(
+          'Failed to communicate with Trakt after retries',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
       }
 
-      throw new TraktApiException('Failed to communicate with Trakt', 500);
+      throw new TraktApiException(
+        'Failed to communicate with Trakt',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     return result.data as T;

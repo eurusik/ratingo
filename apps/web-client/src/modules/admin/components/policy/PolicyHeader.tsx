@@ -1,35 +1,35 @@
-"use client"
+'use client';
 
-import { Card, CardHeader, CardTitle } from '@/shared/ui/card'
-import { Badge } from '@/shared/ui/badge'
-import { Button } from '@/shared/ui/button'
-import { Loader2, Play, Pencil } from 'lucide-react'
-import { POLICY_STATUS } from '@/modules/admin/types'
+import { Card, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Loader2, Play, Pencil } from 'lucide-react';
+import { POLICY_STATUS } from '@/modules/admin/types';
 
 export interface PolicyHeaderLabels {
-  active: string
-  inactive: string
-  lastUpdated: string
-  prepare: string
-  preparing: string
-  edit?: string
+  active: string;
+  inactive: string;
+  lastUpdated: string;
+  prepare: string;
+  preparing: string;
+  edit?: string;
 }
 
 interface PolicyHeaderProps {
-  name: string
-  version: string
-  status: string
-  lastUpdated: Date | string
-  onPrepare: () => void
-  onEdit?: () => void
-  isPreparing: boolean
-  isEditing?: boolean
-  labels: PolicyHeaderLabels
+  name: string;
+  version: string;
+  status: string;
+  lastUpdated: Date | string;
+  onPrepare: () => void;
+  onEdit?: () => void;
+  isPreparing: boolean;
+  isEditing?: boolean;
+  labels: PolicyHeaderLabels;
 }
 
 /**
  * Displays policy header with status and actions.
- * 
+ *
  * Shows policy name, version, status badge, last updated date,
  * and prepare/edit buttons.
  *
@@ -54,9 +54,9 @@ export function PolicyHeader({
   isEditing = false,
   labels,
 }: PolicyHeaderProps) {
-  const badgeVariant = status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary'
-  const statusLabel = status === POLICY_STATUS.ACTIVE ? labels.active : labels.inactive
-  const date = new Date(lastUpdated).toLocaleDateString('uk-UA')
+  const badgeVariant = status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary';
+  const statusLabel = status === POLICY_STATUS.ACTIVE ? labels.active : labels.inactive;
+  const date = new Date(lastUpdated).toLocaleDateString('uk-UA');
 
   return (
     <Card>
@@ -96,5 +96,5 @@ export function PolicyHeader({
         </div>
       </CardHeader>
     </Card>
-  )
+  );
 }

@@ -5,12 +5,13 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
+
 import { DatabaseException } from '../../../../common/exceptions';
 import {
-  IProvidersRepository,
-  ProviderInfo,
+  type IProvidersRepository,
+  type ProviderInfo,
 } from '../../domain/repositories/providers.repository.interface';
-import { ProvidersQuery } from '../queries/providers.query';
+import { type ProvidersQuery } from '../queries/providers.query';
 
 @Injectable()
 export class DrizzleProvidersRepository implements IProvidersRepository {

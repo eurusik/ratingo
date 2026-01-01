@@ -112,3 +112,51 @@ export class InvalidRunStateTransitionError extends Error {
     this.attemptedAction = attemptedAction;
   }
 }
+
+/**
+ * Thrown when a run is not found.
+ *
+ * @example
+ * throw new RunNotFoundError('run-123');
+ */
+export class RunNotFoundError extends Error {
+  public readonly runId: string;
+
+  constructor(runId: string) {
+    super(`Run ${runId} not found`);
+    this.name = 'RunNotFoundError';
+    this.runId = runId;
+  }
+}
+
+/**
+ * Thrown when a policy is not found.
+ *
+ * @example
+ * throw new PolicyNotFoundError('policy-123');
+ */
+export class PolicyNotFoundError extends Error {
+  public readonly policyId: string;
+
+  constructor(policyId: string) {
+    super(`Policy with id ${policyId} not found`);
+    this.name = 'PolicyNotFoundError';
+    this.policyId = policyId;
+  }
+}
+
+/**
+ * Thrown when policy validation fails due to business rule violations.
+ *
+ * @example
+ * throw new PolicyValidationError('Countries cannot be both allowed and blocked: US, GB');
+ */
+export class PolicyValidationError extends Error {
+  public readonly details?: Record<string, unknown>;
+
+  constructor(message: string, details?: Record<string, unknown>) {
+    super(message);
+    this.name = 'PolicyValidationError';
+    this.details = details;
+  }
+}

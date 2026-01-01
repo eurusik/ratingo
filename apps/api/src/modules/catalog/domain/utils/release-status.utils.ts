@@ -1,3 +1,4 @@
+import { MS_PER_DAY, NEW_RELEASE_WINDOW_DAYS } from '../../../../common/constants';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
 
 /**
@@ -6,14 +7,15 @@ import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
  * @param releaseDate - General release date (usually theatrical)
  * @param theatricalReleaseDate - Theatrical release date
  * @param digitalReleaseDate - Digital/streaming release date
+ * @param now - Current date (injected for testability)
  * @returns ReleaseStatus enum value
  */
 export function computeReleaseStatus(
   releaseDate: Date | null,
   theatricalReleaseDate: Date | null,
   digitalReleaseDate: Date | null,
+  now: Date,
 ): ReleaseStatus {
-  const now = new Date();
   const effectiveTheatrical = theatricalReleaseDate ?? releaseDate;
 
   // Check if movie is upcoming (not released yet)
@@ -25,8 +27,8 @@ export function computeReleaseStatus(
   if (digitalReleaseDate && digitalReleaseDate <= now) {
     // Check if it's new on streaming (within 14 days)
     const diffMs = now.getTime() - digitalReleaseDate.getTime();
-    const diffDays = diffMs / (1000 * 60 * 60 * 24);
-    if (diffDays <= 14) {
+    const diffDays = diffMs / MS_PER_DAY;
+    if (diffDays <= NEW_RELEASE_WINDOW_DAYS) {
       return ReleaseStatus.NEW_ON_STREAMING;
     }
     return ReleaseStatus.STREAMING;

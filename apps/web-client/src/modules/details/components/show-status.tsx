@@ -21,7 +21,7 @@ export interface ShowStatusProps {
 function pluralize(
   count: number,
   forms: { one: string; few: string; many: string },
-  locale: string = 'uk'
+  locale: string = 'uk',
 ): string {
   const pr = new Intl.PluralRules(locale);
   const rule = pr.select(count);
@@ -57,12 +57,8 @@ export function ShowStatus({
         {nextEpisodeDate && (
           <div className="flex items-center gap-2.5">
             <Clock className="w-4 h-4 text-blue-400 flex-shrink-0" />
-            <span className="text-sm text-zinc-400">
-              {dict.details.showStatus.nextEpisode}:
-            </span>
-            <span className="text-sm text-blue-400 font-medium">
-              {formatDate(nextEpisodeDate)}
-            </span>
+            <span className="text-sm text-zinc-400">{dict.details.showStatus.nextEpisode}:</span>
+            <span className="text-sm text-blue-400 font-medium">{formatDate(nextEpisodeDate)}</span>
           </div>
         )}
       </div>

@@ -19,9 +19,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UserMediaService } from '../../application/user-media.service';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { type UserMediaService } from '../../application/user-media.service';
 import { SetUserMediaStateDto } from '../dto/set-user-media-state.dto';
 import { UserMediaStateDto } from '../dto/user-media-state.dto';
 
@@ -53,10 +56,10 @@ export class UserMediaController {
   @Get('continue')
   async listContinue(
     @CurrentUser() user: { id: string },
-    @Query('limit') limit = 20,
+    @Query('limit') limit = DEFAULT_PAGE_SIZE,
     @Query('offset') offset = 0,
   ) {
-    const parsedLimit = Number(limit) || 20;
+    const parsedLimit = Number(limit) || DEFAULT_PAGE_SIZE;
     const parsedOffset = Number(offset) || 0;
     return this.userMediaService.listContinueWithMedia(user.id, parsedLimit, parsedOffset);
   }
@@ -122,10 +125,10 @@ export class UserMediaController {
   @Get()
   async list(
     @CurrentUser() user: { id: string },
-    @Query('limit') limit = 20,
+    @Query('limit') limit = DEFAULT_PAGE_SIZE,
     @Query('offset') offset = 0,
   ) {
-    const parsedLimit = Number(limit) || 20;
+    const parsedLimit = Number(limit) || DEFAULT_PAGE_SIZE;
     const parsedOffset = Number(offset) || 0;
     return this.userMediaService.listWithMedia(user.id, parsedLimit, parsedOffset);
   }

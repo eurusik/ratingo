@@ -1,19 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
+
+import { type TraktRatingsPort } from '../../../domain/ports/trakt-ratings.port';
+import { TRAKT_BATCH_CONCURRENCY, MAX_SEASONS_FOR_ANALYSIS } from '../../../ingestion.constants';
+
 import { BaseTraktHttp } from './base-trakt-http';
 import {
-  EpisodeData,
-  SeasonData,
-  TraktSearchMovieResult,
-  TraktSearchShowResult,
-  TraktRatingsResponse,
-  TraktStatsResponse,
-  TraktWatchingUser,
-  TraktMediaType,
-  TraktEndpoint,
+  type EpisodeData,
+  type SeasonData,
+  type TraktSearchMovieResult,
+  type TraktSearchShowResult,
+  type TraktRatingsResponse,
+  type TraktStatsResponse,
+  type TraktWatchingUser,
+  type TraktMediaType,
+  type TraktEndpoint,
   TRAKT_MEDIA_TYPE,
   TRAKT_ENDPOINT,
 } from './interfaces/trakt.types';
-import { TraktRatingsPort } from '../../../domain/ports/trakt-ratings.port';
 
 /**
  * Trakt adapter for ratings, watchers, stats, and episode/season metadata.
@@ -271,7 +274,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       if (!seasons.length) return null;
 
       const seasonData = await Promise.all(
-        seasons.slice(0, 10).map(async (s) => ({
+        seasons.slice(0, MAX_SEASONS_FOR_ANALYSIS).map(async (s) => ({
           number: s.number,
           episodes: await this.getSeasonEpisodes(traktId, s.number),
         })),
@@ -302,7 +305,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
   private async getWatchersByTmdbIds(
     type: TraktMediaType,
     tmdbIds: number[],
-    concurrency = 3,
+    concurrency = TRAKT_BATCH_CONCURRENCY,
   ): Promise<Map<number, number | null>> {
     const result = new Map<number, number | null>();
     if (tmdbIds.length === 0) return result;
@@ -315,10 +318,17 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
         try {
           const data = await fetchFn.call(this, tmdbId);
           return { tmdbId, watchers: data?.watchers ?? 0 };
-        } catch (error: any) {
-          const status = error?.response?.status;
-          if (status === 429 || status >= 500 || !status) {
-            this.logger.warn(`Transient error for ${type} ${tmdbId}: ${error.message || error}`);
+        } catch (error: unknown) {
+          const err = error as { response?: { status?: number }; message?: string };
+          const status = err?.response?.status;
+          if (
+            status === HttpStatus.TOO_MANY_REQUESTS ||
+            (status && status >= HttpStatus.INTERNAL_SERVER_ERROR) ||
+            !status
+          ) {
+            this.logger.warn(
+              `Transient error for ${type} ${tmdbId}: ${err.message || String(error)}`,
+            );
             return { tmdbId, watchers: null };
           }
           return { tmdbId, watchers: 0 };
@@ -343,7 +353,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
    */
   async getMovieWatchersByTmdbIds(
     tmdbIds: number[],
-    concurrency = 3,
+    concurrency = TRAKT_BATCH_CONCURRENCY,
   ): Promise<Map<number, number | null>> {
     return this.getWatchersByTmdbIds(TRAKT_MEDIA_TYPE.MOVIE, tmdbIds, concurrency);
   }
@@ -357,7 +367,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
    */
   async getShowWatchersByTmdbIds(
     tmdbIds: number[],
-    concurrency = 3,
+    concurrency = TRAKT_BATCH_CONCURRENCY,
   ): Promise<Map<number, number | null>> {
     return this.getWatchersByTmdbIds(TRAKT_MEDIA_TYPE.SHOW, tmdbIds, concurrency);
   }

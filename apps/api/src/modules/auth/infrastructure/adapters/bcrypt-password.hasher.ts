@@ -1,8 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
+import { type ConfigType } from '@nestjs/config';
+
 import * as bcrypt from 'bcrypt';
-import { ConfigType } from '@nestjs/config';
-import { PasswordHasher } from '../../domain/services/password-hasher.interface';
+
 import authConfig from '../../../../config/auth.config';
+import { type PasswordHasher } from '../../domain/services/password-hasher.interface';
 
 /**
  * Bcrypt-based password hashing adapter.

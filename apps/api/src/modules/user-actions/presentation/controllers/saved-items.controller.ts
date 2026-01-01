@@ -19,20 +19,23 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/common/constants';
+
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { SavedItemsService } from '../../application/saved-items.service';
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { type SavedItemsService } from '../../application/saved-items.service';
+import { SAVED_ITEM_LIST } from '../../domain/entities/user-saved-item.entity';
 import {
-  SaveItemDto,
-  UnsaveItemDto,
+  type SaveItemDto,
+  type UnsaveItemDto,
   SavedItemWithMediaResponseDto,
   MediaSaveStatusDto,
   SaveActionResultDto,
   UnsaveActionResultDto,
-  BatchStatusQueryDto,
+  type BatchStatusQueryDto,
   BatchStatusResponseDto,
 } from '../dto/saved-items.dto';
-import { SAVED_ITEM_LIST, SavedItemList } from '../../domain/entities/user-saved-item.entity';
 
 @ApiTags('Saved Items')
 @ApiBearerAuth()
@@ -117,7 +120,7 @@ export class SavedItemsController {
     @CurrentUser() user: { id: string },
     @Query() query: BatchStatusQueryDto,
   ): Promise<BatchStatusResponseDto> {
-    const ids = query.ids.split(',').filter(Boolean).slice(0, 100);
+    const ids = query.ids.split(',').filter(Boolean).slice(0, MAX_PAGE_SIZE);
     const statuses = await this.savedItemsService.getBatchStatus(user.id, ids);
     return { statuses };
   }
@@ -156,7 +159,7 @@ export class SavedItemsController {
     const { total, data } = await this.savedItemsService.listWithMedia(
       user.id,
       SAVED_ITEM_LIST.FOR_LATER,
-      limit ?? 20,
+      limit ?? DEFAULT_PAGE_SIZE,
       offset ?? 0,
     );
 
@@ -164,7 +167,7 @@ export class SavedItemsController {
       data,
       meta: {
         total,
-        limit: limit ?? 20,
+        limit: limit ?? DEFAULT_PAGE_SIZE,
         offset: offset ?? 0,
         hasMore: (offset ?? 0) + data.length < total,
       },
@@ -187,7 +190,7 @@ export class SavedItemsController {
     const { total, data } = await this.savedItemsService.listWithMedia(
       user.id,
       SAVED_ITEM_LIST.CONSIDERING,
-      limit ?? 20,
+      limit ?? DEFAULT_PAGE_SIZE,
       offset ?? 0,
     );
 
@@ -195,7 +198,7 @@ export class SavedItemsController {
       data,
       meta: {
         total,
-        limit: limit ?? 20,
+        limit: limit ?? DEFAULT_PAGE_SIZE,
         offset: offset ?? 0,
         hasMore: (offset ?? 0) + data.length < total,
       },

@@ -1,13 +1,14 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
-import omdbConfig from '../../../../../config/omdb.config';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { type ConfigType } from '@nestjs/config';
+
 import { MediaType } from '../../../../../common/enums/media-type.enum';
 import { OmdbApiException } from '../../../../../common/exceptions/external-api.exception';
 import {
   ResilientHttpClient,
-  RetryConfig,
+  type RetryConfig,
   HttpError,
 } from '../../../../../common/http/resilient-http.client';
+import omdbConfig from '../../../../../config/omdb.config';
 
 /**
  * OMDb API rating source entry.
@@ -89,7 +90,7 @@ export class OmdbAdapter {
     const result = await this.httpClient.get<T>(url.toString());
 
     if (!result.success) {
-      const error = result.error;
+      const { error } = result;
 
       if (error instanceof HttpError) {
         throw new OmdbApiException(error.message, error.status);
@@ -98,10 +99,16 @@ export class OmdbAdapter {
       // Network/timeout errors after all retries
       if (result.isRetryable) {
         this.logger.warn(`OMDb request failed after ${result.attempts} attempts`);
-        throw new OmdbApiException('Failed to communicate with OMDb after retries', 503);
+        throw new OmdbApiException(
+          'Failed to communicate with OMDb after retries',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
       }
 
-      throw new OmdbApiException('Failed to communicate with OMDb', 500);
+      throw new OmdbApiException(
+        'Failed to communicate with OMDb',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     return result.data as T;
@@ -140,17 +147,8 @@ export class OmdbAdapter {
       let metacritic: number | null = null;
 
       if (Array.isArray(data.Ratings)) {
-        const rt = data.Ratings.find((r) => r.Source === this.SOURCE_ROTTEN_TOMATOES);
-        if (rt?.Value) {
-          const m = rt.Value.match(/(\d+)%/);
-          if (m) rottenTomatoes = parseInt(m[1], 10);
-        }
-
-        const mc = data.Ratings.find((r) => r.Source === this.SOURCE_METACRITIC);
-        if (mc?.Value) {
-          const m = mc.Value.match(/(\d+)/);
-          if (m) metacritic = parseInt(m[1], 10);
-        }
+        rottenTomatoes = this.extractRottenTomatoesRating(data.Ratings);
+        metacritic = this.extractMetacriticRating(data.Ratings);
       }
 
       const metascore =
@@ -160,7 +158,9 @@ export class OmdbAdapter {
     } catch (error) {
       // Best-effort: log warning but don't fail the job
       const status =
-        error instanceof OmdbApiException ? (error.details as any)?.statusCode : 'unknown';
+        error instanceof OmdbApiException
+          ? (error.details as Record<string, unknown>)?.statusCode
+          : 'unknown';
       this.logger.warn(`OMDb enrichment skipped for ${imdbId} (status=${status})`);
       return {
         imdbRating: null,
@@ -170,5 +170,25 @@ export class OmdbAdapter {
         metascore: null,
       };
     }
+  }
+
+  /**
+   * Extracts Rotten Tomatoes rating from OMDb ratings array.
+   */
+  private extractRottenTomatoesRating(ratings: OmdbRating[]): number | null {
+    const rt = ratings.find((r) => r.Source === this.SOURCE_ROTTEN_TOMATOES);
+    if (!rt?.Value) return null;
+    const match = rt.Value.match(/(\d+)%/);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  /**
+   * Extracts Metacritic rating from OMDb ratings array.
+   */
+  private extractMetacriticRating(ratings: OmdbRating[]): number | null {
+    const mc = ratings.find((r) => r.Source === this.SOURCE_METACRITIC);
+    if (!mc?.Value) return null;
+    const match = mc.Value.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
   }
 }

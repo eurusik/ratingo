@@ -20,9 +20,7 @@ interface SectionTitleProps {
 
 function SectionTitle({ children }: SectionTitleProps) {
   return (
-    <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-      {children}
-    </h2>
+    <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">{children}</h2>
   );
 }
 
@@ -40,9 +38,7 @@ export function SuitableForTags({ tags, label }: SuitableForTagsProps) {
 
   return (
     <section className="flex flex-wrap items-center gap-2">
-      <span className="text-xs text-zinc-500 uppercase tracking-wider">
-        {label}:
-      </span>
+      <span className="text-xs text-zinc-500 uppercase tracking-wider">{label}:</span>
       {tags.map((tag) => (
         <span
           key={tag}
@@ -69,12 +65,8 @@ export function OverviewSection({ title, overview }: OverviewSectionProps) {
 
   return (
     <section id="overview-section" className="space-y-2 scroll-mt-8">
-      <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
-        {title}
-      </h3>
-      <p className="text-base md:text-lg text-zinc-300 leading-relaxed">
-        {overview}
-      </p>
+      <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">{title}</h3>
+      <p className="text-base md:text-lg text-zinc-300 leading-relaxed">{overview}</p>
     </section>
   );
 }
@@ -98,7 +90,7 @@ export function TrailersSection({ title, videos, primaryTrailerKey }: TrailersSe
         <SectionTitle>{title}</SectionTitle>
         <TrailersCarousel
           videos={videos}
-          primaryTrailer={videos.find(v => v.key === primaryTrailerKey)}
+          primaryTrailer={videos.find((v) => v.key === primaryTrailerKey)}
         />
       </section>
       <Separator className="my-12 bg-zinc-800/50" />
@@ -124,12 +116,8 @@ export function CastCrewSection({ cast, crew }: CastCrewSectionProps) {
   return (
     <>
       <div className="space-y-8">
-        {hasCast && (
-          <CastCarousel cast={cast} crew={crew || []} />
-        )}
-        {hasCrew && (
-          <CrewCarousel crew={crew} />
-        )}
+        {hasCast && <CastCarousel cast={cast} crew={crew || []} />}
+        {hasCrew && <CrewCarousel crew={crew} />}
       </div>
       <Separator className="my-12 bg-zinc-800/50" />
     </>
@@ -168,9 +156,7 @@ interface DetailsContentProps {
 export function DetailsContent({ children }: DetailsContentProps) {
   return (
     <div className="bg-zinc-950">
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        {children}
-      </div>
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">{children}</div>
     </div>
   );
 }

@@ -1,28 +1,28 @@
-"use client"
+'use client';
 
-import * as React from 'react'
-import { Search } from 'lucide-react'
-import { useDebounce } from 'use-debounce'
+import * as React from 'react';
+import { Search } from 'lucide-react';
+import { useDebounce } from 'use-debounce';
 
-import { cn } from '../../../shared/utils'
-import { Input } from '../../../shared/ui/input'
-import { Button } from '../../../shared/ui/button'
+import { cn } from '../../../shared/utils';
+import { Input } from '../../../shared/ui/input';
+import { Button } from '../../../shared/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../../shared/ui/select'
+} from '../../../shared/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../../shared/ui/dropdown-menu'
-import { useTranslation } from '../../../shared/i18n'
+} from '../../../shared/ui/dropdown-menu';
+import { useTranslation } from '../../../shared/i18n';
 
-import { FilterBarProps, FilterConfig } from '../types'
+import { FilterBarProps, FilterConfig } from '../types';
 
 function FilterBar({
   searchValue = '',
@@ -31,25 +31,25 @@ function FilterBar({
   actions,
   className,
 }: FilterBarProps & { className?: string }) {
-  const [internalSearchValue, setInternalSearchValue] = React.useState(searchValue)
-  const [debouncedSearchValue] = useDebounce(internalSearchValue, 300)
-  const { dict } = useTranslation()
+  const [internalSearchValue, setInternalSearchValue] = React.useState(searchValue);
+  const [debouncedSearchValue] = useDebounce(internalSearchValue, 300);
+  const { dict } = useTranslation();
 
   // Update parent when debounced value changes
   React.useEffect(() => {
     if (onSearchChange && debouncedSearchValue !== searchValue) {
-      onSearchChange(debouncedSearchValue)
+      onSearchChange(debouncedSearchValue);
     }
-  }, [debouncedSearchValue, onSearchChange, searchValue])
+  }, [debouncedSearchValue, onSearchChange, searchValue]);
 
   // Update internal value when prop changes
   React.useEffect(() => {
-    setInternalSearchValue(searchValue)
-  }, [searchValue])
+    setInternalSearchValue(searchValue);
+  }, [searchValue]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInternalSearchValue(event.target.value)
-  }
+    setInternalSearchValue(event.target.value);
+  };
 
   const renderFilter = (filter: FilterConfig) => {
     switch (filter.type) {
@@ -57,7 +57,11 @@ function FilterBar({
         return (
           <Select key={filter.key}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={filter.placeholder || `${dict.admin.common.select || 'Select'} ${filter.label}`} />
+              <SelectValue
+                placeholder={
+                  filter.placeholder || `${dict.admin.common.select || 'Select'} ${filter.label}`
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               {filter.options?.map((option) => (
@@ -67,7 +71,7 @@ function FilterBar({
               ))}
             </SelectContent>
           </Select>
-        )
+        );
 
       case 'input':
         return (
@@ -76,7 +80,7 @@ function FilterBar({
             placeholder={filter.placeholder || filter.label}
             className="w-[180px]"
           />
-        )
+        );
 
       case 'date':
         return (
@@ -86,15 +90,15 @@ function FilterBar({
             placeholder={filter.placeholder || filter.label}
             className="w-[180px]"
           />
-        )
+        );
 
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
-    <div className={cn("flex items-center justify-between space-x-4", className)}>
+    <div className={cn('flex items-center justify-between space-x-4', className)}>
       <div className="flex items-center space-x-4">
         {/* Search Input */}
         {onSearchChange && (
@@ -114,13 +118,9 @@ function FilterBar({
       </div>
 
       {/* Actions */}
-      {actions && (
-        <div className="flex items-center space-x-2">
-          {actions}
-        </div>
-      )}
+      {actions && <div className="flex items-center space-x-2">{actions}</div>}
     </div>
-  )
+  );
 }
 
-export { FilterBar }
+export { FilterBar };

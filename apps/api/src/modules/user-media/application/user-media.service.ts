@@ -1,16 +1,17 @@
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  IUserMediaStateRepository,
-  ListWithMediaOptions,
-  USER_MEDIA_STATE_REPOSITORY,
-  UserMediaStats,
-  UpsertUserMediaStateData,
-} from '../domain/repositories/user-media-state.repository.interface';
-import { USER_MEDIA_STATE, UserMediaState } from '../domain/entities/user-media-state.entity';
-import { MediaType } from '../../../common/enums/media-type.enum';
-import { ImageDto } from '../../../common/dtos/image.dto';
-import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
+import { type CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
+import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
+import {
+  type IUserMediaStateRepository,
+  type ListWithMediaOptions,
+  USER_MEDIA_STATE_REPOSITORY,
+  type UserMediaStats,
+  type UpsertUserMediaStateData,
+} from '../domain/repositories/user-media-state.repository.interface';
 
 /**
  * Application service for user media state use cases.
@@ -92,7 +93,7 @@ export class UserMediaService {
    * @param {number} offset - Offset
    * @returns {Promise<UserMediaState[]>} States
    */
-  async list(userId: string, limit = 20, offset = 0): Promise<UserMediaState[]> {
+  async list(userId: string, limit = DEFAULT_PAGE_SIZE, offset = 0): Promise<UserMediaState[]> {
     return this.repo.listByUser(userId, limit, offset);
   }
 
@@ -118,7 +119,12 @@ export class UserMediaService {
    *   >
    * >} List of states with media summary
    */
-  async listWithMedia(userId: string, limit = 20, offset = 0, options?: ListWithMediaOptions) {
+  async listWithMedia(
+    userId: string,
+    limit = DEFAULT_PAGE_SIZE,
+    offset = 0,
+    options?: ListWithMediaOptions,
+  ) {
     const items = await this.repo.listWithMedia(userId, limit, offset, options);
     return this.cards.enrichUserMedia(items, { context: CARD_LIST_CONTEXT.USER_LIBRARY });
   }
@@ -134,7 +140,7 @@ export class UserMediaService {
    * @param {number} offset - Offset
    * @returns {Promise<any[]>} Continue items with media summary
    */
-  async listContinueWithMedia(userId: string, limit = 20, offset = 0) {
+  async listContinueWithMedia(userId: string, limit = DEFAULT_PAGE_SIZE, offset = 0) {
     const items = await this.repo.listContinueWithMedia(userId, limit, offset);
     return this.cards.enrichUserMedia(items, { context: CARD_LIST_CONTEXT.CONTINUE_LIST });
   }
@@ -170,7 +176,7 @@ export class UserMediaService {
    * @param {number} offset - Offset
    * @returns {Promise<any[]>} Activity list items
    */
-  async listActivityWithMedia(userId: string, limit = 20, offset = 0) {
+  async listActivityWithMedia(userId: string, limit = DEFAULT_PAGE_SIZE, offset = 0) {
     const items = await this.repo.listActivityWithMedia(userId, limit, offset);
     return this.cards.enrichUserMedia(items);
   }

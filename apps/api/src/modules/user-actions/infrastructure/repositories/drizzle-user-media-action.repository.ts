@@ -1,14 +1,17 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { and, desc, eq } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DEFAULT_BATCH_SIZE } from '../../../../common/constants';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
+import { type UserMediaAction } from '../../domain/entities/user-media-action.entity';
 import {
-  IUserMediaActionRepository,
-  CreateUserMediaActionData,
+  type IUserMediaActionRepository,
+  type CreateUserMediaActionData,
 } from '../../domain/repositories/user-media-action.repository.interface';
-import { UserMediaAction } from '../../domain/entities/user-media-action.entity';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 /**
  * Drizzle implementation of user media action repository.
@@ -60,7 +63,11 @@ export class DrizzleUserMediaActionRepository implements IUserMediaActionReposit
    * @param {number} offset - Offset
    * @returns {Promise<UserMediaAction[]>} Actions
    */
-  async listByUser(userId: string, limit = 50, offset = 0): Promise<UserMediaAction[]> {
+  async listByUser(
+    userId: string,
+    limit = DEFAULT_BATCH_SIZE,
+    offset = 0,
+  ): Promise<UserMediaAction[]> {
     try {
       const rows = await this.db
         .select()

@@ -1,7 +1,6 @@
-import { MovieStatus } from '../../../../common/enums/movie-status.enum';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { type MovieStatus } from '../../../../common/enums/movie-status.enum';
 import type { CardMeta } from '../../../shared/cards/domain/card.types';
-import { DatabaseTransaction } from '../types/transaction.type';
 import type {
   ImageData,
   VideoData,
@@ -12,6 +11,7 @@ import type {
   ExternalRatings,
 } from '../types/common.types';
 import type { WithTotal, CatalogSort, SortOrder, VoteSource } from '../types/query.types';
+import { type DatabaseTransaction } from '../types/transaction.type';
 
 // Re-export query types for convenience
 export type { WithTotal, CatalogSort, SortOrder, VoteSource } from '../types/query.types';

@@ -1,9 +1,20 @@
-import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
-import * as schema from '../../../../database/schema';
-import { InferInsertModel } from 'drizzle-orm';
+import { type InferInsertModel } from 'drizzle-orm';
+
+import type * as schema from '../../../../database/schema';
+import type {
+  NormalizedMedia,
+  NormalizedSeason,
+  NormalizedEpisode,
+} from '../../../ingestion/public';
 
 type MediaItemInsert = InferInsertModel<typeof schema.mediaItems>;
 type MediaStatsInsert = InferInsertModel<typeof schema.mediaStats>;
+
+/** Movie-specific details from NormalizedMedia.details */
+type MovieDetails = NonNullable<NormalizedMedia['details']>;
+
+/** Show-specific details from NormalizedMedia.details */
+type ShowDetails = NonNullable<NormalizedMedia['details']>;
 
 /**
  * Filters out undefined values from an object.
@@ -11,6 +22,14 @@ type MediaStatsInsert = InferInsertModel<typeof schema.mediaStats>;
  */
 const pickDefined = <T extends Record<string, unknown>>(obj: T): Partial<T> =>
   Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as Partial<T>;
+
+/**
+ * Converts a date value to Date object or null.
+ */
+function toDateOrNull(value: Date | string | null | undefined): Date | null {
+  if (!value) return null;
+  return value instanceof Date ? value : new Date(value);
+}
 
 export class PersistenceMapper {
   static toMediaItemInsert(media: NormalizedMedia): MediaItemInsert {
@@ -38,12 +57,7 @@ export class PersistenceMapper {
       popularity: media.popularity,
       trendingScore: media.trendingScore ?? 0,
       trendingRank: media.trendingRank ?? null,
-      trendingUpdatedAt:
-        media.trendingUpdatedAt instanceof Date
-          ? media.trendingUpdatedAt
-          : media.trendingUpdatedAt
-            ? new Date(media.trendingUpdatedAt)
-            : null,
+      trendingUpdatedAt: toDateOrNull(media.trendingUpdatedAt),
 
       // External Ratings
       ratingImdb: media.ratingImdb,
@@ -53,12 +67,7 @@ export class PersistenceMapper {
       ratingMetacritic: media.ratingMetacritic,
       ratingRottenTomatoes: media.ratingRottenTomatoes,
 
-      releaseDate:
-        media.releaseDate instanceof Date
-          ? media.releaseDate
-          : media.releaseDate
-            ? new Date(media.releaseDate)
-            : null,
+      releaseDate: toDateOrNull(media.releaseDate),
 
       // Origin metadata for catalog policy
       originCountries: media.originCountries || null,
@@ -69,19 +78,8 @@ export class PersistenceMapper {
   }
 
   static toMediaItemUpdate(media: NormalizedMedia): Partial<MediaItemInsert> {
-    const releaseDate =
-      media.releaseDate instanceof Date
-        ? media.releaseDate
-        : media.releaseDate
-          ? new Date(media.releaseDate)
-          : null;
-
-    const trendingUpdatedAt =
-      media.trendingUpdatedAt instanceof Date
-        ? media.trendingUpdatedAt
-        : media.trendingUpdatedAt
-          ? new Date(media.trendingUpdatedAt)
-          : new Date();
+    const releaseDate = toDateOrNull(media.releaseDate);
+    const trendingUpdatedAt = toDateOrNull(media.trendingUpdatedAt) ?? new Date();
 
     const update: Partial<MediaItemInsert> = {
       imdbId: media.externalIds.imdbId || null,
@@ -140,7 +138,10 @@ export class PersistenceMapper {
     };
   }
 
-  static toMovieInsert(mediaId: string, details: any): InferInsertModel<typeof schema.movies> {
+  static toMovieInsert(
+    mediaId: string,
+    details: MovieDetails,
+  ): InferInsertModel<typeof schema.movies> {
     return {
       mediaItemId: mediaId,
       runtime: details.runtime,
@@ -153,7 +154,7 @@ export class PersistenceMapper {
     };
   }
 
-  static toMovieUpdate(details: any): Partial<InferInsertModel<typeof schema.movies>> {
+  static toMovieUpdate(details: MovieDetails): Partial<InferInsertModel<typeof schema.movies>> {
     const update = pickDefined({
       runtime: details.runtime,
       budget: details.budget,
@@ -170,7 +171,10 @@ export class PersistenceMapper {
     return update;
   }
 
-  static toShowInsert(mediaId: string, details: any): InferInsertModel<typeof schema.shows> {
+  static toShowInsert(
+    mediaId: string,
+    details: ShowDetails,
+  ): InferInsertModel<typeof schema.shows> {
     return {
       mediaItemId: mediaId,
       totalSeasons: details.totalSeasons,
@@ -181,7 +185,7 @@ export class PersistenceMapper {
     };
   }
 
-  static toShowUpdate(details: any): Partial<InferInsertModel<typeof schema.shows>> {
+  static toShowUpdate(details: ShowDetails): Partial<InferInsertModel<typeof schema.shows>> {
     const update = pickDefined({
       totalSeasons: details.totalSeasons,
       totalEpisodes: details.totalEpisodes,
@@ -196,7 +200,10 @@ export class PersistenceMapper {
     return update;
   }
 
-  static toSeasonInsert(showId: string, season: any): InferInsertModel<typeof schema.seasons> {
+  static toSeasonInsert(
+    showId: string,
+    season: NormalizedSeason,
+  ): InferInsertModel<typeof schema.seasons> {
     return {
       showId: showId,
       tmdbId: season.tmdbId,
@@ -209,7 +216,9 @@ export class PersistenceMapper {
     };
   }
 
-  static toSeasonUpdate(season: any): Partial<InferInsertModel<typeof schema.seasons>> {
+  static toSeasonUpdate(
+    season: NormalizedSeason,
+  ): Partial<InferInsertModel<typeof schema.seasons>> {
     const update = pickDefined({
       tmdbId: season.tmdbId,
       name: season.name,
@@ -228,7 +237,7 @@ export class PersistenceMapper {
   static toEpisodeInsert(
     seasonId: string,
     showId: string,
-    episode: any,
+    episode: NormalizedEpisode,
   ): InferInsertModel<typeof schema.episodes> {
     return {
       seasonId: seasonId,
@@ -244,7 +253,9 @@ export class PersistenceMapper {
     };
   }
 
-  static toEpisodeUpdate(episode: any): Partial<InferInsertModel<typeof schema.episodes>> {
+  static toEpisodeUpdate(
+    episode: NormalizedEpisode,
+  ): Partial<InferInsertModel<typeof schema.episodes>> {
     const update = pickDefined({
       tmdbId: episode.tmdbId,
       title: episode.title,

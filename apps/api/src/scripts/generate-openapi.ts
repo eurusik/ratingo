@@ -1,10 +1,10 @@
 import { writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
 
-import { Test } from '@nestjs/testing';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { DocumentBuilder, SwaggerModule, OpenAPIObject } from '@nestjs/swagger';
 import { BullRegistrar, getQueueToken } from '@nestjs/bullmq';
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { DocumentBuilder, SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
+import { Test } from '@nestjs/testing';
 
 import { AppModule } from '../app.module';
 import { DATABASE_CONNECTION } from '../database/database.module';
@@ -176,7 +176,7 @@ const generateOpenApi = async (): Promise<void> => {
 
   wrapSuccessResponses(doc);
 
-  await writeFile(getOutputPath(), JSON.stringify(doc, null, 2) + '\n', 'utf8');
+  await writeFile(getOutputPath(), `${JSON.stringify(doc, null, 2)}\n`, 'utf8');
   await app.close();
 };
 

@@ -1,16 +1,19 @@
 import { Controller, Get, NotFoundException, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UsersService } from '../../application/users.service';
-import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { PublicUserProfileDto } from '../dto/public-user-profile.dto';
-import { ViewerContext } from '../../application/user-profile-visibility.policy';
-import { PublicUserMediaService } from '../../application/public-user-media.service';
+import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { type PublicUserMediaService } from '../../application/public-user-media.service';
+import { type ViewerContext } from '../../application/user-profile-visibility.policy';
+import { type UsersService } from '../../application/users.service';
 import {
-  PublicUserMediaListItemDto,
-  PublicUserMediaListQueryDto,
+  type PublicUserMediaListItemDto,
+  type PublicUserMediaListQueryDto,
   PaginatedPublicUserMediaResponseDto,
 } from '../dto/public-user-media.dto';
+import { type PublicUserProfileDto } from '../dto/public-user-profile.dto';
 
 /**
  * Exposes public user profile and list endpoints.
@@ -65,7 +68,7 @@ export class PublicUsersController {
     const result = await this.publicUserMediaService.getRatings(username, viewer, query);
     if (!result) throw new NotFoundException('User not found');
 
-    const limit = query?.limit ?? 20;
+    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query?.offset ?? 0;
     const items = result.data as PublicUserMediaListItemDto[];
 
@@ -101,7 +104,7 @@ export class PublicUsersController {
     const result = await this.publicUserMediaService.getWatchlist(username, viewer, query);
     if (!result) throw new NotFoundException('User not found');
 
-    const limit = query?.limit ?? 20;
+    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query?.offset ?? 0;
     const items = result.data as PublicUserMediaListItemDto[];
 
@@ -137,7 +140,7 @@ export class PublicUsersController {
     const result = await this.publicUserMediaService.getHistory(username, viewer, query);
     if (!result) throw new NotFoundException('User not found');
 
-    const limit = query?.limit ?? 20;
+    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query?.offset ?? 0;
     const items = result.data as PublicUserMediaListItemDto[];
 

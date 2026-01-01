@@ -34,10 +34,8 @@ export function BrowsePageHeader({
       </Link>
 
       <h1 className="text-3xl font-bold text-white">{title}</h1>
-      
-      {subtitle && (
-        <p className="text-zinc-400 mt-2">{subtitle}</p>
-      )}
+
+      {subtitle && <p className="text-zinc-400 mt-2">{subtitle}</p>}
     </header>
   );
 }

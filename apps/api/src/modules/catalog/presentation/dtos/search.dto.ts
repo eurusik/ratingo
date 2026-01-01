@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import { ImageDto } from '../../../../common/dtos/image.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 

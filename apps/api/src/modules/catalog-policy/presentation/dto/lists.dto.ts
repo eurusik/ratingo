@@ -5,10 +5,12 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsEnum, IsDate, IsBoolean, IsArray, IsOptional } from 'class-validator';
+
 import { Type } from 'class-transformer';
-import { ProgressStatsDto } from './run-status.dto';
+import { IsString, IsEnum, IsDate, IsBoolean, IsArray, IsOptional } from 'class-validator';
+
 import { PolicyDto } from './policy.dto';
+import { ProgressStatsDto } from './run-status.dto';
 
 // Re-export PolicyDto for convenience
 export { PolicyDto };

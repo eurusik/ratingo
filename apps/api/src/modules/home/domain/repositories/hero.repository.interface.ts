@@ -1,5 +1,5 @@
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { HeroMediaItem } from '../../../../common/types/hero-media.types';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
 
 /**
  * Repository interface for hero media items.

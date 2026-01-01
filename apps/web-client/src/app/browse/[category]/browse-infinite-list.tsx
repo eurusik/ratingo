@@ -39,9 +39,9 @@ export function BrowseInfiniteList({
       // Fetch next page via API route
       const response = await fetch(`/api/browse/${category}?page=${page}&limit=${pageSize}`);
       if (!response.ok) throw new Error('Failed to fetch');
-      
+
       const data = await response.json();
-      
+
       setItems((prev) => [...prev, ...data.items]);
       setHasMore(data.hasMore);
       setPage((p) => p + 1);

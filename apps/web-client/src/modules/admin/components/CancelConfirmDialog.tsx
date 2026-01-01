@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import {
   Dialog,
@@ -7,18 +7,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/shared/ui/dialog'
-import { Button } from '@/shared/ui/button'
-import { AlertTriangle, Loader2 } from 'lucide-react'
-import { useTranslation } from '@/shared/i18n'
+} from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
+import { AlertTriangle, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/shared/i18n';
 
 interface CancelConfirmDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onConfirm: () => Promise<void>
-  runId: string
-  policyName: string
-  isLoading?: boolean
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => Promise<void>;
+  runId: string;
+  policyName: string;
+  isLoading?: boolean;
 }
 
 export function CancelConfirmDialog({
@@ -29,22 +29,22 @@ export function CancelConfirmDialog({
   policyName,
   isLoading = false,
 }: CancelConfirmDialogProps) {
-  const { dict } = useTranslation()
-  
+  const { dict } = useTranslation();
+
   const handleConfirm = async () => {
     try {
-      await onConfirm()
-      onOpenChange(false)
+      await onConfirm();
+      onOpenChange(false);
     } catch (error) {
       // Error handled by parent component
     }
-  }
+  };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!isLoading) {
-      onOpenChange(newOpen)
+      onOpenChange(newOpen);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -60,25 +60,15 @@ export function CancelConfirmDialog({
                 .replace('{policyName}', policyName)
                 .replace('{runId}', runId)}
             </p>
-            <p className="text-muted-foreground">
-              {dict.admin.runDetail.confirmCancel.warning}
-            </p>
+            <p className="text-muted-foreground">{dict.admin.runDetail.confirmCancel.warning}</p>
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter className="mt-4">
-          <Button
-            variant="outline"
-            onClick={() => handleOpenChange(false)}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isLoading}>
             {dict.admin.runDetail.confirmCancel.keepRunning}
           </Button>
-          <Button
-            variant="destructive"
-            onClick={handleConfirm}
-            disabled={isLoading}
-          >
+          <Button variant="destructive" onClick={handleConfirm} disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -91,5 +81,5 @@ export function CancelConfirmDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

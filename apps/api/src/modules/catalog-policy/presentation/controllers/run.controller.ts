@@ -6,15 +6,17 @@
 
 import { Controller, Post, Get, Param, Body, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { PolicyActivationService } from '../../application/services/policy-activation.service';
-import { DiffService } from '../../application/services/diff.service';
+
+import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/constants';
+import { type DiffService } from '../../application/services/diff.service';
+import { type PolicyActivationService } from '../../application/services/policy-activation.service';
 import {
   PromoteOptionsDto,
   RunStatusDto,
   ActionResponseDto,
   DiffReportDto,
   RunsListDto,
-  EvaluationRunDto,
+  type EvaluationRunDto,
 } from '../dto';
 
 @ApiTags('Admin - Policy Activation')
@@ -58,7 +60,7 @@ export class RunController {
     @Query('limit') limitStr?: string,
     @Query('offset') offsetStr?: string,
   ): Promise<RunsListDto> {
-    const limit = limitStr ? parseInt(limitStr, 10) : 20;
+    const limit = limitStr ? parseInt(limitStr, 10) : DEFAULT_PAGE_SIZE;
     const offset = offsetStr ? parseInt(offsetStr, 10) : 0;
 
     const runs = await this.policyActivationService.listRuns({ limit, offset });
@@ -241,7 +243,7 @@ export class RunController {
     @Param('runId') runId: string,
     @Query('sampleSize') sampleSize?: string,
   ): Promise<DiffReportDto> {
-    const size = sampleSize ? parseInt(sampleSize, 10) : 50;
+    const size = sampleSize ? parseInt(sampleSize, 10) : DEFAULT_BATCH_SIZE;
     const diffReport = await this.diffService.computeDiff(runId, size);
 
     return {

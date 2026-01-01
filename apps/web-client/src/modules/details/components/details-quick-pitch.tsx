@@ -13,15 +13,10 @@ export interface DetailsQuickPitchProps {
 }
 
 export function DetailsQuickPitch({ pitch, suitableFor, dict }: DetailsQuickPitchProps) {
-
   return (
     <section className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800">
-      <h2 className="text-sm font-semibold text-zinc-400 mb-2">
-        {dict.details.quickPitch.title}
-      </h2>
-      <p className="text-white leading-relaxed mb-3">
-        {pitch}
-      </p>
+      <h2 className="text-sm font-semibold text-zinc-400 mb-2">{dict.details.quickPitch.title}</h2>
+      <p className="text-white leading-relaxed mb-3">{pitch}</p>
       {suitableFor && suitableFor.length > 0 && (
         <p className="text-sm text-zinc-400">
           <span className="text-zinc-500">{dict.details.quickPitch.suitable}:</span>{' '}

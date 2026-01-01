@@ -1,13 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq } from 'drizzle-orm';
-import {
-  IStatsRepository,
-  MediaStatsData,
-} from '../../domain/repositories/stats.repository.interface';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { DatabaseException } from '../../../../common/exceptions';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import {
+  type IStatsRepository,
+  type MediaStatsData,
+} from '../../domain/repositories/stats.repository.interface';
 
 /**
  * Drizzle ORM implementation of the Stats Repository.
@@ -19,7 +21,7 @@ export class DrizzleStatsRepository implements IStatsRepository {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   async upsert(stats: MediaStatsData): Promise<void> {

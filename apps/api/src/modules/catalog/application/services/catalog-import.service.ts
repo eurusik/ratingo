@@ -1,15 +1,17 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+
+import { type Queue } from 'bullmq';
+
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
+import { type TmdbAdapter } from '../../../tmdb/public';
 import {
-  IMediaRepository,
+  type IMediaRepository,
   MEDIA_REPOSITORY,
 } from '../../domain/repositories/media.repository.interface';
-import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
-import { ImportStatus, ImportResult } from '../../domain/types/import.types';
+import { ImportStatus, type ImportResult } from '../../domain/types/import.types';
 import { generateSlug } from '../../domain/utils/slug.utils';
 
 /**

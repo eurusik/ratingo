@@ -88,7 +88,7 @@ async function handleResponse<T>(promise: Promise<ApiResponse<T>>): Promise<T> {
 
   if (!response.success || !response.data) {
     throw ApiError.fromResponse(
-      response.error || { code: 'UNKNOWN', message: 'Unknown error', statusCode: 500 }
+      response.error || { code: 'UNKNOWN', message: 'Unknown error', statusCode: 500 },
     );
   }
 
@@ -120,7 +120,11 @@ export async function apiGet<T>(path: string, options?: Options): Promise<T> {
  * @returns Response data
  */
 export async function apiPost<T>(path: string, json?: unknown, options?: Options): Promise<T> {
-  return handleResponse(getClient().post(path, { json, ...options }).json<ApiResponse<T>>());
+  return handleResponse(
+    getClient()
+      .post(path, { json, ...options })
+      .json<ApiResponse<T>>(),
+  );
 }
 
 /**
@@ -132,7 +136,11 @@ export async function apiPost<T>(path: string, json?: unknown, options?: Options
  * @returns Response data
  */
 export async function apiPatch<T>(path: string, json?: unknown, options?: Options): Promise<T> {
-  return handleResponse(getClient().patch(path, { json, ...options }).json<ApiResponse<T>>());
+  return handleResponse(
+    getClient()
+      .patch(path, { json, ...options })
+      .json<ApiResponse<T>>(),
+  );
 }
 
 /**
@@ -144,7 +152,11 @@ export async function apiPatch<T>(path: string, json?: unknown, options?: Option
  * @returns Response data
  */
 export async function apiPut<T>(path: string, json?: unknown, options?: Options): Promise<T> {
-  return handleResponse(getClient().put(path, { json, ...options }).json<ApiResponse<T>>());
+  return handleResponse(
+    getClient()
+      .put(path, { json, ...options })
+      .json<ApiResponse<T>>(),
+  );
 }
 
 /**

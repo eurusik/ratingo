@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 import {
   Injectable,
   ConflictException,
@@ -5,17 +7,18 @@ import {
   Logger,
   Inject,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { randomUUID } from 'crypto';
-import { UsersService } from '../../users/application/users.service';
-import { PasswordHasher, PASSWORD_HASHER } from '../domain/services/password-hasher.interface';
+import { type ConfigType } from '@nestjs/config';
+import { type JwtService } from '@nestjs/jwt';
+
+import { MS_PER_SECOND, MS_PER_MINUTE, MS_PER_HOUR, MS_PER_DAY } from '../../../common/constants';
 import authConfig from '../../../config/auth.config';
-import { ConfigType } from '@nestjs/config';
+import { type UsersService } from '../../users/application/users.service';
+import { type User } from '../../users/domain/entities/user.entity';
 import {
-  IRefreshTokensRepository,
+  type IRefreshTokensRepository,
   REFRESH_TOKENS_REPOSITORY,
 } from '../domain/repositories/refresh-tokens.repository.interface';
-import { User } from '../../users/domain/entities/user.entity';
+import { type PasswordHasher, PASSWORD_HASHER } from '../domain/services/password-hasher.interface';
 
 export interface AuthTokens {
   accessToken: string;
@@ -231,13 +234,13 @@ export class AuthService {
     const unit = match[2];
     switch (unit) {
       case 's':
-        return value * 1000;
+        return value * MS_PER_SECOND;
       case 'm':
-        return value * 60 * 1000;
+        return value * MS_PER_MINUTE;
       case 'h':
-        return value * 60 * 60 * 1000;
+        return value * MS_PER_HOUR;
       case 'd':
-        return value * 24 * 60 * 60 * 1000;
+        return value * MS_PER_DAY;
       default:
         return value;
     }

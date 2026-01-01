@@ -9,7 +9,17 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
-import { Button, Input, Label, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  Label,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { REGION_GROUPS } from '@/shared/constants';
 import type { MeDto } from '@/core/api';
@@ -134,13 +144,11 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             autoComplete="username"
             className={cn(
               'bg-zinc-800 border-zinc-700 text-zinc-100',
-              errors.username && 'border-red-500 focus-visible:ring-red-500'
+              errors.username && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('username')}
           />
-          {errors.username && (
-            <p className="text-xs text-red-400">{errors.username.message}</p>
-          )}
+          {errors.username && <p className="text-xs text-red-400">{errors.username.message}</p>}
           {usernameChanged && !errors.username && (
             <p className="text-xs text-yellow-400">{dict.settings.profile.usernameHint}</p>
           )}
@@ -157,13 +165,11 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             placeholder={dict.settings.profile.bioPlaceholder}
             className={cn(
               'flex w-full rounded-md border bg-zinc-800 border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 disabled:cursor-not-allowed disabled:opacity-50',
-              errors.bio && 'border-red-500 focus-visible:ring-red-500'
+              errors.bio && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('bio')}
           />
-          {errors.bio && (
-            <p className="text-xs text-red-400">{errors.bio.message}</p>
-          )}
+          {errors.bio && <p className="text-xs text-red-400">{errors.bio.message}</p>}
         </div>
 
         {/* Location */}
@@ -177,13 +183,11 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             placeholder={dict.settings.profile.locationPlaceholder}
             className={cn(
               'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
-              errors.location && 'border-red-500 focus-visible:ring-red-500'
+              errors.location && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('location')}
           />
-          {errors.location && (
-            <p className="text-xs text-red-400">{errors.location.message}</p>
-          )}
+          {errors.location && <p className="text-xs text-red-400">{errors.location.message}</p>}
         </div>
 
         {/* Website */}
@@ -197,13 +201,11 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             placeholder={dict.settings.profile.websitePlaceholder}
             className={cn(
               'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
-              errors.website && 'border-red-500 focus-visible:ring-red-500'
+              errors.website && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('website')}
           />
-          {errors.website && (
-            <p className="text-xs text-red-400">{errors.website.message}</p>
-          )}
+          {errors.website && <p className="text-xs text-red-400">{errors.website.message}</p>}
         </div>
 
         {/* Language & Region */}
@@ -252,11 +254,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
         )}
 
         {/* Submit button */}
-        <Button
-          type="submit"
-          disabled={isSubmitting || !isDirty}
-          className="w-full"
-        >
+        <Button type="submit" disabled={isSubmitting || !isDirty} className="w-full">
           {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
           {isSubmitting ? dict.settings.saving : dict.common.save}
         </Button>

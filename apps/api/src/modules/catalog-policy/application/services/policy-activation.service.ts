@@ -8,33 +8,39 @@
  * Phase 2 (Promote): Atomically switch active policy after verification
  */
 
+import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
+import { type Queue } from 'bullmq';
 import { eq, and, isNull, lte, sql } from 'drizzle-orm';
-import {
-  ICatalogPolicyRepository,
-  CATALOG_POLICY_REPOSITORY,
-} from '../../infrastructure/repositories/catalog-policy.repository';
-import {
-  ICatalogEvaluationRunRepository,
-  CATALOG_EVALUATION_RUN_REPOSITORY,
-} from '../../infrastructure/repositories/catalog-evaluation-run.repository';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
 import {
   RunStatus as RunStatusEnum,
-  RunStatusType,
+  type RunStatusType,
   CANCELLABLE_RUN_STATUSES,
   BlockingReasonCode,
-  BlockingReasonType,
+  type BlockingReasonType,
 } from '../../domain/constants/evaluation.constants';
-import { InvalidRunStateTransitionError } from '../../domain/errors';
-import { RunAggregationService } from './run-aggregation.service';
-import { CatalogPolicyService } from './catalog-policy.service';
+import {
+  type ICatalogEvaluationRunRepository,
+  CATALOG_EVALUATION_RUN_REPOSITORY,
+} from '../../infrastructure/repositories/catalog-evaluation-run.repository';
+import {
+  type ICatalogPolicyRepository,
+  CATALOG_POLICY_REPOSITORY,
+} from '../../infrastructure/repositories/catalog-policy.repository';
+
+import { type CatalogPolicyService } from './catalog-policy.service';
+import { type RunAggregationService } from './run-aggregation.service';
+
+// Constants
+const DEFAULT_BATCH_SIZE = 500;
+const PERCENT_MULTIPLIER = 100;
 
 export interface PrepareOptions {
   batchSize?: number; // default: 500
@@ -183,7 +189,7 @@ export class PolicyActivationService {
       {
         runId: run.id,
         policyVersion: policy.version,
-        batchSize: options?.batchSize || 500,
+        batchSize: options?.batchSize || DEFAULT_BATCH_SIZE,
       },
       {
         jobId: `reeval:${policy.version}:${run.id}`,
@@ -317,7 +323,7 @@ export class PolicyActivationService {
     if (coverage < coverageThreshold) {
       return {
         success: false,
-        error: `Coverage ${(coverage * 100).toFixed(1)}% is below threshold ${(coverageThreshold * 100).toFixed(1)}%`,
+        error: `Coverage ${(coverage * PERCENT_MULTIPLIER).toFixed(1)}% is below threshold ${(coverageThreshold * PERCENT_MULTIPLIER).toFixed(1)}%`,
       };
     }
 

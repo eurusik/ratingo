@@ -5,6 +5,8 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsNumber,
@@ -16,7 +18,6 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
 /**
  * Valid rating sources for breakout rules.

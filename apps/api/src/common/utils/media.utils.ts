@@ -1,4 +1,4 @@
-import { NEW_RELEASE_WINDOW_DAYS } from '../constants';
+import { MS_PER_DAY, NEW_RELEASE_WINDOW_DAYS } from '../constants';
 
 /**
  * Rating source labels for context display (matches verdict types).
@@ -50,7 +50,7 @@ export function isNewRelease(
 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  const diffDays = diffMs / MS_PER_DAY;
   return diffDays >= 0 && diffDays <= windowDays;
 }
 
@@ -62,7 +62,8 @@ export function hasRecentEpisode(nextAirDate: Date | string | null): boolean {
   const date = nextAirDate instanceof Date ? nextAirDate : new Date(nextAirDate);
   if (isNaN(date.getTime())) return false;
 
+  const DAYS_IN_WEEK = 7;
   const now = new Date();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const weekAgo = new Date(now.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
   return date >= weekAgo && date <= now;
 }

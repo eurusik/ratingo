@@ -1,5 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
+
 import { ErrorCode } from '../enums/error-code.enum';
+
 import { AppException } from './app.exception';
 
 /**
@@ -32,7 +34,7 @@ export class DatabaseException extends AppException {
   constructor(
     message: string = 'Database error occurred',
     cause?: unknown,
-    details?: Record<string, any>,
+    details?: Record<string, unknown>,
   ) {
     super(ErrorCode.DATABASE_ERROR, message, HttpStatus.INTERNAL_SERVER_ERROR, details);
     this.cause = cause;

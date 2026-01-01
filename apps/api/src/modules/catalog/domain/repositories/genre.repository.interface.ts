@@ -1,4 +1,4 @@
-import { DatabaseTransaction } from '../types/transaction.type';
+import { type DatabaseTransaction } from '../types/transaction.type';
 
 /**
  * Genre data for syncing.

@@ -29,7 +29,7 @@ export class ApiError extends Error {
     public readonly code: string,
     public readonly statusCode: number,
     message: string,
-    public readonly details?: unknown
+    public readonly details?: unknown,
   ) {
     super(message);
     this.name = 'ApiError';

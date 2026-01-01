@@ -1,50 +1,51 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { DrizzleMediaRepository } from './infrastructure/repositories/drizzle-media.repository';
-import { DrizzleGenreRepository } from './infrastructure/repositories/drizzle-genre.repository';
-import { DrizzleShowRepository } from './infrastructure/repositories/drizzle-show.repository';
-import { DrizzleMovieRepository } from './infrastructure/repositories/drizzle-movie.repository';
-import { CatalogMoviesController } from './presentation/controllers/catalog.movies.controller';
-import { CatalogShowsController } from './presentation/controllers/catalog.shows.controller';
-import { CatalogSearchController } from './presentation/controllers/catalog.search.controller';
-import { CatalogProvidersController } from './presentation/controllers/catalog.providers.controller';
-import { MEDIA_REPOSITORY } from './domain/repositories/media.repository.interface';
-import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface';
+
+import { HERO_REPOSITORY } from '../home/public';
+import { INGESTION_QUEUE } from '../ingestion/public';
+import { CardsModule } from '../shared/cards/cards.module';
+import { TmdbModule } from '../tmdb/public';
+import { UserMediaModule } from '../user-media/user-media.module';
+
+import { CatalogImportService } from './application/services/catalog-import.service';
+import { CatalogSearchService } from './application/services/catalog-search.service';
+import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
+import { MovieDetailsService } from './application/services/movie-details.service';
 import { GENRE_REPOSITORY } from './domain/repositories/genre.repository.interface';
+import { MEDIA_REPOSITORY } from './domain/repositories/media.repository.interface';
 import { MOVIE_REPOSITORY } from './domain/repositories/movie.repository.interface';
 import { PROVIDERS_REPOSITORY } from './domain/repositories/providers.repository.interface';
+import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface';
+import { HeroRepositoryAdapter } from './infrastructure/adapters/hero.repository.adapter';
+import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
+import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
+import { MovieDetailsQuery } from './infrastructure/queries/movie-details.query';
+import { MovieListingsQuery } from './infrastructure/queries/movie-listings.query';
+import { NewEpisodesQuery } from './infrastructure/queries/new-episodes.query';
+import { ProvidersQuery } from './infrastructure/queries/providers.query';
+import { GenreQuery } from './infrastructure/queries/shared/genre.query';
+import { ShowDetailsQuery } from './infrastructure/queries/show-details.query';
+import { TrendingMoviesQuery } from './infrastructure/queries/trending-movies.query';
+import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
+import { DrizzleGenreRepository } from './infrastructure/repositories/drizzle-genre.repository';
+import { DrizzleMediaRepository } from './infrastructure/repositories/drizzle-media.repository';
+import { DrizzleMovieRepository } from './infrastructure/repositories/drizzle-movie.repository';
+import { DrizzleShowRepository } from './infrastructure/repositories/drizzle-show.repository';
 import { DrizzleProvidersRepository } from './infrastructure/repositories/providers.repository';
+import { CatalogMoviesController } from './presentation/controllers/catalog.movies.controller';
+import { CatalogProvidersController } from './presentation/controllers/catalog.providers.controller';
+import { CatalogSearchController } from './presentation/controllers/catalog.search.controller';
+import { CatalogShowsController } from './presentation/controllers/catalog.shows.controller';
 
 // Query Objects - Shows
-import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
-import { ShowDetailsQuery } from './infrastructure/queries/show-details.query';
-import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
-import { NewEpisodesQuery } from './infrastructure/queries/new-episodes.query';
 
 // Query Objects - Movies
-import { MovieDetailsQuery } from './infrastructure/queries/movie-details.query';
-import { TrendingMoviesQuery } from './infrastructure/queries/trending-movies.query';
-import { MovieListingsQuery } from './infrastructure/queries/movie-listings.query';
 
 // Query Objects - Mixed Media
-import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
 
 // Query Objects - Shared
-import { GenreQuery } from './infrastructure/queries/shared/genre.query';
-import { ProvidersQuery } from './infrastructure/queries/providers.query';
 
 // Adapters
-import { HeroRepositoryAdapter } from './infrastructure/adapters/hero.repository.adapter';
-import { HERO_REPOSITORY } from '../home/domain/repositories/hero.repository.interface';
-
-import { CatalogSearchService } from './application/services/catalog-search.service';
-import { CatalogImportService } from './application/services/catalog-import.service';
-import { MovieDetailsService } from './application/services/movie-details.service';
-import { TmdbModule } from '../tmdb/tmdb.module';
-import { BullModule } from '@nestjs/bullmq';
-import { INGESTION_QUEUE } from '../ingestion/ingestion.constants';
-import { UserMediaModule } from '../user-media/user-media.module';
-import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
-import { CardsModule } from '../shared/cards/cards.module';
 
 /**
  * Catalog module.

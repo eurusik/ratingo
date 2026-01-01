@@ -1,5 +1,5 @@
-import { HeroMediaItem } from '../../../../common/types/hero-media.types';
-import { HeroItemDto, HeroShowProgressDto } from '../dtos/hero-item.dto';
+import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
+import { HeroItemDto, type HeroShowProgressDto } from '../dtos/hero-item.dto';
 
 const EMPTY_IMAGE = { small: '', medium: '', large: '', original: '' };
 

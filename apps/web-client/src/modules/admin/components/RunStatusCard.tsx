@@ -2,83 +2,88 @@
  * RunStatusCard - Displays detailed run status information
  */
 
-'use client'
+'use client';
 
-import * as React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/card'
-import { Badge } from '../../../shared/ui/badge'
-import { Progress } from '../../../shared/ui/progress'
-import { Button } from '../../../shared/ui/button'
-import { RefreshCw, Play, X } from 'lucide-react'
-import { StatusBadge } from './StatusBadge'
-import { useTranslation } from '../../../shared/i18n'
-import { useRunStatus, usePromoteRun, useCancelRun } from '../../../core/query'
-import { toast } from 'sonner'
+import * as React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/card';
+import { Badge } from '../../../shared/ui/badge';
+import { Progress } from '../../../shared/ui/progress';
+import { Button } from '../../../shared/ui/button';
+import { RefreshCw, Play, X } from 'lucide-react';
+import { StatusBadge } from './StatusBadge';
+import { useTranslation } from '../../../shared/i18n';
+import { useRunStatus, usePromoteRun, useCancelRun } from '../../../core/query';
+import { toast } from 'sonner';
 
 interface RunStatusCardProps {
-  runId: string
-  autoRefresh?: boolean
-  onPromote?: () => void
-  onCancel?: () => void
+  runId: string;
+  autoRefresh?: boolean;
+  onPromote?: () => void;
+  onCancel?: () => void;
 }
 
-export function RunStatusCard({ 
-  runId, 
+export function RunStatusCard({
+  runId,
   autoRefresh = true,
   onPromote,
-  onCancel 
+  onCancel,
 }: RunStatusCardProps) {
-  const { dict } = useTranslation()
-  const { data: runStatus, isLoading, error, refetch } = useRunStatus({ 
-    runId, 
-    autoRefresh 
-  })
+  const { dict } = useTranslation();
+  const {
+    data: runStatus,
+    isLoading,
+    error,
+    refetch,
+  } = useRunStatus({
+    runId,
+    autoRefresh,
+  });
 
-  const promoteRunMutation = usePromoteRun()
-  const cancelRunMutation = useCancelRun()
+  const promoteRunMutation = usePromoteRun();
+  const cancelRunMutation = useCancelRun();
 
   const handlePromote = async () => {
-    if (!runStatus) return
+    if (!runStatus) return;
 
     try {
-      const result = await promoteRunMutation.mutateAsync({ 
+      const result = await promoteRunMutation.mutateAsync({
         runId,
-        policyId: runStatus.targetPolicyId 
-      })
-      
+        policyId: runStatus.targetPolicyId,
+      });
+
       if (result.success) {
-        toast.success(result.message || dict.admin.runDetail.toast.promoteSuccess)
-        onPromote?.()
+        toast.success(result.message || dict.admin.runDetail.toast.promoteSuccess);
+        onPromote?.();
       } else {
-        toast.error(result.error || dict.admin.runDetail.toast.promoteFailed)
+        toast.error(result.error || dict.admin.runDetail.toast.promoteFailed);
       }
     } catch (error) {
-      console.error('Failed to promote run:', error)
-      toast.error(dict.admin.runDetail.toast.promoteFailed)
+      console.error('Failed to promote run:', error);
+      toast.error(dict.admin.runDetail.toast.promoteFailed);
     }
-  }
+  };
 
   const handleCancel = async () => {
-    if (!runStatus) return
+    if (!runStatus) return;
 
     try {
-      const result = await cancelRunMutation.mutateAsync(runId)
-      
+      const result = await cancelRunMutation.mutateAsync(runId);
+
       if (result.success) {
-        toast.success(result.message || dict.admin.runDetail.toast.cancelSuccess)
-        onCancel?.()
+        toast.success(result.message || dict.admin.runDetail.toast.cancelSuccess);
+        onCancel?.();
       } else {
-        toast.error(result.error || dict.admin.runDetail.toast.cancelFailed)
+        toast.error(result.error || dict.admin.runDetail.toast.cancelFailed);
       }
     } catch (error) {
-      console.error('Failed to cancel run:', error)
-      toast.error(dict.admin.runDetail.toast.cancelFailed)
+      console.error('Failed to cancel run:', error);
+      toast.error(dict.admin.runDetail.toast.cancelFailed);
     }
-  }
+  };
 
   const handleRefresh = () => {
-    refetch()
-  }
+    refetch();
+  };
 
   if (isLoading && !runStatus) {
     return (
@@ -91,7 +96,7 @@ export function RunStatusCard({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (error) {
@@ -107,13 +112,14 @@ export function RunStatusCard({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
-  if (!runStatus) return null
+  if (!runStatus) return null;
 
-  const progress = runStatus.progress
-  const percentage = progress.total > 0 ? Math.round((progress.processed / progress.total) * 100) : 0
+  const progress = runStatus.progress;
+  const percentage =
+    progress.total > 0 ? Math.round((progress.processed / progress.total) * 100) : 0;
 
   return (
     <Card>
@@ -126,28 +132,24 @@ export function RunStatusCard({
         </div>
         <div className="flex items-center space-x-2">
           <StatusBadge status={runStatus.status} />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
+          <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {/* Progress */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{dict.admin.runDetail.progress.title}</span>
             <span className="text-sm text-muted-foreground">
-              {progress.processed}/{progress.total} ({percentage}% {dict.admin.runDetail.progress.complete})
+              {progress.processed}/{progress.total} ({percentage}%{' '}
+              {dict.admin.runDetail.progress.complete})
             </span>
           </div>
           <Progress value={percentage} className="h-2" />
-          
+
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className="text-xs">
               {progress.eligible} {dict.admin.runs.progress.eligible}
@@ -185,9 +187,7 @@ export function RunStatusCard({
         {/* Blocking reasons */}
         {runStatus.blockingReasons.length > 0 && (
           <div className="space-y-2">
-            <span className="text-sm font-medium text-destructive">
-              Cannot promote
-            </span>
+            <span className="text-sm font-medium text-destructive">Cannot promote</span>
             <ul className="text-sm text-muted-foreground space-y-1">
               {runStatus.blockingReasons.map((reason, index) => (
                 <li key={index}>• {String(reason)}</li>
@@ -212,7 +212,7 @@ export function RunStatusCard({
               {dict.admin.runDetail.actions.promote}
             </Button>
           )}
-          
+
           {runStatus.status === 'running' && (
             <Button
               variant="destructive"
@@ -231,5 +231,5 @@ export function RunStatusCard({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

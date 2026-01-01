@@ -43,4 +43,9 @@ export type ShowStatus = components['schemas']['ShowResponseDto']['status'];
 export type SubscriptionTrigger = components['schemas']['SubscribeDto']['trigger'];
 
 /** Reason why subscription is unavailable (null when subscription is available) */
-export type SubscriptionUnavailableReason = 'ended' | 'canceled' | 'no_date' | 'already_available' | null;
+export type SubscriptionUnavailableReason =
+  | 'ended'
+  | 'canceled'
+  | 'no_date'
+  | 'already_available'
+  | null;

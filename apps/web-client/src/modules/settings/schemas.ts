@@ -15,19 +15,9 @@ export function createProfileSchema(dict: Dict) {
       .min(3, dict.settings.validation.usernameMin)
       .max(20, dict.settings.validation.usernameMax)
       .regex(/^[a-zA-Z0-9_]+$/, dict.settings.validation.usernameFormat),
-    bio: z
-      .string()
-      .max(500, dict.settings.validation.bioMax)
-      .optional(),
-    location: z
-      .string()
-      .max(100, dict.settings.validation.locationMax)
-      .optional(),
-    website: z
-      .string()
-      .url(dict.settings.validation.websiteInvalid)
-      .optional()
-      .or(z.literal('')),
+    bio: z.string().max(500, dict.settings.validation.bioMax).optional(),
+    location: z.string().max(100, dict.settings.validation.locationMax).optional(),
+    website: z.string().url(dict.settings.validation.websiteInvalid).optional().or(z.literal('')),
     preferredLanguage: z.enum(['uk', 'en']).optional(),
     preferredRegion: z.string().optional(),
   });

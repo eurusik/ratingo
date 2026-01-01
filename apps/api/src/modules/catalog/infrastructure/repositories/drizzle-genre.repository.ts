@@ -1,15 +1,16 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { inArray } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { DatabaseException } from '../../../../common/exceptions';
-import { IGenreRepository, GenreData } from '../../domain/repositories/genre.repository.interface';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import {
-  DatabaseTransaction,
-  toDrizzleTx,
-  DrizzleTransaction,
-} from '../../domain/types/transaction.type';
+  type IGenreRepository,
+  type GenreData,
+} from '../../domain/repositories/genre.repository.interface';
+import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
 
 /**
  * Drizzle implementation of IGenreRepository.

@@ -5,6 +5,8 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsNumber,
@@ -14,7 +16,6 @@ import {
   IsArray,
   IsOptional,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
 /**
  * Progress statistics DTO.

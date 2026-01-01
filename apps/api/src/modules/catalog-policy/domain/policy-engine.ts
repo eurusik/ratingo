@@ -5,22 +5,22 @@
  * All functions are pure (no side effects) for deterministic, testable behavior.
  */
 
-import {
-  Evaluation,
-  PolicyConfig,
-  PolicyEngineInput,
-  BreakoutRule,
-  EvaluationContext,
-  EvaluationOptions,
-  GlobalRequirements,
-} from './types/policy.types';
+import { type ContentClass } from './classification.service';
 import {
   EligibilityStatus,
   EvaluationReason,
-  EvaluationReasonType,
+  type EvaluationReasonType,
 } from './constants/evaluation.constants';
-import { ContentClass } from './classification.service';
 import { resolveCanonicalProvider } from './constants/provider-mapping';
+import {
+  type Evaluation,
+  type PolicyConfig,
+  type PolicyEngineInput,
+  type BreakoutRule,
+  type EvaluationContext,
+  type EvaluationOptions,
+  type GlobalRequirements,
+} from './types/policy.types';
 
 /**
  * Default contexts where gate applies when appliesTo not configured.
@@ -121,7 +121,7 @@ export function evaluateEligibility(
           reasons: [EvaluationReason.EXCLUDED_CONTENT_CLASS],
           breakoutRuleId: null,
           globalGateDetails: {
-            failedChecks: gateResult.failedChecks as any,
+            failedChecks: gateResult.failedChecks,
           },
         };
       }
@@ -173,7 +173,7 @@ export function evaluateEligibility(
           reasons,
           breakoutRuleId: null,
           globalGateDetails: {
-            failedChecks: gateResult.failedChecks as any,
+            failedChecks: gateResult.failedChecks,
           },
         };
       }
@@ -205,7 +205,7 @@ export function evaluateEligibility(
         reasons: [EvaluationReason.MISSING_GLOBAL_SIGNALS],
         breakoutRuleId: null,
         globalGateDetails: {
-          failedChecks: gateResult.failedChecks as any,
+          failedChecks: gateResult.failedChecks,
         },
       };
     }
@@ -216,25 +216,8 @@ export function evaluateEligibility(
 
   if (isNeutral) {
     // Neutral content is INELIGIBLE unless eligibilityMode is RELAXED
-    if (policy.eligibilityMode === 'RELAXED') {
-      // In RELAXED mode, neutral is allowed if at least one dimension is allowed
-      const hasAllowedCountry = mediaItem.originCountries.some((c) =>
-        policy.allowedCountries.includes(c),
-      );
-      const hasAllowedLanguage = policy.allowedLanguages.includes(mediaItem.originalLanguage);
-
-      if (hasAllowedCountry || hasAllowedLanguage) {
-        // Clear neutral reasons and add actual allowed reasons for accurate audit trail
-        const allowedReasons: EvaluationReasonType[] = [];
-        if (hasAllowedCountry) allowedReasons.push(EvaluationReason.ALLOWED_COUNTRY);
-        if (hasAllowedLanguage) allowedReasons.push(EvaluationReason.ALLOWED_LANGUAGE);
-        return {
-          status: EligibilityStatus.ELIGIBLE,
-          reasons: allowedReasons,
-          breakoutRuleId: null,
-        };
-      }
-    }
+    const relaxedResult = tryRelaxedModeEligibility(mediaItem, policy);
+    if (relaxedResult) return relaxedResult;
 
     return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
   }
@@ -245,6 +228,36 @@ export function evaluateEligibility(
   reasons.push(EvaluationReason.ALLOWED_LANGUAGE);
 
   return { status: EligibilityStatus.ELIGIBLE, reasons, breakoutRuleId: null };
+}
+
+/**
+ * Checks if neutral content can be eligible under RELAXED mode.
+ * Returns evaluation result if eligible, null otherwise.
+ */
+function tryRelaxedModeEligibility(
+  mediaItem: PolicyEngineInput['mediaItem'],
+  policy: PolicyConfig,
+): Evaluation | null {
+  if (policy.eligibilityMode !== 'RELAXED') return null;
+
+  // In RELAXED mode, neutral is allowed if at least one dimension is allowed
+  const hasAllowedCountry = mediaItem.originCountries!.some((c) =>
+    policy.allowedCountries.includes(c),
+  );
+  const hasAllowedLanguage = policy.allowedLanguages.includes(mediaItem.originalLanguage!);
+
+  if (!hasAllowedCountry && !hasAllowedLanguage) return null;
+
+  // Build allowed reasons for accurate audit trail
+  const allowedReasons: EvaluationReasonType[] = [];
+  if (hasAllowedCountry) allowedReasons.push(EvaluationReason.ALLOWED_COUNTRY);
+  if (hasAllowedLanguage) allowedReasons.push(EvaluationReason.ALLOWED_LANGUAGE);
+
+  return {
+    status: EligibilityStatus.ELIGIBLE,
+    reasons: allowedReasons,
+    breakoutRuleId: null,
+  };
 }
 
 /**
@@ -268,26 +281,15 @@ function checkBlocked(
   );
 
   if (blockedCountries.length > 0) {
-    if (policy.blockedCountryMode === 'ANY') {
-      // ANY mode: any blocked country = blocked
+    const isCountryBlocked = isBlockedByCountryRule(
+      blockedCountries.length,
+      mediaItem.originCountries!.length,
+      policy.blockedCountryMode,
+    );
+
+    if (isCountryBlocked) {
       reasons.push(EvaluationReason.BLOCKED_COUNTRY);
       isBlocked = true;
-    } else {
-      // MAJORITY mode with tie-breaker
-      const totalCountries = mediaItem.originCountries!.length;
-
-      // Tie-breaker: for 1-2 countries, fallback to ANY
-      if (totalCountries <= 2) {
-        reasons.push(EvaluationReason.BLOCKED_COUNTRY);
-        isBlocked = true;
-      } else {
-        // For 3+ countries, use majority rule
-        const majority = Math.ceil(totalCountries / 2);
-        if (blockedCountries.length >= majority) {
-          reasons.push(EvaluationReason.BLOCKED_COUNTRY);
-          isBlocked = true;
-        }
-      }
     }
   }
 
@@ -298,6 +300,25 @@ function checkBlocked(
   }
 
   return isBlocked;
+}
+
+/**
+ * Determines if content is blocked based on country blocking mode.
+ */
+function isBlockedByCountryRule(
+  blockedCount: number,
+  totalCountries: number,
+  mode: 'ANY' | 'MAJORITY',
+): boolean {
+  // ANY mode: any blocked country = blocked
+  if (mode === 'ANY') return true;
+
+  // MAJORITY mode with tie-breaker: for 1-2 countries, fallback to ANY
+  if (totalCountries <= 2) return true;
+
+  // For 3+ countries, use majority rule
+  const majority = Math.ceil(totalCountries / 2);
+  return blockedCount >= majority;
 }
 
 /**
@@ -432,7 +453,7 @@ function matchesBreakoutRule(
 function hasAnyProvider(
   mediaItem: PolicyEngineInput['mediaItem'],
   requiredProviders: string[],
-  policy: PolicyConfig,
+  _policy: PolicyConfig,
 ): boolean {
   if (!mediaItem.watchProviders) {
     return false;
@@ -496,6 +517,12 @@ function hasAnyRating(
   return false;
 }
 
+/** Valid failed check types for global gate */
+type GlobalGateFailedCheck =
+  | 'minQualityScoreNormalized'
+  | 'requireAnyOfRatingsPresent'
+  | 'minVotesAnyOf';
+
 /**
  * Checks if media meets global quality requirements.
  * All configured conditions are combined with AND logic.
@@ -507,12 +534,12 @@ function hasAnyRating(
 function checkGlobalRequirements(
   input: PolicyEngineInput,
   requirements: PolicyConfig['globalRequirements'],
-): { passes: boolean; failedChecks: string[] } {
+): { passes: boolean; failedChecks: GlobalGateFailedCheck[] } {
   if (!requirements) {
     return { passes: true, failedChecks: [] };
   }
 
-  const failedChecks: string[] = [];
+  const failedChecks: GlobalGateFailedCheck[] = [];
   const { mediaItem } = input;
 
   // Check minQualityScoreNormalized (null/undefined = fail)
@@ -563,7 +590,13 @@ function checkGlobalRequirements(
  * @param policy - Policy configuration
  * @returns Relevance score in range [0, 100]
  */
-export function computeRelevance(input: PolicyEngineInput, policy: PolicyConfig): number {
+export function computeRelevance(input: PolicyEngineInput, _policy: PolicyConfig): number {
+  // Relevance weights
+  const QUALITY_WEIGHT = 0.4;
+  const POPULARITY_WEIGHT = 0.4;
+  const FRESHNESS_WEIGHT = 0.2;
+  const MAX_SCORE = 100;
+
   if (!input.stats) {
     return 0;
   }
@@ -581,17 +614,20 @@ export function computeRelevance(input: PolicyEngineInput, policy: PolicyConfig)
   const safeFreshness = Number.isNaN(freshness) ? 0 : freshness;
 
   // Weighted average: quality 40%, popularity 40%, freshness 20%
-  const normalized = safeQuality * 0.4 + safePopularity * 0.4 + safeFreshness * 0.2;
+  const normalized =
+    safeQuality * QUALITY_WEIGHT +
+    safePopularity * POPULARITY_WEIGHT +
+    safeFreshness * FRESHNESS_WEIGHT;
 
   // Scale to 0-100 and round
-  const result = Math.round(normalized * 100);
+  const result = Math.round(normalized * MAX_SCORE);
 
   // Final guard: ensure result is in valid range
   if (Number.isNaN(result) || result < 0) {
     return 0;
   }
-  if (result > 100) {
-    return 100;
+  if (result > MAX_SCORE) {
+    return MAX_SCORE;
   }
 
   return result;
@@ -604,7 +640,7 @@ export function computeRelevance(input: PolicyEngineInput, policy: PolicyConfig)
  * @returns Dictionary of reason descriptions
  */
 export function getReasonDescriptions(
-  reasons: EvaluationReasonType[],
+  _reasons: EvaluationReasonType[],
 ): Record<EvaluationReasonType, string> {
   const descriptions: Record<EvaluationReasonType, string> = {
     [EvaluationReason.MISSING_ORIGIN_COUNTRY]: 'Origin country information is missing',

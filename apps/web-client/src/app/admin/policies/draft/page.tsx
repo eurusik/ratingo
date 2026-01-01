@@ -1,14 +1,14 @@
-"use client"
+'use client';
 
-import { Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, AlertCircle } from 'lucide-react'
-import { Button } from '@/shared/ui/button'
-import { toast } from 'sonner'
-import { useTranslation } from '@/shared/i18n'
-import { usePolicyDetail, useCreatePolicy } from '@/core/query/admin'
-import { DraftHeader, PolicyEditForm, type PolicyFormData } from '@/modules/admin'
-import type { PolicyConfigDto } from '@/core/api/admin'
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Loader2, AlertCircle } from 'lucide-react';
+import { Button } from '@/shared/ui/button';
+import { toast } from 'sonner';
+import { useTranslation } from '@/shared/i18n';
+import { usePolicyDetail, useCreatePolicy } from '@/core/query/admin';
+import { DraftHeader, PolicyEditForm, type PolicyFormData } from '@/modules/admin';
+import type { PolicyConfigDto } from '@/core/api/admin';
 
 /**
  * Empty policy configuration for creating from scratch.
@@ -23,16 +23,16 @@ const EMPTY_POLICY_CONFIG: PolicyConfigDto = {
   breakoutRules: [],
   eligibilityMode: 'STRICT',
   homepage: { minRelevanceScore: 0 },
-}
+};
 
 function PolicyDraftContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { dict } = useTranslation()
-  
-  const baseId = searchParams.get('base')
-  const { data: basePolicy, isLoading, error } = usePolicyDetail(baseId ?? '', !!baseId)
-  const createPolicy = useCreatePolicy()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { dict } = useTranslation();
+
+  const baseId = searchParams.get('base');
+  const { data: basePolicy, isLoading, error } = usePolicyDetail(baseId ?? '', !!baseId);
+  const createPolicy = useCreatePolicy();
 
   const handleSave = async (data: PolicyFormData) => {
     try {
@@ -47,18 +47,18 @@ function PolicyDraftContent() {
         eligibilityMode: data.eligibilityMode,
         homepage: data.homepage,
         globalRequirements: data.globalRequirements,
-      })
-      
-      toast.success(dict.admin.policyDraft.toast.success ?? `Policy v${result.version} created`)
-      router.push(`/admin/policies/${result.id}`)
+      });
+
+      toast.success(dict.admin.policyDraft.toast.success ?? `Policy v${result.version} created`);
+      router.push(`/admin/policies/${result.id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : dict.admin.policyDraft.toast.failed)
+      toast.error(err instanceof Error ? err.message : dict.admin.policyDraft.toast.failed);
     }
-  }
+  };
 
   const handleCancel = () => {
-    router.push('/admin/policies')
-  }
+    router.push('/admin/policies');
+  };
 
   // Loading state when fetching base policy
   if (baseId && isLoading) {
@@ -66,7 +66,7 @@ function PolicyDraftContent() {
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
-    )
+    );
   }
 
   // Error state
@@ -82,11 +82,11 @@ function PolicyDraftContent() {
           {dict.admin.policyDetail.backToPolicies}
         </Button>
       </div>
-    )
+    );
   }
 
-  const config = basePolicy?.config ?? EMPTY_POLICY_CONFIG
-  const formLabels = dict.admin.policyDetail.form
+  const config = basePolicy?.config ?? EMPTY_POLICY_CONFIG;
+  const formLabels = dict.admin.policyDetail.form;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -107,17 +107,19 @@ function PolicyDraftContent() {
         labels={formLabels}
       />
     </div>
-  )
+  );
 }
 
 export default function PolicyDraftPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
       <PolicyDraftContent />
     </Suspense>
-  )
+  );
 }

@@ -37,9 +37,7 @@ function Toggle({ id, label, description, checked, onChange, disabled }: ToggleP
         <Label htmlFor={id} className="text-zinc-200 cursor-pointer">
           {label}
         </Label>
-        {description && (
-          <p className="text-sm text-zinc-400">{description}</p>
-        )}
+        {description && <p className="text-sm text-zinc-400">{description}</p>}
       </div>
       <button
         type="button"
@@ -73,7 +71,7 @@ function Toggle({ id, label, description, checked, onChange, disabled }: ToggleP
 export function PrivacySection({ user, onUpdate }: PrivacySectionProps) {
   const { dict } = useTranslation();
   const [updatingField, setUpdatingField] = useState<PrivacyField | null>(null);
-  
+
   // Local state for optimistic updates
   const [localValues, setLocalValues] = useState({
     isProfilePublic: user.profile.privacy?.isProfilePublic ?? true,
@@ -84,11 +82,11 @@ export function PrivacySection({ user, onUpdate }: PrivacySectionProps) {
 
   const handleToggle = async (field: PrivacyField, value: boolean) => {
     const previousValue = localValues[field];
-    
+
     // Optimistic update
     setLocalValues((prev) => ({ ...prev, [field]: value }));
     setUpdatingField(field);
-    
+
     try {
       await onUpdate(field, value);
     } catch {
@@ -100,7 +98,11 @@ export function PrivacySection({ user, onUpdate }: PrivacySectionProps) {
   };
 
   const privacyFields: { id: PrivacyField; label: string; description?: string }[] = [
-    { id: 'isProfilePublic', label: dict.settings.privacy.publicProfile, description: dict.settings.privacy.publicProfileHint },
+    {
+      id: 'isProfilePublic',
+      label: dict.settings.privacy.publicProfile,
+      description: dict.settings.privacy.publicProfileHint,
+    },
     { id: 'showWatchHistory', label: dict.settings.privacy.showHistory },
     { id: 'showRatings', label: dict.settings.privacy.showRatings },
     { id: 'allowFollowers', label: dict.settings.privacy.allowFollowers },
@@ -109,9 +111,7 @@ export function PrivacySection({ user, onUpdate }: PrivacySectionProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-zinc-100 mb-4">
-          {dict.settings.privacy.title}
-        </h3>
+        <h3 className="text-lg font-medium text-zinc-100 mb-4">{dict.settings.privacy.title}</h3>
 
         <div className="space-y-1 divide-y divide-zinc-800">
           {privacyFields.map((field) => (

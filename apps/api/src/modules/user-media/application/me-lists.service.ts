@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { UserMediaService } from './user-media.service';
-import {
-  USER_MEDIA_LIST_SORT,
-  UserMediaListSort,
-} from '../domain/repositories/user-media-state.repository.interface';
+
 import {
   USER_MEDIA_HISTORY_STATES,
   USER_MEDIA_WATCHLIST_STATES,
 } from '../domain/entities/user-media-state.entity';
+import {
+  USER_MEDIA_LIST_SORT,
+  type UserMediaListSort,
+} from '../domain/repositories/user-media-state.repository.interface';
+
+import { type UserMediaService } from './user-media.service';
 
 /**
  * Provides owner-only user media list queries with total counts.

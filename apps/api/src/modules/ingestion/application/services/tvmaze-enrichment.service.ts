@@ -1,10 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TvMazeAdapter, TvMazeEpisode } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
+
 import {
-  NormalizedMedia,
-  NormalizedSeason,
-  NormalizedEpisode,
+  type NormalizedMedia,
+  type NormalizedSeason,
+  type NormalizedEpisode,
 } from '../../domain/models/normalized-media.model';
+import {
+  type TvMazeAdapter,
+  type TvMazeEpisode,
+} from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
 
 /**
  * Enriches show metadata with TVMaze episode data.
@@ -79,7 +83,7 @@ export class TvMazeEnrichmentService {
       const tmdbSeason = tmdbSeasonMap.get(seasonNum);
 
       const cleanEpisodes: NormalizedEpisode[] = episodes.map((e) => {
-        const { seasonNumber, ...rest } = e;
+        const { seasonNumber: _seasonNumber, ...rest } = e;
         return rest;
       });
 

@@ -5,11 +5,13 @@
  */
 
 import { Inject, Injectable } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { sql } from 'drizzle-orm';
-import { ProviderInfo } from '../../domain/repositories/providers.repository.interface';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import type * as schema from '../../../../database/schema';
+import { type ProviderInfo } from '../../domain/repositories/providers.repository.interface';
 
 /**
  * Query object for extracting unique streaming providers from catalog.

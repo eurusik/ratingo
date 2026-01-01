@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { ErrorCode } from '../enums/error-code.enum';
+
+import { type ErrorCode } from '../enums/error-code.enum';
 
 /**
  * Base application exception.
@@ -7,13 +8,13 @@ import { ErrorCode } from '../enums/error-code.enum';
  */
 export class AppException extends HttpException {
   public readonly code: ErrorCode;
-  public readonly details?: Record<string, any>;
+  public readonly details?: Record<string, unknown>;
 
   constructor(
     code: ErrorCode,
     message: string,
     statusCode: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
-    details?: Record<string, any>
+    details?: Record<string, unknown>,
   ) {
     super(message, statusCode);
     this.code = code;

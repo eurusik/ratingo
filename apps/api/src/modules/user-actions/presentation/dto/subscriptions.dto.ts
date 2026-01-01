@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import { IsIn, IsOptional, IsString } from 'class-validator';
+
 import {
   SUBSCRIPTION_TRIGGER,
-  SubscriptionTrigger,
+  type SubscriptionTrigger,
 } from '../../domain/entities/user-subscription.entity';
 
 const SUBSCRIPTION_TRIGGER_VALUES = Object.values(SUBSCRIPTION_TRIGGER);

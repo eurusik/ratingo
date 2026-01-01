@@ -1,5 +1,7 @@
 import { HttpStatus } from '@nestjs/common';
+
 import { ErrorCode } from '../enums/error-code.enum';
+
 import { AppException } from './app.exception';
 
 /**
@@ -9,7 +11,7 @@ export class NotFoundException extends AppException {
   constructor(
     code: ErrorCode = ErrorCode.RESOURCE_NOT_FOUND,
     message: string = 'Resource not found',
-    details?: Record<string, any>
+    details?: Record<string, unknown>,
   ) {
     super(code, message, HttpStatus.NOT_FOUND, details);
   }

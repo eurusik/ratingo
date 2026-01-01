@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
+
 import { DatabaseModule } from '../../database/database.module';
-import { InsightsController } from './presentation/controllers/insights.controller';
+
 import { InsightsService } from './application/services/insights.service';
 import { INSIGHTS_REPOSITORY } from './domain/repositories/insights.repository.interface';
 import { DrizzleInsightsRepository } from './infrastructure/repositories/drizzle-insights.repository';
+import { InsightsController } from './presentation/controllers/insights.controller';
 
 /**
  * Insights module.

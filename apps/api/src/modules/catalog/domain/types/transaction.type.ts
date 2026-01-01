@@ -1,5 +1,6 @@
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import type * as schema from '../../../../database/schema';
 
 /**
  * Abstract transaction type for repository operations.

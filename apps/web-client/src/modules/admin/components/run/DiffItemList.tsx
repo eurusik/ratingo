@@ -1,21 +1,21 @@
-"use client"
+'use client';
 
-import type { DiffReportDto } from '@/core/api/admin'
+import type { DiffReportDto } from '@/core/api/admin';
 
-type DiffSample = DiffReportDto['topRegressions'][number]
+type DiffSample = DiffReportDto['topRegressions'][number];
 
 interface DiffItemListProps {
-  items: DiffSample[]
-  variant: 'regression' | 'improvement'
+  items: DiffSample[];
+  variant: 'regression' | 'improvement';
   labels: {
-    mediaId: string
-    statusChange: string
-  }
+    mediaId: string;
+    statusChange: string;
+  };
 }
 
 /**
  * Displays list of diff items (regressions or improvements).
- * 
+ *
  * Shows media items with title, ID, and status change reason.
  * Color-coded by variant (red for regressions, green for improvements).
  *
@@ -24,11 +24,10 @@ interface DiffItemListProps {
  * @param labels - Localized labels
  */
 export function DiffItemList({ items, variant, labels }: DiffItemListProps) {
-  if (items.length === 0) return null
+  if (items.length === 0) return null;
 
-  const bgClass = variant === 'regression' 
-    ? 'bg-red-50 dark:bg-red-950/20' 
-    : 'bg-green-50 dark:bg-green-950/20'
+  const bgClass =
+    variant === 'regression' ? 'bg-red-50 dark:bg-red-950/20' : 'bg-green-50 dark:bg-green-950/20';
 
   return (
     <div className="space-y-2">
@@ -44,5 +43,5 @@ export function DiffItemList({ items, variant, labels }: DiffItemListProps) {
         </div>
       ))}
     </div>
-  )
+  );
 }

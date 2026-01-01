@@ -1,33 +1,33 @@
-"use client"
+'use client';
 
-import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
-import { Progress } from '@/shared/ui/progress'
-import { DataTable, StatusBadge } from '@/modules/admin'
-import { DataTableColumnDef } from '@/modules/admin/types'
-import type { components } from '@ratingo/api-contract'
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Progress } from '@/shared/ui/progress';
+import { DataTable, StatusBadge } from '@/modules/admin';
+import { DataTableColumnDef } from '@/modules/admin/types';
+import type { components } from '@ratingo/api-contract';
 
-type EvaluationRunDto = components['schemas']['EvaluationRunDto']
+type EvaluationRunDto = components['schemas']['EvaluationRunDto'];
 
 interface PolicyRunsTabProps {
-  runs: EvaluationRunDto[] | undefined
+  runs: EvaluationRunDto[] | undefined;
   labels: {
-    title: string
-    description: string
-    runId: string
-    status: string
-    progress: string
-    started: string
-    finished: string
-    empty: string
-    emptyHint: string
-    viewDetails: string
-  }
+    title: string;
+    description: string;
+    runId: string;
+    status: string;
+    progress: string;
+    started: string;
+    finished: string;
+    empty: string;
+    emptyHint: string;
+    viewDetails: string;
+  };
 }
 
 /**
  * Displays policy evaluation runs tab.
- * 
+ *
  * Shows table of runs with status, progress, and timestamps.
  * Includes empty state when no runs exist.
  *
@@ -35,7 +35,7 @@ interface PolicyRunsTabProps {
  * @param labels - Localized labels for table
  */
 export function PolicyRunsTab({ runs, labels }: PolicyRunsTabProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   const columns: DataTableColumnDef<EvaluationRunDto>[] = [
     {
@@ -56,8 +56,8 @@ export function PolicyRunsTab({ runs, labels }: PolicyRunsTabProps) {
       id: 'progress',
       header: labels.progress,
       cell: ({ row }) => {
-        const { processed, total } = row.original.progress
-        const percentage = Math.round((processed / total) * 100)
+        const { processed, total } = row.original.progress;
+        const percentage = Math.round((processed / total) * 100);
         return (
           <div className="w-24">
             <Progress value={percentage} className="h-2" />
@@ -65,7 +65,7 @@ export function PolicyRunsTab({ runs, labels }: PolicyRunsTabProps) {
               {processed}/{total}
             </div>
           </div>
-        )
+        );
       },
     },
     {
@@ -85,16 +85,16 @@ export function PolicyRunsTab({ runs, labels }: PolicyRunsTabProps) {
       header: labels.finished,
       accessorKey: 'finishedAt',
       cell: ({ row }) => {
-        if (!row.original.finishedAt) return '-'
+        if (!row.original.finishedAt) return '-';
         return new Date(row.original.finishedAt).toLocaleDateString('uk-UA', {
           month: 'short',
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit',
-        })
+        });
       },
     },
-  ]
+  ];
 
   return (
     <Card>
@@ -122,5 +122,5 @@ export function PolicyRunsTab({ runs, labels }: PolicyRunsTabProps) {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

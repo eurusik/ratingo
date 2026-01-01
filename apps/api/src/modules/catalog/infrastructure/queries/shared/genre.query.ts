@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
+
 import { eq, inArray } from 'drizzle-orm';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { DATABASE_CONNECTION } from '../../../../../database/database.module';
 import * as schema from '../../../../../database/schema';
 import type { GenreInfo } from '../../../domain/types/common.types';

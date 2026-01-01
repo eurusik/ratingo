@@ -51,11 +51,8 @@ export function useUnsaveItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (params: {
-      mediaItemId: string;
-      list: SavedItemList;
-      context?: string;
-    }) => userActionsApi.unsaveItem(params),
+    mutationFn: (params: { mediaItemId: string; list: SavedItemList; context?: string }) =>
+      userActionsApi.unsaveItem(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },

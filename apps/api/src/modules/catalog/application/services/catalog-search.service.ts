@@ -1,13 +1,18 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+
+import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { type TmdbAdapter } from '../../../tmdb/public';
+import { SEARCH_CONFIG } from '../../domain/constants/catalog.constants';
 import {
-  IMediaRepository,
+  type IMediaRepository,
   MEDIA_REPOSITORY,
 } from '../../domain/repositories/media.repository.interface';
-import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
-import { SearchResponseDto, SearchItemDto, SearchSource } from '../../presentation/dtos/search.dto';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { SEARCH_CONFIG } from '../../domain/constants/catalog.constants';
+import {
+  type SearchResponseDto,
+  type SearchItemDto,
+  SearchSource,
+} from '../../presentation/dtos/search.dto';
 
 /**
  * Orchestrates search across local database and TMDB.

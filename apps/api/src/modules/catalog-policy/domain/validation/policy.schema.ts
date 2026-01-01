@@ -6,8 +6,10 @@
  */
 
 import { z } from 'zod';
-import { PolicyConfig, BreakoutRule } from '../types/policy.types';
-import { ContentClass, VALID_CONTENT_CLASSES } from '../classification.service';
+
+import { type ContentClass, VALID_CONTENT_CLASSES } from '../classification.service';
+import { PolicyValidationError } from '../errors';
+import { type PolicyConfig } from '../types/policy.types';
 
 /**
  * Breakout rule schema
@@ -28,6 +30,9 @@ const BreakoutRuleSchema = z.object({
 /**
  * Global requirements schema
  */
+// Schema validation constants
+const MAX_RELEVANCE_SCORE = 100;
+
 const GlobalRequirementsSchema = z.object({
   minQualityScoreNormalized: z.number().min(0).max(1).optional(),
   requireAnyOfRatingsPresent: z.array(z.enum(['imdb', 'metacritic', 'rt', 'trakt'])).optional(),
@@ -63,7 +68,10 @@ const PolicyConfigSchema = z.object({
   breakoutRules: z.array(BreakoutRuleSchema),
   eligibilityMode: z.enum(['STRICT', 'RELAXED']),
   homepage: z.object({
-    minRelevanceScore: z.number().min(0).max(100, 'Relevance score must be between 0 and 100'),
+    minRelevanceScore: z
+      .number()
+      .min(0)
+      .max(MAX_RELEVANCE_SCORE, 'Relevance score must be between 0 and 100'),
   }),
   globalRequirements: GlobalRequirementsSchema.optional(),
   excludedContentClasses: z
@@ -115,21 +123,25 @@ export function validatePolicyOrThrow(policy: unknown): PolicyConfig {
  */
 function validateBusinessRules(policy: PolicyConfig): void {
   // Check for overlapping allowed/blocked countries
-  const allowedSet = new Set(policy.allowedCountries);
   const blockedSet = new Set(policy.blockedCountries);
   const countryOverlap = policy.allowedCountries.filter((c) => blockedSet.has(c));
 
   if (countryOverlap.length > 0) {
-    throw new Error(`Countries cannot be both allowed and blocked: ${countryOverlap.join(', ')}`);
+    throw new PolicyValidationError(
+      `Countries cannot be both allowed and blocked: ${countryOverlap.join(', ')}`,
+      { overlappingCountries: countryOverlap },
+    );
   }
 
   // Check for overlapping allowed/blocked languages
-  const allowedLangSet = new Set(policy.allowedLanguages);
   const blockedLangSet = new Set(policy.blockedLanguages);
   const langOverlap = policy.allowedLanguages.filter((l) => blockedLangSet.has(l));
 
   if (langOverlap.length > 0) {
-    throw new Error(`Languages cannot be both allowed and blocked: ${langOverlap.join(', ')}`);
+    throw new PolicyValidationError(
+      `Languages cannot be both allowed and blocked: ${langOverlap.join(', ')}`,
+      { overlappingLanguages: langOverlap },
+    );
   }
 
   // Check for duplicate breakout rule IDs
@@ -137,7 +149,9 @@ function validateBusinessRules(policy: PolicyConfig): void {
   const uniqueIds = new Set(ruleIds);
 
   if (ruleIds.length !== uniqueIds.size) {
-    throw new Error('Breakout rule IDs must be unique');
+    throw new PolicyValidationError('Breakout rule IDs must be unique', {
+      duplicateIds: ruleIds.filter((id, i) => ruleIds.indexOf(id) !== i),
+    });
   }
 
   // Check for duplicate breakout rule priorities
@@ -145,15 +159,18 @@ function validateBusinessRules(policy: PolicyConfig): void {
   const uniquePriorities = new Set(priorities);
 
   if (priorities.length !== uniquePriorities.size) {
-    throw new Error('Breakout rule priorities must be unique');
+    throw new PolicyValidationError('Breakout rule priorities must be unique', {
+      duplicatePriorities: priorities.filter((p, i) => priorities.indexOf(p) !== i),
+    });
   }
 
   // Ensure at least one requirement is specified for each breakout rule
   for (const rule of policy.breakoutRules) {
     const hasRequirement = Object.keys(rule.requirements).length > 0;
     if (!hasRequirement) {
-      throw new Error(
+      throw new PolicyValidationError(
         `Breakout rule "${rule.name}" (${rule.id}) must have at least one requirement`,
+        { ruleId: rule.id, ruleName: rule.name },
       );
     }
   }

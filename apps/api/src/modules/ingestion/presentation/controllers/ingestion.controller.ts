@@ -1,3 +1,4 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import {
   Controller,
   Post,
@@ -10,18 +11,30 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { SyncMediaService } from '../../application/services/sync-media.service';
-import { DEFAULT_REGION } from '../../../../common/constants';
+
+import { type Queue } from 'bullmq';
+
+import { formatUtcDayId } from '@/common/utils/date.util';
+
+import { DEFAULT_REGION, CATALOG_DEFAULT_NEW_RELEASE_DAYS } from '../../../../common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { JobStatus, BULL_STATE_TO_JOB_STATUS } from '../../../../common/enums/job-status.enum';
-import { formatUtcDayId } from '@/common/utils/date.util';
-import { SyncDto, SyncTrendingDto, SyncNowPlayingDto, SyncNewReleasesDto } from '../dto';
-import { normalizeRegion } from '../../application/helpers/queue.helpers';
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { normalizeRegion, formatHourWindow } from '../../application/helpers/queue.helpers';
+import { type SyncMediaService } from '../../application/services/sync-media.service';
+import {
+  INGESTION_QUEUE,
+  IngestionJob,
+  TRENDING_DEFAULT_PAGES,
+  TMDB_TRENDING_PAGE_SIZE,
+} from '../../ingestion.constants';
+import {
+  type SyncDto,
+  type SyncTrendingDto,
+  type SyncNowPlayingDto,
+  type SyncNewReleasesDto,
+} from '../dto';
 
 /**
  * Triggers ingestion processes.
@@ -188,7 +201,7 @@ export class IngestionController {
     }
 
     // Dispatcher mode (default and recommended)
-    const pagesCount = pages || 5;
+    const pagesCount = pages || TRENDING_DEFAULT_PAGES;
     const job = await this.ingestionQueue.add(IngestionJob.SYNC_TRENDING_DISPATCHER, {
       pages: pagesCount,
       syncStats,
@@ -200,7 +213,7 @@ export class IngestionController {
       jobId: job.id,
       mode: 'dispatcher',
       pages: pagesCount,
-      maxItems: pagesCount * 20 * 2, // pages × 20 items × 2 types (upper bound)
+      maxItems: pagesCount * TMDB_TRENDING_PAGE_SIZE * 2, // pages × 20 items × 2 types (upper bound)
       syncStats,
       force,
     };
@@ -270,7 +283,7 @@ export class IngestionController {
   @HttpCode(HttpStatus.ACCEPTED)
   async syncNewReleases(@Body() dto: SyncNewReleasesDto) {
     const region = dto.region || DEFAULT_REGION;
-    const daysBack = dto.daysBack || 30;
+    const daysBack = dto.daysBack || CATALOG_DEFAULT_NEW_RELEASE_DAYS;
     const force = dto.force || false;
 
     // Deduplication logic: one job per region/daysBack per day
@@ -353,9 +366,7 @@ export class IngestionController {
   async syncTrackedShows(@Query('force') force?: string) {
     const isForce = force === 'true';
     const startedAt = new Date();
-    const window = isForce
-      ? startedAt.getTime().toString()
-      : startedAt.toISOString().slice(0, 13).replace(/[-T]/g, '');
+    const window = isForce ? startedAt.getTime().toString() : formatHourWindow(startedAt);
     const jobId = `tracked_shows_${window}`;
 
     const job = await this.ingestionQueue.add(

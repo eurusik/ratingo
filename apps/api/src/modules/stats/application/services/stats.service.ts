@@ -1,20 +1,26 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+
+import { DEFAULT_PAGE_SIZE, MS_PER_MINUTE } from '@/common/constants';
+
+// Stats sync constants
+const SAFETY_WINDOW_MINUTES = 5;
+const SAFETY_WINDOW_MS = SAFETY_WINDOW_MINUTES * MS_PER_MINUTE;
+const NOT_FOUND_EXAMPLES_LIMIT = 5;
+
+import { StatsNotFoundException } from '../../../../common/exceptions';
+import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import {
-  TraktListsPort,
+  type TraktListsPort,
   TRAKT_LISTS_PORT,
-  TraktRatingsPort,
+  type TraktRatingsPort,
   TRAKT_RATINGS_PORT,
-} from '../../../ingestion/domain/ports';
+} from '../../../ingestion/public';
+import { type ScoreCalculatorService } from '../../../shared/score-calculator';
 import {
-  IStatsRepository,
+  type IStatsRepository,
+  type MediaStatsData,
   STATS_REPOSITORY,
 } from '../../domain/repositories/stats.repository.interface';
-import {
-  IMediaRepository,
-  MEDIA_REPOSITORY,
-} from '../../../catalog/domain/repositories/media.repository.interface';
-import { StatsNotFoundException } from '../../../../common/exceptions';
-import { ScoreCalculatorService } from '../../../shared/score-calculator';
 
 /**
  * Application service for managing media statistics.
@@ -50,7 +56,7 @@ export class StatsService {
    * @param {number} limit - Number of trending items to fetch per type
    * @returns {Promise<{ movies: number; shows: number }>} Count of updated items
    */
-  async syncTrendingStats(limit = 20): Promise<{ movies: number; shows: number }> {
+  async syncTrendingStats(limit = DEFAULT_PAGE_SIZE): Promise<{ movies: number; shows: number }> {
     this.logger.log(`Syncing trending stats (limit: ${limit})...`);
 
     // Fetch trending from Trakt (parallel)
@@ -89,8 +95,7 @@ export class StatsService {
     const scoreDataMap = new Map(scoreDataList.map((s) => [s.tmdbId, s]));
 
     // Calculate scores and prepare batch upsert
-    const statsToUpsert: import('../../domain/repositories/stats.repository.interface').MediaStatsData[] =
-      [];
+    const statsToUpsert: MediaStatsData[] = [];
 
     for (const item of existingTrending) {
       const mediaId = mediaMap.get(item.tmdbId)!;
@@ -167,9 +172,8 @@ export class StatsService {
     limit: number;
   }): Promise<{ movies: number; shows: number }> {
     // Apply safety window: since - 5 minutes to handle clock skew/delays
-    const safetyWindowMs = 5 * 60 * 1000;
     const adjustedSince = options.since
-      ? new Date(options.since.getTime() - safetyWindowMs)
+      ? new Date(options.since.getTime() - SAFETY_WINDOW_MS)
       : undefined;
 
     this.logger.log(
@@ -211,32 +215,13 @@ export class StatsService {
     }
 
     // Aggregate results for logging
-    const requested = dbItems.length;
-    let fetched = 0;
-    let skipped = 0;
-    let notFound = 0;
-    const notFoundExamples: { tmdbId: number; type: string }[] = [];
-
-    for (const [tmdbId, watchers] of watchersMap) {
-      if (watchers === null) {
-        skipped++; // Transient error
-      } else if (watchers === 0) {
-        notFound++; // Not found in Trakt (or genuinely 0 watchers)
-        fetched++;
-        // Collect first 5 notFound examples for debugging
-        if (notFoundExamples.length < 5) {
-          const item = dbItems.find((i) => i.tmdbId === tmdbId);
-          if (item) {
-            notFoundExamples.push({ tmdbId, type: item.type });
-          }
-        }
-      } else {
-        fetched++;
-      }
-    }
+    const { fetched, skipped, notFound, notFoundExamples } = this.aggregateWatchersResults(
+      watchersMap,
+      dbItems,
+    );
 
     this.logger.log(
-      `Trakt watchers: requested=${requested}, fetched=${fetched}, skipped=${skipped}, notFound=${notFound}`,
+      `Trakt watchers: requested=${dbItems.length}, fetched=${fetched}, skipped=${skipped}, notFound=${notFound}`,
     );
 
     // Log notFound examples for debugging Trakt matching issues
@@ -252,8 +237,7 @@ export class StatsService {
     const scoreDataMap = new Map(scoreDataList.map((s) => [s.tmdbId, s]));
 
     // 4. Build stats to upsert (skip items with null watchers to preserve old data)
-    const statsToUpsert: import('../../domain/repositories/stats.repository.interface').MediaStatsData[] =
-      [];
+    const statsToUpsert: MediaStatsData[] = [];
 
     for (const item of itemsToUpdate) {
       const watchers = watchersMap.get(item.tmdbId)!; // Not null, we filtered above
@@ -293,5 +277,54 @@ export class StatsService {
       `Synced stats: ${moviesUpdated} movies, ${showsUpdated} shows (${skipped} skipped due to errors)`,
     );
     return { movies: moviesUpdated, shows: showsUpdated };
+  }
+
+  /**
+   * Aggregates watchers results for logging purposes.
+   */
+  private aggregateWatchersResults(
+    watchersMap: Map<number, number | null>,
+    dbItems: { tmdbId: number; type: string }[],
+  ): {
+    fetched: number;
+    skipped: number;
+    notFound: number;
+    notFoundExamples: { tmdbId: number; type: string }[];
+  } {
+    let fetched = 0;
+    let skipped = 0;
+    let notFound = 0;
+    const notFoundExamples: { tmdbId: number; type: string }[] = [];
+
+    for (const [tmdbId, watchers] of watchersMap) {
+      if (watchers === null) {
+        skipped++;
+        continue;
+      }
+
+      fetched++;
+      if (watchers === 0) {
+        notFound++;
+        this.collectNotFoundExample(tmdbId, dbItems, notFoundExamples);
+      }
+    }
+
+    return { fetched, skipped, notFound, notFoundExamples };
+  }
+
+  /**
+   * Collects not-found examples for debugging (up to limit).
+   */
+  private collectNotFoundExample(
+    tmdbId: number,
+    dbItems: { tmdbId: number; type: string }[],
+    notFoundExamples: { tmdbId: number; type: string }[],
+  ): void {
+    if (notFoundExamples.length >= NOT_FOUND_EXAMPLES_LIMIT) return;
+
+    const item = dbItems.find((i) => i.tmdbId === tmdbId);
+    if (item) {
+      notFoundExamples.push({ tmdbId, type: item.type });
+    }
   }
 }

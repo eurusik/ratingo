@@ -38,7 +38,7 @@ export interface CreateMetadataOptions {
  */
 export function createMediaMetadata(
   media: SeoMediaItem | null,
-  options: CreateMetadataOptions
+  options: CreateMetadataOptions,
 ): Metadata {
   if (!media) {
     return {

@@ -1,38 +1,40 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module, forwardRef } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+
+import omdbConfig from '../../config/omdb.config';
+import schedulerConfig from '../../config/scheduler.config';
+import traktConfig from '../../config/trakt.config';
+import tvmazeConfig from '../../config/tvmaze.config';
 import { CatalogModule } from '../catalog/catalog.module';
 import { CatalogPolicyModule } from '../catalog-policy/catalog-policy.module';
+import { ScoreCalculatorModule } from '../shared/score-calculator';
 import { StatsModule } from '../stats/stats.module';
-import { TmdbModule } from '../tmdb/tmdb.module';
+import { TmdbModule } from '../tmdb/public';
 import { UserActionsModule } from '../user-actions/user-actions.module';
-import { TraktRatingsAdapter } from './infrastructure/adapters/trakt/trakt-ratings.adapter';
-import { TraktListsAdapter } from './infrastructure/adapters/trakt/trakt-lists.adapter';
-import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
-import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
+
+import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeline';
+import { NowPlayingPipeline } from './application/pipelines/now-playing.pipeline';
+import { SnapshotsPipeline } from './application/pipelines/snapshots.pipeline';
+import { TrackedShowsPipeline } from './application/pipelines/tracked-shows.pipeline';
+import { TrendingPipeline } from './application/pipelines/trending.pipeline';
+import { BulkJobService } from './application/services/bulk-job.service';
+import { IngestionSchedulerService } from './application/services/ingestion-scheduler.service';
+import { SnapshotsService } from './application/services/snapshots.service';
 import { SyncMediaService } from './application/services/sync-media.service';
 import { TrackedSyncService } from './application/services/tracked-sync.service';
 import { TvMazeEnrichmentService } from './application/services/tvmaze-enrichment.service';
-import { BulkJobService } from './application/services/bulk-job.service';
-import { ConfigModule } from '@nestjs/config';
-import traktConfig from '../../config/trakt.config';
-import { BullModule } from '@nestjs/bullmq';
+import { SyncWorker } from './application/workers/sync.worker';
+import { TRAKT_LISTS_PORT } from './domain/ports/trakt-lists.port';
+import { TRAKT_RATINGS_PORT } from './domain/ports/trakt-ratings.port';
+import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
+import { OmdbAdapter } from './infrastructure/adapters/omdb/omdb.adapter';
+import { TraktListsAdapter } from './infrastructure/adapters/trakt/trakt-lists.adapter';
+import { TraktRatingsAdapter } from './infrastructure/adapters/trakt/trakt-ratings.adapter';
+import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
+import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
 import { INGESTION_QUEUE } from './ingestion.constants';
 import { IngestionController } from './presentation/controllers/ingestion.controller';
-import { ScoreCalculatorModule } from '../shared/score-calculator';
-import { SnapshotsService } from './application/services/snapshots.service';
-import { IngestionSchedulerService } from './application/services/ingestion-scheduler.service';
-import omdbConfig from '../../config/omdb.config';
-import tvmazeConfig from '../../config/tvmaze.config';
-import schedulerConfig from '../../config/scheduler.config';
-import { SyncWorker } from './application/workers/sync.worker';
-import { SnapshotsPipeline } from './application/pipelines/snapshots.pipeline';
-import { TrendingPipeline } from './application/pipelines/trending.pipeline';
-import { TrackedShowsPipeline } from './application/pipelines/tracked-shows.pipeline';
-import { NowPlayingPipeline } from './application/pipelines/now-playing.pipeline';
-import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeline';
-import { SNAPSHOTS_REPOSITORY } from './domain/repositories/snapshots.repository.interface';
-import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
-import { TRAKT_RATINGS_PORT } from './domain/ports/trakt-ratings.port';
-import { TRAKT_LISTS_PORT } from './domain/ports/trakt-lists.port';
 
 /**
  * Ingestion module.

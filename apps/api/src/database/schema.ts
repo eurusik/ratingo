@@ -1,3 +1,4 @@
+import { relations, sql } from 'drizzle-orm';
 import {
   pgTable,
   text,
@@ -15,14 +16,17 @@ import {
   customType,
   primaryKey,
 } from 'drizzle-orm/pg-core';
-import { relations, sql } from 'drizzle-orm';
-import {
-  NormalizedVideo,
-  Credits,
-  WatchProvidersMap,
-} from '../modules/ingestion/domain/models/normalized-media.model';
-import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../common/enums/video.enum';
+
 import { MediaType } from '../common/enums/media-type.enum';
+import {
+  type VideoSiteEnum,
+  type VideoTypeEnum,
+  type VideoLanguageEnum,
+} from '../common/enums/video.enum';
+import {
+  type Credits,
+  type WatchProvidersMap,
+} from '../modules/ingestion/domain/models/normalized-media.model';
 
 // Define custom tsvector type since Drizzle ORM core doesn't support it natively yet
 const tsvector = customType<{ data: string }>({

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ImageDto } from '../../../../common/dtos/image.dto';
+
 import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
 import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 

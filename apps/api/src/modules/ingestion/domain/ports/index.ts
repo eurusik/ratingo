@@ -6,3 +6,4 @@ export {
   SeasonAnalysisData,
   ShowEpisodesAnalysisPayload,
 } from './trakt-ratings.port';
+export { MetadataProviderPort, METADATA_PROVIDER_PORT } from './metadata-provider.port';

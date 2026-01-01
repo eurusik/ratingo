@@ -1,10 +1,12 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { BulkJobService } from '../services/bulk-job.service';
-import { IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { IngestionJob } from '../../ingestion.constants';
+
 import { formatUtcDayId } from '@/common/utils/date.util';
-import { DEFAULT_REGION } from '../../../../common/constants';
+
+import { DEFAULT_REGION, CATALOG_DEFAULT_NEW_RELEASE_DAYS } from '../../../../common/constants';
+import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
+import { type TmdbAdapter } from '../../../tmdb/public';
+import { IngestionJob } from '../../ingestion.constants';
+import { type BulkJobService } from '../services/bulk-job.service';
 
 /**
  * New Releases pipeline: syncs recently released movies.
@@ -26,9 +28,9 @@ export class NewReleasesPipeline {
    * Syncs new releases: fetches TMDB IDs and enqueues sync jobs.
    *
    * @param region - Region code for release dates (default: DEFAULT_REGION)
-   * @param daysBack - Number of days to look back (default: 30)
+   * @param daysBack - Number of days to look back (default: CATALOG_DEFAULT_NEW_RELEASE_DAYS)
    */
-  async sync(region = DEFAULT_REGION, daysBack = 30): Promise<void> {
+  async sync(region = DEFAULT_REGION, daysBack = CATALOG_DEFAULT_NEW_RELEASE_DAYS): Promise<void> {
     this.logger.log(`Starting new releases sync (region: ${region}, daysBack: ${daysBack})...`);
 
     const tmdbIds = await this.tmdbAdapter.getNewReleaseIds(daysBack, region);

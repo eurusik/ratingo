@@ -4,8 +4,11 @@
  * Core type definitions for policy configuration and evaluation results.
  */
 
-import { EligibilityStatusType, EvaluationReasonType } from '../constants/evaluation.constants';
-import { ContentClass } from '../classification.service';
+import { type ContentClass } from '../classification.service';
+import {
+  type EligibilityStatusType,
+  type EvaluationReasonType,
+} from '../constants/evaluation.constants';
 
 /**
  * Evaluation context for content display surfaces.

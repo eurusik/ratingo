@@ -17,7 +17,6 @@ import { SeasonProgress } from './card-progress';
 import { CardBookmark } from './card-cta';
 import { CardBadge, RankBadge, badgeLabelKeys } from './card-badge';
 
-
 /** Base props for all media cards. */
 interface BaseMediaCardProps {
   /** Unique media item ID. */
@@ -96,21 +95,21 @@ export function MediaCard(props: MediaCardProps) {
       {rank != null && rank <= 3 ? (
         <RankBadge rank={rank} />
       ) : badgeKey ? (
-        <CardBadge badgeKey={badgeKey} label={t(`card.badge.${badgeLabelKeys[badgeKey]}`)} position="top-right" />
+        <CardBadge
+          badgeKey={badgeKey}
+          label={t(`card.badge.${badgeLabelKeys[badgeKey]}`)}
+          position="top-right"
+        />
       ) : null}
     </CardPoster>
   );
 
-  const overlaySlot = (
-    <CardBookmark isBookmarked={isBookmarked} onClick={onBookmarkClick} />
-  );
+  const overlaySlot = <CardBookmark isBookmarked={isBookmarked} onClick={onBookmarkClick} />;
 
   return (
     <CardLayout href={href} poster={posterSlot} overlay={overlaySlot}>
       {/* Title */}
-      <h3 className={cn(cardTitleStyles)}>
-        {title}
-      </h3>
+      <h3 className={cn(cardTitleStyles)}>{title}</h3>
 
       {/* ⭐ Rating left, 👁 Watchers right */}
       <CardRating rating={rating} watchers={watchers} className="mb-2" />

@@ -1,10 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, and, gte, lte, asc } from 'drizzle-orm';
-import { CalendarEpisode } from '../../domain/repositories/show.repository.interface';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import { type CalendarEpisode } from '../../domain/repositories/show.repository.interface';
 
 /**
  * Fetches episodes airing within a date range for calendar view.
@@ -20,7 +22,7 @@ export class CalendarEpisodesQuery {
 
   constructor(
     @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   /**

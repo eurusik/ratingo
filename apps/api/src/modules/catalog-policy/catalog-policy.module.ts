@@ -5,16 +5,27 @@
  * Provides policy management, evaluation services, and repositories.
  */
 
-import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
+import { Module } from '@nestjs/common';
 
-// Constants
+import { CatalogEvaluationService } from './application/services/catalog-evaluation.service';
+import { CatalogPolicyService } from './application/services/catalog-policy.service';
+import { DiffService } from './application/services/diff.service';
+import { DryRunService } from './application/services/dry-run.service';
+import { PolicyActivationService } from './application/services/policy-activation.service';
+import { RunAggregationService } from './application/services/run-aggregation.service';
+import { RunFinalizeService } from './application/services/run-finalize.service';
+import { CatalogPolicyWorker } from './application/workers/catalog-policy.worker';
 import { CATALOG_POLICY_QUEUE } from './catalog-policy.constants';
-
-// Ports
 import { CATALOG_POLICY_EVALUATOR } from './domain/ports/catalog-policy-evaluator.port';
-
-// Repositories
+import {
+  AdminCatalogRepository,
+  ADMIN_CATALOG_REPOSITORY,
+} from './infrastructure/repositories/admin-catalog.repository';
+import {
+  CatalogEvaluationRunRepository,
+  CATALOG_EVALUATION_RUN_REPOSITORY,
+} from './infrastructure/repositories/catalog-evaluation-run.repository';
 import {
   CatalogPolicyRepository,
   CATALOG_POLICY_REPOSITORY,
@@ -24,31 +35,9 @@ import {
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
 } from './infrastructure/repositories/media-catalog-evaluation.repository';
 import {
-  CatalogEvaluationRunRepository,
-  CATALOG_EVALUATION_RUN_REPOSITORY,
-} from './infrastructure/repositories/catalog-evaluation-run.repository';
-import {
   PublicCatalogRepository,
   PUBLIC_CATALOG_REPOSITORY,
 } from './infrastructure/repositories/public-catalog.repository';
-import {
-  AdminCatalogRepository,
-  ADMIN_CATALOG_REPOSITORY,
-} from './infrastructure/repositories/admin-catalog.repository';
-
-// Services
-import { CatalogPolicyService } from './application/services/catalog-policy.service';
-import { CatalogEvaluationService } from './application/services/catalog-evaluation.service';
-import { PolicyActivationService } from './application/services/policy-activation.service';
-import { DiffService } from './application/services/diff.service';
-import { DryRunService } from './application/services/dry-run.service';
-import { RunAggregationService } from './application/services/run-aggregation.service';
-import { RunFinalizeService } from './application/services/run-finalize.service';
-
-// Workers
-import { CatalogPolicyWorker } from './application/workers/catalog-policy.worker';
-
-// Controllers
 import { PolicyController, RunController, DryRunController } from './presentation/controllers';
 
 @Module({

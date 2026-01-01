@@ -67,8 +67,13 @@ export function useSearch() {
       if (result.status === ImportStatus.READY && result.slug) {
         setOpen(false);
         setQuery('');
-        router.push(result.type === MediaType.MOVIE ? `/movies/${result.slug}` : `/shows/${result.slug}`);
-      } else if (result.status === ImportStatus.IMPORTING || result.status === ImportStatus.EXISTS) {
+        router.push(
+          result.type === MediaType.MOVIE ? `/movies/${result.slug}` : `/shows/${result.slug}`,
+        );
+      } else if (
+        result.status === ImportStatus.IMPORTING ||
+        result.status === ImportStatus.EXISTS
+      ) {
         setOpen(false);
         setQuery('');
         // Pass title, poster, slug and jobId via query params for better UX

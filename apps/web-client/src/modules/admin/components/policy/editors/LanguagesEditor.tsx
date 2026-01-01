@@ -1,23 +1,23 @@
-"use client"
+'use client';
 
-import { Languages } from 'lucide-react'
-import { ConfigCard } from '../ConfigCard'
-import { TagInput } from './TagInput'
-import { Label } from '@/shared/ui/label'
+import { Languages } from 'lucide-react';
+import { ConfigCard } from '../ConfigCard';
+import { TagInput } from './TagInput';
+import { Label } from '@/shared/ui/label';
 
 interface LanguagesEditorProps {
-  allowedLanguages: string[]
-  blockedLanguages: string[]
-  onAllowedChange: (value: string[]) => void
-  onBlockedChange: (value: string[]) => void
+  allowedLanguages: string[];
+  blockedLanguages: string[];
+  onAllowedChange: (value: string[]) => void;
+  onBlockedChange: (value: string[]) => void;
   labels?: {
-    title?: string
-    description?: string
-    allowed?: string
-    blocked?: string
-    allowedPlaceholder?: string
-    blockedPlaceholder?: string
-  }
+    title?: string;
+    description?: string;
+    allowed?: string;
+    blocked?: string;
+    allowedPlaceholder?: string;
+    blockedPlaceholder?: string;
+  };
 }
 
 /**
@@ -31,14 +31,16 @@ export function LanguagesEditor({
   labels,
 }: LanguagesEditorProps) {
   return (
-    <ConfigCard 
-      title={labels?.title ?? 'Languages'} 
+    <ConfigCard
+      title={labels?.title ?? 'Languages'}
       description={labels?.description ?? 'Filter content by original language'}
-      icon={Languages} 
+      icon={Languages}
       contentClassName="space-y-4"
     >
       <div>
-        <Label className="text-green-600">{labels?.allowed ?? 'Allowed'} ({allowedLanguages.length})</Label>
+        <Label className="text-green-600">
+          {labels?.allowed ?? 'Allowed'} ({allowedLanguages.length})
+        </Label>
         <TagInput
           value={allowedLanguages}
           onChange={onAllowedChange}
@@ -48,7 +50,9 @@ export function LanguagesEditor({
         />
       </div>
       <div>
-        <Label className="text-red-600">{labels?.blocked ?? 'Blocked'} ({blockedLanguages.length})</Label>
+        <Label className="text-red-600">
+          {labels?.blocked ?? 'Blocked'} ({blockedLanguages.length})
+        </Label>
         <TagInput
           value={blockedLanguages}
           onChange={onBlockedChange}
@@ -58,5 +62,5 @@ export function LanguagesEditor({
         />
       </div>
     </ConfigCard>
-  )
+  );
 }

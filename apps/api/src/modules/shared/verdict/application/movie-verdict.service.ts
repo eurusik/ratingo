@@ -6,17 +6,20 @@
  */
 
 import { Injectable } from '@nestjs/common';
+
+import { MS_PER_YEAR } from '../../../../common/constants';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import { MovieVerdictInput, MovieVerdict } from '../domain/movie-verdict.types';
+import { type MovieVerdictInput, type MovieVerdict } from '../domain/movie-verdict.types';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
-import { RATING_SOURCE } from '../domain/verdict.types';
+import { formatRatingContext } from '../domain/rating-aggregator';
 import {
   CONFIDENCE,
   RATING_THRESHOLDS,
   POPULARITY_THRESHOLDS,
   AGE_THRESHOLDS,
+  VERDICT_DEFAULTS,
 } from '../domain/verdict.constants';
-import { formatRatingContext } from '../domain/rating-aggregator';
+import { RATING_SOURCE } from '../domain/verdict.types';
 
 /**
  * Movie Verdict Service
@@ -51,7 +54,7 @@ export class MovieVerdictService {
 
     // Calculate content age in years
     const contentAgeYears = releaseDate
-      ? (Date.now() - new Date(releaseDate).getTime()) / (1000 * 60 * 60 * 24 * 365)
+      ? (Date.now() - new Date(releaseDate).getTime()) / MS_PER_YEAR
       : 0;
     const isOlderContent = contentAgeYears >= AGE_THRESHOLDS.OLDER_CONTENT_YEARS;
     const isClassic = contentAgeYears >= AGE_THRESHOLDS.CLASSIC_YEARS;
@@ -71,17 +74,24 @@ export class MovieVerdictService {
     const hasAnyRatings = avgRating !== null && avgRating !== undefined;
 
     // Quality thresholds (only based on avgRating, NOT ratingoScore)
-    const isPoorQuality = hasConfidentRating && (avgRating ?? 10) < RATING_THRESHOLDS.POOR;
+    const isPoorQuality =
+      hasConfidentRating &&
+      (avgRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_HIGH) < RATING_THRESHOLDS.POOR;
     const isBelowAverage =
-      hasConfidentRating && (avgRating ?? 10) < RATING_THRESHOLDS.BELOW_AVERAGE;
-    const isMixedQuality = hasConfidentRating && (avgRating ?? 10) < RATING_THRESHOLDS.MIXED;
+      hasConfidentRating &&
+      (avgRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_HIGH) < RATING_THRESHOLDS.BELOW_AVERAGE;
+    const isMixedQuality =
+      hasConfidentRating &&
+      (avgRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_HIGH) < RATING_THRESHOLDS.MIXED;
     const isDecentQuality =
       hasConfidentRating &&
-      (avgRating ?? 0) >= RATING_THRESHOLDS.DECENT &&
-      (avgRating ?? 0) < RATING_THRESHOLDS.STRONG;
-    const isGoodQuality = hasConfidentRating && (avgRating ?? 0) >= RATING_THRESHOLDS.STRONG;
+      (avgRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_LOW) >= RATING_THRESHOLDS.DECENT &&
+      (avgRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_LOW) < RATING_THRESHOLDS.STRONG;
+    const isGoodQuality =
+      hasConfidentRating &&
+      (avgRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_LOW) >= RATING_THRESHOLDS.STRONG;
     const isCriticsLoved =
-      (avgRating ?? 0) >= RATING_THRESHOLDS.CRITICS_LOVED &&
+      (avgRating ?? VERDICT_DEFAULTS.RATING_FALLBACK_LOW) >= RATING_THRESHOLDS.CRITICS_LOVED &&
       (voteCount ?? 0) >= CONFIDENCE.MIN_VOTES_FOR_CRITICS_LOVED;
 
     // ═══════════════════════════════════════════════════════════════

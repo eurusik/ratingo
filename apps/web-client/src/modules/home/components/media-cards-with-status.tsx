@@ -14,9 +14,5 @@ interface MediaCardsWithStatusProps {
  * Prefetches save status for all cards in a single batch request.
  */
 export function MediaCardsWithStatus({ mediaItemIds, children }: MediaCardsWithStatusProps) {
-  return (
-    <SavedStatusProvider mediaItemIds={mediaItemIds}>
-      {children}
-    </SavedStatusProvider>
-  );
+  return <SavedStatusProvider mediaItemIds={mediaItemIds}>{children}</SavedStatusProvider>;
 }

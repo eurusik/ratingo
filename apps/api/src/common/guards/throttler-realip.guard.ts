@@ -1,5 +1,6 @@
-import { Injectable, Logger, ExecutionContext } from '@nestjs/common';
-import { ThrottlerGuard, ThrottlerLimitDetail } from '@nestjs/throttler';
+import { Injectable, Logger, type ExecutionContext } from '@nestjs/common';
+import { ThrottlerGuard, type ThrottlerLimitDetail } from '@nestjs/throttler';
+
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
 /**
@@ -33,8 +34,8 @@ function extractRealIp(req: FastifyRequest): string {
 export class ThrottlerRealIpGuard extends ThrottlerGuard {
   private readonly logger = new Logger(ThrottlerRealIpGuard.name);
 
-  protected getTracker(req: Record<string, any>): Promise<string> {
-    const fastifyReq = req as FastifyRequest;
+  protected getTracker(req: Record<string, unknown>): Promise<string> {
+    const fastifyReq = req as unknown as FastifyRequest;
     return Promise.resolve(extractRealIp(fastifyReq));
   }
 

@@ -1,21 +1,25 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { and, desc, eq, sql, isNull, notInArray, inArray } from 'drizzle-orm';
+
+import { and, desc, eq, sql, isNull, inArray } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { ShowStatus } from '../../../../common/enums/show-status.enum';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
-  IUserSubscriptionRepository,
-  UpsertSubscriptionData,
-  SubscriptionWithMedia,
-} from '../../domain/repositories/user-subscription.repository.interface';
-import {
-  UserSubscription,
-  SubscriptionTrigger,
+  type UserSubscription,
+  type SubscriptionTrigger,
 } from '../../domain/entities/user-subscription.entity';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import {
+  type IUserSubscriptionRepository,
+  type UpsertSubscriptionData,
+  type SubscriptionWithMedia,
+} from '../../domain/repositories/user-subscription.repository.interface';
 
 /**
  * Drizzle implementation of user subscription repository.
@@ -181,7 +185,7 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
    */
   async listActiveWithMedia(
     userId: string,
-    limit = 20,
+    limit = DEFAULT_PAGE_SIZE,
     offset = 0,
   ): Promise<SubscriptionWithMedia[]> {
     try {

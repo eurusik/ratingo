@@ -14,7 +14,7 @@ export default function MovieLoading() {
           <div className="flex gap-6 md:gap-10 items-end">
             {/* Poster skeleton */}
             <Skeleton className="w-32 md:w-48 lg:w-56 aspect-[2/3] rounded-xl" />
-            
+
             {/* Info skeleton */}
             <div className="flex-1 space-y-4">
               <Skeleton className="h-12 w-3/4" />

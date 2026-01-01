@@ -1,25 +1,16 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
-import { sql, SQL } from 'drizzle-orm';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import {
-  TrendingShowItem,
-  TrendingShowsOptions,
-} from '../../domain/repositories/show.repository.interface';
-import type { WithTotal } from '../../domain/types/query.types';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+
+import { sql, type SQL } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import {
-  CatalogSort,
-  SortOrder,
-  VoteSource,
-  VOTE_SOURCE,
-  CATALOG_SORT,
-  SORT_ORDER,
-} from '../../presentation/dtos/catalog-list-query.dto';
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import { EligibilityStatus } from '../../../catalog-policy/public';
 import {
   TRENDING_THRESHOLDS,
@@ -27,6 +18,54 @@ import {
   NEW_RELEASE_THRESHOLDS,
   CLASSIC_THRESHOLDS,
 } from '../../domain/constants/catalog.constants';
+import {
+  type TrendingShowItem,
+  type TrendingShowsOptions,
+} from '../../domain/repositories/show.repository.interface';
+import type { WithTotal } from '../../domain/types/query.types';
+import {
+  type CatalogSort,
+  type SortOrder,
+  type VoteSource,
+  VOTE_SOURCE,
+  CATALOG_SORT,
+  SORT_ORDER,
+} from '../../presentation/dtos/catalog-list-query.dto';
+
+/**
+ * Raw row type from trending shows query.
+ */
+interface TrendingShowRow {
+  id: string;
+  tmdb_id: number;
+  title: string;
+  original_title: string | null;
+  slug: string;
+  overview: string | null;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_date: Date | null;
+  videos: unknown;
+  ingestion_status: string;
+  rating: number;
+  vote_count: number;
+  rating_imdb: number | null;
+  vote_count_imdb: number | null;
+  rating_trakt: number | null;
+  vote_count_trakt: number | null;
+  rating_metacritic: number | null;
+  rating_rotten_tomatoes: number | null;
+  popularity: number;
+  ratingo_score: number | null;
+  quality_score: number | null;
+  popularity_score: number | null;
+  watchers_count: number | null;
+  total_watchers: number | null;
+  last_air_date: Date | null;
+  next_air_date: Date | null;
+  season_number: number | null;
+  episode_number: number | null;
+}
 
 /**
  * Fetches trending TV shows with episode progress.
@@ -55,7 +94,7 @@ export class TrendingShowsQuery {
    */
   async execute(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>> {
     const {
-      limit = 20,
+      limit = DEFAULT_PAGE_SIZE,
       offset = 0,
       minRatingo,
       genres,
@@ -218,7 +257,7 @@ export class TrendingShowsQuery {
       const typedTotalRows = totalRows as Array<{ total?: number | null }>;
       const total = Number(typedTotalRows[0]?.total ?? 0);
 
-      const mapped = this.mapResults(results);
+      const mapped = this.mapResults(results as unknown as TrendingShowRow[]);
       const withTotal = mapped as WithTotal<TrendingShowItem>;
       withTotal.total = total;
       return withTotal;
@@ -233,7 +272,7 @@ export class TrendingShowsQuery {
   /**
    * Maps raw database rows to TrendingShowItem DTOs.
    */
-  private mapResults(results: any[]): TrendingShowItem[] {
+  private mapResults(results: TrendingShowRow[]): TrendingShowItem[] {
     const now = new Date();
     const newReleaseCutoff = new Date();
     newReleaseCutoff.setDate(now.getDate() - NEW_RELEASE_THRESHOLDS.DAYS);
@@ -241,7 +280,7 @@ export class TrendingShowsQuery {
     const classicCutoff = new Date();
     classicCutoff.setFullYear(now.getFullYear() - CLASSIC_THRESHOLDS.YEARS_OLD);
 
-    return results.map((row: any) => {
+    return results.map((row: TrendingShowRow) => {
       const releaseDate = row.release_date ? new Date(row.release_date) : null;
 
       return {
@@ -294,7 +333,7 @@ export class TrendingShowsQuery {
   /**
    * Builds show progress object with season/episode label.
    */
-  private buildShowProgress(row: any) {
+  private buildShowProgress(row: TrendingShowRow) {
     let label: string | null = null;
     if (row.season_number != null && row.episode_number != null) {
       label = `S${row.season_number}E${row.episode_number}`;

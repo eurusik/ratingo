@@ -5,7 +5,8 @@
  * specific quality/popularity thresholds.
  */
 
-import { BreakoutRule } from '../types/policy.types';
+import { type BreakoutRule } from '../types/policy.types';
+
 import { CANONICAL_PROVIDERS } from './provider-mapping';
 
 /**

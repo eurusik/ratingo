@@ -81,13 +81,12 @@ export function SearchResultItem({
       </div>
 
       {/* Import indicator */}
-      {!isLocal && (
-        isImporting ? (
+      {!isLocal &&
+        (isImporting ? (
           <Loader2 className="h-4 w-4 animate-spin text-zinc-400 shrink-0" />
         ) : (
           <Download className="h-4 w-4 text-zinc-500 shrink-0" />
-        )
-      )}
+        ))}
     </CommandItem>
   );
 }

@@ -1,77 +1,81 @@
-"use client"
+'use client';
 
-import React, { useState } from 'react'
-import { Card, CardContent } from '@/shared/ui/card'
-import { Badge } from '@/shared/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs'
-import { 
-  ProgressWithStats, 
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/shared/ui/card';
+import { Badge } from '@/shared/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import {
+  ProgressWithStats,
   ConfirmActionDialog,
   RunHeader,
   RunDiffTab,
   RunErrorsTab,
-} from '@/modules/admin'
-import { RUN_STATUS } from '@/modules/admin/types'
-import { toast } from 'sonner'
-import { useRunStatus, useRunDiff, usePromoteRun, useCancelRun } from '@/core/query/admin'
-import { useTranslation } from '@/shared/i18n'
+} from '@/modules/admin';
+import { RUN_STATUS } from '@/modules/admin/types';
+import { toast } from 'sonner';
+import { useRunStatus, useRunDiff, usePromoteRun, useCancelRun } from '@/core/query/admin';
+import { useTranslation } from '@/shared/i18n';
 
 export default function RunDetailPage({ params }: { params: Promise<{ runId: string }> }) {
-  const resolvedParams = React.use(params)
-  const runId = resolvedParams.runId
-  const { dict } = useTranslation()
-  
-  const [confirmDialog, setConfirmDialog] = useState<{
-    open: boolean
-    type?: 'promote' | 'cancel'
-  }>({ open: false })
+  const resolvedParams = React.use(params);
+  const runId = resolvedParams.runId;
+  const { dict } = useTranslation();
 
-  const { data: run, isLoading, error } = useRunStatus({
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type?: 'promote' | 'cancel';
+  }>({ open: false });
+
+  const {
+    data: run,
+    isLoading,
+    error,
+  } = useRunStatus({
     runId,
     autoRefresh: true,
     refreshInterval: 5000,
-  })
+  });
 
   const { data: diffReport, isLoading: diffLoading } = useRunDiff({
     runId,
     sampleSize: 50,
     enabled: run?.status === RUN_STATUS.PREPARED,
-  })
+  });
 
-  const promoteRunMutation = usePromoteRun()
-  const cancelRunMutation = useCancelRun()
+  const promoteRunMutation = usePromoteRun();
+  const cancelRunMutation = useCancelRun();
 
   const handlePromote = async () => {
-    if (!run) return
+    if (!run) return;
     try {
-      await promoteRunMutation.mutateAsync({ runId, policyId: run.targetPolicyId })
-      toast.success(dict.admin.runDetail.toast.promoteSuccess)
-      setConfirmDialog({ open: false })
+      await promoteRunMutation.mutateAsync({ runId, policyId: run.targetPolicyId });
+      toast.success(dict.admin.runDetail.toast.promoteSuccess);
+      setConfirmDialog({ open: false });
     } catch {
-      toast.error(dict.admin.runDetail.toast.promoteFailed)
+      toast.error(dict.admin.runDetail.toast.promoteFailed);
     }
-  }
+  };
 
   const handleCancel = async () => {
     try {
-      await cancelRunMutation.mutateAsync(runId)
-      toast.success(dict.admin.runDetail.toast.cancelSuccess)
-      setConfirmDialog({ open: false })
+      await cancelRunMutation.mutateAsync(runId);
+      toast.success(dict.admin.runDetail.toast.cancelSuccess);
+      setConfirmDialog({ open: false });
     } catch {
-      toast.error(dict.admin.runDetail.toast.cancelFailed)
+      toast.error(dict.admin.runDetail.toast.cancelFailed);
     }
-  }
+  };
 
   const getBlockingReasonMessages = (reasons: unknown[][] | null | undefined): string[] => {
     if (!reasons || reasons.length === 0) {
-      return [dict.admin.runDetail.blockingReasons.default]
+      return [dict.admin.runDetail.blockingReasons.default];
     }
-    const codes = reasons.flat().filter((r): r is string => typeof r === 'string')
-    return codes.map(code => {
-      const key = code as keyof typeof dict.admin.runDetail.blockingReasons
-      return dict.admin.runDetail.blockingReasons[key] || code
-    })
-  }
+    const codes = reasons.flat().filter((r): r is string => typeof r === 'string');
+    return codes.map((code) => {
+      const key = code as keyof typeof dict.admin.runDetail.blockingReasons;
+      return dict.admin.runDetail.blockingReasons[key] || code;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -82,7 +86,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   if (error || !run) {
@@ -96,10 +100,10 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
-  const isMutating = promoteRunMutation.isPending || cancelRunMutation.isPending
+  const isMutating = promoteRunMutation.isPending || cancelRunMutation.isPending;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -190,5 +194,5 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
         variant="destructive"
       />
     </div>
-  )
+  );
 }

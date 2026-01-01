@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import { IsIn } from 'class-validator';
 
 export const AVATAR_CONTENT_TYPE_VALUES = ['image/jpeg', 'image/png', 'image/webp'] as const;

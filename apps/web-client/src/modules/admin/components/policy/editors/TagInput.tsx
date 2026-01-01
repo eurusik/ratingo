@@ -1,22 +1,22 @@
-"use client"
+'use client';
 
-import { useState, KeyboardEvent } from 'react'
-import { X } from 'lucide-react'
-import { Input } from '@/shared/ui/input'
-import { Badge } from '@/shared/ui/badge'
+import { useState, KeyboardEvent } from 'react';
+import { X } from 'lucide-react';
+import { Input } from '@/shared/ui/input';
+import { Badge } from '@/shared/ui/badge';
 
 interface TagInputProps {
-  value: string[]
-  onChange: (value: string[]) => void
-  placeholder?: string
-  variant?: 'default' | 'destructive'
-  disabled?: boolean
-  transform?: (value: string) => string
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+  variant?: 'default' | 'destructive';
+  disabled?: boolean;
+  transform?: (value: string) => string;
 }
 
 /**
  * Input for managing list of tags (countries, languages, providers).
- * 
+ *
  * Supports adding via Enter/comma and removing via X button or backspace.
  */
 export function TagInput({
@@ -27,32 +27,32 @@ export function TagInput({
   disabled = false,
   transform = (v) => v.toUpperCase(),
 }: TagInputProps) {
-  const [inputValue, setInputValue] = useState('')
+  const [inputValue, setInputValue] = useState('');
 
   const addTag = (tag: string) => {
-    const transformed = transform(tag.trim())
+    const transformed = transform(tag.trim());
     if (transformed && !value.includes(transformed)) {
-      onChange([...value, transformed])
+      onChange([...value, transformed]);
     }
-    setInputValue('')
-  }
+    setInputValue('');
+  };
 
   const removeTag = (tagToRemove: string) => {
-    onChange(value.filter((tag) => tag !== tagToRemove))
-  }
+    onChange(value.filter((tag) => tag !== tagToRemove));
+  };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault()
+      e.preventDefault();
       if (inputValue.trim()) {
-        addTag(inputValue)
+        addTag(inputValue);
       }
     } else if (e.key === 'Backspace' && !inputValue && value.length > 0) {
-      removeTag(value[value.length - 1])
+      removeTag(value[value.length - 1]);
     }
-  }
+  };
 
-  const badgeVariant = variant === 'destructive' ? 'destructive' : 'outline'
+  const badgeVariant = variant === 'destructive' ? 'destructive' : 'outline';
 
   return (
     <div className="space-y-2">
@@ -81,5 +81,5 @@ export function TagInput({
         className="h-8 text-sm"
       />
     </div>
-  )
+  );
 }

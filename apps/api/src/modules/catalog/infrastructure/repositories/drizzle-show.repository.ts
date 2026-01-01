@@ -1,28 +1,28 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import type { NormalizedSeason } from '../../../ingestion/public';
+import { type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import {
-  CalendarEpisode,
-  IShowRepository,
-  ShowDetails,
-  ShowListItem,
-  TrendingShowItem,
-  TrendingShowsOptions,
+  type CalendarEpisode,
+  type IShowRepository,
+  type ShowDetails,
+  type ShowListItem,
+  type TrendingShowItem,
+  type TrendingShowsOptions,
 } from '../../domain/repositories/show.repository.interface';
 import type { WithTotal } from '../../domain/types/query.types';
-import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
+import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
-import { DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
-import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-
-// Query Objects
-import { TrendingShowsQuery } from '../queries/trending-shows.query';
-import { ShowDetailsQuery } from '../queries/show-details.query';
-import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
+import { type CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
+import { type ShowDetailsQuery } from '../queries/show-details.query';
+import { type TrendingShowsQuery } from '../queries/trending-shows.query';
 
 /**
  * Show details payload for upsert operation.
@@ -73,28 +73,53 @@ export class DrizzleShowRepository implements IShowRepository {
     const showId = show.id;
 
     if (details.seasons?.length) {
-      for (const season of details.seasons) {
-        const [seasonRecord] = await drizzleTx
-          .insert(schema.seasons)
-          .values(PersistenceMapper.toSeasonInsert(showId, season))
-          .onConflictDoUpdate({
-            target: [schema.seasons.showId, schema.seasons.number],
-            set: PersistenceMapper.toSeasonUpdate(season),
-          })
-          .returning({ id: schema.seasons.id });
+      await this.upsertSeasons(drizzleTx, showId, details.seasons);
+    }
+  }
 
-        if (season.episodes?.length) {
-          for (const ep of season.episodes) {
-            await drizzleTx
-              .insert(schema.episodes)
-              .values(PersistenceMapper.toEpisodeInsert(seasonRecord.id, showId, ep))
-              .onConflictDoUpdate({
-                target: [schema.episodes.seasonId, schema.episodes.number],
-                set: PersistenceMapper.toEpisodeUpdate(ep),
-              });
-          }
-        }
-      }
+  /**
+   * Upserts seasons and their episodes.
+   */
+  private async upsertSeasons(
+    drizzleTx: ReturnType<typeof toDrizzleTx>,
+    showId: string,
+    seasons: ShowDetailsPayload['seasons'],
+  ): Promise<void> {
+    if (!seasons) return;
+
+    for (const season of seasons) {
+      const [seasonRecord] = await drizzleTx
+        .insert(schema.seasons)
+        .values(PersistenceMapper.toSeasonInsert(showId, season))
+        .onConflictDoUpdate({
+          target: [schema.seasons.showId, schema.seasons.number],
+          set: PersistenceMapper.toSeasonUpdate(season),
+        })
+        .returning({ id: schema.seasons.id });
+
+      await this.upsertEpisodes(drizzleTx, seasonRecord.id, showId, season.episodes);
+    }
+  }
+
+  /**
+   * Upserts episodes for a season.
+   */
+  private async upsertEpisodes(
+    drizzleTx: ReturnType<typeof toDrizzleTx>,
+    seasonId: string,
+    showId: string,
+    episodes: ShowDetailsPayload['seasons'][number]['episodes'] | undefined,
+  ): Promise<void> {
+    if (!episodes?.length) return;
+
+    for (const ep of episodes) {
+      await drizzleTx
+        .insert(schema.episodes)
+        .values(PersistenceMapper.toEpisodeInsert(seasonId, showId, ep))
+        .onConflictDoUpdate({
+          target: [schema.episodes.seasonId, schema.episodes.number],
+          set: PersistenceMapper.toEpisodeUpdate(ep),
+        });
     }
   }
 

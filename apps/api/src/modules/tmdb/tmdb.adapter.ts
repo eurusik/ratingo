@@ -1,17 +1,24 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
-import { IMetadataProvider } from '../ingestion/domain/interfaces/metadata-provider.interface';
-import { NormalizedMedia } from '../ingestion/domain/models/normalized-media.model';
-import { TmdbMapper } from './mappers/tmdb.mapper';
-import tmdbConfig from '../../config/tmdb.config';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { type ConfigType } from '@nestjs/config';
+
+import {
+  DEFAULT_REGION,
+  DEFAULT_LANGUAGE,
+  CATALOG_DEFAULT_NEW_RELEASE_DAYS,
+  MS_PER_DAY,
+} from '../../common/constants';
 import { MediaType } from '../../common/enums/media-type.enum';
 import { TmdbApiException } from '../../common/exceptions/external-api.exception';
-import { DEFAULT_REGION, DEFAULT_LANGUAGE } from '../../common/constants';
 import {
   ResilientHttpClient,
-  RetryConfig,
+  type RetryConfig,
   HttpError,
 } from '../../common/http/resilient-http.client';
+import tmdbConfig from '../../config/tmdb.config';
+import { type MetadataProviderPort, type NormalizedMedia } from '../ingestion/public';
+
+import { TmdbMapper } from './mappers/tmdb.mapper';
+import type { TmdbMediaResponse } from './types/tmdb-api.types';
 
 /**
  * TMDB-specific retry configuration.
@@ -24,16 +31,57 @@ const TMDB_RETRY_CONFIG: Partial<RetryConfig> = {
   timeoutMs: 15000,
 };
 
+/** Safety limit to prevent infinite loops when paginating */
+const MAX_PAGES = 10;
+
+/**
+ * TMDB API response for paginated results.
+ */
+interface TmdbPaginatedResponse {
+  results: TmdbResultItem[];
+  total_pages: number;
+  total_results: number;
+  page: number;
+}
+
+/**
+ * TMDB result item from paginated endpoints.
+ */
+interface TmdbResultItem {
+  id: number;
+  media_type?: string;
+  title?: string;
+  name?: string;
+  original_title?: string;
+  original_name?: string;
+  release_date?: string;
+  first_air_date?: string;
+  poster_path?: string | null;
+  vote_average?: number;
+}
+
+/**
+ * Search result item returned by searchMulti.
+ */
+export interface TmdbSearchResult {
+  externalIds: { tmdbId: number };
+  type: MediaType;
+  title: string;
+  originalTitle: string | null;
+  releaseDate: string | null;
+  posterPath: string | null;
+  rating: number;
+}
+
 /**
  * Implementation of MetadataProvider for The Movie Database (TMDB) API v3.
  * Handles fetching, error handling (404s), and mapping to domain models.
  */
 @Injectable()
-export class TmdbAdapter implements IMetadataProvider {
+export class TmdbAdapter implements MetadataProviderPort {
   public readonly providerName = 'tmdb';
   private readonly logger = new Logger(TmdbAdapter.name);
   private readonly DEFAULT_LANG = DEFAULT_LANGUAGE;
-  private readonly MAX_PAGES = 10; // Safety limit to prevent infinite loops
   private readonly httpClient: ResilientHttpClient;
 
   constructor(
@@ -49,18 +97,25 @@ export class TmdbAdapter implements IMetadataProvider {
    */
   public async getMovie(tmdbId: number): Promise<NormalizedMedia | null> {
     try {
-      const data = await this.fetch(`/movie/${tmdbId}`, {
+      const data = await this.fetch<TmdbMediaResponse>(`/movie/${tmdbId}`, {
         append_to_response: 'credits,videos,release_dates,watch/providers',
         include_video_language: 'uk,en',
       });
       const result = TmdbMapper.toDomain(data, MediaType.MOVIE);
       // Fallback: if no localized data, create minimal object for import
       if (!result && data?.id) {
+        const releaseDateStr = 'release_date' in data ? data.release_date : null;
         return {
-          externalIds: { tmdbId: data.id, imdbId: data.imdb_id || null },
+          externalIds: {
+            tmdbId: data.id,
+            imdbId: ('imdb_id' in data ? data.imdb_id : null) || null,
+          },
           type: MediaType.MOVIE,
-          title: data.title || data.original_title || `TMDB #${tmdbId}`,
-          originalTitle: data.original_title || null,
+          title:
+            ('title' in data ? data.title : '') ||
+            ('original_title' in data ? data.original_title : '') ||
+            `TMDB #${tmdbId}`,
+          originalTitle: ('original_title' in data ? data.original_title : null) || null,
           overview: data.overview || null,
           slug: '',
           posterPath: data.poster_path || null,
@@ -68,16 +123,17 @@ export class TmdbAdapter implements IMetadataProvider {
           rating: data.vote_average || 0,
           voteCount: data.vote_count || 0,
           popularity: data.popularity || 0,
-          releaseDate: data.release_date || null,
+          releaseDate: releaseDateStr ? new Date(releaseDateStr) : null,
           genres: [],
           videos: [],
           credits: { cast: [], crew: [] },
           watchProviders: {},
+          isAdult: data.adult || false,
         } as NormalizedMedia;
       }
       return result;
     } catch (error) {
-      if (error instanceof TmdbApiException && error.details?.statusCode === 404) {
+      if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
         this.logger.warn(`TMDB movie ${tmdbId} not found (404)`);
         return null;
       }
@@ -92,18 +148,22 @@ export class TmdbAdapter implements IMetadataProvider {
    */
   public async getShow(tmdbId: number): Promise<NormalizedMedia | null> {
     try {
-      const data = await this.fetch(`/tv/${tmdbId}`, {
+      const data = await this.fetch<TmdbMediaResponse>(`/tv/${tmdbId}`, {
         append_to_response: 'aggregate_credits,videos,content_ratings,watch/providers',
         include_video_language: 'uk,en',
       });
       const result = TmdbMapper.toDomain(data, MediaType.SHOW);
       // Fallback: if no localized data, create minimal object for import
       if (!result && data?.id) {
+        const releaseDateStr = 'first_air_date' in data ? data.first_air_date : null;
         return {
           externalIds: { tmdbId: data.id, imdbId: data.external_ids?.imdb_id || null },
           type: MediaType.SHOW,
-          title: data.name || data.original_name || `TMDB #${tmdbId}`,
-          originalTitle: data.original_name || null,
+          title:
+            ('name' in data ? data.name : '') ||
+            ('original_name' in data ? data.original_name : '') ||
+            `TMDB #${tmdbId}`,
+          originalTitle: ('original_name' in data ? data.original_name : null) || null,
           overview: data.overview || null,
           slug: '',
           posterPath: data.poster_path || null,
@@ -111,16 +171,17 @@ export class TmdbAdapter implements IMetadataProvider {
           rating: data.vote_average || 0,
           voteCount: data.vote_count || 0,
           popularity: data.popularity || 0,
-          releaseDate: data.first_air_date || null,
+          releaseDate: releaseDateStr ? new Date(releaseDateStr) : null,
           genres: [],
           videos: [],
           credits: { cast: [], crew: [] },
           watchProviders: {},
+          isAdult: data.adult || false,
         } as NormalizedMedia;
       }
       return result;
     } catch (error) {
-      if (error instanceof TmdbApiException && error.details?.statusCode === 404) {
+      if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
         this.logger.warn(`TMDB show ${tmdbId} not found (404)`);
         return null;
       }
@@ -144,11 +205,11 @@ export class TmdbAdapter implements IMetadataProvider {
       endpoint = `/trending/${tmdbType}/day`;
     }
 
-    const data = await this.fetch(endpoint, { page: page.toString() });
+    const data = await this.fetch<TmdbPaginatedResponse>(endpoint, { page: page.toString() });
 
     return (data.results || [])
-      .filter((item: any) => item.media_type !== 'person')
-      .map((item: any) => ({
+      .filter((item) => item.media_type !== 'person')
+      .map((item) => ({
         tmdbId: item.id,
         // If specific type endpoint used, media_type might be missing in result, so use the requested type
         type: type || (item.media_type === 'movie' ? MediaType.MOVIE : MediaType.SHOW),
@@ -168,13 +229,13 @@ export class TmdbAdapter implements IMetadataProvider {
     let totalPages = 0;
 
     // Fetch all pages (with safety limit to prevent infinite loops)
-    for (let page = 1; page <= this.MAX_PAGES; page++) {
-      const data = await this.fetch('/movie/now_playing', {
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const data = await this.fetch<TmdbPaginatedResponse>('/movie/now_playing', {
         region,
         page: page.toString(),
       });
 
-      const pageIds = (data.results || []).map((m: any) => m.id);
+      const pageIds = (data.results || []).map((m) => m.id);
       ids.push(...pageIds);
 
       pagesFetched = page;
@@ -199,16 +260,19 @@ export class TmdbAdapter implements IMetadataProvider {
    * @param {string} region - ISO 3166-1 country code
    * @returns {Promise<number[]>} Array of TMDB movie IDs
    */
-  public async getNewReleaseIds(daysBack = 30, region = DEFAULT_REGION): Promise<number[]> {
+  public async getNewReleaseIds(
+    daysBack = CATALOG_DEFAULT_NEW_RELEASE_DAYS,
+    region = DEFAULT_REGION,
+  ): Promise<number[]> {
     const now = new Date();
-    const cutoff = new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000);
+    const cutoff = new Date(now.getTime() - daysBack * MS_PER_DAY);
     const ids: number[] = [];
     let pagesFetched = 0;
     let totalPages = 0;
 
     // Fetch all pages (with safety limit)
-    for (let page = 1; page <= this.MAX_PAGES; page++) {
-      const data = await this.fetch('/discover/movie', {
+    for (let page = 1; page <= MAX_PAGES; page++) {
+      const data = await this.fetch<TmdbPaginatedResponse>('/discover/movie', {
         region,
         sort_by: 'primary_release_date.desc',
         'primary_release_date.lte': now.toISOString().split('T')[0],
@@ -217,7 +281,7 @@ export class TmdbAdapter implements IMetadataProvider {
         page: page.toString(),
       });
 
-      const pageIds = (data.results || []).map((m: any) => m.id);
+      const pageIds = (data.results || []).map((m) => m.id);
       ids.push(...pageIds);
 
       pagesFetched = page;
@@ -227,9 +291,9 @@ export class TmdbAdapter implements IMetadataProvider {
       if (page >= data.total_pages) break;
     }
 
-    if (totalPages > this.MAX_PAGES) {
+    if (totalPages > MAX_PAGES) {
       this.logger.warn(
-        `New releases limit reached: fetched ${this.MAX_PAGES} pages, but total is ${totalPages}. Some releases may be missed.`,
+        `New releases limit reached: fetched ${MAX_PAGES} pages, but total is ${totalPages}. Some releases may be missed.`,
       );
     }
 
@@ -245,27 +309,27 @@ export class TmdbAdapter implements IMetadataProvider {
    *
    * @param {string} query - Search string
    * @param {number} page - Page number
-   * @returns {Promise<any[]>} Search results
+   * @returns {Promise<TmdbSearchResult[]>} Search results
    */
-  public async searchMulti(query: string, page = 1): Promise<any[]> {
+  public async searchMulti(query: string, page = 1): Promise<TmdbSearchResult[]> {
     // TMDB search works with any language query but returns localized titles
     // when language param is set. We keep uk-UA to get Ukrainian titles.
-    const data = await this.fetch('/search/multi', {
+    const data = await this.fetch<TmdbPaginatedResponse>('/search/multi', {
       query,
       page: page.toString(),
       include_adult: 'false',
     });
 
     return (data.results || [])
-      .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
-      .map((item: any) => ({
+      .filter((item) => item.media_type === 'movie' || item.media_type === 'tv')
+      .map((item) => ({
         externalIds: { tmdbId: item.id },
         type: item.media_type === 'movie' ? MediaType.MOVIE : MediaType.SHOW,
-        title: item.title || item.name,
-        originalTitle: item.original_title || item.original_name,
-        releaseDate: item.release_date || item.first_air_date,
-        posterPath: item.poster_path,
-        rating: item.vote_average,
+        title: item.title || item.name || '',
+        originalTitle: item.original_title || item.original_name || null,
+        releaseDate: item.release_date || item.first_air_date || null,
+        posterPath: item.poster_path || null,
+        rating: item.vote_average || 0,
       }));
   }
 
@@ -273,11 +337,11 @@ export class TmdbAdapter implements IMetadataProvider {
    * Helper method to perform fetch requests with retry logic.
    * Uses ResilientHttpClient for automatic retries with exponential backoff.
    */
-  private async fetch(
+  private async fetch<T = unknown>(
     endpoint: string,
     params: Record<string, string> = {},
     options: { skipLanguage?: boolean } = {},
-  ): Promise<any> {
+  ): Promise<T> {
     const url = new URL(`${this.config.apiUrl}${endpoint}`);
 
     // Default params
@@ -291,14 +355,14 @@ export class TmdbAdapter implements IMetadataProvider {
       url.searchParams.append(key, value);
     });
 
-    const result = await this.httpClient.get<any>(url.toString());
+    const result = await this.httpClient.get<T>(url.toString());
 
     if (!result.success) {
-      const error = result.error;
+      const { error } = result;
 
       if (error instanceof HttpError) {
-        if (error.status === 404) {
-          throw new TmdbApiException('Resource not found', 404);
+        if (error.status === HttpStatus.NOT_FOUND) {
+          throw new TmdbApiException('Resource not found', HttpStatus.NOT_FOUND);
         }
         throw new TmdbApiException(error.message, error.status);
       }
@@ -306,10 +370,16 @@ export class TmdbAdapter implements IMetadataProvider {
       // Network/timeout errors after all retries
       if (result.isRetryable) {
         this.logger.error(`TMDB request failed after ${result.attempts} attempts: ${endpoint}`);
-        throw new TmdbApiException('Failed to communicate with TMDB after retries', 503);
+        throw new TmdbApiException(
+          'Failed to communicate with TMDB after retries',
+          HttpStatus.SERVICE_UNAVAILABLE,
+        );
       }
 
-      throw new TmdbApiException('Failed to communicate with TMDB', 500);
+      throw new TmdbApiException(
+        'Failed to communicate with TMDB',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
 
     return result.data;

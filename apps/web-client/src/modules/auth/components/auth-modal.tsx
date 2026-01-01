@@ -6,13 +6,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/shared/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { LoginForm } from './login-form';
 import { RegisterForm } from './register-form';
@@ -56,15 +50,9 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
         </DialogHeader>
 
         {mode === 'login' ? (
-          <LoginForm
-            onSuccess={handleSuccess}
-            onSwitchToRegister={() => setMode('register')}
-          />
+          <LoginForm onSuccess={handleSuccess} onSwitchToRegister={() => setMode('register')} />
         ) : (
-          <RegisterForm
-            onSuccess={handleSuccess}
-            onSwitchToLogin={() => setMode('login')}
-          />
+          <RegisterForm onSuccess={handleSuccess} onSwitchToLogin={() => setMode('login')} />
         )}
       </DialogContent>
     </Dialog>

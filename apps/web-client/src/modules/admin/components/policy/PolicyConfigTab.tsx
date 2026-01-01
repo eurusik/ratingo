@@ -1,10 +1,15 @@
-"use client"
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
-import { Badge } from '@/shared/ui/badge'
-import type { PolicyConfigDto } from '@/core/api/admin'
-import { POLICY_STATUS } from '@/modules/admin/types'
-import type { PolicyFormLabels, ConfigViewLabels, PolicyInfoLabels, StatusLabels } from './labels.types'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Badge } from '@/shared/ui/badge';
+import type { PolicyConfigDto } from '@/core/api/admin';
+import { POLICY_STATUS } from '@/modules/admin/types';
+import type {
+  PolicyFormLabels,
+  ConfigViewLabels,
+  PolicyInfoLabels,
+  StatusLabels,
+} from './labels.types';
 import {
   CountriesCard,
   LanguagesCard,
@@ -12,28 +17,28 @@ import {
   SettingsCard,
   BreakoutRulesCard,
   GlobalRequirementsCard,
-} from './PolicyConfigCards'
-import { PolicyEditForm, type PolicyFormData } from './PolicyEditForm'
+} from './PolicyConfigCards';
+import { PolicyEditForm, type PolicyFormData } from './PolicyEditForm';
 
 interface PolicyConfigTabProps {
-  config: PolicyConfigDto | undefined
-  version: string
-  status: string
-  isEditing?: boolean
-  onSave?: (data: PolicyFormData) => Promise<void>
-  onCancelEdit?: () => void
-  isSaving?: boolean
+  config: PolicyConfigDto | undefined;
+  version: string;
+  status: string;
+  isEditing?: boolean;
+  onSave?: (data: PolicyFormData) => Promise<void>;
+  onCancelEdit?: () => void;
+  isSaving?: boolean;
   labels: {
-    config?: ConfigViewLabels
-    form?: PolicyFormLabels
-    policyInfo: PolicyInfoLabels
-    statusLabels: StatusLabels
-  }
+    config?: ConfigViewLabels;
+    form?: PolicyFormLabels;
+    policyInfo: PolicyInfoLabels;
+    statusLabels: StatusLabels;
+  };
 }
 
 /**
  * Displays policy configuration tab with view/edit modes.
- * 
+ *
  * Shows config cards (countries, languages, providers, settings, breakout rules)
  * in view mode, or edit form in edit mode.
  *
@@ -57,7 +62,7 @@ export function PolicyConfigTab({
   labels,
 }: PolicyConfigTabProps) {
   if (!config) {
-    return <PolicyInfoFallback version={version} status={status} labels={labels} />
+    return <PolicyInfoFallback version={version} status={status} labels={labels} />;
   }
 
   if (isEditing && onSave && onCancelEdit) {
@@ -69,7 +74,7 @@ export function PolicyConfigTab({
         isSaving={isSaving}
         labels={labels.form}
       />
-    )
+    );
   }
 
   return (
@@ -85,7 +90,7 @@ export function PolicyConfigTab({
       <GlobalRequirementsCard config={config} labels={labels.config} />
       <BreakoutRulesCard config={config} labels={labels.config} />
     </>
-  )
+  );
 }
 
 function PolicyInfoFallback({
@@ -93,12 +98,13 @@ function PolicyInfoFallback({
   status,
   labels,
 }: {
-  version: string
-  status: string
-  labels: PolicyConfigTabProps['labels']
+  version: string;
+  status: string;
+  labels: PolicyConfigTabProps['labels'];
 }) {
-  const badgeVariant = status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary'
-  const statusLabel = status === POLICY_STATUS.ACTIVE ? labels.statusLabels.active : labels.statusLabels.inactive
+  const badgeVariant = status === POLICY_STATUS.ACTIVE ? 'default' : 'secondary';
+  const statusLabel =
+    status === POLICY_STATUS.ACTIVE ? labels.statusLabels.active : labels.statusLabels.inactive;
 
   return (
     <Card>
@@ -120,5 +126,5 @@ function PolicyInfoFallback({
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

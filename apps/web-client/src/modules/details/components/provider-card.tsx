@@ -13,7 +13,7 @@ interface ProviderCardProps {
 
 export function ProviderCard({ provider }: ProviderCardProps) {
   return (
-    <div 
+    <div
       className="relative group flex items-center justify-center p-1 bg-white rounded-lg hover:shadow-lg hover:shadow-blue-500/20 transition-all cursor-pointer"
       title={provider.name}
     >

@@ -1,9 +1,12 @@
+import { InjectQueue } from '@nestjs/bullmq';
 import { Controller, Get, Post, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { StatsService } from '../../application/services/stats.service';
-import { DropOffService } from '../../application/services/drop-off.service';
+
+import { type Queue } from 'bullmq';
+
+import { DEFAULT_BATCH_SIZE, DEFAULT_PAGE_SIZE } from '../../../../common/constants';
+import { type DropOffService } from '../../application/services/drop-off.service';
+import { type StatsService } from '../../application/services/stats.service';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 
 /**
@@ -35,11 +38,11 @@ export class StatsController {
     name: 'limit',
     required: false,
     type: Number,
-    description: 'Number of items to sync (default: 20)',
+    description: `Number of items to sync (default: ${DEFAULT_PAGE_SIZE})`,
   })
   async syncTrendingStats(@Query('limit') limit?: number) {
     const job = await this.statsQueue.add(STATS_JOBS.SYNC_TRENDING, {
-      limit: limit || 20,
+      limit: limit || DEFAULT_PAGE_SIZE,
     });
 
     return {
@@ -91,18 +94,18 @@ export class StatsController {
     name: 'limit',
     required: false,
     type: Number,
-    description: 'Max shows to analyze (default: 50)',
+    description: `Max shows to analyze (default: ${DEFAULT_BATCH_SIZE})`,
   })
   async analyzeDropOff(@Query('tmdbId') tmdbId?: number, @Query('limit') limit?: number) {
     const job = await this.statsQueue.add(STATS_JOBS.ANALYZE_DROP_OFF, {
       tmdbId,
-      limit: limit || 50,
+      limit: limit || DEFAULT_BATCH_SIZE,
     });
 
     return {
       message: tmdbId
         ? `Drop-off analysis job for show ${tmdbId} added to queue`
-        : `Drop-off analysis job for ${limit || 50} shows added to queue`,
+        : `Drop-off analysis job for ${limit || DEFAULT_BATCH_SIZE} shows added to queue`,
       jobId: job.id,
     };
   }

@@ -54,7 +54,7 @@ export function SeasonProgress({
             key={i}
             className={cn(
               'w-1.5 h-1.5 rounded-full',
-              i < filledDots ? 'bg-blue-400' : 'bg-zinc-700'
+              i < filledDots ? 'bg-blue-400' : 'bg-zinc-700',
             )}
           />
         ))}

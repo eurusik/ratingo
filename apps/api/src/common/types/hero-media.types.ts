@@ -1,5 +1,6 @@
-import { MediaType } from '../enums/media-type.enum';
-import { ImageData, ExternalRatings, RatingoStats } from './media.types';
+import { type MediaType } from '../enums/media-type.enum';
+
+import { type ImageData, type ExternalRatings, type RatingoStats } from './media.types';
 
 // Re-export for backward compatibility
 export type { ImageData, ExternalRatings, RatingoStats } from './media.types';

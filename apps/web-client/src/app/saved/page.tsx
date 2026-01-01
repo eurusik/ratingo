@@ -32,7 +32,7 @@ function SavedPageContent() {
   const { dict } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
   const searchParams = useSearchParams();
-  
+
   const defaultTab = getTabFromParam(searchParams.get('tab'));
 
   if (isLoading) {
@@ -51,12 +51,8 @@ function SavedPageContent() {
       <div className="min-h-screen pt-24 pb-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <h1 className="text-2xl font-bold text-zinc-100 mb-4">
-              {dict.saved.title}
-            </h1>
-            <p className="text-zinc-500">
-              {dict.auth.loginSubtitle}
-            </p>
+            <h1 className="text-2xl font-bold text-zinc-100 mb-4">{dict.saved.title}</h1>
+            <p className="text-zinc-500">{dict.auth.loginSubtitle}</p>
           </div>
         </div>
       </div>
@@ -66,25 +62,17 @@ function SavedPageContent() {
   return (
     <div className="min-h-screen pt-24 pb-12">
       <div className="container mx-auto px-4">
-        <h1 className="text-2xl font-bold text-zinc-100 mb-8">
-          {dict.saved.title}
-        </h1>
+        <h1 className="text-2xl font-bold text-zinc-100 mb-8">{dict.saved.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="bg-zinc-900 border border-zinc-800 mb-6">
-            <TabsTrigger 
-              value={TAB_VALUES.FOR_LATER}
-              className="data-[state=active]:bg-zinc-800"
-            >
+            <TabsTrigger value={TAB_VALUES.FOR_LATER} className="data-[state=active]:bg-zinc-800">
               {dict.saved.tabs.forLater}
             </TabsTrigger>
-            <TabsTrigger 
-              value={TAB_VALUES.CONSIDERING}
-              className="data-[state=active]:bg-zinc-800"
-            >
+            <TabsTrigger value={TAB_VALUES.CONSIDERING} className="data-[state=active]:bg-zinc-800">
               {dict.saved.tabs.considering}
             </TabsTrigger>
-            <TabsTrigger 
+            <TabsTrigger
               value={TAB_VALUES.NOTIFICATIONS}
               className="data-[state=active]:bg-zinc-800"
             >
@@ -111,13 +99,15 @@ function SavedPageContent() {
 
 export default function SavedPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen pt-24 pb-12">
-        <div className="container mx-auto px-4">
-          <div className="h-8 w-48 bg-zinc-800 rounded animate-pulse mb-8" />
+    <Suspense
+      fallback={
+        <div className="min-h-screen pt-24 pb-12">
+          <div className="container mx-auto px-4">
+            <div className="h-8 w-48 bg-zinc-800 rounded animate-pulse mb-8" />
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <SavedPageContent />
     </Suspense>
   );

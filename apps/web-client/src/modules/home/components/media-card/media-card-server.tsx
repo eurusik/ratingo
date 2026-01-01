@@ -3,7 +3,13 @@
  */
 
 import { Calendar } from 'lucide-react';
-import type { BadgeKey, ImageDto, RatingoStatsDto, ExternalRatingsDto, ShowProgressDto } from '@/modules/home/types';
+import type {
+  BadgeKey,
+  ImageDto,
+  RatingoStatsDto,
+  ExternalRatingsDto,
+  ShowProgressDto,
+} from '@/modules/home/types';
 import { cn } from '@/shared/utils';
 import { formatYear } from '@/shared/utils/format';
 import { getDictionary, type Locale } from '@/shared/i18n';
@@ -12,7 +18,6 @@ import { CardPoster } from './card-poster';
 import { CardRating } from './card-rating';
 import { CardBadge, RankBadge, badgeLabelKeys } from './card-badge';
 import { CardBookmark } from './card-cta';
-
 
 /** Props for MediaCardServer - minimalist view props. */
 export interface MediaCardServerProps {
@@ -67,7 +72,11 @@ export function MediaCardServer(props: MediaCardServerProps) {
       {rank != null && rank <= 3 ? (
         <RankBadge rank={rank} />
       ) : badgeKey ? (
-        <CardBadge badgeKey={badgeKey} label={dict.card.badge[badgeLabelKeys[badgeKey]]} position="top-right" />
+        <CardBadge
+          badgeKey={badgeKey}
+          label={dict.card.badge[badgeLabelKeys[badgeKey]]}
+          position="top-right"
+        />
       ) : null}
     </CardPoster>
   );
@@ -78,9 +87,7 @@ export function MediaCardServer(props: MediaCardServerProps) {
   return (
     <CardLayout href={href} as="article" poster={posterSlot} overlay={overlaySlot}>
       {/* Title */}
-      <h3 className={cn(cardTitleStyles)}>
-        {title}
-      </h3>
+      <h3 className={cn(cardTitleStyles)}>{title}</h3>
 
       {/* ⭐ Rating left, 👁 Watchers right */}
       <CardRating rating={rating} watchers={watchers} className="mb-2" />

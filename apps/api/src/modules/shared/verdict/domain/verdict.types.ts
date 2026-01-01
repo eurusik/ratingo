@@ -5,8 +5,6 @@
  * and provides user-facing recommendations.
  */
 
-import type { ExternalRatings } from '../../../../common/types/media.types';
-
 // Re-export for convenience within verdict module
 export type { ExternalRatings } from '../../../../common/types/media.types';
 

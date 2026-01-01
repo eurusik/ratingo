@@ -6,12 +6,15 @@
  */
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, desc } from 'drizzle-orm';
-import { CatalogPolicy, PolicyConfig } from '../../domain/types/policy.types';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { DatabaseException } from '../../../../common/exceptions';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import { PolicyNotFoundError } from '../../domain/errors';
+import { type CatalogPolicy, type PolicyConfig } from '../../domain/types/policy.types';
 
 export const CATALOG_POLICY_REPOSITORY = 'CATALOG_POLICY_REPOSITORY';
 
@@ -136,7 +139,7 @@ export class CatalogPolicyRepository implements ICatalogPolicyRepository {
         .values({
           version: nextVersion,
           isActive: false,
-          policy: policy as any, // JSONB type
+          policy: policy as unknown as (typeof schema.catalogPolicies.$inferInsert)['policy'], // JSONB type
           createdAt: new Date(),
           activatedAt: null,
         })
@@ -168,7 +171,7 @@ export class CatalogPolicyRepository implements ICatalogPolicyRepository {
           .returning();
 
         if (result.length === 0) {
-          throw new Error(`Policy with id ${id} not found`);
+          throw new PolicyNotFoundError(id);
         }
 
         this.logger.log(`Activated policy ${id} (version ${result[0].version})`);

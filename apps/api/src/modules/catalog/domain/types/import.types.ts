@@ -1,5 +1,5 @@
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
 
 /**
  * Status of an import operation.

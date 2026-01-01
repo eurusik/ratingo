@@ -1,15 +1,17 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { eq } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
+import { type User } from '../../domain/entities/user.entity';
 import {
-  CreateUserData,
-  IUsersRepository,
-  UpdateUserProfileData,
+  type CreateUserData,
+  type IUsersRepository,
+  type UpdateUserProfileData,
 } from '../../domain/repositories/users.repository.interface';
-import { User } from '../../domain/entities/user.entity';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 /**
  * Drizzle implementation of Users repository.

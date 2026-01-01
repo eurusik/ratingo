@@ -1,17 +1,24 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { and, desc, eq, sql } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
+import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
-  IUserSavedItemRepository,
-  UpsertSavedItemData,
-  SavedItemWithMedia,
+  type UserSavedItem,
+  type SavedItemList,
+} from '../../domain/entities/user-saved-item.entity';
+import {
+  type IUserSavedItemRepository,
+  type UpsertSavedItemData,
+  type SavedItemWithMedia,
 } from '../../domain/repositories/user-saved-item.repository.interface';
-import { UserSavedItem, SavedItemList } from '../../domain/entities/user-saved-item.entity';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
 
 /**
  * Drizzle implementation of user saved item repository.
@@ -160,7 +167,7 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
   async listWithMedia(
     userId: string,
     list: SavedItemList,
-    limit = 20,
+    limit = DEFAULT_PAGE_SIZE,
     offset = 0,
   ): Promise<SavedItemWithMedia[]> {
     try {

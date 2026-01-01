@@ -20,9 +20,9 @@ export interface CarouselProps {
   className?: string;
 }
 
-export function Carousel({ 
-  children, 
-  title, 
+export function Carousel({
+  children,
+  title,
   titleTooltip,
   subtitle,
   actions,
@@ -71,7 +71,9 @@ export function Carousel({
           <div className="space-y-1">
             {title && (
               <div className="flex items-center gap-1.5">
-                <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">{title}</h2>
+                <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+                  {title}
+                </h2>
                 {titleTooltip && (
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
@@ -88,9 +90,7 @@ export function Carousel({
                 )}
               </div>
             )}
-            {subtitle && (
-              <p className="text-xs text-zinc-500">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-xs text-zinc-500">{subtitle}</p>}
           </div>
 
           <div className="flex items-center gap-3">
@@ -122,9 +122,7 @@ export function Carousel({
 
       {/* Scrollable content */}
       <div className="overflow-hidden" ref={emblaRef}>
-        <div className={`flex ${gapClasses[gap]} pb-2`}>
-          {children}
-        </div>
+        <div className={`flex ${gapClasses[gap]} pb-2`}>{children}</div>
       </div>
     </section>
   );

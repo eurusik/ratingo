@@ -48,7 +48,10 @@ export function SettingsPageClient({ user, initialTab = 'profile' }: SettingsPag
     // Could show toast here
   };
 
-  const handlePrivacyUpdate = async (field: 'isProfilePublic' | 'showWatchHistory' | 'showRatings' | 'allowFollowers', value: boolean) => {
+  const handlePrivacyUpdate = async (
+    field: 'isProfilePublic' | 'showWatchHistory' | 'showRatings' | 'allowFollowers',
+    value: boolean,
+  ) => {
     await updateProfile.mutateAsync({
       [field]: value,
     });
@@ -58,9 +61,7 @@ export function SettingsPageClient({ user, initialTab = 'profile' }: SettingsPag
     <div className="container max-w-xl mx-auto pt-24 pb-8 px-4">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-zinc-100">
-          {dict.settings.title}
-        </h1>
+        <h1 className="text-2xl font-bold text-zinc-100">{dict.settings.title}</h1>
       </div>
 
       {/* Tabs */}
@@ -78,16 +79,16 @@ export function SettingsPageClient({ user, initialTab = 'profile' }: SettingsPag
         </TabsList>
 
         <TabsContent value="profile" className="mt-0 space-y-6">
-            <ProfileSection user={user} onSuccess={handleProfileSuccess} />
-          </TabsContent>
+          <ProfileSection user={user} onSuccess={handleProfileSuccess} />
+        </TabsContent>
 
         <TabsContent value="privacy" className="mt-0 space-y-6">
-            <PrivacySection user={user} onUpdate={handlePrivacyUpdate} />
-          </TabsContent>
+          <PrivacySection user={user} onUpdate={handlePrivacyUpdate} />
+        </TabsContent>
 
         <TabsContent value="security" className="mt-0 space-y-6">
-            <SecuritySection />
-          </TabsContent>
+          <SecuritySection />
+        </TabsContent>
       </Tabs>
     </div>
   );

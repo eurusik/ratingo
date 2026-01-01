@@ -1,14 +1,20 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, desc, and, lte, isNotNull, gte, inArray, isNull } from 'drizzle-orm';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { MS_PER_DAY } from '../../../../common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
-import { HeroMediaItem, HeroShowProgress } from '../../../../common/types/hero-media.types';
+import {
+  type HeroMediaItem,
+  type HeroShowProgress,
+} from '../../../../common/types/hero-media.types';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import { EligibilityStatus } from '../../../catalog-policy/public';
+import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
 
 /**
  * Options for hero media query.
@@ -162,7 +168,8 @@ export class HeroMediaQuery {
       .orderBy(desc(schema.episodes.airDate));
 
     // Group by showId and pick first (latest)
-    const latestEpisodeMap = new Map<string, any>();
+    type EpisodeRow = (typeof episodes)[number];
+    const latestEpisodeMap = new Map<string, EpisodeRow>();
     for (const ep of episodes) {
       if (!latestEpisodeMap.has(ep.showId)) {
         latestEpisodeMap.set(ep.showId, ep);
@@ -198,7 +205,7 @@ export class HeroMediaQuery {
     if (!Array.isArray(videos) || videos.length === 0) return null;
     const first = videos[0];
     if (!first || typeof first !== 'object') return null;
-    const key = (first as Record<string, unknown>).key;
+    const { key } = first as Record<string, unknown>;
     return typeof key === 'string' ? key : null;
   }
 
@@ -233,9 +240,7 @@ export class HeroMediaQuery {
     showProgressMap: Map<string, HeroShowProgress>,
     now: Date,
   ): HeroMediaItem[] {
-    const ninetyDaysAgo = new Date(
-      now.getTime() - HERO_THRESHOLDS.NEW_RELEASE_DAYS * 24 * 60 * 60 * 1000,
-    );
+    const ninetyDaysAgo = new Date(now.getTime() - HERO_THRESHOLDS.NEW_RELEASE_DAYS * MS_PER_DAY);
     const fiveYearsAgo = new Date(
       now.getFullYear() - HERO_THRESHOLDS.CLASSIC_YEARS,
       now.getMonth(),

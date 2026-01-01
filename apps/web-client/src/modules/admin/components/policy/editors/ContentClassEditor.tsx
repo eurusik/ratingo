@@ -1,17 +1,17 @@
-"use client"
+'use client';
 
-import { Filter } from 'lucide-react'
-import { ConfigCard } from '../ConfigCard'
-import { Badge } from '@/shared/ui/badge'
-import type { ContentClass } from '@/core/api/admin'
+import { Filter } from 'lucide-react';
+import { ConfigCard } from '../ConfigCard';
+import { Badge } from '@/shared/ui/badge';
+import type { ContentClass } from '@/core/api/admin';
 
 // Re-export for convenience
-export type { ContentClass }
+export type { ContentClass };
 
 interface ContentClassItem {
-  value: ContentClass
-  labelKey: string
-  descriptionKey: string
+  value: ContentClass;
+  labelKey: string;
+  descriptionKey: string;
 }
 
 // Only non-mainstream classes (mainstream should never be excluded)
@@ -20,7 +20,7 @@ const CONTENT_CLASSES: ContentClassItem[] = [
   { value: 'documentary', labelKey: 'documentary', descriptionKey: 'documentaryDescription' },
   { value: 'reality', labelKey: 'reality', descriptionKey: 'realityDescription' },
   { value: 'kids', labelKey: 'kids', descriptionKey: 'kidsDescription' },
-]
+];
 
 const DEFAULT_LABELS: Record<string, string> = {
   anime: 'Anime',
@@ -31,30 +31,30 @@ const DEFAULT_LABELS: Record<string, string> = {
   realityDescription: 'Reality TV shows',
   kids: 'Kids',
   kidsDescription: 'Content for children',
-}
+};
 
 interface ContentClassEditorProps {
-  excludedContentClasses: ContentClass[]
-  onChange: (value: ContentClass[]) => void
+  excludedContentClasses: ContentClass[];
+  onChange: (value: ContentClass[]) => void;
   labels?: {
-    title?: string
-    description?: string
-    hint?: string
-    toggleHint?: string
-    anime?: string
-    animeDescription?: string
-    documentary?: string
-    documentaryDescription?: string
-    reality?: string
-    realityDescription?: string
-    kids?: string
-    kidsDescription?: string
-  }
+    title?: string;
+    description?: string;
+    hint?: string;
+    toggleHint?: string;
+    anime?: string;
+    animeDescription?: string;
+    documentary?: string;
+    documentaryDescription?: string;
+    reality?: string;
+    realityDescription?: string;
+    kids?: string;
+    kidsDescription?: string;
+  };
 }
 
 /**
  * Editor for excluded content classes configuration.
- * 
+ *
  * Allows selecting which content classes to exclude from catalog.
  * Note: 'mainstream' is not shown as it should never be excluded.
  */
@@ -65,13 +65,14 @@ export function ContentClassEditor({
 }: ContentClassEditorProps) {
   const handleToggle = (contentClass: ContentClass) => {
     if (excludedContentClasses.includes(contentClass)) {
-      onChange(excludedContentClasses.filter((c) => c !== contentClass))
+      onChange(excludedContentClasses.filter((c) => c !== contentClass));
     } else {
-      onChange([...excludedContentClasses, contentClass])
+      onChange([...excludedContentClasses, contentClass]);
     }
-  }
+  };
 
-  const getLabel = (key: string) => labels?.[key as keyof typeof labels] ?? DEFAULT_LABELS[key] ?? key
+  const getLabel = (key: string) =>
+    labels?.[key as keyof typeof labels] ?? DEFAULT_LABELS[key] ?? key;
 
   return (
     <ConfigCard
@@ -82,7 +83,7 @@ export function ContentClassEditor({
     >
       <div className="flex flex-wrap gap-2">
         {CONTENT_CLASSES.map((item) => {
-          const isExcluded = excludedContentClasses.includes(item.value)
+          const isExcluded = excludedContentClasses.includes(item.value);
           return (
             <Badge
               key={item.value}
@@ -94,7 +95,7 @@ export function ContentClassEditor({
               {getLabel(item.labelKey)}
               {isExcluded && ' ✕'}
             </Badge>
-          )
+          );
         })}
       </div>
       <div className="text-xs text-muted-foreground space-y-1 pt-2 border-t">
@@ -102,5 +103,5 @@ export function ContentClassEditor({
         <p>{labels?.hint ?? 'Excluded classes can still pass via breakout rules (soft filter)'}</p>
       </div>
     </ConfigCard>
-  )
+  );
 }

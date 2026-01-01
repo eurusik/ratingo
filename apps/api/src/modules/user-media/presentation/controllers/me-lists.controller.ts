@@ -1,16 +1,19 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
+import { type ImageDto } from '../../../../common/dtos/image.dto';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { MeListsService } from '../../application/me-lists.service';
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { type MeListsService } from '../../application/me-lists.service';
+import { type UserMediaState } from '../../domain/entities/user-media-state.entity';
 import {
-  MeUserMediaListQueryDto,
-  MeUserMediaListItemDto,
+  type MeUserMediaListQueryDto,
+  type MeUserMediaListItemDto,
   PaginatedMeUserMediaResponseDto,
 } from '../dto/me-lists.dto';
-import { UserMediaState } from '../../domain/entities/user-media-state.entity';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageDto } from '../../../../common/dtos/image.dto';
 
 type UserMediaWithSummary = UserMediaState & {
   mediaSummary: {
@@ -68,7 +71,7 @@ export class MeListsController {
     @CurrentUser() user: { id: string },
     @Query() query: MeUserMediaListQueryDto,
   ): Promise<PaginatedMeUserMediaResponseDto> {
-    const limit = query.limit ?? 20;
+    const limit = query.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query.offset ?? 0;
     const { total, data } = await this.meListsService.getRatings(
       user.id,
@@ -105,7 +108,7 @@ export class MeListsController {
     @CurrentUser() user: { id: string },
     @Query() query: MeUserMediaListQueryDto,
   ): Promise<PaginatedMeUserMediaResponseDto> {
-    const limit = query.limit ?? 20;
+    const limit = query.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query.offset ?? 0;
     const { total, data } = await this.meListsService.getWatchlist(
       user.id,
@@ -142,7 +145,7 @@ export class MeListsController {
     @CurrentUser() user: { id: string },
     @Query() query: MeUserMediaListQueryDto,
   ): Promise<PaginatedMeUserMediaResponseDto> {
-    const limit = query.limit ?? 20;
+    const limit = query.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query.offset ?? 0;
     const { total, data } = await this.meListsService.getHistory(
       user.id,
@@ -179,7 +182,7 @@ export class MeListsController {
     @CurrentUser() user: { id: string },
     @Query() query: MeUserMediaListQueryDto,
   ): Promise<PaginatedMeUserMediaResponseDto> {
-    const limit = query.limit ?? 20;
+    const limit = query.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query.offset ?? 0;
     const { total, data } = await this.meListsService.getActivity(user.id, limit, offset);
 

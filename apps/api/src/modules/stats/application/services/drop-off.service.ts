@@ -1,10 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../ingestion/domain/ports';
-import { DropOffAnalyzerService, DropOffAnalysis } from '../../../shared/drop-off-analyzer';
+
+import { DEFAULT_BATCH_SIZE } from '../../../../common/constants';
+import { type IShowRepository, SHOW_REPOSITORY } from '../../../catalog/public';
+import { type TraktRatingsPort, TRAKT_RATINGS_PORT } from '../../../ingestion/public';
 import {
-  IShowRepository,
-  SHOW_REPOSITORY,
-} from '../../../catalog/domain/repositories/show.repository.interface';
+  type DropOffAnalyzerService,
+  type DropOffAnalysis,
+} from '../../../shared/drop-off-analyzer';
 
 /**
  * Service for orchestrating drop-off analysis for shows.
@@ -60,7 +62,7 @@ export class DropOffService {
    * Analyzes drop-off for all shows in the database.
    * Used by background job.
    */
-  async analyzeAllShows(limit = 50): Promise<{ analyzed: number; failed: number }> {
+  async analyzeAllShows(limit = DEFAULT_BATCH_SIZE): Promise<{ analyzed: number; failed: number }> {
     this.logger.log(`Starting drop-off analysis for up to ${limit} shows...`);
 
     // Get shows that need analysis
@@ -77,8 +79,9 @@ export class DropOffService {
         failed++;
       }
 
-      // Rate limiting: wait 500ms between API calls
-      await new Promise((r) => setTimeout(r, 500));
+      // Rate limiting: wait between API calls
+      const RATE_LIMIT_DELAY_MS = 500;
+      await new Promise((r) => setTimeout(r, RATE_LIMIT_DELAY_MS));
     }
 
     this.logger.log(`Drop-off analysis complete: ${analyzed} analyzed, ${failed} failed`);

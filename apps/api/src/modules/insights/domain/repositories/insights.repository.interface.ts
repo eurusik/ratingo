@@ -1,4 +1,4 @@
-import { RiseFallItem } from '../models/rise-fall.model';
+import { type RiseFallItem } from '../models/rise-fall.model';
 
 /**
  * Repository contract for Insights data.

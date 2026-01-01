@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
-import { SAVED_ITEM_LIST, SavedItemList } from '../../domain/entities/user-saved-item.entity';
+
+import { IsIn, IsOptional, IsString } from 'class-validator';
+
+import { SAVED_ITEM_LIST, type SavedItemList } from '../../domain/entities/user-saved-item.entity';
 
 const SAVED_ITEM_LIST_VALUES = Object.values(SAVED_ITEM_LIST);
 

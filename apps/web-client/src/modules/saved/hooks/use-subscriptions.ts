@@ -39,11 +39,8 @@ export function useUnsubscribe() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (params: {
-      mediaItemId: string;
-      trigger: SubscriptionTrigger;
-      context?: string;
-    }) => userActionsApi.unsubscribe(params),
+    mutationFn: (params: { mediaItemId: string; trigger: SubscriptionTrigger; context?: string }) =>
+      userActionsApi.unsubscribe(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
     },

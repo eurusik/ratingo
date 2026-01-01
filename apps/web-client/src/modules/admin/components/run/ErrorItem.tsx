@@ -1,27 +1,27 @@
-"use client"
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
-import * as CollapsiblePrimitive from "@radix-ui/react-collapsible"
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface ErrorItemProps {
   error: {
-    mediaItemId: string
-    error: string
-    stack?: string
-    timestamp: string
-  }
-  isExpanded: boolean
-  onToggle: () => void
+    mediaItemId: string;
+    error: string;
+    stack?: string;
+    timestamp: string;
+  };
+  isExpanded: boolean;
+  onToggle: () => void;
   labels: {
-    mediaId: string
-    stackTrace: string
-  }
+    mediaId: string;
+    stackTrace: string;
+  };
 }
 
 /**
  * Displays collapsible error item.
- * 
+ *
  * Shows error message and media ID in collapsed state.
  * Expands to show full details including stack trace.
  *
@@ -38,11 +38,7 @@ export function ErrorItem({ error, isExpanded, onToggle, labels }: ErrorItemProp
         onClick={onToggle}
       >
         <div className="flex items-center space-x-3">
-          {isExpanded ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
+          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           <div className="text-left">
             <div className="font-medium">{error.error}</div>
             <div className="text-sm text-muted-foreground">
@@ -54,8 +50,12 @@ export function ErrorItem({ error, isExpanded, onToggle, labels }: ErrorItemProp
       <CollapsiblePrimitive.Content className="px-4 pb-4">
         <div className="space-y-4 mt-4">
           <div className="text-sm">
-            <div><strong>{labels.mediaId}:</strong> {error.mediaItemId}</div>
-            <div><strong>Timestamp:</strong> {error.timestamp}</div>
+            <div>
+              <strong>{labels.mediaId}:</strong> {error.mediaItemId}
+            </div>
+            <div>
+              <strong>Timestamp:</strong> {error.timestamp}
+            </div>
           </div>
           {error.stack && (
             <Card>
@@ -72,5 +72,5 @@ export function ErrorItem({ error, isExpanded, onToggle, labels }: ErrorItemProp
         </div>
       </CollapsiblePrimitive.Content>
     </CollapsiblePrimitive.Root>
-  )
+  );
 }

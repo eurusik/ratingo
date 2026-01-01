@@ -1,15 +1,18 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
+import { type UserSavedItem, type SavedItemList, SAVED_ITEM_LIST } from '../domain/entities';
+import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
 import {
-  IUserSavedItemRepository,
-  USER_SAVED_ITEM_REPOSITORY,
-  SavedItemWithMedia,
-} from '../domain/repositories/user-saved-item.repository.interface';
-import {
-  IUserMediaActionRepository,
+  type IUserMediaActionRepository,
   USER_MEDIA_ACTION_REPOSITORY,
 } from '../domain/repositories/user-media-action.repository.interface';
-import { UserSavedItem, SavedItemList, SAVED_ITEM_LIST } from '../domain/entities';
-import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
+import {
+  type IUserSavedItemRepository,
+  USER_SAVED_ITEM_REPOSITORY,
+  type SavedItemWithMedia,
+} from '../domain/repositories/user-saved-item.repository.interface';
 
 /**
  * Payload for saving an item.
@@ -130,7 +133,7 @@ export class SavedItemsService {
   async listWithMedia(
     userId: string,
     list: SavedItemList,
-    limit = 20,
+    limit = DEFAULT_PAGE_SIZE,
     offset = 0,
   ): Promise<{ total: number; data: SavedItemWithMedia[] }> {
     const [total, data] = await Promise.all([

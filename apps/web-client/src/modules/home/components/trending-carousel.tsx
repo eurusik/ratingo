@@ -23,12 +23,15 @@ export function TrendingCarousel({
   actions,
 }: TrendingCarouselProps) {
   // Формуємо заголовок з іконкою
-  const titleWithIcon = titleIcon && title ? (
-    <div className="flex items-center gap-2">
-      {titleIcon}
-      <span>{title}</span>
-    </div>
-  ) : title;
+  const titleWithIcon =
+    titleIcon && title ? (
+      <div className="flex items-center gap-2">
+        {titleIcon}
+        <span>{title}</span>
+      </div>
+    ) : (
+      title
+    );
 
   return (
     <Carousel

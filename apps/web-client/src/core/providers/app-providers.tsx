@@ -20,7 +20,12 @@ interface AppProvidersProps {
 
 export function AppProviders({ children, locale = DEFAULT_LOCALE }: AppProvidersProps) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" disableTransitionOnChange>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      forcedTheme="dark"
+      disableTransitionOnChange
+    >
       <I18nProvider locale={locale}>
         <QueryProvider>
           <AuthProvider>

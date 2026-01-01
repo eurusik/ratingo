@@ -1,4 +1,4 @@
-import { UserMediaAction } from '../entities/user-media-action.entity';
+import { type UserMediaAction } from '../entities/user-media-action.entity';
 
 /**
  * Injection token for user media action repository.

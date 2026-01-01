@@ -1,9 +1,12 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
-import { Job } from 'bullmq';
+
+import { type Job } from 'bullmq';
+
+import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/constants';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
-import { StatsService } from '../services/stats.service';
-import { DropOffService } from '../services/drop-off.service';
+import { type DropOffService } from '../services/drop-off.service';
+import { type StatsService } from '../services/stats.service';
 
 /**
  * Background worker for processing stats-related jobs.
@@ -34,7 +37,7 @@ export class StatsWorker extends WorkerHost {
     try {
       switch (job.name) {
         case STATS_JOBS.SYNC_TRENDING:
-          await this.statsService.syncTrendingStats(job.data.limit || 20);
+          await this.statsService.syncTrendingStats(job.data.limit || DEFAULT_PAGE_SIZE);
           break;
 
         case STATS_JOBS.ANALYZE_DROP_OFF:
@@ -43,7 +46,7 @@ export class StatsWorker extends WorkerHost {
             await this.dropOffService.analyzeShow(job.data.tmdbId);
           } else {
             // Analyze all shows
-            await this.dropOffService.analyzeAllShows(job.data.limit || 50);
+            await this.dropOffService.analyzeAllShows(job.data.limit || DEFAULT_BATCH_SIZE);
           }
           break;
 

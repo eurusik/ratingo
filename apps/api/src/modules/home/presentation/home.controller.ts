@@ -1,9 +1,11 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { HomeService } from '../application/home.service';
+
+import { MediaType } from '../../../common/enums/media-type.enum';
+import { type HomeService } from '../application/home.service';
+
 import { HeroItemDto } from './dtos/hero-item.dto';
 import { HeroItemMapper } from './mappers/hero-item.mapper';
-import { MediaType } from '../../../common/enums/media-type.enum';
 
 /**
  * Public home endpoints.

@@ -1,17 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
 import { IsIn, IsOptional } from 'class-validator';
-import {
-  OffsetPaginationMetaDto,
-  OffsetPaginationQueryDto,
-} from '../../../catalog/presentation/dtos/pagination.dto';
+
+import { type ImageDto } from '../../../../common/dtos/image.dto';
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../catalog/public';
+import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 import {
   USER_MEDIA_LIST_SORT,
-  UserMediaListSort,
+  type UserMediaListSort,
 } from '../../domain/repositories/user-media-state.repository.interface';
+
 import { UserMediaStateDto } from './user-media-state.dto';
-import { ImageDto } from '../../../../common/dtos/image.dto';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 
 export const ME_USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
 

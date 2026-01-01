@@ -31,7 +31,14 @@ interface CardPosterProps {
  *   <Badge variant="rank" position="top-left">№1</Badge>
  * </CardPoster>
  */
-export function CardPoster({ src, alt, type = 'movie', noPosterText, children, className }: CardPosterProps) {
+export function CardPoster({
+  src,
+  alt,
+  type = 'movie',
+  noPosterText,
+  children,
+  className,
+}: CardPosterProps) {
   return (
     <div className={cn('aspect-[2/3] relative bg-zinc-800 overflow-hidden', className)}>
       {src ? (

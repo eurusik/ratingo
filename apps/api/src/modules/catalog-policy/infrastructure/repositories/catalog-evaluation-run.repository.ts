@@ -6,12 +6,15 @@
  */
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, desc, sql } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
 import { DatabaseException } from '../../../../common/exceptions';
-import { RunStatus, RunStatusType } from '../../domain/constants/evaluation.constants';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import { RunStatus, type RunStatusType } from '../../domain/constants/evaluation.constants';
 import { InvalidRunStatusError } from '../../domain/errors/policy.errors';
 
 export const CATALOG_EVALUATION_RUN_REPOSITORY = 'CATALOG_EVALUATION_RUN_REPOSITORY';
@@ -187,7 +190,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
 
   async update(id: string, updates: UpdateRunInput): Promise<void> {
     try {
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
 
       if (updates.status !== undefined) updateData.status = updates.status;
       if (updates.finishedAt !== undefined) updateData.finishedAt = updates.finishedAt;
@@ -233,7 +236,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
       const result = await this.db
         .select()
         .from(schema.catalogEvaluationRuns)
-        .where(eq(schema.catalogEvaluationRuns.status, status as any))
+        .where(eq(schema.catalogEvaluationRuns.status, status as RunStatusType))
         .orderBy(desc(schema.catalogEvaluationRuns.startedAt));
 
       return result.map((row) => this.mapToEntity(row));
@@ -244,7 +247,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
   }
 
   async findAll(options?: { limit?: number; offset?: number }): Promise<CatalogEvaluationRun[]> {
-    const limit = options?.limit ?? 20;
+    const limit = options?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = options?.offset ?? 0;
 
     try {
@@ -268,7 +271,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
    */
   async incrementCounters(id: string, increments: IncrementCountersInput): Promise<void> {
     try {
-      const updates: any = {};
+      const updates: Record<string, unknown> = {};
 
       if (increments.processed !== undefined) {
         updates.processed = sql`COALESCE(processed, 0) + ${increments.processed}`;
@@ -354,7 +357,7 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
       ineligible: row.ineligible ?? 0,
       pending: row.pending ?? 0,
       errors: row.errors ?? 0,
-      errorSample: (row.errorSample as any) ?? [],
+      errorSample: (row.errorSample as CatalogEvaluationRun['errorSample']) ?? [],
       promotedAt: row.promotedAt,
       promotedBy: row.promotedBy,
     };

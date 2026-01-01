@@ -8,13 +8,15 @@
  */
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, and, sql } from 'drizzle-orm';
-import { MediaCatalogEvaluation } from '../../domain/types/policy.types';
-import { EligibilityStatusType } from '../../domain/constants/evaluation.constants';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { DatabaseException } from '../../../../common/exceptions';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import { type EligibilityStatusType } from '../../domain/constants/evaluation.constants';
+import { type MediaCatalogEvaluation } from '../../domain/types/policy.types';
 
 export const MEDIA_CATALOG_EVALUATION_REPOSITORY = 'MEDIA_CATALOG_EVALUATION_REPOSITORY';
 
@@ -220,10 +222,10 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
         .where(eq(schema.mediaCatalogEvaluations.policyVersion, policyVersion));
 
       if (options?.limit) {
-        query = query.limit(options.limit) as any;
+        query = query.limit(options.limit) as typeof query;
       }
       if (options?.offset) {
-        query = query.offset(options.offset) as any;
+        query = query.offset(options.offset) as typeof query;
       }
 
       const result = await query;
@@ -242,13 +244,13 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
       let query = this.db
         .select()
         .from(schema.mediaCatalogEvaluations)
-        .where(eq(schema.mediaCatalogEvaluations.status, status as any));
+        .where(eq(schema.mediaCatalogEvaluations.status, status));
 
       if (options?.limit) {
-        query = query.limit(options.limit) as any;
+        query = query.limit(options.limit) as typeof query;
       }
       if (options?.offset) {
-        query = query.offset(options.offset) as any;
+        query = query.offset(options.offset) as typeof query;
       }
 
       const result = await query;

@@ -43,16 +43,16 @@ interface CardBookmarkProps {
  * If mediaItemId is provided, handles save/unsave automatically.
  * Reads status from SavedStatusProvider context (batch fetched).
  */
-export function CardBookmark({ 
-  mediaItemId, 
+export function CardBookmark({
+  mediaItemId,
   listContext,
-  isBookmarked: isBookmarkedProp, 
-  onClick: onClickProp, 
-  className 
+  isBookmarked: isBookmarkedProp,
+  onClick: onClickProp,
+  className,
 }: CardBookmarkProps) {
   const { isAuthenticated } = useAuth();
   const openLogin = useAuthModalStore((s) => s.openLogin);
-  
+
   // Use context for batch status (no individual API calls)
   const statusContext = useSavedStatusContext();
   const contextStatus = mediaItemId ? statusContext?.getStatus(mediaItemId) : undefined;
@@ -94,13 +94,13 @@ export function CardBookmark({
             statusContext?.invalidate();
           },
           onError: () => toast.error('Не вдалося видалити'),
-        }
+        },
       );
     } else {
       saveItem(
-        { 
-          mediaItemId, 
-          list: DEFAULT_LIST, 
+        {
+          mediaItemId,
+          list: DEFAULT_LIST,
           context: 'card',
           reasonKey: listContext ? LIST_CONTEXT_TO_REASON[listContext] : undefined,
         },
@@ -110,7 +110,7 @@ export function CardBookmark({
             statusContext?.invalidate();
           },
           onError: () => toast.error('Не вдалося зберегти'),
-        }
+        },
       );
     }
   };
@@ -127,14 +127,14 @@ export function CardBookmark({
         'hover:bg-black/80 hover:scale-110',
         'focus:outline-none',
         'disabled:opacity-50',
-        className
+        className,
       )}
       aria-label={isBookmarked ? 'Видалити з закладок' : 'Додати в закладки'}
     >
       <Bookmark
         className={cn(
           'w-5 h-5 transition-colors',
-          isBookmarked ? 'fill-blue-400 text-blue-400' : 'text-white'
+          isBookmarked ? 'fill-blue-400 text-blue-400' : 'text-white',
         )}
       />
     </button>

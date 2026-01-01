@@ -6,9 +6,10 @@
 
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+
 import {
   PROVIDERS_REPOSITORY,
-  IProvidersRepository,
+  type IProvidersRepository,
 } from '../../domain/repositories/providers.repository.interface';
 import { ProvidersListDto } from '../dtos/providers.dto';
 

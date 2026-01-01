@@ -1,25 +1,26 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
+
 import * as Joi from 'joi';
-import { DatabaseModule } from './database/database.module';
+
+import { ThrottlerRealIpGuard } from './common/guards/throttler-realip.guard';
+import authConfig from './config/auth.config';
+import omdbConfig from './config/omdb.config';
 import tmdbConfig from './config/tmdb.config';
 import traktConfig from './config/trakt.config';
-import omdbConfig from './config/omdb.config';
-import authConfig from './config/auth.config';
-import { CatalogModule } from './modules/catalog/catalog.module';
-import { IngestionModule } from './modules/ingestion/ingestion.module';
-import { StatsModule } from './modules/stats/stats.module';
-import { HomeModule } from './modules/home/home.module';
-import { InsightsModule } from './modules/insights/insights.module';
+import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { UserMediaModule } from './modules/user-media/user-media.module';
+import { CatalogModule } from './modules/catalog/catalog.module';
+import { HomeModule } from './modules/home/home.module';
+import { IngestionModule } from './modules/ingestion/ingestion.module';
+import { InsightsModule } from './modules/insights/insights.module';
+import { StatsModule } from './modules/stats/stats.module';
 import { UserActionsModule } from './modules/user-actions/user-actions.module';
-import { ThrottlerRealIpGuard } from './common/guards/throttler-realip.guard';
-
-import { BullModule } from '@nestjs/bullmq';
+import { UserMediaModule } from './modules/user-media/user-media.module';
+import { UsersModule } from './modules/users/users.module';
 
 /**
  * Duration format regex for TTL validation (e.g., 15m, 7d, 1h, 30s, 100ms).

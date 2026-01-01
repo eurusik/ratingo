@@ -1,0 +1,68 @@
+# CODEOWNERS - Auto-assign reviewers based on file paths
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @eurusik
+
+# =============================================================================
+# Backend (API)
+# =============================================================================
+
+# Core architecture & shared code
+apps/api/src/common/                    @eurusik
+apps/api/src/config/                    @eurusik
+apps/api/src/database/                  @eurusik
+
+# Domain modules - each module can have dedicated owner
+apps/api/src/modules/auth/              @eurusik
+apps/api/src/modules/catalog/           @eurusik
+apps/api/src/modules/catalog-policy/    @eurusik
+apps/api/src/modules/home/              @eurusik
+apps/api/src/modules/ingestion/         @eurusik
+apps/api/src/modules/insights/          @eurusik
+apps/api/src/modules/stats/             @eurusik
+apps/api/src/modules/tmdb/              @eurusik
+apps/api/src/modules/user-media/        @eurusik
+apps/api/src/modules/users/             @eurusik
+
+# Database migrations - require extra attention
+apps/api/drizzle/                       @eurusik
+
+# =============================================================================
+# Frontend (Web Client)
+# =============================================================================
+
+apps/web-client/                        @eurusik
+
+# =============================================================================
+# Shared Packages
+# =============================================================================
+
+packages/api-contract/                  @eurusik
+
+# =============================================================================
+# Infrastructure & DevOps
+# =============================================================================
+
+.github/                                @eurusik
+docker-compose.yml                      @eurusik
+Dockerfile.*                            @eurusik
+turbo.json                              @eurusik
+
+# =============================================================================
+# Code Quality & Standards
+# =============================================================================
+
+# Changes to these require careful review
+eslint.config.mjs                       @eurusik
+.prettierrc.json                        @eurusik
+tsconfig.json                           @eurusik
+.kiro/steering/                         @eurusik
+
+# =============================================================================
+# Documentation
+# =============================================================================
+
+*.md                                    @eurusik
+DOCS_STANDARD.md                        @eurusik
+SYSTEM_MAP.md                           @eurusik

@@ -1,16 +1,46 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
-import { eq, gte, gt, lte, isNotNull, isNull, inArray, and, or, exists, sql } from 'drizzle-orm';
-import { MovieWithMedia, WithTotal } from '../../domain/repositories/movie.repository.interface';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { CatalogSort, SortOrder, VoteSource } from '../../presentation/dtos/catalog-list-query.dto';
+
+import {
+  eq,
+  gte,
+  gt,
+  lte,
+  isNotNull,
+  isNull,
+  inArray,
+  and,
+  or,
+  exists,
+  sql,
+  type SQL,
+} from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import {
+  DEFAULT_PAGE_SIZE,
+  CATALOG_DEFAULT_NEW_RELEASE_DAYS,
+  CATALOG_DEFAULT_DIGITAL_DAYS,
+  MS_PER_DAY,
+} from '@/common/constants';
+
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import { EligibilityStatus } from '../../../catalog-policy/public';
-import { GenreQuery } from './shared/genre.query';
-import { movieSelectFields, MovieSelectRow } from './shared/movie-select.fields';
+import {
+  type MovieWithMedia,
+  type WithTotal,
+} from '../../domain/repositories/movie.repository.interface';
+import {
+  type CatalogSort,
+  type SortOrder,
+  type VoteSource,
+} from '../../presentation/dtos/catalog-list-query.dto';
+
+import { type GenreQuery } from './shared/genre.query';
 import { MovieResultMapper } from './shared/movie-result.mapper';
+import { movieSelectFields, type MovieSelectRow } from './shared/movie-select.fields';
 
 /**
  * Type of movie listing to fetch.
@@ -82,7 +112,7 @@ export class MovieListingsQuery {
     options: MovieListingOptions = {},
   ): Promise<WithTotal<MovieWithMedia>> {
     const {
-      limit = 20,
+      limit = DEFAULT_PAGE_SIZE,
       offset = 0,
       daysBack,
       sort = 'popularity',
@@ -113,7 +143,7 @@ export class MovieListingsQuery {
         eligibilityMode,
       );
 
-      let results: any[];
+      let results: MovieSelectRow[];
 
       if (eligibilityMode === ELIGIBILITY_MODE.NONE) {
         results = await this.db
@@ -149,7 +179,7 @@ export class MovieListingsQuery {
       const mediaItemIds = results.map((m) => m.mediaItemId);
       const genresMap = await this.genreQuery.fetchForMediaItems(mediaItemIds);
 
-      const items = MovieResultMapper.mapMany(results as MovieSelectRow[], genresMap);
+      const items = MovieResultMapper.mapMany(results, genresMap);
       const withTotal = items as WithTotal<MovieWithMedia>;
       withTotal.total = total;
       return withTotal;
@@ -177,7 +207,7 @@ export class MovieListingsQuery {
     eligibilityMode: EligibilityMode = 'catalog',
   ) {
     const now = new Date();
-    const conditions: any[] = [
+    const conditions: SQL[] = [
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
       isNull(schema.mediaItems.deletedAt),
     ];
@@ -252,7 +282,7 @@ export class MovieListingsQuery {
 
       case 'new_releases': {
         const cutoffDate = new Date();
-        cutoffDate.setDate(now.getDate() - (daysBack ?? 30));
+        cutoffDate.setDate(now.getDate() - (daysBack ?? CATALOG_DEFAULT_NEW_RELEASE_DAYS));
         conditions.push(
           isNotNull(schema.movies.theatricalReleaseDate),
           gte(schema.movies.theatricalReleaseDate, cutoffDate),
@@ -263,7 +293,9 @@ export class MovieListingsQuery {
       }
 
       case 'new_on_digital': {
-        const cutoffDate = new Date(now.getTime() - (daysBack ?? 14) * 24 * 60 * 60 * 1000);
+        const cutoffDate = new Date(
+          now.getTime() - (daysBack ?? CATALOG_DEFAULT_DIGITAL_DAYS) * MS_PER_DAY,
+        );
         conditions.push(
           isNotNull(schema.movies.digitalReleaseDate),
           gte(schema.movies.digitalReleaseDate, cutoffDate),
@@ -315,7 +347,7 @@ export class MovieListingsQuery {
   }
 
   private async countTotal(
-    conditions: any[],
+    conditions: SQL[],
     eligibilityMode: EligibilityMode = ELIGIBILITY_MODE.CATALOG,
   ): Promise<number> {
     if (eligibilityMode === ELIGIBILITY_MODE.NONE) {

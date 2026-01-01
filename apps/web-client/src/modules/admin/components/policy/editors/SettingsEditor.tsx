@@ -1,43 +1,37 @@
-"use client"
+'use client';
 
-import { Settings } from 'lucide-react'
-import { ConfigCard } from '../ConfigCard'
-import { Label } from '@/shared/ui/label'
-import { Input } from '@/shared/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select'
-import type { BlockedCountryMode, EligibilityMode } from '@/core/api/admin'
+import { Settings } from 'lucide-react';
+import { ConfigCard } from '../ConfigCard';
+import { Label } from '@/shared/ui/label';
+import { Input } from '@/shared/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import type { BlockedCountryMode, EligibilityMode } from '@/core/api/admin';
 
 interface SettingsEditorProps {
-  eligibilityMode: EligibilityMode
-  blockedCountryMode: BlockedCountryMode
-  minRelevanceScore: number
-  onEligibilityModeChange: (value: EligibilityMode) => void
-  onBlockedCountryModeChange: (value: BlockedCountryMode) => void
-  onMinRelevanceScoreChange: (value: number) => void
+  eligibilityMode: EligibilityMode;
+  blockedCountryMode: BlockedCountryMode;
+  minRelevanceScore: number;
+  onEligibilityModeChange: (value: EligibilityMode) => void;
+  onBlockedCountryModeChange: (value: BlockedCountryMode) => void;
+  onMinRelevanceScoreChange: (value: number) => void;
   labels?: {
-    title?: string
-    description?: string
-    eligibilityMode?: string
-    eligibilityModeHint?: string
-    blockedCountryMode?: string
-    blockedCountryModeHint?: string
-    minRelevanceScore?: string
-    minRelevanceScoreHint?: string
-    strictLabel?: string
-    strictDescription?: string
-    relaxedLabel?: string
-    relaxedDescription?: string
-    anyLabel?: string
-    anyDescription?: string
-    majorityLabel?: string
-    majorityDescription?: string
-  }
+    title?: string;
+    description?: string;
+    eligibilityMode?: string;
+    eligibilityModeHint?: string;
+    blockedCountryMode?: string;
+    blockedCountryModeHint?: string;
+    minRelevanceScore?: string;
+    minRelevanceScoreHint?: string;
+    strictLabel?: string;
+    strictDescription?: string;
+    relaxedLabel?: string;
+    relaxedDescription?: string;
+    anyLabel?: string;
+    anyDescription?: string;
+    majorityLabel?: string;
+    majorityDescription?: string;
+  };
 }
 
 /** Editor for policy settings (modes and thresholds). */
@@ -51,10 +45,10 @@ export function SettingsEditor({
   labels,
 }: SettingsEditorProps) {
   return (
-    <ConfigCard 
-      title={labels?.title ?? 'Settings'} 
+    <ConfigCard
+      title={labels?.title ?? 'Settings'}
       description={labels?.description ?? 'Configure how content is evaluated'}
-      icon={Settings} 
+      icon={Settings}
       contentClassName="space-y-4"
     >
       <div className="space-y-2">
@@ -132,5 +126,5 @@ export function SettingsEditor({
         </p>
       </div>
     </ConfigCard>
-  )
+  );
 }

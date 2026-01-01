@@ -20,9 +20,9 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
 
   // Filter for trailers only and prioritize primary
-  const trailers = videos.filter(v => v.type === 'Trailer');
+  const trailers = videos.filter((v) => v.type === 'Trailer');
   const sortedTrailers = primaryTrailer
-    ? [primaryTrailer, ...trailers.filter(t => t.key !== primaryTrailer.key)]
+    ? [primaryTrailer, ...trailers.filter((t) => t.key !== primaryTrailer.key)]
     : trailers;
 
   if (sortedTrailers.length === 0) return null;
@@ -47,10 +47,10 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
               alt={video.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
-            
+
             {/* Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            
+
             {/* Play button */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-12 h-12 rounded-full bg-blue-500/90 flex items-center justify-center group-hover:bg-blue-400 group-hover:scale-110 transition-all">
@@ -60,9 +60,7 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
 
             {/* Title */}
             <div className="absolute bottom-0 left-0 right-0 p-3">
-              <p className="text-xs text-white font-medium line-clamp-2">
-                {video.name}
-              </p>
+              <p className="text-xs text-white font-medium line-clamp-2">{video.name}</p>
               {index === 0 && video.official && (
                 <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold bg-blue-500 text-white rounded">
                   Офіційний

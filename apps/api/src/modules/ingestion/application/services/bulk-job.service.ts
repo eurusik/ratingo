@@ -1,11 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { INGESTION_QUEUE } from '../../ingestion.constants';
+import { Injectable, type Logger } from '@nestjs/common';
+
+import { type Queue } from 'bullmq';
+
+import { INGESTION_QUEUE, JOB_DEDUPE_CHECK_CONCURRENCY } from '../../ingestion.constants';
 import { preDedupeBulk, formatSample } from '../helpers/queue.helpers';
 
 /** Job definition for bulk enqueue. */
-export interface JobDefinition<T = any> {
+export interface JobDefinition<T = unknown> {
   name: string;
   data: T;
   opts: { jobId: string };
@@ -26,7 +28,7 @@ export interface BulkEnqueueResult {
  */
 @Injectable()
 export class BulkJobService {
-  private readonly CHECK_CONCURRENCY = 50;
+  private readonly CHECK_CONCURRENCY = JOB_DEDUPE_CHECK_CONCURRENCY;
 
   constructor(
     @InjectQueue(INGESTION_QUEUE)

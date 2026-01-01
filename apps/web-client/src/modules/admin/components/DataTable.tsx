@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import * as React from 'react'
+import * as React from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -10,29 +10,22 @@ import {
   type ColumnDef,
   type SortingState,
   type PaginationState,
-} from '@tanstack/react-table'
-import { ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react'
+} from '@tanstack/react-table';
+import { ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 
-import { cn } from '@/shared/utils'
-import { Button } from '@/shared/ui/button'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/shared/ui/table'
+import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/shared/ui/dropdown-menu'
-import { Skeleton } from '@/shared/ui/skeleton'
-import { useTranslation } from '@/shared/i18n'
+} from '@/shared/ui/dropdown-menu';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { useTranslation } from '@/shared/i18n';
 
-import { DataTableProps, DropdownMenuItemProps, DataTableColumnDef } from '../types'
+import { DataTableProps, DropdownMenuItemProps, DataTableColumnDef } from '../types';
 
 function DataTable<T>({
   data,
@@ -48,15 +41,15 @@ function DataTable<T>({
   className,
 }: DataTableProps<T>) {
   const [internalSorting, setInternalSorting] = React.useState<SortingState>(
-    sorting ? [{ id: sorting.column, desc: sorting.direction === 'desc' }] : []
-  )
-  
+    sorting ? [{ id: sorting.column, desc: sorting.direction === 'desc' }] : [],
+  );
+
   const [internalPagination, setInternalPagination] = React.useState<PaginationState>({
     pageIndex: pagination?.page ? pagination.page - 1 : 0,
     pageSize: pagination?.limit || 10,
-  })
-  
-  const { dict } = useTranslation()
+  });
+
+  const { dict } = useTranslation();
 
   // Convert custom column definitions to TanStack Table format
   const tanstackColumns = React.useMemo(() => {
@@ -70,16 +63,16 @@ function DataTable<T>({
         width: col.width,
         sortable: col.sortable,
       },
-    }))
-    
+    }));
+
     if (rowActions) {
       cols.push({
         id: 'actions',
         header: '',
         cell: ({ row }) => {
-          const actions = rowActions(row.original)
-          if (!actions.length) return null
-          
+          const actions = rowActions(row.original);
+          if (!actions.length) return null;
+
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -95,7 +88,7 @@ function DataTable<T>({
                     onClick={action.onClick}
                     disabled={action.disabled}
                     className={cn(
-                      action.variant === 'destructive' && 'text-destructive focus:text-destructive'
+                      action.variant === 'destructive' && 'text-destructive focus:text-destructive',
                     )}
                   >
                     {action.icon && <span className="mr-2">{action.icon}</span>}
@@ -104,17 +97,17 @@ function DataTable<T>({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          )
+          );
         },
         enableSorting: false,
         meta: {
           width: '50px',
         },
-      })
+      });
     }
-    
-    return cols
-  }, [columns, rowActions])
+
+    return cols;
+  }, [columns, rowActions]);
 
   const table = useReactTable({
     data,
@@ -123,25 +116,25 @@ function DataTable<T>({
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: (updater) => {
-      const newSorting = typeof updater === 'function' ? updater(internalSorting) : updater
-      setInternalSorting(newSorting)
-      
+      const newSorting = typeof updater === 'function' ? updater(internalSorting) : updater;
+      setInternalSorting(newSorting);
+
       if (onSortingChange && newSorting.length > 0) {
         onSortingChange({
           column: newSorting[0].id,
           direction: newSorting[0].desc ? 'desc' : 'asc',
-        })
+        });
       }
     },
     onPaginationChange: (updater) => {
-      const newPagination = typeof updater === 'function' ? updater(internalPagination) : updater
-      setInternalPagination(newPagination)
-      
+      const newPagination = typeof updater === 'function' ? updater(internalPagination) : updater;
+      setInternalPagination(newPagination);
+
       if (onPaginationChange) {
         onPaginationChange({
           page: newPagination.pageIndex + 1,
           limit: newPagination.pageSize,
-        })
+        });
       }
     },
     state: {
@@ -151,7 +144,7 @@ function DataTable<T>({
     manualSorting: !!onSortingChange,
     manualPagination: !!pagination,
     pageCount: pagination ? Math.ceil(pagination.total / pagination.limit) : undefined,
-  })
+  });
 
   if (error) {
     return (
@@ -161,7 +154,7 @@ function DataTable<T>({
           <p className="text-sm text-muted-foreground mt-1">{error}</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (loading) {
@@ -192,7 +185,7 @@ function DataTable<T>({
           </Table>
         </div>
       </div>
-    )
+    );
   }
 
   if (data.length === 0) {
@@ -202,9 +195,7 @@ function DataTable<T>({
           <TableHeader>
             <TableRow>
               {tanstackColumns.map((column) => (
-                <TableHead key={column.id}>
-                  {column.header as React.ReactNode}
-                </TableHead>
+                <TableHead key={column.id}>{column.header as React.ReactNode}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
@@ -217,51 +208,48 @@ function DataTable<T>({
           )}
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn('space-y-4', className)}>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const columnMeta = header.column.columnDef.meta as { width?: string; sortable?: boolean }
+                  const columnMeta = header.column.columnDef.meta as {
+                    width?: string;
+                    sortable?: boolean;
+                  };
                   return (
-                    <TableHead 
-                      key={header.id}
-                      style={{ width: columnMeta?.width }}
-                    >
+                    <TableHead key={header.id} style={{ width: columnMeta?.width }}>
                       {header.isPlaceholder ? null : (
                         <div
                           className={cn(
-                            "flex items-center space-x-2",
-                            header.column.getCanSort() && "cursor-pointer select-none"
+                            'flex items-center space-x-2',
+                            header.column.getCanSort() && 'cursor-pointer select-none',
                           )}
                           onClick={header.column.getToggleSortingHandler()}
                         >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          {flexRender(header.column.columnDef.header, header.getContext())}
                           {header.column.getCanSort() && (
                             <div className="flex flex-col">
                               <ChevronUp
                                 className={cn(
-                                  "h-3 w-3",
-                                  header.column.getIsSorted() === "asc"
-                                    ? "text-foreground"
-                                    : "text-muted-foreground"
+                                  'h-3 w-3',
+                                  header.column.getIsSorted() === 'asc'
+                                    ? 'text-foreground'
+                                    : 'text-muted-foreground',
                                 )}
                               />
                               <ChevronDown
                                 className={cn(
-                                  "h-3 w-3 -mt-1",
-                                  header.column.getIsSorted() === "desc"
-                                    ? "text-foreground"
-                                    : "text-muted-foreground"
+                                  'h-3 w-3 -mt-1',
+                                  header.column.getIsSorted() === 'desc'
+                                    ? 'text-foreground'
+                                    : 'text-muted-foreground',
                                 )}
                               />
                             </div>
@@ -269,17 +257,14 @@ function DataTable<T>({
                         </div>
                       )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
+              <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -295,12 +280,15 @@ function DataTable<T>({
       {pagination && (
         <div className="flex items-center justify-between px-2">
           <div className="flex-1 text-sm text-muted-foreground">
-            {dict.admin.common.pagination.showing} {internalPagination.pageIndex * internalPagination.pageSize + 1} {dict.admin.common.pagination.to}{" "}
+            {dict.admin.common.pagination.showing}{' '}
+            {internalPagination.pageIndex * internalPagination.pageSize + 1}{' '}
+            {dict.admin.common.pagination.to}{' '}
             {Math.min(
               (internalPagination.pageIndex + 1) * internalPagination.pageSize,
-              pagination.total
-            )}{" "}
-            {dict.admin.common.pagination.of} {pagination.total} {dict.admin.common.pagination.entries}
+              pagination.total,
+            )}{' '}
+            {dict.admin.common.pagination.of} {pagination.total}{' '}
+            {dict.admin.common.pagination.entries}
           </div>
           <div className="flex items-center space-x-6 lg:space-x-8">
             <div className="flex items-center space-x-2">
@@ -325,7 +313,7 @@ function DataTable<T>({
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export { DataTable }
+export { DataTable };

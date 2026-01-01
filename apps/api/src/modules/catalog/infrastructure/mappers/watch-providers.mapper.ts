@@ -1,11 +1,11 @@
-import {
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import type {
   WatchProvidersMap,
   WatchProvider as TmdbWatchProvider,
   WatchProviderRegion,
-} from '../../../ingestion/domain/models/normalized-media.model';
+} from '../../../ingestion/public';
 import type { AvailabilityData, WatchProvider } from '../../domain/types/common.types';
-import { WatchProviderRegionDto } from '../../presentation/dtos/common.dto';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { type WatchProviderRegionDto } from '../../presentation/dtos/common.dto';
 
 export class WatchProvidersMapper {
   /**

@@ -33,17 +33,11 @@ export function UserMenu() {
   };
 
   if (isLoading) {
-    return (
-      <div className="w-8 h-8 rounded-full bg-zinc-800 animate-pulse" />
-    );
+    return <div className="w-8 h-8 rounded-full bg-zinc-800 animate-pulse" />;
   }
 
   if (!isAuthenticated) {
-    return (
-      <Button onClick={openLogin}>
-        {dict.auth.login}
-      </Button>
-    );
+    return <Button onClick={openLogin}>{dict.auth.login}</Button>;
   }
 
   return (

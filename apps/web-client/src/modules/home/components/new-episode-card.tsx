@@ -36,7 +36,7 @@ function formatRelativeDate(airDate: string, locale: string): RelativeDateResult
     if (diffDays === 0) return { text: 'сьогодні', freshness: 'fresh' };
     if (diffDays === 1) return { text: 'вчора', freshness: getFreshness(diffDays) };
     if (diffDays < 7) return { text: `${diffDays} дн. тому`, freshness: getFreshness(diffDays) };
-    return { 
+    return {
       text: date.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }),
       freshness: 'older',
     };
@@ -45,7 +45,7 @@ function formatRelativeDate(airDate: string, locale: string): RelativeDateResult
   if (diffDays === 0) return { text: 'today', freshness: 'fresh' };
   if (diffDays === 1) return { text: 'yesterday', freshness: getFreshness(diffDays) };
   if (diffDays < 7) return { text: `${diffDays}d ago`, freshness: getFreshness(diffDays) };
-  return { 
+  return {
     text: date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
     freshness: 'older',
   };
@@ -102,9 +102,7 @@ export function NewEpisodeCard({ item, locale = 'uk' }: NewEpisodeCardProps) {
           </span>
         </p>
         {item.episodeTitle && (
-          <p className="text-xs text-zinc-500 mt-0.5 truncate">
-            {item.episodeTitle}
-          </p>
+          <p className="text-xs text-zinc-500 mt-0.5 truncate">{item.episodeTitle}</p>
         )}
       </div>
     </Link>

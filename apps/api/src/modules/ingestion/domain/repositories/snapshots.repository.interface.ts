@@ -1,4 +1,4 @@
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
 
 /**
  * Minimal media info needed for snapshot sync.

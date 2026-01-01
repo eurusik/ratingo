@@ -1,29 +1,29 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
-import { eq, inArray } from 'drizzle-orm';
-import {
-  IMovieRepository,
-  MovieWithMedia,
-  MovieDetails,
-  NowPlayingOptions,
-  TrendingMovieItem,
-  WithTotal,
-  ReleaseInfo,
-} from '../../domain/repositories/movie.repository.interface';
-import { PersistenceMapper } from '../mappers/persistence.mapper';
-import { DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
-// Query Objects
-import { MovieDetailsQuery } from '../queries/movie-details.query';
-import { TrendingMoviesQuery } from '../queries/trending-movies.query';
+import { eq, inArray } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import {
-  MovieListingsQuery,
+  type IMovieRepository,
+  type MovieWithMedia,
+  type MovieDetails,
+  type NowPlayingOptions,
+  type TrendingMovieItem,
+  type WithTotal,
+  type ReleaseInfo,
+} from '../../domain/repositories/movie.repository.interface';
+import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
+import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { type MovieDetailsQuery } from '../queries/movie-details.query';
+import {
+  type MovieListingsQuery,
   MOVIE_LISTING_TYPE,
   ELIGIBILITY_MODE,
 } from '../queries/movie-listings.query';
+import { type TrendingMoviesQuery } from '../queries/trending-movies.query';
 
 /**
  * Movie details payload for upsert operation.

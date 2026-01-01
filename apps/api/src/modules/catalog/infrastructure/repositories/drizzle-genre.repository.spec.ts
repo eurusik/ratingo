@@ -84,7 +84,7 @@ describe('DrizzleGenreRepository', () => {
 
     const tx = db;
     await expect(
-      repository.syncGenres(tx, 'media-1', [{ tmdbId: 1, name: 'Action', slug: 'action' }])
+      repository.syncGenres(tx, 'media-1', [{ tmdbId: 1, name: 'Action', slug: 'action' }]),
     ).rejects.toThrow(DatabaseException);
   });
 });

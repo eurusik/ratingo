@@ -1,6 +1,11 @@
 export { MediaCard, type MediaCardProps } from './media-card';
 export { MediaCardServer, type MediaCardServerProps } from './media-card-server';
-export { CardLayout, cardContainerStyles, cardTitleStyles, type CardLayoutProps } from './card-layout';
+export {
+  CardLayout,
+  cardContainerStyles,
+  cardTitleStyles,
+  type CardLayoutProps,
+} from './card-layout';
 export { CardPoster } from './card-poster';
 export { CardRating } from './card-rating';
 export { CardEpisodeInfo } from './card-episode-info';

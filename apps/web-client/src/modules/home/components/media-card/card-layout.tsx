@@ -40,7 +40,14 @@ export interface CardLayoutProps {
  * Base card layout with Link wrapper.
  * Overlay slot is rendered outside Link for clickable buttons.
  */
-export function CardLayout({ href, as: Tag = 'div', poster, overlay, children, className }: CardLayoutProps) {
+export function CardLayout({
+  href,
+  as: Tag = 'div',
+  poster,
+  overlay,
+  children,
+  className,
+}: CardLayoutProps) {
   return (
     <Tag className={cn(cardContainerStyles, 'relative', className)}>
       {/* Overlay (buttons) - z-10, outside Link flow */}
@@ -49,14 +56,10 @@ export function CardLayout({ href, as: Tag = 'div', poster, overlay, children, c
       {/* Link covers the card for navigation */}
       <Link href={href as Route} className="block h-full">
         {/* Poster area */}
-        <div className="overflow-hidden">
-          {poster}
-        </div>
+        <div className="overflow-hidden">{poster}</div>
 
         {/* Content area */}
-        <div className="p-3 flex-1 flex flex-col">
-          {children}
-        </div>
+        <div className="p-3 flex-1 flex flex-col">{children}</div>
       </Link>
     </Tag>
   );

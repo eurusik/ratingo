@@ -1,16 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, and, isNull } from 'drizzle-orm';
-import { MovieStatus } from '../../../../common/enums/movie-status.enum';
-import { CreditsMapper } from '../mappers/credits.mapper';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { MovieDetails } from '../../domain/repositories/movie.repository.interface';
-import { GenreQuery } from './shared/genre.query';
+import { type MovieStatus } from '../../../../common/enums/movie-status.enum';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import { type MovieDetails } from '../../domain/repositories/movie.repository.interface';
+import { CreditsMapper } from '../mappers/credits.mapper';
+import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
+
+import { type GenreQuery } from './shared/genre.query';
 
 /**
  * Fetches complete movie details by slug.

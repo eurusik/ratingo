@@ -19,9 +19,7 @@ export function ProvidersCategory({ title, providers }: ProvidersCategoryProps) 
 
   return (
     <div>
-      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
-        {title}
-      </h3>
+      <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">{title}</h3>
       <div className="flex flex-wrap gap-2">
         {providers.map((provider) => (
           <ProviderCard key={provider.providerId} provider={provider} />

@@ -51,13 +51,7 @@ export function SubscriptionCard({
       <Link href={href as Route} className="shrink-0">
         <div className="relative w-16 h-24 rounded-md overflow-hidden bg-zinc-800">
           {posterUrl ? (
-            <Image
-              src={posterUrl}
-              alt={title}
-              fill
-              sizes="64px"
-              className="object-cover"
-            />
+            <Image src={posterUrl} alt={title} fill sizes="64px" className="object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
               —
@@ -91,8 +85,8 @@ export function SubscriptionCard({
               onClick={onUnsubscribe}
               disabled={isUnsubscribing}
               className={cn(
-                "h-7 px-2 text-xs",
-                "text-zinc-500 hover:text-red-400 hover:bg-red-400/10"
+                'h-7 px-2 text-xs',
+                'text-zinc-500 hover:text-red-400 hover:bg-red-400/10',
               )}
             >
               <BellOff className="w-3 h-3 mr-1" />

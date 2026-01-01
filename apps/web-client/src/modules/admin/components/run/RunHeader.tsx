@@ -1,28 +1,28 @@
-"use client"
+'use client';
 
-import { Card, CardHeader, CardTitle } from '@/shared/ui/card'
-import { Button } from '@/shared/ui/button'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip'
-import { StatusBadge } from '@/modules/admin'
-import { RUN_STATUS } from '@/modules/admin/types'
-import type { RunHeaderLabels } from './labels.types'
+import { Card, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Button } from '@/shared/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
+import { StatusBadge } from '@/modules/admin';
+import { RUN_STATUS } from '@/modules/admin/types';
+import type { RunHeaderLabels } from './labels.types';
 
 interface RunHeaderProps {
-  id: string
-  status: string
-  targetPolicyId: string
-  startedAt: string | Date
-  readyToPromote: boolean
-  blockingMessages: string[]
-  isMutating: boolean
-  onPromote: () => void
-  onCancel: () => void
-  labels: RunHeaderLabels
+  id: string;
+  status: string;
+  targetPolicyId: string;
+  startedAt: string | Date;
+  readyToPromote: boolean;
+  blockingMessages: string[];
+  isMutating: boolean;
+  onPromote: () => void;
+  onCancel: () => void;
+  labels: RunHeaderLabels;
 }
 
 /**
  * Displays run header with status and action buttons.
- * 
+ *
  * Shows run ID, status badge, policy info, timestamps,
  * and promote/cancel buttons with blocking reasons tooltip.
  *
@@ -49,7 +49,7 @@ export function RunHeader({
   onCancel,
   labels,
 }: RunHeaderProps) {
-  const startedDate = new Date(startedAt).toLocaleString('uk-UA')
+  const startedDate = new Date(startedAt).toLocaleString('uk-UA');
 
   return (
     <Card>
@@ -84,7 +84,9 @@ export function RunHeader({
                     <div className="space-y-1">
                       <p className="font-medium">{labels.blockingReasonsTitle}</p>
                       {blockingMessages.map((message, index) => (
-                        <p key={index} className="text-sm">• {message}</p>
+                        <p key={index} className="text-sm">
+                          • {message}
+                        </p>
                       ))}
                     </div>
                   </TooltipContent>
@@ -95,5 +97,5 @@ export function RunHeader({
         </div>
       </CardHeader>
     </Card>
-  )
+  );
 }

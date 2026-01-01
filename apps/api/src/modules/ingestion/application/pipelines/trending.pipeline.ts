@@ -1,11 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SyncMediaService } from '../services/sync-media.service';
-import { BulkJobService } from '../services/bulk-job.service';
-import { StatsService } from '../../../stats/application/services/stats.service';
-import { IngestionJob, TRENDING_STATS_DELAY_MS } from '../../ingestion.constants';
+
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
+
+import { type StatsService } from '../../../stats/public';
+import {
+  IngestionJob,
+  TRENDING_STATS_DELAY_MS,
+  TRENDING_DEFAULT_PAGES,
+  TRENDING_DEFAULT_STATS_LIMIT,
+  TMDB_TRENDING_PAGE_SIZE,
+} from '../../ingestion.constants';
 import { formatHourWindow } from '../helpers/queue.helpers';
+import { type BulkJobService } from '../services/bulk-job.service';
+import { type SyncMediaService } from '../services/sync-media.service';
 
 /**
  * Trending pipeline: TMDB trending sync and Trakt stats updates.
@@ -29,7 +37,7 @@ export class TrendingPipeline {
    * @param syncStats - Whether to queue stats job (default: true)
    * @param force - Bypass hour-based deduplication (default: false)
    */
-  async dispatch(pages = 5, syncStats = true, force = false): Promise<void> {
+  async dispatch(pages = TRENDING_DEFAULT_PAGES, syncStats = true, force = false): Promise<void> {
     const startedAt = new Date();
     const window = force ? startedAt.getTime().toString() : formatHourWindow();
 
@@ -74,7 +82,7 @@ export class TrendingPipeline {
 
     const result = await this.statsService.syncTrendingStatsForUpdatedItems({
       since: sinceDate,
-      limit: limit || 200,
+      limit: limit || TRENDING_DEFAULT_STATS_LIMIT,
     });
 
     this.logger.log(`Trending stats sync complete: ${result.movies} movies, ${result.shows} shows`);
@@ -126,10 +134,11 @@ export class TrendingPipeline {
 
   private buildSyncJobs(items: Array<{ tmdbId: number; type: MediaType }>, page: number) {
     const today = formatUtcDayId();
+    const baseScore = 10000;
 
     return items.map((item, i) => {
-      const rank = (page - 1) * 20 + i + 1;
-      const score = 10000 - rank + 1;
+      const rank = (page - 1) * TMDB_TRENDING_PAGE_SIZE + i + 1;
+      const score = baseScore - rank + 1;
 
       return {
         name: item.type === MediaType.MOVIE ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW,
@@ -140,7 +149,7 @@ export class TrendingPipeline {
   }
 
   private async queueStatsJob(startedAt: Date, pages: number, window: string): Promise<void> {
-    const expectedLimit = pages * 20 * 2;
+    const expectedLimit = pages * TMDB_TRENDING_PAGE_SIZE * 2;
 
     await this.bulkJobService.addDelayed(
       IngestionJob.SYNC_TRENDING_STATS,

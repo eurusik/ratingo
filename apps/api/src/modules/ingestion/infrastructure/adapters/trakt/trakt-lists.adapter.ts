@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
+
+import { type TraktListsPort } from '../../../domain/ports/trakt-lists.port';
+
 import { BaseTraktHttp } from './base-trakt-http';
 import {
-  TraktTrendingMovie,
-  TraktTrendingShow,
-  TraktEndpoint,
+  type TraktTrendingMovie,
+  type TraktTrendingShow,
+  type TraktEndpoint,
   TRAKT_ENDPOINT,
 } from './interfaces/trakt.types';
-import { TraktListsPort } from '../../../domain/ports/trakt-lists.port';
 
 /**
  * Trakt adapter for trending lists and watchers ranks.

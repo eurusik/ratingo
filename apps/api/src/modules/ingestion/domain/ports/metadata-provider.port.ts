@@ -1,4 +1,10 @@
-import { NormalizedMedia } from '../models/normalized-media.model';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type NormalizedMedia } from '../models/normalized-media.model';
+
+/**
+ * Injection token for metadata provider port.
+ */
+export const METADATA_PROVIDER_PORT = Symbol('METADATA_PROVIDER_PORT');
 
 /**
  * Port (Interface) for any external metadata provider.
@@ -6,7 +12,7 @@ import { NormalizedMedia } from '../models/normalized-media.model';
  * Whether it's TMDB, Trakt, or OMDb - they all must satisfy this contract.
  * This allows us to switch or aggregate providers without changing business logic.
  */
-export interface IMetadataProvider {
+export interface MetadataProviderPort {
   /**
    * Unique identifier of the provider (e.g. 'tmdb', 'trakt')
    */
@@ -29,7 +35,8 @@ export interface IMetadataProvider {
   /**
    * Fetches currently trending items.
    * @param {number} page - Page number (1-based)
-   * @returns {Promise<Array<{ tmdbId: number; type: 'movie' | 'show' }>>} List of TMDB IDs and basic info if available
+   * @param {MediaType} type - Optional filter by media type
+   * @returns {Promise<Array<{ tmdbId: number; type: MediaType }>>} List of TMDB IDs
    */
-  getTrending(page?: number): Promise<Array<{ tmdbId: number; type: 'movie' | 'show' }>>;
+  getTrending(page?: number, type?: MediaType): Promise<Array<{ tmdbId: number; type: MediaType }>>;
 }

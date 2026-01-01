@@ -1,8 +1,13 @@
 import { Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+
 import { Strategy } from 'passport-local';
-import { UsersService } from '../../../users/application/users.service';
-import { PasswordHasher, PASSWORD_HASHER } from '../../domain/services/password-hasher.interface';
+
+import { type UsersService } from '../../../users/application/users.service';
+import {
+  type PasswordHasher,
+  PASSWORD_HASHER,
+} from '../../domain/services/password-hasher.interface';
 
 /**
  * Local strategy for email/password login.

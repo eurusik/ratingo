@@ -1,23 +1,25 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import {
-  IMovieRepository,
-  MOVIE_REPOSITORY,
-  MovieDetails,
-} from '../../domain/repositories/movie.repository.interface';
-import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
+
+import { type ReleaseStatus } from '../../../../common/enums/release-status.enum';
+import { getBestRating, isNewRelease } from '../../../../common/utils/media.utils';
 import { BADGE_KEY, CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
-import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
+import type { CardMeta, BadgeKey } from '../../../shared/cards/domain/card.types';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
-import { computeReleaseStatus } from '../../domain/utils/release-status.utils';
-import { computeMovieVerdict, MovieVerdict } from '../../../shared/verdict';
+import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
+import { computeMovieVerdict, type MovieVerdict } from '../../../shared/verdict';
 import {
   POPULARITY_SIGNAL,
-  PopularitySignal,
+  type PopularitySignal,
 } from '../../../shared/verdict/domain/popularity-signal';
-import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
-import { getBestRating, isNewRelease } from '../../../../common/utils/media.utils';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
-import type { CardMeta, BadgeKey } from '../../../shared/cards/domain/card.types';
+import {
+  type IMovieRepository,
+  MOVIE_REPOSITORY,
+  type MovieDetails,
+} from '../../domain/repositories/movie.repository.interface';
+import { computeReleaseStatus } from '../../domain/utils/release-status.utils';
+
+import { type CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
 
 /**
  * Maps card badge key to verdict popularity signal.
@@ -80,6 +82,7 @@ export class MovieDetailsService {
       movie.releaseDate,
       movie.theatricalReleaseDate,
       movie.digitalReleaseDate,
+      new Date(),
     );
 
     // Compute verdict

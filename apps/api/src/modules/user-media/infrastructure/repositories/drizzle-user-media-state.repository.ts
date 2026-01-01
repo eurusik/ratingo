@@ -1,21 +1,25 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { and, desc, eq, inArray, isNotNull, or, sql } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
+import { type ImageDto } from '../../../../common/dtos/image.dto';
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import {
-  IUserMediaStateRepository,
-  ListWithMediaOptions,
-  USER_MEDIA_LIST_SORT,
-  UserMediaStats,
-  UpsertUserMediaStateData,
-} from '../../domain/repositories/user-media-state.repository.interface';
-import { UserMediaState } from '../../domain/entities/user-media-state.entity';
+import { type UserMediaState } from '../../domain/entities/user-media-state.entity';
 import { USER_MEDIA_STATE } from '../../domain/entities/user-media-state.entity';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { ImageDto } from '../../../../common/dtos/image.dto';
+import {
+  type IUserMediaStateRepository,
+  type ListWithMediaOptions,
+  USER_MEDIA_LIST_SORT,
+  type UserMediaStats,
+  type UpsertUserMediaStateData,
+} from '../../domain/repositories/user-media-state.repository.interface';
 
 /**
  * Drizzle implementation of user media state repository.
@@ -79,7 +83,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
    * @returns {Promise<any[]>} Continue items with media summary
    * @throws {DatabaseException} When query fails
    */
-  async listContinueWithMedia(userId: string, limit = 20, offset = 0) {
+  async listContinueWithMedia(userId: string, limit = DEFAULT_PAGE_SIZE, offset = 0) {
     try {
       const rows = await this.db
         .select({
@@ -211,7 +215,11 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
    * @param {number} offset - Offset
    * @returns {Promise<UserMediaState[]>} States
    */
-  async listByUser(userId: string, limit = 20, offset = 0): Promise<UserMediaState[]> {
+  async listByUser(
+    userId: string,
+    limit = DEFAULT_PAGE_SIZE,
+    offset = 0,
+  ): Promise<UserMediaState[]> {
     try {
       const rows = await this.db
         .select()
@@ -252,7 +260,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
    */
   async listWithMedia(
     userId: string,
-    limit = 20,
+    limit = DEFAULT_PAGE_SIZE,
     offset = 0,
     options?: ListWithMediaOptions,
   ): Promise<
@@ -360,7 +368,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
    * @returns {Promise<any[]>} Activity list items
    * @throws {DatabaseException} When query fails
    */
-  async listActivityWithMedia(userId: string, limit = 20, offset = 0) {
+  async listActivityWithMedia(userId: string, limit = DEFAULT_PAGE_SIZE, offset = 0) {
     try {
       const rows = await this.db
         .select({

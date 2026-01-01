@@ -1,7 +1,7 @@
 /**
  * Browse categories configuration.
  * Single source of truth for all browse pages.
- * 
+ *
  * API Structure:
  * - /api/catalog/movies/trending
  * - /api/catalog/movies/now-playing
@@ -13,14 +13,14 @@
 
 import type { Route } from 'next';
 
-export type BrowseCategory = 
-  | 'shows-trending'     // Shows trending
-  | 'movies-trending'    // Movies trending
+export type BrowseCategory =
+  | 'shows-trending' // Shows trending
+  | 'movies-trending' // Movies trending
   | 'movies-now-playing' // Movies in theaters
-  | 'movies-new-releases'// Movies recently released
-  | 'movies-digital'     // Movies new on digital
-  | 'shows'              // All shows (trending)
-  | 'movies';            // All movies (trending)
+  | 'movies-new-releases' // Movies recently released
+  | 'movies-digital' // Movies new on digital
+  | 'shows' // All shows (trending)
+  | 'movies'; // All movies (trending)
 
 export interface CategoryConfig {
   /** URL slug */
@@ -30,7 +30,12 @@ export interface CategoryConfig {
   /** i18n key for description (SEO) */
   descriptionKey: string;
   /** API method name in catalogApi */
-  apiMethod: 'getTrendingShows' | 'getTrendingMovies' | 'getNowPlayingMovies' | 'getNewReleasesMovies' | 'getNewOnDigitalMovies';
+  apiMethod:
+    | 'getTrendingShows'
+    | 'getTrendingMovies'
+    | 'getNowPlayingMovies'
+    | 'getNewReleasesMovies'
+    | 'getNewOnDigitalMovies';
   /** Media type for card rendering */
   mediaType: 'movie' | 'show';
   /** Items per page */
@@ -59,7 +64,7 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
     mediaType: 'show',
     pageSize: 24,
   },
-  
+
   // Movies
   movies: {
     slug: 'movies',

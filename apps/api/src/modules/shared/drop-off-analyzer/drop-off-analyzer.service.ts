@@ -49,6 +49,19 @@ const DROP_OFF_CONFIG = {
   minVotesThreshold: 100,
   // Early drop = within first 30% of episodes
   earlyDropThreshold: 0.3,
+  // Minimum episodes needed for analysis
+  minEpisodesForAnalysis: 3,
+  // Minimum episodes with valid votes for drop-off detection
+  minValidEpisodesForDropOff: 2,
+  // Approximate episodes per season for position calculation
+  approxEpisodesPerSeason: 10,
+  // High retention threshold
+  highRetentionThreshold: 70,
+  // Percentage bounds
+  minPercent: 0,
+  maxPercent: 100,
+  // Decimal precision multiplier (for rounding to 1 decimal place)
+  decimalPrecision: 10,
 };
 
 /**
@@ -73,7 +86,7 @@ export class DropOffAnalyzerService {
     // Flatten all episodes with season info
     const allEpisodes = this.flattenEpisodes(seasons);
 
-    if (allEpisodes.length < 3) {
+    if (allEpisodes.length < DROP_OFF_CONFIG.minEpisodesForAnalysis) {
       return this.emptyAnalysis();
     }
 
@@ -86,7 +99,9 @@ export class DropOffAnalyzerService {
     // Calculate overall retention based on season engagement (first vs last season avg votes)
     const firstSeasonVotes = seasonEngagement[0]?.avgVotes || 1;
     const lastSeasonVotes = seasonEngagement[seasonEngagement.length - 1]?.avgVotes || 0;
-    const overallRetention = Math.round((lastSeasonVotes / firstSeasonVotes) * 100);
+    const overallRetention = Math.round(
+      (lastSeasonVotes / firstSeasonVotes) * DROP_OFF_CONFIG.maxPercent,
+    );
 
     const dropOffPercent = dropOffPoint
       ? this.calculateDropOffPercent(allEpisodes, dropOffPoint)
@@ -97,13 +112,16 @@ export class DropOffAnalyzerService {
       dropOffPoint,
       dropOffPercent,
       overallRetention,
-      allEpisodes.length
+      allEpisodes.length,
     );
 
     return {
       dropOffPoint,
       dropOffPercent,
-      overallRetention: Math.max(0, Math.min(100, overallRetention)),
+      overallRetention: Math.max(
+        DROP_OFF_CONFIG.minPercent,
+        Math.min(DROP_OFF_CONFIG.maxPercent, overallRetention),
+      ),
       seasonEngagement,
       insight,
       insightType,
@@ -127,7 +145,7 @@ export class DropOffAnalyzerService {
 
     return seasons.map((season, index) => {
       const validEpisodes = season.episodes.filter(
-        (ep) => ep.votes >= DROP_OFF_CONFIG.minVotesThreshold
+        (ep) => ep.votes >= DROP_OFF_CONFIG.minVotesThreshold,
       );
 
       const avgRating = validEpisodes.length
@@ -141,13 +159,15 @@ export class DropOffAnalyzerService {
       const engagementDrop =
         index === 0 || prevAvgVotes === 0
           ? 0
-          : Math.round(((prevAvgVotes - avgVotes) / prevAvgVotes) * 100);
+          : Math.round(((prevAvgVotes - avgVotes) / prevAvgVotes) * DROP_OFF_CONFIG.maxPercent);
 
       prevAvgVotes = avgVotes;
 
       return {
         season: season.number,
-        avgRating: Math.round(avgRating * 10) / 10,
+        avgRating:
+          Math.round(avgRating * DROP_OFF_CONFIG.decimalPrecision) /
+          DROP_OFF_CONFIG.decimalPrecision,
         avgVotes,
         engagementDrop: Math.max(0, engagementDrop),
       };
@@ -158,19 +178,20 @@ export class DropOffAnalyzerService {
    * Finds the first significant drop-off point in the series.
    */
   private findDropOffPoint(
-    episodes: Array<EpisodeData & { season: number }>
+    episodes: Array<EpisodeData & { season: number }>,
   ): DropOffAnalysis['dropOffPoint'] {
     // Need at least 2 episodes with valid votes
     const validEpisodes = episodes.filter((ep) => ep.votes >= DROP_OFF_CONFIG.minVotesThreshold);
 
-    if (validEpisodes.length < 2) return null;
+    if (validEpisodes.length < DROP_OFF_CONFIG.minValidEpisodesForDropOff) return null;
 
     for (let i = 1; i < validEpisodes.length; i++) {
       const prev = validEpisodes[i - 1];
       const curr = validEpisodes[i];
 
       const ratingDrop = prev.rating - curr.rating;
-      const votesDropPercent = ((prev.votes - curr.votes) / prev.votes) * 100;
+      const votesDropPercent =
+        ((prev.votes - curr.votes) / prev.votes) * DROP_OFF_CONFIG.maxPercent;
 
       if (
         ratingDrop >= DROP_OFF_CONFIG.minRatingDrop &&
@@ -192,10 +213,10 @@ export class DropOffAnalyzerService {
    */
   private calculateDropOffPercent(
     episodes: Array<EpisodeData & { season: number }>,
-    dropOffPoint: NonNullable<DropOffAnalysis['dropOffPoint']>
+    dropOffPoint: NonNullable<DropOffAnalysis['dropOffPoint']>,
   ): number {
     const dropIndex = episodes.findIndex(
-      (ep) => ep.season === dropOffPoint.season && ep.number === dropOffPoint.episode
+      (ep) => ep.season === dropOffPoint.season && ep.number === dropOffPoint.episode,
     );
 
     if (dropIndex <= 0) return 0;
@@ -203,7 +224,7 @@ export class DropOffAnalyzerService {
     const beforeVotes = episodes[dropIndex - 1].votes;
     const atVotes = episodes[dropIndex].votes;
 
-    return Math.round(((beforeVotes - atVotes) / beforeVotes) * 100);
+    return Math.round(((beforeVotes - atVotes) / beforeVotes) * DROP_OFF_CONFIG.maxPercent);
   }
 
   /**
@@ -213,11 +234,11 @@ export class DropOffAnalyzerService {
     dropOffPoint: DropOffAnalysis['dropOffPoint'],
     dropOffPercent: number,
     overallRetention: number,
-    totalEpisodes: number
+    totalEpisodes: number,
   ): { insight: string; insightType: DropOffAnalysis['insightType'] } {
     // No drop-off detected
     if (!dropOffPoint) {
-      if (overallRetention >= 70) {
+      if (overallRetention >= DROP_OFF_CONFIG.highRetentionThreshold) {
         return {
           insight: 'Серіал тримає аудиторію стабільно від початку до кінця',
           insightType: 'steady',
@@ -231,7 +252,8 @@ export class DropOffAnalyzerService {
 
     // Calculate position of drop-off
     const dropPosition = `S${dropOffPoint.season}E${dropOffPoint.episode}`;
-    const episodeIndex = (dropOffPoint.season - 1) * 10 + dropOffPoint.episode; // Approximate
+    const episodeIndex =
+      (dropOffPoint.season - 1) * DROP_OFF_CONFIG.approxEpisodesPerSeason + dropOffPoint.episode;
     const isEarlyDrop = episodeIndex / totalEpisodes < DROP_OFF_CONFIG.earlyDropThreshold;
 
     if (isEarlyDrop) {

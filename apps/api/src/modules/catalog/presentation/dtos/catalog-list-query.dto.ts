@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
 import { Type } from 'class-transformer';
 import {
   IsEnum,
@@ -10,17 +11,19 @@ import {
   Max,
   Min,
   Validate,
-  ValidationArguments,
+  type ValidationArguments,
   ValidatorConstraint,
-  ValidatorConstraintInterface,
+  type ValidatorConstraintInterface,
 } from 'class-validator';
+
+import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
 
 @ValidatorConstraint({ name: 'YearRange', async: false })
 class YearRangeConstraint implements ValidatorConstraintInterface {
-  validate(yearTo: any, args: ValidationArguments): boolean {
+  validate(yearTo: unknown, args: ValidationArguments): boolean {
     const o = args.object as { yearFrom?: number; yearTo?: number };
     if (o.yearFrom === undefined || yearTo === undefined) return true;
-    return o.yearFrom <= yearTo;
+    return o.yearFrom <= (yearTo as number);
   }
 
   defaultMessage(): string {
@@ -30,7 +33,7 @@ class YearRangeConstraint implements ValidatorConstraintInterface {
 
 @ValidatorConstraint({ name: 'YearExclusive', async: false })
 class YearExclusiveConstraint implements ValidatorConstraintInterface {
-  validate(year: any, args: ValidationArguments): boolean {
+  validate(year: unknown, args: ValidationArguments): boolean {
     const o = args.object as { yearFrom?: number; yearTo?: number };
     if (year === undefined) return true;
     return o.yearFrom === undefined && o.yearTo === undefined;
@@ -67,13 +70,13 @@ export type VoteSource = (typeof VOTE_SOURCE)[keyof typeof VOTE_SOURCE];
  * Unified list query parameters for catalog endpoints.
  */
 export class CatalogListQueryDto {
-  @ApiPropertyOptional({ default: 20, minimum: 1, maximum: 50 })
+  @ApiPropertyOptional({ default: DEFAULT_PAGE_SIZE, minimum: 1, maximum: 50 })
   @IsOptional()
   @IsInt()
   @Min(1)
   @Max(50)
   @Type(() => Number)
-  limit: number = 20;
+  limit: number = DEFAULT_PAGE_SIZE;
 
   @ApiPropertyOptional({ default: 0, minimum: 0 })
   @IsOptional()

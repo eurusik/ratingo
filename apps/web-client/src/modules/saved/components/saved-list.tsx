@@ -17,11 +17,9 @@ interface SavedListProps {
 export function SavedList({ list }: SavedListProps) {
   const { dict } = useTranslation();
   const isForLater = list === 'for_later';
-  
-  const { data, isLoading } = isForLater 
-    ? useSavedForLater() 
-    : useSavedConsidering();
-  
+
+  const { data, isLoading } = isForLater ? useSavedForLater() : useSavedConsidering();
+
   const unsaveMutation = useUnsaveItem();
   const saveMutation = useSaveItem();
 
@@ -68,7 +66,7 @@ export function SavedList({ list }: SavedListProps) {
       {items.map((item) => {
         const media = item.mediaSummary;
         const poster = media.poster as Record<string, string> | null;
-        
+
         return (
           <SavedItemCard
             key={item.id}
@@ -83,9 +81,8 @@ export function SavedList({ list }: SavedListProps) {
             activeSubscriptionTriggers={item.activeSubscriptionTriggers}
             onRemove={() => handleRemove(item.mediaItemId)}
             onMove={() => handleMove(item.mediaItemId)}
-            moveLabel={isForLater 
-              ? dict.saved.actions.moveToConsidering 
-              : dict.saved.actions.moveToForLater
+            moveLabel={
+              isForLater ? dict.saved.actions.moveToConsidering : dict.saved.actions.moveToForLater
             }
             isRemoving={unsaveMutation.isPending}
           />

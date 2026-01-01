@@ -1,9 +1,11 @@
-import { Injectable, Logger, OnModuleInit, Inject } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { ConfigType } from '@nestjs/config';
-import { Queue, JobSchedulerJson } from 'bullmq';
+import { Injectable, Logger, type OnModuleInit, Inject } from '@nestjs/common';
+import { type ConfigType } from '@nestjs/config';
+
+import { type Queue, type JobSchedulerJson } from 'bullmq';
+
+import schedulerConfig, { type ScheduledJobConfig } from '../../../../config/scheduler.config';
 import { INGESTION_QUEUE } from '../../ingestion.constants';
-import schedulerConfig, { ScheduledJobConfig } from '../../../../config/scheduler.config';
 
 /**
  * Manages automated ingestion jobs using BullMQ Job Schedulers.
@@ -166,23 +168,11 @@ export class IngestionSchedulerService implements OnModuleInit {
       // Upsert desired schedulers
       for (const [schedulerId, jobConfig] of desiredSchedulers) {
         const existing = existingByKey.get(schedulerId);
+        const result = await this.syncScheduler(schedulerId, jobConfig, existing, timezone);
 
-        if (existing) {
-          if (existing.pattern !== jobConfig.pattern) {
-            this.logger.log(
-              `[${jobConfig.name}] Pattern changed: "${existing.pattern}" → "${jobConfig.pattern}"`,
-            );
-            await this.upsertJobScheduler(schedulerId, jobConfig, timezone);
-            updated++;
-          } else {
-            this.logger.debug(`[${jobConfig.name}] Unchanged: ${jobConfig.pattern}`);
-            unchanged++;
-          }
-        } else {
-          await this.upsertJobScheduler(schedulerId, jobConfig, timezone);
-          this.logger.log(`[${jobConfig.name}] Added: ${jobConfig.pattern} ${timezone}`);
-          added++;
-        }
+        if (result === 'added') added++;
+        else if (result === 'updated') updated++;
+        else unchanged++;
       }
 
       const disabledJobs = jobs.filter((job) => !job.enabled);
@@ -197,6 +187,35 @@ export class IngestionSchedulerService implements OnModuleInit {
     } catch (error) {
       this.logger.error(`Failed to setup job schedulers: ${String(error)}`);
     }
+  }
+
+  /**
+   * Syncs a single scheduler - adds, updates, or leaves unchanged.
+   *
+   * @returns 'added' | 'updated' | 'unchanged'
+   */
+  private async syncScheduler(
+    schedulerId: string,
+    jobConfig: ScheduledJobConfig,
+    existing: JobSchedulerJson | undefined,
+    timezone: string,
+  ): Promise<'added' | 'updated' | 'unchanged'> {
+    if (!existing) {
+      await this.upsertJobScheduler(schedulerId, jobConfig, timezone);
+      this.logger.log(`[${jobConfig.name}] Added: ${jobConfig.pattern} ${timezone}`);
+      return 'added';
+    }
+
+    if (existing.pattern !== jobConfig.pattern) {
+      this.logger.log(
+        `[${jobConfig.name}] Pattern changed: "${existing.pattern}" → "${jobConfig.pattern}"`,
+      );
+      await this.upsertJobScheduler(schedulerId, jobConfig, timezone);
+      return 'updated';
+    }
+
+    this.logger.debug(`[${jobConfig.name}] Unchanged: ${jobConfig.pattern}`);
+    return 'unchanged';
   }
 
   /**

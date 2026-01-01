@@ -63,13 +63,11 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
           placeholder="user@example.com"
           className={cn(
             'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
-            errors.email && 'border-red-500 focus-visible:ring-red-500'
+            errors.email && 'border-red-500 focus-visible:ring-red-500',
           )}
           {...register('email')}
         />
-        {errors.email && (
-          <p className="text-xs text-red-400">{errors.email.message}</p>
-        )}
+        {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
       </div>
 
       <div className="space-y-2">
@@ -83,13 +81,11 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
           placeholder="ratingo_fan"
           className={cn(
             'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
-            errors.username && 'border-red-500 focus-visible:ring-red-500'
+            errors.username && 'border-red-500 focus-visible:ring-red-500',
           )}
           {...register('username')}
         />
-        {errors.username && (
-          <p className="text-xs text-red-400">{errors.username.message}</p>
-        )}
+        {errors.username && <p className="text-xs text-red-400">{errors.username.message}</p>}
       </div>
 
       <div className="space-y-2">
@@ -103,13 +99,11 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
           placeholder="••••••"
           className={cn(
             'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
-            errors.password && 'border-red-500 focus-visible:ring-red-500'
+            errors.password && 'border-red-500 focus-visible:ring-red-500',
           )}
           {...register('password')}
         />
-        {errors.password && (
-          <p className="text-xs text-red-400">{errors.password.message}</p>
-        )}
+        {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
       </div>
 
       <div className="space-y-2">
@@ -123,7 +117,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
           placeholder="••••••"
           className={cn(
             'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
-            errors.confirmPassword && 'border-red-500 focus-visible:ring-red-500'
+            errors.confirmPassword && 'border-red-500 focus-visible:ring-red-500',
           )}
           {...register('confirmPassword')}
         />
@@ -138,11 +132,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
         </Alert>
       )}
 
-      <Button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full"
-      >
+      <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
         {isSubmitting ? dict.auth.registering : dict.auth.register}
       </Button>

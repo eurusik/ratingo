@@ -1,16 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, asc, and, isNull } from 'drizzle-orm';
-import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { ShowDetails } from '../../domain/repositories/show.repository.interface';
-import { CreditsMapper } from '../mappers/credits.mapper';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { GenreQuery } from './shared/genre.query';
+import { type ShowStatus } from '../../../../common/enums/show-status.enum';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import { type ShowDetails } from '../../domain/repositories/show.repository.interface';
+import { CreditsMapper } from '../mappers/credits.mapper';
+import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
+
+import { type GenreQuery } from './shared/genre.query';
 
 /**
  * Fetches complete TV show details by slug.
@@ -102,7 +105,7 @@ export class ShowDetailsQuery {
         show.showId ? this.fetchSeasons(show.showId) : Promise.resolve([]),
       ]);
 
-      const { showId, ...showData } = show;
+      const { showId: _showId, ...showData } = show;
 
       return {
         id: showData.id,

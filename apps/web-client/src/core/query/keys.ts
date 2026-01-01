@@ -106,7 +106,8 @@ export const queryKeys = {
     runs: {
       all: ['admin', 'runs'] as const,
       status: (runId: string) => [...queryKeys.admin.runs.all, 'status', runId] as const,
-      diff: (runId: string, sampleSize: number) => [...queryKeys.admin.runs.all, 'diff', runId, sampleSize] as const,
+      diff: (runId: string, sampleSize: number) =>
+        [...queryKeys.admin.runs.all, 'diff', runId, sampleSize] as const,
     },
   },
 } as const;

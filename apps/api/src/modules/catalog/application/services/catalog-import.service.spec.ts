@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { CatalogImportService } from './catalog-import.service';
 import { MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
-import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';

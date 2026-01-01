@@ -1,7 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { IHeroRepository, HERO_REPOSITORY } from '../domain/repositories/hero.repository.interface';
-import { HeroMediaItem } from '../../../common/types/hero-media.types';
-import { MediaType } from '../../../common/enums/media-type.enum';
+
+import { type MediaType } from '../../../common/enums/media-type.enum';
+import { type HeroMediaItem } from '../../../common/types/hero-media.types';
+import {
+  type IHeroRepository,
+  HERO_REPOSITORY,
+} from '../domain/repositories/hero.repository.interface';
 import { HERO_CONFIG } from '../home.constants';
 
 /**

@@ -6,10 +6,10 @@
  */
 
 import {
-  ExternalRatings,
-  AggregatedRating,
+  type ExternalRatings,
+  type AggregatedRating,
   RATING_SOURCE,
-  RatingSourceLabel,
+  type RatingSourceLabel,
 } from './verdict.types';
 
 /**

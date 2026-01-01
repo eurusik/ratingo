@@ -1,16 +1,18 @@
 import {
-  ExceptionFilter,
+  type ExceptionFilter,
   Catch,
-  ArgumentsHost,
+  type ArgumentsHost,
   HttpException,
   HttpStatus,
   Logger,
 } from '@nestjs/common';
 import { ThrottlerException } from '@nestjs/throttler';
-import { FastifyReply } from 'fastify';
-import { AppException } from '../exceptions/app.exception';
+
+import { type FastifyReply } from 'fastify';
+
 import { ErrorCode } from '../enums/error-code.enum';
-import { ApiErrorResponse } from '../interfaces/api-response.interface';
+import { AppException } from '../exceptions/app.exception';
+import { type ApiErrorResponse } from '../interfaces/api-response.interface';
 
 type ExceptionResponseMessage = string | string[];
 
@@ -154,11 +156,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Handle unknown errors
     // Mask internal error details in production-like environments
     const isProduction = process.env.NODE_ENV === 'production';
-    const message = isProduction
-      ? 'Internal server error'
-      : exception instanceof Error
-        ? exception.message
-        : 'Unknown error occurred';
+    const message = this.resolveUnknownErrorMessage(exception, isProduction);
 
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -187,5 +185,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       [HttpStatus.GATEWAY_TIMEOUT]: ErrorCode.EXTERNAL_API_ERROR,
     };
     return map[status] ?? ErrorCode.UNKNOWN_ERROR;
+  }
+
+  private resolveUnknownErrorMessage(exception: unknown, isProduction: boolean): string {
+    if (isProduction) return 'Internal server error';
+    if (exception instanceof Error) {
+      const { message } = exception;
+      return message;
+    }
+    return 'Unknown error occurred';
   }
 }

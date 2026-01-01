@@ -5,10 +5,12 @@
  */
 
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, sql } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import { EligibilityStatus } from '../../domain/constants/evaluation.constants';
 
 export interface AggregatedCounters {
@@ -54,7 +56,7 @@ export class RunAggregationService {
       .where(eq(schema.catalogEvaluationRuns.id, runId))
       .limit(1);
 
-    const errorSample = (run[0]?.errorSample as any[]) || [];
+    const errorSample = (run[0]?.errorSample as unknown[]) || [];
 
     return {
       ...counters,

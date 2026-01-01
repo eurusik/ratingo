@@ -1,30 +1,33 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
-import { eq, gte, lte, isNotNull, inArray, and, exists, sql, isNull } from 'drizzle-orm';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import type {
-  TrendingMovieItem,
-  WithTotal,
-} from '../../domain/repositories/movie.repository.interface';
-import {
-  CatalogSort,
-  SortOrder,
-  VoteSource,
-  CATALOG_SORT,
-  SORT_ORDER,
-  VOTE_SOURCE,
-} from '../../presentation/dtos/catalog-list-query.dto';
+
+import { eq, gte, lte, isNotNull, inArray, and, exists, sql, isNull, type SQL } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import { EligibilityStatus } from '../../../catalog-policy/public';
 import {
   TRENDING_THRESHOLDS,
   MOVIE_TRENDING_WEIGHTS,
 } from '../../domain/constants/catalog.constants';
-import { GenreQuery } from './shared/genre.query';
-import { movieSelectFields, MovieSelectRow } from './shared/movie-select.fields';
+import type {
+  TrendingMovieItem,
+  WithTotal,
+} from '../../domain/repositories/movie.repository.interface';
+import {
+  type CatalogSort,
+  type SortOrder,
+  type VoteSource,
+  CATALOG_SORT,
+  SORT_ORDER,
+  VOTE_SOURCE,
+} from '../../presentation/dtos/catalog-list-query.dto';
+
+import { type GenreQuery } from './shared/genre.query';
 import { MovieResultMapper } from './shared/movie-result.mapper';
+import { movieSelectFields, type MovieSelectRow } from './shared/movie-select.fields';
 
 /**
  * Options for trending movies query.
@@ -85,7 +88,7 @@ export class TrendingMoviesQuery {
     } = options;
 
     try {
-      const conditions: any[] = [
+      const conditions: SQL[] = [
         isNotNull(schema.mediaStats.popularityScore),
         eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
         eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
@@ -230,7 +233,7 @@ export class TrendingMoviesQuery {
     return [sql`${schema.mediaStats.popularityScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
   }
 
-  private async countTotal(conditions: any[]): Promise<number> {
+  private async countTotal(conditions: SQL[]): Promise<number> {
     const [{ total }] = await this.db
       .select({ total: sql<number>`count(*)` })
       .from(schema.movies)

@@ -58,7 +58,7 @@ export function SubscriptionsList() {
           slug: string;
           poster: Record<string, string> | null;
         };
-        
+
         return (
           <SubscriptionCard
             key={item.id}

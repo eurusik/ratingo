@@ -1,22 +1,22 @@
-"use client"
+'use client';
 
-import { Globe, Languages, Tv, Settings, Shield, Filter } from 'lucide-react'
-import type { PolicyConfigDto } from '@/core/api/admin'
-import type { ConfigViewLabels } from './labels.types'
-import { ConfigCard } from './ConfigCard'
-import { AllowedBlockedList } from './AllowedBlockedList'
-import { BadgeList } from './BadgeList'
-import { SettingRow } from './SettingRow'
-import { BreakoutRuleItem } from './BreakoutRuleItem'
+import { Globe, Languages, Tv, Settings, Shield, Filter } from 'lucide-react';
+import type { PolicyConfigDto } from '@/core/api/admin';
+import type { ConfigViewLabels } from './labels.types';
+import { ConfigCard } from './ConfigCard';
+import { AllowedBlockedList } from './AllowedBlockedList';
+import { BadgeList } from './BadgeList';
+import { SettingRow } from './SettingRow';
+import { BreakoutRuleItem } from './BreakoutRuleItem';
 
 interface PolicyConfigCardsProps {
-  config: PolicyConfigDto
-  labels?: ConfigViewLabels
+  config: PolicyConfigDto;
+  labels?: ConfigViewLabels;
 }
 
 /**
  * Displays policy countries configuration card.
- * 
+ *
  * Shows allowed and blocked countries with ISO codes.
  *
  * @param config - Policy configuration
@@ -36,12 +36,12 @@ export function CountriesCard({ config, labels }: PolicyConfigCardsProps) {
         }}
       />
     </ConfigCard>
-  )
+  );
 }
 
 /**
  * Displays policy languages configuration card.
- * 
+ *
  * Shows allowed and blocked languages with ISO codes.
  *
  * @param config - Policy configuration
@@ -49,7 +49,11 @@ export function CountriesCard({ config, labels }: PolicyConfigCardsProps) {
  */
 export function LanguagesCard({ config, labels }: PolicyConfigCardsProps) {
   return (
-    <ConfigCard title={labels?.languages ?? 'Languages'} icon={Languages} contentClassName="space-y-3">
+    <ConfigCard
+      title={labels?.languages ?? 'Languages'}
+      icon={Languages}
+      contentClassName="space-y-3"
+    >
       <AllowedBlockedList
         allowed={config.allowedLanguages}
         blocked={config.blockedLanguages}
@@ -61,12 +65,12 @@ export function LanguagesCard({ config, labels }: PolicyConfigCardsProps) {
         }}
       />
     </ConfigCard>
-  )
+  );
 }
 
 /**
  * Displays global streaming providers card.
- * 
+ *
  * Shows list of provider names as badges.
  *
  * @param config - Policy configuration
@@ -77,12 +81,12 @@ export function ProvidersCard({ config, labels }: PolicyConfigCardsProps) {
     <ConfigCard title={labels?.providers ?? 'Global Providers'} icon={Tv}>
       <BadgeList items={config.globalProviders} />
     </ConfigCard>
-  )
+  );
 }
 
 /**
  * Displays policy settings card.
- * 
+ *
  * Shows eligibility mode, blocked country mode, and min relevance score.
  *
  * @param config - Policy configuration
@@ -106,12 +110,12 @@ export function SettingsCard({ config, labels }: PolicyConfigCardsProps) {
         variant="outline"
       />
     </ConfigCard>
-  )
+  );
 }
 
 /**
  * Displays breakout rules card.
- * 
+ *
  * Shows list of exception rules with requirements.
  * Returns null if no rules configured.
  *
@@ -119,9 +123,9 @@ export function SettingsCard({ config, labels }: PolicyConfigCardsProps) {
  * @param labels - Localized labels
  */
 export function BreakoutRulesCard({ config, labels }: PolicyConfigCardsProps) {
-  if (config.breakoutRules.length === 0) return null
+  if (config.breakoutRules.length === 0) return null;
 
-  const title = `${labels?.breakoutRules ?? 'Breakout Rules'} (${config.breakoutRules.length})`
+  const title = `${labels?.breakoutRules ?? 'Breakout Rules'} (${config.breakoutRules.length})`;
 
   return (
     <ConfigCard title={title} icon={Shield}>
@@ -131,12 +135,12 @@ export function BreakoutRulesCard({ config, labels }: PolicyConfigCardsProps) {
         ))}
       </div>
     </ConfigCard>
-  )
+  );
 }
 
 /**
  * Displays global quality gate requirements card.
- * 
+ *
  * Shows minimum thresholds for quality score, required ratings,
  * and minimum votes from any source.
  * Returns null if no global requirements configured.
@@ -145,15 +149,15 @@ export function BreakoutRulesCard({ config, labels }: PolicyConfigCardsProps) {
  * @param labels - Localized labels
  */
 export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProps) {
-  const req = config.globalRequirements
-  if (!req) return null
+  const req = config.globalRequirements;
+  if (!req) return null;
 
-  const hasAnyRequirement = 
+  const hasAnyRequirement =
     (req.minQualityScoreNormalized && req.minQualityScoreNormalized > 0) ||
     (req.requireAnyOfRatingsPresent && req.requireAnyOfRatingsPresent.length > 0) ||
-    (req.minVotesAnyOf && req.minVotesAnyOf.min > 0)
+    (req.minVotesAnyOf && req.minVotesAnyOf.min > 0);
 
-  if (!hasAnyRequirement) return null
+  if (!hasAnyRequirement) return null;
 
   const CONTEXT_LABELS: Record<string, string> = {
     catalog: 'Catalog',
@@ -162,12 +166,12 @@ export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProp
     now_playing: 'Now Playing',
     new_digital: 'New Digital',
     search: 'Search',
-  }
-  const activeContexts = req.appliesTo ?? ['catalog', 'homepage', 'trending', 'search']
+  };
+  const activeContexts = req.appliesTo ?? ['catalog', 'homepage', 'trending', 'search'];
 
   return (
-    <ConfigCard 
-      title={labels?.globalRequirements ?? 'Global Quality Gate'} 
+    <ConfigCard
+      title={labels?.globalRequirements ?? 'Global Quality Gate'}
       icon={Filter}
       contentClassName="space-y-2"
     >
@@ -184,7 +188,7 @@ export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProp
             {labels?.minVotesAnyOf ?? 'Min Votes (Any Source)'}
           </p>
           <div className="flex items-center gap-2">
-            <BadgeList items={req.minVotesAnyOf.sources.map(s => s.toUpperCase())} />
+            <BadgeList items={req.minVotesAnyOf.sources.map((s) => s.toUpperCase())} />
             <span className="text-sm">≥ {req.minVotesAnyOf.min.toLocaleString()}</span>
           </div>
         </div>
@@ -198,11 +202,9 @@ export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProp
         </div>
       )}
       <div className="pt-1">
-        <p className="text-sm text-muted-foreground mb-1">
-          {labels?.appliesTo ?? 'Applies To'}
-        </p>
-        <BadgeList items={activeContexts.map(c => CONTEXT_LABELS[c] ?? c)} />
+        <p className="text-sm text-muted-foreground mb-1">{labels?.appliesTo ?? 'Applies To'}</p>
+        <BadgeList items={activeContexts.map((c) => CONTEXT_LABELS[c] ?? c)} />
       </div>
     </ConfigCard>
-  )
+  );
 }

@@ -1,18 +1,20 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+
 import authConfig from '../../config/auth.config';
-import { AuthService } from './application/auth.service';
+import { DatabaseModule } from '../../database/database.module';
+import { UserMediaModule } from '../user-media/user-media.module';
 import { UsersModule } from '../users/users.module';
+
+import { AuthService } from './application/auth.service';
+import { REFRESH_TOKENS_REPOSITORY } from './domain/repositories/refresh-tokens.repository.interface';
 import { PASSWORD_HASHER } from './domain/services/password-hasher.interface';
 import { BcryptPasswordHasher } from './infrastructure/adapters/bcrypt-password.hasher';
-import { REFRESH_TOKENS_REPOSITORY } from './domain/repositories/refresh-tokens.repository.interface';
 import { DrizzleRefreshTokensRepository } from './infrastructure/repositories/drizzle-refresh-tokens.repository';
-import { DatabaseModule } from '../../database/database.module';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { AuthController } from './presentation/controllers/auth.controller';
-import { UserMediaModule } from '../user-media/user-media.module';
 
 /**
  * Auth module wiring (tokens, hashing, refresh storage).

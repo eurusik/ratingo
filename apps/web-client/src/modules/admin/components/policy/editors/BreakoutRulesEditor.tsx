@@ -1,44 +1,40 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { Shield, Plus, Trash2, GripVertical } from 'lucide-react'
-import { ConfigCard } from '../ConfigCard'
-import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
-import { Label } from '@/shared/ui/label'
-import { Badge } from '@/shared/ui/badge'
-import type { BreakoutRule } from '@/core/api/admin'
-import { TagInput } from './TagInput'
+import { useState } from 'react';
+import { Shield, Plus, Trash2, GripVertical } from 'lucide-react';
+import { ConfigCard } from '../ConfigCard';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { Badge } from '@/shared/ui/badge';
+import type { BreakoutRule } from '@/core/api/admin';
+import { TagInput } from './TagInput';
 
 interface BreakoutRulesEditorProps {
-  rules: BreakoutRule[]
-  onChange: (rules: BreakoutRule[]) => void
+  rules: BreakoutRule[];
+  onChange: (rules: BreakoutRule[]) => void;
   labels?: {
-    title?: string
-    description?: string
-    addRule?: string
-    ruleName?: string
-    priority?: string
-    minImdbVotes?: string
-    minTraktVotes?: string
-    minQualityScore?: string
-    providers?: string
-    ratings?: string
-    providerPlaceholder?: string
-  }
+    title?: string;
+    description?: string;
+    addRule?: string;
+    ruleName?: string;
+    priority?: string;
+    minImdbVotes?: string;
+    minTraktVotes?: string;
+    minQualityScore?: string;
+    providers?: string;
+    ratings?: string;
+    providerPlaceholder?: string;
+  };
 }
 
-const RATING_OPTIONS = ['imdb', 'metacritic', 'rt', 'trakt'] as const
+const RATING_OPTIONS = ['imdb', 'metacritic', 'rt', 'trakt'] as const;
 
 /**
  * Editor for breakout rules (exceptions to main policy).
  */
-export function BreakoutRulesEditor({
-  rules,
-  onChange,
-  labels,
-}: BreakoutRulesEditorProps) {
-  const [expandedRule, setExpandedRule] = useState<string | null>(null)
+export function BreakoutRulesEditor({ rules, onChange, labels }: BreakoutRulesEditorProps) {
+  const [expandedRule, setExpandedRule] = useState<string | null>(null);
 
   const addRule = () => {
     const newRule: BreakoutRule = {
@@ -46,40 +42,38 @@ export function BreakoutRulesEditor({
       name: `Rule ${rules.length + 1}`,
       priority: rules.length + 1,
       requirements: {},
-    }
-    onChange([...rules, newRule])
-    setExpandedRule(newRule.id)
-  }
+    };
+    onChange([...rules, newRule]);
+    setExpandedRule(newRule.id);
+  };
 
   const removeRule = (ruleId: string) => {
-    onChange(rules.filter((r) => r.id !== ruleId))
-  }
+    onChange(rules.filter((r) => r.id !== ruleId));
+  };
 
   const updateRule = (ruleId: string, updates: Partial<BreakoutRule>) => {
-    onChange(
-      rules.map((r) => (r.id === ruleId ? { ...r, ...updates } : r))
-    )
-  }
+    onChange(rules.map((r) => (r.id === ruleId ? { ...r, ...updates } : r)));
+  };
 
   const updateRequirements = (
     ruleId: string,
-    reqUpdates: Partial<BreakoutRule['requirements']>
+    reqUpdates: Partial<BreakoutRule['requirements']>,
   ) => {
     onChange(
       rules.map((r) =>
-        r.id === ruleId
-          ? { ...r, requirements: { ...r.requirements, ...reqUpdates } }
-          : r
-      )
-    )
-  }
+        r.id === ruleId ? { ...r, requirements: { ...r.requirements, ...reqUpdates } } : r,
+      ),
+    );
+  };
 
-  const title = `${labels?.title ?? 'Breakout Rules'} (${rules.length})`
+  const title = `${labels?.title ?? 'Breakout Rules'} (${rules.length})`;
 
   return (
-    <ConfigCard 
-      title={title} 
-      description={labels?.description ?? 'Exceptions that bypass main policy rules for high-quality content'}
+    <ConfigCard
+      title={title}
+      description={
+        labels?.description ?? 'Exceptions that bypass main policy rules for high-quality content'
+      }
       icon={Shield}
     >
       <div className="space-y-3">
@@ -100,8 +94,8 @@ export function BreakoutRulesEditor({
                 variant="ghost"
                 size="sm"
                 onClick={(e) => {
-                  e.stopPropagation()
-                  removeRule(rule.id)
+                  e.stopPropagation();
+                  removeRule(rule.id);
                 }}
               >
                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -202,25 +196,26 @@ export function BreakoutRulesEditor({
                   <Label>{labels?.ratings ?? 'Required Ratings (any of)'}</Label>
                   <div className="flex flex-wrap gap-2">
                     {RATING_OPTIONS.map((rating) => {
-                      const isSelected = rule.requirements.requireAnyOfRatingsPresent?.includes(rating)
+                      const isSelected =
+                        rule.requirements.requireAnyOfRatingsPresent?.includes(rating);
                       return (
                         <Badge
                           key={rating}
                           variant={isSelected ? 'default' : 'outline'}
                           className="cursor-pointer"
                           onClick={() => {
-                            const current = rule.requirements.requireAnyOfRatingsPresent ?? []
+                            const current = rule.requirements.requireAnyOfRatingsPresent ?? [];
                             const updated = isSelected
                               ? current.filter((r) => r !== rating)
-                              : [...current, rating]
+                              : [...current, rating];
                             updateRequirements(rule.id, {
                               requireAnyOfRatingsPresent: updated.length > 0 ? updated : undefined,
-                            })
+                            });
                           }}
                         >
                           {rating}
                         </Badge>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -235,5 +230,5 @@ export function BreakoutRulesEditor({
         </Button>
       </div>
     </ConfigCard>
-  )
+  );
 }

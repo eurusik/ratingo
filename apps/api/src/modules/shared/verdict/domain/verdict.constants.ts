@@ -73,3 +73,22 @@ export const AGE_THRESHOLDS = {
   /** Years after which content is considered a "classic" */
   CLASSIC_YEARS: 10,
 } as const;
+
+/**
+ * Show-specific thresholds.
+ */
+export const SHOW_THRESHOLDS = {
+  /** Minimum seasons for "long running" verdict */
+  LONG_RUNNING_SEASONS: 5,
+} as const;
+
+/**
+ * Default fallback values for verdict calculations.
+ * Used when rating is null/undefined in nullish coalescing.
+ */
+export const VERDICT_DEFAULTS = {
+  /** Fallback for "below threshold" checks (high = assume good, skip warning) */
+  RATING_FALLBACK_HIGH: 10,
+  /** Fallback for "above threshold" checks (low = assume bad, skip positive verdict) */
+  RATING_FALLBACK_LOW: 0,
+} as const;

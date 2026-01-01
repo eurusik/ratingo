@@ -1,8 +1,9 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
-import { NormalizedEpisode } from '../../../domain/models/normalized-media.model';
+import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
+import { type ConfigType } from '@nestjs/config';
+
 import { TvMazeApiException } from '../../../../../common/exceptions/external-api.exception';
 import tvmazeConfig from '../../../../../config/tvmaze.config';
+import { type NormalizedEpisode } from '../../../domain/models/normalized-media.model';
 
 /**
  * TVMaze API response for show lookup.
@@ -78,7 +79,10 @@ export class TvMazeAdapter {
       }));
     } catch (error) {
       // 404 is common for new shows or shows not in TVMaze
-      if (error instanceof TvMazeApiException && error.details?.statusCode === 404) {
+      if (
+        error instanceof TvMazeApiException &&
+        error.details?.statusCode === HttpStatus.NOT_FOUND
+      ) {
         return [];
       }
       this.logger.warn(

@@ -1,31 +1,31 @@
 import { Controller, Get, Inject, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  IMovieRepository,
-  MOVIE_REPOSITORY,
-} from '../../domain/repositories/movie.repository.interface';
-import { MovieResponseDto } from '../dtos/movie-response.dto';
-import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
-import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
-import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
-import {
-  MovieDetailsService,
-  EnrichedMovieDetails,
-} from '../../application/services/movie-details.service';
-import { TrendingMoviesResponseDto } from '../dtos/trending.dto';
-import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
-import { CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-days.dto';
-import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
-import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
-import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
-import { normalizeListQuery } from '../utils/query-normalizer';
+
 import {
   CATALOG_DEFAULT_LIMIT,
   CATALOG_DEFAULT_OFFSET,
   CATALOG_DEFAULT_NEW_RELEASE_DAYS,
   CATALOG_DEFAULT_DIGITAL_DAYS,
 } from '../../../../common/constants';
+import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
+import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { type CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
+import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
+import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
+import { type CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
+import {
+  type MovieDetailsService,
+  type EnrichedMovieDetails,
+} from '../../application/services/movie-details.service';
+import {
+  type IMovieRepository,
+  MOVIE_REPOSITORY,
+} from '../../domain/repositories/movie.repository.interface';
+import { type CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-days.dto';
+import { type CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
+import { MovieResponseDto } from '../dtos/movie-response.dto';
+import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
+import { normalizeListQuery } from '../utils/query-normalizer';
 
 /**
  * Public movie catalog endpoints (trending, listings, details).

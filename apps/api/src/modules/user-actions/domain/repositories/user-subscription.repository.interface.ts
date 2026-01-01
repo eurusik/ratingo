@@ -1,6 +1,9 @@
-import { UserSubscription, SubscriptionTrigger } from '../entities/user-subscription.entity';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageDto } from '../../../../common/dtos/image.dto';
+import { type ImageDto } from '../../../../common/dtos/image.dto';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
+import {
+  type UserSubscription,
+  type SubscriptionTrigger,
+} from '../entities/user-subscription.entity';
 
 /**
  * Injection token for user subscription repository.

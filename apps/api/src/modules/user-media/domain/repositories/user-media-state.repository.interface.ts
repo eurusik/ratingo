@@ -1,6 +1,6 @@
-import { UserMediaState } from '../entities/user-media-state.entity';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageDto } from '../../../../common/dtos/image.dto';
+import { type ImageDto } from '../../../../common/dtos/image.dto';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type UserMediaState } from '../entities/user-media-state.entity';
 
 /**
  * Injection token for user media state repository.

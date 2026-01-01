@@ -15,7 +15,7 @@ export interface ScheduledJobConfig {
   /** Unique jobId for BullMQ (prevents duplicates) */
   jobId: string;
   /** Optional job payload data */
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 /**

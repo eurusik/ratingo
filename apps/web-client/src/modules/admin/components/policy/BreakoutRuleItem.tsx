@@ -1,16 +1,16 @@
-"use client"
+'use client';
 
-import { Badge } from '@/shared/ui/badge'
-import type { BreakoutRule } from '@/core/api/admin'
+import { Badge } from '@/shared/ui/badge';
+import type { BreakoutRule } from '@/core/api/admin';
 
 interface BreakoutRuleItemProps {
-  rule: BreakoutRule
-  priorityLabel?: string
+  rule: BreakoutRule;
+  priorityLabel?: string;
 }
 
 /**
  * Displays single breakout rule with requirements.
- * 
+ *
  * Shows rule name, priority badge, and formatted requirements
  * (votes, quality score, providers, ratings).
  *
@@ -18,7 +18,7 @@ interface BreakoutRuleItemProps {
  * @param priorityLabel - Localized label for priority
  */
 export function BreakoutRuleItem({ rule, priorityLabel }: BreakoutRuleItemProps) {
-  const { requirements } = rule
+  const { requirements } = rule;
 
   return (
     <div className="p-3 border rounded-lg">
@@ -41,10 +41,11 @@ export function BreakoutRuleItem({ rule, priorityLabel }: BreakoutRuleItemProps)
         {requirements.requireAnyOfProviders && requirements.requireAnyOfProviders.length > 0 && (
           <span>Providers: {requirements.requireAnyOfProviders.join(', ')}</span>
         )}
-        {requirements.requireAnyOfRatingsPresent && requirements.requireAnyOfRatingsPresent.length > 0 && (
-          <span>Ratings: {requirements.requireAnyOfRatingsPresent.join(', ')}</span>
-        )}
+        {requirements.requireAnyOfRatingsPresent &&
+          requirements.requireAnyOfRatingsPresent.length > 0 && (
+            <span>Ratings: {requirements.requireAnyOfRatingsPresent.join(', ')}</span>
+          )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,11 +1,9 @@
-import { DropOffAnalysis } from '../../../shared/drop-off-analyzer';
-import { NormalizedSeason } from '../../../ingestion/domain/models/normalized-media.model';
-import { ShowStatus } from '../../../../common/enums/show-status.enum';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseTransaction } from '../types/transaction.type';
+import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type ShowStatus } from '../../../../common/enums/show-status.enum';
+import { type NormalizedSeason } from '../../../ingestion/public';
 import type { CardMeta } from '../../../shared/cards/domain/card.types';
-import type { WithTotal, CatalogSort, SortOrder, VoteSource } from '../types/query.types';
+import { type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import type {
   ImageData,
   VideoData,
@@ -15,6 +13,8 @@ import type {
   ExternalRatings,
   GenreInfo,
 } from '../types/common.types';
+import type { WithTotal, CatalogSort, SortOrder, VoteSource } from '../types/query.types';
+import { type DatabaseTransaction } from '../types/transaction.type';
 
 /**
  * Options for trending shows query.

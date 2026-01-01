@@ -27,7 +27,7 @@ describe('ThrottlerRealIpGuard', () => {
       const req = {
         headers: { 'cf-connecting-ip': '1.2.3.4' },
         ip: '192.168.1.1',
-      } as unknown as FastifyRequest;
+      } as unknown as Record<string, unknown>;
 
       const result = await guard['getTracker'](req);
       expect(result).toBe('1.2.3.4');
@@ -37,7 +37,7 @@ describe('ThrottlerRealIpGuard', () => {
       const req = {
         headers: { 'x-forwarded-for': '5.6.7.8, 9.10.11.12' },
         ip: '192.168.1.1',
-      } as unknown as FastifyRequest;
+      } as unknown as Record<string, unknown>;
 
       const result = await guard['getTracker'](req);
       expect(result).toBe('5.6.7.8');
@@ -47,7 +47,7 @@ describe('ThrottlerRealIpGuard', () => {
       const req = {
         headers: {},
         ip: '192.168.1.1',
-      } as unknown as FastifyRequest;
+      } as unknown as Record<string, unknown>;
 
       const result = await guard['getTracker'](req);
       expect(result).toBe('192.168.1.1');
@@ -79,7 +79,7 @@ describe('ThrottlerRealIpGuard', () => {
       const req = {
         headers: { 'cf-connecting-ip': '  1.2.3.4  ' },
         ip: '192.168.1.1',
-      } as unknown as FastifyRequest;
+      } as unknown as Record<string, unknown>;
 
       const result = await guard['getTracker'](req);
       expect(result).toBe('1.2.3.4');
@@ -89,7 +89,7 @@ describe('ThrottlerRealIpGuard', () => {
       const req = {
         headers: { 'cf-connecting-ip': '   ', 'x-forwarded-for': '5.6.7.8' },
         ip: '192.168.1.1',
-      } as unknown as FastifyRequest;
+      } as unknown as Record<string, unknown>;
 
       const result = await guard['getTracker'](req);
       expect(result).toBe('5.6.7.8');

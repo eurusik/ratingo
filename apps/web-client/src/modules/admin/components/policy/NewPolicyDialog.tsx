@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import {
   Dialog,
@@ -6,31 +6,31 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/shared/ui/dialog'
-import { Button } from '@/shared/ui/button'
-import { FileText, FilePlus } from 'lucide-react'
+} from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
+import { FileText, FilePlus } from 'lucide-react';
 
 export interface NewPolicyDialogLabels {
-  title: string
-  description: string
-  fromActive: string
-  fromActiveHint: string
-  fromScratch: string
-  recommended: string
+  title: string;
+  description: string;
+  fromActive: string;
+  fromActiveHint: string;
+  fromScratch: string;
+  recommended: string;
 }
 
 interface NewPolicyDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onCreateFromActive: () => void
-  onCreateFromScratch: () => void
-  activeVersion?: string
-  labels: NewPolicyDialogLabels
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCreateFromActive: () => void;
+  onCreateFromScratch: () => void;
+  activeVersion?: string;
+  labels: NewPolicyDialogLabels;
 }
 
 /**
  * Dialog for choosing how to create a new policy.
- * 
+ *
  * Offers two options: create from active policy or from scratch.
  */
 export function NewPolicyDialog({
@@ -46,11 +46,9 @@ export function NewPolicyDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{labels.title}</DialogTitle>
-          <DialogDescription>
-            {labels.description}
-          </DialogDescription>
+          <DialogDescription>{labels.description}</DialogDescription>
         </DialogHeader>
-        
+
         <div className="flex flex-col gap-3 pt-4">
           <Button
             variant="outline"
@@ -87,5 +85,5 @@ export function NewPolicyDialog({
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

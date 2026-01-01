@@ -1,32 +1,39 @@
-import {
-  NormalizedMedia,
-  NormalizedVideo,
-  Credits,
-  CastMember,
-  CrewMember,
-  WatchProvidersMap,
-  WatchProvider,
-} from '../../ingestion/domain/models/normalized-media.model';
+import slugify from 'slugify';
+
+import { DEFAULT_REGION } from '../../../common/constants';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../common/enums/video.enum';
-import { DEFAULT_REGION } from '../../../common/constants';
-import slugify from 'slugify';
+import {
+  type NormalizedMedia,
+  type NormalizedVideo,
+  type Credits,
+  type CastMember,
+  type CrewMember,
+  type WatchProvidersMap,
+  type WatchProvider,
+} from '../../ingestion/public';
+import {
+  type TmdbMediaResponse,
+  type TmdbMovieResponse,
+  type TmdbShowResponse,
+  type TmdbCastMember,
+  type TmdbCrewMember,
+  type TmdbCreator,
+  type TmdbVideo,
+  type TmdbWatchProvider,
+  type TmdbSeason,
+} from '../types/tmdb-api.types';
 import {
   normalizeOriginCountries,
   normalizeOriginalLanguage,
 } from '../utils/normalize-metadata.util';
-import {
-  TmdbMediaResponse,
-  TmdbMovieResponse,
-  TmdbShowResponse,
-  TmdbCastMember,
-  TmdbCrewMember,
-  TmdbCreator,
-  TmdbVideo,
-  TmdbWatchProvider,
-  TmdbSeason,
-  TmdbReleaseDatesCountry,
-} from '../types/tmdb-api.types';
+
+// TMDB mapper constants
+const CAST_LIMIT = 10;
+const VIDEOS_LIMIT = 3;
+const RELEASE_TYPE_THEATRICAL = 3;
+const RELEASE_TYPE_DIGITAL = 4;
+const DEFAULT_ORDER_FALLBACK = 999;
 
 /**
  * Pure utility class to transform raw TMDB JSON responses into the internal NormalizedMedia format.
@@ -40,7 +47,7 @@ export class TmdbMapper {
   static toDomain(data: TmdbMediaResponse, type: MediaType): NormalizedMedia | null {
     const isMovie = type === MediaType.MOVIE;
     const title = isMovie ? (data as TmdbMovieResponse).title : (data as TmdbShowResponse).name;
-    const overview = data.overview;
+    const { overview } = data;
 
     if (!title || title.trim() === '' || !overview || overview.trim() === '') {
       return null;
@@ -183,7 +190,9 @@ export class TmdbMapper {
     // Find theatrical release (type 3) - prioritize US/UA
     let theatricalReleaseDate: Date | null = null;
     for (const country of priorityCountries) {
-      const theatrical = allReleases.find((r) => r.country === country && r.type === 3);
+      const theatrical = allReleases.find(
+        (r) => r.country === country && r.type === RELEASE_TYPE_THEATRICAL,
+      );
       if (theatrical) {
         theatricalReleaseDate = new Date(theatrical.date);
         break;
@@ -191,7 +200,7 @@ export class TmdbMapper {
     }
     // Fallback to any theatrical release
     if (!theatricalReleaseDate) {
-      const anyTheatrical = allReleases.find((r) => r.type === 3);
+      const anyTheatrical = allReleases.find((r) => r.type === RELEASE_TYPE_THEATRICAL);
       if (anyTheatrical) {
         theatricalReleaseDate = new Date(anyTheatrical.date);
       }
@@ -200,7 +209,9 @@ export class TmdbMapper {
     // Find digital release (type 4) - prioritize US/UA
     let digitalReleaseDate: Date | null = null;
     for (const country of priorityCountries) {
-      const digital = allReleases.find((r) => r.country === country && r.type === 4);
+      const digital = allReleases.find(
+        (r) => r.country === country && r.type === RELEASE_TYPE_DIGITAL,
+      );
       if (digital) {
         digitalReleaseDate = new Date(digital.date);
         break;
@@ -208,7 +219,7 @@ export class TmdbMapper {
     }
     // Fallback to any digital release
     if (!digitalReleaseDate) {
-      const anyDigital = allReleases.find((r) => r.type === 4);
+      const anyDigital = allReleases.find((r) => r.type === RELEASE_TYPE_DIGITAL);
       if (anyDigital) {
         digitalReleaseDate = new Date(anyDigital.date);
       }
@@ -261,11 +272,11 @@ export class TmdbMapper {
   private static processCast(rawCast: TmdbCastMember[], isMovie: boolean): CastMember[] {
     return rawCast
       .sort((a: TmdbCastMember, b: TmdbCastMember) => {
-        const orderA = a.order ?? 999;
-        const orderB = b.order ?? 999;
+        const orderA = a.order ?? DEFAULT_ORDER_FALLBACK;
+        const orderB = b.order ?? DEFAULT_ORDER_FALLBACK;
         return orderA - orderB;
       })
-      .slice(0, 10)
+      .slice(0, CAST_LIMIT)
       .map((c: TmdbCastMember, index: number) => ({
         tmdbId: c.id,
         name: c.name,
@@ -281,16 +292,14 @@ export class TmdbMapper {
     job: string,
   ) {
     if (!map.has(c.id)) {
+      const defaultDepartment = job === 'Creator' ? 'Writing' : 'Directing';
+      const department = 'department' in c && c.department ? c.department : defaultDepartment;
+
       map.set(c.id, {
         tmdbId: c.id,
         name: c.name,
         job: job,
-        department:
-          'department' in c
-            ? c.department || (job === 'Creator' ? 'Writing' : 'Directing')
-            : job === 'Creator'
-              ? 'Writing'
-              : 'Directing',
+        department,
         profilePath: c.profile_path,
       });
     }
@@ -364,7 +373,7 @@ export class TmdbMapper {
         const dateB = new Date(b.published_at).getTime();
         return dateB - dateA;
       })
-      .slice(0, 3) // Take top 3
+      .slice(0, VIDEOS_LIMIT) // Take top 3
       .map((v: TmdbVideo) => ({
         key: v.key,
         name: v.name,

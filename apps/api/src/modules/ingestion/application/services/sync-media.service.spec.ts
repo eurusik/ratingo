@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SyncMediaService } from './sync-media.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
-import { TmdbAdapter } from '@/modules/tmdb/tmdb.adapter';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';

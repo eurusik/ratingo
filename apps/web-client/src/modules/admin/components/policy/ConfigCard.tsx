@@ -1,23 +1,23 @@
-"use client"
+'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/ui/card'
-import { LucideIcon } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/ui/card';
+import { LucideIcon } from 'lucide-react';
 
 interface ConfigCardProps {
-  title: string
-  description?: string
-  icon: LucideIcon
-  children: React.ReactNode
-  contentClassName?: string
+  title: string;
+  description?: string;
+  icon: LucideIcon;
+  children: React.ReactNode;
+  contentClassName?: string;
 }
 
 /** Base card wrapper for policy config sections. */
-export function ConfigCard({ 
-  title, 
+export function ConfigCard({
+  title,
   description,
-  icon: Icon, 
-  children, 
-  contentClassName 
+  icon: Icon,
+  children,
+  contentClassName,
 }: ConfigCardProps) {
   return (
     <Card>
@@ -26,15 +26,9 @@ export function ConfigCard({
           <Icon className="h-4 w-4" />
           {title}
         </CardTitle>
-        {description && (
-          <CardDescription className="text-xs">
-            {description}
-          </CardDescription>
-        )}
+        {description && <CardDescription className="text-xs">{description}</CardDescription>}
       </CardHeader>
-      <CardContent className={contentClassName}>
-        {children}
-      </CardContent>
+      <CardContent className={contentClassName}>{children}</CardContent>
     </Card>
-  )
+  );
 }

@@ -33,14 +33,10 @@ export default function Error({ error, reset }: ErrorProps) {
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl font-bold text-white mb-2">
-          {t('error.title')}
-        </h1>
+        <h1 className="text-2xl font-bold text-white mb-2">{t('error.title')}</h1>
 
         {/* Description */}
-        <p className="text-zinc-400 mb-8">
-          {t('error.description')}
-        </p>
+        <p className="text-zinc-400 mb-8">{t('error.description')}</p>
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

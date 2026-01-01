@@ -2,8 +2,16 @@ node_modules
 .next
 out
 build
+dist
 drizzle
 .vercel
 .trae
 .qoder
+.kiro
+.turbo
 coverage
+*.min.js
+*.min.css
+package-lock.json
+pnpm-lock.yaml
+yarn.lock

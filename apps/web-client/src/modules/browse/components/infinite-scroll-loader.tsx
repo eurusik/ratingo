@@ -40,7 +40,7 @@ export function InfiniteScrollLoader({
           onLoadMore();
         }
       },
-      { threshold: 0.1, rootMargin: '100px' }
+      { threshold: 0.1, rootMargin: '100px' },
     );
 
     const currentRef = loaderRef.current;
@@ -60,10 +60,7 @@ export function InfiniteScrollLoader({
   }
 
   return (
-    <div
-      ref={loaderRef}
-      className="flex items-center justify-center py-8"
-    >
+    <div ref={loaderRef} className="flex items-center justify-center py-8">
       {isLoading && (
         <div className="flex items-center gap-2 text-zinc-400">
           <Loader2 className="w-5 h-5 animate-spin" />

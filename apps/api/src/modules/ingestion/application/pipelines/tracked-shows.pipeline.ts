@@ -1,9 +1,8 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { TrackedSyncService } from '../services/tracked-sync.service';
-import { BulkJobService, BulkEnqueueResult } from '../services/bulk-job.service';
-import { SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
+
+import { type SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
 import {
-  IUserSubscriptionRepository,
+  type IUserSubscriptionRepository,
   USER_SUBSCRIPTION_REPOSITORY,
 } from '../../../user-actions/domain/repositories/user-subscription.repository.interface';
 import {
@@ -13,6 +12,8 @@ import {
   TMDB_REQUEST_DELAY_MS,
 } from '../../ingestion.constants';
 import { hashIds, formatHourWindow, chunkArray } from '../helpers/queue.helpers';
+import { type BulkJobService, type BulkEnqueueResult } from '../services/bulk-job.service';
+import { type TrackedSyncService } from '../services/tracked-sync.service';
 
 /**
  * Tracked shows pipeline: syncs shows with active subscriptions.
@@ -81,27 +82,14 @@ export class TrackedShowsPipeline {
     let withChanges = 0;
 
     for (const tmdbId of tmdbIds) {
-      try {
-        const diff = await this.trackedSyncService.syncShowWithDiff(tmdbId);
+      const result = await this.processTrackedShow(tmdbId);
+      if (result.hasChanges) withChanges++;
+      processed++;
 
-        if (diff.hasChanges) {
-          withChanges++;
-          const events = await this.subscriptionTriggerService.handleShowDiff(diff);
-          if (events.length > 0) {
-            this.logger.log(`Show ${tmdbId}: ${events.length} notifications generated`);
-          }
-        }
-
-        processed++;
-
-        if (processed < tmdbIds.length) {
-          await this.delay(TMDB_REQUEST_DELAY_MS);
-        }
-      } catch (error) {
-        this.logger.error(`Failed to sync tracked show ${tmdbId}: ${error.message}`);
+      if (processed < tmdbIds.length) {
+        await this.delay(TMDB_REQUEST_DELAY_MS);
       }
     }
-
     this.logger.log(
       `Tracked show batch complete: ${processed}/${tmdbIds.length} processed, ${withChanges} with changes`,
     );
@@ -109,5 +97,27 @@ export class TrackedShowsPipeline {
 
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Processes a single tracked show with diff detection.
+   */
+  private async processTrackedShow(tmdbId: number): Promise<{ hasChanges: boolean }> {
+    try {
+      const diff = await this.trackedSyncService.syncShowWithDiff(tmdbId);
+
+      if (diff.hasChanges) {
+        const events = await this.subscriptionTriggerService.handleShowDiff(diff);
+        if (events.length > 0) {
+          this.logger.log(`Show ${tmdbId}: ${events.length} notifications generated`);
+        }
+      }
+
+      return { hasChanges: diff.hasChanges };
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(`Failed to sync tracked show ${tmdbId}: ${err.message}`);
+      return { hasChanges: false };
+    }
   }
 }

@@ -1,15 +1,18 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
+import { type UserSubscription, type SubscriptionTrigger } from '../domain/entities';
+import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
 import {
-  IUserSubscriptionRepository,
-  USER_SUBSCRIPTION_REPOSITORY,
-  SubscriptionWithMedia,
-} from '../domain/repositories/user-subscription.repository.interface';
-import {
-  IUserMediaActionRepository,
+  type IUserMediaActionRepository,
   USER_MEDIA_ACTION_REPOSITORY,
 } from '../domain/repositories/user-media-action.repository.interface';
-import { UserSubscription, SubscriptionTrigger } from '../domain/entities';
-import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
+import {
+  type IUserSubscriptionRepository,
+  USER_SUBSCRIPTION_REPOSITORY,
+  type SubscriptionWithMedia,
+} from '../domain/repositories/user-subscription.repository.interface';
 
 /**
  * Payload for subscribing to notifications.
@@ -115,7 +118,7 @@ export class SubscriptionsService {
    */
   async listActiveWithMedia(
     userId: string,
-    limit = 20,
+    limit = DEFAULT_PAGE_SIZE,
     offset = 0,
   ): Promise<{ total: number; data: SubscriptionWithMedia[] }> {
     const [total, data] = await Promise.all([

@@ -6,7 +6,7 @@
 
 import { cn } from '@/shared/utils';
 
-type SkeletonProps = React.HTMLAttributes<HTMLDivElement>
+type SkeletonProps = React.HTMLAttributes<HTMLDivElement>;
 
 /**
  * Animated skeleton placeholder.
@@ -16,12 +16,7 @@ type SkeletonProps = React.HTMLAttributes<HTMLDivElement>
  * <Skeleton className="h-40 w-full rounded-xl" />
  */
 function Skeleton({ className, ...props }: SkeletonProps) {
-  return (
-    <div
-      className={cn('animate-pulse rounded-md bg-zinc-800', className)}
-      {...props}
-    />
-  );
+  return <div className={cn('animate-pulse rounded-md bg-zinc-800', className)} {...props} />;
 }
 
 export { Skeleton };

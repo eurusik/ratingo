@@ -117,9 +117,7 @@ export function DetailsLayout({
               <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
                 {dict.details.overview.title}
               </h3>
-              <p className="text-base md:text-lg text-zinc-300 leading-relaxed">
-                {overview}
-              </p>
+              <p className="text-base md:text-lg text-zinc-300 leading-relaxed">{overview}</p>
             </section>
           )}
 
@@ -134,7 +132,7 @@ export function DetailsLayout({
                 </h2>
                 <TrailersCarousel
                   videos={videos}
-                  primaryTrailer={videos.find(v => v.key === primaryTrailerKey)}
+                  primaryTrailer={videos.find((v) => v.key === primaryTrailerKey)}
                 />
               </section>
               <Separator className="my-12 bg-zinc-800/50" />
@@ -153,12 +151,8 @@ export function DetailsLayout({
           {(hasCast || hasCrew) && (
             <>
               <div className="space-y-8">
-                {hasCast && (
-                  <CastCarousel cast={cast} crew={crew || []} />
-                )}
-                {hasCrew && (
-                  <CrewCarousel crew={crew} />
-                )}
+                {hasCast && <CastCarousel cast={cast} crew={crew || []} />}
+                {hasCrew && <CrewCarousel crew={crew} />}
               </div>
               <Separator className="my-12 bg-zinc-800/50" />
             </>

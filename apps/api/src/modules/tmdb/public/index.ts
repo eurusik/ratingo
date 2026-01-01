@@ -5,10 +5,11 @@
  *
  * @example
  * // ✅ Correct
- * import { TmdbAdapter } from '../tmdb/public';
+ * import { TmdbAdapter, TmdbModule } from '../tmdb/public';
  *
  * // ❌ Wrong - breaks module boundaries
  * import { TmdbAdapter } from '../tmdb/tmdb.adapter';
  */
 
 export { TmdbAdapter } from '../tmdb.adapter';
+export { TmdbModule } from '../tmdb.module';

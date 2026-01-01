@@ -1,12 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { and, eq, inArray, or, isNull, ne, lt } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { DATABASE_CONNECTION } from '../../../database/database.module';
 import * as schema from '../../../database/schema';
-import {
-  ShowSyncDiff,
-  ShowSyncChanges,
-} from '../../ingestion/domain/interfaces/show-sync-diff.interface';
+import type { ShowSyncDiff } from '../../ingestion/public';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 
 /**

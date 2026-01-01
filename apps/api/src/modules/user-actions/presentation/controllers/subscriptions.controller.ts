@@ -19,18 +19,21 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { SubscriptionsService } from '../../application/subscriptions.service';
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { type SubscriptionsService } from '../../application/subscriptions.service';
+import { SUBSCRIPTION_TRIGGER } from '../../domain/entities/user-subscription.entity';
 import {
-  SubscribeDto,
-  UnsubscribeDto,
+  type SubscribeDto,
+  type UnsubscribeDto,
   SubscriptionWithMediaResponseDto,
   MediaSubscriptionStatusDto,
   SubscribeActionResultDto,
   UnsubscribeActionResultDto,
 } from '../dto/subscriptions.dto';
-import { SUBSCRIPTION_TRIGGER } from '../../domain/entities/user-subscription.entity';
 
 @ApiTags('Subscriptions')
 @ApiBearerAuth()
@@ -159,7 +162,7 @@ export class SubscriptionsController {
   ) {
     const { total, data } = await this.subscriptionsService.listActiveWithMedia(
       user.id,
-      limit ?? 20,
+      limit ?? DEFAULT_PAGE_SIZE,
       offset ?? 0,
     );
 
@@ -167,7 +170,7 @@ export class SubscriptionsController {
       data,
       meta: {
         total,
-        limit: limit ?? 20,
+        limit: limit ?? DEFAULT_PAGE_SIZE,
         offset: offset ?? 0,
         hasMore: (offset ?? 0) + data.length < total,
       },

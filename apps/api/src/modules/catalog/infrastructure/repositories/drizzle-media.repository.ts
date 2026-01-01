@@ -1,40 +1,41 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
-import {
-  IMediaRepository,
-  MediaScoreData,
-  MediaWithTmdbId,
-  MediaScoreDataWithTmdbId,
-} from '../../domain/repositories/media.repository.interface';
-import {
-  IGenreRepository,
-  GENRE_REPOSITORY,
-} from '../../domain/repositories/genre.repository.interface';
-import {
-  IMovieRepository,
-  MOVIE_REPOSITORY,
-} from '../../domain/repositories/movie.repository.interface';
-import {
-  IShowRepository,
-  SHOW_REPOSITORY,
-} from '../../domain/repositories/show.repository.interface';
-import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
-import { eq, inArray, sql, and, desc, gt, gte, isNull, isNotNull } from 'drizzle-orm';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { DatabaseException } from '../../../../common/exceptions';
 
-import { PersistenceMapper } from '../mappers/persistence.mapper';
-import { HeroMediaQuery } from '../queries/hero-media.query';
-import { HeroMediaItem } from '../../../../common/types/hero-media.types';
-import { LocalSearchResult } from '../../domain/models/search-result.model';
+import { eq, inArray, sql, and, desc, gt, gte, isNull, isNotNull } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DatabaseException } from '../../../../common/exceptions';
+import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import {
   EligibilityStatus,
   EvaluationReason,
   DEFAULT_POLICY_VERSION,
 } from '../../../catalog-policy/public';
+import type { NormalizedMedia } from '../../../ingestion/public';
+import { type LocalSearchResult } from '../../domain/models/search-result.model';
+import {
+  type IGenreRepository,
+  GENRE_REPOSITORY,
+} from '../../domain/repositories/genre.repository.interface';
+import {
+  type IMediaRepository,
+  type MediaScoreData,
+  type MediaWithTmdbId,
+  type MediaScoreDataWithTmdbId,
+} from '../../domain/repositories/media.repository.interface';
+import {
+  type IMovieRepository,
+  MOVIE_REPOSITORY,
+} from '../../domain/repositories/movie.repository.interface';
+import {
+  type IShowRepository,
+  SHOW_REPOSITORY,
+} from '../../domain/repositories/show.repository.interface';
+import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { type HeroMediaQuery } from '../queries/hero-media.query';
 
 /**
  * Drizzle ORM implementation of the Media Repository.
@@ -219,19 +220,25 @@ export class DrizzleMediaRepository implements IMediaRepository {
           })
           .onConflictDoNothing(); // If already exists, don't overwrite (evaluation job will update it)
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as {
+        message?: string;
+        code?: string;
+        detail?: string;
+        constraint?: string;
+      };
       this.logger.error(`Failed to upsert media ${media.title}`, {
-        message: error.message,
-        code: error.code,
-        detail: error.detail,
-        constraint: error.constraint,
+        message: err.message,
+        code: err.code,
+        detail: err.detail,
+        constraint: err.constraint,
         tmdbId: media.externalIds.tmdbId,
       });
-      throw new DatabaseException(`Failed to upsert media: ${error.message}`, {
+      throw new DatabaseException(`Failed to upsert media: ${err.message}`, {
         tmdbId: media.externalIds.tmdbId,
         title: media.title,
-        code: error.code,
-        constraint: error.constraint,
+        code: err.code,
+        constraint: err.constraint,
       });
     }
   }

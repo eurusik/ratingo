@@ -3,12 +3,7 @@
  * Provides optimistic updates and cache invalidation.
  */
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryOptions,
-} from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
 import { HTTPError } from 'ky';
 import {
   userActionsApi,
@@ -58,7 +53,7 @@ export const SUBSCRIPTION_TRIGGER: {
  */
 export function useSaveStatus(
   mediaItemId: string,
-  options?: Omit<UseQueryOptions<MediaSaveStatusDto>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<MediaSaveStatusDto>, 'queryKey' | 'queryFn'>,
 ) {
   return useQuery({
     queryKey: queryKeys.userActions.savedItems.status(mediaItemId),
@@ -98,7 +93,7 @@ export function useSaveItem() {
 
       // Snapshot previous value
       const previousStatus = queryClient.getQueryData<MediaSaveStatusDto>(
-        queryKeys.userActions.savedItems.status(variables.mediaItemId)
+        queryKeys.userActions.savedItems.status(variables.mediaItemId),
       );
 
       // Optimistic update
@@ -107,7 +102,7 @@ export function useSaveItem() {
         {
           isForLater: variables.list === SAVED_ITEM_LIST.FOR_LATER,
           isConsidering: variables.list === SAVED_ITEM_LIST.CONSIDERING,
-        }
+        },
       );
 
       return { previousStatus };
@@ -116,7 +111,7 @@ export function useSaveItem() {
     onSuccess: (data, variables) => {
       queryClient.setQueryData<MediaSaveStatusDto>(
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
-        data.status
+        data.status,
       );
       queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },
@@ -125,7 +120,7 @@ export function useSaveItem() {
       if (context?.previousStatus) {
         queryClient.setQueryData(
           queryKeys.userActions.savedItems.status(variables.mediaItemId),
-          context.previousStatus
+          context.previousStatus,
         );
       }
     },
@@ -155,16 +150,18 @@ export function useUnsaveItem() {
       });
 
       const previousStatus = queryClient.getQueryData<MediaSaveStatusDto>(
-        queryKeys.userActions.savedItems.status(variables.mediaItemId)
+        queryKeys.userActions.savedItems.status(variables.mediaItemId),
       );
 
       // Optimistic update
       queryClient.setQueryData<MediaSaveStatusDto>(
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
         (old) => ({
-          isForLater: variables.list === SAVED_ITEM_LIST.FOR_LATER ? false : old?.isForLater ?? false,
-          isConsidering: variables.list === SAVED_ITEM_LIST.CONSIDERING ? false : old?.isConsidering ?? false,
-        })
+          isForLater:
+            variables.list === SAVED_ITEM_LIST.FOR_LATER ? false : (old?.isForLater ?? false),
+          isConsidering:
+            variables.list === SAVED_ITEM_LIST.CONSIDERING ? false : (old?.isConsidering ?? false),
+        }),
       );
 
       return { previousStatus };
@@ -173,7 +170,7 @@ export function useUnsaveItem() {
     onSuccess: (data, variables) => {
       queryClient.setQueryData<MediaSaveStatusDto>(
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
-        data.status
+        data.status,
       );
       // Invalidate saved items lists so /saved page updates
       queryClient.invalidateQueries({ queryKey: ['saved-items'] });
@@ -183,7 +180,7 @@ export function useUnsaveItem() {
       if (context?.previousStatus) {
         queryClient.setQueryData(
           queryKeys.userActions.savedItems.status(variables.mediaItemId),
-          context.previousStatus
+          context.previousStatus,
         );
       }
     },
@@ -203,7 +200,7 @@ export function useUnsaveItem() {
  */
 export function useSubscriptionStatus(
   mediaItemId: string,
-  options?: Omit<UseQueryOptions<MediaSubscriptionStatusDto>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<MediaSubscriptionStatusDto>, 'queryKey' | 'queryFn'>,
 ) {
   return useQuery({
     queryKey: queryKeys.userActions.subscriptions.status(mediaItemId),
@@ -241,7 +238,7 @@ export function useSubscribe() {
       });
 
       const previousStatus = queryClient.getQueryData<MediaSubscriptionStatusDto>(
-        queryKeys.userActions.subscriptions.status(variables.mediaItemId)
+        queryKeys.userActions.subscriptions.status(variables.mediaItemId),
       );
 
       // Optimistic update
@@ -255,7 +252,7 @@ export function useSubscribe() {
             hasNewSeason: newTriggers.includes(SUBSCRIPTION_TRIGGER.NEW_SEASON),
             hasOnStreaming: newTriggers.includes(SUBSCRIPTION_TRIGGER.ON_STREAMING),
           };
-        }
+        },
       );
 
       return { previousStatus };
@@ -264,7 +261,7 @@ export function useSubscribe() {
     onSuccess: (data, variables) => {
       queryClient.setQueryData<MediaSubscriptionStatusDto>(
         queryKeys.userActions.subscriptions.status(variables.mediaItemId),
-        data.status
+        data.status,
       );
     },
 
@@ -272,7 +269,7 @@ export function useSubscribe() {
       if (context?.previousStatus) {
         queryClient.setQueryData(
           queryKeys.userActions.subscriptions.status(variables.mediaItemId),
-          context.previousStatus
+          context.previousStatus,
         );
       }
     },
@@ -302,7 +299,7 @@ export function useUnsubscribe() {
       });
 
       const previousStatus = queryClient.getQueryData<MediaSubscriptionStatusDto>(
-        queryKeys.userActions.subscriptions.status(variables.mediaItemId)
+        queryKeys.userActions.subscriptions.status(variables.mediaItemId),
       );
 
       // Optimistic update
@@ -316,7 +313,7 @@ export function useUnsubscribe() {
             hasNewSeason: newTriggers.includes(SUBSCRIPTION_TRIGGER.NEW_SEASON),
             hasOnStreaming: newTriggers.includes(SUBSCRIPTION_TRIGGER.ON_STREAMING),
           };
-        }
+        },
       );
 
       return { previousStatus };
@@ -325,7 +322,7 @@ export function useUnsubscribe() {
     onSuccess: (data, variables) => {
       queryClient.setQueryData<MediaSubscriptionStatusDto>(
         queryKeys.userActions.subscriptions.status(variables.mediaItemId),
-        data.status
+        data.status,
       );
     },
 
@@ -333,7 +330,7 @@ export function useUnsubscribe() {
       if (context?.previousStatus) {
         queryClient.setQueryData(
           queryKeys.userActions.subscriptions.status(variables.mediaItemId),
-          context.previousStatus
+          context.previousStatus,
         );
       }
     },

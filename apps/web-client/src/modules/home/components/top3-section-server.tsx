@@ -22,7 +22,12 @@ interface Top3SectionServerProps {
  * Top-3 section with horizontal cards.
  *
  */
-export function Top3SectionServer({ items, title, locale = 'uk', className }: Top3SectionServerProps) {
+export function Top3SectionServer({
+  items,
+  title,
+  locale = 'uk',
+  className,
+}: Top3SectionServerProps) {
   const dict = getDictionary(locale);
 
   if (!Array.isArray(items) || items.length === 0) return null;

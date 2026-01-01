@@ -9,30 +9,39 @@
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
-import { eq, inArray, isNull } from 'drizzle-orm';
 
-import { CatalogPolicyService } from './catalog-policy.service';
+import { eq, inArray, isNull } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import {
-  IMediaCatalogEvaluationRepository,
+  DEFAULT_PAGE_SIZE as _DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+} from '../../../../common/constants';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import { EligibilityStatus } from '../../domain/constants/evaluation.constants';
+import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
+import {
+  type ICatalogPolicyEvaluator,
+  type EvaluateOneInput,
+  type EvaluationResult,
+} from '../../domain/ports/catalog-policy-evaluator.port';
+import {
+  type MediaCatalogEvaluation,
+  type PolicyEngineInput,
+} from '../../domain/types/policy.types';
+import {
+  type IMediaCatalogEvaluationRepository,
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
 } from '../../infrastructure/repositories/media-catalog-evaluation.repository';
-import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
-import { MediaCatalogEvaluation, PolicyEngineInput } from '../../domain/types/policy.types';
-import { EligibilityStatus } from '../../domain/constants/evaluation.constants';
 import {
-  MediaItemRow,
+  type MediaItemRow,
   mapRowToPolicyEngineInput,
   mapRowsToPolicyEngineInputs,
   POLICY_EVALUATION_SELECT_FIELDS,
 } from '../utils/policy-input.mapper';
-import {
-  ICatalogPolicyEvaluator,
-  EvaluateOneInput,
-  EvaluationResult,
-} from '../../domain/ports/catalog-policy-evaluator.port';
+
+import { type CatalogPolicyService } from './catalog-policy.service';
 
 // Re-export for backward compatibility
 export { EvaluationResult } from '../../domain/ports/catalog-policy-evaluator.port';
@@ -249,7 +258,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       onProgress?: (processed: number, total: number) => void;
     },
   ): Promise<BatchEvaluationResult> {
-    const batchSize = options?.batchSize || 100;
+    const batchSize = options?.batchSize || MAX_PAGE_SIZE;
 
     // Get total count
     const totalResult = await this.db

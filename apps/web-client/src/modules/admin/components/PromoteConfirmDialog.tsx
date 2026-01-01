@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,20 +8,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/shared/ui/dialog'
-import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
-import { Label } from '@/shared/ui/label'
-import { AlertTriangle, Loader2 } from 'lucide-react'
-import { useTranslation } from '@/shared/i18n'
+} from '@/shared/ui/dialog';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { AlertTriangle, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/shared/i18n';
 
 interface PromoteConfirmDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onConfirm: () => Promise<void>
-  runId: string
-  policyName: string
-  isLoading?: boolean
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => Promise<void>;
+  runId: string;
+  policyName: string;
+  isLoading?: boolean;
 }
 
 export function PromoteConfirmDialog({
@@ -32,28 +32,28 @@ export function PromoteConfirmDialog({
   policyName,
   isLoading = false,
 }: PromoteConfirmDialogProps) {
-  const { dict } = useTranslation()
-  const [confirmText, setConfirmText] = useState('')
-  const isConfirmValid = confirmText === 'PROMOTE'
+  const { dict } = useTranslation();
+  const [confirmText, setConfirmText] = useState('');
+  const isConfirmValid = confirmText === 'PROMOTE';
 
   const handleConfirm = async () => {
-    if (!isConfirmValid) return
-    
+    if (!isConfirmValid) return;
+
     try {
-      await onConfirm()
-      setConfirmText('')
-      onOpenChange(false)
+      await onConfirm();
+      setConfirmText('');
+      onOpenChange(false);
     } catch (error) {
       // Error handled by parent component
     }
-  }
+  };
 
   const handleOpenChange = (newOpen: boolean) => {
     if (!isLoading) {
-      setConfirmText('')
-      onOpenChange(newOpen)
+      setConfirmText('');
+      onOpenChange(newOpen);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -93,18 +93,10 @@ export function PromoteConfirmDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => handleOpenChange(false)}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isLoading}>
             {dict.admin.runDetail.confirmPromote.cancel}
           </Button>
-          <Button
-            variant="default"
-            onClick={handleConfirm}
-            disabled={!isConfirmValid || isLoading}
-          >
+          <Button variant="default" onClick={handleConfirm} disabled={!isConfirmValid || isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -117,5 +109,5 @@ export function PromoteConfirmDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

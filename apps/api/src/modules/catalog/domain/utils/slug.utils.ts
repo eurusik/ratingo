@@ -1,4 +1,5 @@
 import slugify from 'slugify';
+
 import { SLUG_CONFIG } from '../constants/catalog.constants';
 
 /**

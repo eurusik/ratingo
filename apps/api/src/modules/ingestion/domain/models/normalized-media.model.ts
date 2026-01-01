@@ -1,11 +1,11 @@
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
 import {
-  VideoSiteEnum,
-  VideoTypeEnum,
-  VideoLanguageEnum,
+  type VideoSiteEnum,
+  type VideoTypeEnum,
+  type VideoLanguageEnum,
 } from '../../../../common/enums/video.enum';
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { ContentClass } from '../../../catalog-policy/public';
+import { type ContentClass } from '../../../catalog-policy/public';
 
 /**
  * Cast member representation in normalized credits.

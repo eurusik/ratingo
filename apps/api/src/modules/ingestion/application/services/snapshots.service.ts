@@ -1,10 +1,11 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
+
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import {
-  ISnapshotsRepository,
+  type ISnapshotsRepository,
   SNAPSHOTS_REPOSITORY,
 } from '../../domain/repositories/snapshots.repository.interface';
+import { type TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 
 /**
  * Service for managing daily snapshots of media metrics.

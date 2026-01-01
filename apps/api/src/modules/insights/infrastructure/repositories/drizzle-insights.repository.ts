@@ -1,12 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { and, eq, inArray } from 'drizzle-orm';
-import { InsightsRepository } from '../../domain/repositories/insights.repository.interface';
-import { RiseFallItem, RiseFallMediaType } from '../../domain/models/rise-fall.model';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { ExternalRatings } from '../../../../common/types';
+import { type ExternalRatings } from '../../../../common/types';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import { type RiseFallItem, type RiseFallMediaType } from '../../domain/models/rise-fall.model';
+import { type InsightsRepository } from '../../domain/repositories/insights.repository.interface';
+
+// Fallers filtering thresholds
+const MIN_PREV_GROWTH = 100;
+const MAX_DROP_PERCENT = -10;
+const PERCENT_MULTIPLIER = 100;
 
 /**
  * Drizzle implementation of insights repository.
@@ -73,7 +80,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
       >();
 
       for (const row of rows) {
-        const id = row.media.id;
+        const { id } = row.media;
         if (!grouped.has(id)) {
           grouped.set(id, { media: row.media, snapshots: {} });
         }
@@ -92,7 +99,7 @@ export class DrizzleInsightsRepository implements InsightsRepository {
 
         let deltaPercent = null;
         if (growthPrev !== 0) {
-          deltaPercent = (delta / Math.abs(growthPrev)) * 100;
+          deltaPercent = (delta / Math.abs(growthPrev)) * PERCENT_MULTIPLIER;
         }
 
         // Identify new entrants (no growth in previous window, but growth now)
@@ -133,9 +140,6 @@ export class DrizzleInsightsRepository implements InsightsRepository {
       const fallers = items
         .filter((i) => {
           if (i.stats.deltaWatchers >= 0) return false;
-
-          const MIN_PREV_GROWTH = 100;
-          const MAX_DROP_PERCENT = -10;
 
           if (i.stats.growthPrev < MIN_PREV_GROWTH) return false;
           if ((i.stats.deltaPercent || 0) > MAX_DROP_PERCENT) return false;

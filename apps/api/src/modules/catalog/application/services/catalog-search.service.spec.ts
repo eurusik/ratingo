@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CatalogSearchService } from './catalog-search.service';
 import { MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
-import { TmdbAdapter } from '../../../tmdb/tmdb.adapter';
+import { TmdbAdapter } from '../../../tmdb/public';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { SearchSource } from '../../presentation/dtos/search.dto';
 
@@ -86,7 +86,7 @@ describe('CatalogSearchService', () => {
         source: SearchSource.LOCAL,
         isImported: true,
         title: 'Local Movie',
-      })
+      }),
     );
 
     // Check TMDB
@@ -97,7 +97,7 @@ describe('CatalogSearchService', () => {
         source: SearchSource.TMDB,
         isImported: false,
         title: 'TMDB Movie',
-      })
+      }),
     );
   });
 

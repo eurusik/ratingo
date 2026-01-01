@@ -9,18 +9,58 @@
  */
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { sql } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/constants';
 import { DatabaseException } from '../../../../common/exceptions';
-import {
-  Credits,
-  WatchProvidersMap,
-} from '../../../ingestion/domain/models/normalized-media.model';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import type * as schema from '../../../../database/schema';
+import type { Credits, WatchProvidersMap } from '../../../ingestion/public';
 import { TRENDING_GATE } from '../../catalog-policy.constants';
 
 export const PUBLIC_CATALOG_REPOSITORY = 'PUBLIC_CATALOG_REPOSITORY';
+
+/**
+ * Raw row shape from public_media_items view (snake_case).
+ */
+interface RawPublicMediaItemRow {
+  id: string;
+  type: 'movie' | 'show';
+  tmdb_id: number;
+  imdb_id: string | null;
+  title: string;
+  original_title: string | null;
+  slug: string;
+  overview: string | null;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  videos: schema.Video[] | null;
+  credits: Credits | null;
+  watch_providers: WatchProvidersMap | null;
+  trending_score: number | null;
+  trending_rank: number | null;
+  popularity: number | null;
+  rating: number | null;
+  vote_count: number | null;
+  rating_imdb: number | null;
+  rating_metacritic: number | null;
+  rating_rotten_tomatoes: number | null;
+  rating_trakt: number | null;
+  release_date: string | null;
+  origin_countries: string[] | null;
+  original_language: string | null;
+  created_at: string;
+  updated_at: string;
+  ratingo_score: number | null;
+  quality_score: number | null;
+  popularity_score: number | null;
+  freshness_score: number | null;
+  watchers_count: number | null;
+  relevance_score: number | null;
+  eligibility_status: string | null;
+}
 
 /**
  * DTO for rows returned from public_media_items view.
@@ -130,7 +170,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
   ) {}
 
   async findTrending(options?: TrendingOptions): Promise<PublicMediaItemRow[]> {
-    const limit = options?.limit ?? 20;
+    const limit = options?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = options?.offset ?? 0;
 
     try {
@@ -162,7 +202,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
       `;
 
       const result = await this.db.execute(query);
-      return (result as any[]).map((row) => this.mapToDto(row));
+      return (result as unknown as RawPublicMediaItemRow[]).map((row) => this.mapToDto(row));
     } catch (error) {
       this.logger.error('Failed to find trending items', error);
       throw new DatabaseException('Failed to find trending items', error);
@@ -170,7 +210,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
   }
 
   async search(query: string, options?: SearchOptions): Promise<PublicMediaItemRow[]> {
-    const limit = options?.limit ?? 20;
+    const limit = options?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = options?.offset ?? 0;
     const searchTerm = query.trim();
 
@@ -196,7 +236,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
       `;
 
       const result = await this.db.execute(sqlQuery);
-      return (result as any[]).map((row) => this.mapToDto(row));
+      return (result as unknown as RawPublicMediaItemRow[]).map((row) => this.mapToDto(row));
     } catch (error) {
       this.logger.error(`Failed to search for "${query}"`, error);
       throw new DatabaseException('Failed to search catalog', error);
@@ -204,8 +244,8 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
   }
 
   async findForHomepage(options?: HomepageOptions): Promise<PublicMediaItemRow[]> {
-    const minRelevanceScore = options?.minRelevanceScore ?? 50;
-    const limit = options?.limit ?? 20;
+    const minRelevanceScore = options?.minRelevanceScore ?? DEFAULT_BATCH_SIZE;
+    const limit = options?.limit ?? DEFAULT_PAGE_SIZE;
 
     try {
       const query = sql`
@@ -216,7 +256,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
       `;
 
       const result = await this.db.execute(query);
-      return (result as any[]).map((row) => this.mapToDto(row));
+      return (result as unknown as RawPublicMediaItemRow[]).map((row) => this.mapToDto(row));
     } catch (error) {
       this.logger.error('Failed to find homepage items', error);
       throw new DatabaseException('Failed to find homepage items', error);
@@ -232,7 +272,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
       `;
 
       const result = await this.db.execute(query);
-      const rows = result as any[];
+      const rows = result as unknown as RawPublicMediaItemRow[];
 
       if (rows.length === 0) {
         return null;
@@ -254,7 +294,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
       `;
 
       const result = await this.db.execute(query);
-      const rows = result as any[];
+      const rows = result as unknown as RawPublicMediaItemRow[];
 
       if (rows.length === 0) {
         return null;
@@ -288,7 +328,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
    * Maps raw database row to PublicMediaItemRow DTO.
    * Handles snake_case to camelCase conversion.
    */
-  private mapToDto(row: any): PublicMediaItemRow {
+  private mapToDto(row: RawPublicMediaItemRow): PublicMediaItemRow {
     return {
       id: row.id,
       type: row.type,

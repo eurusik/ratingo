@@ -1,23 +1,23 @@
-"use client"
+'use client';
 
-import { Globe } from 'lucide-react'
-import { ConfigCard } from '../ConfigCard'
-import { TagInput } from './TagInput'
-import { Label } from '@/shared/ui/label'
+import { Globe } from 'lucide-react';
+import { ConfigCard } from '../ConfigCard';
+import { TagInput } from './TagInput';
+import { Label } from '@/shared/ui/label';
 
 interface CountriesEditorProps {
-  allowedCountries: string[]
-  blockedCountries: string[]
-  onAllowedChange: (value: string[]) => void
-  onBlockedChange: (value: string[]) => void
+  allowedCountries: string[];
+  blockedCountries: string[];
+  onAllowedChange: (value: string[]) => void;
+  onBlockedChange: (value: string[]) => void;
   labels?: {
-    title?: string
-    description?: string
-    allowed?: string
-    blocked?: string
-    allowedPlaceholder?: string
-    blockedPlaceholder?: string
-  }
+    title?: string;
+    description?: string;
+    allowed?: string;
+    blocked?: string;
+    allowedPlaceholder?: string;
+    blockedPlaceholder?: string;
+  };
 }
 
 /**
@@ -31,14 +31,16 @@ export function CountriesEditor({
   labels,
 }: CountriesEditorProps) {
   return (
-    <ConfigCard 
-      title={labels?.title ?? 'Countries'} 
+    <ConfigCard
+      title={labels?.title ?? 'Countries'}
       description={labels?.description ?? 'Content will only be available in selected countries'}
-      icon={Globe} 
+      icon={Globe}
       contentClassName="space-y-4"
     >
       <div>
-        <Label className="text-green-600">{labels?.allowed ?? 'Allowed'} ({allowedCountries.length})</Label>
+        <Label className="text-green-600">
+          {labels?.allowed ?? 'Allowed'} ({allowedCountries.length})
+        </Label>
         <TagInput
           value={allowedCountries}
           onChange={onAllowedChange}
@@ -47,7 +49,9 @@ export function CountriesEditor({
         />
       </div>
       <div>
-        <Label className="text-red-600">{labels?.blocked ?? 'Blocked'} ({blockedCountries.length})</Label>
+        <Label className="text-red-600">
+          {labels?.blocked ?? 'Blocked'} ({blockedCountries.length})
+        </Label>
         <TagInput
           value={blockedCountries}
           onChange={onBlockedChange}
@@ -56,5 +60,5 @@ export function CountriesEditor({
         />
       </div>
     </ConfigCard>
-  )
+  );
 }

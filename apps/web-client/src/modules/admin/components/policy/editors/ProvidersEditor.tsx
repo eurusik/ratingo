@@ -1,39 +1,35 @@
-"use client"
+'use client';
 
-import { Tv } from 'lucide-react'
-import { ConfigCard } from '../ConfigCard'
-import { ComboboxTagInput, ComboboxOption } from './ComboboxTagInput'
-import { useProviders } from '@/core/query'
+import { Tv } from 'lucide-react';
+import { ConfigCard } from '../ConfigCard';
+import { ComboboxTagInput, ComboboxOption } from './ComboboxTagInput';
+import { useProviders } from '@/core/query';
 
 interface ProvidersEditorProps {
-  providers: string[]
-  onChange: (value: string[]) => void
+  providers: string[];
+  onChange: (value: string[]) => void;
   labels?: {
-    title?: string
-    description?: string
-    placeholder?: string
-    searchPlaceholder?: string
-    emptyText?: string
-  }
+    title?: string;
+    description?: string;
+    placeholder?: string;
+    searchPlaceholder?: string;
+    emptyText?: string;
+  };
 }
 
 /** Editor for global streaming providers with autocomplete. */
-export function ProvidersEditor({
-  providers,
-  onChange,
-  labels,
-}: ProvidersEditorProps) {
-  const { data: providersData = [], isLoading } = useProviders()
+export function ProvidersEditor({ providers, onChange, labels }: ProvidersEditorProps) {
+  const { data: providersData = [], isLoading } = useProviders();
 
   const options: ComboboxOption[] = providersData.map((p) => ({
     id: p.id,
     name: p.name,
     count: p.count,
-  }))
+  }));
 
   return (
-    <ConfigCard 
-      title={labels?.title ?? 'Global Providers'} 
+    <ConfigCard
+      title={labels?.title ?? 'Global Providers'}
       description={labels?.description ?? 'Content available on these platforms will be included'}
       icon={Tv}
     >
@@ -48,5 +44,5 @@ export function ProvidersEditor({
         transform={(v) => v.toLowerCase()}
       />
     </ConfigCard>
-  )
+  );
 }

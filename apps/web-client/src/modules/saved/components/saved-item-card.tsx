@@ -45,7 +45,7 @@ export function SavedItemCard({
   const { dict } = useTranslation();
   const href = type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`;
   const year = releaseDate ? new Date(releaseDate).getFullYear() : null;
-  
+
   const reasonLabel = reasonKey && dict.saved.reason[reasonKey as keyof typeof dict.saved.reason];
   const typeLabel = type === 'movie' ? dict.mediaType.movie : dict.mediaType.show;
 
@@ -55,13 +55,7 @@ export function SavedItemCard({
       <Link href={href as Route} className="shrink-0">
         <div className="relative w-16 h-24 rounded-md overflow-hidden bg-zinc-800">
           {posterUrl ? (
-            <Image
-              src={posterUrl}
-              alt={title}
-              fill
-              sizes="64px"
-              className="object-cover"
-            />
+            <Image src={posterUrl} alt={title} fill sizes="64px" className="object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
               —
@@ -85,7 +79,9 @@ export function SavedItemCard({
           {reasonLabel && (
             <p className="text-xs text-zinc-600 mt-1 flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-amber-500/70" />
-              <span>{dict.saved.reason.label}: {reasonLabel}</span>
+              <span>
+                {dict.saved.reason.label}: {reasonLabel}
+              </span>
             </p>
           )}
           {activeSubscriptionTriggers.length > 0 && (
@@ -129,8 +125,8 @@ export function SavedItemCard({
                     onClick={onRemove}
                     disabled={isRemoving}
                     className={cn(
-                      "h-7 w-7",
-                      "text-zinc-500 hover:text-red-400 hover:bg-red-400/10"
+                      'h-7 w-7',
+                      'text-zinc-500 hover:text-red-400 hover:bg-red-400/10',
                     )}
                   >
                     <Trash2 className="w-3.5 h-3.5" />

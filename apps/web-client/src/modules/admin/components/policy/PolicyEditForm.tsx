@@ -1,10 +1,17 @@
-"use client"
+'use client';
 
-import { useState } from 'react'
-import { Button } from '@/shared/ui/button'
-import { Loader2, Save, X } from 'lucide-react'
-import type { PolicyConfigDto, BreakoutRule, BlockedCountryMode, EligibilityMode, GlobalRequirements, ContentClass } from '@/core/api/admin'
-import type { PolicyFormLabels } from './labels.types'
+import { useState } from 'react';
+import { Button } from '@/shared/ui/button';
+import { Loader2, Save, X } from 'lucide-react';
+import type {
+  PolicyConfigDto,
+  BreakoutRule,
+  BlockedCountryMode,
+  EligibilityMode,
+  GlobalRequirements,
+  ContentClass,
+} from '@/core/api/admin';
+import type { PolicyFormLabels } from './labels.types';
 import {
   CountriesEditor,
   LanguagesEditor,
@@ -13,20 +20,20 @@ import {
   BreakoutRulesEditor,
   GlobalRequirementsEditor,
   ContentClassEditor,
-} from './editors'
+} from './editors';
 
 export interface PolicyFormData {
-  allowedCountries: string[]
-  blockedCountries: string[]
-  blockedCountryMode: BlockedCountryMode
-  allowedLanguages: string[]
-  blockedLanguages: string[]
-  globalProviders: string[]
-  breakoutRules: BreakoutRule[]
-  eligibilityMode: EligibilityMode
-  homepage: { minRelevanceScore: number }
-  globalRequirements?: GlobalRequirements
-  excludedContentClasses?: ContentClass[]
+  allowedCountries: string[];
+  blockedCountries: string[];
+  blockedCountryMode: BlockedCountryMode;
+  allowedLanguages: string[];
+  blockedLanguages: string[];
+  globalProviders: string[];
+  breakoutRules: BreakoutRule[];
+  eligibilityMode: EligibilityMode;
+  homepage: { minRelevanceScore: number };
+  globalRequirements?: GlobalRequirements;
+  excludedContentClasses?: ContentClass[];
 }
 
 // Type-safe field keys
@@ -42,20 +49,20 @@ const FORM_FIELDS = {
   homepage: 'homepage',
   globalRequirements: 'globalRequirements',
   excludedContentClasses: 'excludedContentClasses',
-} as const satisfies Record<keyof PolicyFormData, keyof PolicyFormData>
+} as const satisfies Record<keyof PolicyFormData, keyof PolicyFormData>;
 
 interface PolicyEditFormProps {
-  initialConfig: PolicyConfigDto
-  onSave: (data: PolicyFormData) => Promise<void>
-  onCancel: () => void
-  isSaving?: boolean
-  showActions?: boolean
-  labels?: PolicyFormLabels
+  initialConfig: PolicyConfigDto;
+  onSave: (data: PolicyFormData) => Promise<void>;
+  onCancel: () => void;
+  isSaving?: boolean;
+  showActions?: boolean;
+  labels?: PolicyFormLabels;
 }
 
 /**
  * Form for editing policy configuration.
- * 
+ *
  * Manages form state and provides save/cancel actions.
  * Creates a new policy version on save.
  */
@@ -79,18 +86,15 @@ export function PolicyEditForm({
     homepage: { minRelevanceScore: initialConfig.homepage.minRelevanceScore },
     globalRequirements: initialConfig.globalRequirements,
     excludedContentClasses: (initialConfig.excludedContentClasses ?? []) as ContentClass[],
-  })
+  });
 
   const handleSave = async () => {
-    await onSave(formData)
-  }
+    await onSave(formData);
+  };
 
-  const updateField = <K extends keyof PolicyFormData>(
-    field: K,
-    value: PolicyFormData[K]
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+  const updateField = <K extends keyof PolicyFormData>(field: K, value: PolicyFormData[K]) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   return (
     <div className="space-y-4">
@@ -170,5 +174,5 @@ export function PolicyEditForm({
         labels={labels?.breakoutRules}
       />
     </div>
-  )
+  );
 }

@@ -6,14 +6,14 @@
 
 ## Tech Stack
 
-| Category | Technology |
-|----------|------------|
-| Framework | NestJS + Fastify |
-| Database | PostgreSQL + Drizzle ORM |
-| Queues | BullMQ (Redis) |
+| Category      | Technology                |
+| ------------- | ------------------------- |
+| Framework     | NestJS + Fastify          |
+| Database      | PostgreSQL + Drizzle ORM  |
+| Queues        | BullMQ (Redis)            |
 | External APIs | TMDB, Trakt, OMDb, TVMaze |
-| File Storage | S3 / Cloudflare R2 |
-| Docs | Swagger (`/docs`) |
+| File Storage  | S3 / Cloudflare R2        |
+| Docs          | Swagger (`/docs`)         |
 
 ---
 
@@ -81,28 +81,33 @@ module/
 ## Core Modules
 
 ### Auth
+
 - JWT access/refresh tokens with rotation
 - Strategies: `JwtStrategy`, `LocalStrategy`
 - Guards: `JwtAuthGuard`, `OptionalJwtAuthGuard`
 - Token storage in `refresh_tokens` table
 
 ### Users
+
 - Profile CRUD with privacy settings
 - Public profiles with configurable visibility
 - Avatar uploads (S3 presigned URL)
 - Settings: `isProfilePublic`, `showWatchHistory`, `showRatings`, `allowFollowers`
 
 ### UserMedia
+
 - Watch state: `planned`, `watching`, `completed`, `dropped`
 - Ratings (0-100 scale), notes, progress tracking
 - Stored in `user_media_state` table
 
 ### UserActions
+
 - **Saved Items**: `for_later`, `considering` lists with reason tracking
 - **Subscriptions**: Notifications for `release`, `new_season`, `new_episode`, `on_streaming`, `status_changed`
 - **Action Log**: Event sourcing for all user interactions (`user_media_actions`)
 
 ### Catalog
+
 - Public movies/shows catalog
 - Trending, now-playing, new releases
 - Search (local full-text + TMDB fallback)
@@ -110,6 +115,7 @@ module/
 - Watch providers by region
 
 ### CatalogPolicy
+
 - **Policy Engine**: Versioned eligibility rules for catalog filtering
 - **Evaluation**: Country/language filtering, breakout rules, relevance scoring
 - **Activation Flow**: Prepare → Dry Run → Promote workflow
@@ -117,6 +123,7 @@ module/
 - **Background Jobs**: RE_EVALUATE_ALL, EVALUATE_CATALOG_ITEM, WATCHDOG
 
 ### Ingestion
+
 - Metadata import from TMDB
 - Enrichment: TVMaze (episodes), Trakt/OMDb (ratings)
 - Ratingo Score calculation
@@ -124,15 +131,18 @@ module/
 - BullMQ worker for background jobs
 
 ### Stats
+
 - Stats sync from Trakt
 - Show drop-off analysis
 - Watchers snapshots for trend analysis
 
 ### Insights
+
 - Analytics: risers/fallers by period
 - Based on `media_watchers_snapshots` time-series data
 
 ### Shared Services
+
 - **ScoreCalculator**: Ratingo Score (quality + popularity + freshness)
 - **DropOffAnalyzer**: Show engagement analysis
 - **Verdict**: Media verdict generation for UI
@@ -144,38 +154,38 @@ module/
 
 ### Core Tables
 
-| Table | Purpose |
-|-------|---------|
-| `media_items` | Base movie/show info with full-text search |
-| `media_stats` | Fast-changing stats (watchers, Ratingo Score) |
-| `movies` | Movie details (runtime, budget, releases) |
-| `shows` | Show details (seasons, episodes, drop-off analysis) |
-| `seasons`, `episodes` | Show structure |
-| `genres`, `media_genres` | Genre taxonomy |
+| Table                    | Purpose                                             |
+| ------------------------ | --------------------------------------------------- |
+| `media_items`            | Base movie/show info with full-text search          |
+| `media_stats`            | Fast-changing stats (watchers, Ratingo Score)       |
+| `movies`                 | Movie details (runtime, budget, releases)           |
+| `shows`                  | Show details (seasons, episodes, drop-off analysis) |
+| `seasons`, `episodes`    | Show structure                                      |
+| `genres`, `media_genres` | Genre taxonomy                                      |
 
 ### User Tables
 
-| Table | Purpose |
-|-------|---------|
-| `users` | User accounts with privacy settings |
-| `user_media_state` | Watch state & ratings |
-| `user_media_actions` | Action event log |
-| `user_saved_items` | Saved items projection |
-| `user_subscriptions` | Notification subscriptions |
-| `refresh_tokens` | JWT refresh token storage |
+| Table                | Purpose                             |
+| -------------------- | ----------------------------------- |
+| `users`              | User accounts with privacy settings |
+| `user_media_state`   | Watch state & ratings               |
+| `user_media_actions` | Action event log                    |
+| `user_saved_items`   | Saved items projection              |
+| `user_subscriptions` | Notification subscriptions          |
+| `refresh_tokens`     | JWT refresh token storage           |
 
 ### Catalog Policy Tables
 
-| Table | Purpose |
-|-------|---------|
-| `catalog_policies` | Versioned policy configurations |
-| `media_catalog_evaluations` | Evaluation results per media item |
-| `catalog_evaluation_runs` | Run tracking for prepare/promote flow |
+| Table                       | Purpose                               |
+| --------------------------- | ------------------------------------- |
+| `catalog_policies`          | Versioned policy configurations       |
+| `media_catalog_evaluations` | Evaluation results per media item     |
+| `catalog_evaluation_runs`   | Run tracking for prepare/promote flow |
 
 ### Analytics Tables
 
-| Table | Purpose |
-|-------|---------|
+| Table                      | Purpose                    |
+| -------------------------- | -------------------------- |
 | `media_watchers_snapshots` | Daily watchers time-series |
 
 ---
@@ -184,52 +194,52 @@ module/
 
 ### Queues
 
-| Queue | Purpose |
-|-------|---------|
-| `ingestion` | Movie/show import, trending sync |
-| `stats-queue` | Stats sync, drop-off analysis |
+| Queue                  | Purpose                          |
+| ---------------------- | -------------------------------- |
+| `ingestion`            | Movie/show import, trending sync |
+| `stats-queue`          | Stats sync, drop-off analysis    |
 | `catalog-policy-queue` | Policy evaluation, re-evaluation |
 
 ### Ingestion Jobs
 
-| Job | Purpose |
-|-----|---------|
-| `SYNC_MOVIE` / `SYNC_SHOW` | Single item sync |
-| `SYNC_TRENDING_DISPATCHER` | Queue trending page jobs |
-| `SYNC_TRENDING_PAGE` | Sync one page of trending |
-| `SYNC_TRENDING_STATS` | Sync Trakt stats after trending |
-| `SYNC_NOW_PLAYING` | Now playing movies |
-| `SYNC_NEW_RELEASES` | New digital releases |
-| `SYNC_TRACKED_SHOWS` | Dispatcher for tracked shows |
-| `SYNC_TRACKED_SHOW_BATCH` | Batch sync with diff detection |
-| `SYNC_SNAPSHOTS_DISPATCHER` | Queue snapshot jobs |
-| `SYNC_SNAPSHOT_ITEM` | Single item snapshot |
+| Job                         | Purpose                         |
+| --------------------------- | ------------------------------- |
+| `SYNC_MOVIE` / `SYNC_SHOW`  | Single item sync                |
+| `SYNC_TRENDING_DISPATCHER`  | Queue trending page jobs        |
+| `SYNC_TRENDING_PAGE`        | Sync one page of trending       |
+| `SYNC_TRENDING_STATS`       | Sync Trakt stats after trending |
+| `SYNC_NOW_PLAYING`          | Now playing movies              |
+| `SYNC_NEW_RELEASES`         | New digital releases            |
+| `SYNC_TRACKED_SHOWS`        | Dispatcher for tracked shows    |
+| `SYNC_TRACKED_SHOW_BATCH`   | Batch sync with diff detection  |
+| `SYNC_SNAPSHOTS_DISPATCHER` | Queue snapshot jobs             |
+| `SYNC_SNAPSHOT_ITEM`        | Single item snapshot            |
 
 ### Stats Jobs
 
-| Job | Purpose |
-|-----|---------|
-| `SYNC_TRENDING` | Stats update |
+| Job                | Purpose                |
+| ------------------ | ---------------------- |
+| `SYNC_TRENDING`    | Stats update           |
 | `ANALYZE_DROP_OFF` | Show drop-off analysis |
 
 ### Catalog Policy Jobs
 
-| Job | Purpose |
-|-----|---------|
-| `RE_EVALUATE_ALL` | Re-evaluate entire catalog |
-| `EVALUATE_CATALOG_ITEM` | Evaluate single item |
-| `WATCHDOG` | Monitor stuck runs |
+| Job                     | Purpose                    |
+| ----------------------- | -------------------------- |
+| `RE_EVALUATE_ALL`       | Re-evaluate entire catalog |
+| `EVALUATE_CATALOG_ITEM` | Evaluate single item       |
+| `WATCHDOG`              | Monitor stuck runs         |
 
 ---
 
 ## External Integrations
 
-| Service | Data |
-|---------|------|
-| **TMDB** | Metadata, posters, trailers, watch providers |
-| **Trakt** | Ratings, watchers, trending lists |
-| **OMDb** | IMDb/Rotten Tomatoes/Metacritic ratings |
-| **TVMaze** | Show episode schedule |
+| Service    | Data                                         |
+| ---------- | -------------------------------------------- |
+| **TMDB**   | Metadata, posters, trailers, watch providers |
+| **Trakt**  | Ratings, watchers, trending lists            |
+| **OMDb**   | IMDb/Rotten Tomatoes/Metacritic ratings      |
+| **TVMaze** | Show episode schedule                        |
 
 ### Adapters
 
@@ -387,11 +397,11 @@ POST /auth/refresh { refreshToken }
 
 Global rate limiting with tiered protection:
 
-| Tier | Limit | Methods | Purpose |
-|------|-------|---------|---------|
-| `default` | 600 req/min | GET, HEAD, OPTIONS | Browsing |
-| `strict` | 120 req/min | POST, PUT, PATCH, DELETE | Mutations |
-| `auth` | Applied via @Throttle() | Auth routes | Login/register |
+| Tier      | Limit                   | Methods                  | Purpose        |
+| --------- | ----------------------- | ------------------------ | -------------- |
+| `default` | 600 req/min             | GET, HEAD, OPTIONS       | Browsing       |
+| `strict`  | 120 req/min             | POST, PUT, PATCH, DELETE | Mutations      |
+| `auth`    | Applied via @Throttle() | Auth routes              | Login/register |
 
 Uses `ThrottlerRealIpGuard` for Cloudflare/proxy support.
 
@@ -400,6 +410,7 @@ Uses `ThrottlerRealIpGuard` for Cloudflare/proxy support.
 ## API Response Format
 
 **Success:**
+
 ```json
 {
   "success": true,
@@ -408,6 +419,7 @@ Uses `ThrottlerRealIpGuard` for Cloudflare/proxy support.
 ```
 
 **Error:**
+
 ```json
 {
   "success": false,
@@ -465,4 +477,4 @@ Uses `ThrottlerRealIpGuard` for Cloudflare/proxy support.
 
 ---
 
-*Last updated: December 2024*
+_Last updated: December 2024_

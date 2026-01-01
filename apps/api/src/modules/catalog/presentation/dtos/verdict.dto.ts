@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import {
-  VerdictType,
-  VerdictHintKey,
-  MovieVerdictMessageKey,
-  ShowQualityVerdictKey,
-  ShowStatusHintKey,
+  type VerdictType,
+  type VerdictHintKey,
+  type MovieVerdictMessageKey,
+  type ShowQualityVerdictKey,
+  type ShowStatusHintKey,
 } from '../../../shared/verdict';
 
 /**

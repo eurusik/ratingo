@@ -1,7 +1,14 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import {
+  Injectable,
+  type NestInterceptor,
+  type ExecutionContext,
+  type CallHandler,
+} from '@nestjs/common';
+
+import { type Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApiSuccessResponse } from '../interfaces/api-response.interface';
+
+import { type ApiSuccessResponse } from '../interfaces/api-response.interface';
 
 /**
  * Global interceptor that wraps successful responses in a standardized format.
@@ -14,7 +21,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiSuccessResp
       map((data) => ({
         success: true as const,
         data,
-      }))
+      })),
     );
   }
 }

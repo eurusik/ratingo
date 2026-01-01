@@ -5,6 +5,8 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { Type } from 'class-transformer';
 import {
   IsString,
   IsDate,
@@ -15,12 +17,13 @@ import {
   IsIn,
   IsEnum,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { PolicyConfigDto } from './policy-config.dto';
+
+import { PolicyStatus, type PolicyStatusType } from '../../catalog-policy.constants';
+import { type ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
+
 import { BreakoutRuleDto } from './breakout-rule.dto';
 import { GlobalRequirementsDto } from './global-requirements.dto';
-import { ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
-import { PolicyStatus, PolicyStatusType } from '../../catalog-policy.constants';
+import { PolicyConfigDto } from './policy-config.dto';
 
 const POLICY_STATUS_VALUES = Object.values(PolicyStatus);
 

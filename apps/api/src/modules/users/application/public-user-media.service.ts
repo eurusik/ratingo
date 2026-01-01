@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { UserProfileVisibilityPolicy, ViewerContext } from './user-profile-visibility.policy';
-import { UserMediaService } from '../../user-media/application/user-media.service';
-import {
-  PublicUserMediaListQueryDto,
-  USER_MEDIA_LIST_SORT,
-} from '../presentation/dto/public-user-media.dto';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
+import { type UserMediaService } from '../../user-media/application/user-media.service';
 import {
   USER_MEDIA_HISTORY_STATES,
   USER_MEDIA_WATCHLIST_STATES,
 } from '../../user-media/domain/entities/user-media-state.entity';
+import {
+  type PublicUserMediaListQueryDto,
+  USER_MEDIA_LIST_SORT,
+} from '../presentation/dto/public-user-media.dto';
+
+import { UserProfileVisibilityPolicy, type ViewerContext } from './user-profile-visibility.policy';
+import { type UsersService } from './users.service';
 
 /**
  * Application service for reading public user media lists with privacy enforcement.
@@ -39,7 +43,7 @@ export class PublicUserMediaService {
 
     if (!UserProfileVisibilityPolicy.canViewRatings(user, viewer)) return null;
 
-    const limit = query?.limit ?? 20;
+    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query?.offset ?? 0;
     const sort = query?.sort ?? USER_MEDIA_LIST_SORT.RECENT;
 
@@ -81,7 +85,7 @@ export class PublicUserMediaService {
 
     if (!UserProfileVisibilityPolicy.canViewWatchHistory(user, viewer)) return null;
 
-    const limit = query?.limit ?? 20;
+    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query?.offset ?? 0;
     const sort = query?.sort ?? USER_MEDIA_LIST_SORT.RECENT;
 
@@ -122,7 +126,7 @@ export class PublicUserMediaService {
 
     if (!UserProfileVisibilityPolicy.canViewWatchHistory(user, viewer)) return null;
 
-    const limit = query?.limit ?? 20;
+    const limit = query?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query?.offset ?? 0;
     const sort = query?.sort ?? USER_MEDIA_LIST_SORT.RECENT;
 

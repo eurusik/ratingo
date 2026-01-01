@@ -1,5 +1,6 @@
-import { Queue } from 'bullmq';
 import { createHash } from 'crypto';
+
+import { type Queue } from 'bullmq';
 
 /**
  * Shared utilities for queue job deduplication and bulk operations.
@@ -10,6 +11,14 @@ export interface PreDedupeResult<T> {
   deduped: number;
   sample: string[];
 }
+
+// Default values for queue helpers
+const DEFAULT_SAMPLE_SIZE = 3;
+const DEFAULT_HASH_LENGTH = 12;
+const DEFAULT_DEDUPE_CONCURRENCY = 50;
+
+// ISO string slice length for hour window (YYYY-MM-DDTHH)
+const ISO_HOUR_WINDOW_LENGTH = 13;
 
 /**
  * Pre-deduplicates jobs by checking if they already exist in the queue.
@@ -24,8 +33,8 @@ export interface PreDedupeResult<T> {
 export async function preDedupeBulk<T extends { opts?: { jobId: string } }>(
   jobs: T[],
   queue: Queue,
-  concurrency = 50,
-  sampleSize = 3,
+  concurrency = DEFAULT_DEDUPE_CONCURRENCY,
+  sampleSize = DEFAULT_SAMPLE_SIZE,
 ): Promise<PreDedupeResult<T>> {
   let deduped = 0;
   const jobsToAdd: T[] = [];
@@ -66,7 +75,7 @@ export async function preDedupeBulk<T extends { opts?: { jobId: string } }>(
  * @param length - Length of hash to return (default: 12)
  * @returns Short hex hash string
  */
-export function hashIds(ids: number[], length = 12): string {
+export function hashIds(ids: number[], length = DEFAULT_HASH_LENGTH): string {
   return createHash('sha1').update(ids.join(',')).digest('hex').slice(0, length);
 }
 
@@ -78,7 +87,7 @@ export function hashIds(ids: number[], length = 12): string {
  * @returns Hour window string
  */
 export function formatHourWindow(date: Date = new Date()): string {
-  return date.toISOString().slice(0, 13).replace(/[-T]/g, '');
+  return date.toISOString().slice(0, ISO_HOUR_WINDOW_LENGTH).replace(/[-T]/g, '');
 }
 
 /**

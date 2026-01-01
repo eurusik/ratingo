@@ -32,7 +32,9 @@ export function CardRating({ rating, watchers, className }: CardRatingProps) {
           <Activity className="w-4 h-4 text-blue-400" />
           <span className="text-white font-semibold">{formatRating(rating)}</span>
         </div>
-      ) : <div />}
+      ) : (
+        <div />
+      )}
 
       {/* � Активний інтерес (right) */}
       {hasWatchers ? (

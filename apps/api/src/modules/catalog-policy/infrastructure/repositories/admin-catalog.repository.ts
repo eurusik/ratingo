@@ -12,13 +12,16 @@
  */
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, and, isNull, desc, asc, sql } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
+import { type MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions';
-import { EligibilityStatusType } from '../../domain/constants/evaluation.constants';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import { type EligibilityStatusType } from '../../domain/constants/evaluation.constants';
 
 export const ADMIN_CATALOG_REPOSITORY = 'ADMIN_CATALOG_REPOSITORY';
 
@@ -148,7 +151,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
   ) {}
 
   async findAll(options?: AdminQueryOptions): Promise<MediaItemWithEvaluation[]> {
-    const limit = options?.limit ?? 20;
+    const limit = options?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = options?.offset ?? 0;
 
     try {
@@ -174,37 +177,39 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
 
       // Apply conditions
       if (conditions.length > 0) {
-        query = query.where(and(...conditions)) as any;
+        query = query.where(and(...conditions)) as typeof query;
       }
 
       // Apply eligibility status filter (after join)
       if (options?.eligibilityStatus) {
         query = query.where(
-          eq(schema.mediaCatalogEvaluations.status, options.eligibilityStatus as any),
-        ) as any;
+          eq(schema.mediaCatalogEvaluations.status, options.eligibilityStatus),
+        ) as typeof query;
       }
 
       // Apply sorting
       const sortOrder = options?.sortOrder === 'asc' ? asc : desc;
       switch (options?.sortBy) {
         case 'createdAt':
-          query = query.orderBy(sortOrder(schema.mediaItems.createdAt)) as any;
+          query = query.orderBy(sortOrder(schema.mediaItems.createdAt)) as typeof query;
           break;
         case 'updatedAt':
-          query = query.orderBy(sortOrder(schema.mediaItems.updatedAt)) as any;
+          query = query.orderBy(sortOrder(schema.mediaItems.updatedAt)) as typeof query;
           break;
         case 'trendingScore':
-          query = query.orderBy(sortOrder(schema.mediaItems.trendingScore)) as any;
+          query = query.orderBy(sortOrder(schema.mediaItems.trendingScore)) as typeof query;
           break;
         case 'relevanceScore':
-          query = query.orderBy(sortOrder(schema.mediaCatalogEvaluations.relevanceScore)) as any;
+          query = query.orderBy(
+            sortOrder(schema.mediaCatalogEvaluations.relevanceScore),
+          ) as typeof query;
           break;
         default:
-          query = query.orderBy(desc(schema.mediaItems.updatedAt)) as any;
+          query = query.orderBy(desc(schema.mediaItems.updatedAt)) as typeof query;
       }
 
       // Apply pagination
-      query = query.limit(limit).offset(offset) as any;
+      query = query.limit(limit).offset(offset) as typeof query;
 
       const result = await query;
       return result.map((row) => this.mapToEntity(row));
@@ -280,7 +285,7 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
     reason: string,
     options?: AdminQueryOptions,
   ): Promise<MediaItemWithEvaluation[]> {
-    const limit = options?.limit ?? 20;
+    const limit = options?.limit ?? DEFAULT_PAGE_SIZE;
     const offset = options?.offset ?? 0;
 
     try {
@@ -313,36 +318,38 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
     }
   }
 
-  private mapToEntity(row: any): MediaItemWithEvaluation {
+  private mapToEntity(
+    row: typeof this.selectFields extends infer T ? { [K in keyof T]: unknown } : never,
+  ): MediaItemWithEvaluation {
     return {
-      id: row.id,
-      type: row.type,
-      tmdbId: row.tmdbId,
-      imdbId: row.imdbId,
-      title: row.title,
-      originalTitle: row.originalTitle,
-      slug: row.slug,
-      overview: row.overview,
-      posterPath: row.posterPath,
-      backdropPath: row.backdropPath,
-      trendingScore: row.trendingScore,
-      trendingRank: row.trendingRank,
-      popularity: row.popularity,
-      rating: row.rating,
-      releaseDate: row.releaseDate,
+      id: row.id as string,
+      type: row.type as 'movie' | 'show',
+      tmdbId: row.tmdbId as number,
+      imdbId: row.imdbId as string | null,
+      title: row.title as string,
+      originalTitle: row.originalTitle as string | null,
+      slug: row.slug as string,
+      overview: row.overview as string | null,
+      posterPath: row.posterPath as string | null,
+      backdropPath: row.backdropPath as string | null,
+      trendingScore: row.trendingScore as number | null,
+      trendingRank: row.trendingRank as number | null,
+      popularity: row.popularity as number | null,
+      rating: row.rating as number | null,
+      releaseDate: row.releaseDate as Date | null,
       originCountries: row.originCountries as string[] | null,
-      originalLanguage: row.originalLanguage,
-      ingestionStatus: row.ingestionStatus,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      deletedAt: row.deletedAt,
+      originalLanguage: row.originalLanguage as string | null,
+      ingestionStatus: row.ingestionStatus as string,
+      createdAt: row.createdAt as Date,
+      updatedAt: row.updatedAt as Date,
+      deletedAt: row.deletedAt as Date | null,
       // Evaluation fields - status is already in canonical lowercase format
       eligibilityStatus: row.eligibilityStatus as EligibilityStatusType | null,
-      evaluationReasons: row.evaluationReasons ?? [],
-      relevanceScore: row.relevanceScore,
-      policyVersion: row.policyVersion,
-      breakoutRuleId: row.breakoutRuleId,
-      evaluatedAt: row.evaluatedAt,
+      evaluationReasons: (row.evaluationReasons as string[]) ?? [],
+      relevanceScore: row.relevanceScore as number | null,
+      policyVersion: row.policyVersion as number | null,
+      breakoutRuleId: row.breakoutRuleId as string | null,
+      evaluatedAt: row.evaluatedAt as Date | null,
     };
   }
 }

@@ -4,9 +4,9 @@
  */
 
 import {
-  VideoSiteEnum,
-  VideoTypeEnum,
-  VideoLanguageEnum,
+  type VideoSiteEnum,
+  type VideoTypeEnum,
+  type VideoLanguageEnum,
 } from '../../../../common/enums/video.enum';
 
 /**

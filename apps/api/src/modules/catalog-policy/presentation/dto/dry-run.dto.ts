@@ -6,6 +6,8 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { Type } from 'class-transformer';
 import {
   IsOptional,
   IsNumber,
@@ -17,7 +19,7 @@ import {
   Max,
   Matches,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+
 import { CreatePolicyDto } from './index';
 
 /**

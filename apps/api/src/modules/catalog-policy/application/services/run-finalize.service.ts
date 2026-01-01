@@ -5,12 +5,16 @@
  */
 
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, and, lt, sql } from 'drizzle-orm';
-import { RunAggregationService } from './run-aggregation.service';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { MS_PER_MINUTE } from '../../../../common/constants';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import { RunStatus } from '../../domain/constants/evaluation.constants';
+
+import { type RunAggregationService } from './run-aggregation.service';
 
 export interface FinalizeResult {
   runId: string;
@@ -156,7 +160,7 @@ export class RunFinalizeService {
    * @returns Array of finalization results
    */
   async finalizeStaleRuns(maxAgeMinutes: number = 5): Promise<FinalizeResult[]> {
-    const cutoff = new Date(Date.now() - maxAgeMinutes * 60 * 1000);
+    const cutoff = new Date(Date.now() - maxAgeMinutes * MS_PER_MINUTE);
 
     const staleRuns = await this.db
       .select({ id: schema.catalogEvaluationRuns.id })

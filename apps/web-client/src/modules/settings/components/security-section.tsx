@@ -71,9 +71,7 @@ export function SecuritySection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-zinc-100 mb-4">
-          {dict.settings.security.title}
-        </h3>
+        <h3 className="text-lg font-medium text-zinc-100 mb-4">{dict.settings.security.title}</h3>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Current Password */}
@@ -87,7 +85,7 @@ export function SecuritySection() {
               autoComplete="current-password"
               className={cn(
                 'bg-zinc-800 border-zinc-700 text-zinc-100',
-                errors.currentPassword && 'border-red-500 focus-visible:ring-red-500'
+                errors.currentPassword && 'border-red-500 focus-visible:ring-red-500',
               )}
               {...register('currentPassword')}
             />
@@ -107,7 +105,7 @@ export function SecuritySection() {
               autoComplete="new-password"
               className={cn(
                 'bg-zinc-800 border-zinc-700 text-zinc-100',
-                errors.newPassword && 'border-red-500 focus-visible:ring-red-500'
+                errors.newPassword && 'border-red-500 focus-visible:ring-red-500',
               )}
               {...register('newPassword')}
             />
@@ -127,7 +125,7 @@ export function SecuritySection() {
               autoComplete="new-password"
               className={cn(
                 'bg-zinc-800 border-zinc-700 text-zinc-100',
-                errors.confirmPassword && 'border-red-500 focus-visible:ring-red-500'
+                errors.confirmPassword && 'border-red-500 focus-visible:ring-red-500',
               )}
               {...register('confirmPassword')}
             />
@@ -151,11 +149,7 @@ export function SecuritySection() {
           )}
 
           {/* Submit button */}
-          <Button
-            type="submit"
-            disabled={isSubmitting || !isDirty}
-            className="w-full"
-          >
+          <Button type="submit" disabled={isSubmitting || !isDirty} className="w-full">
             {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
             {isSubmitting ? dict.settings.saving : dict.settings.security.changePassword}
           </Button>

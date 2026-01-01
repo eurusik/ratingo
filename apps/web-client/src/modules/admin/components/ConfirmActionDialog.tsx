@@ -1,12 +1,12 @@
-"use client"
+'use client';
 
-import * as React from 'react'
-import { Loader2 } from 'lucide-react'
+import * as React from 'react';
+import { Loader2 } from 'lucide-react';
 
-import { cn } from '@/shared/utils'
-import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
-import { Label } from '@/shared/ui/label'
+import { cn } from '@/shared/utils';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,14 +16,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/shared/ui/alert-dialog'
-import { useTranslation } from '@/shared/i18n'
+} from '@/shared/ui/alert-dialog';
+import { useTranslation } from '@/shared/i18n';
 
-import { ConfirmActionDialogProps } from '../types'
+import { ConfirmActionDialogProps } from '../types';
 
 /**
  * Confirmation dialog with optional typing requirement.
- * 
+ *
  * @example
  * <ConfirmActionDialog
  *   open={isOpen}
@@ -45,46 +45,46 @@ function ConfirmActionDialog({
   onConfirm,
   variant = 'default',
 }: ConfirmActionDialogProps) {
-  const { dict } = useTranslation()
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [typedText, setTypedText] = React.useState('')
-  const [error, setError] = React.useState<string | null>(null)
+  const { dict } = useTranslation();
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [typedText, setTypedText] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
 
   // Reset state when dialog opens/closes
   React.useEffect(() => {
     if (!open) {
-      setIsLoading(false)
-      setTypedText('')
-      setError(null)
+      setIsLoading(false);
+      setTypedText('');
+      setError(null);
     }
-  }, [open])
+  }, [open]);
 
   const handleConfirm = async () => {
     if (requireTyping && typedText !== confirmText) {
-      setError(dict.admin.common.confirmDialog.errorTyping.replace('{text}', confirmText))
-      return
+      setError(dict.admin.common.confirmDialog.errorTyping.replace('{text}', confirmText));
+      return;
     }
 
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
     try {
-      await onConfirm()
-      onOpenChange(false)
+      await onConfirm();
+      onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : dict.admin.common.confirmDialog.errorOccurred)
+      setError(err instanceof Error ? err.message : dict.admin.common.confirmDialog.errorOccurred);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleCancel = () => {
     if (!isLoading) {
-      onOpenChange(false)
+      onOpenChange(false);
     }
-  }
+  };
 
-  const isConfirmDisabled = isLoading || (requireTyping && typedText !== confirmText)
+  const isConfirmDisabled = isLoading || (requireTyping && typedText !== confirmText);
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -98,7 +98,9 @@ function ConfirmActionDialog({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="confirmation">
-                {dict.admin.common.confirmDialog.typeToConfirm} <span className="font-mono font-semibold">{confirmText}</span> {dict.admin.common.confirmDialog.toConfirm}:
+                {dict.admin.common.confirmDialog.typeToConfirm}{' '}
+                <span className="font-mono font-semibold">{confirmText}</span>{' '}
+                {dict.admin.common.confirmDialog.toConfirm}:
               </Label>
               <Input
                 id="confirmation"
@@ -106,13 +108,9 @@ function ConfirmActionDialog({
                 onChange={(e) => setTypedText(e.target.value)}
                 placeholder={confirmText}
                 disabled={isLoading}
-                className={cn(
-                  error && 'border-destructive focus-visible:ring-destructive'
-                )}
+                className={cn(error && 'border-destructive focus-visible:ring-destructive')}
               />
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+              {error && <p className="text-sm text-destructive">{error}</p>}
             </div>
           </div>
         )}
@@ -124,19 +122,14 @@ function ConfirmActionDialog({
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel 
-            onClick={handleCancel}
-            disabled={isLoading}
-          >
+          <AlertDialogCancel onClick={handleCancel} disabled={isLoading}>
             {dict.admin.common.confirmDialog.cancel}
           </AlertDialogCancel>
           <Button
             onClick={handleConfirm}
             disabled={isConfirmDisabled}
             variant={variant === 'destructive' ? 'destructive' : 'default'}
-            className={cn(
-              isLoading && 'cursor-not-allowed'
-            )}
+            className={cn(isLoading && 'cursor-not-allowed')}
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {confirmText}
@@ -144,7 +137,7 @@ function ConfirmActionDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }
 
-export { ConfirmActionDialog }
+export { ConfirmActionDialog };

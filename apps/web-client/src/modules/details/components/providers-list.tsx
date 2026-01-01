@@ -43,27 +43,15 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
     <div className="space-y-6">
       {/* Region info */}
       {providers.region && (
-        <ProvidersRegionBadge 
-          region={providers.region} 
-          isFallback={providers.isFallback} 
-        />
+        <ProvidersRegionBadge region={providers.region} isFallback={providers.isFallback} />
       )}
 
       {/* Categories */}
-      <ProvidersCategory 
-        title={dict.details.providers.stream} 
-        providers={providers.stream || []} 
-      />
-      
-      <ProvidersCategory 
-        title={dict.details.providers.rent} 
-        providers={providers.rent || []} 
-      />
-      
-      <ProvidersCategory 
-        title={dict.details.providers.buy} 
-        providers={providers.buy || []} 
-      />
+      <ProvidersCategory title={dict.details.providers.stream} providers={providers.stream || []} />
+
+      <ProvidersCategory title={dict.details.providers.rent} providers={providers.rent || []} />
+
+      <ProvidersCategory title={dict.details.providers.buy} providers={providers.buy || []} />
 
       {/* Footer */}
       <div className="pt-4 border-t border-zinc-800/50 space-y-3">
@@ -81,9 +69,7 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
         )}
 
         {/* Official note */}
-        <p className="text-xs text-zinc-500">
-          * {dict.details.providers.officialNote}
-        </p>
+        <p className="text-xs text-zinc-500">* {dict.details.providers.officialNote}</p>
       </div>
     </div>
   );

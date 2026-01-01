@@ -1,9 +1,13 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 
 /**
  * New episode item for the update feed.
@@ -19,6 +23,9 @@ export interface NewEpisodeItem {
   episodeTitle: string;
   airDate: Date;
 }
+
+// Query multiplier to ensure enough results after grouping
+const QUERY_LIMIT_MULTIPLIER = 3;
 
 /**
  * Fetches shows with new episodes within a date range.
@@ -43,7 +50,7 @@ export class NewEpisodesQuery {
    * @returns {Promise<NewEpisodeItem[]>} Shows with new episodes
    * @throws {DatabaseException} When database query fails
    */
-  async execute(days: number = 7, limit: number = 20): Promise<NewEpisodeItem[]> {
+  async execute(days: number = 7, limit: number = DEFAULT_PAGE_SIZE): Promise<NewEpisodeItem[]> {
     try {
       const now = new Date();
       const startDate = new Date(now);
@@ -66,7 +73,7 @@ export class NewEpisodesQuery {
         .innerJoin(schema.mediaItems, eq(schema.shows.mediaItemId, schema.mediaItems.id))
         .where(and(gte(schema.episodes.airDate, startDate), lte(schema.episodes.airDate, now)))
         .orderBy(desc(schema.episodes.airDate))
-        .limit(limit * 3);
+        .limit(limit * QUERY_LIMIT_MULTIPLIER);
 
       const showMap = new Map<string, NewEpisodeItem>();
 

@@ -1,4 +1,4 @@
-import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
+import { type CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
 
 /**
  * Normalized query with parsed genres array.

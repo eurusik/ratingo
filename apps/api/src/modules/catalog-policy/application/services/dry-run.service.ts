@@ -15,25 +15,27 @@
 
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
-import { eq, and, isNull, inArray, sql } from 'drizzle-orm';
-import { MediaType } from '../../../../common/enums/media-type.enum';
 
-import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
-import { PolicyConfig, PolicyEngineInput } from '../../domain/types/policy.types';
+import { eq, and, isNull, inArray, sql } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import {
   EligibilityStatus,
-  EligibilityStatusType,
-  EvaluationReasonType,
+  type EligibilityStatusType,
+  type EvaluationReasonType,
 } from '../../domain/constants/evaluation.constants';
-import { CatalogPolicyService } from './catalog-policy.service';
+import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
+import { type PolicyConfig } from '../../domain/types/policy.types';
 import {
-  MediaItemRow,
+  type MediaItemRow,
   mapRowToPolicyEngineInput,
   POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE,
 } from '../utils/policy-input.mapper';
+
+import { type CatalogPolicyService } from './catalog-policy.service';
 
 /**
  * Dry-run selection mode
@@ -102,6 +104,10 @@ export interface DryRunResult {
 // Constants
 const MAX_ITEMS = 10000;
 const DEFAULT_LIMIT = 1000;
+const MAX_SAMPLE_PERCENT = 100;
+const DEFAULT_SAMPLE_PERCENT = 10;
+const MIN_SAMPLE_PERCENT = 1;
+const SAMPLE_DIVISOR = 100;
 
 /**
  * Timeout for dry-run execution in milliseconds.
@@ -272,7 +278,10 @@ export class DryRunService {
       throw new BadRequestException(`limit must be between 1 and ${MAX_ITEMS}`);
     }
 
-    if (options.samplePercent && (options.samplePercent < 1 || options.samplePercent > 100)) {
+    if (
+      options.samplePercent &&
+      (options.samplePercent < MIN_SAMPLE_PERCENT || options.samplePercent > MAX_SAMPLE_PERCENT)
+    ) {
       throw new BadRequestException('samplePercent must be between 1 and 100');
     }
   }
@@ -304,7 +313,9 @@ export class DryRunService {
   ): Promise<Array<MediaItemRow>> {
     // Calculate sample percent based on limit and estimated table size
     // Default to 10% if not specified, adjust based on limit
-    const percent = samplePercent || Math.min(10, Math.max(1, limit / 100));
+    const percent =
+      samplePercent ||
+      Math.min(DEFAULT_SAMPLE_PERCENT, Math.max(MIN_SAMPLE_PERCENT, limit / SAMPLE_DIVISOR));
 
     // Use TABLESAMPLE BERNOULLI for random sampling
     // Note: TABLESAMPLE is not directly supported in Drizzle, use raw SQL

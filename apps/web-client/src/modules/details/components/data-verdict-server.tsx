@@ -5,7 +5,11 @@
 
 import type { components } from '@ratingo/api-contract';
 import { Info, TrendingDown, User, Star, Flame, Calendar, AlertTriangle } from 'lucide-react';
-import type { PrimaryCta, SubscriptionTrigger, SubscriptionUnavailableReason } from '@/shared/types';
+import type {
+  PrimaryCta,
+  SubscriptionTrigger,
+  SubscriptionUnavailableReason,
+} from '@/shared/types';
 import { cn } from '@/shared/utils';
 import type { getDictionary } from '@/shared/i18n';
 import { VerdictCtaButton } from './verdict-cta-button';
@@ -55,14 +59,17 @@ export interface DataVerdictServerProps {
   dict: ReturnType<typeof getDictionary>;
 }
 
-const verdictConfig: Record<VerdictType, {
-  icon: typeof Info;
-  iconColor: string;
-  textColor: string;
-  bgGradient: string;
-  borderColor: string;
-  ctaAccent: string;
-}> = {
+const verdictConfig: Record<
+  VerdictType,
+  {
+    icon: typeof Info;
+    iconColor: string;
+    textColor: string;
+    bgGradient: string;
+    borderColor: string;
+    ctaAccent: string;
+  }
+> = {
   season_comparison: {
     icon: TrendingDown,
     iconColor: 'text-amber-400',
@@ -141,7 +148,7 @@ export function DataVerdictServer({
       className={cn(
         'relative rounded-2xl p-5 border-l-2 backdrop-blur-sm',
         config.bgGradient,
-        config.borderColor
+        config.borderColor,
       )}
     >
       <div className="flex items-start gap-4">
@@ -162,11 +169,7 @@ export function DataVerdictServer({
           )}
 
           {/* Additional context (optional) */}
-          {context && (
-            <p className="text-sm text-zinc-400 leading-relaxed">
-              {context}
-            </p>
-          )}
+          {context && <p className="text-sm text-zinc-400 leading-relaxed">{context}</p>}
 
           {/* Integrated CTA - Client Component for interactivity */}
           {showCta && ctaProps && (

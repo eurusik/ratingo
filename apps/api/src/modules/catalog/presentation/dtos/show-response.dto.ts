@@ -1,7 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MediaBaseDto } from './common.dto';
+
 import { ShowStatus } from '../../../../common/enums/show-status.enum';
 import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
+
+import { MediaBaseDto } from './common.dto';
 import { ShowVerdictDto, ShowStatusHintDto } from './verdict.dto';
 
 export class SeasonDto {

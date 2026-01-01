@@ -29,6 +29,15 @@ export {
 
 export { IShowRepository, SHOW_REPOSITORY } from '../domain/repositories/show.repository.interface';
 
+export type {
+  TrendingShowsOptions,
+  TrendingShowItem,
+  ShowListItem,
+  CalendarEpisode,
+  SeasonInfo,
+  ShowDetails,
+} from '../domain/repositories/show.repository.interface';
+
 export {
   IGenreRepository,
   GENRE_REPOSITORY,
@@ -38,3 +47,13 @@ export {
   IProvidersRepository,
   PROVIDERS_REPOSITORY,
 } from '../domain/repositories/providers.repository.interface';
+
+// Presentation DTOs (from common)
+export {
+  OffsetPaginationQueryDto,
+  OffsetPaginationMetaDto,
+  LISTING_SORT,
+  LISTING_SORT_VALUES,
+} from '../../../common/dtos';
+
+export type { ListingSort, OffsetPaginationMeta } from '../../../common/dtos';

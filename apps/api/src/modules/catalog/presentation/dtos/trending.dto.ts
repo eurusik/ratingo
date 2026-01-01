@@ -1,11 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ImageDto } from '../../../../common/dtos/image.dto';
+
+import { OffsetPaginationMetaDto } from '../../../../common/dtos';
 import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
+import { ImageDto } from '../../../../common/dtos/image.dto';
 import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
-import { OffsetPaginationMetaDto } from './pagination.dto';
-import { CatalogListQueryDto } from './catalog-list-query.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
+
+import { CatalogListQueryDto } from './catalog-list-query.dto';
 
 export class TrendingShowsQueryDto extends CatalogListQueryDto {}
 

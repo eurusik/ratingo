@@ -9,7 +9,13 @@
  */
 
 import { useQuery, type UseQueryOptions, type UseQueryResult } from '@tanstack/react-query';
-import { catalogApi, type ShowDetailsDto, type TrendingShowsDto, type CalendarResponseDto, type ProviderDto } from '../api/catalog';
+import {
+  catalogApi,
+  type ShowDetailsDto,
+  type TrendingShowsDto,
+  type CalendarResponseDto,
+  type ProviderDto,
+} from '../api/catalog';
 import { queryKeys } from './keys';
 import type { TrendingShowsParams } from '../api/catalog';
 
@@ -25,7 +31,7 @@ import type { TrendingShowsParams } from '../api/catalog';
  */
 export function useTrendingShows(
   params?: TrendingShowsParams,
-  options?: Omit<UseQueryOptions<TrendingShowsDto>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<TrendingShowsDto>, 'queryKey' | 'queryFn'>,
 ): UseQueryResult<TrendingShowsDto> {
   return useQuery({
     queryKey: queryKeys.shows.trending(params as Record<string, unknown>),
@@ -46,7 +52,7 @@ export function useTrendingShows(
  */
 export function useShowDetails(
   slug: string,
-  options?: Omit<UseQueryOptions<ShowDetailsDto>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<ShowDetailsDto>, 'queryKey' | 'queryFn'>,
 ): UseQueryResult<ShowDetailsDto> {
   return useQuery({
     queryKey: queryKeys.shows.detail(slug),
@@ -67,7 +73,7 @@ export function useShowDetails(
  */
 export function useShowCalendar(
   params?: { startDate?: string; days?: number },
-  options?: Omit<UseQueryOptions<CalendarResponseDto>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<CalendarResponseDto>, 'queryKey' | 'queryFn'>,
 ): UseQueryResult<CalendarResponseDto> {
   return useQuery({
     queryKey: queryKeys.shows.calendar(params),
@@ -75,7 +81,6 @@ export function useShowCalendar(
     ...options,
   });
 }
-
 
 /**
  * Gets streaming providers.
@@ -87,7 +92,7 @@ export function useShowCalendar(
  * const { data: providers, isLoading } = useProviders();
  */
 export function useProviders(
-  options?: Omit<UseQueryOptions<ProviderDto[]>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<ProviderDto[]>, 'queryKey' | 'queryFn'>,
 ): UseQueryResult<ProviderDto[]> {
   return useQuery({
     queryKey: queryKeys.catalog.providers,

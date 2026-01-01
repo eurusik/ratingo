@@ -1,10 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+
+import { type User } from '../domain/entities/user.entity';
 import {
-  IUsersRepository,
+  type IUsersRepository,
   USERS_REPOSITORY,
 } from '../domain/repositories/users.repository.interface';
-import { User } from '../domain/entities/user.entity';
-import { UserProfileVisibilityPolicy, ViewerContext } from './user-profile-visibility.policy';
+
+import { UserProfileVisibilityPolicy, type ViewerContext } from './user-profile-visibility.policy';
 
 /**
  * Application service for user-related use cases.

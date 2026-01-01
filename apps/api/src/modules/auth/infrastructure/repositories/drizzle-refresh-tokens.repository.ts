@@ -1,11 +1,13 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { and, eq, gte, isNull } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { IRefreshTokensRepository } from '../../domain/repositories/refresh-tokens.repository.interface';
-import { RefreshToken } from '../../domain/entities/refresh-token.entity';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { type RefreshToken } from '../../domain/entities/refresh-token.entity';
+import { type IRefreshTokensRepository } from '../../domain/repositories/refresh-tokens.repository.interface';
 
 /**
  * Drizzle implementation for refresh token storage.

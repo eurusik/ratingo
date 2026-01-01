@@ -3,7 +3,7 @@
  * Other modules should inject this port, not the concrete service.
  */
 
-import { EligibilityStatusType } from '../constants/evaluation.constants';
+import { type EligibilityStatusType } from '../constants/evaluation.constants';
 
 /** Evaluation context for content display surfaces. */
 export type EvaluationContext =

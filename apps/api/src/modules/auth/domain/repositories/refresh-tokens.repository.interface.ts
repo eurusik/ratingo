@@ -3,7 +3,7 @@
  */
 export const REFRESH_TOKENS_REPOSITORY = Symbol('REFRESH_TOKENS_REPOSITORY');
 
-import { RefreshToken } from '../entities/refresh-token.entity';
+import { type RefreshToken } from '../entities/refresh-token.entity';
 
 /**
  * Repository contract for refresh token storage.

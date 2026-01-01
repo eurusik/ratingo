@@ -18,7 +18,18 @@ interface CardBadgeProps {
 }
 
 /** Badge label keys mapping for i18n */
-export const badgeLabelKeys: Record<BadgeKey, 'hit' | 'trending' | 'newRelease' | 'rising' | 'newEpisode' | 'continue' | 'inWatchlist' | 'inTheaters' | 'newOnStreaming'> = {
+export const badgeLabelKeys: Record<
+  BadgeKey,
+  | 'hit'
+  | 'trending'
+  | 'newRelease'
+  | 'rising'
+  | 'newEpisode'
+  | 'continue'
+  | 'inWatchlist'
+  | 'inTheaters'
+  | 'newOnStreaming'
+> = {
   HIT: 'hit',
   TRENDING: 'trending',
   NEW_RELEASE: 'newRelease',
@@ -89,7 +100,7 @@ export function CardBadge({ badgeKey, label, position = 'top-right', className }
         'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold',
         config.className,
         positionClasses[position],
-        className
+        className,
       )}
     >
       <Icon className="w-3 h-3" />
@@ -115,7 +126,7 @@ export function RankBadge({ rank, className }: RankBadgeProps) {
       className={cn(
         'absolute top-2 left-2 px-2 py-1 rounded-full text-xs font-bold',
         'bg-yellow-400 text-black',
-        className
+        className,
       )}
     >
       №{rank}

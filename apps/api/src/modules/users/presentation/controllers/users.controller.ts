@@ -16,14 +16,15 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UsersService } from '../../application/users.service';
-import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+
+import { type AuthService } from '../../../auth/application/auth.service';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
-import { UpdateProfileDto } from '../dto/update-profile.dto';
-import { AuthService } from '../../../auth/application/auth.service';
-import { ChangePasswordDto } from '../../../auth/presentation/dto/change-password.dto';
-import { AvatarUploadService } from '../../application/avatar-upload.service';
-import { AvatarUploadUrlDto, CreateAvatarUploadUrlDto } from '../dto/avatar-upload.dto';
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { type ChangePasswordDto } from '../../../auth/presentation/dto/change-password.dto';
+import { type AvatarUploadService } from '../../application/avatar-upload.service';
+import { type UsersService } from '../../application/users.service';
+import { AvatarUploadUrlDto, type CreateAvatarUploadUrlDto } from '../dto/avatar-upload.dto';
+import { type UpdateProfileDto } from '../dto/update-profile.dto';
 
 /**
  * Handles authenticated user profile operations.
@@ -53,7 +54,7 @@ export class UsersController {
     if (!user) throw new UnauthorizedException();
     const record = await this.usersService.getById(user.id);
     if (!record) return null;
-    const { passwordHash, ...safe } = record;
+    const { passwordHash: _passwordHash, ...safe } = record;
     return safe;
   }
 
@@ -83,7 +84,7 @@ export class UsersController {
       showRatings: body.showRatings,
       allowFollowers: body.allowFollowers,
     });
-    const { passwordHash, ...safe } = updated;
+    const { passwordHash: _passwordHash, ...safe } = updated;
     return safe;
   }
 

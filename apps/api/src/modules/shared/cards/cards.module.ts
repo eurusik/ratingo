@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+
 import { CardEnrichmentService } from './application/card-enrichment.service';
 
 /**

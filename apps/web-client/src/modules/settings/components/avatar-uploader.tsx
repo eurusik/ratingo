@@ -21,8 +21,11 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 /**
  * Validates avatar file against MIME type and size constraints.
  */
-function validateAvatarFile(file: File, dict: ReturnType<typeof useTranslation>['dict']): string | null {
-  if (!VALID_MIME_TYPES.includes(file.type as typeof VALID_MIME_TYPES[number])) {
+function validateAvatarFile(
+  file: File,
+  dict: ReturnType<typeof useTranslation>['dict'],
+): string | null {
+  if (!VALID_MIME_TYPES.includes(file.type as (typeof VALID_MIME_TYPES)[number])) {
     return dict.settings.errors.invalidFileType;
   }
 
@@ -76,7 +79,7 @@ export function AvatarUploader({ currentAvatarUrl, onUploadSuccess }: AvatarUplo
           setError(dict.settings.errors.uploadFailed);
           setPreviewUrl(null);
         },
-      }
+      },
     );
   };
 
@@ -125,7 +128,9 @@ export function AvatarUploader({ currentAvatarUrl, onUploadSuccess }: AvatarUplo
         </Button>
 
         <div className="text-xs text-muted-foreground">
-          <div>{dict.settings.avatar.formats} • {dict.settings.avatar.maxSize}</div>
+          <div>
+            {dict.settings.avatar.formats} • {dict.settings.avatar.maxSize}
+          </div>
           <div className="text-muted-foreground/70">{dict.settings.avatar.squareHint}</div>
         </div>
 

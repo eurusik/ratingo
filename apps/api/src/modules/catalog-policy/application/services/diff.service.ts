@@ -7,24 +7,26 @@
 
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import * as schema from '../../../../database/schema';
+
 import { eq, sql, inArray } from 'drizzle-orm';
-import {
-  ICatalogEvaluationRunRepository,
-  CATALOG_EVALUATION_RUN_REPOSITORY,
-} from '../../infrastructure/repositories/catalog-evaluation-run.repository';
-import {
-  ICatalogPolicyRepository,
-  CATALOG_POLICY_REPOSITORY,
-} from '../../infrastructure/repositories/catalog-policy.repository';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
 import {
   EligibilityStatus,
   DIFF_STATUS_NONE,
   DIFFABLE_RUN_STATUSES,
-  DiffStatus,
+  type DiffStatus,
 } from '../../domain/constants/evaluation.constants';
+import {
+  type ICatalogEvaluationRunRepository,
+  CATALOG_EVALUATION_RUN_REPOSITORY,
+} from '../../infrastructure/repositories/catalog-evaluation-run.repository';
+import {
+  type ICatalogPolicyRepository,
+  CATALOG_POLICY_REPOSITORY,
+} from '../../infrastructure/repositories/catalog-policy.repository';
 
 export interface DiffCounts {
   /** Items that will be removed from catalog (ELIGIBLE → INELIGIBLE) */
@@ -129,7 +131,7 @@ export class DiffService {
     }
 
     // 2. Verify run is SUCCESS or PROMOTED (diff only makes sense for completed runs)
-    if (!DIFFABLE_RUN_STATUSES.includes(run.status as any)) {
+    if (!DIFFABLE_RUN_STATUSES.includes(run.status as (typeof DIFFABLE_RUN_STATUSES)[number])) {
       throw new BadRequestException(
         `Run status is ${run.status}, diff only available for ${DIFFABLE_RUN_STATUSES.join(' or ')} runs`,
       );

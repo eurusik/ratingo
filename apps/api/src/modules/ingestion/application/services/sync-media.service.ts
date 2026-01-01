@@ -1,19 +1,25 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
-import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
-import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
-import { IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { ScoreCalculatorService, ScoreInput } from '../../../shared/score-calculator';
-import { NormalizedMedia } from '../../domain/models/normalized-media.model';
+
+import slugify from 'slugify';
+
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { MediaType } from '../../../../common/enums/media-type.enum';
+import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import {
-  ICatalogPolicyEvaluator,
+  type ICatalogPolicyEvaluator,
   CATALOG_POLICY_EVALUATOR,
   classifyContent,
 } from '../../../catalog-policy/public';
-import slugify from 'slugify';
+import { type ScoreCalculatorService, type ScoreInput } from '../../../shared/score-calculator';
+import { type TmdbAdapter } from '../../../tmdb/public';
+import { type NormalizedMedia } from '../../domain/models/normalized-media.model';
+import { type OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
+import { type TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
+
+import { type TvMazeEnrichmentService } from './tvmaze-enrichment.service';
+
+// Score display multiplier (0-1 to 0-100)
+const SCORE_PERCENT_MULTIPLIER = 100;
 
 /**
  * Result of checking if media exists.
@@ -146,7 +152,7 @@ export class SyncMediaService {
       await this.evaluateCatalog(tmdbId, logPrefix);
 
       this.logger.log(
-        `${logPrefix} Synced: ${classified.title} (Ratingo: ${((classified.ratingoScore ?? 0) * 100).toFixed(1)})`,
+        `${logPrefix} Synced: ${classified.title} (Ratingo: ${((classified.ratingoScore ?? 0) * SCORE_PERCENT_MULTIPLIER).toFixed(1)})`,
       );
     } catch (error) {
       this.logger.error(`${logPrefix} Failed: ${error.message}`, error.stack);
@@ -283,7 +289,7 @@ export class SyncMediaService {
   }
 
   /** Persists media to database. */
-  private async persist(media: NormalizedMedia, tmdbId: number): Promise<void> {
+  private async persist(media: NormalizedMedia, _tmdbId: number): Promise<void> {
     await this.mediaRepository.upsert(media);
   }
 
