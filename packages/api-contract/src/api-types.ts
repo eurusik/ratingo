@@ -938,26 +938,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/catalog-policies/backfill/content-class": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Backfill content_class for all media items
-         * @description Classifies all existing media items based on genres and origin metadata. Use dry-run mode to preview changes without updating the database. Set triggerReEvaluation=true to automatically re-evaluate catalog after backfill.
-         */
-        post: operations["BackfillController_backfillContentClass"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/stats/sync": {
         parameters: {
             query?: never;
@@ -1261,7 +1241,7 @@ export interface components {
         };
         RatingoStatsDto: {
             /**
-             * @description Composite Hype Score (0-100)
+             * @description Composite Ratingo Score (0-100)
              * @example 85.5
              */
             ratingoScore?: number | null;
@@ -1951,13 +1931,14 @@ export interface components {
             /** @example Rewatching with friends */
             notes?: string | null;
         };
+        Function: Record<string, never>;
         MeUserMediaSummaryDto: {
             id: string;
             /** @enum {string} */
             type: "movie" | "show";
             title: string;
             slug: string;
-            poster: components["schemas"]["ImageDto"] | null;
+            poster: components["schemas"]["Function"] | null;
             /** Format: date-time */
             releaseDate?: string | null;
             card?: components["schemas"]["CardMetaDto"];
@@ -2146,7 +2127,7 @@ export interface components {
             type: "movie" | "show";
             title: string;
             slug: string;
-            poster: components["schemas"]["ImageDto"] | null;
+            poster: components["schemas"]["Function"] | null;
             /** Format: date-time */
             releaseDate?: string | null;
         };
@@ -2277,6 +2258,59 @@ export interface components {
             /** @description List of policies */
             data: components["schemas"]["PolicyDto"][];
         };
+        BreakoutRuleRequirementsDto: {
+            /**
+             * @description Minimum IMDb vote count required
+             * @example 10000
+             */
+            minImdbVotes?: number;
+            /**
+             * @description Minimum Trakt vote count required
+             * @example 5000
+             */
+            minTraktVotes?: number;
+            /**
+             * @description Minimum normalized quality score (0.0 to 1.0)
+             * @example 0.7
+             */
+            minQualityScoreNormalized?: number;
+            /**
+             * @description List of streaming providers - at least one must be present
+             * @example [
+             *       "netflix",
+             *       "prime",
+             *       "disney"
+             *     ]
+             */
+            requireAnyOfProviders?: unknown[][];
+            /**
+             * @description Rating sources - at least one must have a rating present. Valid values: imdb, metacritic, rt, trakt
+             * @example [
+             *       "imdb",
+             *       "rt"
+             *     ]
+             */
+            requireAnyOfRatingsPresent?: ("imdb" | "metacritic" | "rt" | "trakt")[];
+        };
+        BreakoutRuleDto: {
+            /**
+             * @description Unique identifier for the breakout rule
+             * @example high-quality-exception
+             */
+            id: string;
+            /**
+             * @description Human-readable name for the breakout rule
+             * @example High Quality Content Exception
+             */
+            name: string;
+            /**
+             * @description Priority of the rule (lower number = higher priority)
+             * @example 1
+             */
+            priority: number;
+            /** @description Requirements that must be met for this rule to apply */
+            requirements: components["schemas"]["BreakoutRuleRequirementsDto"];
+        };
         HomepageConfigDto: {
             /**
              * @description Minimum relevance score for homepage items (0-100)
@@ -2337,7 +2371,7 @@ export interface components {
              *       "UA"
              *     ]
              */
-            allowedCountries: unknown[][];
+            allowedCountries: string[];
             /**
              * @description Blocked countries (ISO 3166-1 alpha-2 codes)
              * @example [
@@ -2345,7 +2379,7 @@ export interface components {
              *       "BY"
              *     ]
              */
-            blockedCountries: unknown[][];
+            blockedCountries: string[];
             /**
              * @description Blocked country mode
              * @example ANY
@@ -2361,14 +2395,14 @@ export interface components {
              *       "fr"
              *     ]
              */
-            allowedLanguages: unknown[][];
+            allowedLanguages: string[];
             /**
              * @description Blocked languages (ISO 639-1 codes)
              * @example [
              *       "ru"
              *     ]
              */
-            blockedLanguages: unknown[][];
+            blockedLanguages: string[];
             /**
              * @description Global streaming providers
              * @example [
@@ -2379,9 +2413,9 @@ export interface components {
              *       "disney"
              *     ]
              */
-            globalProviders: unknown[][];
+            globalProviders: string[];
             /** @description Breakout rules for exceptions */
-            breakoutRules: unknown[][];
+            breakoutRules: components["schemas"]["BreakoutRuleDto"][];
             /**
              * @description Eligibility mode (STRICT = country AND language, RELAXED = country OR language)
              * @example STRICT
@@ -2993,7 +3027,6 @@ export interface components {
              */
             currentPolicyVersion?: number;
         };
-        BackfillResponseDto: Record<string, never>;
         SaveItemDto: {
             /**
              * @description List to save to: for_later or considering
@@ -3233,56 +3266,23 @@ export interface components {
              */
             mediaSummary: Record<string, never>;
         };
-        HeroStatsDto: {
-            /** @example 85.5 */
-            ratingoScore: number;
-            /** @example 88.5 */
-            qualityScore: number;
+        HeroShowProgressDto: {
+            /** @example 5 */
+            season: number;
+            /** @example 5 */
+            episode: number;
+            /** @example S5E5 */
+            label: string;
             /**
-             * @description Number of people watching right now (Live)
-             * @example 6
+             * Format: date-time
+             * @example 2025-12-14T00:00:00.000Z
              */
-            liveWatchers?: number;
+            lastAirDate?: string;
             /**
-             * @description Total unique watchers all time
-             * @example 6423
+             * Format: date-time
+             * @example 2025-12-21T00:00:00.000Z
              */
-            totalWatchers?: number;
-        };
-        HeroExternalRatingsDto: {
-            /**
-             * @example {
-             *       "rating": 8.4,
-             *       "voteCount": 20000
-             *     }
-             */
-            tmdb?: Record<string, never>;
-            /**
-             * @example {
-             *       "rating": 8.7,
-             *       "voteCount": 1500000
-             *     }
-             */
-            imdb?: Record<string, never> | null;
-            /**
-             * @example {
-             *       "rating": 8.5,
-             *       "voteCount": 50000
-             *     }
-             */
-            trakt?: Record<string, never> | null;
-            /**
-             * @example {
-             *       "rating": 75
-             *     }
-             */
-            metacritic?: Record<string, never> | null;
-            /**
-             * @example {
-             *       "rating": 85
-             *     }
-             */
-            rottenTomatoes?: Record<string, never> | null;
+            nextAirDate?: string;
         };
         HeroItemDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
@@ -3301,7 +3301,7 @@ export interface components {
             /** @example Fight Club */
             originalTitle: string;
             /** @example An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more. */
-            overview: string;
+            overview: string | null;
             /**
              * @description YouTube video key for primary trailer
              * @example ogFrkWefoLQ
@@ -3309,13 +3309,13 @@ export interface components {
             primaryTrailerKey?: string | null;
             poster: components["schemas"]["ImageDto"];
             backdrop: components["schemas"]["ImageDto"];
-            stats: components["schemas"]["HeroStatsDto"];
-            externalRatings?: components["schemas"]["HeroExternalRatingsDto"];
+            stats: components["schemas"]["RatingoStatsDto"];
+            externalRatings?: components["schemas"]["ExternalRatingsDto"];
             /**
              * Format: date-time
              * @example 1999-10-15T00:00:00.000Z
              */
-            releaseDate: string;
+            releaseDate: string | null;
             /**
              * @description True if released within last 90 days
              * @example false
@@ -3326,16 +3326,8 @@ export interface components {
              * @example true
              */
             isClassic: boolean;
-            /**
-             * @description Progress info for TV Shows (latest aired episode)
-             * @example {
-             *       "season": 5,
-             *       "episode": 5,
-             *       "label": "S5E5",
-             *       "lastAirDate": "2025-12-14"
-             *     }
-             */
-            showProgress?: Record<string, never>;
+            /** @description Progress info for TV Shows (latest aired episode) */
+            showProgress?: components["schemas"]["HeroShowProgressDto"];
         };
         RiseFallStatsDto: {
             /** @description Absolute change in watchers count */
@@ -4922,37 +4914,6 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["DryRunResponseDto"];
-                    };
-                };
-            };
-        };
-    };
-    BackfillController_backfillContentClass: {
-        parameters: {
-            query?: {
-                /** @description If true, only simulates changes without updating DB */
-                dryRun?: boolean;
-                /** @description Batch size for processing (default: 1000) */
-                batchSize?: number;
-                /** @description If true, triggers catalog re-evaluation after backfill completes */
-                triggerReEvaluation?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Backfill completed */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["BackfillResponseDto"];
                     };
                 };
             };

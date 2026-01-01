@@ -5,10 +5,10 @@ import { Button } from '@/shared/ui/button';
 import { Loader2, Save, X } from 'lucide-react';
 import type {
   PolicyConfigDto,
-  BreakoutRule,
+  BreakoutRuleDto,
   BlockedCountryMode,
   EligibilityMode,
-  GlobalRequirements,
+  GlobalRequirementsDto,
   ContentClass,
 } from '@/core/api/admin';
 import type { PolicyFormLabels } from './labels.types';
@@ -29,10 +29,10 @@ export interface PolicyFormData {
   allowedLanguages: string[];
   blockedLanguages: string[];
   globalProviders: string[];
-  breakoutRules: BreakoutRule[];
+  breakoutRules: BreakoutRuleDto[];
   eligibilityMode: EligibilityMode;
   homepage: { minRelevanceScore: number };
-  globalRequirements?: GlobalRequirements;
+  globalRequirements?: GlobalRequirementsDto;
   excludedContentClasses?: ContentClass[];
 }
 

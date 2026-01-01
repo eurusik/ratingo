@@ -3222,72 +3222,6 @@
         ]
       }
     },
-    "/api/admin/catalog-policies/backfill/content-class": {
-      "post": {
-        "operationId": "BackfillController_backfillContentClass",
-        "summary": "Backfill content_class for all media items",
-        "description": "Classifies all existing media items based on genres and origin metadata. Use dry-run mode to preview changes without updating the database. Set triggerReEvaluation=true to automatically re-evaluate catalog after backfill.",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "required": false,
-            "in": "query",
-            "description": "If true, only simulates changes without updating DB",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "batchSize",
-            "required": false,
-            "in": "query",
-            "description": "Batch size for processing (default: 1000)",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "triggerReEvaluation",
-            "required": false,
-            "in": "query",
-            "description": "If true, triggers catalog re-evaluation after backfill completes",
-            "schema": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Backfill completed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/BackfillResponseDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Admin - Content Classification"
-        ]
-      }
-    },
     "/api/stats/sync": {
       "post": {
         "operationId": "StatsController_syncTrendingStats",
@@ -4169,7 +4103,7 @@
           "ratingoScore": {
             "type": "number",
             "example": 85.5,
-            "description": "Composite Hype Score (0-100)",
+            "description": "Composite Ratingo Score (0-100)",
             "nullable": true
           },
           "qualityScore": {
@@ -5972,6 +5906,10 @@
           "state"
         ]
       },
+      "Function": {
+        "type": "object",
+        "properties": {}
+      },
       "MeUserMediaSummaryDto": {
         "type": "object",
         "properties": {
@@ -5995,7 +5933,7 @@
             "nullable": true,
             "allOf": [
               {
-                "$ref": "#/components/schemas/ImageDto"
+                "$ref": "#/components/schemas/Function"
               }
             ]
           },
@@ -6458,7 +6396,7 @@
             "nullable": true,
             "allOf": [
               {
-                "$ref": "#/components/schemas/ImageDto"
+                "$ref": "#/components/schemas/Function"
               }
             ]
           },
@@ -6698,6 +6636,96 @@
           "data"
         ]
       },
+      "BreakoutRuleRequirementsDto": {
+        "type": "object",
+        "properties": {
+          "minImdbVotes": {
+            "type": "number",
+            "description": "Minimum IMDb vote count required",
+            "example": 10000,
+            "minimum": 0
+          },
+          "minTraktVotes": {
+            "type": "number",
+            "description": "Minimum Trakt vote count required",
+            "example": 5000,
+            "minimum": 0
+          },
+          "minQualityScoreNormalized": {
+            "type": "number",
+            "description": "Minimum normalized quality score (0.0 to 1.0)",
+            "example": 0.7,
+            "minimum": 0,
+            "maximum": 1
+          },
+          "requireAnyOfProviders": {
+            "description": "List of streaming providers - at least one must be present",
+            "example": [
+              "netflix",
+              "prime",
+              "disney"
+            ],
+            "type": "array",
+            "items": {
+              "type": "array"
+            }
+          },
+          "requireAnyOfRatingsPresent": {
+            "type": "array",
+            "description": "Rating sources - at least one must have a rating present. Valid values: imdb, metacritic, rt, trakt",
+            "example": [
+              "imdb",
+              "rt"
+            ],
+            "items": {
+              "type": "string",
+              "enum": [
+                "imdb",
+                "metacritic",
+                "rt",
+                "trakt"
+              ]
+            }
+          }
+        }
+      },
+      "BreakoutRuleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the breakout rule",
+            "example": "high-quality-exception",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name for the breakout rule",
+            "example": "High Quality Content Exception",
+            "minLength": 1
+          },
+          "priority": {
+            "type": "number",
+            "description": "Priority of the rule (lower number = higher priority)",
+            "example": 1,
+            "minimum": 0
+          },
+          "requirements": {
+            "description": "Requirements that must be met for this rule to apply",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BreakoutRuleRequirementsDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "priority",
+          "requirements"
+        ]
+      },
       "HomepageConfigDto": {
         "type": "object",
         "properties": {
@@ -6809,7 +6837,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "blockedCountries": {
@@ -6820,7 +6848,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "blockedCountryMode": {
@@ -6842,7 +6870,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "blockedLanguages": {
@@ -6852,7 +6880,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "globalProviders": {
@@ -6866,15 +6894,15 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "breakoutRules": {
             "description": "Breakout rules for exceptions",
+            "type": "array",
             "items": {
-              "type": "array"
-            },
-            "type": "array"
+              "$ref": "#/components/schemas/BreakoutRuleDto"
+            }
           },
           "eligibilityMode": {
             "type": "string",
@@ -7889,10 +7917,6 @@
           "items"
         ]
       },
-      "BackfillResponseDto": {
-        "type": "object",
-        "properties": {}
-      },
       "SaveItemDto": {
         "type": "object",
         "properties": {
@@ -8330,74 +8354,37 @@
           "mediaSummary"
         ]
       },
-      "HeroStatsDto": {
+      "HeroShowProgressDto": {
         "type": "object",
         "properties": {
-          "ratingoScore": {
+          "season": {
             "type": "number",
-            "example": 85.5
+            "example": 5
           },
-          "qualityScore": {
+          "episode": {
             "type": "number",
-            "example": 88.5
+            "example": 5
           },
-          "liveWatchers": {
-            "type": "number",
-            "example": 6,
-            "description": "Number of people watching right now (Live)"
+          "label": {
+            "type": "string",
+            "example": "S5E5"
           },
-          "totalWatchers": {
-            "type": "number",
-            "example": 6423,
-            "description": "Total unique watchers all time"
+          "lastAirDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-12-14T00:00:00.000Z"
+          },
+          "nextAirDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2025-12-21T00:00:00.000Z"
           }
         },
         "required": [
-          "ratingoScore",
-          "qualityScore"
+          "season",
+          "episode",
+          "label"
         ]
-      },
-      "HeroExternalRatingsDto": {
-        "type": "object",
-        "properties": {
-          "tmdb": {
-            "type": "object",
-            "example": {
-              "rating": 8.4,
-              "voteCount": 20000
-            }
-          },
-          "imdb": {
-            "type": "object",
-            "example": {
-              "rating": 8.7,
-              "voteCount": 1500000
-            },
-            "nullable": true
-          },
-          "trakt": {
-            "type": "object",
-            "example": {
-              "rating": 8.5,
-              "voteCount": 50000
-            },
-            "nullable": true
-          },
-          "metacritic": {
-            "type": "object",
-            "example": {
-              "rating": 75
-            },
-            "nullable": true
-          },
-          "rottenTomatoes": {
-            "type": "object",
-            "example": {
-              "rating": 85
-            },
-            "nullable": true
-          }
-        }
       },
       "HeroItemDto": {
         "type": "object",
@@ -8432,7 +8419,8 @@
           },
           "overview": {
             "type": "string",
-            "example": "An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more."
+            "example": "An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into much more.",
+            "nullable": true
           },
           "primaryTrailerKey": {
             "type": "string",
@@ -8447,15 +8435,16 @@
             "$ref": "#/components/schemas/ImageDto"
           },
           "stats": {
-            "$ref": "#/components/schemas/HeroStatsDto"
+            "$ref": "#/components/schemas/RatingoStatsDto"
           },
           "externalRatings": {
-            "$ref": "#/components/schemas/HeroExternalRatingsDto"
+            "$ref": "#/components/schemas/ExternalRatingsDto"
           },
           "releaseDate": {
             "format": "date-time",
             "type": "string",
-            "example": "1999-10-15T00:00:00.000Z"
+            "example": "1999-10-15T00:00:00.000Z",
+            "nullable": true
           },
           "isNew": {
             "type": "boolean",
@@ -8468,14 +8457,12 @@
             "description": "True if released more than 5 years ago"
           },
           "showProgress": {
-            "type": "object",
-            "example": {
-              "season": 5,
-              "episode": 5,
-              "label": "S5E5",
-              "lastAirDate": "2025-12-14"
-            },
-            "description": "Progress info for TV Shows (latest aired episode)"
+            "description": "Progress info for TV Shows (latest aired episode)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HeroShowProgressDto"
+              }
+            ]
           }
         },
         "required": [

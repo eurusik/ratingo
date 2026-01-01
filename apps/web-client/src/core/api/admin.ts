@@ -13,100 +13,38 @@ import type { components } from '@ratingo/api-contract';
 /** Policy DTO from API contract. */
 export type PolicyDto = components['schemas']['PolicyDto'];
 
+/** Policy detail DTO from API contract. */
+export type PolicyDetailDto = components['schemas']['PolicyDetailDto'];
+
+/** Policy config DTO from API contract. */
+export type PolicyConfigDto = components['schemas']['PolicyConfigDto'];
+
 /** Blocked country mode enum from API contract. */
-export type BlockedCountryMode = components['schemas']['PolicyConfigDto']['blockedCountryMode'];
+export type BlockedCountryMode = PolicyConfigDto['blockedCountryMode'];
 
 /** Eligibility mode enum from API contract. */
-export type EligibilityMode = components['schemas']['PolicyConfigDto']['eligibilityMode'];
+export type EligibilityMode = PolicyConfigDto['eligibilityMode'];
 
-/** Breakout rule requirements type. */
-export interface BreakoutRuleRequirements {
-  minImdbVotes?: number;
-  minTraktVotes?: number;
-  minQualityScoreNormalized?: number;
-  requireAnyOfProviders?: string[];
-  requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[];
-}
+/** Content class type from API contract. */
+export type ContentClass = NonNullable<PolicyConfigDto['excludedContentClasses']>[number];
 
-/** Breakout rule type. */
-export interface BreakoutRule {
-  id: string;
-  name: string;
-  priority: number;
-  requirements: BreakoutRuleRequirements;
-}
+/** Breakout rule DTO from API contract. */
+export type BreakoutRuleDto = components['schemas']['BreakoutRuleDto'];
 
-/** Homepage config type. */
-export interface HomepageConfig {
-  minRelevanceScore: number;
-}
+/** Breakout rule requirements DTO from API contract. */
+export type BreakoutRuleRequirementsDto = components['schemas']['BreakoutRuleRequirementsDto'];
 
-/** Min votes any-of configuration type. */
-export interface MinVotesAnyOf {
-  sources: ('imdb' | 'trakt')[];
-  min: number;
-}
+/** Homepage config DTO from API contract. */
+export type HomepageConfigDto = components['schemas']['HomepageConfigDto'];
 
-/** Evaluation context type. */
-export type EvaluationContext =
-  | 'catalog'
-  | 'homepage'
-  | 'trending'
-  | 'now_playing'
-  | 'new_digital'
-  | 'search';
+/** Global requirements DTO from API contract. */
+export type GlobalRequirementsDto = components['schemas']['GlobalRequirementsDto'];
 
-/** Global requirements type. */
-export interface GlobalRequirements {
-  minQualityScoreNormalized?: number;
-  requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[];
-  minVotesAnyOf?: MinVotesAnyOf;
-  appliesTo?: EvaluationContext[];
-}
+/** Min votes any-of DTO from API contract. */
+export type MinVotesAnyOfDto = components['schemas']['MinVotesAnyOfDto'];
 
-/** Create policy request type (manual, because generated types are broken). */
-export interface CreatePolicyRequest {
-  allowedCountries: string[];
-  blockedCountries: string[];
-  blockedCountryMode?: BlockedCountryMode;
-  allowedLanguages: string[];
-  blockedLanguages: string[];
-  globalProviders?: string[];
-  breakoutRules?: BreakoutRule[];
-  eligibilityMode?: EligibilityMode;
-  homepage?: { minRelevanceScore?: number };
-  globalRequirements?: GlobalRequirements;
-  excludedContentClasses?: ContentClass[];
-}
-
-/** Content class type. */
-export type ContentClass = 'mainstream' | 'anime' | 'documentary' | 'reality' | 'kids';
-
-/** Policy config type. */
-export interface PolicyConfigDto {
-  allowedCountries: string[];
-  blockedCountries: string[];
-  blockedCountryMode: BlockedCountryMode;
-  allowedLanguages: string[];
-  blockedLanguages: string[];
-  globalProviders: string[];
-  breakoutRules: BreakoutRule[];
-  eligibilityMode: EligibilityMode;
-  homepage: HomepageConfig;
-  globalRequirements?: GlobalRequirements;
-  excludedContentClasses?: ContentClass[];
-}
-
-/** Policy detail DTO type. */
-export interface PolicyDetailDto {
-  id: string;
-  name: string;
-  version: string;
-  status: 'active' | 'inactive';
-  config: PolicyConfigDto;
-  createdAt: string;
-  activatedAt?: string;
-}
+/** Evaluation context type from API contract. */
+export type EvaluationContext = NonNullable<GlobalRequirementsDto['appliesTo']>[number];
 
 /** Evaluation run DTO from API contract. */
 export type EvaluationRunDto = components['schemas']['EvaluationRunDto'];
@@ -126,7 +64,7 @@ export type DiffReportDto = components['schemas']['DiffReportDto'];
 /** Progress statistics DTO from API contract. */
 export type ProgressStatsDto = components['schemas']['ProgressStatsDto'];
 
-/** Create policy request DTO from API contract. */
+/** Create policy DTO from API contract. */
 export type CreatePolicyDto = components['schemas']['CreatePolicyDto'];
 
 /** Create policy response DTO from API contract. */
@@ -212,8 +150,9 @@ export class AdminApiClient {
    *
    * @param body - Policy configuration
    * @returns Created policy response with ID and version
+   * @throws {ApiError} When request fails
    */
-  async createPolicy(body: CreatePolicyRequest): Promise<CreatePolicyResponseDto> {
+  async createPolicy(body: CreatePolicyDto): Promise<CreatePolicyResponseDto> {
     return apiPost<CreatePolicyResponseDto>('admin/catalog-policies', body);
   }
 

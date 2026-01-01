@@ -7,7 +7,7 @@ import { Input } from '@/shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Badge } from '@/shared/ui/badge';
 import { X } from 'lucide-react';
-import type { GlobalRequirements } from '@/core/api/admin';
+import type { GlobalRequirementsDto } from '@/core/api/admin';
 
 type RatingSource = 'imdb' | 'metacritic' | 'rt' | 'trakt';
 type VoteSource = 'imdb' | 'trakt';
@@ -20,8 +20,8 @@ type EvaluationContext =
   | 'search';
 
 interface GlobalRequirementsEditorProps {
-  globalRequirements?: GlobalRequirements;
-  onChange: (value: GlobalRequirements | undefined) => void;
+  globalRequirements?: GlobalRequirementsDto;
+  onChange: (value: GlobalRequirementsDto | undefined) => void;
   labels?: {
     title?: string;
     description?: string;
@@ -80,16 +80,16 @@ export function GlobalRequirementsEditor({
   onChange,
   labels,
 }: GlobalRequirementsEditorProps) {
-  const updateField = <K extends keyof GlobalRequirements>(
+  const updateField = <K extends keyof GlobalRequirementsDto>(
     field: K,
-    value: GlobalRequirements[K],
+    value: GlobalRequirementsDto[K],
   ) => {
     const updated = { ...globalRequirements, [field]: value };
 
     // Clean up undefined values
     Object.keys(updated).forEach((key) => {
-      if (updated[key as keyof GlobalRequirements] === undefined) {
-        delete updated[key as keyof GlobalRequirements];
+      if (updated[key as keyof GlobalRequirementsDto] === undefined) {
+        delete updated[key as keyof GlobalRequirementsDto];
       }
     });
 

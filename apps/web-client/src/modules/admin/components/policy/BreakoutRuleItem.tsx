@@ -1,10 +1,10 @@
 'use client';
 
 import { Badge } from '@/shared/ui/badge';
-import type { BreakoutRule } from '@/core/api/admin';
+import type { BreakoutRuleDto } from '@/core/api/admin';
 
 interface BreakoutRuleItemProps {
-  rule: BreakoutRule;
+  rule: BreakoutRuleDto;
   priorityLabel?: string;
 }
 

@@ -23,6 +23,7 @@ import {
 import { cn } from '@/shared/utils';
 import { REGION_GROUPS } from '@/shared/constants';
 import type { MeDto } from '@/core/api';
+import { ApiError } from '@/core/api';
 import { createProfileSchema, type ProfileFormData } from '../schemas';
 import { useUpdateProfile } from '../hooks';
 import { AvatarUploader } from './avatar-uploader';
@@ -95,7 +96,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
       });
       onSuccess();
     } catch (err) {
-      if (err && typeof err === 'object' && 'statusCode' in err && err.statusCode === 409) {
+      if (err instanceof ApiError && err.statusCode === 409) {
         setError(dict.settings.errors.usernameTaken);
       } else {
         setError(dict.settings.errors.saveFailed);

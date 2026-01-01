@@ -7,12 +7,12 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Badge } from '@/shared/ui/badge';
-import type { BreakoutRule } from '@/core/api/admin';
+import type { BreakoutRuleDto } from '@/core/api/admin';
 import { TagInput } from './TagInput';
 
 interface BreakoutRulesEditorProps {
-  rules: BreakoutRule[];
-  onChange: (rules: BreakoutRule[]) => void;
+  rules: BreakoutRuleDto[];
+  onChange: (rules: BreakoutRuleDto[]) => void;
   labels?: {
     title?: string;
     description?: string;
@@ -37,7 +37,7 @@ export function BreakoutRulesEditor({ rules, onChange, labels }: BreakoutRulesEd
   const [expandedRule, setExpandedRule] = useState<string | null>(null);
 
   const addRule = () => {
-    const newRule: BreakoutRule = {
+    const newRule: BreakoutRuleDto = {
       id: `rule-${Date.now()}`,
       name: `Rule ${rules.length + 1}`,
       priority: rules.length + 1,
@@ -51,13 +51,13 @@ export function BreakoutRulesEditor({ rules, onChange, labels }: BreakoutRulesEd
     onChange(rules.filter((r) => r.id !== ruleId));
   };
 
-  const updateRule = (ruleId: string, updates: Partial<BreakoutRule>) => {
+  const updateRule = (ruleId: string, updates: Partial<BreakoutRuleDto>) => {
     onChange(rules.map((r) => (r.id === ruleId ? { ...r, ...updates } : r)));
   };
 
   const updateRequirements = (
     ruleId: string,
-    reqUpdates: Partial<BreakoutRule['requirements']>,
+    reqUpdates: Partial<BreakoutRuleDto['requirements']>,
   ) => {
     onChange(
       rules.map((r) =>

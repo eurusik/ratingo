@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GlobalRequirementsEditor } from '../GlobalRequirementsEditor';
-import type { GlobalRequirements } from '@/core/api/admin';
+import type { GlobalRequirementsDto } from '@/core/api/admin';
 
 describe('GlobalRequirementsEditor', () => {
   /**
@@ -25,7 +25,7 @@ describe('GlobalRequirementsEditor', () => {
 
   test('renders with existing values', () => {
     const onChange = jest.fn();
-    const existingValues: GlobalRequirements = {
+    const existingValues: GlobalRequirementsDto = {
       minVotesAnyOf: { sources: ['imdb', 'trakt'], min: 3000 },
       minQualityScoreNormalized: 0.6,
       requireAnyOfRatingsPresent: ['imdb', 'metacritic'],
@@ -58,7 +58,7 @@ describe('GlobalRequirementsEditor', () => {
 
   test('clears field when input is empty', () => {
     const onChange = jest.fn();
-    const existingValues: GlobalRequirements = {
+    const existingValues: GlobalRequirementsDto = {
       minQualityScoreNormalized: 0.6,
     };
 
@@ -89,7 +89,7 @@ describe('GlobalRequirementsEditor', () => {
 
   test('removes rating source', () => {
     const onChange = jest.fn();
-    const existingValues: GlobalRequirements = {
+    const existingValues: GlobalRequirementsDto = {
       requireAnyOfRatingsPresent: ['imdb', 'metacritic'],
     };
 
@@ -109,7 +109,7 @@ describe('GlobalRequirementsEditor', () => {
 
   test('removes last rating source sets to undefined', () => {
     const onChange = jest.fn();
-    const existingValues: GlobalRequirements = {
+    const existingValues: GlobalRequirementsDto = {
       requireAnyOfRatingsPresent: ['imdb'],
     };
 
@@ -146,7 +146,7 @@ describe('GlobalRequirementsEditor', () => {
 
   test('handles minVotesAnyOf updates', () => {
     const onChange = jest.fn();
-    const existingValues: GlobalRequirements = {
+    const existingValues: GlobalRequirementsDto = {
       minVotesAnyOf: { sources: ['imdb'], min: 3000 },
     };
 
@@ -175,7 +175,7 @@ describe('GlobalRequirementsEditor', () => {
 
   test('validates vote counts input attributes', () => {
     const onChange = jest.fn();
-    const existingValues: GlobalRequirements = {
+    const existingValues: GlobalRequirementsDto = {
       minVotesAnyOf: { sources: ['imdb'], min: 3000 },
     };
 

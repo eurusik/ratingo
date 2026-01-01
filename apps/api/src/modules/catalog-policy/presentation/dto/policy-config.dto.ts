@@ -43,7 +43,7 @@ export class PolicyConfigDto {
   @ApiProperty({
     description: 'Allowed countries (ISO 3166-1 alpha-2 codes)',
     example: ['US', 'GB', 'CA', 'AU', 'UA'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })
@@ -52,7 +52,7 @@ export class PolicyConfigDto {
   @ApiProperty({
     description: 'Blocked countries (ISO 3166-1 alpha-2 codes)',
     example: ['RU', 'BY'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })
@@ -69,7 +69,7 @@ export class PolicyConfigDto {
   @ApiProperty({
     description: 'Allowed languages (ISO 639-1 codes)',
     example: ['en', 'uk', 'de', 'fr'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })
@@ -78,7 +78,7 @@ export class PolicyConfigDto {
   @ApiProperty({
     description: 'Blocked languages (ISO 639-1 codes)',
     example: ['ru'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })
@@ -87,7 +87,7 @@ export class PolicyConfigDto {
   @ApiProperty({
     description: 'Global streaming providers',
     example: ['netflix', 'max', 'appletv', 'prime', 'disney'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })
@@ -96,7 +96,6 @@ export class PolicyConfigDto {
   @ApiProperty({
     description: 'Breakout rules for exceptions',
     type: [BreakoutRuleDto],
-    isArray: true,
   })
   @IsArray()
   @ValidateNested({ each: true })
