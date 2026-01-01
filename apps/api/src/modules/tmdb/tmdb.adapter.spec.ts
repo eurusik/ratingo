@@ -285,7 +285,7 @@ describe('TmdbAdapter', () => {
       expect(result?.title).toBe('Some Show');
       expect(result?.externalIds.tmdbId).toBe(54321);
       expect(result?.type).toBe(MediaType.SHOW);
-      expect(result?.releaseDate).toBe('2024-01-01');
+      expect(result?.releaseDate).toEqual(new Date('2024-01-01'));
     });
   });
 
