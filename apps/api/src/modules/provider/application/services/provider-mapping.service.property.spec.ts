@@ -1,13 +1,8 @@
 /**
  * Provider Mapping Service Property-Based Tests
- *
- * Feature: provider-system-redesign
- * Tasks: 3.3, 3.4
  */
 
 import * as fc from 'fast-check';
-
-import { PROVIDER_MAPPING_REPOSITORY } from '../../domain/repositories/provider-mapping.repository.interface';
 import type { ProviderMapping, ResolvedMapping } from '../../domain/types/provider.types';
 import { GLOBAL_REGION } from '../../domain/utils/region-normalizer';
 import { ProviderMappingService } from './provider-mapping.service';
@@ -38,15 +33,6 @@ describe('Provider Mapping Service - Property-Based Tests', () => {
     createdAt: dateArb,
   });
 
-  /**
-   * Property 3: Mapping Resolution Excludes Offer Type (Task 3.3)
-   *
-   * For any TMDB provider ID with a valid mapping, the resolved mapping SHALL contain
-   * providerId, variantId, and distributionChannel fields, and SHALL NOT contain an
-   * offerType field.
-   *
-   * Validates: Requirements 3.2, 3.3
-   */
   describe('Property 3: Mapping Resolution Excludes Offer Type', () => {
     it('should return ResolvedMapping without offerType field', async () => {
       await fc.assert(
@@ -132,15 +118,6 @@ describe('Provider Mapping Service - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property 4: Region-Specific Mapping Priority (Task 3.4)
-   *
-   * For any TMDB provider ID that has both a global mapping (region = 'global') and
-   * a region-specific mapping, resolving with that specific region SHALL return the
-   * region-specific mapping, not the global one.
-   *
-   * Validates: Requirements 3.5, 3.6
-   */
   describe('Property 4: Region-Specific Mapping Priority', () => {
     it('should prefer region-specific mapping over global', async () => {
       await fc.assert(
