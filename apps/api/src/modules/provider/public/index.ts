@@ -9,9 +9,19 @@ export { ProviderModule } from '../provider.module';
 
 // Services
 export { ProviderRegistryService } from '../application/services/provider-registry.service';
+export { ProviderMappingService } from '../application/services/provider-mapping.service';
 
 // Repository tokens
 export { PROVIDER_REGISTRY_REPOSITORY } from '../domain/repositories/provider-registry.repository.interface';
+export { PROVIDER_MAPPING_REPOSITORY } from '../domain/repositories/provider-mapping.repository.interface';
+
+// Utils
+export {
+  normalizeRegion,
+  isGlobalRegion,
+  isValidRegionFormat,
+  GLOBAL_REGION,
+} from '../domain/utils/region-normalizer';
 
 // Types
 export type {
@@ -33,3 +43,4 @@ export type {
 
 // Repository interfaces
 export type { IProviderRegistryRepository } from '../domain/repositories/provider-registry.repository.interface';
+export type { IProviderMappingRepository } from '../domain/repositories/provider-mapping.repository.interface';

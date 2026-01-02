@@ -372,6 +372,22 @@ export default [
               from: './apps/api/src/modules/home/domain/**/*',
               message: 'Import from home/public instead of internal files.',
             },
+            // provider module
+            {
+              target: './apps/api/src/modules/!(provider)/**/*',
+              from: './apps/api/src/modules/provider/domain/**/*',
+              message: 'Import from provider/public instead of internal files.',
+            },
+            {
+              target: './apps/api/src/modules/!(provider)/**/*',
+              from: './apps/api/src/modules/provider/application/**/*',
+              message: 'Import from provider/public instead of internal files.',
+            },
+            {
+              target: './apps/api/src/modules/!(provider)/**/*',
+              from: './apps/api/src/modules/provider/infrastructure/**/*',
+              message: 'Import from provider/public instead of internal files.',
+            },
           ],
         },
       ],
