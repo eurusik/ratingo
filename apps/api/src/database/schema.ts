@@ -17,6 +17,7 @@ import {
   primaryKey,
 } from 'drizzle-orm/pg-core';
 
+import { DEFAULT_PROVIDER_PRIORITY } from '../common/constants/provider.constants';
 import { MediaType } from '../common/enums/media-type.enum';
 import {
   type VideoSiteEnum,
@@ -864,7 +865,7 @@ export const providerRegistry = pgTable('provider_registry', {
   displayName: text('display_name').notNull(),
   brandGroup: text('brand_group'),
   logoPath: text('logo_path'),
-  priority: integer('priority').default(100),
+  priority: integer('priority').default(DEFAULT_PROVIDER_PRIORITY),
   isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
