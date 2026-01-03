@@ -11,11 +11,13 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { mediaWatchOffers } from '../../../../database/schema';
+import { mediaWatchOffers, providerVariants } from '../../../../database/schema';
 import type {
   CreateWatchOfferInput,
   FindOffersOptions,
+  GetOffersForMediaBatchOptions,
   IMediaWatchOffersRepository,
+  MediaWatchOfferView,
 } from '../../domain/repositories/media-watch-offers.repository.interface';
 import type { MediaWatchOffer } from '../../domain/types/provider.types';
 
@@ -202,6 +204,114 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
       this.logger.error(`Failed to delete offers for media=${mediaItemId} region=${region}`, error);
       throw error;
     }
+  }
+
+  async getOffersForMediaBatch(
+    mediaItemIds: string[],
+    options?: GetOffersForMediaBatchOptions,
+  ): Promise<Map<string, MediaWatchOfferView[]>> {
+    if (mediaItemIds.length === 0) {
+      return new Map();
+    }
+
+    try {
+      const conditions = [inArray(mediaWatchOffers.mediaItemId, mediaItemIds)];
+
+      if (options?.offerTypes?.length) {
+        conditions.push(inArray(mediaWatchOffers.offerType, options.offerTypes));
+      }
+
+      if (options?.distributionChannels?.length) {
+        conditions.push(
+          inArray(mediaWatchOffers.distributionChannel, options.distributionChannels),
+        );
+      }
+
+      // Conditional JOIN with provider_variants when variant info needed
+      if (options?.includeVariantInfo) {
+        const rows = await this.db
+          .select({
+            mediaItemId: mediaWatchOffers.mediaItemId,
+            providerId: mediaWatchOffers.providerId,
+            offerType: mediaWatchOffers.offerType,
+            distributionChannel: mediaWatchOffers.distributionChannel,
+            variantId: mediaWatchOffers.variantId,
+            isAdsTier: providerVariants.isAdsTier,
+          })
+          .from(mediaWatchOffers)
+          .leftJoin(providerVariants, eq(mediaWatchOffers.variantId, providerVariants.id))
+          .where(and(...conditions));
+
+        return this.groupOfferViewsWithVariant(rows);
+      }
+
+      // Simple query without JOIN
+      const rows = await this.db
+        .select({
+          mediaItemId: mediaWatchOffers.mediaItemId,
+          providerId: mediaWatchOffers.providerId,
+          offerType: mediaWatchOffers.offerType,
+          distributionChannel: mediaWatchOffers.distributionChannel,
+        })
+        .from(mediaWatchOffers)
+        .where(and(...conditions));
+
+      return this.groupOfferViews(rows);
+    } catch (error) {
+      this.logger.error(`Failed to get offers for ${mediaItemIds.length} media items batch`, error);
+      throw error;
+    }
+  }
+
+  private groupOfferViews(
+    rows: Array<{
+      mediaItemId: string;
+      providerId: string;
+      offerType: 'flatrate' | 'rent' | 'buy' | 'ads' | 'free';
+      distributionChannel: 'direct' | 'amazon_channel' | 'apple_tv_channel';
+    }>,
+  ): Map<string, MediaWatchOfferView[]> {
+    const grouped = new Map<string, MediaWatchOfferView[]>();
+
+    for (const row of rows) {
+      const offers = grouped.get(row.mediaItemId) ?? [];
+      offers.push({
+        providerId: row.providerId,
+        offerType: row.offerType,
+        distributionChannel: row.distributionChannel,
+      });
+      grouped.set(row.mediaItemId, offers);
+    }
+
+    return grouped;
+  }
+
+  private groupOfferViewsWithVariant(
+    rows: Array<{
+      mediaItemId: string;
+      providerId: string;
+      offerType: 'flatrate' | 'rent' | 'buy' | 'ads' | 'free';
+      distributionChannel: 'direct' | 'amazon_channel' | 'apple_tv_channel';
+      variantId: string | null;
+      isAdsTier: boolean | null;
+    }>,
+  ): Map<string, MediaWatchOfferView[]> {
+    const grouped = new Map<string, MediaWatchOfferView[]>();
+
+    for (const row of rows) {
+      const offers = grouped.get(row.mediaItemId) ?? [];
+      offers.push({
+        providerId: row.providerId,
+        offerType: row.offerType,
+        distributionChannel: row.distributionChannel,
+        // variantIsAdsTier: true only if variant exists AND is ads tier
+        // null variant = standard tier (not ads)
+        variantIsAdsTier: row.variantId !== null ? (row.isAdsTier ?? false) : false,
+      });
+      grouped.set(row.mediaItemId, offers);
+    }
+
+    return grouped;
   }
 
   private toDomain(row: typeof mediaWatchOffers.$inferSelect): MediaWatchOffer {

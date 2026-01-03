@@ -27,6 +27,29 @@ export interface FindOffersOptions {
   region?: string;
 }
 
+/** Options for batch query with policy filtering */
+export interface GetOffersForMediaBatchOptions {
+  offerTypes?: OfferType[];
+  distributionChannels?: DistributionChannel[];
+  /**
+   * When true, performs LEFT JOIN with provider_variants
+   * and includes variantIsAdsTier in result for ads tier filtering.
+   */
+  includeVariantInfo?: boolean;
+}
+
+/**
+ * Media watch offer view for policy evaluation.
+ * Minimal projection with optional variant info.
+ */
+export interface MediaWatchOfferView {
+  providerId: string;
+  offerType: OfferType;
+  distributionChannel: DistributionChannel;
+  /** Present only when includeVariantInfo = true */
+  variantIsAdsTier?: boolean;
+}
+
 /**
  * Repository for normalized media watch offers.
  * Implemented by: MediaWatchOffersRepository
@@ -61,6 +84,19 @@ export interface IMediaWatchOffersRepository {
     mediaItemIds: string[],
     options?: FindOffersOptions,
   ): Promise<Map<string, MediaWatchOffer[]>>;
+
+  /**
+   * Batch query for policy evaluation with optional variant info.
+   * No N+1 queries - single query with optional JOIN.
+   *
+   * @param mediaItemIds - Media item IDs to query
+   * @param options - Query options including variant info flag
+   * @returns Map of mediaItemId → offer views
+   */
+  getOffersForMediaBatch(
+    mediaItemIds: string[],
+    options?: GetOffersForMediaBatchOptions,
+  ): Promise<Map<string, MediaWatchOfferView[]>>;
 
   /**
    * Deletes all offers for a media item.

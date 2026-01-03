@@ -13,6 +13,7 @@ import {
   IsOptional,
   IsArray,
   IsIn,
+  IsBoolean,
   Min,
   Max,
   MinLength,
@@ -24,6 +25,12 @@ import {
  */
 export const VALID_RATING_SOURCES = ['imdb', 'metacritic', 'rt', 'trakt'] as const;
 export type RatingSource = (typeof VALID_RATING_SOURCES)[number];
+
+/**
+ * Valid availability modes for provider filtering.
+ */
+export const VALID_AVAILABILITY_MODES = ['subscription_only', 'transactional_only', 'any'] as const;
+export type AvailabilityMode = (typeof VALID_AVAILABILITY_MODES)[number];
 
 /**
  * Breakout rule requirements DTO.
@@ -83,6 +90,35 @@ export class BreakoutRuleRequirementsDto {
   @IsArray()
   @IsIn(VALID_RATING_SOURCES, { each: true })
   requireAnyOfRatingsPresent?: RatingSource[];
+
+  @ApiPropertyOptional({
+    description:
+      'Availability mode for provider filtering. subscription_only = flatrate only, transactional_only = rent/buy only, any = all types',
+    example: 'subscription_only',
+    enum: VALID_AVAILABILITY_MODES,
+    default: 'subscription_only',
+  })
+  @IsOptional()
+  @IsIn(VALID_AVAILABILITY_MODES)
+  availabilityMode?: AvailabilityMode;
+
+  @ApiPropertyOptional({
+    description: 'Exclude ads-tier variants from provider matching',
+    example: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  excludeAdsTiers?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Exclude non-direct distribution channels (amazon_channel, apple_tv_channel)',
+    example: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  excludeChannelDistribution?: boolean;
 }
 
 /**

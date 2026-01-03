@@ -98,6 +98,28 @@ export interface GlobalGateDetails {
 }
 
 /**
+ * Availability mode for provider filtering.
+ * - subscription_only: Only flatrate offers (streaming subscriptions)
+ * - transactional_only: Only rent/buy offers
+ * - any: All offer types
+ */
+export type AvailabilityMode = 'subscription_only' | 'transactional_only' | 'any';
+
+/**
+ * Breakout rule requirements for provider filtering.
+ */
+export interface BreakoutProviderRequirements {
+  /** Canonical provider IDs - at least one must be present */
+  requireAnyOfProviders?: string[];
+  /** Filter by availability mode. Defaults to 'subscription_only'. */
+  availabilityMode?: AvailabilityMode;
+  /** Exclude ads-tier variants (requires variant lookup). Defaults to false. */
+  excludeAdsTiers?: boolean;
+  /** Exclude non-direct distribution channels. Defaults to false. */
+  excludeChannelDistribution?: boolean;
+}
+
+/**
  * Breakout rule configuration.
  * Allows blocked content to become eligible under specific conditions.
  */
@@ -109,11 +131,10 @@ export interface BreakoutRule {
    * Lower number = higher priority.
    */
   priority: number;
-  requirements: {
+  requirements: BreakoutProviderRequirements & {
     minImdbVotes?: number;
     minTraktVotes?: number;
     minQualityScoreNormalized?: number;
-    requireAnyOfProviders?: string[];
     requireAnyOfRatingsPresent?: RatingSource[];
   };
 }

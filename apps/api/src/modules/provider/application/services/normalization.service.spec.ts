@@ -37,6 +37,7 @@ describe('NormalizationService', () => {
       findByMediaItemId: jest.fn().mockResolvedValue([]),
       findByTmdbProviderId: jest.fn().mockResolvedValue([]),
       findByMediaItemIds: jest.fn().mockResolvedValue(new Map()),
+      getOffersForMediaBatch: jest.fn().mockResolvedValue(new Map()),
       deleteByMediaItemId: jest.fn().mockResolvedValue(undefined),
       deleteByMediaItemIdAndRegion: jest.fn().mockResolvedValue(undefined),
     };

@@ -17,6 +17,7 @@ describe('MediaWatchOffersRepository', () => {
     where: jest.Mock;
     values: jest.Mock;
     transaction: jest.Mock;
+    leftJoin: jest.Mock;
   };
 
   const createMockDbRow = (overrides?: Partial<ReturnType<typeof createMockDbRow>>) => ({
@@ -54,6 +55,7 @@ describe('MediaWatchOffersRepository', () => {
       where: jest.fn(),
       values: jest.fn(),
       transaction: jest.fn(),
+      leftJoin: jest.fn().mockReturnThis(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -358,6 +360,144 @@ describe('MediaWatchOffersRepository', () => {
       await expect(repository.deleteByMediaItemIdAndRegion('media-123', 'US')).rejects.toThrow(
         'DB Error',
       );
+    });
+  });
+
+  describe('getOffersForMediaBatch', () => {
+    it('should return empty map for empty input', async () => {
+      // Act
+      const result = await repository.getOffersForMediaBatch([]);
+
+      // Assert
+      expect(result.size).toBe(0);
+      expect(mockDb.select).not.toHaveBeenCalled();
+    });
+
+    it('should return offer views grouped by media item without variant info', async () => {
+      // Arrange
+      const mockRows = [
+        {
+          mediaItemId: 'media-1',
+          providerId: 'netflix',
+          offerType: 'flatrate',
+          distributionChannel: 'direct',
+        },
+        {
+          mediaItemId: 'media-1',
+          providerId: 'prime_video',
+          offerType: 'rent',
+          distributionChannel: 'direct',
+        },
+        {
+          mediaItemId: 'media-2',
+          providerId: 'disney_plus',
+          offerType: 'flatrate',
+          distributionChannel: 'direct',
+        },
+      ];
+      mockDb.where.mockResolvedValue(mockRows);
+
+      // Act
+      const result = await repository.getOffersForMediaBatch(['media-1', 'media-2']);
+
+      // Assert
+      expect(result.size).toBe(2);
+      expect(result.get('media-1')).toHaveLength(2);
+      expect(result.get('media-2')).toHaveLength(1);
+      expect(result.get('media-1')![0]).toEqual({
+        providerId: 'netflix',
+        offerType: 'flatrate',
+        distributionChannel: 'direct',
+      });
+    });
+
+    it('should return offer views with variant info when includeVariantInfo = true', async () => {
+      // Arrange
+      const mockRows = [
+        {
+          mediaItemId: 'media-1',
+          providerId: 'netflix',
+          offerType: 'flatrate',
+          distributionChannel: 'direct',
+          variantId: 'netflix_ads',
+          isAdsTier: true,
+        },
+        {
+          mediaItemId: 'media-1',
+          providerId: 'netflix',
+          offerType: 'flatrate',
+          distributionChannel: 'direct',
+          variantId: 'netflix_standard',
+          isAdsTier: false,
+        },
+        {
+          mediaItemId: 'media-2',
+          providerId: 'prime_video',
+          offerType: 'flatrate',
+          distributionChannel: 'direct',
+          variantId: null,
+          isAdsTier: null,
+        },
+      ];
+      mockDb.where.mockResolvedValue(mockRows);
+
+      // Act
+      const result = await repository.getOffersForMediaBatch(['media-1', 'media-2'], {
+        includeVariantInfo: true,
+      });
+
+      // Assert
+      expect(result.size).toBe(2);
+      expect(result.get('media-1')).toHaveLength(2);
+      expect(result.get('media-1')![0]).toEqual({
+        providerId: 'netflix',
+        offerType: 'flatrate',
+        distributionChannel: 'direct',
+        variantIsAdsTier: true,
+      });
+      expect(result.get('media-1')![1]).toEqual({
+        providerId: 'netflix',
+        offerType: 'flatrate',
+        distributionChannel: 'direct',
+        variantIsAdsTier: false,
+      });
+      // null variant = not ads tier
+      expect(result.get('media-2')![0].variantIsAdsTier).toBe(false);
+      expect(mockDb.leftJoin).toHaveBeenCalled();
+    });
+
+    it('should apply offer type filters', async () => {
+      // Arrange
+      mockDb.where.mockResolvedValue([]);
+
+      // Act
+      await repository.getOffersForMediaBatch(['media-1'], {
+        offerTypes: ['flatrate', 'rent'],
+      });
+
+      // Assert
+      expect(mockDb.where).toHaveBeenCalled();
+    });
+
+    it('should apply distribution channel filters', async () => {
+      // Arrange
+      mockDb.where.mockResolvedValue([]);
+
+      // Act
+      await repository.getOffersForMediaBatch(['media-1'], {
+        distributionChannels: ['direct'],
+      });
+
+      // Assert
+      expect(mockDb.where).toHaveBeenCalled();
+    });
+
+    it('should log and rethrow on error', async () => {
+      // Arrange
+      mockDb.where.mockRejectedValue(new Error('DB Error'));
+
+      // Act & Assert
+      await expect(repository.getOffersForMediaBatch(['media-1'])).rejects.toThrow('DB Error');
     });
   });
 });

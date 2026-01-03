@@ -57,6 +57,8 @@ export type {
   IMediaWatchOffersRepository,
   CreateWatchOfferInput,
   FindOffersOptions,
+  GetOffersForMediaBatchOptions,
+  MediaWatchOfferView,
 } from '../domain/repositories/media-watch-offers.repository.interface';
 
 // Normalization types
