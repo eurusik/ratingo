@@ -120,12 +120,15 @@ describe('Provider Mapping Service - Property-Based Tests', () => {
 
   describe('Property 4: Region-Specific Mapping Priority', () => {
     it('should prefer region-specific mapping over global', async () => {
+      // Use regions that won't be normalized differently (exclude UK -> GB alias)
+      const safeRegionArb = fc.stringMatching(/^[A-Z]{2}$/).filter((r) => r !== 'UK' && r !== 'EN');
+
       await fc.assert(
         fc.asyncProperty(
           tmdbProviderIdArb,
           providerIdArb,
           providerIdArb,
-          regionArb,
+          safeRegionArb,
           async (tmdbId, globalProviderId, regionProviderId, region) => {
             // Skip if providers are the same (can't distinguish)
             fc.pre(globalProviderId !== regionProviderId);
