@@ -3,8 +3,10 @@
  */
 
 import * as fc from 'fast-check';
+
 import type { ProviderMapping, ResolvedMapping } from '../../domain/types/provider.types';
-import { GLOBAL_REGION } from '../../domain/utils/region-normalizer';
+import { GLOBAL_REGION, normalizeRegion } from '../../domain/utils/region-normalizer';
+
 import { ProviderMappingService } from './provider-mapping.service';
 
 describe('Provider Mapping Service - Property-Based Tests', () => {
@@ -120,15 +122,12 @@ describe('Provider Mapping Service - Property-Based Tests', () => {
 
   describe('Property 4: Region-Specific Mapping Priority', () => {
     it('should prefer region-specific mapping over global', async () => {
-      // Use regions that won't be normalized differently (exclude UK -> GB alias)
-      const safeRegionArb = fc.stringMatching(/^[A-Z]{2}$/).filter((r) => r !== 'UK' && r !== 'EN');
-
       await fc.assert(
         fc.asyncProperty(
           tmdbProviderIdArb,
           providerIdArb,
           providerIdArb,
-          safeRegionArb,
+          regionArb,
           async (tmdbId, globalProviderId, regionProviderId, region) => {
             // Skip if providers are the same (can't distinguish)
             fc.pre(globalProviderId !== regionProviderId);
@@ -288,19 +287,29 @@ function toResolvedMapping(mapping: ProviderMapping): ResolvedMapping {
 }
 
 function createMockRepository(mappings: ProviderMapping[]) {
+  // Normalize mappings regions to match production behavior
+  const normalizedMappings = mappings.map((m) => ({
+    ...m,
+    region: normalizeRegion(m.region),
+  }));
+
   return {
     findById: jest.fn(),
     findByRegion: jest.fn(),
     findByTmdbIdAndRegion: jest.fn().mockImplementation((tmdbId: number, region: string) => {
-      const found = mappings.find((m) => m.tmdbProviderId === tmdbId && m.region === region);
+      const norm = normalizeRegion(region);
+      const found = normalizedMappings.find(
+        (m) => m.tmdbProviderId === tmdbId && m.region === norm,
+      );
       return Promise.resolve(found ?? null);
     }),
     findManyByTmdbIdsAndRegion: jest
       .fn()
       .mockImplementation((tmdbIds: number[], region: string) => {
+        const norm = normalizeRegion(region);
         const map = new Map<number, ProviderMapping>();
-        for (const m of mappings) {
-          if (tmdbIds.includes(m.tmdbProviderId) && m.region === region) {
+        for (const m of normalizedMappings) {
+          if (tmdbIds.includes(m.tmdbProviderId) && m.region === norm) {
             map.set(m.tmdbProviderId, m);
           }
         }
@@ -310,13 +319,17 @@ function createMockRepository(mappings: ProviderMapping[]) {
     update: jest.fn(),
     delete: jest.fn(),
     resolve: jest.fn().mockImplementation((tmdbId: number, region: string) => {
-      const found = mappings.find((m) => m.tmdbProviderId === tmdbId && m.region === region);
+      const norm = normalizeRegion(region);
+      const found = normalizedMappings.find(
+        (m) => m.tmdbProviderId === tmdbId && m.region === norm,
+      );
       return Promise.resolve(found ? toResolvedMapping(found) : null);
     }),
     resolveMany: jest.fn().mockImplementation((tmdbIds: number[], region: string) => {
+      const norm = normalizeRegion(region);
       const map = new Map<number, ResolvedMapping>();
-      for (const m of mappings) {
-        if (tmdbIds.includes(m.tmdbProviderId) && m.region === region) {
+      for (const m of normalizedMappings) {
+        if (tmdbIds.includes(m.tmdbProviderId) && m.region === norm) {
           map.set(m.tmdbProviderId, toResolvedMapping(m));
         }
       }
@@ -326,19 +339,29 @@ function createMockRepository(mappings: ProviderMapping[]) {
 }
 
 function createMockRepositoryWithFallback(mappings: ProviderMapping[]) {
+  // Normalize mappings regions to match production behavior
+  const normalizedMappings = mappings.map((m) => ({
+    ...m,
+    region: normalizeRegion(m.region),
+  }));
+
   return {
     findById: jest.fn(),
     findByRegion: jest.fn(),
     findByTmdbIdAndRegion: jest.fn().mockImplementation((tmdbId: number, region: string) => {
-      const found = mappings.find((m) => m.tmdbProviderId === tmdbId && m.region === region);
+      const norm = normalizeRegion(region);
+      const found = normalizedMappings.find(
+        (m) => m.tmdbProviderId === tmdbId && m.region === norm,
+      );
       return Promise.resolve(found ?? null);
     }),
     findManyByTmdbIdsAndRegion: jest
       .fn()
       .mockImplementation((tmdbIds: number[], region: string) => {
+        const norm = normalizeRegion(region);
         const map = new Map<number, ProviderMapping>();
-        for (const m of mappings) {
-          if (tmdbIds.includes(m.tmdbProviderId) && m.region === region) {
+        for (const m of normalizedMappings) {
+          if (tmdbIds.includes(m.tmdbProviderId) && m.region === norm) {
             map.set(m.tmdbProviderId, m);
           }
         }
@@ -348,27 +371,31 @@ function createMockRepositoryWithFallback(mappings: ProviderMapping[]) {
     update: jest.fn(),
     delete: jest.fn(),
     resolve: jest.fn().mockImplementation((tmdbId: number, region: string) => {
+      const norm = normalizeRegion(region);
       // Try region-specific first
-      let found = mappings.find((m) => m.tmdbProviderId === tmdbId && m.region === region);
+      let found = normalizedMappings.find((m) => m.tmdbProviderId === tmdbId && m.region === norm);
       // Fall back to global
-      if (!found && region !== GLOBAL_REGION) {
-        found = mappings.find((m) => m.tmdbProviderId === tmdbId && m.region === GLOBAL_REGION);
+      if (!found && norm !== GLOBAL_REGION) {
+        found = normalizedMappings.find(
+          (m) => m.tmdbProviderId === tmdbId && m.region === GLOBAL_REGION,
+        );
       }
       return Promise.resolve(found ? toResolvedMapping(found) : null);
     }),
     resolveMany: jest.fn().mockImplementation((tmdbIds: number[], region: string) => {
+      const norm = normalizeRegion(region);
       const map = new Map<number, ResolvedMapping>();
 
       // First pass: region-specific
-      for (const m of mappings) {
-        if (tmdbIds.includes(m.tmdbProviderId) && m.region === region) {
+      for (const m of normalizedMappings) {
+        if (tmdbIds.includes(m.tmdbProviderId) && m.region === norm) {
           map.set(m.tmdbProviderId, toResolvedMapping(m));
         }
       }
 
       // Second pass: global fallback for missing
-      if (region !== GLOBAL_REGION) {
-        for (const m of mappings) {
+      if (norm !== GLOBAL_REGION) {
+        for (const m of normalizedMappings) {
           if (
             tmdbIds.includes(m.tmdbProviderId) &&
             m.region === GLOBAL_REGION &&
