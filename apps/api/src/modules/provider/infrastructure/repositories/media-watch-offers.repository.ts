@@ -19,7 +19,11 @@ import type {
   IMediaWatchOffersRepository,
   MediaWatchOfferView,
 } from '../../domain/repositories/media-watch-offers.repository.interface';
-import type { MediaWatchOffer } from '../../domain/types/provider.types';
+import type {
+  DistributionChannel,
+  MediaWatchOffer,
+  OfferType,
+} from '../../domain/types/provider.types';
 
 @Injectable()
 export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
@@ -267,8 +271,8 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
     rows: Array<{
       mediaItemId: string;
       providerId: string;
-      offerType: 'flatrate' | 'rent' | 'buy' | 'ads' | 'free';
-      distributionChannel: 'direct' | 'amazon_channel' | 'apple_tv_channel';
+      offerType: OfferType;
+      distributionChannel: DistributionChannel;
     }>,
   ): Map<string, MediaWatchOfferView[]> {
     const grouped = new Map<string, MediaWatchOfferView[]>();
@@ -290,8 +294,8 @@ export class MediaWatchOffersRepository implements IMediaWatchOffersRepository {
     rows: Array<{
       mediaItemId: string;
       providerId: string;
-      offerType: 'flatrate' | 'rent' | 'buy' | 'ads' | 'free';
-      distributionChannel: 'direct' | 'amazon_channel' | 'apple_tv_channel';
+      offerType: OfferType;
+      distributionChannel: DistributionChannel;
       variantId: string | null;
       isAdsTier: boolean | null;
     }>,

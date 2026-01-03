@@ -5,19 +5,8 @@
  * Used by PolicyEngine for provider-based eligibility checks.
  */
 
+import type { MediaWatchOfferView } from '../../../provider/public';
 import type { AvailabilityMode, BreakoutProviderRequirements } from '../types/policy.types';
-
-/**
- * Media watch offer view for policy evaluation.
- * Minimal projection of MediaWatchOffer with optional variant info.
- */
-export interface MediaWatchOfferView {
-  providerId: string;
-  offerType: 'flatrate' | 'rent' | 'buy' | 'ads' | 'free';
-  distributionChannel: 'direct' | 'amazon_channel' | 'apple_tv_channel';
-  /** Present only when excludeAdsTiers filter is used */
-  variantIsAdsTier?: boolean;
-}
 
 /**
  * Filters offers by availability mode.

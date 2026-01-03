@@ -2,13 +2,14 @@
  * Provider Filter Unit Tests
  */
 
+import type { MediaWatchOfferView } from '../../../provider/public';
+
 import {
   filterByAvailabilityMode,
   filterOutAdsTiers,
   filterDirectDistribution,
   matchesAnyProvider,
   hasRequiredProvider,
-  type MediaWatchOfferView,
 } from './provider-filter';
 
 describe('Provider Filter Utilities', () => {
