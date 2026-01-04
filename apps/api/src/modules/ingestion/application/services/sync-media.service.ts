@@ -10,6 +10,7 @@ import {
   CATALOG_POLICY_EVALUATOR,
   classifyContent,
 } from '../../../catalog-policy/public';
+import { NormalizationService } from '../../../provider/public';
 import { ScoreCalculatorService, type ScoreInput } from '../../../shared/score-calculator';
 import { TmdbAdapter } from '../../../tmdb/public';
 import { type NormalizedMedia } from '../../domain/models/normalized-media.model';
@@ -59,6 +60,7 @@ export class SyncMediaService {
     private readonly omdbAdapter: OmdbAdapter,
     private readonly tvMazeEnrichment: TvMazeEnrichmentService,
     private readonly scoreCalculator: ScoreCalculatorService,
+    private readonly normalizationService: NormalizationService,
 
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
@@ -148,7 +150,10 @@ export class SyncMediaService {
       // Step 7: Persist
       await this.persist(classified, tmdbId);
 
-      // Step 8: Evaluate catalog eligibility
+      // Step 8: Normalize watch providers
+      await this.normalizeWatchProviders(classified, logPrefix);
+
+      // Step 9: Evaluate catalog eligibility
       await this.evaluateCatalog(tmdbId, logPrefix);
 
       this.logger.log(
@@ -291,6 +296,35 @@ export class SyncMediaService {
   /** Persists media to database. */
   private async persist(media: NormalizedMedia, _tmdbId: number): Promise<void> {
     await this.mediaRepository.upsert(media);
+  }
+
+  /** Normalizes watch providers and stores in media_watch_offers table. */
+  private async normalizeWatchProviders(media: NormalizedMedia, logPrefix: string): Promise<void> {
+    if (!media.watchProviders || Object.keys(media.watchProviders).length === 0) {
+      return;
+    }
+
+    try {
+      const mediaItem = await this.mediaRepository.findByTmdbId(media.externalIds.tmdbId);
+      if (!mediaItem) {
+        this.logger.warn(`${logPrefix} Cannot normalize providers: media item not found`);
+        return;
+      }
+
+      const result = await this.normalizationService.normalizeWatchProviders(
+        mediaItem.id,
+        media.watchProviders,
+      );
+
+      if (result.unmappedCount > 0) {
+        this.logger.debug(
+          `${logPrefix} Normalized providers: ${result.offersCreated} offers, ${result.unmappedCount} unmapped`,
+        );
+      }
+    } catch (error) {
+      // Best-effort: log warning but don't fail the sync
+      this.logger.warn(`${logPrefix} Provider normalization failed: ${(error as Error).message}`);
+    }
   }
 
   /** Triggers catalog eligibility evaluation if service available. */

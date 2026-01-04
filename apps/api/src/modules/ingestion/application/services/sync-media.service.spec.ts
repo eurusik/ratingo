@@ -6,6 +6,7 @@ import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-r
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
+import { NormalizationService } from '@/modules/provider/public';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '@/common/enums/video.enum';
 
@@ -16,6 +17,7 @@ describe('SyncMediaService', () => {
   let omdbAdapter: jest.Mocked<OmdbAdapter>;
   let tvMazeEnrichment: jest.Mocked<TvMazeEnrichmentService>;
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
+  let normalizationService: jest.Mocked<NormalizationService>;
   let mediaRepository: any;
 
   const mockMedia: any = {
@@ -66,6 +68,11 @@ describe('SyncMediaService', () => {
     const mockMediaRepository = {
       upsert: jest.fn(),
       updateIngestionStatus: jest.fn(),
+      findByTmdbId: jest.fn(),
+    };
+
+    const mockNormalizationService = {
+      normalizeWatchProviders: jest.fn().mockResolvedValue({ offersCreated: 0, unmappedCount: 0 }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -76,6 +83,7 @@ describe('SyncMediaService', () => {
         { provide: OmdbAdapter, useValue: mockOmdbAdapter },
         { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
+        { provide: NormalizationService, useValue: mockNormalizationService },
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
       ],
     }).compile();
@@ -86,6 +94,7 @@ describe('SyncMediaService', () => {
     omdbAdapter = module.get(OmdbAdapter);
     tvMazeEnrichment = module.get(TvMazeEnrichmentService);
     scoreCalculator = module.get(ScoreCalculatorService);
+    normalizationService = module.get(NormalizationService);
     mediaRepository = module.get(MEDIA_REPOSITORY);
   });
 
@@ -406,6 +415,76 @@ describe('SyncMediaService', () => {
 
       // Should not throw, should just skip TVMaze
       expect(mediaRepository.upsert).toHaveBeenCalled();
+    });
+  });
+
+  describe('provider normalization', () => {
+    it('should normalize watch providers when present', async () => {
+      const mediaWithProviders = {
+        ...mockMedia,
+        watchProviders: {
+          US: {
+            flatrate: [{ providerId: 8, name: 'Netflix' }],
+          },
+        },
+      };
+      tmdbAdapter.getMovie.mockResolvedValue(mediaWithProviders);
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncMovie(550);
+
+      expect(normalizationService.normalizeWatchProviders).toHaveBeenCalledWith(
+        'media-123',
+        mediaWithProviders.watchProviders,
+      );
+    });
+
+    it('should skip normalization when no watch providers', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia, watchProviders: {} });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+
+      await service.syncMovie(550);
+
+      expect(normalizationService.normalizeWatchProviders).not.toHaveBeenCalled();
+    });
+
+    it('should handle normalization failure gracefully', async () => {
+      const mediaWithProviders = {
+        ...mockMedia,
+        watchProviders: {
+          US: { flatrate: [{ providerId: 8, name: 'Netflix' }] },
+        },
+      };
+      tmdbAdapter.getMovie.mockResolvedValue(mediaWithProviders);
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+      normalizationService.normalizeWatchProviders.mockRejectedValue(new Error('DB Error'));
+
+      // Should not throw
+      await service.syncMovie(550);
+
+      expect(mediaRepository.upsert).toHaveBeenCalled();
+    });
+
+    it('should skip normalization when media item not found after persist', async () => {
+      const mediaWithProviders = {
+        ...mockMedia,
+        watchProviders: {
+          US: { flatrate: [{ providerId: 8, name: 'Netflix' }] },
+        },
+      };
+      tmdbAdapter.getMovie.mockResolvedValue(mediaWithProviders);
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      mediaRepository.findByTmdbId.mockResolvedValue(null);
+
+      await service.syncMovie(550);
+
+      expect(normalizationService.normalizeWatchProviders).not.toHaveBeenCalled();
     });
   });
 });

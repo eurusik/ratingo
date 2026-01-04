@@ -78,8 +78,8 @@ describe('NormalizationService', () => {
         US: {
           link: 'https://tmdb.org/watch/123',
           flatrate: [
-            { provider_id: 8, provider_name: 'Netflix' },
-            { provider_id: 9, provider_name: 'Prime Video' },
+            { providerId: 8, name: 'Netflix' },
+            { providerId: 9, name: 'Prime Video' },
           ],
         },
       };
@@ -119,7 +119,7 @@ describe('NormalizationService', () => {
       // Arrange
       const rawProviders: WatchProvidersMap = {
         US: {
-          flatrate: [{ provider_id: 999, provider_name: 'Unknown Provider' }],
+          flatrate: [{ providerId: 999, name: 'Unknown Provider' }],
         },
       };
 
@@ -144,9 +144,9 @@ describe('NormalizationService', () => {
       // Arrange
       const rawProviders: WatchProvidersMap = {
         US: {
-          flatrate: [{ provider_id: 8, provider_name: 'Netflix' }],
-          rent: [{ provider_id: 8, provider_name: 'Netflix' }],
-          buy: [{ provider_id: 8, provider_name: 'Netflix' }],
+          flatrate: [{ providerId: 8, name: 'Netflix' }],
+          rent: [{ providerId: 8, name: 'Netflix' }],
+          buy: [{ providerId: 8, name: 'Netflix' }],
         },
       };
 
@@ -174,10 +174,10 @@ describe('NormalizationService', () => {
       // Arrange
       const rawProviders: WatchProvidersMap = {
         US: {
-          flatrate: [{ provider_id: 8, provider_name: 'Netflix' }],
+          flatrate: [{ providerId: 8, name: 'Netflix' }],
         },
         GB: {
-          flatrate: [{ provider_id: 8, provider_name: 'Netflix' }],
+          flatrate: [{ providerId: 8, name: 'Netflix' }],
         },
       };
 
@@ -199,7 +199,7 @@ describe('NormalizationService', () => {
       const rawProviders: WatchProvidersMap = {
         us: {
           // lowercase
-          flatrate: [{ provider_id: 8, provider_name: 'Netflix' }],
+          flatrate: [{ providerId: 8, name: 'Netflix' }],
         },
       };
 
@@ -223,7 +223,7 @@ describe('NormalizationService', () => {
       const rawProviders: WatchProvidersMap = {
         US: {
           link: 'https://tmdb.org/watch/123',
-          flatrate: [{ provider_id: 8, provider_name: 'Netflix' }],
+          flatrate: [{ providerId: 8, name: 'Netflix' }],
         },
       };
 
@@ -246,7 +246,7 @@ describe('NormalizationService', () => {
       // Arrange
       const rawProviders: WatchProvidersMap = {
         US: {
-          flatrate: [{ provider_id: 8, provider_name: 'Netflix' }],
+          flatrate: [{ providerId: 8, name: 'Netflix' }],
         },
       };
 
@@ -284,8 +284,8 @@ describe('NormalizationService', () => {
       const rawProviders: WatchProvidersMap = {
         US: {
           flatrate: [
-            { provider_id: 8, provider_name: 'Netflix' },
-            { provider_id: 999, provider_name: 'Unknown' },
+            { providerId: 8, name: 'Netflix' },
+            { providerId: 999, name: 'Unknown' },
           ],
         },
       };
@@ -324,7 +324,7 @@ describe('NormalizationService', () => {
       // Arrange
       const rawProviders: WatchProvidersMap = {
         US: {
-          flatrate: [{ provider_id: 8, provider_name: 'Netflix' }],
+          flatrate: [{ providerId: 8, name: 'Netflix' }],
         },
       };
 
@@ -350,7 +350,7 @@ describe('NormalizationService', () => {
       // Arrange
       const rawProviders: WatchProvidersMap = {
         US: {
-          flatrate: [{ provider_id: 8, provider_name: 'Netflix' }],
+          flatrate: [{ providerId: 8, name: 'Netflix' }],
         },
       };
 

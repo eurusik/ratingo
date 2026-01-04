@@ -21,17 +21,17 @@ import { normalizeRegion } from '../../domain/utils/region-normalizer';
 
 import { ProviderMappingService } from './provider-mapping.service';
 
-/** Raw TMDB provider data */
+/** Raw TMDB provider data (normalized format from TmdbMapper) */
 export interface TmdbProvider {
-  provider_id: number;
-  provider_name: string;
-  logo_path?: string;
-  display_priority?: number;
+  providerId: number;
+  name: string;
+  logoPath?: string | null;
+  displayPriority?: number;
 }
 
-/** Raw TMDB region data */
+/** Raw TMDB region data (normalized format from TmdbMapper) */
 export interface TmdbRegionData {
-  link?: string;
+  link?: string | null;
   flatrate?: TmdbProvider[];
   rent?: TmdbProvider[];
   buy?: TmdbProvider[];
@@ -182,7 +182,7 @@ export class NormalizationService {
       const providers = regionData[offerType] ?? [];
 
       for (const provider of providers) {
-        const mapping = regionMappings.get(provider.provider_id);
+        const mapping = regionMappings.get(provider.providerId);
 
         if (mapping) {
           offers.push({
@@ -193,12 +193,12 @@ export class NormalizationService {
             offerType,
             region,
             link,
-            tmdbProviderId: provider.provider_id,
+            tmdbProviderId: provider.providerId,
           });
         } else {
           unmapped.push({
-            tmdbProviderId: provider.provider_id,
-            providerName: provider.provider_name,
+            tmdbProviderId: provider.providerId,
+            providerName: provider.name,
             region,
           });
         }
@@ -219,7 +219,7 @@ export class NormalizationService {
       for (const offerType of OFFER_TYPES) {
         const providers = regionData[offerType] ?? [];
         for (const provider of providers) {
-          ids.add(provider.provider_id);
+          ids.add(provider.providerId);
         }
       }
 

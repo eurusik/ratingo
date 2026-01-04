@@ -8,6 +8,7 @@ import traktConfig from '../../config/trakt.config';
 import tvmazeConfig from '../../config/tvmaze.config';
 import { CatalogModule } from '../catalog/catalog.module';
 import { CatalogPolicyModule } from '../catalog-policy/catalog-policy.module';
+import { ProviderModule } from '../provider/public';
 import { ScoreCalculatorModule } from '../shared/score-calculator';
 import { StatsModule } from '../stats/stats.module';
 import { TmdbModule } from '../tmdb/public';
@@ -43,6 +44,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
   imports: [
     CatalogModule,
     CatalogPolicyModule,
+    ProviderModule,
     TmdbModule,
     forwardRef(() => StatsModule),
     forwardRef(() => UserActionsModule),
