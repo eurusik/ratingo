@@ -20,3 +20,13 @@ export {
   usePromoteRun,
   useCancelRun,
 } from './admin';
+export {
+  adminProvidersKeys,
+  useAdminProviders,
+  useUnmappedProviders,
+  useMappings,
+  useResolveMapping,
+  useCreateMapping,
+  useUpdateMapping,
+  useDeleteMapping,
+} from './admin-providers';

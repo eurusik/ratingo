@@ -8,6 +8,7 @@ import { AllowedBlockedList } from './AllowedBlockedList';
 import { BadgeList } from './BadgeList';
 import { SettingRow } from './SettingRow';
 import { BreakoutRuleItem } from './BreakoutRuleItem';
+import { useProviderNames } from './hooks/use-provider-names';
 
 interface PolicyConfigCardsProps {
   config: PolicyConfigDto;
@@ -72,14 +73,18 @@ export function LanguagesCard({ config, labels }: PolicyConfigCardsProps) {
  * Displays global streaming providers card.
  *
  * Shows list of provider names as badges.
+ * Resolves canonical IDs to display names.
  *
  * @param config - Policy configuration
  * @param labels - Localized labels
  */
 export function ProvidersCard({ config, labels }: PolicyConfigCardsProps) {
+  const { resolveNames } = useProviderNames();
+  const displayNames = resolveNames(config.globalProviders);
+
   return (
     <ConfigCard title={labels?.providers ?? 'Global Providers'} icon={Tv}>
-      <BadgeList items={config.globalProviders} />
+      <BadgeList items={displayNames} />
     </ConfigCard>
   );
 }
@@ -123,6 +128,8 @@ export function SettingsCard({ config, labels }: PolicyConfigCardsProps) {
  * @param labels - Localized labels
  */
 export function BreakoutRulesCard({ config, labels }: PolicyConfigCardsProps) {
+  const { resolveNames } = useProviderNames();
+
   if (config.breakoutRules.length === 0) return null;
 
   const title = `${labels?.breakoutRules ?? 'Breakout Rules'} (${config.breakoutRules.length})`;
@@ -131,7 +138,12 @@ export function BreakoutRulesCard({ config, labels }: PolicyConfigCardsProps) {
     <ConfigCard title={title} icon={Shield}>
       <div className="space-y-3">
         {config.breakoutRules.map((rule) => (
-          <BreakoutRuleItem key={rule.id} rule={rule} priorityLabel={labels?.priority} />
+          <BreakoutRuleItem
+            key={rule.id}
+            rule={rule}
+            priorityLabel={labels?.priority}
+            resolveProviderNames={resolveNames}
+          />
         ))}
       </div>
     </ConfigCard>

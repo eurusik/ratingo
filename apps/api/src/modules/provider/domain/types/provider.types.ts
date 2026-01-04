@@ -4,14 +4,36 @@
  * Core types for the normalized provider registry system.
  */
 
+/** Distribution channel values */
+export const DISTRIBUTION_CHANNEL = {
+  DIRECT: 'direct',
+  AMAZON_CHANNEL: 'amazon_channel',
+  APPLE_TV_CHANNEL: 'apple_tv_channel',
+} as const;
+
 /** Distribution channel - how content is accessed */
-export type DistributionChannel = 'direct' | 'amazon_channel' | 'apple_tv_channel';
+export type DistributionChannel = (typeof DISTRIBUTION_CHANNEL)[keyof typeof DISTRIBUTION_CHANNEL];
+
+/** Offer type values */
+export const OFFER_TYPE = {
+  FLATRATE: 'flatrate',
+  RENT: 'rent',
+  BUY: 'buy',
+  ADS: 'ads',
+  FREE: 'free',
+} as const;
 
 /** Offer type - type of availability */
-export type OfferType = 'flatrate' | 'rent' | 'buy' | 'ads' | 'free';
+export type OfferType = (typeof OFFER_TYPE)[keyof typeof OFFER_TYPE];
+
+/** Mapping source values */
+export const MAPPING_SOURCE = {
+  MANUAL: 'manual',
+  INFERRED: 'inferred',
+} as const;
 
 /** Mapping source - how the mapping was created */
-export type MappingSource = 'manual' | 'inferred';
+export type MappingSource = (typeof MAPPING_SOURCE)[keyof typeof MAPPING_SOURCE];
 
 /**
  * Canonical provider brand from provider_registry.

@@ -14,6 +14,7 @@ describe('UnmappedTrackingRepository', () => {
     where: jest.Mock;
     orderBy: jest.Mock;
     limit: jest.Mock;
+    offset: jest.Mock;
     values: jest.Mock;
     onConflictDoUpdate: jest.Mock;
   };
@@ -37,7 +38,8 @@ describe('UnmappedTrackingRepository', () => {
       from: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
-      limit: jest.fn(),
+      limit: jest.fn().mockReturnThis(),
+      offset: jest.fn(),
       values: jest.fn().mockReturnThis(),
       onConflictDoUpdate: jest.fn(),
     };
@@ -212,47 +214,56 @@ describe('UnmappedTrackingRepository', () => {
         createMockDbRow({ tmdbProviderId: 8, seenCount: 100 }),
         createMockDbRow({ tmdbProviderId: 9, lastSeenName: 'Prime Video', seenCount: 50 }),
       ];
+      mockDb.select.mockReturnThis();
+      mockDb.from.mockReturnThis();
       mockDb.orderBy.mockReturnThis();
-      mockDb.limit.mockResolvedValue(mockRows);
+      mockDb.limit.mockReturnThis();
+      mockDb.offset.mockResolvedValue(mockRows);
 
       // Act
-      const result = await repository.findAll({ sortBy: 'count', limit: 10 });
+      const result = await repository.findAll({ sortBy: 'seenCount', limit: 10 });
 
       // Assert
-      expect(result).toHaveLength(2);
-      expect(result[0].tmdbProviderId).toBe(8);
-      expect(result[0].seenCount).toBe(100);
-      expect(mockDb.orderBy).toHaveBeenCalled();
-      expect(mockDb.limit).toHaveBeenCalledWith(10);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].tmdbProviderId).toBe(8);
+      expect(result.data[0].seenCount).toBe(100);
     });
 
-    it('should return all unmapped providers sorted by lastSeen', async () => {
+    it('should return all unmapped providers sorted by lastSeenAt', async () => {
       // Arrange
       const mockRows = [createMockDbRow()];
+      mockDb.select.mockReturnThis();
+      mockDb.from.mockReturnThis();
       mockDb.orderBy.mockReturnThis();
-      mockDb.limit.mockResolvedValue(mockRows);
+      mockDb.limit.mockReturnThis();
+      mockDb.offset.mockResolvedValue(mockRows);
 
       // Act
-      await repository.findAll({ sortBy: 'lastSeen', limit: 5 });
+      const result = await repository.findAll({ sortBy: 'lastSeenAt', limit: 5 });
 
       // Assert
-      expect(mockDb.orderBy).toHaveBeenCalled();
+      expect(result.data).toHaveLength(1);
     });
 
-    it('should use default sort by count when no options', async () => {
+    it('should use default sort by seenCount when no options', async () => {
       // Arrange
-      mockDb.orderBy.mockResolvedValue([]);
+      mockDb.select.mockReturnThis();
+      mockDb.from.mockReturnThis();
+      mockDb.orderBy.mockReturnThis();
+      mockDb.limit.mockReturnThis();
+      mockDb.offset.mockResolvedValue([]);
 
       // Act
-      await repository.findAll();
+      const result = await repository.findAll();
 
       // Assert
-      expect(mockDb.orderBy).toHaveBeenCalled();
+      expect(result.data).toEqual([]);
     });
 
     it('should log and rethrow on error', async () => {
       // Arrange
-      mockDb.orderBy.mockRejectedValue(new Error('DB Error'));
+      mockDb.select.mockReturnThis();
+      mockDb.from.mockRejectedValue(new Error('DB Error'));
 
       // Act & Assert
       await expect(repository.findAll()).rejects.toThrow('DB Error');

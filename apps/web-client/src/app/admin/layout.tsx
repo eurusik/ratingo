@@ -15,7 +15,7 @@ export default async function AdminLayoutWrapper({ children }: { children: React
   }
 
   // TODO: Get user permissions from auth system
-  const userPermissions = ['admin.policies.read', 'admin.runs.read'];
+  const userPermissions = ['admin.policies.read', 'admin.runs.read', 'admin.providers.read'];
 
   return <AdminLayout userPermissions={userPermissions}>{children}</AdminLayout>;
 }

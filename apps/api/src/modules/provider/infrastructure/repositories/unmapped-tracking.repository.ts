@@ -14,6 +14,7 @@ import * as schema from '../../../../database/schema';
 import { providerUnmapped } from '../../../../database/schema';
 import type {
   FindAllUnmappedOptions,
+  FindAllUnmappedResult,
   IUnmappedTrackingRepository,
   RecordUnmappedInput,
 } from '../../domain/repositories/unmapped-tracking.repository.interface';
@@ -99,24 +100,34 @@ export class UnmappedTrackingRepository implements IUnmappedTrackingRepository {
     }
   }
 
-  async findAll(options?: FindAllUnmappedOptions): Promise<UnmappedProvider[]> {
-    const { sortBy = 'count', limit } = options ?? {};
+  async findAll(options?: FindAllUnmappedOptions): Promise<FindAllUnmappedResult> {
+    const { sortBy = 'seenCount', sortOrder = 'desc', limit = 50, offset = 0 } = options ?? {};
 
     try {
+      // Get total count
+      const countResult = await this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(providerUnmapped);
+      const total = countResult[0]?.count ?? 0;
+
+      // Get paginated data
       let query = this.db.select().from(providerUnmapped);
 
-      if (sortBy === 'count') {
-        query = query.orderBy(desc(providerUnmapped.seenCount)) as typeof query;
-      } else {
-        query = query.orderBy(desc(providerUnmapped.lastSeenAt)) as typeof query;
-      }
+      const orderColumn =
+        sortBy === 'seenCount' ? providerUnmapped.seenCount : providerUnmapped.lastSeenAt;
+      query =
+        sortOrder === 'desc'
+          ? (query.orderBy(desc(orderColumn)) as typeof query)
+          : (query.orderBy(orderColumn) as typeof query);
 
-      if (limit) {
-        query = query.limit(limit) as typeof query;
-      }
+      query = query.limit(limit).offset(offset) as typeof query;
 
       const rows = await query;
-      return rows.map(this.toDomain);
+
+      return {
+        data: rows.map(this.toDomain),
+        total,
+      };
     } catch (error) {
       this.logger.error('Failed to find all unmapped providers', error);
       throw error;

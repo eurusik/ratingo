@@ -6,203 +6,21 @@
       "idx": 0,
       "version": "7",
       "when": 1766040101868,
-      "tag": "0000_user_actions_saved_subscriptions",
+      "tag": "0000_initial_schema",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1766090614050,
-      "tag": "0001_budget_revenue_bigint",
+      "when": 1767356000000,
+      "tag": "0027_provider_seed",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1766090614051,
-      "tag": "0002_pg_trgm_search",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1766090614052,
-      "tag": "0003_add_reason_key_to_saved_items",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1766183223039,
-      "tag": "0004_add-trending-rank",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1766218536493,
-      "tag": "0005_fix-tmdb-unique-constraint",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1766218600000,
-      "tag": "0005_add_subscription_triggers",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1766268000000,
-      "tag": "0006_add_trending_updated_at",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1766527800000,
-      "tag": "0007_add_origin_metadata_to_media_items",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1766527860000,
-      "tag": "0008_create_catalog_policies_table",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "7",
-      "when": 1766527920000,
-      "tag": "0009_create_media_catalog_evaluations_table",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "7",
-      "when": 1766527980000,
-      "tag": "0010_create_catalog_evaluation_runs_table",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "7",
-      "when": 1766528040000,
-      "tag": "0011_create_public_media_items_view",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "7",
-      "when": 1766529480000,
-      "tag": "0012_backfill_media_catalog_evaluations",
-      "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "7",
-      "when": 1766532060000,
-      "tag": "0013_seed_default_policy_v1",
-      "breakpoints": true
-    },
-    {
-      "idx": 15,
-      "version": "7",
-      "when": 1766534820000,
-      "tag": "0014_evaluation_history",
-      "breakpoints": true
-    },
-    {
-      "idx": 16,
-      "version": "7",
-      "when": 1766535120000,
-      "tag": "0015_update_public_view_policy_version",
-      "breakpoints": true
-    },
-    {
-      "idx": 17,
-      "version": "7",
-      "when": 1766535180000,
-      "tag": "0016_extend_catalog_evaluation_runs",
-      "breakpoints": true
-    },
-    {
-      "idx": 18,
-      "version": "7",
-      "when": 1766535240000,
-      "tag": "0017_add_processed_column",
-      "breakpoints": true
-    },
-    {
-      "idx": 19,
-      "version": "7",
-      "when": 1766535300000,
-      "tag": "0018_run_status_model_migration",
-      "breakpoints": true
-    },
-    {
-      "idx": 20,
-      "version": "7",
-      "when": 1766535360000,
-      "tag": "0019_add_run_id_to_evaluations",
-      "breakpoints": true
-    },
-    {
-      "idx": 21,
-      "version": "7",
-      "when": 1766535420000,
-      "tag": "0020_normalize_eligibility_status",
-      "breakpoints": true
-    },
-    {
-      "idx": 22,
-      "version": "7",
-      "when": 1766535480000,
-      "tag": "0021_add_diff_service_indexes",
-      "breakpoints": true
-    },
-    {
-      "idx": 23,
-      "version": "7",
-      "when": 1766535540000,
-      "tag": "0022_cleanup_duplicate_evaluations",
-      "breakpoints": true
-    },
-    {
-      "idx": 24,
-      "version": "7",
-      "when": 1766535600000,
-      "tag": "0023_migrate_legacy_run_statuses",
-      "breakpoints": true
-    },
-    {
-      "idx": 25,
-      "version": "7",
-      "when": 1735423200000,
-      "tag": "0024_add_baseline_policy_version",
-      "breakpoints": true
-    },
-    {
-      "idx": 26,
-      "version": "7",
-      "when": 1767354000000,
-      "tag": "0025_add_content_class_to_media_items",
-      "breakpoints": true
-    },
-    {
-      "idx": 27,
-      "version": "7",
-      "when": 1767355000000,
-      "tag": "0026_provider_system_tables",
-      "breakpoints": true
-    },
-    {
-      "idx": 28,
-      "version": "7",
-      "when": 1767356000000,
-      "tag": "0027_provider_seed",
+      "when": 1767357000000,
+      "tag": "0001_seed_policy_v1",
       "breakpoints": true
     }
   ]

@@ -296,6 +296,7 @@ function createMockRepository(mappings: ProviderMapping[]) {
   return {
     findById: jest.fn(),
     findByRegion: jest.fn(),
+    findAll: jest.fn().mockResolvedValue(normalizedMappings),
     findByTmdbIdAndRegion: jest.fn().mockImplementation((tmdbId: number, region: string) => {
       const norm = normalizeRegion(region);
       const found = normalizedMappings.find(
@@ -348,6 +349,7 @@ function createMockRepositoryWithFallback(mappings: ProviderMapping[]) {
   return {
     findById: jest.fn(),
     findByRegion: jest.fn(),
+    findAll: jest.fn().mockResolvedValue(normalizedMappings),
     findByTmdbIdAndRegion: jest.fn().mockImplementation((tmdbId: number, region: string) => {
       const norm = normalizeRegion(region);
       const found = normalizedMappings.find(

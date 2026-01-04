@@ -4,7 +4,7 @@ import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Menu, FileText, Play } from 'lucide-react';
+import { Menu, FileText, Play, Tv } from 'lucide-react';
 import { cn } from '../../../shared/utils/cn';
 import { NavigationItem } from '../types';
 import { Button } from '../../../shared/ui/button';
@@ -28,12 +28,14 @@ interface SidebarProps {
 const iconMap: Record<string, React.ReactNode> = {
   policies: <FileText className="h-4 w-4" />,
   runs: <Play className="h-4 w-4" />,
+  providers: <Tv className="h-4 w-4" />,
 };
 
 // Translation key mapping for navigation items
 const labelMap: Record<string, string> = {
   policies: 'admin.navigation.policies',
   runs: 'admin.navigation.runs',
+  providers: 'admin.navigation.providers',
 };
 
 /**

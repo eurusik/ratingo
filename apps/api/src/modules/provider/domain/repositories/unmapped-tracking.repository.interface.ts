@@ -17,8 +17,16 @@ export interface RecordUnmappedInput {
 
 /** Options for querying unmapped providers */
 export interface FindAllUnmappedOptions {
-  sortBy?: 'count' | 'lastSeen';
+  sortBy?: 'seenCount' | 'lastSeenAt';
+  sortOrder?: 'asc' | 'desc';
   limit?: number;
+  offset?: number;
+}
+
+/** Result with pagination info */
+export interface FindAllUnmappedResult {
+  data: UnmappedProvider[];
+  total: number;
 }
 
 /**
@@ -41,7 +49,7 @@ export interface IUnmappedTrackingRepository {
   /**
    * Finds all unmapped providers with optional sorting and limit.
    */
-  findAll(options?: FindAllUnmappedOptions): Promise<UnmappedProvider[]>;
+  findAll(options?: FindAllUnmappedOptions): Promise<FindAllUnmappedResult>;
 
   /**
    * Finds unmapped provider by TMDB ID.

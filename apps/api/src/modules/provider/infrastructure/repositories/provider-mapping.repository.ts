@@ -112,6 +112,41 @@ export class ProviderMappingRepository implements IProviderMappingRepository {
     }
   }
 
+  async findAll(options?: {
+    providerId?: string;
+    region?: string;
+    includeGlobal?: boolean;
+  }): Promise<ProviderMapping[]> {
+    try {
+      const conditions = [];
+
+      if (options?.providerId) {
+        conditions.push(eq(schema.providerMappings.providerId, options.providerId));
+      }
+
+      if (options?.region) {
+        const normalizedRegion = normalizeRegion(options.region);
+        if (options.includeGlobal !== false && normalizedRegion !== GLOBAL_REGION) {
+          // Include both region-specific and global
+          conditions.push(
+            inArray(schema.providerMappings.region, [normalizedRegion, GLOBAL_REGION]),
+          );
+        } else {
+          conditions.push(eq(schema.providerMappings.region, normalizedRegion));
+        }
+      }
+
+      const query = this.db.select().from(schema.providerMappings);
+
+      const result = conditions.length > 0 ? await query.where(and(...conditions)) : await query;
+
+      return result.map((row) => this.mapToEntity(row));
+    } catch (error) {
+      this.logger.error('Failed to find all mappings', error);
+      throw new DatabaseException('Failed to find all mappings', error);
+    }
+  }
+
   async findById(id: string): Promise<ProviderMapping | null> {
     try {
       const result = await this.db

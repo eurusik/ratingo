@@ -95,6 +95,17 @@ export class ProviderMappingService {
   }
 
   /**
+   * Finds all mappings with optional filters.
+   */
+  async findAll(options?: {
+    providerId?: string;
+    region?: string;
+    includeGlobal?: boolean;
+  }): Promise<ProviderMapping[]> {
+    return this.mappingRepository.findAll(options);
+  }
+
+  /**
    * Finds a mapping by TMDB ID and region.
    */
   async findByTmdbIdAndRegion(
@@ -117,11 +128,13 @@ export class ProviderMappingService {
   /**
    * Updates an existing mapping.
    * Admin only operation.
-   * @throws NotFoundException if not found
+   * @returns Updated mapping or null if not found
    */
-  async update(id: string, data: UpdateMappingDto): Promise<ProviderMapping> {
-    // Verify exists
-    await this.findById(id);
+  async update(id: string, data: UpdateMappingDto): Promise<ProviderMapping | null> {
+    const existing = await this.mappingRepository.findById(id);
+    if (!existing) {
+      return null;
+    }
 
     this.logger.log(`Updating mapping ${id}`);
     return this.mappingRepository.update(id, data);
@@ -130,13 +143,16 @@ export class ProviderMappingService {
   /**
    * Deletes a mapping.
    * Admin only operation.
-   * @throws NotFoundException if not found
+   * @returns true if deleted, false if not found
    */
-  async delete(id: string): Promise<void> {
-    // Verify exists
-    await this.findById(id);
+  async delete(id: string): Promise<boolean> {
+    const mapping = await this.mappingRepository.findById(id);
+    if (!mapping) {
+      return false;
+    }
 
     this.logger.log(`Deleting mapping ${id}`);
     await this.mappingRepository.delete(id);
+    return true;
   }
 }

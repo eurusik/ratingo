@@ -223,15 +223,15 @@ describe('ProviderMappingService', () => {
 
       const result = await service.update('mapping-1', { providerId: 'prime_video' });
 
-      expect(result.providerId).toBe('prime_video');
+      expect(result?.providerId).toBe('prime_video');
     });
 
-    it('should throw NotFoundException when not exists', async () => {
+    it('should return null when not exists', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(service.update('unknown', { providerId: 'netflix' })).rejects.toThrow(
-        NotFoundException,
-      );
+      const result = await service.update('unknown', { providerId: 'netflix' });
+
+      expect(result).toBeNull();
     });
   });
 
@@ -240,15 +240,18 @@ describe('ProviderMappingService', () => {
       mockRepository.findById.mockResolvedValue(mockMapping);
       mockRepository.delete.mockResolvedValue(undefined);
 
-      await service.delete('mapping-1');
+      const result = await service.delete('mapping-1');
 
+      expect(result).toBe(true);
       expect(mockRepository.delete).toHaveBeenCalledWith('mapping-1');
     });
 
-    it('should throw NotFoundException when not exists', async () => {
+    it('should return false when not exists', async () => {
       mockRepository.findById.mockResolvedValue(null);
 
-      await expect(service.delete('unknown')).rejects.toThrow(NotFoundException);
+      const result = await service.delete('unknown');
+
+      expect(result).toBe(false);
     });
   });
 });

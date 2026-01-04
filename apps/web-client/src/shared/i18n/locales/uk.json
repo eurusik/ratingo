@@ -506,7 +506,8 @@
     "navigation": {
       "title": "Навігація",
       "policies": "Політики",
-      "runs": "Запуски оцінювання"
+      "runs": "Запуски оцінювання",
+      "providers": "Провайдери"
     },
     "policies": {
       "title": "Політики каталогу",
@@ -837,6 +838,78 @@
         "promoteFailed": "Не вдалося просунути запуск",
         "cancelSuccess": "Запуск скасовано успішно",
         "cancelFailed": "Не вдалося скасувати запуск"
+      }
+    },
+    "providers": {
+      "title": "Управління провайдерами",
+      "description": "Зв'язування TMDB провайдерів з нашими canonical провайдерами",
+      "tabs": {
+        "unmapped": "Незамаплені",
+        "mappings": "Mappings"
+      },
+      "unmapped": {
+        "title": "Незамаплені провайдери",
+        "description": "TMDB провайдери, які зустрічаються в даних, але не мають mapping",
+        "createMapping": "Створити mapping",
+        "columns": {
+          "tmdbId": "TMDB ID",
+          "name": "Назва",
+          "region": "Регіон",
+          "occurrences": "Зустрічей",
+          "lastSeen": "Останній раз"
+        },
+        "empty": {
+          "title": "Всі провайдери замаплені",
+          "description": "Немає провайдерів, які потребують mapping"
+        }
+      },
+      "mappings": {
+        "title": "Provider Mappings",
+        "description": "Зв'язки між TMDB провайдерами та canonical провайдерами",
+        "addMapping": "Додати mapping",
+        "columns": {
+          "tmdbId": "TMDB ID",
+          "provider": "Provider",
+          "variant": "Variant",
+          "channel": "Channel",
+          "region": "Region",
+          "source": "Source"
+        },
+        "empty": {
+          "title": "Немає mappings",
+          "description": "Створіть перший mapping для провайдера",
+          "action": "Створити mapping"
+        },
+        "actions": {
+          "edit": "Редагувати",
+          "delete": "Видалити"
+        },
+        "confirmDelete": {
+          "title": "Видалити mapping",
+          "description": "Ви впевнені, що хочете видалити цей mapping?"
+        }
+      },
+      "dialog": {
+        "createTitle": "Створити mapping",
+        "editTitle": "Редагувати mapping",
+        "description": "Зв'язування TMDB провайдера з canonical провайдером",
+        "tmdbProviderId": "TMDB Provider ID",
+        "providerId": "Canonical Provider",
+        "variantId": "Variant ID",
+        "distributionChannel": "Distribution Channel",
+        "region": "Region",
+        "cancel": "Скасувати",
+        "create": "Створити",
+        "save": "Зберегти",
+        "saving": "Збереження..."
+      },
+      "toast": {
+        "createSuccess": "Mapping створено успішно",
+        "createError": "Не вдалося створити mapping",
+        "updateSuccess": "Mapping оновлено",
+        "updateError": "Не вдалося оновити mapping",
+        "deleteSuccess": "Mapping видалено",
+        "deleteError": "Не вдалося видалити mapping"
       }
     },
     "common": {

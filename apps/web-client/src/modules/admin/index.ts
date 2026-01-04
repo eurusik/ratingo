@@ -31,6 +31,15 @@ export {
   type PolicyFormData,
 } from './components/policy';
 
+// Provider management components
+export {
+  MappingDialog,
+  UnmappedProvidersTable,
+  MappingsTable,
+  type MappingDialogProps,
+  type MappingFormData,
+} from './components/providers';
+
 // Run components
 export { RunHeader, RunDiffTab, RunErrorsTab } from './components/run';
 

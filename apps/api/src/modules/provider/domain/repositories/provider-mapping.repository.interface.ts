@@ -35,6 +35,15 @@ export interface IProviderMappingRepository {
   findByRegion(region: string): Promise<ProviderMapping[]>;
 
   /**
+   * Finds all mappings with optional filters.
+   */
+  findAll(options?: {
+    providerId?: string;
+    region?: string;
+    includeGlobal?: boolean;
+  }): Promise<ProviderMapping[]>;
+
+  /**
    * Finds a mapping by ID.
    */
   findById(id: string): Promise<ProviderMapping | null>;

@@ -8,7 +8,8 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Badge } from '@/shared/ui/badge';
 import type { BreakoutRuleDto } from '@/core/api/admin';
-import { TagInput } from './TagInput';
+import { ComboboxTagInput, type ComboboxOption } from './ComboboxTagInput';
+import { useProviders } from '@/core/query';
 
 interface BreakoutRulesEditorProps {
   rules: BreakoutRuleDto[];
@@ -35,6 +36,14 @@ const RATING_OPTIONS = ['imdb', 'metacritic', 'rt', 'trakt'] as const;
  */
 export function BreakoutRulesEditor({ rules, onChange, labels }: BreakoutRulesEditorProps) {
   const [expandedRule, setExpandedRule] = useState<string | null>(null);
+  const { data: providersData = [], isLoading: providersLoading } = useProviders();
+
+  // Convert providers to combobox options
+  const providerOptions: ComboboxOption[] = providersData.map((p) => ({
+    id: p.id,
+    name: p.name,
+    count: p.count,
+  }));
 
   const addRule = () => {
     const newRule: BreakoutRuleDto = {
@@ -182,12 +191,16 @@ export function BreakoutRulesEditor({ rules, onChange, labels }: BreakoutRulesEd
 
                 <div className="space-y-2">
                   <Label>{labels?.providers ?? 'Required Providers (any of)'}</Label>
-                  <TagInput
+                  <ComboboxTagInput
                     value={rule.requirements.requireAnyOfProviders ?? []}
                     onChange={(providers) =>
                       updateRequirements(rule.id, { requireAnyOfProviders: providers })
                     }
-                    placeholder={labels?.providerPlaceholder ?? 'Add provider (e.g., netflix)'}
+                    options={providerOptions}
+                    isLoading={providersLoading}
+                    placeholder={labels?.providerPlaceholder ?? 'Select or add provider...'}
+                    searchPlaceholder="Search providers..."
+                    emptyText="No providers found"
                     transform={(v) => v.toLowerCase()}
                   />
                 </div>

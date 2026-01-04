@@ -15,7 +15,7 @@ describe('UnmappedTrackingService', () => {
     mockRepository = {
       recordUnmapped: jest.fn().mockResolvedValue(undefined),
       recordUnmappedBatch: jest.fn().mockResolvedValue(undefined),
-      findAll: jest.fn().mockResolvedValue([]),
+      findAll: jest.fn().mockResolvedValue({ data: [], total: 0 }),
       findByTmdbId: jest.fn().mockResolvedValue(null),
       removeByTmdbId: jest.fn().mockResolvedValue(undefined),
     };
@@ -92,29 +92,33 @@ describe('UnmappedTrackingService', () => {
         createMockUnmapped(8, 'Netflix', 100),
         createMockUnmapped(9, 'Prime Video', 50),
       ];
-      mockRepository.findAll.mockResolvedValueOnce(mockProviders);
+      mockRepository.findAll.mockResolvedValueOnce({ data: mockProviders, total: 2 });
 
       const result = await service.findAll();
 
-      expect(result).toHaveLength(2);
-      expect(result[0].tmdbProviderId).toBe(8);
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].tmdbProviderId).toBe(8);
+      expect(result.total).toBe(2);
     });
 
     it('should pass options to repository', async () => {
-      await service.findAll({ sortBy: 'lastSeen', limit: 10 });
+      mockRepository.findAll.mockResolvedValueOnce({ data: [], total: 0 });
+
+      await service.findAll({ sortBy: 'lastSeenAt', limit: 10 });
 
       expect(mockRepository.findAll).toHaveBeenCalledWith({
-        sortBy: 'lastSeen',
+        sortBy: 'lastSeenAt',
         limit: 10,
       });
     });
 
     it('should return empty array when no unmapped providers', async () => {
-      mockRepository.findAll.mockResolvedValueOnce([]);
+      mockRepository.findAll.mockResolvedValueOnce({ data: [], total: 0 });
 
       const result = await service.findAll();
 
-      expect(result).toEqual([]);
+      expect(result.data).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 

@@ -17,6 +17,12 @@ export const ADMIN_NAVIGATION: NavigationItem[] = [
     href: '/admin/runs',
     permissions: ['admin.runs.read'],
   },
+  {
+    id: 'providers',
+    label: 'Провайдери', // Fallback label, will be translated
+    href: '/admin/providers',
+    permissions: ['admin.providers.read'],
+  },
 ];
 
 /**

@@ -6,6 +6,8 @@ import type { BreakoutRuleDto } from '@/core/api/admin';
 interface BreakoutRuleItemProps {
   rule: BreakoutRuleDto;
   priorityLabel?: string;
+  /** Resolves provider IDs to display names. */
+  resolveProviderNames?: (ids: string[]) => string[];
 }
 
 /**
@@ -16,9 +18,19 @@ interface BreakoutRuleItemProps {
  *
  * @param rule - Breakout rule configuration
  * @param priorityLabel - Localized label for priority
+ * @param resolveProviderNames - Function to resolve provider IDs to names
  */
-export function BreakoutRuleItem({ rule, priorityLabel }: BreakoutRuleItemProps) {
+export function BreakoutRuleItem({
+  rule,
+  priorityLabel,
+  resolveProviderNames,
+}: BreakoutRuleItemProps) {
   const { requirements } = rule;
+
+  const providerIds = requirements.requireAnyOfProviders ?? [];
+  const providerNames = resolveProviderNames
+    ? resolveProviderNames(providerIds)
+    : providerIds;
 
   return (
     <div className="p-3 border rounded-lg">
@@ -38,9 +50,7 @@ export function BreakoutRuleItem({ rule, priorityLabel }: BreakoutRuleItemProps)
         {requirements.minQualityScoreNormalized && (
           <span>Quality ≥ {(requirements.minQualityScoreNormalized * 100).toFixed(0)}%</span>
         )}
-        {requirements.requireAnyOfProviders && requirements.requireAnyOfProviders.length > 0 && (
-          <span>Providers: {requirements.requireAnyOfProviders.join(', ')}</span>
-        )}
+        {providerNames.length > 0 && <span>Providers: {providerNames.join(', ')}</span>}
         {requirements.requireAnyOfRatingsPresent &&
           requirements.requireAnyOfRatingsPresent.length > 0 && (
             <span>Ratings: {requirements.requireAnyOfRatingsPresent.join(', ')}</span>

@@ -21,9 +21,11 @@ import { MediaWatchOffersRepository } from './infrastructure/repositories/media-
 import { ProviderMappingRepository } from './infrastructure/repositories/provider-mapping.repository';
 import { ProviderRegistryRepository } from './infrastructure/repositories/provider-registry.repository';
 import { UnmappedTrackingRepository } from './infrastructure/repositories/unmapped-tracking.repository';
+import { ProvidersController } from './presentation/controllers/providers.controller';
 
 @Module({
   imports: [DatabaseModule],
+  controllers: [ProvidersController],
   providers: [
     // Repositories
     {

@@ -8,6 +8,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import {
   FindAllUnmappedOptions,
+  FindAllUnmappedResult,
   IUnmappedTrackingRepository,
   RecordUnmappedInput,
   UNMAPPED_TRACKING_REPOSITORY,
@@ -48,10 +49,11 @@ export class UnmappedTrackingService {
   /**
    * Finds all unmapped providers with optional sorting and limit.
    *
-   * @param options.sortBy - Sort by 'count' (default) or 'lastSeen'
+   * @param options.sortBy - Sort by 'seenCount' (default) or 'lastSeenAt'
    * @param options.limit - Maximum number of results
+   * @param options.offset - Offset for pagination
    */
-  async findAll(options?: FindAllUnmappedOptions): Promise<UnmappedProvider[]> {
+  async findAll(options?: FindAllUnmappedOptions): Promise<FindAllUnmappedResult> {
     return this.repository.findAll(options);
   }
 

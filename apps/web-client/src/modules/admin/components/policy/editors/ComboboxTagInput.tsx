@@ -59,10 +59,10 @@ export function ComboboxTagInput({
       opt.id.toLowerCase() === search.toLowerCase(),
   );
 
-  const addTag = (tag: string) => {
-    const transformed = transform(tag.trim());
-    if (transformed && !value.includes(transformed)) {
-      onChange([...value, transformed]);
+  const addTag = (id: string) => {
+    const trimmed = id.trim();
+    if (trimmed && !value.includes(trimmed)) {
+      onChange([...value, trimmed]);
     }
     setSearch('');
   };
@@ -72,11 +72,10 @@ export function ComboboxTagInput({
   };
 
   const toggleOption = (option: ComboboxOption) => {
-    const transformed = transform(option.name);
-    if (value.includes(transformed)) {
-      removeTag(transformed);
+    if (value.includes(option.id)) {
+      removeTag(option.id);
     } else {
-      addTag(option.name);
+      addTag(option.id);
     }
   };
 
@@ -84,7 +83,17 @@ export function ComboboxTagInput({
     if (e.key === 'Enter') {
       e.preventDefault();
       if (search.trim()) {
-        addTag(search);
+        // Check if search matches an option - use its ID
+        const matchedOption = options.find(
+          (opt) =>
+            opt.name.toLowerCase() === search.toLowerCase() ||
+            opt.id.toLowerCase() === search.toLowerCase(),
+        );
+        if (matchedOption) {
+          addTag(matchedOption.id);
+        } else {
+          addTag(transform(search));
+        }
         setOpen(false);
       }
     } else if (e.key === 'Escape') {
@@ -152,7 +161,7 @@ export function ComboboxTagInput({
             ) : (
               <>
                 {filteredOptions.map((option) => {
-                  const isSelected = value.includes(transform(option.name));
+                  const isSelected = value.includes(option.id);
                   return (
                     <button
                       key={option.id}
@@ -178,7 +187,15 @@ export function ComboboxTagInput({
                   <button
                     type="button"
                     onClick={() => {
-                      addTag(search);
+                      // Check if matches an option by name
+                      const matchedOption = options.find(
+                        (opt) => opt.name.toLowerCase() === search.toLowerCase(),
+                      );
+                      if (matchedOption) {
+                        addTag(matchedOption.id);
+                      } else {
+                        addTag(transform(search));
+                      }
                       setOpen(false);
                     }}
                     className="flex items-center w-full px-2 py-1.5 text-sm hover:bg-accent cursor-pointer border-t"
