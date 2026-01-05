@@ -74,8 +74,19 @@ function createClient(): KyInstance {
       ],
       afterResponse: [
         async (request, _options, response) => {
-          // Only handle 401 in browser environment
-          if (response.status !== 401 || typeof window === 'undefined') {
+          // Skip handling in SSR
+          if (typeof window === 'undefined') {
+            return response;
+          }
+
+          // Handle 403 Forbidden (admin access denied)
+          if (response.status === 403) {
+            window.dispatchEvent(new CustomEvent('auth:forbidden'));
+            return response;
+          }
+
+          // Only handle 401 from here
+          if (response.status !== 401) {
             return response;
           }
 

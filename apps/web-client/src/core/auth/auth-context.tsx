@@ -27,6 +27,8 @@ interface AuthState {
   isLoading: boolean;
   /** Whether user is authenticated. */
   isAuthenticated: boolean;
+  /** Whether user has admin role. */
+  isAdmin: boolean;
 }
 
 /** Auth context actions. */
@@ -56,6 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   const isAuthenticated = !!user;
+  const isAdmin = user?.role === 'admin';
 
   // Initialize token getter for API client
   useEffect(() => {
@@ -144,12 +147,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user,
       isLoading,
       isAuthenticated,
+      isAdmin,
       login,
       register,
       logout,
       refreshUser,
     }),
-    [user, isLoading, isAuthenticated, login, register, logout, refreshUser],
+    [user, isLoading, isAuthenticated, isAdmin, login, register, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
