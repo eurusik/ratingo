@@ -422,7 +422,7 @@ describe('SyncMediaService', () => {
     it('should normalize watch providers when present', async () => {
       const mediaWithProviders = {
         ...mockMedia,
-        watchProviders: {
+        watchProvidersRaw: {
           US: {
             flatrate: [{ providerId: 8, name: 'Netflix' }],
           },
@@ -437,12 +437,12 @@ describe('SyncMediaService', () => {
 
       expect(normalizationService.normalizeWatchProviders).toHaveBeenCalledWith(
         'media-123',
-        mediaWithProviders.watchProviders,
+        mediaWithProviders.watchProvidersRaw,
       );
     });
 
     it('should skip normalization when no watch providers', async () => {
-      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia, watchProviders: {} });
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia, watchProvidersRaw: {} });
       traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
       omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
 
@@ -454,7 +454,7 @@ describe('SyncMediaService', () => {
     it('should handle normalization failure gracefully', async () => {
       const mediaWithProviders = {
         ...mockMedia,
-        watchProviders: {
+        watchProvidersRaw: {
           US: { flatrate: [{ providerId: 8, name: 'Netflix' }] },
         },
       };
@@ -473,7 +473,7 @@ describe('SyncMediaService', () => {
     it('should skip normalization when media item not found after persist', async () => {
       const mediaWithProviders = {
         ...mockMedia,
-        watchProviders: {
+        watchProvidersRaw: {
           US: { flatrate: [{ providerId: 8, name: 'Netflix' }] },
         },
       };

@@ -137,7 +137,7 @@ describe('TmdbMapper', () => {
       expect(result).toEqual(
         expect.objectContaining({
           title: 'Breaking Bad',
-          slug: 'breaking-bad-1396',
+          slug: 'breaking-bad',
           type: MediaType.SHOW,
           externalIds: { tmdbId: 1396, imdbId: null },
           rating: 9.5,
@@ -171,7 +171,7 @@ describe('TmdbMapper', () => {
       const movieWithSpecialChars = { ...mockMovie, title: 'The Fast & The Furious: Tokyo Drift' };
       const result = TmdbMapper.toDomain(movieWithSpecialChars, MediaType.MOVIE);
 
-      expect(result?.slug).toBe('the-fast-and-the-furious-tokyo-drift-550');
+      expect(result?.slug).toBe('the-fast-and-the-furious-tokyo-drift');
     });
 
     it('should only extract UA and US watch providers, ignoring other regions', () => {

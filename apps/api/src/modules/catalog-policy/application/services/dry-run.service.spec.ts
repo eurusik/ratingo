@@ -14,11 +14,13 @@ import { DryRunService, DryRunOptions } from './dry-run.service';
 import { CatalogPolicyService } from './catalog-policy.service';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { PolicyConfig } from '../../domain/types/policy.types';
+import { MEDIA_WATCH_OFFERS_REPOSITORY } from '../../../provider/public';
 
 describe('DryRunService', () => {
   let service: DryRunService;
   let mockDb: any;
   let mockPolicyService: any;
+  let mockWatchOffersRepository: any;
 
   const createTestPolicy = (overrides: Partial<PolicyConfig> = {}): PolicyConfig => ({
     allowedCountries: ['US', 'UA'],
@@ -53,11 +55,16 @@ describe('DryRunService', () => {
       getActive: jest.fn().mockResolvedValue({ version: 1 }),
     };
 
+    mockWatchOffersRepository = {
+      findByMediaItemIds: jest.fn().mockResolvedValue([]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DryRunService,
         { provide: DATABASE_CONNECTION, useValue: mockDb },
         { provide: CatalogPolicyService, useValue: mockPolicyService },
+        { provide: MEDIA_WATCH_OFFERS_REPOSITORY, useValue: mockWatchOffersRepository },
       ],
     }).compile();
 
