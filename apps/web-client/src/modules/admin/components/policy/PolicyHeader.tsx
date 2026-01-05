@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Loader2, Play, Pencil } from 'lucide-react';
-import { POLICY_STATUS } from '@/modules/admin/types';
+import { POLICY_STATUS } from '../../types';
 
 export interface PolicyHeaderLabels {
   active: string;

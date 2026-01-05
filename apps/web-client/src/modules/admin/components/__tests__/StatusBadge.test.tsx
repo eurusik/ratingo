@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import * as fc from 'fast-check';
-import { StatusBadge, statusVariantMap } from '../StatusBadge';
+import { StatusBadge, statusVariantMap } from '../ui/StatusBadge';
 import { RunStatus, PolicyStatus } from '../../types';
 import { I18nProvider } from '@/shared/i18n/context';
 

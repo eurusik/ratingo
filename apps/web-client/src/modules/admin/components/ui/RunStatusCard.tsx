@@ -5,14 +5,14 @@
 'use client';
 
 import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/card';
-import { Badge } from '../../../shared/ui/badge';
-import { Progress } from '../../../shared/ui/progress';
-import { Button } from '../../../shared/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Badge } from '@/shared/ui/badge';
+import { Progress } from '@/shared/ui/progress';
+import { Button } from '@/shared/ui/button';
 import { RefreshCw, Play, X } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
-import { useTranslation } from '../../../shared/i18n';
-import { useRunStatus, usePromoteRun, useCancelRun } from '../../../core/query';
+import { useTranslation } from '@/shared/i18n';
+import { useRunStatus, usePromoteRun, useCancelRun } from '@/core/query';
 import { toast } from 'sonner';
 
 interface RunStatusCardProps {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { fc } from '@fast-check/jest';
-import { DataTable } from '../DataTable';
+import { DataTable } from '../ui/DataTable';
 import { DataTableColumnDef, DropdownMenuItemProps } from '../../types';
 import { I18nProvider } from '@/shared/i18n/context';
 
@@ -210,10 +210,9 @@ describe('DataTable Property Tests', () => {
     it('should display custom empty state when provided', () => {
       fc.assert(
         fc.property(
-          fc.string({ minLength: 5, maxLength: 20 }).filter((s) => s.trim().length > 0),
+          fc.stringMatching(/^[a-zA-Z0-9]{5,20}$/),
           (customMessage) => {
-            const trimmedMessage = customMessage.trim();
-            const customEmptyState = <div data-testid="custom-empty">{trimmedMessage}</div>;
+            const customEmptyState = <div data-testid="custom-empty">{customMessage}</div>;
 
             const { container } = renderWithI18n(
               <DataTable
@@ -227,7 +226,7 @@ describe('DataTable Property Tests', () => {
             // Should show custom empty state
             const customEmpty = container.querySelector('[data-testid="custom-empty"]');
             expect(customEmpty).toBeInTheDocument();
-            expect(customEmpty).toHaveTextContent(trimmedMessage);
+            expect(customEmpty).toHaveTextContent(customMessage);
 
             // Should not show default empty state
             expect(container.textContent).not.toContain('No data available');

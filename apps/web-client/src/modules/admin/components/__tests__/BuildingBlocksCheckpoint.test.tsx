@@ -1,12 +1,12 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import { StatusBadge } from '../StatusBadge';
-import { DataTable } from '../DataTable';
-import { FilterBar } from '../FilterBar';
-import { ConfirmActionDialog } from '../ConfirmActionDialog';
-import { EmptyState } from '../EmptyState';
-import { ErrorState } from '../ErrorState';
-import { LoadingState } from '../LoadingState';
+import { StatusBadge } from '../ui/StatusBadge';
+import { DataTable } from '../ui/DataTable';
+import { FilterBar } from '../ui/FilterBar';
+import { ConfirmActionDialog } from '../dialogs/ConfirmActionDialog';
+import { EmptyState } from '../ui/EmptyState';
+import { ErrorState } from '../ui/ErrorState';
+import { LoadingState } from '../ui/LoadingState';
 import { RunStatus, PolicyStatus, DataTableColumnDef } from '../../types';
 import { I18nProvider } from '@/shared/i18n/context';
 

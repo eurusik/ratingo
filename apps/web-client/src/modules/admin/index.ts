@@ -1,27 +1,36 @@
-// Admin UI Shell components
-export { StatusBadge } from './components/StatusBadge';
-export { DataTable } from './components/DataTable';
-export { FilterBar } from './components/FilterBar';
-export { ConfirmActionDialog } from './components/ConfirmActionDialog';
-export { EmptyState } from './components/EmptyState';
-export { ErrorState } from './components/ErrorState';
-export { LoadingState } from './components/LoadingState';
-export { AdminShell } from './components/AdminShell';
-export { AdminLayout } from './components/AdminLayout';
-export { Sidebar, SidebarTrigger } from './components/Sidebar';
-export { ProgressWithStats } from './components/ProgressWithStats';
-export { JsonViewer } from './components/JsonViewer';
-export { RunStatusCard } from './components/RunStatusCard';
-export { PromoteConfirmDialog } from './components/PromoteConfirmDialog';
-export { CancelConfirmDialog } from './components/CancelConfirmDialog';
+// Layout components
+export { AdminLayout, AdminShell, Sidebar, SidebarTrigger } from './components/layout';
 
-// Policy config components
+// UI primitives
+export {
+  DataTable,
+  StatusBadge,
+  statusBadgeVariants,
+  statusVariantMap,
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  JsonViewer,
+  FilterBar,
+  ProgressWithStats,
+  RunStatusCard,
+} from './components/ui';
+
+// Dialogs
+export {
+  ConfirmActionDialog,
+  CancelConfirmDialog,
+  PromoteConfirmDialog,
+} from './components/dialogs';
+
+// Policy feature components
 export {
   CountriesCard,
   LanguagesCard,
   ProvidersCard,
   SettingsCard,
   BreakoutRulesCard,
+  GlobalRequirementsCard,
   PolicyHeader,
   PolicyRunsTab,
   PolicyConfigTab,
@@ -29,9 +38,11 @@ export {
   NewPolicyDialog,
   DraftHeader,
   type PolicyFormData,
+  type PolicyHeaderLabels,
+  type NewPolicyDialogLabels,
 } from './components/policy';
 
-// Provider management components
+// Provider feature components
 export {
   MappingDialog,
   UnmappedProvidersTable,
@@ -40,7 +51,7 @@ export {
   type MappingFormData,
 } from './components/providers';
 
-// Run components
+// Run feature components
 export { RunHeader, RunDiffTab, RunErrorsTab } from './components/run';
 
 // Configuration

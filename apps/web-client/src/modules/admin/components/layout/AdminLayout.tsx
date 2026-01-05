@@ -4,8 +4,9 @@ import { useEffect, useRef } from 'react';
 import { type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/core/auth';
-import { AdminShell, getAdminNavigation } from '../';
-import { BreadcrumbItem } from '../types';
+import { AdminShell } from './AdminShell';
+import { getAdminNavigation } from '../../config';
+import { BreadcrumbItem } from '../../types';
 
 interface AdminLayoutProps {
   children: ReactNode;

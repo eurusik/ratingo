@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Badge } from '@/shared/ui/badge';
 import type { PolicyConfigDto } from '@/core/api/admin';
-import { POLICY_STATUS } from '@/modules/admin/types';
+import { POLICY_STATUS } from '../../types';
 import type {
   PolicyFormLabels,
   ConfigViewLabels,

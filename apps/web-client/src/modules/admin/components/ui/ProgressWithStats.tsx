@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Progress } from '@/shared/ui/progress';
 import { Badge } from '@/shared/ui/badge';
-import { ProgressStats } from '../types';
+import { ProgressStats } from '../../types';
 
 interface ProgressWithStatsProps {
   stats: ProgressStats;

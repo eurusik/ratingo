@@ -5,18 +5,18 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Menu, FileText, Play, Tv } from 'lucide-react';
-import { cn } from '../../../shared/utils/cn';
-import { NavigationItem } from '../types';
-import { Button } from '../../../shared/ui/button';
-import { Badge } from '../../../shared/ui/badge';
-import { useTranslation } from '../../../shared/i18n';
+import { cn } from '@/shared/utils';
+import { NavigationItem } from '../../types';
+import { Button } from '@/shared/ui/button';
+import { Badge } from '@/shared/ui/badge';
+import { useTranslation } from '@/shared/i18n';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '../../../shared/ui/sheet';
+} from '@/shared/ui/sheet';
 
 interface SidebarProps {
   navigationItems: NavigationItem[];

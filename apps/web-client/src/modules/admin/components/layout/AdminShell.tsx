@@ -1,8 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../../../shared/utils/cn';
-import { AdminShellProps, NavigationItem } from '../types';
+import { cn } from '@/shared/utils';
+import { AdminShellProps, NavigationItem } from '../../types';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,8 +10,8 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '../../../shared/ui/breadcrumb';
-import { Separator } from '../../../shared/ui/separator';
+} from '@/shared/ui/breadcrumb';
+import { Separator } from '@/shared/ui/separator';
 import { Sidebar, SidebarTrigger } from './Sidebar';
 
 interface AdminShellWithSidebarProps extends AdminShellProps {

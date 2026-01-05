@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ErrorState } from '../ErrorState';
+import { ErrorState } from '../ui/ErrorState';
 
 describe('ErrorState', () => {
   test('renders inline variant with string error', () => {

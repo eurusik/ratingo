@@ -3,8 +3,8 @@
 import { Card, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
-import { StatusBadge } from '@/modules/admin';
-import { RUN_STATUS } from '@/modules/admin/types';
+import { StatusBadge } from '../ui';
+import { RUN_STATUS } from '../../types';
 import type { RunHeaderLabels } from './labels.types';
 
 interface RunHeaderProps {

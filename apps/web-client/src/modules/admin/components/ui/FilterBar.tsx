@@ -4,25 +4,25 @@ import * as React from 'react';
 import { Search } from 'lucide-react';
 import { useDebounce } from 'use-debounce';
 
-import { cn } from '../../../shared/utils';
-import { Input } from '../../../shared/ui/input';
-import { Button } from '../../../shared/ui/button';
+import { cn } from '@/shared/utils';
+import { Input } from '@/shared/ui/input';
+import { Button } from '@/shared/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../../shared/ui/select';
+} from '@/shared/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../../../shared/ui/dropdown-menu';
-import { useTranslation } from '../../../shared/i18n';
+} from '@/shared/ui/dropdown-menu';
+import { useTranslation } from '@/shared/i18n';
 
-import { FilterBarProps, FilterConfig } from '../types';
+import { FilterBarProps, FilterConfig } from '../../types';
 
 function FilterBar({
   searchValue = '',

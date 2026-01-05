@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { EmptyState } from '../EmptyState';
+import { EmptyState } from '../ui/EmptyState';
 import { FileX } from 'lucide-react';
 
 describe('EmptyState', () => {

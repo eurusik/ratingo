@@ -25,7 +25,7 @@ import {
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useTranslation } from '@/shared/i18n';
 
-import { DataTableProps, DropdownMenuItemProps, DataTableColumnDef } from '../types';
+import { DataTableProps, DropdownMenuItemProps, DataTableColumnDef } from '../../types';
 
 function DataTable<T>({
   data,

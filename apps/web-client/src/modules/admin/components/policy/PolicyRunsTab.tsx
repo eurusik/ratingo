@@ -3,8 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Progress } from '@/shared/ui/progress';
-import { DataTable, StatusBadge } from '@/modules/admin';
-import { DataTableColumnDef } from '@/modules/admin/types';
+import { DataTable } from '../ui';
+import { StatusBadge } from '../ui';
+import { DataTableColumnDef } from '../../types';
 import type { components } from '@ratingo/api-contract';
 
 type EvaluationRunDto = components['schemas']['EvaluationRunDto'];

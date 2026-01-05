@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/shared/utils';
-import type { RunStatusType, PolicyStatusType } from '../types';
+import type { RunStatusType, PolicyStatusType } from '../../types';
 import { useTranslation } from '@/shared/i18n';
 
 // Badge variants with success variant for status mapping
