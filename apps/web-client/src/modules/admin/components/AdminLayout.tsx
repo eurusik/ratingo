@@ -29,6 +29,8 @@ export function AdminLayout({
   const navigation = getAdminNavigation(userPermissions);
   const isRedirecting = useRef(false);
 
+  const shouldRedirect = !isLoading && (!isAuthenticated || !isAdmin);
+
   // Listen for 403 forbidden events
   useEffect(() => {
     const handleForbidden = () => {
@@ -40,6 +42,14 @@ export function AdminLayout({
     return () => window.removeEventListener('auth:forbidden', handleForbidden);
   }, [router]);
 
+  // Redirect non-admin users (must be in useEffect, not render phase)
+  useEffect(() => {
+    if (shouldRedirect && !isRedirecting.current) {
+      isRedirecting.current = true;
+      router.push('/');
+    }
+  }, [shouldRedirect, router]);
+
   // Show loading state while checking auth
   if (isLoading) {
     return (
@@ -49,12 +59,8 @@ export function AdminLayout({
     );
   }
 
-  // Redirect if not authenticated or not admin
-  if (!isAuthenticated || !isAdmin) {
-    if (!isRedirecting.current) {
-      isRedirecting.current = true;
-      router.push('/');
-    }
+  // Don't render admin content if not authorized
+  if (shouldRedirect) {
     return null;
   }
 
