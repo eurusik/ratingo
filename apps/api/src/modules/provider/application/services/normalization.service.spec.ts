@@ -302,6 +302,77 @@ describe('NormalizationService', () => {
       expect(result.offersCreated).toBe(1);
       expect(result.unmappedCount).toBe(1);
     });
+
+    it('should deduplicate identical offers within same region', async () => {
+      // Arrange: same provider appears twice in flatrate (TMDB data anomaly)
+      const rawProviders: WatchProvidersMap = {
+        US: {
+          flatrate: [
+            { providerId: 8, name: 'Netflix' },
+            { providerId: 8, name: 'Netflix' }, // duplicate
+          ],
+        },
+      };
+
+      const mappings = new Map<number, ResolvedMapping>([
+        [8, { providerId: 'netflix', variantId: null, distributionChannel: 'direct' }],
+      ]);
+      mockMappingService.resolveMany.mockResolvedValue(mappings);
+
+      // Act
+      const result = await service.normalizeWatchProviders('media-123', rawProviders);
+
+      // Assert: only 1 offer created, not 2
+      expect(result.offersCreated).toBe(1);
+      expect(mockOffersRepository.upsertManyByRegions).toHaveBeenCalledWith(
+        'media-123',
+        expect.arrayContaining([expect.objectContaining({ providerId: 'netflix' })]),
+      );
+      const calls = mockOffersRepository.upsertManyByRegions.mock.calls;
+      expect(calls[0][1]).toHaveLength(1);
+    });
+
+    it('should deduplicate unmapped providers within same region', async () => {
+      // Arrange: same unmapped provider in multiple offer types
+      const rawProviders: WatchProvidersMap = {
+        US: {
+          flatrate: [{ providerId: 999, name: 'Unknown' }],
+          rent: [{ providerId: 999, name: 'Unknown' }],
+        },
+      };
+
+      mockMappingService.resolveMany.mockResolvedValue(new Map());
+
+      // Act
+      const result = await service.normalizeWatchProviders('media-123', rawProviders);
+
+      // Assert: only 1 unmapped recorded, not 2
+      expect(result.unmappedCount).toBe(1);
+      expect(mockUnmappedRepository.recordUnmappedBatch).toHaveBeenCalledWith([
+        expect.objectContaining({ tmdbProviderId: 999, region: 'US' }),
+      ]);
+    });
+
+    it('should allow same provider in different offer types', async () => {
+      // Arrange: Netflix available for both flatrate and rent (legitimate)
+      const rawProviders: WatchProvidersMap = {
+        US: {
+          flatrate: [{ providerId: 8, name: 'Netflix' }],
+          rent: [{ providerId: 8, name: 'Netflix' }],
+        },
+      };
+
+      const mappings = new Map<number, ResolvedMapping>([
+        [8, { providerId: 'netflix', variantId: null, distributionChannel: 'direct' }],
+      ]);
+      mockMappingService.resolveMany.mockResolvedValue(mappings);
+
+      // Act
+      const result = await service.normalizeWatchProviders('media-123', rawProviders);
+
+      // Assert: 2 offers (different offerType = different dedupe key)
+      expect(result.offersCreated).toBe(2);
+    });
   });
 
   describe('normalizeBatch', () => {

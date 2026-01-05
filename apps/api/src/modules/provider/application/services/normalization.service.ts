@@ -82,6 +82,8 @@ export class NormalizationService {
   ): Promise<NormalizationResult> {
     const offers: CreateWatchOfferInput[] = [];
     const unmapped: RecordUnmappedInput[] = [];
+    const seenOffers = new Set<string>();
+    const seenUnmapped = new Set<string>();
 
     // Collect TMDB provider IDs per region for batch resolution
     const idsByRegion = this.collectIdsByRegion(rawProviders);
@@ -103,6 +105,8 @@ export class NormalizationService {
         regionMappings,
         offers,
         unmapped,
+        seenOffers,
+        seenUnmapped,
       );
     }
 
@@ -168,6 +172,7 @@ export class NormalizationService {
 
   /**
    * Processes all offer types for a single region.
+   * Deduplicates offers and unmapped providers to prevent INSERT conflicts.
    */
   private processRegionOffers(
     mediaItemId: string,
@@ -177,33 +182,75 @@ export class NormalizationService {
     regionMappings: Map<number, ResolvedMappingInternal>,
     offers: CreateWatchOfferInput[],
     unmapped: RecordUnmappedInput[],
+    seenOffers: Set<string>,
+    seenUnmapped: Set<string>,
   ): void {
     for (const offerType of OFFER_TYPES) {
       const providers = regionData[offerType] ?? [];
 
       for (const provider of providers) {
-        const mapping = regionMappings.get(provider.providerId);
-
-        if (mapping) {
-          offers.push({
-            mediaItemId,
-            providerId: mapping.providerId,
-            variantId: mapping.variantId,
-            distributionChannel: mapping.distributionChannel,
-            offerType,
-            region,
-            link,
-            tmdbProviderId: provider.providerId,
-          });
-        } else {
-          unmapped.push({
-            tmdbProviderId: provider.providerId,
-            providerName: provider.name,
-            region,
-          });
-        }
+        this.processProvider(
+          mediaItemId,
+          provider,
+          offerType,
+          region,
+          link,
+          regionMappings,
+          offers,
+          unmapped,
+          seenOffers,
+          seenUnmapped,
+        );
       }
     }
+  }
+
+  /**
+   * Processes a single provider, adding to offers or unmapped with deduplication.
+   */
+  private processProvider(
+    mediaItemId: string,
+    provider: TmdbProvider,
+    offerType: OfferType,
+    region: string,
+    link: string | null,
+    regionMappings: Map<number, ResolvedMappingInternal>,
+    offers: CreateWatchOfferInput[],
+    unmapped: RecordUnmappedInput[],
+    seenOffers: Set<string>,
+    seenUnmapped: Set<string>,
+  ): void {
+    const mapping = regionMappings.get(provider.providerId);
+
+    if (mapping) {
+      // Dedupe key: region|offerType|providerId|variantId|distributionChannel
+      const offerKey = `${region}|${offerType}|${mapping.providerId}|${mapping.variantId ?? ''}|${mapping.distributionChannel}`;
+      if (seenOffers.has(offerKey)) return;
+      seenOffers.add(offerKey);
+
+      offers.push({
+        mediaItemId,
+        providerId: mapping.providerId,
+        variantId: mapping.variantId,
+        distributionChannel: mapping.distributionChannel,
+        offerType,
+        region,
+        link,
+        tmdbProviderId: provider.providerId,
+      });
+      return;
+    }
+
+    // Dedupe key: region|tmdbProviderId
+    const unmappedKey = `${region}|${provider.providerId}`;
+    if (seenUnmapped.has(unmappedKey)) return;
+    seenUnmapped.add(unmappedKey);
+
+    unmapped.push({
+      tmdbProviderId: provider.providerId,
+      providerName: provider.name,
+      region,
+    });
   }
 
   /**
