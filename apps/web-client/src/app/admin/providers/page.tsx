@@ -48,16 +48,20 @@ export default function ProvidersPage() {
             <Info className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>
-                <strong>What is a mapping?</strong> TMDB returns providers with different IDs for
-                different regions. Mapping allows us to unify them under one canonical provider.
+                <strong>{labels.info?.whatIsMapping ?? 'What is a mapping?'}</strong>{' '}
+                {labels.info?.whatIsMappingDescription ??
+                  'TMDB returns providers with different IDs for different regions. Mapping allows us to unify them under one canonical provider.'}
               </p>
               <p>
-                <strong>Example:</strong> TMDB ID 8 (Netflix US), TMDB ID 175 (Netflix UA) →
-                canonical <code className="bg-muted px-1 rounded">netflix</code>
+                <strong>{labels.info?.example ?? 'Example:'}</strong>{' '}
+                {labels.info?.exampleDescription ??
+                  'TMDB ID 8 (Netflix US), TMDB ID 175 (Netflix UA) → canonical'}{' '}
+                <code className="bg-muted px-1 rounded">netflix</code>
               </p>
               <p>
-                <strong>Distribution Channel:</strong> Direct = own service, Amazon/Apple Channel
-                = content available via Amazon Prime / Apple TV+ subscription
+                <strong>{labels.info?.distributionChannel ?? 'Distribution Channel:'}</strong>{' '}
+                {labels.info?.distributionChannelDescription ??
+                  'Direct = own service, Amazon/Apple Channel = content available via Amazon Prime / Apple TV+ subscription'}
               </p>
             </div>
           </div>
@@ -93,6 +97,7 @@ export default function ProvidersPage() {
               createMapping: labels.unmapped?.createMapping,
               columns: labels.unmapped?.columns,
               empty: labels.unmapped?.empty,
+              dialog: labels.dialog,
               toast: {
                 success: labels.toast?.createSuccess,
                 error: labels.toast?.createError,
@@ -107,10 +112,14 @@ export default function ProvidersPage() {
               title: labels.mappings?.title,
               description: labels.mappings?.description,
               addMapping: labels.mappings?.addMapping,
+              global: labels.mappings?.global,
               columns: labels.mappings?.columns,
+              channels: labels.mappings?.channels,
+              sources: labels.mappings?.sources,
               empty: labels.mappings?.empty,
               actions: labels.mappings?.actions,
               confirmDelete: labels.mappings?.confirmDelete,
+              dialog: labels.dialog,
               toast: {
                 createSuccess: labels.toast?.createSuccess,
                 createError: labels.toast?.createError,

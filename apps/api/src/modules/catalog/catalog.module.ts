@@ -24,6 +24,7 @@ import { MovieListingsQuery } from './infrastructure/queries/movie-listings.quer
 import { NewEpisodesQuery } from './infrastructure/queries/new-episodes.query';
 import { ProvidersQuery } from './infrastructure/queries/providers.query';
 import { GenreQuery } from './infrastructure/queries/shared/genre.query';
+import { WatchOffersQuery } from './infrastructure/queries/shared/watch-offers.query';
 import { ShowDetailsQuery } from './infrastructure/queries/show-details.query';
 import { TrendingMoviesQuery } from './infrastructure/queries/trending-movies.query';
 import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
@@ -84,6 +85,7 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
 
     // Query Objects - Shared
     GenreQuery,
+    WatchOffersQuery,
     ProvidersQuery,
 
     // Repositories

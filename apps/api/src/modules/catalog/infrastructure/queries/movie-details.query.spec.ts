@@ -1,7 +1,7 @@
 import { MovieDetailsQuery } from './movie-details.query';
 import { CreditsMapper } from '../mappers/credits.mapper';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
+import { MediaWatchOffersMapper } from '../mappers/media-watch-offers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 describe('MovieDetailsQuery', () => {
@@ -13,7 +13,7 @@ describe('MovieDetailsQuery', () => {
     jest.spyOn(CreditsMapper, 'toDto').mockReturnValue({ cast: [] } as any);
     jest.spyOn(ImageMapper, 'toPoster').mockReturnValue({ small: 'poster' } as any);
     jest.spyOn(ImageMapper, 'toBackdrop').mockReturnValue({ small: 'backdrop' } as any);
-    jest.spyOn(WatchProvidersMapper, 'toAvailability').mockReturnValue({ region: 'UA' } as any);
+    jest.spyOn(MediaWatchOffersMapper, 'toAvailability').mockReturnValue({ region: 'UA' } as any);
   });
 
   afterEach(() => {
@@ -36,7 +36,14 @@ describe('MovieDetailsQuery', () => {
       }),
     };
 
-    query = new MovieDetailsQuery(db as any, mockGenreQuery as any);
+    const mockWatchOffersQuery = {
+      fetchForMediaItem: jest.fn().mockImplementation(() => {
+        const offersData = selectQueue.shift() ?? [];
+        return Promise.resolve(offersData);
+      }),
+    };
+
+    query = new MovieDetailsQuery(db as any, mockGenreQuery as any, mockWatchOffersQuery as any);
   };
 
   // Simple thenable chain for select/from/where/innerJoin/leftJoin/limit
@@ -96,12 +103,14 @@ describe('MovieDetailsQuery', () => {
       { id: 'g2', name: 'Drama', slug: 'drama' },
     ];
 
-    setup([[movieRow], genresRows]);
+    const watchOffersRows: any[] = []; // Empty watch offers for test
+
+    setup([[movieRow], genresRows, watchOffersRows]);
 
     const res = await query.execute('title');
 
     expect(res).toBeTruthy();
-    expect(db.select).toHaveBeenCalledTimes(1); // main select only (genres via mockGenreQuery)
+    expect(db.select).toHaveBeenCalledTimes(1); // main select only (genres + watch offers via mocks)
     expect(res?.id).toBe('m1');
     expect(res?.primaryTrailer).toEqual({ key: 'trailer1' });
     expect(res?.poster).toEqual({ small: 'poster' });
@@ -112,7 +121,7 @@ describe('MovieDetailsQuery', () => {
     expect(res?.theatricalReleaseDate).toEqual(new Date('2020-02-01'));
     expect(res?.digitalReleaseDate).toEqual(new Date('2020-03-01'));
     expect(CreditsMapper.toDto).toHaveBeenCalled();
-    expect(WatchProvidersMapper.toAvailability).toHaveBeenCalled();
+    expect(MediaWatchOffersMapper.toAvailability).toHaveBeenCalled();
   });
 
   it('should return null when not found', async () => {

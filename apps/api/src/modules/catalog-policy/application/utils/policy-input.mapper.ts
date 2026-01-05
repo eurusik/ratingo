@@ -9,7 +9,7 @@ import { type Logger } from '@nestjs/common';
 
 import * as schema from '../../../../database/schema';
 import { type ContentClass, isValidContentClass } from '../../domain/classification.service';
-import { type PolicyEngineInput, type WatchProvidersMap } from '../../domain/types/policy.types';
+import { type PolicyEngineInput, type NormalizedOffer } from '../../domain/types/policy.types';
 
 /**
  * Raw media item row from database query.
@@ -20,7 +20,6 @@ export interface MediaItemRow {
   title?: string;
   originCountries: unknown;
   originalLanguage: string | null;
-  watchProviders: unknown;
   contentClass: string | null;
   ratingImdb: number | null;
   ratingMetacritic: number | null;
@@ -42,7 +41,6 @@ export const POLICY_EVALUATION_SELECT_FIELDS = {
   id: schema.mediaItems.id,
   originCountries: schema.mediaItems.originCountries,
   originalLanguage: schema.mediaItems.originalLanguage,
-  watchProviders: schema.mediaItems.watchProviders,
   contentClass: schema.mediaItems.contentClass,
   ratingImdb: schema.mediaItems.ratingImdb,
   ratingMetacritic: schema.mediaItems.ratingMetacritic,
@@ -70,15 +68,21 @@ const DEFAULT_CONTENT_CLASS: ContentClass = 'mainstream';
  * Maps a database row to PolicyEngineInput.
  *
  * Handles:
- * - Type casting for JSONB fields (originCountries, watchProviders)
+ * - Type casting for JSONB fields (originCountries)
  * - ContentClass validation with fallback to 'mainstream'
  * - Stats object creation (null if no qualityScore)
+ * - Normalized offers from media_watch_offers table
  *
  * @param row - Raw database row
+ * @param normalizedOffers - Pre-fetched normalized offers for this media item
  * @param logger - Optional logger for warnings (invalid contentClass)
  * @returns PolicyEngineInput ready for policy engine evaluation
  */
-export function mapRowToPolicyEngineInput(row: MediaItemRow, logger?: Logger): PolicyEngineInput {
+export function mapRowToPolicyEngineInput(
+  row: MediaItemRow,
+  normalizedOffers: NormalizedOffer[] = [],
+  logger?: Logger,
+): PolicyEngineInput {
   // Validate contentClass with fallback
   let contentClass: ContentClass = DEFAULT_CONTENT_CLASS;
   const { contentClass: rowContentClass } = row;
@@ -97,7 +101,7 @@ export function mapRowToPolicyEngineInput(row: MediaItemRow, logger?: Logger): P
       id: row.id,
       originCountries: row.originCountries as string[] | null,
       originalLanguage: row.originalLanguage,
-      watchProviders: row.watchProviders as WatchProvidersMap | null,
+      normalizedOffers,
       voteCountImdb: row.voteCountImdb,
       voteCountTrakt: row.voteCountTrakt,
       ratingImdb: row.ratingImdb,
@@ -122,12 +126,14 @@ export function mapRowToPolicyEngineInput(row: MediaItemRow, logger?: Logger): P
  * Maps multiple database rows to PolicyEngineInputs.
  *
  * @param rows - Array of raw database rows
+ * @param offersMap - Map of mediaItemId → normalized offers
  * @param logger - Optional logger for warnings
  * @returns Array of PolicyEngineInput
  */
 export function mapRowsToPolicyEngineInputs(
   rows: MediaItemRow[],
+  offersMap: Map<string, NormalizedOffer[]> = new Map(),
   logger?: Logger,
 ): PolicyEngineInput[] {
-  return rows.map((row) => mapRowToPolicyEngineInput(row, logger));
+  return rows.map((row) => mapRowToPolicyEngineInput(row, offersMap.get(row.id) ?? [], logger));
 }

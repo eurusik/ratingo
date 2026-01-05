@@ -116,6 +116,7 @@ export class PolicyController {
         eligibilityMode: policy.policy.eligibilityMode,
         homepage: policy.policy.homepage,
         globalRequirements: policy.policy.globalRequirements,
+        excludedContentClasses: policy.policy.excludedContentClasses,
       },
       createdAt: policy.createdAt,
       activatedAt: policy.activatedAt ?? undefined,

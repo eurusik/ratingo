@@ -23,7 +23,7 @@ export function ProvidersEditor({ providers, onChange, labels }: ProvidersEditor
 
   const options: ComboboxOption[] = (data?.data ?? []).map((p) => ({
     id: p.id,
-    name: p.displayName,
+    name: p.name,
   }));
 
   return (

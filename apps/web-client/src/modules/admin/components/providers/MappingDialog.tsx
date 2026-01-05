@@ -22,12 +22,8 @@ import {
 import { useProviders } from '@/core/query';
 import { Loader2 } from 'lucide-react';
 
-/** Distribution channel options. */
-const DISTRIBUTION_CHANNELS = [
-  { value: 'direct', label: 'Direct (own service)' },
-  { value: 'amazon_channel', label: 'Amazon Channel' },
-  { value: 'apple_tv_channel', label: 'Apple TV Channel' },
-] as const;
+/** Distribution channel values. */
+const DISTRIBUTION_CHANNEL_VALUES = ['direct', 'amazon_channel', 'apple_tv_channel'] as const;
 
 export interface MappingFormData {
   tmdbProviderId: number;
@@ -45,17 +41,33 @@ export interface MappingDialogProps {
   initialData?: Partial<MappingFormData>;
   mode: 'create' | 'edit';
   labels?: {
-    title?: string;
+    createTitle?: string;
+    editTitle?: string;
     description?: string;
     tmdbProviderId?: string;
-    tmdbProviderName?: string;
+    tmdbProviderIdPlaceholder?: string;
+    tmdbName?: string;
     providerId?: string;
+    providerIdPlaceholder?: string;
+    providerIdHint?: string;
     variantId?: string;
+    variantIdPlaceholder?: string;
+    variantIdHint?: string;
     distributionChannel?: string;
+    distributionChannelHint?: string;
+    channels?: {
+      direct?: string;
+      amazon?: string;
+      appleTV?: string;
+    };
     region?: string;
+    regionPlaceholder?: string;
+    regionHint?: string;
     cancel?: string;
-    submit?: string;
-    submitting?: string;
+    create?: string;
+    save?: string;
+    saving?: string;
+    mediaCount?: string;
   };
 }
 
@@ -133,12 +145,27 @@ export function MappingDialog({
     formData.variantId.length > 0 &&
     formData.distributionChannel.length > 0;
 
+  const getChannelLabel = (value: string) => {
+    switch (value) {
+      case 'direct':
+        return labels?.channels?.direct ?? 'Direct (own service)';
+      case 'amazon_channel':
+        return labels?.channels?.amazon ?? 'Amazon Channel';
+      case 'apple_tv_channel':
+        return labels?.channels?.appleTV ?? 'Apple TV Channel';
+      default:
+        return value;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {labels?.title ?? (mode === 'create' ? 'Create mapping' : 'Edit mapping')}
+            {mode === 'create'
+              ? (labels?.createTitle ?? 'Create mapping')
+              : (labels?.editTitle ?? 'Edit mapping')}
           </DialogTitle>
           <DialogDescription>
             {labels?.description ??
@@ -161,13 +188,13 @@ export function MappingDialog({
                   tmdbProviderId: parseInt(e.target.value) || 0,
                 }))
               }
-              placeholder="e.g., 8 (Netflix)"
+              placeholder={labels?.tmdbProviderIdPlaceholder ?? 'e.g., 8 (Netflix)'}
               disabled={mode === 'edit'}
               className="h-9"
             />
             {formData.tmdbProviderName && (
               <p className="text-sm text-muted-foreground">
-                TMDB name: {formData.tmdbProviderName}
+                {labels?.tmdbName ?? 'TMDB name'}: {formData.tmdbProviderName}
               </p>
             )}
           </div>
@@ -181,18 +208,18 @@ export function MappingDialog({
               disabled={providersLoading}
             >
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Select provider..." />
+                <SelectValue placeholder={labels?.providerIdPlaceholder ?? 'Select provider...'} />
               </SelectTrigger>
               <SelectContent>
                 {providers.map((provider) => (
                   <SelectItem key={provider.id} value={provider.id}>
-                    {provider.name} ({provider.count} media)
+                    {provider.name} ({provider.count} {labels?.mediaCount ?? 'media'})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Our internal provider ID (e.g., netflix, amazon-prime-video)
+              {labels?.providerIdHint ?? 'Our internal provider ID (e.g., netflix, amazon-prime-video)'}
             </p>
           </div>
 
@@ -203,11 +230,11 @@ export function MappingDialog({
               id="variantId"
               value={formData.variantId}
               onChange={(e) => setFormData((prev) => ({ ...prev, variantId: e.target.value }))}
-              placeholder="e.g., Netflix, Netflix Basic"
+              placeholder={labels?.variantIdPlaceholder ?? 'e.g., Netflix, Netflix Basic'}
               className="h-9"
             />
             <p className="text-xs text-muted-foreground">
-              Display name for the variant (may differ from canonical ID)
+              {labels?.variantIdHint ?? 'Display name for the variant (may differ from canonical ID)'}
             </p>
           </div>
 
@@ -226,15 +253,15 @@ export function MappingDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {DISTRIBUTION_CHANNELS.map((channel) => (
-                  <SelectItem key={channel.value} value={channel.value}>
-                    {channel.label}
+                {DISTRIBUTION_CHANNEL_VALUES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {getChannelLabel(value)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              direct = own service, channel = via Amazon/Apple
+              {labels?.distributionChannelHint ?? 'direct = own service, channel = via Amazon/Apple'}
             </p>
           </div>
 
@@ -247,12 +274,12 @@ export function MappingDialog({
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, region: e.target.value.toUpperCase() }))
               }
-              placeholder="UA, US, or empty for global"
+              placeholder={labels?.regionPlaceholder ?? 'UA, US, or empty for global'}
               maxLength={2}
               className="h-9"
             />
             <p className="text-xs text-muted-foreground">
-              Empty = global mapping for all regions
+              {labels?.regionHint ?? 'Empty = global mapping for all regions'}
             </p>
           </div>
 
@@ -264,10 +291,12 @@ export function MappingDialog({
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {labels?.submitting ?? 'Saving...'}
+                  {labels?.saving ?? 'Saving...'}
                 </>
               ) : (
-                (labels?.submit ?? (mode === 'create' ? 'Create' : 'Save'))
+                mode === 'create'
+                  ? (labels?.create ?? 'Create')
+                  : (labels?.save ?? 'Save')
               )}
             </Button>
           </DialogFooter>

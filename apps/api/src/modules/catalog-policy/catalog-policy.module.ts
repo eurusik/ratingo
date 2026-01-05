@@ -8,6 +8,8 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 
+import { ProviderModule } from '../provider/public';
+
 import { CatalogEvaluationService } from './application/services/catalog-evaluation.service';
 import { CatalogPolicyService } from './application/services/catalog-policy.service';
 import { DiffService } from './application/services/diff.service';
@@ -45,6 +47,7 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     BullModule.registerQueue({
       name: CATALOG_POLICY_QUEUE,
     }),
+    ProviderModule,
   ],
   controllers: [PolicyController, RunController, DryRunController],
   providers: [

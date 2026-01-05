@@ -1,11 +1,3 @@
-/**
- * BreakoutRuleDto Property-Based Tests
- *
- * Feature: catalog-policy-refactoring
- * Property 3: Invalid BreakoutRules Are Rejected
- * Validates: Requirements 4.2, 4.3
- */
-
 import 'reflect-metadata';
 import * as fc from 'fast-check';
 import { plainToInstance } from 'class-transformer';
@@ -65,10 +57,6 @@ describe('BreakoutRuleDto - Property-Based Tests', () => {
     requirements: validRequirementsArb,
   });
 
-  /**
-   * Property 3: Invalid BreakoutRules Are Rejected
-   * Validates: Requirements 4.2, 4.3
-   */
   describe('Property 3: Invalid BreakoutRules Are Rejected', () => {
     it('should accept valid breakout rules', () => {
       fc.assert(
@@ -248,9 +236,6 @@ describe('BreakoutRuleDto - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Additional Property: Valid requirements are accepted
-   */
   describe('Property: Valid Requirements Are Accepted', () => {
     it('should accept valid requirements with all optional fields', () => {
       fc.assert(

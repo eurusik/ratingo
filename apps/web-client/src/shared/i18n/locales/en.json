@@ -506,7 +506,8 @@
     "navigation": {
       "title": "Navigation",
       "policies": "Policies",
-      "runs": "Evaluation Runs"
+      "runs": "Evaluation Runs",
+      "providers": "Providers"
     },
     "policies": {
       "title": "Catalog Policies",
@@ -606,14 +607,33 @@
         "status": "Status"
       },
       "config": {
+        "countries": "Countries",
+        "languages": "Languages",
+        "providers": "Global Providers",
+        "settings": "Settings",
+        "breakoutRules": "Breakout Rules",
+        "allowed": "Allowed",
+        "blocked": "Blocked",
         "othersExcluded": "Other countries",
         "othersLanguagesExcluded": "Other languages",
         "excludedFromCatalog": "Excluded from catalog",
+        "eligibilityMode": "Eligibility Mode",
+        "blockedCountryMode": "Blocked Country Mode",
+        "minRelevanceScore": "Min Relevance Score",
+        "priority": "Priority",
         "globalRequirements": "Global Quality Gate",
         "minQualityScore": "Min Quality Score",
         "requireRatings": "Required Ratings (any of)",
         "minVotesAnyOf": "Min Votes (Any Source)",
-        "appliesTo": "Applies To"
+        "appliesTo": "Applies To",
+        "contentClasses": "Excluded Content Classes",
+        "contentClassLabels": {
+          "mainstream": "Mainstream",
+          "anime": "Anime",
+          "documentary": "Documentary",
+          "reality": "Reality",
+          "kids": "Kids"
+        }
       },
       "form": {
         "save": "Save as New Version",
@@ -837,6 +857,111 @@
         "promoteFailed": "Failed to promote run",
         "cancelSuccess": "Run cancelled successfully",
         "cancelFailed": "Failed to cancel run"
+      }
+    },
+    "providers": {
+      "title": "Provider Management",
+      "description": "Link TMDB providers to our canonical providers",
+      "info": {
+        "whatIsMapping": "What is a mapping?",
+        "whatIsMappingDescription": "TMDB returns providers with different IDs for different regions. Mapping allows us to unify them under one canonical provider.",
+        "example": "Example:",
+        "exampleDescription": "TMDB ID 8 (Netflix US), TMDB ID 175 (Netflix UA) → canonical",
+        "distributionChannel": "Distribution Channel:",
+        "distributionChannelDescription": "Direct = own service, Amazon/Apple Channel = content available via Amazon Prime / Apple TV+ subscription"
+      },
+      "tabs": {
+        "unmapped": "Unmapped",
+        "mappings": "Mappings"
+      },
+      "unmapped": {
+        "title": "Unmapped Providers",
+        "description": "TMDB providers found in data that have no mapping",
+        "createMapping": "Create mapping",
+        "columns": {
+          "tmdbId": "TMDB ID",
+          "name": "Name",
+          "region": "Region",
+          "occurrences": "Occurrences",
+          "lastSeen": "Last seen"
+        },
+        "empty": {
+          "title": "All providers mapped",
+          "description": "No providers need mapping"
+        }
+      },
+      "mappings": {
+        "title": "Provider Mappings",
+        "description": "Links between TMDB providers and canonical providers",
+        "addMapping": "Add mapping",
+        "global": "Global",
+        "columns": {
+          "tmdbId": "TMDB ID",
+          "provider": "Provider",
+          "variant": "Variant",
+          "channel": "Channel",
+          "region": "Region",
+          "source": "Source"
+        },
+        "channels": {
+          "direct": "Direct",
+          "amazon": "Amazon",
+          "appleTV": "Apple TV"
+        },
+        "sources": {
+          "manual": "manual",
+          "auto": "auto"
+        },
+        "empty": {
+          "title": "No mappings",
+          "description": "Create your first provider mapping",
+          "action": "Create mapping"
+        },
+        "actions": {
+          "edit": "Edit",
+          "delete": "Delete"
+        },
+        "confirmDelete": {
+          "title": "Delete mapping",
+          "description": "Are you sure you want to delete this mapping?"
+        }
+      },
+      "dialog": {
+        "createTitle": "Create mapping",
+        "editTitle": "Edit mapping",
+        "description": "Link a TMDB provider to a canonical provider",
+        "tmdbProviderId": "TMDB Provider ID",
+        "tmdbProviderIdPlaceholder": "e.g., 8 (Netflix)",
+        "tmdbName": "TMDB name",
+        "providerId": "Canonical Provider",
+        "providerIdPlaceholder": "Select provider...",
+        "providerIdHint": "Our internal provider ID (e.g., netflix, amazon-prime-video)",
+        "variantId": "Variant ID",
+        "variantIdPlaceholder": "e.g., Netflix, Netflix Basic",
+        "variantIdHint": "Display name for the variant (may differ from canonical ID)",
+        "distributionChannel": "Distribution Channel",
+        "distributionChannelHint": "direct = own service, channel = via Amazon/Apple",
+        "channels": {
+          "direct": "Direct (own service)",
+          "amazon": "Amazon Channel",
+          "appleTV": "Apple TV Channel"
+        },
+        "region": "Region (optional)",
+        "regionPlaceholder": "UA, US, or empty for global",
+        "regionHint": "Empty = global mapping for all regions",
+        "cancel": "Cancel",
+        "create": "Create",
+        "save": "Save",
+        "saving": "Saving...",
+        "mediaCount": "media"
+      },
+      "toast": {
+        "createSuccess": "Mapping created successfully",
+        "createError": "Failed to create mapping",
+        "updateSuccess": "Mapping updated",
+        "updateError": "Failed to update mapping",
+        "deleteSuccess": "Mapping deleted",
+        "deleteError": "Failed to delete mapping"
       }
     },
     "common": {

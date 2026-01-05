@@ -11,9 +11,10 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { type MovieDetails } from '../../domain/repositories/movie.repository.interface';
 import { CreditsMapper } from '../mappers/credits.mapper';
-import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
+import { MediaWatchOffersMapper } from '../mappers/media-watch-offers.mapper';
 
 import { GenreQuery } from './shared/genre.query';
+import { WatchOffersQuery } from './shared/watch-offers.query';
 
 /**
  * Fetches complete movie details by slug.
@@ -31,6 +32,7 @@ export class MovieDetailsQuery {
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly genreQuery: GenreQuery,
+    private readonly watchOffersQuery: WatchOffersQuery,
   ) {}
 
   /**
@@ -60,7 +62,6 @@ export class MovieDetailsQuery {
           releaseDate: schema.mediaItems.releaseDate,
           videos: schema.mediaItems.videos,
           credits: schema.mediaItems.credits,
-          watchProviders: schema.mediaItems.watchProviders,
 
           ratingImdb: schema.mediaItems.ratingImdb,
           voteCountImdb: schema.mediaItems.voteCountImdb,
@@ -99,7 +100,11 @@ export class MovieDetailsQuery {
       if (result.length === 0) return null;
       const movie = result[0];
 
-      const genres = await this.genreQuery.fetchForMediaItem(movie.id);
+      // Fetch genres and watch offers in parallel
+      const [genres, watchOffers] = await Promise.all([
+        this.genreQuery.fetchForMediaItem(movie.id),
+        this.watchOffersQuery.fetchForMediaItem(movie.id),
+      ]);
 
       return {
         id: movie.id,
@@ -115,7 +120,7 @@ export class MovieDetailsQuery {
         videos: movie.videos,
         primaryTrailer: movie.videos?.[0] || null,
         credits: CreditsMapper.toDto(movie.credits),
-        availability: WatchProvidersMapper.toAvailability(movie.watchProviders),
+        availability: MediaWatchOffersMapper.toAvailability(watchOffers),
 
         runtime: movie.runtime ?? null,
         budget: movie.budget ?? null,

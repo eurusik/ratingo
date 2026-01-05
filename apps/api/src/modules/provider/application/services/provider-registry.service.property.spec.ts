@@ -1,10 +1,3 @@
-/**
- * Provider Registry Service Property-Based Tests
- *
- * Feature: provider-system-redesign
- * Tasks: 2.2, 2.3
- */
-
 import * as fc from 'fast-check';
 
 import type { Provider } from '../../domain/types/provider.types';
@@ -32,9 +25,6 @@ describe('Provider Registry Service - Property-Based Tests', () => {
     updatedAt: dateArb,
   });
 
-  /**
-   * Helper: Deduplicate providers by ID
-   */
   function deduplicateById(providers: Provider[]): Provider[] {
     const seen = new Set<string>();
     return providers.filter((p) => {
@@ -44,9 +34,6 @@ describe('Provider Registry Service - Property-Based Tests', () => {
     });
   }
 
-  /**
-   * Helper: Create mock repository with given providers
-   */
   function createMockRepository(uniqueProviders: Provider[]) {
     const activeProviders = uniqueProviders.filter((p) => p.isActive);
 
@@ -69,12 +56,6 @@ describe('Provider Registry Service - Property-Based Tests', () => {
     };
   }
 
-  /**
-   * Property 1: Provider Registry Query Correctness (Task 2.2)
-   *
-   * findAll() without includeInactive returns only active providers.
-   * The count of returned providers equals the count of active providers in the dataset.
-   */
   describe('Property 1: Provider Registry Query Correctness', () => {
     it('should return only active providers when includeInactive is false or undefined', async () => {
       await fc.assert(
@@ -163,12 +144,6 @@ describe('Provider Registry Service - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property 2: Brand Group Filtering (Task 2.3)
-   *
-   * findByBrandGroup(group) returns exactly providers with that brand group.
-   * No providers with different brand groups are returned.
-   */
   describe('Property 2: Brand Group Filtering', () => {
     it('should return exactly providers matching the brand group', async () => {
       await fc.assert(
@@ -291,11 +266,6 @@ describe('Provider Registry Service - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Additional Property: Query Determinism
-   *
-   * Same input should always produce same output.
-   */
   describe('Property: Query Determinism', () => {
     it('should produce identical results for identical queries', async () => {
       await fc.assert(

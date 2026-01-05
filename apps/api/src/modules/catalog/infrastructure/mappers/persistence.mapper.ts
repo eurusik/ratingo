@@ -49,7 +49,7 @@ export class PersistenceMapper {
       backdropPath: media.backdropPath,
       videos: media.videos || null,
       credits: media.credits || null,
-      watchProviders: media.watchProviders || null,
+      watchProvidersRaw: media.watchProvidersRaw || null,
 
       // Metrics
       rating: media.rating,
@@ -100,7 +100,7 @@ export class PersistenceMapper {
       backdropPath: media.backdropPath,
       videos: media.videos || null,
       credits: media.credits || null,
-      watchProviders: media.watchProviders || null,
+      watchProvidersRaw: media.watchProvidersRaw || null,
       releaseDate,
       originCountries: media.originCountries || null,
       originalLanguage: media.originalLanguage || null,

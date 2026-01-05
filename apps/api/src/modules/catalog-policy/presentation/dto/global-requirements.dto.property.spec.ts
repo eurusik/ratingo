@@ -1,11 +1,3 @@
-/**
- * GlobalRequirementsDto Property-Based Tests
- *
- * Feature: global-quality-gate
- * Property 9: DTO Validation Correctness
- * Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5
- */
-
 import 'reflect-metadata';
 import * as fc from 'fast-check';
 import { plainToInstance } from 'class-transformer';
@@ -51,10 +43,6 @@ describe('GlobalRequirementsDto - Property-Based Tests', () => {
     minVotesAnyOf: fc.option(validMinVotesAnyOfArb, { nil: undefined }),
   });
 
-  /**
-   * Property 9: DTO Validation Correctness
-   * Validates: Requirements 5.1-5.5
-   */
   describe('Property 9: DTO Validation Correctness', () => {
     it('should accept valid global requirements', () => {
       fc.assert(
@@ -206,9 +194,6 @@ describe('GlobalRequirementsDto - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Additional validation tests for edge cases
-   */
   describe('Edge Cases', () => {
     it('should accept minQualityScoreNormalized = 0', () => {
       const dto = plainToInstance(GlobalRequirementsDto, {

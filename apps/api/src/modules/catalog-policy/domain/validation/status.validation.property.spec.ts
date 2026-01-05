@@ -1,11 +1,3 @@
-/**
- * Status Validation Property-Based Tests
- *
- * Feature: catalog-policy-refactoring
- * Property 7: Unexpected Values Cause Explicit Errors
- * Validates: Requirements 7.5
- */
-
 import * as fc from 'fast-check';
 import { validateStatus, isValidEligibilityStatus } from './status.validation';
 import { EligibilityStatus, EligibilityStatusType } from '../constants/evaluation.constants';
@@ -45,12 +37,6 @@ describe('Status Validation - Property-Based Tests', () => {
     'eLiGiBlE',
   );
 
-  /**
-   * Property 7: Unexpected Values Cause Explicit Errors
-   *
-   * For any status not in canonical set, system throws explicit error.
-   * Validates: Requirements 7.5
-   */
   describe('Property 7: Unexpected Values Cause Explicit Errors', () => {
     it('should accept all canonical lowercase status values', () => {
       fc.assert(

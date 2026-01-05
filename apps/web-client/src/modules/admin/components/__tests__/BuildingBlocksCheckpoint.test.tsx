@@ -27,7 +27,7 @@ describe('Building Blocks Checkpoint', () => {
     expect(() => {
       renderWithI18n(<StatusBadge status={RunStatus.RUNNING} />);
       renderWithI18n(<StatusBadge status={PolicyStatus.ACTIVE} />);
-      renderWithI18n(<StatusBadge status={RunStatus.SUCCESS} variant="compact" />);
+      renderWithI18n(<StatusBadge status={RunStatus.PROMOTED} variant="compact" />);
     }).not.toThrow();
   });
 
@@ -168,7 +168,7 @@ describe('Building Blocks Checkpoint', () => {
     // by checking that they render without throwing errors and contain
     // expected shadcn/ui class patterns
 
-    const { container: statusContainer } = renderWithI18n(<StatusBadge status={RunStatus.SUCCESS} />);
+    const { container: statusContainer } = renderWithI18n(<StatusBadge status={RunStatus.PROMOTED} />);
     expect(statusContainer.querySelector('[data-testid="status-badge"]')).toBeInTheDocument();
 
     const { container: emptyContainer } = render(<EmptyState title="Test" />);

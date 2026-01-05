@@ -2,6 +2,7 @@
  * Unmapped Tracking Repository Implementation
  *
  * Drizzle-based repository for tracking unmapped TMDB provider IDs.
+ * Uses atomic upserts to handle concurrent writes safely.
  */
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -52,33 +53,39 @@ export class UnmappedTrackingRepository implements IUnmappedTrackingRepository {
           target: providerUnmapped.tmdbProviderId,
           set: {
             lastSeenName: providerName,
-            lastSeenAt: new Date(),
+            lastSeenAt: sql`now()`,
+            // Atomic increment in SQL
             seenCount: sql`${providerUnmapped.seenCount} + 1`,
+            // Merge arrays: new first, dedupe by first occurrence, limit, preserve order
             sampleNames: sql`(
-              SELECT array_agg(DISTINCT elem)
-              FROM (
-                SELECT unnest(
-                  CASE 
-                    WHEN ${providerName} = ANY(${providerUnmapped.sampleNames})
-                    THEN ${providerUnmapped.sampleNames}
-                    ELSE array_cat(${providerUnmapped.sampleNames}, ARRAY[${providerName}])
-                  END
-                ) AS elem
-                LIMIT ${MAX_SAMPLE_NAMES}
-              ) sub
+              WITH src AS (
+                SELECT elem, ord
+                FROM unnest(
+                  ARRAY[${providerName}]::text[] || COALESCE(${providerUnmapped.sampleNames}, ARRAY[]::text[])
+                ) WITH ORDINALITY AS t(elem, ord)
+              ),
+              dedup AS (
+                SELECT elem, MIN(ord) AS ord
+                FROM src
+                GROUP BY elem
+              )
+              SELECT COALESCE(array_agg(elem ORDER BY ord), ARRAY[]::text[])
+              FROM (SELECT elem, ord FROM dedup ORDER BY ord LIMIT ${MAX_SAMPLE_NAMES}) x
             )`,
             sampleRegions: sql`(
-              SELECT array_agg(DISTINCT elem)
-              FROM (
-                SELECT unnest(
-                  CASE 
-                    WHEN ${region} = ANY(${providerUnmapped.sampleRegions})
-                    THEN ${providerUnmapped.sampleRegions}
-                    ELSE array_cat(${providerUnmapped.sampleRegions}, ARRAY[${region}])
-                  END
-                ) AS elem
-                LIMIT ${MAX_SAMPLE_REGIONS}
-              ) sub
+              WITH src AS (
+                SELECT elem, ord
+                FROM unnest(
+                  ARRAY[${region}]::text[] || COALESCE(${providerUnmapped.sampleRegions}, ARRAY[]::text[])
+                ) WITH ORDINALITY AS t(elem, ord)
+              ),
+              dedup AS (
+                SELECT elem, MIN(ord) AS ord
+                FROM src
+                GROUP BY elem
+              )
+              SELECT COALESCE(array_agg(elem ORDER BY ord), ARRAY[]::text[])
+              FROM (SELECT elem, ord FROM dedup ORDER BY ord LIMIT ${MAX_SAMPLE_REGIONS}) x
             )`,
           },
         });
@@ -91,12 +98,17 @@ export class UnmappedTrackingRepository implements IUnmappedTrackingRepository {
   async recordUnmappedBatch(inputs: RecordUnmappedInput[]): Promise<void> {
     if (inputs.length === 0) return;
 
-    // Aggregate inputs by tmdbProviderId
+    // Aggregate inputs by tmdbProviderId in JS first
     const aggregated = this.aggregateInputs(inputs);
 
-    // Process each aggregated entry
-    for (const entry of aggregated.values()) {
-      await this.recordAggregatedEntry(entry);
+    // Bulk upsert all aggregated entries
+    try {
+      for (const entry of aggregated.values()) {
+        await this.upsertAggregatedEntry(entry);
+      }
+    } catch (error) {
+      this.logger.error('Failed to record unmapped batch', error);
+      throw error;
     }
   }
 
@@ -184,47 +196,81 @@ export class UnmappedTrackingRepository implements IUnmappedTrackingRepository {
     return map;
   }
 
-  private async recordAggregatedEntry(entry: AggregatedEntry): Promise<void> {
+  /**
+   * Atomic upsert for aggregated entry.
+   * Uses ON CONFLICT DO UPDATE with SQL-based array merge and atomic increment.
+   */
+  private async upsertAggregatedEntry(entry: AggregatedEntry): Promise<void> {
     const { tmdbProviderId, lastSeenName, names, regions, count } = entry;
     const namesArray = [...names].slice(0, MAX_SAMPLE_NAMES);
     const regionsArray = [...regions].slice(0, MAX_SAMPLE_REGIONS);
 
-    try {
-      await this.db
-        .insert(providerUnmapped)
-        .values({
-          tmdbProviderId,
+    // Build SQL array literals for proper interpolation
+    const namesSql =
+      namesArray.length > 0
+        ? sql`ARRAY[${sql.join(
+            namesArray.map((n) => sql`${n}`),
+            sql`, `,
+          )}]::text[]`
+        : sql`ARRAY[]::text[]`;
+
+    const regionsSql =
+      regionsArray.length > 0
+        ? sql`ARRAY[${sql.join(
+            regionsArray.map((r) => sql`${r}`),
+            sql`, `,
+          )}]::text[]`
+        : sql`ARRAY[]::text[]`;
+
+    await this.db
+      .insert(providerUnmapped)
+      .values({
+        tmdbProviderId,
+        lastSeenName,
+        sampleNames: namesArray,
+        sampleRegions: regionsArray,
+        seenCount: count,
+      })
+      .onConflictDoUpdate({
+        target: providerUnmapped.tmdbProviderId,
+        set: {
           lastSeenName,
-          sampleNames: namesArray,
-          sampleRegions: regionsArray,
-          seenCount: count,
-        })
-        .onConflictDoUpdate({
-          target: providerUnmapped.tmdbProviderId,
-          set: {
-            lastSeenName,
-            lastSeenAt: new Date(),
-            seenCount: sql`${providerUnmapped.seenCount} + ${count}`,
-            sampleNames: sql`(
-              SELECT array_agg(DISTINCT elem)
-              FROM (
-                SELECT unnest(array_cat(${providerUnmapped.sampleNames}, ${namesArray}::text[])) AS elem
-                LIMIT ${MAX_SAMPLE_NAMES}
-              ) sub
-            )`,
-            sampleRegions: sql`(
-              SELECT array_agg(DISTINCT elem)
-              FROM (
-                SELECT unnest(array_cat(${providerUnmapped.sampleRegions}, ${regionsArray}::text[])) AS elem
-                LIMIT ${MAX_SAMPLE_REGIONS}
-              ) sub
-            )`,
-          },
-        });
-    } catch (error) {
-      this.logger.error(`Failed to record aggregated entry ${tmdbProviderId}`, error);
-      throw error;
-    }
+          lastSeenAt: sql`now()`,
+          // Atomic increment
+          seenCount: sql`${providerUnmapped.seenCount} + ${count}`,
+          // Merge arrays: new first, dedupe by first occurrence, limit, preserve order
+          sampleNames: sql`(
+            WITH src AS (
+              SELECT elem, ord
+              FROM unnest(
+                ${namesSql} || COALESCE(${providerUnmapped.sampleNames}, ARRAY[]::text[])
+              ) WITH ORDINALITY AS t(elem, ord)
+            ),
+            dedup AS (
+              SELECT elem, MIN(ord) AS ord
+              FROM src
+              GROUP BY elem
+            )
+            SELECT COALESCE(array_agg(elem ORDER BY ord), ARRAY[]::text[])
+            FROM (SELECT elem, ord FROM dedup ORDER BY ord LIMIT ${MAX_SAMPLE_NAMES}) x
+          )`,
+          sampleRegions: sql`(
+            WITH src AS (
+              SELECT elem, ord
+              FROM unnest(
+                ${regionsSql} || COALESCE(${providerUnmapped.sampleRegions}, ARRAY[]::text[])
+              ) WITH ORDINALITY AS t(elem, ord)
+            ),
+            dedup AS (
+              SELECT elem, MIN(ord) AS ord
+              FROM src
+              GROUP BY elem
+            )
+            SELECT COALESCE(array_agg(elem ORDER BY ord), ARRAY[]::text[])
+            FROM (SELECT elem, ord FROM dedup ORDER BY ord LIMIT ${MAX_SAMPLE_REGIONS}) x
+          )`,
+        },
+      });
   }
 
   private toDomain(row: typeof providerUnmapped.$inferSelect): UnmappedProvider {

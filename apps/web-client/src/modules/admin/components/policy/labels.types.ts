@@ -116,6 +116,8 @@ export interface ConfigViewLabels {
   settings?: string;
   breakoutRules?: string;
   globalRequirements?: string;
+  contentClasses?: string;
+  contentClassLabels?: Record<string, string>;
   // Shared labels
   allowed?: string;
   blocked?: string;

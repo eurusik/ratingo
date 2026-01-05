@@ -1,20 +1,7 @@
-/**
- * Movie Listings Query Property-Based Tests
- *
- * Feature: context-aware-eligibility
- *
- * Property-based tests using fast-check to verify universal properties
- * that should hold across all valid inputs.
- */
-
 import * as fc from 'fast-check';
 import { EligibilityStatus } from '../../../catalog-policy/public';
 import { EligibilityMode } from './movie-listings.query';
 
-/**
- * Simulates the eligibility filtering logic from buildEligibilityCondition.
- * This is a pure function that mirrors the SQL condition logic for testing.
- */
 function matchesEligibilityCondition(
   evaluation: { status: string; reasons: string[] },
   mode: EligibilityMode,
@@ -64,14 +51,6 @@ describe('Movie Listings Query - Property-Based Tests', () => {
     policyVersion: fc.nat({ max: 10 }),
   });
 
-  /**
-   * Property 3: Catalog Mode Returns Only Eligible
-   * Feature: context-aware-eligibility, Property 3: Catalog Mode Returns Only Eligible
-   * Validates: Requirements 3.2
-   *
-   * For any set of media_catalog_evaluations, querying with eligibilityMode: 'catalog'
-   * SHALL return only items where status = 'eligible'.
-   */
   describe('Property 3: Catalog Mode Returns Only Eligible', () => {
     it('should only match eligible items in catalog mode', () => {
       fc.assert(
@@ -192,19 +171,6 @@ describe('Movie Listings Query - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property 4: Freshness Mode Whitelist Filter
-   * Feature: context-aware-eligibility, Property 4: Freshness Mode Whitelist Filter
-   * Validates: Requirements 3.3, 3.4, 6.2
-   *
-   * For any set of media_catalog_evaluations, querying with eligibilityMode: 'freshness' SHALL return:
-   * - All items where status = 'eligible'
-   * - Items where status = 'ineligible' AND reasons equals exactly ['MISSING_GLOBAL_SIGNALS']
-   *
-   * And SHALL NOT return:
-   * - Items where status = 'pending'
-   * - Items where status = 'ineligible' with any reasons containing BLOCKED_*, NEUTRAL_*, or any combination beyond just MISSING_GLOBAL_SIGNALS
-   */
   describe('Property 4: Freshness Mode Whitelist Filter', () => {
     it('should always return eligible items in freshness mode', () => {
       fc.assert(

@@ -19,6 +19,11 @@ import {
 } from '../../../../common/constants';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
+import {
+  type IMediaWatchOffersRepository,
+  MEDIA_WATCH_OFFERS_REPOSITORY,
+  type MediaWatchOfferView,
+} from '../../../provider/public';
 import { EligibilityStatus } from '../../domain/constants/evaluation.constants';
 import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
 import {
@@ -29,6 +34,7 @@ import {
 import {
   type MediaCatalogEvaluation,
   type PolicyEngineInput,
+  type NormalizedOffer,
 } from '../../domain/types/policy.types';
 import {
   type IMediaCatalogEvaluationRepository,
@@ -65,6 +71,8 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
     private readonly policyService: CatalogPolicyService,
     @Inject(MEDIA_CATALOG_EVALUATION_REPOSITORY)
     private readonly evaluationRepository: IMediaCatalogEvaluationRepository,
+    @Inject(MEDIA_WATCH_OFFERS_REPOSITORY)
+    private readonly watchOffersRepository: IMediaWatchOffersRepository,
   ) {}
 
   /**
@@ -333,7 +341,13 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       return null;
     }
 
-    return mapRowToPolicyEngineInput(result[0] as MediaItemRow, this.logger);
+    // Fetch normalized offers for this media item
+    const offersMap = await this.watchOffersRepository.getOffersForMediaBatch([mediaItemId], {
+      includeVariantInfo: true,
+    });
+    const normalizedOffers = this.mapOffersToNormalized(offersMap.get(mediaItemId) ?? []);
+
+    return mapRowToPolicyEngineInput(result[0] as MediaItemRow, normalizedOffers, this.logger);
   }
 
   /**
@@ -350,6 +364,29 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(inArray(schema.mediaItems.id, mediaItemIds));
 
-    return mapRowsToPolicyEngineInputs(result as MediaItemRow[], this.logger);
+    // Fetch normalized offers for all media items in batch
+    const offersMap = await this.watchOffersRepository.getOffersForMediaBatch(mediaItemIds, {
+      includeVariantInfo: true,
+    });
+
+    // Convert MediaWatchOfferView to NormalizedOffer
+    const normalizedOffersMap = new Map<string, NormalizedOffer[]>();
+    for (const [id, offers] of offersMap) {
+      normalizedOffersMap.set(id, this.mapOffersToNormalized(offers));
+    }
+
+    return mapRowsToPolicyEngineInputs(result as MediaItemRow[], normalizedOffersMap, this.logger);
+  }
+
+  /**
+   * Maps MediaWatchOfferView to NormalizedOffer for policy engine.
+   */
+  private mapOffersToNormalized(offers: MediaWatchOfferView[]): NormalizedOffer[] {
+    return offers.map((offer) => ({
+      providerId: offer.providerId,
+      offerType: offer.offerType,
+      distributionChannel: offer.distributionChannel,
+      isAdsTier: offer.variantIsAdsTier,
+    }));
   }
 }

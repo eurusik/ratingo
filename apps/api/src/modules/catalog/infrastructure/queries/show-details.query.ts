@@ -11,9 +11,10 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { type ShowDetails } from '../../domain/repositories/show.repository.interface';
 import { CreditsMapper } from '../mappers/credits.mapper';
-import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
+import { MediaWatchOffersMapper } from '../mappers/media-watch-offers.mapper';
 
 import { GenreQuery } from './shared/genre.query';
+import { WatchOffersQuery } from './shared/watch-offers.query';
 
 /**
  * Fetches complete TV show details by slug.
@@ -31,6 +32,7 @@ export class ShowDetailsQuery {
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly genreQuery: GenreQuery,
+    private readonly watchOffersQuery: WatchOffersQuery,
   ) {}
 
   /**
@@ -57,7 +59,6 @@ export class ShowDetailsQuery {
           backdropPath: schema.mediaItems.backdropPath,
           videos: schema.mediaItems.videos,
           credits: schema.mediaItems.credits,
-          watchProviders: schema.mediaItems.watchProviders,
           rating: schema.mediaItems.rating,
           voteCount: schema.mediaItems.voteCount,
           releaseDate: schema.mediaItems.releaseDate,
@@ -100,9 +101,11 @@ export class ShowDetailsQuery {
       if (result.length === 0) return null;
       const show = result[0];
 
-      const [genres, seasons] = await Promise.all([
+      // Fetch genres, seasons, and watch offers in parallel
+      const [genres, seasons, watchOffers] = await Promise.all([
         this.genreQuery.fetchForMediaItem(show.id),
         show.showId ? this.fetchSeasons(show.showId) : Promise.resolve([]),
+        this.watchOffersQuery.fetchForMediaItem(show.id),
       ]);
 
       const { showId: _showId, ...showData } = show;
@@ -120,7 +123,7 @@ export class ShowDetailsQuery {
         videos: showData.videos,
         primaryTrailer: showData.videos?.[0] || null,
         credits: CreditsMapper.toDto(showData.credits),
-        availability: WatchProvidersMapper.toAvailability(showData.watchProviders),
+        availability: MediaWatchOffersMapper.toAvailability(watchOffers),
         releaseDate: showData.releaseDate,
 
         totalSeasons: showData.totalSeasons,

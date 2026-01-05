@@ -184,7 +184,7 @@ export class RunStatusDto {
   @ApiProperty({
     description: 'Reasons why the run cannot be promoted (if any)',
     example: ['COVERAGE_NOT_MET'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })

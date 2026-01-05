@@ -1,18 +1,4 @@
-/**
- * Policy Activation Service Property-Based Tests
- *
- * Property-based tests using fast-check to verify universal properties
- * that should hold across all valid inputs.
- *
- * Feature: policy-activation-flow
- */
-
 import * as fc from 'fast-check';
-
-/**
- * Pure functions extracted for property testing.
- * These mirror the logic in PolicyActivationService but are testable without mocks.
- */
 
 type RunStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled' | 'promoted';
 
@@ -33,16 +19,10 @@ type BlockingReason =
   | 'ERRORS_EXCEEDED'
   | 'ALREADY_PROMOTED';
 
-/**
- * Calculates coverage from run data.
- */
 function calculateCoverage(run: RunData): number {
   return run.totalReadySnapshot > 0 ? run.processed / run.totalReadySnapshot : 0;
 }
 
-/**
- * Calculates blocking reasons for a run.
- */
 function calculateBlockingReasons(run: RunData): BlockingReason[] {
   const reasons: BlockingReason[] = [];
 
@@ -66,16 +46,10 @@ function calculateBlockingReasons(run: RunData): BlockingReason[] {
   return reasons;
 }
 
-/**
- * Determines if run is ready to promote.
- */
 function isReadyToPromote(run: RunData): boolean {
   return calculateBlockingReasons(run).length === 0;
 }
 
-/**
- * Validates if promote should succeed.
- */
 function canPromote(
   run: RunData,
   options: { coverageThreshold?: number; maxErrors?: number } = {},
@@ -144,13 +118,6 @@ describe('Policy Activation - Property-Based Tests', () => {
       })),
     );
 
-  /**
-   * Property 2: Counter Consistency
-   *
-   * eligible + ineligible + pending + errors = processed
-   *
-   * Validates: Requirements 1.3, 5.4
-   */
   describe('Property 2: Counter Consistency', () => {
     it('counters should sum to processed (when consistent)', () => {
       // Generate consistent run data
@@ -179,13 +146,6 @@ describe('Policy Activation - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property 12: Ready To Promote Flag
-   *
-   * readyToPromote = status=SUCCESS AND coverage >= threshold AND errors <= max
-   *
-   * Validates: Requirements 3.9
-   */
   describe('Property 12: Ready To Promote Flag', () => {
     it('readyToPromote should be true only when all conditions met', () => {
       fc.assert(
@@ -279,13 +239,6 @@ describe('Policy Activation - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property 7: Promote Status Validation
-   *
-   * Promote only allowed when status=SUCCESS
-   *
-   * Validates: Requirements 3.1, 3.2, 3.8
-   */
   describe('Property 7: Promote Status Validation', () => {
     it('canPromote should fail for non-success status', () => {
       const nonSuccessArb = fc.constantFrom<RunStatus>(
@@ -394,11 +347,6 @@ describe('Policy Activation - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property: Coverage Calculation
-   *
-   * Coverage should always be in range [0, 1] when processed <= totalReadySnapshot
-   */
   describe('Property: Coverage Calculation', () => {
     it('coverage should be in range [0, 1]', () => {
       fc.assert(
@@ -446,11 +394,6 @@ describe('Policy Activation - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property: Blocking Reasons Consistency
-   *
-   * Blocking reasons should be consistent with run state.
-   */
   describe('Property: Blocking Reasons Consistency', () => {
     it('RUN_NOT_SUCCESS should appear iff status !== success', () => {
       fc.assert(

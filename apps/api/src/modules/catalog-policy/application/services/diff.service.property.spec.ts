@@ -1,12 +1,3 @@
-/**
- * Diff Service Property-Based Tests
- *
- * Property-based tests using fast-check to verify universal properties
- * that should hold across all valid inputs.
- *
- * Feature: catalog-policy-refactoring
- */
-
 import * as fc from 'fast-check';
 import { isDiffRegression, isDiffImprovement, DiffSample } from './diff.service';
 import {
@@ -15,10 +6,6 @@ import {
   DiffStatus,
 } from '../../domain/constants/evaluation.constants';
 
-/**
- * Pure function to filter and limit samples (mirrors getSampleItems logic).
- * This is extracted for property testing without database dependencies.
- */
 function filterAndLimitSamples(
   samples: DiffSample[],
   type: 'regression' | 'improvement',
@@ -67,14 +54,6 @@ describe('DiffService - Property-Based Tests', () => {
 
   const diffSampleArrayArb = fc.array(diffSampleArb, { minLength: 0, maxLength: 200 });
 
-  /**
-   * Property 2: DiffService Sample Respects Limit
-   *
-   * For any valid runId and sampleSize parameter, the getSampleItems() function
-   * SHALL return at most sampleSize items.
-   *
-   * **Validates: Requirements 3.2**
-   */
   describe('Property 2: DiffService Sample Respects Limit', () => {
     it('should never return more items than the specified limit', () => {
       fc.assert(
@@ -186,12 +165,6 @@ describe('DiffService - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property: Helper Functions Consistency
-   *
-   * isDiffRegression and isDiffImprovement should be mutually exclusive
-   * for any given status transition.
-   */
   describe('Property: Helper Functions Consistency', () => {
     it('regression and improvement should be mutually exclusive', () => {
       fc.assert(
@@ -230,11 +203,6 @@ describe('DiffService - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property: Regression Definition
-   *
-   * A regression occurs when an item was ELIGIBLE and becomes non-ELIGIBLE.
-   */
   describe('Property: Regression Definition', () => {
     it('regression requires old status to be ELIGIBLE', () => {
       const nonEligibleArb = fc.constantFrom<DiffStatus>(
@@ -264,11 +232,6 @@ describe('DiffService - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property: Improvement Definition
-   *
-   * An improvement occurs when an item was non-ELIGIBLE and becomes ELIGIBLE.
-   */
   describe('Property: Improvement Definition', () => {
     it('improvement requires new status to be ELIGIBLE', () => {
       const nonEligibleArb = fc.constantFrom<DiffStatus>(

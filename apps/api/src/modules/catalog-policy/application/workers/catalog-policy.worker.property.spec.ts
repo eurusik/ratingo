@@ -1,16 +1,5 @@
-/**
- * Catalog Policy Worker Property-Based Tests
- *
- * Feature: catalog-policy-refactoring
- * Property 6: Worker Records Errors in ErrorSample
- * Validates: Requirements 7.3
- */
-
 import * as fc from 'fast-check';
 
-/**
- * Interface for error sample entries as recorded by the Worker
- */
 interface ErrorSampleEntry {
   mediaItemId: string;
   error: string;
@@ -18,10 +7,6 @@ interface ErrorSampleEntry {
   timestamp: string;
 }
 
-/**
- * Simulates the Worker's error recording behavior.
- * This mirrors the logic in CatalogPolicyWorker.handleEvaluateCatalogItem
- */
 function createErrorSampleEntry(mediaItemId: string, error: Error): ErrorSampleEntry {
   return {
     mediaItemId,
@@ -31,9 +16,6 @@ function createErrorSampleEntry(mediaItemId: string, error: Error): ErrorSampleE
   };
 }
 
-/**
- * Validates that an error sample entry has all required fields
- */
 function isValidErrorSampleEntry(entry: ErrorSampleEntry): boolean {
   return (
     typeof entry.mediaItemId === 'string' &&
@@ -46,13 +28,6 @@ function isValidErrorSampleEntry(entry: ErrorSampleEntry): boolean {
 }
 
 describe('Catalog Policy Worker - Property-Based Tests', () => {
-  /**
-   * Property 6: Worker Records Errors in ErrorSample
-   *
-   * For any evaluation error in the Worker, the error SHALL be recorded
-   * in the run's errorSample with mediaItemId, error message, and timestamp.
-   * Validates: Requirements 7.3
-   */
   describe('Property 6: Worker Records Errors in ErrorSample', () => {
     // Arbitraries for generating test data
     const mediaItemIdArb = fc.uuid();
@@ -206,9 +181,6 @@ describe('Catalog Policy Worker - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Additional property: Error sample entries are JSON-serializable
-   */
   describe('Error sample entries are JSON-serializable', () => {
     const mediaItemIdArb = fc.uuid();
     const errorMessageArb = fc.string({ minLength: 1, maxLength: 200 });

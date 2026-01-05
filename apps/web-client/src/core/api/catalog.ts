@@ -337,14 +337,8 @@ export interface JobStatusDto {
   slug: string | null;
 }
 
-/** Provider info from catalog. */
-export interface ProviderDto {
-  id: string;
-  name: string;
-  count: number;
-}
+/** Provider info from catalog (from api-contract). */
+export type ProviderDto = components['schemas']['ProviderDto'];
 
-/** Providers list response. */
-export interface ProvidersListDto {
-  data: ProviderDto[];
-}
+/** Providers list response (from api-contract). */
+export type ProvidersListDto = components['schemas']['ProvidersListDto'];

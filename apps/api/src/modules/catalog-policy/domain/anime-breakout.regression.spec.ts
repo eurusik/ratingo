@@ -46,14 +46,9 @@ function createAnimeInput(overrides: {
       ratingMetacritic: null,
       ratingRottenTomatoes: null,
       ratingTrakt: 8.0,
-      watchProviders: hasNetflix
-        ? {
-            US: {
-              link: null,
-              flatrate: [{ providerId: 8, name: 'Netflix' }],
-            },
-          }
-        : null,
+      normalizedOffers: hasNetflix
+        ? [{ providerId: 'netflix', offerType: 'flatrate', distributionChannel: 'direct' }]
+        : [],
     },
     stats: { qualityScore: 0.7, popularityScore: 0.5, freshnessScore: 0.6, ratingoScore: 0.6 },
   };
@@ -73,7 +68,7 @@ function createWesternAnimationInput(): PolicyEngineInput {
       ratingMetacritic: 85,
       ratingRottenTomatoes: 95,
       ratingTrakt: 8.5,
-      watchProviders: null,
+      normalizedOffers: [],
     },
     stats: { qualityScore: 0.9, popularityScore: 0.8, freshnessScore: 0.7, ratingoScore: 0.85 },
   };
@@ -167,7 +162,7 @@ describe('Anime Breakout Regression Tests', () => {
           ratingMetacritic: 70,
           ratingRottenTomatoes: 85,
           ratingTrakt: 7.5,
-          watchProviders: null,
+          normalizedOffers: [],
         },
         stats: { qualityScore: 0.75, popularityScore: 0.7, freshnessScore: 0.6, ratingoScore: 0.7 },
       };
@@ -193,7 +188,7 @@ describe('Anime Breakout Regression Tests', () => {
           ratingMetacritic: null,
           ratingRottenTomatoes: null,
           ratingTrakt: 7.0,
-          watchProviders: null,
+          normalizedOffers: [],
         },
         stats: { qualityScore: 0.6, popularityScore: 0.4, freshnessScore: 0.5, ratingoScore: 0.5 },
       };
@@ -204,7 +199,7 @@ describe('Anime Breakout Regression Tests', () => {
       expect(result.reasons).not.toContain(EvaluationReason.EXCLUDED_CONTENT_CLASS);
     });
 
-    it('Anime with null watchProviders: cannot match provider-based breakout', () => {
+    it('Anime with empty normalizedOffers: cannot match provider-based breakout', () => {
       const input = createAnimeInput({ voteCountImdb: 60000, hasNetflix: false });
       const result = evaluateEligibility(input, animeExclusionPolicy);
 

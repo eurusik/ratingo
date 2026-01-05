@@ -1,18 +1,8 @@
-/**
- * Query Keys Property-Based Tests
- *
- * Property-based tests using fast-check to verify universal properties
- * that should hold across all valid inputs.
- *
- * Feature: core-architecture-fixes
- */
+// Property-based tests for query keys using fast-check
 
 import * as fc from 'fast-check';
 import { queryKeys, createBatchHash } from './keys';
 
-/**
- * Helper to check if a value is a primitive (string, number, null, undefined).
- */
 function isPrimitive(value: unknown): boolean {
   return (
     value === null ||
@@ -23,24 +13,12 @@ function isPrimitive(value: unknown): boolean {
   );
 }
 
-/**
- * Helper to check if all elements in an array are primitives.
- */
 function allPrimitives(arr: readonly unknown[]): boolean {
   return arr.every(isPrimitive);
 }
 
 describe('Query Keys Property Tests', () => {
-  /**
-   * Property 6: Query keys contain only primitives
-   *
-   * For any query key factory function in queryKeys, the returned array
-   * SHALL contain only values of type string | number | null | undefined,
-   * never objects or arrays (except the key array itself).
-   *
-   * **Validates: Requirements 4.1, 4.5**
-   */
-  describe('Property 6: Query keys contain only primitives', () => {
+  describe('Query keys contain only primitives', () => {
     it('shows.trending returns only primitive values', () => {
       fc.assert(
         fc.property(
@@ -216,86 +194,76 @@ describe('Query Keys Property Tests', () => {
 
 
 describe('Query Keys Undefined Normalization', () => {
-  /**
-   * Property 7: Undefined normalization to null
-   *
-   * For any optional parameter passed as undefined to a query key factory function,
-   * the resulting key array SHALL contain null in that position, not undefined.
-   *
-   * **Validates: Requirements 4.5**
-   */
-  describe('Property 7: Undefined normalization to null', () => {
+  describe('Undefined normalization to null', () => {
     it('shows.trending normalizes undefined to null', () => {
       const key = queryKeys.shows.trending(undefined, undefined, undefined);
-      // Check that no undefined values exist in the key
-      expect(key.includes(undefined as unknown as string)).toBe(false);
-      // Check that null is used for optional params
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['shows', 'trending', null, null, null]);
     });
 
     it('shows.calendar normalizes undefined to null', () => {
       const key = queryKeys.shows.calendar(undefined, undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['shows', 'calendar', null, null]);
     });
 
     it('movies.trending normalizes undefined to null', () => {
       const key = queryKeys.movies.trending(undefined, undefined, undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['movies', 'trending', null, null, null]);
     });
 
     it('movies.nowPlaying normalizes undefined to null', () => {
       const key = queryKeys.movies.nowPlaying(undefined, undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['movies', 'now-playing', null, null]);
     });
 
     it('movies.newReleases normalizes undefined to null', () => {
       const key = queryKeys.movies.newReleases(undefined, undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['movies', 'new-releases', null, null]);
     });
 
     it('home.hero normalizes undefined to null', () => {
       const key = queryKeys.home.hero(undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['home', 'hero', null]);
     });
 
     it('insights.movements normalizes undefined to null', () => {
       const key = queryKeys.insights.movements(undefined, undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['insights', 'movements', null, null]);
     });
 
     it('userMedia.myRatings normalizes undefined to null', () => {
       const key = queryKeys.userMedia.myRatings(undefined, undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['user-media', 'my-ratings', null, null]);
     });
 
     it('userMedia.myWatchlist normalizes undefined to null', () => {
       const key = queryKeys.userMedia.myWatchlist(undefined, undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['user-media', 'my-watchlist', null, null]);
     });
 
     it('users.ratings normalizes undefined to null for optional params', () => {
       const key = queryKeys.users.ratings('testuser', undefined, undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['users', 'testuser', 'ratings', null, null]);
     });
 
     it('userActions.savedItems.list normalizes undefined to null', () => {
       const key = queryKeys.userActions.savedItems.list('watchlist', undefined, undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['user-actions', 'saved-items', 'list', 'watchlist', null, null]);
     });
 
     it('userActions.subscriptions.list normalizes undefined to null', () => {
       const key = queryKeys.userActions.subscriptions.list(undefined, undefined);
-      expect(key.includes(undefined as unknown as string)).toBe(false);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['user-actions', 'subscriptions', 'list', null, null]);
     });
 

@@ -1,7 +1,7 @@
 'use client';
 
-import { Globe, Languages, Tv, Settings, Shield, Filter } from 'lucide-react';
-import type { PolicyConfigDto } from '@/core/api/admin';
+import { Globe, Languages, Tv, Settings, Shield, Filter, Ban } from 'lucide-react';
+import type { PolicyConfigDto, ContentClass } from '@/core/api/admin';
 import type { ConfigViewLabels } from './labels.types';
 import { ConfigCard } from './ConfigCard';
 import { AllowedBlockedList } from './AllowedBlockedList';
@@ -167,7 +167,7 @@ export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProp
   const hasAnyRequirement =
     (req.minQualityScoreNormalized && req.minQualityScoreNormalized > 0) ||
     (req.requireAnyOfRatingsPresent && req.requireAnyOfRatingsPresent.length > 0) ||
-    (req.minVotesAnyOf && req.minVotesAnyOf.min > 0);
+    (req.minVotesAnyOf?.min !== undefined && req.minVotesAnyOf.min > 0);
 
   if (!hasAnyRequirement) return null;
 
@@ -194,13 +194,13 @@ export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProp
           variant="outline"
         />
       )}
-      {req.minVotesAnyOf && req.minVotesAnyOf.min > 0 && (
+      {req.minVotesAnyOf?.min !== undefined && req.minVotesAnyOf.min > 0 && (
         <div className="pt-1">
           <p className="text-sm text-muted-foreground mb-1">
             {labels?.minVotesAnyOf ?? 'Min Votes (Any Source)'}
           </p>
           <div className="flex items-center gap-2">
-            <BadgeList items={req.minVotesAnyOf.sources.map((s) => s.toUpperCase())} />
+            <BadgeList items={(req.minVotesAnyOf.sources ?? []).map((s) => s.toUpperCase())} />
             <span className="text-sm">≥ {req.minVotesAnyOf.min.toLocaleString()}</span>
           </div>
         </div>
@@ -217,6 +217,40 @@ export function GlobalRequirementsCard({ config, labels }: PolicyConfigCardsProp
         <p className="text-sm text-muted-foreground mb-1">{labels?.appliesTo ?? 'Applies To'}</p>
         <BadgeList items={activeContexts.map((c) => CONTEXT_LABELS[c] ?? c)} />
       </div>
+    </ConfigCard>
+  );
+}
+
+/** Default content class display labels (fallback) */
+const DEFAULT_CONTENT_CLASS_LABELS: Record<ContentClass, string> = {
+  mainstream: 'Mainstream',
+  anime: 'Anime',
+  documentary: 'Documentary',
+  reality: 'Reality',
+  kids: 'Kids',
+};
+
+/**
+ * Displays excluded content classes card.
+ *
+ * Shows list of content classes excluded from catalog.
+ * Returns null if no classes are excluded.
+ *
+ * @param config - Policy configuration
+ * @param labels - Localized labels
+ */
+export function ContentClassCard({ config, labels }: PolicyConfigCardsProps) {
+  const excluded = config.excludedContentClasses ?? [];
+  if (excluded.length === 0) return null;
+
+  const classLabels = labels?.contentClassLabels ?? DEFAULT_CONTENT_CLASS_LABELS;
+
+  return (
+    <ConfigCard title={labels?.contentClasses ?? 'Excluded Content Classes'} icon={Ban}>
+      <BadgeList
+        items={excluded.map((c) => classLabels[c] ?? c)}
+        variant="destructive"
+      />
     </ConfigCard>
   );
 }

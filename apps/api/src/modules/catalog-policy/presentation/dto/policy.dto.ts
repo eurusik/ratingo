@@ -23,7 +23,7 @@ import { type ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classific
 
 import { BreakoutRuleDto } from './breakout-rule.dto';
 import { GlobalRequirementsDto } from './global-requirements.dto';
-import { PolicyConfigDto } from './policy-config.dto';
+import { HomepageConfigDto, PolicyConfigDto } from './policy-config.dto';
 
 const POLICY_STATUS_VALUES = Object.values(PolicyStatus);
 
@@ -146,7 +146,7 @@ export class CreatePolicyDto {
   @ApiProperty({
     description: 'Allowed countries (ISO 3166-1 alpha-2 codes)',
     example: ['US', 'GB', 'CA', 'AU', 'UA'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })
@@ -155,7 +155,7 @@ export class CreatePolicyDto {
   @ApiProperty({
     description: 'Blocked countries (ISO 3166-1 alpha-2 codes)',
     example: ['RU', 'BY'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })
@@ -173,7 +173,7 @@ export class CreatePolicyDto {
   @ApiProperty({
     description: 'Allowed languages (ISO 639-1 codes)',
     example: ['en', 'uk', 'de', 'fr'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })
@@ -182,7 +182,7 @@ export class CreatePolicyDto {
   @ApiProperty({
     description: 'Blocked languages (ISO 639-1 codes)',
     example: ['ru'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })
@@ -191,7 +191,7 @@ export class CreatePolicyDto {
   @ApiPropertyOptional({
     description: 'Global streaming providers',
     example: ['netflix', 'max', 'appletv', 'prime', 'disney'],
-    isArray: true,
+    type: [String],
   })
   @IsOptional()
   @IsArray()
@@ -201,7 +201,6 @@ export class CreatePolicyDto {
   @ApiPropertyOptional({
     description: 'Breakout rules for exceptions',
     type: [BreakoutRuleDto],
-    isArray: true,
   })
   @IsOptional()
   @IsArray()
@@ -221,6 +220,7 @@ export class CreatePolicyDto {
   @ApiPropertyOptional({
     description: 'Homepage configuration',
     example: { minRelevanceScore: 50 },
+    type: () => HomepageConfigDto,
   })
   @IsOptional()
   homepage?: { minRelevanceScore?: number };
@@ -238,8 +238,8 @@ export class CreatePolicyDto {
     description:
       'Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.',
     example: ['anime', 'reality'],
-    isArray: true,
     enum: ['mainstream', 'anime', 'documentary', 'reality', 'kids'],
+    isArray: true,
   })
   @IsOptional()
   @IsArray()

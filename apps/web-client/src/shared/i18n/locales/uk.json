@@ -607,14 +607,33 @@
         "status": "Статус"
       },
       "config": {
+        "countries": "Країни",
+        "languages": "Мови",
+        "providers": "Глобальні провайдери",
+        "settings": "Налаштування",
+        "breakoutRules": "Правила винятків",
+        "allowed": "Дозволені",
+        "blocked": "Заблоковані",
         "othersExcluded": "Інші країни",
         "othersLanguagesExcluded": "Інші мови",
         "excludedFromCatalog": "Виключені з каталогу",
+        "eligibilityMode": "Режим відповідності",
+        "blockedCountryMode": "Режим блокування країн",
+        "minRelevanceScore": "Мін. оцінка релевантності",
+        "priority": "Пріоритет",
         "globalRequirements": "Глобальний поріг якості",
         "minQualityScore": "Мін. оцінка якості",
         "requireRatings": "Обов'язкові рейтинги (будь-який з)",
         "minVotesAnyOf": "Мін. голосів (будь-яке джерело)",
-        "appliesTo": "Застосовується до"
+        "appliesTo": "Застосовується до",
+        "contentClasses": "Виключені класи контенту",
+        "contentClassLabels": {
+          "mainstream": "Мейнстрім",
+          "anime": "Аніме",
+          "documentary": "Документальні",
+          "reality": "Реаліті",
+          "kids": "Дитячі"
+        }
       },
       "form": {
         "save": "Зберегти як нову версію",
@@ -843,6 +862,14 @@
     "providers": {
       "title": "Управління провайдерами",
       "description": "Зв'язування TMDB провайдерів з нашими canonical провайдерами",
+      "info": {
+        "whatIsMapping": "Що таке mapping?",
+        "whatIsMappingDescription": "TMDB повертає провайдерів з різними ID для різних регіонів. Mapping дозволяє об'єднати їх під одним canonical провайдером.",
+        "example": "Приклад:",
+        "exampleDescription": "TMDB ID 8 (Netflix US), TMDB ID 175 (Netflix UA) → canonical",
+        "distributionChannel": "Distribution Channel:",
+        "distributionChannelDescription": "Direct = власний сервіс, Amazon/Apple Channel = контент доступний через підписку Amazon Prime / Apple TV+"
+      },
       "tabs": {
         "unmapped": "Незамаплені",
         "mappings": "Mappings"
@@ -867,13 +894,23 @@
         "title": "Provider Mappings",
         "description": "Зв'язки між TMDB провайдерами та canonical провайдерами",
         "addMapping": "Додати mapping",
+        "global": "Глобальний",
         "columns": {
           "tmdbId": "TMDB ID",
-          "provider": "Provider",
-          "variant": "Variant",
-          "channel": "Channel",
-          "region": "Region",
-          "source": "Source"
+          "provider": "Провайдер",
+          "variant": "Варіант",
+          "channel": "Канал",
+          "region": "Регіон",
+          "source": "Джерело"
+        },
+        "channels": {
+          "direct": "Прямий",
+          "amazon": "Amazon",
+          "appleTV": "Apple TV"
+        },
+        "sources": {
+          "manual": "вручну",
+          "auto": "авто"
         },
         "empty": {
           "title": "Немає mappings",
@@ -894,14 +931,29 @@
         "editTitle": "Редагувати mapping",
         "description": "Зв'язування TMDB провайдера з canonical провайдером",
         "tmdbProviderId": "TMDB Provider ID",
-        "providerId": "Canonical Provider",
+        "tmdbProviderIdPlaceholder": "напр., 8 (Netflix)",
+        "tmdbName": "Назва в TMDB",
+        "providerId": "Canonical провайдер",
+        "providerIdPlaceholder": "Оберіть провайдера...",
+        "providerIdHint": "Наш внутрішній ID провайдера (напр., netflix, amazon-prime-video)",
         "variantId": "Variant ID",
-        "distributionChannel": "Distribution Channel",
-        "region": "Region",
+        "variantIdPlaceholder": "напр., Netflix, Netflix Basic",
+        "variantIdHint": "Відображувана назва варіанту (може відрізнятися від canonical ID)",
+        "distributionChannel": "Канал дистрибуції",
+        "distributionChannelHint": "direct = власний сервіс, channel = через Amazon/Apple",
+        "channels": {
+          "direct": "Прямий (власний сервіс)",
+          "amazon": "Amazon Channel",
+          "appleTV": "Apple TV Channel"
+        },
+        "region": "Регіон (опціонально)",
+        "regionPlaceholder": "UA, US, або порожньо для глобального",
+        "regionHint": "Порожньо = глобальний mapping для всіх регіонів",
         "cancel": "Скасувати",
         "create": "Створити",
         "save": "Зберегти",
-        "saving": "Збереження..."
+        "saving": "Збереження...",
+        "mediaCount": "медіа"
       },
       "toast": {
         "createSuccess": "Mapping створено успішно",

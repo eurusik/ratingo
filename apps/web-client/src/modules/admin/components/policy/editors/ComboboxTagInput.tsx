@@ -49,14 +49,14 @@ export function ComboboxTagInput({
 
   const filteredOptions = options.filter(
     (opt) =>
-      opt.name.toLowerCase().includes(search.toLowerCase()) ||
-      opt.id.toLowerCase().includes(search.toLowerCase()),
+      opt?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      opt?.id?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const searchMatchesOption = options.some(
     (opt) =>
-      opt.name.toLowerCase() === search.toLowerCase() ||
-      opt.id.toLowerCase() === search.toLowerCase(),
+      opt?.name?.toLowerCase() === search.toLowerCase() ||
+      opt?.id?.toLowerCase() === search.toLowerCase(),
   );
 
   const addTag = (id: string) => {
@@ -86,8 +86,8 @@ export function ComboboxTagInput({
         // Check if search matches an option - use its ID
         const matchedOption = options.find(
           (opt) =>
-            opt.name.toLowerCase() === search.toLowerCase() ||
-            opt.id.toLowerCase() === search.toLowerCase(),
+            opt?.name?.toLowerCase() === search.toLowerCase() ||
+            opt?.id?.toLowerCase() === search.toLowerCase(),
         );
         if (matchedOption) {
           addTag(matchedOption.id);
@@ -189,7 +189,7 @@ export function ComboboxTagInput({
                     onClick={() => {
                       // Check if matches an option by name
                       const matchedOption = options.find(
-                        (opt) => opt.name.toLowerCase() === search.toLowerCase(),
+                        (opt) => opt?.name?.toLowerCase() === search.toLowerCase(),
                       );
                       if (matchedOption) {
                         addTag(matchedOption.id);

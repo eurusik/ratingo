@@ -300,7 +300,7 @@ export class SyncMediaService {
 
   /** Normalizes watch providers and stores in media_watch_offers table. */
   private async normalizeWatchProviders(media: NormalizedMedia, logPrefix: string): Promise<void> {
-    if (!media.watchProviders || Object.keys(media.watchProviders).length === 0) {
+    if (!media.watchProvidersRaw || Object.keys(media.watchProvidersRaw).length === 0) {
       return;
     }
 
@@ -313,7 +313,7 @@ export class SyncMediaService {
 
       const result = await this.normalizationService.normalizeWatchProviders(
         mediaItem.id,
-        media.watchProviders,
+        media.watchProvidersRaw,
       );
 
       if (result.unmappedCount > 0) {

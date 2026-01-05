@@ -3,18 +3,30 @@
  *
  * Breakout rules allow excluded content to become eligible if it meets
  * specific quality/popularity thresholds.
+ *
+ * Note: Provider IDs are canonical IDs from provider_registry table.
  */
 
 import { type BreakoutRule } from '../types/policy.types';
 
-import { CANONICAL_PROVIDERS } from './provider-mapping';
+/**
+ * Canonical provider IDs for breakout rules.
+ * These match the IDs in provider_registry table.
+ */
+const PROVIDERS = {
+  NETFLIX: 'netflix',
+  MAX: 'max',
+  PRIME_VIDEO: 'prime_video',
+  DISNEY_PLUS: 'disney_plus',
+  APPLE_TV_PLUS: 'apple_tv_plus',
+} as const;
 
 /**
  * Anime Global Hit - allows popular anime on major streaming platforms.
  *
  * Requirements:
  * - 50,000+ IMDB votes (global popularity signal)
- * - Available on Netflix, HBO Max, Prime Video, Disney+, or Apple TV+
+ * - Available on Netflix, Max, Prime Video, Disney+, or Apple TV+
  */
 export const ANIME_GLOBAL_HIT: BreakoutRule = {
   id: 'ANIME_GLOBAL_HIT',
@@ -23,11 +35,11 @@ export const ANIME_GLOBAL_HIT: BreakoutRule = {
   requirements: {
     minImdbVotes: 50000,
     requireAnyOfProviders: [
-      CANONICAL_PROVIDERS.NETFLIX,
-      CANONICAL_PROVIDERS.HBO_MAX,
-      CANONICAL_PROVIDERS.PRIME_VIDEO,
-      CANONICAL_PROVIDERS.DISNEY_PLUS,
-      CANONICAL_PROVIDERS.APPLE_TV_PLUS,
+      PROVIDERS.NETFLIX,
+      PROVIDERS.MAX,
+      PROVIDERS.PRIME_VIDEO,
+      PROVIDERS.DISNEY_PLUS,
+      PROVIDERS.APPLE_TV_PLUS,
     ],
   },
 };

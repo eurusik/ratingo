@@ -1,12 +1,11 @@
-/**
- * Policy Engine Property-Based Tests
- *
- * Feature: catalog-policy-engine
- */
-
 import * as fc from 'fast-check';
 import { evaluateEligibility, computeRelevance } from './policy-engine';
-import { PolicyConfig, PolicyEngineInput, EvaluationContext } from './types/policy.types';
+import {
+  PolicyConfig,
+  PolicyEngineInput,
+  EvaluationContext,
+  NormalizedOffer,
+} from './types/policy.types';
 import { EligibilityStatus, EligibilityStatusType } from './constants/evaluation.constants';
 import { ContentClass } from './classification.service';
 
@@ -49,7 +48,7 @@ describe('Policy Engine - Property-Based Tests', () => {
     id: fc.uuid(),
     originCountries: fc.option(fc.array(countryCodeArb, { minLength: 1, maxLength: 5 })),
     originalLanguage: fc.option(languageCodeArb),
-    watchProviders: fc.constant(null), // Simplified for now
+    normalizedOffers: fc.constant([] as NormalizedOffer[]), // Simplified for now
     voteCountImdb: fc.option(fc.nat({ max: 1000000 })),
     voteCountTrakt: fc.option(fc.nat({ max: 100000 })),
     ratingImdb: fc.option(fc.double({ min: 0, max: 10 })),
@@ -79,10 +78,6 @@ describe('Policy Engine - Property-Based Tests', () => {
     stats: statsArb,
   });
 
-  /**
-   * Property 1: Canonical Lowercase Status
-   * Validates: Requirements 1.2, 1.3
-   */
   describe('Property: Canonical Lowercase Status', () => {
     // Canonical lowercase status values
     const CANONICAL_STATUSES: EligibilityStatusType[] = [
@@ -124,10 +119,6 @@ describe('Policy Engine - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property: Evaluation Determinism
-   * Validates: Requirements 3.1, 3.5
-   */
   describe('Property 1: Evaluation Determinism', () => {
     it('should produce identical results for identical inputs', () => {
       fc.assert(
@@ -167,10 +158,6 @@ describe('Policy Engine - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property: Breakout Rule Priority Ordering
-   * Validates: Requirements 4.6
-   */
   describe('Property 6: Breakout Rule Priority Ordering', () => {
     it('should always select the breakout rule with lowest priority number', () => {
       fc.assert(
@@ -228,10 +215,6 @@ describe('Policy Engine - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property: Relevance Score Range
-   * Validates: Requirements 3.2
-   */
   describe('Property 7: Relevance Score Range', () => {
     it('should always return a score between 0 and 100', () => {
       fc.assert(
@@ -254,7 +237,7 @@ describe('Policy Engine - Property-Based Tests', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: null,
               voteCountTrakt: null,
               ratingImdb: null,
@@ -282,7 +265,7 @@ describe('Policy Engine - Property-Based Tests', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: null,
               voteCountTrakt: null,
               ratingImdb: null,
@@ -308,9 +291,6 @@ describe('Policy Engine - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Property: Status Consistency
-   */
   describe('Additional Property: Status Consistency', () => {
     it('should have consistent status and reasons', () => {
       fc.assert(
@@ -349,10 +329,6 @@ describe('Policy Engine - Property-Based Tests', () => {
   });
 });
 
-/**
- * Context-Aware Eligibility Property Tests
- * Feature: context-aware-eligibility
- */
 describe('Context-Aware Eligibility Properties', () => {
   // Arbitraries for context-aware tests
   const countryCodeArb = fc.stringMatching(/^[A-Z]{2}$/);
@@ -362,7 +338,7 @@ describe('Context-Aware Eligibility Properties', () => {
     id: fc.uuid(),
     originCountries: fc.option(fc.array(countryCodeArb, { minLength: 1, maxLength: 5 })),
     originalLanguage: fc.option(languageCodeArb),
-    watchProviders: fc.constant(null),
+    normalizedOffers: fc.constant([] as NormalizedOffer[]),
     voteCountImdb: fc.option(fc.nat({ max: 1000000 })),
     voteCountTrakt: fc.option(fc.nat({ max: 100000 })),
     ratingImdb: fc.option(fc.double({ min: 0, max: 10 })),
@@ -401,14 +377,6 @@ describe('Context-Aware Eligibility Properties', () => {
     'search',
   ];
 
-  /**
-   * Property 1: No Context Equals Catalog Context
-   * Feature: context-aware-eligibility, Property 1: No Context Equals Catalog Context
-   * Validates: Requirements 1.3
-   *
-   * For any valid PolicyEngineInput and PolicyConfig, calling evaluateEligibility(input, policy)
-   * without options SHALL produce the same result as evaluateEligibility(input, policy, { context: 'catalog' }).
-   */
   describe('Property 1: No Context Equals Catalog Context', () => {
     it('should produce identical results when called without options vs with context: catalog', () => {
       fc.assert(
@@ -516,16 +484,7 @@ describe('Context-Aware Eligibility Properties', () => {
   });
 });
 
-/**
- * Global Quality Gate Property Tests
- * Feature: global-quality-gate
- */
 describe('Global Quality Gate Properties', () => {
-  /**
-   * Property 1: minVotesAnyOf Threshold Enforcement (OR logic)
-   * Feature: global-quality-gate, Property 1: Votes below threshold on ALL sources → INELIGIBLE
-   * Validates: Requirements 1.2, 1.7
-   */
   it('Property 1: should enforce minVotesAnyOf threshold with OR logic', () => {
     fc.assert(
       fc.property(
@@ -553,7 +512,7 @@ describe('Global Quality Gate Properties', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: imdbVotes,
               voteCountTrakt: traktVotes,
               ratingImdb: null,
@@ -586,11 +545,6 @@ describe('Global Quality Gate Properties', () => {
     );
   });
 
-  /**
-   * Property 2: Single Source minVotesAnyOf
-   * Feature: global-quality-gate, Property 2: Single source check works correctly
-   * Validates: Requirements 1.3, 1.8
-   */
   it('Property 2: should enforce minVotesAnyOf with single source', () => {
     fc.assert(
       fc.property(
@@ -618,7 +572,7 @@ describe('Global Quality Gate Properties', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: source === 'imdb' ? votes : null,
               voteCountTrakt: source === 'trakt' ? votes : null,
               ratingImdb: null,
@@ -646,11 +600,6 @@ describe('Global Quality Gate Properties', () => {
     );
   });
 
-  /**
-   * Property 3: Quality Score Threshold Enforcement
-   * Feature: global-quality-gate, Property 3: Quality score below threshold → INELIGIBLE
-   * Validates: Requirements 1.4, 1.9
-   */
   it('Property 3: should enforce minQualityScoreNormalized threshold', () => {
     fc.assert(
       fc.property(
@@ -677,7 +626,7 @@ describe('Global Quality Gate Properties', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: null,
               voteCountTrakt: null,
               ratingImdb: null,
@@ -713,11 +662,6 @@ describe('Global Quality Gate Properties', () => {
     );
   });
 
-  /**
-   * Property 4: Rating Presence Check
-   * Feature: global-quality-gate, Property 4: At least one rating must be present
-   * Validates: Requirements 1.5, 1.10
-   */
   it('Property 4: should enforce requireAnyOfRatingsPresent', () => {
     fc.assert(
       fc.property(
@@ -744,7 +688,7 @@ describe('Global Quality Gate Properties', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: null,
               voteCountTrakt: null,
               ratingImdb: requiredRating === 'imdb' && hasRating ? 7.5 : null,
@@ -772,11 +716,6 @@ describe('Global Quality Gate Properties', () => {
     );
   });
 
-  /**
-   * Property 5: AND Logic for Multiple Requirements (votes + quality)
-   * Feature: global-quality-gate, Property 5: All requirements must pass
-   * Validates: Requirements 1.6
-   */
   it('Property 5: should enforce AND logic for multiple requirements', () => {
     fc.assert(
       fc.property(
@@ -806,7 +745,7 @@ describe('Global Quality Gate Properties', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: votes,
               voteCountTrakt: null,
               ratingImdb: null,
@@ -846,11 +785,6 @@ describe('Global Quality Gate Properties', () => {
     );
   });
 
-  /**
-   * Property 6: Global Gate Precedes Access Filters
-   * Feature: global-quality-gate, Property 6: Global gate is checked before access filters
-   * Validates: Requirements 2.1, 2.2, 3.2, 3.3
-   */
   it('Property 6: should check global gate before access filters for non-blocked content', () => {
     fc.assert(
       fc.property(
@@ -877,7 +811,7 @@ describe('Global Quality Gate Properties', () => {
               id: 'test',
               originCountries: ['US'], // Allowed
               originalLanguage: 'en', // Allowed
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: votes,
               voteCountTrakt: null,
               ratingImdb: null,
@@ -907,11 +841,6 @@ describe('Global Quality Gate Properties', () => {
     );
   });
 
-  /**
-   * Property 7: Backward Compatibility
-   * Feature: global-quality-gate, Property 7: Policies without globalRequirements work unchanged
-   * Validates: Requirements 2.4, 4.1, 4.2, 4.3
-   */
   it('Property 7: should skip global gate when not configured', () => {
     fc.assert(
       fc.property(
@@ -937,7 +866,7 @@ describe('Global Quality Gate Properties', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: imdbVotes,
               voteCountTrakt: traktVotes,
               ratingImdb: null,
@@ -969,11 +898,6 @@ describe('Global Quality Gate Properties', () => {
     );
   });
 
-  /**
-   * Property 8: Breakout Rules Cannot Bypass Global Gate
-   * Feature: global-quality-gate, Property 8: Blocked content must pass gate to use breakout
-   * Validates: Requirements 2.5
-   */
   it('Property 8: should prevent breakout when global gate fails', () => {
     fc.assert(
       fc.property(
@@ -1013,7 +937,7 @@ describe('Global Quality Gate Properties', () => {
               id: 'test',
               originCountries: ['RU'], // Blocked
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: votes,
               voteCountTrakt: null,
               ratingImdb: null,
@@ -1055,10 +979,6 @@ describe('Global Quality Gate Properties', () => {
   });
 
   /**
-   * Property 2: Context-Aware Gate Application
-   * Feature: context-aware-eligibility, Property 2: Context-Aware Gate Application
-   * Validates: Requirements 2.2, 2.3, 2.4, 2.5
-   *
    * For any PolicyConfig with globalRequirements, and for any EvaluationContext:
    * - IF context IS in appliesTo (or appliesTo is undefined and context is in default contexts),
    *   THEN gate SHALL be checked
@@ -1112,7 +1032,7 @@ describe('Global Quality Gate Properties', () => {
                 id: 'test',
                 originCountries: ['US'], // Allowed
                 originalLanguage: 'en', // Allowed
-                watchProviders: null,
+                normalizedOffers: [],
                 voteCountImdb: votes,
                 voteCountTrakt: null,
                 ratingImdb: null,
@@ -1176,7 +1096,7 @@ describe('Global Quality Gate Properties', () => {
                 id: 'test',
                 originCountries: ['US'], // Allowed
                 originalLanguage: 'en', // Allowed
-                watchProviders: null,
+                normalizedOffers: [],
                 voteCountImdb: votes, // May fail gate, but gate should be skipped
                 voteCountTrakt: null,
                 ratingImdb: null,
@@ -1228,7 +1148,7 @@ describe('Global Quality Gate Properties', () => {
                 id: 'test',
                 originCountries: ['US'],
                 originalLanguage: 'en',
-                watchProviders: null,
+                normalizedOffers: [],
                 voteCountImdb: votes,
                 voteCountTrakt: null,
                 ratingImdb: null,
@@ -1292,7 +1212,7 @@ describe('Global Quality Gate Properties', () => {
                 id: 'test',
                 originCountries: ['US'],
                 originalLanguage: 'en',
-                watchProviders: null,
+                normalizedOffers: [],
                 voteCountImdb: votes, // May fail gate, but gate should be skipped
                 voteCountTrakt: null,
                 ratingImdb: null,
@@ -1344,7 +1264,7 @@ describe('Global Quality Gate Properties', () => {
                 id: 'test',
                 originCountries: ['RU'], // Blocked
                 originalLanguage: 'en',
-                watchProviders: null,
+                normalizedOffers: [],
                 voteCountImdb: votes,
                 voteCountTrakt: null,
                 ratingImdb: null,
@@ -1368,11 +1288,6 @@ describe('Global Quality Gate Properties', () => {
     });
   });
 
-  /**
-   * Property 10: Reason Precedence Determinism
-   * Feature: global-quality-gate, Property 10: Blocked content shows BLOCKED reason, not MISSING_GLOBAL_SIGNALS
-   * Validates: Requirements 2.1, 3.3
-   */
   it('Property 10: should use BLOCKED reason for blocked content that fails gate', () => {
     fc.assert(
       fc.property(
@@ -1399,7 +1314,7 @@ describe('Global Quality Gate Properties', () => {
               id: 'test',
               originCountries: ['RU'], // Blocked
               originalLanguage: 'ru', // Blocked
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: votes,
               voteCountTrakt: null,
               ratingImdb: null,
@@ -1439,8 +1354,6 @@ describe('Global Quality Gate Properties', () => {
 
 /**
  * Content Classification Property Tests
- * Feature: content-classification
- * Validates: Requirements 3.2, 3.3, 4.1, 4.2, 4.3, 4.4, 4.5
  */
 describe('Content Classification Properties', () => {
   const countryCodeArb = fc.stringMatching(/^[A-Z]{2}$/);
@@ -1457,7 +1370,7 @@ describe('Content Classification Properties', () => {
     id: fc.uuid(),
     originCountries: fc.option(fc.array(countryCodeArb, { minLength: 1, maxLength: 5 })),
     originalLanguage: fc.option(languageCodeArb),
-    watchProviders: fc.constant(null),
+    normalizedOffers: fc.constant([] as NormalizedOffer[]),
     voteCountImdb: fc.option(fc.nat({ max: 1000000 })),
     voteCountTrakt: fc.option(fc.nat({ max: 100000 })),
     ratingImdb: fc.option(fc.double({ min: 0, max: 10 })),
@@ -1479,11 +1392,6 @@ describe('Content Classification Properties', () => {
     ),
   });
 
-  /**
-   * Property 2: Content Class Filtering with Breakout Override
-   * Feature: content-classification, Property 2
-   * Validates: Requirements 3.2, 3.3, 4.2, 4.3, 4.4, 4.5
-   */
   describe('Property 2: Content Class Filtering with Breakout Override', () => {
     it('should include EXCLUDED_CONTENT_CLASS in reasons when content class is excluded', () => {
       fc.assert(
@@ -1506,7 +1414,7 @@ describe('Content Classification Properties', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: null,
               voteCountTrakt: null,
               ratingImdb: null,
@@ -1551,7 +1459,7 @@ describe('Content Classification Properties', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: null,
               voteCountTrakt: null,
               ratingImdb: null,
@@ -1593,7 +1501,7 @@ describe('Content Classification Properties', () => {
               id: 'test',
               originCountries: ['US'],
               originalLanguage: 'en',
-              watchProviders: null,
+              normalizedOffers: [],
               voteCountImdb: null,
               voteCountTrakt: null,
               ratingImdb: null,
@@ -1646,7 +1554,7 @@ describe('Content Classification Properties', () => {
                 id: 'test',
                 originCountries: ['US'],
                 originalLanguage: 'en',
-                watchProviders: null,
+                normalizedOffers: [],
                 voteCountImdb: breakoutThreshold + 1000, // Passes breakout
                 voteCountTrakt: null,
                 ratingImdb: null,
@@ -1704,7 +1612,7 @@ describe('Content Classification Properties', () => {
                 id: 'test',
                 originCountries: ['RU'], // Blocked country
                 originalLanguage: 'en',
-                watchProviders: null,
+                normalizedOffers: [],
                 voteCountImdb: breakoutThreshold + 1000, // Passes breakout
                 voteCountTrakt: null,
                 ratingImdb: null,
@@ -1730,11 +1638,6 @@ describe('Content Classification Properties', () => {
     });
   });
 
-  /**
-   * Property 5: Evaluation Order Invariant
-   * Feature: content-classification, Property 5
-   * Validates: Requirements 4.1
-   */
   describe('Property 5: Evaluation Order Invariant', () => {
     it('should return PENDING for missing originCountries regardless of content class', () => {
       fc.assert(
@@ -1760,7 +1663,7 @@ describe('Content Classification Properties', () => {
                 id: 'test',
                 originCountries: null, // Missing
                 originalLanguage: 'en',
-                watchProviders: null,
+                normalizedOffers: [],
                 voteCountImdb: null,
                 voteCountTrakt: null,
                 ratingImdb: null,
@@ -1808,7 +1711,7 @@ describe('Content Classification Properties', () => {
                 id: 'test',
                 originCountries: [], // Empty
                 originalLanguage: 'en',
-                watchProviders: null,
+                normalizedOffers: [],
                 voteCountImdb: null,
                 voteCountTrakt: null,
                 ratingImdb: null,
@@ -1855,7 +1758,7 @@ describe('Content Classification Properties', () => {
                 id: 'test',
                 originCountries: ['US'],
                 originalLanguage: null, // Missing
-                watchProviders: null,
+                normalizedOffers: [],
                 voteCountImdb: null,
                 voteCountTrakt: null,
                 ratingImdb: null,

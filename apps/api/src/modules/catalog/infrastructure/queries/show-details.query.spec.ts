@@ -1,7 +1,7 @@
 import { ShowDetailsQuery } from './show-details.query';
 import { CreditsMapper } from '../mappers/credits.mapper';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { WatchProvidersMapper } from '../mappers/watch-providers.mapper';
+import { MediaWatchOffersMapper } from '../mappers/media-watch-offers.mapper';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 // Chainable thenable for Drizzle-like API
@@ -29,7 +29,7 @@ describe('ShowDetailsQuery', () => {
     jest.spyOn(CreditsMapper, 'toDto').mockReturnValue({ cast: [] } as any);
     jest.spyOn(ImageMapper, 'toPoster').mockReturnValue({ small: 'poster' } as any);
     jest.spyOn(ImageMapper, 'toBackdrop').mockReturnValue({ small: 'backdrop' } as any);
-    jest.spyOn(WatchProvidersMapper, 'toAvailability').mockReturnValue({ region: 'UA' } as any);
+    jest.spyOn(MediaWatchOffersMapper, 'toAvailability').mockReturnValue({ region: 'UA' } as any);
   });
 
   afterEach(() => {
@@ -52,7 +52,14 @@ describe('ShowDetailsQuery', () => {
       }),
     };
 
-    query = new ShowDetailsQuery(db as any, mockGenreQuery as any);
+    const mockWatchOffersQuery = {
+      fetchForMediaItem: jest.fn().mockImplementation(() => {
+        const offersData = selectQueue.shift() ?? [];
+        return Promise.resolve(offersData);
+      }),
+    };
+
+    query = new ShowDetailsQuery(db as any, mockGenreQuery as any, mockWatchOffersQuery as any);
   };
 
   it('should map show details with genres and seasons', async () => {
@@ -112,11 +119,13 @@ describe('ShowDetailsQuery', () => {
       },
     ];
 
-    setup([[showRow], genres, seasons]);
+    const watchOffers: any[] = []; // Empty watch offers for test
+
+    setup([[showRow], genres, seasons, watchOffers]);
 
     const res = await query.execute('show');
 
-    expect(db.select).toHaveBeenCalledTimes(2); // main + seasons (genres via mockGenreQuery)
+    expect(db.select).toHaveBeenCalledTimes(2); // main + seasons (genres + watch offers via mocks)
     expect(res?.id).toBe('m1');
     expect(res?.primaryTrailer).toEqual({ key: 'trailer1' });
     expect(res?.poster).toEqual({ small: 'poster' });
@@ -124,7 +133,7 @@ describe('ShowDetailsQuery', () => {
     expect(res?.genres).toHaveLength(2);
     expect(res?.seasons).toHaveLength(2);
     expect(CreditsMapper.toDto).toHaveBeenCalled();
-    expect(WatchProvidersMapper.toAvailability).toHaveBeenCalled();
+    expect(MediaWatchOffersMapper.toAvailability).toHaveBeenCalled();
   });
 
   it('should return null when not found', async () => {

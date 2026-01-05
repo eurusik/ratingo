@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import {
+  AVAILABILITY_REGIONS,
+  type AvailabilityRegion,
+} from '../../../../common/constants/region.constants';
 import { ExternalRatingsDto } from '../../../../common/dtos/external-ratings.dto';
 import { ImageDto } from '../../../../common/dtos/image.dto';
 import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
@@ -143,7 +147,14 @@ export class UserMediaStateDto {
 }
 
 export class WatchProviderDto {
-  @ApiProperty({ example: 8 })
+  @ApiProperty({ example: 'netflix', description: 'Canonical provider ID' })
+  id: string;
+
+  @ApiProperty({
+    example: 8,
+    description: 'Numeric provider ID (deprecated, use id instead)',
+    deprecated: true,
+  })
   providerId: number;
 
   @ApiProperty({ example: 'Netflix' })
@@ -179,11 +190,11 @@ export class WatchProviderRegionDto {
 export class AvailabilityDto {
   @ApiProperty({
     example: 'UA',
-    enum: ['UA', 'US'],
+    enum: [...AVAILABILITY_REGIONS],
     nullable: true,
     description: 'Selected region for watch providers (UA primary, US fallback)',
   })
-  region: 'UA' | 'US' | null;
+  region: AvailabilityRegion | null;
 
   @ApiProperty({
     example: false,

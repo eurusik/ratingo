@@ -127,7 +127,7 @@ export class TmdbAdapter implements MetadataProviderPort {
           genres: [],
           videos: [],
           credits: { cast: [], crew: [] },
-          watchProviders: {},
+          watchProvidersRaw: {},
           isAdult: data.adult || false,
         } as NormalizedMedia;
       }
@@ -175,7 +175,7 @@ export class TmdbAdapter implements MetadataProviderPort {
           genres: [],
           videos: [],
           credits: { cast: [], crew: [] },
-          watchProviders: {},
+          watchProvidersRaw: {},
           isAdult: data.adult || false,
         } as NormalizedMedia;
       }

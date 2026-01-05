@@ -1,6 +1,7 @@
 import slugify from 'slugify';
 
 import { DEFAULT_REGION } from '../../../common/constants';
+import { AVAILABILITY_REGIONS, FALLBACK_REGION } from '../../../common/constants/region.constants';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../common/enums/video.enum';
 import {
@@ -109,7 +110,7 @@ export class TmdbMapper {
 
       videos: this.extractVideos(data),
       credits: this.extractCredits(data, type),
-      watchProviders: this.extractProviders(data),
+      watchProvidersRaw: this.extractProviders(data),
 
       details: {},
     };
@@ -185,7 +186,7 @@ export class TmdbMapper {
     }
 
     // Priority countries for finding primary release dates
-    const priorityCountries = ['US', DEFAULT_REGION];
+    const priorityCountries = [FALLBACK_REGION, DEFAULT_REGION];
 
     // Find theatrical release (type 3) - prioritize US/UA
     let theatricalReleaseDate: Date | null = null;
@@ -226,7 +227,9 @@ export class TmdbMapper {
     }
 
     // Filter releases to only UA/US to reduce data size
-    const filteredReleases = allReleases.filter((r) => r.country === 'UA' || r.country === 'US');
+    const filteredReleases = allReleases.filter(
+      (r) => r.country === DEFAULT_REGION || r.country === FALLBACK_REGION,
+    );
 
     return {
       theatricalReleaseDate,
@@ -381,12 +384,12 @@ export class TmdbMapper {
         type: v.type as VideoTypeEnum,
         official: v.official,
         language: v.iso_639_1 as VideoLanguageEnum,
-        country: v.iso_3166_1 || 'US',
+        country: v.iso_3166_1 || FALLBACK_REGION,
       }));
   }
 
   /** Allowed regions for watch providers - UA primary, US fallback */
-  private static readonly ALLOWED_REGIONS = [DEFAULT_REGION, 'US'];
+  private static readonly ALLOWED_REGIONS = [...AVAILABILITY_REGIONS];
 
   private static extractProviders(data: TmdbMediaResponse): WatchProvidersMap | null {
     const results = data['watch/providers']?.results;

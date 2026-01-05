@@ -3222,6 +3222,399 @@
         ]
       }
     },
+    "/api/admin/providers": {
+      "get": {
+        "operationId": "ProvidersController_listProviders",
+        "summary": "List providers",
+        "description": "Returns all providers from the registry with their status.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ProvidersListDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Providers"
+        ]
+      }
+    },
+    "/api/admin/providers/unmapped": {
+      "get": {
+        "operationId": "ProvidersController_listUnmapped",
+        "summary": "List unmapped providers",
+        "description": "Returns providers seen in TMDB data that have no mapping. Sorted by seen count descending.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "Sort by field",
+            "schema": {
+              "default": "count",
+              "example": "count",
+              "enum": [
+                "count",
+                "lastSeen"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UnmappedProvidersListDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Providers"
+        ]
+      }
+    },
+    "/api/admin/providers/mappings": {
+      "get": {
+        "operationId": "ProvidersController_listMappings",
+        "summary": "List mappings",
+        "description": "Returns all provider mappings. Can filter by provider or region.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "providerId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by provider ID",
+            "schema": {
+              "example": "netflix",
+              "type": "string"
+            }
+          },
+          {
+            "name": "region",
+            "required": false,
+            "in": "query",
+            "description": "Filter by region",
+            "schema": {
+              "example": "US",
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeGlobal",
+            "required": false,
+            "in": "query",
+            "description": "Include global mappings",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MappingsListDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Providers"
+        ]
+      },
+      "post": {
+        "operationId": "ProvidersController_createMapping",
+        "summary": "Create mapping",
+        "description": "Creates a new TMDB to canonical provider mapping. After creation, affected media will be re-normalized on next sync.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMappingRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MappingDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid provider ID or mapping already exists"
+          }
+        },
+        "tags": [
+          "Admin - Providers"
+        ]
+      }
+    },
+    "/api/admin/providers/mappings/{id}": {
+      "put": {
+        "operationId": "ProvidersController_updateMapping",
+        "summary": "Update mapping",
+        "description": "Updates an existing mapping. Only provided fields are updated.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mapping ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMappingRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MappingDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mapping not found"
+          }
+        },
+        "tags": [
+          "Admin - Providers"
+        ]
+      },
+      "delete": {
+        "operationId": "ProvidersController_deleteMapping",
+        "summary": "Delete mapping",
+        "description": "Deletes a mapping. The TMDB provider will become unmapped again.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Mapping ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Mapping deleted"
+          },
+          "404": {
+            "description": "Mapping not found"
+          }
+        },
+        "tags": [
+          "Admin - Providers"
+        ]
+      }
+    },
+    "/api/admin/providers/resolve": {
+      "get": {
+        "operationId": "ProvidersController_resolveProvider",
+        "summary": "Debug resolution",
+        "description": "Tests how a TMDB provider ID would be resolved to canonical provider. Useful for debugging mapping issues.",
+        "parameters": [
+          {
+            "name": "tmdbId",
+            "required": true,
+            "in": "query",
+            "description": "TMDB provider ID to resolve",
+            "schema": {
+              "example": 8,
+              "type": "number"
+            }
+          },
+          {
+            "name": "region",
+            "required": false,
+            "in": "query",
+            "description": "Region for resolution",
+            "schema": {
+              "example": "US",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ResolveResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Providers"
+        ]
+      }
+    },
     "/api/stats/sync": {
       "post": {
         "operationId": "StatsController_syncTrendingStats",
@@ -4722,9 +5115,16 @@
       "WatchProviderDto": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "example": "netflix",
+            "description": "Canonical provider ID"
+          },
           "providerId": {
             "type": "number",
-            "example": 8
+            "example": 8,
+            "description": "Numeric provider ID (deprecated, use id instead)",
+            "deprecated": true
           },
           "name": {
             "type": "string",
@@ -4744,6 +5144,7 @@
           }
         },
         "required": [
+          "id",
           "providerId",
           "name"
         ]
@@ -5856,15 +6257,18 @@
         "type": "object",
         "properties": {
           "data": {
-            "description": "List of streaming providers",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ProviderDto"
             }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/OffsetPaginationMetaDto"
           }
         },
         "required": [
-          "data"
+          "data",
+          "meta"
         ]
       },
       "SetUserMediaStateDto": {
@@ -6667,7 +7071,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "requireAnyOfRatingsPresent": {
@@ -6686,6 +7090,26 @@
                 "trakt"
               ]
             }
+          },
+          "availabilityMode": {
+            "type": "string",
+            "description": "Availability mode for provider filtering. subscription_only = flatrate only, transactional_only = rent/buy only, any = all types",
+            "example": "subscription_only",
+            "enum": [
+              "subscription_only",
+              "transactional_only",
+              "any"
+            ]
+          },
+          "excludeAdsTiers": {
+            "type": "boolean",
+            "description": "Exclude ads-tier variants from provider matching",
+            "example": false
+          },
+          "excludeChannelDistribution": {
+            "type": "boolean",
+            "description": "Exclude non-direct distribution channels (amazon_channel, apple_tv_channel)",
+            "example": false
           }
         }
       },
@@ -7031,7 +7455,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "blockedCountries": {
@@ -7042,7 +7466,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "blockedCountryMode": {
@@ -7064,7 +7488,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "blockedLanguages": {
@@ -7074,7 +7498,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "globalProviders": {
@@ -7088,15 +7512,15 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "breakoutRules": {
             "description": "Breakout rules for exceptions",
+            "type": "array",
             "items": {
-              "type": "array"
-            },
-            "type": "array"
+              "$ref": "#/components/schemas/BreakoutRuleDto"
+            }
           },
           "eligibilityMode": {
             "type": "string",
@@ -7108,11 +7532,15 @@
             ]
           },
           "homepage": {
-            "type": "object",
             "description": "Homepage configuration",
             "example": {
               "minRelevanceScore": 50
-            }
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HomepageConfigDto"
+              }
+            ]
           },
           "globalRequirements": {
             "description": "Global quality gate requirements (all conditions combined with AND)",
@@ -7449,7 +7877,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "coverage": {
@@ -7860,7 +8288,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "array"
+              "type": "string"
             }
           },
           "relevanceScore": {
@@ -7915,6 +8343,255 @@
         "required": [
           "summary",
           "items"
+        ]
+      },
+      "UnmappedProviderDto": {
+        "type": "object",
+        "properties": {
+          "tmdbProviderId": {
+            "type": "number",
+            "example": 999,
+            "description": "TMDB provider ID"
+          },
+          "lastSeenName": {
+            "type": "string",
+            "example": "Unknown Streaming",
+            "description": "Last seen provider name"
+          },
+          "seenCount": {
+            "type": "number",
+            "example": 150,
+            "description": "Number of times seen"
+          },
+          "lastSeenAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last seen timestamp"
+          },
+          "sampleRegions": {
+            "example": [
+              "US",
+              "GB"
+            ],
+            "description": "Sample regions where seen",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sampleNames": {
+            "example": [
+              "Unknown Streaming",
+              "Unknown Stream"
+            ],
+            "description": "Sample names seen",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "tmdbProviderId",
+          "lastSeenName",
+          "seenCount",
+          "lastSeenAt",
+          "sampleRegions",
+          "sampleNames"
+        ]
+      },
+      "UnmappedProvidersListDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnmappedProviderDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/OffsetPaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "MappingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-123",
+            "description": "Mapping ID"
+          },
+          "tmdbProviderId": {
+            "type": "number",
+            "example": 8,
+            "description": "TMDB provider ID"
+          },
+          "providerId": {
+            "type": "string",
+            "example": "netflix",
+            "description": "Canonical provider ID"
+          },
+          "variantId": {
+            "type": "string",
+            "example": "netflix_ads",
+            "description": "Variant ID if applicable"
+          },
+          "distributionChannel": {
+            "type": "string",
+            "example": "direct",
+            "description": "Distribution channel"
+          },
+          "region": {
+            "type": "string",
+            "example": "global",
+            "description": "Region code or global"
+          },
+          "source": {
+            "type": "string",
+            "example": "seed",
+            "description": "Mapping source"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "tmdbProviderId",
+          "providerId",
+          "distributionChannel",
+          "region",
+          "source",
+          "createdAt"
+        ]
+      },
+      "MappingsListDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MappingDto"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/OffsetPaginationMetaDto"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
+        ]
+      },
+      "CreateMappingRequestDto": {
+        "type": "object",
+        "properties": {
+          "tmdbProviderId": {
+            "type": "number",
+            "example": 8,
+            "description": "TMDB provider ID"
+          },
+          "providerId": {
+            "type": "string",
+            "example": "netflix",
+            "description": "Canonical provider ID"
+          },
+          "variantId": {
+            "type": "string",
+            "example": "netflix_ads",
+            "description": "Variant ID"
+          },
+          "distributionChannel": {
+            "type": "string",
+            "example": "direct",
+            "description": "Distribution channel",
+            "enum": [
+              "direct",
+              "amazon_channel",
+              "apple_tv_channel"
+            ],
+            "default": "direct"
+          },
+          "region": {
+            "type": "string",
+            "example": "US",
+            "description": "Region code (ISO 3166-1 alpha-2) or \"global\"",
+            "default": "global"
+          }
+        },
+        "required": [
+          "tmdbProviderId",
+          "providerId"
+        ]
+      },
+      "UpdateMappingRequestDto": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "example": "netflix",
+            "description": "Canonical provider ID"
+          },
+          "variantId": {
+            "type": "string",
+            "example": "netflix_ads",
+            "description": "Variant ID"
+          },
+          "distributionChannel": {
+            "type": "string",
+            "example": "direct",
+            "description": "Distribution channel",
+            "enum": [
+              "direct",
+              "amazon_channel",
+              "apple_tv_channel"
+            ]
+          }
+        }
+      },
+      "ResolveResultDto": {
+        "type": "object",
+        "properties": {
+          "tmdbProviderId": {
+            "type": "number",
+            "example": 8,
+            "description": "Input TMDB provider ID"
+          },
+          "region": {
+            "type": "string",
+            "example": "US",
+            "description": "Region used for resolution"
+          },
+          "mapping": {
+            "description": "Resolved mapping if found",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MappingDto"
+              }
+            ]
+          },
+          "found": {
+            "type": "boolean",
+            "example": true,
+            "description": "Whether mapping was found"
+          },
+          "source": {
+            "type": "string",
+            "example": "region",
+            "description": "Resolution source: region-specific or global fallback"
+          }
+        },
+        "required": [
+          "tmdbProviderId",
+          "region",
+          "found"
         ]
       },
       "SaveItemDto": {

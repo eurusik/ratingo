@@ -66,12 +66,11 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
     }
   };
 
-  const getBlockingReasonMessages = (reasons: unknown[][] | null | undefined): string[] => {
+  const getBlockingReasonMessages = (reasons: string[] | null | undefined): string[] => {
     if (!reasons || reasons.length === 0) {
       return [dict.admin.runDetail.blockingReasons.default];
     }
-    const codes = reasons.flat().filter((r): r is string => typeof r === 'string');
-    return codes.map((code) => {
+    return reasons.map((code) => {
       const key = code as keyof typeof dict.admin.runDetail.blockingReasons;
       return dict.admin.runDetail.blockingReasons[key] || code;
     });

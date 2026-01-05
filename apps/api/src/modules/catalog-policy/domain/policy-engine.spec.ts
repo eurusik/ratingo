@@ -43,7 +43,7 @@ describe('Policy Engine', () => {
       id: 'test-id',
       originCountries: ['US'],
       originalLanguage: 'en',
-      watchProviders: null,
+      normalizedOffers: [],
       voteCountImdb: null,
       voteCountTrakt: null,
       ratingImdb: null,

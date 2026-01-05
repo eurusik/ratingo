@@ -205,5 +205,9 @@ export interface NormalizedMedia {
   videos?: NormalizedVideo[];
   credits: Credits;
 
-  watchProviders?: WatchProvidersMap | null;
+  /**
+   * Raw watch providers data from TMDB.
+   * @deprecated Use media_watch_offers for normalized data.
+   */
+  watchProvidersRaw?: WatchProvidersMap | null;
 }

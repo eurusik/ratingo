@@ -23,12 +23,17 @@ import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
+  type IMediaWatchOffersRepository,
+  MEDIA_WATCH_OFFERS_REPOSITORY,
+  type MediaWatchOfferView,
+} from '../../../provider/public';
+import {
   EligibilityStatus,
   type EligibilityStatusType,
   type EvaluationReasonType,
 } from '../../domain/constants/evaluation.constants';
 import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
-import { type PolicyConfig } from '../../domain/types/policy.types';
+import { type PolicyConfig, type NormalizedOffer } from '../../domain/types/policy.types';
 import {
   type MediaItemRow,
   mapRowToPolicyEngineInput,
@@ -123,6 +128,8 @@ export class DryRunService {
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly policyService: CatalogPolicyService,
+    @Inject(MEDIA_WATCH_OFFERS_REPOSITORY)
+    private readonly watchOffersRepository: IMediaWatchOffersRepository,
   ) {}
 
   /**
@@ -152,6 +159,12 @@ export class DryRunService {
     // Get current evaluations for comparison
     const currentEvaluations = await this.getCurrentEvaluations(items.map((i) => i.id));
 
+    // Fetch normalized offers for all items in batch
+    const mediaItemIds = items.map((i) => i.id);
+    const offersMap = await this.watchOffersRepository.getOffersForMediaBatch(mediaItemIds, {
+      includeVariantInfo: true,
+    });
+
     // Evaluate each item
     const results: DryRunItemResult[] = [];
     const reasonCounts: Record<string, number> = {};
@@ -170,7 +183,8 @@ export class DryRunService {
         break;
       }
 
-      const input = mapRowToPolicyEngineInput(item, this.logger);
+      const normalizedOffers = this.mapOffersToNormalized(offersMap.get(item.id) ?? []);
+      const input = mapRowToPolicyEngineInput(item, normalizedOffers, this.logger);
       const evalResult = evaluateEligibility(input, proposedPolicy);
       const relevanceScore = computeRelevance(input, proposedPolicy);
 
@@ -325,7 +339,6 @@ export class DryRunService {
         mi.title,
         mi.origin_countries as "originCountries",
         mi.original_language as "originalLanguage",
-        mi.watch_providers as "watchProviders",
         mi.content_class as "contentClass",
         mi.rating_imdb as "ratingImdb",
         mi.rating_metacritic as "ratingMetacritic",
@@ -460,5 +473,17 @@ export class DryRunService {
       },
       items: [],
     };
+  }
+
+  /**
+   * Maps MediaWatchOfferView to NormalizedOffer for policy engine.
+   */
+  private mapOffersToNormalized(offers: MediaWatchOfferView[]): NormalizedOffer[] {
+    return offers.map((offer) => ({
+      providerId: offer.providerId,
+      offerType: offer.offerType,
+      distributionChannel: offer.distributionChannel,
+      isAdsTier: offer.variantIsAdsTier,
+    }));
   }
 }

@@ -1,24 +1,9 @@
-/**
- * DatabaseException Property-Based Tests
- *
- * Feature: catalog-policy-refactoring
- * Property 4: Database Errors Wrapped in DatabaseException
- * Validates: Requirements 7.1
- */
-
 import * as fc from 'fast-check';
 import { DatabaseException } from './database.exception';
 import { ErrorCode } from '../enums/error-code.enum';
 import { HttpStatus } from '@nestjs/common';
 
 describe('DatabaseException - Property-Based Tests', () => {
-  /**
-   * Property 4: Database Errors Wrapped in DatabaseException
-   *
-   * For any database operation that fails, the error SHALL be wrapped
-   * in a DatabaseException with the original error preserved.
-   * Validates: Requirements 7.1
-   */
   describe('Property 4: Database Errors Wrapped in DatabaseException', () => {
     // Arbitrary for generating error messages
     const errorMessageArb = fc.string({ minLength: 1, maxLength: 200 });

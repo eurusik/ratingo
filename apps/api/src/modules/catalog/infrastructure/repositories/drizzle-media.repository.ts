@@ -133,7 +133,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           voteCount: 0,
           credits: { cast: [], crew: [] },
           videos: null,
-          watchProviders: null,
+          watchProvidersRaw: null,
           overview: null,
         })
         .onConflictDoUpdate({
@@ -221,24 +221,41 @@ export class DrizzleMediaRepository implements IMediaRepository {
           .onConflictDoNothing(); // If already exists, don't overwrite (evaluation job will update it)
       });
     } catch (error: unknown) {
+      // Drizzle wraps PostgreSQL errors - extract the actual DB error
       const err = error as {
         message?: string;
         code?: string;
         detail?: string;
         constraint?: string;
+        cause?: {
+          message?: string;
+          code?: string;
+          detail?: string;
+          constraint?: string;
+        };
       };
+
+      // PostgreSQL error is often in cause (wrapped by Drizzle)
+      const pgError = err.cause ?? err;
+      const pgCode = pgError.code ?? err.code;
+      const pgDetail = pgError.detail ?? err.detail;
+      const pgConstraint = pgError.constraint ?? err.constraint;
+      const pgMessage = pgError.message ?? err.message;
+
       this.logger.error(`Failed to upsert media ${media.title}`, {
-        message: err.message,
-        code: err.code,
-        detail: err.detail,
-        constraint: err.constraint,
+        message: pgMessage,
+        code: pgCode,
+        detail: pgDetail,
+        constraint: pgConstraint,
         tmdbId: media.externalIds.tmdbId,
       });
-      throw new DatabaseException(`Failed to upsert media: ${err.message}`, {
+
+      throw new DatabaseException(`Failed to upsert media: ${pgMessage}`, error, {
         tmdbId: media.externalIds.tmdbId,
         title: media.title,
-        code: err.code,
-        constraint: err.constraint,
+        code: pgCode,
+        detail: pgDetail,
+        constraint: pgConstraint,
       });
     }
   }

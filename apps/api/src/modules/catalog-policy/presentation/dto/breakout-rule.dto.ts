@@ -72,7 +72,7 @@ export class BreakoutRuleRequirementsDto {
   @ApiPropertyOptional({
     description: 'List of streaming providers - at least one must be present',
     example: ['netflix', 'prime', 'disney'],
-    isArray: true,
+    type: [String],
   })
   @IsOptional()
   @IsArray()
@@ -96,7 +96,6 @@ export class BreakoutRuleRequirementsDto {
       'Availability mode for provider filtering. subscription_only = flatrate only, transactional_only = rent/buy only, any = all types',
     example: 'subscription_only',
     enum: VALID_AVAILABILITY_MODES,
-    default: 'subscription_only',
   })
   @IsOptional()
   @IsIn(VALID_AVAILABILITY_MODES)
@@ -105,7 +104,6 @@ export class BreakoutRuleRequirementsDto {
   @ApiPropertyOptional({
     description: 'Exclude ads-tier variants from provider matching',
     example: false,
-    default: false,
   })
   @IsOptional()
   @IsBoolean()
@@ -114,7 +112,6 @@ export class BreakoutRuleRequirementsDto {
   @ApiPropertyOptional({
     description: 'Exclude non-direct distribution channels (amazon_channel, apple_tv_channel)',
     example: false,
-    default: false,
   })
   @IsOptional()
   @IsBoolean()

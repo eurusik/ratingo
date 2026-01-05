@@ -61,7 +61,7 @@ describe('UnmappedTrackingRepository', () => {
   });
 
   describe('recordUnmapped', () => {
-    it('should insert new unmapped provider', async () => {
+    it('should upsert unmapped provider atomically', async () => {
       // Arrange
       mockDb.onConflictDoUpdate.mockResolvedValue(undefined);
 
@@ -83,21 +83,6 @@ describe('UnmappedTrackingRepository', () => {
           seenCount: 1,
         }),
       );
-      expect(mockDb.onConflictDoUpdate).toHaveBeenCalled();
-    });
-
-    it('should handle upsert on conflict', async () => {
-      // Arrange
-      mockDb.onConflictDoUpdate.mockResolvedValue(undefined);
-
-      // Act
-      await repository.recordUnmapped({
-        tmdbProviderId: 8,
-        providerName: 'Netflix',
-        region: 'GB',
-      });
-
-      // Assert
       expect(mockDb.onConflictDoUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
           target: expect.anything(),
@@ -143,8 +128,9 @@ describe('UnmappedTrackingRepository', () => {
         { tmdbProviderId: 9, providerName: 'Prime Video', region: 'US' },
       ]);
 
-      // Assert - should have 2 inserts (one per unique tmdbProviderId)
+      // Assert - should have 2 upserts (one per unique tmdbProviderId)
       expect(mockDb.insert).toHaveBeenCalledTimes(2);
+      expect(mockDb.onConflictDoUpdate).toHaveBeenCalledTimes(2);
     });
 
     it('should aggregate different names for same provider', async () => {
@@ -204,6 +190,18 @@ describe('UnmappedTrackingRepository', () => {
           lastSeenName: 'Netflix Premium',
         }),
       );
+    });
+
+    it('should log and rethrow on error', async () => {
+      // Arrange
+      mockDb.onConflictDoUpdate.mockRejectedValue(new Error('DB Error'));
+
+      // Act & Assert
+      await expect(
+        repository.recordUnmappedBatch([
+          { tmdbProviderId: 8, providerName: 'Netflix', region: 'US' },
+        ]),
+      ).rejects.toThrow('DB Error');
     });
   });
 

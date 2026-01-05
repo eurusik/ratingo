@@ -118,7 +118,12 @@ export const mediaItems = pgTable(
     backdropPath: text('backdrop_path'),
     videos: jsonb('videos').$type<Video[] | null>().default(null),
     credits: jsonb('credits').$type<Credits>().default({ cast: [], crew: [] }),
-    watchProviders: jsonb('watch_providers').$type<WatchProvidersMap | null>().default(null),
+    /**
+     * Raw watch providers data from TMDB.
+     * Normalized offers are stored in media_watch_offers table.
+     * @deprecated Use media_watch_offers for policy evaluation
+     */
+    watchProvidersRaw: jsonb('watch_providers_raw').$type<WatchProvidersMap | null>().default(null),
 
     // Metrics (Denormalized for speed)
     trendingScore: doublePrecision('trending_score').default(0),

@@ -172,17 +172,23 @@ export interface PolicyConfig {
 }
 
 /**
- * Watch providers map structure.
+ * Offer type for normalized watch offers.
  */
-export interface WatchProvidersMap {
-  [region: string]: {
-    link: string | null;
-    flatrate?: Array<{ providerId: number; name: string }>;
-    rent?: Array<{ providerId: number; name: string }>;
-    buy?: Array<{ providerId: number; name: string }>;
-    ads?: Array<{ providerId: number; name: string }>;
-    free?: Array<{ providerId: number; name: string }>;
-  };
+export type NormalizedOfferType = 'flatrate' | 'rent' | 'buy' | 'ads' | 'free';
+
+/**
+ * Normalized watch offer for policy evaluation.
+ * Pre-resolved to canonical provider IDs.
+ */
+export interface NormalizedOffer {
+  /** Canonical provider ID (e.g., 'netflix', 'disney_plus') */
+  providerId: string;
+  /** Offer type */
+  offerType: NormalizedOfferType;
+  /** Distribution channel */
+  distributionChannel: 'direct' | 'amazon_channel' | 'apple_tv_channel';
+  /** Whether this is an ads-supported tier (for excludeAdsTiers filtering) */
+  isAdsTier?: boolean;
 }
 
 /**
@@ -193,7 +199,11 @@ export interface PolicyEngineInput {
     id: string;
     originCountries: string[] | null;
     originalLanguage: string | null;
-    watchProviders: WatchProvidersMap | null;
+    /**
+     * Normalized watch offers with canonical provider IDs.
+     * Pre-resolved from media_watch_offers table.
+     */
+    normalizedOffers: NormalizedOffer[];
     voteCountImdb: number | null;
     voteCountTrakt: number | null;
     ratingImdb: number | null;

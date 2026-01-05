@@ -1,7 +1,3 @@
-/**
- * Provider Mapping Service Property-Based Tests
- */
-
 import * as fc from 'fast-check';
 
 import type { ProviderMapping, ResolvedMapping } from '../../domain/types/provider.types';

@@ -1,11 +1,3 @@
-/**
- * Service Error Mapping Property-Based Tests
- *
- * Feature: catalog-policy-refactoring
- * Property 5: Services Throw Appropriate NestJS Exceptions
- * Validates: Requirements 7.2
- */
-
 import * as fc from 'fast-check';
 import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import {
@@ -14,10 +6,6 @@ import {
   InvalidRunStateTransitionError,
 } from '../../domain/errors';
 
-/**
- * Helper function that maps domain errors to NestJS exceptions.
- * This mirrors the logic in PolicyActivationService.mapDomainErrorToHttpException
- */
 function mapDomainErrorToHttpException(error: unknown): never {
   if (error instanceof InvalidEligibilityStatusError) {
     throw new BadRequestException(error.message);
@@ -35,14 +23,6 @@ function mapDomainErrorToHttpException(error: unknown): never {
 }
 
 describe('Service Error Mapping - Property-Based Tests', () => {
-  /**
-   * Property 5: Services Throw Appropriate NestJS Exceptions
-   *
-   * For any service method that encounters a "not found" condition, it SHALL throw NotFoundException.
-   * For any service method that encounters invalid input, it SHALL throw BadRequestException.
-   * For any service method that encounters state conflicts, it SHALL throw ConflictException.
-   * Validates: Requirements 7.2
-   */
   describe('Property 5: Services Throw Appropriate NestJS Exceptions', () => {
     // Arbitraries for generating test data
     const invalidStatusArb = fc.string({ minLength: 1, maxLength: 50 });
@@ -169,9 +149,6 @@ describe('Service Error Mapping - Property-Based Tests', () => {
     });
   });
 
-  /**
-   * Additional property: Domain errors contain useful debugging information
-   */
   describe('Domain errors contain debugging information', () => {
     it('InvalidEligibilityStatusError should contain invalid status and valid statuses', () => {
       fc.assert(

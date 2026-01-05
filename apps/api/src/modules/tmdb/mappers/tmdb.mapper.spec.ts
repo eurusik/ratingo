@@ -119,10 +119,10 @@ describe('TmdbMapper', () => {
       expect(result?.genres).toHaveLength(1);
       expect(result?.genres[0]).toEqual({ tmdbId: 18, name: 'Drama', slug: 'drama' });
 
-      expect(result?.watchProviders).toBeDefined();
-      expect(result?.watchProviders?.[DEFAULT_REGION]).toBeDefined();
-      expect(result?.watchProviders?.[DEFAULT_REGION].flatrate).toHaveLength(1);
-      expect(result?.watchProviders?.[DEFAULT_REGION].flatrate?.[0]).toEqual(
+      expect(result?.watchProvidersRaw).toBeDefined();
+      expect(result?.watchProvidersRaw?.[DEFAULT_REGION]).toBeDefined();
+      expect(result?.watchProvidersRaw?.[DEFAULT_REGION].flatrate).toHaveLength(1);
+      expect(result?.watchProvidersRaw?.[DEFAULT_REGION].flatrate?.[0]).toEqual(
         expect.objectContaining({
           providerId: 8,
           name: 'Netflix',
@@ -137,7 +137,7 @@ describe('TmdbMapper', () => {
       expect(result).toEqual(
         expect.objectContaining({
           title: 'Breaking Bad',
-          slug: 'breaking-bad',
+          slug: 'breaking-bad-1396',
           type: MediaType.SHOW,
           externalIds: { tmdbId: 1396, imdbId: null },
           rating: 9.5,
@@ -153,10 +153,10 @@ describe('TmdbMapper', () => {
         }),
       );
 
-      expect(result?.watchProviders).toBeDefined();
-      expect(result?.watchProviders?.[DEFAULT_REGION]).toBeDefined();
-      expect(result?.watchProviders?.[DEFAULT_REGION].buy).toHaveLength(1);
-      expect(result?.watchProviders?.[DEFAULT_REGION].buy?.[0].providerId).toBe(3);
+      expect(result?.watchProvidersRaw).toBeDefined();
+      expect(result?.watchProvidersRaw?.[DEFAULT_REGION]).toBeDefined();
+      expect(result?.watchProvidersRaw?.[DEFAULT_REGION].buy).toHaveLength(1);
+      expect(result?.watchProvidersRaw?.[DEFAULT_REGION].buy?.[0].providerId).toBe(3);
     });
 
     it('should return null if essential data is missing', () => {
@@ -171,7 +171,7 @@ describe('TmdbMapper', () => {
       const movieWithSpecialChars = { ...mockMovie, title: 'The Fast & The Furious: Tokyo Drift' };
       const result = TmdbMapper.toDomain(movieWithSpecialChars, MediaType.MOVIE);
 
-      expect(result?.slug).toBe('the-fast-and-the-furious-tokyo-drift');
+      expect(result?.slug).toBe('the-fast-and-the-furious-tokyo-drift-550');
     });
 
     it('should only extract UA and US watch providers, ignoring other regions', () => {
@@ -196,13 +196,13 @@ describe('TmdbMapper', () => {
 
       const result = TmdbMapper.toDomain(movieWithManyRegions, MediaType.MOVIE);
 
-      expect(result?.watchProviders).toBeDefined();
-      expect(Object.keys(result?.watchProviders || {})).toEqual([DEFAULT_REGION, 'US']);
-      expect(result?.watchProviders?.[DEFAULT_REGION]?.flatrate?.[0].name).toBe('UA Provider');
-      expect(result?.watchProviders?.['US']?.rent?.[0].name).toBe('US Provider');
-      expect(result?.watchProviders?.['AR']).toBeUndefined();
-      expect(result?.watchProviders?.['DE']).toBeUndefined();
-      expect(result?.watchProviders?.['GB']).toBeUndefined();
+      expect(result?.watchProvidersRaw).toBeDefined();
+      expect(Object.keys(result?.watchProvidersRaw || {})).toEqual([DEFAULT_REGION, 'US']);
+      expect(result?.watchProvidersRaw?.[DEFAULT_REGION]?.flatrate?.[0].name).toBe('UA Provider');
+      expect(result?.watchProvidersRaw?.['US']?.rent?.[0].name).toBe('US Provider');
+      expect(result?.watchProvidersRaw?.['AR']).toBeUndefined();
+      expect(result?.watchProvidersRaw?.['DE']).toBeUndefined();
+      expect(result?.watchProvidersRaw?.['GB']).toBeUndefined();
     });
 
     it('should handle missing release dates gracefully', () => {

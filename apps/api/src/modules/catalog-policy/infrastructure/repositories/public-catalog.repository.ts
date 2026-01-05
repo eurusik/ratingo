@@ -38,7 +38,7 @@ interface RawPublicMediaItemRow {
   backdrop_path: string | null;
   videos: schema.Video[] | null;
   credits: Credits | null;
-  watch_providers: WatchProvidersMap | null;
+  watch_providers_raw: WatchProvidersMap | null;
   trending_score: number | null;
   trending_rank: number | null;
   popularity: number | null;
@@ -65,6 +65,7 @@ interface RawPublicMediaItemRow {
 /**
  * DTO for rows returned from public_media_items view.
  * Single source of truth for public catalog data shape.
+ * Note: watchProviders is kept for API compatibility, reads from watch_providers_raw
  */
 export interface PublicMediaItemRow {
   id: string;
@@ -79,6 +80,7 @@ export interface PublicMediaItemRow {
   backdropPath: string | null;
   videos: schema.Video[] | null;
   credits: Credits | null;
+  /** @deprecated Use media_watch_offers for normalized data. Kept for API compatibility. */
   watchProviders: WatchProvidersMap | null;
   trendingScore: number | null;
   trendingRank: number | null;
@@ -327,6 +329,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
   /**
    * Maps raw database row to PublicMediaItemRow DTO.
    * Handles snake_case to camelCase conversion.
+   * Note: watchProviders reads from watch_providers_raw for API compatibility.
    */
   private mapToDto(row: RawPublicMediaItemRow): PublicMediaItemRow {
     return {
@@ -342,7 +345,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
       backdropPath: row.backdrop_path,
       videos: row.videos,
       credits: row.credits,
-      watchProviders: row.watch_providers,
+      watchProviders: row.watch_providers_raw,
       trendingScore: row.trending_score,
       trendingRank: row.trending_rank,
       popularity: row.popularity,

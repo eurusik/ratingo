@@ -3,94 +3,39 @@
  * Endpoints for managing provider mappings and unmapped providers.
  */
 
+import type { components } from '@ratingo/api-contract';
 import { apiGet, apiPost, apiPut, apiDelete } from './client';
 
 // ============================================================================
-// Types
+// Types from API Contract
 // ============================================================================
 
-/** Provider from registry with media count. */
-export interface ProviderListItem {
-  id: string;
-  name: string;
-  logoPath: string | null;
-  mediaCount: number;
-}
-
-/** Providers list response. */
-export interface ProvidersListResponse {
-  data: ProviderListItem[];
-  meta: {
-    count: number;
-    total: number;
-    limit: number;
-    offset: number;
-    hasMore: boolean;
-  };
-}
-
 /** Unmapped provider entry. */
-export interface UnmappedProvider {
-  id: string;
-  tmdbProviderId: number;
-  tmdbProviderName: string;
-  region: string;
-  occurrences: number;
-  firstSeenAt: string;
-  lastSeenAt: string;
-}
+export type UnmappedProvider = components['schemas']['UnmappedProviderDto'];
 
 /** Unmapped providers list response. */
-export interface UnmappedProvidersResponse {
-  data: UnmappedProvider[];
-  meta: {
-    count: number;
-    total: number;
-    limit: number;
-    offset: number;
-    hasMore: boolean;
-  };
-}
+export type UnmappedProvidersResponse = components['schemas']['UnmappedProvidersListDto'];
 
 /** Provider mapping entry. */
-export interface ProviderMapping {
-  id: string;
-  tmdbProviderId: number;
-  providerId: string;
-  variantId: string;
-  distributionChannel: string;
-  region: string;
-  source: string;
-  createdAt: string;
-}
+export type ProviderMapping = components['schemas']['MappingDto'];
 
 /** Mappings list response. */
-export interface MappingsListResponse {
-  data: ProviderMapping[];
-  meta: {
-    count: number;
-    total: number;
-    limit: number;
-    offset: number;
-    hasMore: boolean;
-  };
-}
+export type MappingsListResponse = components['schemas']['MappingsListDto'];
 
 /** Create mapping request. */
-export interface CreateMappingRequest {
-  tmdbProviderId: number;
-  providerId: string;
-  variantId?: string;
-  distributionChannel?: string;
-  region?: string;
-}
+export type CreateMappingRequest = components['schemas']['CreateMappingRequestDto'];
 
 /** Update mapping request. */
-export interface UpdateMappingRequest {
-  providerId?: string;
-  variantId?: string;
-  distributionChannel?: string;
-}
+export type UpdateMappingRequest = components['schemas']['UpdateMappingRequestDto'];
+
+/** Distribution channel type. */
+export type DistributionChannel = CreateMappingRequest['distributionChannel'];
+
+/** Provider from registry with media count. */
+export type ProviderListItem = components['schemas']['ProviderDto'];
+
+/** Providers list response. */
+export type ProvidersListResponse = components['schemas']['ProvidersListDto'];
 
 /** Resolved mapping result. */
 export interface ResolvedMapping {
@@ -103,7 +48,7 @@ export interface ResolvedMapping {
 export interface ResolveMappingResponse {
   tmdbProviderId: number;
   region: string;
-  mapping: ResolvedMapping | null;
+  mapping: ProviderMapping | null;
   source: 'region' | 'global' | null;
 }
 

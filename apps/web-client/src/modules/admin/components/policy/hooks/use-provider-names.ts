@@ -16,7 +16,7 @@ export function useProviderNames() {
   const providerMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const provider of providers) {
-      map.set(provider.id, provider.displayName);
+      map.set(provider.id, provider.name);
     }
     return map;
   }, [providers]);

@@ -11,7 +11,6 @@ import {
   EvaluationReason,
   type EvaluationReasonType,
 } from './constants/evaluation.constants';
-import { resolveCanonicalProvider } from './constants/provider-mapping';
 import {
   type Evaluation,
   type PolicyConfig,
@@ -20,6 +19,8 @@ import {
   type EvaluationContext,
   type EvaluationOptions,
   type GlobalRequirements,
+  type NormalizedOffer,
+  type AvailabilityMode,
 } from './types/policy.types';
 
 /**
@@ -393,7 +394,7 @@ function findMatchingBreakoutRule(
 function matchesBreakoutRule(
   input: PolicyEngineInput,
   rule: BreakoutRule,
-  policy: PolicyConfig,
+  _policy: PolicyConfig,
 ): boolean {
   const { mediaItem } = input;
   const { requirements } = rule;
@@ -424,7 +425,9 @@ function matchesBreakoutRule(
 
   // Check requireAnyOfProviders
   if (requirements.requireAnyOfProviders && requirements.requireAnyOfProviders.length > 0) {
-    if (!hasAnyProvider(mediaItem, requirements.requireAnyOfProviders, policy)) {
+    if (
+      !hasAnyProvider(mediaItem.normalizedOffers, requirements.requireAnyOfProviders, requirements)
+    ) {
       return false;
     }
   }
@@ -444,41 +447,80 @@ function matchesBreakoutRule(
 
 /**
  * Checks if media has any of the required providers.
+ * Uses normalized offers with canonical provider IDs.
  *
- * @param mediaItem - Media item with watchProviders
- * @param requiredProviders - Canonical provider IDs (e.g., 'netflix', 'hbo_max')
- * @param policy - Policy configuration
- * @returns True if any required provider is present
+ * @param offers - Normalized watch offers with canonical provider IDs
+ * @param requiredProviders - Canonical provider IDs (e.g., 'netflix', 'disney_plus')
+ * @param requirements - Breakout rule requirements for filtering
+ * @returns True if any required provider is present (after filtering)
  */
 function hasAnyProvider(
-  mediaItem: PolicyEngineInput['mediaItem'],
+  offers: NormalizedOffer[],
   requiredProviders: string[],
-  _policy: PolicyConfig,
+  requirements: BreakoutRule['requirements'],
 ): boolean {
-  if (!mediaItem.watchProviders) {
+  if (offers.length === 0) {
     return false;
   }
 
-  for (const region of Object.keys(mediaItem.watchProviders)) {
-    const regionProviders = mediaItem.watchProviders[region];
+  // Filter offers based on requirements
+  const filteredOffers = filterOffersByRequirements(offers, requirements);
 
-    const allProviders = [
-      ...(regionProviders.flatrate || []),
-      ...(regionProviders.rent || []),
-      ...(regionProviders.buy || []),
-      ...(regionProviders.ads || []),
-      ...(regionProviders.free || []),
-    ];
+  // Check if any filtered offer matches required providers
+  return filteredOffers.some((offer) => requiredProviders.includes(offer.providerId));
+}
 
-    for (const provider of allProviders) {
-      const canonical = resolveCanonicalProvider(provider.providerId);
-      if (canonical && requiredProviders.includes(canonical)) {
-        return true;
-      }
-    }
+/**
+ * Filters offers based on breakout rule requirements.
+ *
+ * @param offers - All normalized offers
+ * @param requirements - Breakout rule requirements
+ * @returns Filtered offers
+ */
+function filterOffersByRequirements(
+  offers: NormalizedOffer[],
+  requirements: BreakoutRule['requirements'],
+): NormalizedOffer[] {
+  let filtered = offers;
+
+  // Filter by availability mode
+  const availabilityMode = requirements.availabilityMode ?? 'subscription_only';
+  filtered = filterByAvailabilityMode(filtered, availabilityMode);
+
+  // Filter by excludeAdsTiers
+  if (requirements.excludeAdsTiers) {
+    filtered = filtered.filter((offer) => !offer.isAdsTier);
   }
 
-  return false;
+  // Filter by excludeChannelDistribution (only direct)
+  if (requirements.excludeChannelDistribution) {
+    filtered = filtered.filter((offer) => offer.distributionChannel === 'direct');
+  }
+
+  return filtered;
+}
+
+/**
+ * Filters offers by availability mode.
+ *
+ * @param offers - Offers to filter
+ * @param mode - Availability mode
+ * @returns Filtered offers
+ */
+function filterByAvailabilityMode(
+  offers: NormalizedOffer[],
+  mode: AvailabilityMode,
+): NormalizedOffer[] {
+  switch (mode) {
+    case 'subscription_only':
+      return offers.filter((o) => o.offerType === 'flatrate');
+    case 'transactional_only':
+      return offers.filter((o) => o.offerType === 'rent' || o.offerType === 'buy');
+    case 'any':
+      return offers;
+    default:
+      return offers;
+  }
 }
 
 /**

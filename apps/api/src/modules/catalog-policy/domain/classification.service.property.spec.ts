@@ -1,10 +1,3 @@
-/**
- * Classification Service Property-Based Tests
- *
- * Feature: content-classification
- * Validates: Requirements 2.1-2.6
- */
-
 import * as fc from 'fast-check';
 import {
   classifyContent,

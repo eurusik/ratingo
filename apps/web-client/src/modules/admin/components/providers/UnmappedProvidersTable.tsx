@@ -9,7 +9,7 @@ import { EmptyState } from '../EmptyState';
 import { MappingDialog, type MappingFormData } from './MappingDialog';
 import { useUnmappedProviders, useCreateMapping } from '@/core/query';
 import type { DataTableColumnDef } from '../../types';
-import type { UnmappedProvider } from '@/core/api/admin-providers';
+import type { UnmappedProvider, DistributionChannel } from '@/core/api/admin-providers';
 import { toast } from 'sonner';
 
 interface UnmappedProvidersTableProps {
@@ -27,6 +27,35 @@ interface UnmappedProvidersTableProps {
     empty?: {
       title?: string;
       description?: string;
+    };
+    dialog?: {
+      createTitle?: string;
+      editTitle?: string;
+      description?: string;
+      tmdbProviderId?: string;
+      tmdbProviderIdPlaceholder?: string;
+      tmdbName?: string;
+      providerId?: string;
+      providerIdPlaceholder?: string;
+      providerIdHint?: string;
+      variantId?: string;
+      variantIdPlaceholder?: string;
+      variantIdHint?: string;
+      distributionChannel?: string;
+      distributionChannelHint?: string;
+      channels?: {
+        direct?: string;
+        amazon?: string;
+        appleTV?: string;
+      };
+      region?: string;
+      regionPlaceholder?: string;
+      regionHint?: string;
+      cancel?: string;
+      create?: string;
+      save?: string;
+      saving?: string;
+      mediaCount?: string;
     };
     toast?: {
       success?: string;
@@ -65,28 +94,37 @@ export function UnmappedProvidersTable({ labels }: UnmappedProvidersTableProps) 
       width: '100px',
     },
     {
-      id: 'tmdbProviderName',
+      id: 'lastSeenName',
       header: labels?.columns?.name ?? 'Name',
-      accessorKey: 'tmdbProviderName',
-      cell: ({ row }) => <span className="font-medium">{row.original.tmdbProviderName}</span>,
+      accessorKey: 'lastSeenName',
+      cell: ({ row }) => <span className="font-medium">{row.original.lastSeenName}</span>,
     },
     {
-      id: 'region',
-      header: labels?.columns?.region ?? 'Region',
-      accessorKey: 'region',
+      id: 'sampleRegions',
+      header: labels?.columns?.region ?? 'Regions',
+      accessorKey: 'sampleRegions',
       cell: ({ row }) => (
-        <Badge variant="secondary" className="font-mono">
-          {row.original.region}
-        </Badge>
+        <div className="flex gap-1 flex-wrap">
+          {row.original.sampleRegions.slice(0, 3).map((region) => (
+            <Badge key={region} variant="secondary" className="font-mono text-xs">
+              {region}
+            </Badge>
+          ))}
+          {row.original.sampleRegions.length > 3 && (
+            <Badge variant="outline" className="text-xs">
+              +{row.original.sampleRegions.length - 3}
+            </Badge>
+          )}
+        </div>
       ),
-      width: '80px',
+      width: '120px',
     },
     {
-      id: 'occurrences',
-      header: labels?.columns?.occurrences ?? 'Occurrences',
-      accessorKey: 'occurrences',
+      id: 'seenCount',
+      header: labels?.columns?.occurrences ?? 'Seen',
+      accessorKey: 'seenCount',
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.occurrences.toLocaleString()}</span>
+        <span className="text-muted-foreground">{row.original.seenCount.toLocaleString()}</span>
       ),
       width: '100px',
     },
@@ -119,8 +157,8 @@ export function UnmappedProvidersTable({ labels }: UnmappedProvidersTableProps) 
         tmdbProviderId: formData.tmdbProviderId,
         providerId: formData.providerId,
         variantId: formData.variantId || undefined,
-        distributionChannel: formData.distributionChannel || undefined,
-        region: formData.region || undefined,
+        distributionChannel: (formData.distributionChannel || 'direct') as DistributionChannel,
+        region: formData.region || 'global',
       });
       toast.success(labels?.toast?.success ?? 'Mapping created successfully');
     } catch {
@@ -166,12 +204,12 @@ export function UnmappedProvidersTable({ labels }: UnmappedProvidersTableProps) 
             error={error?.message}
             rowActions={rowActions}
             emptyState={emptyState}
-            pagination={data?.meta && {
+            pagination={data?.meta ? {
               page,
               limit,
-              total: data.meta.total,
-              hasNext: data.meta.hasMore,
-            }}
+              total: data.meta.total ?? 0,
+              hasNext: data.meta.hasMore ?? false,
+            } : undefined}
             onPaginationChange={({ page: newPage }) => setPage(newPage)}
           />
         </CardContent>
@@ -186,11 +224,12 @@ export function UnmappedProvidersTable({ labels }: UnmappedProvidersTableProps) 
           mappingDialog.provider
             ? {
                 tmdbProviderId: mappingDialog.provider.tmdbProviderId,
-                tmdbProviderName: mappingDialog.provider.tmdbProviderName,
-                region: mappingDialog.provider.region,
+                tmdbProviderName: mappingDialog.provider.lastSeenName,
+                region: mappingDialog.provider.sampleRegions[0] ?? '',
               }
             : undefined
         }
+        labels={labels?.dialog}
       />
     </>
   );

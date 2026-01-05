@@ -3,6 +3,7 @@
  * These types are domain-specific and don't depend on presentation or infrastructure layers.
  */
 
+import { type AvailabilityRegion } from '../../../../common/constants/region.constants';
 import {
   type VideoSiteEnum,
   type VideoTypeEnum,
@@ -109,6 +110,12 @@ export interface CreditsData {
  * Watch provider data.
  */
 export interface WatchProvider {
+  /** Canonical provider ID (string) from provider_registry */
+  id: string;
+  /**
+   * Numeric provider ID for UI compatibility.
+   * @deprecated Use `id` for new code. This is a hash of canonical ID for backward compatibility.
+   */
   providerId: number;
   name: string;
   logo?: ImageData | null;
@@ -119,7 +126,7 @@ export interface WatchProvider {
  * Availability data for media items.
  */
 export interface AvailabilityData {
-  region: 'UA' | 'US' | null;
+  region: AvailabilityRegion | null;
   isFallback: boolean;
   link: string | null;
   stream?: WatchProvider[];

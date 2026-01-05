@@ -146,7 +146,7 @@ export class DryRunItemResultDto {
   @ApiProperty({
     description: 'Evaluation reasons',
     example: ['ALLOWED_COUNTRY', 'ALLOWED_LANGUAGE'],
-    isArray: true,
+    type: [String],
   })
   @IsArray()
   @IsString({ each: true })

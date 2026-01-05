@@ -17,6 +17,7 @@ import {
   SettingsCard,
   BreakoutRulesCard,
   GlobalRequirementsCard,
+  ContentClassCard,
 } from './PolicyConfigCards';
 import { PolicyEditForm, type PolicyFormData } from './PolicyEditForm';
 
@@ -88,6 +89,7 @@ export function PolicyConfigTab({
         <SettingsCard config={config} labels={labels.config} />
       </div>
       <GlobalRequirementsCard config={config} labels={labels.config} />
+      <ContentClassCard config={config} labels={labels.config} />
       <BreakoutRulesCard config={config} labels={labels.config} />
     </>
   );

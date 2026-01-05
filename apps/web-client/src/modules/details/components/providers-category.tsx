@@ -22,7 +22,7 @@ export function ProvidersCategory({ title, providers }: ProvidersCategoryProps) 
       <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">{title}</h3>
       <div className="flex flex-wrap gap-2">
         {providers.map((provider) => (
-          <ProviderCard key={provider.providerId} provider={provider} />
+          <ProviderCard key={provider.id} provider={provider} />
         ))}
       </div>
     </div>

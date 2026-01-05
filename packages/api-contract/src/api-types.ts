@@ -938,6 +938,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List providers
+         * @description Returns all providers from the registry with their status.
+         */
+        get: operations["ProvidersController_listProviders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/unmapped": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List unmapped providers
+         * @description Returns providers seen in TMDB data that have no mapping. Sorted by seen count descending.
+         */
+        get: operations["ProvidersController_listUnmapped"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/mappings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List mappings
+         * @description Returns all provider mappings. Can filter by provider or region.
+         */
+        get: operations["ProvidersController_listMappings"];
+        put?: never;
+        /**
+         * Create mapping
+         * @description Creates a new TMDB to canonical provider mapping. After creation, affected media will be re-normalized on next sync.
+         */
+        post: operations["ProvidersController_createMapping"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/mappings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update mapping
+         * @description Updates an existing mapping. Only provided fields are updated.
+         */
+        put: operations["ProvidersController_updateMapping"];
+        post?: never;
+        /**
+         * Delete mapping
+         * @description Deletes a mapping. The TMDB provider will become unmapped again.
+         */
+        delete: operations["ProvidersController_deleteMapping"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/providers/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Debug resolution
+         * @description Tests how a TMDB provider ID would be resolved to canonical provider. Useful for debugging mapping issues.
+         */
+        get: operations["ProvidersController_resolveProvider"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats/sync": {
         parameters: {
             query?: never;
@@ -1521,7 +1629,16 @@ export interface components {
             crew: components["schemas"]["CrewMemberDto"][];
         };
         WatchProviderDto: {
-            /** @example 8 */
+            /**
+             * @description Canonical provider ID
+             * @example netflix
+             */
+            id: string;
+            /**
+             * @deprecated
+             * @description Numeric provider ID (deprecated, use id instead)
+             * @example 8
+             */
             providerId: number;
             /** @example Netflix */
             name: string;
@@ -1908,8 +2025,8 @@ export interface components {
             count: number;
         };
         ProvidersListDto: {
-            /** @description List of streaming providers */
             data: components["schemas"]["ProviderDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
         };
         SetUserMediaStateDto: {
             /**
@@ -2282,7 +2399,7 @@ export interface components {
              *       "disney"
              *     ]
              */
-            requireAnyOfProviders?: unknown[][];
+            requireAnyOfProviders?: string[];
             /**
              * @description Rating sources - at least one must have a rating present. Valid values: imdb, metacritic, rt, trakt
              * @example [
@@ -2291,6 +2408,22 @@ export interface components {
              *     ]
              */
             requireAnyOfRatingsPresent?: ("imdb" | "metacritic" | "rt" | "trakt")[];
+            /**
+             * @description Availability mode for provider filtering. subscription_only = flatrate only, transactional_only = rent/buy only, any = all types
+             * @example subscription_only
+             * @enum {string}
+             */
+            availabilityMode?: "subscription_only" | "transactional_only" | "any";
+            /**
+             * @description Exclude ads-tier variants from provider matching
+             * @example false
+             */
+            excludeAdsTiers?: boolean;
+            /**
+             * @description Exclude non-direct distribution channels (amazon_channel, apple_tv_channel)
+             * @example false
+             */
+            excludeChannelDistribution?: boolean;
         };
         BreakoutRuleDto: {
             /**
@@ -2483,7 +2616,7 @@ export interface components {
              *       "UA"
              *     ]
              */
-            allowedCountries: unknown[][];
+            allowedCountries: string[];
             /**
              * @description Blocked countries (ISO 3166-1 alpha-2 codes)
              * @example [
@@ -2491,7 +2624,7 @@ export interface components {
              *       "BY"
              *     ]
              */
-            blockedCountries: unknown[][];
+            blockedCountries: string[];
             /**
              * @description Blocked country mode
              * @example ANY
@@ -2507,14 +2640,14 @@ export interface components {
              *       "fr"
              *     ]
              */
-            allowedLanguages: unknown[][];
+            allowedLanguages: string[];
             /**
              * @description Blocked languages (ISO 639-1 codes)
              * @example [
              *       "ru"
              *     ]
              */
-            blockedLanguages: unknown[][];
+            blockedLanguages: string[];
             /**
              * @description Global streaming providers
              * @example [
@@ -2525,9 +2658,9 @@ export interface components {
              *       "disney"
              *     ]
              */
-            globalProviders?: unknown[][];
+            globalProviders?: string[];
             /** @description Breakout rules for exceptions */
-            breakoutRules?: unknown[][];
+            breakoutRules?: components["schemas"]["BreakoutRuleDto"][];
             /**
              * @description Eligibility mode
              * @example STRICT
@@ -2540,7 +2673,7 @@ export interface components {
              *       "minRelevanceScore": 50
              *     }
              */
-            homepage?: Record<string, never>;
+            homepage?: components["schemas"]["HomepageConfigDto"];
             /** @description Global quality gate requirements (all conditions combined with AND) */
             globalRequirements?: components["schemas"]["GlobalRequirementsDto"];
             /**
@@ -2754,7 +2887,7 @@ export interface components {
              *       "COVERAGE_NOT_MET"
              *     ]
              */
-            blockingReasons: unknown[][];
+            blockingReasons: string[];
             /**
              * @description Coverage percentage (0.0 to 1.0)
              * @example 0.95
@@ -2999,7 +3132,7 @@ export interface components {
              *       "ALLOWED_LANGUAGE"
              *     ]
              */
-            reasons: unknown[][];
+            reasons: string[];
             /**
              * @description Relevance score (0-100)
              * @example 75
@@ -3026,6 +3159,166 @@ export interface components {
              * @example 1
              */
             currentPolicyVersion?: number;
+        };
+        UnmappedProviderDto: {
+            /**
+             * @description TMDB provider ID
+             * @example 999
+             */
+            tmdbProviderId: number;
+            /**
+             * @description Last seen provider name
+             * @example Unknown Streaming
+             */
+            lastSeenName: string;
+            /**
+             * @description Number of times seen
+             * @example 150
+             */
+            seenCount: number;
+            /**
+             * Format: date-time
+             * @description Last seen timestamp
+             */
+            lastSeenAt: string;
+            /**
+             * @description Sample regions where seen
+             * @example [
+             *       "US",
+             *       "GB"
+             *     ]
+             */
+            sampleRegions: string[];
+            /**
+             * @description Sample names seen
+             * @example [
+             *       "Unknown Streaming",
+             *       "Unknown Stream"
+             *     ]
+             */
+            sampleNames: string[];
+        };
+        UnmappedProvidersListDto: {
+            data: components["schemas"]["UnmappedProviderDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        MappingDto: {
+            /**
+             * @description Mapping ID
+             * @example uuid-123
+             */
+            id: string;
+            /**
+             * @description TMDB provider ID
+             * @example 8
+             */
+            tmdbProviderId: number;
+            /**
+             * @description Canonical provider ID
+             * @example netflix
+             */
+            providerId: string;
+            /**
+             * @description Variant ID if applicable
+             * @example netflix_ads
+             */
+            variantId?: string;
+            /**
+             * @description Distribution channel
+             * @example direct
+             */
+            distributionChannel: string;
+            /**
+             * @description Region code or global
+             * @example global
+             */
+            region: string;
+            /**
+             * @description Mapping source
+             * @example seed
+             */
+            source: string;
+            /**
+             * Format: date-time
+             * @description Creation timestamp
+             */
+            createdAt: string;
+        };
+        MappingsListDto: {
+            data: components["schemas"]["MappingDto"][];
+            meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        CreateMappingRequestDto: {
+            /**
+             * @description TMDB provider ID
+             * @example 8
+             */
+            tmdbProviderId: number;
+            /**
+             * @description Canonical provider ID
+             * @example netflix
+             */
+            providerId: string;
+            /**
+             * @description Variant ID
+             * @example netflix_ads
+             */
+            variantId?: string;
+            /**
+             * @description Distribution channel
+             * @default direct
+             * @example direct
+             * @enum {string}
+             */
+            distributionChannel: "direct" | "amazon_channel" | "apple_tv_channel";
+            /**
+             * @description Region code (ISO 3166-1 alpha-2) or "global"
+             * @default global
+             * @example US
+             */
+            region: string;
+        };
+        UpdateMappingRequestDto: {
+            /**
+             * @description Canonical provider ID
+             * @example netflix
+             */
+            providerId?: string;
+            /**
+             * @description Variant ID
+             * @example netflix_ads
+             */
+            variantId?: string;
+            /**
+             * @description Distribution channel
+             * @example direct
+             * @enum {string}
+             */
+            distributionChannel?: "direct" | "amazon_channel" | "apple_tv_channel";
+        };
+        ResolveResultDto: {
+            /**
+             * @description Input TMDB provider ID
+             * @example 8
+             */
+            tmdbProviderId: number;
+            /**
+             * @description Region used for resolution
+             * @example US
+             */
+            region: string;
+            /** @description Resolved mapping if found */
+            mapping?: components["schemas"]["MappingDto"];
+            /**
+             * @description Whether mapping was found
+             * @example true
+             */
+            found: boolean;
+            /**
+             * @description Resolution source: region-specific or global fallback
+             * @example region
+             */
+            source?: string;
         };
         SaveItemDto: {
             /**
@@ -4914,6 +5207,216 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["DryRunResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    ProvidersController_listProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ProvidersListDto"];
+                    };
+                };
+            };
+        };
+    };
+    ProvidersController_listUnmapped: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Sort by field */
+                sortBy?: "count" | "lastSeen";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnmappedProvidersListDto"];
+                    };
+                };
+            };
+        };
+    };
+    ProvidersController_listMappings: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description Filter by provider ID */
+                providerId?: string;
+                /** @description Filter by region */
+                region?: string;
+                /** @description Include global mappings */
+                includeGlobal?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MappingsListDto"];
+                    };
+                };
+            };
+        };
+    };
+    ProvidersController_createMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMappingRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MappingDto"];
+                    };
+                };
+            };
+            /** @description Invalid provider ID or mapping already exists */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProvidersController_updateMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Mapping ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateMappingRequestDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MappingDto"];
+                    };
+                };
+            };
+            /** @description Mapping not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProvidersController_deleteMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Mapping ID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Mapping deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Mapping not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProvidersController_resolveProvider: {
+        parameters: {
+            query: {
+                /** @description TMDB provider ID to resolve */
+                tmdbId: number;
+                /** @description Region for resolution */
+                region?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ResolveResultDto"];
                     };
                 };
             };

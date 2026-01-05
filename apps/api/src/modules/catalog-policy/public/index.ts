@@ -38,15 +38,10 @@ export {
 } from '../domain/constants/evaluation.constants';
 
 // =============================================================================
-// Provider Mapping (for breakout rules)
+// Policy Types (for normalized offers)
 // =============================================================================
 
-export {
-  CANONICAL_PROVIDERS,
-  CanonicalProviderId,
-  PROVIDER_ID_TO_CANONICAL,
-  resolveCanonicalProvider,
-} from '../domain/constants/provider-mapping';
+export type { NormalizedOffer, NormalizedOfferType } from '../domain/types/policy.types';
 
 // =============================================================================
 // Ports (for cross-module DI)
