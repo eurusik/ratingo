@@ -21,10 +21,12 @@ import {
   HttpStatus,
   NotFoundException,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
+import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
 import { ProviderMappingService } from '../../application/services/provider-mapping.service';
 import { ProviderRegistryService } from '../../application/services/provider-registry.service';
 import { UnmappedTrackingService } from '../../application/services/unmapped-tracking.service';
@@ -44,6 +46,8 @@ import {
 } from '../dto';
 
 @ApiTags('Admin - Providers')
+@ApiBearerAuth()
+@UseGuards(AdminJwtGuard)
 @Controller('admin/providers')
 export class ProvidersController {
   constructor(

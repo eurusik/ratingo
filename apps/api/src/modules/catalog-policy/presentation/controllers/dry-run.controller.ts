@@ -4,14 +4,17 @@
  * Admin endpoints for testing policy changes without persisting results.
  */
 
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
+import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
 import { DryRunService } from '../../application/services/dry-run.service';
 import { validatePolicyOrThrow } from '../../domain/validation/policy.schema';
 import { DryRunRequestDto, DryRunResponseDto } from '../dto/dry-run.dto';
 
 @ApiTags('Admin - Policy Activation')
+@ApiBearerAuth()
+@UseGuards(AdminJwtGuard)
 @Controller('admin/catalog-policies/dry-run')
 export class DryRunController {
   constructor(private readonly dryRunService: DryRunService) {}

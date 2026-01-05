@@ -4,10 +4,19 @@
  * Admin endpoints for evaluation run management.
  */
 
-import { Controller, Post, Get, Param, Body, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { Controller, Post, Get, Param, Body, Query, UseGuards } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBody,
+  ApiQuery,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/constants';
+import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
 import { DiffService } from '../../application/services/diff.service';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import {
@@ -20,6 +29,8 @@ import {
 } from '../dto';
 
 @ApiTags('Admin - Policy Activation')
+@ApiBearerAuth()
+@UseGuards(AdminJwtGuard)
 @Controller('admin/catalog-policies/runs')
 export class RunController {
   constructor(

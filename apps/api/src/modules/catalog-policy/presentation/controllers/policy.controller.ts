@@ -13,9 +13,18 @@ import {
   HttpCode,
   HttpStatus,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+  ApiBody,
+  ApiResponse,
+} from '@nestjs/swagger';
 
+import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
 import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import {
@@ -29,6 +38,8 @@ import {
 } from '../dto';
 
 @ApiTags('Admin - Policy Activation')
+@ApiBearerAuth()
+@UseGuards(AdminJwtGuard)
 @Controller('admin/catalog-policies')
 export class PolicyController {
   constructor(

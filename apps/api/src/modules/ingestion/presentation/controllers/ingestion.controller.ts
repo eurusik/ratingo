@@ -10,8 +10,9 @@ import {
   Param,
   NotFoundException,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 
 import { type Queue } from 'bullmq';
 
@@ -21,6 +22,7 @@ import { DEFAULT_REGION, CATALOG_DEFAULT_NEW_RELEASE_DAYS } from '../../../../co
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { JobStatus, BULL_STATE_TO_JOB_STATUS } from '../../../../common/enums/job-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
 import { normalizeRegion, formatHourWindow } from '../../application/helpers/queue.helpers';
 import { SyncMediaService } from '../../application/services/sync-media.service';
 import {
@@ -36,6 +38,8 @@ import { SyncDto, SyncTrendingDto, SyncNowPlayingDto, SyncNewReleasesDto } from 
  * Intended for admin panels and operational debugging.
  */
 @ApiTags('Service: Ingestion')
+@ApiBearerAuth()
+@UseGuards(AdminJwtGuard)
 @Controller('ingestion')
 export class IngestionController {
   constructor(

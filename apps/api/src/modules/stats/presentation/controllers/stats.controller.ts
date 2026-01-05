@@ -1,10 +1,11 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Controller, Get, Post, Param, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
 
 import { type Queue } from 'bullmq';
 
 import { DEFAULT_BATCH_SIZE, DEFAULT_PAGE_SIZE } from '../../../../common/constants';
+import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
 import { DropOffService } from '../../application/services/drop-off.service';
 import { StatsService } from '../../application/services/stats.service';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
@@ -28,6 +29,8 @@ export class StatsController {
    * @returns {Promise<any>} Job info
    */
   @Post('sync')
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtGuard)
   @ApiTags('Service: Stats')
   @ApiOperation({
     summary: 'Sync trending stats from Trakt',
@@ -78,6 +81,8 @@ export class StatsController {
    * @returns {Promise<any>} Job info
    */
   @Post('drop-off/analyze')
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtGuard)
   @ApiTags('Service: Stats')
   @ApiOperation({
     summary: 'Analyze drop-off for shows',
@@ -117,6 +122,8 @@ export class StatsController {
    * @returns {Promise<any>} Job info
    */
   @Post('drop-off/analyze/:tmdbId')
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtGuard)
   @ApiTags('Service: Stats')
   @ApiOperation({
     summary: 'Analyze drop-off for a specific show',
