@@ -71,12 +71,12 @@ INSERT INTO catalog_policies (
         "name": "Ukrainian Content",
         "priority": 5,
         "requirements": {
-          "originCountry": "UA",
+          "originCountries": ["UA"],
           "minImdbVotes": 200
         }
       }
     ],
-    "eligibilityMode": "HYBRID",
+    "eligibilityMode": "STRICT",
     "homepage": {
       "minRelevanceScore": 35
     }

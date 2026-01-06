@@ -136,6 +136,11 @@ export interface BreakoutRule {
     minTraktVotes?: number;
     minQualityScoreNormalized?: number;
     requireAnyOfRatingsPresent?: RatingSource[];
+    /**
+     * Origin countries filter (ISO 3166-1 alpha-2 codes).
+     * Rule matches if media has ANY of these countries (intersection).
+     */
+    originCountries?: string[];
   };
 }
 

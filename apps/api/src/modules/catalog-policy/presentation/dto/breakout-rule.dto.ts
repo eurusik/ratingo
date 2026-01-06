@@ -116,6 +116,17 @@ export class BreakoutRuleRequirementsDto {
   @IsOptional()
   @IsBoolean()
   excludeChannelDistribution?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Origin countries filter (ISO 3166-1 alpha-2 codes). Rule matches if media has ANY of these countries.',
+    example: ['UA', 'PL'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  originCountries?: string[];
 }
 
 /**

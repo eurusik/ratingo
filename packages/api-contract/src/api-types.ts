@@ -2424,6 +2424,14 @@ export interface components {
              * @example false
              */
             excludeChannelDistribution?: boolean;
+            /**
+             * @description Origin countries filter (ISO 3166-1 alpha-2 codes). Rule matches if media has ANY of these countries.
+             * @example [
+             *       "UA",
+             *       "PL"
+             *     ]
+             */
+            originCountries?: string[];
         };
         BreakoutRuleDto: {
             /**

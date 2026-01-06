@@ -399,6 +399,19 @@ function matchesBreakoutRule(
   const { mediaItem } = input;
   const { requirements } = rule;
 
+  // Check originCountries (ANY intersection)
+  if (requirements.originCountries && requirements.originCountries.length > 0) {
+    if (!mediaItem.originCountries || mediaItem.originCountries.length === 0) {
+      return false;
+    }
+    const hasMatchingCountry = requirements.originCountries.some((country) =>
+      mediaItem.originCountries!.includes(country),
+    );
+    if (!hasMatchingCountry) {
+      return false;
+    }
+  }
+
   // Check minImdbVotes
   if (requirements.minImdbVotes !== undefined) {
     if (!mediaItem.voteCountImdb || mediaItem.voteCountImdb < requirements.minImdbVotes) {

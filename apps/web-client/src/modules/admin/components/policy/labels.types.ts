@@ -62,6 +62,9 @@ export interface BreakoutRulesLabels {
   providers?: string;
   ratings?: string;
   providerPlaceholder?: string;
+  originCountries?: string;
+  originCountriesHint?: string;
+  originCountriesPlaceholder?: string;
 }
 
 export interface GlobalRequirementsLabels {

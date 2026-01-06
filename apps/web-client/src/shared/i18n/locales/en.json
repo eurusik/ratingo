@@ -692,7 +692,10 @@
           "minQualityScore": "Min Quality %",
           "providers": "Required Providers (any of)",
           "ratings": "Required Ratings (any of)",
-          "providerPlaceholder": "Add provider (e.g., netflix)"
+          "providerPlaceholder": "Add provider (e.g., netflix)",
+          "originCountries": "Origin Countries (any of)",
+          "originCountriesHint": "ISO 3166-1 alpha-2 codes, comma-separated",
+          "originCountriesPlaceholder": "e.g., UA, PL, CZ"
         },
         "globalRequirements": {
           "title": "Global Quality Gate",

@@ -457,6 +457,116 @@ describe('Policy Engine', () => {
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
+
+    it('should match breakout rule when media has ANY of required originCountries', () => {
+      const policy = createPolicy({
+        breakoutRules: [
+          {
+            id: 'ukrainian-content',
+            name: 'Ukrainian Content',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 200,
+              originCountries: ['UA'],
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['RU', 'UA'], // Co-production with UA
+          voteCountImdb: 500,
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.breakoutRuleId).toBe('ukrainian-content');
+    });
+
+    it('should NOT match breakout rule when media has NONE of required originCountries', () => {
+      const policy = createPolicy({
+        breakoutRules: [
+          {
+            id: 'ukrainian-content',
+            name: 'Ukrainian Content',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 200,
+              originCountries: ['UA'],
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['RU'], // Blocked, no UA
+          voteCountImdb: 500,
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.breakoutRuleId).toBeNull();
+    });
+
+    it('should NOT match breakout rule when media originCountries is empty', () => {
+      const policy = createPolicy({
+        breakoutRules: [
+          {
+            id: 'ukrainian-content',
+            name: 'Ukrainian Content',
+            priority: 1,
+            requirements: {
+              originCountries: ['UA'],
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['RU'], // Blocked
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      // Breakout doesn't match (no UA), so blocked country applies
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.breakoutRuleId).toBeNull();
+    });
+
+    it('should match breakout rule with multiple required originCountries (ANY match)', () => {
+      const policy = createPolicy({
+        breakoutRules: [
+          {
+            id: 'eastern-european',
+            name: 'Eastern European Content',
+            priority: 1,
+            requirements: {
+              originCountries: ['UA', 'PL', 'CZ'],
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['RU', 'PL'], // Blocked RU, but has PL from requirements
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.breakoutRuleId).toBe('eastern-european');
+    });
   });
 
   describe('evaluateEligibility - Neutral Returns INELIGIBLE', () => {

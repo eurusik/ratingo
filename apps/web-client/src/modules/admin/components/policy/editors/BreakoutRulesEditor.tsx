@@ -26,10 +26,28 @@ interface BreakoutRulesEditorProps {
     providers?: string;
     ratings?: string;
     providerPlaceholder?: string;
+    originCountries?: string;
+    originCountriesHint?: string;
+    originCountriesPlaceholder?: string;
   };
 }
 
 const RATING_OPTIONS = ['imdb', 'metacritic', 'rt', 'trakt'] as const;
+
+/**
+ * Parses comma-separated country codes into array.
+ * Returns undefined if empty (for optional field cleanup).
+ */
+function parseCountryCodes(value: string): string[] | undefined {
+  if (!value.trim()) return undefined;
+
+  const codes = value
+    .split(',')
+    .map((c) => c.trim().toUpperCase())
+    .filter(Boolean);
+
+  return codes.length > 0 ? codes : undefined;
+}
 
 /**
  * Editor for breakout rules (exceptions to main policy).
@@ -231,6 +249,23 @@ export function BreakoutRulesEditor({ rules, onChange, labels }: BreakoutRulesEd
                       );
                     })}
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>{labels?.originCountries ?? 'Origin Countries (any of)'}</Label>
+                  <Input
+                    value={rule.requirements.originCountries?.join(', ') ?? ''}
+                    onChange={(e) =>
+                      updateRequirements(rule.id, {
+                        originCountries: parseCountryCodes(e.target.value),
+                      })
+                    }
+                    placeholder={labels?.originCountriesPlaceholder ?? 'e.g., UA, PL, CZ'}
+                    className="h-8"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {labels?.originCountriesHint ?? 'ISO 3166-1 alpha-2 codes, comma-separated'}
+                  </p>
                 </div>
               </div>
             )}

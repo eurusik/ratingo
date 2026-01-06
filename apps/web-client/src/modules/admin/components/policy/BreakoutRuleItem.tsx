@@ -55,6 +55,9 @@ export function BreakoutRuleItem({
           requirements.requireAnyOfRatingsPresent.length > 0 && (
             <span>Ratings: {requirements.requireAnyOfRatingsPresent.join(', ')}</span>
           )}
+        {requirements.originCountries && requirements.originCountries.length > 0 && (
+          <span>Countries: {requirements.originCountries.join(', ')}</span>
+        )}
       </div>
     </div>
   );
