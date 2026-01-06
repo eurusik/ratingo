@@ -1,6 +1,7 @@
 import { HeroMediaQuery } from './hero-media.query';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
 
 // Chainable thenable factory for Drizzle-like API
 const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
@@ -46,7 +47,7 @@ describe('HeroMediaQuery', () => {
 
   it('should map hero items with show progress and movie flags', async () => {
     const now = new Date();
-    // First select: base media results (one movie, one show)
+    // First select (strict pass): base media results (one movie, one show)
     const mediaRows = [
       {
         id: 'm1',
@@ -86,7 +87,10 @@ describe('HeroMediaQuery', () => {
       },
     ];
 
-    // Second select: shows data
+    // Second select (fallback pass): empty since strict returned < limit
+    const fallbackRows: any[] = [];
+
+    // Third select: shows data
     const showsData = [
       {
         mediaItemId: 's1',
@@ -96,7 +100,7 @@ describe('HeroMediaQuery', () => {
       },
     ];
 
-    // Third select: episodes data (latest first)
+    // Fourth select: episodes data (latest first)
     const episodes = [
       {
         showId: 'sh1',
@@ -106,7 +110,7 @@ describe('HeroMediaQuery', () => {
       },
     ];
 
-    setup([mediaRows, showsData, episodes]);
+    setup([mediaRows, fallbackRows, showsData, episodes]);
 
     const result = await query.execute({ limit: 5 });
 
@@ -123,6 +127,89 @@ describe('HeroMediaQuery', () => {
     expect(show.isNew).toBe(true);
     expect(show.isClassic).toBe(false);
     expect(show.showProgress).toMatchObject({ season: 2, episode: 3, label: 'S2E3' });
+  });
+
+  it('should skip fallback pass when strict pass fills limit', async () => {
+    const now = new Date();
+    const mediaRows = Array.from({ length: 3 }, (_, i) => ({
+      id: `m${i}`,
+      type: MediaType.MOVIE,
+      slug: `movie-${i}`,
+      title: `Movie ${i}`,
+      originalTitle: `Movie ${i}`,
+      overview: 'ov',
+      posterPath: '/p.jpg',
+      backdropPath: '/b.jpg',
+      releaseDate: now,
+      videos: [],
+      ratingoScore: 0.8,
+      qualityScore: 70,
+      watchersCount: 10,
+      totalWatchers: 20,
+      rating: 8,
+      voteCount: 1000,
+    }));
+
+    setup([mediaRows]);
+
+    const result = await query.execute({ limit: 3 });
+
+    expect(result).toHaveLength(3);
+    expect(db.select).toHaveBeenCalledTimes(1);
+  });
+
+  it('should combine strict and fallback results', async () => {
+    const now = new Date();
+    const strictRows = [
+      {
+        id: 'm1',
+        type: MediaType.MOVIE,
+        slug: 'strict-movie',
+        title: 'Strict Movie',
+        originalTitle: 'Strict Movie',
+        overview: 'ov',
+        posterPath: '/p.jpg',
+        backdropPath: '/b.jpg',
+        releaseDate: now,
+        videos: [],
+        ratingoScore: 0.9,
+        qualityScore: 80,
+        watchersCount: 100,
+        totalWatchers: 200,
+        rating: 9,
+        voteCount: 5000,
+      },
+    ];
+
+    const fallbackRows = [
+      {
+        id: 'm2',
+        type: MediaType.MOVIE,
+        slug: 'fallback-movie',
+        title: 'Fallback Movie',
+        originalTitle: 'Fallback Movie',
+        overview: 'ov',
+        posterPath: '/p.jpg',
+        backdropPath: '/b.jpg',
+        releaseDate: now,
+        videos: [],
+        ratingoScore: 0.7,
+        qualityScore: 65,
+        watchersCount: 20,
+        totalWatchers: 50,
+        rating: 7,
+        voteCount: 1000,
+      },
+    ];
+
+    setup([strictRows, fallbackRows]);
+
+    const result = await query.execute({ limit: 2 });
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe('m1');
+    expect(result[1].id).toBe('m2');
+    expect(db.select).toHaveBeenCalledTimes(2);
   });
 
   it('should return empty array on error', async () => {

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, desc, and, lte, isNotNull, gte, inArray, isNull } from 'drizzle-orm';
+import { eq, desc, and, lte, isNotNull, gte, inArray, isNull, notInArray } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MS_PER_DAY } from '../../../../common/constants';
@@ -25,6 +25,34 @@ export interface HeroMediaOptions {
 }
 
 /**
+ * Raw query result row type.
+ */
+type HeroQueryRow = {
+  id: string;
+  type: MediaType;
+  slug: string;
+  title: string;
+  originalTitle: string | null;
+  overview: string | null;
+  posterPath: string | null;
+  backdropPath: string | null;
+  releaseDate: Date | null;
+  videos: unknown;
+  ratingoScore: number | null;
+  qualityScore: number | null;
+  watchersCount: number | null;
+  totalWatchers: number | null;
+  rating: number;
+  voteCount: number;
+  ratingImdb: number | null;
+  voteCountImdb: number | null;
+  ratingTrakt: number | null;
+  voteCountTrakt: number | null;
+  ratingMetacritic: number | null;
+  ratingRottenTomatoes: number | null;
+};
+
+/**
  * Fetches top media items for the Hero block on homepage.
  *
  * Retrieves high-quality, popular media with proper assets (posters/backdrops).
@@ -42,7 +70,9 @@ export class HeroMediaQuery {
   ) {}
 
   /**
-   * Executes the hero media query.
+   * Executes the hero media query with two-pass strategy.
+   * First pass: strict criteria (high popularity).
+   * Second pass: fallback with relaxed popularity if strict didn't fill limit.
    * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
    * @param {HeroMediaOptions} options - Query options (limit, optional type filter)
@@ -54,72 +84,120 @@ export class HeroMediaQuery {
     try {
       const now = new Date();
 
-      const whereConditions = [
-        lte(schema.mediaItems.releaseDate, now),
-        isNotNull(schema.mediaItems.posterPath),
-        isNotNull(schema.mediaItems.backdropPath),
-        gte(schema.mediaStats.qualityScore, HERO_THRESHOLDS.MIN_QUALITY_SCORE),
-        gte(schema.mediaStats.popularityScore, HERO_THRESHOLDS.MIN_POPULARITY_SCORE),
-        // Eligibility filter: only show ELIGIBLE items
-        eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-        // Ready filter: only show items with ready ingestion status
-        eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
-        // Not deleted filter
-        isNull(schema.mediaItems.deletedAt),
-      ];
+      const strictResults = await this.queryHeroItems({
+        limit,
+        type,
+        now,
+        minPopularityScore: HERO_THRESHOLDS.MIN_POPULARITY_SCORE,
+        excludeIds: [],
+      });
 
-      if (type) {
-        whereConditions.push(eq(schema.mediaItems.type, type));
+      if (strictResults.length >= limit) {
+        const showProgressMap = await this.fetchShowProgress(strictResults, now);
+        return this.mapResults(strictResults, showProgressMap, now);
       }
 
-      const results = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          type: schema.mediaItems.type,
-          slug: schema.mediaItems.slug,
-          title: schema.mediaItems.title,
-          originalTitle: schema.mediaItems.originalTitle,
-          overview: schema.mediaItems.overview,
-          posterPath: schema.mediaItems.posterPath,
-          backdropPath: schema.mediaItems.backdropPath,
-          releaseDate: schema.mediaItems.releaseDate,
-          videos: schema.mediaItems.videos,
+      const remaining = limit - strictResults.length;
+      const strictIds = strictResults.map((r) => r.id);
+      const fallbackBuffer = 2;
 
-          ratingoScore: schema.mediaStats.ratingoScore,
-          qualityScore: schema.mediaStats.qualityScore,
-          watchersCount: schema.mediaStats.watchersCount,
-          totalWatchers: schema.mediaStats.totalWatchers,
+      const fallbackResults = await this.queryHeroItems({
+        limit: remaining + fallbackBuffer,
+        type,
+        now,
+        minPopularityScore: HERO_THRESHOLDS.MIN_POPULARITY_SCORE_FALLBACK,
+        excludeIds: strictIds,
+      });
 
-          rating: schema.mediaItems.rating,
-          voteCount: schema.mediaItems.voteCount,
-          ratingImdb: schema.mediaItems.ratingImdb,
-          voteCountImdb: schema.mediaItems.voteCountImdb,
-          ratingTrakt: schema.mediaItems.ratingTrakt,
-          voteCountTrakt: schema.mediaItems.voteCountTrakt,
-          ratingMetacritic: schema.mediaItems.ratingMetacritic,
-          ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-        })
-        .from(schema.mediaItems)
-        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
-        .innerJoin(
-          schema.mediaCatalogEvaluations,
-          and(
-            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
-            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-          ),
-        )
-        .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-        .where(and(...whereConditions))
-        .orderBy(desc(schema.mediaStats.popularityScore), desc(schema.mediaStats.ratingoScore))
-        .limit(limit);
+      const combined = [...strictResults, ...fallbackResults.slice(0, remaining)];
 
-      const showProgressMap = await this.fetchShowProgress(results, now);
+      this.logger.debug(
+        `Hero query: strict=${strictResults.length} fallback=${Math.min(fallbackResults.length, remaining)} total=${combined.length}`,
+      );
 
-      return this.mapResults(results, showProgressMap, now);
+      const showProgressMap = await this.fetchShowProgress(combined, now);
+      return this.mapResults(combined, showProgressMap, now);
     } catch (error) {
       this.logger.error(`Failed to find hero items: ${error.message}`, error.stack);
       return [];
     }
+  }
+
+  /**
+   * Queries hero items with configurable popularity threshold.
+   */
+  private async queryHeroItems(params: {
+    limit: number;
+    type?: MediaType;
+    now: Date;
+    minPopularityScore: number;
+    excludeIds: string[];
+  }): Promise<HeroQueryRow[]> {
+    const { limit, type, now, minPopularityScore, excludeIds } = params;
+
+    const whereConditions = [
+      lte(schema.mediaItems.releaseDate, now),
+      isNotNull(schema.mediaItems.posterPath),
+      isNotNull(schema.mediaItems.backdropPath),
+      gte(schema.mediaStats.qualityScore, HERO_THRESHOLDS.MIN_QUALITY_SCORE),
+      gte(schema.mediaStats.popularityScore, minPopularityScore),
+      eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+      eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
+      isNull(schema.mediaItems.deletedAt),
+    ];
+
+    if (type) {
+      whereConditions.push(eq(schema.mediaItems.type, type));
+    }
+
+    if (excludeIds.length > 0) {
+      whereConditions.push(notInArray(schema.mediaItems.id, excludeIds));
+    }
+
+    return this.db
+      .select({
+        id: schema.mediaItems.id,
+        type: schema.mediaItems.type,
+        slug: schema.mediaItems.slug,
+        title: schema.mediaItems.title,
+        originalTitle: schema.mediaItems.originalTitle,
+        overview: schema.mediaItems.overview,
+        posterPath: schema.mediaItems.posterPath,
+        backdropPath: schema.mediaItems.backdropPath,
+        releaseDate: schema.mediaItems.releaseDate,
+        videos: schema.mediaItems.videos,
+
+        ratingoScore: schema.mediaStats.ratingoScore,
+        qualityScore: schema.mediaStats.qualityScore,
+        watchersCount: schema.mediaStats.watchersCount,
+        totalWatchers: schema.mediaStats.totalWatchers,
+
+        rating: schema.mediaItems.rating,
+        voteCount: schema.mediaItems.voteCount,
+        ratingImdb: schema.mediaItems.ratingImdb,
+        voteCountImdb: schema.mediaItems.voteCountImdb,
+        ratingTrakt: schema.mediaItems.ratingTrakt,
+        voteCountTrakt: schema.mediaItems.voteCountTrakt,
+        ratingMetacritic: schema.mediaItems.ratingMetacritic,
+        ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+      })
+      .from(schema.mediaItems)
+      .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
+      .innerJoin(
+        schema.mediaCatalogEvaluations,
+        and(
+          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+          eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+        ),
+      )
+      .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+      .where(and(...whereConditions))
+      .orderBy(
+        desc(schema.mediaStats.popularityScore),
+        desc(schema.mediaStats.ratingoScore),
+        desc(schema.mediaItems.id), // Stable sort tiebreaker
+      )
+      .limit(limit);
   }
 
   /**
@@ -213,30 +291,7 @@ export class HeroMediaQuery {
    * Maps raw database rows to hero item DTOs.
    */
   private mapResults(
-    results: Array<{
-      id: string;
-      type: MediaType;
-      slug: string;
-      title: string;
-      originalTitle: string | null;
-      overview: string | null;
-      posterPath: string | null;
-      backdropPath: string | null;
-      releaseDate: Date | null;
-      videos: unknown;
-      ratingoScore: number | null;
-      qualityScore: number | null;
-      watchersCount: number | null;
-      totalWatchers: number | null;
-      rating: number;
-      voteCount: number;
-      ratingImdb: number | null;
-      voteCountImdb: number | null;
-      ratingTrakt: number | null;
-      voteCountTrakt: number | null;
-      ratingMetacritic: number | null;
-      ratingRottenTomatoes: number | null;
-    }>,
+    results: HeroQueryRow[],
     showProgressMap: Map<string, HeroShowProgress>,
     now: Date,
   ): HeroMediaItem[] {

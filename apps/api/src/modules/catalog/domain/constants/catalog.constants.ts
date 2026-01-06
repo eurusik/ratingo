@@ -93,8 +93,10 @@ export const SHOW_TRENDING_WEIGHTS = {
 export const HERO_THRESHOLDS = {
   /** Minimum quality score to appear in hero */
   MIN_QUALITY_SCORE: 60,
-  /** Minimum popularity score to appear in hero */
+  /** Minimum popularity score to appear in hero (strict pass) */
   MIN_POPULARITY_SCORE: 40,
+  /** Minimum popularity score for fallback pass (relaxed) */
+  MIN_POPULARITY_SCORE_FALLBACK: 25,
   /** Days since release to be considered "new" in hero */
   NEW_RELEASE_DAYS: 90,
   /** Years since release to be considered "classic" in hero */

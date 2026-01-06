@@ -135,9 +135,9 @@ export default async function HomePage() {
 
         {/* Main content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
-          {/* Top 2-3 */}
-          {top3Cards.length >= 2 && (
-            <Top3SectionServer items={top3Cards.slice(1)} locale="uk" className="mb-12" />
+          {/* Top 2-3: show only when we have at least 2 cards for this section */}
+          {top3Cards.length >= 3 && (
+            <Top3SectionServer items={top3Cards.slice(1, 3)} locale="uk" className="mb-12" />
           )}
 
           {/* Серіали в тренді */}
