@@ -159,12 +159,82 @@ describe('TmdbMapper', () => {
       expect(result?.watchProvidersRaw?.[DEFAULT_REGION].buy?.[0].providerId).toBe(3);
     });
 
-    it('should return null if essential data is missing', () => {
+    it('should return null only when title is missing', () => {
+      // Missing title should return null
       const brokenMovie = { ...mockMovie, title: '' };
       expect(TmdbMapper.toDomain(brokenMovie, MediaType.MOVIE)).toBeNull();
 
-      const brokenShow = { ...mockShow, overview: '' };
+      const brokenShow = { ...mockShow, name: '' };
       expect(TmdbMapper.toDomain(brokenShow, MediaType.SHOW)).toBeNull();
+    });
+
+    it('should NOT return null when only overview is missing (preserves origin metadata)', () => {
+      // Missing overview should NOT return null - we want to preserve originCountries/originalLanguage
+      const movieNoOverview = { ...mockMovie, overview: '' };
+      const movieResult = TmdbMapper.toDomain(movieNoOverview, MediaType.MOVIE);
+      expect(movieResult).not.toBeNull();
+      expect(movieResult?.title).toBe('Fight Club');
+      // Empty overview becomes null in mapper (data.overview || null)
+      expect(movieResult?.overview).toBeNull();
+
+      const showNoOverview = { ...mockShow, overview: '' };
+      const showResult = TmdbMapper.toDomain(showNoOverview, MediaType.SHOW);
+      expect(showResult).not.toBeNull();
+      expect(showResult?.title).toBe('Breaking Bad');
+    });
+
+    it('should preserve originCountries and originalLanguage even without overview', () => {
+      const movieWithOrigin = {
+        ...mockMovie,
+        overview: '', // No overview
+        production_countries: [
+          { iso_3166_1: 'JP', name: 'Japan' },
+          { iso_3166_1: 'US', name: 'United States' },
+        ],
+        original_language: 'ja',
+      };
+
+      const result = TmdbMapper.toDomain(movieWithOrigin, MediaType.MOVIE);
+
+      expect(result).not.toBeNull();
+      expect(result?.originCountries).toEqual(['JP', 'US']);
+      expect(result?.originalLanguage).toBe('ja');
+    });
+
+    it('should map originCountries from production_countries for movies', () => {
+      const movieWithCountries = {
+        ...mockMovie,
+        production_countries: [
+          { iso_3166_1: 'US', name: 'United States' },
+          { iso_3166_1: 'GB', name: 'United Kingdom' },
+        ],
+      };
+
+      const result = TmdbMapper.toDomain(movieWithCountries, MediaType.MOVIE);
+
+      expect(result?.originCountries).toEqual(['US', 'GB']);
+    });
+
+    it('should map originCountries from origin_country for shows', () => {
+      const showWithCountries = {
+        ...mockShow,
+        origin_country: ['KR', 'JP'],
+      };
+
+      const result = TmdbMapper.toDomain(showWithCountries, MediaType.SHOW);
+
+      expect(result?.originCountries).toEqual(['KR', 'JP']);
+    });
+
+    it('should map originalLanguage correctly', () => {
+      const movieJapanese = {
+        ...mockMovie,
+        original_language: 'ja',
+      };
+
+      const result = TmdbMapper.toDomain(movieJapanese, MediaType.MOVIE);
+
+      expect(result?.originalLanguage).toBe('ja');
     });
 
     it('should generate slugs correctly', () => {

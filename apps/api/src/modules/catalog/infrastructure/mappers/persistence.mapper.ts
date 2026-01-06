@@ -77,6 +77,13 @@ export class PersistenceMapper {
     };
   }
 
+  /**
+   * Creates update payload for media item.
+   *
+   * IMPORTANT: Fields like originCountries, originalLanguage, overview are only
+   * included when explicitly provided (not undefined). This prevents overwriting
+   * existing data with NULL when sync payload is incomplete (e.g., fallback path).
+   */
   static toMediaItemUpdate(media: NormalizedMedia): Partial<MediaItemInsert> {
     const releaseDate = toDateOrNull(media.releaseDate);
     const trendingUpdatedAt = toDateOrNull(media.trendingUpdatedAt) ?? new Date();
@@ -85,7 +92,6 @@ export class PersistenceMapper {
       imdbId: media.externalIds.imdbId || null,
       title: media.title,
       originalTitle: media.originalTitle,
-      overview: media.overview,
       ingestionStatus: media.ingestionStatus,
       rating: media.rating,
       voteCount: media.voteCount,
@@ -102,14 +108,17 @@ export class PersistenceMapper {
       credits: media.credits || null,
       watchProvidersRaw: media.watchProvidersRaw || null,
       releaseDate,
-      originCountries: media.originCountries || null,
-      originalLanguage: media.originalLanguage || null,
       updatedAt: new Date(),
       ...(media.trendingScore !== undefined && {
         trendingScore: media.trendingScore,
         trendingRank: media.trendingRank ?? null,
         trendingUpdatedAt,
       }),
+      // Only update these fields if explicitly provided (not undefined)
+      // This prevents overwriting existing data when sync uses fallback path
+      ...(media.overview !== undefined && { overview: media.overview }),
+      ...(media.originCountries !== undefined && { originCountries: media.originCountries }),
+      ...(media.originalLanguage !== undefined && { originalLanguage: media.originalLanguage }),
     };
 
     // Filter out undefined values

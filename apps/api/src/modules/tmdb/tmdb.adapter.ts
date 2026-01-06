@@ -105,6 +105,9 @@ export class TmdbAdapter implements MetadataProviderPort {
       // Fallback: if no localized data, create minimal object for import
       if (!result && data?.id) {
         const releaseDateStr = 'release_date' in data ? data.release_date : null;
+        const movieData = data as TmdbMediaResponse & {
+          production_countries?: Array<{ iso_3166_1: string }>;
+        };
         return {
           externalIds: {
             tmdbId: data.id,
@@ -129,6 +132,9 @@ export class TmdbAdapter implements MetadataProviderPort {
           credits: { cast: [], crew: [] },
           watchProvidersRaw: {},
           isAdult: data.adult || false,
+          // Preserve origin metadata even in fallback path
+          originCountries: movieData.production_countries?.map((c) => c.iso_3166_1) || null,
+          originalLanguage: data.original_language || null,
         } as NormalizedMedia;
       }
       return result;
@@ -156,6 +162,7 @@ export class TmdbAdapter implements MetadataProviderPort {
       // Fallback: if no localized data, create minimal object for import
       if (!result && data?.id) {
         const releaseDateStr = 'first_air_date' in data ? data.first_air_date : null;
+        const showData = data as TmdbMediaResponse & { origin_country?: string[] };
         return {
           externalIds: { tmdbId: data.id, imdbId: data.external_ids?.imdb_id || null },
           type: MediaType.SHOW,
@@ -177,6 +184,9 @@ export class TmdbAdapter implements MetadataProviderPort {
           credits: { cast: [], crew: [] },
           watchProvidersRaw: {},
           isAdult: data.adult || false,
+          // Preserve origin metadata even in fallback path
+          originCountries: showData.origin_country || null,
+          originalLanguage: data.original_language || null,
         } as NormalizedMedia;
       }
       return result;

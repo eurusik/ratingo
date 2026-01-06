@@ -199,6 +199,35 @@ describe('TmdbAdapter', () => {
       expect(result?.posterPath).toBe('/poster.jpg');
     });
 
+    it('should preserve originCountries and originalLanguage in fallback path', async () => {
+      const mockMovieData = {
+        id: 12345,
+        title: 'Nosferatu',
+        original_title: 'Nosferatu',
+        original_language: 'de',
+        production_countries: [{ iso_3166_1: 'DE' }, { iso_3166_1: 'US' }],
+        poster_path: '/poster.jpg',
+        vote_average: 7.5,
+        vote_count: 1000,
+        popularity: 50,
+        release_date: '2024-12-25',
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockMovieData),
+      });
+
+      // Mapper returns null - fallback should still preserve origin metadata
+      mockToDomain.mockReturnValue(null);
+
+      const result = await adapter.getMovie(12345);
+
+      expect(result).not.toBeNull();
+      expect(result?.originCountries).toEqual(['DE', 'US']);
+      expect(result?.originalLanguage).toBe('de');
+    });
+
     it('should return null when TMDB returns no data', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
@@ -286,6 +315,35 @@ describe('TmdbAdapter', () => {
       expect(result?.externalIds.tmdbId).toBe(54321);
       expect(result?.type).toBe(MediaType.SHOW);
       expect(result?.releaseDate).toEqual(new Date('2024-01-01'));
+    });
+
+    it('should preserve originCountries and originalLanguage in fallback path', async () => {
+      const mockShowData = {
+        id: 54321,
+        name: 'Korean Drama',
+        original_name: '한국 드라마',
+        original_language: 'ko',
+        origin_country: ['KR'],
+        poster_path: '/show-poster.jpg',
+        vote_average: 8.5,
+        vote_count: 500,
+        popularity: 75,
+        first_air_date: '2024-01-01',
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockShowData),
+      });
+
+      // Mapper returns null - fallback should still preserve origin metadata
+      mockToDomain.mockReturnValue(null);
+
+      const result = await adapter.getShow(54321);
+
+      expect(result).not.toBeNull();
+      expect(result?.originCountries).toEqual(['KR']);
+      expect(result?.originalLanguage).toBe('ko');
     });
   });
 

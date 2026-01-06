@@ -43,14 +43,16 @@ const DEFAULT_ORDER_FALLBACK = 999;
 export class TmdbMapper {
   /**
    * Converts raw TMDB API response to our Domain Model.
-   * Returns null if content is missing essential localized data (e.g. overview).
+   * Returns null only if title is missing (essential for identification).
+   * Missing overview is acceptable - we preserve other metadata (origin, language, etc.)
    */
   static toDomain(data: TmdbMediaResponse, type: MediaType): NormalizedMedia | null {
     const isMovie = type === MediaType.MOVIE;
     const title = isMovie ? (data as TmdbMovieResponse).title : (data as TmdbShowResponse).name;
-    const { overview } = data;
 
-    if (!title || title.trim() === '' || !overview || overview.trim() === '') {
+    // Only title is required - overview can be empty
+    // This ensures we don't lose originCountries/originalLanguage for items without localized overview
+    if (!title || title.trim() === '') {
       return null;
     }
 

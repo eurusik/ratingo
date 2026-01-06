@@ -105,6 +105,114 @@ describe('PersistenceMapper', () => {
     expect(res.imdbId).toBeNull();
   });
 
+  describe('toMediaItemUpdate - null-overwrite prevention', () => {
+    it('should NOT include originCountries when undefined (prevents overwriting existing data)', () => {
+      const mediaWithoutOrigin = {
+        ...baseMedia,
+        originCountries: undefined,
+      };
+
+      const res = PersistenceMapper.toMediaItemUpdate(mediaWithoutOrigin as any);
+
+      // Should NOT have originCountries key at all
+      expect(res).not.toHaveProperty('originCountries');
+    });
+
+    it('should include originCountries when explicitly provided (even if null)', () => {
+      const mediaWithNullOrigin = {
+        ...baseMedia,
+        originCountries: null,
+      };
+
+      const res = PersistenceMapper.toMediaItemUpdate(mediaWithNullOrigin as any);
+
+      // Should have originCountries = null (explicit clear)
+      expect(res).toHaveProperty('originCountries');
+      expect(res.originCountries).toBeNull();
+    });
+
+    it('should include originCountries when array is provided', () => {
+      const mediaWithOrigin = {
+        ...baseMedia,
+        originCountries: ['US', 'JP'],
+      };
+
+      const res = PersistenceMapper.toMediaItemUpdate(mediaWithOrigin as any);
+
+      expect(res.originCountries).toEqual(['US', 'JP']);
+    });
+
+    it('should NOT include originalLanguage when undefined (prevents overwriting existing data)', () => {
+      const mediaWithoutLang = {
+        ...baseMedia,
+        originalLanguage: undefined,
+      };
+
+      const res = PersistenceMapper.toMediaItemUpdate(mediaWithoutLang as any);
+
+      expect(res).not.toHaveProperty('originalLanguage');
+    });
+
+    it('should include originalLanguage when explicitly provided', () => {
+      const mediaWithLang = {
+        ...baseMedia,
+        originalLanguage: 'ja',
+      };
+
+      const res = PersistenceMapper.toMediaItemUpdate(mediaWithLang as any);
+
+      expect(res.originalLanguage).toBe('ja');
+    });
+
+    it('should NOT include overview when undefined (prevents overwriting existing data)', () => {
+      const mediaWithoutOverview = {
+        ...baseMedia,
+        overview: undefined,
+      };
+
+      const res = PersistenceMapper.toMediaItemUpdate(mediaWithoutOverview as any);
+
+      expect(res).not.toHaveProperty('overview');
+    });
+
+    it('should include overview when explicitly provided (even empty string)', () => {
+      const mediaWithEmptyOverview = {
+        ...baseMedia,
+        overview: '',
+      };
+
+      const res = PersistenceMapper.toMediaItemUpdate(mediaWithEmptyOverview as any);
+
+      expect(res).toHaveProperty('overview');
+      expect(res.overview).toBe('');
+    });
+
+    it('should preserve existing DB data when sync payload is incomplete (fallback scenario)', () => {
+      // Simulates fallback path where originCountries/originalLanguage are not in payload
+      const incompletePayload = {
+        externalIds: { tmdbId: 123, imdbId: null },
+        title: 'Some Movie',
+        // originCountries: undefined (not provided)
+        // originalLanguage: undefined (not provided)
+        // overview: undefined (not provided)
+        rating: 7.5,
+        voteCount: 100,
+        popularity: 50,
+      };
+
+      const res = PersistenceMapper.toMediaItemUpdate(incompletePayload as any);
+
+      // These fields should NOT be in update payload
+      expect(res).not.toHaveProperty('originCountries');
+      expect(res).not.toHaveProperty('originalLanguage');
+      expect(res).not.toHaveProperty('overview');
+
+      // Other fields should be present
+      expect(res.title).toBe('Some Movie');
+      expect(res.rating).toBe(7.5);
+    });
+  });
+
   it('toMediaStatsInsert should return null when ratingoScore undefined', () => {
     const resNull = PersistenceMapper.toMediaStatsInsert('m1', {
       ...baseMedia,
