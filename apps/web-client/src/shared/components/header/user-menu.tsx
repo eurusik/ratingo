@@ -7,7 +7,7 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { User, LogOut, Settings, Bookmark } from 'lucide-react';
+import { User, LogOut, Settings, Bookmark, Shield } from 'lucide-react';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { useTranslation } from '@/shared/i18n';
 import {
@@ -24,7 +24,7 @@ import {
 } from '@/shared/ui';
 
 export function UserMenu() {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, isAdmin, logout } = useAuth();
   const { dict } = useTranslation();
   const openLogin = useAuthModalStore((s) => s.openLogin);
 
@@ -72,6 +72,17 @@ export function UserMenu() {
             {dict.auth.settings}
           </Link>
         </DropdownMenuItem>
+        {isAdmin && (
+          <>
+            <DropdownMenuSeparator className="bg-zinc-800" />
+            <DropdownMenuItem asChild className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100">
+              <Link href={'/admin' as Route}>
+                <Shield className="w-4 h-4 mr-2" />
+                {dict.auth.admin}
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator className="bg-zinc-800" />
         <DropdownMenuItem
           onClick={handleLogout}
