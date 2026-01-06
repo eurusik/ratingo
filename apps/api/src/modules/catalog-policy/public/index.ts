@@ -35,6 +35,9 @@ export {
   EvaluationReason,
   EvaluationReasonType,
   DEFAULT_POLICY_VERSION,
+  EvaluationContext,
+  EvaluationContextType,
+  DEFAULT_EVALUATION_CONTEXT,
 } from '../domain/constants/evaluation.constants';
 
 // =============================================================================
@@ -52,5 +55,7 @@ export {
   CATALOG_POLICY_EVALUATOR,
   EvaluateOneInput,
   EvaluationResult,
-  EvaluationContext,
 } from '../domain/ports/catalog-policy-evaluator.port';
+
+// Re-export EvaluationContext type alias for backward compatibility
+export type { EvaluationContext as PolicyEvaluationContext } from '../domain/types/policy.types';

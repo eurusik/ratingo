@@ -13,6 +13,7 @@ import {
   EligibilityStatus,
   EvaluationReason,
   DEFAULT_POLICY_VERSION,
+  EvaluationContext,
 } from '../../../catalog-policy/public';
 import type { NormalizedMedia } from '../../../ingestion/public';
 import { type LocalSearchResult } from '../../domain/models/search-result.model';
@@ -217,6 +218,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
             reasons: [EvaluationReason.NO_ACTIVE_POLICY],
             relevanceScore: 0,
             evaluatedAt: null, // NULL for pending items
+            context: EvaluationContext.CATALOG, // Default context for catalog evaluation
           })
           .onConflictDoNothing(); // If already exists, don't overwrite (evaluation job will update it)
       });

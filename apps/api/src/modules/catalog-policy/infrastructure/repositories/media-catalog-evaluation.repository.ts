@@ -2,9 +2,9 @@
  * Media Catalog Evaluation Repository
  *
  * Repository for managing media eligibility evaluations.
- * Each evaluation is tied to a specific policyVersion.
+ * Each evaluation is tied to a specific policyVersion AND context.
  *
- * Key invariant: mediaItemId + policyVersion = unique evaluation
+ * Key invariant: mediaItemId + policyVersion + context = unique evaluation
  */
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -15,7 +15,11 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DatabaseException } from '../../../../common/exceptions';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { type EligibilityStatusType } from '../../domain/constants/evaluation.constants';
+import {
+  type EligibilityStatusType,
+  DEFAULT_EVALUATION_CONTEXT,
+  type EvaluationContextType,
+} from '../../domain/constants/evaluation.constants';
 import { type MediaCatalogEvaluation } from '../../domain/types/policy.types';
 
 export const MEDIA_CATALOG_EVALUATION_REPOSITORY = 'MEDIA_CATALOG_EVALUATION_REPOSITORY';
@@ -23,7 +27,7 @@ export const MEDIA_CATALOG_EVALUATION_REPOSITORY = 'MEDIA_CATALOG_EVALUATION_REP
 export interface IMediaCatalogEvaluationRepository {
   /**
    * Upserts an evaluation for a media item.
-   * Creates new or updates existing evaluation for the same mediaItemId.
+   * Creates new or updates existing evaluation for the same mediaItemId + policyVersion + context.
    */
   upsert(evaluation: MediaCatalogEvaluation): Promise<MediaCatalogEvaluation>;
 
@@ -33,16 +37,21 @@ export interface IMediaCatalogEvaluationRepository {
   bulkUpsert(evaluations: MediaCatalogEvaluation[]): Promise<number>;
 
   /**
-   * Finds evaluation by media item ID (latest/current).
+   * Finds evaluation by media item ID (latest/current) for a specific context.
+   * Defaults to 'catalog' context for backward compatibility.
    */
-  findByMediaId(mediaItemId: string): Promise<MediaCatalogEvaluation | null>;
+  findByMediaId(
+    mediaItemId: string,
+    context?: EvaluationContextType,
+  ): Promise<MediaCatalogEvaluation | null>;
 
   /**
-   * Finds evaluation by media item ID and specific policy version.
+   * Finds evaluation by media item ID, policy version, and context.
    */
   findByMediaIdAndPolicyVersion(
     mediaItemId: string,
     policyVersion: number,
+    context?: EvaluationContextType,
   ): Promise<MediaCatalogEvaluation | null>;
 
   /**
@@ -50,7 +59,7 @@ export interface IMediaCatalogEvaluationRepository {
    */
   listByPolicyVersion(
     policyVersion: number,
-    options?: { limit?: number; offset?: number },
+    options?: { limit?: number; offset?: number; context?: EvaluationContextType },
   ): Promise<MediaCatalogEvaluation[]>;
 
   /**
@@ -58,14 +67,15 @@ export interface IMediaCatalogEvaluationRepository {
    */
   findByStatus(
     status: EligibilityStatusType,
-    options?: { limit?: number; offset?: number },
+    options?: { limit?: number; offset?: number; context?: EvaluationContextType },
   ): Promise<MediaCatalogEvaluation[]>;
 
   /**
-   * Counts evaluations by status for a policy version.
+   * Counts evaluations by status for a policy version and context.
    */
   countByStatusAndPolicyVersion(
     policyVersion: number,
+    context?: EvaluationContextType,
   ): Promise<Record<EligibilityStatusType, number>>;
 }
 
@@ -79,6 +89,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
   ) {}
 
   async upsert(evaluation: MediaCatalogEvaluation): Promise<MediaCatalogEvaluation> {
+    const context = evaluation.context ?? DEFAULT_EVALUATION_CONTEXT;
     try {
       const result = await this.db
         .insert(schema.mediaCatalogEvaluations)
@@ -91,11 +102,13 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
           breakoutRuleId: evaluation.breakoutRuleId,
           evaluatedAt: evaluation.evaluatedAt,
           runId: evaluation.runId,
+          context,
         })
         .onConflictDoUpdate({
           target: [
             schema.mediaCatalogEvaluations.mediaItemId,
             schema.mediaCatalogEvaluations.policyVersion,
+            schema.mediaCatalogEvaluations.context,
           ],
           set: {
             status: evaluation.status,
@@ -132,6 +145,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
         breakoutRuleId: e.breakoutRuleId,
         evaluatedAt: e.evaluatedAt,
         runId: e.runId,
+        context: e.context ?? DEFAULT_EVALUATION_CONTEXT,
       }));
 
       const result = await this.db
@@ -141,6 +155,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
           target: [
             schema.mediaCatalogEvaluations.mediaItemId,
             schema.mediaCatalogEvaluations.policyVersion,
+            schema.mediaCatalogEvaluations.context,
           ],
           set: {
             status: sql`excluded.status`,
@@ -162,12 +177,20 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
     }
   }
 
-  async findByMediaId(mediaItemId: string): Promise<MediaCatalogEvaluation | null> {
+  async findByMediaId(
+    mediaItemId: string,
+    context: EvaluationContextType = DEFAULT_EVALUATION_CONTEXT,
+  ): Promise<MediaCatalogEvaluation | null> {
     try {
       const result = await this.db
         .select()
         .from(schema.mediaCatalogEvaluations)
-        .where(eq(schema.mediaCatalogEvaluations.mediaItemId, mediaItemId))
+        .where(
+          and(
+            eq(schema.mediaCatalogEvaluations.mediaItemId, mediaItemId),
+            eq(schema.mediaCatalogEvaluations.context, context),
+          ),
+        )
         .limit(1);
 
       if (result.length === 0) {
@@ -184,6 +207,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
   async findByMediaIdAndPolicyVersion(
     mediaItemId: string,
     policyVersion: number,
+    context: EvaluationContextType = DEFAULT_EVALUATION_CONTEXT,
   ): Promise<MediaCatalogEvaluation | null> {
     try {
       const result = await this.db
@@ -193,6 +217,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
           and(
             eq(schema.mediaCatalogEvaluations.mediaItemId, mediaItemId),
             eq(schema.mediaCatalogEvaluations.policyVersion, policyVersion),
+            eq(schema.mediaCatalogEvaluations.context, context),
           ),
         )
         .limit(1);
@@ -213,13 +238,19 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
 
   async listByPolicyVersion(
     policyVersion: number,
-    options?: { limit?: number; offset?: number },
+    options?: { limit?: number; offset?: number; context?: EvaluationContextType },
   ): Promise<MediaCatalogEvaluation[]> {
+    const context = options?.context ?? DEFAULT_EVALUATION_CONTEXT;
     try {
       let query = this.db
         .select()
         .from(schema.mediaCatalogEvaluations)
-        .where(eq(schema.mediaCatalogEvaluations.policyVersion, policyVersion));
+        .where(
+          and(
+            eq(schema.mediaCatalogEvaluations.policyVersion, policyVersion),
+            eq(schema.mediaCatalogEvaluations.context, context),
+          ),
+        );
 
       if (options?.limit) {
         query = query.limit(options.limit) as typeof query;
@@ -238,13 +269,19 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
 
   async findByStatus(
     status: EligibilityStatusType,
-    options?: { limit?: number; offset?: number },
+    options?: { limit?: number; offset?: number; context?: EvaluationContextType },
   ): Promise<MediaCatalogEvaluation[]> {
+    const context = options?.context ?? DEFAULT_EVALUATION_CONTEXT;
     try {
       let query = this.db
         .select()
         .from(schema.mediaCatalogEvaluations)
-        .where(eq(schema.mediaCatalogEvaluations.status, status));
+        .where(
+          and(
+            eq(schema.mediaCatalogEvaluations.status, status),
+            eq(schema.mediaCatalogEvaluations.context, context),
+          ),
+        );
 
       if (options?.limit) {
         query = query.limit(options.limit) as typeof query;
@@ -263,6 +300,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
 
   async countByStatusAndPolicyVersion(
     policyVersion: number,
+    context: EvaluationContextType = DEFAULT_EVALUATION_CONTEXT,
   ): Promise<Record<EligibilityStatusType, number>> {
     try {
       const result = await this.db
@@ -271,7 +309,12 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
           count: sql<number>`count(*)::int`,
         })
         .from(schema.mediaCatalogEvaluations)
-        .where(eq(schema.mediaCatalogEvaluations.policyVersion, policyVersion))
+        .where(
+          and(
+            eq(schema.mediaCatalogEvaluations.policyVersion, policyVersion),
+            eq(schema.mediaCatalogEvaluations.context, context),
+          ),
+        )
         .groupBy(schema.mediaCatalogEvaluations.status);
 
       const counts: Record<EligibilityStatusType, number> = {
@@ -305,6 +348,7 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
       breakoutRuleId: row.breakoutRuleId,
       evaluatedAt: row.evaluatedAt,
       runId: row.runId ?? undefined,
+      context: row.context as EvaluationContextType,
     };
   }
 }

@@ -9,15 +9,10 @@ import { Badge } from '@/shared/ui/badge';
 import { X } from 'lucide-react';
 import type { GlobalRequirementsDto } from '@/core/api/admin';
 
-type RatingSource = 'imdb' | 'metacritic' | 'rt' | 'trakt';
-type VoteSource = 'imdb' | 'trakt';
-type EvaluationContext =
-  | 'catalog'
-  | 'homepage'
-  | 'trending'
-  | 'now_playing'
-  | 'new_digital'
-  | 'search';
+// Extract types from DTO to stay in sync with API contract
+type EvaluationContext = NonNullable<GlobalRequirementsDto['appliesTo']>[number];
+type RatingSource = NonNullable<GlobalRequirementsDto['requireAnyOfRatingsPresent']>[number];
+type VoteSource = NonNullable<NonNullable<GlobalRequirementsDto['minVotesAnyOf']>['sources']>[number];
 
 interface GlobalRequirementsEditorProps {
   globalRequirements?: GlobalRequirementsDto;
@@ -60,10 +55,10 @@ const VOTE_SOURCE_LABELS: Record<VoteSource, string> = {
 const RATING_SOURCES: RatingSource[] = ['imdb', 'metacritic', 'rt', 'trakt'];
 const VOTE_SOURCES: VoteSource[] = ['imdb', 'trakt'];
 // Quality-driven contexts (gate applies by default)
-const QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending'];
+const QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'search'];
 // Freshness-driven contexts (gate excluded by default)
-const FRESHNESS_CONTEXTS: EvaluationContext[] = ['now_playing', 'new_digital'];
-const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending', 'search'];
+const FRESHNESS_CONTEXTS: EvaluationContext[] = ['now_playing', 'new_digital', 'trending'];
+const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'search'];
 
 const CONTEXT_LABELS: Record<EvaluationContext, string> = {
   catalog: 'Catalog',

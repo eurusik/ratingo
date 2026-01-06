@@ -7,7 +7,7 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { EligibilityStatus } from '../../../catalog-policy/public';
+import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import {
   TRENDING_THRESHOLDS,
   MOVIE_TRENDING_WEIGHTS,
@@ -91,6 +91,7 @@ export class TrendingMoviesQuery {
       const conditions: SQL[] = [
         isNotNull(schema.mediaStats.popularityScore),
         eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+        eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
         eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
         isNull(schema.mediaItems.deletedAt),
       ];

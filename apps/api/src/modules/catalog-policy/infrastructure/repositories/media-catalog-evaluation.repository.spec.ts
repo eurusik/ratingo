@@ -51,6 +51,7 @@ describe('MediaCatalogEvaluationRepository', () => {
         policyVersion: 1,
         evaluatedAt: new Date(),
         breakoutRuleId: null,
+        context: 'catalog',
       };
 
       mockDb.returning.mockResolvedValue([
@@ -62,6 +63,7 @@ describe('MediaCatalogEvaluationRepository', () => {
           policyVersion: 1,
           evaluatedAt: new Date(),
           breakoutRuleId: null,
+          context: 'catalog',
         },
       ]);
 
@@ -70,6 +72,7 @@ describe('MediaCatalogEvaluationRepository', () => {
       expect(mockDb.values).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'eligible',
+          context: 'catalog',
         }),
       );
     });
@@ -83,6 +86,7 @@ describe('MediaCatalogEvaluationRepository', () => {
         policyVersion: 1,
         evaluatedAt: new Date(),
         breakoutRuleId: null,
+        context: 'catalog',
       };
 
       mockDb.returning.mockResolvedValue([
@@ -94,6 +98,7 @@ describe('MediaCatalogEvaluationRepository', () => {
           policyVersion: 1,
           evaluatedAt: new Date(),
           breakoutRuleId: null,
+          context: 'catalog',
         },
       ]);
 
@@ -102,6 +107,7 @@ describe('MediaCatalogEvaluationRepository', () => {
       expect(mockDb.values).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'ineligible',
+          context: 'catalog',
         }),
       );
     });
@@ -115,6 +121,7 @@ describe('MediaCatalogEvaluationRepository', () => {
         policyVersion: 1,
         evaluatedAt: new Date(),
         breakoutRuleId: null,
+        context: 'catalog',
       };
 
       mockDb.returning.mockResolvedValue([
@@ -126,6 +133,7 @@ describe('MediaCatalogEvaluationRepository', () => {
           policyVersion: 1,
           evaluatedAt: new Date(),
           breakoutRuleId: null,
+          context: 'catalog',
         },
       ]);
 
@@ -134,6 +142,7 @@ describe('MediaCatalogEvaluationRepository', () => {
       expect(mockDb.values).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'pending',
+          context: 'catalog',
         }),
       );
     });
@@ -147,6 +156,7 @@ describe('MediaCatalogEvaluationRepository', () => {
         policyVersion: 1,
         evaluatedAt: new Date(),
         breakoutRuleId: null,
+        context: 'catalog',
       };
 
       mockDb.returning.mockResolvedValue([
@@ -158,6 +168,7 @@ describe('MediaCatalogEvaluationRepository', () => {
           policyVersion: 1,
           evaluatedAt: new Date(),
           breakoutRuleId: null,
+          context: 'catalog',
         },
       ]);
 
@@ -166,6 +177,42 @@ describe('MediaCatalogEvaluationRepository', () => {
       expect(mockDb.values).toHaveBeenCalledWith(
         expect.objectContaining({
           status: 'review',
+          context: 'catalog',
+        }),
+      );
+    });
+
+    it('should store trending context evaluation', async () => {
+      const evaluation: MediaCatalogEvaluation = {
+        mediaItemId: 'media-5',
+        status: 'eligible',
+        reasons: ['ALLOWED_COUNTRY'],
+        relevanceScore: 75,
+        policyVersion: 1,
+        evaluatedAt: new Date(),
+        breakoutRuleId: null,
+        context: 'trending',
+      };
+
+      mockDb.returning.mockResolvedValue([
+        {
+          mediaItemId: 'media-5',
+          status: 'eligible',
+          reasons: ['ALLOWED_COUNTRY'],
+          relevanceScore: 75,
+          policyVersion: 1,
+          evaluatedAt: new Date(),
+          breakoutRuleId: null,
+          context: 'trending',
+        },
+      ]);
+
+      await repository.upsert(evaluation);
+
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'eligible',
+          context: 'trending',
         }),
       );
     });
@@ -182,6 +229,7 @@ describe('MediaCatalogEvaluationRepository', () => {
           policyVersion: 1,
           evaluatedAt: new Date(),
           breakoutRuleId: null,
+          context: 'catalog',
         },
         {
           mediaItemId: 'media-2',
@@ -191,6 +239,7 @@ describe('MediaCatalogEvaluationRepository', () => {
           policyVersion: 1,
           evaluatedAt: new Date(),
           breakoutRuleId: null,
+          context: 'catalog',
         },
       ];
 
@@ -200,8 +249,52 @@ describe('MediaCatalogEvaluationRepository', () => {
 
       expect(mockDb.values).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ status: 'eligible' }),
-          expect.objectContaining({ status: 'ineligible' }),
+          expect.objectContaining({ status: 'eligible', context: 'catalog' }),
+          expect.objectContaining({ status: 'ineligible', context: 'catalog' }),
+        ]),
+      );
+    });
+
+    it('should store evaluations with different contexts', async () => {
+      const evaluations: MediaCatalogEvaluation[] = [
+        {
+          mediaItemId: 'media-1',
+          status: 'pending',
+          reasons: ['MISSING_ORIGIN_COUNTRY'],
+          relevanceScore: 0,
+          policyVersion: 1,
+          evaluatedAt: new Date(),
+          breakoutRuleId: null,
+          context: 'catalog',
+        },
+        {
+          mediaItemId: 'media-1',
+          status: 'eligible',
+          reasons: ['ALLOWED_COUNTRY'],
+          relevanceScore: 75,
+          policyVersion: 1,
+          evaluatedAt: new Date(),
+          breakoutRuleId: null,
+          context: 'trending',
+        },
+      ];
+
+      mockDb.returning.mockResolvedValue([]);
+
+      await repository.bulkUpsert(evaluations);
+
+      expect(mockDb.values).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            mediaItemId: 'media-1',
+            context: 'catalog',
+            status: 'pending',
+          }),
+          expect.objectContaining({
+            mediaItemId: 'media-1',
+            context: 'trending',
+            status: 'eligible',
+          }),
         ]),
       );
     });
@@ -217,6 +310,7 @@ describe('MediaCatalogEvaluationRepository', () => {
         policyVersion: 1,
         evaluatedAt: new Date(),
         breakoutRuleId: null,
+        context: 'catalog',
       };
 
       mockDb.returning.mockRejectedValue(new Error('DB Error'));
@@ -234,6 +328,7 @@ describe('MediaCatalogEvaluationRepository', () => {
           policyVersion: 1,
           evaluatedAt: new Date(),
           breakoutRuleId: null,
+          context: 'catalog',
         },
       ];
 

@@ -7,6 +7,7 @@ import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
 import { MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
 import { NormalizationService } from '@/modules/provider/public';
+import { CATALOG_POLICY_EVALUATOR, EvaluationContext } from '@/modules/catalog-policy/public';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '@/common/enums/video.enum';
 
@@ -19,6 +20,7 @@ describe('SyncMediaService', () => {
   let scoreCalculator: jest.Mocked<ScoreCalculatorService>;
   let normalizationService: jest.Mocked<NormalizationService>;
   let mediaRepository: any;
+  let catalogEvaluator: any;
 
   const mockMedia: any = {
     type: MediaType.MOVIE,
@@ -75,6 +77,10 @@ describe('SyncMediaService', () => {
       normalizeWatchProviders: jest.fn().mockResolvedValue({ offersCreated: 0, unmappedCount: 0 }),
     };
 
+    const mockCatalogEvaluator = {
+      evaluateOne: jest.fn().mockResolvedValue({ status: 'eligible', reasons: [] }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SyncMediaService,
@@ -85,6 +91,7 @@ describe('SyncMediaService', () => {
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: NormalizationService, useValue: mockNormalizationService },
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
+        { provide: CATALOG_POLICY_EVALUATOR, useValue: mockCatalogEvaluator },
       ],
     }).compile();
 
@@ -96,6 +103,7 @@ describe('SyncMediaService', () => {
     scoreCalculator = module.get(ScoreCalculatorService);
     normalizationService = module.get(NormalizationService);
     mediaRepository = module.get(MEDIA_REPOSITORY);
+    catalogEvaluator = module.get(CATALOG_POLICY_EVALUATOR);
   });
 
   describe('syncMovie', () => {
@@ -485,6 +493,82 @@ describe('SyncMediaService', () => {
       await service.syncMovie(550);
 
       expect(normalizationService.normalizeWatchProviders).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('catalog evaluation with context', () => {
+    it('should evaluate only catalog context when not trending', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncMovie(550);
+
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledTimes(1);
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledWith({
+        mediaItemId: 'media-123',
+        context: EvaluationContext.CATALOG,
+      });
+    });
+
+    it('should evaluate both catalog and trending contexts when trending data provided', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncMovie(550, { score: 9999, rank: 1 });
+
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledTimes(2);
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledWith({
+        mediaItemId: 'media-123',
+        context: EvaluationContext.CATALOG,
+      });
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledWith({
+        mediaItemId: 'media-123',
+        context: EvaluationContext.TRENDING,
+      });
+    });
+
+    it('should not evaluate trending context when trending score is 0', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncMovie(550, { score: 0, rank: 100 });
+
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledTimes(1);
+      expect(catalogEvaluator.evaluateOne).toHaveBeenCalledWith({
+        mediaItemId: 'media-123',
+        context: EvaluationContext.CATALOG,
+      });
+    });
+
+    it('should handle evaluation failure gracefully', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+      catalogEvaluator.evaluateOne.mockRejectedValue(new Error('Evaluation failed'));
+
+      // Should not throw
+      await service.syncMovie(550);
+
+      expect(mediaRepository.upsert).toHaveBeenCalled();
+    });
+
+    it('should skip evaluation when media item not found after persist', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      // First call for normalization, second for evaluation
+      mediaRepository.findByTmdbId.mockResolvedValue(null);
+
+      await service.syncMovie(550);
+
+      expect(catalogEvaluator.evaluateOne).not.toHaveBeenCalled();
     });
   });
 });

@@ -11,7 +11,7 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { EligibilityStatus } from '../../../catalog-policy/public';
+import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import {
   TRENDING_THRESHOLDS,
   SHOW_TRENDING_WEIGHTS,
@@ -111,8 +111,9 @@ export class TrendingShowsQuery {
       const whereConditions: SQL[] = [
         sql`mi.type = ${MediaType.SHOW}`,
         sql`mi.deleted_at IS NULL`,
-        // Eligibility filter: only show ELIGIBLE items
+        // Eligibility filter: only show ELIGIBLE items with trending context
         sql`mce.status = ${EligibilityStatus.ELIGIBLE}`,
+        sql`mce.context = ${EvaluationContext.TRENDING}`,
         // Ready filter: only show items with ready ingestion status
         sql`mi.ingestion_status = ${IngestionStatus.READY}`,
       ];

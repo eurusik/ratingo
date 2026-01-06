@@ -11,13 +11,8 @@ import {
   shouldApplyGlobalGate,
   checkContentClassExcluded,
 } from './policy-engine';
-import {
-  PolicyConfig,
-  PolicyEngineInput,
-  GlobalRequirements,
-  EvaluationContext,
-} from './types/policy.types';
-import { EligibilityStatus } from './constants/evaluation.constants';
+import { PolicyConfig, PolicyEngineInput, GlobalRequirements } from './types/policy.types';
+import { EligibilityStatus, EvaluationContext } from './constants/evaluation.constants';
 import { ContentClass } from './classification.service';
 
 describe('Policy Engine', () => {
@@ -1114,6 +1109,123 @@ describe('Policy Engine', () => {
       const result = evaluateEligibility(input, policy, { context: 'now_playing' });
       expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
+    });
+
+    it('should skip gate for trending context when appliesTo excludes trending', () => {
+      const policy = createPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
+          appliesTo: [EvaluationContext.CATALOG, EvaluationContext.HOMEPAGE], // Excludes trending
+        },
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US'],
+          originalLanguage: 'en',
+          voteCountImdb: 100, // Would fail gate
+        },
+      });
+
+      // Catalog context - gate applies, should fail
+      const catalogResult = evaluateEligibility(input, policy, {
+        context: EvaluationContext.CATALOG,
+      });
+      expect(catalogResult.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(catalogResult.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+
+      // Trending context - gate skipped, should pass
+      const trendingResult = evaluateEligibility(input, policy, {
+        context: EvaluationContext.TRENDING,
+      });
+      expect(trendingResult.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(trendingResult.reasons).toContain('ALLOWED_COUNTRY');
+      expect(trendingResult.reasons).toContain('ALLOWED_LANGUAGE');
+    });
+
+    it('should allow same media item to be INELIGIBLE for catalog but ELIGIBLE for trending', () => {
+      // This is the key business scenario: trending surface has relaxed requirements
+      const policy = createPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
+          appliesTo: [EvaluationContext.CATALOG], // Only catalog requires gate
+        },
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US'],
+          originalLanguage: 'en',
+          voteCountImdb: 1000, // Low votes - fails catalog gate
+        },
+      });
+
+      const catalogResult = evaluateEligibility(input, policy, {
+        context: EvaluationContext.CATALOG,
+      });
+      const trendingResult = evaluateEligibility(input, policy, {
+        context: EvaluationContext.TRENDING,
+      });
+
+      // Same input, different outcomes based on context
+      expect(catalogResult.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(trendingResult.status).toBe(EligibilityStatus.ELIGIBLE);
+    });
+
+    it('should apply gate for trending when trending is in appliesTo', () => {
+      const policy = createPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
+          appliesTo: [EvaluationContext.CATALOG, EvaluationContext.TRENDING], // Includes trending
+        },
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US'],
+          originalLanguage: 'en',
+          voteCountImdb: 100, // Fails gate
+        },
+      });
+
+      const trendingResult = evaluateEligibility(input, policy, {
+        context: EvaluationContext.TRENDING,
+      });
+      expect(trendingResult.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(trendingResult.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+    });
+
+    it('should use EvaluationContext constants for context values', () => {
+      const policy = createPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 50000 },
+          appliesTo: [EvaluationContext.CATALOG],
+        },
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US'],
+          originalLanguage: 'en',
+          voteCountImdb: 100,
+        },
+      });
+
+      // Verify all context constants work correctly
+      const contexts = [
+        EvaluationContext.CATALOG,
+        EvaluationContext.TRENDING,
+        EvaluationContext.HOMEPAGE,
+        EvaluationContext.NOW_PLAYING,
+        EvaluationContext.NEW_DIGITAL,
+        EvaluationContext.SEARCH,
+      ];
+
+      for (const context of contexts) {
+        const result = evaluateEligibility(input, policy, { context });
+        // Should not throw, context is valid
+        expect(result.status).toBeDefined();
+      }
     });
   });
 

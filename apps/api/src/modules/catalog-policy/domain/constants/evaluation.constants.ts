@@ -107,3 +107,23 @@ export type EvaluationReasonType = (typeof EvaluationReason)[keyof typeof Evalua
  * Default policy version for unevaluated items.
  */
 export const DEFAULT_POLICY_VERSION = 0;
+
+/**
+ * Evaluation context values (stored in DB).
+ * Determines which display surface the evaluation applies to.
+ */
+export const EvaluationContext = {
+  CATALOG: 'catalog',
+  TRENDING: 'trending',
+  HOMEPAGE: 'homepage',
+  NOW_PLAYING: 'now_playing',
+  NEW_DIGITAL: 'new_digital',
+  SEARCH: 'search',
+} as const;
+
+export type EvaluationContextType = (typeof EvaluationContext)[keyof typeof EvaluationContext];
+
+/**
+ * Default context for backward compatibility.
+ */
+export const DEFAULT_EVALUATION_CONTEXT: EvaluationContextType = EvaluationContext.CATALOG;

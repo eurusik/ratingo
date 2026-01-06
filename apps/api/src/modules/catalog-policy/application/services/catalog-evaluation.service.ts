@@ -24,7 +24,10 @@ import {
   MEDIA_WATCH_OFFERS_REPOSITORY,
   type MediaWatchOfferView,
 } from '../../../provider/public';
-import { EligibilityStatus } from '../../domain/constants/evaluation.constants';
+import {
+  EligibilityStatus,
+  DEFAULT_EVALUATION_CONTEXT,
+} from '../../domain/constants/evaluation.constants';
 import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
 import {
   type ICatalogPolicyEvaluator,
@@ -84,7 +87,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
    */
   async evaluateOne(input: EvaluateOneInput): Promise<EvaluationResult>;
   /**
-   * @deprecated Use object form: evaluateOne({ mediaItemId, policyVersion, runId })
+   * @deprecated Use object form: evaluateOne({ mediaItemId, policyVersion, runId, context })
    */
   async evaluateOne(
     mediaItemId: string,
@@ -102,7 +105,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
         ? { mediaItemId: inputOrMediaItemId, policyVersion, runId }
         : inputOrMediaItemId;
 
-    const { mediaItemId } = input;
+    const { mediaItemId, context = DEFAULT_EVALUATION_CONTEXT } = input;
     // Get policy
     const policy = input.policyVersion
       ? await this.policyService.getByVersion(input.policyVersion)
@@ -118,11 +121,11 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       throw new NotFoundException(`Media item ${mediaItemId} not found`);
     }
 
-    // Get previous evaluation (if exists)
-    const previousEvaluation = await this.evaluationRepository.findByMediaId(mediaItemId);
+    // Get previous evaluation (if exists) for this context
+    const previousEvaluation = await this.evaluationRepository.findByMediaId(mediaItemId, context);
 
-    // Run policy engine
-    const evalResult = evaluateEligibility(engineInput, policy.policy);
+    // Run policy engine with context
+    const evalResult = evaluateEligibility(engineInput, policy.policy, { context });
     const relevanceScore = computeRelevance(engineInput, policy.policy);
 
     // Build evaluation entity
@@ -135,9 +138,10 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       breakoutRuleId: evalResult.breakoutRuleId,
       evaluatedAt: new Date(),
       runId: input.runId, // Link to specific run for counter aggregation
+      context,
     };
 
-    // Persist (idempotent via UNIQUE constraint on run_id + media_item_id)
+    // Persist (idempotent via UNIQUE constraint on media_item_id + policy_version + context)
     const saved = await this.evaluationRepository.upsert(evaluation);
 
     // Detect change
@@ -148,7 +152,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
 
     if (changed) {
       this.logger.log(
-        `Evaluated ${mediaItemId}: ${previousEvaluation?.status || 'NEW'} → ${saved.status} (policy v${policy.version})`,
+        `Evaluated ${mediaItemId} [${context}]: ${previousEvaluation?.status || 'NEW'} → ${saved.status} (policy v${policy.version})`,
       );
     }
 
@@ -211,6 +215,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
           policyVersion: policy.version,
           breakoutRuleId: evalResult.breakoutRuleId,
           evaluatedAt: new Date(),
+          context: DEFAULT_EVALUATION_CONTEXT,
         };
 
         evaluations.push(evaluation);

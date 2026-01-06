@@ -9,6 +9,7 @@ import {
   type ICatalogPolicyEvaluator,
   CATALOG_POLICY_EVALUATOR,
   classifyContent,
+  EvaluationContext,
 } from '../../../catalog-policy/public';
 import { NormalizationService } from '../../../provider/public';
 import { ScoreCalculatorService, type ScoreInput } from '../../../shared/score-calculator';
@@ -153,8 +154,9 @@ export class SyncMediaService {
       // Step 8: Normalize watch providers
       await this.normalizeWatchProviders(classified, logPrefix);
 
-      // Step 9: Evaluate catalog eligibility
-      await this.evaluateCatalog(tmdbId, logPrefix);
+      // Step 9: Evaluate catalog eligibility (both catalog and trending contexts if applicable)
+      const isTrending = trending !== undefined && trending.score > 0;
+      await this.evaluateCatalog(tmdbId, logPrefix, isTrending);
 
       this.logger.log(
         `${logPrefix} Synced: ${classified.title} (Ratingo: ${((classified.ratingoScore ?? 0) * SCORE_PERCENT_MULTIPLIER).toFixed(1)})`,
@@ -328,13 +330,32 @@ export class SyncMediaService {
   }
 
   /** Triggers catalog eligibility evaluation if service available. */
-  private async evaluateCatalog(tmdbId: number, logPrefix: string): Promise<void> {
+  private async evaluateCatalog(
+    tmdbId: number,
+    logPrefix: string,
+    isTrending: boolean = false,
+  ): Promise<void> {
     if (!this.catalogEvaluator) return;
 
     try {
       const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId);
-      if (mediaItem) {
-        await this.catalogEvaluator.evaluateOne({ mediaItemId: mediaItem.id });
+      if (!mediaItem) return;
+
+      // Always evaluate for catalog context
+      await this.catalogEvaluator.evaluateOne({
+        mediaItemId: mediaItem.id,
+        context: EvaluationContext.CATALOG,
+      });
+
+      // Additionally evaluate for trending context if item came from trending pipeline
+      // This allows relaxed requirements for trending display surface
+      if (isTrending) {
+        await this.catalogEvaluator.evaluateOne({
+          mediaItemId: mediaItem.id,
+          context: EvaluationContext.TRENDING,
+        });
+        this.logger.debug(`${logPrefix} Evaluated catalog + trending eligibility`);
+      } else {
         this.logger.debug(`${logPrefix} Evaluated catalog eligibility`);
       }
     } catch (evalError) {

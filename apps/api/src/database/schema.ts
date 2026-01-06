@@ -81,6 +81,16 @@ export const distributionChannelEnum = pgEnum('distribution_channel', [
 // Offer type enum for provider system
 export const offerTypeEnum = pgEnum('offer_type', ['flatrate', 'rent', 'buy', 'ads', 'free']);
 
+// Evaluation context enum for context-aware policy evaluation
+export const evaluationContextEnum = pgEnum('evaluation_context', [
+  'catalog',
+  'trending',
+  'homepage',
+  'now_playing',
+  'new_digital',
+  'search',
+]);
+
 // --- SHARED TYPES ---
 
 export interface Video {
@@ -761,8 +771,9 @@ export const catalogPolicies = pgTable(
  * MEDIA CATALOG EVALUATIONS
  * Stores evaluation results for each media item based on catalog policy.
  *
- * Key invariant: (media_item_id, policy_version) = unique evaluation
- * This enables storing evaluation history per policy version.
+ * Key invariant: (media_item_id, policy_version, context) = unique evaluation
+ * This enables storing evaluation history per policy version AND per display context.
+ * Same item can have different eligibility for catalog vs trending vs homepage.
  */
 export const mediaCatalogEvaluations = pgTable(
   'media_catalog_evaluations',
@@ -779,10 +790,13 @@ export const mediaCatalogEvaluations = pgTable(
     // Links evaluation to specific run for accurate counter aggregation
     // NULL for legacy evaluations or manual updates
     runId: uuid('run_id').references(() => catalogEvaluationRuns.id, { onDelete: 'set null' }),
+    // Display surface context for this evaluation
+    // Same item can have different eligibility per context (e.g., PENDING for catalog, ELIGIBLE for trending)
+    context: evaluationContextEnum('context').default('catalog').notNull(),
   },
   (t) => ({
-    // Composite primary key: (media_item_id, policy_version)
-    pk: primaryKey({ columns: [t.mediaItemId, t.policyVersion] }),
+    // Composite primary key: (media_item_id, policy_version, context)
+    pk: primaryKey({ columns: [t.mediaItemId, t.policyVersion, t.context] }),
     statusIdx: index('media_catalog_eval_status_idx').on(t.status),
     statusRelevanceIdx: index('media_catalog_eval_status_relevance_idx').on(
       t.status,
@@ -790,6 +804,13 @@ export const mediaCatalogEvaluations = pgTable(
     ),
     policyVersionIdx: index('media_catalog_eval_policy_version_idx').on(t.policyVersion),
     runIdIdx: index('media_catalog_eval_run_id_idx').on(t.runId),
+    // Context-based indexes (added in migration 0029)
+    contextIdx: index('media_catalog_eval_context_idx').on(t.context),
+    contextStatusIdx: index('media_catalog_eval_context_status_idx').on(
+      t.context,
+      t.status,
+      t.relevanceScore,
+    ),
     // Additional indexes added via migration 0014:
     // - media_catalog_eval_policy_status_relevance_idx (policy_version, status, relevance_score DESC)
     // - media_catalog_eval_item_version_idx (media_item_id, policy_version DESC)

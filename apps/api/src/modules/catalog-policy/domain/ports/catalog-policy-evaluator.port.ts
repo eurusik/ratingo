@@ -3,23 +3,17 @@
  * Other modules should inject this port, not the concrete service.
  */
 
-import { type EligibilityStatusType } from '../constants/evaluation.constants';
-
-/** Evaluation context for content display surfaces. */
-export type EvaluationContext =
-  | 'catalog'
-  | 'homepage'
-  | 'trending'
-  | 'now_playing'
-  | 'new_digital'
-  | 'search';
+import {
+  type EligibilityStatusType,
+  type EvaluationContextType,
+} from '../constants/evaluation.constants';
 
 /** Input for single media item evaluation. */
 export interface EvaluateOneInput {
   mediaItemId: string;
   policyVersion?: number;
   runId?: string;
-  context?: EvaluationContext;
+  context?: EvaluationContextType;
 }
 
 /** Result of evaluating a single media item. */

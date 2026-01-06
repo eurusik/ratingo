@@ -9,14 +9,15 @@ import { type ContentClass } from './classification.service';
 import {
   EligibilityStatus,
   EvaluationReason,
+  EvaluationContext,
   type EvaluationReasonType,
+  type EvaluationContextType,
 } from './constants/evaluation.constants';
 import {
   type Evaluation,
   type PolicyConfig,
   type PolicyEngineInput,
   type BreakoutRule,
-  type EvaluationContext,
   type EvaluationOptions,
   type GlobalRequirements,
   type NormalizedOffer,
@@ -27,7 +28,12 @@ import {
  * Default contexts where gate applies when appliesTo not configured.
  * Quality-driven surfaces that require maturity signals.
  */
-const DEFAULT_QUALITY_CONTEXTS: EvaluationContext[] = ['catalog', 'homepage', 'trending', 'search'];
+const DEFAULT_QUALITY_CONTEXTS: EvaluationContextType[] = [
+  EvaluationContext.CATALOG,
+  EvaluationContext.HOMEPAGE,
+  EvaluationContext.TRENDING,
+  EvaluationContext.SEARCH,
+];
 
 /**
  * Checks if content class is excluded by policy.
@@ -55,7 +61,7 @@ export function checkContentClassExcluded(
  */
 export function shouldApplyGlobalGate(
   requirements: GlobalRequirements | undefined,
-  context: EvaluationContext = 'catalog',
+  context: EvaluationContextType = EvaluationContext.CATALOG,
 ): boolean {
   if (!requirements) return false;
   const appliesTo = requirements.appliesTo ?? DEFAULT_QUALITY_CONTEXTS;
@@ -87,7 +93,7 @@ export function evaluateEligibility(
   const { mediaItem } = input;
   const reasons: EvaluationReasonType[] = [];
   // Context defaults to 'catalog' for legacy/batch compatibility
-  const context = options?.context ?? 'catalog';
+  const context = options?.context ?? EvaluationContext.CATALOG;
 
   // Step 1: Missing data checks → PENDING
   if (!mediaItem.originCountries || mediaItem.originCountries.length === 0) {

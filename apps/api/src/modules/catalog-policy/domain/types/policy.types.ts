@@ -8,19 +8,15 @@ import { type ContentClass } from '../classification.service';
 import {
   type EligibilityStatusType,
   type EvaluationReasonType,
+  type EvaluationContextType,
 } from '../constants/evaluation.constants';
 
 /**
  * Evaluation context for content display surfaces.
  * Controls context-aware gate application.
+ * @deprecated Use EvaluationContextType from constants instead
  */
-export type EvaluationContext =
-  | 'catalog' // Main catalog, browse pages
-  | 'homepage' // Homepage recommendations
-  | 'trending' // Trending lists
-  | 'now_playing' // Movies currently in theaters
-  | 'new_digital' // New on digital platforms
-  | 'search'; // Search results
+export type EvaluationContext = EvaluationContextType;
 
 /**
  * Options for policy evaluation.
@@ -251,12 +247,17 @@ export interface MediaCatalogEvaluation {
   relevanceScore: number;
   policyVersion: number;
   breakoutRuleId: string | null;
-  evaluatedAt: Date;
+  evaluatedAt: Date | null;
   /**
    * Links evaluation to specific run.
    * NULL for legacy/manual evaluations.
    */
   runId?: string;
+  /**
+   * Display surface context for this evaluation.
+   * Defaults to 'catalog' for backward compatibility.
+   */
+  context: EvaluationContext;
 }
 
 /**
