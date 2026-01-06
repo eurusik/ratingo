@@ -27,7 +27,7 @@ INSERT INTO catalog_policies (
         "sources": ["imdb", "trakt"],
         "min": 250
       },
-      "appliesTo": ["catalog", "trending", "homepage"]
+      "appliesTo": ["catalog", "homepage"]
     },
     "breakoutRules": [
       {

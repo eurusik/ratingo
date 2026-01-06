@@ -24,6 +24,9 @@ const BreakoutRuleSchema = z.object({
     minQualityScoreNormalized: z.number().min(0).max(1).optional(),
     requireAnyOfProviders: z.array(z.string()).optional(),
     requireAnyOfRatingsPresent: z.array(z.enum(['imdb', 'metacritic', 'rt', 'trakt'])).optional(),
+    originCountries: z
+      .array(z.string().length(2, 'Country codes must be 2 characters (ISO 3166-1 alpha-2)'))
+      .optional(),
   }),
 });
 

@@ -731,6 +731,7 @@ export interface BreakoutRule {
     minQualityScoreNormalized?: number;
     requireAnyOfProviders?: string[];
     requireAnyOfRatingsPresent?: ('imdb' | 'metacritic' | 'rt' | 'trakt')[];
+    originCountries?: string[];
   };
 }
 
