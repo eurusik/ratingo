@@ -9,6 +9,7 @@ import { TrendingPipeline } from '../pipelines/trending.pipeline';
 import { TrackedShowsPipeline } from '../pipelines/tracked-shows.pipeline';
 import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
 import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
+import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
 
 afterAll(() => {
@@ -23,6 +24,7 @@ describe('SyncWorker', () => {
   let trackedShowsPipeline: any;
   let nowPlayingPipeline: any;
   let newReleasesPipeline: any;
+  let backfillImdbPipeline: any;
 
   beforeEach(async () => {
     syncService = {
@@ -56,6 +58,11 @@ describe('SyncWorker', () => {
       sync: jest.fn().mockResolvedValue(undefined),
     };
 
+    backfillImdbPipeline = {
+      dispatch: jest.fn().mockResolvedValue(undefined),
+      processItem: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SyncWorker,
@@ -65,6 +72,7 @@ describe('SyncWorker', () => {
         { provide: TrackedShowsPipeline, useValue: trackedShowsPipeline },
         { provide: NowPlayingPipeline, useValue: nowPlayingPipeline },
         { provide: NewReleasesPipeline, useValue: newReleasesPipeline },
+        { provide: BackfillImdbPipeline, useValue: backfillImdbPipeline },
       ],
     }).compile();
 
