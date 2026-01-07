@@ -2,9 +2,15 @@
 .qoder
 node_modules
 .next
+.swc
+.turbo
+coverage
+**/coverage
 .env
 dist
+**/dist
 tmp
+logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
