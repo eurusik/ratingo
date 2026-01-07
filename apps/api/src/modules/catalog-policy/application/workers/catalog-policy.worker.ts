@@ -184,7 +184,7 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
           mediaItemId: item.id,
         } as EvaluateCatalogItemPayload,
         opts: {
-          jobId: `eval:${runId}:${item.id}`, // Idempotent job ID per run
+          jobId: `eval_${runId}_${item.id}`, // Idempotent job ID per run
         },
       }));
 

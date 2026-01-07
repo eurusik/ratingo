@@ -78,7 +78,7 @@ export class BackfillImdbPipeline {
         .map((r) => ({
           name: IngestionJob.BACKFILL_IMDB_ITEM,
           data: { tmdbId: r.tmdbId },
-          opts: { jobId: `backfill-imdb:${r.tmdbId}` },
+          opts: { jobId: `backfill-imdb_${r.tmdbId}` },
         }));
 
       if (jobs.length > 0) {

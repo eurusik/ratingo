@@ -192,7 +192,7 @@ export class PolicyActivationService {
         batchSize: options?.batchSize || DEFAULT_BATCH_SIZE,
       },
       {
-        jobId: `reeval:${policy.version}:${run.id}`,
+        jobId: `reeval_${policy.version}_${run.id}`,
         attempts: 5,
         backoff: {
           type: 'exponential',
