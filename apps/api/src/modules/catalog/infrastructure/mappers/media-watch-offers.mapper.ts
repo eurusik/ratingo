@@ -1,10 +1,16 @@
 import {
   PRIMARY_REGION,
   FALLBACK_REGION,
+  AVAILABILITY_REGIONS,
   type AvailabilityRegion,
 } from '../../../../common/constants/region.constants';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import type { AvailabilityData, WatchProvider } from '../../domain/types/common.types';
+import type { WatchProvidersMap } from '../../../ingestion/public';
+import type {
+  AvailabilityData,
+  AvailabilityHint,
+  WatchProvider,
+} from '../../domain/types/common.types';
 
 /** Fallback priority when provider has no priority set */
 const DEFAULT_PRIORITY_FALLBACK = 999;
@@ -34,16 +40,19 @@ export interface WatchOfferRow {
 export class MediaWatchOffersMapper {
   /**
    * Maps watch offer rows to AvailabilityData with region fallback logic.
+   * Computes availability hint based on normalized offers and raw TMDB data.
    *
    * @param offers - Rows from media_watch_offers JOIN provider_registry
-   * @returns AvailabilityData or null if no offers
+   * @param rawProviders - Raw TMDB watch providers for fallback hint computation
+   * @returns AvailabilityData (never null - always returns with hint)
    */
-  static toAvailability(offers: WatchOfferRow[]): AvailabilityData | null {
-    if (!offers || offers.length === 0) return null;
-
-    // Group by region
+  static toAvailability(
+    offers: WatchOfferRow[],
+    rawProviders?: WatchProvidersMap | null,
+  ): AvailabilityData {
+    // Group offers by region
     const byRegion = new Map<string, WatchOfferRow[]>();
-    for (const offer of offers) {
+    for (const offer of offers ?? []) {
       const region = offer.region.toUpperCase();
       if (!byRegion.has(region)) {
         byRegion.set(region, []);
@@ -51,27 +60,77 @@ export class MediaWatchOffersMapper {
       byRegion.get(region)!.push(offer);
     }
 
-    // Try UA first
+    // Try UA first, then US
     const uaOffers = byRegion.get(PRIMARY_REGION);
-    if (uaOffers && uaOffers.length > 0) {
-      return {
-        region: PRIMARY_REGION as AvailabilityRegion,
-        isFallback: false,
-        ...this.groupByOfferType(uaOffers),
-      };
-    }
-
-    // Fallback to US
     const usOffers = byRegion.get(FALLBACK_REGION);
-    if (usOffers && usOffers.length > 0) {
+
+    const selectedOffers = uaOffers?.length ? uaOffers : usOffers?.length ? usOffers : null;
+    const region = uaOffers?.length
+      ? (PRIMARY_REGION as AvailabilityRegion)
+      : usOffers?.length
+        ? (FALLBACK_REGION as AvailabilityRegion)
+        : null;
+    const isFallback = !uaOffers?.length && !!usOffers?.length;
+
+    if (selectedOffers) {
+      const grouped = this.groupByOfferType(selectedOffers);
+      const hasSvod = (grouped.stream?.length ?? 0) > 0 || (grouped.free?.length ?? 0) > 0;
+
       return {
-        region: FALLBACK_REGION as AvailabilityRegion,
-        isFallback: true,
-        ...this.groupByOfferType(usOffers),
+        region,
+        isFallback,
+        hint: hasSvod ? 'svod' : 'svod', // Has normalized offers = svod
+        ...grouped,
       };
     }
 
-    return null;
+    // No normalized offers - compute fallback hint from raw data
+    const { hint, tmdbWatchUrl } = this.computeFallbackHint(rawProviders);
+
+    return {
+      region: null,
+      isFallback: false,
+      link: null,
+      hint,
+      tmdbWatchUrl,
+    };
+  }
+
+  /**
+   * Computes availability hint from raw TMDB data when no normalized offers exist.
+   * Checks if rent/buy exists in raw data for supported regions.
+   */
+  private static computeFallbackHint(rawProviders?: WatchProvidersMap | null): {
+    hint: AvailabilityHint;
+    tmdbWatchUrl: string | null;
+  } {
+    if (!rawProviders) {
+      return { hint: 'none', tmdbWatchUrl: null };
+    }
+
+    let hasTvod = false;
+    let tmdbWatchUrl: string | null = null;
+
+    // Check supported regions (UA, US) for rent/buy
+    for (const regionCode of AVAILABILITY_REGIONS) {
+      const regionData = rawProviders[regionCode] ?? rawProviders[regionCode.toLowerCase()];
+      if (!regionData) continue;
+
+      // Capture TMDB watch URL
+      if (!tmdbWatchUrl && regionData.link) {
+        tmdbWatchUrl = regionData.link;
+      }
+
+      // Check for rent/buy
+      if (regionData.rent?.length || regionData.buy?.length) {
+        hasTvod = true;
+      }
+    }
+
+    return {
+      hint: hasTvod ? 'tvod_only' : 'none',
+      tmdbWatchUrl,
+    };
   }
 
   /**
@@ -79,7 +138,7 @@ export class MediaWatchOffersMapper {
    */
   private static groupByOfferType(
     offers: WatchOfferRow[],
-  ): Omit<AvailabilityData, 'region' | 'isFallback'> {
+  ): Omit<AvailabilityData, 'region' | 'isFallback' | 'hint' | 'tmdbWatchUrl'> {
     const stream: WatchProvider[] = [];
     const rent: WatchProvider[] = [];
     const buy: WatchProvider[] = [];

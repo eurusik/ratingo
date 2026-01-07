@@ -258,6 +258,10 @@
       "rent": "Rent",
       "buy": "Buy",
       "noProviders": "No providers available",
+      "notOnSubscription": "Not available on subscription",
+      "availableForPurchase": "Available for rent or purchase",
+      "viewOnTmdb": "View on TMDB",
+      "noInfo": "Watch info unavailable",
       "officialNote": "We link to official services"
     },
     "similar": {

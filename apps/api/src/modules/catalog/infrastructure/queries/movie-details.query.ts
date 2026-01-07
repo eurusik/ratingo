@@ -62,6 +62,7 @@ export class MovieDetailsQuery {
           releaseDate: schema.mediaItems.releaseDate,
           videos: schema.mediaItems.videos,
           credits: schema.mediaItems.credits,
+          watchProvidersRaw: schema.mediaItems.watchProvidersRaw,
 
           ratingImdb: schema.mediaItems.ratingImdb,
           voteCountImdb: schema.mediaItems.voteCountImdb,
@@ -120,7 +121,7 @@ export class MovieDetailsQuery {
         videos: movie.videos,
         primaryTrailer: movie.videos?.[0] || null,
         credits: CreditsMapper.toDto(movie.credits),
-        availability: MediaWatchOffersMapper.toAvailability(watchOffers),
+        availability: MediaWatchOffersMapper.toAvailability(watchOffers, movie.watchProvidersRaw),
 
         runtime: movie.runtime ?? null,
         budget: movie.budget ?? null,

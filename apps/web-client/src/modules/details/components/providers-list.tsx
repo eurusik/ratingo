@@ -1,6 +1,7 @@
 /**
  * Providers list: "Де дивитись" block.
  * Displays streaming providers with logos from TMDB.
+ * Shows fallback states when subscription providers unavailable.
  */
 
 import { ExternalLink } from 'lucide-react';
@@ -17,14 +18,57 @@ export interface ProvidersListProps {
 }
 
 export function ProvidersList({ providers, dict }: ProvidersListProps) {
+  // No availability data at all
   if (!providers) {
     return (
       <div className="text-center py-8">
-        <p className="text-zinc-500 text-sm">{dict.details.providers.noProviders}</p>
+        <p className="text-zinc-500 text-sm">{dict.details.providers.noInfo}</p>
       </div>
     );
   }
 
+  const { hint, tmdbWatchUrl } = providers;
+
+  // TVOD only: no subscription, but rent/buy exists in raw data
+  if (hint === 'tvod_only') {
+    return (
+      <div className="space-y-4">
+        <div className="text-center py-6">
+          <p className="text-zinc-400 text-sm font-medium">
+            {dict.details.providers.notOnSubscription}
+          </p>
+          <p className="text-zinc-500 text-xs mt-1">
+            {dict.details.providers.availableForPurchase}
+          </p>
+        </div>
+
+        {tmdbWatchUrl && (
+          <div className="flex justify-center">
+            <a
+              href={tmdbWatchUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors px-4 py-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-800"
+            >
+              {dict.details.providers.viewOnTmdb}
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // No data at all
+  if (hint === 'none') {
+    return (
+      <div className="text-center py-8">
+        <p className="text-zinc-500 text-sm">{dict.details.providers.noInfo}</p>
+      </div>
+    );
+  }
+
+  // SVOD: has normalized providers
   const allProviders = [
     ...(providers.stream || []),
     ...(providers.rent || []),

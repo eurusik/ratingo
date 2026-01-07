@@ -59,6 +59,7 @@ export class ShowDetailsQuery {
           backdropPath: schema.mediaItems.backdropPath,
           videos: schema.mediaItems.videos,
           credits: schema.mediaItems.credits,
+          watchProvidersRaw: schema.mediaItems.watchProvidersRaw,
           rating: schema.mediaItems.rating,
           voteCount: schema.mediaItems.voteCount,
           releaseDate: schema.mediaItems.releaseDate,
@@ -123,7 +124,7 @@ export class ShowDetailsQuery {
         videos: showData.videos,
         primaryTrailer: showData.videos?.[0] || null,
         credits: CreditsMapper.toDto(showData.credits),
-        availability: MediaWatchOffersMapper.toAvailability(watchOffers),
+        availability: MediaWatchOffersMapper.toAvailability(watchOffers, show.watchProvidersRaw),
         releaseDate: showData.releaseDate,
 
         totalSeasons: showData.totalSeasons,

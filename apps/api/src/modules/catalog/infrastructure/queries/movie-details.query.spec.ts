@@ -13,7 +13,12 @@ describe('MovieDetailsQuery', () => {
     jest.spyOn(CreditsMapper, 'toDto').mockReturnValue({ cast: [] } as any);
     jest.spyOn(ImageMapper, 'toPoster').mockReturnValue({ small: 'poster' } as any);
     jest.spyOn(ImageMapper, 'toBackdrop').mockReturnValue({ small: 'backdrop' } as any);
-    jest.spyOn(MediaWatchOffersMapper, 'toAvailability').mockReturnValue({ region: 'UA' } as any);
+    jest.spyOn(MediaWatchOffersMapper, 'toAvailability').mockReturnValue({
+      region: 'UA',
+      isFallback: false,
+      link: null,
+      hint: 'svod',
+    } as any);
   });
 
   afterEach(() => {
@@ -115,7 +120,12 @@ describe('MovieDetailsQuery', () => {
     expect(res?.primaryTrailer).toEqual({ key: 'trailer1' });
     expect(res?.poster).toEqual({ small: 'poster' });
     expect(res?.backdrop).toEqual({ small: 'backdrop' });
-    expect(res?.availability).toEqual({ region: 'UA' });
+    expect(res?.availability).toEqual({
+      region: 'UA',
+      isFallback: false,
+      link: null,
+      hint: 'svod',
+    });
     expect(res?.genres).toHaveLength(2);
     expect(res?.releaseDate).toEqual(new Date('2020-01-01'));
     expect(res?.theatricalReleaseDate).toEqual(new Date('2020-02-01'));

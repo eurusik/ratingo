@@ -5347,12 +5347,29 @@
             "items": {
               "$ref": "#/components/schemas/WatchProviderDto"
             }
+          },
+          "hint": {
+            "type": "string",
+            "example": "svod",
+            "enum": [
+              "svod",
+              "tvod_only",
+              "none"
+            ],
+            "description": "Hint for UI: svod = show providers, tvod_only = show \"not on subscription\" message, none = no data"
+          },
+          "tmdbWatchUrl": {
+            "type": "string",
+            "example": "https://www.themoviedb.org/movie/123/watch",
+            "nullable": true,
+            "description": "TMDB watch page URL for fallback \"View on TMDB\" link"
           }
         },
         "required": [
           "region",
           "isFallback",
-          "link"
+          "link",
+          "hint"
         ]
       },
       "MovieVerdictDto": {

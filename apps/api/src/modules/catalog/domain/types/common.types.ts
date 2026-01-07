@@ -123,6 +123,14 @@ export interface WatchProvider {
 }
 
 /**
+ * Hint for UI when normalized providers are unavailable.
+ * - svod: Subscription/free providers available (show provider list)
+ * - tvod_only: Only rent/buy in raw TMDB data (show "not on subscription" message)
+ * - none: No provider data at all
+ */
+export type AvailabilityHint = 'svod' | 'tvod_only' | 'none';
+
+/**
  * Availability data for media items.
  */
 export interface AvailabilityData {
@@ -134,4 +142,14 @@ export interface AvailabilityData {
   buy?: WatchProvider[];
   ads?: WatchProvider[];
   free?: WatchProvider[];
+  /**
+   * Computed hint for UI fallback states.
+   * Tells UI what to show when normalized providers are empty.
+   */
+  hint: AvailabilityHint;
+  /**
+   * TMDB watch page URL for "View on TMDB" fallback link.
+   * Present when hint is 'tvod_only'.
+   */
+  tmdbWatchUrl?: string | null;
 }

@@ -223,6 +223,22 @@ export class AvailabilityDto {
 
   @ApiProperty({ type: [WatchProviderDto], required: false })
   free?: WatchProviderDto[];
+
+  @ApiProperty({
+    example: 'svod',
+    enum: ['svod', 'tvod_only', 'none'],
+    description:
+      'Hint for UI: svod = show providers, tvod_only = show "not on subscription" message, none = no data',
+  })
+  hint: 'svod' | 'tvod_only' | 'none';
+
+  @ApiProperty({
+    example: 'https://www.themoviedb.org/movie/123/watch',
+    required: false,
+    nullable: true,
+    description: 'TMDB watch page URL for fallback "View on TMDB" link',
+  })
+  tmdbWatchUrl?: string | null;
 }
 
 export class MediaBaseDto {

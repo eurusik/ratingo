@@ -29,7 +29,12 @@ describe('ShowDetailsQuery', () => {
     jest.spyOn(CreditsMapper, 'toDto').mockReturnValue({ cast: [] } as any);
     jest.spyOn(ImageMapper, 'toPoster').mockReturnValue({ small: 'poster' } as any);
     jest.spyOn(ImageMapper, 'toBackdrop').mockReturnValue({ small: 'backdrop' } as any);
-    jest.spyOn(MediaWatchOffersMapper, 'toAvailability').mockReturnValue({ region: 'UA' } as any);
+    jest.spyOn(MediaWatchOffersMapper, 'toAvailability').mockReturnValue({
+      region: 'UA',
+      isFallback: false,
+      link: null,
+      hint: 'svod',
+    } as any);
   });
 
   afterEach(() => {

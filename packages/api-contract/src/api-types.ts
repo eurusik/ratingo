@@ -1666,6 +1666,17 @@ export interface components {
             buy?: components["schemas"]["WatchProviderDto"][];
             ads?: components["schemas"]["WatchProviderDto"][];
             free?: components["schemas"]["WatchProviderDto"][];
+            /**
+             * @description Hint for UI: svod = show providers, tvod_only = show "not on subscription" message, none = no data
+             * @example svod
+             * @enum {string}
+             */
+            hint: "svod" | "tvod_only" | "none";
+            /**
+             * @description TMDB watch page URL for fallback "View on TMDB" link
+             * @example https://www.themoviedb.org/movie/123/watch
+             */
+            tmdbWatchUrl?: string | null;
         };
         MovieVerdictDto: {
             /**
