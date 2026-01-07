@@ -27,6 +27,8 @@ async function bootstrap(): Promise<void> {
     origin: process.env.CORS_ORIGIN?.split(',') || [
       'http://localhost:3002',
       'http://localhost:3000',
+      'https://new.ratingo.top',
+      'https://ratingo.top',
     ],
     credentials: true,
   });
