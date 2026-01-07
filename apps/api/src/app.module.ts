@@ -76,6 +76,7 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
         DATABASE_URL: Joi.string().required(),
 
         // Redis (BullMQ)
+        REDIS_URL: Joi.string().uri().optional(),
         REDIS_HOST: Joi.string().default('localhost'),
         REDIS_PORT: Joi.number().default(6379),
 
@@ -107,12 +108,29 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
     }),
     BullModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        connection: {
-          host: config.get('REDIS_HOST'),
-          port: config.get('REDIS_PORT'),
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const redisUrl = config.get<string>('REDIS_URL');
+        if (redisUrl) {
+          const url = new URL(redisUrl);
+          const port = url.port ? Number(url.port) : 6379;
+          const password = url.password ? decodeURIComponent(url.password) : undefined;
+          return {
+            connection: {
+              host: url.hostname,
+              port,
+              ...(password && { password }),
+              ...(url.protocol === 'rediss:' && { tls: {} }),
+            },
+          };
+        }
+
+        return {
+          connection: {
+            host: config.get('REDIS_HOST'),
+            port: config.get('REDIS_PORT'),
+          },
+        };
+      },
     }),
     DatabaseModule,
     CatalogModule,
