@@ -3,7 +3,13 @@ import { Card, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { ErrorStateProps } from '../types';
+
+type ErrorStateProps = {
+  error: string | Error;
+  retry?: () => void;
+  fallback?: React.ReactNode;
+  variant?: 'page' | 'section' | 'inline';
+};
 
 /**
  * ErrorState component for displaying error states with retry functionality

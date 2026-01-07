@@ -72,7 +72,10 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
       </Carousel>
 
       {/* Video Modal */}
-      <Dialog open={!!selectedVideo} onOpenChange={(open) => !open && setSelectedVideo(null)}>
+      <Dialog
+        open={!!selectedVideo}
+        onOpenChange={(open: boolean) => !open && setSelectedVideo(null)}
+      >
         <DialogContent className="max-w-4xl p-0 bg-black border-zinc-800 overflow-hidden">
           <div className="aspect-video">
             {selectedVideo && (

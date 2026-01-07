@@ -3,7 +3,11 @@ import { Card, CardContent } from '@/shared/ui/card';
 import { Progress } from '@/shared/ui/progress';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Loader2 } from 'lucide-react';
-import { LoadingStateProps } from '../types';
+
+type LoadingStateProps = {
+  type: 'skeleton' | 'progress' | 'spinner';
+  message?: React.ReactNode;
+};
 
 /**
  * LoadingState component with skeleton, spinner, and progress variants

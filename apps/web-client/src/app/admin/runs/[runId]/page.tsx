@@ -170,7 +170,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
 
       <ConfirmActionDialog
         open={confirmDialog.open && confirmDialog.type === 'promote'}
-        onOpenChange={(open) => setConfirmDialog({ open })}
+        onOpenChange={(open: boolean) => setConfirmDialog({ open })}
         title={dict.admin.runDetail.confirmPromote.title}
         description={dict.admin.runDetail.confirmPromote.description
           .replace('{policyName}', run.targetPolicyId)
@@ -183,7 +183,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
 
       <ConfirmActionDialog
         open={confirmDialog.open && confirmDialog.type === 'cancel'}
-        onOpenChange={(open) => setConfirmDialog({ open })}
+        onOpenChange={(open: boolean) => setConfirmDialog({ open })}
         title={dict.admin.runDetail.confirmCancel.title}
         description={dict.admin.runDetail.confirmCancel.description
           .replace('{policyName}', run.targetPolicyId)

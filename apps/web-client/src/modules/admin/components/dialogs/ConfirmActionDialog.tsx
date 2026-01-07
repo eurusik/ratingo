@@ -19,7 +19,16 @@ import {
 } from '@/shared/ui/alert-dialog';
 import { useTranslation } from '@/shared/i18n';
 
-import { ConfirmActionDialogProps } from '../types';
+type ConfirmActionDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: React.ReactNode;
+  description?: React.ReactNode;
+  confirmText?: string;
+  requireTyping?: boolean;
+  onConfirm: () => Promise<void> | void;
+  variant?: 'default' | 'destructive';
+};
 
 /**
  * Confirmation dialog with optional typing requirement.

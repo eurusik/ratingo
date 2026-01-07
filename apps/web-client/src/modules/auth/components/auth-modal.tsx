@@ -38,7 +38,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
   }, [onClose]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
       <DialogContent className="bg-zinc-900 border-zinc-800 sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-zinc-100">

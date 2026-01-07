@@ -347,7 +347,7 @@ export function MappingsTable({ labels }: MappingsTableProps) {
 
       <MappingDialog
         open={mappingDialog.open}
-        onOpenChange={(open) => setMappingDialog((prev) => ({ ...prev, open }))}
+        onOpenChange={(open: boolean) => setMappingDialog((prev) => ({ ...prev, open }))}
         onSubmit={handleSubmitMapping}
         mode={mappingDialog.mode}
         initialData={
@@ -366,11 +366,11 @@ export function MappingsTable({ labels }: MappingsTableProps) {
 
       <ConfirmActionDialog
         open={deleteDialog.open}
-        onOpenChange={(open) => setDeleteDialog({ open })}
+        onOpenChange={(open: boolean) => setDeleteDialog({ open })}
         title={labels?.confirmDelete?.title ?? 'Delete mapping'}
         description={
           labels?.confirmDelete?.description ??
-          `Are you sure you want to delete mapping for TMDB ID ${deleteDialog.mapping?.tmdbProviderId}?`
+          `Delete mapping for provider "${deleteDialog.mapping?.providerId}"?`
         }
         onConfirm={handleConfirmDelete}
         variant="destructive"

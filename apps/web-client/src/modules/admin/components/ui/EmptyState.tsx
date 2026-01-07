@@ -1,7 +1,16 @@
 import React from 'react';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
-import { EmptyStateProps } from '../types';
+
+type EmptyStateProps = {
+  icon?: React.ReactNode;
+  title: React.ReactNode;
+  description?: React.ReactNode;
+  action?: {
+    label: React.ReactNode;
+    onClick: () => void;
+  };
+};
 
 /**
  * EmptyState component for displaying empty data states

@@ -162,7 +162,7 @@ export default function PoliciesPage() {
 
       <ConfirmActionDialog
         open={confirmDialog.open}
-        onOpenChange={(open) => setConfirmDialog({ open })}
+        onOpenChange={(open: boolean) => setConfirmDialog({ open })}
         title={dict.admin.policies.confirmPrepare.title}
         description={dict.admin.policies.confirmPrepare.description.replace(
           '{policyName}',

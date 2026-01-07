@@ -217,7 +217,7 @@ export function UnmappedProvidersTable({ labels }: UnmappedProvidersTableProps) 
 
       <MappingDialog
         open={mappingDialog.open}
-        onOpenChange={(open) => setMappingDialog({ open })}
+        onOpenChange={(open: boolean) => setMappingDialog({ open })}
         onSubmit={handleSubmitMapping}
         mode="create"
         initialData={
