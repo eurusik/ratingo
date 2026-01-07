@@ -382,4 +382,33 @@ export class IngestionController {
       force: isForce,
     };
   }
+
+  /**
+   * Queues IMDb backfill job for shows missing IMDb ID.
+   * Re-syncs shows to fetch external_ids from TMDB and OMDb ratings.
+   *
+   * @returns {Promise<any>} Queueing result with jobId
+   */
+  @Post('backfill/imdb')
+  @ApiOperation({
+    summary: 'Backfill IMDb IDs for shows',
+    description:
+      'Finds all shows with missing IMDb ID and re-syncs them to fetch external_ids from TMDB. This also populates OMDb ratings (IMDb, Rotten Tomatoes, Metacritic).',
+  })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async backfillImdb(@Query('force') force?: string) {
+    const isForce = force === 'true';
+    const today = formatUtcDayId();
+    const window = isForce ? Date.now().toString() : today;
+    const jobId = `backfill_imdb_${window}`;
+
+    const job = await this.ingestionQueue.add(IngestionJob.BACKFILL_IMDB_DISPATCHER, {}, { jobId });
+
+    return {
+      status: 'queued',
+      jobId: job.id,
+      jobType: IngestionJob.BACKFILL_IMDB_DISPATCHER,
+      force: isForce,
+    };
+  }
 }

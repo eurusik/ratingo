@@ -34,6 +34,11 @@ export enum IngestionJob {
 
   /** @deprecated Use SYNC_TRENDING_DISPATCHER instead */
   SYNC_TRENDING_FULL = 'sync-trending-full',
+
+  /** Dispatcher job: finds shows without IMDb ID and queues re-sync */
+  BACKFILL_IMDB_DISPATCHER = 'backfill-imdb-dispatcher',
+  /** Item job: re-syncs a single show to fetch IMDb ID */
+  BACKFILL_IMDB_ITEM = 'backfill-imdb-item',
 }
 
 /**

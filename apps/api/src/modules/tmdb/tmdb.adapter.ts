@@ -155,7 +155,7 @@ export class TmdbAdapter implements MetadataProviderPort {
   public async getShow(tmdbId: number): Promise<NormalizedMedia | null> {
     try {
       const data = await this.fetch<TmdbMediaResponse>(`/tv/${tmdbId}`, {
-        append_to_response: 'aggregate_credits,videos,content_ratings,watch/providers',
+        append_to_response: 'external_ids,aggregate_credits,videos,content_ratings,watch/providers',
         include_video_language: 'uk,en',
       });
       const result = TmdbMapper.toDomain(data, MediaType.SHOW);

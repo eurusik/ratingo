@@ -6,6 +6,7 @@ import { type Job } from 'bullmq';
 import { type MediaType } from '@/common/enums/media-type.enum';
 
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
+import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
 import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
 import { SnapshotsPipeline } from '../pipelines/snapshots.pipeline';
@@ -34,6 +35,7 @@ export class SyncWorker extends WorkerHost {
     private readonly trackedShowsPipeline: TrackedShowsPipeline,
     private readonly nowPlayingPipeline: NowPlayingPipeline,
     private readonly newReleasesPipeline: NewReleasesPipeline,
+    private readonly backfillImdbPipeline: BackfillImdbPipeline,
   ) {
     super();
   }
@@ -132,6 +134,14 @@ export class SyncWorker extends WorkerHost {
         // New releases pipeline
         case IngestionJob.SYNC_NEW_RELEASES:
           await this.newReleasesPipeline.sync(job.data.region, job.data.daysBack);
+          break;
+
+        // IMDb backfill pipeline
+        case IngestionJob.BACKFILL_IMDB_DISPATCHER:
+          await this.backfillImdbPipeline.dispatch();
+          break;
+        case IngestionJob.BACKFILL_IMDB_ITEM:
+          await this.backfillImdbPipeline.processItem(job.data.tmdbId!, jid);
           break;
 
         default:
