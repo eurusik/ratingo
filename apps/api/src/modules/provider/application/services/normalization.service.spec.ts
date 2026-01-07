@@ -9,7 +9,12 @@ import {
   UNMAPPED_TRACKING_REPOSITORY,
 } from '../../domain/repositories/unmapped-tracking.repository.interface';
 import type { ResolvedMapping } from '../../domain/types/provider.types';
-import { NormalizationService, WatchProvidersMap } from './normalization.service';
+import {
+  NormalizationService,
+  SUPPORTED_OFFER_TYPES,
+  SUPPORTED_REGIONS,
+  WatchProvidersMap,
+} from './normalization.service';
 import { ProviderMappingService } from './provider-mapping.service';
 
 describe('NormalizationService', () => {
@@ -333,11 +338,11 @@ describe('NormalizationService', () => {
     });
 
     it('should deduplicate unmapped providers within same region', async () => {
-      // Arrange: same unmapped provider in multiple offer types
+      // Arrange: same unmapped provider in multiple supported offer types (flatrate + free)
       const rawProviders: WatchProvidersMap = {
         US: {
           flatrate: [{ providerId: 999, name: 'Unknown' }],
-          rent: [{ providerId: 999, name: 'Unknown' }],
+          free: [{ providerId: 999, name: 'Unknown' }],
         },
       };
 
@@ -346,7 +351,7 @@ describe('NormalizationService', () => {
       // Act
       const result = await service.normalizeWatchProviders('media-123', rawProviders);
 
-      // Assert: only 1 unmapped recorded, not 2
+      // Assert: only 1 unmapped recorded (deduped by region|tmdbProviderId)
       expect(result.unmappedCount).toBe(1);
       expect(mockUnmappedRepository.recordUnmappedBatch).toHaveBeenCalledWith([
         expect.objectContaining({ tmdbProviderId: 999, region: 'US' }),
@@ -372,6 +377,135 @@ describe('NormalizationService', () => {
 
       // Assert: 2 offers (different offerType = different dedupe key)
       expect(result.offersCreated).toBe(2);
+    });
+
+    describe('unmapped tracking scope', () => {
+      it('should not track rent/buy/ads as unmapped even when mapping is missing', async () => {
+        // Arrange: unmapped provider in rent/buy/ads only
+        const rawProviders: WatchProvidersMap = {
+          US: {
+            rent: [{ providerId: 999, name: 'Unknown Rental' }],
+            buy: [{ providerId: 998, name: 'Unknown Purchase' }],
+            ads: [{ providerId: 997, name: 'Unknown Ads' }],
+          },
+        };
+
+        mockMappingService.resolveMany.mockResolvedValue(new Map());
+
+        // Act
+        const result = await service.normalizeWatchProviders('media-123', rawProviders);
+
+        // Assert: no unmapped recorded (rent/buy/ads are not actionable)
+        expect(result.unmappedCount).toBe(0);
+        expect(mockUnmappedRepository.recordUnmappedBatch).not.toHaveBeenCalled();
+      });
+
+      it('should not track regions outside UA/US as unmapped', async () => {
+        // Arrange: unmapped provider in GB (not supported)
+        const rawProviders: WatchProvidersMap = {
+          GB: {
+            flatrate: [{ providerId: 999, name: 'Unknown UK Provider' }],
+          },
+          DE: {
+            free: [{ providerId: 998, name: 'Unknown German Provider' }],
+          },
+        };
+
+        mockMappingService.resolveMany.mockResolvedValue(new Map());
+
+        // Act
+        const result = await service.normalizeWatchProviders('media-123', rawProviders);
+
+        // Assert: no unmapped recorded (GB/DE are not supported regions)
+        expect(result.unmappedCount).toBe(0);
+        expect(mockUnmappedRepository.recordUnmappedBatch).not.toHaveBeenCalled();
+      });
+
+      it('should track flatrate/free in UA/US as unmapped when mapping is missing', async () => {
+        // Arrange: unmapped providers in supported regions and offer types
+        const rawProviders: WatchProvidersMap = {
+          UA: {
+            flatrate: [{ providerId: 999, name: 'Unknown UA Flatrate' }],
+            free: [{ providerId: 998, name: 'Unknown UA Free' }],
+          },
+          US: {
+            flatrate: [{ providerId: 997, name: 'Unknown US Flatrate' }],
+          },
+        };
+
+        mockMappingService.resolveMany.mockResolvedValue(new Map());
+
+        // Act
+        const result = await service.normalizeWatchProviders('media-123', rawProviders);
+
+        // Assert: all 3 unmapped recorded
+        expect(result.unmappedCount).toBe(3);
+        expect(mockUnmappedRepository.recordUnmappedBatch).toHaveBeenCalledWith(
+          expect.arrayContaining([
+            expect.objectContaining({ tmdbProviderId: 999, region: 'UA' }),
+            expect.objectContaining({ tmdbProviderId: 998, region: 'UA' }),
+            expect.objectContaining({ tmdbProviderId: 997, region: 'US' }),
+          ]),
+        );
+      });
+
+      it('should track unmapped only for supported offer types even in supported regions', async () => {
+        // Arrange: mix of supported and unsupported offer types in US
+        const rawProviders: WatchProvidersMap = {
+          US: {
+            flatrate: [{ providerId: 999, name: 'Unknown Flatrate' }],
+            free: [{ providerId: 998, name: 'Unknown Free' }],
+            rent: [{ providerId: 997, name: 'Unknown Rent' }],
+            buy: [{ providerId: 996, name: 'Unknown Buy' }],
+          },
+        };
+
+        mockMappingService.resolveMany.mockResolvedValue(new Map());
+
+        // Act
+        const result = await service.normalizeWatchProviders('media-123', rawProviders);
+
+        // Assert: only flatrate and free tracked (2 unmapped)
+        expect(result.unmappedCount).toBe(2);
+        expect(mockUnmappedRepository.recordUnmappedBatch).toHaveBeenCalledWith(
+          expect.arrayContaining([
+            expect.objectContaining({ tmdbProviderId: 999, providerName: 'Unknown Flatrate' }),
+            expect.objectContaining({ tmdbProviderId: 998, providerName: 'Unknown Free' }),
+          ]),
+        );
+      });
+
+      it('should still create offers for all offer types regardless of unmapped tracking scope', async () => {
+        // Arrange: mapped provider in all offer types across multiple regions
+        const rawProviders: WatchProvidersMap = {
+          US: {
+            flatrate: [{ providerId: 8, name: 'Netflix' }],
+            rent: [{ providerId: 8, name: 'Netflix' }],
+            buy: [{ providerId: 8, name: 'Netflix' }],
+          },
+          GB: {
+            flatrate: [{ providerId: 8, name: 'Netflix' }],
+          },
+        };
+
+        const mappings = new Map<number, ResolvedMapping>([
+          [8, { providerId: 'netflix', variantId: null, distributionChannel: 'direct' }],
+        ]);
+        mockMappingService.resolveMany.mockResolvedValue(mappings);
+
+        // Act
+        const result = await service.normalizeWatchProviders('media-123', rawProviders);
+
+        // Assert: all 4 offers created (offers are not filtered by scope)
+        expect(result.offersCreated).toBe(4);
+        expect(result.unmappedCount).toBe(0);
+      });
+
+      it('should export SUPPORTED_REGIONS and SUPPORTED_OFFER_TYPES constants', () => {
+        // Assert: constants are exported and have expected values
+        expect(SUPPORTED_REGIONS).toEqual(['UA', 'US']);
+        expect(SUPPORTED_OFFER_TYPES).toEqual(['flatrate', 'free']);
+      });
     });
   });
 

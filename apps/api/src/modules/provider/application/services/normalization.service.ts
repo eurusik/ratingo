@@ -21,6 +21,18 @@ import { normalizeRegion } from '../../domain/utils/region-normalizer';
 
 import { ProviderMappingService } from './provider-mapping.service';
 
+/**
+ * Supported regions for unmapped provider tracking.
+ * Only providers from these regions will be recorded as unmapped.
+ */
+export const SUPPORTED_REGIONS = ['UA', 'US'] as const;
+
+/**
+ * Supported offer types for unmapped provider tracking.
+ * Only flatrate/free offers are actionable for "where to watch".
+ */
+export const SUPPORTED_OFFER_TYPES = ['flatrate', 'free'] as const;
+
 /** Raw TMDB provider data (normalized format from TmdbMapper) */
 export interface TmdbProvider {
   providerId: number;
@@ -207,6 +219,7 @@ export class NormalizationService {
 
   /**
    * Processes a single provider, adding to offers or unmapped with deduplication.
+   * Unmapped tracking is limited to SUPPORTED_REGIONS and SUPPORTED_OFFER_TYPES.
    */
   private processProvider(
     mediaItemId: string,
@@ -238,6 +251,14 @@ export class NormalizationService {
         link,
         tmdbProviderId: provider.providerId,
       });
+      return;
+    }
+
+    // Only track unmapped for supported regions and offer types
+    const isSupportedRegion = (SUPPORTED_REGIONS as readonly string[]).includes(region);
+    const isSupportedOfferType = (SUPPORTED_OFFER_TYPES as readonly string[]).includes(offerType);
+
+    if (!isSupportedRegion || !isSupportedOfferType) {
       return;
     }
 
