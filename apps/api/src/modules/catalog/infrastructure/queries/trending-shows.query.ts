@@ -113,7 +113,7 @@ export class TrendingShowsQuery {
         sql`mi.deleted_at IS NULL`,
         // Eligibility filter: only show ELIGIBLE items with trending context
         sql`mce.status = ${EligibilityStatus.ELIGIBLE}`,
-        sql`mce.context = ${EvaluationContext.TRENDING}`,
+        sql`mce.context IN (${EvaluationContext.TRENDING}, ${EvaluationContext.CATALOG})`,
         // Ready filter: only show items with ready ingestion status
         sql`mi.ingestion_status = ${IngestionStatus.READY}`,
       ];

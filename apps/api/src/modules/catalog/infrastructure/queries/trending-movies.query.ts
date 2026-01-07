@@ -91,7 +91,10 @@ export class TrendingMoviesQuery {
       const conditions: SQL[] = [
         isNotNull(schema.mediaStats.popularityScore),
         eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-        eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
+        inArray(schema.mediaCatalogEvaluations.context, [
+          EvaluationContext.TRENDING,
+          EvaluationContext.CATALOG,
+        ]),
         eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
         isNull(schema.mediaItems.deletedAt),
       ];
