@@ -384,16 +384,20 @@ export class IngestionController {
   }
 
   /**
-   * Queues IMDb backfill job for shows missing IMDb ID.
-   * Re-syncs shows to fetch external_ids from TMDB and OMDb ratings.
+   * Queues re-sync job for shows missing IMDb ID.
+   * Performs full re-sync: fetches external_ids from TMDB, then enriches with
+   * Trakt stats and OMDb ratings (IMDb, Rotten Tomatoes, Metacritic).
    *
    * @returns {Promise<any>} Queueing result with jobId
    */
   @Post('backfill/imdb')
   @ApiOperation({
-    summary: 'Backfill IMDb IDs for shows',
+    summary: 'Re-sync shows missing IMDb ID',
     description:
-      'Finds all shows with missing IMDb ID and re-syncs them to fetch external_ids from TMDB. This also populates OMDb ratings (IMDb, Rotten Tomatoes, Metacritic).',
+      'Finds all shows with missing IMDb ID and performs full re-sync. ' +
+      'This fetches external_ids from TMDB (including imdb_id), then enriches each show with ' +
+      'Trakt stats (watchers, ratings) and OMDb ratings (IMDb, Rotten Tomatoes, Metacritic). ' +
+      'Use when shows were imported before external_ids fetching was implemented.',
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async backfillImdb(@Query('force') force?: string) {
