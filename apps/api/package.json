@@ -8,7 +8,7 @@
     "start": "nest start",
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "start:prod": "node dist/src/main.js",
     "openapi:generate": "ts-node -r tsconfig-paths/register src/scripts/generate-openapi.ts",
     "lint": "cd ../.. && npx eslint \"apps/api/src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
