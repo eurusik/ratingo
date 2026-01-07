@@ -42,7 +42,7 @@ RUN npm ci --omit=dev --include-workspace-root --workspace=web-client
 
 # Copy Next.js build output
 COPY --from=build /app/apps/web-client/.next ./apps/web-client/.next
-COPY --from=build /app/apps/web-client/next.config.ts ./apps/web-client/next.config.ts
+COPY --from=build /app/apps/web-client/next.config.js ./apps/web-client/next.config.js
 
 EXPOSE 3002
 
