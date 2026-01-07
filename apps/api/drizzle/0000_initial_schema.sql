@@ -59,6 +59,11 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
+  CREATE TYPE "public"."evaluation_context" AS ENUM('catalog', 'trending', 'homepage', 'now_playing', 'new_digital', 'search');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
   CREATE TYPE "public"."subscription_trigger" AS ENUM('release', 'new_season', 'new_episode', 'on_streaming', 'status_changed');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
@@ -91,7 +96,7 @@ CREATE TABLE IF NOT EXISTS "media_items" (
   "backdrop_path" text,
   "videos" jsonb DEFAULT null,
   "credits" jsonb DEFAULT '{"cast":[],"crew":[]}',
-  "watch_providers" jsonb DEFAULT null,
+  "watch_providers_raw" jsonb DEFAULT null,
   "trending_score" double precision DEFAULT 0,
   "trending_rank" integer,
   "trending_updated_at" timestamp,
@@ -125,6 +130,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS "media_slug_idx" ON "media_items" ("slug");
 CREATE INDEX IF NOT EXISTS "media_active_idx" ON "media_items" ("deleted_at") WHERE "deleted_at" IS NULL;
 CREATE INDEX IF NOT EXISTS "media_search_idx" ON "media_items" USING gin ("search_vector");
 CREATE INDEX IF NOT EXISTS "media_content_class_idx" ON "media_items" ("content_class");
+CREATE INDEX IF NOT EXISTS "media_title_trgm_idx" ON "media_items" USING gin ("title" gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS "media_original_title_trgm_idx" ON "media_items" USING gin ("original_title" gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS "media_items_ingestion_status_idx" ON "media_items" ("ingestion_status") WHERE "deleted_at" IS NULL;
 
 -- ============================================================
 -- MEDIA GENRES (Junction)
@@ -432,6 +440,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "catalog_eval_runs_running_policy_uniq" ON "ca
 
 CREATE TABLE IF NOT EXISTS "media_catalog_evaluations" (
   "media_item_id" uuid NOT NULL REFERENCES "media_items"("id") ON DELETE CASCADE,
+  "context" "evaluation_context" NOT NULL DEFAULT 'catalog',
   "status" "eligibility_status" DEFAULT 'pending' NOT NULL,
   "reasons" text[] DEFAULT '{}' NOT NULL,
   "relevance_score" integer DEFAULT 0 NOT NULL,
@@ -439,16 +448,21 @@ CREATE TABLE IF NOT EXISTS "media_catalog_evaluations" (
   "breakout_rule_id" text,
   "evaluated_at" timestamp,
   "run_id" uuid REFERENCES "catalog_evaluation_runs"("id") ON DELETE SET NULL,
-  PRIMARY KEY ("media_item_id", "policy_version")
+  PRIMARY KEY ("media_item_id", "policy_version", "context")
 );
 
 CREATE INDEX IF NOT EXISTS "media_catalog_eval_status_idx" ON "media_catalog_evaluations" ("status");
 CREATE INDEX IF NOT EXISTS "media_catalog_eval_status_relevance_idx" ON "media_catalog_evaluations" ("status", "relevance_score");
 CREATE INDEX IF NOT EXISTS "media_catalog_eval_policy_version_idx" ON "media_catalog_evaluations" ("policy_version");
 CREATE INDEX IF NOT EXISTS "media_catalog_eval_run_id_idx" ON "media_catalog_evaluations" ("run_id");
+CREATE INDEX IF NOT EXISTS "media_catalog_eval_run_status_idx" ON "media_catalog_evaluations" ("run_id", "status") WHERE "run_id" IS NOT NULL;
 CREATE INDEX IF NOT EXISTS "media_catalog_eval_policy_status_relevance_idx" ON "media_catalog_evaluations" ("policy_version", "status", "relevance_score" DESC);
 CREATE INDEX IF NOT EXISTS "media_catalog_eval_item_version_idx" ON "media_catalog_evaluations" ("media_item_id", "policy_version" DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS "media_catalog_eval_run_item_unique_idx" ON "media_catalog_evaluations" ("run_id", "media_item_id") WHERE "run_id" IS NOT NULL;
+CREATE INDEX IF NOT EXISTS "media_catalog_eval_context_idx" ON "media_catalog_evaluations" ("context");
+CREATE INDEX IF NOT EXISTS "media_catalog_eval_context_status_idx" ON "media_catalog_evaluations" ("context", "status", "relevance_score" DESC);
+CREATE INDEX IF NOT EXISTS "idx_media_catalog_evaluations_version_item" ON "media_catalog_evaluations" ("policy_version", "media_item_id");
+CREATE INDEX IF NOT EXISTS "idx_media_catalog_evaluations_version_item_status" ON "media_catalog_evaluations" ("policy_version", "media_item_id", "status");
 
 -- ============================================================
 -- PROVIDER SYSTEM
@@ -555,3 +569,57 @@ BEGIN
   WHERE run_id = p_run_id;
 END;
 $$ LANGUAGE plpgsql STABLE;
+
+
+-- ============================================================
+-- PUBLIC MEDIA ITEMS VIEW
+-- ============================================================
+
+CREATE OR REPLACE VIEW public_media_items AS
+SELECT 
+  mi.id,
+  mi.type,
+  mi.tmdb_id,
+  mi.imdb_id,
+  mi.title,
+  mi.original_title,
+  mi.slug,
+  mi.overview,
+  mi.poster_path,
+  mi.backdrop_path,
+  mi.videos,
+  mi.credits,
+  mi.watch_providers_raw,
+  mi.trending_score,
+  mi.trending_rank,
+  mi.popularity,
+  mi.rating,
+  mi.vote_count,
+  mi.rating_imdb,
+  mi.rating_metacritic,
+  mi.rating_rotten_tomatoes,
+  mi.rating_trakt,
+  mi.release_date,
+  mi.origin_countries,
+  mi.original_language,
+  mi.ingestion_status,
+  mi.created_at,
+  mi.updated_at,
+  ms.ratingo_score,
+  ms.quality_score,
+  ms.popularity_score,
+  ms.freshness_score,
+  ms.watchers_count,
+  mce.relevance_score,
+  mce.status AS eligibility_status
+FROM media_items mi
+LEFT JOIN media_stats ms ON ms.media_item_id = mi.id
+JOIN catalog_policies cp ON cp.is_active = true
+JOIN media_catalog_evaluations mce 
+  ON mce.media_item_id = mi.id 
+  AND mce.policy_version = cp.version
+  AND mce.context = 'catalog'
+WHERE 
+  mce.status = 'eligible'
+  AND mi.ingestion_status = 'ready'
+  AND mi.deleted_at IS NULL;
