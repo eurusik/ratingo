@@ -7,15 +7,17 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
+import {
+  EligibilityStatus,
+  EvaluationContext,
+  type EvaluationContextType,
+} from '../../../catalog-policy/public';
 import {
   TRENDING_THRESHOLDS,
   MOVIE_TRENDING_WEIGHTS,
 } from '../../domain/constants/catalog.constants';
-import type {
-  TrendingMovieItem,
-  WithTotal,
-} from '../../domain/repositories/movie.repository.interface';
+import type { TrendingMovieItem } from '../../domain/repositories/movie.repository.interface';
+import type { TrendingQueryResult } from '../../domain/types/query.types';
 import {
   type CatalogSort,
   type SortOrder,
@@ -68,11 +70,14 @@ export class TrendingMoviesQuery {
    * Executes the trending movies query.
    * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
+   * Returns degraded state if no evaluations exist for the trending context
+   * with the active policy version.
+   *
    * @param {TrendingMoviesOptions} options - Query options (limit, offset, filters)
-   * @returns {Promise<WithTotal<TrendingMovieItem>>} List of trending movies with stats and genres
+   * @returns {Promise<TrendingQueryResult<TrendingMovieItem>>} List of trending movies with stats and genres
    * @throws {DatabaseException} When database query fails
    */
-  async execute(options: TrendingMoviesOptions): Promise<WithTotal<TrendingMovieItem>> {
+  async execute(options: TrendingMoviesOptions): Promise<TrendingQueryResult<TrendingMovieItem>> {
     const {
       limit = 20,
       offset = 0,
@@ -88,6 +93,24 @@ export class TrendingMoviesQuery {
     } = options;
 
     try {
+      // Check for degraded state before executing main query
+      const evaluationsExist = await this.checkContextEvaluationsExist(EvaluationContext.TRENDING);
+
+      if (!evaluationsExist) {
+        this.logger.warn(
+          `Degraded state: no evaluations for context=${EvaluationContext.TRENDING} with active policy`,
+        );
+
+        const emptyResult: TrendingQueryResult<TrendingMovieItem> =
+          [] as TrendingQueryResult<TrendingMovieItem>;
+        emptyResult.total = 0;
+        emptyResult.meta = {
+          degraded: true,
+          degradedReason: 'Context evaluations missing - evaluation in progress',
+        };
+        return emptyResult;
+      }
+
       const conditions: SQL[] = [
         isNotNull(schema.mediaStats.popularityScore),
         eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
@@ -183,8 +206,9 @@ export class TrendingMoviesQuery {
       const genresMap = await this.genreQuery.fetchForMediaItems(mediaItemIds);
 
       const mapped = MovieResultMapper.mapManyTrending(results as MovieSelectRow[], genresMap);
-      const withTotal = mapped as WithTotal<TrendingMovieItem>;
+      const withTotal = mapped as TrendingQueryResult<TrendingMovieItem>;
       withTotal.total = total;
+      withTotal.meta = { degraded: false };
       return withTotal;
     } catch (error) {
       this.logger.error(`Failed to find trending movies: ${error.message}`, error.stack);
@@ -192,6 +216,30 @@ export class TrendingMoviesQuery {
         originalError: error.message,
       });
     }
+  }
+
+  /**
+   * Checks if any evaluations exist for the given context with the active policy.
+   * Used to detect degraded state when context evaluations are missing.
+   *
+   * @param context - The evaluation context to check
+   * @returns True if evaluations exist, false otherwise
+   */
+  async checkContextEvaluationsExist(context: EvaluationContextType): Promise<boolean> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.mediaCatalogEvaluations)
+      .innerJoin(
+        schema.catalogPolicies,
+        and(
+          eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+          eq(schema.catalogPolicies.isActive, true),
+        ),
+      )
+      .where(eq(schema.mediaCatalogEvaluations.context, context))
+      .limit(1);
+
+    return (result[0]?.count ?? 0) > 0;
   }
 
   private buildYearStart(year: number): Date {

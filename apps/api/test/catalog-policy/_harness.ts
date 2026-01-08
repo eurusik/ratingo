@@ -5,7 +5,7 @@
  * for testing the policy activation flow without real database/Redis.
  */
 
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import * as request from 'supertest';
@@ -23,6 +23,7 @@ import { DiffService } from '../../src/modules/catalog-policy/application/servic
 import { DryRunService } from '../../src/modules/catalog-policy/application/services/dry-run.service';
 import { CatalogPolicyService } from '../../src/modules/catalog-policy/application/services/catalog-policy.service';
 import { RunAggregationService } from '../../src/modules/catalog-policy/application/services/run-aggregation.service';
+import { AdminJwtGuard } from '../../src/modules/auth/infrastructure/guards/admin-jwt.guard';
 import { CATALOG_POLICY_QUEUE } from '../../src/modules/catalog-policy/catalog-policy.constants';
 import {
   ICatalogPolicyRepository,
@@ -40,6 +41,10 @@ import {
   IMediaCatalogEvaluationRepository,
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
 } from '../../src/modules/catalog-policy/infrastructure/repositories/media-catalog-evaluation.repository';
+import {
+  MEDIA_WATCH_OFFERS_REPOSITORY,
+  type IMediaWatchOffersRepository,
+} from '../../src/modules/provider/public';
 import { DATABASE_CONNECTION } from '../../src/database/database.module';
 import {
   CatalogPolicy,
@@ -327,6 +332,57 @@ class MockQueue {
 }
 
 // ============================================================================
+// Mock Guard (bypasses authentication)
+// ============================================================================
+
+class MockAdminJwtGuard implements CanActivate {
+  canActivate(_context: ExecutionContext): boolean {
+    return true;
+  }
+}
+
+// ============================================================================
+// Mock Watch Offers Repository
+// ============================================================================
+
+class MockWatchOffersRepository implements IMediaWatchOffersRepository {
+  async upsertMany(_mediaItemId: string, _region: string, _offers: any[]): Promise<void> {
+    // No-op for tests
+  }
+
+  async upsertManyByRegions(_mediaItemId: string, _offers: any[]): Promise<void> {
+    // No-op for tests
+  }
+
+  async findByMediaItemId(_mediaItemId: string, _options?: any): Promise<any[]> {
+    return [];
+  }
+
+  async findByTmdbProviderId(_tmdbProviderId: number): Promise<any[]> {
+    return [];
+  }
+
+  async findByMediaItemIds(_mediaItemIds: string[], _options?: any): Promise<Map<string, any[]>> {
+    return new Map();
+  }
+
+  async getOffersForMediaBatch(
+    _mediaItemIds: string[],
+    _options?: any,
+  ): Promise<Map<string, any[]>> {
+    return new Map();
+  }
+
+  async deleteByMediaItemId(_mediaItemId: string): Promise<void> {
+    // No-op for tests
+  }
+
+  async deleteByMediaItemIdAndRegion(_mediaItemId: string, _region: string): Promise<void> {
+    // No-op for tests
+  }
+}
+
+// ============================================================================
 // Mock DB for DiffService
 // ============================================================================
 
@@ -336,7 +392,7 @@ function createMockDb() {
   let executeResults: any[] = [];
   let executeCallIndex = 0;
 
-  return {
+  const mockDb = {
     select: jest.fn().mockReturnThis(),
     from: jest.fn().mockReturnThis(),
     leftJoin: jest.fn().mockReturnThis(),
@@ -350,6 +406,27 @@ function createMockDb() {
       const result = executeResults[executeCallIndex] ?? { rows: [] };
       executeCallIndex++;
       return result;
+    }),
+    transaction: jest.fn().mockImplementation(async (callback: (tx: any) => Promise<any>) => {
+      // Create a mock transaction context that mimics the db interface
+      const txMock = {
+        select: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockResolvedValue([{ version: 1 }]), // active policy
+      };
+      // Override where to return count for the second query (media items count)
+      let callCount = 0;
+      txMock.where.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // First where: active policy query - returns chainable with limit
+          return txMock;
+        }
+        // Second where: count query - returns result directly
+        return Promise.resolve([{ count: 1000 }]);
+      });
+      return callback(txMock);
     }),
     // Helper to set results for tests
     _setWhereResults(results: any[]) {
@@ -367,6 +444,8 @@ function createMockDb() {
       executeCallIndex = 0;
     },
   };
+
+  return mockDb;
 }
 
 // ============================================================================
@@ -423,6 +502,7 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
   const queue = new MockQueue();
   const mockDb = createMockDb();
   const mockAggregationService = createMockRunAggregationService(runRepo);
+  const mockWatchOffersRepo = new MockWatchOffersRepository();
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     controllers: [PolicyController, RunController, DryRunController],
@@ -435,10 +515,14 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
       { provide: CATALOG_POLICY_REPOSITORY, useValue: policyRepo },
       { provide: CATALOG_EVALUATION_RUN_REPOSITORY, useValue: runRepo },
       { provide: MEDIA_CATALOG_EVALUATION_REPOSITORY, useValue: evaluationRepo },
+      { provide: MEDIA_WATCH_OFFERS_REPOSITORY, useValue: mockWatchOffersRepo },
       { provide: getQueueToken(CATALOG_POLICY_QUEUE), useValue: queue },
       { provide: DATABASE_CONNECTION, useValue: mockDb },
     ],
-  }).compile();
+  })
+    .overrideGuard(AdminJwtGuard)
+    .useClass(MockAdminJwtGuard)
+    .compile();
 
   const app = moduleFixture.createNestApplication();
   app.setGlobalPrefix('api');

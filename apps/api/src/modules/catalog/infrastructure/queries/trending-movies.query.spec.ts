@@ -127,13 +127,14 @@ describe('TrendingMoviesQuery', () => {
       { mediaItemId: 'mid2', id: 'g2', name: 'Drama', slug: 'drama' },
     ];
 
-    // main select + count (genres fetched via mockGenreQuery)
-    setup([movies, [{ total: movies.length }], genres]);
+    // context check (evaluations exist) + main select + count (genres fetched via mockGenreQuery)
+    setup([[{ count: 1 }], movies, [{ total: movies.length }], genres]);
 
     const res = await query.execute({ limit: 5, offset: 0, minRatingo: 50 });
 
-    expect(db.select).toHaveBeenCalledTimes(2);
+    expect(db.select).toHaveBeenCalledTimes(3);
     expect(res).toHaveLength(2);
+    expect(res.meta).toEqual({ degraded: false });
 
     const newMovie = res.find((m) => m.id === 'row1')!;
     expect(newMovie.isNew).toBe(true);
@@ -164,21 +165,38 @@ describe('TrendingMoviesQuery', () => {
     ] as any[];
     const genres = [{ mediaItemId: 'mid', id: 'g1', name: 'Action', slug: 'action' }];
 
-    // select for genre subquery, main results, count (genres fetched via mockGenreQuery)
-    setup([[{ id: 'mg' }], movies, [{ total: movies.length }], genres]);
+    // context check + select for genre subquery + main results + count (genres fetched via mockGenreQuery)
+    setup([[{ count: 1 }], [{ id: 'mg' }], movies, [{ total: movies.length }], genres]);
 
     const res = await query.execute({ limit: 1, offset: 0, genres: ['g1'] });
-    expect(db.select).toHaveBeenCalledTimes(3);
+    expect(db.select).toHaveBeenCalledTimes(4);
     expect(res).toHaveLength(1);
     expect(res[0].genres).toHaveLength(1);
+    expect(res.meta).toEqual({ degraded: false });
   });
 
   it('should return empty array when no movies', async () => {
-    setup([[], [{ total: 0 }]]); // main + count (attachGenres skipped)
+    // context check (evaluations exist) + main + count (attachGenres skipped)
+    setup([[{ count: 1 }], [], [{ total: 0 }]]);
     const res = await query.execute({});
     expect(res).toHaveLength(0);
     expect((res as any).total).toBe(0);
-    expect(db.select).toHaveBeenCalledTimes(2);
+    expect(db.select).toHaveBeenCalledTimes(3);
+    expect(res.meta).toEqual({ degraded: false });
+  });
+
+  it('should return degraded state when no evaluations exist', async () => {
+    // context check returns 0 evaluations
+    setup([[{ count: 0 }]]);
+    const res = await query.execute({});
+    expect(res).toHaveLength(0);
+    expect(res.total).toBe(0);
+    expect(res.meta).toEqual({
+      degraded: true,
+      degradedReason: 'Context evaluations missing - evaluation in progress',
+    });
+    // Only the context check query should be called
+    expect(db.select).toHaveBeenCalledTimes(1);
   });
 
   it('should throw DatabaseException on error', async () => {

@@ -8,14 +8,36 @@ const dateFrom = (offsetDays: number) => {
   return d;
 };
 
+// Chainable thenable for Drizzle-like API (for select queries)
+const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
+  const thenable: any = {};
+  const methods = [
+    'select',
+    'from',
+    'innerJoin',
+    'leftJoin',
+    'where',
+    'orderBy',
+    'limit',
+    'offset',
+  ];
+  methods.forEach((m) => {
+    thenable[m] = jest.fn().mockReturnValue(thenable);
+  });
+
+  if (rejectWith) {
+    thenable.then = (_res: any, rej: any) => Promise.reject(rejectWith).catch(rej);
+  } else {
+    thenable.then = (res: any) => Promise.resolve(resolveWith).then(res);
+  }
+  return thenable;
+};
+
 describe('TrendingShowsQuery', () => {
   let db: any;
   let query: TrendingShowsQuery;
 
   beforeEach(() => {
-    db = { execute: jest.fn() };
-    query = new TrendingShowsQuery(db as any);
-
     jest.spyOn(ImageMapper, 'toPoster').mockReturnValue({ small: 'poster' } as any);
     jest.spyOn(ImageMapper, 'toBackdrop').mockReturnValue({ small: 'backdrop' } as any);
   });
@@ -23,6 +45,19 @@ describe('TrendingShowsQuery', () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
+
+  const setup = (contextCheckResult: any[], executeResults: any[][]) => {
+    let executeCallIndex = 0;
+    db = {
+      select: jest.fn().mockReturnValue(createThenable(contextCheckResult)),
+      execute: jest.fn().mockImplementation(() => {
+        const result = executeResults[executeCallIndex] ?? [];
+        executeCallIndex++;
+        return Promise.resolve(result);
+      }),
+    };
+    query = new TrendingShowsQuery(db as any);
+  };
 
   it('should map trending shows with progress and flags', async () => {
     const rows = [
@@ -83,14 +118,15 @@ describe('TrendingShowsQuery', () => {
       },
     ];
 
-    db.execute
-      .mockResolvedValueOnce(rows) // main query
-      .mockResolvedValueOnce([{ total: rows.length }]); // count query
+    // context check (evaluations exist) + main query + count query
+    setup([{ count: 1 }], [rows, [{ total: rows.length }]]);
 
     const result = await query.execute({ limit: 10, offset: 0, minRatingo: 50 });
 
+    expect(db.select).toHaveBeenCalledTimes(1);
     expect(db.execute).toHaveBeenCalledTimes(2);
     expect(result).toHaveLength(2);
+    expect(result.meta).toEqual({ degraded: false });
 
     const first = result.find((r) => r.id === 'm1')!;
     expect(first.isNew).toBe(true);
@@ -105,17 +141,37 @@ describe('TrendingShowsQuery', () => {
   });
 
   it('should return empty array when no results', async () => {
-    db.execute
-      .mockResolvedValueOnce([]) // main query
-      .mockResolvedValueOnce([{ total: 0 }]); // count query
+    // context check (evaluations exist) + main query + count query
+    setup([{ count: 1 }], [[], [{ total: 0 }]]);
     const res = await query.execute({});
     expect(res).toHaveLength(0);
     expect((res as any).total).toBe(0);
+    expect(db.select).toHaveBeenCalledTimes(1);
     expect(db.execute).toHaveBeenCalledTimes(2);
+    expect(res.meta).toEqual({ degraded: false });
+  });
+
+  it('should return degraded state when no evaluations exist', async () => {
+    // context check returns 0 evaluations
+    setup([{ count: 0 }], []);
+    const res = await query.execute({});
+    expect(res).toHaveLength(0);
+    expect(res.total).toBe(0);
+    expect(res.meta).toEqual({
+      degraded: true,
+      degradedReason: 'Context evaluations missing - evaluation in progress',
+    });
+    // Only the context check query should be called
+    expect(db.select).toHaveBeenCalledTimes(1);
+    expect(db.execute).not.toHaveBeenCalled();
   });
 
   it('should throw DatabaseException on error', async () => {
-    db.execute.mockRejectedValue(new Error('DB error'));
+    db = {
+      select: jest.fn().mockReturnValue(createThenable([], new Error('DB error'))),
+      execute: jest.fn(),
+    };
+    query = new TrendingShowsQuery(db as any);
     await expect(query.execute({})).rejects.toThrow(DatabaseException);
   });
 });

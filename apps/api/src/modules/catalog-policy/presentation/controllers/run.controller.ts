@@ -25,6 +25,8 @@ import {
   ActionResponseDto,
   DiffReportDto,
   RunsListDto,
+  BackfillRequestDto,
+  BackfillResponseDto,
   type EvaluationRunDto,
 } from '../dto';
 
@@ -277,6 +279,50 @@ export class RunController {
         reason: `Status change: ${item.oldStatus} → ${item.newStatus}`,
       })),
       reasonBreakdown: diffReport.reasonBreakdown,
+    };
+  }
+
+  /**
+   * Backfill evaluations for a specific context.
+   * Triggers re-evaluation for the specified context only using the active policy.
+   *
+   * @param body - Backfill request with context and options
+   * @returns Backfill run ID for tracking progress
+   */
+  @Post('backfill')
+  @ApiOperation({
+    summary: 'Backfill evaluations for a specific context',
+    description:
+      'Triggers re-evaluation for the specified context only, using the currently active policy. ' +
+      'Use this to populate missing evaluation data for a specific context without affecting other contexts.',
+  })
+  @ApiBody({
+    type: BackfillRequestDto,
+    description: 'Context to backfill and optional batch size',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Backfill started',
+    type: BackfillResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid context',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'No active policy found',
+  })
+  async backfillContext(@Body() body: BackfillRequestDto): Promise<BackfillResponseDto> {
+    const result = await this.policyActivationService.backfillContext(body.context, {
+      batchSize: body.batchSize,
+    });
+
+    return {
+      runId: result.runId,
+      status: result.status,
+      context: result.context,
+      message: `Backfill started for context=${result.context}. Use GET /admin/catalog-policies/runs/${result.runId} to track progress.`,
     };
   }
 }

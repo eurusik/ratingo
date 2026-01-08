@@ -32,3 +32,6 @@ export { PoliciesListDto, RunsListDto, EvaluationRunDto } from './lists.dto';
 
 // Breakout Rules (existing)
 export { BreakoutRuleDto } from './breakout-rule.dto';
+
+// Backfill
+export { BackfillRequestDto, BackfillResponseDto } from './backfill.dto';

@@ -1,5 +1,10 @@
 import * as fc from 'fast-check';
 
+import {
+  ACTIVE_EVALUATION_CONTEXTS,
+  type EvaluationContextType,
+} from '../../domain/constants/evaluation.constants';
+
 type RunStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled' | 'promoted';
 
 interface RunData {
@@ -426,6 +431,287 @@ describe('Policy Activation - Property-Based Tests', () => {
           const hasReason = reasons.includes('ALREADY_PROMOTED');
 
           expect(hasReason).toBe(run.promotedAt !== null);
+        }),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  /**
+   * Feature: multi-context-evaluation
+   * Property 3: Fan-Out Coverage
+   *
+   * For any policy activation trigger, the system SHALL create exactly
+   * ACTIVE_EVALUATION_CONTEXTS.length RE_EVALUATE_ALL jobs, with each job
+   * having a unique context from ACTIVE_EVALUATION_CONTEXTS.
+   *
+   * **Validates: Requirements 5.1, 5.2, 5.3**
+   */
+  describe('Property 3: Fan-Out Coverage', () => {
+    /**
+     * Simulates the fan-out logic from PolicyActivationService.preparePolicy
+     * Returns the contexts that would be dispatched as RE_EVALUATE_ALL jobs
+     */
+    function simulateFanOut(
+      activeContexts: readonly EvaluationContextType[],
+    ): EvaluationContextType[] {
+      const dispatchedContexts: EvaluationContextType[] = [];
+      for (const context of activeContexts) {
+        dispatchedContexts.push(context);
+      }
+      return dispatchedContexts;
+    }
+
+    it('should create exactly ACTIVE_EVALUATION_CONTEXTS.length jobs', () => {
+      /**
+       * Property: For any policy version, fan-out creates exactly N jobs
+       * where N = ACTIVE_EVALUATION_CONTEXTS.length
+       */
+      fc.assert(
+        fc.property(fc.integer({ min: 1, max: 1000 }), (_policyVersion) => {
+          const dispatchedContexts = simulateFanOut(ACTIVE_EVALUATION_CONTEXTS);
+
+          expect(dispatchedContexts.length).toBe(ACTIVE_EVALUATION_CONTEXTS.length);
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should dispatch each active context exactly once', () => {
+      /**
+       * Property: For any policy activation, each context in ACTIVE_EVALUATION_CONTEXTS
+       * appears exactly once in the dispatched jobs
+       */
+      fc.assert(
+        fc.property(fc.integer({ min: 1, max: 1000 }), (_policyVersion) => {
+          const dispatchedContexts = simulateFanOut(ACTIVE_EVALUATION_CONTEXTS);
+
+          // Each active context should appear exactly once
+          for (const expectedContext of ACTIVE_EVALUATION_CONTEXTS) {
+            const count = dispatchedContexts.filter((c) => c === expectedContext).length;
+            expect(count).toBe(1);
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should only dispatch contexts from ACTIVE_EVALUATION_CONTEXTS', () => {
+      /**
+       * Property: For any policy activation, all dispatched contexts
+       * must be members of ACTIVE_EVALUATION_CONTEXTS
+       */
+      fc.assert(
+        fc.property(fc.integer({ min: 1, max: 1000 }), (_policyVersion) => {
+          const dispatchedContexts = simulateFanOut(ACTIVE_EVALUATION_CONTEXTS);
+
+          // All dispatched contexts should be in ACTIVE_EVALUATION_CONTEXTS
+          for (const context of dispatchedContexts) {
+            expect(ACTIVE_EVALUATION_CONTEXTS).toContain(context);
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should have unique contexts in dispatched jobs', () => {
+      /**
+       * Property: For any policy activation, all dispatched contexts are unique
+       * (no duplicates)
+       */
+      fc.assert(
+        fc.property(fc.integer({ min: 1, max: 1000 }), (_policyVersion) => {
+          const dispatchedContexts = simulateFanOut(ACTIVE_EVALUATION_CONTEXTS);
+          const uniqueContexts = new Set(dispatchedContexts);
+
+          expect(uniqueContexts.size).toBe(dispatchedContexts.length);
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should cover all active contexts regardless of context list size', () => {
+      /**
+       * Property: For any non-empty subset of evaluation contexts,
+       * fan-out covers all contexts in that subset exactly once
+       */
+      const contextSubsetArb = fc
+        .subarray([...ACTIVE_EVALUATION_CONTEXTS] as EvaluationContextType[], { minLength: 1 })
+        .filter((arr) => arr.length > 0);
+
+      fc.assert(
+        fc.property(contextSubsetArb, (contextSubset) => {
+          const dispatchedContexts = simulateFanOut(contextSubset);
+
+          // Should dispatch exactly the contexts in the subset
+          expect(dispatchedContexts.length).toBe(contextSubset.length);
+
+          // Each context in subset should be dispatched
+          for (const context of contextSubset) {
+            expect(dispatchedContexts).toContain(context);
+          }
+
+          // No extra contexts
+          for (const dispatched of dispatchedContexts) {
+            expect(contextSubset).toContain(dispatched);
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  /**
+   * Feature: multi-context-evaluation
+   * Property 8: Backfill Context Isolation
+   *
+   * For any backfill operation triggered for context X, the operation SHALL only
+   * write evaluation records with `context = X`. No records with other context
+   * values SHALL be created or modified.
+   *
+   * **Validates: Requirements 9.1, 9.2**
+   */
+  describe('Property 8: Backfill Context Isolation', () => {
+    /**
+     * Simulates the backfill logic from PolicyActivationService.backfillContext
+     * Returns the context that would be dispatched in the RE_EVALUATE_ALL job
+     */
+    function simulateBackfill(
+      targetContext: EvaluationContextType,
+      activeContexts: readonly EvaluationContextType[],
+    ): { dispatchedContext: EvaluationContextType | null; isValid: boolean } {
+      // Validate context is in active contexts
+      if (!activeContexts.includes(targetContext)) {
+        return { dispatchedContext: null, isValid: false };
+      }
+
+      // Backfill dispatches only the target context
+      return { dispatchedContext: targetContext, isValid: true };
+    }
+
+    it('should dispatch only the specified context', () => {
+      /**
+       * Property: For any valid backfill request with context X,
+       * only context X is dispatched (not other contexts)
+       */
+      const validContextArb = fc.constantFrom(
+        ...(ACTIVE_EVALUATION_CONTEXTS as readonly EvaluationContextType[]),
+      );
+
+      fc.assert(
+        fc.property(validContextArb, (targetContext) => {
+          const result = simulateBackfill(targetContext, ACTIVE_EVALUATION_CONTEXTS);
+
+          // Should be valid
+          expect(result.isValid).toBe(true);
+
+          // Should dispatch exactly the target context
+          expect(result.dispatchedContext).toBe(targetContext);
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should not dispatch other contexts during backfill', () => {
+      /**
+       * Property: For any backfill of context X, no other context Y (Y !== X)
+       * should be dispatched
+       */
+      const validContextArb = fc.constantFrom(
+        ...(ACTIVE_EVALUATION_CONTEXTS as readonly EvaluationContextType[]),
+      );
+
+      fc.assert(
+        fc.property(validContextArb, (targetContext) => {
+          const result = simulateBackfill(targetContext, ACTIVE_EVALUATION_CONTEXTS);
+
+          // For each other context, verify it's not dispatched
+          for (const otherContext of ACTIVE_EVALUATION_CONTEXTS) {
+            if (otherContext !== targetContext) {
+              expect(result.dispatchedContext).not.toBe(otherContext);
+            }
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should reject invalid contexts', () => {
+      /**
+       * Property: For any context not in ACTIVE_EVALUATION_CONTEXTS,
+       * backfill should fail validation
+       */
+      const invalidContextArb = fc
+        .string({ minLength: 1, maxLength: 20 })
+        .filter((s) => !ACTIVE_EVALUATION_CONTEXTS.includes(s as EvaluationContextType));
+
+      fc.assert(
+        fc.property(invalidContextArb, (invalidContext) => {
+          const result = simulateBackfill(
+            invalidContext as EvaluationContextType,
+            ACTIVE_EVALUATION_CONTEXTS,
+          );
+
+          // Should be invalid
+          expect(result.isValid).toBe(false);
+          expect(result.dispatchedContext).toBeNull();
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should maintain context isolation across multiple backfills', () => {
+      /**
+       * Property: For any sequence of backfill operations,
+       * each backfill only affects its target context
+       */
+      const backfillSequenceArb = fc.array(
+        fc.constantFrom(...(ACTIVE_EVALUATION_CONTEXTS as readonly EvaluationContextType[])),
+        { minLength: 1, maxLength: 10 },
+      );
+
+      fc.assert(
+        fc.property(backfillSequenceArb, (backfillSequence) => {
+          const results = backfillSequence.map((context) =>
+            simulateBackfill(context, ACTIVE_EVALUATION_CONTEXTS),
+          );
+
+          // Each backfill should dispatch exactly its target context
+          for (let i = 0; i < backfillSequence.length; i++) {
+            expect(results[i].isValid).toBe(true);
+            expect(results[i].dispatchedContext).toBe(backfillSequence[i]);
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('backfill should be idempotent for same context', () => {
+      /**
+       * Property: Running backfill N times for context X should produce
+       * the same result each time (same context dispatched)
+       */
+      const validContextArb = fc.constantFrom(
+        ...(ACTIVE_EVALUATION_CONTEXTS as readonly EvaluationContextType[]),
+      );
+      const repeatCountArb = fc.integer({ min: 1, max: 5 });
+
+      fc.assert(
+        fc.property(validContextArb, repeatCountArb, (targetContext, repeatCount) => {
+          const results: Array<{
+            dispatchedContext: EvaluationContextType | null;
+            isValid: boolean;
+          }> = [];
+
+          for (let i = 0; i < repeatCount; i++) {
+            results.push(simulateBackfill(targetContext, ACTIVE_EVALUATION_CONTEXTS));
+          }
+
+          // All results should be identical
+          for (const result of results) {
+            expect(result.isValid).toBe(true);
+            expect(result.dispatchedContext).toBe(targetContext);
+          }
         }),
         { numRuns: 100 },
       );

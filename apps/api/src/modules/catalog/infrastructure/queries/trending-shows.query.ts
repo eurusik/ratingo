@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { sql, type SQL } from 'drizzle-orm';
+import { and, eq, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
@@ -11,7 +11,11 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
+import {
+  EligibilityStatus,
+  EvaluationContext,
+  type EvaluationContextType,
+} from '../../../catalog-policy/public';
 import {
   TRENDING_THRESHOLDS,
   SHOW_TRENDING_WEIGHTS,
@@ -22,7 +26,7 @@ import {
   type TrendingShowItem,
   type TrendingShowsOptions,
 } from '../../domain/repositories/show.repository.interface';
-import type { WithTotal } from '../../domain/types/query.types';
+import type { TrendingQueryResult } from '../../domain/types/query.types';
 import {
   type CatalogSort,
   type SortOrder,
@@ -88,11 +92,14 @@ export class TrendingShowsQuery {
    * Executes the trending shows query.
    * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
+   * Returns degraded state if no evaluations exist for the trending context
+   * with the active policy version.
+   *
    * @param {TrendingShowsOptions} options - Query options (limit, offset, filters)
-   * @returns {Promise<WithTotal<TrendingShowItem>>} List of trending shows with stats and progress
+   * @returns {Promise<TrendingQueryResult<TrendingShowItem>>} List of trending shows with stats and progress
    * @throws {DatabaseException} When database query fails
    */
-  async execute(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>> {
+  async execute(options: TrendingShowsOptions): Promise<TrendingQueryResult<TrendingShowItem>> {
     const {
       limit = DEFAULT_PAGE_SIZE,
       offset = 0,
@@ -108,6 +115,24 @@ export class TrendingShowsQuery {
     } = options;
 
     try {
+      // Check for degraded state before executing main query
+      const evaluationsExist = await this.checkContextEvaluationsExist(EvaluationContext.TRENDING);
+
+      if (!evaluationsExist) {
+        this.logger.warn(
+          `Degraded state: no evaluations for context=${EvaluationContext.TRENDING} with active policy`,
+        );
+
+        const emptyResult: TrendingQueryResult<TrendingShowItem> =
+          [] as TrendingQueryResult<TrendingShowItem>;
+        emptyResult.total = 0;
+        emptyResult.meta = {
+          degraded: true,
+          degradedReason: 'Context evaluations missing - evaluation in progress',
+        };
+        return emptyResult;
+      }
+
       const whereConditions: SQL[] = [
         sql`mi.type = ${MediaType.SHOW}`,
         sql`mi.deleted_at IS NULL`,
@@ -261,8 +286,9 @@ export class TrendingShowsQuery {
       const total = Number(typedTotalRows[0]?.total ?? 0);
 
       const mapped = this.mapResults(results as unknown as TrendingShowRow[]);
-      const withTotal = mapped as WithTotal<TrendingShowItem>;
+      const withTotal = mapped as TrendingQueryResult<TrendingShowItem>;
       withTotal.total = total;
+      withTotal.meta = { degraded: false };
       return withTotal;
     } catch (error) {
       this.logger.error(`Failed to find trending shows: ${error.message}`, error.stack);
@@ -270,6 +296,30 @@ export class TrendingShowsQuery {
         originalError: error.message,
       });
     }
+  }
+
+  /**
+   * Checks if any evaluations exist for the given context with the active policy.
+   * Used to detect degraded state when context evaluations are missing.
+   *
+   * @param context - The evaluation context to check
+   * @returns True if evaluations exist, false otherwise
+   */
+  async checkContextEvaluationsExist(context: EvaluationContextType): Promise<boolean> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.mediaCatalogEvaluations)
+      .innerJoin(
+        schema.catalogPolicies,
+        and(
+          eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+          eq(schema.catalogPolicies.isActive, true),
+        ),
+      )
+      .where(eq(schema.mediaCatalogEvaluations.context, context))
+      .limit(1);
+
+    return (result[0]?.count ?? 0) > 0;
   }
 
   /**

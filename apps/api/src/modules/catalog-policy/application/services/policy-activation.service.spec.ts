@@ -159,7 +159,26 @@ describe('PolicyActivationService', () => {
           totalReadySnapshot: 1000, // From transaction mock
         }),
       );
-      expect(mockQueue.add).toHaveBeenCalled();
+      // Fan-out: should queue jobs for all active contexts (catalog, trending)
+      expect(mockQueue.add).toHaveBeenCalledTimes(2);
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        're-evaluate-all',
+        expect.objectContaining({
+          runId: 'run-123',
+          policyVersion: 2,
+          context: 'catalog',
+        }),
+        expect.any(Object),
+      );
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        're-evaluate-all',
+        expect.objectContaining({
+          runId: 'run-123',
+          policyVersion: 2,
+          context: 'trending',
+        }),
+        expect.any(Object),
+      );
     });
   });
 

@@ -17,7 +17,7 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
-import { EvaluationContext, RunStatus } from '../../domain/constants/evaluation.constants';
+import { RunStatus, type EvaluationContextType } from '../../domain/constants/evaluation.constants';
 import { RunNotFoundError } from '../../domain/errors';
 import {
   type ICatalogEvaluationRunRepository,
@@ -26,17 +26,27 @@ import {
 import { CatalogEvaluationService } from '../services/catalog-evaluation.service';
 import { RunFinalizeService } from '../services/run-finalize.service';
 
+/**
+ * Payload for RE_EVALUATE_ALL job.
+ * Context is REQUIRED - missing context is a bug.
+ */
 interface ReEvaluateAllPayload {
   runId: string;
   policyVersion: number;
+  context: EvaluationContextType;
   batchSize?: number;
   cursor?: string;
 }
 
+/**
+ * Payload for EVALUATE_CATALOG_ITEM job.
+ * Context is REQUIRED - missing context is a bug.
+ */
 interface EvaluateCatalogItemPayload {
   runId: string;
   policyVersion: number;
   mediaItemId: string;
+  context: EvaluationContextType;
 }
 
 // Worker constants
@@ -136,14 +146,43 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
   }
 
   /**
+   * Validates that context is present in payload.
+   * Missing context is a bug - fail fast.
+   *
+   * @param payload - Job payload that should contain context
+   * @param jobInfo - Additional job info for logging
+   * @returns true if context is present, false otherwise
+   */
+  private validateContextPayload(
+    payload: { context?: EvaluationContextType },
+    jobInfo: { runId?: string; policyVersion?: number; mediaItemId?: string },
+  ): payload is { context: EvaluationContextType } {
+    if (!payload.context) {
+      this.logger.error('MISSING_CONTEXT_IN_JOB_PAYLOAD - this is a bug, not a runtime issue', {
+        ...jobInfo,
+        message: 'Job payload missing required context field',
+      });
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * Orchestrates batch evaluation for a run.
    *
-   * @param payload - Job payload with run ID and policy version
+   * @param payload - Job payload with run ID, policy version, and context
    */
   private async handleReEvaluateAll(payload: ReEvaluateAllPayload): Promise<void> {
-    const { runId, policyVersion, batchSize = 500 } = payload;
+    const { runId, policyVersion, context, batchSize = 500 } = payload;
 
-    this.logger.log(`Starting RE_EVALUATE_ALL for run ${runId}, policy v${policyVersion}`);
+    // Validate context - fail fast if missing (this is a bug)
+    if (!this.validateContextPayload(payload, { runId, policyVersion })) {
+      return; // Skip processing - do NOT dispatch any jobs
+    }
+
+    this.logger.log(
+      `Starting RE_EVALUATE_ALL for run=${runId}, policy=v${policyVersion}, context=${context}`,
+    );
 
     const run = await this.runRepository.findById(runId);
     if (!run) {
@@ -169,11 +208,13 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
 
       if (batch.length === 0) {
         // All items dispatched - attempt to finalize
-        await this.attemptFinalization(runId, totalDispatched);
+        await this.attemptFinalization(runId, totalDispatched, context);
         return;
       }
 
-      this.logger.log(`Fetched batch of ${batch.length} items for run ${runId}`);
+      this.logger.log(
+        `Fetched batch of ${batch.length} items for run=${runId}, context=${context}`,
+      );
 
       // Dispatch EVALUATE_CATALOG_ITEM jobs for each item in batch
       const jobs = batch.map((item) => ({
@@ -182,9 +223,10 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
           runId,
           policyVersion,
           mediaItemId: item.id,
+          context, // Pass context through to item jobs
         } as EvaluateCatalogItemPayload,
         opts: {
-          jobId: `eval_${runId}_${item.id}`, // Idempotent job ID per run
+          jobId: `eval_${runId}_${item.id}_${context}`, // Include context for uniqueness
         },
       }));
 
@@ -197,17 +239,27 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
         cursor,
       });
 
-      this.logger.debug(`Dispatched ${batch.length} evaluation jobs (total: ${totalDispatched})`);
+      this.logger.debug(
+        `Dispatched ${batch.length} evaluation jobs for run=${runId}, context=${context} (total: ${totalDispatched})`,
+      );
     }
   }
 
   /**
    * Attempts to finalize a run after all jobs are dispatched.
    * Finalize failure is not critical - watchdog will retry.
+   *
+   * @param runId - Run ID to finalize
+   * @param totalDispatched - Total number of jobs dispatched
+   * @param context - Evaluation context for logging
    */
-  private async attemptFinalization(runId: string, totalDispatched: number): Promise<void> {
+  private async attemptFinalization(
+    runId: string,
+    totalDispatched: number,
+    context: EvaluationContextType,
+  ): Promise<void> {
     this.logger.log(
-      `All ${totalDispatched} jobs dispatched for run ${runId}, attempting finalize...`,
+      `All ${totalDispatched} jobs dispatched for run=${runId}, context=${context}, attempting finalize...`,
     );
 
     try {
@@ -230,10 +282,15 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
   /**
    * Evaluates single media item and writes result.
    *
-   * @param payload - Job payload with media item ID
+   * @param payload - Job payload with media item ID and context
    */
   private async handleEvaluateCatalogItem(payload: EvaluateCatalogItemPayload): Promise<void> {
-    const { runId, policyVersion, mediaItemId } = payload;
+    const { runId, policyVersion, mediaItemId, context } = payload;
+
+    // Validate context - fail fast if missing (this is a bug)
+    if (!this.validateContextPayload(payload, { runId, policyVersion, mediaItemId })) {
+      return; // Skip processing - do NOT write evaluation
+    }
 
     const run = await this.runRepository.findById(runId);
     if (!run) {
@@ -247,25 +304,14 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
     }
 
     try {
-      const contexts = [
-        EvaluationContext.CATALOG,
-        EvaluationContext.TRENDING,
-        EvaluationContext.HOMEPAGE,
-        EvaluationContext.SEARCH,
-      ] as const;
+      await this.evaluationService.evaluateOne({
+        mediaItemId,
+        policyVersion,
+        runId,
+        context, // Explicit context from payload
+      });
 
-      await this.evaluationService.evaluateOneForContexts(
-        {
-          mediaItemId,
-          policyVersion,
-          runId,
-        },
-        [...contexts],
-      );
-
-      this.logger.debug(
-        `Evaluated ${mediaItemId} for run ${runId} (contexts: ${contexts.join(', ')})`,
-      );
+      this.logger.debug(`Evaluated ${mediaItemId} for run ${runId} (context: ${context})`);
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       // Log error with full context for debugging
@@ -273,6 +319,7 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
         runId,
         policyVersion,
         mediaItemId,
+        context,
         errorMessage: err.message,
         errorName: err.name,
       });

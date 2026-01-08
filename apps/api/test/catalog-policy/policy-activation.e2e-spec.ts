@@ -5,7 +5,10 @@
  */
 
 import { createCatalogPolicyApp, CatalogPolicyE2eContext, createTestPolicy } from './_harness';
-import { RunStatus } from '../../src/modules/catalog-policy/domain/constants/evaluation.constants';
+import {
+  RunStatus,
+  ACTIVE_EVALUATION_CONTEXTS,
+} from '../../src/modules/catalog-policy/domain/constants/evaluation.constants';
 
 describe('Policy Activation Flow (e2e)', () => {
   let ctx: CatalogPolicyE2eContext;
@@ -495,6 +498,124 @@ describe('Policy Activation Flow (e2e)', () => {
       expect(res.body.data.counts.improvements).toBe(1);
       expect(res.body.data.topRegressions).toHaveLength(1);
       expect(res.body.data.topImprovements).toHaveLength(1);
+    });
+  });
+
+  /**
+   * Feature: multi-context-evaluation
+   * Property 4: Complete Context Coverage After Evaluation
+   *
+   * For any policy activation trigger, the system SHALL create RE_EVALUATE_ALL
+   * jobs for ALL contexts in ACTIVE_EVALUATION_CONTEXTS.
+   *
+   * **Validates: Requirements 5.5**
+   */
+  describe('Property 4: Complete Context Coverage (Fan-Out)', () => {
+    beforeEach(() => {
+      ctx.queue.clear();
+    });
+
+    it('should create RE_EVALUATE_ALL jobs for all active contexts', async () => {
+      // Arrange: Create a policy
+      const policy = await ctx.policyRepo.create(createTestPolicy());
+
+      // Act: Trigger policy preparation (which triggers fan-out)
+      const res = await ctx.post(`/${policy.id}/prepare`).expect(202);
+
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.runId).toBeDefined();
+
+      // Assert: Verify jobs were created for all active contexts
+      const reEvaluateAllJobs = ctx.queue.jobs.filter((j) => j.name === 're-evaluate-all');
+
+      // Should have exactly ACTIVE_EVALUATION_CONTEXTS.length jobs
+      expect(reEvaluateAllJobs.length).toBe(ACTIVE_EVALUATION_CONTEXTS.length);
+
+      // Each active context should have exactly one job
+      const dispatchedContexts = reEvaluateAllJobs.map((j) => j.data.context);
+
+      for (const expectedContext of ACTIVE_EVALUATION_CONTEXTS) {
+        const count = dispatchedContexts.filter((c) => c === expectedContext).length;
+        expect(count).toBe(1);
+      }
+
+      // All dispatched contexts should be from ACTIVE_EVALUATION_CONTEXTS
+      for (const context of dispatchedContexts) {
+        expect(ACTIVE_EVALUATION_CONTEXTS).toContain(context);
+      }
+    });
+
+    it('should include context in each RE_EVALUATE_ALL job payload', async () => {
+      // Arrange
+      const policy = await ctx.policyRepo.create(createTestPolicy());
+
+      // Act
+      await ctx.post(`/${policy.id}/prepare`).expect(202);
+
+      // Assert: Each job should have context in payload
+      const reEvaluateAllJobs = ctx.queue.jobs.filter((j) => j.name === 're-evaluate-all');
+
+      for (const job of reEvaluateAllJobs) {
+        expect(job.data.context).toBeDefined();
+        expect(typeof job.data.context).toBe('string');
+        expect(ACTIVE_EVALUATION_CONTEXTS).toContain(job.data.context);
+      }
+    });
+
+    it('should include runId and policyVersion in each job payload', async () => {
+      // Arrange
+      const policy = await ctx.policyRepo.create(createTestPolicy());
+
+      // Act
+      const res = await ctx.post(`/${policy.id}/prepare`).expect(202);
+      const runId = res.body.data.runId;
+
+      // Assert: Each job should have consistent runId and policyVersion
+      const reEvaluateAllJobs = ctx.queue.jobs.filter((j) => j.name === 're-evaluate-all');
+
+      for (const job of reEvaluateAllJobs) {
+        expect(job.data.runId).toBe(runId);
+        expect(job.data.policyVersion).toBe(policy.version);
+      }
+    });
+
+    it('should create unique job IDs per context', async () => {
+      // Arrange
+      const policy = await ctx.policyRepo.create(createTestPolicy());
+
+      // Act
+      await ctx.post(`/${policy.id}/prepare`).expect(202);
+
+      // Assert: Job IDs should be unique and include context
+      const reEvaluateAllJobs = ctx.queue.jobs.filter((j) => j.name === 're-evaluate-all');
+      const jobIds = reEvaluateAllJobs.map((j) => j.opts?.jobId).filter(Boolean);
+
+      // All job IDs should be unique
+      const uniqueJobIds = new Set(jobIds);
+      expect(uniqueJobIds.size).toBe(jobIds.length);
+
+      // Each job ID should contain the context
+      for (const job of reEvaluateAllJobs) {
+        if (job.opts?.jobId) {
+          expect(job.opts.jobId).toContain(job.data.context);
+        }
+      }
+    });
+
+    it('should fan-out for catalog and trending contexts specifically', async () => {
+      // Arrange
+      const policy = await ctx.policyRepo.create(createTestPolicy());
+
+      // Act
+      await ctx.post(`/${policy.id}/prepare`).expect(202);
+
+      // Assert: Verify specific contexts are present
+      const reEvaluateAllJobs = ctx.queue.jobs.filter((j) => j.name === 're-evaluate-all');
+      const dispatchedContexts = reEvaluateAllJobs.map((j) => j.data.context);
+
+      // Current ACTIVE_EVALUATION_CONTEXTS = ['catalog', 'trending']
+      expect(dispatchedContexts).toContain('catalog');
+      expect(dispatchedContexts).toContain('trending');
     });
   });
 });

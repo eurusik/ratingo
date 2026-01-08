@@ -38,6 +38,7 @@ export {
   EvaluationContext,
   EvaluationContextType,
   DEFAULT_EVALUATION_CONTEXT,
+  ACTIVE_EVALUATION_CONTEXTS,
 } from '../domain/constants/evaluation.constants';
 
 // =============================================================================

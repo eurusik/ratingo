@@ -21,3 +21,22 @@ export type SortOrder = 'asc' | 'desc';
  * Vote source for filtering.
  */
 export type VoteSource = 'tmdb' | 'trakt';
+
+/**
+ * Metadata for trending query results.
+ * Indicates whether the response is in a degraded state.
+ */
+export interface TrendingQueryMeta {
+  /** True when evaluation data is incomplete for the requested context */
+  degraded?: boolean;
+  /** Human-readable reason for degraded state */
+  degradedReason?: string;
+}
+
+/**
+ * Result type for trending queries with optional metadata.
+ * Extends WithTotal to include degraded state information.
+ */
+export type TrendingQueryResult<T> = WithTotal<T> & {
+  meta?: TrendingQueryMeta;
+};

@@ -25,6 +25,8 @@ import {
   CANCELLABLE_RUN_STATUSES,
   BlockingReasonCode,
   type BlockingReasonType,
+  ACTIVE_EVALUATION_CONTEXTS,
+  type EvaluationContextType,
 } from '../../domain/constants/evaluation.constants';
 import {
   type ICatalogEvaluationRunRepository,
@@ -40,6 +42,7 @@ import { RunAggregationService } from './run-aggregation.service';
 
 // Constants
 const DEFAULT_BATCH_SIZE = 500;
+const BACKFILL_RUN_PREFIX = 'backfill';
 const PERCENT_MULTIPLIER = 100;
 
 export interface PrepareOptions {
@@ -109,7 +112,7 @@ export class PolicyActivationService {
 
   /**
    * Phase 1: Prepare policy activation
-   * Creates run and starts RE_EVALUATE_ALL job to pre-compute evaluations.
+   * Creates run and starts RE_EVALUATE_ALL jobs for all active contexts (fan-out).
    *
    * @param policyId - Policy to prepare for activation
    * @param options - Batch size and concurrency settings
@@ -183,27 +186,34 @@ export class PolicyActivationService {
       return runResult;
     });
 
-    // 5. Queue RE_EVALUATE_ALL job with retries
-    await this.catalogQueue.add(
-      CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
-      {
-        runId: run.id,
-        policyVersion: policy.version,
-        batchSize: options?.batchSize || DEFAULT_BATCH_SIZE,
-      },
-      {
-        jobId: `reeval_${policy.version}_${run.id}`,
-        attempts: 5,
-        backoff: {
-          type: 'exponential',
-          delay: 5000, // 5s, 10s, 20s, 40s, 80s
+    // 5. Fan-out: Queue RE_EVALUATE_ALL job for each active context
+    for (const context of ACTIVE_EVALUATION_CONTEXTS) {
+      await this.catalogQueue.add(
+        CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
+        {
+          runId: run.id,
+          policyVersion: policy.version,
+          context, // REQUIRED in payload
+          batchSize: options?.batchSize || DEFAULT_BATCH_SIZE,
         },
-        removeOnFail: false, // Keep failed jobs for debugging
-      },
-    );
+        {
+          jobId: `reeval_${policy.version}_${run.id}_${context}`,
+          attempts: 5,
+          backoff: {
+            type: 'exponential',
+            delay: 5000, // 5s, 10s, 20s, 40s, 80s
+          },
+          removeOnFail: false, // Keep failed jobs for debugging
+        },
+      );
+
+      this.logger.log(
+        `Dispatched RE_EVALUATE_ALL for context=${context}, runId=${run.id}, policyVersion=${policy.version}`,
+      );
+    }
 
     this.logger.log(
-      `Created run ${run.id} for policy v${policy.version} and queued RE_EVALUATE_ALL job`,
+      `Created run ${run.id} for policy v${policy.version} and queued ${ACTIVE_EVALUATION_CONTEXTS.length} RE_EVALUATE_ALL jobs (fan-out)`,
     );
 
     return {
@@ -424,5 +434,95 @@ export class PolicyActivationService {
         readyToPromote: isPrepared && run.errors === 0,
       };
     });
+  }
+
+  /**
+   * Backfill evaluations for a specific context.
+   * Triggers RE_EVALUATE_ALL for the specified context only, using the active policy.
+   * Reuses the existing evaluation pipeline.
+   *
+   * @param context - Evaluation context to backfill
+   * @param options - Batch size settings
+   * @returns Run ID and status for tracking
+   */
+  async backfillContext(
+    context: EvaluationContextType,
+    options?: { batchSize?: number },
+  ): Promise<{ runId: string; status: string; context: EvaluationContextType }> {
+    // 1. Validate context is in ACTIVE_EVALUATION_CONTEXTS
+    if (!ACTIVE_EVALUATION_CONTEXTS.includes(context)) {
+      throw new BadRequestException(
+        `Invalid context '${context}'. Must be one of: ${ACTIVE_EVALUATION_CONTEXTS.join(', ')}`,
+      );
+    }
+
+    // 2. Get active policy
+    const activePolicy = await this.policyRepository.findActive();
+    if (!activePolicy) {
+      throw new NotFoundException('No active policy found. Cannot backfill without active policy.');
+    }
+
+    // 3. Calculate totalReadySnapshot and create run
+    const snapshotCutoff = new Date();
+
+    const run = await this.db.transaction(async (tx) => {
+      const countResult = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(schema.mediaItems)
+        .where(
+          and(
+            eq(schema.mediaItems.ingestionStatus, 'ready'),
+            isNull(schema.mediaItems.deletedAt),
+            lte(schema.mediaItems.updatedAt, snapshotCutoff),
+          ),
+        );
+
+      const totalReadySnapshot = countResult[0]?.count || 0;
+
+      this.logger.log(
+        `Backfill for context=${context}: ${totalReadySnapshot} items in snapshot, policy v${activePolicy.version}`,
+      );
+
+      // Create run for backfill (no targetPolicyId since we're using active policy)
+      const runResult = await this.runRepository.create({
+        targetPolicyId: activePolicy.id,
+        targetPolicyVersion: activePolicy.version,
+        baselinePolicyVersion: activePolicy.version,
+        totalReadySnapshot,
+        snapshotCutoff,
+      });
+
+      return runResult;
+    });
+
+    // 4. Queue RE_EVALUATE_ALL job for the specific context only
+    await this.catalogQueue.add(
+      CATALOG_POLICY_JOBS.RE_EVALUATE_ALL,
+      {
+        runId: run.id,
+        policyVersion: activePolicy.version,
+        context, // Only this specific context
+        batchSize: options?.batchSize || DEFAULT_BATCH_SIZE,
+      },
+      {
+        jobId: `${BACKFILL_RUN_PREFIX}_${activePolicy.version}_${run.id}_${context}`,
+        attempts: 5,
+        backoff: {
+          type: 'exponential',
+          delay: 5000,
+        },
+        removeOnFail: false,
+      },
+    );
+
+    this.logger.log(
+      `Created backfill run ${run.id} for context=${context}, policy v${activePolicy.version}`,
+    );
+
+    return {
+      runId: run.id,
+      status: RunStatusEnum.RUNNING,
+      context,
+    };
   }
 }

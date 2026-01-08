@@ -65,6 +65,19 @@ export interface BatchEvaluationResult {
   errors: number;
 }
 
+/**
+ * Options for batch evaluation operations.
+ * Supports explicit context for multi-context evaluation.
+ */
+export interface BatchEvaluationOptions {
+  /** Specific policy version to evaluate against (defaults to active policy) */
+  policyVersion?: number;
+  /** Run ID for tracking and counter aggregation */
+  runId?: string;
+  /** Evaluation context for multi-context support (defaults to DEFAULT_EVALUATION_CONTEXT) */
+  context?: EvaluationContextType;
+}
+
 @Injectable()
 export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
   private readonly logger = new Logger(CatalogEvaluationService.name);
@@ -232,16 +245,25 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
    * Used for re-evaluation jobs.
    *
    * @param mediaItemIds - IDs of media items to evaluate
-   * @param policyVersion - Optional specific policy version (defaults to active)
+   * @param options - Batch evaluation options including context, policyVersion, runId
    * @returns Batch evaluation summary
    */
   async evaluateBatch(
     mediaItemIds: string[],
-    policyVersion?: number,
+    options?: BatchEvaluationOptions,
   ): Promise<BatchEvaluationResult> {
     if (mediaItemIds.length === 0) {
       return { processed: 0, eligible: 0, ineligible: 0, pending: 0, review: 0, errors: 0 };
     }
+
+    // Extract options with defaults
+    const context = options?.context ?? DEFAULT_EVALUATION_CONTEXT;
+    const policyVersion = options?.policyVersion;
+    const runId = options?.runId;
+
+    this.logger.log(
+      `Starting batch evaluation: ${mediaItemIds.length} items, context=${context}, policyVersion=${policyVersion ?? 'active'}`,
+    );
 
     // Get policy
     const policy = policyVersion
@@ -268,7 +290,8 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
 
     for (const input of inputs) {
       try {
-        const evalResult = evaluateEligibility(input, policy.policy);
+        // Pass context to policy engine
+        const evalResult = evaluateEligibility(input, policy.policy, { context });
         const relevanceScore = computeRelevance(input, policy.policy);
 
         const evaluation: MediaCatalogEvaluation = {
@@ -279,7 +302,8 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
           policyVersion: policy.version,
           breakoutRuleId: evalResult.breakoutRuleId,
           evaluatedAt: new Date(),
-          context: DEFAULT_EVALUATION_CONTEXT,
+          context, // Use provided context
+          runId, // Include runId if provided
         };
 
         evaluations.push(evaluation);
@@ -313,7 +337,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
     }
 
     this.logger.log(
-      `Batch evaluated ${result.processed} items: ` +
+      `Batch evaluation complete [context=${context}]: ${result.processed} items - ` +
         `${result.eligible} eligible, ${result.ineligible} ineligible, ` +
         `${result.pending} pending, ${result.review} review, ${result.errors} errors`,
     );
@@ -370,7 +394,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       const ids = batch.map((row) => row.id);
 
       // Evaluate batch
-      const batchResult = await this.evaluateBatch(ids, policyVersion);
+      const batchResult = await this.evaluateBatch(ids, { policyVersion });
 
       // Aggregate results
       aggregateResult.processed += batchResult.processed;

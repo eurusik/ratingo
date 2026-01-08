@@ -127,3 +127,20 @@ export type EvaluationContextType = (typeof EvaluationContext)[keyof typeof Eval
  * Default context for backward compatibility.
  */
 export const DEFAULT_EVALUATION_CONTEXT: EvaluationContextType = EvaluationContext.CATALOG;
+
+/**
+ * Active evaluation contexts - the canonical list of contexts
+ * that must be evaluated during policy activation.
+ *
+ * IMPORTANT: Only add contexts that are used by public API endpoints.
+ * Do not add experimental contexts here.
+ *
+ * To add a new context:
+ * 1. Add to this array
+ * 2. Fan-out will automatically include it
+ * 3. Create/update API endpoint to read from new context
+ */
+export const ACTIVE_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
+  EvaluationContext.CATALOG,
+  EvaluationContext.TRENDING,
+] as const;
