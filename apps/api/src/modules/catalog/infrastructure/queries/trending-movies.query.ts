@@ -91,10 +91,7 @@ export class TrendingMoviesQuery {
       const conditions: SQL[] = [
         isNotNull(schema.mediaStats.popularityScore),
         eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-        inArray(schema.mediaCatalogEvaluations.context, [
-          EvaluationContext.TRENDING,
-          EvaluationContext.CATALOG,
-        ]),
+        eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
         eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
         isNull(schema.mediaItems.deletedAt),
       ];
@@ -172,6 +169,7 @@ export class TrendingMoviesQuery {
           and(
             eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
             eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
           ),
         )
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
@@ -248,6 +246,7 @@ export class TrendingMoviesQuery {
         and(
           eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
           eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+          eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
         ),
       )
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))

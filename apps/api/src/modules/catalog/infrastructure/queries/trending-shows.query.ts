@@ -113,7 +113,7 @@ export class TrendingShowsQuery {
         sql`mi.deleted_at IS NULL`,
         // Eligibility filter: only show ELIGIBLE items with trending context
         sql`mce.status = ${EligibilityStatus.ELIGIBLE}`,
-        sql`mce.context IN (${EvaluationContext.TRENDING}, ${EvaluationContext.CATALOG})`,
+        sql`mce.context = ${EvaluationContext.TRENDING}`,
         // Ready filter: only show items with ready ingestion status
         sql`mi.ingestion_status = ${IngestionStatus.READY}`,
       ];
@@ -220,6 +220,7 @@ export class TrendingShowsQuery {
         JOIN ${schema.mediaCatalogEvaluations} mce 
           ON mce.media_item_id = mi.id 
           AND mce.policy_version = cp.version
+          AND mce.context = ${EvaluationContext.TRENDING}
         LEFT JOIN ${schema.mediaStats} ms ON ms.media_item_id = mi.id
         
         LEFT JOIN LATERAL (
@@ -247,6 +248,7 @@ export class TrendingShowsQuery {
         JOIN ${schema.mediaCatalogEvaluations} mce 
           ON mce.media_item_id = mi.id 
           AND mce.policy_version = cp.version
+          AND mce.context = ${EvaluationContext.TRENDING}
         LEFT JOIN ${schema.mediaStats} ms ON ms.media_item_id = mi.id
         WHERE ${whereSql}
       `;
