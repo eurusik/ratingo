@@ -27,6 +27,7 @@ import {
 import {
   EligibilityStatus,
   DEFAULT_EVALUATION_CONTEXT,
+  type EvaluationContextType,
 } from '../../domain/constants/evaluation.constants';
 import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
 import {
@@ -161,6 +162,69 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       evaluation: saved,
       changed,
     };
+  }
+
+  async evaluateOneForContexts(
+    input: EvaluateOneInput,
+    contexts: EvaluationContextType[],
+  ): Promise<void> {
+    if (contexts.length === 0) return;
+
+    const { mediaItemId } = input;
+
+    // Get policy once
+    const policy = input.policyVersion
+      ? await this.policyService.getByVersion(input.policyVersion)
+      : await this.policyService.getActiveOrThrow();
+
+    if (!policy) {
+      throw new NotFoundException(`Policy version ${input.policyVersion} not found`);
+    }
+
+    // Build policy engine input once (includes offers)
+    const engineInput = await this.buildPolicyEngineInput(mediaItemId);
+    if (!engineInput) {
+      throw new NotFoundException(`Media item ${mediaItemId} not found`);
+    }
+
+    const relevanceScore = computeRelevance(engineInput, policy.policy);
+    const evaluatedAt = new Date();
+
+    const evaluations: MediaCatalogEvaluation[] = [];
+
+    for (const context of contexts) {
+      const previousEvaluation = await this.evaluationRepository.findByMediaId(
+        mediaItemId,
+        context,
+      );
+
+      const evalResult = evaluateEligibility(engineInput, policy.policy, { context });
+
+      const changed =
+        !previousEvaluation ||
+        previousEvaluation.status !== evalResult.status ||
+        previousEvaluation.policyVersion !== policy.version;
+
+      if (changed) {
+        this.logger.log(
+          `Evaluated ${mediaItemId} [${context}]: ${previousEvaluation?.status || 'NEW'} → ${evalResult.status} (policy v${policy.version})`,
+        );
+      }
+
+      evaluations.push({
+        mediaItemId,
+        status: evalResult.status,
+        reasons: evalResult.reasons,
+        relevanceScore,
+        policyVersion: policy.version,
+        breakoutRuleId: evalResult.breakoutRuleId,
+        evaluatedAt,
+        runId: input.runId,
+        context,
+      });
+    }
+
+    await this.evaluationRepository.bulkUpsert(evaluations);
   }
 
   /**

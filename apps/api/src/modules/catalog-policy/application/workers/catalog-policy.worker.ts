@@ -17,7 +17,7 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
-import { RunStatus } from '../../domain/constants/evaluation.constants';
+import { EvaluationContext, RunStatus } from '../../domain/constants/evaluation.constants';
 import { RunNotFoundError } from '../../domain/errors';
 import {
   type ICatalogEvaluationRunRepository,
@@ -247,8 +247,25 @@ export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
     }
 
     try {
-      await this.evaluationService.evaluateOne(mediaItemId, policyVersion, runId);
-      this.logger.debug(`Evaluated ${mediaItemId} for run ${runId}`);
+      const contexts = [
+        EvaluationContext.CATALOG,
+        EvaluationContext.TRENDING,
+        EvaluationContext.HOMEPAGE,
+        EvaluationContext.SEARCH,
+      ] as const;
+
+      await this.evaluationService.evaluateOneForContexts(
+        {
+          mediaItemId,
+          policyVersion,
+          runId,
+        },
+        [...contexts],
+      );
+
+      this.logger.debug(
+        `Evaluated ${mediaItemId} for run ${runId} (contexts: ${contexts.join(', ')})`,
+      );
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       // Log error with full context for debugging
