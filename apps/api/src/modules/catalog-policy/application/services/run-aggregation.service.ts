@@ -37,12 +37,14 @@ export class RunAggregationService {
    * @returns Aggregated counters
    */
   async aggregateCounters(runId: string): Promise<AggregatedCounters> {
+    // Use COUNT(DISTINCT media_item_id) for processed to avoid double-counting
+    // when multiple contexts evaluate the same media item
     const result = await this.db
       .select({
-        processed: sql<number>`COUNT(*)::int`,
-        eligible: sql<number>`COUNT(*) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.ELIGIBLE})::int`,
-        ineligible: sql<number>`COUNT(*) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.INELIGIBLE})::int`,
-        pending: sql<number>`COUNT(*) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.PENDING})::int`,
+        processed: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId})::int`,
+        eligible: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.ELIGIBLE})::int`,
+        ineligible: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.INELIGIBLE})::int`,
+        pending: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.PENDING})::int`,
       })
       .from(schema.mediaCatalogEvaluations)
       .where(eq(schema.mediaCatalogEvaluations.runId, runId));
