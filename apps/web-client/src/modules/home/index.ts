@@ -8,8 +8,12 @@ export {
   HeroSection,
   TrendingCarousel,
   NewEpisodeCard,
+  NewEpisodesSection,
+  type NewEpisodesSectionProps,
+  type NewEpisodeShowItem,
   MediaCardsWithStatus,
 } from './components';
+export { toCardProps, extractNewEpisodeItems, type HomeCardProps } from './mappers';
 export type {
   BadgeKey,
   ImageDto,

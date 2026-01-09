@@ -149,8 +149,8 @@ describe('media.utils', () => {
       jest.useRealTimers();
     });
 
-    it('should return true for episode aired within past week', () => {
-      const airDate = new Date('2024-01-12T20:00:00Z'); // 3 days ago
+    it('should return true for episode aired within past 14 days', () => {
+      const airDate = new Date('2024-01-05T20:00:00Z'); // 10 days ago
       expect(hasRecentEpisode(airDate)).toBe(true);
     });
 
@@ -159,13 +159,13 @@ describe('media.utils', () => {
       expect(hasRecentEpisode(airDate)).toBe(true);
     });
 
-    it('should return true for episode aired exactly 7 days ago', () => {
-      const airDate = new Date('2024-01-08T12:00:00Z'); // exactly 7 days ago
+    it('should return true for episode aired exactly 14 days ago', () => {
+      const airDate = new Date('2024-01-01T12:00:00Z'); // exactly 14 days ago
       expect(hasRecentEpisode(airDate)).toBe(true);
     });
 
-    it('should return false for episode aired more than 7 days ago', () => {
-      const airDate = new Date('2024-01-07T00:00:00Z'); // 8+ days ago
+    it('should return false for episode aired more than 14 days ago', () => {
+      const airDate = new Date('2023-12-31T00:00:00Z'); // 15+ days ago
       expect(hasRecentEpisode(airDate)).toBe(false);
     });
 
@@ -175,7 +175,7 @@ describe('media.utils', () => {
     });
 
     it('should work with string dates', () => {
-      const airDate = '2024-01-12T20:00:00Z'; // 3 days ago
+      const airDate = '2024-01-05T20:00:00Z'; // 10 days ago
       expect(hasRecentEpisode(airDate)).toBe(true);
     });
 

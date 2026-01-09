@@ -29,5 +29,8 @@ export const CATALOG_DEFAULT_DIGITAL_DAYS = 14;
 // New Release Detection (days)
 export const NEW_RELEASE_WINDOW_DAYS = 14;
 
+// Recent Episode Detection (days) — for "New Episodes" section
+export const RECENT_EPISODE_WINDOW_DAYS = 14;
+
 // TTL / Timeouts (seconds)
 export const PRESIGNED_URL_TTL_SECONDS = 300;

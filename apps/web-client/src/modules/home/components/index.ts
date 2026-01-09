@@ -9,4 +9,9 @@ export { Top3SectionServer } from './top3-section-server';
 export { HeroSection } from './hero-section';
 export { TrendingCarousel } from './trending-carousel';
 export { NewEpisodeCard } from './new-episode-card';
+export {
+  NewEpisodesSection,
+  type NewEpisodesSectionProps,
+  type NewEpisodeShowItem,
+} from './new-episodes-section';
 export { MediaCardsWithStatus } from './media-cards-with-status';

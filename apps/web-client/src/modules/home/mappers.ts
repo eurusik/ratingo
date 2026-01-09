@@ -1,0 +1,54 @@
+/**
+ * Mappers for home page data transformation.
+ */
+
+import type { MediaCardServerProps, NewEpisodeShowItem } from './components';
+
+/** API item with optional card metadata */
+type ApiItem = Record<string, unknown> & {
+  card?: Record<string, unknown>;
+  mediaItemId?: string;
+  id?: string;
+  hasRecentEpisode?: boolean;
+};
+
+/** Extended card props with recent episode flag */
+export type HomeCardProps = MediaCardServerProps & {
+  hasRecentEpisode: boolean;
+};
+
+/** Map API item to MediaCardServerProps */
+export function toCardProps(item: ApiItem, type: 'show' | 'movie'): HomeCardProps {
+  const card = item.card;
+  const mediaItemId = item.mediaItemId ?? (item.id as string);
+
+  return {
+    id: mediaItemId,
+    slug: item.slug as string,
+    type,
+    title: item.title as string,
+    poster: (item.poster as MediaCardServerProps['poster']) ?? undefined,
+    stats: (item.stats as MediaCardServerProps['stats']) ?? undefined,
+    externalRatings: (item.externalRatings as MediaCardServerProps['externalRatings']) ?? undefined,
+    showProgress: (item.showProgress as MediaCardServerProps['showProgress']) ?? undefined,
+    releaseDate: (item.releaseDate as string) ?? undefined,
+    badgeKey: (card?.badgeKey as MediaCardServerProps['badgeKey']) ?? undefined,
+    listContext: (card?.listContext as string) ?? undefined,
+    hasRecentEpisode: item.hasRecentEpisode ?? false,
+  };
+}
+
+/** Filter and map show cards to new episode items */
+export function extractNewEpisodeItems(showCards: HomeCardProps[]): NewEpisodeShowItem[] {
+  return showCards
+    .filter((card) => card.hasRecentEpisode && card.showProgress)
+    .map((card) => ({
+      id: card.id,
+      slug: card.slug,
+      title: card.title,
+      posterUrl: card.poster?.medium ?? null,
+      seasonNumber: card.showProgress?.season ?? null,
+      episodeNumber: card.showProgress?.episode ?? null,
+      airDate: card.showProgress?.lastAirDate?.toString() ?? new Date().toISOString(),
+    }));
+}

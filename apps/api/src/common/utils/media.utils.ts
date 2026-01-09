@@ -1,4 +1,4 @@
-import { MS_PER_DAY, NEW_RELEASE_WINDOW_DAYS } from '../constants';
+import { MS_PER_DAY, NEW_RELEASE_WINDOW_DAYS, RECENT_EPISODE_WINDOW_DAYS } from '../constants';
 
 /**
  * Rating source labels for context display (matches verdict types).
@@ -55,15 +55,15 @@ export function isNewRelease(
 }
 
 /**
- * Checks if a show has a new episode (aired within the past week).
+ * Checks if a show has a new episode (aired within the recent window).
+ * Window is configured via RECENT_EPISODE_WINDOW_DAYS constant.
  */
 export function hasRecentEpisode(nextAirDate: Date | string | null): boolean {
   if (!nextAirDate) return false;
   const date = nextAirDate instanceof Date ? nextAirDate : new Date(nextAirDate);
   if (isNaN(date.getTime())) return false;
 
-  const DAYS_IN_WEEK = 7;
   const now = new Date();
-  const weekAgo = new Date(now.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
-  return date >= weekAgo && date <= now;
+  const cutoffDate = new Date(now.getTime() - RECENT_EPISODE_WINDOW_DAYS * MS_PER_DAY);
+  return date >= cutoffDate && date <= now;
 }

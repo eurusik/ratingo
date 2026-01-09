@@ -4,6 +4,9 @@
  * All formatters return empty string for null/undefined values.
  */
 
+import { formatDistanceToNowStrict, differenceInDays } from 'date-fns';
+import { uk, enUS } from 'date-fns/locale';
+
 /**
  * Format number with K/M suffixes.
  *
@@ -70,4 +73,59 @@ export function formatYear(dateString: string | null | undefined): string {
  */
 export function formatEpisode(season: number, episode: number): string {
   return `S${season}E${episode}`;
+}
+
+
+/** Freshness level for relative dates. */
+export type DateFreshness = 'fresh' | 'recent' | 'older';
+
+/** Result of relative date formatting. */
+export interface RelativeDateResult {
+  text: string;
+  freshness: DateFreshness;
+}
+
+/**
+ * Format date as relative time with freshness indicator.
+ *
+ * Freshness levels:
+ * - fresh: today (0 days)
+ * - recent: 1-3 days ago
+ * - older: 4+ days ago
+ *
+ * @example
+ * formatRelativeDate("2025-01-09") // { text: "сьогодні", freshness: "fresh" }
+ * formatRelativeDate("2025-01-08") // { text: "1 день тому", freshness: "recent" }
+ */
+export function formatRelativeDate(
+  dateString: string | null | undefined,
+  locale: 'uk' | 'en' = 'uk',
+): RelativeDateResult {
+  if (!dateString) {
+    return { text: '', freshness: 'older' };
+  }
+
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffDays = differenceInDays(now, date);
+
+  // Determine freshness
+  const freshness: DateFreshness =
+    diffDays === 0 ? 'fresh' : diffDays <= 3 ? 'recent' : 'older';
+
+  // Today special case
+  if (diffDays === 0) {
+    return {
+      text: locale === 'uk' ? 'сьогодні' : 'today',
+      freshness,
+    };
+  }
+
+  // Use date-fns for relative formatting
+  const text = formatDistanceToNowStrict(date, {
+    addSuffix: true,
+    locale: locale === 'uk' ? uk : enUS,
+  });
+
+  return { text, freshness };
 }
