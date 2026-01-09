@@ -37,17 +37,17 @@
     "tagline": "Quick way to decide what to watch now",
     "subtitle": "Trending movies and shows without the noise. Ratings, viewers, new episodes — all in one place.",
     "sections": {
-      "trending": "Trending now",
+      "trending": "Watching now",
       "popularNow": "Popular now",
-      "movies": "Trending movies",
-      "shows": "Trending shows",
+      "movies": "Watching now",
+      "shows": "Watching now",
       "newEpisodes": "Fresh episodes from trending shows",
       "upcoming": "Coming soon"
     }
   },
   "browse": {
     "trending": {
-      "title": "Trending now",
+      "title": "Watching now: Shows",
       "description": "Shows that are currently most watched"
     },
     "shows": {
@@ -59,7 +59,7 @@
       "description": "All movies on Ratingo"
     },
     "moviesTrending": {
-      "title": "Trending movies",
+      "title": "Watching now: Movies",
       "description": "Movies that are currently most watched"
     },
     "moviesNowPlaying": {
@@ -67,11 +67,11 @@
       "description": "Movies currently playing in theaters"
     },
     "moviesNewReleases": {
-      "title": "New releases",
-      "description": "Recently released movies in theaters"
+      "title": "New movies",
+      "description": "Recently released movies"
     },
     "moviesDigital": {
-      "title": "New on digital",
+      "title": "New online",
       "description": "Movies recently released on streaming platforms"
     },
     "loading": "Loading...",

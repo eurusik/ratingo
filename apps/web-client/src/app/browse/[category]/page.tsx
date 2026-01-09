@@ -5,7 +5,7 @@
 
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getDictionary } from '@/shared/i18n';
+import { getDictionary, getByPath } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
 import { getCategoryConfig, getValidCategorySlugs, type BrowseCategory } from '@/modules/browse';
 import { BrowsePageHeader, MediaGrid } from '@/modules/browse';
@@ -34,23 +34,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: 'Не знайдено | Ratingo' };
   }
 
-  // Get title from i18n based on category
-  const categoryMap: Record<string, keyof typeof dict.browse> = {
-    'shows-trending': 'trending',
-    shows: 'shows',
-    movies: 'movies',
-    'movies-trending': 'moviesTrending',
-    'movies-now-playing': 'moviesNowPlaying',
-    'movies-new-releases': 'moviesNewReleases',
-    'movies-digital': 'moviesDigital',
-  };
-  const browseKey = categoryMap[category];
-  const browseDict = browseKey
-    ? (dict.browse[browseKey] as { title: string; description: string })
-    : undefined;
-
-  const title = browseDict?.title || category;
-  const description = browseDict?.description || '';
+  const title = getByPath(dict, config.titleKey);
+  const description = getByPath(dict, config.descriptionKey);
 
   return {
     title: `${title} | Ratingo`,
@@ -127,22 +112,7 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
   const { items, total, hasMore } = await fetchInitialData(category as BrowseCategory, page);
 
   const dict = getDictionary('uk');
-
-  // Get title from i18n - map category slug to i18n key
-  const categoryMap: Record<string, keyof typeof dict.browse> = {
-    trending: 'trending',
-    shows: 'shows',
-    movies: 'movies',
-    'movies-trending': 'moviesTrending',
-    'movies-now-playing': 'moviesNowPlaying',
-    'movies-new-releases': 'moviesNewReleases',
-    'movies-digital': 'moviesDigital',
-  };
-  const browseKey = categoryMap[category];
-  const browseDict = browseKey
-    ? (dict.browse[browseKey] as { title: string; description: string })
-    : undefined;
-  const title = browseDict?.title || category;
+  const title = getByPath(dict, config.titleKey);
 
   return (
     <main className="min-h-screen bg-zinc-950">
