@@ -756,7 +756,6 @@
       "progress": {
         "eligible": "eligible",
         "ineligible": "ineligible",
-        "pending": "pending",
         "errors": "errors"
       },
       "filters": {
@@ -817,7 +816,6 @@
         "total": "total",
         "eligible": "eligible",
         "ineligible": "ineligible",
-        "pending": "pending",
         "errors": "errors"
       },
       "tabs": {

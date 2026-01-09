@@ -55,7 +55,6 @@ describe('DryRunController', () => {
           total: 100,
           eligible: 80,
           ineligible: 15,
-          pending: 5,
         },
         items: [
           {
@@ -77,7 +76,6 @@ describe('DryRunController', () => {
         total: 100,
         eligible: 80,
         ineligible: 15,
-        pending: 5,
       });
       expect(result.items).toHaveLength(1);
       expect(result.items[0].statusChanged).toBe(true);
@@ -88,7 +86,7 @@ describe('DryRunController', () => {
       dto.policy.allowedCountries = ['us', 'gb']; // lowercase
 
       mockDryRunService.execute.mockResolvedValue({
-        summary: { total: 0, eligible: 0, ineligible: 0, pending: 0 },
+        summary: { total: 0, eligible: 0, ineligible: 0 },
         items: [],
       });
 
@@ -118,7 +116,7 @@ describe('DryRunController', () => {
       };
 
       mockDryRunService.execute.mockResolvedValue({
-        summary: { total: 0, eligible: 0, ineligible: 0, pending: 0 },
+        summary: { total: 0, eligible: 0, ineligible: 0 },
         items: [],
       });
 
@@ -146,7 +144,6 @@ describe('DryRunController', () => {
           total: 100,
           eligible: 80,
           ineligible: 15,
-          pending: 5,
         },
         items: [
           {
@@ -182,7 +179,7 @@ describe('DryRunController', () => {
       };
 
       mockDryRunService.executeDiff.mockResolvedValue({
-        summary: { total: 0, eligible: 0, ineligible: 0, pending: 0 },
+        summary: { total: 0, eligible: 0, ineligible: 0 },
         items: [],
         currentPolicyVersion: 1,
       });

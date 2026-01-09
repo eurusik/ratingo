@@ -18,6 +18,7 @@ import { type PolicyEngineInput, type NormalizedOffer } from '../../domain/types
 export interface MediaItemRow {
   id: string;
   title?: string;
+  overview?: string | null;
   originCountries: unknown;
   originalLanguage: string | null;
   contentClass: string | null;
@@ -39,6 +40,8 @@ export interface MediaItemRow {
  */
 export const POLICY_EVALUATION_SELECT_FIELDS = {
   id: schema.mediaItems.id,
+  title: schema.mediaItems.title,
+  overview: schema.mediaItems.overview,
   originCountries: schema.mediaItems.originCountries,
   originalLanguage: schema.mediaItems.originalLanguage,
   contentClass: schema.mediaItems.contentClass,
@@ -52,14 +55,6 @@ export const POLICY_EVALUATION_SELECT_FIELDS = {
   popularityScore: schema.mediaStats.popularityScore,
   freshnessScore: schema.mediaStats.freshnessScore,
   ratingoScore: schema.mediaStats.ratingoScore,
-};
-
-/**
- * Extended SELECT fields including title (for dry-run results).
- */
-export const POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE = {
-  ...POLICY_EVALUATION_SELECT_FIELDS,
-  title: schema.mediaItems.title,
 };
 
 const DEFAULT_CONTENT_CLASS: ContentClass = 'mainstream';
@@ -109,6 +104,9 @@ export function mapRowToPolicyEngineInput(
       ratingRottenTomatoes: row.ratingRottenTomatoes,
       ratingTrakt: row.ratingTrakt,
       contentClass,
+      // Display fields for readability checks (Requirements 2.1, 2.2, 2.3)
+      title: row.title ?? null,
+      overview: row.overview ?? null,
     },
     stats:
       row.qualityScore !== null

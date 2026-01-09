@@ -49,6 +49,8 @@ function createAnimeInput(overrides: {
       normalizedOffers: hasNetflix
         ? [{ providerId: 'netflix', offerType: 'flatrate', distributionChannel: 'direct' }]
         : [],
+      title: 'Test Anime Title',
+      overview: 'A test anime overview for regression testing purposes.',
     },
     stats: { qualityScore: 0.7, popularityScore: 0.5, freshnessScore: 0.6, ratingoScore: 0.6 },
   };
@@ -69,6 +71,8 @@ function createWesternAnimationInput(): PolicyEngineInput {
       ratingRottenTomatoes: 95,
       ratingTrakt: 8.5,
       normalizedOffers: [],
+      title: 'Test Western Animation',
+      overview: 'A test western animation overview for regression testing purposes.',
     },
     stats: { qualityScore: 0.9, popularityScore: 0.8, freshnessScore: 0.7, ratingoScore: 0.85 },
   };
@@ -163,6 +167,9 @@ describe('Anime Breakout Regression Tests', () => {
           ratingRottenTomatoes: 85,
           ratingTrakt: 7.5,
           normalizedOffers: [],
+          title: 'Puss in Boots',
+          overview:
+            'An outlaw cat, his childhood egg-friend, and a seductive thief kitty set out in search for the eggs of the fabled Golden Goose.',
         },
         stats: { qualityScore: 0.75, popularityScore: 0.7, freshnessScore: 0.6, ratingoScore: 0.7 },
       };
@@ -189,6 +196,8 @@ describe('Anime Breakout Regression Tests', () => {
           ratingRottenTomatoes: null,
           ratingTrakt: 7.0,
           normalizedOffers: [],
+          title: 'Korean Animation Test',
+          overview: 'A test Korean animation overview for regression testing purposes.',
         },
         stats: { qualityScore: 0.6, popularityScore: 0.4, freshnessScore: 0.5, ratingoScore: 0.5 },
       };

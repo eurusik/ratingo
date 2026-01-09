@@ -7,7 +7,6 @@
  *
  * Use this repository ONLY for admin endpoints that need to see:
  * - INELIGIBLE items (for review/debugging)
- * - PENDING items (for data quality monitoring)
  * - Evaluation history and reasons
  */
 
@@ -79,7 +78,7 @@ export interface IAdminCatalogRepository {
 
   /**
    * Finds a single media item by ID with full evaluation data.
-   * Returns item even if INELIGIBLE or PENDING.
+   * Returns item even if INELIGIBLE.
    */
   findById(id: string): Promise<MediaItemWithEvaluation | null>;
 
@@ -263,7 +262,6 @@ export class AdminCatalogRepository implements IAdminCatalogRepository {
         .groupBy(schema.mediaCatalogEvaluations.status);
 
       const counts: Record<EligibilityStatusType, number> = {
-        pending: 0,
         eligible: 0,
         ineligible: 0,
         review: 0,

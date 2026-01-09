@@ -206,18 +206,21 @@ export class DrizzleMediaRepository implements IMediaRepository {
             });
         }
 
-        // Upsert Catalog Evaluation (PENDING by default)
+        // Upsert Catalog Evaluation (INELIGIBLE by default)
         // Design Decision DD-3: Every media_item MUST have a corresponding evaluation record
         // This ensures the 1:1 invariant and prevents items from being "stuck" without evaluation
+        //
+        // Per Readability & Pending Reform: PENDING is no longer used.
+        // New items start as INELIGIBLE with NO_ACTIVE_POLICY reason until evaluated.
         await tx
           .insert(schema.mediaCatalogEvaluations)
           .values({
             mediaItemId: mediaId,
-            status: EligibilityStatus.PENDING,
+            status: EligibilityStatus.INELIGIBLE,
             policyVersion: DEFAULT_POLICY_VERSION,
             reasons: [EvaluationReason.NO_ACTIVE_POLICY],
             relevanceScore: 0,
-            evaluatedAt: null, // NULL for pending items
+            evaluatedAt: null, // NULL for items not yet evaluated by Policy Engine
             context: EvaluationContext.CATALOG, // Default context for catalog evaluation
           })
           .onConflictDoNothing(); // If already exists, don't overwrite (evaluation job will update it)

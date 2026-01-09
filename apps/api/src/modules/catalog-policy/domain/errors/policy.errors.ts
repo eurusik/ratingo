@@ -10,11 +10,11 @@ import { EligibilityStatus, RunStatus } from '../constants/evaluation.constants'
 /**
  * Thrown when eligibility status is not in canonical set.
  *
- * Valid values: 'pending', 'eligible', 'ineligible', 'review'.
+ * Valid values: 'eligible', 'ineligible', 'review'.
  *
  * @example
- * throw new InvalidEligibilityStatusError('PENDING');
- * // Error: Invalid eligibility status: 'PENDING'. Expected one of: pending, eligible, ineligible, review
+ * throw new InvalidEligibilityStatusError('UNKNOWN');
+ * // Error: Invalid eligibility status: 'UNKNOWN'. Expected one of: eligible, ineligible, review
  */
 export class InvalidEligibilityStatusError extends Error {
   public readonly invalidStatus: string;

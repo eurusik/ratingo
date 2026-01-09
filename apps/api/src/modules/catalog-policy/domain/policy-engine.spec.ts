@@ -46,13 +46,17 @@ describe('Policy Engine', () => {
       ratingRottenTomatoes: null,
       ratingTrakt: null,
       contentClass: 'mainstream' as ContentClass,
+      title: 'Test Movie',
+      // Overview must be 60+ chars to pass trending/homepage context requirements
+      overview: 'A comprehensive test movie description for testing purposes and validation.',
     },
     stats: null,
     ...overrides,
   });
 
-  describe('evaluateEligibility - Missing Data Returns PENDING', () => {
-    it('should return PENDING when originCountries is null', () => {
+  describe('evaluateEligibility - Missing Data Returns INELIGIBLE', () => {
+    // Per Readability & Pending Reform: missing data now returns INELIGIBLE with umbrella + specific reasons
+    it('should return INELIGIBLE when originCountries is null', () => {
       const policy = createPolicy();
       const input = createInput({
         mediaItem: {
@@ -63,12 +67,13 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.PENDING);
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
       expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should return PENDING when originCountries is empty array', () => {
+    it('should return INELIGIBLE when originCountries is empty array', () => {
       const policy = createPolicy();
       const input = createInput({
         mediaItem: {
@@ -79,12 +84,13 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.PENDING);
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
       expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should return PENDING when originalLanguage is null', () => {
+    it('should return INELIGIBLE when originalLanguage is null', () => {
       const policy = createPolicy();
       const input = createInput({
         mediaItem: {
@@ -95,12 +101,13 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.PENDING);
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
       expect(result.reasons).toContain('MISSING_ORIGINAL_LANGUAGE');
       expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should return PENDING when originalLanguage is empty string', () => {
+    it('should return INELIGIBLE when originalLanguage is empty string', () => {
       const policy = createPolicy();
       const input = createInput({
         mediaItem: {
@@ -111,12 +118,13 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.PENDING);
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
       expect(result.reasons).toContain('MISSING_ORIGINAL_LANGUAGE');
       expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should return PENDING when both originCountries and originalLanguage are missing', () => {
+    it('should return INELIGIBLE when both originCountries and originalLanguage are missing', () => {
       const policy = createPolicy();
       const input = createInput({
         mediaItem: {
@@ -128,8 +136,9 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.PENDING);
-      // Should return on first missing check (originCountries)
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      // Should return on first missing check (originCountries) with umbrella + specific
+      expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
       expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
@@ -146,8 +155,8 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.PENDING);
-      expect(result.reasons).toEqual(['MISSING_ORIGIN_COUNTRY']);
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toEqual(['MISSING_REQUIRED_METADATA', 'MISSING_ORIGIN_COUNTRY']);
       expect(result.breakoutRuleId).toBeNull();
     });
   });
@@ -1117,6 +1126,11 @@ describe('Policy Engine', () => {
           minVotesAnyOf: { sources: ['imdb'], min: 50000 },
           appliesTo: [EvaluationContext.CATALOG, EvaluationContext.HOMEPAGE], // Excludes trending
         },
+        // Disable overview requirement to focus on gate behavior
+        contextRequirements: {
+          trending: { requireOverview: false },
+          homepage: { requireOverview: false },
+        },
       });
       const input = createInput({
         mediaItem: {
@@ -1150,6 +1164,10 @@ describe('Policy Engine', () => {
           minVotesAnyOf: { sources: ['imdb'], min: 50000 },
           appliesTo: [EvaluationContext.CATALOG], // Only catalog requires gate
         },
+        // Disable overview requirement to focus on gate behavior
+        contextRequirements: {
+          trending: { requireOverview: false },
+        },
       });
       const input = createInput({
         mediaItem: {
@@ -1177,6 +1195,10 @@ describe('Policy Engine', () => {
         globalRequirements: {
           minVotesAnyOf: { sources: ['imdb'], min: 50000 },
           appliesTo: [EvaluationContext.CATALOG, EvaluationContext.TRENDING], // Includes trending
+        },
+        // Disable overview requirement to focus on gate behavior
+        contextRequirements: {
+          trending: { requireOverview: false },
         },
       });
       const input = createInput({
@@ -1360,7 +1382,8 @@ describe('Policy Engine', () => {
       expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should return PENDING for missing data regardless of content class exclusion', () => {
+    it('should return INELIGIBLE for missing data regardless of content class exclusion', () => {
+      // Per Readability & Pending Reform: missing data returns INELIGIBLE with umbrella + specific reasons
       const policy = createPolicy({
         excludedContentClasses: ['anime'],
       });
@@ -1374,7 +1397,8 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.PENDING);
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
       expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
       expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
     });

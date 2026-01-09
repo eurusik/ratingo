@@ -22,6 +22,7 @@ import {
   type GlobalRequirements,
   type NormalizedOffer,
   type AvailabilityMode,
+  type ContextRequirements,
 } from './types/policy.types';
 
 /**
@@ -34,6 +35,12 @@ const DEFAULT_QUALITY_CONTEXTS: EvaluationContextType[] = [
   EvaluationContext.TRENDING,
   EvaluationContext.SEARCH,
 ];
+
+/**
+ * Default minimum overview length in characters for contexts that require overview.
+ * Used when requireOverview=true and minOverviewChars is not configured.
+ */
+const DEFAULT_MIN_OVERVIEW_CHARS = 60;
 
 /**
  * Checks if content class is excluded by policy.
@@ -71,14 +78,17 @@ export function shouldApplyGlobalGate(
 /**
  * Evaluates media eligibility based on policy rules.
  *
- * Evaluation order:
- * 1. Missing data → PENDING
- * 2. Content class exclusion (SOFT filter - breakout can override)
- * 3. Blocked checks (HARD filter - breakout cannot override)
- * 4. Global quality gate (if configured)
- * 5. Breakout rules
- * 6. Neutral checks
- * 7. Allowed checks
+ * Evaluation order (Requirements: 6.1, 6.4, 6.5):
+ * 1. Data Integrity (origin/language/title) → INELIGIBLE with umbrella + specific reason
+ * 2. Display Gates (readability/overview) → INELIGIBLE with specific reason
+ * 3. Content Class Exclusion (SOFT filter - breakout can override)
+ * 4. Blocked Checks (HARD filter - breakout cannot override)
+ * 5. Global Quality Gate (if configured)
+ * 6. Breakout Rules
+ * 7. Neutral/Allowed Checks
+ *
+ * Note: PENDING status is no longer returned by Policy Engine.
+ * All missing data cases return INELIGIBLE with specific reasons.
  *
  * @param input - Media item data and stats
  * @param policy - Active policy configuration
@@ -95,30 +105,79 @@ export function evaluateEligibility(
   // Context defaults to 'catalog' for legacy/batch compatibility
   const context = options?.context ?? EvaluationContext.CATALOG;
 
-  // Step 1: Missing data checks → PENDING
+  // ============================================================================
+  // STEP 1: DATA INTEGRITY CHECKS
+  // Missing critical metadata → INELIGIBLE with umbrella + specific reason
+  // Order: origin countries → original language → title
+  // ============================================================================
   if (!mediaItem.originCountries || mediaItem.originCountries.length === 0) {
+    reasons.push(EvaluationReason.MISSING_REQUIRED_METADATA);
     reasons.push(EvaluationReason.MISSING_ORIGIN_COUNTRY);
-    return { status: EligibilityStatus.PENDING, reasons, breakoutRuleId: null };
+    return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
   }
 
   if (!mediaItem.originalLanguage) {
+    reasons.push(EvaluationReason.MISSING_REQUIRED_METADATA);
     reasons.push(EvaluationReason.MISSING_ORIGINAL_LANGUAGE);
-    return { status: EligibilityStatus.PENDING, reasons, breakoutRuleId: null };
+    return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
   }
 
-  // Step 2: Content class exclusion check (SOFT filter)
+  // Check title is not null/empty (Requirements: 1.4, 2.4)
+  if (!mediaItem.title || mediaItem.title.trim().length === 0) {
+    reasons.push(EvaluationReason.MISSING_REQUIRED_METADATA);
+    reasons.push(EvaluationReason.MISSING_TITLE);
+    return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
+  }
+
+  // ============================================================================
+  // STEP 2: DISPLAY GATES CHECKS
+  // Context-dependent readability and overview requirements
+  // Requirements: 3.4, 4.3, 4.4, 4.7
+  // ============================================================================
+  const contextRequirements = getContextRequirements(policy, context);
+
+  // Check readability if requireReadableTitle=true
+  if (contextRequirements.requireReadableTitle && !isReadableTitle(mediaItem.title)) {
+    reasons.push(EvaluationReason.MISSING_TRANSLATED_TITLE);
+    return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
+  }
+
+  // Check overview if requireOverview=true
+  if (contextRequirements.requireOverview) {
+    const overview = mediaItem.overview?.trim() ?? '';
+    // Check for placeholders like "TBA", "N/A", "Coming soon"
+    const isPlaceholder = /^(tba|n\/a|coming soon|to be announced)$/i.test(overview);
+    if (
+      overview.length === 0 ||
+      isPlaceholder ||
+      overview.length < contextRequirements.minOverviewChars
+    ) {
+      reasons.push(EvaluationReason.MISSING_OVERVIEW);
+      return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
+    }
+  }
+
+  // ============================================================================
+  // STEP 3: CONTENT CLASS EXCLUSION CHECK (SOFT filter)
+  // Breakout rules CAN override this exclusion
+  // ============================================================================
   const isContentClassExcluded = checkContentClassExcluded(
     mediaItem.contentClass,
     policy.excludedContentClasses,
   );
 
-  // Step 3: Blocked checks (HARD filter)
+  // ============================================================================
+  // STEP 4: BLOCKED CHECKS (HARD filter)
+  // Breakout rules CANNOT override hard blocks
+  // ============================================================================
   const isBlocked = checkBlocked(mediaItem, policy, reasons);
 
   // Handle excluded content class with breakout opportunity
   if (isContentClassExcluded) {
-    // Check if breakout can override the exclusion
-    // Global gate must pass first (if configured)
+    // ============================================================================
+    // STEP 5: GLOBAL QUALITY GATE (for excluded content)
+    // Gate must pass before breakout is attempted
+    // ============================================================================
     if (policy.globalRequirements) {
       const gateResult = checkGlobalRequirements(input, policy.globalRequirements);
       if (!gateResult.passes) {
@@ -134,7 +193,9 @@ export function evaluateEligibility(
       }
     }
 
-    // Check breakout rules
+    // ============================================================================
+    // STEP 6: BREAKOUT RULES (for excluded content)
+    // ============================================================================
     const breakoutRule = findMatchingBreakoutRule(input, policy);
 
     if (breakoutRule) {
@@ -168,8 +229,10 @@ export function evaluateEligibility(
 
   // Non-excluded content continues with normal flow
   if (isBlocked) {
-    // Step 4: Global Quality Gate for blocked content
+    // ============================================================================
+    // STEP 5: GLOBAL QUALITY GATE (for blocked content)
     // Breakout rules require gate to pass
+    // ============================================================================
     if (policy.globalRequirements) {
       const gateResult = checkGlobalRequirements(input, policy.globalRequirements);
       if (!gateResult.passes) {
@@ -186,7 +249,9 @@ export function evaluateEligibility(
       }
     }
 
-    // Step 5: Check breakout rules (gate passed or not configured)
+    // ============================================================================
+    // STEP 6: BREAKOUT RULES (for blocked content, gate passed or not configured)
+    // ============================================================================
     const breakoutRule = findMatchingBreakoutRule(input, policy);
 
     if (breakoutRule) {
@@ -201,7 +266,9 @@ export function evaluateEligibility(
     return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
   }
 
-  // Step 6: Global Quality Gate for non-blocked content - NOW CONTEXT AWARE
+  // ============================================================================
+  // STEP 5: GLOBAL QUALITY GATE (for non-blocked content) - CONTEXT AWARE
+  // ============================================================================
   if (shouldApplyGlobalGate(policy.globalRequirements, context)) {
     const gateResult = checkGlobalRequirements(input, policy.globalRequirements);
     if (!gateResult.passes) {
@@ -218,7 +285,10 @@ export function evaluateEligibility(
     }
   }
 
-  // Step 7: Neutral checks (not in allowed/blocked)
+  // ============================================================================
+  // STEP 7: NEUTRAL/ALLOWED CHECKS
+  // Content not in blocked lists - check if in allowed or neutral
+  // ============================================================================
   const isNeutral = checkNeutral(mediaItem, policy, reasons);
 
   if (isNeutral) {
@@ -229,8 +299,10 @@ export function evaluateEligibility(
     return { status: EligibilityStatus.INELIGIBLE, reasons, breakoutRuleId: null };
   }
 
-  // Step 8: Allowed checks (whitelist)
+  // ============================================================================
+  // STEP 7 (continued): ALLOWED CHECKS (whitelist)
   // If we reach here, content is in allowed lists
+  // ============================================================================
   reasons.push(EvaluationReason.ALLOWED_COUNTRY);
   reasons.push(EvaluationReason.ALLOWED_LANGUAGE);
 
@@ -695,6 +767,106 @@ export function computeRelevance(input: PolicyEngineInput, _policy: PolicyConfig
 }
 
 /**
+ * Checks if title is readable for UA audience.
+ *
+ * Rules:
+ * 1. If title has 2+ Latin/Cyrillic letters → readable (regardless of other chars)
+ * 2. If title length > 6 AND CJK > 60% of letters AND < 2 Latin/Cyrillic → unreadable
+ * 3. Otherwise → readable (short titles, mixed content)
+ *
+ * @param title - Display title to check
+ * @returns true if readable, false if CJK-heavy without translation
+ */
+export function isReadableTitle(title: string): boolean {
+  // Constants for readability rules
+  const MIN_LATIN_CYRILLIC_FOR_READABLE = 2;
+  const MIN_TITLE_LENGTH_FOR_CJK_CHECK = 6;
+  const CJK_HEAVY_THRESHOLD = 0.6;
+
+  if (!title || title.length === 0) {
+    return false; // Empty title handled by data integrity check
+  }
+
+  // Count character types (letters only, not digits/punctuation)
+  // Using Unicode property escapes for script detection
+  const latinCyrillicRegex = /[\p{Script=Latin}\p{Script=Cyrillic}]/gu;
+  const cjkRegex = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu;
+
+  const latinCyrillicMatches = title.match(latinCyrillicRegex) || [];
+  const cjkMatches = title.match(cjkRegex) || [];
+
+  const latinCyrillicCount = latinCyrillicMatches.length;
+  const cjkCount = cjkMatches.length;
+  const totalLetters = latinCyrillicCount + cjkCount;
+
+  // Rule 1: 2+ Latin/Cyrillic letters = always readable
+  if (latinCyrillicCount >= MIN_LATIN_CYRILLIC_FOR_READABLE) {
+    return true;
+  }
+
+  // Rule 2: Long CJK-heavy title without Latin/Cyrillic = unreadable
+  if (title.length > MIN_TITLE_LENGTH_FOR_CJK_CHECK && totalLetters > 0) {
+    const cjkRatio = cjkCount / totalLetters;
+    if (cjkRatio > CJK_HEAVY_THRESHOLD && latinCyrillicCount < MIN_LATIN_CYRILLIC_FOR_READABLE) {
+      return false;
+    }
+  }
+
+  // Rule 3: Short titles or mixed content = readable
+  return true;
+}
+
+/**
+ * Returns default context requirements for a given context.
+ *
+ * Defaults:
+ * - requireReadableTitle: true (all contexts)
+ * - requireOverview: true (trending, homepage), false (others)
+ * - minOverviewChars: 60 (when requireOverview=true)
+ *
+ * @param context - Evaluation context type
+ * @returns Required context requirements with all fields populated
+ */
+export function getDefaultContextRequirements(
+  context: EvaluationContextType,
+): Required<ContextRequirements> {
+  const requireOverview =
+    context === EvaluationContext.TRENDING || context === EvaluationContext.HOMEPAGE;
+
+  return {
+    requireReadableTitle: true,
+    requireOverview,
+    minOverviewChars: requireOverview ? DEFAULT_MIN_OVERVIEW_CHARS : 0,
+  };
+}
+
+/**
+ * Merges policy context requirements with defaults.
+ * Returns fully populated context requirements for the given context.
+ *
+ * @param policy - Policy configuration (may have partial contextRequirements)
+ * @param context - Evaluation context type
+ * @returns Required context requirements with all fields populated
+ */
+export function getContextRequirements(
+  policy: PolicyConfig,
+  context: EvaluationContextType,
+): Required<ContextRequirements> {
+  const defaults = getDefaultContextRequirements(context);
+  const configured = policy.contextRequirements?.[context];
+
+  if (!configured) {
+    return defaults;
+  }
+
+  return {
+    requireReadableTitle: configured.requireReadableTitle ?? defaults.requireReadableTitle,
+    requireOverview: configured.requireOverview ?? defaults.requireOverview,
+    minOverviewChars: configured.minOverviewChars ?? defaults.minOverviewChars,
+  };
+}
+
+/**
  * Returns human-readable descriptions for evaluation reasons.
  *
  * @param reasons - List of evaluation reasons
@@ -704,8 +876,24 @@ export function getReasonDescriptions(
   _reasons: EvaluationReasonType[],
 ): Record<EvaluationReasonType, string> {
   const descriptions: Record<EvaluationReasonType, string> = {
+    // Umbrella reason
+    [EvaluationReason.MISSING_REQUIRED_METADATA]:
+      'Required metadata is missing (see specific reason for details)',
+
+    // Missing data reasons
     [EvaluationReason.MISSING_ORIGIN_COUNTRY]: 'Origin country information is missing',
     [EvaluationReason.MISSING_ORIGINAL_LANGUAGE]: 'Original language information is missing',
+    [EvaluationReason.MISSING_TITLE]: 'Title is missing or empty',
+
+    // Readability reasons
+    [EvaluationReason.MISSING_TRANSLATED_TITLE]:
+      'Title is not readable for UA audience (CJK-heavy without Latin/Cyrillic translation)',
+
+    // Context-dependent reasons
+    [EvaluationReason.MISSING_OVERVIEW]:
+      'Overview is missing or too short for this display context',
+
+    // Blocked reasons
     [EvaluationReason.BLOCKED_COUNTRY]: 'Content is from a blocked country',
     [EvaluationReason.BLOCKED_LANGUAGE]: 'Content is in a blocked language',
     [EvaluationReason.NEUTRAL_COUNTRY]: 'Content is from a neutral country (not in allowed list)',

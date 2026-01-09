@@ -129,7 +129,7 @@ export class DryRunItemResultDto {
   @ApiPropertyOptional({
     description: 'Current eligibility status (null if not evaluated)',
     example: 'ELIGIBLE',
-    enum: ['PENDING', 'ELIGIBLE', 'INELIGIBLE', 'REVIEW'],
+    enum: ['ELIGIBLE', 'INELIGIBLE', 'REVIEW'],
   })
   @IsOptional()
   @IsString()
@@ -138,7 +138,7 @@ export class DryRunItemResultDto {
   @ApiProperty({
     description: 'Proposed eligibility status under new policy',
     example: 'ELIGIBLE',
-    enum: ['PENDING', 'ELIGIBLE', 'INELIGIBLE', 'REVIEW'],
+    enum: ['ELIGIBLE', 'INELIGIBLE', 'REVIEW'],
   })
   @IsString()
   proposedStatus: string;
@@ -219,13 +219,6 @@ export class DryRunSummaryDto {
   })
   @IsNumber()
   ineligible: number;
-
-  @ApiProperty({
-    description: 'Items that would be pending',
-    example: 40,
-  })
-  @IsNumber()
-  pending: number;
 
   @ApiProperty({
     description: 'Items that would need review',

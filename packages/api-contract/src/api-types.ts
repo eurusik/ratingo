@@ -734,6 +734,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ingestion/backfill/imdb": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-sync shows missing IMDb ID
+         * @description Finds all shows with missing IMDb ID and performs full re-sync. This fetches external_ids from TMDB (including imdb_id), then enriches each show with Trakt stats (watchers, ratings) and OMDb ratings (IMDb, Rotten Tomatoes, Metacritic). Use when shows were imported before external_ids fetching was implemented.
+         */
+        post: operations["IngestionController_backfillImdb"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/catalog-policies": {
         parameters: {
             query?: never;
@@ -892,6 +912,26 @@ export interface paths {
         get: operations["RunController_getDiff"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/catalog-policies/runs/backfill": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill evaluations for a specific context
+         * @description Triggers re-evaluation for the specified context only, using the currently active policy. Use this to populate missing evaluation data for a specific context without affecting other contexts.
+         */
+        post: operations["RunController_backfillContext"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2773,11 +2813,6 @@ export interface components {
              */
             ineligible: number;
             /**
-             * @description Number of pending items
-             * @example 450
-             */
-            pending: number;
-            /**
              * @description Number of errors encountered
              * @example 50
              */
@@ -3026,6 +3061,43 @@ export interface components {
             /** @description Breakdown of reasons for regressions and improvements */
             reasonBreakdown?: components["schemas"]["ReasonBreakdownDto"];
         };
+        BackfillRequestDto: {
+            /**
+             * @description Evaluation context to backfill
+             * @example trending
+             * @enum {string}
+             */
+            context: "catalog" | "trending";
+            /**
+             * @description Batch size for processing items
+             * @example 500
+             */
+            batchSize?: number;
+        };
+        BackfillResponseDto: {
+            /**
+             * @description ID of the created backfill run
+             * @example run-123e4567-e89b-12d3-a456-426614174000
+             */
+            runId: string;
+            /**
+             * @description Current status of the run
+             * @example running
+             * @enum {string}
+             */
+            status: "running" | "prepared" | "failed" | "cancelled" | "promoted";
+            /**
+             * @description Context being backfilled
+             * @example trending
+             * @enum {string}
+             */
+            context: "catalog" | "trending";
+            /**
+             * @description Human-readable message
+             * @example Backfill started for context=trending. Use GET /admin/catalog-policies/runs/run-123 to track progress.
+             */
+            message: string;
+        };
         DryRunOptionsDto: {
             /**
              * @description Selection mode for items to evaluate
@@ -3077,11 +3149,6 @@ export interface components {
              * @example 200
              */
             ineligible: number;
-            /**
-             * @description Items that would be pending
-             * @example 40
-             */
-            pending: number;
             /**
              * @description Items that would need review
              * @example 10
@@ -3137,13 +3204,13 @@ export interface components {
              * @example ELIGIBLE
              * @enum {string}
              */
-            currentStatus?: "PENDING" | "ELIGIBLE" | "INELIGIBLE" | "REVIEW";
+            currentStatus?: "ELIGIBLE" | "INELIGIBLE" | "REVIEW";
             /**
              * @description Proposed eligibility status under new policy
              * @example ELIGIBLE
              * @enum {string}
              */
-            proposedStatus: "PENDING" | "ELIGIBLE" | "INELIGIBLE" | "REVIEW";
+            proposedStatus: "ELIGIBLE" | "INELIGIBLE" | "REVIEW";
             /**
              * @description Evaluation reasons
              * @example [
@@ -4909,6 +4976,25 @@ export interface operations {
             };
         };
     };
+    IngestionController_backfillImdb: {
+        parameters: {
+            query: {
+                force: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PolicyController_getPolicies: {
         parameters: {
             query?: never;
@@ -5170,6 +5256,49 @@ export interface operations {
                         data: components["schemas"]["DiffReportDto"];
                     };
                 };
+            };
+        };
+    };
+    RunController_backfillContext: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Context to backfill and optional batch size */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackfillRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Backfill started */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["BackfillResponseDto"];
+                    };
+                };
+            };
+            /** @description Invalid context */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No active policy found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

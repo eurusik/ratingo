@@ -148,7 +148,6 @@ describe('Building Blocks Checkpoint', () => {
       total: 100,
       eligible: 5,
       ineligible: 3,
-      pending: 2,
       errors: 0,
     };
 

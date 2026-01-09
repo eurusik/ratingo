@@ -2,6 +2,10 @@
  * Run Aggregation Service
  *
  * Provides derived counters from evaluations table (source of truth).
+ *
+ * Note: Per Readability & Pending Reform, PENDING is no longer returned by Policy Engine.
+ * The pending counter is always 0 for policy runs. PENDING status only exists in
+ * ingestion layer (ingestion_status field) as "not ready for evaluation".
  */
 
 import { Injectable, Logger, Inject } from '@nestjs/common';
@@ -17,7 +21,6 @@ export interface AggregatedCounters {
   processed: number;
   eligible: number;
   ineligible: number;
-  pending: number;
   errors: number;
 }
 
@@ -33,6 +36,7 @@ export class RunAggregationService {
   /**
    * Aggregates counters from evaluations table for a specific run.
    *
+   * Note: Per Readability & Pending Reform, pending is always 0.
    * @param runId - Run identifier
    * @returns Aggregated counters
    */
@@ -44,12 +48,11 @@ export class RunAggregationService {
         processed: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId})::int`,
         eligible: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.ELIGIBLE})::int`,
         ineligible: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.INELIGIBLE})::int`,
-        pending: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.PENDING})::int`,
       })
       .from(schema.mediaCatalogEvaluations)
       .where(eq(schema.mediaCatalogEvaluations.runId, runId));
 
-    const counters = result[0] || { processed: 0, eligible: 0, ineligible: 0, pending: 0 };
+    const counters = result[0] || { processed: 0, eligible: 0, ineligible: 0 };
 
     // Get error count from run's error_sample (errors are tracked separately)
     const run = await this.db
@@ -81,7 +84,6 @@ export class RunAggregationService {
         processed: counters.processed,
         eligible: counters.eligible,
         ineligible: counters.ineligible,
-        pending: counters.pending,
         errors: counters.errors,
       })
       .where(eq(schema.catalogEvaluationRuns.id, runId));

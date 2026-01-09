@@ -141,6 +141,29 @@ export interface BreakoutRule {
 }
 
 /**
+ * Context-specific display requirements.
+ * Controls readability and overview gates per display surface.
+ */
+export interface ContextRequirements {
+  /**
+   * Require readable title (Latin/Cyrillic presence).
+   * Default: true (all contexts)
+   */
+  requireReadableTitle?: boolean;
+  /**
+   * Require overview presence.
+   * Default: false (true for trending/homepage)
+   */
+  requireOverview?: boolean;
+  /**
+   * Minimum overview length in characters.
+   * Only evaluated if requireOverview=true.
+   * Default: 60 when requireOverview=true
+   */
+  minOverviewChars?: number;
+}
+
+/**
  * Policy configuration defining catalog eligibility rules.
  */
 export interface PolicyConfig {
@@ -170,6 +193,12 @@ export interface PolicyConfig {
    * Example: ['anime', 'reality'] excludes anime and reality content unless breakout passes.
    */
   excludedContentClasses?: ContentClass[];
+  /**
+   * Context-specific requirements for display surfaces.
+   * Keys are EvaluationContextType values.
+   * Missing contexts use defaults from getDefaultContextRequirements().
+   */
+  contextRequirements?: Partial<Record<EvaluationContextType, ContextRequirements>>;
 }
 
 /**
@@ -216,6 +245,16 @@ export interface PolicyEngineInput {
      * Validated in application layer before engine evaluation.
      */
     contentClass: ContentClass;
+    /**
+     * Display title from media_items.
+     * Used for readability checks (Latin/Cyrillic presence for UA audience).
+     */
+    title: string | null;
+    /**
+     * Description from media_items.
+     * Used for context-dependent overview requirements (trending/homepage).
+     */
+    overview: string | null;
   };
   stats: {
     qualityScore: number | null;
@@ -267,6 +306,9 @@ export interface MediaCatalogEvaluation {
  *
  * Note: Repository layer (infrastructure) extends this with additional fields.
  * This is the domain-level representation.
+ *
+ * Per Readability & Pending Reform: pending is always 0 for new runs.
+ * PENDING is no longer returned by Policy Engine.
  */
 export interface CatalogEvaluationRun {
   id: string;
@@ -278,6 +320,5 @@ export interface CatalogEvaluationRun {
   processed: number;
   eligible: number;
   ineligible: number;
-  pending: number;
   errors: number;
 }

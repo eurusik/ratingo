@@ -2700,6 +2700,36 @@
         ]
       }
     },
+    "/api/ingestion/backfill/imdb": {
+      "post": {
+        "operationId": "IngestionController_backfillImdb",
+        "summary": "Re-sync shows missing IMDb ID",
+        "description": "Finds all shows with missing IMDb ID and performs full re-sync. This fetches external_ids from TMDB (including imdb_id), then enriches each show with Trakt stats (watchers, ratings) and OMDb ratings (IMDb, Rotten Tomatoes, Metacritic). Use when shows were imported before external_ids fetching was implemented.",
+        "parameters": [
+          {
+            "name": "force",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/admin/catalog-policies": {
       "get": {
         "operationId": "PolicyController_getPolicies",
@@ -3197,6 +3227,66 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "Admin - Policy Activation"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/catalog-policies/runs/backfill": {
+      "post": {
+        "operationId": "RunController_backfillContext",
+        "summary": "Backfill evaluations for a specific context",
+        "description": "Triggers re-evaluation for the specified context only, using the currently active policy. Use this to populate missing evaluation data for a specific context without affecting other contexts.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Context to backfill and optional batch size",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackfillRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Backfill started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BackfillResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid context"
+          },
+          "404": {
+            "description": "No active policy found"
           }
         },
         "tags": [
@@ -7848,11 +7938,6 @@
             "description": "Number of ineligible items",
             "example": 100
           },
-          "pending": {
-            "type": "number",
-            "description": "Number of pending items",
-            "example": 450
-          },
           "errors": {
             "type": "number",
             "description": "Number of errors encountered",
@@ -7864,7 +7949,6 @@
           "total",
           "eligible",
           "ineligible",
-          "pending",
           "errors"
         ]
       },
@@ -8259,6 +8343,72 @@
           "topImprovements"
         ]
       },
+      "BackfillRequestDto": {
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "string",
+            "description": "Evaluation context to backfill",
+            "example": "trending",
+            "enum": [
+              "catalog",
+              "trending"
+            ]
+          },
+          "batchSize": {
+            "type": "number",
+            "description": "Batch size for processing items",
+            "example": 500,
+            "minimum": 1,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "context"
+        ]
+      },
+      "BackfillResponseDto": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "ID of the created backfill run",
+            "example": "run-123e4567-e89b-12d3-a456-426614174000"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the run",
+            "example": "running",
+            "enum": [
+              "running",
+              "prepared",
+              "failed",
+              "cancelled",
+              "promoted"
+            ]
+          },
+          "context": {
+            "type": "string",
+            "description": "Context being backfilled",
+            "example": "trending",
+            "enum": [
+              "catalog",
+              "trending"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message",
+            "example": "Backfill started for context=trending. Use GET /admin/catalog-policies/runs/run-123 to track progress."
+          }
+        },
+        "required": [
+          "runId",
+          "status",
+          "context",
+          "message"
+        ]
+      },
       "DryRunOptionsDto": {
         "type": "object",
         "properties": {
@@ -8349,11 +8499,6 @@
             "description": "Items that would be ineligible",
             "example": 200
           },
-          "pending": {
-            "type": "number",
-            "description": "Items that would be pending",
-            "example": 40
-          },
           "review": {
             "type": "number",
             "description": "Items that would need review",
@@ -8407,7 +8552,6 @@
           "totalEvaluated",
           "eligible",
           "ineligible",
-          "pending",
           "review",
           "newlyEligible",
           "newlyIneligible",
@@ -8436,7 +8580,6 @@
             "description": "Current eligibility status (null if not evaluated)",
             "example": "ELIGIBLE",
             "enum": [
-              "PENDING",
               "ELIGIBLE",
               "INELIGIBLE",
               "REVIEW"
@@ -8447,7 +8590,6 @@
             "description": "Proposed eligibility status under new policy",
             "example": "ELIGIBLE",
             "enum": [
-              "PENDING",
               "ELIGIBLE",
               "INELIGIBLE",
               "REVIEW"

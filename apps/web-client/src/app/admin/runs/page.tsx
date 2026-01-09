@@ -50,7 +50,7 @@ export default function RunsPage() {
       id: 'progress',
       header: dict.admin.runs.columns.progress,
       cell: ({ row }) => {
-        const { processed, total, eligible, ineligible, pending, errors } = row.original.progress;
+        const { processed, total, eligible, ineligible, errors } = row.original.progress;
         const percentage = Math.round((processed / total) * 100);
 
         return (
@@ -68,11 +68,6 @@ export default function RunsPage() {
               <Badge variant="secondary" className="text-xs px-2 py-0.5 whitespace-nowrap">
                 {ineligible} {dict.admin.runs.progress.ineligible}
               </Badge>
-              {pending > 0 && (
-                <Badge variant="outline" className="text-xs px-2 py-0.5 whitespace-nowrap">
-                  {pending} {dict.admin.runs.progress.pending}
-                </Badge>
-              )}
               {errors > 0 && (
                 <Badge variant="destructive" className="text-xs px-2 py-0.5 whitespace-nowrap">
                   {errors} {dict.admin.runs.progress.errors}

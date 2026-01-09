@@ -112,41 +112,6 @@ describe('MediaCatalogEvaluationRepository', () => {
       );
     });
 
-    it('should store pending status directly', async () => {
-      const evaluation: MediaCatalogEvaluation = {
-        mediaItemId: 'media-3',
-        status: 'pending',
-        reasons: ['MISSING_ORIGIN_COUNTRY'],
-        relevanceScore: 50,
-        policyVersion: 1,
-        evaluatedAt: new Date(),
-        breakoutRuleId: null,
-        context: 'catalog',
-      };
-
-      mockDb.returning.mockResolvedValue([
-        {
-          mediaItemId: 'media-3',
-          status: 'pending',
-          reasons: ['MISSING_ORIGIN_COUNTRY'],
-          relevanceScore: 50,
-          policyVersion: 1,
-          evaluatedAt: new Date(),
-          breakoutRuleId: null,
-          context: 'catalog',
-        },
-      ]);
-
-      await repository.upsert(evaluation);
-
-      expect(mockDb.values).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'pending',
-          context: 'catalog',
-        }),
-      );
-    });
-
     it('should store review status directly', async () => {
       const evaluation: MediaCatalogEvaluation = {
         mediaItemId: 'media-4',
@@ -259,8 +224,8 @@ describe('MediaCatalogEvaluationRepository', () => {
       const evaluations: MediaCatalogEvaluation[] = [
         {
           mediaItemId: 'media-1',
-          status: 'pending',
-          reasons: ['MISSING_ORIGIN_COUNTRY'],
+          status: 'ineligible',
+          reasons: ['BLOCKED_COUNTRY'],
           relevanceScore: 0,
           policyVersion: 1,
           evaluatedAt: new Date(),
@@ -288,7 +253,7 @@ describe('MediaCatalogEvaluationRepository', () => {
           expect.objectContaining({
             mediaItemId: 'media-1',
             context: 'catalog',
-            status: 'pending',
+            status: 'ineligible',
           }),
           expect.objectContaining({
             mediaItemId: 'media-1',

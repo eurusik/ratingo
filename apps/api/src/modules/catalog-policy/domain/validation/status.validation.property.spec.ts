@@ -4,9 +4,8 @@ import { EligibilityStatus, EligibilityStatusType } from '../constants/evaluatio
 import { InvalidEligibilityStatusError } from '../errors/policy.errors';
 
 describe('Status Validation - Property-Based Tests', () => {
-  // Canonical lowercase status values
+  // Canonical lowercase status values (PENDING removed per Readability & Pending Reform)
   const CANONICAL_STATUSES: EligibilityStatusType[] = [
-    EligibilityStatus.PENDING,
     EligibilityStatus.ELIGIBLE,
     EligibilityStatus.INELIGIBLE,
     EligibilityStatus.REVIEW,
@@ -21,19 +20,16 @@ describe('Status Validation - Property-Based Tests', () => {
     .filter((s) => !CANONICAL_STATUSES.includes(s as EligibilityStatusType));
 
   // Generate uppercase versions of valid statuses
-  const uppercaseStatusArb = fc.constantFrom('PENDING', 'ELIGIBLE', 'INELIGIBLE', 'REVIEW');
+  const uppercaseStatusArb = fc.constantFrom('ELIGIBLE', 'INELIGIBLE', 'REVIEW');
 
   // Generate mixed case versions
   const mixedCaseStatusArb = fc.constantFrom(
-    'Pending',
-    'PENDING',
     'Eligible',
     'ELIGIBLE',
     'Ineligible',
     'INELIGIBLE',
     'Review',
     'REVIEW',
-    'pEnDiNg',
     'eLiGiBlE',
   );
 

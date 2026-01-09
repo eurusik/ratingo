@@ -36,7 +36,6 @@ export interface CatalogEvaluationRun {
   processed: number;
   eligible: number;
   ineligible: number;
-  pending: number;
   errors: number;
   errorSample: Array<{
     mediaItemId: string;
@@ -64,7 +63,6 @@ export interface UpdateRunInput {
   processed?: number;
   eligible?: number;
   ineligible?: number;
-  pending?: number;
   errors?: number;
   errorSample?: Array<{
     mediaItemId: string;
@@ -80,7 +78,6 @@ export interface IncrementCountersInput {
   processed?: number;
   eligible?: number;
   ineligible?: number;
-  pending?: number;
   errors?: number;
 }
 
@@ -153,7 +150,6 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
           processed: 0,
           eligible: 0,
           ineligible: 0,
-          pending: 0,
           errors: 0,
           errorSample: [],
           startedAt: new Date(),
@@ -198,7 +194,6 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
       if (updates.processed !== undefined) updateData.processed = updates.processed;
       if (updates.eligible !== undefined) updateData.eligible = updates.eligible;
       if (updates.ineligible !== undefined) updateData.ineligible = updates.ineligible;
-      if (updates.pending !== undefined) updateData.pending = updates.pending;
       if (updates.errors !== undefined) updateData.errors = updates.errors;
       if (updates.errorSample !== undefined) updateData.errorSample = updates.errorSample;
       if (updates.promotedAt !== undefined) updateData.promotedAt = updates.promotedAt;
@@ -285,10 +280,6 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
         updates.ineligible = sql`COALESCE(ineligible, 0) + ${increments.ineligible}`;
       }
 
-      if (increments.pending !== undefined) {
-        updates.pending = sql`COALESCE(pending, 0) + ${increments.pending}`;
-      }
-
       if (increments.errors !== undefined) {
         updates.errors = sql`COALESCE(errors, 0) + ${increments.errors}`;
       }
@@ -355,7 +346,6 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
       processed: row.processed ?? 0,
       eligible: row.eligible ?? 0,
       ineligible: row.ineligible ?? 0,
-      pending: row.pending ?? 0,
       errors: row.errors ?? 0,
       errorSample: (row.errorSample as CatalogEvaluationRun['errorSample']) ?? [],
       promotedAt: row.promotedAt,

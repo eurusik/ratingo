@@ -111,7 +111,6 @@ class InMemoryEvaluationRepository {
 // ============================================================================
 
 const eligibilityStatusArb = fc.constantFrom<EligibilityStatusType>(
-  EligibilityStatus.PENDING,
   EligibilityStatus.ELIGIBLE,
   EligibilityStatus.INELIGIBLE,
   EligibilityStatus.REVIEW,
@@ -247,7 +246,7 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
             repository.clear();
 
             // Upsert with different statuses
-            let lastStatus: EligibilityStatusType = EligibilityStatus.PENDING;
+            let lastStatus: EligibilityStatusType = EligibilityStatus.ELIGIBLE;
             let lastRelevanceScore = 0;
 
             for (let i = 0; i < statuses.length; i++) {

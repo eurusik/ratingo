@@ -25,7 +25,6 @@ export interface FinalizeResult {
     total: number;
     eligible: number;
     ineligible: number;
-    pending: number;
     errors: number;
   };
 }
@@ -120,7 +119,6 @@ export class RunFinalizeService {
         processed: counters.processed,
         eligible: counters.eligible,
         ineligible: counters.ineligible,
-        pending: counters.pending,
         errors: counters.errors,
       })
       .where(
@@ -142,7 +140,7 @@ export class RunFinalizeService {
 
     this.logger.log(
       `Finalized run ${runId}: ${counters.processed}/${total} processed, ` +
-        `${counters.eligible} eligible, ${counters.ineligible} ineligible, ${counters.pending} pending`,
+        `${counters.eligible} eligible, ${counters.ineligible} ineligible`,
     );
 
     return {

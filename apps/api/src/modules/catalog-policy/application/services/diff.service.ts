@@ -70,7 +70,7 @@ export interface DiffReport {
 /**
  * Checks if a status transition represents a regression (item leaving catalog).
  *
- * A regression occurs when an item was ELIGIBLE and becomes INELIGIBLE, PENDING, or is removed.
+ * A regression occurs when an item was ELIGIBLE and becomes INELIGIBLE or is removed.
  *
  * @param oldStatus - Previous status (or 'none' if item didn't exist)
  * @param newStatus - New status (or 'none' if item was removed)
@@ -79,16 +79,14 @@ export interface DiffReport {
 export function isDiffRegression(oldStatus: DiffStatus, newStatus: DiffStatus): boolean {
   return (
     oldStatus === EligibilityStatus.ELIGIBLE &&
-    (newStatus === EligibilityStatus.INELIGIBLE ||
-      newStatus === EligibilityStatus.PENDING ||
-      newStatus === DIFF_STATUS_NONE)
+    (newStatus === EligibilityStatus.INELIGIBLE || newStatus === DIFF_STATUS_NONE)
   );
 }
 
 /**
  * Checks if a status transition represents an improvement (item entering catalog).
  *
- * An improvement occurs when an item was INELIGIBLE, PENDING, or didn't exist
+ * An improvement occurs when an item was INELIGIBLE or didn't exist
  * and becomes ELIGIBLE.
  *
  * @param oldStatus - Previous status (or 'none' if item didn't exist)
@@ -97,9 +95,7 @@ export function isDiffRegression(oldStatus: DiffStatus, newStatus: DiffStatus): 
  */
 export function isDiffImprovement(oldStatus: DiffStatus, newStatus: DiffStatus): boolean {
   return (
-    (oldStatus === EligibilityStatus.INELIGIBLE ||
-      oldStatus === EligibilityStatus.PENDING ||
-      oldStatus === DIFF_STATUS_NONE) &&
+    (oldStatus === EligibilityStatus.INELIGIBLE || oldStatus === DIFF_STATUS_NONE) &&
     newStatus === EligibilityStatus.ELIGIBLE
   );
 }
@@ -227,8 +223,8 @@ export class DiffService {
         FULL OUTER JOIN new_evals n ON o.media_item_id = n.media_item_id
       )
       SELECT
-        COUNT(*) FILTER (WHERE old_status = ${EligibilityStatus.ELIGIBLE} AND new_status IN (${EligibilityStatus.INELIGIBLE}, ${EligibilityStatus.PENDING}, ${DIFF_STATUS_NONE}))::int as regressions,
-        COUNT(*) FILTER (WHERE old_status IN (${EligibilityStatus.INELIGIBLE}, ${EligibilityStatus.PENDING}, ${DIFF_STATUS_NONE}) AND new_status = ${EligibilityStatus.ELIGIBLE})::int as improvements,
+        COUNT(*) FILTER (WHERE old_status = ${EligibilityStatus.ELIGIBLE} AND new_status IN (${EligibilityStatus.INELIGIBLE}, ${DIFF_STATUS_NONE}))::int as regressions,
+        COUNT(*) FILTER (WHERE old_status IN (${EligibilityStatus.INELIGIBLE}, ${DIFF_STATUS_NONE}) AND new_status = ${EligibilityStatus.ELIGIBLE})::int as improvements,
         COUNT(*) FILTER (WHERE old_status = ${EligibilityStatus.ELIGIBLE} AND new_status = ${EligibilityStatus.ELIGIBLE})::int as unchanged,
         COUNT(*) FILTER (WHERE old_status != ${EligibilityStatus.ELIGIBLE} AND new_status != ${EligibilityStatus.ELIGIBLE})::int as still_ineligible
       FROM diff
@@ -395,12 +391,12 @@ export class DiffService {
         SELECT unnest(reasons) as reason
         FROM diff
         WHERE old_status = ${EligibilityStatus.ELIGIBLE} 
-          AND new_status IN (${EligibilityStatus.INELIGIBLE}, ${EligibilityStatus.PENDING}, ${DIFF_STATUS_NONE})
+          AND new_status IN (${EligibilityStatus.INELIGIBLE}, ${DIFF_STATUS_NONE})
       ),
       improvements AS (
         SELECT unnest(reasons) as reason
         FROM diff
-        WHERE old_status IN (${EligibilityStatus.INELIGIBLE}, ${EligibilityStatus.PENDING}, ${DIFF_STATUS_NONE})
+        WHERE old_status IN (${EligibilityStatus.INELIGIBLE}, ${DIFF_STATUS_NONE})
           AND new_status = ${EligibilityStatus.ELIGIBLE}
       )
       SELECT 'regression' as diff_type, reason, COUNT(*)::int as count

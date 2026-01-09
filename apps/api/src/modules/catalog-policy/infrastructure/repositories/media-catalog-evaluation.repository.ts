@@ -318,7 +318,6 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
         .groupBy(schema.mediaCatalogEvaluations.status);
 
       const counts: Record<EligibilityStatusType, number> = {
-        pending: 0,
         eligible: 0,
         ineligible: 0,
         review: 0,

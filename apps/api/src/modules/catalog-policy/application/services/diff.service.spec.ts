@@ -72,10 +72,6 @@ describe('DiffService', () => {
         );
       });
 
-      it('should return true when eligible becomes pending', () => {
-        expect(isDiffRegression(EligibilityStatus.ELIGIBLE, EligibilityStatus.PENDING)).toBe(true);
-      });
-
       it('should return true when eligible becomes none (removed)', () => {
         expect(isDiffRegression(EligibilityStatus.ELIGIBLE, DIFF_STATUS_NONE)).toBe(true);
       });
@@ -102,10 +98,6 @@ describe('DiffService', () => {
         expect(isDiffImprovement(EligibilityStatus.INELIGIBLE, EligibilityStatus.ELIGIBLE)).toBe(
           true,
         );
-      });
-
-      it('should return true when pending becomes eligible', () => {
-        expect(isDiffImprovement(EligibilityStatus.PENDING, EligibilityStatus.ELIGIBLE)).toBe(true);
       });
 
       it('should return true when none becomes eligible (new item)', () => {

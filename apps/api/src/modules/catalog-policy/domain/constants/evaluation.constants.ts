@@ -6,9 +6,11 @@
 
 /**
  * Eligibility status values (stored in DB).
+ *
+ * Note: PENDING was removed per Readability & Pending Reform.
+ * Policy Engine now returns INELIGIBLE with specific reasons for missing data.
  */
 export const EligibilityStatus = {
-  PENDING: 'pending',
   ELIGIBLE: 'eligible',
   INELIGIBLE: 'ineligible',
   REVIEW: 'review',
@@ -73,9 +75,21 @@ export type BlockingReasonType = (typeof BlockingReasonCode)[keyof typeof Blocki
  * Evaluation reason keys (stored in DB).
  */
 export const EvaluationReason = {
-  // Missing data reasons (return PENDING)
+  // Umbrella reason for any missing critical data
+  MISSING_REQUIRED_METADATA: 'MISSING_REQUIRED_METADATA',
+
+  // Missing data reasons (return INELIGIBLE with umbrella + specific)
   MISSING_ORIGIN_COUNTRY: 'MISSING_ORIGIN_COUNTRY',
   MISSING_ORIGINAL_LANGUAGE: 'MISSING_ORIGINAL_LANGUAGE',
+  MISSING_TITLE: 'MISSING_TITLE',
+
+  // Readability reasons (return INELIGIBLE)
+  // CJK-heavy title without Latin/Cyrillic translation for UA audience
+  MISSING_TRANSLATED_TITLE: 'MISSING_TRANSLATED_TITLE',
+
+  // Context-dependent reasons (return INELIGIBLE)
+  // Missing or too short overview for display surfaces that require it
+  MISSING_OVERVIEW: 'MISSING_OVERVIEW',
 
   // Blocked reasons (return INELIGIBLE)
   BLOCKED_COUNTRY: 'BLOCKED_COUNTRY',

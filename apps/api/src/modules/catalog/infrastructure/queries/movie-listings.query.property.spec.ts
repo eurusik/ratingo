@@ -24,7 +24,6 @@ describe('Movie Listings Query - Property-Based Tests', () => {
   // Arbitraries for generating test data
 
   const eligibilityStatusArb = fc.constantFrom(
-    EligibilityStatus.PENDING,
     EligibilityStatus.ELIGIBLE,
     EligibilityStatus.INELIGIBLE,
     EligibilityStatus.REVIEW,
@@ -65,26 +64,6 @@ describe('Movie Listings Query - Property-Based Tests', () => {
             expect(matches).toBe(false);
           }
         }),
-        { numRuns: 100 },
-      );
-    });
-
-    it('should never return pending items in catalog mode', () => {
-      fc.assert(
-        fc.property(
-          fc.array(reasonArb, { minLength: 0, maxLength: 5 }),
-          fc.nat({ max: 100 }),
-          (reasons, relevanceScore) => {
-            const evaluation = {
-              status: EligibilityStatus.PENDING,
-              reasons,
-              relevanceScore,
-            };
-
-            const matches = matchesEligibilityCondition(evaluation, 'catalog');
-            expect(matches).toBe(false);
-          },
-        ),
         { numRuns: 100 },
       );
     });
@@ -206,27 +185,6 @@ describe('Movie Listings Query - Property-Based Tests', () => {
           // Ineligible with exactly ['MISSING_GLOBAL_SIGNALS'] MUST match
           expect(matches).toBe(true);
         }),
-        { numRuns: 100 },
-      );
-    });
-
-    it('should never return pending items in freshness mode', () => {
-      fc.assert(
-        fc.property(
-          fc.array(reasonArb, { minLength: 0, maxLength: 5 }),
-          fc.nat({ max: 100 }),
-          (reasons, relevanceScore) => {
-            const evaluation = {
-              status: EligibilityStatus.PENDING,
-              reasons,
-              relevanceScore,
-            };
-
-            const matches = matchesEligibilityCondition(evaluation, 'freshness');
-            // Pending items MUST NOT match in freshness mode
-            expect(matches).toBe(false);
-          },
-        ),
         { numRuns: 100 },
       );
     });
@@ -406,11 +364,9 @@ describe('Movie Listings Query - Property-Based Tests', () => {
             expect(isEligible || isSoftBlockedOnly).toBe(true);
           });
 
-          // Verify no pending or review items
-          const hasPendingOrReview = filtered.some(
-            (e) => e.status === EligibilityStatus.PENDING || e.status === EligibilityStatus.REVIEW,
-          );
-          expect(hasPendingOrReview).toBe(false);
+          // Verify no review items
+          const hasReview = filtered.some((e) => e.status === EligibilityStatus.REVIEW);
+          expect(hasReview).toBe(false);
 
           // Verify no hard blocked items
           const hasHardBlocked = filtered.some(

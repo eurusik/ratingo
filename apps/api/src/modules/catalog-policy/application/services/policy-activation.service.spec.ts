@@ -81,7 +81,6 @@ describe('PolicyActivationService', () => {
         processed: 0,
         eligible: 0,
         ineligible: 0,
-        pending: 0,
         errors: 0,
       }),
     };
@@ -199,7 +198,6 @@ describe('PolicyActivationService', () => {
         processed: 500,
         eligible: 400,
         ineligible: 80,
-        pending: 20,
         errors: 0,
         startedAt: new Date(),
         finishedAt: null,
@@ -212,7 +210,6 @@ describe('PolicyActivationService', () => {
         processed: 500,
         eligible: 400,
         ineligible: 80,
-        pending: 20,
         errors: 0,
       });
 
@@ -232,7 +229,6 @@ describe('PolicyActivationService', () => {
         processed: 0,
         eligible: 0,
         ineligible: 0,
-        pending: 0,
         errors: 0,
         startedAt: new Date(),
         finishedAt: new Date(),
@@ -264,7 +260,6 @@ describe('PolicyActivationService', () => {
         processed: 1000,
         eligible: 900,
         ineligible: 100,
-        pending: 0,
         errors: 0,
         startedAt: new Date(),
         finishedAt: new Date(),
@@ -288,7 +283,6 @@ describe('PolicyActivationService', () => {
         processed: 1000,
         eligible: 900,
         ineligible: 100,
-        pending: 0,
         errors: 0,
         startedAt: new Date(),
         finishedAt: null,
@@ -301,7 +295,6 @@ describe('PolicyActivationService', () => {
         processed: 1000,
         eligible: 900,
         ineligible: 100,
-        pending: 0,
         errors: 0,
       });
 
@@ -321,7 +314,6 @@ describe('PolicyActivationService', () => {
         processed: 999,
         eligible: 899,
         ineligible: 100,
-        pending: 0,
         errors: 0,
         startedAt: new Date(),
         finishedAt: new Date(),
@@ -345,7 +337,6 @@ describe('PolicyActivationService', () => {
         processed: 1000,
         eligible: 899,
         ineligible: 100,
-        pending: 0,
         errors: 1,
         startedAt: new Date(),
         finishedAt: new Date(),
@@ -369,7 +360,6 @@ describe('PolicyActivationService', () => {
         processed: 1000,
         eligible: 900,
         ineligible: 100,
-        pending: 0,
         errors: 0,
         startedAt: new Date(),
         finishedAt: new Date(),
@@ -393,7 +383,6 @@ describe('PolicyActivationService', () => {
         processed: 500,
         eligible: 400,
         ineligible: 95,
-        pending: 0,
         errors: 5,
         startedAt: new Date(),
         finishedAt: null,
@@ -406,7 +395,6 @@ describe('PolicyActivationService', () => {
         processed: 500,
         eligible: 400,
         ineligible: 95,
-        pending: 0,
         errors: 5,
       });
 

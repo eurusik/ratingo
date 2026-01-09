@@ -199,7 +199,6 @@ describe('Policy Activation Flow (e2e)', () => {
         processed: 50,
         eligible: 30,
         ineligible: 15,
-        pending: 5,
       });
 
       const res = await ctx.get(`/runs/${run.id}`).expect(200);
@@ -211,7 +210,6 @@ describe('Policy Activation Flow (e2e)', () => {
       expect(res.body.data.progress.processed).toBe(50);
       expect(res.body.data.progress.eligible).toBe(30);
       expect(res.body.data.progress.ineligible).toBe(15);
-      expect(res.body.data.progress.pending).toBe(5);
       expect(res.body.data.coverage).toBe(0.5); // 50/100
     });
 

@@ -39,7 +39,6 @@ describe('CatalogEvaluationRunRepository', () => {
     processed: 0,
     eligible: 0,
     ineligible: 0,
-    pending: 0,
     errors: 0,
     errorSample: [],
     promotedAt: null,
@@ -217,7 +216,6 @@ describe('CatalogEvaluationRunRepository', () => {
         processed: null,
         eligible: null,
         ineligible: null,
-        pending: null,
         errors: null,
         totalReadySnapshot: null,
       });
@@ -228,7 +226,6 @@ describe('CatalogEvaluationRunRepository', () => {
       expect(result?.processed).toBe(0);
       expect(result?.eligible).toBe(0);
       expect(result?.ineligible).toBe(0);
-      expect(result?.pending).toBe(0);
       expect(result?.errors).toBe(0);
       expect(result?.totalReadySnapshot).toBe(0);
     });
@@ -261,7 +258,6 @@ describe('CatalogEvaluationRunRepository', () => {
           processed: 0,
           eligible: 0,
           ineligible: 0,
-          pending: 0,
           errors: 0,
           baselinePolicyVersion: 1,
         }),

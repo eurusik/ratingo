@@ -51,13 +51,6 @@ export class ProgressStatsDto {
   ineligible: number;
 
   @ApiProperty({
-    description: 'Number of pending items',
-    example: 450,
-  })
-  @IsNumber()
-  pending: number;
-
-  @ApiProperty({
     description: 'Number of errors encountered',
     example: 50,
   })

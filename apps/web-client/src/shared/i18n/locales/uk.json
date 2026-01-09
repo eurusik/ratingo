@@ -756,7 +756,6 @@
       "progress": {
         "eligible": "підходить",
         "ineligible": "не підходить",
-        "pending": "очікує",
         "errors": "помилки"
       },
       "filters": {
@@ -817,7 +816,6 @@
         "total": "всього",
         "eligible": "підходить",
         "ineligible": "не підходить",
-        "pending": "очікує",
         "errors": "помилки"
       },
       "tabs": {

@@ -30,14 +30,12 @@ describe('DiffService - Property-Based Tests', () => {
   // Arbitraries (generators)
 
   const eligibilityStatusArb = fc.constantFrom<DiffStatus>(
-    EligibilityStatus.PENDING,
     EligibilityStatus.ELIGIBLE,
     EligibilityStatus.INELIGIBLE,
     EligibilityStatus.REVIEW,
   );
 
   const diffStatusArb = fc.constantFrom<DiffStatus>(
-    EligibilityStatus.PENDING,
     EligibilityStatus.ELIGIBLE,
     EligibilityStatus.INELIGIBLE,
     EligibilityStatus.REVIEW,
@@ -206,7 +204,6 @@ describe('DiffService - Property-Based Tests', () => {
   describe('Property: Regression Definition', () => {
     it('regression requires old status to be ELIGIBLE', () => {
       const nonEligibleArb = fc.constantFrom<DiffStatus>(
-        EligibilityStatus.PENDING,
         EligibilityStatus.INELIGIBLE,
         EligibilityStatus.REVIEW,
         DIFF_STATUS_NONE,
@@ -235,7 +232,6 @@ describe('DiffService - Property-Based Tests', () => {
   describe('Property: Improvement Definition', () => {
     it('improvement requires new status to be ELIGIBLE', () => {
       const nonEligibleArb = fc.constantFrom<DiffStatus>(
-        EligibilityStatus.PENDING,
         EligibilityStatus.INELIGIBLE,
         EligibilityStatus.REVIEW,
         DIFF_STATUS_NONE,

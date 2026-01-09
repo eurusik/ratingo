@@ -213,7 +213,6 @@ export interface ProgressStats {
   total: number;
   eligible: number;
   ineligible: number;
-  pending: number;
   errors: number;
 }
 

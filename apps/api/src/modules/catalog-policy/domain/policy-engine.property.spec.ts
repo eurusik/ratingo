@@ -1,12 +1,23 @@
 import * as fc from 'fast-check';
-import { evaluateEligibility, computeRelevance } from './policy-engine';
+import {
+  evaluateEligibility,
+  computeRelevance,
+  isReadableTitle,
+  getDefaultContextRequirements,
+  getContextRequirements,
+} from './policy-engine';
 import {
   PolicyConfig,
   PolicyEngineInput,
   EvaluationContext,
   NormalizedOffer,
+  BreakoutRule,
 } from './types/policy.types';
-import { EligibilityStatus, EligibilityStatusType } from './constants/evaluation.constants';
+import {
+  EligibilityStatus,
+  EligibilityStatusType,
+  EvaluationContext as EvaluationContextConst,
+} from './constants/evaluation.constants';
 import { ContentClass } from './classification.service';
 
 describe('Policy Engine - Property-Based Tests', () => {
@@ -62,6 +73,8 @@ describe('Policy Engine - Property-Based Tests', () => {
       'reality',
       'kids',
     ) as fc.Arbitrary<ContentClass>,
+    title: fc.option(fc.string({ minLength: 1, maxLength: 100 })),
+    overview: fc.option(fc.string({ minLength: 0, maxLength: 500 })),
   });
 
   const statsArb = fc.option(
@@ -78,10 +91,34 @@ describe('Policy Engine - Property-Based Tests', () => {
     stats: statsArb,
   });
 
+  // Helper to create a minimal valid input for inline test cases
+  const createTestInput = (
+    overrides?: Partial<PolicyEngineInput['mediaItem']>,
+  ): PolicyEngineInput => ({
+    mediaItem: {
+      id: 'test-id',
+      originCountries: ['US'],
+      originalLanguage: 'en',
+      normalizedOffers: [],
+      voteCountImdb: null,
+      voteCountTrakt: null,
+      ratingImdb: null,
+      ratingMetacritic: null,
+      ratingRottenTomatoes: null,
+      ratingTrakt: null,
+      contentClass: 'mainstream' as ContentClass,
+      title: 'Test Movie',
+      // Overview must be 60+ chars to pass trending/homepage context requirements
+      overview:
+        'A comprehensive test movie description for testing purposes and validation scenarios.',
+      ...overrides,
+    },
+    stats: null,
+  });
+
   describe('Property: Canonical Lowercase Status', () => {
-    // Canonical lowercase status values
+    // Canonical lowercase status values (PENDING removed per Readability & Pending Reform)
     const CANONICAL_STATUSES: EligibilityStatusType[] = [
-      EligibilityStatus.PENDING,
       EligibilityStatus.ELIGIBLE,
       EligibilityStatus.INELIGIBLE,
       EligibilityStatus.REVIEW,
@@ -111,7 +148,7 @@ describe('Policy Engine - Property-Based Tests', () => {
           const result = evaluateEligibility(input, policy);
 
           // Explicitly check that uppercase variants are NOT returned
-          const UPPERCASE_STATUSES = ['PENDING', 'ELIGIBLE', 'INELIGIBLE', 'REVIEW'];
+          const UPPERCASE_STATUSES = ['ELIGIBLE', 'INELIGIBLE', 'REVIEW'];
           expect(UPPERCASE_STATUSES).not.toContain(result.status);
         }),
         { numRuns: 100 },
@@ -245,6 +282,9 @@ describe('Policy Engine - Property-Based Tests', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: null,
           };
@@ -273,6 +313,9 @@ describe('Policy Engine - Property-Based Tests', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: {
               qualityScore: 1.0,
@@ -297,26 +340,30 @@ describe('Policy Engine - Property-Based Tests', () => {
         fc.property(policyEngineInputArb, policyConfigArb, (input, policy) => {
           const result = evaluateEligibility(input, policy);
 
-          // PENDING should have missing data reasons
-          if (result.status === EligibilityStatus.PENDING) {
-            const hasMissingReason =
-              result.reasons.includes('MISSING_ORIGIN_COUNTRY') ||
-              result.reasons.includes('MISSING_ORIGINAL_LANGUAGE');
-            expect(hasMissingReason).toBe(true);
-          }
+          // Per Readability & Pending Reform: PENDING is no longer returned by Policy Engine
+          // Missing data now returns INELIGIBLE with umbrella + specific reasons
+          expect(result.status).not.toBe('pending');
 
           // ELIGIBLE via breakout should have BREAKOUT_ALLOWED reason
           if (result.status === EligibilityStatus.ELIGIBLE && result.breakoutRuleId) {
             expect(result.reasons).toContain('BREAKOUT_ALLOWED');
           }
 
-          // INELIGIBLE should have blocking reasons
+          // INELIGIBLE should have blocking reasons (including new readability reasons)
           if (result.status === EligibilityStatus.INELIGIBLE) {
             const hasBlockingReason =
               result.reasons.includes('BLOCKED_COUNTRY') ||
               result.reasons.includes('BLOCKED_LANGUAGE') ||
               result.reasons.includes('NEUTRAL_COUNTRY') ||
-              result.reasons.includes('NEUTRAL_LANGUAGE');
+              result.reasons.includes('NEUTRAL_LANGUAGE') ||
+              result.reasons.includes('MISSING_REQUIRED_METADATA') ||
+              result.reasons.includes('MISSING_ORIGIN_COUNTRY') ||
+              result.reasons.includes('MISSING_ORIGINAL_LANGUAGE') ||
+              result.reasons.includes('MISSING_TITLE') ||
+              result.reasons.includes('MISSING_TRANSLATED_TITLE') ||
+              result.reasons.includes('MISSING_OVERVIEW') ||
+              result.reasons.includes('MISSING_GLOBAL_SIGNALS') ||
+              result.reasons.includes('EXCLUDED_CONTENT_CLASS');
             expect(hasBlockingReason).toBe(true);
           }
 
@@ -352,6 +399,8 @@ describe('Context-Aware Eligibility Properties', () => {
       'reality',
       'kids',
     ) as fc.Arbitrary<ContentClass>,
+    title: fc.option(fc.string({ minLength: 1, maxLength: 100 })),
+    overview: fc.option(fc.string({ minLength: 0, maxLength: 500 })),
   });
 
   const statsArb = fc.option(
@@ -520,6 +569,9 @@ describe('Global Quality Gate Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: null,
           };
@@ -580,6 +632,9 @@ describe('Global Quality Gate Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: null,
           };
@@ -634,6 +689,9 @@ describe('Global Quality Gate Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats:
               score !== null
@@ -696,6 +754,9 @@ describe('Global Quality Gate Properties', () => {
               ratingRottenTomatoes: requiredRating === 'rt' && hasRating ? 85 : null,
               ratingTrakt: requiredRating === 'trakt' && hasRating ? 8.0 : null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: null,
           };
@@ -753,6 +814,9 @@ describe('Global Quality Gate Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats:
               quality !== null
@@ -819,6 +883,9 @@ describe('Global Quality Gate Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: null,
           };
@@ -874,6 +941,9 @@ describe('Global Quality Gate Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats:
               qualityScore !== null
@@ -945,6 +1015,9 @@ describe('Global Quality Gate Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: null,
           };
@@ -1040,6 +1113,10 @@ describe('Global Quality Gate Properties', () => {
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
                 contentClass: 'mainstream',
+                title: 'Test Movie',
+                // Overview must be 60+ chars to pass trending/homepage context requirements
+                overview:
+                  'A comprehensive test movie description for testing purposes and validation scenarios.',
               },
               stats: null,
             };
@@ -1089,6 +1166,11 @@ describe('Global Quality Gate Properties', () => {
                 minVotesAnyOf: { sources: ['imdb'], min: threshold },
                 appliesTo,
               },
+              // Disable overview requirement for this test to focus on gate behavior
+              contextRequirements: {
+                trending: { requireOverview: false },
+                homepage: { requireOverview: false },
+              },
             };
 
             const input: PolicyEngineInput = {
@@ -1104,6 +1186,9 @@ describe('Global Quality Gate Properties', () => {
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
                 contentClass: 'mainstream',
+                title: 'Test Movie',
+                overview:
+                  'A comprehensive test movie description for testing purposes and validation scenarios.',
               },
               stats: null,
             };
@@ -1156,6 +1241,10 @@ describe('Global Quality Gate Properties', () => {
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
                 contentClass: 'mainstream',
+                title: 'Test Movie',
+                // Overview must be 60+ chars to pass trending/homepage context requirements
+                overview:
+                  'A comprehensive test movie description for testing purposes and validation scenarios.',
               },
               stats: null,
             };
@@ -1205,6 +1294,11 @@ describe('Global Quality Gate Properties', () => {
                 minVotesAnyOf: { sources: ['imdb'], min: threshold },
                 appliesTo: [], // Empty array = gate never applies
               },
+              // Disable overview requirement for this test to focus on gate behavior
+              contextRequirements: {
+                trending: { requireOverview: false },
+                homepage: { requireOverview: false },
+              },
             };
 
             const input: PolicyEngineInput = {
@@ -1220,6 +1314,9 @@ describe('Global Quality Gate Properties', () => {
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
                 contentClass: 'mainstream',
+                title: 'Test Movie',
+                overview:
+                  'A comprehensive test movie description for testing purposes and validation scenarios.',
               },
               stats: null,
             };
@@ -1257,6 +1354,11 @@ describe('Global Quality Gate Properties', () => {
                 minVotesAnyOf: { sources: ['imdb'], min: threshold },
                 appliesTo: [], // Gate never applies
               },
+              // Disable overview requirement for this test to focus on blocked behavior
+              contextRequirements: {
+                trending: { requireOverview: false },
+                homepage: { requireOverview: false },
+              },
             };
 
             const input: PolicyEngineInput = {
@@ -1272,6 +1374,9 @@ describe('Global Quality Gate Properties', () => {
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
                 contentClass: 'mainstream',
+                title: 'Test Movie',
+                overview:
+                  'A comprehensive test movie description for testing purposes and validation scenarios.',
               },
               stats: null,
             };
@@ -1322,6 +1427,9 @@ describe('Global Quality Gate Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: 'mainstream',
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: null,
           };
@@ -1378,6 +1486,8 @@ describe('Content Classification Properties', () => {
     ratingRottenTomatoes: fc.option(fc.nat({ max: 100 })),
     ratingTrakt: fc.option(fc.double({ min: 0, max: 10 })),
     contentClass: contentClassArb,
+    title: fc.option(fc.string({ minLength: 1, maxLength: 100 })),
+    overview: fc.option(fc.string({ minLength: 0, maxLength: 500 })),
   });
 
   const policyEngineInputArb = fc.record({
@@ -1422,6 +1532,9 @@ describe('Content Classification Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: excludedClass,
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: null,
           };
@@ -1467,6 +1580,9 @@ describe('Content Classification Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: mediaClass,
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: null,
           };
@@ -1509,6 +1625,9 @@ describe('Content Classification Properties', () => {
               ratingRottenTomatoes: null,
               ratingTrakt: null,
               contentClass: mediaClass,
+              title: 'Test Movie',
+              overview:
+                'A comprehensive test movie description for testing purposes and validation scenarios.',
             },
             stats: null,
           };
@@ -1562,6 +1681,9 @@ describe('Content Classification Properties', () => {
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
                 contentClass: excludedClass,
+                title: 'Test Movie',
+                overview:
+                  'A comprehensive test movie description for testing purposes and validation scenarios.',
               },
               stats: null,
             };
@@ -1620,6 +1742,9 @@ describe('Content Classification Properties', () => {
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
                 contentClass: excludedClass,
+                title: 'Test Movie',
+                overview:
+                  'A comprehensive test movie description for testing purposes and validation scenarios.',
               },
               stats: null,
             };
@@ -1639,7 +1764,8 @@ describe('Content Classification Properties', () => {
   });
 
   describe('Property 5: Evaluation Order Invariant', () => {
-    it('should return PENDING for missing originCountries regardless of content class', () => {
+    // Per Readability & Pending Reform: missing data returns INELIGIBLE with umbrella + specific reasons
+    it('should return INELIGIBLE for missing originCountries regardless of content class', () => {
       fc.assert(
         fc.property(
           contentClassArb,
@@ -1671,14 +1797,18 @@ describe('Content Classification Properties', () => {
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
                 contentClass: mediaClass,
+                title: 'Test Movie',
+                overview:
+                  'A comprehensive test movie description for testing purposes and validation scenarios.',
               },
               stats: null,
             };
 
             const result = evaluateEligibility(input, policy);
 
-            // Missing data → PENDING regardless of content class
-            expect(result.status).toBe(EligibilityStatus.PENDING);
+            // Missing data → INELIGIBLE with umbrella + specific reasons
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
             expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
             expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
           },
@@ -1687,7 +1817,7 @@ describe('Content Classification Properties', () => {
       );
     });
 
-    it('should return PENDING for empty originCountries regardless of content class', () => {
+    it('should return INELIGIBLE for empty originCountries regardless of content class', () => {
       fc.assert(
         fc.property(
           contentClassArb,
@@ -1719,13 +1849,17 @@ describe('Content Classification Properties', () => {
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
                 contentClass: mediaClass,
+                title: 'Test Movie',
+                overview:
+                  'A comprehensive test movie description for testing purposes and validation scenarios.',
               },
               stats: null,
             };
 
             const result = evaluateEligibility(input, policy);
 
-            expect(result.status).toBe(EligibilityStatus.PENDING);
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
             expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
             expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
           },
@@ -1734,7 +1868,7 @@ describe('Content Classification Properties', () => {
       );
     });
 
-    it('should return PENDING for missing originalLanguage regardless of content class', () => {
+    it('should return INELIGIBLE for missing originalLanguage regardless of content class', () => {
       fc.assert(
         fc.property(
           contentClassArb,
@@ -1766,15 +1900,1061 @@ describe('Content Classification Properties', () => {
                 ratingRottenTomatoes: null,
                 ratingTrakt: null,
                 contentClass: mediaClass,
+                title: 'Test Movie',
+                overview:
+                  'A comprehensive test movie description for testing purposes and validation scenarios.',
               },
               stats: null,
             };
 
             const result = evaluateEligibility(input, policy);
 
-            expect(result.status).toBe(EligibilityStatus.PENDING);
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
             expect(result.reasons).toContain('MISSING_ORIGINAL_LANGUAGE');
             expect(result.reasons).not.toContain('EXCLUDED_CONTENT_CLASS');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+  });
+});
+
+/**
+ * Property 3: Readability Classification
+ * Feature: readability-pending-reform
+ *
+ * Tests that isReadableTitle correctly classifies titles:
+ * - Titles with 2+ Latin/Cyrillic letters are always readable
+ * - CJK-heavy titles (>60% CJK, <2 Latin/Cyrillic, length > 6) are unreadable
+ *
+ * **Validates: Requirements 3.2, 3.3**
+ */
+describe('Readability Classification Properties', () => {
+  // Arbitrary for Latin characters
+  const latinCharArb = fc.constantFrom(
+    'a',
+    'b',
+    'c',
+    'd',
+    'e',
+    'f',
+    'g',
+    'h',
+    'i',
+    'j',
+    'k',
+    'l',
+    'm',
+    'n',
+    'o',
+    'p',
+    'q',
+    'r',
+    's',
+    't',
+    'u',
+    'v',
+    'w',
+    'x',
+    'y',
+    'z',
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+    'I',
+    'J',
+    'K',
+    'L',
+    'M',
+    'N',
+    'O',
+    'P',
+    'Q',
+    'R',
+    'S',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+  );
+
+  // Arbitrary for Cyrillic characters
+  const cyrillicCharArb = fc.constantFrom(
+    'а',
+    'б',
+    'в',
+    'г',
+    'д',
+    'е',
+    'ж',
+    'з',
+    'и',
+    'й',
+    'к',
+    'л',
+    'м',
+    'н',
+    'о',
+    'п',
+    'р',
+    'с',
+    'т',
+    'у',
+    'ф',
+    'х',
+    'ц',
+    'ч',
+    'ш',
+    'щ',
+    'ь',
+    'ю',
+    'я',
+    'є',
+    'і',
+    'ї',
+    'ґ',
+    'А',
+    'Б',
+    'В',
+    'Г',
+    'Д',
+    'Е',
+    'Ж',
+    'З',
+    'И',
+    'Й',
+    'К',
+    'Л',
+    'М',
+    'Н',
+    'О',
+    'П',
+    'Р',
+    'С',
+    'Т',
+    'У',
+    'Ф',
+    'Х',
+    'Ц',
+    'Ч',
+    'Ш',
+    'Щ',
+    'Ь',
+    'Ю',
+    'Я',
+    'Є',
+    'І',
+    'Ї',
+    'Ґ',
+  );
+
+  // Arbitrary for CJK characters (Han, Hiragana, Katakana, Hangul)
+  const cjkCharArb = fc.constantFrom(
+    // Han (Chinese)
+    '東',
+    '京',
+    '物',
+    '語',
+    '中',
+    '文',
+    '日',
+    '本',
+    '韓',
+    '國',
+    '電',
+    '影',
+    '愛',
+    '情',
+    '故',
+    '事',
+    '人',
+    '生',
+    '世',
+    '界',
+    // Hiragana
+    'あ',
+    'い',
+    'う',
+    'え',
+    'お',
+    'か',
+    'き',
+    'く',
+    'け',
+    'こ',
+    // Katakana
+    'ア',
+    'イ',
+    'ウ',
+    'エ',
+    'オ',
+    'カ',
+    'キ',
+    'ク',
+    'ケ',
+    'コ',
+    // Hangul
+    '한',
+    '국',
+    '영',
+    '화',
+    '드',
+    '라',
+    '마',
+    '사',
+    '랑',
+    '이',
+  );
+
+  // Arbitrary for Latin/Cyrillic characters (using string type for flexibility)
+  const latinCyrillicCharArb: fc.Arbitrary<string> = fc.oneof(latinCharArb, cyrillicCharArb);
+
+  describe('Property 3: Readability Classification', () => {
+    it('should classify titles with 2+ Latin/Cyrillic letters as readable', () => {
+      fc.assert(
+        fc.property(
+          // Generate at least 2 Latin/Cyrillic characters
+          fc.array(latinCyrillicCharArb, { minLength: 2, maxLength: 10 }),
+          // Optional prefix/suffix with any characters (including CJK)
+          fc.option(fc.array(cjkCharArb, { minLength: 0, maxLength: 10 })),
+          fc.option(fc.array(cjkCharArb, { minLength: 0, maxLength: 10 })),
+          (latinCyrillicChars, prefixCjk, suffixCjk) => {
+            // Build title with Latin/Cyrillic surrounded by optional CJK
+            const prefix = prefixCjk ? prefixCjk.join('') : '';
+            const middle = latinCyrillicChars.join('');
+            const suffix = suffixCjk ? suffixCjk.join('') : '';
+            const title = prefix + middle + suffix;
+
+            // Title with 2+ Latin/Cyrillic should always be readable
+            expect(isReadableTitle(title)).toBe(true);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should classify CJK-heavy titles without Latin/Cyrillic as unreadable', () => {
+      fc.assert(
+        fc.property(
+          // Generate CJK-only title with length > 6
+          fc.array(cjkCharArb, { minLength: 7, maxLength: 20 }),
+          (cjkChars) => {
+            const title = cjkChars.join('');
+
+            // Pure CJK title with length > 6 should be unreadable
+            // (CJK ratio = 100% > 60%, Latin/Cyrillic count = 0 < 2)
+            expect(isReadableTitle(title)).toBe(false);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should classify CJK-heavy titles with only 1 Latin/Cyrillic as unreadable', () => {
+      fc.assert(
+        fc.property(
+          // Generate CJK characters (enough to make >60% ratio)
+          fc.array(cjkCharArb, { minLength: 7, maxLength: 15 }),
+          // Single Latin/Cyrillic character
+          latinCyrillicCharArb,
+          // Position to insert the Latin/Cyrillic char
+          fc.nat(),
+          (cjkChars, latinCyrillicChar, positionSeed) => {
+            // Insert single Latin/Cyrillic at random position
+            const position = positionSeed % (cjkChars.length + 1);
+            const chars: string[] = [...cjkChars];
+            chars.splice(position, 0, latinCyrillicChar);
+            const title = chars.join('');
+
+            // CJK count = cjkChars.length, Latin/Cyrillic count = 1
+            // Total letters = cjkChars.length + 1
+            // CJK ratio = cjkChars.length / (cjkChars.length + 1)
+            // For minLength 7: ratio = 7/8 = 87.5% > 60%
+            // Latin/Cyrillic count = 1 < 2
+            // Title length > 6
+            // Should be unreadable
+            expect(isReadableTitle(title)).toBe(false);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should classify short CJK titles (length <= 6) as readable', () => {
+      fc.assert(
+        fc.property(
+          // Generate short CJK-only title (1-6 characters)
+          fc.array(cjkCharArb, { minLength: 1, maxLength: 6 }),
+          (cjkChars) => {
+            const title = cjkChars.join('');
+
+            // Short titles are readable regardless of script
+            // (Rule 3: short titles = readable)
+            expect(isReadableTitle(title)).toBe(true);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should return false for empty titles', () => {
+      expect(isReadableTitle('')).toBe(false);
+    });
+
+    it('should classify mixed titles with 2+ Latin/Cyrillic as readable regardless of CJK ratio', () => {
+      fc.assert(
+        fc.property(
+          // Generate many CJK characters
+          fc.array(cjkCharArb, { minLength: 10, maxLength: 50 }),
+          // Generate exactly 2 Latin/Cyrillic characters
+          fc.tuple(latinCyrillicCharArb, latinCyrillicCharArb),
+          (cjkChars, [latin1, latin2]) => {
+            // Build title with CJK dominant but 2 Latin/Cyrillic
+            const title = cjkChars.join('') + latin1 + latin2;
+
+            // Even with high CJK ratio, 2+ Latin/Cyrillic = readable
+            expect(isReadableTitle(title)).toBe(true);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+  });
+});
+
+/**
+ * Context Requirements Properties
+ *
+ * Property 6: Default Context Requirements
+ * Validates: Requirements 4.5, 4.6, 8.1
+ */
+describe('Context Requirements Properties', () => {
+  // All evaluation contexts
+  const ALL_CONTEXTS = [
+    EvaluationContextConst.CATALOG,
+    EvaluationContextConst.TRENDING,
+    EvaluationContextConst.HOMEPAGE,
+    EvaluationContextConst.NOW_PLAYING,
+    EvaluationContextConst.NEW_DIGITAL,
+    EvaluationContextConst.SEARCH,
+  ] as const;
+
+  // Contexts that require overview by default
+  const OVERVIEW_REQUIRED_CONTEXTS: readonly string[] = [
+    EvaluationContextConst.TRENDING,
+    EvaluationContextConst.HOMEPAGE,
+  ];
+
+  // Default min overview chars
+  const DEFAULT_MIN_OVERVIEW_CHARS = 60;
+
+  describe('Property 6: Default Context Requirements', () => {
+    /**
+     * Feature: readability-pending-reform, Property 6: Default Context Requirements
+     * Validates: Requirements 4.5, 4.6, 8.1
+     */
+    it('should default requireReadableTitle to true for all contexts', () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
+          const defaults = getDefaultContextRequirements(context);
+
+          // requireReadableTitle should always be true by default
+          expect(defaults.requireReadableTitle).toBe(true);
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should default requireOverview to true only for trending and homepage contexts', () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
+          const defaults = getDefaultContextRequirements(context);
+
+          const shouldRequireOverview = OVERVIEW_REQUIRED_CONTEXTS.includes(context);
+          expect(defaults.requireOverview).toBe(shouldRequireOverview);
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should default minOverviewChars to 60 when requireOverview is true, 0 otherwise', () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
+          const defaults = getDefaultContextRequirements(context);
+
+          if (defaults.requireOverview) {
+            expect(defaults.minOverviewChars).toBe(DEFAULT_MIN_OVERVIEW_CHARS);
+          } else {
+            expect(defaults.minOverviewChars).toBe(0);
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should return fully populated Required<ContextRequirements> with all fields defined', () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
+          const defaults = getDefaultContextRequirements(context);
+
+          // All fields should be defined (not undefined)
+          expect(defaults.requireReadableTitle).toBeDefined();
+          expect(defaults.requireOverview).toBeDefined();
+          expect(defaults.minOverviewChars).toBeDefined();
+
+          // Types should be correct
+          expect(typeof defaults.requireReadableTitle).toBe('boolean');
+          expect(typeof defaults.requireOverview).toBe('boolean');
+          expect(typeof defaults.minOverviewChars).toBe('number');
+        }),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  describe('getContextRequirements merging', () => {
+    /**
+     * Feature: readability-pending-reform, Property 6: Default Context Requirements
+     * Validates: Requirements 8.1
+     */
+    it('should use defaults when contextRequirements is not configured in policy', () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
+          // Policy without contextRequirements
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            // No contextRequirements
+          };
+
+          const result = getContextRequirements(policy, context);
+          const defaults = getDefaultContextRequirements(context);
+
+          // Should match defaults exactly
+          expect(result).toEqual(defaults);
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should use defaults when context is not in contextRequirements', () => {
+      fc.assert(
+        fc.property(
+          fc.constantFrom(...ALL_CONTEXTS),
+          fc.constantFrom(...ALL_CONTEXTS),
+          (configuredContext, queriedContext) => {
+            // Skip if same context (would be configured)
+            fc.pre(configuredContext !== queriedContext);
+
+            // Policy with contextRequirements for a different context
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: [],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              contextRequirements: {
+                [configuredContext]: {
+                  requireReadableTitle: false,
+                  requireOverview: true,
+                  minOverviewChars: 100,
+                },
+              },
+            };
+
+            const result = getContextRequirements(policy, queriedContext);
+            const defaults = getDefaultContextRequirements(queriedContext);
+
+            // Should match defaults for non-configured context
+            expect(result).toEqual(defaults);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should merge configured values with defaults for partial configuration', () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...ALL_CONTEXTS), fc.boolean(), (context, configuredValue) => {
+          // Policy with partial contextRequirements (only requireReadableTitle)
+          const policy: PolicyConfig = {
+            allowedCountries: ['US'],
+            blockedCountries: [],
+            blockedCountryMode: 'ANY',
+            allowedLanguages: ['en'],
+            blockedLanguages: [],
+            globalProviders: [],
+            breakoutRules: [],
+            eligibilityMode: 'STRICT',
+            homepage: { minRelevanceScore: 50 },
+            contextRequirements: {
+              [context]: {
+                requireReadableTitle: configuredValue,
+                // requireOverview and minOverviewChars not configured
+              },
+            },
+          };
+
+          const result = getContextRequirements(policy, context);
+          const defaults = getDefaultContextRequirements(context);
+
+          // Configured value should override
+          expect(result.requireReadableTitle).toBe(configuredValue);
+          // Non-configured values should use defaults
+          expect(result.requireOverview).toBe(defaults.requireOverview);
+          expect(result.minOverviewChars).toBe(defaults.minOverviewChars);
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should fully override when all values are configured', () => {
+      fc.assert(
+        fc.property(
+          fc.constantFrom(...ALL_CONTEXTS),
+          fc.boolean(),
+          fc.boolean(),
+          fc.nat({ max: 500 }),
+          (context, requireReadableTitle, requireOverview, minOverviewChars) => {
+            // Policy with full contextRequirements
+            const policy: PolicyConfig = {
+              allowedCountries: ['US'],
+              blockedCountries: [],
+              blockedCountryMode: 'ANY',
+              allowedLanguages: ['en'],
+              blockedLanguages: [],
+              globalProviders: [],
+              breakoutRules: [],
+              eligibilityMode: 'STRICT',
+              homepage: { minRelevanceScore: 50 },
+              contextRequirements: {
+                [context]: {
+                  requireReadableTitle,
+                  requireOverview,
+                  minOverviewChars,
+                },
+              },
+            };
+
+            const result = getContextRequirements(policy, context);
+
+            // All values should match configured
+            expect(result.requireReadableTitle).toBe(requireReadableTitle);
+            expect(result.requireOverview).toBe(requireOverview);
+            expect(result.minOverviewChars).toBe(minOverviewChars);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+  });
+});
+
+/**
+ * Readability & Pending Reform Property Tests
+ *
+ * These tests validate the reform that removes PENDING status from Policy Engine
+ * and adds readability/overview checks.
+ */
+describe('Readability & Pending Reform Properties', () => {
+  // Arbitraries for property-based testing
+  const countryCodeArb = fc.stringMatching(/^[A-Z]{2}$/);
+  const languageCodeArb = fc.stringMatching(/^[a-z]{2}$/);
+
+  const ALL_CONTEXTS: EvaluationContext[] = [
+    'catalog',
+    'homepage',
+    'trending',
+    'now_playing',
+    'new_digital',
+    'search',
+  ];
+
+  // Arbitrary for CJK-heavy titles (unreadable for UA audience)
+  const cjkHeavyTitleArb = fc
+    .array(fc.constantFrom('東', '京', '物', '語', '한', '국', '中', '文', '日', '本'), {
+      minLength: 7,
+      maxLength: 20,
+    })
+    .map((chars) => chars.join(''));
+
+  // Arbitrary for readable titles (with Latin/Cyrillic)
+  const readableTitleArb = fc
+    .tuple(
+      fc.string({ minLength: 2, maxLength: 10 }),
+      fc.constantFrom('Movie', 'Film', 'Show', 'Series', 'Story'),
+    )
+    .map(([prefix, suffix]) => `${prefix} ${suffix}`);
+
+  // Arbitrary for valid overview (meets minimum length after trim)
+  // Uses alphanumeric + spaces to ensure trim() doesn't reduce length below 60
+  const validOverviewArb = fc
+    .array(
+      fc.constantFrom(
+        ...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 '.split(''),
+      ),
+      {
+        minLength: 65,
+        maxLength: 200,
+      },
+    )
+    .map((chars) => chars.join('').trim())
+    .filter((s) => s.length >= 60);
+
+  // Arbitrary for short/invalid overview
+  const shortOverviewArb = fc.string({ minLength: 0, maxLength: 59 });
+
+  // Base policy config for tests
+  const createBasePolicy = (): PolicyConfig => ({
+    allowedCountries: ['US', 'GB', 'UA'],
+    blockedCountries: ['RU'],
+    blockedCountryMode: 'ANY',
+    allowedLanguages: ['en', 'uk'],
+    blockedLanguages: [],
+    globalProviders: [],
+    breakoutRules: [],
+    eligibilityMode: 'STRICT',
+    homepage: { minRelevanceScore: 50 },
+  });
+
+  // Base input for tests
+  const createBaseInput = (
+    overrides?: Partial<PolicyEngineInput['mediaItem']>,
+  ): PolicyEngineInput => ({
+    mediaItem: {
+      id: 'test-id',
+      originCountries: ['US'],
+      originalLanguage: 'en',
+      normalizedOffers: [] as NormalizedOffer[],
+      voteCountImdb: 10000,
+      voteCountTrakt: 5000,
+      ratingImdb: 7.5,
+      ratingMetacritic: 75,
+      ratingRottenTomatoes: 80,
+      ratingTrakt: 7.8,
+      contentClass: 'mainstream' as ContentClass,
+      title: 'Test Movie',
+      overview:
+        'A test movie description that is long enough to meet the minimum overview requirements for display contexts.',
+      ...overrides,
+    },
+    stats: {
+      qualityScore: 0.8,
+      popularityScore: 0.7,
+      freshnessScore: 0.6,
+      ratingoScore: 0.75,
+    },
+  });
+
+  /**
+   * Property 1: No PENDING Status
+   * For any valid PolicyEngineInput and PolicyConfig, the evaluateEligibility function
+   * SHALL return a status that is either 'eligible' or 'ineligible', never 'pending'.
+   * **Validates: Requirements 1.1**
+   */
+  describe('Property 1: No PENDING Status', () => {
+    it('should never return PENDING status for any input', () => {
+      const mediaItemArb = fc.record({
+        id: fc.uuid(),
+        originCountries: fc.option(fc.array(countryCodeArb, { minLength: 0, maxLength: 5 })),
+        originalLanguage: fc.option(languageCodeArb),
+        normalizedOffers: fc.constant([] as NormalizedOffer[]),
+        voteCountImdb: fc.option(fc.nat({ max: 1000000 })),
+        voteCountTrakt: fc.option(fc.nat({ max: 100000 })),
+        ratingImdb: fc.option(fc.double({ min: 0, max: 10 })),
+        ratingMetacritic: fc.option(fc.nat({ max: 100 })),
+        ratingRottenTomatoes: fc.option(fc.nat({ max: 100 })),
+        ratingTrakt: fc.option(fc.double({ min: 0, max: 10 })),
+        contentClass: fc.constantFrom(
+          'mainstream',
+          'anime',
+          'documentary',
+          'reality',
+          'kids',
+        ) as fc.Arbitrary<ContentClass>,
+        title: fc.option(fc.string({ minLength: 0, maxLength: 100 })),
+        overview: fc.option(fc.string({ minLength: 0, maxLength: 500 })),
+      });
+
+      const policyConfigArb = fc.record({
+        allowedCountries: fc.array(countryCodeArb, { minLength: 1, maxLength: 20 }),
+        blockedCountries: fc.array(countryCodeArb, { maxLength: 10 }),
+        blockedCountryMode: fc.constantFrom('ANY', 'MAJORITY') as fc.Arbitrary<'ANY' | 'MAJORITY'>,
+        allowedLanguages: fc.array(languageCodeArb, { minLength: 1, maxLength: 10 }),
+        blockedLanguages: fc.array(languageCodeArb, { maxLength: 5 }),
+        globalProviders: fc.array(fc.string(), { maxLength: 10 }),
+        breakoutRules: fc.constant([] as BreakoutRule[]),
+        eligibilityMode: fc.constantFrom('STRICT', 'RELAXED') as fc.Arbitrary<'STRICT' | 'RELAXED'>,
+        homepage: fc.record({ minRelevanceScore: fc.nat({ max: 100 }) }),
+      });
+
+      fc.assert(
+        fc.property(
+          mediaItemArb,
+          policyConfigArb,
+          fc.constantFrom(...ALL_CONTEXTS),
+          (mediaItem, policy, context) => {
+            const input: PolicyEngineInput = {
+              mediaItem: mediaItem as unknown as PolicyEngineInput['mediaItem'],
+              stats: null,
+            };
+            const result = evaluateEligibility(input, policy as unknown as PolicyConfig, {
+              context: context as EvaluationContext,
+            });
+
+            // Status must be 'eligible' or 'ineligible', never 'pending'
+            expect(result.status).not.toBe('pending');
+            expect([EligibilityStatus.ELIGIBLE, EligibilityStatus.INELIGIBLE]).toContain(
+              result.status,
+            );
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  /**
+   * Property 2: Missing Data Returns INELIGIBLE with Umbrella + Specific Reasons
+   * For any PolicyEngineInput where originCountries is null/empty OR originalLanguage is null/empty
+   * OR title is null/empty, the evaluateEligibility function SHALL return status='ineligible'
+   * with reasons array containing MISSING_REQUIRED_METADATA as first element and the specific reason
+   * as second element.
+   * **Validates: Requirements 1.2, 1.3, 1.4, 5.7**
+   */
+  describe('Property 2: Missing Data Returns INELIGIBLE with Umbrella + Specific Reasons', () => {
+    it('should return INELIGIBLE with MISSING_REQUIRED_METADATA + MISSING_ORIGIN_COUNTRY when originCountries is null/empty', () => {
+      fc.assert(
+        fc.property(
+          fc.constantFrom<string[] | null>(null, []),
+          fc.constantFrom(...ALL_CONTEXTS),
+          (originCountries, context) => {
+            const input = createBaseInput({ originCountries });
+            const policy = createBasePolicy();
+            const result = evaluateEligibility(input, policy, { context });
+
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons[0]).toBe('MISSING_REQUIRED_METADATA');
+            expect(result.reasons[1]).toBe('MISSING_ORIGIN_COUNTRY');
+            expect(result.reasons.length).toBe(2);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should return INELIGIBLE with MISSING_REQUIRED_METADATA + MISSING_ORIGINAL_LANGUAGE when originalLanguage is null', () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
+          const input = createBaseInput({ originalLanguage: null });
+          const policy = createBasePolicy();
+          const result = evaluateEligibility(input, policy, { context });
+
+          expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+          expect(result.reasons[0]).toBe('MISSING_REQUIRED_METADATA');
+          expect(result.reasons[1]).toBe('MISSING_ORIGINAL_LANGUAGE');
+          expect(result.reasons.length).toBe(2);
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should return INELIGIBLE with MISSING_REQUIRED_METADATA + MISSING_TITLE when title is null/empty', () => {
+      fc.assert(
+        fc.property(
+          fc.constantFrom(null, '', '   '),
+          fc.constantFrom(...ALL_CONTEXTS),
+          (title, context) => {
+            const input = createBaseInput({ title });
+            const policy = createBasePolicy();
+            const result = evaluateEligibility(input, policy, { context });
+
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons[0]).toBe('MISSING_REQUIRED_METADATA');
+            expect(result.reasons[1]).toBe('MISSING_TITLE');
+            expect(result.reasons.length).toBe(2);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  /**
+   * Property 4: Unreadable Title in Readability-Required Context
+   * For any PolicyEngineInput with valid data integrity AND unreadable title (per isReadableTitle)
+   * AND context where requireReadableTitle=true, the evaluateEligibility function SHALL return
+   * status='ineligible' with reasons containing MISSING_TRANSLATED_TITLE.
+   * **Validates: Requirements 3.4, 4.4**
+   */
+  describe('Property 4: Unreadable Title in Readability-Required Context', () => {
+    it('should return INELIGIBLE with MISSING_TRANSLATED_TITLE for CJK-heavy titles', () => {
+      fc.assert(
+        fc.property(cjkHeavyTitleArb, fc.constantFrom(...ALL_CONTEXTS), (title, context) => {
+          // Skip if title happens to have Latin/Cyrillic (edge case in generator)
+          fc.pre(!isReadableTitle(title));
+
+          const input = createBaseInput({ title });
+          const policy = createBasePolicy();
+          // Ensure requireReadableTitle is true (default)
+          const result = evaluateEligibility(input, policy, { context });
+
+          expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+          expect(result.reasons).toContain('MISSING_TRANSLATED_TITLE');
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should return ELIGIBLE for readable titles with Latin/Cyrillic', () => {
+      fc.assert(
+        fc.property(
+          readableTitleArb,
+          fc.constantFrom('catalog', 'search') as fc.Arbitrary<EvaluationContext>,
+          (title, context) => {
+            // Ensure title is readable
+            fc.pre(isReadableTitle(title));
+
+            const input = createBaseInput({ title });
+            const policy = createBasePolicy();
+            const result = evaluateEligibility(input, policy, { context });
+
+            // Should not fail on readability
+            expect(result.reasons).not.toContain('MISSING_TRANSLATED_TITLE');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  /**
+   * Property 5: Missing Overview in Overview-Required Context
+   * For any PolicyEngineInput with valid data integrity AND readable title AND context where
+   * requireOverview=true AND (overview is null/empty OR overview.length < minOverviewChars),
+   * the evaluateEligibility function SHALL return status='ineligible' with reasons containing MISSING_OVERVIEW.
+   * **Validates: Requirements 4.3, 4.7**
+   */
+  describe('Property 5: Missing Overview in Overview-Required Context', () => {
+    it('should return INELIGIBLE with MISSING_OVERVIEW for missing/short overview in trending/homepage', () => {
+      fc.assert(
+        fc.property(
+          fc.constantFrom(null, '', '   ', 'Short desc'),
+          fc.constantFrom('trending', 'homepage') as fc.Arbitrary<EvaluationContext>,
+          (overview, context) => {
+            const input = createBaseInput({ overview });
+            const policy = createBasePolicy();
+            const result = evaluateEligibility(input, policy, { context });
+
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_OVERVIEW');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should return INELIGIBLE with MISSING_OVERVIEW for placeholder overviews', () => {
+      fc.assert(
+        fc.property(
+          fc.constantFrom('TBA', 'N/A', 'Coming soon', 'To be announced'),
+          fc.constantFrom('trending', 'homepage') as fc.Arbitrary<EvaluationContext>,
+          (overview, context) => {
+            const input = createBaseInput({ overview });
+            const policy = createBasePolicy();
+            const result = evaluateEligibility(input, policy, { context });
+
+            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+            expect(result.reasons).toContain('MISSING_OVERVIEW');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should NOT require overview for catalog/search contexts by default', () => {
+      fc.assert(
+        fc.property(
+          shortOverviewArb,
+          fc.constantFrom('catalog', 'search') as fc.Arbitrary<EvaluationContext>,
+          (overview, context) => {
+            const input = createBaseInput({ overview });
+            const policy = createBasePolicy();
+            const result = evaluateEligibility(input, policy, { context });
+
+            // Should not fail on overview for catalog/search
+            expect(result.reasons).not.toContain('MISSING_OVERVIEW');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should accept valid overview in trending/homepage', () => {
+      fc.assert(
+        fc.property(
+          validOverviewArb,
+          fc.constantFrom('trending', 'homepage') as fc.Arbitrary<EvaluationContext>,
+          (overview, context) => {
+            const input = createBaseInput({ overview });
+            const policy = createBasePolicy();
+            const result = evaluateEligibility(input, policy, { context });
+
+            // Should not fail on overview
+            expect(result.reasons).not.toContain('MISSING_OVERVIEW');
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  /**
+   * Property 7: Evaluation Order Short-Circuit
+   * For any PolicyEngineInput that fails Data Integrity check, the returned reasons array SHALL
+   * contain ONLY the data integrity reasons, not any subsequent check reasons.
+   * For any PolicyEngineInput that passes Data Integrity but fails Display Gates, the returned
+   * reasons array SHALL contain ONLY the display gate reason, not any subsequent check reasons.
+   * **Validates: Requirements 6.1, 6.2, 6.3**
+   */
+  describe('Property 7: Evaluation Order Short-Circuit', () => {
+    const SUBSEQUENT_REASONS = [
+      'BLOCKED_COUNTRY',
+      'BLOCKED_LANGUAGE',
+      'NEUTRAL_COUNTRY',
+      'NEUTRAL_LANGUAGE',
+      'MISSING_GLOBAL_SIGNALS',
+      'BREAKOUT_ALLOWED',
+      'ALLOWED_COUNTRY',
+      'ALLOWED_LANGUAGE',
+      'EXCLUDED_CONTENT_CLASS',
+    ];
+
+    it('should short-circuit on Data Integrity failure (missing origin)', () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
+          const input = createBaseInput({ originCountries: null });
+          const policy = createBasePolicy();
+          const result = evaluateEligibility(input, policy, { context });
+
+          // Should only have data integrity reasons
+          expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
+          expect(result.reasons).toContain('MISSING_ORIGIN_COUNTRY');
+
+          // Should NOT have any subsequent reasons
+          for (const reason of SUBSEQUENT_REASONS) {
+            expect(result.reasons).not.toContain(reason);
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should short-circuit on Data Integrity failure (missing language)', () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
+          const input = createBaseInput({ originalLanguage: null });
+          const policy = createBasePolicy();
+          const result = evaluateEligibility(input, policy, { context });
+
+          // Should only have data integrity reasons
+          expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
+          expect(result.reasons).toContain('MISSING_ORIGINAL_LANGUAGE');
+
+          // Should NOT have any subsequent reasons
+          for (const reason of SUBSEQUENT_REASONS) {
+            expect(result.reasons).not.toContain(reason);
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should short-circuit on Data Integrity failure (missing title)', () => {
+      fc.assert(
+        fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
+          const input = createBaseInput({ title: null });
+          const policy = createBasePolicy();
+          const result = evaluateEligibility(input, policy, { context });
+
+          // Should only have data integrity reasons
+          expect(result.reasons).toContain('MISSING_REQUIRED_METADATA');
+          expect(result.reasons).toContain('MISSING_TITLE');
+
+          // Should NOT have any subsequent reasons
+          for (const reason of SUBSEQUENT_REASONS) {
+            expect(result.reasons).not.toContain(reason);
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should short-circuit on Display Gates failure (unreadable title)', () => {
+      fc.assert(
+        fc.property(cjkHeavyTitleArb, fc.constantFrom(...ALL_CONTEXTS), (title, context) => {
+          // Skip if title happens to be readable
+          fc.pre(!isReadableTitle(title));
+
+          const input = createBaseInput({ title });
+          const policy = createBasePolicy();
+          const result = evaluateEligibility(input, policy, { context });
+
+          // Should only have display gate reason
+          expect(result.reasons).toContain('MISSING_TRANSLATED_TITLE');
+
+          // Should NOT have data integrity umbrella reason (title exists)
+          expect(result.reasons).not.toContain('MISSING_REQUIRED_METADATA');
+
+          // Should NOT have any subsequent reasons
+          for (const reason of SUBSEQUENT_REASONS) {
+            expect(result.reasons).not.toContain(reason);
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should short-circuit on Display Gates failure (missing overview in trending/homepage)', () => {
+      fc.assert(
+        fc.property(
+          fc.constantFrom('trending', 'homepage') as fc.Arbitrary<EvaluationContext>,
+          (context) => {
+            const input = createBaseInput({ overview: 'Short' });
+            const policy = createBasePolicy();
+            const result = evaluateEligibility(input, policy, { context });
+
+            // Should only have display gate reason
+            expect(result.reasons).toContain('MISSING_OVERVIEW');
+
+            // Should NOT have data integrity umbrella reason
+            expect(result.reasons).not.toContain('MISSING_REQUIRED_METADATA');
+
+            // Should NOT have any subsequent reasons
+            for (const reason of SUBSEQUENT_REASONS) {
+              expect(result.reasons).not.toContain(reason);
+            }
           },
         ),
         { numRuns: 100 },

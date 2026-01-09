@@ -13,7 +13,6 @@ interface RunData {
   processed: number;
   eligible: number;
   ineligible: number;
-  pending: number;
   errors: number;
   promotedAt: Date | null;
 }
@@ -100,7 +99,6 @@ describe('Policy Activation - Property-Based Tests', () => {
     processed: fc.nat({ max: 100000 }),
     eligible: fc.nat({ max: 100000 }),
     ineligible: fc.nat({ max: 100000 }),
-    pending: fc.nat({ max: 100000 }),
     errors: fc.nat({ max: 1000 }),
     promotedAt: fc.option(fc.date(), { nil: null }),
   });
@@ -112,7 +110,6 @@ describe('Policy Activation - Property-Based Tests', () => {
       totalReadySnapshot: fc.nat({ max: 100000 }),
       eligible: fc.nat({ max: 100000 }),
       ineligible: fc.nat({ max: 100000 }),
-      pending: fc.nat({ max: 100000 }),
       errors: fc.nat({ max: 1000 }),
       promotedAt: fc.option(fc.date(), { nil: null }),
     })
@@ -130,20 +127,19 @@ describe('Policy Activation - Property-Based Tests', () => {
         .record({
           status: runStatusArb,
           totalReadySnapshot: fc.nat({ max: 10000 }),
-          eligible: fc.nat({ max: 2500 }),
-          ineligible: fc.nat({ max: 2500 }),
-          pending: fc.nat({ max: 2500 }),
-          errors: fc.nat({ max: 2500 }),
+          eligible: fc.nat({ max: 3333 }),
+          ineligible: fc.nat({ max: 3333 }),
+          errors: fc.nat({ max: 3333 }),
           promotedAt: fc.option(fc.date(), { nil: null }),
         })
         .map((run) => ({
           ...run,
-          processed: run.eligible + run.ineligible + run.pending + run.errors,
+          processed: run.eligible + run.ineligible + run.errors,
         }));
 
       fc.assert(
         fc.property(consistentRunArb, (run) => {
-          const sum = run.eligible + run.ineligible + run.pending + run.errors;
+          const sum = run.eligible + run.ineligible + run.errors;
           expect(sum).toBe(run.processed);
         }),
         { numRuns: 100 },
@@ -197,7 +193,6 @@ describe('Policy Activation - Property-Based Tests', () => {
           totalReadySnapshot: fc.integer({ min: 10, max: 10000 }),
           eligible: fc.nat({ max: 5000 }),
           ineligible: fc.nat({ max: 5000 }),
-          pending: fc.nat({ max: 5000 }),
           errors: fc.constant(0),
           promotedAt: fc.constant(null),
         })
@@ -224,7 +219,6 @@ describe('Policy Activation - Property-Based Tests', () => {
           totalReadySnapshot: fc.integer({ min: 1, max: 10000 }),
           eligible: fc.nat({ max: 5000 }),
           ineligible: fc.nat({ max: 5000 }),
-          pending: fc.nat({ max: 5000 }),
           errors: fc.integer({ min: 1, max: 100 }),
           promotedAt: fc.constant(null),
         })
@@ -274,7 +268,6 @@ describe('Policy Activation - Property-Based Tests', () => {
         processed: total,
         eligible: Math.floor(total * 0.9),
         ineligible: Math.floor(total * 0.1),
-        pending: 0,
         errors: 0,
         promotedAt: null,
       }));
@@ -298,7 +291,6 @@ describe('Policy Activation - Property-Based Tests', () => {
           processed,
           eligible: processed,
           ineligible: 0,
-          pending: 0,
           errors: 0,
           promotedAt: null,
         };
@@ -334,7 +326,6 @@ describe('Policy Activation - Property-Based Tests', () => {
           processed: totalReadySnapshot,
           eligible: totalReadySnapshot - errors,
           ineligible: 0,
-          pending: 0,
           errors,
           promotedAt: null,
         }));
@@ -386,7 +377,6 @@ describe('Policy Activation - Property-Based Tests', () => {
             processed: total,
             eligible: total,
             ineligible: 0,
-            pending: 0,
             errors: 0,
             promotedAt: null,
           })),

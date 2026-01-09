@@ -55,7 +55,6 @@ describe('RunController', () => {
             total: 1000,
             eligible: 800,
             ineligible: 150,
-            pending: 50,
             errors: 0,
           },
           startedAt: new Date('2024-01-01'),
@@ -81,7 +80,6 @@ describe('RunController', () => {
         total: 1000,
         eligible: 800,
         ineligible: 150,
-        pending: 50,
         errors: 0,
       });
     });
@@ -106,7 +104,6 @@ describe('RunController', () => {
         totalReadySnapshot: 1000,
         eligible: 800,
         ineligible: 150,
-        pending: 50,
         errors: 0,
         startedAt: new Date('2024-01-01'),
         finishedAt: new Date('2024-01-01'),

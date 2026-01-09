@@ -130,7 +130,13 @@ policy_json='{
     "minVotesAnyOf":{"sources":["imdb","trakt"],"min":1500},
     "requireAnyOfRatingsPresent":["imdb","trakt","metacritic","rt"]
   },
-  "excludedContentClasses":[]
+  "excludedContentClasses":[],
+  "contextRequirements":{
+    "trending":{"requireReadableTitle":true,"requireOverview":true,"minOverviewChars":60},
+    "homepage":{"requireReadableTitle":true,"requireOverview":true,"minOverviewChars":60},
+    "catalog":{"requireReadableTitle":true},
+    "search":{"requireReadableTitle":true}
+  }
 }'
 
 echo "== 1) Dry-run diff (sample 5000) =="

@@ -157,11 +157,6 @@ export function RunStatusCard({
             <Badge variant="secondary" className="text-xs">
               {progress.ineligible} {dict.admin.runs.progress.ineligible}
             </Badge>
-            {progress.pending > 0 && (
-              <Badge variant="outline" className="text-xs">
-                {progress.pending} {dict.admin.runs.progress.pending}
-              </Badge>
-            )}
             {progress.errors > 0 && (
               <Badge variant="destructive" className="text-xs">
                 {progress.errors} {dict.admin.runs.progress.errors}

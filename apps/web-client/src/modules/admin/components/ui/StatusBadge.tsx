@@ -40,7 +40,6 @@ const statusVariantMap: Record<string, VariantProps<typeof statusBadgeVariants>[
   failed: 'destructive', // red styling
   cancelled: 'secondary', // gray styling
   promoted: 'outline', // purple/special styling
-  pending: 'outline', // pending status
 
   // PolicyStatus mapping
   active: 'success', // green styling

@@ -60,7 +60,6 @@ export interface BatchEvaluationResult {
   processed: number;
   eligible: number;
   ineligible: number;
-  pending: number;
   review: number;
   errors: number;
 }
@@ -253,7 +252,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
     options?: BatchEvaluationOptions,
   ): Promise<BatchEvaluationResult> {
     if (mediaItemIds.length === 0) {
-      return { processed: 0, eligible: 0, ineligible: 0, pending: 0, review: 0, errors: 0 };
+      return { processed: 0, eligible: 0, ineligible: 0, review: 0, errors: 0 };
     }
 
     // Extract options with defaults
@@ -281,7 +280,6 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       processed: 0,
       eligible: 0,
       ineligible: 0,
-      pending: 0,
       review: 0,
       errors: 0,
     };
@@ -309,6 +307,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
         evaluations.push(evaluation);
 
         // Count by status using constants
+        // Note: Per Readability & Pending Reform, PENDING is no longer returned by Policy Engine
         switch (evalResult.status) {
           case EligibilityStatus.ELIGIBLE:
             result.eligible++;
@@ -316,9 +315,8 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
           case EligibilityStatus.INELIGIBLE:
             result.ineligible++;
             break;
-          case EligibilityStatus.PENDING:
-            result.pending++;
-            break;
+          // PENDING case removed per Readability & Pending Reform
+          // Policy Engine now returns INELIGIBLE with specific reasons for missing data
           case EligibilityStatus.REVIEW:
             result.review++;
             break;
@@ -339,7 +337,7 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
     this.logger.log(
       `Batch evaluation complete [context=${context}]: ${result.processed} items - ` +
         `${result.eligible} eligible, ${result.ineligible} ineligible, ` +
-        `${result.pending} pending, ${result.review} review, ${result.errors} errors`,
+        `${result.review} review, ${result.errors} errors`,
     );
 
     return result;
@@ -375,7 +373,6 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       processed: 0,
       eligible: 0,
       ineligible: 0,
-      pending: 0,
       review: 0,
       errors: 0,
     };
@@ -400,7 +397,6 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       aggregateResult.processed += batchResult.processed;
       aggregateResult.eligible += batchResult.eligible;
       aggregateResult.ineligible += batchResult.ineligible;
-      aggregateResult.pending += batchResult.pending;
       aggregateResult.review += batchResult.review;
       aggregateResult.errors += batchResult.errors;
 

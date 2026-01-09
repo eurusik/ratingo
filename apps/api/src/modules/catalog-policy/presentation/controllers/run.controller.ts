@@ -127,7 +127,6 @@ export class RunController {
         total: runStatus.totalReadySnapshot,
         eligible: runStatus.eligible,
         ineligible: runStatus.ineligible,
-        pending: runStatus.pending,
         errors: runStatus.errors,
       },
       startedAt: runStatus.startedAt,

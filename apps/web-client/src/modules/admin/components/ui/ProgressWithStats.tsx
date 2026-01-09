@@ -14,7 +14,7 @@ interface ProgressWithStatsProps {
  * Requirements: 3.4
  */
 export function ProgressWithStats({ stats, className }: ProgressWithStatsProps) {
-  const { processed, total, eligible, ineligible, pending, errors } = stats;
+  const { processed, total, eligible, ineligible, errors } = stats;
   const percentage = total > 0 ? Math.round((processed / total) * 100) : 0;
 
   return (
@@ -44,13 +44,6 @@ export function ProgressWithStats({ stats, className }: ProgressWithStatsProps) 
               <span className="font-medium text-red-600">{ineligible.toLocaleString()}</span>
               <span className="ml-1 text-muted-foreground">ineligible</span>
             </Badge>
-
-            {pending > 0 && (
-              <Badge variant="outline" className="px-3 py-1">
-                <span className="font-medium text-yellow-600">{pending.toLocaleString()}</span>
-                <span className="ml-1 text-muted-foreground">pending</span>
-              </Badge>
-            )}
 
             {errors > 0 && (
               <Badge variant="destructive" className="px-3 py-1">

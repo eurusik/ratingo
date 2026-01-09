@@ -64,7 +64,6 @@ export interface RunStatus {
   processed: number;
   eligible: number;
   ineligible: number;
-  pending: number;
   errors: number;
   startedAt: Date;
   finishedAt: Date | null;
@@ -85,7 +84,6 @@ export interface RunListItem {
     total: number;
     eligible: number;
     ineligible: number;
-    pending: number;
     errors: number;
   };
   startedAt: Date;
@@ -243,7 +241,6 @@ export class PolicyActivationService {
       processed: run.processed,
       eligible: run.eligible,
       ineligible: run.ineligible,
-      pending: run.pending,
       errors: run.errors,
     };
 
@@ -286,7 +283,6 @@ export class PolicyActivationService {
       processed: counters.processed,
       eligible: counters.eligible,
       ineligible: counters.ineligible,
-      pending: counters.pending,
       errors: counters.errors,
       startedAt: run.startedAt,
       finishedAt: run.finishedAt,
@@ -426,7 +422,6 @@ export class PolicyActivationService {
           total: run.totalReadySnapshot,
           eligible: run.eligible,
           ineligible: run.ineligible,
-          pending: run.pending,
           errors: run.errors,
         },
         startedAt: run.startedAt,

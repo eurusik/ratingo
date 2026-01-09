@@ -37,7 +37,7 @@ import { type PolicyConfig, type NormalizedOffer } from '../../domain/types/poli
 import {
   type MediaItemRow,
   mapRowToPolicyEngineInput,
-  POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE,
+  POLICY_EVALUATION_SELECT_FIELDS,
 } from '../utils/policy-input.mapper';
 
 import { CatalogPolicyService } from './catalog-policy.service';
@@ -87,7 +87,6 @@ export interface DryRunSummary {
   totalEvaluated: number;
   eligible: number;
   ineligible: number;
-  pending: number;
   review: number;
   newlyEligible: number;
   newlyIneligible: number;
@@ -170,7 +169,6 @@ export class DryRunService {
     const reasonCounts: Record<string, number> = {};
     let eligible = 0;
     let ineligible = 0;
-    let pending = 0;
     let review = 0;
     let newlyEligible = 0;
     let newlyIneligible = 0;
@@ -193,6 +191,7 @@ export class DryRunService {
       const statusChanged = currentStatus !== evalResult.status;
 
       // Count statuses using constants
+      // Note: Per Readability & Pending Reform, PENDING is no longer returned by Policy Engine
       switch (evalResult.status) {
         case EligibilityStatus.ELIGIBLE:
           eligible++;
@@ -202,9 +201,8 @@ export class DryRunService {
           ineligible++;
           if (currentStatus && currentStatus !== EligibilityStatus.INELIGIBLE) newlyIneligible++;
           break;
-        case EligibilityStatus.PENDING:
-          pending++;
-          break;
+        // PENDING case removed per Readability & Pending Reform
+        // Policy Engine now returns INELIGIBLE with specific reasons for missing data
         case EligibilityStatus.REVIEW:
           review++;
           break;
@@ -238,7 +236,7 @@ export class DryRunService {
 
     this.logger.log(
       `Dry-run complete: ${results.length} items in ${executionTimeMs}ms. ` +
-        `Eligible: ${eligible}, Ineligible: ${ineligible}, Pending: ${pending}`,
+        `Eligible: ${eligible}, Ineligible: ${ineligible}`,
     );
 
     return {
@@ -246,7 +244,6 @@ export class DryRunService {
         totalEvaluated: results.length,
         eligible,
         ineligible,
-        pending,
         review,
         newlyEligible,
         newlyIneligible,
@@ -365,7 +362,7 @@ export class DryRunService {
    */
   private async fetchTopItems(limit: number): Promise<Array<MediaItemRow>> {
     const result = await this.db
-      .select(POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE)
+      .select(POLICY_EVALUATION_SELECT_FIELDS)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(
@@ -387,7 +384,7 @@ export class DryRunService {
     const typeValue = mediaType === 'movie' ? MediaType.MOVIE : MediaType.SHOW;
 
     const result = await this.db
-      .select(POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE)
+      .select(POLICY_EVALUATION_SELECT_FIELDS)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(
@@ -410,7 +407,7 @@ export class DryRunService {
     const countryUpper = country.toUpperCase();
 
     const result = await this.db
-      .select(POLICY_EVALUATION_SELECT_FIELDS_WITH_TITLE)
+      .select(POLICY_EVALUATION_SELECT_FIELDS)
       .from(schema.mediaItems)
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(
@@ -461,7 +458,6 @@ export class DryRunService {
         totalEvaluated: 0,
         eligible: 0,
         ineligible: 0,
-        pending: 0,
         review: 0,
         newlyEligible: 0,
         newlyIneligible: 0,

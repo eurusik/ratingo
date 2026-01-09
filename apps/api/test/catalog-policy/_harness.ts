@@ -152,7 +152,6 @@ class InMemoryRunRepository implements ICatalogEvaluationRunRepository {
       processed: 0,
       eligible: 0,
       ineligible: 0,
-      pending: 0,
       errors: 0,
       errorSample: [],
       promotedAt: null,
@@ -179,7 +178,6 @@ class InMemoryRunRepository implements ICatalogEvaluationRunRepository {
       if (increments.processed) run.processed += increments.processed;
       if (increments.eligible) run.eligible += increments.eligible;
       if (increments.ineligible) run.ineligible += increments.ineligible;
-      if (increments.pending) run.pending += increments.pending;
       if (increments.errors) run.errors += increments.errors;
     }
   }
@@ -291,7 +289,6 @@ class InMemoryEvaluationRepository implements IMediaCatalogEvaluationRepository 
     policyVersion: number,
   ): Promise<Record<EligibilityStatusType, number>> {
     const counts: Record<EligibilityStatusType, number> = {
-      pending: 0,
       eligible: 0,
       ineligible: 0,
       review: 0,
@@ -461,7 +458,6 @@ function createMockRunAggregationService(runRepo: InMemoryRunRepository) {
           processed: 0,
           eligible: 0,
           ineligible: 0,
-          pending: 0,
           errors: 0,
         };
       }
@@ -469,7 +465,6 @@ function createMockRunAggregationService(runRepo: InMemoryRunRepository) {
         processed: run.processed,
         eligible: run.eligible,
         ineligible: run.ineligible,
-        pending: run.pending,
         errors: run.errors,
       };
     },
