@@ -104,7 +104,6 @@ export function mapRowToPolicyEngineInput(
       ratingRottenTomatoes: row.ratingRottenTomatoes,
       ratingTrakt: row.ratingTrakt,
       contentClass,
-      // Display fields for readability checks (Requirements 2.1, 2.2, 2.3)
       title: row.title ?? null,
       overview: row.overview ?? null,
     },
