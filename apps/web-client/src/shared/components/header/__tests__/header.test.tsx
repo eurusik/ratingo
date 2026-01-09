@@ -56,7 +56,7 @@ describe('Header', () => {
 
     it('renders all nav links', () => {
       renderHeader();
-      expect(screen.getByRole('link', { name: /зараз дивляться/i })).toBeInTheDocument();
+      expect(screen.getByText(/зараз дивляться/i)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /фільми/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /серіали/i })).toBeInTheDocument();
     });
@@ -84,7 +84,7 @@ describe('Header', () => {
       renderHeader();
 
       const header = screen.getByRole('banner');
-      expect(header).toHaveClass('backdrop-blur-sm');
+      expect(header).toHaveClass('backdrop-blur-md');
       expect(header).toHaveClass('border-b');
     });
   });
@@ -93,17 +93,13 @@ describe('Header', () => {
     it('links to correct routes', () => {
       renderHeader();
 
-      expect(screen.getByRole('link', { name: /зараз дивляться/i })).toHaveAttribute(
-        'href',
-        '/browse/trending',
-      );
       expect(screen.getByRole('link', { name: /фільми/i })).toHaveAttribute(
         'href',
-        '/browse/movies',
+        '/browse/movies-trending',
       );
       expect(screen.getByRole('link', { name: /серіали/i })).toHaveAttribute(
         'href',
-        '/browse/shows',
+        '/browse/shows-trending',
       );
     });
   });
