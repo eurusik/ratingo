@@ -82,6 +82,7 @@ export class RunController {
       id: run.id,
       policyId: run.policyId,
       policyName: run.policyName,
+      policyVersion: run.policyVersion,
       status: run.status,
       progress: run.progress,
       startedAt: run.startedAt,

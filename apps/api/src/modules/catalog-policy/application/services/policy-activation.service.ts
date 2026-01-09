@@ -78,6 +78,7 @@ export interface RunListItem {
   id: string;
   policyId: string;
   policyName: string;
+  policyVersion: number;
   status: RunStatusType;
   progress: {
     processed: number;
@@ -411,11 +412,13 @@ export class PolicyActivationService {
     return runs.map((run) => {
       const policy = run.targetPolicyId ? policyMap.get(run.targetPolicyId) : null;
       const isPrepared = run.status === RunStatusEnum.PREPARED;
+      const version = policy?.version ?? run.policyVersion ?? 0;
 
       return {
         id: run.id,
         policyId: run.targetPolicyId || '',
         policyName: policy ? `Policy v${policy.version}` : `Policy v${run.policyVersion}`,
+        policyVersion: version,
         status: run.status,
         progress: {
           processed: run.processed,

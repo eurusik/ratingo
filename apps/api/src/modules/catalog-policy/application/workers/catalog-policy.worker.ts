@@ -51,7 +51,7 @@ interface EvaluateCatalogItemPayload {
 
 // Worker constants
 const ERROR_STACK_MAX_LENGTH = 500;
-const STALE_RUN_MAX_AGE_MINUTES = 5;
+const STALE_RUN_MAX_AGE_MINUTES = 1;
 
 @Processor(CATALOG_POLICY_QUEUE, { concurrency: 1 })
 export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {

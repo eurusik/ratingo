@@ -42,6 +42,12 @@ export class EvaluationRunDto {
   policyName: string;
 
   @ApiProperty({
+    description: 'Policy version number',
+    example: 1,
+  })
+  policyVersion: number;
+
+  @ApiProperty({
     description: 'Run status',
     example: 'running',
     enum: ['running', 'prepared', 'failed', 'cancelled', 'promoted'],

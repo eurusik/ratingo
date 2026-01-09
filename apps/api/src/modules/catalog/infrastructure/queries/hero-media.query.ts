@@ -13,7 +13,7 @@ import {
 } from '../../../../common/types/hero-media.types';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { EligibilityStatus } from '../../../catalog-policy/public';
+import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
 
 /**
@@ -142,6 +142,7 @@ export class HeroMediaQuery {
       gte(schema.mediaStats.qualityScore, HERO_THRESHOLDS.MIN_QUALITY_SCORE),
       gte(schema.mediaStats.popularityScore, minPopularityScore),
       eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+      eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
       isNull(schema.mediaItems.deletedAt),
     ];
