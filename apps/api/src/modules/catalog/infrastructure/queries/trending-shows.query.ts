@@ -9,6 +9,7 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { hasRecentEpisode } from '../../../../common/utils/media.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
@@ -379,6 +380,8 @@ export class TrendingShowsQuery {
         },
 
         showProgress: this.buildShowProgress(row),
+
+        hasRecentEpisode: hasRecentEpisode(row.last_air_date),
       };
     });
   }

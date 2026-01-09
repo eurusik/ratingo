@@ -9,7 +9,6 @@ import {
   HeroSection,
   Top3SectionServer,
   TrendingCarousel,
-  NewEpisodeCard,
   MediaCardsWithStatus,
 } from '@/modules/home';
 import { getDictionary } from '@/shared/i18n';
@@ -43,14 +42,12 @@ export default async function HomePage() {
   const [
     heroItems,
     trendingShowsData,
-    newEpisodesData,
     trendingMoviesData,
     nowPlayingData,
     newOnDigitalData,
   ] = await Promise.all([
     catalogApi.getHeroItems({ type: 'show' }).catch(() => []),
     catalogApi.getTrendingShows({ limit: 12 }).catch(() => ({ data: [] })),
-    catalogApi.getNewEpisodes({ days: 7, limit: 9 }).catch(() => ({ data: [] })),
     catalogApi.getTrendingMovies({ limit: 12 }).catch(() => ({ data: [] })),
     catalogApi.getNowPlayingMovies({ limit: 12 }).catch(() => ({ data: [] })),
     catalogApi.getNewOnDigitalMovies({ limit: 12 }).catch(() => ({ data: [] })),
@@ -72,9 +69,6 @@ export default async function HomePage() {
   const newOnDigitalMovies = Array.isArray(newOnDigitalData)
     ? newOnDigitalData
     : (((newOnDigitalData as Record<string, unknown>).data as unknown[]) ?? []);
-
-  // Extract new episodes
-  const newEpisodes = (newEpisodesData as { data: unknown[] })?.data ?? [];
 
   // Map hero items to MediaCardServerProps
   const top3Cards = (heroItems ?? []).map((item) =>
@@ -163,22 +157,34 @@ export default async function HomePage() {
             ))}
           </TrendingCarousel>
 
-          {/* Нові епізоди 📺 */}
-          {newEpisodes.length > 0 && (
-            <section className="mt-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <Tv className="w-5 h-5 text-blue-400" />
-                  {dict.home.sections.newEpisodes}
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 bg-zinc-900/50 rounded-xl p-2">
-                {(newEpisodes as import('@/core/api/catalog').NewEpisodeItem[]).map((item) => (
-                  <NewEpisodeCard key={item.showId} item={item} locale="uk" />
-                ))}
-              </div>
-            </section>
-          )}
+          {/* Нові епізоди в тренді 📺 */}
+          {(() => {
+            // Filter trending shows with recent episodes
+            const showsWithNewEpisodes = catalogCards.filter((card) => {
+              const originalShow = shows.find(
+                (s) => (s as Record<string, unknown>).slug === card.slug,
+              ) as Record<string, unknown> | undefined;
+              return originalShow?.hasRecentEpisode === true;
+            });
+
+            if (showsWithNewEpisodes.length === 0) return null;
+
+            return (
+              <section className="mt-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <Tv className="w-5 h-5 text-blue-400" />
+                    {dict.home.sections.newEpisodes}
+                  </h2>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                  {showsWithNewEpisodes.slice(0, 6).map((item) => (
+                    <MediaCardServer key={item.id} {...item} locale="uk" />
+                  ))}
+                </div>
+              </section>
+            );
+          })()}
 
           {/* ═══ Візуальне розділення: Фільми ═══ */}
           <div className="relative my-8">

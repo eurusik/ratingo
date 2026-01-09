@@ -93,6 +93,7 @@ export class CardEnrichmentService {
    * Global signals:
    * - TRENDING: enabled when `isTrendingContext` is true
    * - NEW_RELEASE: derived from release dates within a fixed window
+   * - NEW_EPISODE: derived from hasRecentEpisode flag on shows
    *
    * User-derived signals are applied when `userState` exists.
    */
@@ -101,6 +102,7 @@ export class CardEnrichmentService {
       releaseDate?: Date | null;
       theatricalReleaseDate?: Date | null;
       digitalReleaseDate?: Date | null;
+      hasRecentEpisode?: boolean;
     } & CatalogItemWithUserState,
   >(items: T[], opts: { context: CardListContext; now?: Date }): Array<T & { card: CardMeta }> {
     const now = opts.now ?? new Date();
@@ -120,7 +122,7 @@ export class CardEnrichmentService {
           hasUserEntry: Boolean(userState),
           userState: userState?.state ?? null,
           continuePoint,
-          hasNewEpisode: false,
+          hasNewEpisode: item.hasRecentEpisode ?? false,
           isNewRelease,
           trendDelta: null,
           isTrending: false,

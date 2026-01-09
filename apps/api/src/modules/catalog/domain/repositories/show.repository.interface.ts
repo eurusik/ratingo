@@ -63,6 +63,9 @@ export interface TrendingShowItem {
     episode: number | null;
     label: string | null;
   } | null;
+
+  /** Whether the show has a recent episode (aired within past 7 days). */
+  hasRecentEpisode: boolean;
 }
 
 /**

@@ -54,6 +54,7 @@ export function extractContinuePoint(
  * Selects a single badge for a card based on canonical priority.
  */
 export function selectBadge(signals: CardItemSignals, ctx: CardListContext): CardBadge | null {
+  // User is watching + has new episode = highest priority (personalized)
   if (signals.userState === CARD_USER_STATE.WATCHING && signals.hasNewEpisode) {
     return {
       key: BADGE_KEY.NEW_EPISODE,
