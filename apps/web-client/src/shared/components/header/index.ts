@@ -6,4 +6,6 @@ export { Header } from './header';
 export { UserMenu } from './user-menu';
 export { HeaderContextProvider, useHeaderContext } from './header-context';
 export { SearchCommand } from './search';
+export { TrendingToggle } from './trending-toggle';
+export { Logo } from './logo';
 export type { HeaderContextValue } from './header-context';

@@ -1,14 +1,11 @@
 /**
- * Global header component with hero/scrolled modes.
- *
- * Hero mode: transparent
- * Scrolled mode: subtle dark frosted glass (quiet, not showcase)
+ * Global header with hero/scrolled modes and trending toggle navigation.
  */
 
 'use client';
 
 import Link from 'next/link';
-import type { Route } from 'next';
+import { type Route } from 'next';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
@@ -17,6 +14,8 @@ import { useHeaderContext } from './header-context';
 import { UserMenu } from './user-menu';
 import { SearchCommand } from './search';
 import { NotificationBell } from './notification-bell';
+import { TrendingToggle } from './trending-toggle';
+import { Logo } from './logo';
 
 const NAV_LINK_STYLES = 'text-sm text-muted-foreground hover:text-foreground transition-colors';
 
@@ -28,12 +27,6 @@ export function Header() {
   const hasContext = !!breadcrumb || !!backUrl;
   const showBreadcrumb = isScrolled && hasContext;
 
-  const navLinks = [
-    { href: '/browse/trending', label: dict.home.sections.trending },
-    { href: '/browse/movies', label: dict.nav.movies },
-    { href: '/browse/shows', label: dict.nav.shows },
-  ] as const;
-
   return (
     <header
       className={cn(
@@ -41,15 +34,21 @@ export function Header() {
         'transition-all duration-200',
         // Default: transparent
         'bg-transparent',
-        // Scrolled: quiet dark frosted glass
+        // Scrolled: compact dark frosted glass with subtle border
         isScrolled && [
-          'bg-background/75',
-          'backdrop-blur-sm backdrop-saturate-110',
-          'border-b border-border/30',
+          'bg-background/80',
+          'backdrop-blur-md backdrop-saturate-150',
+          'border-b border-border/40',
         ],
       )}
     >
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-6">
+      <div
+        className={cn(
+          'container mx-auto px-4 flex items-center justify-between gap-6',
+          'transition-all duration-200',
+          isScrolled ? 'h-14' : 'h-16',
+        )}
+      >
         {/* Left: Breadcrumb (when scrolled) or Logo */}
         <div className="flex items-center gap-4 min-w-0">
           {showBreadcrumb && backUrl ? (
@@ -61,19 +60,20 @@ export function Header() {
               <span className="hidden sm:inline">{breadcrumb || dict.details.backToHome}</span>
             </Link>
           ) : (
-            <Link href="/" className="flex items-center gap-2 shrink-0">
-              <span className="text-xl font-bold text-foreground">{dict.meta.siteName}</span>
-            </Link>
+            <Logo />
           )}
         </div>
 
-        {/* Center: Nav */}
-        <nav aria-label="Main navigation" className="hidden md:flex items-center gap-6">
-          {navLinks.map(({ href, label }) => (
-            <Link key={href} href={href} className={NAV_LINK_STYLES}>
-              {label}
-            </Link>
-          ))}
+        {/* Center: Trending toggle (hidden when scrolled on detail pages) */}
+        <nav
+          aria-label="Main navigation"
+          className={cn(
+            'hidden md:flex items-center',
+            'transition-opacity duration-200',
+            isScrolled && hasContext && 'md:hidden',
+          )}
+        >
+          <TrendingToggle />
         </nav>
 
         {/* Right: Search + Notifications + Auth */}

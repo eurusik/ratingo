@@ -12,7 +12,7 @@
     "home": "Go home"
   },
   "search": {
-    "placeholder": "Search...",
+    "placeholder": "Find a movie or show",
     "hint": "Enter movie or show title",
     "noResults": "Nothing found",
     "inCatalog": "In catalog",
@@ -343,6 +343,34 @@
       "trending": "trending",
       "ratings": "ratings"
     }
+  },
+  "footer": {
+    "descriptionStart": "Created with ❤️ for easy tracking of movie and show trends. Developer — ",
+    "authorName": "Yevhen Rusakov",
+    "sources": "Data & Ratings",
+    "sourcesDesc": "TMDB, Trakt, IMDb and other trusted sources",
+    "openness": "Openness",
+    "about": "About Ratingo",
+    "aboutLink": "Read more →",
+    "madeIn": "Made in Ukraine 🇺🇦"
+  },
+  "about": {
+    "meta": {
+      "title": "About",
+      "description": "Ratingo — a project for easy tracking of movie and show trends"
+    },
+    "title": "About",
+    "intro": "I love watching shows and movies. It's my way to relax, recharge, and get inspired. But over the past few years, one big problem emerged: I completely lost track of what to watch.",
+    "problem": "Every streaming platform pushes its own content. Recommendations are different everywhere. They show you: \"Here's the top 10 shows of the week! They're all amazing!\" You start watching... and you're lucky if one out of ten is actually worth your time. The rest? Just mediocre stuff that's not even worth spending an evening on.",
+    "solution": "I don't want to waste time on fake \"trends\". I want to see what people are actually watching right now, not what some platform's marketing machine is pushing. That's why I created Ratingo.",
+    "whyTitle": "Why this exists",
+    "whyText": "Ratingo gathers information from various streaming services and shows the real picture of popularity — what's actually trending among people worldwide. I fine-tuned the rating system so you can tell at a glance whether a show is worth your time, or if it's just another \"please watch this, we spent 5 million on promotion\". Filters, trends, ratings, relevance — all together give you an honest answer: \"people are watching this\" or \"you can skip this\".",
+    "whatYouGetTitle": "What you get",
+    "whatYouGetText": "Instead of wandering through Netflix, Max, Amazon, Hulu, Disney+ and others looking for something decent: you open Ratingo, see what people are watching right now, pick what suits you, and don't waste your evening on boring stuff. Simple and honest.",
+    "whyIMadeItTitle": "Why I made this",
+    "whyIMadeItText": "Because I wanted a site that saves my time, not sells me content. A site that shows real people's interest, not a promotion algorithm. A site that helps find genuinely interesting things, not \"another premiere you have to watch because it's everywhere right now\".",
+    "whyIMadeItConclusion": "So I went ahead and built it.",
+    "opennessTitle": "Openness"
   },
   "mediaType": {
     "movie": "Movie",
