@@ -160,9 +160,9 @@ export default async function HomePage() {
           {/* Нові епізоди в тренді 📺 */}
           {(() => {
             // Filter trending shows with recent episodes
-            const showsWithNewEpisodes = catalogCards.filter((card) => {
+            const showsWithNewEpisodes = showCards.filter((card) => {
               const originalShow = shows.find(
-                (s) => (s as Record<string, unknown>).slug === card.slug,
+                (s) => (s as Record<string, unknown>).id === card.id,
               ) as Record<string, unknown> | undefined;
               return originalShow?.hasRecentEpisode === true;
             });
