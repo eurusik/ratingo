@@ -39,7 +39,8 @@
     "format": "prettier --write \"apps/**/*.{ts,tsx,md,json}\"",
     "contracts:openapi": "npm run openapi:generate --workspace=api",
     "contracts:types": "npm run generate:types --workspace=@ratingo/api-contract",
-    "contracts:update": "npm run contracts:openapi && npm run contracts:types"
+    "contracts:update": "npm run contracts:openapi && npm run contracts:types",
+    "ratingo": "node packages/cli/dist/index.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

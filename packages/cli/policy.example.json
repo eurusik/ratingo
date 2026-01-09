@@ -1,0 +1,30 @@
+{
+  "allowedCountries": ["US", "UA", "GB", "CA", "AU", "DE", "FR", "ES", "IT", "NL", "SE", "PL"],
+  "blockedCountries": ["JP", "KR", "CN", "IN", "TR", "ID"],
+  "blockedCountryMode": "ANY",
+  "allowedLanguages": ["en", "uk", "de", "fr", "es", "it", "pl"],
+  "blockedLanguages": ["ja", "ko", "zh", "hi", "tr", "id", "ar"],
+  "globalProviders": ["netflix", "prime_video", "disney_plus", "apple_tv_plus", "max", "paramount_plus", "hulu", "peacock"],
+  "breakoutRules": [
+    { "id": "early-viral", "name": "Early Viral", "priority": 1, "requirements": { "minImdbVotes": 8000, "minQualityScoreNormalized": 0.62 } },
+    { "id": "viral-hit", "name": "Viral Hit", "priority": 2, "requirements": { "minImdbVotes": 100000, "minQualityScoreNormalized": 0.55 } },
+    { "id": "streaming-original", "name": "Streaming Original", "priority": 3, "requirements": { "minImdbVotes": 3000, "requireAnyOfProviders": ["netflix", "prime_video", "disney_plus", "apple_tv_plus", "max"] } },
+    { "id": "critically-acclaimed", "name": "Critically Acclaimed", "priority": 4, "requirements": { "minQualityScoreNormalized": 0.74, "requireAnyOfRatingsPresent": ["imdb", "metacritic", "rt"] } },
+    { "id": "top-foreign", "name": "Top Foreign", "priority": 5, "requirements": { "minQualityScoreNormalized": 0.65, "requireAnyOfRatingsPresent": ["imdb", "trakt"], "minImdbVotes": 10000, "minTraktVotes": 10000 } }
+  ],
+  "eligibilityMode": "STRICT",
+  "homepage": { "minRelevanceScore": 35 },
+  "globalRequirements": {
+    "appliesTo": ["catalog", "homepage", "trending", "search"],
+    "minQualityScoreNormalized": 0.58,
+    "minVotesAnyOf": { "sources": ["imdb", "trakt"], "min": 1500 },
+    "requireAnyOfRatingsPresent": ["imdb", "trakt", "metacritic", "rt"]
+  },
+  "excludedContentClasses": [],
+  "contextRequirements": {
+    "trending": { "requireReadableTitle": true, "requireOverview": true, "minOverviewChars": 60 },
+    "homepage": { "requireReadableTitle": true, "requireOverview": true, "minOverviewChars": 60 },
+    "catalog": { "requireReadableTitle": true },
+    "search": { "requireReadableTitle": true }
+  }
+}

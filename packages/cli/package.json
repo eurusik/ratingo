@@ -1,0 +1,25 @@
+{
+  "name": "@ratingo/cli",
+  "version": "0.1.0",
+  "description": "Ratingo CLI",
+  "type": "module",
+  "bin": {
+    "ratingo": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1"
+  },
+  "devDependencies": {
+    "@ratingo/api-contract": "*",
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  }
+}
