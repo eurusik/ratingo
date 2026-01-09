@@ -16,7 +16,7 @@ import { catalogApi } from '@/core/api';
 import { TrendingUp, Clapperboard, Sparkles, Film, Tv } from 'lucide-react';
 
 /** Map API item to MediaCardServerProps */
-function toCardProps(item: Record<string, unknown>, type: 'show' | 'movie'): MediaCardServerProps {
+function toCardProps(item: Record<string, unknown>, type: 'show' | 'movie'): MediaCardServerProps & { hasRecentEpisode?: boolean } {
   const card = item.card as Record<string, unknown> | undefined;
   // Use mediaItemId for saving (foreign key to media_items), fallback to id for shows
   const mediaItemId = (item.mediaItemId as string) ?? (item.id as string);
@@ -32,6 +32,7 @@ function toCardProps(item: Record<string, unknown>, type: 'show' | 'movie'): Med
     releaseDate: (item.releaseDate as string) ?? undefined,
     badgeKey: (card?.badgeKey as MediaCardServerProps['badgeKey']) ?? undefined,
     listContext: (card?.listContext as string) ?? undefined,
+    hasRecentEpisode: (item.hasRecentEpisode as boolean) ?? false,
   };
 }
 
@@ -160,12 +161,7 @@ export default async function HomePage() {
           {/* Нові епізоди в тренді 📺 */}
           {(() => {
             // Filter trending shows with recent episodes
-            const showsWithNewEpisodes = showCards.filter((card) => {
-              const originalShow = shows.find(
-                (s) => (s as Record<string, unknown>).id === card.id,
-              ) as Record<string, unknown> | undefined;
-              return originalShow?.hasRecentEpisode === true;
-            });
+            const showsWithNewEpisodes = showCards.filter((card) => card.hasRecentEpisode);
 
             if (showsWithNewEpisodes.length === 0) return null;
 
