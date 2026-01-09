@@ -56,7 +56,7 @@ describe('Header', () => {
 
     it('renders all nav links', () => {
       renderHeader();
-      expect(screen.getByText(/зараз дивляться/i)).toBeInTheDocument();
+      expect(screen.getByText(/у тренді/i)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /фільми/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /серіали/i })).toBeInTheDocument();
     });
