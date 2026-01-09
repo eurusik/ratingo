@@ -109,6 +109,18 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
 };
 
 /**
+ * API methods that support sort/filter parameters.
+ */
+const FILTERABLE_API_METHODS = ['getTrendingShows', 'getTrendingMovies'] as const;
+
+/**
+ * Check if category supports filters (sort, year, etc).
+ */
+export function categorySupportsFilters(config: CategoryConfig): boolean {
+  return (FILTERABLE_API_METHODS as readonly string[]).includes(config.apiMethod);
+}
+
+/**
  * Get category config by slug.
  */
 export function getCategoryConfig(slug: string): CategoryConfig | null {

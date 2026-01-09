@@ -77,7 +77,24 @@
     "loading": "Loading...",
     "noResults": "Nothing found",
     "backToHome": "Back to home",
-    "resultsCount": "{count} results"
+    "resultsCount": "{count} results",
+    "filters": {
+      "sort": "Sort by",
+      "sortOptions": {
+        "trending": "Trending",
+        "popularity": "Popular",
+        "ratingo": "Top rated",
+        "releaseDate": "New releases"
+      },
+      "sortTooltips": {
+        "trending": "Shows that are actively being watched right now. Based on current viewer activity and overall popularity.",
+        "popularity": "Shows that consistently appeal to a large audience. Based on all-time popularity.",
+        "ratingo": "Shows with the highest ratings. Considers quality, vote count, and freshness.",
+        "releaseDate": "Newest shows, sorted by release date."
+      },
+      "year": "Year",
+      "allYears": "All years"
+    }
   },
   "card": {
     "cta": {

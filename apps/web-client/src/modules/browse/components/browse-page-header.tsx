@@ -24,7 +24,7 @@ export function BrowsePageHeader({
   backLabel = 'Назад',
 }: BrowsePageHeaderProps) {
   return (
-    <header className="mb-8">
+    <header>
       <Link
         href={backHref}
         className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-4"

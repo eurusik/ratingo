@@ -7,8 +7,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getDictionary, getByPath } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
-import { getCategoryConfig, getValidCategorySlugs, type BrowseCategory } from '@/modules/browse';
-import { BrowsePageHeader, MediaGrid } from '@/modules/browse';
+import { getCategoryConfig, getValidCategorySlugs, categorySupportsFilters, type BrowseCategory } from '@/modules/browse';
+import { BrowsePageHeader, MediaGrid, BrowseFilters } from '@/modules/browse';
 import { BrowseInfiniteList } from './browse-infinite-list';
 import type { MediaCardServerProps } from '@/modules/home';
 
@@ -19,7 +19,7 @@ export function generateStaticParams() {
 
 interface PageProps {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; sort?: string }>;
 }
 
 /**
@@ -50,17 +50,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 /**
  * Fetch initial data for SSR.
  */
-async function fetchInitialData(category: BrowseCategory, page: number = 1) {
+async function fetchInitialData(
+  category: BrowseCategory,
+  page: number = 1,
+  filters: { sort?: string } = {}
+) {
   const config = getCategoryConfig(category);
   if (!config) return { items: [], total: 0, hasMore: false };
 
   try {
     const offset = (page - 1) * config.pageSize;
-    const params = { offset, limit: config.pageSize };
+    const params: Record<string, string | number> = { 
+      offset, 
+      limit: config.pageSize,
+    };
+    
+    // Add filters if provided
+    if (filters.sort) params.sort = filters.sort;
 
     // Call the appropriate API method based on category config
     const apiMethod = catalogApi[config.apiMethod];
-    const response = (await apiMethod(params)) as unknown as {
+    const response = (await apiMethod(params as Parameters<typeof apiMethod>[0])) as unknown as {
       data: Array<{
         id: string;
         slug: string;
@@ -101,7 +111,7 @@ async function fetchInitialData(category: BrowseCategory, page: number = 1) {
 
 export default async function BrowsePage({ params, searchParams }: PageProps) {
   const { category } = await params;
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, sort } = await searchParams;
 
   const config = getCategoryConfig(category);
   if (!config) {
@@ -109,19 +119,38 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
   }
 
   const page = Math.max(1, parseInt(pageParam || '1', 10));
-  const { items, total, hasMore } = await fetchInitialData(category as BrowseCategory, page);
+  const { items, total, hasMore } = await fetchInitialData(
+    category as BrowseCategory, 
+    page,
+    { sort }
+  );
 
   const dict = getDictionary('uk');
   const title = getByPath(dict, config.titleKey);
 
+  // Check if this category supports filters (trending endpoints)
+  const supportsFilters = categorySupportsFilters(config);
+
   return (
     <main className="min-h-screen bg-zinc-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BrowsePageHeader
-          title={title}
-          subtitle={dict.browse.resultsCount.replace('{count}', total.toString())}
-          backLabel={dict.browse.backToHome}
-        />
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+          <BrowsePageHeader
+            title={title}
+            subtitle={dict.browse.resultsCount.replace('{count}', total.toString())}
+            backLabel={dict.browse.backToHome}
+          />
+          
+          {supportsFilters && (
+            <BrowseFilters
+              labels={{
+                sort: dict.browse.filters.sort,
+                sortOptions: dict.browse.filters.sortOptions,
+                sortTooltips: dict.browse.filters.sortTooltips,
+              }}
+            />
+          )}
+        </div>
 
         {items.length === 0 ? (
           <div className="text-center py-16">

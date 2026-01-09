@@ -106,7 +106,7 @@ export class TrendingShowsQuery {
       offset = 0,
       minRatingo,
       genres,
-      sort = CATALOG_SORT.POPULARITY,
+      sort = CATALOG_SORT.TRENDING,
       order = SORT_ORDER.DESC,
       voteSource = VOTE_SOURCE.TMDB,
       minVotes,
