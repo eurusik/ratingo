@@ -20,7 +20,7 @@ import {
 import { type ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
 
 import { BreakoutRuleDto } from './breakout-rule.dto';
-import { ContextRequirementsDto } from './context-requirements.dto';
+import { type ContextRequirementsDto } from './context-requirements.dto';
 import { GlobalRequirementsDto } from './global-requirements.dto';
 
 /**
@@ -142,8 +142,6 @@ export class PolicyConfigDto {
 
   @ApiPropertyOptional({
     description: 'Context-specific requirements for display surfaces (readability, overview)',
-    type: 'object',
-    additionalProperties: { $ref: '#/components/schemas/ContextRequirementsDto' },
     example: {
       trending: { requireReadableTitle: true, requireOverview: true, minOverviewChars: 60 },
       homepage: { requireReadableTitle: true, requireOverview: true, minOverviewChars: 60 },
@@ -151,7 +149,5 @@ export class PolicyConfigDto {
     },
   })
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => ContextRequirementsDto)
   contextRequirements?: Record<string, ContextRequirementsDto>;
 }

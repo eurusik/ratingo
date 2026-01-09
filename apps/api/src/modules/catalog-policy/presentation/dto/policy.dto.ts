@@ -22,6 +22,7 @@ import { PolicyStatus, type PolicyStatusType } from '../../catalog-policy.consta
 import { type ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
 
 import { BreakoutRuleDto } from './breakout-rule.dto';
+import { type ContextRequirementsDto } from './context-requirements.dto';
 import { GlobalRequirementsDto } from './global-requirements.dto';
 import { HomepageConfigDto, PolicyConfigDto } from './policy-config.dto';
 
@@ -245,6 +246,17 @@ export class CreatePolicyDto {
   @IsArray()
   @IsIn(VALID_CONTENT_CLASSES, { each: true })
   excludedContentClasses?: ContentClass[];
+
+  @ApiPropertyOptional({
+    description: 'Context-specific requirements for display surfaces (readability, overview)',
+    example: {
+      trending: { requireReadableTitle: true, requireOverview: true, minOverviewChars: 60 },
+      homepage: { requireReadableTitle: true, requireOverview: true, minOverviewChars: 60 },
+      catalog: { requireReadableTitle: true },
+    },
+  })
+  @IsOptional()
+  contextRequirements?: Record<string, ContextRequirementsDto>;
 }
 
 /**
