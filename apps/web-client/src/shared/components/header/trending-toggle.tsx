@@ -1,5 +1,5 @@
 /**
- * Segmented control for switching between trending shows and movies.
+ * Segmented control for switching between shows and movies.
  */
 
 'use client';
@@ -15,42 +15,31 @@ export function TrendingToggle() {
 
   const isShowsTrending = pathname.startsWith('/browse/shows-trending');
   const isMoviesTrending = pathname.startsWith('/browse/movies-trending');
-  const isTrendingSection = isShowsTrending || isMoviesTrending;
 
   return (
-    <div className="flex items-center gap-2">
-      <span
+    <div className="flex items-center rounded-full bg-muted/50 p-0.5">
+      <Link
+        href="/browse/shows-trending"
         className={cn(
-          'text-sm transition-colors',
-          isTrendingSection ? 'text-foreground font-medium' : 'text-muted-foreground',
+          'px-3 py-1.5 text-sm rounded-full transition-all',
+          isShowsTrending
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground',
         )}
       >
-        {dict.home.sections.trending}
-      </span>
-      <div className="flex items-center rounded-full bg-muted/50 p-0.5">
-        <Link
-          href="/browse/shows-trending"
-          className={cn(
-            'px-2.5 py-1 text-xs rounded-full transition-all',
-            isShowsTrending
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
-          {dict.nav.shows}
-        </Link>
-        <Link
-          href="/browse/movies-trending"
-          className={cn(
-            'px-2.5 py-1 text-xs rounded-full transition-all',
-            isMoviesTrending
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
-          {dict.nav.movies}
-        </Link>
-      </div>
+        {dict.nav.shows}
+      </Link>
+      <Link
+        href="/browse/movies-trending"
+        className={cn(
+          'px-3 py-1.5 text-sm rounded-full transition-all',
+          isMoviesTrending
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground',
+        )}
+      >
+        {dict.nav.movies}
+      </Link>
     </div>
   );
 }

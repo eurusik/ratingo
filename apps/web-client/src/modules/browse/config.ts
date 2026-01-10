@@ -50,7 +50,7 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
   // Shows
   'shows-trending': {
     slug: 'shows-trending',
-    titleKey: 'browse.trending.title',
+    titleKey: 'browse.shows.title',
     descriptionKey: 'browse.trending.description',
     apiMethod: 'getTrendingShows',
     mediaType: 'show',
@@ -76,7 +76,7 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
   },
   'movies-trending': {
     slug: 'movies-trending',
-    titleKey: 'browse.moviesTrending.title',
+    titleKey: 'browse.movies.title',
     descriptionKey: 'browse.moviesTrending.description',
     apiMethod: 'getTrendingMovies',
     mediaType: 'movie',

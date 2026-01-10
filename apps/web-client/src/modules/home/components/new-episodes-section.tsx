@@ -127,8 +127,8 @@ export function NewEpisodesSection({
   // Different initial counts for mobile vs desktop
   const mobileHasMore = allItems.length > MOBILE_INITIAL_COUNT;
   const desktopHasMore = allItems.length > DESKTOP_INITIAL_COUNT;
-  const mobileRemaining = allItems.length - MOBILE_INITIAL_COUNT;
-  const desktopRemaining = allItems.length - DESKTOP_INITIAL_COUNT;
+  const mobileRemaining = Math.max(0, allItems.length - MOBILE_INITIAL_COUNT);
+  const desktopRemaining = Math.max(0, allItems.length - DESKTOP_INITIAL_COUNT);
 
   // Visible items based on expand state
   const mobileVisible = isExpanded ? allItems : allItems.slice(0, MOBILE_INITIAL_COUNT);
@@ -175,12 +175,12 @@ export function NewEpisodesSection({
           onClick={() => setIsExpanded(true)}
           className="mt-3 text-sm text-zinc-500 hover:text-zinc-400 transition-colors"
         >
-          {/* Mobile text */}
-          <span className="sm:hidden">
+          {/* Mobile text — hidden on desktop, or if no mobile overflow */}
+          <span className={mobileHasMore ? 'sm:hidden' : 'hidden'}>
             {dict.common.showMore.replace('{count}', String(mobileRemaining))}
           </span>
-          {/* Desktop text */}
-          <span className="hidden sm:inline">
+          {/* Desktop text — hidden on mobile, or if no desktop overflow */}
+          <span className={desktopHasMore ? 'hidden sm:inline' : 'hidden'}>
             {dict.common.showMore.replace('{count}', String(desktopRemaining))}
           </span>
         </button>

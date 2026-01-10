@@ -83,13 +83,13 @@
       "sortOptions": {
         "trending": "Trending",
         "popularity": "Popular",
-        "ratingo": "Top rated",
+        "ratingo": "Hits",
         "releaseDate": "New releases"
       },
       "sortTooltips": {
-        "trending": "Shows that are actively being watched right now. Based on current viewer activity and overall popularity.",
+        "trending": "Shows with the highest current viewing activity. Based on recent viewer engagement and overall popularity.",
         "popularity": "Shows that consistently appeal to a large audience. Based on all-time popularity.",
-        "ratingo": "Shows with the highest ratings. Considers quality, vote count, and freshness.",
+        "ratingo": "Hits — shows with the highest Ratingo score. Combines ratings, popularity, and freshness, not just average score.",
         "releaseDate": "Newest shows, sorted by release date."
       },
       "year": "Year",
