@@ -98,10 +98,10 @@ export class ScoreCalculatorService {
     const avgRatingNorm = this.clamp(avgRating / RATING_SCALE_MAX, 0, 1);
 
     const totalVotes = (input.imdbVotes || 0) + (input.traktVotes || 0);
-    const voteConfidenceNorm = this.clamp(
-      1 - Math.exp(-totalVotes / normalization.voteConfidenceK),
-      0,
-      1,
+    const voteConfidenceNorm = this.calculateVoteConfidence(
+      input.imdbVotes,
+      input.traktVotes,
+      normalization.voteConfidenceK,
     );
 
     const freshnessNorm = this.calculateFreshness(
@@ -204,6 +204,44 @@ export class ScoreCalculatorService {
 
     const expDecay = Math.exp(-daysSinceRelease / decayDays);
     return this.clamp(Math.max(expDecay, minFloor), 0, 1);
+  }
+
+  /**
+   * Calculates vote confidence based on available sources only.
+   * Missing source ≠ negative signal — we only measure what we have.
+   *
+   * IMDb and Trakt have different vote scales:
+   * - IMDb: popular movies get 100k-1M+ votes, threshold ~1000
+   * - Trakt: niche platform, 100-500 votes is solid, threshold ~300
+   */
+  private calculateVoteConfidence(
+    imdbVotes?: number | null,
+    traktVotes?: number | null,
+    _defaultK = 1000,
+  ): number {
+    // Source-specific thresholds (votes needed for ~63% confidence)
+    const IMDB_CONFIDENCE_K = 1000;
+    const TRAKT_CONFIDENCE_K = 300;
+
+    const sources: Array<{ votes: number; k: number }> = [];
+
+    if (imdbVotes && imdbVotes > 0) {
+      sources.push({ votes: imdbVotes, k: IMDB_CONFIDENCE_K });
+    }
+    if (traktVotes && traktVotes > 0) {
+      sources.push({ votes: traktVotes, k: TRAKT_CONFIDENCE_K });
+    }
+
+    // No vote data = neutral confidence (not penalized)
+    if (sources.length === 0) {
+      return 0.5;
+    }
+
+    // Average confidence across available sources
+    const confidences = sources.map((s) => 1 - Math.exp(-s.votes / s.k));
+    const avgConfidence = confidences.reduce((sum, c) => sum + c, 0) / confidences.length;
+
+    return this.clamp(avgConfidence, 0, 1);
   }
 
   /**
