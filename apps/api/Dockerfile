@@ -43,6 +43,10 @@ RUN npm ci --omit=dev --include-workspace-root --workspace=api
 # Copy compiled API bundle
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 
+# Copy migration script and migrations for runtime migrations
+COPY apps/api/scripts/migrate.mjs ./apps/api/scripts/migrate.mjs
+COPY apps/api/drizzle_v2 ./apps/api/drizzle_v2
+
 EXPOSE 3000
 
 CMD ["npm", "run", "start:prod", "--workspace=api"]
