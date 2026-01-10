@@ -1,8 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
 
+import {
+  type ICatalogPolicyEvaluator,
+  CATALOG_POLICY_EVALUATOR,
+  EvaluationContext,
+} from '../../../catalog-policy/public';
 import { StatsService } from '../../../stats/public';
 import {
   IngestionJob,
@@ -28,6 +33,10 @@ export class TrendingPipeline {
     private readonly syncService: SyncMediaService,
     private readonly bulkJobService: BulkJobService,
     private readonly statsService: StatsService,
+
+    @Optional()
+    @Inject(CATALOG_POLICY_EVALUATOR)
+    private readonly catalogEvaluator?: ICatalogPolicyEvaluator,
   ) {}
 
   /**
@@ -86,6 +95,27 @@ export class TrendingPipeline {
     });
 
     this.logger.log(`Trending stats sync complete: ${result.movies} movies, ${result.shows} shows`);
+
+    // Log eligibility stats for monitoring Policy Engine effectiveness
+    await this.logEligibilityStats();
+  }
+
+  /** Logs eligibility statistics for trending context. */
+  private async logEligibilityStats(): Promise<void> {
+    if (!this.catalogEvaluator) return;
+
+    try {
+      const stats = await this.catalogEvaluator.getEligibilityStats(EvaluationContext.TRENDING);
+      const eligibilityRate =
+        stats.total > 0 ? ((stats.eligible / stats.total) * 100).toFixed(1) : '0';
+
+      this.logger.log(
+        `Trending eligibility: total=${stats.total}, eligible=${stats.eligible}, ` +
+          `ineligible=${stats.ineligible}, rate=${eligibilityRate}%`,
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to get eligibility stats: ${(error as Error).message}`);
+    }
   }
 
   /**

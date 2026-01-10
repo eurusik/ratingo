@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
 import { TrendingPipeline } from './trending.pipeline';
 import { SyncMediaService } from '../services/sync-media.service';
 import { BulkJobService } from '../services/bulk-job.service';
 import { StatsService } from '../../../stats/application/services/stats.service';
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
+import { CATALOG_POLICY_EVALUATOR } from '../../../catalog-policy/public';
+import { IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 
 describe('TrendingPipeline', () => {
@@ -12,6 +12,7 @@ describe('TrendingPipeline', () => {
   let syncService: jest.Mocked<SyncMediaService>;
   let bulkJobService: jest.Mocked<BulkJobService>;
   let statsService: jest.Mocked<StatsService>;
+  let catalogEvaluator: jest.Mocked<{ getEligibilityStats: jest.Mock }>;
 
   beforeEach(async () => {
     const mockSyncService = {
@@ -31,12 +32,22 @@ describe('TrendingPipeline', () => {
       syncTrendingStats: jest.fn().mockResolvedValue(undefined),
     };
 
+    const mockCatalogEvaluator = {
+      getEligibilityStats: jest.fn().mockResolvedValue({
+        eligible: 80,
+        ineligible: 120,
+        review: 0,
+        total: 200,
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TrendingPipeline,
         { provide: SyncMediaService, useValue: mockSyncService },
         { provide: BulkJobService, useValue: mockBulkJobService },
         { provide: StatsService, useValue: mockStatsService },
+        { provide: CATALOG_POLICY_EVALUATOR, useValue: mockCatalogEvaluator },
       ],
     }).compile();
 
@@ -44,6 +55,7 @@ describe('TrendingPipeline', () => {
     syncService = module.get(SyncMediaService);
     bulkJobService = module.get(BulkJobService);
     statsService = module.get(StatsService);
+    catalogEvaluator = module.get(CATALOG_POLICY_EVALUATOR);
   });
 
   describe('dispatch', () => {
@@ -129,6 +141,12 @@ describe('TrendingPipeline', () => {
         since: expect.any(Date),
         limit: 200,
       });
+    });
+
+    it('should log eligibility stats after sync', async () => {
+      await pipeline.processStats();
+
+      expect(catalogEvaluator.getEligibilityStats).toHaveBeenCalledWith('trending');
     });
   });
 

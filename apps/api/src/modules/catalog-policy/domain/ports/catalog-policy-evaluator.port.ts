@@ -32,6 +32,14 @@ export interface EvaluationResult {
   changed: boolean;
 }
 
+/** Eligibility statistics by status. */
+export interface EligibilityStats {
+  eligible: number;
+  ineligible: number;
+  review: number;
+  total: number;
+}
+
 /**
  * Port for catalog policy evaluation.
  *
@@ -49,6 +57,15 @@ export interface ICatalogPolicyEvaluator {
    * @returns {Promise<EvaluationResult>} Evaluation result with status, reasons, and change detection
    */
   evaluateOne(input: EvaluateOneInput): Promise<EvaluationResult>;
+
+  /**
+   * Gets eligibility statistics for a specific context.
+   * Used for monitoring pipeline effectiveness.
+   *
+   * @param {EvaluationContextType} context - Evaluation context (e.g., 'trending', 'catalog')
+   * @returns {Promise<EligibilityStats>} Counts by eligibility status
+   */
+  getEligibilityStats(context: EvaluationContextType): Promise<EligibilityStats>;
 }
 
 /** DI token for ICatalogPolicyEvaluator */

@@ -61,7 +61,7 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobType: 'sync-trending-dispatcher',
     pattern: '0 */4 * * *', // Every 4 hours
     jobId: 'scheduled-trending',
-    data: { pages: 5, syncStats: true }, // Top 100 (5 pages × 20 items)
+    data: { pages: 10, syncStats: true }, // ~200 items before Policy Engine → ~100 eligible
   },
   {
     name: 'nowPlaying',

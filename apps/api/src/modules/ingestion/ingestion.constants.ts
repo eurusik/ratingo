@@ -72,8 +72,10 @@ export const TRENDING_STATS_DELAY_MS = 180000;
 
 /**
  * Default number of pages to sync for trending.
+ * 10 pages × 20 items = 200 items before Policy Engine filtering.
+ * Expected ~100 eligible items after filtering (~50% pass rate).
  */
-export const TRENDING_DEFAULT_PAGES = 5;
+export const TRENDING_DEFAULT_PAGES = 10;
 
 /**
  * Default limit for trending stats sync.

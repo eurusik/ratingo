@@ -34,6 +34,7 @@ import {
   type ICatalogPolicyEvaluator,
   type EvaluateOneInput,
   type EvaluationResult,
+  type EligibilityStats,
 } from '../../domain/ports/catalog-policy-evaluator.port';
 import {
   type MediaCatalogEvaluation,
@@ -477,5 +478,27 @@ export class CatalogEvaluationService implements ICatalogPolicyEvaluator {
       distributionChannel: offer.distributionChannel,
       isAdsTier: offer.variantIsAdsTier,
     }));
+  }
+
+  /**
+   * Gets eligibility statistics for a specific context.
+   * Used for monitoring trending pipeline effectiveness.
+   *
+   * @param context - Evaluation context (e.g., 'trending', 'catalog')
+   * @returns Eligibility stats with counts by status
+   */
+  async getEligibilityStats(context: EvaluationContextType): Promise<EligibilityStats> {
+    const policy = await this.policyService.getActiveOrThrow();
+    const counts = await this.evaluationRepository.countByStatusAndPolicyVersion(
+      policy.version,
+      context,
+    );
+
+    return {
+      eligible: counts.eligible,
+      ineligible: counts.ineligible,
+      review: counts.review,
+      total: counts.eligible + counts.ineligible + counts.review,
+    };
   }
 }
