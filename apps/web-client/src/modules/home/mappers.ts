@@ -38,7 +38,7 @@ export function toCardProps(item: ApiItem, type: 'show' | 'movie'): HomeCardProp
   };
 }
 
-/** Filter and map show cards to new episode items */
+/** Filter and map show cards to new episode items, sorted by airDate (newest first) */
 export function extractNewEpisodeItems(showCards: HomeCardProps[]): NewEpisodeShowItem[] {
   return showCards
     .filter((card) => card.hasRecentEpisode && card.showProgress)
@@ -50,5 +50,6 @@ export function extractNewEpisodeItems(showCards: HomeCardProps[]): NewEpisodeSh
       seasonNumber: card.showProgress?.season ?? null,
       episodeNumber: card.showProgress?.episode ?? null,
       airDate: card.showProgress?.lastAirDate?.toString() ?? new Date().toISOString(),
-    }));
+    }))
+    .sort((a, b) => new Date(b.airDate).getTime() - new Date(a.airDate).getTime());
 }
