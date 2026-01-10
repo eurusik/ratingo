@@ -302,6 +302,9 @@
     },
     "verdict": {
       "byData": "Ratingo's Verdict",
+      "context": {
+        "aggregatePublic": "Based on public ratings"
+      },
       "seasonComparison": {
         "stronger": "Season {season} maintains the previous bar",
         "weaker": "Season {season} started weaker than the previous",
