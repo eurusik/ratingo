@@ -55,9 +55,27 @@ export function SignalsSection({
     };
   };
 
+  const getPopularityBadgeProps = (score: number) => {
+    if (score >= 80)
+      return {
+        label: dict.details.popularityBadge.hot,
+        tooltip: dict.details.popularityBadgeTooltip.hot,
+      };
+    if (score >= 60)
+      return {
+        label: dict.details.popularityBadge.trending,
+        tooltip: dict.details.popularityBadgeTooltip.trending,
+      };
+    return {
+      label: dict.details.popularityBadge.rising,
+      tooltip: dict.details.popularityBadgeTooltip.rising,
+    };
+  };
+
   const hasQualityBadge = stats?.qualityScore != null && stats.qualityScore >= 65;
+  const hasPopularityBadge = stats?.popularityScore != null && stats.popularityScore >= 40;
   const hasStatusBadge = badgeKey || (rank != null && rank <= 10);
-  const hasBadges = hasQualityBadge || hasStatusBadge;
+  const hasBadges = hasQualityBadge || hasPopularityBadge || hasStatusBadge;
 
   const hasLiveWatchers = stats?.liveWatchers != null && stats.liveWatchers > 0;
   const hasTotalWatchers = stats?.totalWatchers != null && stats.totalWatchers > 0;
@@ -76,7 +94,7 @@ export function SignalsSection({
 
   return (
     <section className="space-y-5 md:space-y-8">
-      {/* Як сприймають — max 2 badges on mobile */}
+      {/* Як сприймають — max 2 badges on mobile, 3 on desktop */}
       {hasBadges && (
         <div className="space-y-2">
           <SectionLabel>{dict.details.signals.perception}</SectionLabel>
@@ -87,6 +105,15 @@ export function SignalsSection({
                 score={stats!.qualityScore!}
                 {...getQualityBadgeProps(stats!.qualityScore!)}
               />
+            )}
+            {/* PopularityBadge — hidden on mobile to reduce visual noise */}
+            {hasPopularityBadge && (
+              <span className="hidden md:inline-flex">
+                <PopularityBadge
+                  score={stats!.popularityScore!}
+                  {...getPopularityBadgeProps(stats!.popularityScore!)}
+                />
+              </span>
             )}
           </div>
         </div>
