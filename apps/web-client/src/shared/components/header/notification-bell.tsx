@@ -1,6 +1,6 @@
 /**
  * Notification bell component for header.
- * Shows recent subscriptions with quick access popover.
+ * Shows actual notification events (new seasons, releases, etc.).
  */
 
 'use client';
@@ -8,23 +8,34 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import Image from 'next/image';
-import { Bell } from 'lucide-react';
+import { Bell, CheckCheck } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
-import { useSubscriptions } from '@/modules/saved';
+import { useNotifications, useMarkAllNotificationsAsRead } from '@/core/query/user-actions';
 import { useAuth } from '@/core/auth';
 
 export function NotificationBell() {
   const { dict } = useTranslation();
   const { isAuthenticated } = useAuth();
-  const { data, isLoading } = useSubscriptions(isAuthenticated);
+  const { data, isLoading } = useNotifications(isAuthenticated);
+  const markAllAsRead = useMarkAllNotificationsAsRead();
+
+  const handleMarkAllAsRead = () => {
+    markAllAsRead.mutate(undefined, {
+      onSuccess: () => {
+        toast.success(dict.notifications.markedAllRead);
+      },
+    });
+  };
 
   if (!isAuthenticated) {
     return null;
   }
 
-  const subscriptions = data?.data ?? [];
-  const hasNotifications = subscriptions.length > 0;
+  const notifications = data?.data ?? [];
+  const unreadCount = data?.unreadCount ?? 0;
+  const hasNotifications = notifications.length > 0;
 
   return (
     <Popover>
@@ -35,31 +46,38 @@ export function NotificationBell() {
           className="relative h-9 w-9 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800"
         >
           <Bell className="h-5 w-5" />
-          {hasNotifications && (
+          {unreadCount > 0 && (
             <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-blue-500" />
           )}
           <span className="sr-only">{dict.notifications.title}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0 bg-zinc-900 border-zinc-800">
-        <div className="p-3 border-b border-zinc-800">
+        <div className="p-3 border-b border-zinc-800 flex items-center justify-between">
           <h3 className="font-medium text-zinc-100">{dict.notifications.title}</h3>
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-zinc-400 hover:text-white"
+              onClick={handleMarkAllAsRead}
+              disabled={markAllAsRead.isPending}
+            >
+              <CheckCheck className="h-3.5 w-3.5 mr-1" />
+              {dict.notifications.markAllRead}
+            </Button>
+          )}
         </div>
 
         <div className="max-h-80 overflow-y-auto">
           {isLoading ? (
             <div className="p-4 text-center text-zinc-500 text-sm">...</div>
-          ) : subscriptions.length === 0 ? (
+          ) : !hasNotifications ? (
             <div className="p-4 text-center text-zinc-500 text-sm">{dict.notifications.empty}</div>
           ) : (
             <div className="divide-y divide-zinc-800">
-              {subscriptions.slice(0, 5).map((item) => {
-                const media = item.mediaSummary as unknown as {
-                  type: 'movie' | 'show';
-                  title: string;
-                  slug: string;
-                  poster: Record<string, string> | null;
-                };
+              {notifications.slice(0, 5).map((item) => {
+                const media = item.mediaSummary;
                 const href =
                   media.type === 'movie' ? `/movies/${media.slug}` : `/shows/${media.slug}`;
 
@@ -75,7 +93,9 @@ export function NotificationBell() {
                   <Link
                     key={item.id}
                     href={href as Route}
-                    className="flex items-start gap-3 p-3 hover:bg-zinc-800/50 transition-colors"
+                    className={`flex items-start gap-3 p-3 hover:bg-zinc-800/50 transition-colors ${
+                      !item.isRead ? 'bg-zinc-800/30' : ''
+                    }`}
                   >
                     <div className="relative w-10 h-14 rounded overflow-hidden bg-zinc-800 shrink-0">
                       {media.poster?.small ? (

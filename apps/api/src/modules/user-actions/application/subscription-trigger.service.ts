@@ -7,6 +7,10 @@ import { DATABASE_CONNECTION } from '../../../database/database.module';
 import * as schema from '../../../database/schema';
 import type { ShowSyncDiff } from '../../ingestion/public';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
+import {
+  type IUserNotificationRepository,
+  USER_NOTIFICATION_REPOSITORY,
+} from '../domain/repositories/user-notification.repository.interface';
 
 /**
  * Notification event to be emitted/processed.
@@ -37,11 +41,14 @@ export class SubscriptionTriggerService {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
+    @Inject(USER_NOTIFICATION_REPOSITORY)
+    private readonly notificationRepo: IUserNotificationRepository,
   ) {}
 
   /**
    * Handles show sync diff and triggers notifications for affected subscriptions.
    * Implements dedup check using lastNotifiedEpisodeKey and lastNotifiedSeasonNumber.
+   * Persists notifications to database for user retrieval.
    *
    * @param diff - Show sync diff with detected changes
    * @returns Array of notification events to be processed
@@ -70,11 +77,47 @@ export class SubscriptionTriggerService {
       await this.handleStatusChanged(diff);
     }
 
+    // Persist notifications to database
+    if (events.length > 0) {
+      await this.persistNotifications(events);
+    }
+
     this.logger.log(
       `Processed diff for show ${diff.tmdbId}: ${events.length} notifications generated`,
     );
 
     return events;
+  }
+
+  /**
+   * Persists notification events to database for user retrieval.
+   */
+  private async persistNotifications(events: SubscriptionNotificationEvent[]): Promise<void> {
+    try {
+      const notificationData = events.map((event) => ({
+        userId: event.userId,
+        mediaItemId: event.mediaItemId,
+        subscriptionId: event.subscriptionId,
+        trigger: event.trigger as
+          | 'release'
+          | 'new_season'
+          | 'new_episode'
+          | 'on_streaming'
+          | 'status_changed',
+        payload: {
+          seasonNumber: event.payload.seasonNumber,
+          episodeKey: event.payload.episodeKey,
+          airDate: event.payload.airDate,
+        },
+      }));
+
+      const created = await this.notificationRepo.createMany(notificationData);
+      this.logger.log(`Persisted ${created} notifications to database`);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to persist notifications: ${msg}`);
+      // Don't throw - notifications are best-effort, subscription markers already updated
+    }
   }
 
   /**

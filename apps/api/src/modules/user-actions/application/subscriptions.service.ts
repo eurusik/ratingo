@@ -1,9 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { and, desc, eq, lte } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
+import { DATABASE_CONNECTION } from '../../../database/database.module';
+import * as schema from '../../../database/schema';
 import { type UserSubscription, type SubscriptionTrigger } from '../domain/entities';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
+import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 import {
   type IUserMediaActionRepository,
   USER_MEDIA_ACTION_REPOSITORY,
@@ -26,6 +32,22 @@ export interface SubscribePayload {
 }
 
 /**
+ * Current show state for initializing dedup markers.
+ */
+interface ShowCurrentState {
+  lastEpisodeKey: string | null;
+}
+
+/**
+ * Parses season number from episode key (e.g., 'S2E5' -> 2).
+ */
+function parseSeasonFromEpisodeKey(key: string | null): number | null {
+  if (!key) return null;
+  const match = key.match(/^S(\d+)E\d+$/i);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+/**
  * Application service for subscription use cases.
  */
 @Injectable()
@@ -37,10 +59,13 @@ export class SubscriptionsService {
     private readonly subscriptionRepo: IUserSubscriptionRepository,
     @Inject(USER_MEDIA_ACTION_REPOSITORY)
     private readonly actionRepo: IUserMediaActionRepository,
+    @Inject(DATABASE_CONNECTION)
+    private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
   /**
    * Subscribes to notifications and logs the action.
+   * Initializes dedup markers to current state to prevent immediate notifications.
    *
    * @param {SubscribePayload} payload - Subscribe payload
    * @returns {Promise<UserSubscription>} Subscription
@@ -48,7 +73,37 @@ export class SubscriptionsService {
   async subscribe(payload: SubscribePayload): Promise<UserSubscription> {
     const { userId, mediaItemId, trigger, context, reasonKey } = payload;
 
-    const subscription = await this.subscriptionRepo.upsert({ userId, mediaItemId, trigger });
+    // Get initial dedup markers based on current show state
+    const initialMarkers: {
+      lastNotifiedSeasonNumber?: number | null;
+      lastNotifiedEpisodeKey?: string | null;
+    } = {};
+
+    if (
+      trigger === SUBSCRIPTION_TRIGGER.NEW_SEASON ||
+      trigger === SUBSCRIPTION_TRIGGER.NEW_EPISODE
+    ) {
+      const showState = await this.getShowCurrentState(mediaItemId);
+      if (showState) {
+        // Use aired season (from lastEpisodeKey) not totalSeasons
+        // This prevents marking "announced but not aired" seasons as seen
+        const airedSeason = parseSeasonFromEpisodeKey(showState.lastEpisodeKey) ?? 0;
+
+        if (trigger === SUBSCRIPTION_TRIGGER.NEW_SEASON) {
+          initialMarkers.lastNotifiedSeasonNumber = airedSeason;
+        }
+        if (trigger === SUBSCRIPTION_TRIGGER.NEW_EPISODE) {
+          initialMarkers.lastNotifiedEpisodeKey = showState.lastEpisodeKey;
+        }
+      }
+    }
+
+    const subscription = await this.subscriptionRepo.upsert({
+      userId,
+      mediaItemId,
+      trigger,
+      ...initialMarkers,
+    });
 
     await this.actionRepo.create({
       userId,
@@ -61,6 +116,47 @@ export class SubscriptionsService {
 
     this.logger.log(`User ${userId} subscribed to ${trigger} for ${mediaItemId}`);
     return subscription;
+  }
+
+  /**
+   * Gets current show state for initializing dedup markers.
+   * Returns the last aired episode key (e.g., 'S2E5').
+   * Only considers episodes with airDate <= now to exclude announced/future episodes.
+   */
+  private async getShowCurrentState(mediaItemId: string): Promise<ShowCurrentState | null> {
+    try {
+      // Get last aired episode (highest season + episode number with airDate <= now)
+      const result = await this.db
+        .select({
+          seasonNumber: schema.seasons.number,
+          episodeNumber: schema.episodes.number,
+        })
+        .from(schema.episodes)
+        .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
+        .innerJoin(schema.shows, eq(schema.shows.id, schema.seasons.showId))
+        .where(
+          and(
+            eq(schema.shows.mediaItemId, mediaItemId),
+            // Only aired episodes (airDate exists and is in the past)
+            lte(schema.episodes.airDate, new Date()),
+          ),
+        )
+        .orderBy(desc(schema.seasons.number), desc(schema.episodes.number))
+        .limit(1);
+
+      if (result.length === 0) {
+        return { lastEpisodeKey: null };
+      }
+
+      const ep = result[0];
+      const lastEpisodeKey = `S${ep.seasonNumber}E${ep.episodeNumber}`;
+
+      return { lastEpisodeKey };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to get show state for ${mediaItemId}: ${msg}`);
+      return null;
+    }
   }
 
   /**

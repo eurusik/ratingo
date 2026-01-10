@@ -103,9 +103,25 @@ export function DataVerdict({
     if (isSubscriptionMutating || !subscriptionTrigger) return;
 
     if (isSubscribed) {
-      unsubscribe({ mediaItemId, trigger: subscriptionTrigger, context: CTA_CONTEXT });
+      unsubscribe(
+        { mediaItemId, trigger: subscriptionTrigger, context: CTA_CONTEXT },
+        {
+          onSuccess: () => toast.success(props.dict.saved.toast.unsubscribed),
+          onError: () => toast.error(props.dict.saved.toast.error),
+        },
+      );
     } else {
-      subscribe({ mediaItemId, trigger: subscriptionTrigger, context: CTA_CONTEXT });
+      const toastMessage =
+        props.dict.saved.toast.subscribed[
+          subscriptionTrigger as keyof typeof props.dict.saved.toast.subscribed
+        ] ?? props.dict.saved.toast.subscribed.new_season;
+      subscribe(
+        { mediaItemId, trigger: subscriptionTrigger, context: CTA_CONTEXT },
+        {
+          onSuccess: () => toast.success(toastMessage),
+          onError: () => toast.error(props.dict.saved.toast.error),
+        },
+      );
     }
   };
 

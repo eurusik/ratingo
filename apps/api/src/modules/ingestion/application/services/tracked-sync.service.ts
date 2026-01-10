@@ -150,19 +150,19 @@ export class TrackedSyncService {
       changes: {},
     };
 
-    // Check for new season
-    if (
-      after.totalSeasons !== null &&
-      before.totalSeasons !== null &&
-      after.totalSeasons > before.totalSeasons
-    ) {
+    // Parse season numbers from lastEpisodeKey (aired seasons, not totalSeasons)
+    const beforeAiredSeason = this.parseSeasonFromEpisodeKey(before.lastEpisodeKey);
+    const afterAiredSeason = this.parseSeasonFromEpisodeKey(after.lastEpisodeKey);
+
+    // Check for new season (based on aired episodes, not totalSeasons)
+    if (afterAiredSeason !== null && afterAiredSeason > (beforeAiredSeason ?? 0)) {
       diff.hasChanges = true;
       diff.changes.newSeason = {
-        seasonNumber: after.totalSeasons,
+        seasonNumber: afterAiredSeason,
         airDate: formatDateToIso(after.nextAirDate) ?? new Date().toISOString().split('T')[0],
-        key: formatSeasonKey(after.totalSeasons),
+        key: formatSeasonKey(afterAiredSeason),
       };
-      this.logger.log(`Detected new season ${after.totalSeasons} for show ${tmdbId}`);
+      this.logger.log(`Detected new season ${afterAiredSeason} for show ${tmdbId}`);
     }
 
     // Check for new episode
@@ -209,5 +209,14 @@ export class TrackedSyncService {
     }
 
     return diff;
+  }
+
+  /**
+   * Parses season number from episode key (e.g., 'S2E5' -> 2).
+   */
+  private parseSeasonFromEpisodeKey(key: string | null): number | null {
+    if (!key) return null;
+    const match = key.match(/^S(\d+)E\d+$/i);
+    return match ? parseInt(match[1], 10) : null;
   }
 }

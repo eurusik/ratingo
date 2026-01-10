@@ -89,7 +89,7 @@ export function SavedItemCard({
               <Bell className="w-3 h-3" />
               <span>
                 {activeSubscriptionTriggers
-                  .map((t) => dict.saved.trigger[t as keyof typeof dict.saved.trigger])
+                  .map((t) => dict.saved.trigger.label[t as keyof typeof dict.saved.trigger.label])
                   .join(', ')}
               </span>
             </p>

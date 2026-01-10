@@ -113,6 +113,13 @@ export const queryKeys = {
       list: (limit?: number, offset?: number) =>
         [...queryKeys.userActions.subscriptions.all, 'list', limit ?? null, offset ?? null] as const,
     },
+    notifications: {
+      all: ['user-actions', 'notifications'] as const,
+      list: (limit?: number, offset?: number) =>
+        [...queryKeys.userActions.notifications.all, 'list', limit ?? null, offset ?? null] as const,
+      unreadCount: () =>
+        [...queryKeys.userActions.notifications.all, 'unread-count'] as const,
+    },
   },
 
   /** Admin queries. */

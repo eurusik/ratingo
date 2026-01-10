@@ -9,9 +9,9 @@ import type { Route } from 'next';
 import Image from 'next/image';
 import { Bell, BellOff } from 'lucide-react';
 import { cn } from '@/shared/utils';
-import { Button, Badge } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
-import type { SubscriptionTrigger, MediaType } from '@/shared/types';
+import type { SubscriptionTrigger } from '@/shared/types';
 
 interface SubscriptionCardProps {
   id: string;
@@ -37,12 +37,12 @@ export function SubscriptionCard({
   const { dict } = useTranslation();
   const href = type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`;
 
-  const triggerLabels: Record<SubscriptionTrigger, string> = {
-    release: dict.saved.trigger.release,
-    new_season: dict.saved.trigger.new_season,
-    new_episode: dict.saved.trigger.new_episode,
-    on_streaming: dict.saved.trigger.on_streaming,
-    status_changed: dict.saved.trigger.status_changed,
+  const triggerMessages: Record<SubscriptionTrigger, string> = {
+    release: dict.saved.trigger.message.release,
+    new_season: dict.saved.trigger.message.new_season,
+    new_episode: dict.saved.trigger.message.new_episode,
+    on_streaming: dict.saved.trigger.message.on_streaming,
+    status_changed: dict.saved.trigger.message.status_changed,
   };
 
   return (
@@ -68,12 +68,10 @@ export function SubscriptionCard({
               {title}
             </h3>
           </Link>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="default" className="text-xs">
-              <Bell className="w-3 h-3 mr-1" />
-              {triggerLabels[trigger]}
-            </Badge>
-          </div>
+          <p className="flex items-center gap-1.5 mt-1.5 text-sm text-zinc-400">
+            <Bell className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            <span className="truncate">{triggerMessages[trigger]}</span>
+          </p>
         </div>
 
         {/* Actions */}

@@ -3,15 +3,19 @@ import { Module, forwardRef } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
 import { AuthModule } from '../auth/auth.module';
 
+import { NotificationsService } from './application/notifications.service';
 import { SavedItemsService } from './application/saved-items.service';
 import { SubscriptionTriggerService } from './application/subscription-trigger.service';
 import { SubscriptionsService } from './application/subscriptions.service';
 import { USER_MEDIA_ACTION_REPOSITORY } from './domain/repositories/user-media-action.repository.interface';
+import { USER_NOTIFICATION_REPOSITORY } from './domain/repositories/user-notification.repository.interface';
 import { USER_SAVED_ITEM_REPOSITORY } from './domain/repositories/user-saved-item.repository.interface';
 import { USER_SUBSCRIPTION_REPOSITORY } from './domain/repositories/user-subscription.repository.interface';
 import { DrizzleUserMediaActionRepository } from './infrastructure/repositories/drizzle-user-media-action.repository';
+import { DrizzleUserNotificationRepository } from './infrastructure/repositories/drizzle-user-notification.repository';
 import { DrizzleUserSavedItemRepository } from './infrastructure/repositories/drizzle-user-saved-item.repository';
 import { DrizzleUserSubscriptionRepository } from './infrastructure/repositories/drizzle-user-subscription.repository';
+import { NotificationsController } from './presentation/controllers/notifications.controller';
 import { SavedItemsController } from './presentation/controllers/saved-items.controller';
 import { SubscriptionsController } from './presentation/controllers/subscriptions.controller';
 
@@ -21,17 +25,23 @@ import { SubscriptionsController } from './presentation/controllers/subscription
  * Handles:
  * - Saved items (for_later, considering)
  * - Subscriptions (release, new_season, on_streaming notifications)
+ * - Notifications (actual events triggered by subscriptions)
  * - Action event logging for analytics
  */
 @Module({
   imports: [DatabaseModule, forwardRef(() => AuthModule)],
   providers: [
+    NotificationsService,
     SavedItemsService,
     SubscriptionsService,
     SubscriptionTriggerService,
     {
       provide: USER_MEDIA_ACTION_REPOSITORY,
       useClass: DrizzleUserMediaActionRepository,
+    },
+    {
+      provide: USER_NOTIFICATION_REPOSITORY,
+      useClass: DrizzleUserNotificationRepository,
     },
     {
       provide: USER_SAVED_ITEM_REPOSITORY,
@@ -42,8 +52,9 @@ import { SubscriptionsController } from './presentation/controllers/subscription
       useClass: DrizzleUserSubscriptionRepository,
     },
   ],
-  controllers: [SavedItemsController, SubscriptionsController],
+  controllers: [NotificationsController, SavedItemsController, SubscriptionsController],
   exports: [
+    NotificationsService,
     SavedItemsService,
     SubscriptionsService,
     SubscriptionTriggerService,

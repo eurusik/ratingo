@@ -442,14 +442,32 @@
     "toast": {
       "saved": "Saved",
       "unsaved": "Removed from saved",
-      "error": "Failed to save"
+      "error": "Failed to save",
+      "subscribed": {
+        "release": "Done! We'll notify you about the release",
+        "new_season": "Done! We'll notify you about the new season",
+        "new_episode": "Done! We'll notify you about new episodes",
+        "on_streaming": "Done! We'll notify you when it's on streaming",
+        "status_changed": "Done! We'll notify you about status changes"
+      },
+      "unsubscribed": "Notifications disabled"
     },
     "trigger": {
-      "release": "Release",
-      "new_season": "New season",
-      "new_episode": "New episode",
-      "on_streaming": "On streaming",
-      "status_changed": "Status changed"
+      "label": {
+        "release": "Release",
+        "new_season": "New season",
+        "new_episode": "New episode",
+        "on_streaming": "On streaming",
+        "status_changed": "Status changed"
+      },
+      "message": {
+        "release": "We'll notify you when it's released",
+        "new_season": "We'll notify you when a new season is out",
+        "new_episode": "We'll notify you when a new episode is out",
+        "on_streaming": "We'll notify you when it's on streaming",
+        "status_changed": "We'll notify you when the status changes"
+      },
+      "disabled": "Notifications disabled"
     },
     "unavailable": {
       "no_date": "Next season date not announced yet",
@@ -483,6 +501,8 @@
     "title": "Notifications",
     "empty": "No new notifications",
     "viewAll": "View all",
+    "markAllRead": "Mark all read",
+    "markedAllRead": "All notifications marked as read",
     "events": {
       "newSeason": "New season released",
       "newEpisode": "New episode released",

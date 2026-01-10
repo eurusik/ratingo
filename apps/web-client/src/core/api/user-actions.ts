@@ -3,9 +3,6 @@
  *
  * Provides type-safe methods for saved items and subscriptions endpoints.
  *
- * @example
- * import { userActionsApi } from '@/core/api/user-actions';
- * const result = await userActionsApi.saveItem({ mediaItemId: '...', list: 'for_later' });
  */
 
 import type { components } from '@ratingo/api-contract';
@@ -30,6 +27,35 @@ export type SubscribeActionResultDto = components['schemas']['SubscribeActionRes
 export type UnsubscribeActionResultDto = components['schemas']['UnsubscribeActionResultDto'];
 export type SubscriptionWithMediaResponseDto =
   components['schemas']['SubscriptionWithMediaResponseDto'];
+
+// Notification types (not in api-contract yet, define locally)
+export interface NotificationPayload {
+  seasonNumber?: number;
+  episodeKey?: string;
+  airDate?: string;
+}
+
+export interface NotificationMediaSummary {
+  id: string;
+  type: 'movie' | 'show';
+  title: string;
+  slug: string;
+  poster: { small: string; medium: string; large: string } | null;
+}
+
+export interface NotificationItem {
+  id: string;
+  trigger: SubscriptionTrigger;
+  payload: NotificationPayload | null;
+  isRead: boolean;
+  createdAt: string;
+  mediaSummary: NotificationMediaSummary;
+}
+
+export interface NotificationListResponse {
+  data: NotificationItem[];
+  unreadCount: number;
+}
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -210,5 +236,49 @@ export const userActionsApi = {
     return apiGet<PaginatedResponse<SubscriptionWithMediaResponseDto>>('me/subscriptions', {
       searchParams: params as Record<string, string | number>,
     });
+  },
+
+  // --------------------------------------------------------------------------
+  // Notifications
+  // --------------------------------------------------------------------------
+
+  /**
+   * Get notifications with media info.
+   *
+   * @param params - Pagination parameters
+   * @returns Notifications with unread count
+   */
+  async listNotifications(params?: ListParams): Promise<NotificationListResponse> {
+    return apiGet<NotificationListResponse>('me/notifications', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Get unread notification count.
+   *
+   * @returns Unread count
+   */
+  async getUnreadCount(): Promise<{ unreadCount: number }> {
+    return apiGet<{ unreadCount: number }>('me/notifications/unread-count');
+  },
+
+  /**
+   * Mark a notification as read.
+   *
+   * @param notificationId - Notification ID
+   * @returns Success status
+   */
+  async markNotificationAsRead(notificationId: string): Promise<{ success: boolean }> {
+    return apiPost<{ success: boolean }>(`me/notifications/${notificationId}/read`, {});
+  },
+
+  /**
+   * Mark all notifications as read.
+   *
+   * @returns Success status with count
+   */
+  async markAllNotificationsAsRead(): Promise<{ success: boolean; count?: number }> {
+    return apiPost<{ success: boolean; count?: number }>('me/notifications/read-all', {});
   },
 } as const;

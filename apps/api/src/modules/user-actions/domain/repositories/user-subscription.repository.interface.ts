@@ -18,6 +18,10 @@ export interface UpsertSubscriptionData {
   mediaItemId: string;
   trigger: SubscriptionTrigger;
   channel?: string;
+  /** Initial dedup marker for new_season trigger. */
+  lastNotifiedSeasonNumber?: number | null;
+  /** Initial dedup marker for new_episode trigger. */
+  lastNotifiedEpisodeKey?: string | null;
 }
 
 /**

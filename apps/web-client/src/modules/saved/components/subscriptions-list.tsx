@@ -4,6 +4,7 @@
 
 'use client';
 
+import { toast } from 'sonner';
 import { useTranslation } from '@/shared/i18n';
 import { Skeleton } from '@/shared/ui';
 import type { SubscriptionTrigger } from '@/shared/types';
@@ -17,7 +18,13 @@ export function SubscriptionsList() {
   const unsubscribeMutation = useUnsubscribe();
 
   const handleUnsubscribe = (mediaItemId: string, trigger: SubscriptionTrigger) => {
-    unsubscribeMutation.mutate({ mediaItemId, trigger, context: 'saved-page' });
+    unsubscribeMutation.mutate(
+      { mediaItemId, trigger, context: 'saved-page' },
+      {
+        onSuccess: () => toast.success(dict.saved.toast.unsubscribed),
+        onError: () => toast.error(dict.saved.toast.error),
+      },
+    );
   };
 
   if (isLoading) {

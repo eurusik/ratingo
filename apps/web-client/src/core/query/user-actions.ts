@@ -367,3 +367,90 @@ export function useUnsubscribe() {
     },
   });
 }
+
+// ============================================================================
+// Notifications Hooks
+// ============================================================================
+
+/**
+ * Fetches notifications for the current user.
+ *
+ * @param enabled - Whether to enable the query (e.g., only when authenticated)
+ * @returns Query result with notifications and unread count
+ */
+export function useNotifications(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.userActions.notifications.list(),
+    queryFn: () => userActionsApi.listNotifications({ limit: 20 }),
+    enabled,
+    staleTime: 1000 * 60, // 1 minute
+    retry: (failureCount, error) => {
+      if (isUnauthorized(error)) return false;
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Fetches unread notification count.
+ *
+ * @param enabled - Whether to enable the query
+ * @returns Query result with unread count
+ */
+export function useUnreadNotificationCount(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.userActions.notifications.unreadCount(),
+    queryFn: () => userActionsApi.getUnreadCount(),
+    enabled,
+    staleTime: 1000 * 30, // 30 seconds
+    retry: (failureCount, error) => {
+      if (isUnauthorized(error)) return false;
+      return failureCount < 2;
+    },
+  });
+}
+
+/**
+ * Marks a notification as read.
+ *
+ * @returns Mutation with markAsRead function
+ */
+export function useMarkNotificationAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (notificationId: string) =>
+      userActionsApi.markNotificationAsRead(notificationId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.notifications.list(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.notifications.unreadCount(),
+      });
+    },
+  });
+}
+
+/**
+ * Marks all notifications as read.
+ *
+ * @returns Mutation with markAllAsRead function
+ */
+export function useMarkAllNotificationsAsRead() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => userActionsApi.markAllNotificationsAsRead(),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.notifications.list(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.notifications.unreadCount(),
+      });
+    },
+  });
+}

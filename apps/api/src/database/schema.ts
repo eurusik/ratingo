@@ -712,6 +712,72 @@ export const userSubscriptionsRelations = relations(userSubscriptions, ({ one })
   }),
 }));
 
+/**
+ * USER NOTIFICATIONS
+ * Stores actual notification events triggered by subscriptions.
+ * Separate from subscriptions - these are "things that happened".
+ */
+export const userNotifications = pgTable(
+  'user_notifications',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    mediaItemId: uuid('media_item_id')
+      .references(() => mediaItems.id, { onDelete: 'cascade' })
+      .notNull(),
+    subscriptionId: uuid('subscription_id')
+      .references(() => userSubscriptions.id, { onDelete: 'cascade' })
+      .notNull(),
+
+    // What triggered this notification
+    trigger: subscriptionTriggerEnum('trigger').notNull(),
+
+    // Event-specific payload (seasonNumber, episodeKey, etc.)
+    payload: jsonb('payload').$type<{
+      seasonNumber?: number;
+      episodeKey?: string;
+      airDate?: string;
+      statusFrom?: string | null;
+      statusTo?: string;
+    }>(),
+
+    // Read status
+    isRead: boolean('is_read').default(false).notNull(),
+    readAt: timestamp('read_at'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    userIdx: index('user_notifications_user_idx').on(t.userId),
+    userUnreadIdx: index('user_notifications_user_unread_idx').on(t.userId, t.isRead),
+    createdAtIdx: index('user_notifications_created_at_idx').on(t.createdAt),
+    // Prevent duplicate notifications for same event
+    uniqUserMediaTriggerPayload: uniqueIndex('user_notifications_dedup_idx').on(
+      t.userId,
+      t.mediaItemId,
+      t.trigger,
+      t.payload,
+    ),
+  }),
+);
+
+export const userNotificationsRelations = relations(userNotifications, ({ one }) => ({
+  user: one(users, {
+    fields: [userNotifications.userId],
+    references: [users.id],
+  }),
+  media: one(mediaItems, {
+    fields: [userNotifications.mediaItemId],
+    references: [mediaItems.id],
+  }),
+  subscription: one(userSubscriptions, {
+    fields: [userNotifications.subscriptionId],
+    references: [userSubscriptions.id],
+  }),
+}));
+
 // --- CATALOG POLICY ENGINE ---
 
 /**

@@ -35,6 +35,8 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
 
   /**
    * Upserts a subscription (activates if exists).
+   * For new subscriptions, initializes dedup markers to prevent immediate notifications.
+   * For reactivated subscriptions (was inactive), updates markers to current state.
    *
    * @param {UpsertSubscriptionData} data - Upsert payload
    * @returns {Promise<UserSubscription>} Persisted subscription
@@ -49,6 +51,9 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
           trigger: data.trigger,
           channel: data.channel ?? 'push',
           isActive: true,
+          // Initialize dedup markers to prevent immediate notifications
+          lastNotifiedSeasonNumber: data.lastNotifiedSeasonNumber ?? null,
+          lastNotifiedEpisodeKey: data.lastNotifiedEpisodeKey ?? null,
         })
         .onConflictDoUpdate({
           target: [
@@ -60,6 +65,14 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
           set: {
             isActive: true,
             updatedAt: new Date(),
+            // Update markers only if reactivating (was inactive)
+            // This is handled by conditional update: only set if current isActive = false
+            ...(data.lastNotifiedSeasonNumber !== undefined && {
+              lastNotifiedSeasonNumber: sql`CASE WHEN ${schema.userSubscriptions.isActive} = false THEN ${data.lastNotifiedSeasonNumber} ELSE ${schema.userSubscriptions.lastNotifiedSeasonNumber} END`,
+            }),
+            ...(data.lastNotifiedEpisodeKey !== undefined && {
+              lastNotifiedEpisodeKey: sql`CASE WHEN ${schema.userSubscriptions.isActive} = false THEN ${data.lastNotifiedEpisodeKey} ELSE ${schema.userSubscriptions.lastNotifiedEpisodeKey} END`,
+            }),
           },
         })
         .returning();

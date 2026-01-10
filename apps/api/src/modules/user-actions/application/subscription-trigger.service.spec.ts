@@ -3,10 +3,12 @@ import { SubscriptionTriggerService } from './subscription-trigger.service';
 import { DATABASE_CONNECTION } from '../../../database/database.module';
 import { ShowSyncDiff } from '../../ingestion/domain/interfaces/show-sync-diff.interface';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
+import { USER_NOTIFICATION_REPOSITORY } from '../domain/repositories/user-notification.repository.interface';
 
 describe('SubscriptionTriggerService', () => {
   let service: SubscriptionTriggerService;
   let db: any;
+  let notificationRepo: any;
 
   // Mock data
   const mockDiff: ShowSyncDiff = {
@@ -54,12 +56,20 @@ describe('SubscriptionTriggerService', () => {
       }),
     };
 
+    notificationRepo = {
+      createMany: jest.fn().mockResolvedValue(options.updateReturn?.length ?? 0),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SubscriptionTriggerService, { provide: DATABASE_CONNECTION, useValue: db }],
+      providers: [
+        SubscriptionTriggerService,
+        { provide: DATABASE_CONNECTION, useValue: db },
+        { provide: USER_NOTIFICATION_REPOSITORY, useValue: notificationRepo },
+      ],
     }).compile();
 
     service = module.get<SubscriptionTriggerService>(SubscriptionTriggerService);
-    return { service, db, updateChain };
+    return { service, db, updateChain, notificationRepo };
   };
 
   describe('handleShowDiff', () => {
@@ -171,6 +181,111 @@ describe('SubscriptionTriggerService', () => {
       const events = await service.handleShowDiff(seasonDiff);
 
       expect(events).toHaveLength(0);
+    });
+  });
+
+  describe('handleShowDiff - status changed', () => {
+    const statusChangedDiff: ShowSyncDiff = {
+      tmdbId: 12345,
+      mediaItemId: 'media-123',
+      hasChanges: true,
+      changes: {
+        statusChanged: {
+          from: 'Returning Series',
+          to: 'Ended',
+        },
+      },
+    };
+
+    it('should deactivate subscriptions when show ends', async () => {
+      const { updateChain } = await setup({
+        updateReturn: [{ id: 'sub-1' }, { id: 'sub-2' }],
+      });
+
+      const events = await service.handleShowDiff(statusChangedDiff);
+
+      // Status change doesn't generate notification events
+      expect(events).toHaveLength(0);
+      // But it should deactivate subscriptions
+      expect(db.update).toHaveBeenCalled();
+      expect(updateChain.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isActive: false,
+        }),
+      );
+    });
+
+    it('should deactivate subscriptions when show is canceled', async () => {
+      const canceledDiff: ShowSyncDiff = {
+        ...statusChangedDiff,
+        changes: {
+          statusChanged: {
+            from: 'Returning Series',
+            to: 'Canceled',
+          },
+        },
+      };
+
+      await setup({ updateReturn: [{ id: 'sub-1' }] });
+
+      const events = await service.handleShowDiff(canceledDiff);
+
+      expect(events).toHaveLength(0);
+      expect(db.update).toHaveBeenCalled();
+    });
+
+    it('should not deactivate for non-terminal status changes', async () => {
+      const nonTerminalDiff: ShowSyncDiff = {
+        ...statusChangedDiff,
+        changes: {
+          statusChanged: {
+            from: 'In Production',
+            to: 'Returning Series',
+          },
+        },
+      };
+
+      await setup();
+
+      const events = await service.handleShowDiff(nonTerminalDiff);
+
+      expect(events).toHaveLength(0);
+      // update should not be called for non-terminal status
+      expect(db.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('persistNotifications', () => {
+    it('should persist notifications to database', async () => {
+      const { notificationRepo } = await setup({
+        updateReturn: [mockSubscription],
+      });
+
+      await service.handleShowDiff(mockDiff);
+
+      expect(notificationRepo.createMany).toHaveBeenCalledWith([
+        expect.objectContaining({
+          userId: 'user-1',
+          mediaItemId: 'media-123',
+          subscriptionId: 'sub-1',
+          trigger: 'new_episode',
+          payload: expect.objectContaining({
+            episodeKey: 'S2E5',
+          }),
+        }),
+      ]);
+    });
+
+    it('should not fail if notification persistence fails', async () => {
+      const { notificationRepo } = await setup({
+        updateReturn: [mockSubscription],
+      });
+      notificationRepo.createMany.mockRejectedValueOnce(new Error('DB error'));
+
+      // Should not throw
+      const events = await service.handleShowDiff(mockDiff);
+
+      expect(events).toHaveLength(1);
     });
   });
 });

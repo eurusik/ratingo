@@ -180,7 +180,9 @@ export function VerdictCtaButton({
 
   // Subscription label based on trigger (passed from parent)
   // If subscriptionTrigger is null, subscription is not available for this item
-  const subscriptionLabel = subscriptionTrigger ? dict.saved.trigger[subscriptionTrigger] : null;
+  const subscriptionLabel = subscriptionTrigger
+    ? dict.saved.trigger.label[subscriptionTrigger]
+    : null;
 
   return (
     <>

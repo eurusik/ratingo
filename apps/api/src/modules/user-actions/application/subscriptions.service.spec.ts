@@ -4,11 +4,13 @@ import { USER_SUBSCRIPTION_REPOSITORY } from '../domain/repositories/user-subscr
 import { USER_MEDIA_ACTION_REPOSITORY } from '../domain/repositories/user-media-action.repository.interface';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
+import { DATABASE_CONNECTION } from '../../../database/database.module';
 
 describe('SubscriptionsService', () => {
   let service: SubscriptionsService;
   let subscriptionRepo: any;
   let actionRepo: any;
+  let mockDb: any;
 
   const mockSubscription = {
     id: 'sub-id-1',
@@ -46,11 +48,22 @@ describe('SubscriptionsService', () => {
       create: jest.fn().mockResolvedValue({ id: 'action-id-1' }),
     };
 
+    // Mock DB for getShowCurrentState query
+    mockDb = {
+      select: jest.fn().mockReturnThis(),
+      from: jest.fn().mockReturnThis(),
+      innerJoin: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue([]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SubscriptionsService,
         { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: subscriptionRepo },
         { provide: USER_MEDIA_ACTION_REPOSITORY, useValue: actionRepo },
+        { provide: DATABASE_CONNECTION, useValue: mockDb },
       ],
     }).compile();
 
@@ -80,6 +93,76 @@ describe('SubscriptionsService', () => {
         context: 'verdict',
         reasonKey: 'upcomingHit',
         payload: { trigger: SUBSCRIPTION_TRIGGER.RELEASE },
+      });
+    });
+
+    it('should initialize dedup markers for new_season trigger', async () => {
+      // Mock DB to return last aired episode
+      mockDb.limit.mockResolvedValueOnce([{ seasonNumber: 2, episodeNumber: 10 }]);
+
+      await service.subscribe({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
+      });
+
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
+        lastNotifiedSeasonNumber: 2, // Derived from S2E10
+      });
+    });
+
+    it('should initialize dedup markers for new_episode trigger', async () => {
+      // Mock DB to return last aired episode
+      mockDb.limit.mockResolvedValueOnce([{ seasonNumber: 3, episodeNumber: 5 }]);
+
+      await service.subscribe({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        trigger: SUBSCRIPTION_TRIGGER.NEW_EPISODE,
+      });
+
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        trigger: SUBSCRIPTION_TRIGGER.NEW_EPISODE,
+        lastNotifiedEpisodeKey: 'S3E5',
+      });
+    });
+
+    it('should set season marker to 0 when no episodes exist', async () => {
+      // Mock DB to return empty (no episodes)
+      mockDb.limit.mockResolvedValueOnce([]);
+
+      await service.subscribe({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
+      });
+
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
+        lastNotifiedSeasonNumber: 0,
+      });
+    });
+
+    it('should not fetch show state for non-show triggers', async () => {
+      await service.subscribe({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        trigger: SUBSCRIPTION_TRIGGER.RELEASE,
+      });
+
+      // DB should not be queried for movie triggers
+      expect(mockDb.select).not.toHaveBeenCalled();
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        trigger: SUBSCRIPTION_TRIGGER.RELEASE,
       });
     });
   });
