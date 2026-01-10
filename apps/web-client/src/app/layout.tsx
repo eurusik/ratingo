@@ -7,7 +7,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { AppProviders } from '@/core/providers';
-import { Header, HeaderContextProvider, Footer } from '@/shared/components';
+import { Header, HeaderContextProvider, Footer, GoogleAnalytics } from '@/shared/components';
 import { GlobalAuthModal } from '@/modules/auth';
 import { getDictionary } from '@/shared/i18n';
 import './globals.css';
@@ -88,6 +88,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           </HeaderContextProvider>
           <GlobalAuthModal />
         </AppProviders>
+        <GoogleAnalytics />
       </body>
     </html>
   );
