@@ -163,6 +163,7 @@ export function DataVerdict({
               ...ctaProps,
               isSaved,
               isLoading: isCtaLoading,
+              isGuest: !isAuthenticated,
               onSave: handleCtaAction,
               // Subscription props
               subscriptionTrigger,

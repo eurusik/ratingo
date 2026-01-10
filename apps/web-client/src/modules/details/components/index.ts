@@ -29,6 +29,7 @@ export {
   ProvidersSection,
   DetailsContent,
 } from './details-sections';
+export { OverviewExpandable } from './overview-expandable';
 export { NotFoundView } from './not-found-view';
 
 // Atomic components for Hero section
@@ -39,6 +40,10 @@ export { QuickPitchScroll } from './quick-pitch-scroll';
 export { WatchersStats } from './watchers-stats';
 export { StatusBadges } from './status-badges';
 export { HeroBackdrop } from './hero-backdrop';
+
+// Extracted from hero - now in content sections
+export { ExternalRatingsRow } from './external-ratings-row';
+export { SocialSignals } from './social-signals';
 
 export type {
   BadgeKey,

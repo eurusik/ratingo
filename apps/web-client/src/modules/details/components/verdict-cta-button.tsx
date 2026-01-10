@@ -24,6 +24,35 @@ type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey'];
 type ApiVerdictType = components['schemas']['MovieVerdictDto']['type'];
 type VerdictType = ApiVerdictType | 'season_comparison' | 'user_context';
 
+/**
+ * Helper component for CTA hint text.
+ * Separates logic from nested ternaries.
+ */
+function CtaHintText({
+  isGuest,
+  hintKey,
+  hasNewEpisodes,
+  dict,
+}: {
+  isGuest?: boolean;
+  hintKey?: VerdictHintKey;
+  hasNewEpisodes?: boolean;
+  dict: ReturnType<typeof getDictionary>;
+}) {
+  const getText = () => {
+    if (isGuest) return dict.details.cta.guestHint;
+    if (hintKey) return dict.details.cta.saveHint[hintKey];
+    if (hasNewEpisodes) return dict.details.cta.saveHint.newEpisodes;
+    return dict.details.cta.saveHint.general;
+  };
+
+  return (
+    <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
+      {getText()}
+    </span>
+  );
+}
+
 interface VerdictCtaButtonProps {
   /** CTA type from card metadata. */
   primaryCta?: PrimaryCta;
@@ -33,6 +62,8 @@ interface VerdictCtaButtonProps {
   isSaved?: boolean;
   /** Is loading save status. */
   isLoading?: boolean;
+  /** Is guest (not authenticated). */
+  isGuest?: boolean;
   /** Has new episodes. */
   hasNewEpisodes?: boolean;
   /** Custom hint key. */
@@ -61,6 +92,7 @@ export function VerdictCtaButton({
   continuePoint,
   isSaved = false,
   isLoading = false,
+  isGuest = false,
   hasNewEpisodes,
   hintKey,
   verdictType,
@@ -171,13 +203,12 @@ export function VerdictCtaButton({
             {config.label}
           </span>
           {config.showHint && (
-            <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
-              {hintKey
-                ? dict.details.cta.saveHint[hintKey]
-                : hasNewEpisodes
-                  ? dict.details.cta.saveHint.newEpisodes
-                  : dict.details.cta.saveHint.general}
-            </span>
+            <CtaHintText
+              isGuest={isGuest}
+              hintKey={hintKey}
+              hasNewEpisodes={hasNewEpisodes}
+              dict={dict}
+            />
           )}
           {/* Subscription toggle - inline when saved and subscription is available */}
           {isSaved &&

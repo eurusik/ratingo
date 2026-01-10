@@ -218,6 +218,7 @@
         "notifyRelease": "we'll notify you when it's available",
         "decideToWatch": "to decide whether to watch"
       },
+      "guestHint": "account required",
       "whereToWatchHint": "official services"
     },
     "quickPitch": {

@@ -13,13 +13,15 @@ import {
   DetailsContent,
   DetailsPageClient,
   SuitableForTags,
-  OverviewSection,
+  OverviewExpandable,
   TrailersSection,
   CastCrewSection,
   ProvidersSection,
   NotFoundView,
   ShowStatus,
   DataVerdict,
+  ExternalRatingsRow,
+  SocialSignals,
   type BadgeKey,
 } from '@/modules/details';
 import { Separator } from '@/shared/ui';
@@ -157,16 +159,11 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           releaseDate={show.releaseDate}
           genres={show.genres}
           stats={show.stats}
-          externalRatings={show.externalRatings}
-          badgeKey={show.badgeKey}
-          rank={show.rank}
-          quickPitch={show.quickPitch}
           dict={dict}
         />
 
         <DetailsContent>
-          <SuitableForTags tags={show.suitableFor} label={dict.details.quickPitch.suitable} />
-
+          {/* Verdict Ratingo - FIRST after hero (key value prop) */}
           {apiShow.verdict?.messageKey && verdictMessage && (
             <DataVerdict
               mediaItemId={show.id}
@@ -187,7 +184,28 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             />
           )}
 
-          <OverviewSection title={dict.details.overview.title} overview={show.overview} />
+          {/* Social signals - badges, watchers (moved from hero) */}
+          <SocialSignals
+            stats={show.stats}
+            badgeKey={show.badgeKey}
+            rank={show.rank}
+            dict={dict}
+          />
+
+          <SuitableForTags tags={show.suitableFor} label={dict.details.quickPitch.suitable} />
+
+          {/* External ratings - IMDb, TMDB, Trakt (moved from hero) */}
+          <ExternalRatingsRow
+            externalRatings={show.externalRatings}
+            excludeRating={show.stats?.qualityScore}
+          />
+
+          <OverviewExpandable
+            title={dict.details.overview.title}
+            overview={show.overview}
+            showMoreLabel={dict.details.showMore}
+            showLessLabel={dict.details.showLess}
+          />
 
           <Separator className="my-12 bg-zinc-800/50" />
 

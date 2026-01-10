@@ -43,6 +43,7 @@ export interface DataVerdictServerProps {
   ctaProps?: {
     isSaved?: boolean;
     isLoading?: boolean;
+    isGuest?: boolean;
     hasNewEpisodes?: boolean;
     hintKey?: VerdictHintKey;
     primaryCta?: PrimaryCta;
@@ -146,12 +147,12 @@ export function DataVerdictServer({
   return (
     <section
       className={cn(
-        'relative rounded-2xl p-5 border-l-2 backdrop-blur-sm',
+        'relative rounded-2xl p-4 md:p-5 border-l-2 backdrop-blur-sm',
         config.bgGradient,
         config.borderColor,
       )}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3 md:gap-4">
         {/* Icon - always show */}
         <Icon className={cn('w-5 h-5 mt-0.5 flex-shrink-0', config.iconColor)} />
 
@@ -178,6 +179,7 @@ export function DataVerdictServer({
               continuePoint={ctaProps.continuePoint}
               isSaved={ctaProps.isSaved}
               isLoading={ctaProps.isLoading}
+              isGuest={ctaProps.isGuest}
               hasNewEpisodes={ctaProps.hasNewEpisodes}
               hintKey={ctaProps.hintKey}
               verdictType={type}

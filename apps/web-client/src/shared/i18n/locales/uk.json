@@ -218,6 +218,7 @@
         "notifyRelease": "повідомимо, коли з'явиться",
         "decideToWatch": "щоб вирішити, дивитись чи ні"
       },
+      "guestHint": "потрібен акаунт",
       "whereToWatchHint": "офіційні сервіси"
     },
     "quickPitch": {

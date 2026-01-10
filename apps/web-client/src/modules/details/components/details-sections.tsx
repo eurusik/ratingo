@@ -156,7 +156,7 @@ interface DetailsContentProps {
 export function DetailsContent({ children }: DetailsContentProps) {
   return (
     <div className="bg-zinc-950">
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">{children}</div>
+      <div className="max-w-4xl mx-auto px-4 py-6 md:py-8 space-y-6 md:space-y-8">{children}</div>
     </div>
   );
 }
