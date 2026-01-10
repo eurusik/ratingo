@@ -19,7 +19,6 @@
     "lint:staged": "lint-staged",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:migrate:prod": "node scripts/migrate.mjs",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
@@ -40,6 +39,7 @@
     "bullmq": "^5.65.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "drizzle-kit": "^0.31.0",
     "drizzle-orm": "^0.44.0",
     "ioredis": "^5.8.2",
     "joi": "^18.0.2",
@@ -61,7 +61,6 @@
     "@types/jest": "^29.5.0",
     "@types/node": "^20.0.0",
     "@types/supertest": "^6.0.3",
-    "drizzle-kit": "^0.31.0",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
     "fast-check": "^4.5.2",

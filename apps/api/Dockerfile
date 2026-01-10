@@ -32,7 +32,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install production deps for API workspace
+# Install production deps for API workspace (includes drizzle-kit now)
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/*/package.json ./apps/
@@ -43,8 +43,8 @@ RUN npm ci --omit=dev --include-workspace-root --workspace=api
 # Copy compiled API bundle
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 
-# Copy migration script and migrations for runtime migrations
-COPY apps/api/scripts/migrate.mjs ./apps/api/scripts/migrate.mjs
+# Copy drizzle config and migrations for db:migrate
+COPY apps/api/drizzle.config.js ./apps/api/drizzle.config.js
 COPY apps/api/drizzle_v2 ./apps/api/drizzle_v2
 
 EXPOSE 3000
