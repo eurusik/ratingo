@@ -44,6 +44,8 @@ export { HeroBackdrop } from './hero-backdrop';
 // Extracted from hero - now in content sections
 export { ExternalRatingsRow } from './external-ratings-row';
 export { SocialSignals } from './social-signals';
+export { InterestStats } from './interest-stats';
+export { SignalsSection } from './signals-section';
 
 export type {
   BadgeKey,

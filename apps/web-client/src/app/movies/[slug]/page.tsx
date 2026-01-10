@@ -12,7 +12,6 @@ import {
   DetailsHero,
   DetailsContent,
   DetailsPageClient,
-  SuitableForTags,
   OverviewExpandable,
   TrailersSection,
   CastCrewSection,
@@ -20,8 +19,7 @@ import {
   NotFoundView,
   DataVerdict,
   MovieRelease,
-  ExternalRatingsRow,
-  SocialSignals,
+  SignalsSection,
   type BadgeKey,
   type MovieVerdict,
   type MovieVerdictMessageKey,
@@ -152,52 +150,51 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
         <DetailsContent>
           {/* Verdict Ratingo - FIRST after hero (key value prop) */}
           {verdict && verdictMessage && (
-            <DataVerdict
-              mediaItemId={movie.id}
-              mediaType="movie"
-              isReleased={!!movie.releaseDate && new Date(movie.releaseDate) <= new Date()}
-              hasStreamingProviders={
-                !!(
-                  movie.availability?.stream?.length ||
-                  movie.availability?.rent?.length ||
-                  movie.availability?.buy?.length
-                )
-              }
-              type={verdict.type}
-              message={verdictMessage}
-              messageKey={verdict.messageKey}
-              context={verdict.context ?? undefined}
-              showCta
-              ctaProps={{
-                hintKey: verdict.hintKey,
-                primaryCta: movie.card?.primaryCta,
-              }}
-              dict={dict}
-            />
+            <div className="mb-8 md:mb-12">
+              <DataVerdict
+                mediaItemId={movie.id}
+                mediaType="movie"
+                isReleased={!!movie.releaseDate && new Date(movie.releaseDate) <= new Date()}
+                hasStreamingProviders={
+                  !!(
+                    movie.availability?.stream?.length ||
+                    movie.availability?.rent?.length ||
+                    movie.availability?.buy?.length
+                  )
+                }
+                type={verdict.type}
+                message={verdictMessage}
+                messageKey={verdict.messageKey}
+                context={verdict.context ?? undefined}
+                showCta
+                ctaProps={{
+                  hintKey: verdict.hintKey,
+                  primaryCta: movie.card?.primaryCta,
+                }}
+                dict={dict}
+              />
+            </div>
           )}
 
-          {/* Social signals - badges, watchers (moved from hero) */}
-          <SocialSignals
+          {/* All signals in one structured section */}
+          <SignalsSection
             stats={movie.stats}
             badgeKey={movie.badgeKey}
             rank={movie.rank}
+            genres={movie.suitableFor}
+            externalRatings={movie.externalRatings}
             dict={dict}
           />
 
-          <SuitableForTags tags={movie.suitableFor} label={dict.details.quickPitch.suitable} />
-
-          {/* External ratings - IMDb, TMDB, Trakt (moved from hero) */}
-          <ExternalRatingsRow
-            externalRatings={movie.externalRatings}
-            excludeRating={movie.stats?.qualityScore}
-          />
-
-          <OverviewExpandable
-            title={dict.details.overview.title}
-            overview={movie.overview}
-            showMoreLabel={dict.details.showMore}
-            showLessLabel={dict.details.showLess}
-          />
+          {/* Extra spacing before overview */}
+          <div className="pt-4 md:pt-6">
+            <OverviewExpandable
+              title={dict.details.overview.title}
+              overview={movie.overview}
+              showMoreLabel={dict.details.showMore}
+              showLessLabel={dict.details.showLess}
+            />
+          </div>
 
           <Separator className="my-12 bg-zinc-800/50" />
 

@@ -12,7 +12,6 @@ import {
   DetailsHero,
   DetailsContent,
   DetailsPageClient,
-  SuitableForTags,
   OverviewExpandable,
   TrailersSection,
   CastCrewSection,
@@ -20,8 +19,7 @@ import {
   NotFoundView,
   ShowStatus,
   DataVerdict,
-  ExternalRatingsRow,
-  SocialSignals,
+  SignalsSection,
   type BadgeKey,
 } from '@/modules/details';
 import { Separator } from '@/shared/ui';
@@ -165,47 +163,46 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
         <DetailsContent>
           {/* Verdict Ratingo - FIRST after hero (key value prop) */}
           {apiShow.verdict?.messageKey && verdictMessage && (
-            <DataVerdict
-              mediaItemId={show.id}
-              mediaType="show"
-              showStatus={show.status}
-              hasUpcomingAirDate={!!show.nextAirDate && new Date(show.nextAirDate) > new Date()}
-              type={apiShow.verdict.type}
-              message={verdictMessage}
-              messageKey={apiShow.verdict.messageKey}
-              context={verdictContext}
-              showCta
-              ctaProps={{
-                hintKey: apiShow.verdict.hintKey,
-                primaryCta: show.card?.primaryCta,
-                continuePoint: show.card?.continue,
-              }}
-              dict={dict}
-            />
+            <div className="mb-8 md:mb-12">
+              <DataVerdict
+                mediaItemId={show.id}
+                mediaType="show"
+                showStatus={show.status}
+                hasUpcomingAirDate={!!show.nextAirDate && new Date(show.nextAirDate) > new Date()}
+                type={apiShow.verdict.type}
+                message={verdictMessage}
+                messageKey={apiShow.verdict.messageKey}
+                context={verdictContext}
+                showCta
+                ctaProps={{
+                  hintKey: apiShow.verdict.hintKey,
+                  primaryCta: show.card?.primaryCta,
+                  continuePoint: show.card?.continue,
+                }}
+                dict={dict}
+              />
+            </div>
           )}
 
-          {/* Social signals - badges, watchers (moved from hero) */}
-          <SocialSignals
+          {/* All signals in one structured section */}
+          <SignalsSection
             stats={show.stats}
             badgeKey={show.badgeKey}
             rank={show.rank}
+            genres={show.suitableFor}
+            externalRatings={show.externalRatings}
             dict={dict}
           />
 
-          <SuitableForTags tags={show.suitableFor} label={dict.details.quickPitch.suitable} />
-
-          {/* External ratings - IMDb, TMDB, Trakt (moved from hero) */}
-          <ExternalRatingsRow
-            externalRatings={show.externalRatings}
-            excludeRating={show.stats?.qualityScore}
-          />
-
-          <OverviewExpandable
-            title={dict.details.overview.title}
-            overview={show.overview}
-            showMoreLabel={dict.details.showMore}
-            showLessLabel={dict.details.showLess}
-          />
+          {/* Extra spacing before overview */}
+          <div className="pt-4 md:pt-6">
+            <OverviewExpandable
+              title={dict.details.overview.title}
+              overview={show.overview}
+              showMoreLabel={dict.details.showMore}
+              showLessLabel={dict.details.showLess}
+            />
+          </div>
 
           <Separator className="my-12 bg-zinc-800/50" />
 

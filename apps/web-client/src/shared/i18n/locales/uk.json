@@ -221,6 +221,11 @@
       "guestHint": "потрібен акаунт",
       "whereToWatchHint": "офіційні сервіси"
     },
+    "signals": {
+      "perception": "Як сприймають",
+      "activity": "Активність зараз",
+      "externalRatings": "Зовнішні рейтинги"
+    },
     "quickPitch": {
       "title": "Коротко",
       "suitable": "Підійде, якщо подобається"

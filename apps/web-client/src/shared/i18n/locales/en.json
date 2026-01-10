@@ -221,6 +221,11 @@
       "guestHint": "account required",
       "whereToWatchHint": "official services"
     },
+    "signals": {
+      "perception": "How it's perceived",
+      "activity": "Activity now",
+      "externalRatings": "External ratings"
+    },
     "quickPitch": {
       "title": "In Short",
       "suitable": "Perfect if you like"
