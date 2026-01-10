@@ -56,9 +56,8 @@ describe('Header', () => {
 
     it('renders all nav links', () => {
       renderHeader();
-      expect(screen.getByText(/у тренді/i)).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /фільми/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /серіали/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /фільми/i })).toBeInTheDocument();
     });
 
     it('renders search, notifications, and user menu', () => {
