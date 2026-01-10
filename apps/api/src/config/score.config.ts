@@ -9,7 +9,6 @@ export default registerAs('score', () => ({
   normalization: {
     tmdbPopularityMax: 1000, // TMDB popularity usually 0-3000+
     traktWatchersMax: 5000, // Top shows in prime time
-    voteConfidenceK: 1000, // Votes threshold for full confidence
     freshnessDecayDays: 180, // Half-life for freshness decay
     freshnessMinFloor: 0.2, // Minimum freshness for classics
   },

@@ -10,6 +10,21 @@ const PERCENT_SCALE = 100;
 const NEUTRAL_RATING_DEFAULT = 5.0;
 
 /**
+ * Neutral confidence when no vote data available.
+ * 0.5 = "we don't know" — neither good nor bad signal.
+ * Combined with NEUTRAL_RATING_DEFAULT gives true neutral score.
+ */
+const NEUTRAL_CONFIDENCE_DEFAULT = 0.5;
+
+/**
+ * Source-specific vote thresholds for confidence calculation.
+ * These represent votes needed for ~63% confidence (1 - 1/e).
+ * IMDb has much higher volume than Trakt, so thresholds differ.
+ */
+const IMDB_CONFIDENCE_K = 1000;
+const TRAKT_CONFIDENCE_K = 300;
+
+/**
  * Input data for score calculation.
  */
 export interface ScoreInput {
@@ -98,11 +113,7 @@ export class ScoreCalculatorService {
     const avgRatingNorm = this.clamp(avgRating / RATING_SCALE_MAX, 0, 1);
 
     const totalVotes = (input.imdbVotes || 0) + (input.traktVotes || 0);
-    const voteConfidenceNorm = this.calculateVoteConfidence(
-      input.imdbVotes,
-      input.traktVotes,
-      normalization.voteConfidenceK,
-    );
+    const voteConfidenceNorm = this.calculateVoteConfidence(input.imdbVotes, input.traktVotes);
 
     const freshnessNorm = this.calculateFreshness(
       input.releaseDate,
@@ -209,20 +220,8 @@ export class ScoreCalculatorService {
   /**
    * Calculates vote confidence based on available sources only.
    * Missing source ≠ negative signal — we only measure what we have.
-   *
-   * IMDb and Trakt have different vote scales:
-   * - IMDb: popular movies get 100k-1M+ votes, threshold ~1000
-   * - Trakt: niche platform, 100-500 votes is solid, threshold ~300
    */
-  private calculateVoteConfidence(
-    imdbVotes?: number | null,
-    traktVotes?: number | null,
-    _defaultK = 1000,
-  ): number {
-    // Source-specific thresholds (votes needed for ~63% confidence)
-    const IMDB_CONFIDENCE_K = 1000;
-    const TRAKT_CONFIDENCE_K = 300;
-
+  private calculateVoteConfidence(imdbVotes?: number | null, traktVotes?: number | null): number {
     const sources: Array<{ votes: number; k: number }> = [];
 
     if (imdbVotes && imdbVotes > 0) {
@@ -234,7 +233,7 @@ export class ScoreCalculatorService {
 
     // No vote data = neutral confidence (not penalized)
     if (sources.length === 0) {
-      return 0.5;
+      return NEUTRAL_CONFIDENCE_DEFAULT;
     }
 
     // Average confidence across available sources
