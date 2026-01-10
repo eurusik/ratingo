@@ -106,7 +106,7 @@
     },
     "badge": {
       "hit": "ХІТ",
-      "trending": "Трендинг",
+      "trending": "У тренді",
       "newRelease": "Новинка",
       "rising": "Ріст",
       "newEpisode": "Новий епізод",
@@ -456,7 +456,7 @@
     },
     "reason": {
       "label": "Збережено через",
-      "trendingNow": "Трендинг",
+      "trendingNow": "У тренді",
       "risingHype": "Зростаючий інтерес",
       "criticsLoved": "Високі оцінки",
       "strongRatings": "Хороші рейтинги",
