@@ -1,10 +1,10 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
-import { SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
 import {
+  SubscriptionTriggerService,
   type IUserSubscriptionRepository,
   USER_SUBSCRIPTION_REPOSITORY,
-} from '../../../user-actions/domain/repositories/user-subscription.repository.interface';
+} from '../../../user-actions/public';
 import {
   IngestionJob,
   TRACKED_SHOWS_CHUNK_SIZE,

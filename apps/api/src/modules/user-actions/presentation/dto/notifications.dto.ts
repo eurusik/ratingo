@@ -1,6 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
+ * Poster URLs for different sizes.
+ */
+export class PosterDto {
+  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w92/poster.jpg' })
+  small: string;
+
+  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w185/poster.jpg' })
+  medium: string;
+
+  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w500/poster.jpg' })
+  large: string;
+}
+
+/**
  * Media summary in notification response.
  */
 export class NotificationMediaSummaryDto {
@@ -16,7 +30,7 @@ export class NotificationMediaSummaryDto {
   @ApiProperty({ example: 'breaking-bad' })
   slug: string;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ type: PosterDto, nullable: true })
   poster: { small: string; medium: string; large: string } | null;
 }
 

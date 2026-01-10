@@ -3989,6 +3989,200 @@
         ]
       }
     },
+    "/api/me/notifications": {
+      "get": {
+        "operationId": "NotificationsController_list",
+        "summary": "List notifications (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationListResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/notifications/unread-count": {
+      "get": {
+        "operationId": "NotificationsController_getUnreadCount",
+        "summary": "Get unread notification count (auth: Bearer)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UnreadCountResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/notifications/{notificationId}/read": {
+      "post": {
+        "operationId": "NotificationsController_markAsRead",
+        "summary": "Mark notification as read (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "notificationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MarkReadResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/notifications/read-all": {
+      "post": {
+        "operationId": "NotificationsController_markAllAsRead",
+        "summary": "Mark all notifications as read (auth: Bearer)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MarkReadResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/me/saved-items/{mediaItemId}": {
       "post": {
         "operationId": "SavedItemsController_saveItem",
@@ -7633,6 +7827,25 @@
                 "kids"
               ]
             }
+          },
+          "contextRequirements": {
+            "type": "object",
+            "description": "Context-specific requirements for display surfaces (readability, overview)",
+            "example": {
+              "trending": {
+                "requireReadableTitle": true,
+                "requireOverview": true,
+                "minOverviewChars": 60
+              },
+              "homepage": {
+                "requireReadableTitle": true,
+                "requireOverview": true,
+                "minOverviewChars": 60
+              },
+              "catalog": {
+                "requireReadableTitle": true
+              }
+            }
           }
         },
         "required": [
@@ -7830,6 +8043,25 @@
                 "kids"
               ]
             }
+          },
+          "contextRequirements": {
+            "type": "object",
+            "description": "Context-specific requirements for display surfaces (readability, overview)",
+            "example": {
+              "trending": {
+                "requireReadableTitle": true,
+                "requireOverview": true,
+                "minOverviewChars": 60
+              },
+              "homepage": {
+                "requireReadableTitle": true,
+                "requireOverview": true,
+                "minOverviewChars": 60
+              },
+              "catalog": {
+                "requireReadableTitle": true
+              }
+            }
           }
         },
         "required": [
@@ -7970,6 +8202,11 @@
             "description": "Policy name",
             "example": "Content Filtering Policy"
           },
+          "policyVersion": {
+            "type": "number",
+            "description": "Policy version number",
+            "example": 1
+          },
           "status": {
             "type": "string",
             "description": "Run status",
@@ -8012,6 +8249,7 @@
           "id",
           "policyId",
           "policyName",
+          "policyVersion",
           "status",
           "progress",
           "startedAt"
@@ -8907,6 +9145,179 @@
           "tmdbProviderId",
           "region",
           "found"
+        ]
+      },
+      "NotificationPayloadDto": {
+        "type": "object",
+        "properties": {
+          "seasonNumber": {
+            "type": "number",
+            "example": 3
+          },
+          "episodeKey": {
+            "type": "string",
+            "example": "S3E1"
+          },
+          "airDate": {
+            "type": "string",
+            "example": "2025-01-15"
+          }
+        }
+      },
+      "PosterDto": {
+        "type": "object",
+        "properties": {
+          "small": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/w92/poster.jpg"
+          },
+          "medium": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/w185/poster.jpg"
+          },
+          "large": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/w500/poster.jpg"
+          }
+        },
+        "required": [
+          "small",
+          "medium",
+          "large"
+        ]
+      },
+      "NotificationMediaSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-123"
+          },
+          "type": {
+            "type": "string",
+            "example": "show",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "example": "Breaking Bad"
+          },
+          "slug": {
+            "type": "string",
+            "example": "breaking-bad"
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PosterDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "slug",
+          "poster"
+        ]
+      },
+      "NotificationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-123"
+          },
+          "trigger": {
+            "type": "string",
+            "example": "new_season",
+            "enum": [
+              "release",
+              "new_season",
+              "new_episode",
+              "on_streaming",
+              "status_changed"
+            ]
+          },
+          "payload": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationPayloadDto"
+              }
+            ]
+          },
+          "isRead": {
+            "type": "boolean",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2025-01-15T10:30:00.000Z"
+          },
+          "mediaSummary": {
+            "$ref": "#/components/schemas/NotificationMediaSummaryDto"
+          }
+        },
+        "required": [
+          "id",
+          "trigger",
+          "payload",
+          "isRead",
+          "createdAt",
+          "mediaSummary"
+        ]
+      },
+      "NotificationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationItemDto"
+            }
+          },
+          "unreadCount": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "data",
+          "unreadCount"
+        ]
+      },
+      "UnreadCountResponseDto": {
+        "type": "object",
+        "properties": {
+          "unreadCount": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "unreadCount"
+        ]
+      },
+      "MarkReadResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "count": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "success"
         ]
       },
       "SaveItemDto": {

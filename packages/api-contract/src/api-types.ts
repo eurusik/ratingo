@@ -1186,6 +1186,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List notifications (auth: Bearer) */
+        get: operations["NotificationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get unread notification count (auth: Bearer) */
+        get: operations["NotificationsController_getUnreadCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/{notificationId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark notification as read (auth: Bearer) */
+        post: operations["NotificationsController_markAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark all notifications as read (auth: Bearer) */
+        post: operations["NotificationsController_markAllAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/saved-items/{mediaItemId}": {
         parameters: {
             query?: never;
@@ -2626,6 +2694,25 @@ export interface components {
              *     ]
              */
             excludedContentClasses?: ("mainstream" | "anime" | "documentary" | "reality" | "kids")[];
+            /**
+             * @description Context-specific requirements for display surfaces (readability, overview)
+             * @example {
+             *       "trending": {
+             *         "requireReadableTitle": true,
+             *         "requireOverview": true,
+             *         "minOverviewChars": 60
+             *       },
+             *       "homepage": {
+             *         "requireReadableTitle": true,
+             *         "requireOverview": true,
+             *         "minOverviewChars": 60
+             *       },
+             *       "catalog": {
+             *         "requireReadableTitle": true
+             *       }
+             *     }
+             */
+            contextRequirements?: Record<string, never>;
         };
         PolicyDetailDto: {
             /**
@@ -2743,6 +2830,25 @@ export interface components {
              *     ]
              */
             excludedContentClasses?: ("mainstream" | "anime" | "documentary" | "reality" | "kids")[];
+            /**
+             * @description Context-specific requirements for display surfaces (readability, overview)
+             * @example {
+             *       "trending": {
+             *         "requireReadableTitle": true,
+             *         "requireOverview": true,
+             *         "minOverviewChars": 60
+             *       },
+             *       "homepage": {
+             *         "requireReadableTitle": true,
+             *         "requireOverview": true,
+             *         "minOverviewChars": 60
+             *       },
+             *       "catalog": {
+             *         "requireReadableTitle": true
+             *       }
+             *     }
+             */
+            contextRequirements?: Record<string, never>;
         };
         CreatePolicyResponseDto: {
             /**
@@ -2834,6 +2940,11 @@ export interface components {
              * @example Content Filtering Policy
              */
             policyName: string;
+            /**
+             * @description Policy version number
+             * @example 1
+             */
+            policyVersion: number;
             /**
              * @description Run status
              * @example running
@@ -3405,6 +3516,66 @@ export interface components {
              * @example region
              */
             source?: string;
+        };
+        NotificationPayloadDto: {
+            /** @example 3 */
+            seasonNumber?: number;
+            /** @example S3E1 */
+            episodeKey?: string;
+            /** @example 2025-01-15 */
+            airDate?: string;
+        };
+        PosterDto: {
+            /** @example https://image.tmdb.org/t/p/w92/poster.jpg */
+            small: string;
+            /** @example https://image.tmdb.org/t/p/w185/poster.jpg */
+            medium: string;
+            /** @example https://image.tmdb.org/t/p/w500/poster.jpg */
+            large: string;
+        };
+        NotificationMediaSummaryDto: {
+            /** @example uuid-123 */
+            id: string;
+            /**
+             * @example show
+             * @enum {string}
+             */
+            type: "movie" | "show";
+            /** @example Breaking Bad */
+            title: string;
+            /** @example breaking-bad */
+            slug: string;
+            poster: components["schemas"]["PosterDto"] | null;
+        };
+        NotificationItemDto: {
+            /** @example uuid-123 */
+            id: string;
+            /**
+             * @example new_season
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            payload: components["schemas"]["NotificationPayloadDto"] | null;
+            /** @example false */
+            isRead: boolean;
+            /** @example 2025-01-15T10:30:00.000Z */
+            createdAt: string;
+            mediaSummary: components["schemas"]["NotificationMediaSummaryDto"];
+        };
+        NotificationListResponseDto: {
+            data: components["schemas"]["NotificationItemDto"][];
+            /** @example 5 */
+            unreadCount: number;
+        };
+        UnreadCountResponseDto: {
+            /** @example 5 */
+            unreadCount: number;
+        };
+        MarkReadResponseDto: {
+            /** @example true */
+            success: boolean;
+            /** @example 3 */
+            count?: number;
         };
         SaveItemDto: {
             /**
@@ -5669,6 +5840,103 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    NotificationsController_list: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["NotificationListResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    NotificationsController_getUnreadCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnreadCountResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    NotificationsController_markAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MarkReadResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    NotificationsController_markAllAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MarkReadResponseDto"];
+                    };
+                };
             };
         };
     };

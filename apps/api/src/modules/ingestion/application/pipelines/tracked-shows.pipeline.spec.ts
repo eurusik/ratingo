@@ -2,8 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TrackedShowsPipeline } from './tracked-shows.pipeline';
 import { TrackedSyncService } from '../services/tracked-sync.service';
 import { BulkJobService } from '../services/bulk-job.service';
-import { SubscriptionTriggerService } from '../../../user-actions/application/subscription-trigger.service';
-import { USER_SUBSCRIPTION_REPOSITORY } from '../../../user-actions/domain/repositories/user-subscription.repository.interface';
+import {
+  SubscriptionTriggerService,
+  USER_SUBSCRIPTION_REPOSITORY,
+} from '../../../user-actions/public';
 import { IngestionJob } from '../../ingestion.constants';
 
 describe('TrackedShowsPipeline', () => {

@@ -28,34 +28,11 @@ export type UnsubscribeActionResultDto = components['schemas']['UnsubscribeActio
 export type SubscriptionWithMediaResponseDto =
   components['schemas']['SubscriptionWithMediaResponseDto'];
 
-// Notification types (not in api-contract yet, define locally)
-export interface NotificationPayload {
-  seasonNumber?: number;
-  episodeKey?: string;
-  airDate?: string;
-}
-
-export interface NotificationMediaSummary {
-  id: string;
-  type: 'movie' | 'show';
-  title: string;
-  slug: string;
-  poster: { small: string; medium: string; large: string } | null;
-}
-
-export interface NotificationItem {
-  id: string;
-  trigger: SubscriptionTrigger;
-  payload: NotificationPayload | null;
-  isRead: boolean;
-  createdAt: string;
-  mediaSummary: NotificationMediaSummary;
-}
-
-export interface NotificationListResponse {
-  data: NotificationItem[];
-  unreadCount: number;
-}
+// Notification types from api-contract
+export type NotificationPayloadDto = components['schemas']['NotificationPayloadDto'];
+export type NotificationMediaSummaryDto = components['schemas']['NotificationMediaSummaryDto'];
+export type NotificationItemDto = components['schemas']['NotificationItemDto'];
+export type NotificationListResponseDto = components['schemas']['NotificationListResponseDto'];
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -248,8 +225,8 @@ export const userActionsApi = {
    * @param params - Pagination parameters
    * @returns Notifications with unread count
    */
-  async listNotifications(params?: ListParams): Promise<NotificationListResponse> {
-    return apiGet<NotificationListResponse>('me/notifications', {
+  async listNotifications(params?: ListParams): Promise<NotificationListResponseDto> {
+    return apiGet<NotificationListResponseDto>('me/notifications', {
       searchParams: params as Record<string, string | number>,
     });
   },
