@@ -20,6 +20,9 @@ import { formatHourWindow } from '../helpers/queue.helpers';
 import { BulkJobService } from '../services/bulk-job.service';
 import { SyncMediaService } from '../services/sync-media.service';
 
+/** Multiplier for percentage calculation (0-1 to 0-100). */
+const PERCENT_MULTIPLIER = 100;
+
 /**
  * Trending pipeline: TMDB trending sync and Trakt stats updates.
  *
@@ -107,7 +110,7 @@ export class TrendingPipeline {
     try {
       const stats = await this.catalogEvaluator.getEligibilityStats(EvaluationContext.TRENDING);
       const eligibilityRate =
-        stats.total > 0 ? ((stats.eligible / stats.total) * 100).toFixed(1) : '0';
+        stats.total > 0 ? ((stats.eligible / stats.total) * PERCENT_MULTIPLIER).toFixed(1) : '0';
 
       this.logger.log(
         `Trending eligibility: total=${stats.total}, eligible=${stats.eligible}, ` +

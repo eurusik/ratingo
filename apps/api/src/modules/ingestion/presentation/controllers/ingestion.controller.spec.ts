@@ -146,11 +146,11 @@ describe('IngestionController', () => {
       });
     });
 
-    it('should use default pages=5 when not specified', async () => {
+    it('should use default pages=10 when not specified', async () => {
       await controller.syncTrending(undefined, undefined, undefined, undefined, undefined, {});
 
       expect(mockQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_TRENDING_DISPATCHER, {
-        pages: 5,
+        pages: 10,
         syncStats: true,
         force: false,
       });
