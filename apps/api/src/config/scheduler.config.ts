@@ -52,14 +52,14 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
   {
     name: 'snapshots',
     jobType: 'sync-snapshots',
-    pattern: '0 3 * * *', // 3:00 UTC daily
+    pattern: '30 */6 * * *', // Every 6 hours (30 min after trending)
     jobId: 'scheduled-snapshots',
     data: {},
   },
   {
     name: 'trending',
     jobType: 'sync-trending-dispatcher',
-    pattern: '0 */6 * * *', // Every 6 hours
+    pattern: '0 */4 * * *', // Every 4 hours
     jobId: 'scheduled-trending',
     data: { pages: 5, syncStats: true }, // Top 100 (5 pages × 20 items)
   },
@@ -80,7 +80,7 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
   {
     name: 'newReleases',
     jobType: 'sync-new-releases',
-    pattern: '0 4 * * 1,4', // Monday and Thursday 4:00 UTC
+    pattern: '0 4 * * *', // Daily 4:00 UTC
     jobId: 'scheduled-new-releases',
     data: { region: 'UA', daysBack: 30 },
   },
