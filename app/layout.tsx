@@ -13,6 +13,7 @@ import { ProgressBar } from '@/components/ProgressBar';
 import { Footer } from '@/components/Footer';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { Flame, Clapperboard, Film } from 'lucide-react';
+import { AnnouncementBanner } from '@/components/AnnouncementBanner';
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -102,8 +103,9 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <FiltersProvider>
               <div className="sticky top-0 z-50" suppressHydrationWarning>
+                <AnnouncementBanner />
                 <div
-                  className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-xl"
+                  className="absolute inset-0 top-auto h-16 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-xl"
                   suppressHydrationWarning
                 />
                 <nav className="relative bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/50">
