@@ -179,6 +179,7 @@
     "showLess": "Сховати",
     "watchingNow": "цікавляться зараз",
     "totalWatchers": "дивились загалом",
+    "ratingSubtitle": "Агрегована оцінка якості",
     "ratingTooltip": {
       "title": "Ratingo рейтинг",
       "subtitle": "Якість × Актуальність",

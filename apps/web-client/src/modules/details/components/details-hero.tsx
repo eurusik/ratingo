@@ -7,12 +7,11 @@
 'use client';
 
 import Image from 'next/image';
-import { Activity, Info } from 'lucide-react';
 import type { Genre, ImageSet, Stats } from '../types';
-import { formatRating, formatYear } from '@/shared/utils/format';
+import { formatYear } from '@/shared/utils/format';
 import type { getDictionary } from '@/shared/i18n';
 import { HeroBackdrop } from './hero-backdrop';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
+import { RatingoScore } from './ratingo-score';
 
 export interface DetailsHeroProps {
   title: string;
@@ -80,64 +79,8 @@ export function DetailsHero({
                 {genres && genres.length > 0 && ` • ${genres.map((g) => g.name).join(', ')}`}
               </p>
 
-              {/* Single Ratingo score with tooltip */}
-              {rating != null && (
-                <div className="flex items-center gap-1.5 md:gap-2 bg-zinc-900/60 backdrop-blur-sm px-2.5 md:px-3 py-1 md:py-1.5 rounded-lg w-fit">
-                  <Activity className="w-5 h-5 md:w-6 md:h-6 text-blue-400" />
-                  <span className="text-lg md:text-2xl font-bold text-white">
-                    {formatRating(rating)}
-                  </span>
-
-                  {/* Info icon with tooltip */}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          type="button"
-                          className="ml-1 text-gray-500 hover:text-gray-400 transition-colors cursor-help"
-                          onClick={(e) => e.preventDefault()}
-                        >
-                          <Info className="w-4 h-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent
-                        side="top"
-                        className="max-w-sm bg-zinc-800 border border-zinc-700"
-                      >
-                        <div className="text-xs leading-relaxed space-y-3">
-                          {/* Header */}
-                          <div>
-                            <p className="font-semibold text-white">
-                              {dict.details.ratingTooltip.title}
-                            </p>
-                            <p className="text-zinc-400 mt-0.5">
-                              {dict.details.ratingTooltip.subtitle}
-                            </p>
-                          </div>
-
-                          {/* Description */}
-                          <div>
-                            <p className="text-zinc-300">
-                              {dict.details.ratingTooltip.description}
-                            </p>
-                          </div>
-
-                          {/* How to read */}
-                          <div>
-                            <p className="font-medium text-white mb-1.5">
-                              {dict.details.ratingTooltip.howToRead}
-                            </p>
-                            <ul className="text-zinc-300 space-y-1.5">
-                              <li>• {dict.details.ratingTooltip.exampleHigh}</li>
-                              <li>• {dict.details.ratingTooltip.exampleTrending}</li>
-                            </ul>
-                          </div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              )}
+              {/* Ratingo score with label and subtitle */}
+              {rating != null && <RatingoScore score={rating} dict={dict} />}
             </div>
           </div>
         </div>

@@ -34,6 +34,7 @@ export { NotFoundView } from './not-found-view';
 
 // Atomic components for Hero section
 export { RatingBadge } from './rating-badge';
+export { RatingoScore } from './ratingo-score';
 export { QualityBadge } from './quality-badge';
 export { PopularityBadge } from './popularity-badge';
 export { QuickPitchScroll } from './quick-pitch-scroll';

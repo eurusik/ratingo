@@ -179,6 +179,7 @@
     "showLess": "Show less",
     "watchingNow": "interested now",
     "totalWatchers": "watched overall",
+    "ratingSubtitle": "Aggregated quality score",
     "ratingTooltip": {
       "title": "Ratingo rating",
       "subtitle": "Quality × Relevance",
