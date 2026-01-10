@@ -8,7 +8,8 @@
 import { useState } from 'react';
 import { Play } from 'lucide-react';
 import { Carousel } from '@/shared/components/carousel';
-import { Dialog, DialogContent } from '@/shared/ui';
+import { Dialog, DialogContent, DialogTitle } from '@/shared/ui';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import type { Video } from '../types';
 
 export interface TrailersCarouselProps {
@@ -77,6 +78,9 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
         onOpenChange={(open: boolean) => !open && setSelectedVideo(null)}
       >
         <DialogContent className="max-w-4xl p-0 bg-black border-zinc-800 overflow-hidden">
+          <VisuallyHidden>
+            <DialogTitle>{selectedVideo?.name || 'Video'}</DialogTitle>
+          </VisuallyHidden>
           <div className="aspect-video">
             {selectedVideo && (
               <iframe
