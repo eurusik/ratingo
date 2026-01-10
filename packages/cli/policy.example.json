@@ -15,7 +15,7 @@
   "eligibilityMode": "STRICT",
   "homepage": { "minRelevanceScore": 35 },
   "globalRequirements": {
-    "appliesTo": ["catalog", "homepage", "trending", "search"],
+    "appliesTo": ["catalog", "homepage", "search"],
     "minQualityScoreNormalized": 0.58,
     "minVotesAnyOf": { "sources": ["imdb", "trakt"], "min": 1500 },
     "requireAnyOfRatingsPresent": ["imdb", "trakt", "metacritic", "rt"]

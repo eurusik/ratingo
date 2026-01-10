@@ -302,6 +302,9 @@
     },
     "verdict": {
       "byData": "Вердикт Ratingo",
+      "context": {
+        "aggregatePublic": "Оцінка на основі публічних рейтингів"
+      },
       "seasonComparison": {
         "stronger": "Сезон {season} тримає планку попереднього",
         "weaker": "Сезон {season} стартував слабше попереднього",

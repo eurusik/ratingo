@@ -314,8 +314,8 @@ describe('ShowVerdictService', () => {
     });
   });
 
-  describe('rating source in context', () => {
-    it('should use source with highest votes in context', () => {
+  describe('rating context format', () => {
+    it('should show just the rating number without source brand', () => {
       const result = service.compute({
         externalRatings: {
           imdb: { rating: 7.5, voteCount: 100 },
@@ -324,8 +324,8 @@ describe('ShowVerdictService', () => {
         },
       });
 
-      // Trakt has highest votes
-      expect(result.verdict.context).toContain('Trakt');
+      // Context should be just the number, no source brand
+      expect(result.verdict.context).toBe('7.4');
     });
   });
 

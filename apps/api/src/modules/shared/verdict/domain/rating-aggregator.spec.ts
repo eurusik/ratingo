@@ -42,6 +42,19 @@ describe('aggregateRatings', () => {
       expect(result.consensusRating).toBe(8.5);
       expect(result.ratingsCount).toBe(1);
     });
+
+    it('should ignore rating of 0 (means no rating)', () => {
+      const result = aggregateRatings({
+        imdb: null,
+        trakt: { rating: 5.5, voteCount: 100 },
+        tmdb: { rating: 0, voteCount: 0 }, // TMDB 0 = no rating
+      });
+
+      // Only Trakt should be counted
+      expect(result.consensusRating).toBe(5.5);
+      expect(result.ratingsCount).toBe(1);
+      expect(result.primarySource).toBe('Trakt');
+    });
   });
 
   describe('spread calculation', () => {
@@ -118,17 +131,13 @@ describe('aggregateRatings', () => {
 });
 
 describe('formatRatingContext', () => {
-  it('should format rating with source', () => {
-    expect(formatRatingContext(7.5, RATING_SOURCE.IMDB)).toBe('IMDb: 7.5');
-    expect(formatRatingContext(8.0, RATING_SOURCE.TRAKT)).toBe('Trakt: 8.0');
+  it('should format rating as just the number', () => {
+    expect(formatRatingContext(7.5)).toBe('7.5');
+    expect(formatRatingContext(8.0)).toBe('8.0');
   });
 
   it('should return null for null rating', () => {
     expect(formatRatingContext(null)).toBeNull();
     expect(formatRatingContext(undefined)).toBeNull();
-  });
-
-  it('should default to IMDb source', () => {
-    expect(formatRatingContext(7.5)).toBe('IMDb: 7.5');
   });
 });

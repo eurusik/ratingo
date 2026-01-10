@@ -54,12 +54,11 @@ export class ShowVerdictService {
     const isClassic = contentAgeYears >= AGE_THRESHOLDS.CLASSIC_YEARS;
 
     // Aggregate ratings from all sources
-    const { consensusRating, spread, totalVotes, ratingsCount, primarySource } =
-      aggregateRatings(externalRatings);
+    const { consensusRating, spread, totalVotes, ratingsCount } = aggregateRatings(externalRatings);
 
-    // Helper to format rating context
+    // Helper to format rating context (just the number, no source brand)
     const formatContext = (rating: number | null | undefined): string | null => {
-      return formatRatingContext(rating, primarySource);
+      return formatRatingContext(rating);
     };
 
     // Status flags

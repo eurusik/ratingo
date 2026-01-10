@@ -32,22 +32,22 @@ export function aggregateRatings(ratings: ExternalRatings | null | undefined): A
   const ratingValues: number[] = [];
   const sources: { source: RatingSourceLabel; votes: number }[] = [];
 
-  // Collect all available ratings
-  if (ratings.imdb?.rating !== undefined && ratings.imdb.rating !== null) {
+  // Collect all available ratings (skip 0 as it means "no rating")
+  if (ratings.imdb?.rating != null && ratings.imdb.rating > 0) {
     ratingValues.push(ratings.imdb.rating);
     sources.push({
       source: RATING_SOURCE.IMDB,
       votes: ratings.imdb.voteCount ?? 0,
     });
   }
-  if (ratings.trakt?.rating !== undefined && ratings.trakt.rating !== null) {
+  if (ratings.trakt?.rating != null && ratings.trakt.rating > 0) {
     ratingValues.push(ratings.trakt.rating);
     sources.push({
       source: RATING_SOURCE.TRAKT,
       votes: ratings.trakt.voteCount ?? 0,
     });
   }
-  if (ratings.tmdb?.rating !== undefined && ratings.tmdb.rating !== null) {
+  if (ratings.tmdb?.rating != null && ratings.tmdb.rating > 0) {
     ratingValues.push(ratings.tmdb.rating);
     sources.push({
       source: RATING_SOURCE.TMDB,
@@ -93,16 +93,14 @@ export function aggregateRatings(ratings: ExternalRatings | null | undefined): A
 }
 
 /**
- * Formats rating context string for display.
+ * Formats rating context string for display in verdict.
+ * Shows aggregated rating without source brand to avoid confusion
+ * with external ratings section.
  *
- * @param rating - Rating value
- * @param source - Rating source label
- * @returns Formatted string like "IMDb: 7.5"
+ * @param rating - Aggregated rating value
+ * @returns Formatted string like "7.5" or null
  */
-export function formatRatingContext(
-  rating: number | null | undefined,
-  source: RatingSourceLabel = RATING_SOURCE.IMDB,
-): string | null {
+export function formatRatingContext(rating: number | null | undefined): string | null {
   if (rating === null || rating === undefined) return null;
-  return `${source}: ${rating.toFixed(1)}`;
+  return rating.toFixed(1);
 }

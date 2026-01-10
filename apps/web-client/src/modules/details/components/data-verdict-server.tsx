@@ -26,6 +26,14 @@ export type VerdictHintKey = components['schemas']['MovieVerdictDto']['hintKey']
 /** Confidence level for verdict accuracy. */
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
 
+/**
+ * Checks if context string is a numeric rating (e.g., "8.4", "7", "8,4").
+ * Used to determine if we should show "Aggregate rating" label.
+ */
+function isNumericContext(s?: string): boolean {
+  return !!s && /^[0-9]+([.,][0-9]+)?$/.test(s.trim());
+}
+
 export interface DataVerdictServerProps {
   /** Verdict type (determines icon and style). */
   type: VerdictType;
@@ -170,7 +178,13 @@ export function DataVerdictServer({
           )}
 
           {/* Additional context (optional) */}
-          {context && <p className="text-sm text-zinc-400 leading-relaxed">{context}</p>}
+          {context && (
+            <p className="text-sm text-zinc-400 leading-relaxed">
+              {isNumericContext(context)
+                ? dict.details.verdict.context.aggregatePublic
+                : context}
+            </p>
+          )}
 
           {/* Integrated CTA - Client Component for interactivity */}
           {showCta && ctaProps && (

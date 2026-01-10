@@ -1,7 +1,6 @@
 import { MovieVerdictService, computeMovieVerdict } from './movie-verdict.service';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
 import { POPULARITY_SIGNAL } from '../domain/popularity-signal';
-import { RATING_SOURCE } from '../domain/verdict.types';
 
 describe('MovieVerdictService', () => {
   let service: MovieVerdictService;
@@ -15,19 +14,17 @@ describe('MovieVerdictService', () => {
       const result = service.compute({
         avgRating: 5.0,
         voteCount: 500,
-        ratingSource: RATING_SOURCE.IMDB,
       });
 
       expect(result.type).toBe('warning');
       expect(result.messageKey).toBe('poorRatings');
-      expect(result.context).toBe('IMDb: 5.0');
+      expect(result.context).toBe('5.0');
     });
 
     it('should return belowAverage for avgRating 5.5-6.0 with confident votes', () => {
       const result = service.compute({
         avgRating: 5.8,
         voteCount: 500,
-        ratingSource: RATING_SOURCE.IMDB,
       });
 
       expect(result.type).toBe('warning');
@@ -119,12 +116,11 @@ describe('MovieVerdictService', () => {
       const result = service.compute({
         avgRating: 8.0,
         voteCount: 1500,
-        ratingSource: RATING_SOURCE.IMDB,
       });
 
       expect(result.type).toBe('quality');
       expect(result.messageKey).toBe('criticsLoved');
-      expect(result.context).toBe('IMDb: 8.0');
+      expect(result.context).toBe('8.0');
     });
 
     it('should return strongRatings for avgRating >= 7.0', () => {
@@ -278,24 +274,14 @@ describe('MovieVerdictService', () => {
     });
   });
 
-  describe('rating source in context', () => {
-    it('should use provided ratingSource in context', () => {
-      const result = service.compute({
-        avgRating: 7.5,
-        voteCount: 500,
-        ratingSource: RATING_SOURCE.TRAKT,
-      });
-
-      expect(result.context).toBe('Trakt: 7.5');
-    });
-
-    it('should default to IMDb when no ratingSource provided', () => {
+  describe('rating context format', () => {
+    it('should show just the rating number without source brand', () => {
       const result = service.compute({
         avgRating: 7.5,
         voteCount: 500,
       });
 
-      expect(result.context).toBe('IMDb: 7.5');
+      expect(result.context).toBe('7.5');
     });
   });
 

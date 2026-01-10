@@ -19,7 +19,6 @@ import {
   AGE_THRESHOLDS,
   VERDICT_DEFAULTS,
 } from '../domain/verdict.constants';
-import { RATING_SOURCE } from '../domain/verdict.types';
 
 /**
  * Movie Verdict Service
@@ -59,9 +58,9 @@ export class MovieVerdictService {
     const isOlderContent = contentAgeYears >= AGE_THRESHOLDS.OLDER_CONTENT_YEARS;
     const isClassic = contentAgeYears >= AGE_THRESHOLDS.CLASSIC_YEARS;
 
-    // Helper to format rating context with correct source label
+    // Helper to format rating context (just the number, no source brand)
     const formatContext = (rating: number | null | undefined): string | null => {
-      return formatRatingContext(rating, ratingSource ?? RATING_SOURCE.IMDB);
+      return formatRatingContext(rating);
     };
 
     // Release status flags
