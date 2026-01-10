@@ -12,14 +12,25 @@ import { Bell, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
-import { useNotifications, useMarkAllNotificationsAsRead } from '@/core/query/user-actions';
+import {
+  useNotifications,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+} from '@/core/query/user-actions';
 import { useAuth } from '@/core/auth';
 
 export function NotificationBell() {
   const { dict } = useTranslation();
   const { isAuthenticated } = useAuth();
   const { data, isLoading } = useNotifications(isAuthenticated);
+  const markAsRead = useMarkNotificationAsRead();
   const markAllAsRead = useMarkAllNotificationsAsRead();
+
+  const handleNotificationClick = (notificationId: string, isRead: boolean) => {
+    if (!isRead) {
+      markAsRead.mutate(notificationId);
+    }
+  };
 
   const handleMarkAllAsRead = () => {
     markAllAsRead.mutate(undefined, {
@@ -93,6 +104,7 @@ export function NotificationBell() {
                   <Link
                     key={item.id}
                     href={href as Route}
+                    onClick={() => handleNotificationClick(item.id, item.isRead)}
                     className={`flex items-start gap-3 p-3 hover:bg-zinc-800/50 transition-colors ${
                       !item.isRead ? 'bg-zinc-800/30' : ''
                     }`}
