@@ -30,19 +30,22 @@ export function OverviewExpandable({
   if (!overview) return null;
 
   const needsTruncation = overview.length > PREVIEW_CHAR_LIMIT;
-  const displayText = isExpanded || !needsTruncation 
-    ? overview 
-    : overview.slice(0, PREVIEW_CHAR_LIMIT).trim() + '...';
+  const displayText =
+    isExpanded || !needsTruncation
+      ? overview
+      : overview.slice(0, PREVIEW_CHAR_LIMIT).trim() + '...';
 
   return (
     <section id="overview-section" className="space-y-2 scroll-mt-8">
       <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">{title}</h3>
-      
+
       <div>
-        <p className={cn(
-          'text-base md:text-lg text-zinc-300 leading-relaxed',
-          !isExpanded && needsTruncation && 'line-clamp-3'
-        )}>
+        <p
+          className={cn(
+            'text-base md:text-lg text-zinc-300 leading-relaxed',
+            !isExpanded && needsTruncation && 'line-clamp-3',
+          )}
+        >
           {displayText}
         </p>
 

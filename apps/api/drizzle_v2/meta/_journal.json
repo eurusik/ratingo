@@ -36,6 +36,20 @@
       "when": 1768144478379,
       "tag": "0004_first_post",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1768150475659,
+      "tag": "0005_add_google_oauth",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1768150532417,
+      "tag": "0006_add_oauth_exchange_codes",
+      "breakpoints": true
     }
   ]
 }

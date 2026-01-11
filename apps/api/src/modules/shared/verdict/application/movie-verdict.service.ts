@@ -41,15 +41,8 @@ export class MovieVerdictService {
    * Computes verdict for a movie.
    */
   compute(input: MovieVerdictInput): MovieVerdict {
-    const {
-      releaseStatus,
-      avgRating,
-      voteCount,
-      ratingSource,
-      popularitySignal,
-      popularity,
-      releaseDate,
-    } = input;
+    const { releaseStatus, avgRating, voteCount, popularitySignal, popularity, releaseDate } =
+      input;
 
     // Calculate content age in years
     const contentAgeYears = releaseDate

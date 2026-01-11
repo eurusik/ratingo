@@ -75,7 +75,6 @@ export default async function HomePage() {
     ...newDigitalCards.map((c) => c.id),
   ].filter(Boolean);
 
-
   return (
     <MediaCardsWithStatus mediaItemIds={allMediaItemIds}>
       <main className="min-h-screen">
@@ -85,8 +84,16 @@ export default async function HomePage() {
             item={{
               ...top3Cards[0],
               backdrop:
-                (heroItems[0] as { backdrop?: { small: string; medium: string; large: string; original: string } | null })
-                  ?.backdrop ?? null,
+                (
+                  heroItems[0] as {
+                    backdrop?: {
+                      small: string;
+                      medium: string;
+                      large: string;
+                      original: string;
+                    } | null;
+                  }
+                )?.backdrop ?? null,
             }}
             locale="uk"
           />
@@ -103,13 +110,19 @@ export default async function HomePage() {
             title={dict.home.sections.shows}
             titleIcon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
             actions={
-              <Link href="/browse/shows-trending" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+              <Link
+                href="/browse/shows-trending"
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
                 {dict.common.showAll} →
               </Link>
             }
           >
             {catalogCards.map((item) => (
-              <div key={item.id} className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]">
+              <div
+                key={item.id}
+                className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
+              >
                 <MediaCardServer {...item} locale="uk" />
               </div>
             ))}
@@ -137,13 +150,19 @@ export default async function HomePage() {
               title={dict.browse.moviesNowPlaying.title}
               titleIcon={<Clapperboard className="w-5 h-5 text-red-500" />}
               actions={
-                <Link href="/browse/movies-now-playing" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                <Link
+                  href="/browse/movies-now-playing"
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                >
                   {dict.common.showAll} →
                 </Link>
               }
             >
               {nowPlayingCards.map((item) => (
-                <div key={item.id} className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]">
+                <div
+                  key={item.id}
+                  className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
+                >
                   <MediaCardServer {...item} locale="uk" />
                 </div>
               ))}
@@ -156,13 +175,19 @@ export default async function HomePage() {
               title={dict.browse.moviesDigital.title}
               titleIcon={<Sparkles className="w-5 h-5 text-amber-400" />}
               actions={
-                <Link href="/browse/movies-digital" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                <Link
+                  href="/browse/movies-digital"
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                >
                   {dict.common.showAll} →
                 </Link>
               }
             >
               {newDigitalCards.map((item) => (
-                <div key={item.id} className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]">
+                <div
+                  key={item.id}
+                  className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
+                >
                   <MediaCardServer {...item} locale="uk" />
                 </div>
               ))}
@@ -175,13 +200,19 @@ export default async function HomePage() {
               title={dict.home.sections.movies}
               titleIcon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
               actions={
-                <Link href="/browse/movies-trending" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                <Link
+                  href="/browse/movies-trending"
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                >
                   {dict.common.showAll} →
                 </Link>
               }
             >
               {trendingMovieCards.map((item) => (
-                <div key={item.id} className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]">
+                <div
+                  key={item.id}
+                  className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
+                >
                   <MediaCardServer {...item} locale="uk" />
                 </div>
               ))}

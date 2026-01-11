@@ -192,7 +192,6 @@ describe('Query Keys Property Tests', () => {
   });
 });
 
-
 describe('Query Keys Undefined Normalization', () => {
   describe('Undefined normalization to null', () => {
     it('shows.trending normalizes undefined to null', () => {

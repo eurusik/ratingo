@@ -1,8 +1,5 @@
 /**
  * Property-based tests for single-flight token refresh.
- *
- * Feature: core-architecture-fixes, Property 1: Single-flight refresh guarantees one request
- * Validates: Requirements 1.1, 1.2, 1.5
  */
 
 import * as fc from 'fast-check';
@@ -44,8 +41,6 @@ describe('Single-flight token refresh', () => {
    *
    * For any number of concurrent 401 responses (N ≥ 1), calling refreshTokens()
    * N times concurrently SHALL result in exactly one HTTP request to the refresh endpoint.
-   *
-   * Validates: Requirements 1.1, 1.2, 1.5
    */
   it('Property 1: concurrent refresh calls result in exactly one API request', async () => {
     await fc.assert(

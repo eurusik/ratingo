@@ -7,8 +7,6 @@
  *
  * These tests validate that trending queries correctly detect and report
  * degraded state when context evaluations are missing.
- *
- * **Validates: Requirements 7.1, 7.2, 7.3, 7.5, 7.6**
  */
 
 import * as fc from 'fast-check';
@@ -129,8 +127,6 @@ describe('Trending Queries - Degraded State Detection Property Tests', () => {
    * For any API request to a context-specific endpoint (e.g., trending),
    * IF no evaluation records exist for that context with the active policy version,
    * THEN the response SHALL include `meta.degraded: true`.
-   *
-   * **Validates: Requirements 7.1, 7.2, 7.3, 7.6**
    */
   describe('Property 5: Degraded State Detection', () => {
     it('returns degraded=true when no evaluations exist for context', () => {
@@ -246,8 +242,6 @@ describe('Trending Queries - Degraded State Detection Property Tests', () => {
    * IF evaluation records exist for that context with the active policy version,
    * THEN the response SHALL NOT include `meta.degraded: true`
    * (or `meta.degraded` SHALL be `false`).
-   *
-   * **Validates: Requirements 7.5**
    */
   describe('Property 6: Normal State When Evaluations Exist', () => {
     it('returns degraded=false when evaluations exist', () => {

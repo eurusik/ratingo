@@ -58,21 +58,21 @@ export function BrowseFilters({ labels }: BrowseFiltersProps) {
   const updateParams = useCallback(
     (key: string, value: string | null) => {
       const params = new URLSearchParams(searchParams.toString());
-      
+
       if (value && value !== 'all') {
         params.set(key, value);
       } else {
         params.delete(key);
       }
-      
+
       // Reset to page 1 when filters change
       params.delete('page');
-      
+
       const query = params.toString();
       const url = (query ? `${pathname}?${query}` : pathname) as Route;
       router.push(url);
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams],
   );
 
   const handleSortChange = (value: string) => {
@@ -100,7 +100,7 @@ export function BrowseFilters({ labels }: BrowseFiltersProps) {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button 
+              <button
                 type="button"
                 className="p-1.5 text-zinc-500 hover:text-zinc-300 transition-colors"
                 aria-label="Інформація про сортування"
@@ -108,8 +108,8 @@ export function BrowseFilters({ labels }: BrowseFiltersProps) {
                 <Info className="w-4 h-4" />
               </button>
             </TooltipTrigger>
-            <TooltipContent 
-              side="bottom" 
+            <TooltipContent
+              side="bottom"
               className="max-w-[280px] bg-zinc-800 border-zinc-700 text-zinc-200"
             >
               <p className="text-sm">{labels.sortTooltips[currentSort]}</p>

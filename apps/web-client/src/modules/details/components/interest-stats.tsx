@@ -29,9 +29,7 @@ export function InterestStats({ stats, watchingNowLabel, totalWatchersLabel }: I
         </span>
       )}
 
-      {hasLiveWatchers && hasTotalWatchers && (
-        <span className="text-zinc-600">·</span>
-      )}
+      {hasLiveWatchers && hasTotalWatchers && <span className="text-zinc-600">·</span>}
 
       {hasTotalWatchers && (
         <span className="inline-flex items-center gap-1.5">

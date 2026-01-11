@@ -414,6 +414,7 @@ export const users = pgTable('users', {
   email: text('email').unique().notNull(),
   username: text('username').unique().notNull(),
   passwordHash: text('password_hash'),
+  googleId: text('google_id').unique(),
   avatarUrl: text('avatar_url'),
   bio: text('bio'),
   location: text('location'),
@@ -471,6 +472,31 @@ export const refreshTokens = pgTable(
   (t) => ({
     userIdx: index('refresh_tokens_user_idx').on(t.userId),
     expiresIdx: index('refresh_tokens_expires_idx').on(t.expiresAt),
+  }),
+);
+
+/**
+ * OAuth Exchange Codes
+ * Short-lived one-time codes for secure token delivery after OAuth callback.
+ * Code is stored as HMAC-SHA256 hash for security.
+ */
+export const oauthExchangeCodes = pgTable(
+  'oauth_exchange_codes',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    codeHash: text('code_hash').notNull(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    usedAt: timestamp('used_at'),
+    ip: text('ip'),
+    userAgent: text('user_agent'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    codeHashIdx: index('oauth_exchange_codes_hash_idx').on(t.codeHash),
+    expiresIdx: index('oauth_exchange_codes_expires_idx').on(t.expiresAt),
   }),
 );
 

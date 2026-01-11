@@ -434,8 +434,6 @@ describe('Policy Activation - Property-Based Tests', () => {
    * For any policy activation trigger, the system SHALL create exactly
    * ACTIVE_EVALUATION_CONTEXTS.length RE_EVALUATE_ALL jobs, with each job
    * having a unique context from ACTIVE_EVALUATION_CONTEXTS.
-   *
-   * **Validates: Requirements 5.1, 5.2, 5.3**
    */
   describe('Property 3: Fan-Out Coverage', () => {
     /**
@@ -558,8 +556,6 @@ describe('Policy Activation - Property-Based Tests', () => {
    * For any backfill operation triggered for context X, the operation SHALL only
    * write evaluation records with `context = X`. No records with other context
    * values SHALL be created or modified.
-   *
-   * **Validates: Requirements 9.1, 9.2**
    */
   describe('Property 8: Backfill Context Isolation', () => {
     /**

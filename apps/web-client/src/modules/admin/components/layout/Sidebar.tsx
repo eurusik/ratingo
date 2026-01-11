@@ -10,13 +10,7 @@ import { NavigationItem } from '../../types';
 import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
 import { useTranslation } from '@/shared/i18n';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/shared/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/shared/ui/sheet';
 
 interface SidebarProps {
   navigationItems: NavigationItem[];

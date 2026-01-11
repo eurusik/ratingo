@@ -7,8 +7,6 @@
  * For any evaluation with the same (media_item_id, policy_version, context) tuple,
  * upserting N times (N >= 1) SHALL result in exactly ONE record in the database
  * with the latest evaluation values.
- *
- * **Validates: Requirements 8.1, 8.3, 8.4, 9.4**
  */
 
 import * as fc from 'fast-check';
@@ -196,8 +194,6 @@ describe('Media Catalog Evaluation Repository - Property-Based Tests', () => {
    * For any evaluation with the same (media_item_id, policy_version, context) tuple,
    * upserting N times (N >= 1) SHALL result in exactly ONE record in the database
    * with the latest evaluation values.
-   *
-   * **Validates: Requirements 8.1, 8.3, 8.4, 9.4**
    */
   describe('Property 7: Upsert Idempotency', () => {
     it('upserting same evaluation N times results in exactly ONE record', () => {

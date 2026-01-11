@@ -12,13 +12,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { useProviders } from '@/core/query';
 import { Loader2 } from 'lucide-react';
 
@@ -168,8 +162,7 @@ export function MappingDialog({
               : (labels?.editTitle ?? 'Edit mapping')}
           </DialogTitle>
           <DialogDescription>
-            {labels?.description ??
-              'Mapping links a TMDB provider to our canonical provider'}
+            {labels?.description ?? 'Mapping links a TMDB provider to our canonical provider'}
           </DialogDescription>
         </DialogHeader>
 
@@ -219,7 +212,8 @@ export function MappingDialog({
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              {labels?.providerIdHint ?? 'Our internal provider ID (e.g., netflix, amazon-prime-video)'}
+              {labels?.providerIdHint ??
+                'Our internal provider ID (e.g., netflix, amazon-prime-video)'}
             </p>
           </div>
 
@@ -234,7 +228,8 @@ export function MappingDialog({
               className="h-9"
             />
             <p className="text-xs text-muted-foreground">
-              {labels?.variantIdHint ?? 'Display name for the variant (may differ from canonical ID)'}
+              {labels?.variantIdHint ??
+                'Display name for the variant (may differ from canonical ID)'}
             </p>
           </div>
 
@@ -261,7 +256,8 @@ export function MappingDialog({
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              {labels?.distributionChannelHint ?? 'direct = own service, channel = via Amazon/Apple'}
+              {labels?.distributionChannelHint ??
+                'direct = own service, channel = via Amazon/Apple'}
             </p>
           </div>
 
@@ -293,10 +289,10 @@ export function MappingDialog({
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {labels?.saving ?? 'Saving...'}
                 </>
+              ) : mode === 'create' ? (
+                (labels?.create ?? 'Create')
               ) : (
-                mode === 'create'
-                  ? (labels?.create ?? 'Create')
-                  : (labels?.save ?? 'Save')
+                (labels?.save ?? 'Save')
               )}
             </Button>
           </DialogFooter>

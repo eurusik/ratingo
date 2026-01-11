@@ -180,9 +180,7 @@ export function DataVerdictServer({
           {/* Additional context (optional) */}
           {context && (
             <p className="text-sm text-zinc-400 leading-relaxed">
-              {isNumericContext(context)
-                ? dict.details.verdict.context.aggregatePublic
-                : context}
+              {isNumericContext(context) ? dict.details.verdict.context.aggregatePublic : context}
             </p>
           )}
 

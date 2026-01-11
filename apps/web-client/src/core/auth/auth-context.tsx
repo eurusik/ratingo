@@ -106,6 +106,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
+  // Listen for tokens-updated events (e.g., from OAuth callback)
+  useEffect(() => {
+    const handleTokensUpdated = () => {
+      fetchUser();
+    };
+
+    window.addEventListener('auth:tokens-updated', handleTokensUpdated);
+    return () => window.removeEventListener('auth:tokens-updated', handleTokensUpdated);
+  }, [fetchUser]);
+
   const login = useCallback(async (data: LoginDto) => {
     const tokens = await authApi.login(data);
     tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);

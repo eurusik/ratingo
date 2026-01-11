@@ -182,9 +182,7 @@ export function MappingsTable({ labels }: MappingsTableProps) {
       id: 'variantId',
       header: labels?.columns?.variant ?? 'Variant',
       accessorKey: 'variantId',
-      cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.variantId}</span>
-      ),
+      cell: ({ row }) => <span className="text-muted-foreground">{row.original.variantId}</span>,
     },
     {
       id: 'distributionChannel',
@@ -317,8 +315,7 @@ export function MappingsTable({ labels }: MappingsTableProps) {
               {labels?.title ?? 'Provider Mappings'}
             </CardTitle>
             <CardDescription>
-              {labels?.description ??
-                'Links between TMDB providers and our canonical providers'}
+              {labels?.description ?? 'Links between TMDB providers and our canonical providers'}
             </CardDescription>
           </div>
           <Button onClick={handleCreateMapping}>
@@ -334,12 +331,16 @@ export function MappingsTable({ labels }: MappingsTableProps) {
             error={error?.message}
             rowActions={rowActions}
             emptyState={emptyState}
-            pagination={data?.meta ? {
-              page,
-              limit,
-              total: data.meta.total ?? 0,
-              hasNext: data.meta.hasMore ?? false,
-            } : undefined}
+            pagination={
+              data?.meta
+                ? {
+                    page,
+                    limit,
+                    total: data.meta.total ?? 0,
+                    hasNext: data.meta.hasMore ?? false,
+                  }
+                : undefined
+            }
             onPaginationChange={({ page: newPage }) => setPage(newPage)}
           />
         </CardContent>

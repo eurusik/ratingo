@@ -204,12 +204,16 @@ export function UnmappedProvidersTable({ labels }: UnmappedProvidersTableProps) 
             error={error?.message}
             rowActions={rowActions}
             emptyState={emptyState}
-            pagination={data?.meta ? {
-              page,
-              limit,
-              total: data.meta.total ?? 0,
-              hasNext: data.meta.hasMore ?? false,
-            } : undefined}
+            pagination={
+              data?.meta
+                ? {
+                    page,
+                    limit,
+                    total: data.meta.total ?? 0,
+                    hasNext: data.meta.hasMore ?? false,
+                  }
+                : undefined
+            }
             onPaginationChange={({ page: newPage }) => setPage(newPage)}
           />
         </CardContent>

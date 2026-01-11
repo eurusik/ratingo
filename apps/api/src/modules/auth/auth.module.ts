@@ -1,20 +1,47 @@
-import { Module, forwardRef } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Module, forwardRef, type Provider } from '@nestjs/common';
+import { ConfigModule, ConfigService, type ConfigType } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import authConfig from '../../config/auth.config';
+import googleConfig from '../../config/google.config';
 import { DatabaseModule } from '../../database/database.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 import { UsersModule } from '../users/users.module';
 
 import { AuthService } from './application/auth.service';
+import { EXCHANGE_CODES_REPOSITORY } from './domain/repositories/exchange-codes.repository.interface';
 import { REFRESH_TOKENS_REPOSITORY } from './domain/repositories/refresh-tokens.repository.interface';
 import { PASSWORD_HASHER } from './domain/services/password-hasher.interface';
 import { BcryptPasswordHasher } from './infrastructure/adapters/bcrypt-password.hasher';
+import { GoogleAuthGuard } from './infrastructure/guards/google-auth.guard';
+import { CleanupExchangeCodesJob } from './infrastructure/jobs/cleanup-exchange-codes.job';
+import { DrizzleExchangeCodesRepository } from './infrastructure/repositories/drizzle-exchange-codes.repository';
 import { DrizzleRefreshTokensRepository } from './infrastructure/repositories/drizzle-refresh-tokens.repository';
+import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import { LocalStrategy } from './infrastructure/strategies/local.strategy';
 import { AuthController } from './presentation/controllers/auth.controller';
+import { OAuthExceptionFilter } from './presentation/filters/oauth-exception.filter';
+
+/**
+ * Conditionally provides GoogleStrategy only when Google OAuth is enabled.
+ * This prevents Passport from throwing "clientID required" error when
+ * Google OAuth credentials are not configured.
+ */
+const googleStrategyProvider: Provider = {
+  provide: GoogleStrategy,
+  useFactory: (config: ConfigType<typeof googleConfig>) => {
+    if (!config.enabled) {
+      // Return null when Google OAuth is disabled - no strategy registered
+      return null;
+    }
+    // Instantiate GoogleStrategy with the injected config
+    return new GoogleStrategy(config);
+  },
+  inject: [googleConfig.KEY],
+};
 
 /**
  * Auth module wiring (tokens, hashing, refresh storage).
@@ -22,6 +49,8 @@ import { AuthController } from './presentation/controllers/auth.controller';
 @Module({
   imports: [
     ConfigModule.forFeature(authConfig),
+    ConfigModule.forFeature(googleConfig),
+    ScheduleModule.forRoot(),
     JwtModule.registerAsync({
       imports: [ConfigModule.forFeature(authConfig)],
       inject: [ConfigService],
@@ -38,6 +67,14 @@ import { AuthController } from './presentation/controllers/auth.controller';
     AuthService,
     JwtStrategy,
     LocalStrategy,
+    googleStrategyProvider,
+    GoogleAuthGuard,
+    OAuthExceptionFilter,
+    CleanupExchangeCodesJob,
+    {
+      provide: APP_FILTER,
+      useClass: OAuthExceptionFilter,
+    },
     {
       provide: PASSWORD_HASHER,
       useClass: BcryptPasswordHasher,
@@ -46,8 +83,12 @@ import { AuthController } from './presentation/controllers/auth.controller';
       provide: REFRESH_TOKENS_REPOSITORY,
       useClass: DrizzleRefreshTokensRepository,
     },
+    {
+      provide: EXCHANGE_CODES_REPOSITORY,
+      useClass: DrizzleExchangeCodesRepository,
+    },
   ],
   controllers: [AuthController],
-  exports: [AuthService, PASSWORD_HASHER, REFRESH_TOKENS_REPOSITORY],
+  exports: [AuthService, PASSWORD_HASHER, REFRESH_TOKENS_REPOSITORY, EXCHANGE_CODES_REPOSITORY],
 })
 export class AuthModule {}

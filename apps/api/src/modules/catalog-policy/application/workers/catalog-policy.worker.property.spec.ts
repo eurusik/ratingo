@@ -214,8 +214,6 @@ describe('Catalog Policy Worker - Property-Based Tests', () => {
    *
    * For any job payload (ReEvaluateAllPayload or EvaluateCatalogItemPayload) that is missing
    * the `context` field, the worker SHALL NOT write any evaluation record to the database.
-   *
-   * Validates: Requirements 2.3, 2.4, 3.4
    */
   describe('Property 1: Missing Context Fails Fast', () => {
     // Mock logger to capture error calls
@@ -367,8 +365,6 @@ describe('Catalog Policy Worker - Property-Based Tests', () => {
    * For any evaluation request with explicit `context` parameter, the stored evaluation
    * record SHALL have that exact context value. This applies to single-item (`evaluateOne`)
    * operations.
-   *
-   * Validates: Requirements 3.1, 3.3
    */
   describe('Property 2: Explicit Context Round-Trip (single item)', () => {
     // Simulated evaluation storage (mirrors repository behavior)
@@ -534,8 +530,6 @@ describe('Catalog Policy Worker - Property-Based Tests', () => {
    *
    * For any batch evaluation request with explicit `context` parameter, all stored evaluation
    * records SHALL have that exact context value.
-   *
-   * Validates: Requirements 4.1, 4.3
    */
   describe('Property 2: Explicit Context Round-Trip (batch)', () => {
     // Simulated evaluation storage (mirrors repository behavior)

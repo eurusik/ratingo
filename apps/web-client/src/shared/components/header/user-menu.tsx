@@ -75,7 +75,10 @@ export function UserMenu() {
         {isAdmin && (
           <>
             <DropdownMenuSeparator className="bg-zinc-800" />
-            <DropdownMenuItem asChild className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100">
+            <DropdownMenuItem
+              asChild
+              className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100"
+            >
               <Link href={'/admin' as Route}>
                 <Shield className="w-4 h-4 mr-2" />
                 {dict.auth.admin}

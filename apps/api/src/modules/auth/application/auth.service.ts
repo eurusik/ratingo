@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { randomUUID, randomBytes, createHmac } from 'crypto';
 
 import {
   Injectable,
@@ -16,10 +16,27 @@ import authConfig from '../../../config/auth.config';
 import { UsersService } from '../../users/application/users.service';
 import { type User } from '../../users/domain/entities/user.entity';
 import {
+  EXCHANGE_CODE_SIZE_BYTES,
+  EXCHANGE_CODE_TTL_MS,
+  USERNAME_MAX_BASE_LENGTH,
+  USERNAME_MIN_LENGTH,
+  USERNAME_SUFFIX_LENGTH,
+  USERNAME_MAX_ATTEMPTS,
+  USERNAME_FALLBACK_SUFFIX_LENGTH,
+  USERNAME_RANDOM_BYTES,
+  BASE_36,
+} from '../auth.constants';
+import {
+  type IExchangeCodesRepository,
+  EXCHANGE_CODES_REPOSITORY,
+  ConsumeCodeFailureReason,
+} from '../domain/repositories/exchange-codes.repository.interface';
+import {
   type IRefreshTokensRepository,
   REFRESH_TOKENS_REPOSITORY,
 } from '../domain/repositories/refresh-tokens.repository.interface';
 import { type PasswordHasher, PASSWORD_HASHER } from '../domain/services/password-hasher.interface';
+import { type GoogleUserPayload } from '../infrastructure/strategies/google.strategy';
 
 export interface AuthTokens {
   accessToken: string;
@@ -62,16 +79,14 @@ export class AuthService {
     private readonly passwordHasher: PasswordHasher,
     @Inject(REFRESH_TOKENS_REPOSITORY)
     private readonly refreshTokensRepository: IRefreshTokensRepository,
+    @Inject(EXCHANGE_CODES_REPOSITORY)
+    private readonly exchangeCodesRepository: IExchangeCodesRepository,
   ) {}
 
   /**
-   * Registers a new user and returns tokens.
+   * Registers a new user and issues tokens.
    *
-   * @param {string} email - User email
-   * @param {string} username - Username
-   * @param {string} password - Plain password
-   * @param {ClientMeta} clientMeta - Client metadata for token binding
-   * @returns {Promise<AuthTokens>} Access and refresh tokens
+   * @throws {ConflictException} When email or username already in use
    */
   async register(
     email: string,
@@ -98,12 +113,9 @@ export class AuthService {
   }
 
   /**
-   * Authenticates user and returns tokens.
+   * Authenticates user with email/password.
    *
-   * @param {string} email - User email
-   * @param {string} password - Plain password
-   * @param {ClientMeta} clientMeta - Client metadata for token binding
-   * @returns {Promise<AuthTokens>} Access and refresh tokens
+   * @throws {UnauthorizedException} When credentials are invalid
    */
   async login(email: string, password: string, clientMeta?: ClientMeta): Promise<AuthTokens> {
     const user = await this.usersService.getByEmail(email);
@@ -118,11 +130,53 @@ export class AuthService {
   }
 
   /**
-   * Issues new tokens based on refresh token.
+   * Authenticates user via Google OAuth.
+   * Resolves account by: googleId → email (link) → create new.
+   */
+  async loginWithGoogle(
+    payload: GoogleUserPayload,
+    clientMeta?: ClientMeta,
+  ): Promise<{ user: User; tokens: AuthTokens }> {
+    // 1. Find by googleId
+    let user = await this.usersService.getByGoogleId(payload.googleId);
+
+    // 2. Find by email and link googleId
+    if (!user) {
+      user = await this.usersService.getByEmail(payload.email);
+      if (user) {
+        await this.usersService.linkGoogleId(user.id, payload.googleId);
+        // Set avatarUrl only if currently null
+        if (!user.avatarUrl && payload.picture) {
+          await this.usersService.updateProfile(user.id, { avatarUrl: payload.picture });
+        }
+        // Refresh user data after updates
+        user = await this.usersService.getById(user.id);
+      }
+    }
+
+    // 3. Create new user
+    if (!user) {
+      const username = await this.generateUniqueUsername(payload.name, payload.email);
+      user = await this.usersService.createUser({
+        email: payload.email,
+        username,
+        passwordHash: null,
+        googleId: payload.googleId,
+        avatarUrl: payload.picture,
+      });
+    }
+
+    // Issue tokens using existing method - applies same token rotation
+    // and reuse detection as password-authenticated users
+    const tokens = await this.issueTokens(user, clientMeta);
+    return { user, tokens };
+  }
+
+  /**
+   * Issues new tokens using valid refresh token.
+   * Implements token rotation with reuse detection.
    *
-   * @param {string} refreshToken - Provided refresh token
-   * @param {ClientMeta} clientMeta - Client metadata for token binding
-   * @returns {Promise<AuthTokens>} Access and refresh tokens
+   * @throws {UnauthorizedException} When token is invalid, expired, or reused
    */
   async refresh(refreshToken: string, clientMeta?: ClientMeta): Promise<AuthTokens> {
     const t = DevTiming.start('authRefresh');
@@ -180,9 +234,6 @@ export class AuthService {
 
   /**
    * Revokes all refresh tokens for user (logout everywhere).
-   *
-   * @param {string} userId - User identifier
-   * @returns {Promise<void>} Nothing
    */
   async logout(userId: string): Promise<void> {
     await this.refreshTokensRepository.revokeAllForUser(userId);
@@ -226,10 +277,7 @@ export class AuthService {
   /**
    * Changes user password after verifying current password.
    *
-   * @param {string} userId - User identifier
-   * @param {string} currentPassword - Current password
-   * @param {string} newPassword - New password to set
-   * @returns {Promise<void>} Nothing
+   * @throws {UnauthorizedException} When current password is invalid
    */
   async changePassword(
     userId: string,
@@ -250,6 +298,58 @@ export class AuthService {
     await this.usersService.updatePassword(user.id, newHash);
   }
 
+  /**
+   * Generates one-time exchange code for secure token delivery after OAuth.
+   * Code is HMAC-SHA256 hashed and stored with 60s TTL.
+   */
+  async generateExchangeCode(userId: string, clientMeta?: ClientMeta): Promise<string> {
+    // Generate random code (256 bits of entropy)
+    const code = randomBytes(EXCHANGE_CODE_SIZE_BYTES).toString('base64url');
+
+    // Hash with HMAC-SHA256 using pepper for additional security
+    const codeHash = createHmac('sha256', this.config.exchangeCodePepper)
+      .update(code)
+      .digest('hex');
+
+    await this.exchangeCodesRepository.create({
+      codeHash,
+      userId,
+      expiresAt: new Date(Date.now() + EXCHANGE_CODE_TTL_MS),
+      ip: clientMeta?.ip ?? null,
+      userAgent: clientMeta?.userAgent ?? null,
+    });
+
+    return code;
+  }
+
+  /**
+   * Exchanges one-time code for tokens. Code is consumed atomically.
+   *
+   * @throws {UnauthorizedException} OAUTH_EXCHANGE_EXPIRED or OAUTH_EXCHANGE_USED
+   */
+  async exchangeCodeForTokens(code: string, clientMeta?: ClientMeta): Promise<AuthTokens> {
+    // Hash the provided code with same pepper
+    const codeHash = createHmac('sha256', this.config.exchangeCodePepper)
+      .update(code)
+      .digest('hex');
+
+    // Atomic consume: find valid code and mark as used in one operation
+    const result = await this.exchangeCodesRepository.consumeCode(codeHash);
+
+    if (!result.success) {
+      if ('reason' in result && result.reason === ConsumeCodeFailureReason.ALREADY_USED) {
+        throw new UnauthorizedException('OAUTH_EXCHANGE_USED');
+      }
+      throw new UnauthorizedException('OAUTH_EXCHANGE_EXPIRED');
+    }
+
+    const user = await this.usersService.getById(result.record.userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return this.issueTokens(user, clientMeta);
+  }
+
   private parseDuration(duration: string): number {
     const match = /^(\d+)([smhd])$/.exec(duration);
     if (!match) return Number(duration) || 0;
@@ -267,5 +367,68 @@ export class AuthService {
       default:
         return value;
     }
+  }
+
+  /**
+   * Generates unique username from Google profile name or email.
+   * Normalizes to ASCII alphanumeric + underscores, adds suffix on collision.
+   */
+  async generateUniqueUsername(name: string, email: string): Promise<string> {
+    // Normalize: ASCII alphanumeric + underscores only
+    let base = this.normalizeToUsername(name);
+
+    // Fallback to email prefix if name is empty/invalid
+    if (base.length < USERNAME_MIN_LENGTH) {
+      base = this.normalizeToUsername(email.split('@')[0]);
+    }
+
+    // Ultimate fallback if email prefix is also invalid
+    if (base.length < USERNAME_MIN_LENGTH) {
+      base = 'user';
+    }
+
+    // Truncate to leave room for suffix
+    base = base.slice(0, USERNAME_MAX_BASE_LENGTH);
+
+    // Check if base username is available
+    let username = base;
+    const existingUser = await this.usersService.getByUsername(username);
+    if (!existingUser) {
+      return username;
+    }
+
+    // Add suffix on collision
+    for (let attempt = 0; attempt < USERNAME_MAX_ATTEMPTS; attempt++) {
+      const suffix = this.generateBase36Suffix(USERNAME_SUFFIX_LENGTH);
+      username = `${base}_${suffix}`;
+
+      const exists = await this.usersService.getByUsername(username);
+      if (!exists) {
+        return username;
+      }
+    }
+
+    // Ultimate fallback: fully random username
+    const randomSuffix = this.generateBase36Suffix(USERNAME_FALLBACK_SUFFIX_LENGTH);
+    return `user_${randomSuffix}`;
+  }
+
+  private normalizeToUsername(input: string): string {
+    if (!input) return '';
+
+    return input
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '_') // Replace non-alphanumeric with underscore
+      .replace(/_+/g, '_') // Collapse multiple underscores
+      .replace(/^_|_$/g, ''); // Trim leading/trailing underscores
+  }
+
+  private generateBase36Suffix(length: number): string {
+    // Generate enough random bytes (4 bytes = 32 bits of entropy)
+    const bytes = randomBytes(USERNAME_RANDOM_BYTES);
+    // Convert to BigInt and then to base36
+    const num = BigInt(`0x${bytes.toString('hex')}`);
+    // Convert to base36 and take required length
+    return num.toString(BASE_36).slice(0, length).padStart(length, '0');
   }
 }

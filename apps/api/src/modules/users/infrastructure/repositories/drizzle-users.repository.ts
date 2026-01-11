@@ -87,6 +87,27 @@ export class DrizzleUsersRepository implements IUsersRepository {
   }
 
   /**
+   * Finds user by Google ID.
+   *
+   * @param {string} googleId - Google ID from OAuth
+   * @returns {Promise<User | null>} User or null
+   */
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return withDbError(
+      'fetch user by google id',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select()
+          .from(schema.users)
+          .where(eq(schema.users.googleId, googleId));
+        return row ? this.mapRow(row) : null;
+      },
+      { googleId },
+    );
+  }
+
+  /**
    * Creates a new user.
    *
    * @param {CreateUserData} data - Creation payload
@@ -103,6 +124,7 @@ export class DrizzleUsersRepository implements IUsersRepository {
             email: data.email,
             username: data.username,
             passwordHash: data.passwordHash,
+            googleId: data.googleId ?? null,
             avatarUrl: data.avatarUrl ?? null,
             bio: data.bio ?? null,
             location: data.location ?? null,
@@ -186,12 +208,36 @@ export class DrizzleUsersRepository implements IUsersRepository {
     );
   }
 
+  /**
+   * Links a Google ID to an existing user account.
+   *
+   * @param {string} id - User identifier
+   * @param {string} googleId - Google ID to link
+   * @returns {Promise<User>} Updated user
+   */
+  async linkGoogleId(id: string, googleId: string): Promise<User> {
+    return withDbError(
+      'link google id',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .update(schema.users)
+          .set({ googleId, updatedAt: new Date() })
+          .where(eq(schema.users.id, id))
+          .returning();
+        return this.mapRow(row);
+      },
+      { id },
+    );
+  }
+
   private mapRow(row: typeof schema.users.$inferSelect): User {
     return {
       id: row.id,
       email: row.email,
       username: row.username,
       passwordHash: row.passwordHash,
+      googleId: row.googleId,
       avatarUrl: row.avatarUrl,
       bio: row.bio,
       location: row.location,

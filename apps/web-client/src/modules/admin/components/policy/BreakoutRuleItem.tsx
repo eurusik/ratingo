@@ -28,9 +28,7 @@ export function BreakoutRuleItem({
   const { requirements } = rule;
 
   const providerIds = requirements.requireAnyOfProviders ?? [];
-  const providerNames = resolveProviderNames
-    ? resolveProviderNames(providerIds)
-    : providerIds;
+  const providerNames = resolveProviderNames ? resolveProviderNames(providerIds) : providerIds;
 
   return (
     <div className="p-3 border rounded-lg">

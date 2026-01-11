@@ -104,21 +104,36 @@ export const queryKeys = {
       batch: (mediaIdsHash: string) =>
         [...queryKeys.userActions.savedItems.all, 'batch', mediaIdsHash] as const,
       list: (list: string, limit?: number, offset?: number) =>
-        [...queryKeys.userActions.savedItems.all, 'list', list, limit ?? null, offset ?? null] as const,
+        [
+          ...queryKeys.userActions.savedItems.all,
+          'list',
+          list,
+          limit ?? null,
+          offset ?? null,
+        ] as const,
     },
     subscriptions: {
       all: ['user-actions', 'subscriptions'] as const,
       status: (mediaItemId: string) =>
         [...queryKeys.userActions.subscriptions.all, 'status', mediaItemId] as const,
       list: (limit?: number, offset?: number) =>
-        [...queryKeys.userActions.subscriptions.all, 'list', limit ?? null, offset ?? null] as const,
+        [
+          ...queryKeys.userActions.subscriptions.all,
+          'list',
+          limit ?? null,
+          offset ?? null,
+        ] as const,
     },
     notifications: {
       all: ['user-actions', 'notifications'] as const,
       list: (limit?: number, offset?: number) =>
-        [...queryKeys.userActions.notifications.all, 'list', limit ?? null, offset ?? null] as const,
-      unreadCount: () =>
-        [...queryKeys.userActions.notifications.all, 'unread-count'] as const,
+        [
+          ...queryKeys.userActions.notifications.all,
+          'list',
+          limit ?? null,
+          offset ?? null,
+        ] as const,
+      unreadCount: () => [...queryKeys.userActions.notifications.all, 'unread-count'] as const,
     },
   },
 

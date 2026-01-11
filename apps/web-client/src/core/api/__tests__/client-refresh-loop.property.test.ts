@@ -1,8 +1,5 @@
 /**
  * Property-based tests for refresh loop prevention.
- *
- * Feature: core-architecture-fixes, Property 2: Refresh loop prevention
- * Validates: Requirements 1.6
  */
 
 import * as fc from 'fast-check';
@@ -25,8 +22,6 @@ describe('Refresh loop prevention', () => {
    *
    * This test validates the isRefreshEndpoint detection which is the
    * foundation of loop prevention in the client's afterResponse hook.
-   *
-   * Validates: Requirements 1.6
    */
   it('Property 2: isRefreshEndpoint correctly identifies refresh URLs to prevent loops', () => {
     fc.assert(
@@ -60,11 +55,7 @@ describe('Refresh loop prevention', () => {
   it('refresh endpoint detection handles various URL formats', () => {
     fc.assert(
       fc.property(
-        fc.constantFrom(
-          'http://localhost:3000',
-          'https://api.example.com',
-          'https://ratingo.app',
-        ),
+        fc.constantFrom('http://localhost:3000', 'https://api.example.com', 'https://ratingo.app'),
         fc.constantFrom('', '/api', '/api/v1'),
         (baseUrl, prefix) => {
           // Standard refresh URL

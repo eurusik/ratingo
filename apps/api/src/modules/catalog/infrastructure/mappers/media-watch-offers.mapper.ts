@@ -64,12 +64,8 @@ export class MediaWatchOffersMapper {
     const uaOffers = byRegion.get(PRIMARY_REGION);
     const usOffers = byRegion.get(FALLBACK_REGION);
 
-    const selectedOffers = uaOffers?.length ? uaOffers : usOffers?.length ? usOffers : null;
-    const region = uaOffers?.length
-      ? (PRIMARY_REGION as AvailabilityRegion)
-      : usOffers?.length
-        ? (FALLBACK_REGION as AvailabilityRegion)
-        : null;
+    const selectedOffers = this.selectOffersByPriority(uaOffers, usOffers);
+    const region = this.determineRegion(uaOffers, usOffers);
     const isFallback = !uaOffers?.length && !!usOffers?.length;
 
     if (selectedOffers) {
@@ -94,6 +90,30 @@ export class MediaWatchOffersMapper {
       hint,
       tmdbWatchUrl,
     };
+  }
+
+  /**
+   * Selects offers by region priority (UA > US).
+   */
+  private static selectOffersByPriority(
+    uaOffers: WatchOfferRow[] | undefined,
+    usOffers: WatchOfferRow[] | undefined,
+  ): WatchOfferRow[] | null {
+    if (uaOffers?.length) return uaOffers;
+    if (usOffers?.length) return usOffers;
+    return null;
+  }
+
+  /**
+   * Determines the region based on available offers.
+   */
+  private static determineRegion(
+    uaOffers: WatchOfferRow[] | undefined,
+    usOffers: WatchOfferRow[] | undefined,
+  ): AvailabilityRegion | null {
+    if (uaOffers?.length) return PRIMARY_REGION as AvailabilityRegion;
+    if (usOffers?.length) return FALLBACK_REGION as AvailabilityRegion;
+    return null;
   }
 
   /**

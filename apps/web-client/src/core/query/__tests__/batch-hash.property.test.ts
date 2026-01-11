@@ -1,8 +1,5 @@
 /**
  * Property-based tests for deterministic batch hash.
- *
- * Feature: core-architecture-fixes, Property 5: Deterministic batch hash
- * Validates: Requirements 2.5
  */
 
 import * as fc from 'fast-check';
@@ -15,23 +12,18 @@ describe('Deterministic batch hash', () => {
    * For any two arrays of mediaItemIds that contain the same set of IDs
    * (regardless of order or duplicates), createBatchHash() SHALL return
    * identical strings.
-   *
-   * Validates: Requirements 2.5
    */
   it('Property 5: same IDs in different order produce identical hash', () => {
     fc.assert(
-      fc.property(
-        fc.array(fc.uuid(), { minLength: 1, maxLength: 20 }),
-        (ids) => {
-          // Shuffle the array
-          const shuffled = [...ids].sort(() => Math.random() - 0.5);
+      fc.property(fc.array(fc.uuid(), { minLength: 1, maxLength: 20 }), (ids) => {
+        // Shuffle the array
+        const shuffled = [...ids].sort(() => Math.random() - 0.5);
 
-          const hash1 = createBatchHash(ids);
-          const hash2 = createBatchHash(shuffled);
+        const hash1 = createBatchHash(ids);
+        const hash2 = createBatchHash(shuffled);
 
-          expect(hash1).toBe(hash2);
-        },
-      ),
+        expect(hash1).toBe(hash2);
+      }),
       { numRuns: 100 },
     );
   });
@@ -91,21 +83,18 @@ describe('Deterministic batch hash', () => {
    */
   it('hash output is sorted ascending and comma-separated', () => {
     fc.assert(
-      fc.property(
-        fc.array(fc.uuid(), { minLength: 1, maxLength: 20 }),
-        (ids) => {
-          const hash = createBatchHash(ids);
-          const parts = hash.split(',');
+      fc.property(fc.array(fc.uuid(), { minLength: 1, maxLength: 20 }), (ids) => {
+        const hash = createBatchHash(ids);
+        const parts = hash.split(',');
 
-          // Parts should be sorted
-          const sortedParts = [...parts].sort();
-          expect(parts).toEqual(sortedParts);
+        // Parts should be sorted
+        const sortedParts = [...parts].sort();
+        expect(parts).toEqual(sortedParts);
 
-          // Parts should be unique
-          const uniqueParts = [...new Set(parts)];
-          expect(parts).toEqual(uniqueParts);
-        },
-      ),
+        // Parts should be unique
+        const uniqueParts = [...new Set(parts)];
+        expect(parts).toEqual(uniqueParts);
+      }),
       { numRuns: 100 },
     );
   });

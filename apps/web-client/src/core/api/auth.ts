@@ -22,6 +22,18 @@ export interface RefreshDto {
   refreshToken: string;
 }
 
+/** OAuth exchange code request payload. */
+export interface ExchangeCodeDto {
+  code: string;
+}
+
+/** Auth configuration response. */
+export interface AuthConfigDto {
+  google: {
+    enabled: boolean;
+  };
+}
+
 /** Auth API methods. */
 export const authApi = {
   /** Registers a new user. */
@@ -47,5 +59,27 @@ export const authApi = {
   /** Gets current authenticated user. */
   async me(): Promise<MeDto> {
     return apiGet<MeDto>('auth/me');
+  },
+
+  /**
+   * Exchanges OAuth one-time code for tokens.
+   * Used after OAuth callback to securely obtain tokens.
+   *
+   * @param code - One-time code from OAuth callback
+   * @returns Auth tokens
+   * @throws {ApiError} OAUTH_EXCHANGE_EXPIRED or OAUTH_EXCHANGE_USED
+   */
+  async exchangeOAuthCode(code: string): Promise<AuthTokensDto> {
+    return apiPost<AuthTokensDto>('auth/oauth/exchange', { code });
+  },
+
+  /**
+   * Gets auth configuration including OAuth provider status.
+   * Used to conditionally show OAuth buttons.
+   *
+   * @returns Auth configuration with provider enabled flags
+   */
+  async getAuthConfig(): Promise<AuthConfigDto> {
+    return apiGet<AuthConfigDto>('auth/config');
   },
 } as const;

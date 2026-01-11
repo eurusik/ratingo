@@ -51,6 +51,16 @@ export class UsersService {
   }
 
   /**
+   * Gets user by Google ID.
+   *
+   * @param {string} googleId - Google ID from OAuth
+   * @returns {Promise<User | null>} User or null
+   */
+  async getByGoogleId(googleId: string): Promise<User | null> {
+    return this.usersRepository.findByGoogleId(googleId);
+  }
+
+  /**
    * Returns public-safe profile or null when not visible for the viewer.
    *
    * @param {string} username - Username
@@ -115,12 +125,13 @@ export class UsersService {
   /**
    * Creates a new user.
    *
-   * @param {Pick<User, 'email' | 'username'> & { passwordHash: string | null; avatarUrl?: string | null }} data - Creation payload
+   * @param {Pick<User, 'email' | 'username'> & { passwordHash: string | null; googleId?: string | null; avatarUrl?: string | null }} data - Creation payload
    * @returns {Promise<User>} Created user
    */
   async createUser(
     data: Pick<User, 'email' | 'username'> & {
       passwordHash: string | null;
+      googleId?: string | null;
       avatarUrl?: string | null;
     },
   ): Promise<User> {
@@ -129,6 +140,7 @@ export class UsersService {
       email: data.email,
       username: data.username,
       passwordHash: data.passwordHash,
+      googleId: data.googleId,
       avatarUrl: data.avatarUrl,
     });
   }
@@ -168,5 +180,17 @@ export class UsersService {
    */
   async updatePassword(id: string, passwordHash: string): Promise<void> {
     await this.usersRepository.updatePassword(id, passwordHash);
+  }
+
+  /**
+   * Links a Google ID to an existing user account.
+   *
+   * @param {string} userId - User identifier
+   * @param {string} googleId - Google ID to link
+   * @returns {Promise<User>} Updated user
+   */
+  async linkGoogleId(userId: string, googleId: string): Promise<User> {
+    this.logger.debug(`Linking Google ID to user ${userId}`);
+    return this.usersRepository.linkGoogleId(userId, googleId);
   }
 }

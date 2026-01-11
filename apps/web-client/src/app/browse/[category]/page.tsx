@@ -7,7 +7,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getDictionary, getByPath } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
-import { getCategoryConfig, getValidCategorySlugs, categorySupportsFilters, type BrowseCategory } from '@/modules/browse';
+import {
+  getCategoryConfig,
+  getValidCategorySlugs,
+  categorySupportsFilters,
+  type BrowseCategory,
+} from '@/modules/browse';
 import { BrowsePageHeader, MediaGrid, BrowseFilters } from '@/modules/browse';
 import { BrowseInfiniteList } from './browse-infinite-list';
 import type { MediaCardServerProps } from '@/modules/home';
@@ -53,18 +58,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 async function fetchInitialData(
   category: BrowseCategory,
   page: number = 1,
-  filters: { sort?: string } = {}
+  filters: { sort?: string } = {},
 ) {
   const config = getCategoryConfig(category);
   if (!config) return { items: [], total: 0, hasMore: false };
 
   try {
     const offset = (page - 1) * config.pageSize;
-    const params: Record<string, string | number> = { 
-      offset, 
+    const params: Record<string, string | number> = {
+      offset,
       limit: config.pageSize,
     };
-    
+
     // Add filters if provided
     if (filters.sort) params.sort = filters.sort;
 
@@ -119,11 +124,9 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
   }
 
   const page = Math.max(1, parseInt(pageParam || '1', 10));
-  const { items, total, hasMore } = await fetchInitialData(
-    category as BrowseCategory, 
-    page,
-    { sort }
-  );
+  const { items, total, hasMore } = await fetchInitialData(category as BrowseCategory, page, {
+    sort,
+  });
 
   const dict = getDictionary('uk');
   const title = getByPath(dict, config.titleKey);
@@ -140,7 +143,7 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
             subtitle={dict.browse.resultsCount.replace('{count}', total.toString())}
             backLabel={dict.browse.backToHome}
           />
-          
+
           {supportsFilters && (
             <BrowseFilters
               labels={{

@@ -1,8 +1,5 @@
 /**
  * Property-based tests for idempotent retry policy.
- *
- * Feature: core-architecture-fixes, Property 3: Idempotent retry policy
- * Validates: Requirements 1.3, 1.7
  */
 
 import * as fc from 'fast-check';
@@ -22,8 +19,6 @@ describe('Idempotent retry policy', () => {
    *
    * For any 401 response on POST/PATCH/PUT/DELETE without idempotency key,
    * the request SHALL NOT be retried.
-   *
-   * Validates: Requirements 1.3, 1.7
    */
   it('Property 3: idempotent methods are correctly classified for retry', () => {
     fc.assert(
@@ -48,7 +43,17 @@ describe('Idempotent retry policy', () => {
   it('method classification handles case variations', () => {
     fc.assert(
       fc.property(
-        fc.constantFrom('get', 'GET', 'Get', 'head', 'HEAD', 'Head', 'options', 'OPTIONS', 'Options'),
+        fc.constantFrom(
+          'get',
+          'GET',
+          'Get',
+          'head',
+          'HEAD',
+          'Head',
+          'options',
+          'OPTIONS',
+          'Options',
+        ),
         (method) => {
           const upperMethod = method.toUpperCase();
           expect(IDEMPOTENT_METHODS.includes(upperMethod)).toBe(true);
@@ -117,11 +122,13 @@ describe('Idempotent retry policy', () => {
   it('unknown methods default to non-retryable', () => {
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 20 }).filter(
-          (s) =>
-            !IDEMPOTENT_METHODS.includes(s.toUpperCase()) &&
-            !NON_IDEMPOTENT_METHODS.includes(s.toUpperCase()),
-        ),
+        fc
+          .string({ minLength: 1, maxLength: 20 })
+          .filter(
+            (s) =>
+              !IDEMPOTENT_METHODS.includes(s.toUpperCase()) &&
+              !NON_IDEMPOTENT_METHODS.includes(s.toUpperCase()),
+          ),
         (unknownMethod) => {
           // Unknown methods should not be in the idempotent list
           expect(IDEMPOTENT_METHODS.includes(unknownMethod.toUpperCase())).toBe(false);

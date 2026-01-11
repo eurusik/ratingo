@@ -7,13 +7,7 @@ import { useDebounce } from 'use-debounce';
 import { cn } from '@/shared/utils';
 import { Input } from '@/shared/ui/input';
 import { Button } from '@/shared/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,

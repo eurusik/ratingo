@@ -79,8 +79,6 @@ describe('Classification Service - Property-Based Tests', () => {
       .map((genres) => [TMDB_GENRES.ANIMATION, ...genres]),
   });
 
-  // Property 1: Classification Determinism
-  // Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5, 2.6
   describe('Property 1: Classification Determinism', () => {
     it('should produce identical results for identical inputs', () => {
       fc.assert(

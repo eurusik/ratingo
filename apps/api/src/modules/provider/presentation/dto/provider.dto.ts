@@ -14,7 +14,6 @@ import {
   IsInt,
   IsIn,
   Min,
-  Max,
   IsNotEmpty,
   MaxLength,
 } from 'class-validator';

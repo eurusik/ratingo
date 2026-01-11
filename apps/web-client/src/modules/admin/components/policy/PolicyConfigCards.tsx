@@ -247,10 +247,7 @@ export function ContentClassCard({ config, labels }: PolicyConfigCardsProps) {
 
   return (
     <ConfigCard title={labels?.contentClasses ?? 'Excluded Content Classes'} icon={Ban}>
-      <BadgeList
-        items={excluded.map((c) => classLabels[c] ?? c)}
-        variant="destructive"
-      />
+      <BadgeList items={excluded.map((c) => classLabels[c] ?? c)} variant="destructive" />
     </ConfigCard>
   );
 }

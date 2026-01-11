@@ -247,8 +247,6 @@ describe('PolicyActivationService', () => {
      * Property 12: Ready To Promote Flag
      *
      * readyToPromote = status=PREPARED AND coverage >= threshold AND errors <= max
-     *
-     * Validates: Requirements 3.9
      */
     it('should be true only when status=prepared, coverage=100%, errors=0', async () => {
       mockRunRepository.findById.mockResolvedValue({
@@ -412,8 +410,6 @@ describe('PolicyActivationService', () => {
      * Property 7: Promote Status Validation
      *
      * Promote only allowed when status=PREPARED
-     *
-     * Validates: Requirements 3.1, 3.2, 3.8
      */
     it('should fail when run not found', async () => {
       mockRunRepository.findById.mockResolvedValue(null);

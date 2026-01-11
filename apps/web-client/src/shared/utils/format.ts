@@ -75,7 +75,6 @@ export function formatEpisode(season: number, episode: number): string {
   return `S${season}E${episode}`;
 }
 
-
 /** Freshness level for relative dates. */
 export type DateFreshness = 'fresh' | 'recent' | 'older';
 
@@ -110,8 +109,7 @@ export function formatRelativeDate(
   const diffDays = differenceInDays(now, date);
 
   // Determine freshness
-  const freshness: DateFreshness =
-    diffDays === 0 ? 'fresh' : diffDays <= 3 ? 'recent' : 'older';
+  const freshness: DateFreshness = diffDays === 0 ? 'fresh' : diffDays <= 3 ? 'recent' : 'older';
 
   // Today special case
   if (diffDays === 0) {

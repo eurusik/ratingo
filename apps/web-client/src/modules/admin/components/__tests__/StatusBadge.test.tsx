@@ -80,7 +80,9 @@ describe('StatusBadge', () => {
   });
 
   test('supports compact variant', () => {
-    const { container } = renderWithI18n(<StatusBadge status={RunStatus.PREPARED} variant="compact" />);
+    const { container } = renderWithI18n(
+      <StatusBadge status={RunStatus.PREPARED} variant="compact" />,
+    );
     const badge = container.querySelector('[data-testid="status-badge"]');
 
     expect(badge).toBeInTheDocument();

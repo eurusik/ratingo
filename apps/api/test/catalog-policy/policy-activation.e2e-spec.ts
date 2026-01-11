@@ -505,8 +505,6 @@ describe('Policy Activation Flow (e2e)', () => {
    *
    * For any policy activation trigger, the system SHALL create RE_EVALUATE_ALL
    * jobs for ALL contexts in ACTIVE_EVALUATION_CONTEXTS.
-   *
-   * **Validates: Requirements 5.5**
    */
   describe('Property 4: Complete Context Coverage (Fan-Out)', () => {
     beforeEach(() => {

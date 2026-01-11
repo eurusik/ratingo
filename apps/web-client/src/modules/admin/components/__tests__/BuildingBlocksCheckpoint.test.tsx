@@ -167,7 +167,9 @@ describe('Building Blocks Checkpoint', () => {
     // by checking that they render without throwing errors and contain
     // expected shadcn/ui class patterns
 
-    const { container: statusContainer } = renderWithI18n(<StatusBadge status={RunStatus.PROMOTED} />);
+    const { container: statusContainer } = renderWithI18n(
+      <StatusBadge status={RunStatus.PROMOTED} />,
+    );
     expect(statusContainer.querySelector('[data-testid="status-badge"]')).toBeInTheDocument();
 
     const { container: emptyContainer } = render(<EmptyState title="Test" />);

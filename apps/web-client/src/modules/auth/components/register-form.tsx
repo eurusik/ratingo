@@ -13,15 +13,18 @@ import { useTranslation } from '@/shared/i18n';
 import { Button, Input, Label, Alert, AlertDescription } from '@/shared/ui';
 import { createRegisterSchema, type RegisterFormData } from '../schemas';
 import { cn } from '@/shared/utils';
+import { GoogleButton } from './google-button';
 
 interface RegisterFormProps {
   /** Callback after successful registration. */
   onSuccess?: () => void;
   /** Switch to login form. */
   onSwitchToLogin?: () => void;
+  /** URL to redirect to after successful registration. */
+  returnTo?: string;
 }
 
-export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
+export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterFormProps) {
   const { register: registerUser } = useAuth();
   const { dict } = useTranslation();
   const [error, setError] = useState<string | null>(null);
@@ -51,104 +54,117 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email" className="text-zinc-200">
-          {dict.auth.email}
-        </Label>
-        <Input
-          id="email"
-          type="email"
-          autoComplete="email"
-          placeholder="user@example.com"
-          className={cn(
-            'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
-            errors.email && 'border-red-500 focus-visible:ring-red-500',
-          )}
-          {...register('email')}
-        />
-        {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
+    <div className="space-y-4">
+      <GoogleButton returnTo={returnTo} mode="register" />
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-zinc-700" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-zinc-900 px-2 text-zinc-500">{dict.auth.or}</span>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="username" className="text-zinc-200">
-          {dict.auth.username}
-        </Label>
-        <Input
-          id="username"
-          type="text"
-          autoComplete="username"
-          placeholder="ratingo_fan"
-          className={cn(
-            'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
-            errors.username && 'border-red-500 focus-visible:ring-red-500',
-          )}
-          {...register('username')}
-        />
-        {errors.username && <p className="text-xs text-red-400">{errors.username.message}</p>}
-      </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-zinc-200">
+            {dict.auth.email}
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            placeholder="user@example.com"
+            className={cn(
+              'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              errors.email && 'border-red-500 focus-visible:ring-red-500',
+            )}
+            {...register('email')}
+          />
+          {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password" className="text-zinc-200">
-          {dict.auth.password}
-        </Label>
-        <Input
-          id="password"
-          type="password"
-          autoComplete="new-password"
-          placeholder="••••••"
-          className={cn(
-            'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
-            errors.password && 'border-red-500 focus-visible:ring-red-500',
-          )}
-          {...register('password')}
-        />
-        {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="username" className="text-zinc-200">
+            {dict.auth.username}
+          </Label>
+          <Input
+            id="username"
+            type="text"
+            autoComplete="username"
+            placeholder="ratingo_fan"
+            className={cn(
+              'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              errors.username && 'border-red-500 focus-visible:ring-red-500',
+            )}
+            {...register('username')}
+          />
+          {errors.username && <p className="text-xs text-red-400">{errors.username.message}</p>}
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword" className="text-zinc-200">
-          {dict.auth.confirmPassword}
-        </Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          placeholder="••••••"
-          className={cn(
-            'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
-            errors.confirmPassword && 'border-red-500 focus-visible:ring-red-500',
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-zinc-200">
+            {dict.auth.password}
+          </Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••"
+            className={cn(
+              'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              errors.password && 'border-red-500 focus-visible:ring-red-500',
+            )}
+            {...register('password')}
+          />
+          {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword" className="text-zinc-200">
+            {dict.auth.confirmPassword}
+          </Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••"
+            className={cn(
+              'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              errors.confirmPassword && 'border-red-500 focus-visible:ring-red-500',
+            )}
+            {...register('confirmPassword')}
+          />
+          {errors.confirmPassword && (
+            <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>
           )}
-          {...register('confirmPassword')}
-        />
-        {errors.confirmPassword && (
-          <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>
+        </div>
+
+        {error && (
+          <Alert variant="destructive" className="bg-red-500/10 border-red-500/20">
+            <AlertDescription className="text-red-400">{error}</AlertDescription>
+          </Alert>
         )}
-      </div>
 
-      {error && (
-        <Alert variant="destructive" className="bg-red-500/10 border-red-500/20">
-          <AlertDescription className="text-red-400">{error}</AlertDescription>
-        </Alert>
-      )}
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+          {isSubmitting ? dict.auth.registering : dict.auth.register}
+        </Button>
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-        {isSubmitting ? dict.auth.registering : dict.auth.register}
-      </Button>
-
-      {onSwitchToLogin && (
-        <p className="text-center text-sm text-zinc-400">
-          {dict.auth.hasAccount}{' '}
-          <button
-            type="button"
-            onClick={onSwitchToLogin}
-            className="text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            {dict.auth.login}
-          </button>
-        </p>
-      )}
-    </form>
+        {onSwitchToLogin && (
+          <p className="text-center text-sm text-zinc-400">
+            {dict.auth.hasAccount}{' '}
+            <button
+              type="button"
+              onClick={onSwitchToLogin}
+              className="text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              {dict.auth.login}
+            </button>
+          </p>
+        )}
+      </form>
+    </div>
   );
 }

@@ -61,10 +61,6 @@ const mockRowActions = (row: any): DropdownMenuItemProps[] => [
 ];
 
 describe('DataTable Property Tests', () => {
-  /**
-   * Feature: admin-ui-shell, Property 4: DataTable Feature Completeness
-   * Validates: Requirements 3.1, 5.3
-   */
   describe('Property 4: DataTable Feature Completeness', () => {
     it('should provide sorting functionality for sortable columns', () => {
       fc.assert(
@@ -209,29 +205,26 @@ describe('DataTable Property Tests', () => {
 
     it('should display custom empty state when provided', () => {
       fc.assert(
-        fc.property(
-          fc.stringMatching(/^[a-zA-Z0-9]{5,20}$/),
-          (customMessage) => {
-            const customEmptyState = <div data-testid="custom-empty">{customMessage}</div>;
+        fc.property(fc.stringMatching(/^[a-zA-Z0-9]{5,20}$/), (customMessage) => {
+          const customEmptyState = <div data-testid="custom-empty">{customMessage}</div>;
 
-            const { container } = renderWithI18n(
-              <DataTable
-                data={[]}
-                columns={mockColumns}
-                loading={false}
-                emptyState={customEmptyState}
-              />,
-            );
+          const { container } = renderWithI18n(
+            <DataTable
+              data={[]}
+              columns={mockColumns}
+              loading={false}
+              emptyState={customEmptyState}
+            />,
+          );
 
-            // Should show custom empty state
-            const customEmpty = container.querySelector('[data-testid="custom-empty"]');
-            expect(customEmpty).toBeInTheDocument();
-            expect(customEmpty).toHaveTextContent(customMessage);
+          // Should show custom empty state
+          const customEmpty = container.querySelector('[data-testid="custom-empty"]');
+          expect(customEmpty).toBeInTheDocument();
+          expect(customEmpty).toHaveTextContent(customMessage);
 
-            // Should not show default empty state
-            expect(container.textContent).not.toContain('No data available');
-          },
-        ),
+          // Should not show default empty state
+          expect(container.textContent).not.toContain('No data available');
+        }),
         { numRuns: 50 },
       );
     });

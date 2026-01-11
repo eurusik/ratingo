@@ -3,6 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
+import fastifyCookie from '@fastify/cookie';
+
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
@@ -23,6 +25,9 @@ async function bootstrap(): Promise<void> {
       trustProxy: true,
     }),
   );
+
+  // Register Fastify cookie plugin for OAuth state management
+  await app.register(fastifyCookie);
 
   // CORS configuration
   app.enableCors({

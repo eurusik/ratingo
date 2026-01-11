@@ -25,6 +25,10 @@ export class InMemoryUsersRepository implements IUsersRepository {
     return this.users.find((u) => u.username === username) ?? null;
   }
 
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return this.users.find((u) => u.googleId === googleId) ?? null;
+  }
+
   async create(data: UserData): Promise<User> {
     const user: User = {
       ...data,
@@ -32,6 +36,7 @@ export class InMemoryUsersRepository implements IUsersRepository {
       createdAt: new Date(),
       updatedAt: new Date(),
       passwordHash: data.passwordHash,
+      googleId: data.googleId ?? null,
       avatarUrl: data.avatarUrl ?? null,
       bio: data.bio ?? null,
       location: data.location ?? null,
@@ -65,6 +70,14 @@ export class InMemoryUsersRepository implements IUsersRepository {
     if (user) {
       user.passwordHash = passwordHash;
     }
+  }
+
+  async linkGoogleId(id: string, googleId: string): Promise<User> {
+    const user = this.users.find((u) => u.id === id);
+    if (!user) throw new Error('User not found');
+    user.googleId = googleId;
+    user.updatedAt = new Date();
+    return user;
   }
 }
 

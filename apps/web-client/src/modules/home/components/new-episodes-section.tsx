@@ -45,13 +45,8 @@ export interface NewEpisodesSectionProps {
   className?: string;
 }
 
-
 /** Format episode label: S2 E1 or fallback */
-function formatEpisodeLabel(
-  season: number | null,
-  episode: number | null,
-  locale: Locale,
-): string {
+function formatEpisodeLabel(season: number | null, episode: number | null, locale: Locale): string {
   if (season == null || episode == null) {
     return locale === 'uk' ? 'Новий' : 'New';
   }
@@ -59,18 +54,8 @@ function formatEpisodeLabel(
 }
 
 /** Compact episode card — horizontal layout for grid. */
-function EpisodeCard({
-  item,
-  locale,
-}: {
-  item: NewEpisodeShowItem;
-  locale: Locale;
-}) {
-  const episodeLabel = formatEpisodeLabel(
-    item.seasonNumber,
-    item.episodeNumber,
-    locale,
-  );
+function EpisodeCard({ item, locale }: { item: NewEpisodeShowItem; locale: Locale }) {
+  const episodeLabel = formatEpisodeLabel(item.seasonNumber, item.episodeNumber, locale);
   const relativeDate = formatRelativeDate(item.airDate, locale);
 
   return (
@@ -81,13 +66,7 @@ function EpisodeCard({
       {/* Tiny thumbnail 32×48 */}
       <div className="relative w-8 h-12 flex-shrink-0 rounded overflow-hidden bg-zinc-800">
         {item.posterUrl ? (
-          <Image
-            src={item.posterUrl}
-            alt={item.title}
-            fill
-            className="object-cover"
-            sizes="32px"
-          />
+          <Image src={item.posterUrl} alt={item.title} fill className="object-cover" sizes="32px" />
         ) : (
           <div className="w-full h-full bg-zinc-700" />
         )}
@@ -101,22 +80,15 @@ function EpisodeCard({
         <p className="text-xs text-zinc-500 truncate">
           <span className="text-emerald-500/80 font-medium">{episodeLabel}</span>
           <span className="mx-1.5 text-zinc-600">·</span>
-          <span className={FRESHNESS_COLORS[relativeDate.freshness]}>
-            {relativeDate.text}
-          </span>
+          <span className={FRESHNESS_COLORS[relativeDate.freshness]}>{relativeDate.text}</span>
         </p>
       </div>
     </Link>
   );
 }
 
-
 /** New Episodes Section — row grid with collapse. */
-export function NewEpisodesSection({
-  items,
-  locale = 'uk',
-  className,
-}: NewEpisodesSectionProps) {
+export function NewEpisodesSection({ items, locale = 'uk', className }: NewEpisodesSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const dict = getDictionary(locale);
 

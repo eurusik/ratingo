@@ -12,4 +12,7 @@ module.exports = {
   coverageDirectory: './coverage-e2e',
   testEnvironment: 'node',
   testTimeout: 20000,
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
 };

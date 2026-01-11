@@ -1928,8 +1928,6 @@ describe('Content Classification Properties', () => {
  * Tests that isReadableTitle correctly classifies titles:
  * - Titles with 2+ Latin/Cyrillic letters are always readable
  * - CJK-heavy titles (>60% CJK, <2 Latin/Cyrillic, length > 6) are unreadable
- *
- * **Validates: Requirements 3.2, 3.3**
  */
 describe('Readability Classification Properties', () => {
   // Arbitrary for Latin characters
@@ -2236,7 +2234,6 @@ describe('Readability Classification Properties', () => {
  * Context Requirements Properties
  *
  * Property 6: Default Context Requirements
- * Validates: Requirements 4.5, 4.6, 8.1
  */
 describe('Context Requirements Properties', () => {
   // All evaluation contexts
@@ -2259,10 +2256,6 @@ describe('Context Requirements Properties', () => {
   const DEFAULT_MIN_OVERVIEW_CHARS = 60;
 
   describe('Property 6: Default Context Requirements', () => {
-    /**
-     * Feature: readability-pending-reform, Property 6: Default Context Requirements
-     * Validates: Requirements 4.5, 4.6, 8.1
-     */
     it('should default requireReadableTitle to true for all contexts', () => {
       fc.assert(
         fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
@@ -2323,10 +2316,6 @@ describe('Context Requirements Properties', () => {
   });
 
   describe('getContextRequirements merging', () => {
-    /**
-     * Feature: readability-pending-reform, Property 6: Default Context Requirements
-     * Validates: Requirements 8.1
-     */
     it('should use defaults when contextRequirements is not configured in policy', () => {
       fc.assert(
         fc.property(fc.constantFrom(...ALL_CONTEXTS), (context) => {
@@ -2571,7 +2560,6 @@ describe('Readability & Pending Reform Properties', () => {
    * Property 1: No PENDING Status
    * For any valid PolicyEngineInput and PolicyConfig, the evaluateEligibility function
    * SHALL return a status that is either 'eligible' or 'ineligible', never 'pending'.
-   * **Validates: Requirements 1.1**
    */
   describe('Property 1: No PENDING Status', () => {
     it('should never return PENDING status for any input', () => {
@@ -2641,7 +2629,6 @@ describe('Readability & Pending Reform Properties', () => {
    * OR title is null/empty, the evaluateEligibility function SHALL return status='ineligible'
    * with reasons array containing MISSING_REQUIRED_METADATA as first element and the specific reason
    * as second element.
-   * **Validates: Requirements 1.2, 1.3, 1.4, 5.7**
    */
   describe('Property 2: Missing Data Returns INELIGIBLE with Umbrella + Specific Reasons', () => {
     it('should return INELIGIBLE with MISSING_REQUIRED_METADATA + MISSING_ORIGIN_COUNTRY when originCountries is null/empty', () => {
@@ -2706,7 +2693,6 @@ describe('Readability & Pending Reform Properties', () => {
    * For any PolicyEngineInput with valid data integrity AND unreadable title (per isReadableTitle)
    * AND context where requireReadableTitle=true, the evaluateEligibility function SHALL return
    * status='ineligible' with reasons containing MISSING_TRANSLATED_TITLE.
-   * **Validates: Requirements 3.4, 4.4**
    */
   describe('Property 4: Unreadable Title in Readability-Required Context', () => {
     it('should return INELIGIBLE with MISSING_TRANSLATED_TITLE for CJK-heavy titles', () => {
@@ -2754,7 +2740,6 @@ describe('Readability & Pending Reform Properties', () => {
    * For any PolicyEngineInput with valid data integrity AND readable title AND context where
    * requireOverview=true AND (overview is null/empty OR overview.length < minOverviewChars),
    * the evaluateEligibility function SHALL return status='ineligible' with reasons containing MISSING_OVERVIEW.
-   * **Validates: Requirements 4.3, 4.7**
    */
   describe('Property 5: Missing Overview in Overview-Required Context', () => {
     it('should return INELIGIBLE with MISSING_OVERVIEW for missing/short overview in trending/homepage', () => {
@@ -2836,7 +2821,6 @@ describe('Readability & Pending Reform Properties', () => {
    * contain ONLY the data integrity reasons, not any subsequent check reasons.
    * For any PolicyEngineInput that passes Data Integrity but fails Display Gates, the returned
    * reasons array SHALL contain ONLY the display gate reason, not any subsequent check reasons.
-   * **Validates: Requirements 6.1, 6.2, 6.3**
    */
   describe('Property 7: Evaluation Order Short-Circuit', () => {
     const SUBSEQUENT_REASONS = [

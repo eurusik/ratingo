@@ -12,7 +12,9 @@ import type { GlobalRequirementsDto } from '@/core/api/admin';
 // Extract types from DTO to stay in sync with API contract
 type EvaluationContext = NonNullable<GlobalRequirementsDto['appliesTo']>[number];
 type RatingSource = NonNullable<GlobalRequirementsDto['requireAnyOfRatingsPresent']>[number];
-type VoteSource = NonNullable<NonNullable<GlobalRequirementsDto['minVotesAnyOf']>['sources']>[number];
+type VoteSource = NonNullable<
+  NonNullable<GlobalRequirementsDto['minVotesAnyOf']>['sources']
+>[number];
 
 interface GlobalRequirementsEditorProps {
   globalRequirements?: GlobalRequirementsDto;

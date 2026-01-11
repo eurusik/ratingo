@@ -1,4 +1,10 @@
-export { MediaGrid, InfiniteScrollLoader, BrowsePageHeader, BrowseFilters, type CatalogSort } from './components';
+export {
+  MediaGrid,
+  InfiniteScrollLoader,
+  BrowsePageHeader,
+  BrowseFilters,
+  type CatalogSort,
+} from './components';
 export {
   BROWSE_CATEGORIES,
   getCategoryConfig,

@@ -3,6 +3,8 @@ import { AuthController } from './auth.controller';
 import { AuthService } from '../../application/auth.service';
 import { UsersService } from '../../../users/application/users.service';
 import { UserMediaService } from '../../../user-media/application/user-media.service';
+import googleConfig from '../../../../config/google.config';
+import authConfig from '../../../../config/auth.config';
 
 /**
  * Creates a mock FastifyRequest for testing.
@@ -38,6 +40,23 @@ describe('AuthController.register', () => {
     getStats: jest.fn(),
   };
 
+  const mockGoogleConfig = {
+    clientId: '',
+    clientSecret: '',
+    callbackUrl: '',
+    enabled: false,
+  };
+
+  const mockAuthConfig = {
+    jwtSecret: 'test-secret',
+    jwtExpiresIn: '15m',
+    refreshSecret: 'test-refresh-secret',
+    refreshExpiresIn: '7d',
+    frontendUrl: 'http://localhost:3000',
+    exchangeCodePepper: 'test-pepper',
+    stateSecret: 'test-state-secret',
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
@@ -45,6 +64,8 @@ describe('AuthController.register', () => {
         { provide: AuthService, useValue: authService },
         { provide: UsersService, useValue: usersService },
         { provide: UserMediaService, useValue: userMediaService },
+        { provide: googleConfig.KEY, useValue: mockGoogleConfig },
+        { provide: authConfig.KEY, useValue: mockAuthConfig },
       ],
     }).compile();
 

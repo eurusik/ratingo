@@ -148,6 +148,26 @@
     "settings": "Налаштування",
     "admin": "Адмін-панель",
     "notifications": "Сповіщення",
+    "or": "або",
+    "google": {
+      "signIn": "Увійти через Google",
+      "signUp": "Зареєструватись через Google"
+    },
+    "oauth": {
+      "completing": "Завершуємо вхід...",
+      "loading": "Завантаження...",
+      "failed": "Помилка автентифікації",
+      "tryAgain": "Спробувати ще",
+      "errors": {
+        "cancelled": "Вхід скасовано",
+        "emailNotVerified": "Спочатку підтвердіть email у Google",
+        "exchangeExpired": "Сесія закінчилась, спробуйте ще",
+        "exchangeUsed": "Сесія вже використана, спробуйте ще",
+        "providerError": "Помилка входу через Google",
+        "stateInvalid": "Помилка безпеки, спробуйте ще",
+        "unknown": "Помилка автентифікації"
+      }
+    },
     "validation": {
       "emailInvalid": "Невірний формат email",
       "passwordMin": "Мінімум 6 символів",

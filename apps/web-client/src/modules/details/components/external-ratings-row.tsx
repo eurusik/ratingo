@@ -25,27 +25,20 @@ export function ExternalRatingsRow({ externalRatings, excludeRating }: ExternalR
 
   return (
     <div className="flex items-center gap-2 md:gap-3 flex-wrap">
-      {externalRatings.imdb?.rating != null &&
-        externalRatings.imdb.rating !== excludeRating && (
-          <RatingBadge source="IMDb" rating={externalRatings.imdb.rating} />
-        )}
+      {externalRatings.imdb?.rating != null && externalRatings.imdb.rating !== excludeRating && (
+        <RatingBadge source="IMDb" rating={externalRatings.imdb.rating} />
+      )}
 
-      {externalRatings.tmdb?.rating != null &&
-        externalRatings.tmdb.rating !== excludeRating && (
-          <RatingBadge source="TMDB" rating={externalRatings.tmdb.rating} />
-        )}
+      {externalRatings.tmdb?.rating != null && externalRatings.tmdb.rating !== excludeRating && (
+        <RatingBadge source="TMDB" rating={externalRatings.tmdb.rating} />
+      )}
 
-      {externalRatings.trakt?.rating != null &&
-        externalRatings.trakt.rating !== excludeRating && (
-          <RatingBadge source="Trakt" rating={externalRatings.trakt.rating} />
-        )}
+      {externalRatings.trakt?.rating != null && externalRatings.trakt.rating !== excludeRating && (
+        <RatingBadge source="Trakt" rating={externalRatings.trakt.rating} />
+      )}
 
       {externalRatings.rottenTomatoes?.rating != null && (
-        <RatingBadge
-          source="RT"
-          rating={externalRatings.rottenTomatoes.rating}
-          isPercentage
-        />
+        <RatingBadge source="RT" rating={externalRatings.rottenTomatoes.rating} isPercentage />
       )}
     </div>
   );

@@ -1,8 +1,5 @@
 /**
  * Property-based tests for batch to individual cache population.
- *
- * Feature: core-architecture-fixes, Property 4: Batch to individual cache population
- * Validates: Requirements 2.1
  */
 
 import * as fc from 'fast-check';
@@ -19,8 +16,6 @@ describe('Batch to individual cache population', () => {
    *
    * This test validates the cache population logic by simulating what
    * SavedStatusProvider does when it receives batch data.
-   *
-   * Validates: Requirements 2.1
    */
   it('Property 4: batch statuses populate individual cache entries correctly', () => {
     fc.assert(
@@ -65,21 +60,17 @@ describe('Batch to individual cache population', () => {
    */
   it('individual cache keys are deterministic for same mediaItemId', () => {
     fc.assert(
-      fc.property(
-        fc.uuid(),
-        fc.integer({ min: 2, max: 10 }),
-        (mediaItemId, iterations) => {
-          const keys: string[] = [];
+      fc.property(fc.uuid(), fc.integer({ min: 2, max: 10 }), (mediaItemId, iterations) => {
+        const keys: string[] = [];
 
-          for (let i = 0; i < iterations; i++) {
-            keys.push(JSON.stringify(queryKeys.userActions.savedItems.status(mediaItemId)));
-          }
+        for (let i = 0; i < iterations; i++) {
+          keys.push(JSON.stringify(queryKeys.userActions.savedItems.status(mediaItemId)));
+        }
 
-          // All keys should be identical
-          const firstKey = keys[0];
-          expect(keys.every((k) => k === firstKey)).toBe(true);
-        },
-      ),
+        // All keys should be identical
+        const firstKey = keys[0];
+        expect(keys.every((k) => k === firstKey)).toBe(true);
+      }),
       { numRuns: 100 },
     );
   });
