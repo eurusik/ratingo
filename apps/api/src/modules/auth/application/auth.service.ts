@@ -11,7 +11,7 @@ import { type ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
 import { MS_PER_SECOND, MS_PER_MINUTE, MS_PER_HOUR, MS_PER_DAY } from '../../../common/constants';
-import { Perf } from '../../../common/utils/perf';
+import { DevTiming } from '../../../common/utils/dev-timing';
 import authConfig from '../../../config/auth.config';
 import { UsersService } from '../../users/application/users.service';
 import { type User } from '../../users/domain/entities/user.entity';
@@ -125,9 +125,9 @@ export class AuthService {
    * @returns {Promise<AuthTokens>} Access and refresh tokens
    */
   async refresh(refreshToken: string, clientMeta?: ClientMeta): Promise<AuthTokens> {
-    const perf = new Perf();
+    const t = DevTiming.start('authRefresh');
 
-    perf.mark('before_verify');
+    t.mark('before_verify');
     let payload: RefreshPayload;
     try {
       payload = await this.jwtService.verifyAsync<RefreshPayload>(refreshToken, {
@@ -137,43 +137,43 @@ export class AuthService {
       this.logger.warn(`Refresh token verification failed: ${error.message}`);
       throw new UnauthorizedException('Invalid refresh token');
     }
-    perf.mark('after_verify');
+    t.mark('after_verify');
 
-    perf.mark('before_lookup');
+    t.mark('before_lookup');
     const stored = await this.refreshTokensRepository.findById(payload.jti);
-    perf.mark('after_lookup');
+    t.mark('after_lookup');
 
     if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
       throw new UnauthorizedException('Refresh token expired or revoked');
     }
 
-    perf.mark('before_compare');
+    t.mark('before_compare');
     const valid = await this.passwordHasher.compare(refreshToken, stored.tokenHash);
-    perf.mark('after_compare');
+    t.mark('after_compare');
 
     if (!valid) {
       await this.refreshTokensRepository.revokeAllForUser(payload.sub);
       throw new UnauthorizedException('Refresh token reuse detected');
     }
 
-    perf.mark('before_load_user');
+    t.mark('before_load_user');
     const user = await this.usersService.getById(payload.sub);
-    perf.mark('after_load_user');
+    t.mark('after_load_user');
 
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    perf.mark('before_revoke');
+    t.mark('before_revoke');
     // rotate: revoke old, issue new
     await this.refreshTokensRepository.revoke(stored.id);
-    perf.mark('after_revoke');
+    t.mark('after_revoke');
 
-    perf.mark('before_issue');
+    t.mark('before_issue');
     const tokens = await this.issueTokens(user, clientMeta);
-    perf.mark('after_issue');
+    t.mark('after_issue');
 
-    this.logger.log(`[TIMING] authRefresh userId=${user.id} ${perf.report()}`);
+    t.end();
 
     return tokens;
   }

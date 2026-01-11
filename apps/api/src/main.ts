@@ -7,6 +7,7 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { SlowRequestInterceptor } from './common/interceptors/slow-request.interceptor';
+import { DevTiming } from './common/utils/dev-timing';
 
 /**
  * Entry point of the API application.
@@ -67,18 +68,8 @@ async function bootstrap(): Promise<void> {
   await app.listen(port, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
 
-  // Event loop lag monitor — detects CPU contention / GC pauses
-  let lastTick = Date.now();
-  setInterval(() => {
-    const now = Date.now();
-    const lag = now - lastTick - 1000;
-    lastTick = now;
-
-    if (lag > 100) {
-      // 100ms+ is noticeable, 200-500ms = tail latency spikes
-      console.warn(`[EVENT_LOOP_LAG] ${lag}ms`);
-    }
-  }, 1000).unref();
+  // Start event loop lag monitor (controlled by DevTiming)
+  DevTiming.startEventLoopMonitor();
 }
 
 bootstrap();
