@@ -89,13 +89,7 @@ function GoogleCallbackContent() {
       // Store tokens
       tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
 
-      // Fetch user to update auth context
-      await authApi.me();
-
-      // Dispatch event to notify auth context of new tokens
-      window.dispatchEvent(new CustomEvent('auth:tokens-updated'));
-
-      // Redirect to destination using window.location for dynamic paths
+      // Redirect to destination — AuthProvider will fetch user on mount
       window.location.href = returnTo;
     } catch (err) {
       // Extract error code from ApiError
