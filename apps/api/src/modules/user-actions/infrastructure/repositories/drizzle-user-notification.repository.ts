@@ -4,9 +4,9 @@ import { and, desc, eq, sql, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { withDbError } from '@/common/utils/db-error.utils';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
@@ -37,25 +37,26 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
    * Creates a notification. Returns null if duplicate (conflict ignored).
    */
   async create(data: CreateNotificationData): Promise<UserNotification | null> {
-    try {
-      const [row] = await this.db
-        .insert(schema.userNotifications)
-        .values({
-          userId: data.userId,
-          mediaItemId: data.mediaItemId,
-          subscriptionId: data.subscriptionId,
-          trigger: data.trigger,
-          payload: data.payload ?? null,
-        })
-        .onConflictDoNothing()
-        .returning();
+    return withDbError(
+      'create notification',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .insert(schema.userNotifications)
+          .values({
+            userId: data.userId,
+            mediaItemId: data.mediaItemId,
+            subscriptionId: data.subscriptionId,
+            trigger: data.trigger,
+            payload: data.payload ?? null,
+          })
+          .onConflictDoNothing()
+          .returning();
 
-      return row ? this.mapRow(row) : null;
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      this.logger.error(`create failed: ${msg}`);
-      throw new DatabaseException('Failed to create notification');
-    }
+        return row ? this.mapRow(row) : null;
+      },
+      { userId: data.userId, mediaItemId: data.mediaItemId },
+    );
   }
 
   /**
@@ -64,27 +65,28 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
   async createMany(data: CreateNotificationData[]): Promise<number> {
     if (data.length === 0) return 0;
 
-    try {
-      const result = await this.db
-        .insert(schema.userNotifications)
-        .values(
-          data.map((d) => ({
-            userId: d.userId,
-            mediaItemId: d.mediaItemId,
-            subscriptionId: d.subscriptionId,
-            trigger: d.trigger,
-            payload: d.payload ?? null,
-          })),
-        )
-        .onConflictDoNothing()
-        .returning({ id: schema.userNotifications.id });
+    return withDbError(
+      'create notifications bulk',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .insert(schema.userNotifications)
+          .values(
+            data.map((d) => ({
+              userId: d.userId,
+              mediaItemId: d.mediaItemId,
+              subscriptionId: d.subscriptionId,
+              trigger: d.trigger,
+              payload: d.payload ?? null,
+            })),
+          )
+          .onConflictDoNothing()
+          .returning({ id: schema.userNotifications.id });
 
-      return result.length;
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      this.logger.error(`createMany failed: ${msg}`);
-      throw new DatabaseException('Failed to create notifications');
-    }
+        return result.length;
+      },
+      { count: data.length },
+    );
   }
 
   /**
@@ -95,113 +97,117 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
     limit = DEFAULT_PAGE_SIZE,
     offset = 0,
   ): Promise<NotificationWithMedia[]> {
-    try {
-      const rows = await this.db
-        .select({
-          notification: schema.userNotifications,
-          media: {
-            id: schema.mediaItems.id,
-            type: schema.mediaItems.type,
-            title: schema.mediaItems.title,
-            slug: schema.mediaItems.slug,
-            posterPath: schema.mediaItems.posterPath,
-          },
-        })
-        .from(schema.userNotifications)
-        .innerJoin(
-          schema.mediaItems,
-          eq(schema.mediaItems.id, schema.userNotifications.mediaItemId),
-        )
-        .where(
-          and(eq(schema.userNotifications.userId, userId), isNull(schema.mediaItems.deletedAt)),
-        )
-        .orderBy(desc(schema.userNotifications.createdAt))
-        .limit(limit)
-        .offset(offset);
+    return withDbError(
+      'list notifications',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({
+            notification: schema.userNotifications,
+            media: {
+              id: schema.mediaItems.id,
+              type: schema.mediaItems.type,
+              title: schema.mediaItems.title,
+              slug: schema.mediaItems.slug,
+              posterPath: schema.mediaItems.posterPath,
+            },
+          })
+          .from(schema.userNotifications)
+          .innerJoin(
+            schema.mediaItems,
+            eq(schema.mediaItems.id, schema.userNotifications.mediaItemId),
+          )
+          .where(
+            and(eq(schema.userNotifications.userId, userId), isNull(schema.mediaItems.deletedAt)),
+          )
+          .orderBy(desc(schema.userNotifications.createdAt))
+          .limit(limit)
+          .offset(offset);
 
-      return rows.map((r) => ({
-        ...this.mapRow(r.notification),
-        mediaSummary: {
-          id: r.media.id,
-          type: r.media.type as MediaType,
-          title: r.media.title,
-          slug: r.media.slug,
-          poster: ImageMapper.toPoster(r.media.posterPath),
-        },
-      }));
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      this.logger.error(`listWithMedia failed: ${msg}`);
-      throw new DatabaseException('Failed to list notifications');
-    }
+        return rows.map((r) => ({
+          ...this.mapRow(r.notification),
+          mediaSummary: {
+            id: r.media.id,
+            type: r.media.type as MediaType,
+            title: r.media.title,
+            slug: r.media.slug,
+            poster: ImageMapper.toPoster(r.media.posterPath),
+          },
+        }));
+      },
+      { userId, limit, offset },
+    );
   }
 
   /**
    * Counts unread notifications.
    */
   async countUnread(userId: string): Promise<number> {
-    try {
-      const [row] = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.userNotifications)
-        .where(
-          and(
-            eq(schema.userNotifications.userId, userId),
-            eq(schema.userNotifications.isRead, false),
-          ),
-        );
-      return Number(row?.count ?? 0);
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      this.logger.error(`countUnread failed: ${msg}`);
-      throw new DatabaseException('Failed to count unread notifications');
-    }
+    return withDbError(
+      'count unread notifications',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.userNotifications)
+          .where(
+            and(
+              eq(schema.userNotifications.userId, userId),
+              eq(schema.userNotifications.isRead, false),
+            ),
+          );
+        return Number(row?.count ?? 0);
+      },
+      { userId },
+    );
   }
 
   /**
    * Marks notification as read.
    */
   async markAsRead(notificationId: string, userId: string): Promise<boolean> {
-    try {
-      const result = await this.db
-        .update(schema.userNotifications)
-        .set({ isRead: true, readAt: new Date() })
-        .where(
-          and(
-            eq(schema.userNotifications.id, notificationId),
-            eq(schema.userNotifications.userId, userId),
-          ),
-        )
-        .returning({ id: schema.userNotifications.id });
-      return result.length > 0;
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      this.logger.error(`markAsRead failed: ${msg}`);
-      throw new DatabaseException('Failed to mark notification as read');
-    }
+    return withDbError(
+      'mark notification as read',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .update(schema.userNotifications)
+          .set({ isRead: true, readAt: new Date() })
+          .where(
+            and(
+              eq(schema.userNotifications.id, notificationId),
+              eq(schema.userNotifications.userId, userId),
+            ),
+          )
+          .returning({ id: schema.userNotifications.id });
+        return result.length > 0;
+      },
+      { notificationId, userId },
+    );
   }
 
   /**
    * Marks all notifications as read.
    */
   async markAllAsRead(userId: string): Promise<number> {
-    try {
-      const result = await this.db
-        .update(schema.userNotifications)
-        .set({ isRead: true, readAt: new Date() })
-        .where(
-          and(
-            eq(schema.userNotifications.userId, userId),
-            eq(schema.userNotifications.isRead, false),
-          ),
-        )
-        .returning({ id: schema.userNotifications.id });
-      return result.length;
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      this.logger.error(`markAllAsRead failed: ${msg}`);
-      throw new DatabaseException('Failed to mark all notifications as read');
-    }
+    return withDbError(
+      'mark all notifications as read',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .update(schema.userNotifications)
+          .set({ isRead: true, readAt: new Date() })
+          .where(
+            and(
+              eq(schema.userNotifications.userId, userId),
+              eq(schema.userNotifications.isRead, false),
+            ),
+          )
+          .returning({ id: schema.userNotifications.id });
+        return result.length;
+      },
+      { userId },
+    );
   }
 
   private mapRow(row: typeof schema.userNotifications.$inferSelect): UserNotification {

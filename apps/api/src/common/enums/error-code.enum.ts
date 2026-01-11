@@ -26,6 +26,9 @@ export enum ErrorCode {
   // Database errors (500)
   DATABASE_ERROR = 'DATABASE_ERROR',
 
+  // Feature disabled (422)
+  FEATURE_DISABLED = 'FEATURE_DISABLED',
+
   // Generic errors
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   UNKNOWN_ERROR = 'UNKNOWN_ERROR',

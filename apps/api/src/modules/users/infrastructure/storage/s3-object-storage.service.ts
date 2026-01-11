@@ -1,10 +1,11 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import { PRESIGNED_URL_TTL_SECONDS } from '@/common/constants';
+import { FeatureDisabledException } from '@/common/exceptions';
 
 import {
   type IObjectStorageService,
@@ -17,7 +18,9 @@ import {
  */
 @Injectable()
 export class S3ObjectStorageService implements IObjectStorageService {
+  private readonly logger = new Logger(S3ObjectStorageService.name);
   private client: S3Client | null = null;
+  private configWarningLogged = false;
 
   constructor(private readonly config: ConfigService) {}
 
@@ -26,7 +29,7 @@ export class S3ObjectStorageService implements IObjectStorageService {
    *
    * @param {object} options - Presign options
    * @returns {Promise<PresignedPutUrlResult>} Presigned upload URL and derived public URL
-   * @throws {ServiceUnavailableException} When required S3_* env vars are missing
+   * @throws {FeatureDisabledException} When required S3_* env vars are missing
    */
   async getPresignedPutUrl(options: {
     key: string;
@@ -37,11 +40,11 @@ export class S3ObjectStorageService implements IObjectStorageService {
     const bucket = this.config.get<string>('S3_BUCKET');
     const publicBaseUrl = this.config.get<string>('S3_PUBLIC_BASE_URL');
 
-    if (!bucket) {
-      throw new ServiceUnavailableException('S3_BUCKET is required');
-    }
-    if (!publicBaseUrl) {
-      throw new ServiceUnavailableException('S3_PUBLIC_BASE_URL is required');
+    if (!bucket || !publicBaseUrl) {
+      this.logConfigWarning();
+      throw new FeatureDisabledException('Avatar upload is not configured', {
+        hint: 'S3_BUCKET and S3_PUBLIC_BASE_URL environment variables are required',
+      });
     }
 
     const expiresIn = options.expiresInSeconds ?? PRESIGNED_URL_TTL_SECONDS;
@@ -69,7 +72,7 @@ export class S3ObjectStorageService implements IObjectStorageService {
    * Gets or creates an S3 client.
    *
    * @returns {S3Client} S3 client instance
-   * @throws {ServiceUnavailableException} When required credentials are missing
+   * @throws {FeatureDisabledException} When required credentials are missing
    */
   private getClient(): S3Client {
     if (this.client) return this.client;
@@ -79,11 +82,11 @@ export class S3ObjectStorageService implements IObjectStorageService {
     const accessKeyId = this.config.get<string>('S3_ACCESS_KEY_ID');
     const secretAccessKey = this.config.get<string>('S3_SECRET_ACCESS_KEY');
 
-    if (!accessKeyId) {
-      throw new ServiceUnavailableException('S3_ACCESS_KEY_ID is required');
-    }
-    if (!secretAccessKey) {
-      throw new ServiceUnavailableException('S3_SECRET_ACCESS_KEY is required');
+    if (!accessKeyId || !secretAccessKey) {
+      this.logConfigWarning();
+      throw new FeatureDisabledException('Avatar upload is not configured', {
+        hint: 'S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY environment variables are required',
+      });
     }
 
     this.client = new S3Client({
@@ -97,5 +100,15 @@ export class S3ObjectStorageService implements IObjectStorageService {
     });
 
     return this.client;
+  }
+
+  /**
+   * Logs a warning about missing S3 configuration (rate-limited to once).
+   */
+  private logConfigWarning(): void {
+    if (!this.configWarningLogged) {
+      this.logger.warn('S3 storage not configured - avatar upload feature is disabled');
+      this.configWarningLogged = true;
+    }
   }
 }

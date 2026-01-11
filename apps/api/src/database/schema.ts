@@ -120,7 +120,7 @@ export const mediaItems = pgTable(
     // Basic Info
     title: text('title').notNull(),
     originalTitle: text('original_title'),
-    slug: text('slug').unique().notNull(),
+    slug: text('slug').notNull(), // Unique per type, not globally
     overview: text('overview'),
 
     // Visuals
@@ -178,7 +178,10 @@ export const mediaItems = pgTable(
     trendingRankIdx: index('media_trending_rank_idx').on(t.trendingRank),
     popularityIdx: index('media_popularity_idx').on(t.popularity),
     releaseDateIdx: index('media_release_date_idx').on(t.releaseDate),
-    slugIdx: uniqueIndex('media_slug_idx').on(t.slug),
+    // Composite unique: same slug can exist for movie AND show (e.g., "the-pitt")
+    typeSlugIdx: uniqueIndex('media_type_slug_idx').on(t.type, t.slug),
+    // Non-unique index for slug lookups/search
+    slugIdx: index('media_slug_idx').on(t.slug),
     // Partial index for active items (non-deleted)
     activeIdx: index('media_active_idx')
       .on(t.deletedAt)
