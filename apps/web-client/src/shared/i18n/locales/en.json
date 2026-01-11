@@ -148,6 +148,26 @@
     "settings": "Settings",
     "admin": "Admin Panel",
     "notifications": "Notifications",
+    "or": "or",
+    "google": {
+      "signIn": "Sign in with Google",
+      "signUp": "Sign up with Google"
+    },
+    "oauth": {
+      "completing": "Completing sign in...",
+      "loading": "Loading...",
+      "failed": "Authentication failed",
+      "tryAgain": "Try again",
+      "errors": {
+        "cancelled": "Sign in cancelled",
+        "emailNotVerified": "Please verify your email in Google first",
+        "exchangeExpired": "Session expired, please try again",
+        "exchangeUsed": "Session already used, please try again",
+        "providerError": "Google sign in error",
+        "stateInvalid": "Security error, please try again",
+        "unknown": "Authentication error"
+      }
+    },
     "validation": {
       "emailInvalid": "Invalid email format",
       "passwordMin": "Minimum 6 characters",
