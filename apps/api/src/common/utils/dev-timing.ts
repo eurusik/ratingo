@@ -67,13 +67,26 @@ class TimingSession {
 }
 
 /**
+ * Interface for timing session (public API).
+ */
+interface ITimingSession {
+  mark(name: string): ITimingSession;
+  end(): void;
+  elapsed(): number;
+}
+
+/**
  * No-op session when timing is disabled.
  */
-const NOOP_SESSION: TimingSession = {
-  mark: () => NOOP_SESSION,
-  end: () => {},
-  elapsed: () => 0,
-} as TimingSession;
+const NOOP_SESSION: ITimingSession = {
+  mark() {
+    return NOOP_SESSION;
+  },
+  end() {},
+  elapsed() {
+    return 0;
+  },
+};
 
 /**
  * DevTiming — centralized timing utility.
@@ -87,7 +100,7 @@ export const DevTiming = {
   /**
    * Starts a timing session for an operation.
    */
-  start(operation: string, context: Record<string, unknown> = {}): TimingSession {
+  start(operation: string, context: Record<string, unknown> = {}): ITimingSession {
     return ENABLED ? new TimingSession(operation, context) : NOOP_SESSION;
   },
 
