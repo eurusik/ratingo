@@ -7,6 +7,7 @@ import {
   Param,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -18,6 +19,7 @@ import {
   DEFAULT_PAGE_SIZE,
 } from '../../../../common/constants';
 import { isNewRelease, hasRecentEpisode } from '../../../../common/utils/media.utils';
+import { Perf } from '../../../../common/utils/perf';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
@@ -61,6 +63,8 @@ function mapBadgeToPopularitySignal(badgeKey: BadgeKey | null | undefined): Popu
 @UseGuards(OptionalJwtAuthGuard)
 @Controller('catalog/shows')
 export class CatalogShowsController {
+  private readonly logger = new Logger(CatalogShowsController.name);
+
   /**
    * Public show catalog endpoints (trending, calendar, details).
    */
@@ -215,12 +219,21 @@ export class CatalogShowsController {
   })
   @ApiOkResponse({ type: ShowResponseDto })
   async getShowBySlug(@Param('slug') slug: string, @CurrentUser() user?: { id: string } | null) {
+    const perf = new Perf();
+
+    perf.mark('before_db_show');
     const show = await this.showRepository.findBySlug(slug);
+    perf.mark('after_db_show');
+
     if (!show) {
       throw new NotFoundException(`Show with slug "${slug}" not found`);
     }
-    const enriched = await this.catalogUserOneEnrich(user, show);
 
+    perf.mark('before_enrich');
+    const enriched = await this.catalogUserOneEnrich(user, show);
+    perf.mark('after_enrich');
+
+    perf.mark('before_card');
     // Build card metadata for details page
     const card = buildCardMeta(
       {
@@ -235,7 +248,9 @@ export class CatalogShowsController {
       },
       CARD_LIST_CONTEXT.DEFAULT,
     );
+    perf.mark('after_card');
 
+    perf.mark('before_verdict');
     // Compute verdict for details page using consensus rating (median of all sources)
     const { verdict, statusHint } = computeShowVerdict({
       status: show.status,
@@ -246,6 +261,11 @@ export class CatalogShowsController {
       lastAirDate: show.lastAirDate,
       firstAirDate: show.releaseDate ?? null,
     });
+    perf.mark('after_verdict');
+
+    this.logger.log(
+      `[TIMING] showBySlug slug=${slug} userId=${user?.id ?? 'anon'} ${perf.report()}`,
+    );
 
     return { ...enriched, card, verdict, statusHint };
   }
