@@ -6,6 +6,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { SlowRequestInterceptor } from './common/interceptors/slow-request.interceptor';
 
 /**
  * Entry point of the API application.
@@ -48,7 +49,7 @@ async function bootstrap(): Promise<void> {
     }),
   );
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalInterceptors(new SlowRequestInterceptor(), new ResponseInterceptor());
 
   // Swagger Documentation Setup
   const config = new DocumentBuilder()
