@@ -111,6 +111,11 @@ export class DrizzleMediaRepository implements IMediaRepository {
   /**
    * Inserts a minimal stub media item (media_items only).
    * If exists, returns existing id/slug without failing.
+   *
+   * Handles race condition where multiple parallel requests try to insert
+   * the same media item. ON CONFLICT handles (type, tmdb_id), but there's
+   * also a unique constraint on (type, slug). If slug conflict occurs,
+   * we fall back to SELECT by slug and handle accordingly.
    */
   async upsertStub(payload: {
     tmdbId: number;
@@ -149,10 +154,120 @@ export class DrizzleMediaRepository implements IMediaRepository {
         .returning({ id: schema.mediaItems.id, slug: schema.mediaItems.slug });
 
       return row;
-    } catch (error) {
-      this.logger.error(`Failed to upsert stub for tmdbId ${payload.tmdbId}: ${error.message}`);
+    } catch (error: unknown) {
+      const result = await this.handleSlugConflict(error, payload);
+      if (result) return result;
+
+      this.logger.error(
+        `Failed to upsert stub for tmdbId ${payload.tmdbId}: ${(error as Error).message}`,
+      );
       throw new DatabaseException('Failed to upsert stub media item', { tmdbId: payload.tmdbId });
     }
+  }
+
+  /**
+   * Handles slug unique constraint violation during upsert.
+   * Returns resolved record or null if error is not a slug conflict.
+   */
+  private async handleSlugConflict(
+    error: unknown,
+    payload: {
+      tmdbId: number;
+      type: MediaType;
+      title: string;
+      slug: string;
+      ingestionStatus: IngestionStatus;
+    },
+  ): Promise<{ id: string; slug: string } | null> {
+    const err = error as {
+      code?: string;
+      constraint?: string;
+      cause?: { code?: string; constraint?: string };
+    };
+    const pgCode = err.cause?.code ?? err.code;
+    const pgConstraint = err.cause?.constraint ?? err.constraint;
+
+    // Not a slug conflict — let caller handle
+    if (pgCode !== '23505' || pgConstraint !== 'media_type_slug_idx') {
+      return null;
+    }
+
+    // Fetch by slug — that's what we know exists from the error
+    const existingBySlug = await this.db
+      .select({
+        id: schema.mediaItems.id,
+        slug: schema.mediaItems.slug,
+        tmdbId: schema.mediaItems.tmdbId,
+      })
+      .from(schema.mediaItems)
+      .where(
+        and(eq(schema.mediaItems.type, payload.type), eq(schema.mediaItems.slug, payload.slug)),
+      )
+      .limit(1);
+
+    if (!existingBySlug[0]) {
+      return null; // Shouldn't happen, but let caller handle
+    }
+
+    // Case 1: Race condition — same tmdbId, just return existing
+    if (existingBySlug[0].tmdbId === payload.tmdbId) {
+      this.logger.debug(
+        `Race condition resolved for tmdbId ${payload.tmdbId}, returning existing record`,
+      );
+      return { id: existingBySlug[0].id, slug: existingBySlug[0].slug };
+    }
+
+    // Case 2: Real slug collision — different tmdbId owns this slug
+    return this.upsertWithUniqueSlug(payload, existingBySlug[0].tmdbId);
+  }
+
+  /**
+   * Retries upsert with a unique slug (appends tmdbId) when slug collision occurs.
+   */
+  private async upsertWithUniqueSlug(
+    payload: {
+      tmdbId: number;
+      type: MediaType;
+      title: string;
+      slug: string;
+      ingestionStatus: IngestionStatus;
+    },
+    conflictingTmdbId: number,
+  ): Promise<{ id: string; slug: string }> {
+    const uniqueSlug = `${payload.slug}-${payload.tmdbId}`;
+    this.logger.warn(
+      `Slug collision: "${payload.slug}" owned by tmdbId ${conflictingTmdbId}, ` +
+        `using "${uniqueSlug}" for tmdbId ${payload.tmdbId}`,
+    );
+
+    const [retryRow] = await this.db
+      .insert(schema.mediaItems)
+      .values({
+        tmdbId: payload.tmdbId,
+        type: payload.type,
+        title: payload.title,
+        slug: uniqueSlug,
+        ingestionStatus: payload.ingestionStatus,
+        popularity: 0,
+        rating: 0,
+        voteCount: 0,
+        credits: { cast: [], crew: [] },
+        videos: null,
+        watchProvidersRaw: null,
+        overview: null,
+      })
+      .onConflictDoUpdate({
+        target: [schema.mediaItems.type, schema.mediaItems.tmdbId],
+        set: {
+          title: payload.title,
+          slug: uniqueSlug,
+          ingestionStatus: payload.ingestionStatus,
+          updatedAt: new Date(),
+        },
+      })
+      .returning({ id: schema.mediaItems.id, slug: schema.mediaItems.slug });
+
+    return retryRow;
   }
 
   /**
