@@ -48,9 +48,6 @@ interface ApiResponse<T> {
  */
 const retriedRequests = new WeakSet<Request>();
 
-/** Idempotent HTTP methods that are safe to retry. */
-const IDEMPOTENT_METHODS = ['GET', 'HEAD'];
-
 /**
  * Creates configured ky instance.
  * Lazy initialized on first request.
@@ -99,12 +96,7 @@ function createClient(): KyInstance {
 
           // Don't retry if already retried (prevents infinite retry loop)
           if (retriedRequests.has(request)) {
-            return response;
-          }
-
-          // Only retry idempotent methods (GET, HEAD)
-          const method = request.method.toUpperCase();
-          if (!IDEMPOTENT_METHODS.includes(method)) {
+            tokenStorage.clearTokens();
             window.dispatchEvent(new CustomEvent('auth:unauthorized'));
             return response;
           }
@@ -116,7 +108,7 @@ function createClient(): KyInstance {
             // Mark as retried to prevent infinite retry loop
             retriedRequests.add(request);
 
-            // Clone request with new token
+            // Clone request with new token (works for all methods including POST/PATCH/PUT)
             const newRequest = new Request(request, {
               headers: new Headers(request.headers),
             });

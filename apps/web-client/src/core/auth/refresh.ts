@@ -5,11 +5,18 @@
  * When multiple requests receive 401 simultaneously, they all
  * wait for the same refresh promise instead of creating multiple requests.
  *
+ * Also broadcasts refresh events to other tabs for coordination.
+ *
  * @module core/auth/refresh
  */
 
 import { authApi, type AuthTokensDto } from '../api/auth';
 import { tokenStorage } from './token-storage';
+import {
+  broadcastRefreshStart,
+  broadcastRefreshSuccess,
+  broadcastRefreshFailed,
+} from './cross-tab-sync';
 
 /**
  * Singleton promise for in-flight refresh.
@@ -22,6 +29,8 @@ let refreshPromise: Promise<AuthTokensDto> | null = null;
  *
  * If a refresh is already in progress, returns the existing promise.
  * Otherwise, initiates a new refresh request.
+ *
+ * Broadcasts refresh events to other tabs for coordination.
  *
  * @returns Promise resolving to new tokens
  * @throws Error if refresh fails or no refresh token available
@@ -45,11 +54,20 @@ export async function refreshTokens(): Promise<AuthTokensDto> {
     throw new Error('No refresh token available');
   }
 
+  // Notify other tabs that refresh is starting
+  broadcastRefreshStart();
+
   refreshPromise = authApi
     .refresh({ refreshToken })
     .then((tokens) => {
       tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
+      // Notify other tabs about new tokens
+      broadcastRefreshSuccess(tokens.accessToken, tokens.refreshToken);
       return tokens;
+    })
+    .catch((error) => {
+      broadcastRefreshFailed();
+      throw error;
     })
     .finally(() => {
       refreshPromise = null;

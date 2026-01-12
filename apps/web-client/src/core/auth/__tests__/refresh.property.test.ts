@@ -11,6 +11,11 @@ import {
 } from '../refresh';
 import { tokenStorage } from '../token-storage';
 import { authApi } from '../../api/auth';
+import {
+  broadcastRefreshStart,
+  broadcastRefreshSuccess,
+  broadcastRefreshFailed,
+} from '../cross-tab-sync';
 
 // Mock dependencies
 jest.mock('../token-storage', () => ({
@@ -27,8 +32,23 @@ jest.mock('../../api/auth', () => ({
   },
 }));
 
+jest.mock('../cross-tab-sync', () => ({
+  broadcastRefreshStart: jest.fn(),
+  broadcastRefreshSuccess: jest.fn(),
+  broadcastRefreshFailed: jest.fn(),
+}));
+
 const mockTokenStorage = tokenStorage as jest.Mocked<typeof tokenStorage>;
 const mockAuthApi = authApi as jest.Mocked<typeof authApi>;
+const mockBroadcastRefreshStart = broadcastRefreshStart as jest.MockedFunction<
+  typeof broadcastRefreshStart
+>;
+const mockBroadcastRefreshSuccess = broadcastRefreshSuccess as jest.MockedFunction<
+  typeof broadcastRefreshSuccess
+>;
+const mockBroadcastRefreshFailed = broadcastRefreshFailed as jest.MockedFunction<
+  typeof broadcastRefreshFailed
+>;
 
 describe('Single-flight token refresh', () => {
   beforeEach(() => {
@@ -173,6 +193,69 @@ describe('Single-flight token refresh', () => {
 
         await expect(refreshTokens()).rejects.toThrow('No refresh token available');
         expect(mockAuthApi.refresh).not.toHaveBeenCalled();
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * Property: refreshTokens broadcasts events to other tabs
+   */
+  it('broadcasts refresh start and success to other tabs', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.string({ minLength: 1 }),
+        fc.string({ minLength: 1 }),
+        fc.string({ minLength: 1 }),
+        async (refreshToken, newAccessToken, newRefreshToken) => {
+          _resetRefreshState();
+          jest.clearAllMocks();
+
+          mockTokenStorage.getRefreshToken.mockReturnValue(refreshToken);
+          mockAuthApi.refresh.mockResolvedValue({
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+          });
+
+          await refreshTokens();
+
+          // Should broadcast start
+          expect(mockBroadcastRefreshStart).toHaveBeenCalledTimes(1);
+
+          // Should broadcast success with new tokens
+          expect(mockBroadcastRefreshSuccess).toHaveBeenCalledTimes(1);
+          expect(mockBroadcastRefreshSuccess).toHaveBeenCalledWith(newAccessToken, newRefreshToken);
+
+          // Should not broadcast failure
+          expect(mockBroadcastRefreshFailed).not.toHaveBeenCalled();
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  /**
+   * Property: refreshTokens broadcasts failure on error
+   */
+  it('broadcasts refresh failure on error', async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.string({ minLength: 1 }), async (refreshToken) => {
+        _resetRefreshState();
+        jest.clearAllMocks();
+
+        mockTokenStorage.getRefreshToken.mockReturnValue(refreshToken);
+        mockAuthApi.refresh.mockRejectedValue(new Error('Refresh failed'));
+
+        await expect(refreshTokens()).rejects.toThrow('Refresh failed');
+
+        // Should broadcast start
+        expect(mockBroadcastRefreshStart).toHaveBeenCalledTimes(1);
+
+        // Should broadcast failure
+        expect(mockBroadcastRefreshFailed).toHaveBeenCalledTimes(1);
+
+        // Should not broadcast success
+        expect(mockBroadcastRefreshSuccess).not.toHaveBeenCalled();
       }),
       { numRuns: 100 },
     );

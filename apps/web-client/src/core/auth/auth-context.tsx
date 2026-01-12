@@ -1,5 +1,10 @@
 /**
- * Auth context and provider for managing authentication state.
+ * Authentication Context Module
+ *
+ * Provides React context for managing authentication state across the application.
+ * Handles login, logout, registration, token refresh, and cross-tab synchronization.
+ *
+ * @module core/auth/auth-context
  */
 
 'use client';
@@ -18,31 +23,61 @@ import { authApi, type MeDto, type LoginDto, type RegisterDto } from '../api/aut
 import { tokenStorage } from './token-storage';
 import { refreshTokens } from './refresh';
 import { setTokenGetter } from '../api/client';
+import { scheduleProactiveRefresh, cancelProactiveRefresh } from './proactive-refresh';
+import {
+  initCrossTabSync,
+  broadcastLogout,
+  destroyCrossTabSync,
+} from './cross-tab-sync';
 
-/** Auth context state. */
+/**
+ * Authentication state interface.
+ */
 interface AuthState {
-  /** Current authenticated user. */
+  /** Current authenticated user or null if not authenticated. */
   user: MeDto | null;
-  /** Whether auth is being initialized. */
+  /** True during initial authentication check on mount. */
   isLoading: boolean;
-  /** Whether user is authenticated. */
+  /** True if user is authenticated (has valid session). */
   isAuthenticated: boolean;
-  /** Whether user has admin role. */
+  /** True if authenticated user has admin role. */
   isAdmin: boolean;
 }
 
-/** Auth context actions. */
+/**
+ * Authentication actions interface.
+ */
 interface AuthActions {
-  /** Logs in with email/password. */
+  /**
+   * Authenticates user with email and password.
+   *
+   * @param data - Login credentials
+   * @throws {ApiError} When credentials are invalid
+   */
   login: (data: LoginDto) => Promise<void>;
-  /** Registers a new user. */
+
+  /**
+   * Registers new user account.
+   *
+   * @param data - Registration data
+   * @throws {ApiError} When email already exists or validation fails
+   */
   register: (data: RegisterDto) => Promise<void>;
-  /** Logs out current user. */
+
+  /**
+   * Logs out current user.
+   * Clears tokens, cancels proactive refresh, and notifies other tabs.
+   */
   logout: () => Promise<void>;
-  /** Refreshes current user data. */
+
+  /**
+   * Refreshes current user data from API.
+   * Useful after profile updates.
+   */
   refreshUser: () => Promise<void>;
 }
 
+/** Combined auth context value type. */
 type AuthContextValue = AuthState & AuthActions;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -51,7 +86,21 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-/** Auth provider component. */
+/**
+ * Authentication provider component.
+ *
+ * Wraps application to provide authentication state and actions.
+ * Handles:
+ * - Initial auth state restoration from tokens
+ * - Proactive token refresh scheduling
+ * - Cross-tab synchronization via BroadcastChannel
+ * - Unauthorized event handling from API client
+ *
+ * @example
+ * <AuthProvider>
+ *   <App />
+ * </AuthProvider>
+ */
 export function AuthProvider({ children }: AuthProviderProps) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<MeDto | null>(null);
@@ -65,7 +114,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setTokenGetter(() => tokenStorage.getAccessToken());
   }, []);
 
-  // Fetch current user on mount
+  // Initialize cross-tab sync
+  useEffect(() => {
+    initCrossTabSync({
+      onTokensUpdated: () => {
+        // Another tab refreshed tokens, schedule our proactive refresh
+        scheduleProactiveRefresh();
+      },
+      onLogout: () => {
+        // Another tab logged out
+        cancelProactiveRefresh();
+        setUser(null);
+        queryClient.clear();
+      },
+    });
+
+    return () => {
+      destroyCrossTabSync();
+    };
+  }, [queryClient]);
+
+  /**
+   * Fetches current user and restores auth state.
+   * Called on mount and after OAuth callback.
+   */
   const fetchUser = useCallback(async () => {
     if (!tokenStorage.hasTokens()) {
       setIsLoading(false);
@@ -75,12 +147,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const me = await authApi.me();
       setUser(me);
+      scheduleProactiveRefresh();
     } catch {
-      // Token invalid or expired, try refresh using centralized single-flight refresh
+      // Token invalid or expired, try refresh
       try {
         await refreshTokens();
         const me = await authApi.me();
         setUser(me);
+        scheduleProactiveRefresh();
       } catch {
         // Refresh failed, clear tokens
         tokenStorage.clearTokens();
@@ -95,9 +169,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     fetchUser();
   }, [fetchUser]);
 
-  // Listen for unauthorized events from API client
+  // Handle unauthorized events from API client (401 after failed refresh)
   useEffect(() => {
     const handleUnauthorized = () => {
+      cancelProactiveRefresh();
       tokenStorage.clearTokens();
       setUser(null);
     };
@@ -106,7 +181,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
-  // Listen for tokens-updated events (e.g., from OAuth callback)
+  // Handle tokens-updated events (e.g., from OAuth callback)
   useEffect(() => {
     const handleTokensUpdated = () => {
       fetchUser();
@@ -121,6 +196,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
     const me = await authApi.me();
     setUser(me);
+    scheduleProactiveRefresh();
   }, []);
 
   const register = useCallback(async (data: RegisterDto) => {
@@ -128,17 +204,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
     const me = await authApi.me();
     setUser(me);
+    scheduleProactiveRefresh();
   }, []);
 
   const logout = useCallback(async () => {
+    cancelProactiveRefresh();
     try {
       await authApi.logout();
     } catch {
-      // Ignore logout errors
+      // Ignore logout API errors
     } finally {
       tokenStorage.clearTokens();
       setUser(null);
       queryClient.clear();
+      broadcastLogout();
     }
   }, [queryClient]);
 
@@ -169,7 +248,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/** Hook to access auth context. */
+/**
+ * Hook to access authentication context.
+ *
+ * @returns Auth state and actions
+ * @throws {Error} When used outside AuthProvider
+ *
+ * @example
+ * const { user, isAuthenticated, login, logout } = useAuth();
+ *
+ * if (isAuthenticated) {
+ *   console.log(`Logged in as ${user.email}`);
+ * }
+ */
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);
   if (!context) {
