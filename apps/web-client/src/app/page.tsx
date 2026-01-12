@@ -11,7 +11,7 @@ import {
   MediaCardsWithStatus,
   NewEpisodesSection,
   toCardProps,
-  extractNewEpisodeItems,
+  mapNewEpisodes,
 } from '@/modules/home';
 import { getDictionary } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
@@ -21,14 +21,21 @@ export default async function HomePage() {
   const dict = getDictionary('uk');
 
   // Fetch all data in parallel (silent fallback on error)
-  const [heroItems, trendingShowsData, trendingMoviesData, nowPlayingData, newOnDigitalData] =
-    await Promise.all([
-      catalogApi.getHeroItems({ type: 'show' }).catch(() => []),
-      catalogApi.getTrendingShows({ limit: 12 }).catch(() => ({ data: [] })),
-      catalogApi.getTrendingMovies({ limit: 12 }).catch(() => ({ data: [] })),
-      catalogApi.getNowPlayingMovies({ limit: 12 }).catch(() => ({ data: [] })),
-      catalogApi.getNewOnDigitalMovies({ limit: 12 }).catch(() => ({ data: [] })),
-    ]);
+  const [
+    heroItems,
+    trendingShowsData,
+    trendingMoviesData,
+    nowPlayingData,
+    newOnDigitalData,
+    newEpisodesData,
+  ] = await Promise.all([
+    catalogApi.getHeroItems({ type: 'show' }).catch(() => []),
+    catalogApi.getTrendingShows({ limit: 12 }).catch(() => ({ data: [] })),
+    catalogApi.getTrendingMovies({ limit: 12 }).catch(() => ({ data: [] })),
+    catalogApi.getNowPlayingMovies({ limit: 12 }).catch(() => ({ data: [] })),
+    catalogApi.getNewOnDigitalMovies({ limit: 12 }).catch(() => ({ data: [] })),
+    catalogApi.getNewEpisodes({ days: 7, limit: 15 }).catch(() => ({ data: [] })),
+  ]);
 
   // Extract data arrays
   const shows = Array.isArray(trendingShowsData)
@@ -63,8 +70,8 @@ export default async function HomePage() {
   const heroMediaItemIds = new Set((heroItems ?? []).map((item) => item.mediaItemId));
   const catalogCards = showCards.filter((card) => !heroMediaItemIds.has(card.id));
 
-  // Extract new episodes from trending shows
-  const newEpisodeItems = extractNewEpisodeItems(showCards);
+  // Map new episodes API response to component format
+  const newEpisodeItems = mapNewEpisodes(newEpisodesData);
 
   // Collect all media item IDs for batch status fetching
   const allMediaItemIds = [

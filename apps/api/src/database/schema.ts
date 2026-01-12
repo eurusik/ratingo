@@ -280,36 +280,43 @@ export const movies = pgTable(
 /**
  * SHOWS (Details)
  */
-export const shows = pgTable('shows', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  mediaItemId: uuid('media_item_id')
-    .references(() => mediaItems.id, { onDelete: 'cascade' })
-    .notNull()
-    .unique(),
+export const shows = pgTable(
+  'shows',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    mediaItemId: uuid('media_item_id')
+      .references(() => mediaItems.id, { onDelete: 'cascade' })
+      .notNull()
+      .unique(),
 
-  totalSeasons: integer('total_seasons'),
-  totalEpisodes: integer('total_episodes'),
-  status: text('status'),
-  lastAirDate: timestamp('last_air_date'),
-  nextAirDate: timestamp('next_air_date'),
+    totalSeasons: integer('total_seasons'),
+    totalEpisodes: integer('total_episodes'),
+    status: text('status'),
+    lastAirDate: timestamp('last_air_date'),
+    nextAirDate: timestamp('next_air_date'),
 
-  // Pre-calculated drop-off analysis (updated by background job)
-  dropOffAnalysis: jsonb('drop_off_analysis').$type<{
-    dropOffPoint: { season: number; episode: number; title: string } | null;
-    dropOffPercent: number;
-    overallRetention: number;
-    seasonEngagement: Array<{
-      season: number;
-      avgRating: number;
-      avgVotes: number;
-      engagementDrop: number;
-    }>;
-    insight: string;
-    insightType: 'strong_start' | 'steady' | 'drops_early' | 'drops_late';
-    analyzedAt: string;
-    episodesAnalyzed: number;
-  }>(),
-});
+    // Pre-calculated drop-off analysis (updated by background job)
+    dropOffAnalysis: jsonb('drop_off_analysis').$type<{
+      dropOffPoint: { season: number; episode: number; title: string } | null;
+      dropOffPercent: number;
+      overallRetention: number;
+      seasonEngagement: Array<{
+        season: number;
+        avgRating: number;
+        avgVotes: number;
+        engagementDrop: number;
+      }>;
+      insight: string;
+      insightType: 'strong_start' | 'steady' | 'drops_early' | 'drops_late';
+      analyzedAt: string;
+      episodesAnalyzed: number;
+    }>(),
+  },
+  (t) => ({
+    // Index for JOIN on media_item_id (used by new-episodes query)
+    mediaItemIdx: index('shows_media_item_idx').on(t.mediaItemId),
+  }),
+);
 
 // --- SEASONS & EPISODES (Normalized) ---
 
@@ -359,6 +366,13 @@ export const episodes = pgTable(
     airDateIdx: index('episodes_air_date_idx').on(t.airDate),
     showIdx: index('episodes_show_idx').on(t.showId),
     showAirDateIdx: index('episodes_show_air_date_idx').on(t.showId, t.airDate),
+    // Optimized for DISTINCT ON (show_id) ORDER BY air_date DESC, number DESC
+    // Used by new-episodes query for batch release handling
+    showAirDateNumberIdx: index('episodes_show_air_date_number_idx').on(
+      t.showId,
+      t.airDate,
+      t.number,
+    ),
   }),
 );
 
@@ -855,10 +869,13 @@ export const catalogPolicies = pgTable(
     activatedAt: timestamp('activated_at'),
   },
   (t) => ({
-    // Partial unique index on constant (1) where active - ensures only one active
-    // SQL: CREATE UNIQUE INDEX catalog_policies_single_active ON catalog_policies ((1)) WHERE is_active = true;
-    // Note: This index is created via raw SQL migration, not Drizzle
     versionIdx: index('catalog_policies_version_idx').on(t.version),
+    // Partial index for fast active policy lookup (used by new-episodes query CTE)
+    // Note: Partial unique index ensuring only one active policy is created via raw SQL migration:
+    // CREATE UNIQUE INDEX catalog_policies_single_active ON catalog_policies ((1)) WHERE is_active = true;
+    activeIdx: index('catalog_policies_active_idx')
+      .on(t.isActive)
+      .where(sql`${t.isActive} = true`),
   }),
 );
 

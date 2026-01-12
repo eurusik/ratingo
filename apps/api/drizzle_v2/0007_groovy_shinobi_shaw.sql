@@ -1,0 +1,3 @@
+CREATE INDEX IF NOT EXISTS "catalog_policies_active_idx" ON "catalog_policies" USING btree ("is_active") WHERE "catalog_policies"."is_active" = true;--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "episodes_show_air_date_number_idx" ON "episodes" USING btree ("show_id","air_date","number");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "shows_media_item_idx" ON "shows" USING btree ("media_item_id");

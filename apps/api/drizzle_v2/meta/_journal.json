@@ -50,6 +50,13 @@
       "when": 1768150532417,
       "tag": "0006_add_oauth_exchange_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1768209039032,
+      "tag": "0007_groovy_shinobi_shaw",
+      "breakpoints": true
     }
   ]
 }

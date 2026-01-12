@@ -79,7 +79,7 @@ export type CalendarResponseDto = GetData<'/api/catalog/shows/calendar'>;
  * New episodes item.
  */
 export interface NewEpisodeItem {
-  showId: string;
+  mediaItemId: string;
   slug: string;
   title: string;
   posterPath: string | null;

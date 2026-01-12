@@ -205,7 +205,8 @@ export class GoogleAuthGuard extends AuthGuard('google') {
 
   private setStateCookie(res: FastifyReply, state: string): void {
     const isProd = process.env.NODE_ENV === 'production';
-    void res.setCookie(OAUTH_STATE_COOKIE, state, {
+    // @fastify/cookie adds setCookie method at runtime
+    (res as any).setCookie(OAUTH_STATE_COOKIE, state, {
       httpOnly: true,
       sameSite: 'lax',
       secure: isProd,
@@ -215,11 +216,13 @@ export class GoogleAuthGuard extends AuthGuard('google') {
   }
 
   private getStateCookie(req: FastifyRequest): string | undefined {
-    return (req.cookies as Record<string, string | undefined>)?.[OAUTH_STATE_COOKIE];
+    // @fastify/cookie adds cookies property at runtime
+    return (req as any).cookies?.[OAUTH_STATE_COOKIE];
   }
 
   private clearStateCookie(res: FastifyReply): void {
-    void res.clearCookie(OAUTH_STATE_COOKIE, { path: GOOGLE_AUTH_COOKIE_PATH });
+    // @fastify/cookie adds clearCookie method at runtime
+    (res as any).clearCookie(OAUTH_STATE_COOKIE, { path: GOOGLE_AUTH_COOKIE_PATH });
   }
 
   private validateReturnTo(returnTo?: string): string | null {

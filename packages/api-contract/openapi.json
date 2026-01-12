@@ -1968,6 +1968,146 @@
         ]
       }
     },
+    "/api/auth/google": {
+      "get": {
+        "operationId": "AuthController_googleAuth",
+        "summary": "Initiate Google OAuth flow",
+        "parameters": [
+          {
+            "name": "returnTo",
+            "required": false,
+            "in": "query",
+            "description": "URL to redirect after auth",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to Google"
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/google/callback": {
+      "get": {
+        "operationId": "AuthController_googleCallback",
+        "summary": "Google OAuth callback",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Redirect to frontend with exchange code"
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/oauth/exchange": {
+      "post": {
+        "operationId": "AuthController_exchangeCode",
+        "summary": "Exchange one-time code for tokens",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExchangeCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens pair",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AuthTokensDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "OAUTH_EXCHANGE_EXPIRED or OAUTH_EXCHANGE_USED"
+          },
+          "429": {
+            "description": "Too many exchange attempts"
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/config": {
+      "get": {
+        "operationId": "AuthController_getConfig",
+        "summary": "Get auth configuration",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Auth configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "google": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/api/users/me": {
       "get": {
         "operationId": "UsersController_me",
@@ -6053,7 +6193,8 @@
         "properties": {
           "showId": {
             "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "Media item ID (for linking to show details)"
           },
           "slug": {
             "type": "string",
@@ -7120,6 +7261,19 @@
           "role",
           "profile",
           "stats"
+        ]
+      },
+      "ExchangeCodeDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "One-time exchange code from OAuth callback",
+            "example": "abc123xyz..."
+          }
+        },
+        "required": [
+          "code"
         ]
       },
       "UpdateProfileDto": {

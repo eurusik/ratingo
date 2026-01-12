@@ -1,8 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class NewEpisodeDto {
-  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
-  showId: string;
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Media item ID (for linking to show details)',
+  })
+  mediaItemId: string;
 
   @ApiProperty({ example: 'arcane' })
   slug: string;

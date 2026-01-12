@@ -13,7 +13,7 @@ export {
   type NewEpisodeShowItem,
   MediaCardsWithStatus,
 } from './components';
-export { toCardProps, extractNewEpisodeItems, type HomeCardProps } from './mappers';
+export { toCardProps, extractNewEpisodeItems, mapNewEpisodes, type HomeCardProps } from './mappers';
 export type {
   BadgeKey,
   ImageDto,

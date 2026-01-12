@@ -2,6 +2,8 @@
  * Mappers for home page data transformation.
  */
 
+import type { NewEpisodeItem } from '@/core/api/catalog';
+import { tmdbImageUrl, TMDB_POSTER_SIZES } from '@/shared/constants';
 import type { MediaCardServerProps, NewEpisodeShowItem } from './components';
 
 /** API item with optional card metadata */
@@ -52,4 +54,24 @@ export function extractNewEpisodeItems(showCards: HomeCardProps[]): NewEpisodeSh
       airDate: card.showProgress?.lastAirDate?.toString() ?? new Date().toISOString(),
     }))
     .sort((a, b) => new Date(b.airDate).getTime() - new Date(a.airDate).getTime());
+}
+
+/**
+ * Map new episodes API response to component format.
+ * Handles both array and {data: []} response shapes.
+ */
+export function mapNewEpisodes(
+  response: { data?: NewEpisodeItem[] } | NewEpisodeItem[],
+): NewEpisodeShowItem[] {
+  const items = Array.isArray(response) ? response : (response.data ?? []);
+
+  return items.map((ep) => ({
+    id: ep.mediaItemId,
+    slug: ep.slug,
+    title: ep.title,
+    posterUrl: tmdbImageUrl(ep.posterPath, TMDB_POSTER_SIZES.W154),
+    seasonNumber: ep.seasonNumber,
+    episodeNumber: ep.episodeNumber,
+    airDate: ep.airDate,
+  }));
 }
