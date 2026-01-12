@@ -1,4 +1,4 @@
-import { AdminLayout } from '../../modules/admin';
+import { AdminLayout } from '@/modules/admin';
 
 export default function AdminLayoutWrapper({ children }: { children: React.ReactNode }) {
   // Auth check is handled client-side in AdminLayout component

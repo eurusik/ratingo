@@ -2,21 +2,21 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/card';
-import { Badge } from '../../../shared/ui/badge';
-import { Progress } from '../../../shared/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Badge } from '@/shared/ui/badge';
+import { Progress } from '@/shared/ui/progress';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../../shared/ui/select';
+} from '@/shared/ui/select';
 import { DataTable, StatusBadge } from '@/modules/admin';
 import { DataTableColumnDef, RUN_STATUS } from '@/modules/admin/types';
 import { useTranslation } from '@/shared/i18n';
-import { useFilteredRuns } from '../../../core/query/admin';
-import { type EvaluationRunDto } from '../../../core/api/admin';
+import { useFilteredRuns } from '@/core/query/admin';
+import { type EvaluationRunDto } from '@/core/api/admin';
 
 export default function RunsPage() {
   const router = useRouter();

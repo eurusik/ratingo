@@ -173,7 +173,7 @@ export function Sidebar({ navigationItems, userPermissions = [], className }: Si
       {/* Desktop Navigation - Fixed Panel */}
       <aside
         className={cn(
-          'hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:z-50',
+          'hidden md:flex md:w-64 md:flex-col md:fixed md:top-14 md:bottom-0 md:z-30',
           className,
         )}
       >

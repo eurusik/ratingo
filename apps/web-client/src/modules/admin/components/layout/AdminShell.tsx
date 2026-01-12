@@ -13,6 +13,7 @@ import {
 } from '@/shared/ui/breadcrumb';
 import { Separator } from '@/shared/ui/separator';
 import { Sidebar, SidebarTrigger } from './Sidebar';
+import { AdminHeader } from './AdminHeader';
 
 interface AdminShellWithSidebarProps extends AdminShellProps {
   navigationItems?: NavigationItem[];
@@ -24,7 +25,7 @@ interface AdminShellWithSidebarProps extends AdminShellProps {
  * AdminShell - Main layout component for all admin pages
  *
  * Provides consistent layout structure with:
- * - Responsive container (max-w-6xl mx-auto space-y-6)
+ * - Fixed header with trending toggle, search and user menu
  * - Optional responsive sidebar (Sheet on mobile, fixed on desktop)
  * - Header with breadcrumbs and actions
  * - Content area for module rendering
@@ -43,6 +44,9 @@ export function AdminShell({
 }: AdminShellWithSidebarProps & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className="min-h-screen bg-background">
+      {/* Fixed header */}
+      <AdminHeader />
+
       {/* Sidebar - only render if navigationItems provided and showSidebar is true */}
       {showSidebar && navigationItems.length > 0 && (
         <Sidebar navigationItems={navigationItems} userPermissions={userPermissions} />
@@ -51,7 +55,7 @@ export function AdminShell({
       {/* Main content area */}
       <div
         className={cn(
-          'max-w-6xl mx-auto space-y-6 p-6',
+          'flex-1 space-y-6 p-6 pt-20', // pt-20 for fixed header offset
           showSidebar && navigationItems.length > 0 && 'md:ml-64', // Offset for fixed sidebar on desktop
           className,
         )}

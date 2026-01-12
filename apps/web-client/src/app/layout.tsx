@@ -7,8 +7,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import { AppProviders } from '@/core/providers';
-import { Header, HeaderContextProvider, Footer, GoogleAnalytics } from '@/shared/components';
-import { GlobalAuthModal } from '@/modules/auth';
+import { GoogleAnalytics } from '@/shared/components';
 import { getDictionary } from '@/shared/i18n';
 import './globals.css';
 
@@ -81,12 +80,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="uk" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-zinc-950 font-sans antialiased" suppressHydrationWarning>
         <AppProviders>
-          <HeaderContextProvider>
-            <Header />
-            <main className="pt-16">{children}</main>
-            <Footer />
-          </HeaderContextProvider>
-          <GlobalAuthModal />
+          {children}
         </AppProviders>
         <GoogleAnalytics />
       </body>
