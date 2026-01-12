@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, and, gte, lte, desc } from 'drizzle-orm';
+import { eq, and, gte, lte, desc, asc } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
@@ -72,7 +72,7 @@ export class NewEpisodesQuery {
         .innerJoin(schema.shows, eq(schema.episodes.showId, schema.shows.id))
         .innerJoin(schema.mediaItems, eq(schema.shows.mediaItemId, schema.mediaItems.id))
         .where(and(gte(schema.episodes.airDate, startDate), lte(schema.episodes.airDate, now)))
-        .orderBy(desc(schema.episodes.airDate))
+        .orderBy(desc(schema.episodes.airDate), desc(schema.episodes.number))
         .limit(limit * QUERY_LIMIT_MULTIPLIER);
 
       const showMap = new Map<string, NewEpisodeItem>();

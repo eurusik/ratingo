@@ -200,4 +200,54 @@ describe('NewEpisodesQuery', () => {
 
     expect(result[0].episodeTitle).toBe('');
   });
+
+  it('should return highest episode number when batch release (same airDate)', async () => {
+    // Batch release: all episodes have the same airDate
+    // DB returns them sorted by airDate DESC, episodeNumber DESC
+    const batchReleaseDate = new Date();
+
+    const episodes = [
+      // Already sorted as DB would return: same airDate, episodeNumber DESC
+      {
+        showId: 'show1',
+        slug: 'you-and-me',
+        title: 'You & Me',
+        posterPath: '/yam.jpg',
+        seasonNumber: 1,
+        episodeNumber: 6,
+        episodeTitle: 'Episode 6',
+        airDate: batchReleaseDate,
+      },
+      {
+        showId: 'show1',
+        slug: 'you-and-me',
+        title: 'You & Me',
+        posterPath: '/yam.jpg',
+        seasonNumber: 1,
+        episodeNumber: 2,
+        episodeTitle: 'Episode 2',
+        airDate: batchReleaseDate,
+      },
+      {
+        showId: 'show1',
+        slug: 'you-and-me',
+        title: 'You & Me',
+        posterPath: '/yam.jpg',
+        seasonNumber: 1,
+        episodeNumber: 1,
+        episodeTitle: 'Episode 1',
+        airDate: batchReleaseDate,
+      },
+    ];
+
+    setup(episodes);
+
+    const result = await query.execute();
+
+    // Should pick episode 6 (highest number) when all have same airDate
+    expect(result).toHaveLength(1);
+    expect(result[0].showId).toBe('show1');
+    expect(result[0].episodeNumber).toBe(6);
+    expect(result[0].episodeTitle).toBe('Episode 6');
+  });
 });
