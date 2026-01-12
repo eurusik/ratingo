@@ -31,7 +31,7 @@ export default function ProvidersPage() {
   const labels = dict.admin?.providers ?? {};
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header with explanation */}
       <Card>
         <CardHeader>

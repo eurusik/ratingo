@@ -96,7 +96,7 @@ export default function PolicyDetailPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
       <PolicyHeader
         name={policy.name}
         version={policy.version}

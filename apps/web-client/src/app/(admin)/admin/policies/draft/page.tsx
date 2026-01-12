@@ -89,7 +89,7 @@ function PolicyDraftContent() {
   const formLabels = dict.admin.policyDetail.form;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
       <DraftHeader
         baseVersion={basePolicy?.version}
         labels={{

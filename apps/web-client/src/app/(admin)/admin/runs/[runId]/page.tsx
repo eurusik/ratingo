@@ -78,7 +78,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="space-y-6">
         <Card>
           <CardContent className="p-6">
             <div className="text-center">{dict.admin.common.loading}</div>
@@ -90,7 +90,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
 
   if (error || !run) {
     return (
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="space-y-6">
         <Card>
           <CardContent className="p-6">
             <div className="text-center text-destructive">
@@ -105,7 +105,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ runId: str
   const isMutating = promoteRunMutation.isPending || cancelRunMutation.isPending;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6">
       <RunHeader
         id={run.id}
         status={run.status}
