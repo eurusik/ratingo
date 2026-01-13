@@ -4,6 +4,7 @@ import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fa
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 import fastifyCookie from '@fastify/cookie';
+import fastifyMultipart from '@fastify/multipart';
 
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -28,6 +29,13 @@ async function bootstrap(): Promise<void> {
 
   // Register Fastify cookie plugin for OAuth state management
   await app.register(fastifyCookie);
+
+  // Register Fastify multipart plugin for file uploads (journal images)
+  await app.register(fastifyMultipart, {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB max file size
+    },
+  });
 
   // CORS configuration
   app.enableCors({
