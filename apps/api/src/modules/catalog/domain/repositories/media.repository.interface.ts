@@ -68,11 +68,17 @@ export interface IMediaRepository {
 
   /**
    * Retrieves a media item by its external TMDB ID.
+   * Note: TMDB IDs are unique per type (movie vs show), so type parameter
+   * is recommended for correctness when both types might exist.
    *
    * @param {number} tmdbId - TMDB ID
+   * @param {MediaType} type - Optional media type for precise lookup
    * @returns {Promise<{ id: string; slug: string; type: MediaType; ingestionStatus: IngestionStatus } | null>} Mapping or null
    */
-  findByTmdbId(tmdbId: number): Promise<{
+  findByTmdbId(
+    tmdbId: number,
+    type?: MediaType,
+  ): Promise<{
     id: string;
     slug: string;
     type: MediaType;

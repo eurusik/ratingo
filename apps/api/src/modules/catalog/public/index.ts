@@ -48,6 +48,9 @@ export {
   PROVIDERS_REPOSITORY,
 } from '../domain/repositories/providers.repository.interface';
 
+// Domain utilities
+export { generateSlug, generateUniqueSlug } from '../domain/utils/slug.utils';
+
 // Presentation DTOs (from common)
 export {
   OffsetPaginationQueryDto,

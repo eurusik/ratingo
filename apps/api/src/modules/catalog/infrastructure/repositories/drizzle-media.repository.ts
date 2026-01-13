@@ -60,16 +60,28 @@ export class DrizzleMediaRepository implements IMediaRepository {
 
   /**
    * Retrieves minimal media info (ID, slug) by TMDB ID to check existence.
+   * Note: TMDB IDs are unique per type (movie vs show), so type parameter
+   * is recommended for correctness when both types might exist.
    *
+   * @param tmdbId - TMDB ID
+   * @param type - Optional media type for precise lookup
    * @throws {DatabaseException} If database query fails
    */
-  async findByTmdbId(tmdbId: number): Promise<{
+  async findByTmdbId(
+    tmdbId: number,
+    type?: MediaType,
+  ): Promise<{
     id: string;
     slug: string;
     type: MediaType;
     ingestionStatus: IngestionStatus;
   } | null> {
     try {
+      const conditions = [eq(schema.mediaItems.tmdbId, tmdbId)];
+      if (type) {
+        conditions.push(eq(schema.mediaItems.type, type));
+      }
+
       const result = await this.db
         .select({
           id: schema.mediaItems.id,
@@ -78,7 +90,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           ingestionStatus: schema.mediaItems.ingestionStatus,
         })
         .from(schema.mediaItems)
-        .where(eq(schema.mediaItems.tmdbId, tmdbId))
+        .where(and(...conditions))
         .limit(1);
 
       if (!result[0]) return null;
@@ -234,7 +246,10 @@ export class DrizzleMediaRepository implements IMediaRepository {
     },
     conflictingTmdbId: number,
   ): Promise<{ id: string; slug: string }> {
-    const uniqueSlug = `${payload.slug}-${payload.tmdbId}`;
+    // Avoid double suffix if slug already ends with tmdbId
+    const suffix = `-${payload.tmdbId}`;
+    const uniqueSlug = payload.slug.endsWith(suffix) ? payload.slug : `${payload.slug}${suffix}`;
+
     this.logger.warn(
       `Slug collision: "${payload.slug}" owned by tmdbId ${conflictingTmdbId}, ` +
         `using "${uniqueSlug}" for tmdbId ${payload.tmdbId}`,
@@ -274,110 +289,175 @@ export class DrizzleMediaRepository implements IMediaRepository {
    * Performs a full transactional upsert of a media item.
    * Updates base table, type-specific details, and syncs genres.
    *
+   * Handles slug collision by retrying with unique slug (appends tmdbId).
+   *
    * @throws {DatabaseException} If database transaction fails
    */
   async upsert(media: NormalizedMedia): Promise<void> {
     try {
-      await this.db.transaction(async (tx) => {
-        // Upsert Base Media Item
-        const [mediaItem] = await tx
-          .insert(schema.mediaItems)
-          .values(PersistenceMapper.toMediaItemInsert(media))
-          .onConflictDoUpdate({
-            target: [schema.mediaItems.type, schema.mediaItems.tmdbId], // Composite key: type + tmdb_id
-            set: PersistenceMapper.toMediaItemUpdate(media),
-          })
-          .returning({ id: schema.mediaItems.id });
-
-        const mediaId = mediaItem.id;
-
-        // Delegate type-specific upsert
-        if (media.type === MediaType.MOVIE) {
-          await this.movieRepository.upsertDetails(tx, mediaId, media.details || {});
-        } else {
-          await this.showRepository.upsertDetails(tx, mediaId, media.details || {});
-        }
-
-        // Sync Genres
-        await this.genreRepository.syncGenres(tx, mediaId, media.genres);
-
-        // Upsert Ratingo Scores to media_stats
-        const statsInsert = PersistenceMapper.toMediaStatsInsert(mediaId, media);
-        if (statsInsert) {
-          await tx
-            .insert(schema.mediaStats)
-            .values(statsInsert)
-            .onConflictDoUpdate({
-              target: schema.mediaStats.mediaItemId,
-              set: {
-                ratingoScore: statsInsert.ratingoScore,
-                qualityScore: statsInsert.qualityScore,
-                popularityScore: statsInsert.popularityScore,
-                freshnessScore: statsInsert.freshnessScore,
-                watchersCount: statsInsert.watchersCount,
-                totalWatchers: statsInsert.totalWatchers,
-                updatedAt: new Date(),
-              },
-            });
-        }
-
-        // Upsert Catalog Evaluation (INELIGIBLE by default)
-        // Design Decision DD-3: Every media_item MUST have a corresponding evaluation record
-        // This ensures the 1:1 invariant and prevents items from being "stuck" without evaluation
-        //
-        // Per Readability & Pending Reform: PENDING is no longer used.
-        // New items start as INELIGIBLE with NO_ACTIVE_POLICY reason until evaluated.
-        await tx
-          .insert(schema.mediaCatalogEvaluations)
-          .values({
-            mediaItemId: mediaId,
-            status: EligibilityStatus.INELIGIBLE,
-            policyVersion: DEFAULT_POLICY_VERSION,
-            reasons: [EvaluationReason.NO_ACTIVE_POLICY],
-            relevanceScore: 0,
-            evaluatedAt: null, // NULL for items not yet evaluated by Policy Engine
-            context: EvaluationContext.CATALOG, // Default context for catalog evaluation
-          })
-          .onConflictDoNothing(); // If already exists, don't overwrite (evaluation job will update it)
-      });
+      await this.upsertWithSlug(media, media.slug);
     } catch (error: unknown) {
-      // Drizzle wraps PostgreSQL errors - extract the actual DB error
-      const err = error as {
+      // Check if it's a slug collision - retry with unique slug
+      const retrySlug = this.extractSlugCollisionRetry(error, media);
+      if (retrySlug) {
+        this.logger.warn(
+          `Slug collision for "${media.slug}", retrying with "${retrySlug}" (tmdbId: ${media.externalIds.tmdbId})`,
+        );
+        await this.upsertWithSlug(media, retrySlug);
+        return;
+      }
+
+      // Not a slug collision - handle as regular error
+      this.handleUpsertError(error, media);
+    }
+  }
+
+  /**
+   * Performs the actual upsert transaction with a specific slug.
+   */
+  private async upsertWithSlug(media: NormalizedMedia, slug: string | undefined): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      // Upsert Base Media Item
+      const insertValues = PersistenceMapper.toMediaItemInsert(media);
+      // Override slug if provided (for retry with unique slug)
+      if (slug) {
+        insertValues.slug = slug;
+      }
+
+      const updateValues = PersistenceMapper.toMediaItemUpdate(media);
+      // Also update slug on conflict if we're using a unique slug
+      if (slug && slug !== media.slug) {
+        updateValues.slug = slug;
+      }
+
+      const [mediaItem] = await tx
+        .insert(schema.mediaItems)
+        .values(insertValues)
+        .onConflictDoUpdate({
+          target: [schema.mediaItems.type, schema.mediaItems.tmdbId], // Composite key: type + tmdb_id
+          set: updateValues,
+        })
+        .returning({ id: schema.mediaItems.id });
+
+      const mediaId = mediaItem.id;
+
+      // Delegate type-specific upsert
+      if (media.type === MediaType.MOVIE) {
+        await this.movieRepository.upsertDetails(tx, mediaId, media.details || {});
+      } else {
+        await this.showRepository.upsertDetails(tx, mediaId, media.details || {});
+      }
+
+      // Sync Genres
+      await this.genreRepository.syncGenres(tx, mediaId, media.genres);
+
+      // Upsert Ratingo Scores to media_stats
+      const statsInsert = PersistenceMapper.toMediaStatsInsert(mediaId, media);
+      if (statsInsert) {
+        await tx
+          .insert(schema.mediaStats)
+          .values(statsInsert)
+          .onConflictDoUpdate({
+            target: schema.mediaStats.mediaItemId,
+            set: {
+              ratingoScore: statsInsert.ratingoScore,
+              qualityScore: statsInsert.qualityScore,
+              popularityScore: statsInsert.popularityScore,
+              freshnessScore: statsInsert.freshnessScore,
+              watchersCount: statsInsert.watchersCount,
+              totalWatchers: statsInsert.totalWatchers,
+              updatedAt: new Date(),
+            },
+          });
+      }
+
+      // Upsert Catalog Evaluation (INELIGIBLE by default)
+      // Design Decision DD-3: Every media_item MUST have a corresponding evaluation record
+      // This ensures the 1:1 invariant and prevents items from being "stuck" without evaluation
+      //
+      // Per Readability & Pending Reform: PENDING is no longer used.
+      // New items start as INELIGIBLE with NO_ACTIVE_POLICY reason until evaluated.
+      await tx
+        .insert(schema.mediaCatalogEvaluations)
+        .values({
+          mediaItemId: mediaId,
+          status: EligibilityStatus.INELIGIBLE,
+          policyVersion: DEFAULT_POLICY_VERSION,
+          reasons: [EvaluationReason.NO_ACTIVE_POLICY],
+          relevanceScore: 0,
+          evaluatedAt: null, // NULL for items not yet evaluated by Policy Engine
+          context: EvaluationContext.CATALOG, // Default context for catalog evaluation
+        })
+        .onConflictDoNothing(); // If already exists, don't overwrite (evaluation job will update it)
+    });
+  }
+
+  /**
+   * Checks if error is a slug collision and returns retry slug, or null if not.
+   */
+  private extractSlugCollisionRetry(error: unknown, media: NormalizedMedia): string | null {
+    const err = error as {
+      code?: string;
+      constraint?: string;
+      cause?: { code?: string; constraint?: string };
+    };
+    const pgCode = err.cause?.code ?? err.code;
+    const pgConstraint = err.cause?.constraint ?? err.constraint;
+
+    // Not a slug collision
+    if (pgCode !== '23505' || pgConstraint !== 'media_type_slug_idx') {
+      return null;
+    }
+
+    // Generate unique slug with tmdbId suffix
+    // Avoid double suffix if slug already ends with tmdbId (e.g., tmdb-1614580 → tmdb-1614580-1614580)
+    const { tmdbId } = media.externalIds;
+    const baseSlug = media.slug || `tmdb-${tmdbId}`;
+    const suffix = `-${tmdbId}`;
+
+    return baseSlug.endsWith(suffix) ? baseSlug : `${baseSlug}${suffix}`;
+  }
+
+  /**
+   * Handles upsert errors by logging and throwing DatabaseException.
+   */
+  private handleUpsertError(error: unknown, media: NormalizedMedia): never {
+    // Drizzle wraps PostgreSQL errors - extract the actual DB error
+    const err = error as {
+      message?: string;
+      code?: string;
+      detail?: string;
+      constraint?: string;
+      cause?: {
         message?: string;
         code?: string;
         detail?: string;
         constraint?: string;
-        cause?: {
-          message?: string;
-          code?: string;
-          detail?: string;
-          constraint?: string;
-        };
       };
+    };
 
-      // PostgreSQL error is often in cause (wrapped by Drizzle)
-      const pgError = err.cause ?? err;
-      const pgCode = pgError.code ?? err.code;
-      const pgDetail = pgError.detail ?? err.detail;
-      const pgConstraint = pgError.constraint ?? err.constraint;
-      const pgMessage = pgError.message ?? err.message;
+    // PostgreSQL error is often in cause (wrapped by Drizzle)
+    const pgError = err.cause ?? err;
+    const pgCode = pgError.code ?? err.code;
+    const pgDetail = pgError.detail ?? err.detail;
+    const pgConstraint = pgError.constraint ?? err.constraint;
+    const pgMessage = pgError.message ?? err.message;
 
-      this.logger.error(`Failed to upsert media ${media.title}`, {
-        message: pgMessage,
-        code: pgCode,
-        detail: pgDetail,
-        constraint: pgConstraint,
-        tmdbId: media.externalIds.tmdbId,
-      });
+    this.logger.error(`Failed to upsert media ${media.title}`, {
+      message: pgMessage,
+      code: pgCode,
+      detail: pgDetail,
+      constraint: pgConstraint,
+      tmdbId: media.externalIds.tmdbId,
+    });
 
-      throw new DatabaseException(`Failed to upsert media: ${pgMessage}`, error, {
-        tmdbId: media.externalIds.tmdbId,
-        title: media.title,
-        code: pgCode,
-        detail: pgDetail,
-        constraint: pgConstraint,
-      });
-    }
+    throw new DatabaseException(`Failed to upsert media: ${pgMessage}`, error, {
+      tmdbId: media.externalIds.tmdbId,
+      title: media.title,
+      code: pgCode,
+      detail: pgDetail,
+      constraint: pgConstraint,
+    });
   }
 
   /**

@@ -4,6 +4,7 @@ import { DEFAULT_REGION } from '../../../common/constants';
 import { AVAILABILITY_REGIONS, FALLBACK_REGION } from '../../../common/constants/region.constants';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { VideoSiteEnum, VideoTypeEnum, VideoLanguageEnum } from '../../../common/enums/video.enum';
+import { generateSlug } from '../../catalog/public';
 import {
   type NormalizedMedia,
   type NormalizedVideo,
@@ -70,8 +71,9 @@ export class TmdbMapper {
         ? (data as TmdbMovieResponse).original_title
         : (data as TmdbShowResponse).original_name,
       overview: data.overview || null,
-      slug: this.generateSlug(
+      slug: generateSlug(
         isMovie ? (data as TmdbMovieResponse).title : (data as TmdbShowResponse).name,
+        data.id,
       ),
 
       posterPath: data.poster_path || null,
@@ -107,7 +109,7 @@ export class TmdbMapper {
       genres: (data.genres || []).map((g) => ({
         tmdbId: g.id,
         name: g.name,
-        slug: this.generateSlug(g.name),
+        slug: this.generateGenreSlug(g.name),
       })),
 
       videos: this.extractVideos(data),
@@ -143,7 +145,7 @@ export class TmdbMapper {
     return media;
   }
 
-  private static generateSlug(text: string): string {
+  private static generateGenreSlug(text: string): string {
     if (!text) return '';
     return slugify(text, {
       lower: true,

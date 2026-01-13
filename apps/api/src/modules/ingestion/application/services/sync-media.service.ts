@@ -1,10 +1,8 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 
-import slugify from 'slugify';
-
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
+import { generateSlug, type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import {
   type ICatalogPolicyEvaluator,
   CATALOG_POLICY_EVALUATOR,
@@ -413,11 +411,7 @@ export class SyncMediaService {
         : await this.tmdbAdapter.getShow(tmdbId);
 
     const title = media?.title || `TMDB #${tmdbId}`;
-    const slug = slugify(title, {
-      lower: true,
-      strict: true,
-      locale: 'uk',
-    });
+    const slug = generateSlug(title, tmdbId);
 
     const stub = await this.mediaRepository.upsertStub({
       tmdbId,
