@@ -99,14 +99,28 @@ function paginate<T>(items: T[], page: number, limit: number): T[] {
   return items.slice(offset, offset + limit);
 }
 
+/**
+ * Generates a scheduled post (isDraft=false, publishedAt in the future).
+ */
+const scheduledPostArb = journalPostArb.map((post) => ({
+  ...post,
+  isDraft: false,
+  publishedAt: new Date(Date.now() + Math.random() * 365 * 24 * 60 * 60 * 1000 + 60000), // Random date in future (at least 1 minute from now)
+}));
+
+/**
+ * Generates a draft post (isDraft=true, publishedAt=null).
+ */
+const draftPostArb = journalPostArb.map((post) => ({
+  ...post,
+  isDraft: true,
+  publishedAt: null,
+}));
+
 // --- Property Tests ---
 
 describe('JournalRepository - Property Tests', () => {
   /**
-   * Property 1: Posts sorted by publication date
-   * Feature: product-journal, Property 1: Posts sorted by publication date
-   * Validates: Requirements 1.1
-   *
    * For any list of published posts, the posts SHALL be sorted by
    * publishedAt in descending order (newest first), with createdAt as tie-breaker.
    */
@@ -167,10 +181,6 @@ describe('JournalRepository - Property Tests', () => {
   });
 
   /**
-   * Property 3: Type filtering returns matching posts
-   * Feature: product-journal, Property 3: Type filtering returns matching posts
-   * Validates: Requirements 1.3, 5.3
-   *
    * For any type filter applied to the posts endpoint, all returned posts
    * SHALL have a type matching one of the filter values (union).
    */
@@ -263,10 +273,6 @@ describe('JournalRepository - Property Tests', () => {
   });
 
   /**
-   * Property 4: Pagination correctness
-   * Feature: product-journal, Property 4: Pagination correctness
-   * Validates: Requirements 1.4
-   *
    * For any page request with limit N, the API SHALL return at most N posts,
    * and totalPages SHALL equal ceil(total / limit).
    */
@@ -373,6 +379,155 @@ describe('JournalRepository - Property Tests', () => {
             }
           },
         ),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  /**
+   * For any post with publishedAt in the future, the post SHALL NOT appear
+   * in public API responses (list or by slug).
+   */
+  describe('Property 7: Scheduled posts visibility', () => {
+    it('should exclude scheduled posts (publishedAt in future) from visible posts', () => {
+      fc.assert(
+        fc.property(
+          fc.array(scheduledPostArb, { minLength: 1, maxLength: 50 }),
+          (scheduledPosts) => {
+            const now = new Date();
+            const visible = filterVisiblePosts(scheduledPosts, now);
+
+            // No scheduled posts should be visible
+            expect(visible.length).toBe(0);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should exclude draft posts from visible posts', () => {
+      fc.assert(
+        fc.property(fc.array(draftPostArb, { minLength: 1, maxLength: 50 }), (draftPosts) => {
+          const now = new Date();
+          const visible = filterVisiblePosts(draftPosts, now);
+
+          // No draft posts should be visible
+          expect(visible.length).toBe(0);
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should include only published posts with publishedAt <= now', () => {
+      fc.assert(
+        fc.property(
+          fc.array(publishedPostArb, { minLength: 0, maxLength: 50 }),
+          (publishedPosts) => {
+            const now = new Date();
+            const visible = filterVisiblePosts(publishedPosts, now);
+
+            // All visible posts should have isDraft=false and publishedAt <= now
+            for (const post of visible) {
+              expect(post.isDraft).toBe(false);
+              expect(post.publishedAt).not.toBeNull();
+              expect(post.publishedAt!.getTime()).toBeLessThanOrEqual(now.getTime());
+            }
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should correctly filter mixed posts (published, scheduled, draft)', () => {
+      // Generate a mix of all post types
+      const mixedPostsArb = fc.tuple(
+        fc.array(publishedPostArb, { minLength: 0, maxLength: 20 }),
+        fc.array(scheduledPostArb, { minLength: 0, maxLength: 20 }),
+        fc.array(draftPostArb, { minLength: 0, maxLength: 20 }),
+      );
+
+      fc.assert(
+        fc.property(mixedPostsArb, ([published, scheduled, drafts]) => {
+          const allPosts = [...published, ...scheduled, ...drafts];
+          const now = new Date();
+          const visible = filterVisiblePosts(allPosts, now);
+
+          // Visible count should equal published posts count (those with publishedAt <= now)
+          const expectedVisibleCount = published.filter(
+            (p) => p.publishedAt !== null && p.publishedAt <= now,
+          ).length;
+          expect(visible.length).toBe(expectedVisibleCount);
+
+          // No scheduled or draft posts should be in visible
+          for (const post of visible) {
+            expect(post.isDraft).toBe(false);
+            expect(post.publishedAt).not.toBeNull();
+            expect(post.publishedAt!.getTime()).toBeLessThanOrEqual(now.getTime());
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should make scheduled posts visible once their publishedAt time passes', () => {
+      fc.assert(
+        fc.property(
+          fc.date({ min: new Date('2020-01-01'), max: new Date('2025-01-01') }),
+          (scheduledDate) => {
+            // Create a post scheduled for a specific date
+            const post: JournalPost = {
+              id: 'test-id',
+              slug: 'test-slug',
+              title: 'Test Post',
+              body: 'Test body content',
+              bodyHtml: '<p>Test body content</p>',
+              excerpt: 'Test excerpt',
+              type: 'update',
+              featuredImageUrl: null,
+              contextId: null,
+              metaTitle: null,
+              metaDescription: null,
+              isDraft: false,
+              publishedAt: scheduledDate,
+              createdAt: new Date('2020-01-01'),
+              updatedAt: new Date('2020-01-01'),
+              authorId: 'author-id',
+            };
+
+            // Before the scheduled date: not visible
+            const beforeDate = new Date(scheduledDate.getTime() - 1000);
+            const visibleBefore = filterVisiblePosts([post], beforeDate);
+            expect(visibleBefore.length).toBe(0);
+
+            // At or after the scheduled date: visible
+            const afterDate = new Date(scheduledDate.getTime() + 1000);
+            const visibleAfter = filterVisiblePosts([post], afterDate);
+            expect(visibleAfter.length).toBe(1);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('should preserve post count: visible + invisible = total', () => {
+      const mixedPostsArb = fc.tuple(
+        fc.array(publishedPostArb, { minLength: 0, maxLength: 20 }),
+        fc.array(scheduledPostArb, { minLength: 0, maxLength: 20 }),
+        fc.array(draftPostArb, { minLength: 0, maxLength: 20 }),
+      );
+
+      fc.assert(
+        fc.property(mixedPostsArb, ([published, scheduled, drafts]) => {
+          const allPosts = [...published, ...scheduled, ...drafts];
+          const now = new Date();
+          const visible = filterVisiblePosts(allPosts, now);
+          const invisible = allPosts.filter(
+            (p) => p.isDraft || p.publishedAt === null || p.publishedAt > now,
+          );
+
+          // Total should be preserved
+          expect(visible.length + invisible.length).toBe(allPosts.length);
+        }),
         { numRuns: 100 },
       );
     });

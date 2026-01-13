@@ -5,6 +5,7 @@ module.exports = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
+  transformIgnorePatterns: ['/node_modules/(?!(nanoid|@exodus/bytes)/)'],
   collectCoverageFrom: [
     '**/*.(t|j)s',
     '!**/main.(t|j)s',
@@ -19,5 +20,6 @@ module.exports = {
   testEnvironment: 'node',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    '^isomorphic-dompurify$': '<rootDir>/../__mocks__/isomorphic-dompurify.js',
   },
 };
