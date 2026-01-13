@@ -363,6 +363,18 @@ describe('Journal Admin Endpoints e2e', () => {
       await request(app.getHttpServer()).delete(`${adminBase}/some-id`).expect(401);
     });
 
+    it('should return 401 for unauthenticated POST /admin/journal/posts/:id/publish', async () => {
+      await request(app.getHttpServer())
+        .post(`${adminBase}/00000000-0000-0000-0000-000000000001/publish`)
+        .expect(401);
+    });
+
+    it('should return 401 for unauthenticated POST /admin/journal/posts/:id/unpublish', async () => {
+      await request(app.getHttpServer())
+        .post(`${adminBase}/00000000-0000-0000-0000-000000000001/unpublish`)
+        .expect(401);
+    });
+
     it('should return 403 for non-admin user on GET /admin/journal/posts', async () => {
       await request(app.getHttpServer())
         .get(adminBase)
