@@ -8,11 +8,13 @@ module.exports = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
+  transformIgnorePatterns: ['/node_modules/(?!(nanoid|@exodus/bytes|marked)/)'],
   collectCoverageFrom: ['**/*.(t|j)s'],
   coverageDirectory: './coverage-e2e',
   testEnvironment: 'node',
   testTimeout: 20000,
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^isomorphic-dompurify$': '<rootDir>/__mocks__/isomorphic-dompurify.js',
   },
 };
