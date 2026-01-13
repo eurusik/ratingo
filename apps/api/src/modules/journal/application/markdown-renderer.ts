@@ -1,4 +1,4 @@
-import he from 'he';
+import * as he from 'he';
 import { marked, Renderer, Tokens } from 'marked';
 
 /**
@@ -164,6 +164,7 @@ export function generateExcerpt(markdown: string, maxLength = 200): string {
         .replace(/\s+/g, ' ') // Normalize whitespace
         .trim(),
     )
+    .replace(/\u00A0/g, ' ') // Convert non-breaking spaces to regular spaces
     .trim();
 
   if (plainText.length <= maxLength) {

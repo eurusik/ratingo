@@ -5,7 +5,7 @@ module.exports = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
-  transformIgnorePatterns: ['/node_modules/(?!(nanoid|@exodus/bytes)/)'],
+  transformIgnorePatterns: ['/node_modules/(?!(nanoid|@exodus/bytes|marked)/)'],
   collectCoverageFrom: [
     '**/*.(t|j)s',
     '!**/main.(t|j)s',
