@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, inArray, sql, and, desc, gt, gte, isNull, isNotNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { PG_ERROR_CODE, DB_CONSTRAINT } from '../../../../common/constants/database.constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions';
@@ -191,16 +192,20 @@ export class DrizzleMediaRepository implements IMediaRepository {
       ingestionStatus: IngestionStatus;
     },
   ): Promise<{ id: string; slug: string } | null> {
+    // postgres.js uses 'constraint_name' (not 'constraint') for the PostgreSQL 'n' field
     const err = error as {
       code?: string;
-      constraint?: string;
-      cause?: { code?: string; constraint?: string };
+      constraint_name?: string;
+      cause?: { code?: string; constraint_name?: string };
     };
     const pgCode = err.cause?.code ?? err.code;
-    const pgConstraint = err.cause?.constraint ?? err.constraint;
+    const pgConstraint = err.cause?.constraint_name ?? err.constraint_name;
 
     // Not a slug conflict — let caller handle
-    if (pgCode !== '23505' || pgConstraint !== 'media_type_slug_idx') {
+    if (
+      pgCode !== PG_ERROR_CODE.UNIQUE_VIOLATION ||
+      pgConstraint !== DB_CONSTRAINT.MEDIA_TYPE_SLUG
+    ) {
       return null;
     }
 
@@ -396,16 +401,20 @@ export class DrizzleMediaRepository implements IMediaRepository {
    * Checks if error is a slug collision and returns retry slug, or null if not.
    */
   private extractSlugCollisionRetry(error: unknown, media: NormalizedMedia): string | null {
+    // postgres.js uses 'constraint_name' (not 'constraint') for the PostgreSQL 'n' field
     const err = error as {
       code?: string;
-      constraint?: string;
-      cause?: { code?: string; constraint?: string };
+      constraint_name?: string;
+      cause?: { code?: string; constraint_name?: string };
     };
     const pgCode = err.cause?.code ?? err.code;
-    const pgConstraint = err.cause?.constraint ?? err.constraint;
+    const pgConstraint = err.cause?.constraint_name ?? err.constraint_name;
 
     // Not a slug collision
-    if (pgCode !== '23505' || pgConstraint !== 'media_type_slug_idx') {
+    if (
+      pgCode !== PG_ERROR_CODE.UNIQUE_VIOLATION ||
+      pgConstraint !== DB_CONSTRAINT.MEDIA_TYPE_SLUG
+    ) {
       return null;
     }
 
@@ -423,16 +432,17 @@ export class DrizzleMediaRepository implements IMediaRepository {
    */
   private handleUpsertError(error: unknown, media: NormalizedMedia): never {
     // Drizzle wraps PostgreSQL errors - extract the actual DB error
+    // postgres.js uses 'constraint_name' (not 'constraint') for the PostgreSQL 'n' field
     const err = error as {
       message?: string;
       code?: string;
       detail?: string;
-      constraint?: string;
+      constraint_name?: string;
       cause?: {
         message?: string;
         code?: string;
         detail?: string;
-        constraint?: string;
+        constraint_name?: string;
       };
     };
 
@@ -440,7 +450,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     const pgError = err.cause ?? err;
     const pgCode = pgError.code ?? err.code;
     const pgDetail = pgError.detail ?? err.detail;
-    const pgConstraint = pgError.constraint ?? err.constraint;
+    const pgConstraint = pgError.constraint_name ?? err.constraint_name;
     const pgMessage = pgError.message ?? err.message;
 
     this.logger.error(`Failed to upsert media ${media.title}`, {

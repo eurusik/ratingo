@@ -8,6 +8,7 @@ import { HeroMediaQuery } from '../queries/hero-media.query';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions';
+import { PG_ERROR_CODE, DB_CONSTRAINT } from '../../../../common/constants/database.constants';
 import { NormalizedMedia } from '../../../ingestion/domain/models/normalized-media.model';
 
 // Helper to create a chainable thenable for Drizzle-like fluent API
@@ -267,8 +268,8 @@ describe('DrizzleMediaRepository', () => {
     it('should return existing record on race condition (same tmdbId)', async () => {
       // Arrange: INSERT fails with slug constraint, SELECT returns same tmdbId
       const slugConflictError = Object.assign(new Error('unique_violation'), {
-        code: '23505',
-        constraint: 'media_type_slug_idx',
+        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
+        constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
       });
       const insertChain = createThenable([], slugConflictError);
       const selectChain = createThenable([{ id: 'existing-id', slug: 'test-show', tmdbId: 72350 }]);
@@ -301,8 +302,8 @@ describe('DrizzleMediaRepository', () => {
     it('should retry with unique slug on real slug collision (different tmdbId)', async () => {
       // Arrange: INSERT fails with slug constraint, SELECT returns different tmdbId
       const slugConflictError = Object.assign(new Error('unique_violation'), {
-        code: '23505',
-        constraint: 'media_type_slug_idx',
+        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
+        constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
       });
       const failingInsertChain = createThenable([], slugConflictError);
       const selectChain = createThenable([{ id: 'other-id', slug: 'test-show', tmdbId: 99999 }]);
@@ -339,8 +340,8 @@ describe('DrizzleMediaRepository', () => {
 
     it('should throw DatabaseException on non-slug constraint error', async () => {
       const otherError = Object.assign(new Error('other_error'), {
-        code: '23505',
-        constraint: 'media_type_tmdb_idx',
+        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
+        constraint_name: 'media_type_tmdb_idx', // Different constraint
       });
       const insertChain = createThenable([], otherError);
 
@@ -366,8 +367,8 @@ describe('DrizzleMediaRepository', () => {
       // Drizzle wraps PostgreSQL errors in cause
       const slugConflictError = Object.assign(new Error('wrapper'), {
         cause: {
-          code: '23505',
-          constraint: 'media_type_slug_idx',
+          code: PG_ERROR_CODE.UNIQUE_VIOLATION,
+          constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
         },
       });
       const insertChain = createThenable([], slugConflictError);
@@ -399,8 +400,8 @@ describe('DrizzleMediaRepository', () => {
       // Edge case: constraint error says slug exists, but SELECT finds nothing
       // (theoretically impossible, but defensive coding)
       const slugConflictError = Object.assign(new Error('unique_violation'), {
-        code: '23505',
-        constraint: 'media_type_slug_idx',
+        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
+        constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
       });
       const insertChain = createThenable([], slugConflictError);
       const selectChain = createThenable([]); // Empty result
@@ -429,8 +430,8 @@ describe('DrizzleMediaRepository', () => {
       // Arrange: first INSERT fails on slug, SELECT finds different tmdbId,
       // retry INSERT also fails (e.g., unique slug already taken)
       const slugConflictError = Object.assign(new Error('unique_violation'), {
-        code: '23505',
-        constraint: 'media_type_slug_idx',
+        code: PG_ERROR_CODE.UNIQUE_VIOLATION,
+        constraint_name: DB_CONSTRAINT.MEDIA_TYPE_SLUG,
       });
       const failingInsertChain = createThenable([], slugConflictError);
       const selectChain = createThenable([{ id: 'other-id', slug: 'test-show', tmdbId: 99999 }]);
