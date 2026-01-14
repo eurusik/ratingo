@@ -51,9 +51,10 @@ function mapPostsResponse(dto: PostListResponseDto): JournalPostsResult {
 
 /**
  * Creates types string for query key.
+ * Returns undefined to let query key factory normalize to null.
  */
-function typesToKey(types?: PostType[]): string | null {
-  if (!types || types.length === 0) return null;
+function typesToKey(types?: PostType[]): string | undefined {
+  if (!types || types.length === 0) return undefined;
   return types.sort().join(',');
 }
 

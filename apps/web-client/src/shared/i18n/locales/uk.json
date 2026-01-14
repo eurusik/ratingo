@@ -1095,5 +1095,24 @@
         "errorOccurred": "Виникла помилка"
       }
     }
+  },
+  "journal": {
+    "title": "Журнал",
+    "description": "Оновлення, пояснення та плани розвитку Ratingo",
+    "empty": "Публікацій поки немає",
+    "postTypes": {
+      "update": "Оновлення",
+      "explanation": "Пояснення",
+      "fix": "Виправлення",
+      "roadmap": "Плани"
+    },
+    "filter": {
+      "reset": "Скинути"
+    },
+    "navigation": {
+      "previous": "Попередня",
+      "next": "Наступна",
+      "backToList": "До журналу"
+    }
   }
 }

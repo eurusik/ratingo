@@ -1095,5 +1095,24 @@
         "errorOccurred": "An error occurred"
       }
     }
+  },
+  "journal": {
+    "title": "Journal",
+    "description": "Updates, explanations, and development plans for Ratingo",
+    "empty": "No posts yet",
+    "postTypes": {
+      "update": "Update",
+      "explanation": "Explanation",
+      "fix": "Fix",
+      "roadmap": "Roadmap"
+    },
+    "filter": {
+      "reset": "Reset"
+    },
+    "navigation": {
+      "previous": "Previous",
+      "next": "Next",
+      "backToList": "Back to journal"
+    }
   }
 }
