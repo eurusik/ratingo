@@ -1,6 +1,31 @@
 import * as he from 'he';
 
 /**
+ * URL protocol constants for security validation.
+ */
+const ALLOWED_PROTOCOLS = {
+  HTTP: 'http://',
+  HTTPS: 'https://',
+  RELATIVE: '/',
+} as const;
+
+/**
+ * HTML attribute values for external links.
+ */
+const EXTERNAL_LINK_ATTRS = {
+  REL: 'nofollow noopener noreferrer',
+  TARGET: '_blank',
+} as const;
+
+/**
+ * Image loading attributes.
+ */
+const IMAGE_ATTRS = {
+  LOADING: 'lazy',
+  DECODING: 'async',
+} as const;
+
+/**
  * Marked module type for lazy loading.
  */
 interface MarkedModule {
@@ -98,18 +123,19 @@ async function getSecureRenderer(): Promise<MarkedRenderer> {
 
   renderer.link = ({ href, title, text }): string => {
     // Only allow http/https protocols and relative paths
-    if (
-      href &&
-      !href.startsWith('http://') &&
-      !href.startsWith('https://') &&
-      !href.startsWith('/')
-    ) {
+    const isAllowedProtocol =
+      !href ||
+      href.startsWith(ALLOWED_PROTOCOLS.HTTP) ||
+      href.startsWith(ALLOWED_PROTOCOLS.HTTPS) ||
+      href.startsWith(ALLOWED_PROTOCOLS.RELATIVE);
+
+    if (!isAllowedProtocol) {
       return text;
     }
 
-    const isExternal = href?.startsWith('http');
-    const relAttr = isExternal ? ' rel="nofollow noopener noreferrer"' : '';
-    const targetAttr = isExternal ? ' target="_blank"' : '';
+    const isExternal = href?.startsWith(ALLOWED_PROTOCOLS.HTTP);
+    const relAttr = isExternal ? ` rel="${EXTERNAL_LINK_ATTRS.REL}"` : '';
+    const targetAttr = isExternal ? ` target="${EXTERNAL_LINK_ATTRS.TARGET}"` : '';
     const titleAttr = title ? ` title="${title}"` : '';
 
     return `<a href="${href}"${relAttr}${targetAttr}${titleAttr}>${text}</a>`;
@@ -117,17 +143,18 @@ async function getSecureRenderer(): Promise<MarkedRenderer> {
 
   renderer.image = ({ href, title, text }): string => {
     // Only allow http/https protocols and relative paths
-    if (
-      href &&
-      !href.startsWith('http://') &&
-      !href.startsWith('https://') &&
-      !href.startsWith('/')
-    ) {
+    const isAllowedProtocol =
+      !href ||
+      href.startsWith(ALLOWED_PROTOCOLS.HTTP) ||
+      href.startsWith(ALLOWED_PROTOCOLS.HTTPS) ||
+      href.startsWith(ALLOWED_PROTOCOLS.RELATIVE);
+
+    if (!isAllowedProtocol) {
       return '';
     }
 
     const titleAttr = title ? ` title="${title}"` : '';
-    return `<img src="${href}" alt="${text}"${titleAttr} loading="lazy" decoding="async" />`;
+    return `<img src="${href}" alt="${text}"${titleAttr} loading="${IMAGE_ATTRS.LOADING}" decoding="${IMAGE_ATTRS.DECODING}" />`;
   };
 
   cachedRenderer = renderer;
