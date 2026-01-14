@@ -1,5 +1,19 @@
 import * as he from 'he';
-import { marked, Renderer, Tokens } from 'marked';
+
+/**
+ * Marked module type for lazy loading.
+ */
+interface MarkedModule {
+  marked: {
+    parse: (markdown: string, options?: Record<string, unknown>) => string;
+  };
+  Renderer: new () => MarkedRenderer;
+}
+
+interface MarkedRenderer {
+  link: (token: { href: string; title?: string; text: string }) => string;
+  image: (token: { href: string; title?: string; text: string }) => string;
+}
 
 /**
  * Sanitizer interface for HTML sanitization.
@@ -12,6 +26,21 @@ export interface SanitizeOptions {
   ALLOWED_TAGS?: string[];
   ALLOWED_ATTR?: string[];
   ALLOW_DATA_ATTR?: boolean;
+}
+
+/**
+ * Cached marked module (lazy-loaded ESM).
+ */
+let cachedMarked: MarkedModule | null = null;
+
+/**
+ * Gets the marked module, loading it lazily.
+ */
+async function getMarked(): Promise<MarkedModule> {
+  if (!cachedMarked) {
+    cachedMarked = (await import('marked')) as unknown as MarkedModule;
+  }
+  return cachedMarked;
 }
 
 /**
@@ -39,15 +68,25 @@ export function setSanitizer(sanitizer: HtmlSanitizer | null): void {
 }
 
 /**
- * Custom renderer for secure markdown rendering.
+ * Cached secure renderer instance.
+ */
+let cachedRenderer: MarkedRenderer | null = null;
+
+/**
+ * Creates a custom renderer for secure markdown rendering.
  * - Only allows http/https protocols for links and images
  * - Adds rel="nofollow noopener noreferrer" to external links
  * - Adds lazy loading to images
  */
-function createSecureRenderer(): Renderer {
+async function getSecureRenderer(): Promise<MarkedRenderer> {
+  if (cachedRenderer) {
+    return cachedRenderer;
+  }
+
+  const { Renderer } = await getMarked();
   const renderer = new Renderer();
 
-  renderer.link = ({ href, title, text }: Tokens.Link): string => {
+  renderer.link = ({ href, title, text }): string => {
     // Only allow http/https protocols and relative paths
     if (
       href &&
@@ -66,7 +105,7 @@ function createSecureRenderer(): Renderer {
     return `<a href="${href}"${relAttr}${targetAttr}${titleAttr}>${text}</a>`;
   };
 
-  renderer.image = ({ href, title, text }: Tokens.Image): string => {
+  renderer.image = ({ href, title, text }): string => {
     // Only allow http/https protocols and relative paths
     if (
       href &&
@@ -81,10 +120,9 @@ function createSecureRenderer(): Renderer {
     return `<img src="${href}" alt="${text}"${titleAttr} loading="lazy" decoding="async" />`;
   };
 
+  cachedRenderer = renderer;
   return renderer;
 }
-
-const secureRenderer = createSecureRenderer();
 
 const SANITIZE_OPTIONS: SanitizeOptions = {
   ALLOWED_TAGS: [
@@ -115,14 +153,17 @@ const SANITIZE_OPTIONS: SanitizeOptions = {
  * Uses DOMPurify for XSS protection.
  *
  * @param markdown - Raw markdown content
- * @param sanitizer - Optional custom sanitizer (for testing)
- * @returns Sanitized HTML string
+ * @param sanitizer - Custom sanitizer (for testing)
+ * @returns Promise resolving to sanitized HTML string
  */
-export function renderMarkdown(markdown: string, sanitizer: HtmlSanitizer): string {
+export async function renderMarkdown(markdown: string, sanitizer: HtmlSanitizer): Promise<string> {
+  const { marked } = await getMarked();
+  const renderer = await getSecureRenderer();
+
   const html = marked.parse(markdown, {
     gfm: true,
     breaks: true,
-    renderer: secureRenderer,
+    renderer,
   }) as string;
 
   return sanitizer.sanitize(html, SANITIZE_OPTIONS);
@@ -135,10 +176,13 @@ export function renderMarkdown(markdown: string, sanitizer: HtmlSanitizer): stri
  * @returns Promise resolving to sanitized HTML string
  */
 export async function renderMarkdownAsync(markdown: string): Promise<string> {
+  const { marked } = await getMarked();
+  const renderer = await getSecureRenderer();
+
   const html = marked.parse(markdown, {
     gfm: true,
     breaks: true,
-    renderer: secureRenderer,
+    renderer,
   }) as string;
 
   const sanitizer = await getSanitizer();
@@ -151,9 +195,10 @@ export async function renderMarkdownAsync(markdown: string): Promise<string> {
  *
  * @param markdown - Raw markdown content
  * @param maxLength - Maximum length of excerpt (default: 200)
- * @returns Plain text excerpt
+ * @returns Promise resolving to plain text excerpt
  */
-export function generateExcerpt(markdown: string, maxLength = 200): string {
+export async function generateExcerpt(markdown: string, maxLength = 200): Promise<string> {
+  const { marked } = await getMarked();
   const html = marked.parse(markdown, { gfm: true }) as string;
 
   // Strip HTML tags and decode entities

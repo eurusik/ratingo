@@ -1,8 +1,21 @@
-import { nanoid } from 'nanoid';
 import slugify from 'slugify';
 
 /** Length of nanoid suffix for fallback slugs */
 const NANOID_LENGTH = 8;
+
+/** Cached nanoid function (lazy-loaded ESM) */
+let cachedNanoid: ((size: number) => string) | null = null;
+
+/**
+ * Gets the nanoid function, loading it lazily.
+ */
+async function getNanoid(): Promise<(size: number) => string> {
+  if (!cachedNanoid) {
+    const module = await import('nanoid');
+    cachedNanoid = module.nanoid;
+  }
+  return cachedNanoid;
+}
 
 /**
  * Generates a URL-friendly slug from a title.
@@ -10,9 +23,9 @@ const NANOID_LENGTH = 8;
  * Falls back to `post-<nanoid>` if slugify produces empty result.
  *
  * @param title - Post title
- * @returns URL-friendly slug
+ * @returns Promise resolving to URL-friendly slug
  */
-export function generateSlug(title: string): string {
+export async function generateSlug(title: string): Promise<string> {
   const slug = slugify(title, {
     lower: true,
     strict: true,
@@ -21,6 +34,7 @@ export function generateSlug(title: string): string {
 
   // Fallback for empty slugs (e.g., emoji-only titles, edge cases)
   if (!slug || slug.length === 0) {
+    const nanoid = await getNanoid();
     return `post-${nanoid(NANOID_LENGTH)}`;
   }
 

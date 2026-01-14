@@ -33,9 +33,18 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+import type { MultipartFile } from '@fastify/multipart';
 import type { FastifyRequest } from 'fastify';
 
 import { ValidationException } from '@/common/exceptions';
+
+/**
+ * Fastify request with multipart file method.
+ * @fastify/multipart augments FastifyRequest at runtime.
+ */
+interface MultipartRequest extends FastifyRequest {
+  file: () => Promise<MultipartFile | undefined>;
+}
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
@@ -170,12 +179,12 @@ export class AdminJournalController {
     validatePostState(isDraft, publishedAt);
 
     // Generate or validate slug
-    const baseSlug = dto.slug || generateSlug(dto.title);
+    const baseSlug = dto.slug || (await generateSlug(dto.title));
     const slug = await ensureUniqueSlug(baseSlug, (s) => this.repository.existsBySlug(s));
 
     // Render markdown to HTML
     const bodyHtml = await renderMarkdownAsync(dto.body);
-    const excerpt = generateExcerpt(dto.body);
+    const excerpt = await generateExcerpt(dto.body);
 
     const post = await this.repository.create({
       slug,
@@ -254,7 +263,7 @@ export class AdminJournalController {
     let { excerpt } = existing;
     if (dto.body && dto.body !== existing.body) {
       bodyHtml = await renderMarkdownAsync(dto.body);
-      excerpt = generateExcerpt(dto.body);
+      excerpt = await generateExcerpt(dto.body);
     }
 
     const updated = await this.repository.update(id, {
@@ -427,7 +436,7 @@ export class AdminJournalController {
     type: ImageUploadResponseDto,
     description: 'Uploaded image URL',
   })
-  async uploadImage(@Req() req: FastifyRequest): Promise<ImageUploadResponseDto> {
+  async uploadImage(@Req() req: MultipartRequest): Promise<ImageUploadResponseDto> {
     // Parse multipart data from Fastify request
     const data = await req.file();
 
