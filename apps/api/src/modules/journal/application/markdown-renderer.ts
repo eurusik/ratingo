@@ -29,6 +29,16 @@ export interface SanitizeOptions {
 }
 
 /**
+ * Dynamic import helper to prevent TypeScript from transforming to require().
+ * This is needed because marked and isomorphic-dompurify are ESM-only
+ * and NestJS uses CommonJS.
+ */
+
+const dynamicImport = new Function('modulePath', 'return import(modulePath)') as (
+  modulePath: string,
+) => Promise<unknown>;
+
+/**
  * Cached marked module (lazy-loaded ESM).
  */
 let cachedMarked: MarkedModule | null = null;
@@ -38,7 +48,7 @@ let cachedMarked: MarkedModule | null = null;
  */
 async function getMarked(): Promise<MarkedModule> {
   if (!cachedMarked) {
-    cachedMarked = (await import('marked')) as unknown as MarkedModule;
+    cachedMarked = (await dynamicImport('marked')) as MarkedModule;
   }
   return cachedMarked;
 }
@@ -54,7 +64,7 @@ let cachedSanitizer: HtmlSanitizer | null = null;
  */
 export async function getSanitizer(): Promise<HtmlSanitizer> {
   if (!cachedSanitizer) {
-    const DOMPurify = await import('isomorphic-dompurify');
+    const DOMPurify = (await dynamicImport('isomorphic-dompurify')) as { default: HtmlSanitizer };
     cachedSanitizer = DOMPurify.default;
   }
   return cachedSanitizer;
