@@ -1497,6 +1497,178 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/journal/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List journal posts
+         * @description Returns paginated list of published journal posts. Supports filtering by type (comma-separated for union) and context.
+         */
+        get: operations["JournalPostsController_getPosts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journal/posts/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get post by slug
+         * @description Returns full post details including rendered HTML and navigation links.
+         */
+        get: operations["JournalPostsController_getPostBySlug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/journal/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all posts (admin)
+         * @description Returns paginated list of all posts including drafts.
+         */
+        get: operations["AdminJournalController_getPosts"];
+        put?: never;
+        /**
+         * Create new post
+         * @description Creates a new journal post. Auto-generates slug from title if not provided.
+         */
+        post: operations["AdminJournalController_createPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/journal/posts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get post by ID (admin)
+         * @description Returns full post details including draft content.
+         */
+        get: operations["AdminJournalController_getPostById"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete post
+         * @description Permanently deletes a journal post.
+         */
+        delete: operations["AdminJournalController_deletePost"];
+        options?: never;
+        head?: never;
+        /**
+         * Update post
+         * @description Updates an existing journal post. Only provided fields are updated.
+         */
+        patch: operations["AdminJournalController_updatePost"];
+        trace?: never;
+    };
+    "/api/admin/journal/posts/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish post
+         * @description Publishes a draft post immediately or at a scheduled time.
+         */
+        post: operations["AdminJournalController_publishPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/journal/posts/{id}/unpublish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unpublish post
+         * @description Converts a published post back to draft status.
+         */
+        post: operations["AdminJournalController_unpublishPost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/journal/posts/upload-image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload image
+         * @description Uploads an image for use in journal posts. Returns CDN URL.
+         */
+        post: operations["AdminJournalController_uploadImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/journal/images/{filename}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get journal image
+         * @description Serves a journal image from storage. Images are cached for 1 year.
+         */
+        get: operations["JournalImagesController_getImage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1992,7 +2164,7 @@ export interface components {
              * @description Media item ID (for linking to show details)
              * @example 123e4567-e89b-12d3-a456-426614174000
              */
-            showId: string;
+            mediaItemId: string;
             /** @example arcane */
             slug: string;
             /** @example Arcane */
@@ -3993,6 +4165,391 @@ export interface components {
             metric: string;
             risers: components["schemas"]["RiseFallItemDto"][];
             fallers: components["schemas"]["RiseFallItemDto"][];
+        };
+        PostListItemDto: {
+            /**
+             * @description Post ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description URL slug
+             * @example shcho-novoho-v-ratingo
+             */
+            slug: string;
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title: string;
+            /**
+             * @description Post excerpt (first 200 chars of body)
+             * @example Ми додали нові функції для покращення вашого досвіду...
+             */
+            excerpt: string;
+            /**
+             * @description Post type
+             * @example update
+             * @enum {string}
+             */
+            type: "update" | "explanation" | "fix" | "roadmap";
+            /**
+             * @description Featured image URL
+             * @example https://cdn.ratingo.com/journal/featured.jpg
+             */
+            featuredImageUrl?: string | null;
+            /**
+             * Format: date-time
+             * @description Publication date
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            publishedAt: string;
+            /**
+             * Format: date-time
+             * @description Creation date
+             * @example 2026-01-14T15:30:00.000Z
+             */
+            createdAt: string;
+        };
+        PostPaginationMetaDto: {
+            /**
+             * @description Total number of posts
+             * @example 42
+             */
+            total: number;
+            /**
+             * @description Current page number
+             * @example 1
+             */
+            page: number;
+            /**
+             * @description Total number of pages
+             * @example 5
+             */
+            totalPages: number;
+            /**
+             * @description Posts per page
+             * @example 10
+             */
+            limit: number;
+        };
+        PostListResponseDto: {
+            /** @description List of posts */
+            posts: components["schemas"]["PostListItemDto"][];
+            /** @description Pagination metadata */
+            meta: components["schemas"]["PostPaginationMetaDto"];
+        };
+        PostNavigationLinkDto: {
+            /**
+             * @description Post slug
+             * @example shcho-novoho-v-ratingo
+             */
+            slug: string;
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title: string;
+        };
+        PostNavigationDto: {
+            /** @description Previous post (older) */
+            prev?: components["schemas"]["PostNavigationLinkDto"] | null;
+            /** @description Next post (newer) */
+            next?: components["schemas"]["PostNavigationLinkDto"] | null;
+        };
+        PostDetailDto: {
+            /**
+             * @description Post ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description URL slug
+             * @example shcho-novoho-v-ratingo
+             */
+            slug: string;
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title: string;
+            /**
+             * @description Post excerpt (first 200 chars of body)
+             * @example Ми додали нові функції для покращення вашого досвіду...
+             */
+            excerpt: string;
+            /**
+             * @description Post type
+             * @example update
+             * @enum {string}
+             */
+            type: "update" | "explanation" | "fix" | "roadmap";
+            /**
+             * @description Featured image URL
+             * @example https://cdn.ratingo.com/journal/featured.jpg
+             */
+            featuredImageUrl?: string | null;
+            /**
+             * Format: date-time
+             * @description Publication date
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            publishedAt: string;
+            /**
+             * Format: date-time
+             * @description Creation date
+             * @example 2026-01-14T15:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @description Post body in Markdown format
+             * @example ## Нові функції
+             *
+             *     Ми додали...
+             */
+            body: string;
+            /**
+             * @description Rendered HTML content
+             * @example <h2>Нові функції</h2><p>Ми додали...</p>
+             */
+            bodyHtml: string;
+            /**
+             * @description Context identifier
+             * @example trending
+             */
+            contextId?: string | null;
+            /**
+             * @description Meta title for SEO
+             * @example Що нового в Ratingo | Журнал
+             */
+            metaTitle?: string | null;
+            /**
+             * @description Meta description for SEO
+             * @example Дізнайтеся про останні оновлення Ratingo...
+             */
+            metaDescription?: string | null;
+            /**
+             * Format: date-time
+             * @description Last update date
+             * @example 2026-01-15T12:00:00.000Z
+             */
+            updatedAt: string;
+            /** @description Navigation links to adjacent posts */
+            navigation: components["schemas"]["PostNavigationDto"];
+        };
+        AdminPostDto: {
+            /**
+             * @description Post ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            id: string;
+            /**
+             * @description URL slug
+             * @example shcho-novoho-v-ratingo
+             */
+            slug: string;
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title: string;
+            /**
+             * @description Post excerpt (first 200 chars of body)
+             * @example Ми додали нові функції для покращення вашого досвіду...
+             */
+            excerpt: string;
+            /**
+             * @description Post type
+             * @example update
+             * @enum {string}
+             */
+            type: "update" | "explanation" | "fix" | "roadmap";
+            /**
+             * @description Featured image URL
+             * @example https://cdn.ratingo.com/journal/featured.jpg
+             */
+            featuredImageUrl?: string | null;
+            /**
+             * Format: date-time
+             * @description Publication date
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            publishedAt: string;
+            /**
+             * Format: date-time
+             * @description Creation date
+             * @example 2026-01-14T15:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @description Post body in Markdown format
+             * @example ## Нові функції
+             *
+             *     Ми додали...
+             */
+            body: string;
+            /**
+             * @description Rendered HTML content
+             * @example <h2>Нові функції</h2><p>Ми додали...</p>
+             */
+            bodyHtml: string;
+            /**
+             * @description Context identifier
+             * @example trending
+             */
+            contextId?: string | null;
+            /**
+             * @description Meta title for SEO
+             * @example Що нового в Ratingo | Журнал
+             */
+            metaTitle?: string | null;
+            /**
+             * @description Meta description for SEO
+             * @example Дізнайтеся про останні оновлення Ratingo...
+             */
+            metaDescription?: string | null;
+            /**
+             * Format: date-time
+             * @description Last update date
+             * @example 2026-01-15T12:00:00.000Z
+             */
+            updatedAt: string;
+            /** @description Navigation links to adjacent posts */
+            navigation: components["schemas"]["PostNavigationDto"];
+            /**
+             * @description Whether post is a draft
+             * @example false
+             */
+            isDraft: boolean;
+            /**
+             * @description Author user ID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            authorId: string;
+        };
+        AdminPostListResponseDto: {
+            /** @description List of posts with admin details */
+            posts: components["schemas"]["AdminPostDto"][];
+            /** @description Pagination metadata */
+            meta: components["schemas"]["PostPaginationMetaDto"];
+        };
+        CreatePostDto: {
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title: string;
+            /**
+             * @description Post body in Markdown format
+             * @example ## Нові функції
+             *
+             *     Ми додали...
+             */
+            body: string;
+            /**
+             * @description Post type
+             * @example update
+             * @enum {string}
+             */
+            type: "update" | "explanation" | "fix" | "roadmap";
+            /**
+             * @description Custom URL slug (auto-generated from title if not provided)
+             * @example shcho-novoho-v-ratingo
+             */
+            slug?: string;
+            /**
+             * @description Featured image URL for Open Graph previews
+             * @example https://cdn.ratingo.com/journal/featured.jpg
+             */
+            featuredImageUrl?: string;
+            /**
+             * @description Context identifier for linking post to product features
+             * @example trending
+             */
+            contextId?: string;
+            /**
+             * @description Custom meta title for SEO (defaults to post title)
+             * @example Що нового в Ratingo | Журнал
+             */
+            metaTitle?: string;
+            /**
+             * @description Custom meta description for SEO (defaults to excerpt)
+             * @example Дізнайтеся про останні оновлення Ratingo...
+             */
+            metaDescription?: string;
+            /**
+             * @description Save as draft without publishing
+             * @default true
+             * @example true
+             */
+            isDraft: boolean;
+            /**
+             * @description Publication date (for scheduling). ISO 8601 format.
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            publishedAt?: string;
+        };
+        UpdatePostDto: {
+            /**
+             * @description Post title
+             * @example Що нового в Ratingo
+             */
+            title?: string;
+            /**
+             * @description Post body in Markdown format
+             * @example ## Нові функції
+             *
+             *     Ми додали...
+             */
+            body?: string;
+            /**
+             * @description Post type
+             * @example update
+             * @enum {string}
+             */
+            type?: "update" | "explanation" | "fix" | "roadmap";
+            /**
+             * @description Custom URL slug
+             * @example shcho-novoho-v-ratingo
+             */
+            slug?: string;
+            /**
+             * @description Featured image URL for Open Graph previews
+             * @example https://cdn.ratingo.com/journal/featured.jpg
+             */
+            featuredImageUrl?: string;
+            /**
+             * @description Context identifier for linking post to product features
+             * @example trending
+             */
+            contextId?: string;
+            /**
+             * @description Custom meta title for SEO
+             * @example Що нового в Ratingo | Журнал
+             */
+            metaTitle?: string;
+            /**
+             * @description Custom meta description for SEO
+             * @example Дізнайтеся про останні оновлення Ratingo...
+             */
+            metaDescription?: string;
+            /**
+             * @description Save as draft without publishing
+             * @example true
+             */
+            isDraft?: boolean;
+            /**
+             * @description Publication date (for scheduling). ISO 8601 format.
+             * @example 2026-01-15T10:00:00.000Z
+             */
+            publishedAt?: string;
+        };
+        ImageUploadResponseDto: {
+            /**
+             * @description CDN URL of uploaded image
+             * @example https://cdn.ratingo.com/journal/abc123.jpg
+             */
+            url: string;
         };
     };
     responses: never;
@@ -6450,6 +7007,330 @@ export interface operations {
                         success: true;
                         data: components["schemas"]["RiseFallResponseDto"];
                     };
+                };
+            };
+        };
+    };
+    JournalPostsController_getPosts: {
+        parameters: {
+            query?: {
+                /** @description Filter by post type(s). Comma-separated for multiple types (union). */
+                type?: string[];
+                /** @description Filter by context identifier */
+                context?: string;
+                /** @description Page number (1-based) */
+                page?: number;
+                /** @description Number of posts per page */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of posts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PostListResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    JournalPostsController_getPostBySlug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post URL slug */
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Full post details with navigation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PostDetailDto"];
+                    };
+                };
+            };
+        };
+    };
+    AdminJournalController_getPosts: {
+        parameters: {
+            query?: {
+                /** @description Filter by post type(s). Comma-separated for multiple types (union). */
+                type?: string[];
+                /** @description Filter by context identifier */
+                context?: string;
+                /** @description Page number (1-based) */
+                page?: number;
+                /** @description Number of posts per page */
+                limit?: number;
+                /** @description Filter by post status */
+                status?: "draft" | "published" | "scheduled";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated list of posts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostListResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    AdminJournalController_createPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePostDto"];
+            };
+        };
+        responses: {
+            /** @description Post created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostDto"];
+                    };
+                };
+            };
+        };
+    };
+    AdminJournalController_getPostById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Full post details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostDto"];
+                    };
+                };
+            };
+        };
+    };
+    AdminJournalController_deletePost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Post deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: {
+                            success?: boolean;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    AdminJournalController_updatePost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePostDto"];
+            };
+        };
+        responses: {
+            /** @description Updated post */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostDto"];
+                    };
+                };
+            };
+        };
+    };
+    AdminJournalController_publishPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Published post */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostDto"];
+                    };
+                };
+            };
+        };
+    };
+    AdminJournalController_unpublishPost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Post UUID */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unpublished post (draft) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["AdminPostDto"];
+                    };
+                };
+            };
+        };
+    };
+    AdminJournalController_uploadImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description Image file (jpg, png, webp, gif). Max 5MB.
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Uploaded image URL */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImageUploadResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    JournalImagesController_getImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Image filename */
+                filename: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Image file */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": unknown;
+                    "image/png": unknown;
+                    "image/webp": unknown;
+                    "image/gif": unknown;
                 };
             };
         };

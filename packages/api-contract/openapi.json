@@ -5009,6 +5009,664 @@
           "Public: Insights"
         ]
       }
+    },
+    "/api/journal/posts": {
+      "get": {
+        "operationId": "JournalPostsController_getPosts",
+        "summary": "List journal posts",
+        "description": "Returns paginated list of published journal posts. Supports filtering by type (comma-separated for union) and context.",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by post type(s). Comma-separated for multiple types (union).",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "context",
+            "required": false,
+            "in": "query",
+            "description": "Filter by context identifier",
+            "schema": {
+              "example": "trending",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1-based)",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of posts per page",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of posts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PostListResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Journal"
+        ]
+      }
+    },
+    "/api/journal/posts/{slug}": {
+      "get": {
+        "operationId": "JournalPostsController_getPostBySlug",
+        "summary": "Get post by slug",
+        "description": "Returns full post details including rendered HTML and navigation links.",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "description": "Post URL slug",
+            "schema": {
+              "example": "shcho-novoho-v-ratingo",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full post details with navigation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PostDetailDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Journal"
+        ]
+      }
+    },
+    "/api/admin/journal/posts": {
+      "get": {
+        "operationId": "AdminJournalController_getPosts",
+        "summary": "List all posts (admin)",
+        "description": "Returns paginated list of all posts including drafts.",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by post type(s). Comma-separated for multiple types (union).",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "context",
+            "required": false,
+            "in": "query",
+            "description": "Filter by context identifier",
+            "schema": {
+              "example": "trending",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number (1-based)",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of posts per page",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by post status",
+            "schema": {
+              "example": "draft",
+              "enum": [
+                "draft",
+                "published",
+                "scheduled"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of posts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminPostListResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Journal"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "AdminJournalController_createPost",
+        "summary": "Create new post",
+        "description": "Creates a new journal post. Auto-generates slug from title if not provided.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePostDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Post created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminPostDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Journal"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/journal/posts/{id}": {
+      "get": {
+        "operationId": "AdminJournalController_getPostById",
+        "summary": "Get post by ID (admin)",
+        "description": "Returns full post details including draft content.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Post UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full post details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminPostDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Journal"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "AdminJournalController_updatePost",
+        "summary": "Update post",
+        "description": "Updates an existing journal post. Only provided fields are updated.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Post UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePostDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated post",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminPostDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Journal"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "AdminJournalController_deletePost",
+        "summary": "Delete post",
+        "description": "Permanently deletes a journal post.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Post UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Journal"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/journal/posts/{id}/publish": {
+      "post": {
+        "operationId": "AdminJournalController_publishPost",
+        "summary": "Publish post",
+        "description": "Publishes a draft post immediately or at a scheduled time.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Post UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published post",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminPostDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Journal"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/journal/posts/{id}/unpublish": {
+      "post": {
+        "operationId": "AdminJournalController_unpublishPost",
+        "summary": "Unpublish post",
+        "description": "Converts a published post back to draft status.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Post UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unpublished post (draft)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminPostDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Journal"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/journal/posts/upload-image": {
+      "post": {
+        "operationId": "AdminJournalController_uploadImage",
+        "summary": "Upload image",
+        "description": "Uploads an image for use in journal posts. Returns CDN URL.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image file (jpg, png, webp, gif). Max 5MB."
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Uploaded image URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ImageUploadResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Journal"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/journal/images/{filename}": {
+      "get": {
+        "operationId": "JournalImagesController_getImage",
+        "summary": "Get journal image",
+        "description": "Serves a journal image from storage. Images are cached for 1 year.",
+        "parameters": [
+          {
+            "name": "filename",
+            "required": true,
+            "in": "path",
+            "description": "Image filename",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000.jpg",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Image file",
+            "content": {
+              "image/jpeg": {},
+              "image/png": {},
+              "image/webp": {},
+              "image/gif": {}
+            }
+          }
+        },
+        "tags": [
+          "Public: Journal"
+        ]
+      }
     }
   },
   "info": {
@@ -6191,7 +6849,7 @@
       "NewEpisodeDto": {
         "type": "object",
         "properties": {
-          "showId": {
+          "mediaItemId": {
             "type": "string",
             "example": "123e4567-e89b-12d3-a456-426614174000",
             "description": "Media item ID (for linking to show details)"
@@ -6227,7 +6885,7 @@
           }
         },
         "required": [
-          "showId",
+          "mediaItemId",
           "slug",
           "title",
           "seasonNumber",
@@ -10174,6 +10832,572 @@
           "metric",
           "risers",
           "fallers"
+        ]
+      },
+      "PostListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Post ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL slug",
+            "example": "shcho-novoho-v-ratingo"
+          },
+          "title": {
+            "type": "string",
+            "description": "Post title",
+            "example": "Що нового в Ratingo"
+          },
+          "excerpt": {
+            "type": "string",
+            "description": "Post excerpt (first 200 chars of body)",
+            "example": "Ми додали нові функції для покращення вашого досвіду..."
+          },
+          "type": {
+            "type": "string",
+            "description": "Post type",
+            "enum": [
+              "update",
+              "explanation",
+              "fix",
+              "roadmap"
+            ],
+            "example": "update"
+          },
+          "featuredImageUrl": {
+            "type": "string",
+            "description": "Featured image URL",
+            "example": "https://cdn.ratingo.com/journal/featured.jpg",
+            "nullable": true
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Publication date",
+            "example": "2026-01-15T10:00:00.000Z"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation date",
+            "example": "2026-01-14T15:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "excerpt",
+          "type",
+          "publishedAt",
+          "createdAt"
+        ]
+      },
+      "PostPaginationMetaDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total number of posts",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "description": "Current page number",
+            "example": 1
+          },
+          "totalPages": {
+            "type": "number",
+            "description": "Total number of pages",
+            "example": 5
+          },
+          "limit": {
+            "type": "number",
+            "description": "Posts per page",
+            "example": 10
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "totalPages",
+          "limit"
+        ]
+      },
+      "PostListResponseDto": {
+        "type": "object",
+        "properties": {
+          "posts": {
+            "description": "List of posts",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostListItemDto"
+            }
+          },
+          "meta": {
+            "description": "Pagination metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostPaginationMetaDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "posts",
+          "meta"
+        ]
+      },
+      "PostNavigationLinkDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Post slug",
+            "example": "shcho-novoho-v-ratingo"
+          },
+          "title": {
+            "type": "string",
+            "description": "Post title",
+            "example": "Що нового в Ratingo"
+          }
+        },
+        "required": [
+          "slug",
+          "title"
+        ]
+      },
+      "PostNavigationDto": {
+        "type": "object",
+        "properties": {
+          "prev": {
+            "description": "Previous post (older)",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostNavigationLinkDto"
+              }
+            ]
+          },
+          "next": {
+            "description": "Next post (newer)",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostNavigationLinkDto"
+              }
+            ]
+          }
+        }
+      },
+      "PostDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Post ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL slug",
+            "example": "shcho-novoho-v-ratingo"
+          },
+          "title": {
+            "type": "string",
+            "description": "Post title",
+            "example": "Що нового в Ratingo"
+          },
+          "excerpt": {
+            "type": "string",
+            "description": "Post excerpt (first 200 chars of body)",
+            "example": "Ми додали нові функції для покращення вашого досвіду..."
+          },
+          "type": {
+            "type": "string",
+            "description": "Post type",
+            "enum": [
+              "update",
+              "explanation",
+              "fix",
+              "roadmap"
+            ],
+            "example": "update"
+          },
+          "featuredImageUrl": {
+            "type": "string",
+            "description": "Featured image URL",
+            "example": "https://cdn.ratingo.com/journal/featured.jpg",
+            "nullable": true
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Publication date",
+            "example": "2026-01-15T10:00:00.000Z"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation date",
+            "example": "2026-01-14T15:30:00.000Z"
+          },
+          "body": {
+            "type": "string",
+            "description": "Post body in Markdown format",
+            "example": "## Нові функції\n\nМи додали..."
+          },
+          "bodyHtml": {
+            "type": "string",
+            "description": "Rendered HTML content",
+            "example": "<h2>Нові функції</h2><p>Ми додали...</p>"
+          },
+          "contextId": {
+            "type": "string",
+            "description": "Context identifier",
+            "example": "trending",
+            "nullable": true
+          },
+          "metaTitle": {
+            "type": "string",
+            "description": "Meta title for SEO",
+            "example": "Що нового в Ratingo | Журнал",
+            "nullable": true
+          },
+          "metaDescription": {
+            "type": "string",
+            "description": "Meta description for SEO",
+            "example": "Дізнайтеся про останні оновлення Ratingo...",
+            "nullable": true
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last update date",
+            "example": "2026-01-15T12:00:00.000Z"
+          },
+          "navigation": {
+            "description": "Navigation links to adjacent posts",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostNavigationDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "excerpt",
+          "type",
+          "publishedAt",
+          "createdAt",
+          "body",
+          "bodyHtml",
+          "updatedAt",
+          "navigation"
+        ]
+      },
+      "AdminPostDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Post ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL slug",
+            "example": "shcho-novoho-v-ratingo"
+          },
+          "title": {
+            "type": "string",
+            "description": "Post title",
+            "example": "Що нового в Ratingo"
+          },
+          "excerpt": {
+            "type": "string",
+            "description": "Post excerpt (first 200 chars of body)",
+            "example": "Ми додали нові функції для покращення вашого досвіду..."
+          },
+          "type": {
+            "type": "string",
+            "description": "Post type",
+            "enum": [
+              "update",
+              "explanation",
+              "fix",
+              "roadmap"
+            ],
+            "example": "update"
+          },
+          "featuredImageUrl": {
+            "type": "string",
+            "description": "Featured image URL",
+            "example": "https://cdn.ratingo.com/journal/featured.jpg",
+            "nullable": true
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Publication date",
+            "example": "2026-01-15T10:00:00.000Z"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Creation date",
+            "example": "2026-01-14T15:30:00.000Z"
+          },
+          "body": {
+            "type": "string",
+            "description": "Post body in Markdown format",
+            "example": "## Нові функції\n\nМи додали..."
+          },
+          "bodyHtml": {
+            "type": "string",
+            "description": "Rendered HTML content",
+            "example": "<h2>Нові функції</h2><p>Ми додали...</p>"
+          },
+          "contextId": {
+            "type": "string",
+            "description": "Context identifier",
+            "example": "trending",
+            "nullable": true
+          },
+          "metaTitle": {
+            "type": "string",
+            "description": "Meta title for SEO",
+            "example": "Що нового в Ratingo | Журнал",
+            "nullable": true
+          },
+          "metaDescription": {
+            "type": "string",
+            "description": "Meta description for SEO",
+            "example": "Дізнайтеся про останні оновлення Ratingo...",
+            "nullable": true
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Last update date",
+            "example": "2026-01-15T12:00:00.000Z"
+          },
+          "navigation": {
+            "description": "Navigation links to adjacent posts",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostNavigationDto"
+              }
+            ]
+          },
+          "isDraft": {
+            "type": "boolean",
+            "description": "Whether post is a draft",
+            "example": false
+          },
+          "authorId": {
+            "type": "string",
+            "description": "Author user ID",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "excerpt",
+          "type",
+          "publishedAt",
+          "createdAt",
+          "body",
+          "bodyHtml",
+          "updatedAt",
+          "navigation",
+          "isDraft",
+          "authorId"
+        ]
+      },
+      "AdminPostListResponseDto": {
+        "type": "object",
+        "properties": {
+          "posts": {
+            "description": "List of posts with admin details",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminPostDto"
+            }
+          },
+          "meta": {
+            "description": "Pagination metadata",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PostPaginationMetaDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "posts",
+          "meta"
+        ]
+      },
+      "CreatePostDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Post title",
+            "example": "Що нового в Ratingo",
+            "minLength": 3,
+            "maxLength": 200
+          },
+          "body": {
+            "type": "string",
+            "description": "Post body in Markdown format",
+            "example": "## Нові функції\n\nМи додали...",
+            "minLength": 10
+          },
+          "type": {
+            "type": "string",
+            "description": "Post type",
+            "enum": [
+              "update",
+              "explanation",
+              "fix",
+              "roadmap"
+            ],
+            "example": "update"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Custom URL slug (auto-generated from title if not provided)",
+            "example": "shcho-novoho-v-ratingo"
+          },
+          "featuredImageUrl": {
+            "type": "string",
+            "description": "Featured image URL for Open Graph previews",
+            "example": "https://cdn.ratingo.com/journal/featured.jpg"
+          },
+          "contextId": {
+            "type": "string",
+            "description": "Context identifier for linking post to product features",
+            "example": "trending"
+          },
+          "metaTitle": {
+            "type": "string",
+            "description": "Custom meta title for SEO (defaults to post title)",
+            "example": "Що нового в Ratingo | Журнал",
+            "maxLength": 70
+          },
+          "metaDescription": {
+            "type": "string",
+            "description": "Custom meta description for SEO (defaults to excerpt)",
+            "example": "Дізнайтеся про останні оновлення Ratingo...",
+            "maxLength": 160
+          },
+          "isDraft": {
+            "type": "boolean",
+            "description": "Save as draft without publishing",
+            "example": true,
+            "default": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "Publication date (for scheduling). ISO 8601 format.",
+            "example": "2026-01-15T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "title",
+          "body",
+          "type"
+        ]
+      },
+      "UpdatePostDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Post title",
+            "example": "Що нового в Ratingo",
+            "minLength": 3,
+            "maxLength": 200
+          },
+          "body": {
+            "type": "string",
+            "description": "Post body in Markdown format",
+            "example": "## Нові функції\n\nМи додали...",
+            "minLength": 10
+          },
+          "type": {
+            "type": "string",
+            "description": "Post type",
+            "enum": [
+              "update",
+              "explanation",
+              "fix",
+              "roadmap"
+            ],
+            "example": "update"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Custom URL slug",
+            "example": "shcho-novoho-v-ratingo",
+            "maxLength": 200
+          },
+          "featuredImageUrl": {
+            "type": "string",
+            "description": "Featured image URL for Open Graph previews",
+            "example": "https://cdn.ratingo.com/journal/featured.jpg"
+          },
+          "contextId": {
+            "type": "string",
+            "description": "Context identifier for linking post to product features",
+            "example": "trending"
+          },
+          "metaTitle": {
+            "type": "string",
+            "description": "Custom meta title for SEO",
+            "example": "Що нового в Ratingo | Журнал",
+            "maxLength": 70
+          },
+          "metaDescription": {
+            "type": "string",
+            "description": "Custom meta description for SEO",
+            "example": "Дізнайтеся про останні оновлення Ratingo...",
+            "maxLength": 160
+          },
+          "isDraft": {
+            "type": "boolean",
+            "description": "Save as draft without publishing",
+            "example": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "Publication date (for scheduling). ISO 8601 format.",
+            "example": "2026-01-15T10:00:00.000Z"
+          }
+        }
+      },
+      "ImageUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "CDN URL of uploaded image",
+            "example": "https://cdn.ratingo.com/journal/abc123.jpg"
+          }
+        },
+        "required": [
+          "url"
         ]
       }
     }
