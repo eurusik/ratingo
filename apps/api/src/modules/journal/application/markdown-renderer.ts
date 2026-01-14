@@ -1,5 +1,7 @@
 import * as he from 'he';
-import sanitizeHtml from 'sanitize-html';
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const sanitizeHtml = require('sanitize-html') as typeof import('sanitize-html');
 
 /**
  * URL protocol constants for security validation.
