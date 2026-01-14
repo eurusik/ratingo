@@ -2,6 +2,7 @@
  * Journal components barrel export.
  */
 
+// Public components
 export { PostCard } from './post-card';
 export type { PostCardProps } from './post-card';
 
@@ -19,3 +20,6 @@ export type { PostTypeBadgeProps } from './post-type-badge';
 
 export { PostTypeFilter } from './post-type-filter';
 export type { PostTypeFilterProps } from './post-type-filter';
+
+// Admin components
+export * from './admin';

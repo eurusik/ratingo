@@ -59,9 +59,14 @@ export const POST_TYPE_VALUES = ['update', 'explanation', 'fix', 'roadmap'] as c
 export type PostType = (typeof POST_TYPE_VALUES)[number];
 
 /**
+ * Post status values as const for type safety.
+ */
+export const POST_STATUS_VALUES = ['draft', 'published', 'scheduled'] as const;
+
+/**
  * Post status for admin views.
  */
-export type PostStatus = 'draft' | 'published' | 'scheduled';
+export type PostStatus = (typeof POST_STATUS_VALUES)[number];
 
 /**
  * Query params for public posts list.

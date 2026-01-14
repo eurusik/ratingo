@@ -608,7 +608,8 @@
       "title": "Navigation",
       "policies": "Policies",
       "runs": "Evaluation Runs",
-      "providers": "Providers"
+      "providers": "Providers",
+      "journal": "Journal"
     },
     "policies": {
       "title": "Catalog Policies",
@@ -1094,6 +1095,68 @@
         "errorTyping": "Please type \"{text}\" to confirm",
         "errorOccurred": "An error occurred"
       }
+    },
+    "journal": {
+        "title": "Journal",
+        "newPost": "New Post",
+        "editPost": "Edit Post",
+        "status": {
+          "draft": "Draft",
+          "published": "Published",
+          "scheduled": "Scheduled"
+        },
+        "columns": {
+          "title": "Title",
+          "type": "Type",
+          "status": "Status",
+          "publishedAt": "Published At",
+          "actions": "Actions"
+        },
+        "actions": {
+          "edit": "Edit",
+          "delete": "Delete",
+          "publish": "Publish",
+          "unpublish": "Unpublish"
+        },
+        "form": {
+          "title": "Title",
+          "titlePlaceholder": "Enter title",
+          "slug": "URL Slug",
+          "slugPlaceholder": "auto-generated-slug",
+          "type": "Post Type",
+          "body": "Content",
+          "bodyPlaceholder": "Write your post content (Markdown supported)",
+          "featuredImage": "Featured Image",
+          "featuredImageHint": "Drag and drop or click to upload",
+          "metaTitle": "SEO Title",
+          "metaTitlePlaceholder": "Title for search engines",
+          "metaDescription": "SEO Description",
+          "metaDescriptionPlaceholder": "Description for search engines",
+          "publishedAt": "Publish Date",
+          "isDraft": "Draft",
+          "save": "Save",
+          "saving": "Saving...",
+          "publish": "Publish",
+          "saveAsDraft": "Save as Draft",
+          "errors": {
+            "titleRequired": "Title is required",
+            "bodyRequired": "Post body is required"
+          }
+        },
+        "editor": {
+          "preview": "Preview",
+          "write": "Write",
+          "markdown": "Markdown",
+          "wysiwyg": "Visual"
+        },
+        "deleteConfirm": {
+          "title": "Delete post?",
+          "description": "This action cannot be undone. The post will be permanently deleted.",
+          "confirm": "Delete",
+          "cancel": "Cancel"
+        },
+        "empty": "No posts yet",
+        "uploadingImage": "Uploading image..."
     }
   },
   "journal": {
