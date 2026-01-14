@@ -30,6 +30,12 @@ const MEDIA_TYPE_TO_JOB: Record<MediaType, IngestionJob> = {
 export class CatalogImportService {
   private readonly logger = new Logger(CatalogImportService.name);
 
+  /**
+   * In-memory lock to deduplicate concurrent import requests for the same media.
+   * Key: `${type}:${tmdbId}`, Value: pending import promise
+   */
+  private readonly pendingImports = new Map<string, Promise<ImportResult>>();
+
   constructor(
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
@@ -42,10 +48,36 @@ export class CatalogImportService {
    * Triggers import of a media item from TMDB.
    * If already exists, returns existing data.
    * If not, creates a stub and queues for full sync.
+   *
+   * Uses in-memory lock to deduplicate concurrent requests for the same media.
    */
   async importMedia(tmdbId: number, type: MediaType): Promise<ImportResult> {
+    const lockKey = `${type}:${tmdbId}`;
+
+    // If import is already in progress, wait for it
+    const pending = this.pendingImports.get(lockKey);
+    if (pending) {
+      this.logger.debug(`Import already in progress for ${lockKey}, waiting...`);
+      return pending;
+    }
+
+    // Start import and store promise
+    const importPromise = this.doImport(tmdbId, type);
+    this.pendingImports.set(lockKey, importPromise);
+
+    try {
+      return await importPromise;
+    } finally {
+      this.pendingImports.delete(lockKey);
+    }
+  }
+
+  /**
+   * Performs the actual import logic.
+   */
+  private async doImport(tmdbId: number, type: MediaType): Promise<ImportResult> {
     // Check if already in DB
-    const existing = await this.mediaRepository.findByTmdbId(tmdbId);
+    const existing = await this.mediaRepository.findByTmdbId(tmdbId, type);
 
     if (existing) {
       return {
@@ -87,9 +119,10 @@ export class CatalogImportService {
       ingestionStatus: IngestionStatus.IMPORTING,
     });
 
-    // Queue for full sync
+    // Queue for full sync with deduplication by jobId
     const jobName = MEDIA_TYPE_TO_JOB[type];
-    const job = await this.ingestionQueue.add(jobName, { tmdbId });
+    const jobId = `${jobName}:${tmdbId}`;
+    const job = await this.ingestionQueue.add(jobName, { tmdbId }, { jobId });
 
     this.logger.log(`Queued import for ${type} ${tmdbId}: ${media.title} (job: ${job.id})`);
 

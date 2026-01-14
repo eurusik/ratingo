@@ -105,7 +105,11 @@ describe('CatalogImportService', () => {
           slug: 'the-matrix',
           ingestionStatus: IngestionStatus.IMPORTING,
         });
-        expect(ingestionQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_MOVIE, { tmdbId: 123 });
+        expect(ingestionQueue.add).toHaveBeenCalledWith(
+          IngestionJob.SYNC_MOVIE,
+          { tmdbId: 123 },
+          { jobId: 'sync-movie:123' },
+        );
         expect(result.status).toBe(ImportStatus.IMPORTING);
         expect(result.id).toBe('new-id');
         expect(result.slug).toBe('the-matrix');
@@ -126,7 +130,11 @@ describe('CatalogImportService', () => {
         const result = await service.importMedia(456, MediaType.SHOW);
 
         expect(tmdbAdapter.getShow).toHaveBeenCalledWith(456);
-        expect(ingestionQueue.add).toHaveBeenCalledWith(IngestionJob.SYNC_SHOW, { tmdbId: 456 });
+        expect(ingestionQueue.add).toHaveBeenCalledWith(
+          IngestionJob.SYNC_SHOW,
+          { tmdbId: 456 },
+          { jobId: 'sync-show:456' },
+        );
         expect(result.status).toBe(ImportStatus.IMPORTING);
         expect(result.type).toBe(MediaType.SHOW);
       });
@@ -200,6 +208,38 @@ describe('CatalogImportService', () => {
 
         expect(result.status).toBe(ImportStatus.IMPORTING);
         expect(mediaRepository.upsertStub).toHaveBeenCalled();
+      });
+
+      it('should deduplicate concurrent requests for the same media', async () => {
+        // Simulate slow TMDB response
+        let resolveGetMovie: (value: any) => void;
+        const slowPromise = new Promise((resolve) => {
+          resolveGetMovie = resolve;
+        });
+        tmdbAdapter.getMovie.mockReturnValue(slowPromise);
+        mediaRepository.upsertStub.mockResolvedValue({
+          id: 'new-id',
+          slug: 'the-matrix',
+        });
+        ingestionQueue.add.mockResolvedValue({ id: 'job-123' });
+
+        // Start two concurrent requests
+        const promise1 = service.importMedia(123, MediaType.MOVIE);
+        const promise2 = service.importMedia(123, MediaType.MOVIE);
+
+        // Resolve TMDB response
+        resolveGetMovie!({ title: 'The Matrix', tmdbId: 123 });
+
+        // Both should return the same result
+        const [result1, result2] = await Promise.all([promise1, promise2]);
+
+        expect(result1).toEqual(result2);
+        // TMDB should be called only once
+        expect(tmdbAdapter.getMovie).toHaveBeenCalledTimes(1);
+        // upsertStub should be called only once
+        expect(mediaRepository.upsertStub).toHaveBeenCalledTimes(1);
+        // Queue should be called only once
+        expect(ingestionQueue.add).toHaveBeenCalledTimes(1);
       });
     });
   });
