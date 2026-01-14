@@ -1,4 +1,5 @@
 import * as he from 'he';
+import sanitizeHtml from 'sanitize-html';
 
 /**
  * URL protocol constants for security validation.
@@ -44,21 +45,13 @@ interface MarkedRenderer {
  * Sanitizer interface for HTML sanitization.
  */
 export interface HtmlSanitizer {
-  sanitize(html: string, options?: SanitizeOptions): string;
-}
-
-export interface SanitizeOptions {
-  ALLOWED_TAGS?: string[];
-  ALLOWED_ATTR?: string[];
-  ALLOW_DATA_ATTR?: boolean;
+  sanitize(html: string): string;
 }
 
 /**
  * Dynamic import helper to prevent TypeScript from transforming to require().
- * This is needed because marked and isomorphic-dompurify are ESM-only
- * and NestJS uses CommonJS.
+ * This is needed because marked is ESM-only and NestJS uses CommonJS.
  */
-
 const dynamicImport = new Function('modulePath', 'return import(modulePath)') as (
   modulePath: string,
 ) => Promise<unknown>;
@@ -79,18 +72,49 @@ async function getMarked(): Promise<MarkedModule> {
 }
 
 /**
- * Default sanitizer using isomorphic-dompurify.
- * Lazy-loaded to avoid ESM issues in tests.
+ * Sanitize options for sanitize-html.
+ */
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'p',
+    'a',
+    'img',
+    'ul',
+    'ol',
+    'li',
+    'strong',
+    'em',
+    'code',
+    'pre',
+    'blockquote',
+    'hr',
+    'br',
+  ],
+  allowedAttributes: {
+    a: ['href', 'title', 'rel', 'target'],
+    img: ['src', 'alt', 'title', 'loading', 'decoding'],
+    '*': ['class'],
+  },
+  allowedSchemes: ['http', 'https'],
+};
+
+/**
+ * Default sanitizer using sanitize-html.
  */
 let cachedSanitizer: HtmlSanitizer | null = null;
 
 /**
- * Gets the DOMPurify sanitizer, loading it lazily.
+ * Gets the sanitizer instance.
  */
-export async function getSanitizer(): Promise<HtmlSanitizer> {
+export function getSanitizer(): HtmlSanitizer {
   if (!cachedSanitizer) {
-    const DOMPurify = (await dynamicImport('isomorphic-dompurify')) as { default: HtmlSanitizer };
-    cachedSanitizer = DOMPurify.default;
+    cachedSanitizer = {
+      sanitize: (html: string) => sanitizeHtml(html, SANITIZE_OPTIONS),
+    };
   }
   return cachedSanitizer;
 }
@@ -161,33 +185,8 @@ async function getSecureRenderer(): Promise<MarkedRenderer> {
   return renderer;
 }
 
-const SANITIZE_OPTIONS: SanitizeOptions = {
-  ALLOWED_TAGS: [
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'p',
-    'a',
-    'img',
-    'ul',
-    'ol',
-    'li',
-    'strong',
-    'em',
-    'code',
-    'pre',
-    'blockquote',
-    'hr',
-    'br',
-  ],
-  ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'loading', 'decoding', 'rel', 'target', 'class'],
-  ALLOW_DATA_ATTR: false,
-};
-
 /**
  * Renders markdown to sanitized HTML.
- * Uses DOMPurify for XSS protection.
  *
  * @param markdown - Raw markdown content
  * @param sanitizer - Custom sanitizer (for testing)
@@ -203,11 +202,11 @@ export async function renderMarkdown(markdown: string, sanitizer: HtmlSanitizer)
     renderer,
   }) as string;
 
-  return sanitizer.sanitize(html, SANITIZE_OPTIONS);
+  return sanitizer.sanitize(html);
 }
 
 /**
- * Async version of renderMarkdown that lazy-loads DOMPurify.
+ * Renders markdown to sanitized HTML using default sanitizer.
  *
  * @param markdown - Raw markdown content
  * @returns Promise resolving to sanitized HTML string
@@ -222,8 +221,8 @@ export async function renderMarkdownAsync(markdown: string): Promise<string> {
     renderer,
   }) as string;
 
-  const sanitizer = await getSanitizer();
-  return sanitizer.sanitize(html, SANITIZE_OPTIONS);
+  const sanitizer = getSanitizer();
+  return sanitizer.sanitize(html);
 }
 
 /**

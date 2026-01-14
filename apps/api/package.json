@@ -46,7 +46,6 @@
     "drizzle-orm": "^0.44.0",
     "he": "^1.2.0",
     "ioredis": "^5.8.2",
-    "isomorphic-dompurify": "^2.35.0",
     "joi": "^18.0.2",
     "marked": "^17.0.1",
     "nanoid": "^5.1.6",
