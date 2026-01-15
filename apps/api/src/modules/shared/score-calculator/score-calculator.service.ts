@@ -181,7 +181,10 @@ export class ScoreCalculatorService {
       },
     ];
 
-    const active = sources.filter((s) => typeof s.value === 'number' && s.value !== null);
+    // Filter out null, undefined, and 0 (0 means "no rating" in TMDB/Trakt)
+    const active = sources.filter(
+      (s) => typeof s.value === 'number' && s.value !== null && s.value > 0,
+    );
 
     if (active.length === 0) {
       return NEUTRAL_RATING_DEFAULT; // Neutral default
