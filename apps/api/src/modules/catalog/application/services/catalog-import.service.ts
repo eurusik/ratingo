@@ -80,6 +80,12 @@ export class CatalogImportService {
     const existing = await this.mediaRepository.findByTmdbId(tmdbId, type);
 
     if (existing) {
+      // Reconstruct jobId for polling (jobId is deterministic: `${jobName}:${tmdbId}`)
+      const jobId =
+        existing.ingestionStatus === IngestionStatus.IMPORTING
+          ? `${MEDIA_TYPE_TO_JOB[type]}:${tmdbId}`
+          : undefined;
+
       return {
         status:
           existing.ingestionStatus === IngestionStatus.READY
@@ -90,6 +96,7 @@ export class CatalogImportService {
         type: existing.type,
         tmdbId,
         ingestionStatus: existing.ingestionStatus,
+        jobId,
       };
     }
 

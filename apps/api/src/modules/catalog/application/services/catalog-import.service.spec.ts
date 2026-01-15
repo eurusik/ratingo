@@ -76,6 +76,8 @@ describe('CatalogImportService', () => {
 
         expect(result.status).toBe(ImportStatus.IMPORTING);
         expect(result.ingestionStatus).toBe(IngestionStatus.IMPORTING);
+        // Should return reconstructed jobId for polling
+        expect(result.jobId).toBe('sync-movie:123');
       });
     });
 
