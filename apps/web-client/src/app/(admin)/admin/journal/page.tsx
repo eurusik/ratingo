@@ -58,7 +58,10 @@ export default function AdminJournalPage() {
     if (!deleteDialog.post) return;
 
     try {
-      await deletePostMutation.mutateAsync(deleteDialog.post.id);
+      await deletePostMutation.mutateAsync({
+        id: deleteDialog.post.id,
+        slug: deleteDialog.post.slug,
+      });
       toast.success('Публікацію видалено');
       setDeleteDialog({ open: false });
     } catch {
