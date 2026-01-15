@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import type { Route } from 'next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { XCircle } from 'lucide-react';
 
@@ -110,7 +111,7 @@ export default function ImportPage({ params }: ImportPageProps) {
     if (isReady && finalSlug) {
       const path =
         type === MediaType.MOVIE ? `/movies/${finalSlug}` : `/shows/${finalSlug}`;
-      router.replace(path);
+      router.replace(path as Route);
     }
   }, [isReady, finalSlug, type, router]);
 
