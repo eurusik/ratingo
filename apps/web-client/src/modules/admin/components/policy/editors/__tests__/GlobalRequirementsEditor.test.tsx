@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GlobalRequirementsEditor } from '../GlobalRequirementsEditor';
-import type { GlobalRequirementsDto } from '@/core/api/admin';
+import type { GlobalRequirementsDto } from '@/core/api/admin.client';
 
 describe('GlobalRequirementsEditor', () => {
   /**

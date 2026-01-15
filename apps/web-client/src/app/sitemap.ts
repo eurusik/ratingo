@@ -4,7 +4,7 @@
  */
 
 import type { MetadataRoute } from 'next';
-import { journalApi } from '@/core/api/journal';
+import { journalApi } from '@/core/api/journal.client';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://ratingo.top';
 

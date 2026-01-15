@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { XCircle } from 'lucide-react';
 
-import { catalogApi } from '@/core/api/catalog';
+import { catalogApi } from '@/core/api/catalog.client';
 import { useTranslation } from '@/shared/i18n';
 import { DetailsSkeleton } from './details-skeleton';
 

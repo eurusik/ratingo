@@ -3,6 +3,9 @@
  */
 
 // Public components
+export { FeaturedPostCard } from './featured-post-card';
+export type { FeaturedPostCardProps } from './featured-post-card';
+
 export { PostCard } from './post-card';
 export type { PostCardProps } from './post-card';
 
@@ -11,6 +14,9 @@ export type { PostDetailProps } from './post-detail';
 
 export { PostList } from './post-list';
 export type { PostListProps } from './post-list';
+
+export { PostListItem } from './post-list-item';
+export type { PostListItemProps } from './post-list-item';
 
 export { PostNavigationLinks } from './post-navigation';
 export type { PostNavigationProps } from './post-navigation';

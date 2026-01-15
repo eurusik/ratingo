@@ -16,7 +16,7 @@ import { DataTable, StatusBadge } from '@/modules/admin';
 import { DataTableColumnDef, RUN_STATUS } from '@/modules/admin/types';
 import { useTranslation } from '@/shared/i18n';
 import { useFilteredRuns } from '@/core/query/admin';
-import { type EvaluationRunDto } from '@/core/api/admin';
+import { type EvaluationRunDto } from '@/core/api/admin.client';
 
 export default function RunsPage() {
   const router = useRouter();

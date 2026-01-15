@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
 
-import { catalogApi, ImportStatus, MediaType } from '@/core/api/catalog';
+import { catalogApi, ImportStatus, MediaType } from '@/core/api/catalog.client';
 import { queryKeys } from '@/core/query/keys';
 
 /**

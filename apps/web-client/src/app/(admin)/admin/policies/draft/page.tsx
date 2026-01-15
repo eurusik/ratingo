@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { useTranslation } from '@/shared/i18n';
 import { usePolicyDetail, useCreatePolicy } from '@/core/query/admin';
 import { DraftHeader, PolicyEditForm, type PolicyFormData } from '@/modules/admin';
-import type { PolicyConfigDto } from '@/core/api/admin';
+import type { PolicyConfigDto } from '@/core/api/admin.client';
 
 /**
  * Empty policy configuration for creating from scratch.

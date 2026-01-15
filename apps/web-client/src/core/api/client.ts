@@ -54,7 +54,7 @@ const retriedRequests = new WeakSet<Request>();
  */
 function createClient(): KyInstance {
   return ky.create({
-    prefixUrl: `${env.API_URL}${env.API_PREFIX}`,
+    prefixUrl: env.API_BASE_URL,
     timeout: 15000,
     retry: {
       limit: 2,

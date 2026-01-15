@@ -6,7 +6,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userActionsApi, type SubscriptionTrigger } from '@/core/api/user-actions';
+import { userActionsApi, type SubscriptionTrigger } from '@/core/api/user-actions.client';
 
 const QUERY_KEY = ['subscriptions'] as const;
 

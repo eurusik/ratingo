@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import type { NewEpisodeItem } from '@/core/api/catalog';
+import type { NewEpisodeItem } from '@/core/api/catalog.client';
 
 interface NewEpisodeCardProps {
   item: NewEpisodeItem;

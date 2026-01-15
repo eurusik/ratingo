@@ -4,7 +4,7 @@
  * Provides type-safe methods for catalog endpoints using api-contract types.
  *
  * @example
- * import { catalogApi } from '@/core/api/catalog';
+ * import { catalogApi } from '@/core/api/catalog.client';
  * const shows = await catalogApi.getTrendingShows({ limit: 20 });
  */
 

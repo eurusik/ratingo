@@ -4,7 +4,7 @@
 
 import type { components } from '@ratingo/api-contract';
 import { apiPatch, apiPost } from './client';
-import type { MeDto } from './auth';
+import type { MeDto } from './auth.client';
 
 export type UpdateProfileDto = components['schemas']['UpdateProfileDto'];
 export type ChangePasswordDto = components['schemas']['ChangePasswordDto'];

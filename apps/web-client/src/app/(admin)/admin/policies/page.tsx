@@ -11,7 +11,7 @@ import { DataTableColumnDef, POLICY_STATUS } from '@/modules/admin/types';
 import { useTranslation } from '@/shared/i18n';
 import { toast } from 'sonner';
 import { usePolicies, useActivePolicy, usePreparePolicy } from '@/core/query';
-import { type PolicyDto } from '@/core/api/admin';
+import { type PolicyDto } from '@/core/api/admin.client';
 
 // Helper to get badge variant for policy status
 const getPolicyBadgeVariant = (status: string) => {

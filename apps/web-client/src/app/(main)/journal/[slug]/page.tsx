@@ -3,24 +3,11 @@
  * Displays full post content with navigation.
  */
 
-import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getDictionary } from '@/shared/i18n';
-import { journalApi } from '@/core/api/journal';
-import type { PostDetailDto } from '@/modules/journal';
-import { JournalPostPageClient } from './journal-post-client';
-
-/**
- * Cached post fetcher - deduplicates requests within same render.
- */
-const getPost = cache(async (slug: string): Promise<PostDetailDto | null> => {
-  try {
-    return await journalApi.getPost(slug);
-  } catch {
-    return null;
-  }
-});
+import { getJournalPost } from '@/core/api/journal.server';
+import { JournalPostPageClient } from './client';
 
 // ISR: Revalidate every 10 minutes
 export const revalidate = 600;
@@ -34,7 +21,7 @@ interface PageParams {
  */
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPost(slug);
+  const post = await getJournalPost(slug);
   const dict = getDictionary('uk');
 
   if (!post) {
@@ -61,17 +48,17 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 
 export default async function JournalPostPage({ params }: PageParams) {
   const { slug } = await params;
-  const post = await getPost(slug);
+  const post = await getJournalPost(slug);
 
   if (!post) {
     notFound();
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-950">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <JournalPostPageClient post={post} />
       </div>
-    </main>
+    </div>
   );
 }

@@ -3,7 +3,7 @@
 import { createContext, useContext, useCallback, useMemo, useEffect, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/core/auth';
-import { userActionsApi, type MediaSaveStatusDto } from '@/core/api/user-actions';
+import { userActionsApi, type MediaSaveStatusDto } from '@/core/api/user-actions.client';
 import { queryKeys, createBatchHash } from '@/core/query/keys';
 
 /**

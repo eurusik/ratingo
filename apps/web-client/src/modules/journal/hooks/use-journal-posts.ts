@@ -6,7 +6,7 @@
 
 import { useQuery, type UseQueryOptions, type UseQueryResult } from '@tanstack/react-query';
 
-import { journalApi } from '@/core/api/journal';
+import { journalApi } from '@/core/api/journal.client';
 import { queryKeys } from '@/core/query/keys';
 
 import type {

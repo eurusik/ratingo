@@ -5,7 +5,7 @@ import { ConfigCard } from '../ConfigCard';
 import { Label } from '@/shared/ui/label';
 import { Input } from '@/shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
-import type { BlockedCountryMode, EligibilityMode } from '@/core/api/admin';
+import type { BlockedCountryMode, EligibilityMode } from '@/core/api/admin.client';
 
 interface SettingsEditorProps {
   eligibilityMode: EligibilityMode;

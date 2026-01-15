@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { CheckCircle, XCircle, BarChart3 } from 'lucide-react';
-import type { DiffReportDto } from '@/core/api/admin';
+import type { DiffReportDto } from '@/core/api/admin.client';
 import { DiffItemList } from './DiffItemList';
 import type { RunDiffLabels } from './labels.types';
 

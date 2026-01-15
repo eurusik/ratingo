@@ -10,7 +10,7 @@ import type {
   EligibilityMode,
   GlobalRequirementsDto,
   ContentClass,
-} from '@/core/api/admin';
+} from '@/core/api/admin.client';
 import type { PolicyFormLabels } from './labels.types';
 import {
   CountriesEditor,

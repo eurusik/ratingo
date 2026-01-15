@@ -1,11 +1,13 @@
 /**
  * Journal list page.
  * Shows all published journal posts with type filtering.
+ * Uses SSR for initial data, client-side for filtering.
  */
 
 import type { Metadata } from 'next';
 import { getDictionary } from '@/shared/i18n';
-import { JournalPageClient } from './journal-page-client';
+import { getJournalPosts } from '@/core/api/journal.server';
+import { JournalPageClient } from './client';
 
 const dict = getDictionary('uk');
 
@@ -14,16 +16,22 @@ export const metadata: Metadata = {
   description: dict.journal.description,
 };
 
-export default function JournalPage() {
+// ISR: Revalidate every 60 seconds
+export const revalidate = 60;
+
+export default async function JournalPage() {
+  // Fetch initial posts on server
+  const initialData = await getJournalPosts({ limit: 20 });
+
   return (
-    <main className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-zinc-950">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">{dict.journal.title}</h1>
         </header>
 
-        <JournalPageClient />
+        <JournalPageClient initialData={initialData} />
       </div>
-    </main>
+    </div>
   );
 }

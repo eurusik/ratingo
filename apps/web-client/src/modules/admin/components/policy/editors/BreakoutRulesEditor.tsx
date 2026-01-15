@@ -7,7 +7,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Badge } from '@/shared/ui/badge';
-import type { BreakoutRuleDto } from '@/core/api/admin';
+import type { BreakoutRuleDto } from '@/core/api/admin.client';
 import { ComboboxTagInput, type ComboboxOption } from './ComboboxTagInput';
 import { useProviders } from '@/core/query';
 

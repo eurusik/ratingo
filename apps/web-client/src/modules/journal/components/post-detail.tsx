@@ -42,7 +42,7 @@ export function PostDetail({ post, className }: PostDetailProps) {
   const { t, locale } = useTranslation();
 
   return (
-    <article className={cn('max-w-3xl mx-auto', className)}>
+    <article className={cn('max-w-none', className)}>
       {/* Back link */}
       <div className="mb-6">
         <Link href="/journal">

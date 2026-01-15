@@ -2,7 +2,7 @@
  * Mappers for home page data transformation.
  */
 
-import type { NewEpisodeItem } from '@/core/api/catalog';
+import type { NewEpisodeItem } from '@/core/api/catalog.client';
 import { tmdbImageUrl, TMDB_POSTER_SIZES } from '@/shared/constants';
 import type { MediaCardServerProps, NewEpisodeShowItem } from './components';
 

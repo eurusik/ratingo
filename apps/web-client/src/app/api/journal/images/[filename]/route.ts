@@ -1,33 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
+import ky from 'ky';
+import { env } from '@/core/config/env';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const imageApi = ky.create({
+  prefixUrl: env.API_BASE_URL,
+  timeout: 30000,
+});
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ filename: string }> }
+  _request: NextRequest,
+  { params }: { params: Promise<{ filename: string }> },
 ) {
   const { filename } = await params;
 
-  const response = await fetch(`${API_URL}/api/journal/images/${filename}`, {
-    headers: {
-      'Accept': 'image/*',
-    },
-  });
+  try {
+    const response = await imageApi.get(`journal/images/${filename}`);
+    const buffer = await response.arrayBuffer();
+    const contentType = response.headers.get('content-type') || 'image/png';
 
-  if (!response.ok) {
-    return NextResponse.json(
-      { error: 'Image not found' },
-      { status: response.status }
-    );
+    return new NextResponse(buffer, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
+    });
+  } catch {
+    return NextResponse.json({ error: 'Image not found' }, { status: 404 });
   }
-
-  const buffer = await response.arrayBuffer();
-  const contentType = response.headers.get('content-type') || 'image/png';
-
-  return new NextResponse(buffer, {
-    headers: {
-      'Content-Type': contentType,
-      'Cache-Control': 'public, max-age=31536000, immutable',
-    },
-  });
 }

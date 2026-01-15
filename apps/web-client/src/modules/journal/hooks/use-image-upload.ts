@@ -7,7 +7,7 @@
 import { useState, useCallback } from 'react';
 import { useMutation, type UseMutationResult } from '@tanstack/react-query';
 
-import { journalApi } from '@/core/api/journal';
+import { journalApi } from '@/core/api/journal.client';
 import type { ImageUploadResponseDto } from '../types';
 
 /**
