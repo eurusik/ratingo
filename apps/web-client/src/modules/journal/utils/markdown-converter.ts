@@ -68,5 +68,34 @@ export function htmlToMarkdown(html: string): string {
     },
   });
 
+  // Custom rule for links (ensure href is preserved)
+  turndownService.addRule('links', {
+    filter: 'a',
+    replacement: (content, node) => {
+      const element = node as HTMLAnchorElement;
+      const href = element.getAttribute('href');
+      const title = element.getAttribute('title');
+
+      if (!href) {
+        return content;
+      }
+
+      if (title) {
+        return `[${content}](${href} "${title}")`;
+      }
+      return `[${content}](${href})`;
+    },
+  });
+
+  // Custom rule for blockquotes
+  turndownService.addRule('blockquotes', {
+    filter: 'blockquote',
+    replacement: (content) => {
+      // Trim and add > prefix to each line
+      const lines = content.trim().split('\n');
+      return lines.map(line => `> ${line}`).join('\n') + '\n\n';
+    },
+  });
+
   return turndownService.turndown(html);
 }
