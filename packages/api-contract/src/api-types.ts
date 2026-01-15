@@ -1709,6 +1709,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/reviews/{reviewId}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List replies for a review
+         * @description Returns all replies for a review with author info.
+         */
+        get: operations["ReviewsController_listReplies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/reviews": {
         parameters: {
             query?: never;
@@ -1774,6 +1794,40 @@ export interface paths {
         post: operations["UserReviewsController_vote"];
         /** Remove vote from a review (auth: Bearer) */
         delete: operations["UserReviewsController_unvote"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews/{reviewId}/replies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a reply to a review (auth: Bearer) */
+        post: operations["UserReviewsController_createReply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews/replies/{replyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete my reply (auth: Bearer) */
+        delete: operations["UserReviewsController_deleteReply"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4727,6 +4781,38 @@ export interface components {
              */
             meta: Record<string, never>;
         };
+        ReplyAuthorDto: {
+            /** @description Author UUID */
+            id: string;
+            /** @description Author username */
+            username: string;
+            /** @description Author avatar URL */
+            avatarUrl?: string;
+            /** @description Whether author profile is public */
+            isProfilePublic: boolean;
+        };
+        ReplyResponseDto: {
+            /** @description Reply UUID */
+            id: string;
+            /** @description Review UUID this reply belongs to */
+            reviewId: string;
+            /** @description Parent reply UUID for nested replies */
+            parentReplyId?: string;
+            /** @description Reply content */
+            content: string;
+            /** @description Reply author info */
+            author: components["schemas"]["ReplyAuthorDto"];
+            /**
+             * Format: date-time
+             * @description When reply was created
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When reply was last updated
+             */
+            updatedAt: string;
+        };
         CreateReviewDto: {
             /**
              * @description Media item UUID
@@ -4809,6 +4895,35 @@ export interface components {
              * @example like
              */
             currentVote: string | null;
+        };
+        CreateReplyDto: {
+            /** @description Reply content */
+            content: string;
+            /**
+             * Format: uuid
+             * @description Parent reply ID for nested replies
+             */
+            parentReplyId?: string;
+        };
+        ReplyMutationResponseDto: {
+            /** @description Reply UUID */
+            id: string;
+            /** @description Review UUID */
+            reviewId: string;
+            /** @description Parent reply UUID */
+            parentReplyId?: string;
+            /** @description Reply content */
+            content: string;
+            /**
+             * Format: date-time
+             * @description When reply was created
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When reply was last updated
+             */
+            updatedAt: string;
         };
     };
     responses: never;
@@ -7655,6 +7770,32 @@ export interface operations {
             };
         };
     };
+    ReviewsController_listReplies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReplyResponseDto"][];
+                    };
+                };
+            };
+        };
+    };
     UserReviewsController_create: {
         parameters: {
             query?: never;
@@ -7817,6 +7958,58 @@ export interface operations {
                         data: components["schemas"]["VoteResultDto"];
                     };
                 };
+            };
+        };
+    };
+    UserReviewsController_createReply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReplyDto"];
+            };
+        };
+        responses: {
+            /** @description Reply created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReplyMutationResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    UserReviewsController_deleteReply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Reply UUID */
+                replyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reply deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

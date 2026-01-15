@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { VOTE_TYPE } from '../../domain/constants/review.constants';
+import { ReviewRepliesService } from '../../application/review-replies.service';
 import { ReviewVotesService } from '../../application/review-votes.service';
 import { ReviewsService } from '../../application/reviews.service';
 import { UserReviewsController } from './user-reviews.controller';
@@ -9,6 +10,7 @@ describe('UserReviewsController', () => {
   let controller: UserReviewsController;
   let reviewsService: jest.Mocked<ReviewsService>;
   let votesService: jest.Mocked<ReviewVotesService>;
+  let repliesService: jest.Mocked<ReviewRepliesService>;
 
   const mockUser = { id: 'user-id-1' };
 
@@ -49,17 +51,32 @@ describe('UserReviewsController', () => {
       unvote: jest.fn().mockResolvedValue({ action: 'removed', newVote: null }),
     };
 
+    const mockRepliesService = {
+      create: jest.fn().mockResolvedValue({
+        id: 'reply-id-1',
+        reviewId: 'review-id-1',
+        userId: 'user-id-1',
+        parentReplyId: null,
+        content: 'Nice review!',
+        createdAt: new Date('2024-01-15T11:00:00Z'),
+        updatedAt: new Date('2024-01-15T11:00:00Z'),
+      }),
+      delete: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserReviewsController],
       providers: [
         { provide: ReviewsService, useValue: mockReviewsService },
         { provide: ReviewVotesService, useValue: mockVotesService },
+        { provide: ReviewRepliesService, useValue: mockRepliesService },
       ],
     }).compile();
 
     controller = module.get<UserReviewsController>(UserReviewsController);
     reviewsService = module.get(ReviewsService);
     votesService = module.get(ReviewVotesService);
+    repliesService = module.get(ReviewRepliesService);
   });
 
   describe('create', () => {

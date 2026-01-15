@@ -4,12 +4,14 @@ import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger'
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
+import { ReviewRepliesService } from '../../application/review-replies.service';
 import { ReviewVotesService } from '../../application/review-votes.service';
 import { ReviewsService } from '../../application/reviews.service';
 import type { VoteType } from '../../domain/constants/review.constants';
+import type { ReviewReplyWithAuthor } from '../../domain/entities/review-reply.entity';
 import type { ReviewVote } from '../../domain/entities/review-vote.entity';
 import type { ReviewWithAuthor } from '../../domain/entities/review.entity';
-import { ReviewQueryDto, ReviewResponseDto, ReviewListResponseDto } from '../dto';
+import { ReviewQueryDto, ReviewResponseDto, ReviewListResponseDto, ReplyResponseDto } from '../dto';
 
 /**
  * Public endpoints for reading reviews.
@@ -22,6 +24,7 @@ export class ReviewsController {
   constructor(
     private readonly reviewsService: ReviewsService,
     private readonly votesService: ReviewVotesService,
+    private readonly repliesService: ReviewRepliesService,
   ) {}
 
   /**
@@ -88,6 +91,39 @@ export class ReviewsController {
     }
 
     return this.toResponseDto(review, new Map(), currentUserVote);
+  }
+
+  /**
+   * Lists replies for a review.
+   */
+  @Get(':reviewId/replies')
+  @ApiOperation({
+    summary: 'List replies for a review',
+    description: 'Returns all replies for a review with author info.',
+  })
+  @ApiParam({ name: 'reviewId', type: String, description: 'Review UUID' })
+  @ApiOkResponse({ type: [ReplyResponseDto] })
+  async listReplies(@Param('reviewId') reviewId: string): Promise<ReplyResponseDto[]> {
+    const replies = await this.repliesService.listForReview(reviewId);
+
+    return replies.map((reply) => this.toReplyResponseDto(reply));
+  }
+
+  private toReplyResponseDto(reply: ReviewReplyWithAuthor): ReplyResponseDto {
+    return {
+      id: reply.id,
+      reviewId: reply.reviewId,
+      parentReplyId: reply.parentReplyId,
+      content: reply.content,
+      author: {
+        id: reply.author.id,
+        username: reply.author.isProfilePublic ? reply.author.username : 'Анонім',
+        avatarUrl: reply.author.isProfilePublic ? reply.author.avatarUrl : null,
+        isProfilePublic: reply.author.isProfilePublic,
+      },
+      createdAt: reply.createdAt,
+      updatedAt: reply.updatedAt,
+    };
   }
 
   private toResponseDto(

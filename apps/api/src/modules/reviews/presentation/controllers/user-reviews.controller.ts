@@ -22,6 +22,7 @@ import {
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
+import { ReviewRepliesService } from '../../application/review-replies.service';
 import { ReviewVotesService } from '../../application/review-votes.service';
 import { ReviewsService } from '../../application/reviews.service';
 import {
@@ -30,6 +31,8 @@ import {
   ReviewVoteDto,
   VoteResultDto,
   ReviewMutationResponseDto,
+  CreateReplyDto,
+  ReplyMutationResponseDto,
 } from '../dto';
 
 /**
@@ -43,6 +46,7 @@ export class UserReviewsController {
   constructor(
     private readonly reviewsService: ReviewsService,
     private readonly votesService: ReviewVotesService,
+    private readonly repliesService: ReviewRepliesService,
   ) {}
 
   /**
@@ -163,6 +167,55 @@ export class UserReviewsController {
       action: result.action,
       currentVote: null,
     };
+  }
+
+  // ============================================================================
+  // Replies
+  // ============================================================================
+
+  /**
+   * Creates a reply to a review.
+   */
+  @Post(':reviewId/replies')
+  @ApiOperation({ summary: 'Create a reply to a review (auth: Bearer)' })
+  @ApiParam({ name: 'reviewId', type: String, description: 'Review UUID' })
+  @ApiCreatedResponse({ type: ReplyMutationResponseDto, description: 'Reply created' })
+  async createReply(
+    @CurrentUser() user: { id: string },
+    @Param('reviewId') reviewId: string,
+    @Body() body: CreateReplyDto,
+  ): Promise<ReplyMutationResponseDto> {
+    const reply = await this.repliesService.create({
+      userId: user.id,
+      reviewId,
+      parentReplyId: body.parentReplyId,
+      content: body.content,
+    });
+
+    return {
+      id: reply.id,
+      reviewId: reply.reviewId,
+      parentReplyId: reply.parentReplyId,
+      content: reply.content,
+      createdAt: reply.createdAt,
+      updatedAt: reply.updatedAt,
+    };
+  }
+
+  /**
+   * Deletes a reply.
+   * Only the author can delete their reply.
+   */
+  @Delete('replies/:replyId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete my reply (auth: Bearer)' })
+  @ApiParam({ name: 'replyId', type: String, description: 'Reply UUID' })
+  @ApiNoContentResponse({ description: 'Reply deleted' })
+  async deleteReply(
+    @CurrentUser() user: { id: string },
+    @Param('replyId') replyId: string,
+  ): Promise<void> {
+    await this.repliesService.delete(replyId, user.id);
   }
 
   private toMutationResponse(review: {

@@ -5816,6 +5816,57 @@
         ]
       }
     },
+    "/api/reviews/{reviewId}/replies": {
+      "get": {
+        "operationId": "ReviewsController_listReplies",
+        "summary": "List replies for a review",
+        "description": "Returns all replies for a review with author info.",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "required": true,
+            "in": "path",
+            "description": "Review UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ReplyResponseDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Reviews"
+        ]
+      }
+    },
     "/api/me/reviews": {
       "post": {
         "operationId": "UserReviewsController_create",
@@ -6110,6 +6161,98 @@
                 }
               }
             }
+          }
+        },
+        "tags": [
+          "User: Reviews"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/reviews/{reviewId}/replies": {
+      "post": {
+        "operationId": "UserReviewsController_createReply",
+        "summary": "Create a reply to a review (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "required": true,
+            "in": "path",
+            "description": "Review UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReplyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reply created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReplyMutationResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "User: Reviews"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/reviews/replies/{replyId}": {
+      "delete": {
+        "operationId": "UserReviewsController_deleteReply",
+        "summary": "Delete my reply (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "replyId",
+            "required": true,
+            "in": "path",
+            "description": "Reply UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Reply deleted"
           }
         },
         "tags": [
@@ -11984,6 +12127,79 @@
           "meta"
         ]
       },
+      "ReplyAuthorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Author UUID"
+          },
+          "username": {
+            "type": "string",
+            "description": "Author username"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "Author avatar URL"
+          },
+          "isProfilePublic": {
+            "type": "boolean",
+            "description": "Whether author profile is public"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "isProfilePublic"
+        ]
+      },
+      "ReplyResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Reply UUID"
+          },
+          "reviewId": {
+            "type": "string",
+            "description": "Review UUID this reply belongs to"
+          },
+          "parentReplyId": {
+            "type": "string",
+            "description": "Parent reply UUID for nested replies"
+          },
+          "content": {
+            "type": "string",
+            "description": "Reply content"
+          },
+          "author": {
+            "description": "Reply author info",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReplyAuthorDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When reply was created"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When reply was last updated"
+          }
+        },
+        "required": [
+          "id",
+          "reviewId",
+          "content",
+          "author",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "CreateReviewDto": {
         "type": "object",
         "properties": {
@@ -12122,6 +12338,63 @@
         "required": [
           "action",
           "currentVote"
+        ]
+      },
+      "CreateReplyDto": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "Reply content",
+            "minLength": 1,
+            "maxLength": 280
+          },
+          "parentReplyId": {
+            "type": "string",
+            "description": "Parent reply ID for nested replies",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "ReplyMutationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Reply UUID"
+          },
+          "reviewId": {
+            "type": "string",
+            "description": "Review UUID"
+          },
+          "parentReplyId": {
+            "type": "string",
+            "description": "Parent reply UUID"
+          },
+          "content": {
+            "type": "string",
+            "description": "Reply content"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When reply was created"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When reply was last updated"
+          }
+        },
+        "required": [
+          "id",
+          "reviewId",
+          "content",
+          "createdAt",
+          "updatedAt"
         ]
       }
     }

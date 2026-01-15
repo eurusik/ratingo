@@ -17,6 +17,11 @@ export type ReviewMutationResponseDto = components['schemas']['ReviewMutationRes
 export type ReviewAuthorDto = components['schemas']['ReviewAuthorDto'];
 export type VoteResultDto = components['schemas']['VoteResultDto'];
 
+// Reply types
+export type ReplyResponseDto = components['schemas']['ReplyResponseDto'];
+export type ReplyMutationResponseDto = components['schemas']['ReplyMutationResponseDto'];
+export type ReplyAuthorDto = components['schemas']['ReplyAuthorDto'];
+
 export type ReviewSort = 'newest' | 'oldest' | 'most_liked';
 
 export const VOTE_TYPE = {
@@ -51,6 +56,12 @@ export interface UpdateReviewParams {
 export interface VoteParams {
   reviewId: string;
   voteType: VoteType;
+}
+
+export interface CreateReplyParams {
+  reviewId: string;
+  content: string;
+  parentReplyId?: string;
 }
 
 // ============================================================================
@@ -148,5 +159,39 @@ export const reviewsApi = {
    */
   async unvote(reviewId: string): Promise<VoteResultDto> {
     return apiDelete<VoteResultDto>(`me/reviews/${reviewId}/vote`);
+  },
+
+  // --------------------------------------------------------------------------
+  // Replies endpoints
+  // --------------------------------------------------------------------------
+
+  /**
+   * List replies for a review.
+   *
+   * @param reviewId - Review UUID
+   * @returns List of replies
+   */
+  async listReplies(reviewId: string): Promise<ReplyResponseDto[]> {
+    return apiGet<ReplyResponseDto[]>(`reviews/${reviewId}/replies`);
+  },
+
+  /**
+   * Create a reply to a review.
+   *
+   * @param params - Reply data
+   * @returns Created reply
+   */
+  async createReply(params: CreateReplyParams): Promise<ReplyMutationResponseDto> {
+    const { reviewId, ...body } = params;
+    return apiPost<ReplyMutationResponseDto>(`me/reviews/${reviewId}/replies`, body);
+  },
+
+  /**
+   * Delete a reply.
+   *
+   * @param replyId - Reply UUID
+   */
+  async deleteReply(replyId: string): Promise<void> {
+    await apiDelete<void>(`me/reviews/replies/${replyId}`);
   },
 };

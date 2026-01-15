@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
 import { REVIEW_SORT, VOTE_TYPE } from '../../domain/constants/review.constants';
+import { ReviewRepliesService } from '../../application/review-replies.service';
 import { ReviewVotesService } from '../../application/review-votes.service';
 import { ReviewsService } from '../../application/reviews.service';
 import { ReviewsController } from './reviews.controller';
@@ -10,6 +11,7 @@ describe('ReviewsController', () => {
   let controller: ReviewsController;
   let reviewsService: jest.Mocked<ReviewsService>;
   let votesService: jest.Mocked<ReviewVotesService>;
+  let repliesService: jest.Mocked<ReviewRepliesService>;
 
   const mockUser = { id: 'user-id-1' };
 
@@ -58,17 +60,23 @@ describe('ReviewsController', () => {
       getUserVote: jest.fn().mockResolvedValue(null),
     };
 
+    const mockRepliesService = {
+      listForReview: jest.fn().mockResolvedValue([]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ReviewsController],
       providers: [
         { provide: ReviewsService, useValue: mockReviewsService },
         { provide: ReviewVotesService, useValue: mockVotesService },
+        { provide: ReviewRepliesService, useValue: mockRepliesService },
       ],
     }).compile();
 
     controller = module.get<ReviewsController>(ReviewsController);
     reviewsService = module.get(ReviewsService);
     votesService = module.get(ReviewVotesService);
+    repliesService = module.get(ReviewRepliesService);
   });
 
   describe('listForMedia', () => {
