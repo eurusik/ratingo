@@ -164,13 +164,13 @@ export function SignalsSection({
         <div className="space-y-2">
           <SectionLabel>{dict.details.signals.externalRatings}</SectionLabel>
           <div className="flex items-center gap-2 flex-wrap">
-            {externalRatings?.imdb?.rating != null && (
+            {externalRatings?.imdb?.rating != null && externalRatings.imdb.rating > 0 && (
               <RatingBadge source="IMDb" rating={externalRatings.imdb.rating} />
             )}
-            {externalRatings?.tmdb?.rating != null && (
+            {externalRatings?.tmdb?.rating != null && externalRatings.tmdb.rating > 0 && (
               <RatingBadge source="TMDB" rating={externalRatings.tmdb.rating} />
             )}
-            {externalRatings?.trakt?.rating != null && (
+            {externalRatings?.trakt?.rating != null && externalRatings.trakt.rating > 0 && (
               <RatingBadge source="Trakt" rating={externalRatings.trakt.rating} />
             )}
           </div>
