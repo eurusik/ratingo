@@ -89,11 +89,34 @@ export default {
   				to: {
   					height: '0'
   				}
+  			},
+  			'vote-pop': {
+  				'0%': {
+  					transform: 'scale(1)'
+  				},
+  				'50%': {
+  					transform: 'scale(1.4)'
+  				},
+  				'100%': {
+  					transform: 'scale(1)'
+  				}
+  			},
+  			'vote-burst': {
+  				'0%': {
+  					transform: 'scale(0)',
+  					opacity: '1'
+  				},
+  				'100%': {
+  					transform: 'scale(2.5)',
+  					opacity: '0'
+  				}
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'vote-pop': 'vote-pop 0.3s ease-out',
+  			'vote-burst': 'vote-burst 0.4s ease-out forwards'
   		}
   	}
   },

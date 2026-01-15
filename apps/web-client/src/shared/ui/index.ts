@@ -54,3 +54,5 @@ export {
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
 export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from './popover';
 export { Textarea } from './textarea';
+export { Slider } from './slider';
+export { Checkbox } from './checkbox';

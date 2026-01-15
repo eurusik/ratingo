@@ -22,6 +22,7 @@ import {
   SignalsSection,
   type BadgeKey,
 } from '@/modules/details';
+import { ReviewsSection } from '@/modules/reviews';
 import { Separator } from '@/shared/ui';
 
 /**
@@ -233,6 +234,11 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             availability={show.availability}
             dict={dict}
           />
+
+          <Separator className="my-12 bg-zinc-800/50" />
+
+          {/* Reviews Section */}
+          <ReviewsSection mediaItemId={show.id} />
         </DetailsContent>
       </main>
     </DetailsPageClient>

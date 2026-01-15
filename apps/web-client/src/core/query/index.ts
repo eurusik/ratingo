@@ -30,3 +30,13 @@ export {
   useUpdateMapping,
   useDeleteMapping,
 } from './admin-providers';
+export {
+  useReviews,
+  useReview,
+  useMyReview,
+  useCreateReview,
+  useUpdateReview,
+  useDeleteReview,
+  useVoteReview,
+  useUnvoteReview,
+} from './reviews';

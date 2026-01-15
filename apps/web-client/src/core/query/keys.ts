@@ -166,4 +166,21 @@ export const queryKeys = {
     detail: (slug: string) => [...queryKeys.journal.all, 'detail', slug] as const,
     byContext: (contextId: string) => [...queryKeys.journal.all, 'context', contextId] as const,
   },
+
+  /** Reviews queries. */
+  reviews: {
+    all: ['reviews'] as const,
+    forMedia: (mediaItemId: string, sort?: string, limit?: number, offset?: number) =>
+      [
+        ...queryKeys.reviews.all,
+        'media',
+        mediaItemId,
+        sort ?? null,
+        limit ?? null,
+        offset ?? null,
+      ] as const,
+    detail: (reviewId: string) => [...queryKeys.reviews.all, 'detail', reviewId] as const,
+    myReview: (mediaItemId: string) =>
+      [...queryKeys.reviews.all, 'my-review', mediaItemId] as const,
+  },
 } as const;

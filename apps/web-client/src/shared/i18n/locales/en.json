@@ -374,6 +374,52 @@
       }
     }
   },
+  "reviews": {
+    "title": "Reviews",
+    "empty": "No reviews yet",
+    "emptyHint": "Sign in to leave the first review",
+    "emptyHintAuth": "Be the first to share your thoughts!",
+    "loadMore": "Load more",
+    "loadError": "Failed to load reviews",
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "most_liked": "Most liked"
+    },
+    "form": {
+      "rating": "Your rating",
+      "ratingGuest": "Rate it",
+      "placeholder": "Share your thoughts... (up to 280 characters)",
+      "spoiler": "Contains spoilers",
+      "submit": "Post",
+      "submitting": "Posting...",
+      "save": "Save",
+      "ratingLabels": {
+        "excellent": "Excellent",
+        "good": "Good",
+        "okay": "Okay",
+        "meh": "Meh",
+        "bad": "Bad"
+      }
+    },
+    "card": {
+      "spoilerWarning": "Spoiler",
+      "showSpoiler": "Show spoiler",
+      "private": "private",
+      "report": "Report"
+    },
+    "vote": {
+      "like": "Like",
+      "dislike": "Dislike"
+    },
+    "toast": {
+      "created": "Review posted",
+      "alreadyReviewed": "You already left a review",
+      "createError": "Failed to post review",
+      "voteOwnReview": "Cannot vote on your own review",
+      "voteError": "Failed to vote"
+    }
+  },
   "errors": {
     "notFound": "Page not found",
     "serverError": "Something went wrong",

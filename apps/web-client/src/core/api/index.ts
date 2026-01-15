@@ -7,3 +7,4 @@ export * from './users.client';
 export * from './admin.client';
 export * from './admin-providers.client';
 export * from './journal.client';
+export * from './reviews.client';

@@ -1600,7 +1600,7 @@ export interface paths {
         put?: never;
         /**
          * Publish post
-         * @description Publishes a draft post immediately or at a scheduled time.
+         * @description Publishes a draft post immediately. For scheduled posts, publishes them now.
          */
         post: operations["AdminJournalController_publishPost"];
         delete?: never;
@@ -1664,6 +1664,116 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/media/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List reviews for a media item
+         * @description Returns reviews for a movie/show with author info and optional current user vote.
+         */
+        get: operations["ReviewsController_listForMedia"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reviews/{reviewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a single review
+         * @description Returns a single review with author info and optional current user vote.
+         */
+        get: operations["ReviewsController_getById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a review (auth: Bearer) */
+        post: operations["UserReviewsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews/media/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get my review for a media item (auth: Bearer) */
+        get: operations["UserReviewsController_getMyReviewForMedia"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/reviews/{reviewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete my review (auth: Bearer) */
+        delete: operations["UserReviewsController_delete"];
+        options?: never;
+        head?: never;
+        /** Update my review (auth: Bearer) */
+        patch: operations["UserReviewsController_update"];
+        trace?: never;
+    };
+    "/api/me/reviews/{reviewId}/vote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Vote on a review (auth: Bearer) */
+        post: operations["UserReviewsController_vote"];
+        /** Remove vote from a review (auth: Bearer) */
+        delete: operations["UserReviewsController_unvote"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4458,8 +4568,8 @@ export interface components {
              */
             slug?: string;
             /**
-             * @description Featured image URL for Open Graph previews
-             * @example https://cdn.ratingo.com/journal/featured.jpg
+             * @description Featured image URL or path for Open Graph previews
+             * @example /api/journal/images/uuid.jpg
              */
             featuredImageUrl?: string;
             /**
@@ -4514,8 +4624,8 @@ export interface components {
              */
             slug?: string;
             /**
-             * @description Featured image URL for Open Graph previews
-             * @example https://cdn.ratingo.com/journal/featured.jpg
+             * @description Featured image URL or path for Open Graph previews
+             * @example /api/journal/images/uuid.jpg
              */
             featuredImageUrl?: string;
             /**
@@ -4550,6 +4660,155 @@ export interface components {
              * @example https://cdn.ratingo.com/journal/abc123.jpg
              */
             url: string;
+        };
+        ReviewAuthorDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example user123 */
+            username: string;
+            /** @example https://example.com/avatar.jpg */
+            avatarUrl: string | null;
+            /**
+             * @description Whether the author shows their ratings publicly
+             * @example true
+             */
+            showRatings: boolean;
+            /**
+             * @description Whether the author profile is public
+             * @example true
+             */
+            isProfilePublic: boolean;
+        };
+        ReviewResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /** @example Чудовий фільм! Візуальні ефекти на висоті. */
+            content: string;
+            /**
+             * @description Rating 0-100, null if author has showRatings=false
+             * @example 85
+             */
+            rating: number | null;
+            /** @example false */
+            hasSpoiler: boolean;
+            /** @example 42 */
+            likesCount: number;
+            /** @example 3 */
+            dislikesCount: number;
+            /** @example 5 */
+            repliesCount: number;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            updatedAt: string;
+            author: components["schemas"]["ReviewAuthorDto"];
+            /**
+             * @description Current user vote (null if not voted or not authenticated)
+             * @example like
+             */
+            currentUserVote: string | null;
+        };
+        ReviewListResponseDto: {
+            data: components["schemas"]["ReviewResponseDto"][];
+            /**
+             * @example {
+             *       "total": 100,
+             *       "limit": 20,
+             *       "offset": 0
+             *     }
+             */
+            meta: Record<string, never>;
+        };
+        CreateReviewDto: {
+            /**
+             * @description Media item UUID
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            mediaItemId: string;
+            /**
+             * @description Review content (max 280 characters)
+             * @example Чудовий фільм! Візуальні ефекти на висоті.
+             */
+            content: string;
+            /**
+             * @description Rating from 0 to 100
+             * @example 85
+             */
+            rating: number;
+            /**
+             * @description Whether the review contains spoilers
+             * @default false
+             * @example false
+             */
+            hasSpoiler: boolean;
+        };
+        ReviewMutationResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /** @example Чудовий фільм! */
+            content: string;
+            /** @example 85 */
+            rating: number;
+            /** @example false */
+            hasSpoiler: boolean;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            updatedAt: string;
+        };
+        UpdateReviewDto: {
+            /**
+             * @description Updated review content (max 280 characters)
+             * @example Переглянув ще раз - стало ще краще!
+             */
+            content?: string;
+            /**
+             * @description Updated rating from 0 to 100
+             * @example 90
+             */
+            rating?: number;
+            /**
+             * @description Whether the review contains spoilers
+             * @example true
+             */
+            hasSpoiler?: boolean;
+        };
+        ReviewVoteDto: {
+            /**
+             * @description Vote type: like or dislike
+             * @example like
+             * @enum {string}
+             */
+            voteType: "like" | "dislike";
+        };
+        VoteResultDto: {
+            /**
+             * @description Action taken
+             * @example added
+             * @enum {string}
+             */
+            action: "added" | "changed" | "removed";
+            /**
+             * @description Current vote type (null if removed)
+             * @example like
+             */
+            currentVote: string | null;
         };
     };
     responses: never;
@@ -7331,6 +7590,232 @@ export interface operations {
                     "image/png": unknown;
                     "image/webp": unknown;
                     "image/gif": unknown;
+                };
+            };
+        };
+    };
+    ReviewsController_listForMedia: {
+        parameters: {
+            query?: {
+                /** @description Sort order: newest, oldest, or most_liked */
+                sort?: "newest" | "oldest" | "most_liked";
+                /** @description Number of reviews to return */
+                limit?: number;
+                /** @description Offset for pagination */
+                offset?: number;
+                /** @description Hide reviews marked as spoilers */
+                hideSpoilers?: boolean;
+            };
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReviewListResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    ReviewsController_getById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReviewResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    UserReviewsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReviewDto"];
+            };
+        };
+        responses: {
+            /** @description Review created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReviewMutationResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    UserReviewsController_getMyReviewForMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Review found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReviewMutationResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    UserReviewsController_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Review deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UserReviewsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateReviewDto"];
+            };
+        };
+        responses: {
+            /** @description Review updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReviewMutationResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    UserReviewsController_vote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewVoteDto"];
+            };
+        };
+        responses: {
+            /** @description Vote registered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["VoteResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    UserReviewsController_unvote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Vote removed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["VoteResultDto"];
+                    };
                 };
             };
         };
