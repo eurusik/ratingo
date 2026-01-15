@@ -75,7 +75,7 @@ export function JournalPageClient({ initialData }: JournalPageClientProps) {
       <PostTypeFilter
         selected={selectedTypes}
         onChange={setSelectedTypes}
-        className="mb-8"
+        className="mb-8 justify-center"
       />
 
       {/* Content */}

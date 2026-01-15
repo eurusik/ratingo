@@ -1162,6 +1162,7 @@
   },
   "journal": {
     "title": "Журнал",
+    "subtitle": "Що нового в Ratingo",
     "description": "Оновлення, пояснення та плани розвитку Ratingo",
     "empty": "Публікацій поки немає",
     "postTypes": {

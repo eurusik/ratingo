@@ -1162,6 +1162,7 @@
   },
   "journal": {
     "title": "Journal",
+    "subtitle": "What's new in Ratingo",
     "description": "Updates, explanations, and development plans for Ratingo",
     "empty": "No posts yet",
     "postTypes": {
