@@ -4,7 +4,7 @@
 
 import * as fc from 'fast-check';
 import { queryKeys, createBatchHash } from '../../query/keys';
-import type { MediaSaveStatusDto } from '../../api/user-actions';
+import type { MediaSaveStatusDto } from '../../api/user-actions.client';
 
 describe('Batch to individual cache population', () => {
   /**
