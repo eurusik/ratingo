@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { XCircle } from 'lucide-react';
 
-import { catalogApi, ImportStatus, MediaType } from '@/core/api/catalog.client';
+import { catalogApi, ImportStatus, JobStatus, MediaType } from '@/core/api/catalog.client';
 import { useTranslation } from '@/shared/i18n';
 import { DetailsSkeleton } from './details-skeleton';
 
@@ -18,9 +18,13 @@ interface ImportPageProps {
 function useImportParams(params: ImportPageProps['params']) {
   const searchParams = useSearchParams();
 
+  const typeParam = searchParams.get('type');
+  const type =
+    typeParam === MediaType.SHOW ? MediaType.SHOW : MediaType.MOVIE;
+
   return {
     tmdbId: parseInt((params as any).tmdbId || '0', 10),
-    type: (searchParams.get('type') as 'movie' | 'show') || 'movie',
+    type,
     title: searchParams.get('title') || '',
     poster: searchParams.get('poster') || '',
     year: searchParams.get('year') || '',
@@ -39,7 +43,8 @@ function useJobPolling(jobId: string) {
       // Stop polling on success, failure, or error (e.g., 404 job not found)
       if (query.state.error) return false;
       const status = query.state.data?.status;
-      return status === 'ready' || status === 'failed' ? false : POLL_INTERVAL;
+      const isTerminal = status === JobStatus.READY || status === JobStatus.FAILED;
+      return isTerminal ? false : POLL_INTERVAL;
     },
   });
 }
@@ -77,7 +82,9 @@ export default function ImportPage({ params }: ImportPageProps) {
   // When job polling fails (404 - job cleaned up), re-check media status via import endpoint
   const recheckMutation = useMutation({
     mutationFn: () =>
-      type === 'movie' ? catalogApi.importMovie(tmdbId) : catalogApi.importShow(tmdbId),
+      type === MediaType.MOVIE
+        ? catalogApi.importMovie(tmdbId)
+        : catalogApi.importShow(tmdbId),
   });
 
   // Trigger recheck when job polling fails
@@ -91,15 +98,19 @@ export default function ImportPage({ params }: ImportPageProps) {
   const finalStatus = recheckMutation.data?.status || jobStatus?.status;
   const finalSlug = recheckMutation.data?.slug || jobStatus?.slug || initialSlug;
 
-  const isReady = finalStatus === 'ready' || recheckMutation.data?.status === ImportStatus.READY;
+  const isReady =
+    finalStatus === JobStatus.READY ||
+    recheckMutation.data?.status === ImportStatus.READY;
   const isFailed =
-    finalStatus === 'failed' ||
+    finalStatus === JobStatus.FAILED ||
     recheckMutation.data?.status === ImportStatus.NOT_FOUND ||
     recheckMutation.isError;
 
   useEffect(() => {
     if (isReady && finalSlug) {
-      router.replace(type === 'movie' ? `/movies/${finalSlug}` : `/shows/${finalSlug}`);
+      const path =
+        type === MediaType.MOVIE ? `/movies/${finalSlug}` : `/shows/${finalSlug}`;
+      router.replace(path);
     }
   }, [isReady, finalSlug, type, router]);
 

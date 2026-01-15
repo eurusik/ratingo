@@ -156,6 +156,16 @@ export const MediaType = {
 };
 
 /**
+ * Job status constants for type-safe comparisons.
+ */
+export const JobStatus = {
+  QUEUED: 'queued' as const,
+  PROCESSING: 'processing' as const,
+  READY: 'ready' as const,
+  FAILED: 'failed' as const,
+};
+
+/**
  * Catalog API client.
  */
 export const catalogApi = {
