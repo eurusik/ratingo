@@ -4,7 +4,7 @@ import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Menu, FileText, Play, Tv, Newspaper } from 'lucide-react';
+import { Menu, FileText, Play, Tv, Newspaper, LayoutDashboard, Plug } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { NavigationItem } from '../../types';
 import { Button } from '@/shared/ui/button';
@@ -18,8 +18,12 @@ interface SidebarProps {
   className?: string;
 }
 
-// Icon mapping for navigation items
+// Icon mapping for navigation items and groups
 const iconMap: Record<string, React.ReactNode> = {
+  // Groups
+  catalog: <LayoutDashboard className="h-4 w-4" />,
+  integrations: <Plug className="h-4 w-4" />,
+  // Items
   policies: <FileText className="h-4 w-4" />,
   runs: <Play className="h-4 w-4" />,
   providers: <Tv className="h-4 w-4" />,
@@ -28,20 +32,25 @@ const iconMap: Record<string, React.ReactNode> = {
 
 // Translation key mapping for navigation items
 const labelMap: Record<string, string> = {
+  // Groups
+  catalog: 'admin.navigation.catalog',
+  integrations: 'admin.navigation.integrations',
+  // Items
   policies: 'admin.navigation.policies',
   runs: 'admin.navigation.runs',
   providers: 'admin.navigation.providers',
   journal: 'admin.navigation.journal',
 };
 
-// Items that should have a separator before them (visual grouping)
-const separatorBefore = new Set(['journal']);
+// Standalone items that should have a separator before them
+const standaloneItems = new Set(['journal']);
 
 /**
  * Sidebar - Responsive navigation component for admin interface
  *
  * Features:
  * - Responsive: Sheet on mobile (< 768px), fixed panel on desktop
+ * - Grouped navigation with section headers
  * - Navigation items with Button variant="ghost"
  * - Active state based on current route
  * - Permissions-based visibility
@@ -76,20 +85,19 @@ export function Sidebar({ navigationItems, userPermissions = [], className }: Si
     (item: NavigationItem) => {
       const translationKey = labelMap[item.id];
       if (translationKey) {
-        // Use nested object access for translation keys like 'admin.navigation.policies'
         const keys = translationKey.split('.');
-        let value: any = dict;
+        let value: unknown = dict;
         for (const key of keys) {
-          value = value?.[key];
+          value = (value as Record<string, unknown>)?.[key];
         }
-        return value || item.label;
+        return (value as string) || item.label;
       }
       return item.label;
     },
     [dict],
   );
 
-  // Render navigation item
+  // Render a single navigation item (leaf node)
   const renderNavItem = React.useCallback(
     (item: NavigationItem) => {
       const active = isActive(item.href);
@@ -98,19 +106,20 @@ export function Sidebar({ navigationItems, userPermissions = [], className }: Si
 
       return (
         <Link
+          key={item.id}
           href={item.href as Route}
-          onClick={() => setIsMobileOpen(false)} // Close mobile menu on navigation
-          className="block mb-1"
+          onClick={() => setIsMobileOpen(false)}
+          className="block"
         >
           <Button
             variant="ghost"
             className={cn(
-              'w-full justify-start py-3',
+              'w-full justify-start py-2.5 h-auto',
               active && 'bg-secondary text-secondary-foreground',
             )}
           >
-            {icon && <span className="mr-2 h-4 w-4">{icon}</span>}
-            <span className="flex-1">{label}</span>
+            {icon && <span className="mr-2.5 h-4 w-4 opacity-70">{icon}</span>}
+            <span className="flex-1 text-left">{label}</span>
             {item.badge && (
               <Badge variant="default" className="ml-auto">
                 {item.badge}
@@ -123,38 +132,55 @@ export function Sidebar({ navigationItems, userPermissions = [], className }: Si
     [isActive, getTranslatedLabel],
   );
 
-  // Render navigation list
+  // Render navigation list with groups
   const renderNavigation = () => (
-    <nav className="space-y-2">
-      {visibleItems.map((item) => {
-        const needsSeparator = separatorBefore.has(item.id);
+    <nav className="space-y-1">
+      {visibleItems.map((item, index) => {
+        const isStandalone = standaloneItems.has(item.id);
+        const hasChildren = item.children && item.children.length > 0;
 
-        if (item.children && item.children.length > 0) {
-          // Render nested navigation (future enhancement)
+        // Standalone item with separator
+        if (isStandalone && !hasChildren) {
           return (
-            <div key={item.id} className="space-y-1">
-              {needsSeparator && <div className="my-3 border-t border-border" />}
-              <div className="px-3 py-2 text-sm font-medium text-muted-foreground">
-                {item.label}
+            <React.Fragment key={item.id}>
+              {index > 0 && <div className="my-4 border-t border-border" />}
+              {renderNavItem(item)}
+            </React.Fragment>
+          );
+        }
+
+        // Group with children
+        if (hasChildren) {
+          const icon = item.icon || iconMap[item.id];
+          const label = getTranslatedLabel(item);
+          const filteredChildren = item.children!.filter((child) => {
+            if (child.disabled) return false;
+            if (!child.permissions || child.permissions.length === 0) return true;
+            return child.permissions.some((permission) => userPermissions.includes(permission));
+          });
+
+          if (filteredChildren.length === 0) return null;
+
+          return (
+            <div key={item.id} className={cn('space-y-1', index > 0 && 'mt-5')}>
+              {/* Group header */}
+              <div className="flex items-center gap-2 px-3 py-2">
+                {icon && <span className="h-4 w-4 text-muted-foreground">{icon}</span>}
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {label}
+                </span>
               </div>
-              <div className="space-y-1 pl-4">
-                {item.children
-                  .filter((child) => {
-                    if (child.disabled) return false;
-                    if (!child.permissions || child.permissions.length === 0) return true;
-                    return child.permissions.some((permission) =>
-                      userPermissions.includes(permission),
-                    );
-                  })
-                  .map(renderNavItem)}
+              {/* Group children */}
+              <div className="space-y-0.5 pl-2">
+                {filteredChildren.map((child) => renderNavItem(child))}
               </div>
             </div>
           );
         }
 
+        // Regular standalone item without separator
         return (
           <React.Fragment key={item.id}>
-            {needsSeparator && <div className="my-3 border-t border-border" />}
             {renderNavItem(item)}
           </React.Fragment>
         );

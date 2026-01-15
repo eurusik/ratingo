@@ -606,8 +606,10 @@
   "admin": {
     "navigation": {
       "title": "Навігація",
+      "catalog": "Каталог",
+      "integrations": "Інтеграції",
       "policies": "Політики",
-      "runs": "Запуски оцінювання",
+      "runs": "Запуски",
       "providers": "Провайдери",
       "journal": "Журнал"
     },
