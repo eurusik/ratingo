@@ -7,7 +7,7 @@
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Pencil, Trash2, Eye, EyeOff, ExternalLink } from 'lucide-react';
 
 import { useTranslation } from '@/shared/i18n';
 import { DataTable } from '@/modules/admin/components/ui/DataTable';
@@ -108,6 +108,10 @@ export function AdminPostList({
     },
   ];
 
+  const handleView = useCallback((post: AdminJournalPost) => {
+    window.open(`/journal/${post.slug}`, '_blank');
+  }, []);
+
   const rowActions = useCallback(
     (post: AdminJournalPost): DropdownMenuItemProps[] => {
       const actions: DropdownMenuItemProps[] = [
@@ -117,6 +121,15 @@ export function AdminPostList({
           onClick: () => handleEdit(post),
         },
       ];
+
+      // Add view action for published posts
+      if (!post.isDraft) {
+        actions.push({
+          label: t('admin.journal.actions.view'),
+          icon: <ExternalLink className="w-4 h-4" />,
+          onClick: () => handleView(post),
+        });
+      }
 
       if (post.isDraft) {
         if (onPublish) {
@@ -147,7 +160,7 @@ export function AdminPostList({
 
       return actions;
     },
-    [t, handleEdit, onPublish, onUnpublish, onDelete],
+    [t, handleEdit, handleView, onPublish, onUnpublish, onDelete],
   );
 
   return (

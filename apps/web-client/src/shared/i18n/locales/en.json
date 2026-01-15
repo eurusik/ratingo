@@ -1116,7 +1116,8 @@
           "edit": "Edit",
           "delete": "Delete",
           "publish": "Publish",
-          "unpublish": "Unpublish"
+          "unpublish": "Unpublish",
+          "view": "View"
         },
         "form": {
           "title": "Title",
