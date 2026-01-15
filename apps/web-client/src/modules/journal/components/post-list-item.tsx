@@ -42,7 +42,7 @@ export function PostListItem({ post, className }: PostListItemProps) {
       <article
         className={cn(
           'flex items-center gap-4 sm:gap-6 py-4 sm:py-5 border-b border-border/50',
-          'transition-colors hover:bg-accent/30 -mx-4 px-4 sm:-mx-6 sm:px-6',
+          'transition-colors hover:bg-accent/30 rounded-lg px-4',
           className,
         )}
       >
