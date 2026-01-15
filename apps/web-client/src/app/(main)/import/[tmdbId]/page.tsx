@@ -2,10 +2,10 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { XCircle } from 'lucide-react';
 
-import { catalogApi } from '@/core/api/catalog.client';
+import { catalogApi, ImportStatus, MediaType } from '@/core/api/catalog.client';
 import { useTranslation } from '@/shared/i18n';
 import { DetailsSkeleton } from './details-skeleton';
 
@@ -34,7 +34,10 @@ function useJobPolling(jobId: string) {
     queryKey: ['job-status', jobId],
     queryFn: () => catalogApi.getJobStatus(jobId),
     enabled: !!jobId,
+    retry: false, // Don't retry on 404 - job may be cleaned up
     refetchInterval: (query) => {
+      // Stop polling on success, failure, or error (e.g., 404 job not found)
+      if (query.state.error) return false;
       const status = query.state.data?.status;
       return status === 'ready' || status === 'failed' ? false : POLL_INTERVAL;
     },
@@ -68,18 +71,37 @@ function ImportFailedView({ onBack }: { onBack: () => void }) {
 export default function ImportPage({ params }: ImportPageProps) {
   const router = useRouter();
   const { dict } = useTranslation();
-  const { type, title, poster, year, jobId, initialSlug } = useImportParams(params);
-  const { data: jobStatus } = useJobPolling(jobId);
+  const { tmdbId, type, title, poster, year, jobId, initialSlug } = useImportParams(params);
+  const { data: jobStatus, isError: jobError } = useJobPolling(jobId);
 
-  const isReady = jobStatus?.status === 'ready';
-  const isFailed = jobStatus?.status === 'failed';
-  const slug = jobStatus?.slug || initialSlug;
+  // When job polling fails (404 - job cleaned up), re-check media status via import endpoint
+  const recheckMutation = useMutation({
+    mutationFn: () =>
+      type === 'movie' ? catalogApi.importMovie(tmdbId) : catalogApi.importShow(tmdbId),
+  });
+
+  // Trigger recheck when job polling fails
+  useEffect(() => {
+    if (jobError && !recheckMutation.isPending && !recheckMutation.data) {
+      recheckMutation.mutate();
+    }
+  }, [jobError, recheckMutation]);
+
+  // Determine final status from job polling or recheck
+  const finalStatus = recheckMutation.data?.status || jobStatus?.status;
+  const finalSlug = recheckMutation.data?.slug || jobStatus?.slug || initialSlug;
+
+  const isReady = finalStatus === 'ready' || recheckMutation.data?.status === ImportStatus.READY;
+  const isFailed =
+    finalStatus === 'failed' ||
+    recheckMutation.data?.status === ImportStatus.NOT_FOUND ||
+    recheckMutation.isError;
 
   useEffect(() => {
-    if (isReady && slug) {
-      router.replace(type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`);
+    if (isReady && finalSlug) {
+      router.replace(type === 'movie' ? `/movies/${finalSlug}` : `/shows/${finalSlug}`);
     }
-  }, [isReady, slug, type, router]);
+  }, [isReady, finalSlug, type, router]);
 
   if (isFailed) {
     return <ImportFailedView onBack={() => router.back()} />;

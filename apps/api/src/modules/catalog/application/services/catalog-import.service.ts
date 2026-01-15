@@ -80,23 +80,48 @@ export class CatalogImportService {
     const existing = await this.mediaRepository.findByTmdbId(tmdbId, type);
 
     if (existing) {
-      // Reconstruct jobId for polling (jobId is deterministic: `${jobName}:${tmdbId}`)
-      const jobId =
-        existing.ingestionStatus === IngestionStatus.IMPORTING
-          ? `${MEDIA_TYPE_TO_JOB[type]}:${tmdbId}`
-          : undefined;
+      // If already ready, just return
+      if (existing.ingestionStatus === IngestionStatus.READY) {
+        return {
+          status: ImportStatus.READY,
+          id: existing.id,
+          slug: existing.slug,
+          type: existing.type,
+          tmdbId,
+          ingestionStatus: existing.ingestionStatus,
+        };
+      }
+
+      // Media is in IMPORTING state - check if job exists
+      const jobName = MEDIA_TYPE_TO_JOB[type];
+      const expectedJobId = `${jobName}_${tmdbId}`;
+      const existingJob = await this.ingestionQueue.getJob(expectedJobId);
+
+      if (existingJob) {
+        // Job exists, return for polling
+        return {
+          status: ImportStatus.IMPORTING,
+          id: existing.id,
+          slug: existing.slug,
+          type: existing.type,
+          tmdbId,
+          ingestionStatus: existing.ingestionStatus,
+          jobId: expectedJobId,
+        };
+      }
+
+      // Job doesn't exist but media is stuck in IMPORTING - re-queue
+      this.logger.warn(`Media ${tmdbId} stuck in IMPORTING state, re-queuing job ${expectedJobId}`);
+      const job = await this.ingestionQueue.add(jobName, { tmdbId }, { jobId: expectedJobId });
 
       return {
-        status:
-          existing.ingestionStatus === IngestionStatus.READY
-            ? ImportStatus.READY
-            : ImportStatus.IMPORTING,
+        status: ImportStatus.IMPORTING,
         id: existing.id,
         slug: existing.slug,
         type: existing.type,
         tmdbId,
         ingestionStatus: existing.ingestionStatus,
-        jobId,
+        jobId: job.id,
       };
     }
 
@@ -128,7 +153,7 @@ export class CatalogImportService {
 
     // Queue for full sync with deduplication by jobId
     const jobName = MEDIA_TYPE_TO_JOB[type];
-    const jobId = `${jobName}:${tmdbId}`;
+    const jobId = `${jobName}_${tmdbId}`;
     const job = await this.ingestionQueue.add(jobName, { tmdbId }, { jobId });
 
     this.logger.log(`Queued import for ${type} ${tmdbId}: ${media.title} (job: ${job.id})`);

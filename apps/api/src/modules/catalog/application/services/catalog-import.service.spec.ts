@@ -27,6 +27,7 @@ describe('CatalogImportService', () => {
 
     const mockQueue = {
       add: jest.fn(),
+      getJob: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -64,20 +65,45 @@ describe('CatalogImportService', () => {
         expect(ingestionQueue.add).not.toHaveBeenCalled();
       });
 
-      it('should return IMPORTING status for existing importing media', async () => {
+      it('should return IMPORTING status when job exists', async () => {
         mediaRepository.findByTmdbId.mockResolvedValue({
           id: 'existing-id',
           slug: 'importing-movie',
           type: MediaType.MOVIE,
           ingestionStatus: IngestionStatus.IMPORTING,
         });
+        // Job exists in queue
+        ingestionQueue.getJob.mockResolvedValue({ id: 'sync-movie_123' });
 
         const result = await service.importMedia(123, MediaType.MOVIE);
 
         expect(result.status).toBe(ImportStatus.IMPORTING);
         expect(result.ingestionStatus).toBe(IngestionStatus.IMPORTING);
-        // Should return reconstructed jobId for polling
-        expect(result.jobId).toBe('sync-movie:123');
+        expect(result.jobId).toBe('sync-movie_123');
+        expect(ingestionQueue.add).not.toHaveBeenCalled();
+      });
+
+      it('should re-queue job when media is stuck in IMPORTING state', async () => {
+        mediaRepository.findByTmdbId.mockResolvedValue({
+          id: 'existing-id',
+          slug: 'stuck-movie',
+          type: MediaType.MOVIE,
+          ingestionStatus: IngestionStatus.IMPORTING,
+        });
+        // Job does NOT exist (stuck state)
+        ingestionQueue.getJob.mockResolvedValue(null);
+        ingestionQueue.add.mockResolvedValue({ id: 'sync-movie_123' });
+
+        const result = await service.importMedia(123, MediaType.MOVIE);
+
+        expect(result.status).toBe(ImportStatus.IMPORTING);
+        expect(result.jobId).toBe('sync-movie_123');
+        // Should re-queue the job
+        expect(ingestionQueue.add).toHaveBeenCalledWith(
+          IngestionJob.SYNC_MOVIE,
+          { tmdbId: 123 },
+          { jobId: 'sync-movie_123' },
+        );
       });
     });
 
@@ -110,7 +136,7 @@ describe('CatalogImportService', () => {
         expect(ingestionQueue.add).toHaveBeenCalledWith(
           IngestionJob.SYNC_MOVIE,
           { tmdbId: 123 },
-          { jobId: 'sync-movie:123' },
+          { jobId: 'sync-movie_123' },
         );
         expect(result.status).toBe(ImportStatus.IMPORTING);
         expect(result.id).toBe('new-id');
@@ -135,7 +161,7 @@ describe('CatalogImportService', () => {
         expect(ingestionQueue.add).toHaveBeenCalledWith(
           IngestionJob.SYNC_SHOW,
           { tmdbId: 456 },
-          { jobId: 'sync-show:456' },
+          { jobId: 'sync-show_456' },
         );
         expect(result.status).toBe(ImportStatus.IMPORTING);
         expect(result.type).toBe(MediaType.SHOW);
