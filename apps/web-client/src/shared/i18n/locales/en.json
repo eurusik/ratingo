@@ -606,8 +606,10 @@
   "admin": {
     "navigation": {
       "title": "Navigation",
+      "catalog": "Catalog",
+      "integrations": "Integrations",
       "policies": "Policies",
-      "runs": "Evaluation Runs",
+      "runs": "Runs",
       "providers": "Providers",
       "journal": "Journal"
     },
