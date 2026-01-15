@@ -140,3 +140,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom prose styles for better link/blockquote visibility */
+.prose a {
+  @apply text-blue-400 underline decoration-blue-400/50 hover:decoration-blue-400 transition-colors;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-blue-500/50 bg-zinc-800/30 py-1 not-italic;
+}
+
+.prose blockquote p {
+  @apply text-zinc-300;
+}
