@@ -472,7 +472,9 @@ describe('JournalRepository - Property Tests', () => {
     it('should make scheduled posts visible once their publishedAt time passes', () => {
       fc.assert(
         fc.property(
-          fc.date({ min: new Date('2020-01-01'), max: new Date('2025-01-01') }),
+          fc
+            .date({ min: new Date('2020-01-01'), max: new Date('2025-01-01') })
+            .filter((d) => !isNaN(d.getTime())),
           (scheduledDate) => {
             // Create a post scheduled for a specific date
             const post: JournalPost = {
