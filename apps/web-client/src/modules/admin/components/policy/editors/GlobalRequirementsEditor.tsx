@@ -7,7 +7,7 @@ import { Input } from '@/shared/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { Badge } from '@/shared/ui/badge';
 import { X } from 'lucide-react';
-import type { GlobalRequirementsDto } from '@/core/api/admin';
+import type { GlobalRequirementsDto } from '@/core/api/admin.client';
 
 // Extract types from DTO to stay in sync with API contract
 type EvaluationContext = NonNullable<GlobalRequirementsDto['appliesTo']>[number];

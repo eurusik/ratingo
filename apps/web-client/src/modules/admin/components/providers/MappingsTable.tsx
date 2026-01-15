@@ -11,7 +11,7 @@ import { ConfirmActionDialog } from '../dialogs/ConfirmActionDialog';
 import { MappingDialog, type MappingFormData } from './MappingDialog';
 import { useMappings, useCreateMapping, useUpdateMapping, useDeleteMapping } from '@/core/query';
 import type { DataTableColumnDef } from '../../types';
-import type { ProviderMapping, DistributionChannel } from '@/core/api/admin-providers';
+import type { ProviderMapping, DistributionChannel } from '@/core/api/admin-providers.client';
 import { toast } from 'sonner';
 
 /** Distribution channel badge variant. */

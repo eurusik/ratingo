@@ -608,7 +608,8 @@
       "title": "Навігація",
       "policies": "Політики",
       "runs": "Запуски оцінювання",
-      "providers": "Провайдери"
+      "providers": "Провайдери",
+      "journal": "Журнал"
     },
     "policies": {
       "title": "Політики каталогу",
@@ -1094,6 +1095,89 @@
         "errorTyping": "Будь ласка, введіть \"{text}\" для підтвердження",
         "errorOccurred": "Виникла помилка"
       }
+    },
+    "journal": {
+        "title": "Журнал",
+        "newPost": "Нова публікація",
+        "editPost": "Редагувати публікацію",
+        "status": {
+          "draft": "Чернетка",
+          "published": "Опубліковано",
+          "scheduled": "Заплановано"
+        },
+        "columns": {
+          "title": "Заголовок",
+          "type": "Тип",
+          "status": "Статус",
+          "publishedAt": "Дата публікації",
+          "actions": "Дії"
+        },
+        "actions": {
+          "edit": "Редагувати",
+          "view": "Переглянути",
+          "delete": "Видалити",
+          "publish": "Опублікувати",
+          "unpublish": "Зняти з публікації"
+        },
+        "form": {
+          "title": "Заголовок",
+          "titlePlaceholder": "Введіть заголовок",
+          "slug": "URL-адреса",
+          "slugPlaceholder": "auto-generated-slug",
+          "type": "Тип публікації",
+          "body": "Текст",
+          "bodyPlaceholder": "Напишіть текст публікації (підтримується Markdown)",
+          "featuredImage": "Зображення",
+          "featuredImageHint": "Перетягніть або натисніть для завантаження",
+          "metaTitle": "SEO заголовок",
+          "metaTitlePlaceholder": "Заголовок для пошукових систем",
+          "metaDescription": "SEO опис",
+          "metaDescriptionPlaceholder": "Опис для пошукових систем",
+          "publishedAt": "Дата публікації",
+          "isDraft": "Чернетка",
+          "save": "Зберегти",
+          "saving": "Збереження...",
+          "publish": "Опублікувати",
+          "saveAsDraft": "Зберегти як чернетку",
+          "errors": {
+            "titleRequired": "Заголовок обов'язковий",
+            "bodyRequired": "Текст публікації обов'язковий"
+          }
+        },
+        "editor": {
+          "preview": "Попередній перегляд",
+          "write": "Редагування",
+          "markdown": "Markdown",
+          "wysiwyg": "Візуальний"
+        },
+        "deleteConfirm": {
+          "title": "Видалити публікацію?",
+          "description": "Ця дія незворотня. Публікацію буде видалено назавжди.",
+          "confirm": "Видалити",
+          "cancel": "Скасувати"
+        },
+        "empty": "Публікацій ще немає",
+        "uploadingImage": "Завантаження зображення..."
+    }
+  },
+  "journal": {
+    "title": "Журнал",
+    "subtitle": "Що нового в Ratingo",
+    "description": "Оновлення, пояснення та плани розвитку Ratingo",
+    "empty": "Публікацій поки немає",
+    "postTypes": {
+      "update": "Оновлення",
+      "explanation": "Пояснення",
+      "fix": "Виправлення",
+      "roadmap": "Плани"
+    },
+    "filter": {
+      "reset": "Скинути"
+    },
+    "navigation": {
+      "previous": "Попередня",
+      "next": "Наступна",
+      "backToList": "До журналу"
     }
   }
 }

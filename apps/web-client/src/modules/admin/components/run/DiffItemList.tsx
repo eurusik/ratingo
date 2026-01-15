@@ -1,6 +1,6 @@
 'use client';
 
-import type { DiffReportDto } from '@/core/api/admin';
+import type { DiffReportDto } from '@/core/api/admin.client';
 
 type DiffSample = DiffReportDto['topRegressions'][number];
 

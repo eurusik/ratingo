@@ -17,7 +17,7 @@ import {
   type CreateMappingRequest,
   type UpdateMappingRequest,
   type ResolveMappingResponse,
-} from '../api/admin-providers';
+} from '../api/admin-providers.client';
 
 // ============================================================================
 // Query Keys

@@ -6,12 +6,20 @@
  * const url = getApiUrl('/catalog/shows/trending');
  */
 
+/** Backend API origin URL. */
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+/** API path prefix. */
+const API_PREFIX = '/api';
+
 /** Application environment variables. */
 export const env = {
-  /** Backend API base URL. */
-  API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  /** Backend API origin URL. */
+  API_URL,
   /** API path prefix. */
-  API_PREFIX: '/api',
+  API_PREFIX,
+  /** Full API base URL for ky prefixUrl (origin + prefix). */
+  API_BASE_URL: `${API_URL}${API_PREFIX}`,
   /** Public site URL for meta tags and redirects. */
   SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3002',
   /** Development mode flag. */
@@ -31,5 +39,5 @@ export const env = {
  */
 export function getApiUrl(path: string): string {
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  return `${env.API_URL}${env.API_PREFIX}/${cleanPath}`;
+  return `${env.API_BASE_URL}/${cleanPath}`;
 }

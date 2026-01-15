@@ -4,7 +4,7 @@
  * Unit tests for AdminApiClient methods.
  */
 
-import { AdminApiClient, PolicyDetailDto } from '../admin';
+import { AdminApiClient, PolicyDetailDto } from '../admin.client';
 import { apiGet, apiPost } from '../client';
 
 // Mock the client module

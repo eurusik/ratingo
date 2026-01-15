@@ -15,9 +15,9 @@ import {
   type TrendingShowsDto,
   type CalendarResponseDto,
   type ProviderDto,
-} from '../api/catalog';
+} from '../api/catalog.client';
 import { queryKeys } from './keys';
-import type { TrendingShowsParams } from '../api/catalog';
+import type { TrendingShowsParams } from '../api/catalog.client';
 
 /**
  * Hook for fetching trending shows.

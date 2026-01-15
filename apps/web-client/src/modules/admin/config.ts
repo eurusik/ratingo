@@ -23,6 +23,12 @@ export const ADMIN_NAVIGATION: NavigationItem[] = [
     href: '/admin/providers',
     permissions: ['admin.providers.read'],
   },
+  {
+    id: 'journal',
+    label: 'Журнал', // Fallback label, will be translated
+    href: '/admin/journal',
+    permissions: ['admin.journal.read'],
+  },
 ];
 
 /**

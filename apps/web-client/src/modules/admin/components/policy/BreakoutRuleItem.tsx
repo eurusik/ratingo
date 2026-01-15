@@ -1,7 +1,7 @@
 'use client';
 
 import { Badge } from '@/shared/ui/badge';
-import type { BreakoutRuleDto } from '@/core/api/admin';
+import type { BreakoutRuleDto } from '@/core/api/admin.client';
 
 interface BreakoutRuleItemProps {
   rule: BreakoutRuleDto;

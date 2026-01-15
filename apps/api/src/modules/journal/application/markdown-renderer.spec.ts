@@ -1,0 +1,336 @@
+import {
+  generateExcerpt,
+  HtmlSanitizer,
+  MarkedModule,
+  MarkedRenderer,
+  renderMarkdown,
+  setMarkedModule,
+} from './markdown-renderer';
+
+/**
+ * Mock Renderer class for testing.
+ */
+class MockRenderer implements MarkedRenderer {
+  link({ href, title, text }: { href: string; title?: string; text: string }): string {
+    const titleAttr = title ? ` title="${title}"` : '';
+    return `<a href="${href}"${titleAttr}>${text}</a>`;
+  }
+
+  image({ href, title, text }: { href: string; title?: string; text: string }): string {
+    const titleAttr = title ? ` title="${title}"` : '';
+    return `<img src="${href}" alt="${text}"${titleAttr} />`;
+  }
+}
+
+/**
+ * Mock marked module for testing.
+ */
+const mockMarkedModule: MarkedModule = {
+  marked: {
+    parse: (markdown: string, options?: Record<string, unknown>): string => {
+      if (!markdown) return '';
+
+      const renderer = (options?.renderer as MarkedRenderer) || new MockRenderer();
+      let html = markdown;
+
+      // Process images first (before links to avoid conflicts)
+      html = html.replace(
+        /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+        (_match, alt, href, title) => {
+          return renderer.image({ href, text: alt, title: title || undefined });
+        },
+      );
+
+      // Process links
+      html = html.replace(
+        /\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+        (_match, text, href, title) => {
+          return renderer.link({ href, text, title: title || undefined });
+        },
+      );
+
+      // Process headings
+      html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+      html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+
+      // Process bold and italic
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+      // Process inline code
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      // Process blockquotes
+      html = html.replace(/^>\s+(.+)$/gm, '<blockquote><p>$1</p></blockquote>');
+
+      // Process horizontal rules
+      html = html.replace(/^---$/gm, '<hr />');
+
+      // Process unordered lists
+      if (/^-\s+/m.test(html)) {
+        html = html.replace(/^-\s+(.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>[\s\S]*?<\/li>)+/g, '<ul>$&</ul>');
+      }
+
+      // Wrap remaining text in paragraphs
+      const parts = html.split(/\n\n+/);
+      html = parts
+        .map((part) => {
+          part = part.trim();
+          if (!part) return '';
+          if (/^<(h[1-6]|ul|ol|li|blockquote|pre|hr|p)/i.test(part)) {
+            return part;
+          }
+          if (options?.breaks) {
+            part = part.replace(/\n/g, '<br>\n');
+          }
+          return `<p>${part}</p>`;
+        })
+        .join('\n');
+
+      return html;
+    },
+  },
+  Renderer: MockRenderer,
+};
+
+/**
+ * Mock sanitizer for testing that provides basic XSS protection.
+ */
+const mockSanitizer: HtmlSanitizer = {
+  sanitize: (html: string, options?: { ALLOWED_TAGS?: string[] }) => {
+    if (!html) return '';
+
+    let result = html
+      // Remove script tags
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      // Remove style tags
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      // Remove iframe tags
+      .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
+      // Remove event handlers (onclick, onerror, etc.)
+      .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
+      .replace(/\s+on\w+\s*=\s*[^\s>]+/gi, '');
+
+    // Filter allowed tags if specified
+    if (options?.ALLOWED_TAGS) {
+      const allowedTags = options.ALLOWED_TAGS;
+      const tagPattern = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+      result = result.replace(tagPattern, (match, tagName) => {
+        if (allowedTags.includes(tagName.toLowerCase())) {
+          return match;
+        }
+        return '';
+      });
+    }
+
+    return result;
+  },
+};
+
+describe('renderMarkdown', () => {
+  beforeAll(() => {
+    setMarkedModule(mockMarkedModule);
+  });
+
+  afterAll(() => {
+    setMarkedModule(null);
+  });
+
+  describe('basic rendering', () => {
+    it('should render headings', async () => {
+      const result = await renderMarkdown('# Hello World', mockSanitizer);
+      expect(result).toContain('<h1>Hello World</h1>');
+    });
+
+    it('should render paragraphs', async () => {
+      const result = await renderMarkdown('This is a paragraph.', mockSanitizer);
+      expect(result).toContain('<p>This is a paragraph.</p>');
+    });
+
+    it('should render bold and italic', async () => {
+      const result = await renderMarkdown('**bold** and *italic*', mockSanitizer);
+      expect(result).toContain('<strong>bold</strong>');
+      expect(result).toContain('<em>italic</em>');
+    });
+
+    it('should render lists', async () => {
+      const result = await renderMarkdown('- item 1\n- item 2', mockSanitizer);
+      expect(result).toContain('<ul>');
+      expect(result).toContain('<li>item 1</li>');
+      expect(result).toContain('<li>item 2</li>');
+    });
+
+    it('should render code blocks', async () => {
+      const result = await renderMarkdown('`inline code`', mockSanitizer);
+      expect(result).toContain('<code>inline code</code>');
+    });
+  });
+
+  describe('XSS prevention', () => {
+    it('should strip javascript: links', async () => {
+      const result = await renderMarkdown('[click me](javascript:alert("xss"))', mockSanitizer);
+      expect(result).not.toContain('javascript:');
+      expect(result).not.toContain('href');
+      expect(result).toContain('click me');
+    });
+
+    it('should strip data: URIs in links', async () => {
+      const result = await renderMarkdown(
+        '[click](data:text/html,<script>alert(1)</script>)',
+        mockSanitizer,
+      );
+      expect(result).not.toContain('data:');
+      expect(result).not.toContain('<script>');
+    });
+
+    it('should strip javascript: in images', async () => {
+      const result = await renderMarkdown('![alt](javascript:alert("xss"))', mockSanitizer);
+      expect(result).not.toContain('javascript:');
+      expect(result).not.toContain('<img');
+    });
+
+    it('should strip script tags', async () => {
+      const result = await renderMarkdown('<script>alert("xss")</script>', mockSanitizer);
+      expect(result).not.toContain('<script>');
+      expect(result).not.toContain('alert');
+    });
+
+    it('should strip onclick attributes', async () => {
+      const result = await renderMarkdown(
+        '<a href="#" onclick="alert(1)">click</a>',
+        mockSanitizer,
+      );
+      expect(result).not.toContain('onclick');
+    });
+
+    it('should strip onerror attributes on images', async () => {
+      const result = await renderMarkdown('<img src="x" onerror="alert(1)">', mockSanitizer);
+      expect(result).not.toContain('onerror');
+    });
+  });
+
+  describe('external links', () => {
+    it('should add rel="nofollow noopener noreferrer" to external links', async () => {
+      const result = await renderMarkdown('[Google](https://google.com)', mockSanitizer);
+      expect(result).toContain('rel="nofollow noopener noreferrer"');
+      expect(result).toContain('target="_blank"');
+    });
+
+    it('should not add rel to internal links', async () => {
+      const result = await renderMarkdown('[Home](/home)', mockSanitizer);
+      expect(result).not.toContain('rel=');
+      expect(result).not.toContain('target=');
+      expect(result).toContain('href="/home"');
+    });
+
+    it('should handle http links as external', async () => {
+      const result = await renderMarkdown('[Site](http://example.com)', mockSanitizer);
+      expect(result).toContain('rel="nofollow noopener noreferrer"');
+    });
+  });
+
+  describe('images', () => {
+    it('should add lazy loading attribute', async () => {
+      const result = await renderMarkdown(
+        '![alt text](https://example.com/image.jpg)',
+        mockSanitizer,
+      );
+      expect(result).toContain('loading="lazy"');
+      expect(result).toContain('decoding="async"');
+    });
+
+    it('should preserve alt text', async () => {
+      const result = await renderMarkdown(
+        '![My Image](https://example.com/img.png)',
+        mockSanitizer,
+      );
+      expect(result).toContain('alt="My Image"');
+    });
+
+    it('should allow relative image paths', async () => {
+      const result = await renderMarkdown('![alt](/images/photo.jpg)', mockSanitizer);
+      expect(result).toContain('src="/images/photo.jpg"');
+    });
+  });
+
+  describe('allowed tags', () => {
+    it('should allow blockquotes', async () => {
+      const result = await renderMarkdown('> This is a quote', mockSanitizer);
+      expect(result).toContain('<blockquote>');
+    });
+
+    it('should allow horizontal rules', async () => {
+      const result = await renderMarkdown('---', mockSanitizer);
+      expect(result).toContain('<hr');
+    });
+
+    it('should strip disallowed tags like iframe', async () => {
+      const result = await renderMarkdown(
+        '<iframe src="https://evil.com"></iframe>',
+        mockSanitizer,
+      );
+      expect(result).not.toContain('<iframe');
+    });
+
+    it('should strip style tags', async () => {
+      const result = await renderMarkdown('<style>body { display: none; }</style>', mockSanitizer);
+      expect(result).not.toContain('<style');
+    });
+  });
+});
+
+describe('generateExcerpt', () => {
+  beforeAll(() => {
+    setMarkedModule(mockMarkedModule);
+  });
+
+  afterAll(() => {
+    setMarkedModule(null);
+  });
+
+  it('should return full text if shorter than maxLength', async () => {
+    const result = await generateExcerpt('Short text', 200);
+    expect(result).toBe('Short text');
+  });
+
+  it('should truncate at word boundary', async () => {
+    const longText = 'This is a very long text that should be truncated at a word boundary';
+    const result = await generateExcerpt(longText, 30);
+    expect(result.length).toBeLessThanOrEqual(31); // 30 + ellipsis
+    expect(result.endsWith('…')).toBe(true);
+    expect(result).not.toMatch(/\s…$/); // No trailing space before ellipsis
+  });
+
+  it('should strip HTML tags', async () => {
+    const result = await generateExcerpt('**Bold** and *italic* text', 200);
+    expect(result).toBe('Bold and italic text');
+  });
+
+  it('should decode HTML entities', async () => {
+    const result = await generateExcerpt('Hello &amp; World', 200);
+    expect(result).toBe('Hello & World');
+  });
+
+  it('should handle &nbsp; entities', async () => {
+    const result = await generateExcerpt('Hello&nbsp;World', 200);
+    expect(result).toBe('Hello World');
+  });
+
+  it('should normalize whitespace', async () => {
+    const result = await generateExcerpt('Multiple   spaces\n\nand newlines', 200);
+    expect(result).toBe('Multiple spaces and newlines');
+  });
+
+  it('should handle empty input', async () => {
+    const result = await generateExcerpt('', 200);
+    expect(result).toBe('');
+  });
+
+  it('should use default maxLength of 200', async () => {
+    const longText = 'A'.repeat(300);
+    const result = await generateExcerpt(longText);
+    expect(result.length).toBeLessThanOrEqual(201);
+  });
+});

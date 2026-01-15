@@ -6,7 +6,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userActionsApi, type SavedItemList } from '@/core/api/user-actions';
+import { userActionsApi, type SavedItemList } from '@/core/api/user-actions.client';
 
 const QUERY_KEYS = {
   forLater: ['saved-items', 'for-later'] as const,

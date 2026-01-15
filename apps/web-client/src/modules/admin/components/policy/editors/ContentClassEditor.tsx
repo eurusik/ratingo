@@ -3,7 +3,7 @@
 import { Filter } from 'lucide-react';
 import { ConfigCard } from '../ConfigCard';
 import { Badge } from '@/shared/ui/badge';
-import type { ContentClass } from '@/core/api/admin';
+import type { ContentClass } from '@/core/api/admin.client';
 
 // Re-export for convenience
 export type { ContentClass };

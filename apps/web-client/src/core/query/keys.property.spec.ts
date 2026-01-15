@@ -189,6 +189,36 @@ describe('Query Keys Property Tests', () => {
         { numRuns: 100 },
       );
     });
+
+    it('journal.list returns only primitive values', () => {
+      fc.assert(
+        fc.property(
+          fc.option(fc.integer({ min: 1, max: 100 }), { nil: undefined }),
+          fc.option(fc.integer({ min: 1, max: 50 }), { nil: undefined }),
+          fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: undefined }),
+          (page, limit, types) => {
+            const key = queryKeys.journal.list(page, limit, types);
+            expect(allPrimitives(key)).toBe(true);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('admin.journal.list returns only primitive values', () => {
+      fc.assert(
+        fc.property(
+          fc.option(fc.integer({ min: 1, max: 100 }), { nil: undefined }),
+          fc.option(fc.integer({ min: 1, max: 50 }), { nil: undefined }),
+          fc.option(fc.constantFrom('draft', 'published', 'scheduled'), { nil: undefined }),
+          (page, limit, status) => {
+            const key = queryKeys.admin.journal.list(page, limit, status);
+            expect(allPrimitives(key)).toBe(true);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
   });
 });
 
@@ -264,6 +294,28 @@ describe('Query Keys Undefined Normalization', () => {
       const key = queryKeys.userActions.subscriptions.list(undefined, undefined);
       expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['user-actions', 'subscriptions', 'list', null, null]);
+    });
+
+    it('journal.list normalizes undefined to null', () => {
+      const key = queryKeys.journal.list(undefined, undefined, undefined);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
+      expect(key).toEqual(['journal', 'list', null, null, null]);
+    });
+
+    it('journal.detail returns correct key', () => {
+      const key = queryKeys.journal.detail('test-slug');
+      expect(key).toEqual(['journal', 'detail', 'test-slug']);
+    });
+
+    it('admin.journal.list normalizes undefined to null', () => {
+      const key = queryKeys.admin.journal.list(undefined, undefined, undefined);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
+      expect(key).toEqual(['admin', 'journal', 'list', null, null, null]);
+    });
+
+    it('admin.journal.detail returns correct key', () => {
+      const key = queryKeys.admin.journal.detail('test-id');
+      expect(key).toEqual(['admin', 'journal', 'detail', 'test-id']);
     });
 
     // Property-based test: for any combination of defined/undefined params,

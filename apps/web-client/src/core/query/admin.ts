@@ -9,7 +9,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useMemo } from 'react';
-import { adminApi, isTerminalStatus } from '../api/admin';
+import { adminApi, isTerminalStatus } from '../api/admin.client';
 import { queryKeys } from './keys';
 
 // ============================================================================

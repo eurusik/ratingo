@@ -50,14 +50,22 @@ export function Footer() {
           {/* Openness */}
           <div>
             <h3 className="text-sm font-medium text-foreground mb-3">{dict.footer.openness}</h3>
-            <a
-              href={EXTERNAL_LINKS.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              GitHub
-            </a>
+            <div className="flex flex-col gap-2">
+              <a
+                href={EXTERNAL_LINKS.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                GitHub
+              </a>
+              <Link
+                href={'/journal' as Route}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {dict.journal.title}
+              </Link>
+            </div>
           </div>
         </div>
 

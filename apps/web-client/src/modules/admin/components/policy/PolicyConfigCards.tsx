@@ -1,7 +1,7 @@
 'use client';
 
 import { Globe, Languages, Tv, Settings, Shield, Filter, Ban } from 'lucide-react';
-import type { PolicyConfigDto, ContentClass } from '@/core/api/admin';
+import type { PolicyConfigDto, ContentClass } from '@/core/api/admin.client';
 import type { ConfigViewLabels } from './labels.types';
 import { ConfigCard } from './ConfigCard';
 import { AllowedBlockedList } from './AllowedBlockedList';

@@ -150,5 +150,20 @@ export const queryKeys = {
       diff: (runId: string, sampleSize: number) =>
         [...queryKeys.admin.runs.all, 'diff', runId, sampleSize] as const,
     },
+    journal: {
+      all: ['admin', 'journal'] as const,
+      list: (page?: number, limit?: number, status?: string) =>
+        [...queryKeys.admin.journal.all, 'list', page ?? null, limit ?? null, status ?? null] as const,
+      detail: (id: string) => [...queryKeys.admin.journal.all, 'detail', id] as const,
+    },
+  },
+
+  /** Journal queries (public). */
+  journal: {
+    all: ['journal'] as const,
+    list: (page?: number, limit?: number, types?: string) =>
+      [...queryKeys.journal.all, 'list', page ?? null, limit ?? null, types ?? null] as const,
+    detail: (slug: string) => [...queryKeys.journal.all, 'detail', slug] as const,
+    byContext: (contextId: string) => [...queryKeys.journal.all, 'context', contextId] as const,
   },
 } as const;

@@ -1,8 +1,9 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
-import * as CollapsiblePrimitive from '@radix-ui/react-collapsible';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible';
 
 interface ErrorItemProps {
   error: {
@@ -32,8 +33,8 @@ interface ErrorItemProps {
  */
 export function ErrorItem({ error, isExpanded, onToggle, labels }: ErrorItemProps) {
   return (
-    <CollapsiblePrimitive.Root open={isExpanded}>
-      <CollapsiblePrimitive.Trigger
+    <Collapsible open={isExpanded}>
+      <CollapsibleTrigger
         className="flex items-center justify-between w-full p-4 border rounded-lg hover:bg-muted/50"
         onClick={onToggle}
       >
@@ -46,8 +47,8 @@ export function ErrorItem({ error, isExpanded, onToggle, labels }: ErrorItemProp
             </div>
           </div>
         </div>
-      </CollapsiblePrimitive.Trigger>
-      <CollapsiblePrimitive.Content className="px-4 pb-4">
+      </CollapsibleTrigger>
+      <CollapsibleContent className="px-4 pb-4">
         <div className="space-y-4 mt-4">
           <div className="text-sm">
             <div>
@@ -70,7 +71,7 @@ export function ErrorItem({ error, isExpanded, onToggle, labels }: ErrorItemProp
             </Card>
           )}
         </div>
-      </CollapsiblePrimitive.Content>
-    </CollapsiblePrimitive.Root>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

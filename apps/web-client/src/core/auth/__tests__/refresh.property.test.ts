@@ -10,7 +10,7 @@ import {
   _resetRefreshState,
 } from '../refresh';
 import { tokenStorage } from '../token-storage';
-import { authApi } from '../../api/auth';
+import { authApi } from '../../api/auth.client';
 import {
   broadcastRefreshStart,
   broadcastRefreshSuccess,
@@ -26,7 +26,7 @@ jest.mock('../token-storage', () => ({
   },
 }));
 
-jest.mock('../../api/auth', () => ({
+jest.mock('../../api/auth.client', () => ({
   authApi: {
     refresh: jest.fn(),
   },
