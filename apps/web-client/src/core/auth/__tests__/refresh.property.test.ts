@@ -26,7 +26,7 @@ jest.mock('../token-storage', () => ({
   },
 }));
 
-jest.mock('../../api/auth', () => ({
+jest.mock('../../api/auth.client', () => ({
   authApi: {
     refresh: jest.fn(),
   },

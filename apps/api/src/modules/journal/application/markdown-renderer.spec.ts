@@ -1,4 +1,99 @@
-import { generateExcerpt, HtmlSanitizer, renderMarkdown } from './markdown-renderer';
+import {
+  generateExcerpt,
+  HtmlSanitizer,
+  MarkedModule,
+  MarkedRenderer,
+  renderMarkdown,
+  setMarkedModule,
+} from './markdown-renderer';
+
+/**
+ * Mock Renderer class for testing.
+ */
+class MockRenderer implements MarkedRenderer {
+  link({ href, title, text }: { href: string; title?: string; text: string }): string {
+    const titleAttr = title ? ` title="${title}"` : '';
+    return `<a href="${href}"${titleAttr}>${text}</a>`;
+  }
+
+  image({ href, title, text }: { href: string; title?: string; text: string }): string {
+    const titleAttr = title ? ` title="${title}"` : '';
+    return `<img src="${href}" alt="${text}"${titleAttr} />`;
+  }
+}
+
+/**
+ * Mock marked module for testing.
+ */
+const mockMarkedModule: MarkedModule = {
+  marked: {
+    parse: (markdown: string, options?: Record<string, unknown>): string => {
+      if (!markdown) return '';
+
+      const renderer = (options?.renderer as MarkedRenderer) || new MockRenderer();
+      let html = markdown;
+
+      // Process images first (before links to avoid conflicts)
+      html = html.replace(
+        /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+        (_match, alt, href, title) => {
+          return renderer.image({ href, text: alt, title: title || undefined });
+        },
+      );
+
+      // Process links
+      html = html.replace(
+        /\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+        (_match, text, href, title) => {
+          return renderer.link({ href, text, title: title || undefined });
+        },
+      );
+
+      // Process headings
+      html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+      html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+
+      // Process bold and italic
+      html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+      // Process inline code
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      // Process blockquotes
+      html = html.replace(/^>\s+(.+)$/gm, '<blockquote><p>$1</p></blockquote>');
+
+      // Process horizontal rules
+      html = html.replace(/^---$/gm, '<hr />');
+
+      // Process unordered lists
+      if (/^-\s+/m.test(html)) {
+        html = html.replace(/^-\s+(.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>[\s\S]*?<\/li>)+/g, '<ul>$&</ul>');
+      }
+
+      // Wrap remaining text in paragraphs
+      const parts = html.split(/\n\n+/);
+      html = parts
+        .map((part) => {
+          part = part.trim();
+          if (!part) return '';
+          if (/^<(h[1-6]|ul|ol|li|blockquote|pre|hr|p)/i.test(part)) {
+            return part;
+          }
+          if (options?.breaks) {
+            part = part.replace(/\n/g, '<br>\n');
+          }
+          return `<p>${part}</p>`;
+        })
+        .join('\n');
+
+      return html;
+    },
+  },
+  Renderer: MockRenderer,
+};
 
 /**
  * Mock sanitizer for testing that provides basic XSS protection.
@@ -35,6 +130,14 @@ const mockSanitizer: HtmlSanitizer = {
 };
 
 describe('renderMarkdown', () => {
+  beforeAll(() => {
+    setMarkedModule(mockMarkedModule);
+  });
+
+  afterAll(() => {
+    setMarkedModule(null);
+  });
+
   describe('basic rendering', () => {
     it('should render headings', async () => {
       const result = await renderMarkdown('# Hello World', mockSanitizer);
@@ -179,6 +282,14 @@ describe('renderMarkdown', () => {
 });
 
 describe('generateExcerpt', () => {
+  beforeAll(() => {
+    setMarkedModule(mockMarkedModule);
+  });
+
+  afterAll(() => {
+    setMarkedModule(null);
+  });
+
   it('should return full text if shorter than maxLength', async () => {
     const result = await generateExcerpt('Short text', 200);
     expect(result).toBe('Short text');

@@ -36,14 +36,14 @@ const IMAGE_ATTRS = {
 /**
  * Marked module type for lazy loading.
  */
-interface MarkedModule {
+export interface MarkedModule {
   marked: {
     parse: (markdown: string, options?: Record<string, unknown>) => string;
   };
   Renderer: new () => MarkedRenderer;
 }
 
-interface MarkedRenderer {
+export interface MarkedRenderer {
   link: (token: { href: string; title?: string; text: string }) => string;
   image: (token: { href: string; title?: string; text: string }) => string;
 }
@@ -67,6 +67,14 @@ const dynamicImport = new Function('modulePath', 'return import(modulePath)') as
  * Cached marked module (lazy-loaded ESM).
  */
 let cachedMarked: MarkedModule | null = null;
+
+/**
+ * Sets the marked module (for testing purposes).
+ */
+export function setMarkedModule(module: MarkedModule | null): void {
+  cachedMarked = module;
+  cachedRenderer = null; // Reset renderer when module changes
+}
 
 /**
  * Gets the marked module, loading it lazily.
@@ -164,7 +172,8 @@ async function getSecureRenderer(): Promise<MarkedRenderer> {
       return text;
     }
 
-    const isExternal = href?.startsWith(ALLOWED_PROTOCOLS.HTTP);
+    const isExternal =
+      href?.startsWith(ALLOWED_PROTOCOLS.HTTP) || href?.startsWith(ALLOWED_PROTOCOLS.HTTPS);
     const relAttr = isExternal ? ` rel="${EXTERNAL_LINK_ATTRS.REL}"` : '';
     const targetAttr = isExternal ? ` target="${EXTERNAL_LINK_ATTRS.TARGET}"` : '';
     const titleAttr = title ? ` title="${title}"` : '';
