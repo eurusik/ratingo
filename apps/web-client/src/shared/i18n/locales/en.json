@@ -1118,6 +1118,7 @@
           "edit": "Edit",
           "delete": "Delete",
           "publish": "Publish",
+          "publishNow": "Publish Now",
           "unpublish": "Unpublish",
           "view": "View"
         },

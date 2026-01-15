@@ -329,7 +329,7 @@ export class AdminJournalController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Publish post',
-    description: 'Publishes a draft post immediately or at a scheduled time.',
+    description: 'Publishes a draft post immediately. For scheduled posts, publishes them now.',
   })
   @ApiParam({
     name: 'id',
@@ -346,13 +346,16 @@ export class AdminJournalController {
       throw new NotFoundException(`Post with ID "${id}" not found`);
     }
 
-    if (!existing.isDraft) {
+    const now = new Date();
+    const isScheduled = !existing.isDraft && existing.publishedAt && existing.publishedAt > now;
+
+    if (!existing.isDraft && !isScheduled) {
       throw new BadRequestException('Post is already published');
     }
 
     const updated = await this.repository.update(id, {
       isDraft: false,
-      publishedAt: new Date(),
+      publishedAt: now,
     });
 
     if (!updated) {

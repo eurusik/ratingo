@@ -7,7 +7,7 @@
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
-import { Pencil, Trash2, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { Pencil, Trash2, Eye, EyeOff, ExternalLink, Clock } from 'lucide-react';
 
 import { useTranslation } from '@/shared/i18n';
 import { DataTable } from '@/modules/admin/components/ui/DataTable';
@@ -44,6 +44,14 @@ function formatDate(date: Date, locale: string): string {
     hour: '2-digit',
     minute: '2-digit',
   }).format(date);
+}
+
+/**
+ * Checks if a post is scheduled (not draft, publishedAt in the future).
+ */
+function isScheduled(post: AdminJournalPost): boolean {
+  if (post.isDraft || !post.publishedAt) return false;
+  return new Date(post.publishedAt) > new Date();
 }
 
 /**
@@ -122,8 +130,10 @@ export function AdminPostList({
         },
       ];
 
-      // Add view action for published posts
-      if (!post.isDraft) {
+      const scheduled = isScheduled(post);
+
+      // Add view action for published posts (not scheduled)
+      if (!post.isDraft && !scheduled) {
         actions.push({
           label: t('admin.journal.actions.view'),
           icon: <ExternalLink className="w-4 h-4" />,
@@ -132,6 +142,7 @@ export function AdminPostList({
       }
 
       if (post.isDraft) {
+        // Draft - show publish
         if (onPublish) {
           actions.push({
             label: t('admin.journal.actions.publish'),
@@ -139,7 +150,24 @@ export function AdminPostList({
             onClick: () => onPublish(post),
           });
         }
+      } else if (scheduled) {
+        // Scheduled - show publish now
+        if (onPublish) {
+          actions.push({
+            label: t('admin.journal.actions.publishNow'),
+            icon: <Clock className="w-4 h-4" />,
+            onClick: () => onPublish(post),
+          });
+        }
+        if (onUnpublish) {
+          actions.push({
+            label: t('admin.journal.actions.unpublish'),
+            icon: <EyeOff className="w-4 h-4" />,
+            onClick: () => onUnpublish(post),
+          });
+        }
       } else {
+        // Published - show unpublish
         if (onUnpublish) {
           actions.push({
             label: t('admin.journal.actions.unpublish'),
