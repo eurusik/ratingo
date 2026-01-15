@@ -4,7 +4,7 @@ import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Menu, FileText, Play, Tv } from 'lucide-react';
+import { Menu, FileText, Play, Tv, Newspaper } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { NavigationItem } from '../../types';
 import { Button } from '@/shared/ui/button';
@@ -23,6 +23,7 @@ const iconMap: Record<string, React.ReactNode> = {
   policies: <FileText className="h-4 w-4" />,
   runs: <Play className="h-4 w-4" />,
   providers: <Tv className="h-4 w-4" />,
+  journal: <Newspaper className="h-4 w-4" />,
 };
 
 // Translation key mapping for navigation items
@@ -30,7 +31,11 @@ const labelMap: Record<string, string> = {
   policies: 'admin.navigation.policies',
   runs: 'admin.navigation.runs',
   providers: 'admin.navigation.providers',
+  journal: 'admin.navigation.journal',
 };
+
+// Items that should have a separator before them (visual grouping)
+const separatorBefore = new Set(['journal']);
 
 /**
  * Sidebar - Responsive navigation component for admin interface
@@ -93,7 +98,6 @@ export function Sidebar({ navigationItems, userPermissions = [], className }: Si
 
       return (
         <Link
-          key={item.id}
           href={item.href as Route}
           onClick={() => setIsMobileOpen(false)} // Close mobile menu on navigation
           className="block mb-1"
@@ -123,10 +127,13 @@ export function Sidebar({ navigationItems, userPermissions = [], className }: Si
   const renderNavigation = () => (
     <nav className="space-y-2">
       {visibleItems.map((item) => {
+        const needsSeparator = separatorBefore.has(item.id);
+
         if (item.children && item.children.length > 0) {
           // Render nested navigation (future enhancement)
           return (
             <div key={item.id} className="space-y-1">
+              {needsSeparator && <div className="my-3 border-t border-border" />}
               <div className="px-3 py-2 text-sm font-medium text-muted-foreground">
                 {item.label}
               </div>
@@ -145,7 +152,12 @@ export function Sidebar({ navigationItems, userPermissions = [], className }: Si
           );
         }
 
-        return renderNavItem(item);
+        return (
+          <React.Fragment key={item.id}>
+            {needsSeparator && <div className="my-3 border-t border-border" />}
+            {renderNavItem(item)}
+          </React.Fragment>
+        );
       })}
     </nav>
   );
