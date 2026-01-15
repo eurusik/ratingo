@@ -6,7 +6,7 @@ import {
   IsIn,
   IsOptional,
   IsString,
-  IsUrl,
+  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -60,11 +60,14 @@ export class UpdatePostDto {
   slug?: string;
 
   @ApiPropertyOptional({
-    description: 'Featured image URL for Open Graph previews',
-    example: 'https://cdn.ratingo.com/journal/featured.jpg',
+    description: 'Featured image URL or path for Open Graph previews',
+    example: '/api/journal/images/uuid.jpg',
   })
   @IsOptional()
-  @IsUrl()
+  @IsString()
+  @Matches(/^(https?:\/\/|\/)\S+$/, {
+    message: 'featuredImageUrl must be a URL or path starting with /',
+  })
   featuredImageUrl?: string;
 
   @ApiPropertyOptional({

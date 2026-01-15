@@ -1,5 +1,3 @@
-import { Readable } from 'node:stream';
-
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -72,8 +70,8 @@ export interface UploadedFile {
  * Result of getImage operation.
  */
 export interface ImageStreamResult {
-  /** Readable stream of image data */
-  stream: Readable;
+  /** Image data as Buffer */
+  buffer: Buffer;
   /** Content type (MIME) */
   contentType: string;
   /** Content length in bytes (if available) */
@@ -160,14 +158,15 @@ export class JournalImageService {
         throw new NotFoundException();
       }
 
-      // S3 SDK v3 returns a Readable stream
-      const stream = response.Body as Readable;
+      // S3 SDK v3 returns a stream that needs conversion to Buffer
+      const byteArray = await response.Body.transformToByteArray();
+      const buffer = Buffer.from(byteArray);
 
       // Determine content type from S3 metadata or fallback to extension
       const contentType = response.ContentType || this.getContentTypeFromKey(key);
 
       return {
-        stream,
+        buffer,
         contentType,
         contentLength: response.ContentLength,
         etag: response.ETag,
@@ -306,7 +305,7 @@ export class JournalImageService {
     this.client = new S3Client({
       region,
       endpoint,
-      forcePathStyle: false, // Railway uses virtual-hosted style URLs
+      forcePathStyle: true, // Required for Railway S3-compatible storage
       credentials: {
         accessKeyId,
         secretAccessKey,

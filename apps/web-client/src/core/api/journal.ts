@@ -17,6 +17,8 @@ import type {
 } from '@/modules/journal/types';
 
 import { apiGet, apiPost, apiPatch, apiDelete } from './client';
+import { getApiUrl } from '../config/env';
+import { tokenStorage } from '../auth/token-storage';
 
 /**
  * Builds search params from query object.
@@ -163,15 +165,19 @@ export const journalApi = {
     file: File,
     onProgress?: (percent: number) => void,
   ): Promise<ImageUploadResponseDto> {
-    // For now, use simple fetch without progress
-    // TODO: Add XMLHttpRequest for progress tracking if needed
     const formData = new FormData();
     formData.append('file', file);
 
-    // Use fetch directly for multipart/form-data
-    const response = await fetch('/api/admin/journal/upload-image', {
+    const token = tokenStorage.getAccessToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(getApiUrl('admin/journal/posts/upload-image'), {
       method: 'POST',
       body: formData,
+      headers,
       credentials: 'include',
     });
 

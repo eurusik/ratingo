@@ -5,7 +5,7 @@
  * Uses aggressive caching since images are immutable.
  */
 
-import { Controller, Get, Header, Param, Res, StreamableFile } from '@nestjs/common';
+import { Controller, Get, Param, Res } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import type { FastifyReply } from 'fastify';
@@ -30,7 +30,6 @@ export class JournalImagesController {
    * @returns Streamable image file
    */
   @Get(':filename')
-  @Header('Cache-Control', 'public, max-age=31536000, immutable')
   @ApiOperation({
     summary: 'Get journal image',
     description: 'Serves a journal image from storage. Images are cached for 1 year.',
@@ -49,26 +48,20 @@ export class JournalImagesController {
       'image/gif': {},
     },
   })
-  async getImage(
-    @Param('filename') filename: string,
-    @Res({ passthrough: true }) res: FastifyReply,
-  ): Promise<StreamableFile> {
+  async getImage(@Param('filename') filename: string, @Res() res: FastifyReply): Promise<void> {
     const key = this.imageService.buildKeyFromFilename(filename);
     const result = await this.imageService.getImage(key);
 
-    // Set content type header
-    res.header('Content-Type', result.contentType);
+    // Set headers and send buffer directly via Fastify
+    res
+      .header('Content-Type', result.contentType)
+      .header('Content-Length', result.buffer.length.toString())
+      .header('Cache-Control', 'public, max-age=31536000, immutable');
 
-    // Set content length if available
-    if (result.contentLength) {
-      res.header('Content-Length', result.contentLength.toString());
-    }
-
-    // Set ETag for conditional requests
     if (result.etag) {
       res.header('ETag', result.etag);
     }
 
-    return new StreamableFile(result.stream);
+    res.send(result.buffer);
   }
 }

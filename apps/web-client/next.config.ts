@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
         hostname: 'image.tmdb.org',
         pathname: '/t/p/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'storage.railway.app',
+        pathname: '/**',
+      },
     ],
   },
   transpilePackages: ['@ratingo/api-contract'],

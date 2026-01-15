@@ -1,7 +1,12 @@
 import * as he from 'he';
+import type { IOptions as SanitizeOptions } from 'sanitize-html';
 
+// sanitize-html is CommonJS, need require for proper function export
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const sanitizeHtml = require('sanitize-html') as typeof import('sanitize-html');
+const sanitizeHtml = require('sanitize-html') as (
+  html: string,
+  options?: SanitizeOptions,
+) => string;
 
 /**
  * URL protocol constants for security validation.
@@ -76,7 +81,7 @@ async function getMarked(): Promise<MarkedModule> {
 /**
  * Sanitize options for sanitize-html.
  */
-const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+const SANITIZE_OPTIONS: SanitizeOptions = {
   allowedTags: [
     'h1',
     'h2',
