@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, asc, count, desc, eq, gt, inArray, lt, lte, or, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, inArray, lt, lte, ne, or, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { withDbError } from '@/common/utils/db-error.utils';
@@ -365,6 +365,7 @@ export class JournalRepository {
             .from(schema.journalPosts)
             .where(
               and(
+                ne(schema.journalPosts.id, currentPost.id),
                 eq(schema.journalPosts.isDraft, false),
                 lte(schema.journalPosts.publishedAt, now),
                 or(
@@ -388,6 +389,7 @@ export class JournalRepository {
             .from(schema.journalPosts)
             .where(
               and(
+                ne(schema.journalPosts.id, currentPost.id),
                 eq(schema.journalPosts.isDraft, false),
                 lte(schema.journalPosts.publishedAt, now),
                 or(
