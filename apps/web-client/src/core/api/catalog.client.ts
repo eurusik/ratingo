@@ -318,11 +318,11 @@ export const catalogApi = {
   },
 
   /**
-   * Checks ingestion job status by job ID.
+   * Checks import job status by job ID.
    * Use this for polling during import.
    */
   async getJobStatus(jobId: string): Promise<JobStatusDto> {
-    return apiGet<JobStatusDto>(`ingestion/jobs/${jobId}`);
+    return apiGet<JobStatusDto>(`catalog/import/status/${jobId}`);
   },
 
   /**
@@ -337,14 +337,12 @@ export const catalogApi = {
 } as const;
 
 /**
- * Job status response from ingestion API.
+ * Job status response from import status API.
  */
 export interface JobStatusDto {
-  id: string;
   status: 'queued' | 'processing' | 'ready' | 'failed';
-  errorMessage: string | null;
-  updatedAt: string | null;
   slug: string | null;
+  errorMessage: string | null;
 }
 
 /** Provider info from catalog (from api-contract). */
