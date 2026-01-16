@@ -153,3 +153,8 @@
 .prose blockquote p {
   @apply text-zinc-300;
 }
+
+/* Limit image size in prose content */
+.prose img {
+  @apply max-h-[400px] w-auto mx-auto rounded-lg;
+}

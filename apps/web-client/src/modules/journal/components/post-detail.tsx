@@ -70,12 +70,12 @@ export function PostDetail({ post, className }: PostDetailProps) {
         </h1>
 
         {post.featuredImageUrl && (
-          <div className="relative aspect-video rounded-lg overflow-hidden mb-6">
+          <div className="relative aspect-video rounded-lg overflow-hidden mb-6 bg-zinc-900">
             <Image
               src={post.featuredImageUrl}
               alt={post.title}
               fill
-              className="object-cover"
+              className="object-contain"
               sizes="(max-width: 768px) 100vw, 768px"
               priority
             />
