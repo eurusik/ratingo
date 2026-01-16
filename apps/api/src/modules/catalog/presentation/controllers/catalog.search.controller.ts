@@ -69,4 +69,26 @@ export class CatalogSearchController {
   async importShow(@Param('tmdbId', ParseIntPipe) tmdbId: number): Promise<ImportResult> {
     return this.catalogImportService.importMedia(tmdbId, MediaType.SHOW);
   }
+
+  /**
+   * Gets the status of an import job.
+   * Use this to poll for completion after triggering an import.
+   */
+  @Get('import/status/:jobId')
+  @ApiOperation({ summary: 'Get import job status' })
+  @ApiParam({ name: 'jobId', type: String, description: 'Job ID returned from import endpoint' })
+  @ApiResponse({
+    status: 200,
+    description: 'Import job status',
+    schema: {
+      properties: {
+        status: { type: 'string', enum: ['queued', 'processing', 'ready', 'failed'] },
+        slug: { type: 'string', nullable: true, description: 'Media slug (available when ready)' },
+        errorMessage: { type: 'string', nullable: true, description: 'Error message (on failure)' },
+      },
+    },
+  })
+  async getImportStatus(@Param('jobId') jobId: string) {
+    return this.catalogImportService.getImportJobStatus(jobId);
+  }
 }

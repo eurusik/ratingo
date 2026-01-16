@@ -1,9 +1,10 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { type Queue } from 'bullmq';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { BULL_STATE_TO_JOB_STATUS, JobStatus } from '../../../../common/enums/job-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
 import { TmdbAdapter } from '../../../tmdb/public';
@@ -166,6 +167,52 @@ export class CatalogImportService {
       tmdbId,
       ingestionStatus: IngestionStatus.IMPORTING,
       jobId: job.id,
+    };
+  }
+
+  /**
+   * Gets the status of an import job.
+   * Only works for import jobs (SYNC_MOVIE, SYNC_SHOW).
+   *
+   * @throws {BadRequestException} If jobId is not a valid import job
+   * @throws {NotFoundException} If job does not exist
+   */
+  async getImportJobStatus(jobId: string): Promise<{
+    status: JobStatus;
+    slug: string | null;
+    errorMessage: string | null;
+  }> {
+    // Validate jobId format - must be sync-movie_* or sync-show_*
+    const isValidImportJob =
+      jobId.startsWith(`${IngestionJob.SYNC_MOVIE}_`) ||
+      jobId.startsWith(`${IngestionJob.SYNC_SHOW}_`);
+
+    if (!isValidImportJob) {
+      throw new BadRequestException('Invalid import job ID');
+    }
+
+    const job = await this.ingestionQueue.getJob(jobId);
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    const state = await job.getState();
+    const status =
+      BULL_STATE_TO_JOB_STATUS[state] ??
+      BULL_STATE_TO_JOB_STATUS[job.finishedOn ? 'completed' : 'failed'] ??
+      JobStatus.FAILED;
+
+    // Get slug from DB if job is completed
+    let slug: string | null = null;
+    if (status === JobStatus.READY && job.data?.tmdbId) {
+      const media = await this.mediaRepository.findByTmdbId(job.data.tmdbId);
+      slug = media?.slug ?? null;
+    }
+
+    return {
+      status,
+      slug,
+      errorMessage: job.failedReason ?? null,
     };
   }
 }
