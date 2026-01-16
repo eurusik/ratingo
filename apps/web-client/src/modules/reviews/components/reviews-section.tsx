@@ -14,7 +14,6 @@ import { useAuth, useAuthModalStore } from '@/core/auth';
 import { getApiErrorCode, ErrorCode } from '@/core/api';
 import type { ReviewSort, VoteType, ReportReason } from '@/core/api/reviews.client';
 import { useTranslation } from '@/shared/i18n';
-import { cn } from '@/shared/utils';
 import {
   Button,
   Skeleton,
@@ -147,69 +146,76 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
 
   if (reviewsError) {
     return (
-      <section className={cn('space-y-4', className)}>
-        <SectionHeader dict={dict} totalReviews={0} sort={sort} onSortChange={setSort} />
-        <div className="text-center py-8 text-zinc-500">
-          {dict.reviews.loadError}
+      <section className={className}>
+        <div className="bg-zinc-900/50 rounded-lg border border-zinc-800/50">
+          <SectionHeader dict={dict} totalReviews={0} sort={sort} onSortChange={setSort} />
+          <div className="text-center py-8 text-zinc-500">
+            {dict.reviews.loadError}
+          </div>
         </div>
       </section>
     );
   }
 
   return (
-    <section className={cn('space-y-4', className)}>
-      <SectionHeader dict={dict} totalReviews={totalReviews} sort={sort} onSortChange={setSort} />
+    <section className={className}>
+      <div className="bg-zinc-900/50 rounded-lg border border-zinc-800/50">
+        {/* Header */}
+        <SectionHeader dict={dict} totalReviews={totalReviews} sort={sort} onSortChange={setSort} />
 
-      {/* Review form (show to guests too, they'll see login modal on submit) */}
-      {showForm && (
-        <ReviewForm
-          onSubmit={handleCreateReview}
-          isSubmitting={createReview.isPending}
-          isGuest={!isAuthenticated}
-        />
-      )}
+        {/* Review form (show to guests too, they'll see login modal on submit) */}
+        {showForm && (
+          <ReviewForm
+            onSubmit={handleCreateReview}
+            isSubmitting={createReview.isPending}
+            isGuest={!isAuthenticated}
+            className="p-4"
+          />
+        )}
 
-      {/* Reviews list */}
-      {isLoadingReviews ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <ReviewCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : reviews.length === 0 ? (
-        <EmptyState dict={dict} isAuthenticated={isAuthenticated} hasForm={showForm} />
-      ) : (
-        <div className="space-y-4">
-          {reviews.map((review) => (
-            <ReviewCard
-              key={review.id}
-              review={review}
-              mediaItemId={mediaItemId}
-              onVote={handleVote}
-              onUnvote={handleUnvote}
-              onReport={handleReport}
-              isAuthenticated={isAuthenticated}
-              isVoting={voteReview.isPending || unvoteReview.isPending}
-              isOwnReview={user?.id === review.author.id}
-              currentUserId={user?.id}
-            />
-          ))}
+        {/* Reviews list */}
+        {isLoadingReviews ? (
+          <div className="divide-y divide-zinc-800">
+            {[1, 2, 3].map((i) => (
+              <ReviewCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : reviews.length === 0 ? (
+          <EmptyState dict={dict} isAuthenticated={isAuthenticated} hasForm={showForm} />
+        ) : (
+          <div className="divide-y divide-zinc-800">
+            {reviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                mediaItemId={mediaItemId}
+                onVote={handleVote}
+                onUnvote={handleUnvote}
+                onReport={handleReport}
+                isAuthenticated={isAuthenticated}
+                isVoting={voteReview.isPending || unvoteReview.isPending}
+                isOwnReview={user?.id === review.author.id}
+                currentUserId={user?.id}
+                className="px-4"
+              />
+            ))}
 
-          {/* Load more button */}
-          {hasMore && (
-            <div className="flex justify-center pt-4">
-              <Button
-                variant="outline"
-                onClick={handleLoadMore}
-                className="flex items-center gap-2"
-              >
-                <ChevronDown className="w-4 h-4" />
-                {dict.reviews.loadMore}
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+            {/* Load more button */}
+            {hasMore && (
+              <div className="flex justify-center py-4">
+                <Button
+                  variant="outline"
+                  onClick={handleLoadMore}
+                  className="flex items-center gap-2"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                  {dict.reviews.loadMore}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Report dialog */}
       <ReviewReportDialog
@@ -237,7 +243,7 @@ interface SectionHeaderProps {
 
 function SectionHeader({ dict, totalReviews, sort, onSortChange }: SectionHeaderProps) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between p-4 border-b border-zinc-800">
       <div className="flex items-center gap-2">
         <MessageSquare className="w-5 h-5 text-zinc-400" />
         <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
@@ -291,7 +297,7 @@ function EmptyState({ dict, isAuthenticated, hasForm }: EmptyStateProps) {
 
 function ReviewCardSkeleton() {
   return (
-    <div className="bg-zinc-900/50 rounded-lg border border-zinc-800/50 p-4 space-y-3">
+    <div className="px-4 py-6 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Skeleton className="h-8 w-8 rounded-full" />

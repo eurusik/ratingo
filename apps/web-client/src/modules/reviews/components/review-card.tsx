@@ -22,6 +22,7 @@ interface ReviewCardProps {
   isVoting?: boolean;
   isOwnReview?: boolean;
   currentUserId?: string;
+  className?: string;
 }
 
 export function ReviewCard({
@@ -34,6 +35,7 @@ export function ReviewCard({
   isVoting = false,
   isOwnReview = false,
   currentUserId,
+  className,
 }: ReviewCardProps) {
   const { dict } = useTranslation();
   const locale = useLocale();
@@ -73,7 +75,7 @@ export function ReviewCard({
   const showSpoilerOverlay = review.hasSpoiler && !spoilerRevealed;
 
   return (
-    <div className="bg-zinc-900/50 rounded-lg border border-zinc-800/50 p-4 space-y-3">
+    <div className={cn('py-6 space-y-4', className)}>
       {/* Header: Author + Rating + Time */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -140,7 +142,7 @@ export function ReviewCard({
       </div>
 
       {/* Actions: Votes + Replies + Report */}
-      <div className="flex items-center justify-between pt-2 border-t border-zinc-800/50">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Like button */}
           <button

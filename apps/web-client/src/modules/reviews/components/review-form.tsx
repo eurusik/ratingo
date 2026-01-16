@@ -23,6 +23,7 @@ interface ReviewFormProps {
   initialValues?: Partial<ReviewFormData>;
   mode?: ReviewFormMode;
   isGuest?: boolean;
+  className?: string;
 }
 
 export function ReviewForm({
@@ -31,6 +32,7 @@ export function ReviewForm({
   initialValues,
   mode = REVIEW_FORM_MODE.CREATE,
   isGuest = false,
+  className,
 }: ReviewFormProps) {
   const { dict } = useTranslation();
 
@@ -90,7 +92,7 @@ export function ReviewForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="bg-zinc-900/50 rounded-lg border border-zinc-800/50 p-4 space-y-4"
+      className={cn('space-y-4', className)}
     >
       {/* Rating slider */}
       <div className="space-y-2">
