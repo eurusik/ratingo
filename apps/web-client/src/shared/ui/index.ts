@@ -56,3 +56,4 @@ export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from './popove
 export { Textarea } from './textarea';
 export { Slider } from './slider';
 export { Checkbox } from './checkbox';
+export { RadioGroup, RadioGroupItem } from './radio-group';

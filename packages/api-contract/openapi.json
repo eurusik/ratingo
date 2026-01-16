@@ -6264,6 +6264,68 @@
           }
         ]
       }
+    },
+    "/api/me/reviews/{reviewId}/report": {
+      "post": {
+        "operationId": "UserReviewsController_report",
+        "summary": "Report a review (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "required": true,
+            "in": "path",
+            "description": "Review UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Report submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReportResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "User: Reviews"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -12395,6 +12457,83 @@
           "content",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "CreateReportDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Report reason",
+            "enum": [
+              "spam",
+              "harassment",
+              "hate_speech",
+              "misinformation",
+              "spoiler_unmarked",
+              "other"
+            ],
+            "example": "spam"
+          },
+          "details": {
+            "type": "string",
+            "description": "Additional details about the report",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "ReportResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Report UUID"
+          },
+          "reviewId": {
+            "type": "string",
+            "description": "Review UUID"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Report reason",
+            "enum": [
+              "spam",
+              "harassment",
+              "hate_speech",
+              "misinformation",
+              "spoiler_unmarked",
+              "other"
+            ]
+          },
+          "details": {
+            "type": "string",
+            "description": "Additional details"
+          },
+          "status": {
+            "type": "string",
+            "description": "Report status",
+            "enum": [
+              "pending",
+              "reviewed",
+              "dismissed",
+              "actioned"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When report was created"
+          }
+        },
+        "required": [
+          "id",
+          "reviewId",
+          "reason",
+          "status",
+          "createdAt"
         ]
       }
     }

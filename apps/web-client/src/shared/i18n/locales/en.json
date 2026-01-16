@@ -437,6 +437,31 @@
         "createError": "Failed to send reply",
         "deleteError": "Failed to delete reply"
       }
+    },
+    "report": {
+      "title": "Report Review",
+      "description": "Select a reason for reporting and provide additional details if needed.",
+      "reason": "Reason for report",
+      "reasons": {
+        "spam": "Spam or advertising",
+        "harassment": "Harassment or bullying",
+        "hate_speech": "Hate speech",
+        "misinformation": "Misinformation",
+        "spoiler_unmarked": "Unmarked spoiler",
+        "other": "Other"
+      },
+      "details": "Additional details",
+      "detailsPlaceholder": "Describe the issue in more detail...",
+      "optional": "optional",
+      "warning": "Abuse of the reporting system may result in account restrictions.",
+      "cancel": "Cancel",
+      "submit": "Submit Report",
+      "submitting": "Submitting...",
+      "toast": {
+        "submitted": "Report submitted. Thank you for your help!",
+        "error": "Failed to submit report",
+        "alreadyReported": "You have already reported this review"
+      }
     }
   },
   "errors": {

@@ -39,4 +39,8 @@ export {
   useDeleteReview,
   useVoteReview,
   useUnvoteReview,
+  useReplies,
+  useCreateReply,
+  useDeleteReply,
+  useReportReview,
 } from './reviews';

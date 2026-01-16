@@ -209,8 +209,8 @@ export function ReviewCard({
           )}
         </div>
 
-        {/* Report button */}
-        {isAuthenticated && onReport && (
+        {/* Report button (hidden for own reviews) */}
+        {isAuthenticated && onReport && !isOwnReview && (
           <button
             onClick={() => onReport(review.id)}
             className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-400 transition-colors"

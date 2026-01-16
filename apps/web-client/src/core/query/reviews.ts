@@ -404,3 +404,23 @@ export function useDeleteReply(reviewId: string, mediaItemId: string) {
     },
   });
 }
+
+// ============================================================================
+// Report Hooks
+// ============================================================================
+
+/**
+ * Reports a review.
+ *
+ * @returns Mutation with report function
+ */
+export function useReportReview() {
+  return useMutation({
+    mutationFn: (params: { reviewId: string; reason: string; details?: string }) =>
+      reviewsApi.reportReview({
+        reviewId: params.reviewId,
+        reason: params.reason as any,
+        details: params.details,
+      }),
+  });
+}

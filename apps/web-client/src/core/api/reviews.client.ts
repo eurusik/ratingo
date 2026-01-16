@@ -22,6 +22,10 @@ export type ReplyResponseDto = components['schemas']['ReplyResponseDto'];
 export type ReplyMutationResponseDto = components['schemas']['ReplyMutationResponseDto'];
 export type ReplyAuthorDto = components['schemas']['ReplyAuthorDto'];
 
+// Report types
+export type ReportResponseDto = components['schemas']['ReportResponseDto'];
+export type ReportReason = 'spam' | 'harassment' | 'hate_speech' | 'misinformation' | 'spoiler_unmarked' | 'other';
+
 export type ReviewSort = 'newest' | 'oldest' | 'most_liked';
 
 export const VOTE_TYPE = {
@@ -62,6 +66,12 @@ export interface CreateReplyParams {
   reviewId: string;
   content: string;
   parentReplyId?: string;
+}
+
+export interface CreateReportParams {
+  reviewId: string;
+  reason: ReportReason;
+  details?: string;
 }
 
 // ============================================================================
@@ -193,5 +203,20 @@ export const reviewsApi = {
    */
   async deleteReply(replyId: string): Promise<void> {
     await apiDelete<void>(`me/reviews/replies/${replyId}`);
+  },
+
+  // --------------------------------------------------------------------------
+  // Reports endpoints
+  // --------------------------------------------------------------------------
+
+  /**
+   * Report a review.
+   *
+   * @param params - Report data
+   * @returns Report response
+   */
+  async reportReview(params: CreateReportParams): Promise<ReportResponseDto> {
+    const { reviewId, ...body } = params;
+    return apiPost<ReportResponseDto>(`me/reviews/${reviewId}/report`, body);
   },
 };

@@ -3,3 +3,4 @@ export { ReviewCard } from './review-card';
 export { ReviewForm } from './review-form';
 export { ReviewReplies } from './review-replies';
 export { ReviewReplyForm } from './review-reply-form';
+export { ReviewReportDialog } from './review-report-dialog';

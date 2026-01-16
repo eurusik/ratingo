@@ -3,15 +3,16 @@
 import { useState } from 'react';
 import { MessageSquare, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { HTTPError } from 'ky';
 import {
   useReviews,
   useCreateReview,
   useVoteReview,
   useUnvoteReview,
+  useReportReview,
 } from '@/core/query';
 import { useAuth, useAuthModalStore } from '@/core/auth';
-import type { ReviewSort, VoteType } from '@/core/api/reviews.client';
+import { getApiErrorCode, ErrorCode } from '@/core/api';
+import type { ReviewSort, VoteType, ReportReason } from '@/core/api/reviews.client';
 import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 import {
@@ -25,6 +26,7 @@ import {
 } from '@/shared/ui';
 import { ReviewCard } from './review-card';
 import { ReviewForm } from './review-form';
+import { ReviewReportDialog } from './review-report-dialog';
 import type { ReviewFormData } from '../schemas';
 
 interface ReviewsSectionProps {
@@ -42,6 +44,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
   const { openLogin } = useAuthModalStore();
   const [sort, setSort] = useState<ReviewSort>('newest');
   const [limit, setLimit] = useState(PAGE_SIZE);
+  const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
 
   // Queries
   const {
@@ -54,6 +57,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
   const createReview = useCreateReview();
   const voteReview = useVoteReview(mediaItemId);
   const unvoteReview = useUnvoteReview(mediaItemId);
+  const reportReview = useReportReview();
 
   const reviews = reviewsData?.data ?? [];
   const totalReviews = reviewsData?.meta?.total ?? 0;
@@ -65,47 +69,31 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
   const showForm = !userHasReview && !isLoadingReviews;
 
   const handleCreateReview = async (data: ReviewFormData) => {
-    // Guest tries to submit - show login modal
     if (!isAuthenticated) {
       openLogin();
       return;
     }
 
     try {
-      await createReview.mutateAsync({
-        mediaItemId,
-        ...data,
-      });
+      await createReview.mutateAsync({ mediaItemId, ...data });
       toast.success(dict.reviews.toast.created);
     } catch (error) {
-      if (error instanceof HTTPError) {
-        try {
-          const body = await error.response.clone().json();
-          if (body?.message?.includes('already reviewed')) {
-            toast.error(dict.reviews.toast.alreadyReviewed);
-            return;
-          }
-        } catch {
-          // ignore parse error
-        }
+      const code = await getApiErrorCode(error);
+      if (code === ErrorCode.REVIEW_ALREADY_EXISTS) {
+        toast.error(dict.reviews.toast.alreadyReviewed);
+      } else {
+        toast.error(dict.reviews.toast.createError);
       }
-      toast.error(dict.reviews.toast.createError);
     }
   };
 
   const handleVoteError = async (error: unknown) => {
-    if (error instanceof HTTPError) {
-      try {
-        const body = await error.response.clone().json();
-        if (body?.message?.includes('own review')) {
-          toast.error(dict.reviews.toast.voteOwnReview);
-          return;
-        }
-      } catch {
-        // ignore parse error
-      }
+    const code = await getApiErrorCode(error);
+    if (code === ErrorCode.FORBIDDEN) {
+      toast.error(dict.reviews.toast.voteOwnReview);
+    } else {
+      toast.error(dict.reviews.toast.voteError);
     }
-    toast.error(dict.reviews.toast.voteError);
   };
 
   const handleVote = (reviewId: string, voteType: VoteType) => {
@@ -129,6 +117,32 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
 
   const handleLoadMore = () => {
     setLimit((prev) => prev + PAGE_SIZE);
+  };
+
+  const handleReport = (reviewId: string) => {
+    if (!isAuthenticated) {
+      openLogin();
+      return;
+    }
+    setReportingReviewId(reviewId);
+  };
+
+  const handleReportSubmit = async (reason: ReportReason, details?: string) => {
+    if (!reportingReviewId) return;
+
+    try {
+      await reportReview.mutateAsync({ reviewId: reportingReviewId, reason, details });
+      toast.success(dict.reviews.report.toast.submitted);
+    } catch (error) {
+      const code = await getApiErrorCode(error);
+      if (code === ErrorCode.REPORT_ALREADY_EXISTS) {
+        toast.error(dict.reviews.report.toast.alreadyReported);
+      } else {
+        toast.error(dict.reviews.report.toast.error);
+      }
+    } finally {
+      setReportingReviewId(null);
+    }
   };
 
   if (reviewsError) {
@@ -173,6 +187,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
               mediaItemId={mediaItemId}
               onVote={handleVote}
               onUnvote={handleUnvote}
+              onReport={handleReport}
               isAuthenticated={isAuthenticated}
               isVoting={voteReview.isPending || unvoteReview.isPending}
               isOwnReview={user?.id === review.author.id}
@@ -195,6 +210,14 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
           )}
         </div>
       )}
+
+      {/* Report dialog */}
+      <ReviewReportDialog
+        open={!!reportingReviewId}
+        onOpenChange={(open) => !open && setReportingReviewId(null)}
+        onSubmit={handleReportSubmit}
+        isSubmitting={reportReview.isPending}
+      />
     </section>
   );
 }

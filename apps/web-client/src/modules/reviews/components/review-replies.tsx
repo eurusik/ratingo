@@ -32,11 +32,12 @@ export function ReviewReplies({
   const { dict } = useTranslation();
   const locale = useLocale();
 
-  const [isExpanded, setIsExpanded] = useState(false);
+  // Show replies by default if 3 or fewer
+  const [isExpanded, setIsExpanded] = useState(repliesCount > 0 && repliesCount <= 3);
   const [replyingTo, setReplyingTo] = useState<{ id: string; username: string } | null>(null);
 
   const { data: replies, isLoading } = useReplies(reviewId, {
-    enabled: isExpanded && repliesCount > 0,
+    enabled: isExpanded,
   });
 
   const createReply = useCreateReply(reviewId, mediaItemId);

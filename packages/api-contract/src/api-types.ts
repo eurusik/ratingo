@@ -1833,6 +1833,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/reviews/{reviewId}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Report a review (auth: Bearer) */
+        post: operations["UserReviewsController_report"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4925,6 +4942,39 @@ export interface components {
              */
             updatedAt: string;
         };
+        CreateReportDto: {
+            /**
+             * @description Report reason
+             * @example spam
+             * @enum {string}
+             */
+            reason: "spam" | "harassment" | "hate_speech" | "misinformation" | "spoiler_unmarked" | "other";
+            /** @description Additional details about the report */
+            details?: string;
+        };
+        ReportResponseDto: {
+            /** @description Report UUID */
+            id: string;
+            /** @description Review UUID */
+            reviewId: string;
+            /**
+             * @description Report reason
+             * @enum {string}
+             */
+            reason: "spam" | "harassment" | "hate_speech" | "misinformation" | "spoiler_unmarked" | "other";
+            /** @description Additional details */
+            details?: string;
+            /**
+             * @description Report status
+             * @enum {string}
+             */
+            status: "pending" | "reviewed" | "dismissed" | "actioned";
+            /**
+             * Format: date-time
+             * @description When report was created
+             */
+            createdAt: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -8010,6 +8060,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    UserReviewsController_report: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Review UUID */
+                reviewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReportDto"];
+            };
+        };
+        responses: {
+            /** @description Report submitted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ReportResponseDto"];
+                    };
+                };
             };
         };
     };
