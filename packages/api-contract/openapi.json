@@ -6326,6 +6326,211 @@
           }
         ]
       }
+    },
+    "/api/admin/reviews/reports": {
+      "get": {
+        "operationId": "AdminReviewsController_listReports",
+        "summary": "List reports",
+        "description": "Returns paginated list of reports for moderation queue.",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "enum": [
+                "pending",
+                "reviewed",
+                "dismissed",
+                "actioned"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Limit",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated reports list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AdminReportListResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Reviews"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/reviews/reports/{reportId}": {
+      "patch": {
+        "operationId": "AdminReviewsController_resolveReport",
+        "summary": "Resolve report",
+        "description": "Resolves a report with given status. Can optionally hide the review.",
+        "parameters": [
+          {
+            "name": "reportId",
+            "required": true,
+            "in": "path",
+            "description": "Report UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Report resolved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Reviews"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/reviews/{reviewId}": {
+      "delete": {
+        "operationId": "AdminReviewsController_forceDeleteReview",
+        "summary": "Force delete review",
+        "description": "Soft deletes a review regardless of ownership.",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "required": true,
+            "in": "path",
+            "description": "Review UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Review deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "success": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Admin - Reviews"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -12534,6 +12739,204 @@
           "reason",
           "status",
           "createdAt"
+        ]
+      },
+      "ReportReviewAuthorDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Author UUID"
+          },
+          "username": {
+            "type": "string",
+            "description": "Author username"
+          }
+        },
+        "required": [
+          "id",
+          "username"
+        ]
+      },
+      "ReportReviewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Review UUID"
+          },
+          "content": {
+            "type": "string",
+            "description": "Review content"
+          },
+          "hasSpoiler": {
+            "type": "boolean",
+            "description": "Whether review contains spoilers"
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "description": "Whether review is deleted"
+          },
+          "author": {
+            "description": "Review author",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReviewAuthorDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "content",
+          "hasSpoiler",
+          "isDeleted",
+          "author"
+        ]
+      },
+      "ReporterDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Reporter UUID"
+          },
+          "username": {
+            "type": "string",
+            "description": "Reporter username"
+          }
+        },
+        "required": [
+          "id",
+          "username"
+        ]
+      },
+      "ReportWithReviewDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Report UUID"
+          },
+          "reviewId": {
+            "type": "string",
+            "description": "Review UUID"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Report reason",
+            "enum": [
+              "spam",
+              "harassment",
+              "hate_speech",
+              "misinformation",
+              "spoiler_unmarked",
+              "other"
+            ]
+          },
+          "details": {
+            "type": "string",
+            "description": "Additional details"
+          },
+          "status": {
+            "type": "string",
+            "description": "Report status",
+            "enum": [
+              "pending",
+              "reviewed",
+              "dismissed",
+              "actioned"
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When report was created"
+          },
+          "review": {
+            "description": "Reported review",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReportReviewDto"
+              }
+            ]
+          },
+          "reporter": {
+            "description": "Reporter info",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ReporterDto"
+              }
+            ]
+          },
+          "moderatorId": {
+            "type": "string",
+            "description": "Moderator UUID who resolved"
+          },
+          "moderatorNotes": {
+            "type": "string",
+            "description": "Moderator notes"
+          },
+          "resolvedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "When report was resolved"
+          }
+        },
+        "required": [
+          "id",
+          "reviewId",
+          "reason",
+          "status",
+          "createdAt",
+          "review",
+          "reporter"
+        ]
+      },
+      "AdminReportListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "Reports",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportWithReviewDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "Total count"
+          }
+        },
+        "required": [
+          "data",
+          "total"
+        ]
+      },
+      "ResolveReportDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "New status",
+            "enum": [
+              "reviewed",
+              "dismissed",
+              "actioned"
+            ]
+          },
+          "moderatorNotes": {
+            "type": "string",
+            "description": "Moderator notes",
+            "maxLength": 500
+          },
+          "hideReview": {
+            "type": "boolean",
+            "description": "Whether to hide the review (soft delete)"
+          }
+        },
+        "required": [
+          "status"
         ]
       }
     }

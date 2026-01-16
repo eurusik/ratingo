@@ -1,6 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsString, IsEnum, IsOptional, MaxLength, IsBoolean } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  MaxLength,
+  IsBoolean,
+  IsInt,
+  Min,
+  Max,
+} from 'class-validator';
 
 import {
   REPORT_REASON,
@@ -138,4 +148,43 @@ export class ResolveReportDto {
   @IsOptional()
   @IsBoolean()
   hideReview?: boolean;
+}
+
+/**
+ * Query DTO for listing reports (admin).
+ */
+export class AdminReportQueryDto {
+  @ApiPropertyOptional({
+    description: 'Filter by status',
+    enum: REPORT_STATUS_VALUES,
+  })
+  @IsOptional()
+  @IsEnum(REPORT_STATUS_VALUES)
+  status?: ReportStatus;
+
+  @ApiPropertyOptional({ description: 'Limit', default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @ApiPropertyOptional({ description: 'Offset', default: 0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number;
+}
+
+/**
+ * Response DTO for admin reports list.
+ */
+export class AdminReportListResponseDto {
+  @ApiProperty({ description: 'Reports', type: [ReportWithReviewDto] })
+  data!: ReportWithReviewDto[];
+
+  @ApiProperty({ description: 'Total count' })
+  total!: number;
 }

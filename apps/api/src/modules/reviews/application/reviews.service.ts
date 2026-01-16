@@ -219,4 +219,19 @@ export class ReviewsService {
 
     this.logger.log(`Admin hard deleted review ${reviewId}`);
   }
+
+  /**
+   * Soft deletes a review regardless of ownership (admin only).
+   */
+  async forceDelete(reviewId: string): Promise<void> {
+    const review = await this.reviewRepo.findById(reviewId);
+
+    if (!review) {
+      throw new NotFoundException(ErrorCode.REVIEW_NOT_FOUND, 'Review not found', { reviewId });
+    }
+
+    await this.reviewRepo.softDelete(reviewId);
+
+    this.logger.log(`Admin force deleted review ${reviewId}`);
+  }
 }

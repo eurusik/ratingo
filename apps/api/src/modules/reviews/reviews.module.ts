@@ -15,6 +15,7 @@ import { DrizzleReviewReplyRepository } from './infrastructure/repositories/driz
 import { DrizzleReviewReportRepository } from './infrastructure/repositories/drizzle-review-report.repository';
 import { DrizzleReviewVoteRepository } from './infrastructure/repositories/drizzle-review-vote.repository';
 import { DrizzleReviewRepository } from './infrastructure/repositories/drizzle-review.repository';
+import { AdminReviewsController } from './presentation/controllers/admin-reviews.controller';
 import { ReviewsController } from './presentation/controllers/reviews.controller';
 import { UserReviewsController } from './presentation/controllers/user-reviews.controller';
 
@@ -52,7 +53,7 @@ import { UserReviewsController } from './presentation/controllers/user-reviews.c
       useClass: DrizzleReviewReportRepository,
     },
   ],
-  controllers: [ReviewsController, UserReviewsController],
+  controllers: [ReviewsController, UserReviewsController, AdminReviewsController],
   exports: [ReviewsService, ReviewVotesService, ReviewRepliesService, ReviewReportsService],
 })
 export class ReviewsModule {}
