@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { withDbError } from '@/common/utils/db-error.utils';
@@ -68,35 +68,35 @@ export class DrizzleStatsRepository implements IStatsRepository {
       'bulk upsert stats',
       this.logger,
       async () => {
-        // Process each stat individually to ensure correct values on conflict
-        for (const stat of stats) {
-          await this.db
-            .insert(schema.mediaStats)
-            .values({
-              mediaItemId: stat.mediaItemId,
-              watchersCount: stat.watchersCount,
-              trendingRank: stat.trendingRank,
-              popularity24h: stat.popularity24h,
-              ratingoScore: stat.ratingoScore,
-              qualityScore: stat.qualityScore,
-              popularityScore: stat.popularityScore,
-              freshnessScore: stat.freshnessScore,
-              updatedAt: new Date(),
-            })
-            .onConflictDoUpdate({
-              target: schema.mediaStats.mediaItemId,
-              set: {
-                watchersCount: stat.watchersCount,
-                trendingRank: stat.trendingRank,
-                popularity24h: stat.popularity24h,
-                ratingoScore: stat.ratingoScore,
-                qualityScore: stat.qualityScore,
-                popularityScore: stat.popularityScore,
-                freshnessScore: stat.freshnessScore,
-                updatedAt: new Date(),
-              },
-            });
-        }
+        const now = new Date();
+        const values = stats.map((stat) => ({
+          mediaItemId: stat.mediaItemId,
+          watchersCount: stat.watchersCount,
+          trendingRank: stat.trendingRank,
+          popularity24h: stat.popularity24h,
+          ratingoScore: stat.ratingoScore,
+          qualityScore: stat.qualityScore,
+          popularityScore: stat.popularityScore,
+          freshnessScore: stat.freshnessScore,
+          updatedAt: now,
+        }));
+
+        await this.db
+          .insert(schema.mediaStats)
+          .values(values)
+          .onConflictDoUpdate({
+            target: schema.mediaStats.mediaItemId,
+            set: {
+              watchersCount: sql`excluded.watchers_count`,
+              trendingRank: sql`excluded.trending_rank`,
+              popularity24h: sql`excluded.popularity_24h`,
+              ratingoScore: sql`excluded.ratingo_score`,
+              qualityScore: sql`excluded.quality_score`,
+              popularityScore: sql`excluded.popularity_score`,
+              freshnessScore: sql`excluded.freshness_score`,
+              updatedAt: sql`excluded.updated_at`,
+            },
+          });
       },
       { count: stats.length },
     );
