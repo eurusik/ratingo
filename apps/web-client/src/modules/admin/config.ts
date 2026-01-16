@@ -25,6 +25,19 @@ export const ADMIN_NAVIGATION: NavigationItem[] = [
     ],
   },
   {
+    id: 'moderation',
+    label: 'Модерація',
+    href: '/admin/reports',
+    children: [
+      {
+        id: 'reports',
+        label: 'Скарги',
+        href: '/admin/reports',
+        permissions: ['admin.reports.read'],
+      },
+    ],
+  },
+  {
     id: 'integrations',
     label: 'Інтеграції',
     href: '/admin/providers', // Default to first child

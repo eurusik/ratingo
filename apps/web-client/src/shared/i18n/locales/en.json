@@ -374,6 +374,96 @@
       }
     }
   },
+  "reviews": {
+    "title": "Reviews",
+    "empty": "No reviews yet",
+    "emptyHint": "Sign in to leave the first review",
+    "emptyHintAuth": "Be the first to share your thoughts!",
+    "loadMore": "Load more",
+    "loadError": "Failed to load reviews",
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "most_liked": "Most liked"
+    },
+    "form": {
+      "rating": "Your rating",
+      "ratingGuest": "Rate it",
+      "placeholder": "Share your thoughts... (up to 280 characters)",
+      "spoiler": "Contains spoilers",
+      "submit": "Post",
+      "submitting": "Posting...",
+      "save": "Save",
+      "ratingLabels": {
+        "excellent": "Excellent",
+        "good": "Good",
+        "okay": "Okay",
+        "meh": "Meh",
+        "bad": "Bad"
+      }
+    },
+    "card": {
+      "spoilerWarning": "Spoiler",
+      "showSpoiler": "Show spoiler",
+      "private": "private",
+      "report": "Report"
+    },
+    "vote": {
+      "like": "Like",
+      "dislike": "Dislike"
+    },
+    "toast": {
+      "created": "Review posted",
+      "alreadyReviewed": "You already left a review",
+      "createError": "Failed to post review",
+      "voteOwnReview": "Cannot vote on your own review",
+      "voteError": "Failed to vote"
+    },
+    "replies": {
+      "title": "Replies",
+      "empty": "No replies yet",
+      "placeholder": "Write a reply...",
+      "submit": "Send",
+      "submitting": "Sending...",
+      "delete": "Delete",
+      "reply": "Reply",
+      "replyTo": "Reply to",
+      "cancel": "Cancel",
+      "showReplies": "Show replies",
+      "hideReplies": "Hide replies",
+      "toast": {
+        "created": "Reply sent",
+        "deleted": "Reply deleted",
+        "createError": "Failed to send reply",
+        "deleteError": "Failed to delete reply"
+      }
+    },
+    "report": {
+      "title": "Report Review",
+      "description": "Select a reason for reporting and provide additional details if needed.",
+      "reason": "Reason for report",
+      "reasons": {
+        "spam": "Spam or advertising",
+        "harassment": "Harassment or bullying",
+        "hate_speech": "Hate speech",
+        "misinformation": "Misinformation",
+        "spoiler_unmarked": "Unmarked spoiler",
+        "other": "Other"
+      },
+      "details": "Additional details",
+      "detailsPlaceholder": "Describe the issue in more detail...",
+      "optional": "optional",
+      "warning": "Abuse of the reporting system may result in account restrictions.",
+      "cancel": "Cancel",
+      "submit": "Submit Report",
+      "submitting": "Submitting...",
+      "toast": {
+        "submitted": "Report submitted. Thank you for your help!",
+        "error": "Failed to submit report",
+        "alreadyReported": "You have already reported this review"
+      }
+    }
+  },
   "errors": {
     "notFound": "Page not found",
     "serverError": "Something went wrong",
@@ -607,9 +697,11 @@
     "navigation": {
       "title": "Navigation",
       "catalog": "Catalog",
+      "moderation": "Moderation",
       "integrations": "Integrations",
       "policies": "Policies",
       "runs": "Runs",
+      "reports": "Reports",
       "providers": "Providers",
       "journal": "Journal"
     },
@@ -1096,6 +1188,56 @@
         "toConfirm": "to confirm",
         "errorTyping": "Please type \"{text}\" to confirm",
         "errorOccurred": "An error occurred"
+      }
+    },
+    "reports": {
+      "title": "Reports Queue",
+      "error": "Failed to load reports",
+      "empty": "No reports",
+      "emptyPending": "All reports have been processed",
+      "emptyFiltered": "No reports with this status",
+      "filter": {
+        "all": "All",
+        "pending": "Pending",
+        "reviewed": "Reviewed",
+        "dismissed": "Dismissed",
+        "actioned": "Actioned"
+      },
+      "status": {
+        "pending": "Pending",
+        "reviewed": "Reviewed",
+        "dismissed": "Dismissed",
+        "actioned": "Actioned"
+      },
+      "reason": {
+        "spam": "Spam",
+        "harassment": "Harassment",
+        "hate_speech": "Hate speech",
+        "misinformation": "Misinformation",
+        "spoiler_unmarked": "Spoiler",
+        "other": "Other"
+      },
+      "card": {
+        "reportFrom": "Report from",
+        "reviewFrom": "Review from",
+        "spoiler": "Spoiler",
+        "deleted": "Deleted",
+        "moderatorNotes": "Moderator notes:"
+      },
+      "actions": {
+        "reviewed": "Reviewed",
+        "dismiss": "Dismiss",
+        "deleteReview": "Delete review"
+      },
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "toast": {
+        "reviewed": "Report marked as reviewed",
+        "dismissed": "Report dismissed",
+        "actioned": "Review deleted",
+        "error": "Failed to process report"
       }
     },
     "journal": {

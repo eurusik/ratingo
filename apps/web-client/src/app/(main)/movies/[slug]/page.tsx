@@ -24,6 +24,7 @@ import {
   type MovieVerdict,
   type MovieVerdictMessageKey,
 } from '@/modules/details';
+import { ReviewsSection } from '@/modules/reviews';
 import { Separator } from '@/shared/ui';
 
 // ISR: Revalidate every hour
@@ -220,6 +221,11 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
             availability={movie.availability}
             dict={dict}
           />
+
+          <Separator className="my-12 bg-zinc-800/50" />
+
+          {/* Reviews Section */}
+          <ReviewsSection mediaItemId={movie.id} />
         </DetailsContent>
       </main>
     </DetailsPageClient>

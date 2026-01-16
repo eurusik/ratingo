@@ -18,6 +18,7 @@ import { HomeModule } from './modules/home/home.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { InsightsModule } from './modules/insights/insights.module';
 import { JournalModule } from './modules/journal/journal.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { UserActionsModule } from './modules/user-actions/user-actions.module';
 import { UserMediaModule } from './modules/user-media/user-media.module';
@@ -144,6 +145,7 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
     UserMediaModule,
     UserActionsModule,
     JournalModule,
+    ReviewsModule,
   ],
   controllers: [],
   providers: [
