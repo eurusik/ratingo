@@ -72,7 +72,7 @@ describe('DrizzleStatsRepository', () => {
   });
 
   describe('bulkUpsert', () => {
-    it('should upsert multiple stats', async () => {
+    it('should upsert multiple stats in a single batch', async () => {
       const mockDb = createMockDb();
 
       const module: TestingModule = await Test.createTestingModule({
@@ -87,7 +87,8 @@ describe('DrizzleStatsRepository', () => {
       ];
       await repository.bulkUpsert(stats);
 
-      expect(mockDb.insert).toHaveBeenCalledTimes(2);
+      // Should use single batch INSERT instead of N individual inserts
+      expect(mockDb.insert).toHaveBeenCalledTimes(1);
     });
 
     it('should return early if array is empty', async () => {

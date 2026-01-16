@@ -39,6 +39,15 @@ export interface ISnapshotsRepository {
    * @returns {Promise<void>} Nothing
    */
   upsertSnapshot(data: SnapshotUpsertData): Promise<void>;
+
+  /**
+   * Bulk upserts watcher snapshots using a single INSERT statement.
+   * More efficient than multiple individual upserts.
+   *
+   * @param {SnapshotUpsertData[]} data - Array of snapshot data to upsert
+   * @returns {Promise<void>} Nothing
+   */
+  bulkUpsertSnapshots(data: SnapshotUpsertData[]): Promise<void>;
 }
 
 /**

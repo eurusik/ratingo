@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
@@ -102,7 +102,8 @@ export class DrizzleShowRepository implements IShowRepository {
   }
 
   /**
-   * Upserts episodes for a season.
+   * Upserts episodes for a season using batch INSERT.
+   * Uses single INSERT with ON CONFLICT DO UPDATE for better performance.
    */
   private async upsertEpisodes(
     drizzleTx: ReturnType<typeof toDrizzleTx>,
@@ -112,15 +113,23 @@ export class DrizzleShowRepository implements IShowRepository {
   ): Promise<void> {
     if (!episodes?.length) return;
 
-    for (const ep of episodes) {
-      await drizzleTx
-        .insert(schema.episodes)
-        .values(PersistenceMapper.toEpisodeInsert(seasonId, showId, ep))
-        .onConflictDoUpdate({
-          target: [schema.episodes.seasonId, schema.episodes.number],
-          set: PersistenceMapper.toEpisodeUpdate(ep),
-        });
-    }
+    const values = episodes.map((ep) => PersistenceMapper.toEpisodeInsert(seasonId, showId, ep));
+
+    await drizzleTx
+      .insert(schema.episodes)
+      .values(values)
+      .onConflictDoUpdate({
+        target: [schema.episodes.seasonId, schema.episodes.number],
+        set: {
+          tmdbId: sql`excluded.tmdb_id`,
+          title: sql`excluded.title`,
+          overview: sql`excluded.overview`,
+          airDate: sql`excluded.air_date`,
+          runtime: sql`excluded.runtime`,
+          stillPath: sql`excluded.still_path`,
+          voteAverage: sql`excluded.vote_average`,
+        },
+      });
   }
 
   /**

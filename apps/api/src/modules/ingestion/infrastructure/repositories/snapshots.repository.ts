@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
@@ -61,6 +61,34 @@ export class SnapshotsRepository implements ISnapshotsRepository {
         ],
         set: {
           totalWatchers: data.totalWatchers,
+        },
+      });
+  }
+
+  /**
+   * @inheritdoc
+   */
+  async bulkUpsertSnapshots(data: SnapshotUpsertData[]): Promise<void> {
+    if (data.length === 0) return;
+
+    const values = data.map((d) => ({
+      mediaItemId: d.mediaItemId,
+      snapshotDate: d.snapshotDate,
+      totalWatchers: d.totalWatchers,
+      region: d.region,
+    }));
+
+    await this.db
+      .insert(schema.mediaWatchersSnapshots)
+      .values(values)
+      .onConflictDoUpdate({
+        target: [
+          schema.mediaWatchersSnapshots.mediaItemId,
+          schema.mediaWatchersSnapshots.snapshotDate,
+          schema.mediaWatchersSnapshots.region,
+        ],
+        set: {
+          totalWatchers: sql`excluded.total_watchers`,
         },
       });
   }
