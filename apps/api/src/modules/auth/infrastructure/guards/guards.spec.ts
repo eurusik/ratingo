@@ -24,20 +24,26 @@ describe('Auth Guards', () => {
   describe('OptionalJwtAuthGuard.handleRequest', () => {
     it('should return null on error', () => {
       const guard = new OptionalJwtAuthGuard();
-      const result = guard.handleRequest(new Error('boom'), null as any);
+      const result = guard.handleRequest(new Error('boom'), null as any, undefined);
       expect(result).toBeNull();
     });
 
     it('should return null when user missing', () => {
       const guard = new OptionalJwtAuthGuard();
-      const result = guard.handleRequest(null, undefined as any);
+      const result = guard.handleRequest(null, undefined as any, undefined);
+      expect(result).toBeNull();
+    });
+
+    it('should return null when info contains error (no token)', () => {
+      const guard = new OptionalJwtAuthGuard();
+      const result = guard.handleRequest(null, false as any, { message: 'No auth token' });
       expect(result).toBeNull();
     });
 
     it('should return user when provided', () => {
       const guard = new OptionalJwtAuthGuard();
       const user = { id: 'u1' };
-      const result = guard.handleRequest(null, user as any);
+      const result = guard.handleRequest(null, user as any, undefined);
       expect(result).toEqual(user);
     });
   });
