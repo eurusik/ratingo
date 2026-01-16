@@ -697,9 +697,11 @@
     "navigation": {
       "title": "Навігація",
       "catalog": "Каталог",
+      "moderation": "Модерація",
       "integrations": "Інтеграції",
       "policies": "Політики",
       "runs": "Запуски",
+      "reports": "Скарги",
       "providers": "Провайдери",
       "journal": "Журнал"
     },

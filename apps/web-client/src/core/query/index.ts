@@ -44,3 +44,9 @@ export {
   useDeleteReply,
   useReportReview,
 } from './reviews';
+export {
+  adminReportsKeys,
+  useAdminReports,
+  useResolveReport,
+  useForceDeleteReview,
+} from './admin-reports';

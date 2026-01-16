@@ -4,7 +4,7 @@ import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Menu, FileText, Play, Tv, Newspaper, LayoutDashboard, Plug } from 'lucide-react';
+import { Menu, FileText, Play, Tv, Newspaper, LayoutDashboard, Plug, Shield, Flag } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { NavigationItem } from '../../types';
 import { Button } from '@/shared/ui/button';
@@ -22,10 +22,12 @@ interface SidebarProps {
 const iconMap: Record<string, React.ReactNode> = {
   // Groups
   catalog: <LayoutDashboard className="h-4 w-4" />,
+  moderation: <Shield className="h-4 w-4" />,
   integrations: <Plug className="h-4 w-4" />,
   // Items
   policies: <FileText className="h-4 w-4" />,
   runs: <Play className="h-4 w-4" />,
+  reports: <Flag className="h-4 w-4" />,
   providers: <Tv className="h-4 w-4" />,
   journal: <Newspaper className="h-4 w-4" />,
 };
@@ -34,10 +36,12 @@ const iconMap: Record<string, React.ReactNode> = {
 const labelMap: Record<string, string> = {
   // Groups
   catalog: 'admin.navigation.catalog',
+  moderation: 'admin.navigation.moderation',
   integrations: 'admin.navigation.integrations',
   // Items
   policies: 'admin.navigation.policies',
   runs: 'admin.navigation.runs',
+  reports: 'admin.navigation.reports',
   providers: 'admin.navigation.providers',
   journal: 'admin.navigation.journal',
 };
