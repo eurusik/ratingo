@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { VOTE_TYPE } from '../../domain/constants/review.constants';
+import { VOTE_TYPE, REPORT_REASON } from '../../domain/constants/review.constants';
 import { ReviewRepliesService } from '../../application/review-replies.service';
+import { ReviewReportsService } from '../../application/review-reports.service';
 import { ReviewVotesService } from '../../application/review-votes.service';
 import { ReviewsService } from '../../application/reviews.service';
 import { UserReviewsController } from './user-reviews.controller';
@@ -11,6 +12,7 @@ describe('UserReviewsController', () => {
   let reviewsService: jest.Mocked<ReviewsService>;
   let votesService: jest.Mocked<ReviewVotesService>;
   let repliesService: jest.Mocked<ReviewRepliesService>;
+  let reportsService: jest.Mocked<ReviewReportsService>;
 
   const mockUser = { id: 'user-id-1' };
 
@@ -64,12 +66,25 @@ describe('UserReviewsController', () => {
       delete: jest.fn().mockResolvedValue(undefined),
     };
 
+    const mockReportsService = {
+      create: jest.fn().mockResolvedValue({
+        id: 'report-id-1',
+        reviewId: 'review-id-1',
+        reporterId: 'user-id-1',
+        reason: REPORT_REASON.SPAM,
+        details: null,
+        status: 'pending',
+        createdAt: new Date('2024-01-15T12:00:00Z'),
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserReviewsController],
       providers: [
         { provide: ReviewsService, useValue: mockReviewsService },
         { provide: ReviewVotesService, useValue: mockVotesService },
         { provide: ReviewRepliesService, useValue: mockRepliesService },
+        { provide: ReviewReportsService, useValue: mockReportsService },
       ],
     }).compile();
 
@@ -77,6 +92,7 @@ describe('UserReviewsController', () => {
     reviewsService = module.get(ReviewsService);
     votesService = module.get(ReviewVotesService);
     repliesService = module.get(ReviewRepliesService);
+    reportsService = module.get(ReviewReportsService);
   });
 
   describe('create', () => {

@@ -4,12 +4,15 @@ import { DatabaseModule } from '../../database/database.module';
 import { AuthModule } from '../auth/auth.module';
 
 import { ReviewRepliesService } from './application/review-replies.service';
+import { ReviewReportsService } from './application/review-reports.service';
 import { ReviewVotesService } from './application/review-votes.service';
 import { ReviewsService } from './application/reviews.service';
 import { REVIEW_REPLY_REPOSITORY } from './domain/repositories/review-reply.repository.interface';
+import { REVIEW_REPORT_REPOSITORY } from './domain/repositories/review-report.repository.interface';
 import { REVIEW_VOTE_REPOSITORY } from './domain/repositories/review-vote.repository.interface';
 import { REVIEW_REPOSITORY } from './domain/repositories/review.repository.interface';
 import { DrizzleReviewReplyRepository } from './infrastructure/repositories/drizzle-review-reply.repository';
+import { DrizzleReviewReportRepository } from './infrastructure/repositories/drizzle-review-report.repository';
 import { DrizzleReviewVoteRepository } from './infrastructure/repositories/drizzle-review-vote.repository';
 import { DrizzleReviewRepository } from './infrastructure/repositories/drizzle-review.repository';
 import { ReviewsController } from './presentation/controllers/reviews.controller';
@@ -31,6 +34,7 @@ import { UserReviewsController } from './presentation/controllers/user-reviews.c
     ReviewsService,
     ReviewVotesService,
     ReviewRepliesService,
+    ReviewReportsService,
     {
       provide: REVIEW_REPOSITORY,
       useClass: DrizzleReviewRepository,
@@ -43,8 +47,12 @@ import { UserReviewsController } from './presentation/controllers/user-reviews.c
       provide: REVIEW_REPLY_REPOSITORY,
       useClass: DrizzleReviewReplyRepository,
     },
+    {
+      provide: REVIEW_REPORT_REPOSITORY,
+      useClass: DrizzleReviewReportRepository,
+    },
   ],
   controllers: [ReviewsController, UserReviewsController],
-  exports: [ReviewsService, ReviewVotesService, ReviewRepliesService],
+  exports: [ReviewsService, ReviewVotesService, ReviewRepliesService, ReviewReportsService],
 })
 export class ReviewsModule {}

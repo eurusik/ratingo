@@ -4,3 +4,4 @@ export * from './review-vote.dto';
 export * from './review-query.dto';
 export * from './review-response.dto';
 export * from './review-reply.dto';
+export * from './review-report.dto';

@@ -23,6 +23,7 @@ import {
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { ReviewRepliesService } from '../../application/review-replies.service';
+import { ReviewReportsService } from '../../application/review-reports.service';
 import { ReviewVotesService } from '../../application/review-votes.service';
 import { ReviewsService } from '../../application/reviews.service';
 import {
@@ -33,6 +34,8 @@ import {
   ReviewMutationResponseDto,
   CreateReplyDto,
   ReplyMutationResponseDto,
+  CreateReportDto,
+  ReportResponseDto,
 } from '../dto';
 
 /**
@@ -47,6 +50,7 @@ export class UserReviewsController {
     private readonly reviewsService: ReviewsService,
     private readonly votesService: ReviewVotesService,
     private readonly repliesService: ReviewRepliesService,
+    private readonly reportsService: ReviewReportsService,
   ) {}
 
   /**
@@ -216,6 +220,40 @@ export class UserReviewsController {
     @Param('replyId') replyId: string,
   ): Promise<void> {
     await this.repliesService.delete(replyId, user.id);
+  }
+
+  // ============================================================================
+  // Reports
+  // ============================================================================
+
+  /**
+   * Reports a review for moderation.
+   * One report per user per review.
+   */
+  @Post(':reviewId/report')
+  @ApiOperation({ summary: 'Report a review (auth: Bearer)' })
+  @ApiParam({ name: 'reviewId', type: String, description: 'Review UUID' })
+  @ApiCreatedResponse({ type: ReportResponseDto, description: 'Report submitted' })
+  async report(
+    @CurrentUser() user: { id: string },
+    @Param('reviewId') reviewId: string,
+    @Body() body: CreateReportDto,
+  ): Promise<ReportResponseDto> {
+    const report = await this.reportsService.create({
+      userId: user.id,
+      reviewId,
+      reason: body.reason,
+      details: body.details,
+    });
+
+    return {
+      id: report.id,
+      reviewId: report.reviewId,
+      reason: report.reason,
+      details: report.details,
+      status: report.status,
+      createdAt: report.createdAt,
+    };
   }
 
   private toMutationResponse(review: {
