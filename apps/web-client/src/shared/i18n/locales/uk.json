@@ -1190,6 +1190,56 @@
         "errorOccurred": "Виникла помилка"
       }
     },
+    "reports": {
+      "title": "Черга скарг",
+      "error": "Помилка завантаження скарг",
+      "empty": "Немає скарг",
+      "emptyPending": "Всі скарги оброблено",
+      "emptyFiltered": "Скарги з таким статусом відсутні",
+      "filter": {
+        "all": "Всі",
+        "pending": "Очікують",
+        "reviewed": "Переглянуті",
+        "dismissed": "Відхилені",
+        "actioned": "З діями"
+      },
+      "status": {
+        "pending": "Очікує",
+        "reviewed": "Переглянуто",
+        "dismissed": "Відхилено",
+        "actioned": "Виконано"
+      },
+      "reason": {
+        "spam": "Спам",
+        "harassment": "Цькування",
+        "hate_speech": "Ненависть",
+        "misinformation": "Дезінформація",
+        "spoiler_unmarked": "Спойлер",
+        "other": "Інше"
+      },
+      "card": {
+        "reportFrom": "Скарга від",
+        "reviewFrom": "Відгук від",
+        "spoiler": "Спойлер",
+        "deleted": "Видалено",
+        "moderatorNotes": "Нотатки модератора:"
+      },
+      "actions": {
+        "reviewed": "Переглянуто",
+        "dismiss": "Відхилити",
+        "deleteReview": "Видалити відгук"
+      },
+      "pagination": {
+        "previous": "Попередні",
+        "next": "Наступні"
+      },
+      "toast": {
+        "reviewed": "Скаргу позначено як переглянуту",
+        "dismissed": "Скаргу відхилено",
+        "actioned": "Відгук видалено",
+        "error": "Не вдалося обробити скаргу"
+      }
+    },
     "journal": {
         "title": "Журнал",
         "newPost": "Нова публікація",

@@ -5,8 +5,8 @@ import { Flag, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useAdminReports, useResolveReport } from '@/core/query';
-import type { ReportStatus } from '@/core/api/admin-reports.client';
-import { cn } from '@/shared/utils';
+import { ReportStatus, type ReportStatusType } from '@/core/api/report.constants';
+import { useTranslation } from '@/shared/i18n';
 import {
   Button,
   Select,
@@ -19,44 +19,45 @@ import {
 
 import { ReportCard } from './ReportCard';
 
-const STATUS_OPTIONS: { value: ReportStatus | 'all'; label: string }[] = [
-  { value: 'all', label: 'Всі' },
-  { value: 'pending', label: 'Очікують' },
-  { value: 'reviewed', label: 'Переглянуті' },
-  { value: 'dismissed', label: 'Відхилені' },
-  { value: 'actioned', label: 'З діями' },
-];
+const STATUS_FILTER_VALUES = ['all', ...Object.values(ReportStatus)] as const;
+type StatusFilter = (typeof STATUS_FILTER_VALUES)[number];
 
 const PAGE_SIZE = 20;
 
 export function ReportsQueue() {
-  const [statusFilter, setStatusFilter] = useState<ReportStatus | 'all'>('pending');
+  const { dict } = useTranslation();
+  const t = dict.admin.reports;
+
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(ReportStatus.PENDING);
   const [offset, setOffset] = useState(0);
 
   const { data, isLoading, error } = useAdminReports({
-    status: statusFilter === 'all' ? undefined : statusFilter,
+    status: statusFilter === 'all' ? undefined : statusFilter as ReportStatusType,
     limit: PAGE_SIZE,
     offset,
   });
 
   const resolveReport = useResolveReport();
 
-  const handleResolve = async (reportId: string, status: Exclude<ReportStatus, 'pending'>, hideReview = false) => {
+  const handleResolve = async (
+    reportId: string,
+    status: Exclude<ReportStatusType, 'pending'>,
+    hideReview = false
+  ) => {
     try {
       await resolveReport.mutateAsync({
         reportId,
         status,
         hideReview,
       });
-      toast.success(
-        status === 'reviewed'
-          ? 'Скаргу позначено як переглянуту'
-          : status === 'dismissed'
-            ? 'Скаргу відхилено'
-            : 'Відгук видалено'
-      );
+      const toastMessages: Record<string, string> = {
+        [ReportStatus.REVIEWED]: t.toast.reviewed,
+        [ReportStatus.DISMISSED]: t.toast.dismissed,
+        [ReportStatus.ACTIONED]: t.toast.actioned,
+      };
+      toast.success(toastMessages[status]);
     } catch {
-      toast.error('Не вдалося обробити скаргу');
+      toast.error(t.toast.error);
     }
   };
 
@@ -65,11 +66,16 @@ export function ReportsQueue() {
   const hasMore = offset + PAGE_SIZE < total;
   const hasPrev = offset > 0;
 
+  const getFilterLabel = (value: StatusFilter): string => {
+    if (value === 'all') return t.filter.all;
+    return t.filter[value as keyof typeof t.filter] || value;
+  };
+
   if (error) {
     return (
       <div className="text-center py-12 text-red-400">
         <Flag className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p>Помилка завантаження скарг</p>
+        <p>{t.error}</p>
       </div>
     );
   }
@@ -80,7 +86,7 @@ export function ReportsQueue() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Flag className="w-5 h-5 text-red-500" />
-          <h1 className="text-xl font-semibold text-zinc-100">Черга скарг</h1>
+          <h1 className="text-xl font-semibold text-zinc-100">{t.title}</h1>
           {total > 0 && (
             <span className="text-sm text-zinc-500">({total})</span>
           )}
@@ -92,7 +98,7 @@ export function ReportsQueue() {
           <Select
             value={statusFilter}
             onValueChange={(value) => {
-              setStatusFilter(value as ReportStatus | 'all');
+              setStatusFilter(value as StatusFilter);
               setOffset(0);
             }}
           >
@@ -100,13 +106,13 @@ export function ReportsQueue() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-zinc-800 border-zinc-700">
-              {STATUS_OPTIONS.map((option) => (
+              {STATUS_FILTER_VALUES.map((value) => (
                 <SelectItem
-                  key={option.value}
-                  value={option.value}
+                  key={value}
+                  value={value}
                   className="text-zinc-300 focus:bg-zinc-700"
                 >
-                  {option.label}
+                  {getFilterLabel(value)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -124,11 +130,11 @@ export function ReportsQueue() {
       ) : reports.length === 0 ? (
         <div className="text-center py-12 text-zinc-500">
           <Flag className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg">Немає скарг</p>
+          <p className="text-lg">{t.empty}</p>
           <p className="text-sm mt-1">
-            {statusFilter === 'pending'
-              ? 'Всі скарги оброблено'
-              : 'Скарги з таким статусом відсутні'}
+            {statusFilter === ReportStatus.PENDING
+              ? t.emptyPending
+              : t.emptyFiltered}
           </p>
         </div>
       ) : (
@@ -137,9 +143,9 @@ export function ReportsQueue() {
             <ReportCard
               key={report.id}
               report={report}
-              onResolve={(id) => handleResolve(id, 'reviewed')}
-              onDismiss={(id) => handleResolve(id, 'dismissed')}
-              onAction={(id) => handleResolve(id, 'actioned', true)}
+              onResolve={(id) => handleResolve(id, ReportStatus.REVIEWED)}
+              onDismiss={(id) => handleResolve(id, ReportStatus.DISMISSED)}
+              onAction={(id) => handleResolve(id, ReportStatus.ACTIONED, true)}
               isResolving={resolveReport.isPending}
             />
           ))}
@@ -154,14 +160,14 @@ export function ReportsQueue() {
             onClick={() => setOffset((prev) => Math.max(0, prev - PAGE_SIZE))}
             disabled={!hasPrev || isLoading}
           >
-            Попередні
+            {t.pagination.previous}
           </Button>
           <Button
             variant="outline"
             onClick={() => setOffset((prev) => prev + PAGE_SIZE)}
             disabled={!hasMore || isLoading}
           >
-            Наступні
+            {t.pagination.next}
           </Button>
         </div>
       )}

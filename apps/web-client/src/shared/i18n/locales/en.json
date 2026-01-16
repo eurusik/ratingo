@@ -1190,6 +1190,56 @@
         "errorOccurred": "An error occurred"
       }
     },
+    "reports": {
+      "title": "Reports Queue",
+      "error": "Failed to load reports",
+      "empty": "No reports",
+      "emptyPending": "All reports have been processed",
+      "emptyFiltered": "No reports with this status",
+      "filter": {
+        "all": "All",
+        "pending": "Pending",
+        "reviewed": "Reviewed",
+        "dismissed": "Dismissed",
+        "actioned": "Actioned"
+      },
+      "status": {
+        "pending": "Pending",
+        "reviewed": "Reviewed",
+        "dismissed": "Dismissed",
+        "actioned": "Actioned"
+      },
+      "reason": {
+        "spam": "Spam",
+        "harassment": "Harassment",
+        "hate_speech": "Hate speech",
+        "misinformation": "Misinformation",
+        "spoiler_unmarked": "Spoiler",
+        "other": "Other"
+      },
+      "card": {
+        "reportFrom": "Report from",
+        "reviewFrom": "Review from",
+        "spoiler": "Spoiler",
+        "deleted": "Deleted",
+        "moderatorNotes": "Moderator notes:"
+      },
+      "actions": {
+        "reviewed": "Reviewed",
+        "dismiss": "Dismiss",
+        "deleteReview": "Delete review"
+      },
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "toast": {
+        "reviewed": "Report marked as reviewed",
+        "dismissed": "Report dismissed",
+        "actioned": "Review deleted",
+        "error": "Failed to process report"
+      }
+    },
     "journal": {
         "title": "Journal",
         "newPost": "New Post",

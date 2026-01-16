@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 
 import { eq, and, asc, sql, gte } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
@@ -64,8 +65,9 @@ export class DrizzleReviewReportRepository implements IReviewReportRepository {
   }): Promise<ReviewReportWithReview[]> {
     const { status, limit = 20, offset = 0 } = params;
 
-    // Alias for reporter user
-    const reporterUser = schema.users;
+    // Create proper aliases for joining users table twice
+    const authorUser = alias(users, 'author_user');
+    const reporterUser = alias(users, 'reporter_user');
 
     const conditions = status ? [eq(reviewReports.status, status)] : [];
 
@@ -87,14 +89,14 @@ export class DrizzleReviewReportRepository implements IReviewReportRepository {
         reviewHasSpoiler: reviews.hasSpoiler,
         reviewIsDeleted: reviews.isDeleted,
         reviewAuthorId: reviews.userId,
-        // Author username (need to join users again)
-        reviewAuthorUsername: users.username,
+        // Author username
+        reviewAuthorUsername: authorUser.username,
         // Reporter username
         reporterUsername: reporterUser.username,
       })
       .from(reviewReports)
       .innerJoin(reviews, eq(reviewReports.reviewId, reviews.id))
-      .innerJoin(users, eq(reviews.userId, users.id))
+      .innerJoin(authorUser, eq(reviews.userId, authorUser.id))
       .innerJoin(reporterUser, eq(reviewReports.reporterId, reporterUser.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(asc(reviewReports.createdAt))
