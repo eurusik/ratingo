@@ -418,6 +418,25 @@
       "createError": "Failed to post review",
       "voteOwnReview": "Cannot vote on your own review",
       "voteError": "Failed to vote"
+    },
+    "replies": {
+      "title": "Replies",
+      "empty": "No replies yet",
+      "placeholder": "Write a reply...",
+      "submit": "Send",
+      "submitting": "Sending...",
+      "delete": "Delete",
+      "reply": "Reply",
+      "replyTo": "Reply to",
+      "cancel": "Cancel",
+      "showReplies": "Show replies",
+      "hideReplies": "Hide replies",
+      "toast": {
+        "created": "Reply sent",
+        "deleted": "Reply deleted",
+        "createError": "Failed to send reply",
+        "deleteError": "Failed to delete reply"
+      }
     }
   },
   "errors": {

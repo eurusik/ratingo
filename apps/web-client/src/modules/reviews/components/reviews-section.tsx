@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { HTTPError } from 'ky';
 import {
@@ -170,11 +170,13 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
             <ReviewCard
               key={review.id}
               review={review}
+              mediaItemId={mediaItemId}
               onVote={handleVote}
               onUnvote={handleUnvote}
               isAuthenticated={isAuthenticated}
               isVoting={voteReview.isPending || unvoteReview.isPending}
               isOwnReview={user?.id === review.author.id}
+              currentUserId={user?.id}
             />
           ))}
 

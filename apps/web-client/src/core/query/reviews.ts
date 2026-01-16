@@ -11,11 +11,14 @@ import {
   type ReviewListResponseDto,
   type ReviewResponseDto,
   type ReviewMutationResponseDto,
+  type ReplyResponseDto,
+  type ReplyMutationResponseDto,
   type VoteResultDto,
   type ReviewSort,
   type VoteType,
   type CreateReviewParams,
   type UpdateReviewParams,
+  type CreateReplyParams,
 } from '../api/reviews.client';
 import { queryKeys } from './keys';
 
@@ -321,6 +324,82 @@ export function useUnvoteReview(mediaItemId: string) {
     },
 
     onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: baseKey });
+    },
+  });
+}
+
+// ============================================================================
+// Reply Hooks
+// ============================================================================
+
+/**
+ * Fetches replies for a review.
+ *
+ * @param reviewId - Review UUID
+ * @param options - Additional query options
+ * @returns Query result with replies list
+ */
+export function useReplies(
+  reviewId: string,
+  options?: Omit<UseQueryOptions<ReplyResponseDto[]>, 'queryKey' | 'queryFn'>,
+) {
+  return useQuery({
+    queryKey: queryKeys.reviews.replies(reviewId),
+    queryFn: () => reviewsApi.listReplies(reviewId),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    ...options,
+  });
+}
+
+/**
+ * Creates a reply to a review.
+ *
+ * @param reviewId - Review UUID
+ * @param mediaItemId - Media item UUID (for cache invalidation)
+ * @returns Mutation with create function
+ */
+export function useCreateReply(reviewId: string, mediaItemId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (params: Omit<CreateReplyParams, 'reviewId'>) =>
+      reviewsApi.createReply({ ...params, reviewId }),
+
+    onSuccess: () => {
+      // Invalidate replies for this review
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reviews.replies(reviewId),
+      });
+
+      // Invalidate reviews list to update repliesCount
+      const baseKey = [...queryKeys.reviews.all, 'media', mediaItemId];
+      queryClient.invalidateQueries({ queryKey: baseKey });
+    },
+  });
+}
+
+/**
+ * Deletes a reply.
+ *
+ * @param reviewId - Review UUID (for cache invalidation)
+ * @param mediaItemId - Media item UUID (for cache invalidation)
+ * @returns Mutation with delete function
+ */
+export function useDeleteReply(reviewId: string, mediaItemId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (replyId: string) => reviewsApi.deleteReply(replyId),
+
+    onSuccess: () => {
+      // Invalidate replies for this review
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reviews.replies(reviewId),
+      });
+
+      // Invalidate reviews list to update repliesCount
+      const baseKey = [...queryKeys.reviews.all, 'media', mediaItemId];
       queryClient.invalidateQueries({ queryKey: baseKey });
     },
   });

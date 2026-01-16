@@ -8,27 +8,32 @@ import { VOTE_TYPE, type ReviewResponseDto, type VoteType } from '@/core/api/rev
 import { useTranslation, useLocale } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/shared/ui';
+import { ReviewReplies } from './review-replies';
 
 const DATE_LOCALES = { uk, en: enUS } as const;
 
 interface ReviewCardProps {
   review: ReviewResponseDto;
+  mediaItemId: string;
   onVote?: (reviewId: string, voteType: VoteType) => void;
   onUnvote?: (reviewId: string) => void;
   onReport?: (reviewId: string) => void;
   isAuthenticated?: boolean;
   isVoting?: boolean;
   isOwnReview?: boolean;
+  currentUserId?: string;
 }
 
 export function ReviewCard({
   review,
+  mediaItemId,
   onVote,
   onUnvote,
   onReport,
   isAuthenticated = false,
   isVoting = false,
   isOwnReview = false,
+  currentUserId,
 }: ReviewCardProps) {
   const { dict } = useTranslation();
   const locale = useLocale();
@@ -215,6 +220,15 @@ export function ReviewCard({
           </button>
         )}
       </div>
+
+      {/* Replies section */}
+      <ReviewReplies
+        reviewId={review.id}
+        mediaItemId={mediaItemId}
+        repliesCount={review.repliesCount}
+        isAuthenticated={isAuthenticated}
+        currentUserId={currentUserId}
+      />
     </div>
   );
 }

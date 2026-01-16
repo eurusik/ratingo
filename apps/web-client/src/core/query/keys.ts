@@ -182,5 +182,6 @@ export const queryKeys = {
     detail: (reviewId: string) => [...queryKeys.reviews.all, 'detail', reviewId] as const,
     myReview: (mediaItemId: string) =>
       [...queryKeys.reviews.all, 'my-review', mediaItemId] as const,
+    replies: (reviewId: string) => [...queryKeys.reviews.all, 'replies', reviewId] as const,
   },
 } as const;
