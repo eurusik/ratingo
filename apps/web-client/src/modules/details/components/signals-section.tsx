@@ -150,7 +150,7 @@ export function SignalsSection({
             {genres.map((genre) => (
               <span
                 key={genre}
-                className="px-2 md:px-2.5 py-0.5 md:py-1 text-[11px] md:text-xs font-medium text-zinc-300 bg-zinc-800/60 rounded-full border border-zinc-700/50"
+                className="px-2 md:px-2.5 py-0.5 md:py-1 text-[11px] md:text-xs font-medium text-zinc-300 bg-cinema-elevated/60 rounded-full border border-zinc-700/50"
               >
                 {genre}
               </span>

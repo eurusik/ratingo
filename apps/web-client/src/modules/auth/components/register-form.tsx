@@ -62,7 +62,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
           <span className="w-full border-t border-zinc-700" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-zinc-900 px-2 text-zinc-500">{dict.auth.or}</span>
+          <span className="bg-cinema-card px-2 text-zinc-500">{dict.auth.or}</span>
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
             autoComplete="email"
             placeholder="user@example.com"
             className={cn(
-              'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              'bg-cinema-elevated border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
               errors.email && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('email')}
@@ -95,7 +95,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
             autoComplete="username"
             placeholder="ratingo_fan"
             className={cn(
-              'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              'bg-cinema-elevated border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
               errors.username && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('username')}
@@ -113,7 +113,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
             autoComplete="new-password"
             placeholder="••••••"
             className={cn(
-              'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              'bg-cinema-elevated border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
               errors.password && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('password')}
@@ -131,7 +131,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
             autoComplete="new-password"
             placeholder="••••••"
             className={cn(
-              'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              'bg-cinema-elevated border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
               errors.confirmPassword && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('confirmPassword')}

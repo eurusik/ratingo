@@ -144,7 +144,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             type="text"
             autoComplete="username"
             className={cn(
-              'bg-zinc-800 border-zinc-700 text-zinc-100',
+              'bg-cinema-elevated border-zinc-700 text-zinc-100',
               errors.username && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('username')}
@@ -165,7 +165,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             rows={3}
             placeholder={dict.settings.profile.bioPlaceholder}
             className={cn(
-              'flex w-full rounded-md border bg-zinc-800 border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 disabled:cursor-not-allowed disabled:opacity-50',
+              'flex w-full rounded-md border bg-cinema-elevated border-zinc-700 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 disabled:cursor-not-allowed disabled:opacity-50',
               errors.bio && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('bio')}
@@ -183,7 +183,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             type="text"
             placeholder={dict.settings.profile.locationPlaceholder}
             className={cn(
-              'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              'bg-cinema-elevated border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
               errors.location && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('location')}
@@ -201,7 +201,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             type="url"
             placeholder={dict.settings.profile.websitePlaceholder}
             className={cn(
-              'bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              'bg-cinema-elevated border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
               errors.website && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('website')}
@@ -217,7 +217,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             </Label>
             <select
               id="language"
-              className="flex h-10 w-full rounded-md border bg-zinc-800 border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+              className="flex h-10 w-full rounded-md border bg-cinema-elevated border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
               {...register('preferredLanguage')}
             >
               <option value="uk">Українська</option>
@@ -231,7 +231,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             </Label>
             <select
               id="region"
-              className="flex h-10 w-full rounded-md border bg-zinc-800 border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+              className="flex h-10 w-full rounded-md border bg-cinema-elevated border-zinc-700 px-3 py-2 text-sm text-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
               {...register('preferredRegion')}
             >
               {REGION_GROUPS.map((group) => (
@@ -263,7 +263,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
 
       {/* Username confirmation dialog */}
       <Dialog open={showUsernameConfirm} onOpenChange={setShowUsernameConfirm}>
-        <DialogContent className="bg-zinc-900 border-zinc-800">
+        <DialogContent className="bg-cinema-card border-zinc-800">
           <DialogHeader>
             <DialogTitle className="text-zinc-100">
               {dict.settings.confirmUsernameChange.title}
@@ -276,7 +276,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
             <Button
               variant="outline"
               onClick={handleUsernameCancel}
-              className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              className="bg-cinema-elevated border-zinc-700 text-zinc-100"
             >
               {dict.settings.confirmUsernameChange.cancel}
             </Button>

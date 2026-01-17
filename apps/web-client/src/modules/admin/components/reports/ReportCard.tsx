@@ -51,7 +51,7 @@ export function ReportCard({
   };
 
   return (
-    <div className="bg-zinc-900/50 rounded-lg border border-zinc-800 p-4 space-y-4">
+    <div className="bg-cinema-card/50 rounded-lg border border-zinc-800 p-4 space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export function ReportCard({
 
       {/* Report details */}
       {report.details && (
-        <div className="bg-zinc-800/50 rounded p-3">
+        <div className="bg-cinema-elevated/50 rounded p-3">
           <p className="text-sm text-zinc-300">{report.details}</p>
         </div>
       )}
@@ -99,7 +99,7 @@ export function ReportCard({
             </Badge>
           )}
         </div>
-        <p className="text-sm text-zinc-300 bg-zinc-800/30 rounded p-3">
+        <p className="text-sm text-zinc-300 bg-cinema-elevated/30 rounded p-3">
           {report.review.content}
         </p>
       </div>
@@ -131,7 +131,7 @@ export function ReportCard({
             variant="outline"
             onClick={() => onDismiss(report.id)}
             disabled={isResolving}
-            className="text-zinc-400 hover:bg-zinc-800"
+            className="text-zinc-400 hover:bg-cinema-elevated"
           >
             <X className="w-4 h-4 mr-1" />
             {t.actions.dismiss}

@@ -48,7 +48,7 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
               href={tmdbWatchUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors px-4 py-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-800"
+              className="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors px-4 py-2 rounded-lg bg-cinema-elevated/50 hover:bg-cinema-elevated"
             >
               {dict.details.providers.viewOnTmdb}
               <ExternalLink className="w-4 h-4" />

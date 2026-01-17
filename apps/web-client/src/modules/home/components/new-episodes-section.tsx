@@ -61,10 +61,10 @@ function EpisodeCard({ item, locale }: { item: NewEpisodeShowItem; locale: Local
   return (
     <Link
       href={`/shows/${item.slug}`}
-      className="group flex items-center gap-2.5 p-2 rounded-lg hover:bg-zinc-800/40 transition-colors"
+      className="group flex items-center gap-2.5 p-2 rounded-lg hover:bg-cinema-elevated/40 transition-colors"
     >
       {/* Tiny thumbnail 32×48 */}
-      <div className="relative w-8 h-12 flex-shrink-0 rounded overflow-hidden bg-zinc-800">
+      <div className="relative w-8 h-12 flex-shrink-0 rounded overflow-hidden bg-cinema-elevated">
         {item.posterUrl ? (
           <Image src={item.posterUrl} alt={item.title} fill className="object-cover" sizes="32px" />
         ) : (

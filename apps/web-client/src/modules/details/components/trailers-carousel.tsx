@@ -40,7 +40,7 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
           <button
             key={video.key}
             onClick={() => setSelectedVideo(video)}
-            className="group relative flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-blue-500 transition-all"
+            className="group relative flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden bg-cinema-card border border-zinc-800 hover:border-blue-500 transition-all"
           >
             {/* Thumbnail */}
             <img

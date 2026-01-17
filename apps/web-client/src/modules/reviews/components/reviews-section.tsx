@@ -147,7 +147,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
   if (reviewsError) {
     return (
       <section className={className}>
-        <div className="bg-zinc-900/50 rounded-lg border border-zinc-800/50">
+        <div className="bg-cinema-card/50 rounded-lg border border-zinc-800/50">
           <SectionHeader dict={dict} totalReviews={0} sort={sort} onSortChange={setSort} />
           <div className="text-center py-8 text-zinc-500">
             {dict.reviews.loadError}
@@ -159,7 +159,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
 
   return (
     <section className={className}>
-      <div className="bg-zinc-900/50 rounded-lg border border-zinc-800/50">
+      <div className="bg-cinema-card/50 rounded-lg border border-zinc-800/50">
         {/* Header - only show when there are reviews */}
         {totalReviews > 0 && (
           <SectionHeader dict={dict} totalReviews={totalReviews} sort={sort} onSortChange={setSort} />
@@ -255,10 +255,10 @@ function SectionHeader({ dict, totalReviews, sort, onSortChange }: SectionHeader
       </div>
 
       <Select value={sort} onValueChange={(value) => onSortChange(value as ReviewSort)}>
-        <SelectTrigger className="w-auto gap-2 bg-zinc-800/50 border-zinc-700 text-zinc-300 text-sm">
+        <SelectTrigger className="w-auto gap-2 bg-cinema-elevated/50 border-zinc-700 text-zinc-300 text-sm">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent className="bg-zinc-800 border-zinc-700">
+        <SelectContent className="bg-cinema-elevated border-zinc-700">
           {SORT_VALUES.map((value) => (
             <SelectItem
               key={value}

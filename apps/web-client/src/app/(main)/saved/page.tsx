@@ -39,8 +39,8 @@ function SavedPageContent() {
     return (
       <div className="min-h-screen pt-24 pb-12">
         <div className="container mx-auto px-4">
-          <div className="h-8 w-48 bg-zinc-800 rounded animate-pulse mb-8" />
-          <div className="h-10 w-96 bg-zinc-800 rounded animate-pulse" />
+          <div className="h-8 w-48 bg-cinema-elevated rounded animate-pulse mb-8" />
+          <div className="h-10 w-96 bg-cinema-elevated rounded animate-pulse" />
         </div>
       </div>
     );
@@ -65,16 +65,16 @@ function SavedPageContent() {
         <h1 className="text-2xl font-bold text-zinc-100 mb-8">{dict.saved.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="bg-zinc-900 border border-zinc-800 mb-6">
-            <TabsTrigger value={TAB_VALUES.FOR_LATER} className="data-[state=active]:bg-zinc-800">
+          <TabsList className="bg-cinema-card border border-zinc-800 mb-6">
+            <TabsTrigger value={TAB_VALUES.FOR_LATER} className="data-[state=active]:bg-cinema-elevated">
               {dict.saved.tabs.forLater}
             </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.CONSIDERING} className="data-[state=active]:bg-zinc-800">
+            <TabsTrigger value={TAB_VALUES.CONSIDERING} className="data-[state=active]:bg-cinema-elevated">
               {dict.saved.tabs.considering}
             </TabsTrigger>
             <TabsTrigger
               value={TAB_VALUES.NOTIFICATIONS}
-              className="data-[state=active]:bg-zinc-800"
+              className="data-[state=active]:bg-cinema-elevated"
             >
               {dict.saved.tabs.notifications}
             </TabsTrigger>
@@ -103,7 +103,7 @@ export default function SavedPage() {
       fallback={
         <div className="min-h-screen pt-24 pb-12">
           <div className="container mx-auto px-4">
-            <div className="h-8 w-48 bg-zinc-800 rounded animate-pulse mb-8" />
+            <div className="h-8 w-48 bg-cinema-elevated rounded animate-pulse mb-8" />
           </div>
         </div>
       }

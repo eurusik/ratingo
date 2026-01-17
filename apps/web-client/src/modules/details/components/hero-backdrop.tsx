@@ -23,7 +23,7 @@ export function HeroBackdrop({ backdrop, poster }: HeroBackdropProps) {
 
   // No image available
   if (!useBackdrop && !posterUrl) {
-    return <div className="absolute inset-0 -z-10 bg-zinc-900" />;
+    return <div className="absolute inset-0 -z-10 bg-cinema-card" />;
   }
 
   return (

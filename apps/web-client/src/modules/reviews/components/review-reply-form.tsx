@@ -52,7 +52,7 @@ export function ReviewReplyForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 overflow-hidden">
+      <div className="rounded-lg border border-zinc-700 bg-cinema-elevated/50 overflow-hidden">
           {/* Reply to indicator */}
           {replyToUsername && (
             <div className="px-3 pt-2 text-xs text-zinc-500">

@@ -54,7 +54,7 @@ function ImportFailedView({ onBack }: { onBack: () => void }) {
   const { dict } = useTranslation();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950">
+    <div className="min-h-screen flex items-center justify-center bg-cinema-page">
       <div className="flex flex-col items-center gap-6 p-8 max-w-md text-center">
         <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
           <XCircle className="w-8 h-8 text-red-500" />
@@ -65,7 +65,7 @@ function ImportFailedView({ onBack }: { onBack: () => void }) {
         </div>
         <button
           onClick={onBack}
-          className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-lg transition-colors"
+          className="px-4 py-2 bg-cinema-elevated hover:bg-zinc-700 text-zinc-100 rounded-lg transition-colors"
         >
           {dict.common.back}
         </button>

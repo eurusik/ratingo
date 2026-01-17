@@ -66,7 +66,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#09090b',
+  themeColor: '#0B0D10',
   width: 'device-width',
   initialScale: 1,
 };
@@ -78,7 +78,7 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="uk" className={inter.variable} suppressHydrationWarning>
-      <body className="min-h-screen bg-zinc-950 font-sans antialiased" suppressHydrationWarning>
+      <body className="min-h-screen bg-cinema-page font-sans antialiased" suppressHydrationWarning>
         <AppProviders>
           {children}
         </AppProviders>

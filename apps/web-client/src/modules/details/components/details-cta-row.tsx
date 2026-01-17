@@ -44,8 +44,8 @@ export function DetailsCtaRow({
           className={cn(
             'group flex items-center justify-between w-full px-4 py-3 rounded-xl border transition-all',
             isSaved
-              ? 'border-zinc-700 bg-zinc-800/50'
-              : 'border-zinc-700/50 hover:border-zinc-600 hover:bg-zinc-800/30',
+              ? 'border-zinc-700 bg-cinema-elevated/50'
+              : 'border-zinc-700/50 hover:border-zinc-600 hover:bg-cinema-elevated/30',
           )}
         >
           <div className="flex items-center gap-3">

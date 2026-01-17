@@ -43,7 +43,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
       className={cn(
         'group flex items-stretch gap-4 p-3 rounded-xl',
         'bg-[#111113] border border-zinc-800/50',
-        'hover:border-zinc-700 hover:bg-zinc-900/80',
+        'hover:border-zinc-700 hover:bg-cinema-card/80',
         'transition-all duration-200',
       )}
     >
@@ -61,7 +61,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
       </div>
 
       {/* Poster */}
-      <div className="relative w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-zinc-800">
+      <div className="relative w-16 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-cinema-elevated">
         {posterUrl ? (
           <Image src={posterUrl} alt={title} fill className="object-cover" sizes="64px" />
         ) : (

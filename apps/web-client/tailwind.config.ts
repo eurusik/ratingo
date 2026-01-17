@@ -24,6 +24,13 @@ export default {
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
+  			// Cinematic black semantic colors
+  			cinema: {
+  				page: '#0B0D10',
+  				card: '#12151B',
+  				elevated: '#1A1D24',
+  				border: '#262A33',
+  			},
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'

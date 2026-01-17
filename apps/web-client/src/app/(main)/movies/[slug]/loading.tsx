@@ -8,7 +8,7 @@ export default function MovieLoading() {
   return (
     <main className="min-h-screen">
       {/* Hero skeleton */}
-      <div className="relative min-h-[60vh] bg-zinc-900">
+      <div className="relative min-h-[60vh] bg-cinema-card">
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent" />
         <div className="relative max-w-4xl mx-auto px-4 pt-32 pb-8">
           <div className="flex gap-6 md:gap-10 items-end">

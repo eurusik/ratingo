@@ -109,10 +109,10 @@ export function VerdictCtaButton({
     return (
       <div className="flex items-center justify-between w-full mt-4 pt-4 border-t border-zinc-800/50 -mx-5 px-5 -mb-5 pb-5">
         <div className="flex flex-col gap-1.5">
-          <div className="h-4 w-20 bg-zinc-800 rounded animate-pulse" />
-          <div className="h-3 w-32 bg-zinc-800/60 rounded animate-pulse" />
+          <div className="h-4 w-20 bg-cinema-elevated rounded animate-pulse" />
+          <div className="h-3 w-32 bg-cinema-elevated/60 rounded animate-pulse" />
         </div>
-        <div className="w-8 h-8 rounded-full bg-zinc-800 animate-pulse" />
+        <div className="w-8 h-8 rounded-full bg-cinema-elevated animate-pulse" />
       </div>
     );
   }
@@ -136,7 +136,7 @@ export function VerdictCtaButton({
       icon: isSaved ? Check : Bookmark,
       label: isSaved ? dict.details.saved : dict.details.save,
       iconColor: isSaved ? 'text-green-500' : 'text-zinc-500 group-hover:text-zinc-300',
-      iconBg: isSaved ? 'bg-green-500/20' : 'bg-zinc-800 group-hover:bg-zinc-700',
+      iconBg: isSaved ? 'bg-green-500/20' : 'bg-cinema-elevated group-hover:bg-zinc-700',
       showHint: !isSaved,
     },
     [PRIMARY_CTA.CONTINUE]: {

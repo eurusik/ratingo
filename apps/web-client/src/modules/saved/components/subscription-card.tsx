@@ -46,10 +46,10 @@ export function SubscriptionCard({
   };
 
   return (
-    <div className="group relative flex gap-3 p-3 rounded-lg bg-zinc-900/50 hover:bg-zinc-800/50 transition-colors">
+    <div className="group relative flex gap-3 p-3 rounded-lg bg-cinema-card/50 hover:bg-cinema-elevated/50 transition-colors">
       {/* Poster */}
       <Link href={href as Route} className="shrink-0">
-        <div className="relative w-16 h-24 rounded-md overflow-hidden bg-zinc-800">
+        <div className="relative w-16 h-24 rounded-md overflow-hidden bg-cinema-elevated">
           {posterUrl ? (
             <Image src={posterUrl} alt={title} fill sizes="64px" className="object-cover" />
           ) : (

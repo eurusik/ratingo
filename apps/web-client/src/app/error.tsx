@@ -54,7 +54,7 @@ export default function Error({ error, reset }: ErrorProps) {
 
         {/* Error digest (for debugging) */}
         {error.digest && (
-          <Alert variant="destructive" className="mt-8 bg-zinc-900/50 border-zinc-800">
+          <Alert variant="destructive" className="mt-8 bg-cinema-card/50 border-zinc-800">
             <AlertDescription className="text-xs text-zinc-500">
               {t('error.errorCode')}: {error.digest}
             </AlertDescription>

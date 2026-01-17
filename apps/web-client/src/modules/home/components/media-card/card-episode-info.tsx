@@ -20,7 +20,7 @@ export function CardEpisodeInfo({ season, episode, className }: CardEpisodeInfoP
   return (
     <span
       className={cn(
-        'inline-block px-2 py-1 bg-zinc-800 rounded font-mono text-white text-sm',
+        'inline-block px-2 py-1 bg-cinema-elevated rounded font-mono text-white text-sm',
         className,
       )}
     >

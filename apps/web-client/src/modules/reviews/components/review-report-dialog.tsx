@@ -63,7 +63,7 @@ export function ReviewReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-zinc-900 border-zinc-800">
+      <DialogContent className="sm:max-w-md bg-cinema-card border-zinc-800">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-zinc-100">
             <Flag className="w-5 h-5 text-red-500" />
@@ -122,7 +122,7 @@ export function ReviewReportDialog({
               onChange={(e) => setDetails(e.target.value)}
               placeholder={dict.reviews.report.detailsPlaceholder}
               className={cn(
-                'min-h-[80px] bg-zinc-800/50 border resize-none text-sm',
+                'min-h-[80px] bg-cinema-elevated/50 border resize-none text-sm',
                 'text-zinc-200 placeholder-zinc-500 border-zinc-700',
               )}
               maxLength={500}

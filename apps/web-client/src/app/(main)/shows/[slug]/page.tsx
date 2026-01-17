@@ -205,7 +205,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             />
           </div>
 
-          <Separator className="my-12 bg-zinc-800/50" />
+          <Separator className="my-12 bg-cinema-elevated/50" />
 
           <TrailersSection
             title={dict.details.trailer.sectionTitle}
@@ -225,7 +225,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             />
           </section>
 
-          <Separator className="my-12 bg-zinc-800/50" />
+          <Separator className="my-12 bg-cinema-elevated/50" />
 
           <CastCrewSection cast={show.credits?.cast} crew={show.credits?.crew} />
 
@@ -235,7 +235,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             dict={dict}
           />
 
-          <Separator className="my-12 bg-zinc-800/50" />
+          <Separator className="my-12 bg-cinema-elevated/50" />
 
           {/* Reviews Section */}
           <ReviewsSection mediaItemId={show.id} />

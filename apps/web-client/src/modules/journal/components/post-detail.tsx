@@ -70,7 +70,7 @@ export function PostDetail({ post, className }: PostDetailProps) {
         </h1>
 
         {post.featuredImageUrl && (
-          <div className="relative aspect-video rounded-lg overflow-hidden mb-6 bg-zinc-900">
+          <div className="relative aspect-video rounded-lg overflow-hidden mb-6 bg-cinema-card">
             <Image
               src={post.featuredImageUrl}
               alt={post.title}

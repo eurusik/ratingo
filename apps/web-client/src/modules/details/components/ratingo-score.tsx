@@ -18,7 +18,7 @@ interface RatingoScoreProps {
 export function RatingoScore({ score, dict }: RatingoScoreProps) {
   return (
     <div className="flex flex-col gap-0.5">
-      <div className="flex items-center gap-1.5 md:gap-2 bg-zinc-900/60 backdrop-blur-sm px-2.5 md:px-3 py-1.5 md:py-2 rounded-lg w-fit">
+      <div className="flex items-center gap-1.5 md:gap-2 bg-cinema-card/60 backdrop-blur-sm px-2.5 md:px-3 py-1.5 md:py-2 rounded-lg w-fit">
         <Activity className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
         <span className="text-xs md:text-sm font-medium text-zinc-400">Ratingo</span>
         <span className="text-lg md:text-2xl font-bold text-white">{formatRating(score)}</span>
@@ -35,7 +35,7 @@ export function RatingoScore({ score, dict }: RatingoScoreProps) {
                 <Info className="w-3.5 h-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-sm bg-zinc-800 border border-zinc-700">
+            <TooltipContent side="top" className="max-w-sm bg-cinema-elevated border border-zinc-700">
               <div className="text-xs leading-relaxed space-y-3">
                 <div>
                   <p className="font-semibold text-white">{dict.details.ratingTooltip.title}</p>

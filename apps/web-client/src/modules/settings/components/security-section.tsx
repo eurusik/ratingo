@@ -84,7 +84,7 @@ export function SecuritySection() {
               type="password"
               autoComplete="current-password"
               className={cn(
-                'bg-zinc-800 border-zinc-700 text-zinc-100',
+                'bg-cinema-elevated border-zinc-700 text-zinc-100',
                 errors.currentPassword && 'border-red-500 focus-visible:ring-red-500',
               )}
               {...register('currentPassword')}
@@ -104,7 +104,7 @@ export function SecuritySection() {
               type="password"
               autoComplete="new-password"
               className={cn(
-                'bg-zinc-800 border-zinc-700 text-zinc-100',
+                'bg-cinema-elevated border-zinc-700 text-zinc-100',
                 errors.newPassword && 'border-red-500 focus-visible:ring-red-500',
               )}
               {...register('newPassword')}
@@ -124,7 +124,7 @@ export function SecuritySection() {
               type="password"
               autoComplete="new-password"
               className={cn(
-                'bg-zinc-800 border-zinc-700 text-zinc-100',
+                'bg-cinema-elevated border-zinc-700 text-zinc-100',
                 errors.confirmPassword && 'border-red-500 focus-visible:ring-red-500',
               )}
               {...register('confirmPassword')}

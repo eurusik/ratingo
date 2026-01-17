@@ -54,7 +54,7 @@ export function SearchResultItem({
           className="rounded object-cover"
         />
       ) : (
-        <div className="w-8 h-12 bg-zinc-800 rounded flex items-center justify-center">
+        <div className="w-8 h-12 bg-cinema-elevated rounded flex items-center justify-center">
           <TypeIcon className="h-4 w-4 text-zinc-600" />
         </div>
       )}

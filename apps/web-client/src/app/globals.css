@@ -41,37 +41,38 @@
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    /* Cinematic black palette */
+    --background: 216 18% 5%;        /* #0B0D10 - page background */
+    --foreground: 0 0% 88%;          /* white ~88% - primary text */
+    --card: 220 20% 9%;              /* #12151B - card background */
+    --card-foreground: 0 0% 88%;
+    --popover: 220 20% 9%;
+    --popover-foreground: 0 0% 88%;
     --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --primary-foreground: 220 20% 9%;
+    --secondary: 222 16% 12%;        /* #1A1D24 - elevated surfaces */
+    --secondary-foreground: 0 0% 88%;
+    --muted: 222 16% 12%;
+    --muted-foreground: 0 0% 45%;    /* white ~45% - meta text */
+    --accent: 222 16% 15%;
+    --accent-foreground: 0 0% 88%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
+    --border: 220 16% 16%;           /* slightly visible border */
+    --input: 220 16% 14%;
     --ring: 0 0% 83.1%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-background: 220 20% 7%;
+    --sidebar-foreground: 0 0% 88%;
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-accent: 222 16% 12%;
+    --sidebar-accent-foreground: 0 0% 88%;
+    --sidebar-border: 220 16% 16%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -120,7 +121,7 @@
 
 /* Glass morphism */
 .glass {
-  @apply bg-zinc-900/50 backdrop-blur-xl;
+  @apply bg-cinema-card/50 backdrop-blur-xl;
 }
 
 /* Hide scrollbar */
@@ -147,7 +148,7 @@
 }
 
 .prose blockquote {
-  @apply border-l-4 border-blue-500/50 bg-zinc-800/30 py-1 not-italic;
+  @apply border-l-4 border-blue-500/50 bg-cinema-elevated/30 py-1 not-italic;
 }
 
 .prose blockquote p {

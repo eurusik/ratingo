@@ -40,7 +40,7 @@ export function CardPoster({
   className,
 }: CardPosterProps) {
   return (
-    <div className={cn('aspect-[2/3] relative bg-zinc-800 overflow-hidden', className)}>
+    <div className={cn('aspect-[2/3] relative bg-cinema-elevated overflow-hidden', className)}>
       {src ? (
         <>
           <Image

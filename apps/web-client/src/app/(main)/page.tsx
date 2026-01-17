@@ -144,7 +144,7 @@ export default async function HomePage() {
               <div className="w-full border-t border-zinc-800" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-zinc-950 px-4 text-sm text-zinc-500 flex items-center gap-2">
+              <span className="bg-cinema-page px-4 text-sm text-zinc-500 flex items-center gap-2">
                 <Film className="w-4 h-4" />
                 {dict.mediaType.movies}
               </span>

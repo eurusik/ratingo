@@ -62,10 +62,10 @@ export function NewEpisodeCard({ item, locale = 'uk' }: NewEpisodeCardProps) {
   return (
     <Link
       href={`/shows/${item.slug}`}
-      className="group flex gap-3 p-2 rounded-lg hover:bg-zinc-800/50 transition-colors"
+      className="group flex gap-3 p-2 rounded-lg hover:bg-cinema-elevated/50 transition-colors"
     >
       {/* Poster */}
-      <div className="relative w-16 h-24 flex-shrink-0 rounded-md overflow-hidden bg-zinc-800">
+      <div className="relative w-16 h-24 flex-shrink-0 rounded-md overflow-hidden bg-cinema-elevated">
         {item.posterPath ? (
           <Image
             src={`https://image.tmdb.org/t/p/w154${item.posterPath}`}

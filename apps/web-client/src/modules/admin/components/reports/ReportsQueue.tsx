@@ -102,10 +102,10 @@ export function ReportsQueue() {
               setOffset(0);
             }}
           >
-            <SelectTrigger className="w-40 bg-zinc-800/50 border-zinc-700">
+            <SelectTrigger className="w-40 bg-cinema-elevated/50 border-zinc-700">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-800 border-zinc-700">
+            <SelectContent className="bg-cinema-elevated border-zinc-700">
               {STATUS_FILTER_VALUES.map((value) => (
                 <SelectItem
                   key={value}

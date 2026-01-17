@@ -66,14 +66,14 @@ export function SettingsPageClient({ user, initialTab = 'profile' }: SettingsPag
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-        <TabsList className="bg-zinc-900 border border-zinc-800 mb-6">
-          <TabsTrigger value="profile" className="data-[state=active]:bg-zinc-800">
+        <TabsList className="bg-cinema-card border border-zinc-800 mb-6">
+          <TabsTrigger value="profile" className="data-[state=active]:bg-cinema-elevated">
             {dict.settings.tabs.profile}
           </TabsTrigger>
-          <TabsTrigger value="privacy" className="data-[state=active]:bg-zinc-800">
+          <TabsTrigger value="privacy" className="data-[state=active]:bg-cinema-elevated">
             {dict.settings.tabs.privacy}
           </TabsTrigger>
-          <TabsTrigger value="security" className="data-[state=active]:bg-zinc-800">
+          <TabsTrigger value="security" className="data-[state=active]:bg-cinema-elevated">
             {dict.settings.tabs.security}
           </TabsTrigger>
         </TabsList>

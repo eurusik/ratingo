@@ -8,7 +8,7 @@ import { VOTE_TYPE, type ReviewResponseDto, type VoteType } from '@/core/api/rev
 import { useTranslation, useLocale } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/shared/ui';
-import { ReviewReplies } from './review-replies';
+import { ReviewReplies } from './review-replies/index';
 
 const DATE_LOCALES = { uk, en: enUS } as const;
 
@@ -100,7 +100,7 @@ export function ReviewCard({
             {review.author.avatarUrl && (
               <AvatarImage src={review.author.avatarUrl} alt={review.author.username} />
             )}
-            <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
+            <AvatarFallback className="bg-cinema-elevated text-zinc-400 text-xs">
               {review.author.username.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -117,7 +117,7 @@ export function ReviewCard({
         </div>
 
         {review.rating !== null && (
-          <span className="px-2 py-0.5 bg-zinc-800 rounded text-zinc-300 text-sm font-medium">
+          <span className="px-2 py-0.5 bg-cinema-elevated rounded text-zinc-300 text-sm font-medium">
             ⭐ {review.rating}
           </span>
         )}

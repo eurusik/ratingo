@@ -38,7 +38,7 @@ export function ProviderCard({ provider }: ProviderCardProps) {
 
       {/* Tooltip on hover */}
       <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-        <div className="bg-zinc-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+        <div className="bg-cinema-card text-white text-xs px-2 py-1 rounded whitespace-nowrap">
           {provider.name}
         </div>
       </div>

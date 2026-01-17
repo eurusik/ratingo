@@ -40,7 +40,7 @@ export function ShowStatus({
   }
 
   return (
-    <section className="bg-zinc-900/30 rounded-2xl p-5 border border-zinc-800/50">
+    <section className="bg-cinema-card/30 rounded-2xl p-5 border border-zinc-800/50">
       <div className="space-y-4">
         {/* Total seasons/episodes summary */}
         {totalSeasons !== undefined && totalEpisodes !== undefined && (

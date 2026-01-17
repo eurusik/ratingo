@@ -47,7 +47,7 @@ export function DetailsHero({
           <div className="flex gap-4 md:gap-10 items-end">
             {/* Poster */}
             <div className="flex-shrink-0 w-24 md:w-48 lg:w-56">
-              <div className="aspect-[2/3] relative rounded-lg md:rounded-xl overflow-hidden bg-zinc-800 shadow-2xl ring-1 ring-white/20">
+              <div className="aspect-[2/3] relative rounded-lg md:rounded-xl overflow-hidden bg-cinema-elevated shadow-2xl ring-1 ring-white/20">
                 {poster?.large && (
                   <Image
                     src={poster.large}

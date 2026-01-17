@@ -24,7 +24,7 @@ export default async function JournalPage() {
   const initialData = await getJournalPosts({ limit: 20 });
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-cinema-page">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-foreground">{dict.journal.title}</h1>

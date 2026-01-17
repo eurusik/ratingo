@@ -149,7 +149,7 @@ export function ReviewForm({
       </div>
 
       {/* Textarea container */}
-      <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 overflow-hidden">
+      <div className="rounded-lg border border-zinc-700 bg-cinema-elevated/50 overflow-hidden">
         <Textarea
           {...registerRest}
           ref={(e) => {

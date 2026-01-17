@@ -43,11 +43,11 @@ export function SearchCommand() {
         variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
-        className="gap-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50"
+        className="gap-2 text-zinc-400 hover:text-zinc-100 hover:bg-cinema-elevated/50"
       >
         <Search className="h-4 w-4" />
         <span className="hidden sm:inline">{dict.search.placeholder}</span>
-        <kbd className="hidden md:inline-flex h-5 select-none items-center gap-1 rounded border border-zinc-700 bg-zinc-800 px-1.5 font-mono text-[10px] font-medium text-zinc-400">
+        <kbd className="hidden md:inline-flex h-5 select-none items-center gap-1 rounded border border-zinc-700 bg-cinema-elevated px-1.5 font-mono text-[10px] font-medium text-zinc-400">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>

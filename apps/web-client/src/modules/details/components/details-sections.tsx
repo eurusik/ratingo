@@ -42,7 +42,7 @@ export function SuitableForTags({ tags, label }: SuitableForTagsProps) {
       {tags.map((tag) => (
         <span
           key={tag}
-          className="px-3 py-1 text-xs font-medium text-zinc-300 bg-zinc-800/60 rounded-full border border-zinc-700/50"
+          className="px-3 py-1 text-xs font-medium text-zinc-300 bg-cinema-elevated/60 rounded-full border border-zinc-700/50"
         >
           {tag}
         </span>
@@ -93,7 +93,7 @@ export function TrailersSection({ title, videos, primaryTrailerKey }: TrailersSe
           primaryTrailer={videos.find((v) => v.key === primaryTrailerKey)}
         />
       </section>
-      <Separator className="my-12 bg-zinc-800/50" />
+      <Separator className="my-12 bg-cinema-elevated/50" />
     </>
   );
 }
@@ -119,7 +119,7 @@ export function CastCrewSection({ cast, crew }: CastCrewSectionProps) {
         {hasCast && <CastCarousel cast={cast} crew={crew || []} />}
         {hasCrew && <CrewCarousel crew={crew} />}
       </div>
-      <Separator className="my-12 bg-zinc-800/50" />
+      <Separator className="my-12 bg-cinema-elevated/50" />
     </>
   );
 }
@@ -155,7 +155,7 @@ interface DetailsContentProps {
 
 export function DetailsContent({ children }: DetailsContentProps) {
   return (
-    <div className="bg-zinc-950">
+    <div className="bg-cinema-page">
       <div className="max-w-4xl mx-auto px-4 py-6 md:py-8 space-y-6 md:space-y-8">{children}</div>
     </div>
   );

@@ -82,14 +82,14 @@ export function DetailsLayout({
 
       {/* Share button (floating) */}
       <button
-        className="fixed top-20 right-4 z-30 p-3 rounded-full bg-zinc-800/80 backdrop-blur text-zinc-400 hover:text-white hover:bg-zinc-700/80 transition-all"
+        className="fixed top-20 right-4 z-30 p-3 rounded-full bg-cinema-elevated/80 backdrop-blur text-zinc-400 hover:text-white hover:bg-zinc-700/80 transition-all"
         aria-label="Share"
       >
         <Share2 className="w-5 h-5" />
       </button>
 
       {/* Content */}
-      <div className="bg-zinc-950">
+      <div className="bg-cinema-page">
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
           {/* Suitable for tags */}
           {suitableFor && suitableFor.length > 0 && (
@@ -100,7 +100,7 @@ export function DetailsLayout({
               {suitableFor.map((tag) => (
                 <span
                   key={tag}
-                  className="px-3 py-1 text-xs font-medium text-zinc-300 bg-zinc-800/60 rounded-full border border-zinc-700/50"
+                  className="px-3 py-1 text-xs font-medium text-zinc-300 bg-cinema-elevated/60 rounded-full border border-zinc-700/50"
                 >
                   {tag}
                 </span>
@@ -121,7 +121,7 @@ export function DetailsLayout({
             </section>
           )}
 
-          <Separator className="my-12 bg-zinc-800/50" />
+          <Separator className="my-12 bg-cinema-elevated/50" />
 
           {/* Trailers */}
           {hasVideos && (
@@ -135,7 +135,7 @@ export function DetailsLayout({
                   primaryTrailer={videos.find((v) => v.key === primaryTrailerKey)}
                 />
               </section>
-              <Separator className="my-12 bg-zinc-800/50" />
+              <Separator className="my-12 bg-cinema-elevated/50" />
             </>
           )}
 
@@ -143,7 +143,7 @@ export function DetailsLayout({
           {typeSpecificSlot && (
             <>
               {typeSpecificSlot}
-              <Separator className="my-12 bg-zinc-800/50" />
+              <Separator className="my-12 bg-cinema-elevated/50" />
             </>
           )}
 
@@ -154,7 +154,7 @@ export function DetailsLayout({
                 {hasCast && <CastCarousel cast={cast} crew={crew || []} />}
                 {hasCrew && <CrewCarousel crew={crew} />}
               </div>
-              <Separator className="my-12 bg-zinc-800/50" />
+              <Separator className="my-12 bg-cinema-elevated/50" />
             </>
           )}
 

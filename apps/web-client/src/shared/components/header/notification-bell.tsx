@@ -54,7 +54,7 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800"
+          className="relative h-9 w-9 rounded-full text-zinc-400 hover:text-white hover:bg-cinema-elevated"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
@@ -63,7 +63,7 @@ export function NotificationBell() {
           <span className="sr-only">{dict.notifications.title}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0 bg-zinc-900 border-zinc-800">
+      <PopoverContent align="end" className="w-80 p-0 bg-cinema-card border-zinc-800">
         <div className="p-3 border-b border-zinc-800 flex items-center justify-between">
           <h3 className="font-medium text-zinc-100">{dict.notifications.title}</h3>
           {unreadCount > 0 && (
@@ -105,11 +105,11 @@ export function NotificationBell() {
                     key={item.id}
                     href={href as Route}
                     onClick={() => handleNotificationClick(item.id, item.isRead)}
-                    className={`flex items-start gap-3 p-3 hover:bg-zinc-800/50 transition-colors ${
-                      !item.isRead ? 'bg-zinc-800/30' : ''
+                    className={`flex items-start gap-3 p-3 hover:bg-cinema-elevated/50 transition-colors ${
+                      !item.isRead ? 'bg-cinema-elevated/30' : ''
                     }`}
                   >
-                    <div className="relative w-10 h-14 rounded overflow-hidden bg-zinc-800 shrink-0">
+                    <div className="relative w-10 h-14 rounded overflow-hidden bg-cinema-elevated shrink-0">
                       {media.poster?.small ? (
                         <Image
                           src={media.poster.small}

@@ -33,7 +33,7 @@ export function UserMenu() {
   };
 
   if (isLoading) {
-    return <div className="w-8 h-8 rounded-full bg-zinc-800 animate-pulse" />;
+    return <div className="w-8 h-8 rounded-full bg-cinema-elevated animate-pulse" />;
   }
 
   if (!isAuthenticated) {
@@ -52,21 +52,21 @@ export function UserMenu() {
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-zinc-900 border-zinc-800">
+      <DropdownMenuContent align="end" className="w-56 bg-cinema-card border-zinc-800">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium text-zinc-100">{user?.username}</p>
             <p className="text-xs text-zinc-500">{user?.email}</p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-zinc-800" />
-        <DropdownMenuItem asChild className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100">
+        <DropdownMenuSeparator className="bg-cinema-elevated" />
+        <DropdownMenuItem asChild className="text-zinc-300 focus:bg-cinema-elevated focus:text-zinc-100">
           <Link href={'/saved' as Route}>
             <Bookmark className="w-4 h-4 mr-2" />
             {dict.auth.saved}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100">
+        <DropdownMenuItem asChild className="text-zinc-300 focus:bg-cinema-elevated focus:text-zinc-100">
           <Link href={'/settings' as Route}>
             <Settings className="w-4 h-4 mr-2" />
             {dict.auth.settings}
@@ -74,10 +74,10 @@ export function UserMenu() {
         </DropdownMenuItem>
         {isAdmin && (
           <>
-            <DropdownMenuSeparator className="bg-zinc-800" />
+            <DropdownMenuSeparator className="bg-cinema-elevated" />
             <DropdownMenuItem
               asChild
-              className="text-zinc-300 focus:bg-zinc-800 focus:text-zinc-100"
+              className="text-zinc-300 focus:bg-cinema-elevated focus:text-zinc-100"
             >
               <Link href={'/admin' as Route}>
                 <Shield className="w-4 h-4 mr-2" />
@@ -86,10 +86,10 @@ export function UserMenu() {
             </DropdownMenuItem>
           </>
         )}
-        <DropdownMenuSeparator className="bg-zinc-800" />
+        <DropdownMenuSeparator className="bg-cinema-elevated" />
         <DropdownMenuItem
           onClick={handleLogout}
-          className="text-red-400 focus:bg-zinc-800 focus:text-red-300"
+          className="text-red-400 focus:bg-cinema-elevated focus:text-red-300"
         >
           <LogOut className="w-4 h-4 mr-2" />
           {dict.auth.logout}
