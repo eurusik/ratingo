@@ -173,12 +173,28 @@ function NestedReplyItem({
 
   // Calculate connector height when replying to last item
   useEffect(() => {
-    if (isReplyingToThis && !hasSiblingsBelow && cardRef.current) {
-      // Connector goes from card hook to form hook
-      // Height = card height + mt-3 gap (12px)
-      const cardHeight = cardRef.current.offsetHeight;
-      setConnectorHeight(cardHeight + 12);
+    if (!isReplyingToThis || hasSiblingsBelow || !cardRef.current) {
+      setConnectorHeight(0);
+      return;
     }
+
+    const calculateHeight = () => {
+      if (cardRef.current) {
+        // Connector goes from card hook to form hook
+        // Height = card height + mt-3 gap (12px)
+        const cardHeight = cardRef.current.offsetHeight;
+        setConnectorHeight(cardHeight + 12);
+      }
+    };
+
+    // Initial calculation
+    calculateHeight();
+
+    // Recalculate on resize
+    const resizeObserver = new ResizeObserver(calculateHeight);
+    resizeObserver.observe(cardRef.current);
+
+    return () => resizeObserver.disconnect();
   }, [isReplyingToThis, hasSiblingsBelow]);
 
   return (
