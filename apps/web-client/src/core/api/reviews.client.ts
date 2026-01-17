@@ -66,6 +66,7 @@ export interface CreateReplyParams {
   reviewId: string;
   content: string;
   parentReplyId?: string;
+  replyToUsername?: string;
 }
 
 export interface CreateReportParams {

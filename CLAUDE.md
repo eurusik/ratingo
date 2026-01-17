@@ -31,6 +31,13 @@ npm run test:api             # Run backend tests (--runInBand)
 npm run test:client          # Run frontend tests
 ```
 
+### Running Single Tests (from apps/api/ or apps/web-client/)
+```bash
+npm test -- path/to/file.spec.ts              # Run single test file
+npm test -- --testNamePattern="test name"     # Filter by test name
+npm run test:watch                            # Watch mode
+```
+
 ### Database (from apps/api/)
 ```bash
 npm run db:generate          # Create new migration

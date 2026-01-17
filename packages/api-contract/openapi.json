@@ -1160,6 +1160,73 @@
         ]
       }
     },
+    "/api/catalog/import/status/{jobId}": {
+      "get": {
+        "operationId": "CatalogSearchController_getImportStatus",
+        "summary": "Get import job status",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "description": "Job ID returned from import endpoint",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Import job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "queued",
+                            "processing",
+                            "ready",
+                            "failed"
+                          ]
+                        },
+                        "slug": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Media slug (available when ready)"
+                        },
+                        "errorMessage": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Error message (on failure)"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
     "/api/catalog/providers": {
       "get": {
         "operationId": "CatalogProvidersController_getProviders",
@@ -12435,6 +12502,10 @@
             "type": "string",
             "description": "Parent reply UUID for nested replies"
           },
+          "replyToUsername": {
+            "type": "string",
+            "description": "Username of the person being replied to"
+          },
           "content": {
             "type": "string",
             "description": "Reply content"
@@ -12620,6 +12691,10 @@
             "type": "string",
             "description": "Parent reply ID for nested replies",
             "format": "uuid"
+          },
+          "replyToUsername": {
+            "type": "string",
+            "description": "Username of the person being replied to"
           }
         },
         "required": [
@@ -12640,6 +12715,10 @@
           "parentReplyId": {
             "type": "string",
             "description": "Parent reply UUID"
+          },
+          "replyToUsername": {
+            "type": "string",
+            "description": "Username of the person being replied to"
           },
           "content": {
             "type": "string",

@@ -1323,6 +1323,7 @@ export const reviewReplies = pgTable(
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
     parentReplyId: uuid('parent_reply_id'),
+    replyToUsername: varchar('reply_to_username', { length: 50 }),
     content: varchar('content', { length: 280 }).notNull(),
     isDeleted: boolean('is_deleted').default(false).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

@@ -230,9 +230,16 @@ export async function apiPut<T>(path: string, json?: unknown, options?: Options)
  *
  * @param path - API endpoint path
  * @param options - Additional ky options
- * @returns Response data
+ * @returns Response data (or void for 204 No Content)
  * @throws {ApiError} When API returns error response
  */
-export async function apiDelete<T>(path: string, options?: Options): Promise<T> {
-  return handleResponse(getClient().delete(path, options).json<ApiResponse<T>>());
+export async function apiDelete<T = void>(path: string, options?: Options): Promise<T> {
+  const response = await getClient().delete(path, options);
+
+  // Handle 204 No Content - return void
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return handleResponse(response.json<ApiResponse<T>>());
 }

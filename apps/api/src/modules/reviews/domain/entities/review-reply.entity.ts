@@ -6,6 +6,7 @@ export interface ReviewReply {
   reviewId: string;
   userId: string;
   parentReplyId: string | null;
+  replyToUsername: string | null;
   content: string;
   isDeleted: boolean;
   createdAt: Date;
@@ -31,5 +32,6 @@ export interface CreateReplyInput {
   reviewId: string;
   userId: string;
   parentReplyId?: string | null;
+  replyToUsername?: string | null;
   content: string;
 }

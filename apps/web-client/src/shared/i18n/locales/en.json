@@ -387,9 +387,10 @@
       "most_liked": "Most liked"
     },
     "form": {
-      "rating": "Your rating",
+      "title": "Leave a review",
+      "rating": "How was it?",
       "ratingGuest": "Rate it",
-      "placeholder": "Share your thoughts... (up to 280 characters)",
+      "placeholder": "Worth it or not? What did you like or dislike...",
       "spoiler": "Contains spoilers",
       "submit": "Post",
       "submitting": "Posting...",
@@ -406,7 +407,10 @@
       "spoilerWarning": "Spoiler",
       "showSpoiler": "Show spoiler",
       "private": "private",
-      "report": "Report"
+      "report": "Report",
+      "today": "today",
+      "yesterday": "yesterday",
+      "daysAgo": "{count}d ago"
     },
     "vote": {
       "like": "Like",

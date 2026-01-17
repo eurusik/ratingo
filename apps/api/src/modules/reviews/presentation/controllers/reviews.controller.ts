@@ -114,6 +114,7 @@ export class ReviewsController {
       id: reply.id,
       reviewId: reply.reviewId,
       parentReplyId: reply.parentReplyId,
+      replyToUsername: reply.replyToUsername,
       content: reply.content,
       author: {
         id: reply.author.id,

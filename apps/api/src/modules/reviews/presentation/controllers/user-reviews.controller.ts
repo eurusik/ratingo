@@ -193,6 +193,7 @@ export class UserReviewsController {
       userId: user.id,
       reviewId,
       parentReplyId: body.parentReplyId,
+      replyToUsername: body.replyToUsername,
       content: body.content,
     });
 
@@ -200,6 +201,7 @@ export class UserReviewsController {
       id: reply.id,
       reviewId: reply.reviewId,
       parentReplyId: reply.parentReplyId,
+      replyToUsername: reply.replyToUsername,
       content: reply.content,
       createdAt: reply.createdAt,
       updatedAt: reply.updatedAt,

@@ -1,0 +1,1 @@
+ALTER TABLE "review_replies" ADD COLUMN "reply_to_username" varchar(50);

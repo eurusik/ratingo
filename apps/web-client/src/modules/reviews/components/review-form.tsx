@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Send, AlertTriangle } from 'lucide-react';
@@ -57,6 +57,17 @@ export function ReviewForm({
   const content = watch('content');
   const rating = watch('rating');
   const charactersRemaining = MAX_CONTENT_LENGTH - content.length;
+  const hasContent = content.trim().length > 0;
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [content]);
 
   const currentLabel = useMemo(() => {
     const labels = dict.reviews.form.ratingLabels;
@@ -89,14 +100,19 @@ export function ReviewForm({
     return 'text-red-500';
   };
 
+  // Merge register with ref for textarea
+  const { ref: registerRef, ...registerRest } = register('content');
+
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className={cn('space-y-4', className)}
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className={cn('space-y-4', className)}>
+      {/* Title */}
+      <h3 className="text-lg font-medium text-zinc-200">
+        {dict.reviews.form.title}
+      </h3>
+
       {/* Rating slider */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
+      <div>
+        <div className="flex items-center justify-between mb-2">
           <label className="text-sm text-zinc-400">
             {isGuest ? dict.reviews.form.ratingGuest : dict.reviews.form.rating}
           </label>
@@ -132,71 +148,79 @@ export function ReviewForm({
         />
       </div>
 
-      {/* Content textarea */}
-      <div className="space-y-2">
+      {/* Textarea container */}
+      <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 overflow-hidden">
         <Textarea
-          {...register('content')}
+          {...registerRest}
+          ref={(e) => {
+            registerRef(e);
+            (textareaRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = e;
+          }}
           placeholder={dict.reviews.form.placeholder}
           className={cn(
-            'min-h-[100px] bg-zinc-800/50 border resize-none',
-            'text-zinc-200 placeholder-zinc-500',
-            errors.content || charactersRemaining < 0 ? 'border-red-500' : 'border-zinc-700',
+            'min-h-[80px] !border-0 !border-none bg-transparent resize-none text-sm overflow-hidden',
+            'text-zinc-200 placeholder-zinc-500 focus-visible:ring-0 shadow-none',
           )}
           disabled={isSubmitting}
         />
-        <div className="flex justify-end">
-          <span
-            className={cn(
-              'text-xs',
-              charactersRemaining < 0
-                ? 'text-red-500'
-                : charactersRemaining < 50
-                  ? 'text-yellow-500'
-                  : 'text-zinc-500',
-            )}
-          >
-            {charactersRemaining}
-          </span>
-        </div>
-      </div>
 
-      {/* Spoiler checkbox */}
-      <Controller
-        name="hasSpoiler"
-        control={control}
-        render={({ field }) => (
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="hasSpoiler"
-              checked={field.value}
-              onCheckedChange={field.onChange}
-              disabled={isSubmitting}
+        {/* Bottom bar */}
+        <div className="flex items-center justify-between px-3 pb-3">
+          {/* Left: spoiler + counter */}
+          <div className="flex items-center gap-4">
+            <Controller
+              name="hasSpoiler"
+              control={control}
+              render={({ field }) => (
+                <div className="flex items-center gap-1.5">
+                  <Checkbox
+                    id="hasSpoiler"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isSubmitting}
+                    className="h-4 w-4"
+                  />
+                  <label
+                    htmlFor="hasSpoiler"
+                    className="flex items-center gap-1 text-xs text-zinc-500 cursor-pointer"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                    {dict.reviews.form.spoiler}
+                  </label>
+                </div>
+              )}
             />
-            <label
-              htmlFor="hasSpoiler"
-              className="flex items-center gap-1.5 text-sm text-zinc-400 cursor-pointer"
+            <span
+              className={cn(
+                'text-xs',
+                charactersRemaining < 0
+                  ? 'text-red-500'
+                  : charactersRemaining < 50
+                    ? 'text-yellow-500'
+                    : 'text-zinc-600',
+              )}
             >
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              {dict.reviews.form.spoiler}
-            </label>
+              {content.length} / {MAX_CONTENT_LENGTH}
+            </span>
           </div>
-        )}
-      />
 
-      {/* Submit button */}
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          disabled={!isValid || isSubmitting}
-          className="flex items-center gap-2"
-        >
-          <Send className="w-4 h-4" />
-          {isSubmitting
-            ? dict.reviews.form.submitting
-            : mode === REVIEW_FORM_MODE.CREATE
-              ? dict.reviews.form.submit
-              : dict.reviews.form.save}
-        </Button>
+          {/* Right: submit button (only when has content) */}
+          {hasContent && (
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!isValid || isSubmitting}
+              className="h-8 flex items-center gap-1.5"
+            >
+              <Send className="w-3.5 h-3.5" />
+              {isSubmitting
+                ? dict.reviews.form.submitting
+                : mode === REVIEW_FORM_MODE.CREATE
+                  ? dict.reviews.form.submit
+                  : dict.reviews.form.save}
+            </Button>
+          )}
+        </div>
       </div>
     </form>
   );

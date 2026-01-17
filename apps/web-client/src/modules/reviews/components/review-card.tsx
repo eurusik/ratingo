@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ThumbsUp, ThumbsDown, MessageCircle, Flag, Eye, EyeOff } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { isToday, isYesterday, differenceInDays, format } from 'date-fns';
 import { uk, enUS } from 'date-fns/locale';
 import { VOTE_TYPE, type ReviewResponseDto, type VoteType } from '@/core/api/reviews.client';
 import { useTranslation, useLocale } from '@/shared/i18n';
@@ -42,10 +42,27 @@ export function ReviewCard({
   const [spoilerRevealed, setSpoilerRevealed] = useState(false);
   const [animatingVote, setAnimatingVote] = useState<VoteType | null>(null);
 
-  const timeAgo = formatDistanceToNow(new Date(review.createdAt), {
-    addSuffix: true,
-    locale: DATE_LOCALES[locale],
-  });
+  // Human-friendly date formatting
+  const formatReviewDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+
+    if (isToday(date)) {
+      return dict.reviews.card.today;
+    }
+    if (isYesterday(date)) {
+      return dict.reviews.card.yesterday;
+    }
+
+    const daysDiff = differenceInDays(new Date(), date);
+    if (daysDiff <= 7) {
+      return dict.reviews.card.daysAgo.replace('{count}', String(daysDiff));
+    }
+
+    // Older than a week - show full date
+    return format(date, 'd MMM yyyy', { locale: DATE_LOCALES[locale] });
+  };
+
+  const reviewDate = formatReviewDate(review.createdAt);
 
   // Disable only when voting in progress or own review (guests can click - parent shows login modal)
   const isVoteDisabled = isVoting || isOwnReview;
@@ -76,7 +93,7 @@ export function ReviewCard({
 
   return (
     <div className={cn('py-6 space-y-4', className)}>
-      {/* Header: Author + Rating + Time */}
+      {/* Header: Author + Time | Rating */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
@@ -87,24 +104,23 @@ export function ReviewCard({
               {review.author.username.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div>
+          <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-zinc-200">
               {review.author.username}
             </span>
             {!review.author.isProfilePublic && (
-              <span className="ml-2 text-xs text-zinc-500">({dict.reviews.card.private})</span>
+              <span className="text-xs text-zinc-500">({dict.reviews.card.private})</span>
             )}
+            <span className="text-xs text-zinc-500">·</span>
+            <span className="text-xs text-zinc-500">{reviewDate}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 text-sm">
-          {review.rating !== null && (
-            <span className="px-2 py-0.5 bg-zinc-800 rounded text-zinc-300 font-medium">
-              ⭐ {review.rating}
-            </span>
-          )}
-          <span className="text-zinc-500">{timeAgo}</span>
-        </div>
+        {review.rating !== null && (
+          <span className="px-2 py-0.5 bg-zinc-800 rounded text-zinc-300 text-sm font-medium">
+            ⭐ {review.rating}
+          </span>
+        )}
       </div>
 
       {/* Content with spoiler handling */}

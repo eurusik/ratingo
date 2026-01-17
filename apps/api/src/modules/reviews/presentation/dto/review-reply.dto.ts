@@ -22,6 +22,12 @@ export class CreateReplyDto {
   @IsOptional()
   @IsUUID()
   parentReplyId?: string;
+
+  @ApiPropertyOptional({ description: 'Username of the person being replied to' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  replyToUsername?: string;
 }
 
 /**
@@ -54,6 +60,9 @@ export class ReplyResponseDto {
   @ApiPropertyOptional({ description: 'Parent reply UUID for nested replies' })
   parentReplyId!: string | null;
 
+  @ApiPropertyOptional({ description: 'Username of the person being replied to' })
+  replyToUsername!: string | null;
+
   @ApiProperty({ description: 'Reply content' })
   content!: string;
 
@@ -79,6 +88,9 @@ export class ReplyMutationResponseDto {
 
   @ApiPropertyOptional({ description: 'Parent reply UUID' })
   parentReplyId!: string | null;
+
+  @ApiPropertyOptional({ description: 'Username of the person being replied to' })
+  replyToUsername!: string | null;
 
   @ApiProperty({ description: 'Reply content' })
   content!: string;

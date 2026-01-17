@@ -160,8 +160,10 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
   return (
     <section className={className}>
       <div className="bg-zinc-900/50 rounded-lg border border-zinc-800/50">
-        {/* Header */}
-        <SectionHeader dict={dict} totalReviews={totalReviews} sort={sort} onSortChange={setSort} />
+        {/* Header - only show when there are reviews */}
+        {totalReviews > 0 && (
+          <SectionHeader dict={dict} totalReviews={totalReviews} sort={sort} onSortChange={setSort} />
+        )}
 
         {/* Review form (show to guests too, they'll see login modal on submit) */}
         {showForm && (
@@ -180,9 +182,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
               <ReviewCardSkeleton key={i} />
             ))}
           </div>
-        ) : reviews.length === 0 ? (
-          <EmptyState dict={dict} isAuthenticated={isAuthenticated} hasForm={showForm} />
-        ) : (
+        ) : reviews.length > 0 && (
           <div>
             {reviews.map((review) => (
               <ReviewCard
@@ -270,27 +270,6 @@ function SectionHeader({ dict, totalReviews, sort, onSortChange }: SectionHeader
           ))}
         </SelectContent>
       </Select>
-    </div>
-  );
-}
-
-interface EmptyStateProps {
-  dict: Dict;
-  isAuthenticated: boolean;
-  hasForm: boolean;
-}
-
-function EmptyState({ dict, isAuthenticated, hasForm }: EmptyStateProps) {
-  return (
-    <div className="text-center py-12 text-zinc-500">
-      <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-      <p className="text-lg mb-2">{dict.reviews.empty}</p>
-      {!isAuthenticated && (
-        <p className="text-sm">{dict.reviews.emptyHint}</p>
-      )}
-      {isAuthenticated && hasForm && (
-        <p className="text-sm">{dict.reviews.emptyHintAuth}</p>
-      )}
     </div>
   );
 }

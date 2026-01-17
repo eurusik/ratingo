@@ -235,6 +235,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/import/status/{jobId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get import job status */
+        get: operations["CatalogSearchController_getImportStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/providers": {
         parameters: {
             query?: never;
@@ -4875,6 +4892,8 @@ export interface components {
             reviewId: string;
             /** @description Parent reply UUID for nested replies */
             parentReplyId?: string;
+            /** @description Username of the person being replied to */
+            replyToUsername?: string;
             /** @description Reply content */
             content: string;
             /** @description Reply author info */
@@ -4981,6 +5000,8 @@ export interface components {
              * @description Parent reply ID for nested replies
              */
             parentReplyId?: string;
+            /** @description Username of the person being replied to */
+            replyToUsername?: string;
         };
         ReplyMutationResponseDto: {
             /** @description Reply UUID */
@@ -4989,6 +5010,8 @@ export interface components {
             reviewId: string;
             /** @description Parent reply UUID */
             parentReplyId?: string;
+            /** @description Username of the person being replied to */
+            replyToUsername?: string;
             /** @description Reply content */
             content: string;
             /**
@@ -5516,6 +5539,40 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["ImportResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    CatalogSearchController_getImportStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Job ID returned from import endpoint */
+                jobId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Import job status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: {
+                            /** @enum {string} */
+                            status?: "queued" | "processing" | "ready" | "failed";
+                            /** @description Media slug (available when ready) */
+                            slug?: string | null;
+                            /** @description Error message (on failure) */
+                            errorMessage?: string | null;
+                        };
                     };
                 };
             };

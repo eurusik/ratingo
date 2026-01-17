@@ -21,6 +21,7 @@ export interface CreateReplyPayload {
   userId: string;
   reviewId: string;
   parentReplyId?: string | null;
+  replyToUsername?: string | null;
   content: string;
 }
 
@@ -56,7 +57,7 @@ export class ReviewRepliesService {
    * Enforces max nesting depth.
    */
   async create(payload: CreateReplyPayload): Promise<ReviewReply> {
-    const { userId, reviewId, parentReplyId, content } = payload;
+    const { userId, reviewId, parentReplyId, replyToUsername, content } = payload;
 
     // Verify review exists
     const review = await this.reviewRepo.findById(reviewId);
@@ -99,6 +100,7 @@ export class ReviewRepliesService {
       userId,
       reviewId,
       parentReplyId: parentReplyId ?? null,
+      replyToUsername: replyToUsername ?? null,
       content: content.trim(),
     });
 

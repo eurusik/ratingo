@@ -66,9 +66,9 @@ export function ReviewReplies({
     return { topLevel, childrenMap };
   }, [replies]);
 
-  const handleCreateReply = async (content: string, parentReplyId?: string) => {
+  const handleCreateReply = async (content: string, parentReplyId?: string, replyToUsername?: string) => {
     try {
-      await createReply.mutateAsync({ content, parentReplyId });
+      await createReply.mutateAsync({ content, parentReplyId, replyToUsername });
       toast.success(dict.reviews.replies.toast.created);
       setReplyingTo(null);
       setShowReplyForm(false);
@@ -191,7 +191,7 @@ interface ReplyItemProps {
   replyingToId?: string;
   replyingToParentId?: string;
   replyingToUsername?: string;
-  onCreateReply: (content: string, parentReplyId?: string) => void;
+  onCreateReply: (content: string, parentReplyId?: string, replyToUsername?: string) => void;
   isCreating: boolean;
   onCancelReply: () => void;
   isLast?: boolean;
@@ -223,7 +223,7 @@ function ReplyItem({
   const isOwn = currentUserId === reply.author.id;
 
   return (
-    <div className="relative pb-3">
+    <div className="relative pb-4">
       {/* Vertical line segment - only if not last (to connect to next sibling) */}
       {!isLast && (
         <div className="absolute -left-5 top-0 bottom-0 w-0.5 bg-zinc-700" />
@@ -234,8 +234,14 @@ function ReplyItem({
         <div className="w-full h-full border-l-2 border-b-2 border-zinc-700 rounded-bl-lg" />
       </div>
 
-      {/* Reply card */}
-      <div className="bg-zinc-900/30 rounded-lg p-3">
+      {/* Reply card - highlight when being replied to */}
+      <div
+        className={cn(
+          'group rounded-lg p-3 transition-all duration-200',
+          'bg-zinc-900/30',
+          replyingToId === reply.id && 'ring-1 ring-zinc-600 bg-zinc-900/50',
+        )}
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -251,13 +257,14 @@ function ReplyItem({
             <span className="text-xs text-zinc-600">{timeAgo}</span>
           </div>
 
-          {/* Delete button for own replies */}
+          {/* Delete button - visible on hover */}
           {isOwn && (
             <button
               onClick={() => onDelete(reply.id)}
               disabled={isDeleting}
               className={cn(
-                'text-zinc-600 hover:text-red-400 transition-colors',
+                'text-zinc-600 hover:text-red-400 transition-all',
+                'opacity-0 group-hover:opacity-100',
                 isDeleting && 'opacity-50 cursor-not-allowed',
               )}
             >
@@ -267,7 +274,12 @@ function ReplyItem({
         </div>
 
         {/* Content */}
-        <p className="text-sm text-zinc-300 leading-relaxed">{reply.content}</p>
+        <p className="text-sm text-zinc-300 leading-relaxed">
+          {reply.replyToUsername && (
+            <span className="text-zinc-500 mr-1">↪ @{reply.replyToUsername}</span>
+          )}
+          {reply.content}
+        </p>
 
         {/* Reply button - below content */}
         {isAuthenticated && !isOwn && replyingToId !== reply.id && (
@@ -309,7 +321,7 @@ function ReplyItem({
       {children && children.length > 0 && (
         <div className="mt-2 ml-6 pl-5">
           {children.map((child, childIndex) => (
-            <div key={child.id} className="relative pb-2">
+            <div key={child.id} className="relative pb-3">
               {/* Vertical line for nested - only if not last (to connect to next sibling) */}
               {childIndex < children.length - 1 && (
                 <div className="absolute -left-5 top-0 bottom-0 w-0.5 bg-zinc-700" />
@@ -318,7 +330,14 @@ function ReplyItem({
               <div className="absolute -left-5 top-0 w-4 h-4">
                 <div className="w-full h-full border-l-2 border-b-2 border-zinc-700 rounded-bl-lg" />
               </div>
-              <div className="bg-zinc-900/30 rounded-lg p-3">
+              {/* Nested reply - lighter background for visual hierarchy */}
+              <div
+                className={cn(
+                  'group rounded-lg p-3 transition-all duration-200',
+                  'bg-zinc-900/20',
+                  replyingToId === child.id && 'ring-1 ring-zinc-600 bg-zinc-900/40',
+                )}
+              >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
@@ -337,12 +356,14 @@ function ReplyItem({
                       })}
                     </span>
                   </div>
+                  {/* Delete button - visible on hover */}
                   {currentUserId === child.author.id && (
                     <button
                       onClick={() => onDelete(child.id)}
                       disabled={isDeleting}
                       className={cn(
-                        'text-zinc-600 hover:text-red-400 transition-colors',
+                        'text-zinc-600 hover:text-red-400 transition-all',
+                        'opacity-0 group-hover:opacity-100',
                         isDeleting && 'opacity-50 cursor-not-allowed',
                       )}
                     >
@@ -350,7 +371,12 @@ function ReplyItem({
                     </button>
                   )}
                 </div>
-                <p className="text-sm text-zinc-300 leading-relaxed">{child.content}</p>
+                <p className="text-sm text-zinc-300 leading-relaxed">
+                  {child.replyToUsername && (
+                    <span className="text-zinc-500 mr-1">↪ @{child.replyToUsername}</span>
+                  )}
+                  {child.content}
+                </p>
 
                 {/* Reply button for nested - creates sibling reply mentioning this user */}
                 {isAuthenticated && currentUserId !== child.author.id && replyingToId !== child.id && (

@@ -9,7 +9,7 @@ import { Button, Textarea } from '@/shared/ui';
 const MAX_REPLY_LENGTH = 280;
 
 interface ReviewReplyFormProps {
-  onSubmit: (content: string, parentReplyId?: string) => void;
+  onSubmit: (content: string, parentReplyId?: string, replyToUsername?: string) => void;
   onCancel?: () => void;
   isSubmitting?: boolean;
   parentReplyId?: string;
@@ -46,7 +46,7 @@ export function ReviewReplyForm({
     e.preventDefault();
     if (!isValid || isSubmitting) return;
 
-    onSubmit(content.trim(), parentReplyId);
+    onSubmit(content.trim(), parentReplyId, replyToUsername);
     setContent('');
   };
 
@@ -87,7 +87,7 @@ export function ReviewReplyForm({
                     : 'text-zinc-600',
               )}
             >
-              {charactersRemaining}
+              {content.length} / {MAX_REPLY_LENGTH}
             </span>
 
             <div className="flex items-center gap-2">
