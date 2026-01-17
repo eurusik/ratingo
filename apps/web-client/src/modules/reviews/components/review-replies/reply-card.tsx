@@ -106,7 +106,7 @@ export function ReplyCard({
       {/* Content */}
       <p className="text-sm text-zinc-300 leading-relaxed break-words">
         {replyToUsername && (
-          <span className="text-zinc-500 mr-1">↪ @{replyToUsername}</span>
+          <span className="text-zinc-500 mr-1 whitespace-nowrap">↪ @{replyToUsername}</span>
         )}
         {content}
       </p>
