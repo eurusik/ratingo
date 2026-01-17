@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
@@ -27,6 +27,16 @@ export function ReviewReplyForm({
 }: ReviewReplyFormProps) {
   const { dict } = useTranslation();
   const [content, setContent] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, [content]);
 
   const charactersRemaining = MAX_REPLY_LENGTH - content.length;
   const isValid = content.trim().length > 0 && charactersRemaining >= 0;
@@ -53,12 +63,13 @@ export function ReviewReplyForm({
 
           {/* Textarea */}
           <Textarea
+            ref={textareaRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder={dict.reviews.replies.placeholder}
             className={cn(
-              'min-h-[50px] border-0 bg-transparent resize-none text-sm',
-              'text-zinc-200 placeholder-zinc-500 focus-visible:ring-0',
+              'min-h-[50px] !border-0 !border-none bg-transparent resize-none text-sm overflow-hidden',
+              'text-zinc-200 placeholder-zinc-500 focus-visible:ring-0 shadow-none',
             )}
             disabled={isSubmitting}
             autoFocus={autoFocus}

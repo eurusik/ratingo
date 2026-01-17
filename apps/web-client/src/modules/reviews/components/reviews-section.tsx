@@ -175,7 +175,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
 
         {/* Reviews list */}
         {isLoadingReviews ? (
-          <div className="divide-y divide-zinc-800">
+          <div>
             {[1, 2, 3].map((i) => (
               <ReviewCardSkeleton key={i} />
             ))}
@@ -183,7 +183,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
         ) : reviews.length === 0 ? (
           <EmptyState dict={dict} isAuthenticated={isAuthenticated} hasForm={showForm} />
         ) : (
-          <div className="divide-y divide-zinc-800">
+          <div>
             {reviews.map((review) => (
               <ReviewCard
                 key={review.id}

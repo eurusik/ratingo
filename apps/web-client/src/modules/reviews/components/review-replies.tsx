@@ -95,7 +95,7 @@ export function ReviewReplies({
 
   return (
     <div className="mt-4">
-      <div className="space-y-0">
+      <div className="space-y-3">
         {/* Toggle button */}
         {repliesCount > 0 && (
           <button
