@@ -318,18 +318,18 @@ function ReplyItem({
               <div className="absolute -left-5 top-0 w-4 h-4">
                 <div className="w-full h-full border-l-2 border-b-2 border-zinc-700 rounded-bl-lg" />
               </div>
-              <div className="bg-zinc-900/20 rounded-lg p-2">
-                <div className="flex items-center justify-between mb-1">
+              <div className="bg-zinc-900/30 rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Avatar className="h-5 w-5">
+                    <Avatar className="h-6 w-6">
                       {child.author.avatarUrl && (
                         <AvatarImage src={child.author.avatarUrl} alt={child.author.username} />
                       )}
-                      <AvatarFallback className="bg-zinc-800 text-zinc-400 text-[10px]">
+                      <AvatarFallback className="bg-zinc-800 text-zinc-400 text-xs">
                         {child.author.username.slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-xs text-zinc-300">{child.author.username}</span>
+                    <span className="text-sm text-zinc-300">{child.author.username}</span>
                     <span className="text-xs text-zinc-600">
                       {formatDistanceToNow(new Date(child.createdAt), {
                         addSuffix: true,
@@ -342,15 +342,15 @@ function ReplyItem({
                       onClick={() => onDelete(child.id)}
                       disabled={isDeleting}
                       className={cn(
-                        'text-xs text-zinc-600 hover:text-red-400 transition-colors',
+                        'text-zinc-600 hover:text-red-400 transition-colors',
                         isDeleting && 'opacity-50 cursor-not-allowed',
                       )}
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-zinc-400 leading-relaxed">{child.content}</p>
+                <p className="text-sm text-zinc-300 leading-relaxed">{child.content}</p>
 
                 {/* Reply button for nested - creates sibling reply mentioning this user */}
                 {isAuthenticated && currentUserId !== child.author.id && replyingToId !== child.id && (
