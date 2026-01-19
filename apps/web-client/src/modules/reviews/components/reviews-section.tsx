@@ -166,57 +166,60 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
         showSort={totalReviews > 0}
       />
 
-      {/* Review form (show to guests too, they'll see login modal on submit) */}
-      {showForm && (
-        <ReviewForm
-          onSubmit={handleCreateReview}
-          isSubmitting={createReview.isPending}
-          isGuest={!isAuthenticated}
-        />
-      )}
+      {/* Content container */}
+      <div className="bg-cinema-card/30 rounded-2xl p-5 border border-cinema-borderSoft/50">
+        {/* Review form (show to guests too, they'll see login modal on submit) */}
+        {showForm && (
+          <ReviewForm
+            onSubmit={handleCreateReview}
+            isSubmitting={createReview.isPending}
+            isGuest={!isAuthenticated}
+          />
+        )}
 
-      {/* Reviews list */}
-      {isLoadingReviews ? (
-        <div className="space-y-6">
-          {[1, 2, 3].map((i) => (
-            <ReviewCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : reviews.length > 0 ? (
-        <div className="space-y-6">
-          {reviews.map((review) => (
-            <ReviewCard
-              key={review.id}
-              review={review}
-              mediaItemId={mediaItemId}
-              onVote={handleVote}
-              onUnvote={handleUnvote}
-              onReport={handleReport}
-              isAuthenticated={isAuthenticated}
-              isVoting={voteReview.isPending || unvoteReview.isPending}
-              isOwnReview={user?.id === review.author.id}
-              currentUserId={user?.id}
-            />
-          ))}
+        {/* Reviews list */}
+        {isLoadingReviews ? (
+          <div className="space-y-6">
+            {[1, 2, 3].map((i) => (
+              <ReviewCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : reviews.length > 0 ? (
+          <div className={showForm ? 'mt-6 pt-6 border-t border-cinema-borderSoft/30 space-y-6' : 'space-y-6'}>
+            {reviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                mediaItemId={mediaItemId}
+                onVote={handleVote}
+                onUnvote={handleUnvote}
+                onReport={handleReport}
+                isAuthenticated={isAuthenticated}
+                isVoting={voteReview.isPending || unvoteReview.isPending}
+                isOwnReview={user?.id === review.author.id}
+                currentUserId={user?.id}
+              />
+            ))}
 
-          {/* Load more button */}
-          {hasMore && (
-            <div className="flex justify-center py-4">
-              <Button
-                variant="outline"
-                onClick={handleLoadMore}
-                className="flex items-center gap-2"
-              >
-                <ChevronDown className="w-4 h-4" />
-                {dict.reviews.loadMore}
-              </Button>
-            </div>
-          )}
-        </div>
-      ) : !showForm && (
-        /* Empty state - only show if form is hidden (user already reviewed) */
-        <EmptyState dict={dict} />
-      )}
+            {/* Load more button */}
+            {hasMore && (
+              <div className="flex justify-center py-4">
+                <Button
+                  variant="outline"
+                  onClick={handleLoadMore}
+                  className="flex items-center gap-2"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                  {dict.reviews.loadMore}
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : !showForm && (
+          /* Empty state - only show if form is hidden (user already reviewed) */
+          <EmptyState dict={dict} />
+        )}
+      </div>
 
       {/* Report dialog */}
       <ReviewReportDialog
@@ -245,14 +248,14 @@ interface SectionHeaderProps {
 
 function SectionHeader({ dict, totalReviews, sort, onSortChange, showSort = true }: SectionHeaderProps) {
   return (
-    <div className="flex items-center justify-between pb-6">
+    <div className="flex items-center justify-between pb-4">
       <div className="flex items-center gap-2">
-        <MessageSquare className="w-5 h-5 text-cinema-text-secondary" />
-        <h2 className="text-base font-semibold text-cinema-text-primary uppercase tracking-wider">
+        <MessageSquare className="w-4 h-4 text-cinema-text-muted" />
+        <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
           {dict.reviews.title}
         </h2>
         {totalReviews > 0 && (
-          <span className="text-sm text-cinema-text-muted">({totalReviews})</span>
+          <span className="text-sm text-cinema-text-disabled">({totalReviews})</span>
         )}
       </div>
 
