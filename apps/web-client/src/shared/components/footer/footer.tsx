@@ -15,7 +15,7 @@ export function Footer() {
   const dict = getDictionary('uk');
 
   return (
-    <footer className="border-t border-border/40 bg-background/50">
+    <footer className="border-t border-cinema-borderSoft/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 text-center md:text-left">
           {/* About — anchor column */}
