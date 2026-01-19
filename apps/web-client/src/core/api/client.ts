@@ -184,11 +184,14 @@ export async function apiGet<T>(path: string, options?: Options): Promise<T> {
  * @throws {ApiError} When API returns error response
  */
 export async function apiPost<T>(path: string, json?: unknown, options?: Options): Promise<T> {
-  return handleResponse(
-    getClient()
-      .post(path, { json, ...options })
-      .json<ApiResponse<T>>(),
-  );
+  const response = await getClient().post(path, { json, ...options });
+
+  // Handle 204 No Content - return void
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return handleResponse(response.json<ApiResponse<T>>());
 }
 
 /**

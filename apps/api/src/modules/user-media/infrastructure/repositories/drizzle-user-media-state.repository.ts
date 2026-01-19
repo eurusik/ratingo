@@ -73,6 +73,32 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   }
 
   /**
+   * Deletes user media state.
+   *
+   * @param {string} userId - User identifier
+   * @param {string} mediaItemId - Media item identifier
+   * @returns {Promise<void>}
+   */
+  async delete(userId: string, mediaItemId: string): Promise<void> {
+    try {
+      await this.db
+        .delete(schema.userMediaState)
+        .where(
+          and(
+            eq(schema.userMediaState.userId, userId),
+            eq(schema.userMediaState.mediaItemId, mediaItemId),
+          ),
+        );
+    } catch (error) {
+      this.logger.error(`delete failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to delete user media state', {
+        userId,
+        mediaItemId,
+      });
+    }
+  }
+
+  /**
    * Lists "Continue" items with media summary.
    *
    * Semantics: `progress IS NOT NULL`.
@@ -274,6 +300,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           poster: ImageDto | null;
           releaseDate?: Date | null;
         };
+        progressSummary?: { watched: number; total: number } | null;
       }
     >
   > {
@@ -301,6 +328,25 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             posterPath: schema.mediaItems.posterPath,
             releaseDate: schema.mediaItems.releaseDate,
           },
+          // Progress for shows: total episodes and watched count
+          progressTotal: sql<number | null>`
+            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+              SELECT COUNT(*)::int FROM ${schema.episodes} e
+              JOIN ${schema.seasons} s ON s.id = e.season_id
+              JOIN ${schema.shows} sh ON sh.id = s.show_id
+              WHERE sh.media_item_id = ${schema.mediaItems.id}
+            ) ELSE NULL END
+          `.as('progress_total'),
+          progressWatched: sql<number | null>`
+            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+              SELECT COUNT(*)::int FROM ${schema.userEpisodeProgress} uep
+              JOIN ${schema.episodes} e ON e.id = uep.episode_id
+              JOIN ${schema.seasons} s ON s.id = e.season_id
+              JOIN ${schema.shows} sh ON sh.id = s.show_id
+              WHERE sh.media_item_id = ${schema.mediaItems.id}
+              AND uep.user_id = ${userId}
+            ) ELSE NULL END
+          `.as('progress_watched'),
         })
         .from(schema.userMediaState)
         .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
@@ -319,6 +365,10 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           poster: ImageMapper.toPoster(r.media.posterPath),
           releaseDate: r.media.releaseDate,
         },
+        progressSummary:
+          r.progressTotal !== null && r.progressWatched !== null
+            ? { watched: r.progressWatched, total: r.progressTotal }
+            : null,
       }));
     } catch (error) {
       this.logger.error(`listWithMedia failed: ${error.message}`, error.stack);

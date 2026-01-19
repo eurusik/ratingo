@@ -185,4 +185,47 @@ describe('DrizzleEpisodeProgressRepository', () => {
       await expect(repo.getShowProgress('user-1', 'show-1')).rejects.toThrow(DatabaseException);
     });
   });
+
+  describe('getEpisodeMediaInfo', () => {
+    it('should return episode media info when found', async () => {
+      const db = makeDbMock();
+      const mockInfo = {
+        episodeId: 'ep-1',
+        showId: 'show-1',
+        mediaItemId: 'media-1',
+        seasonNumber: 1,
+        episodeNumber: 3,
+      };
+
+      // Override the chain for getEpisodeMediaInfo which uses limit
+      const limitMock = jest.fn().mockResolvedValue([mockInfo]);
+      db.whereMock.mockReturnValue({ limit: limitMock });
+
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+      const result = await repo.getEpisodeMediaInfo('ep-1');
+
+      expect(result).toEqual(mockInfo);
+    });
+
+    it('should return null when episode not found', async () => {
+      const db = makeDbMock();
+      const limitMock = jest.fn().mockResolvedValue([]);
+      db.whereMock.mockReturnValue({ limit: limitMock });
+
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+      const result = await repo.getEpisodeMediaInfo('non-existent');
+
+      expect(result).toBeNull();
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const db = makeDbMock();
+      const limitMock = jest.fn().mockRejectedValue(new Error('DB error'));
+      db.whereMock.mockReturnValue({ limit: limitMock });
+
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      await expect(repo.getEpisodeMediaInfo('ep-1')).rejects.toThrow(DatabaseException);
+    });
+  });
 });

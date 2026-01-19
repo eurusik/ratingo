@@ -93,6 +93,13 @@ export const queryKeys = {
     showProgress: (showId: string) => [...queryKeys.episodeProgress.all, 'show', showId] as const,
   },
 
+  /** Me lists queries (activity, history). */
+  meLists: {
+    all: ['me-lists'] as const,
+    history: ['me-lists', 'history'] as const,
+    watchlist: ['me-lists', 'watchlist'] as const,
+  },
+
   /** Public user queries. */
   users: {
     profile: (username: string) => ['users', username] as const,

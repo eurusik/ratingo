@@ -145,6 +145,7 @@
     "noAccount": "Немає акаунту?",
     "hasAccount": "Вже є акаунт?",
     "saved": "Збережене",
+    "activity": "Активність",
     "settings": "Налаштування",
     "admin": "Адмін-панель",
     "notifications": "Сповіщення",
@@ -543,6 +544,8 @@
     "tabs": {
       "forLater": "На потім",
       "considering": "Роздумую",
+      "watchlist": "До перегляду",
+      "history": "Переглянуті",
       "notifications": "Сповіщення"
     },
     "empty": {
@@ -554,10 +557,24 @@
         "title": "Тут поки порожньо",
         "description": "Додавайте контент, щодо якого ще не вирішили"
       },
+      "watchlist": {
+        "title": "Список порожній",
+        "description": "Додайте контент, який плануєте дивитись"
+      },
+      "history": {
+        "title": "Історія порожня",
+        "description": "Ви ще нічого не переглянули"
+      },
       "notifications": {
         "title": "Немає активних сповіщень",
         "description": "Підписуйтесь на реліз або новий сезон, щоб не пропустити"
       }
+    },
+    "states": {
+      "watching": "Дивлюсь",
+      "completed": "Переглянуто",
+      "planned": "Заплановано",
+      "dropped": "Покинуто"
     },
     "actions": {
       "remove": "Видалити",
@@ -622,6 +639,29 @@
       "steadyInterest": "Стабільний інтерес",
       "classicChoice": "Класика",
       "timelessFavorite": "Улюблена класика"
+    }
+  },
+  "activity": {
+    "title": "Активність",
+    "tabs": {
+      "watching": "Дивлюсь",
+      "history": "Переглянуті"
+    },
+    "empty": {
+      "watching": {
+        "title": "Ще нічого не дивитесь",
+        "description": "Почніть дивитись серіал і він з'явиться тут"
+      },
+      "history": {
+        "title": "Історія порожня",
+        "description": "Ви ще нічого не переглянули"
+      }
+    },
+    "toast": {
+      "addedToWatching": "Додано до «Дивлюсь»",
+      "completed": "Серіал позначено як переглянутий",
+      "backToWatching": "Повернено до «Дивлюсь»",
+      "removedFromActivity": "Видалено з активності"
     }
   },
   "notifications": {

@@ -11,3 +11,4 @@ export * from './journal.client';
 export * from './reviews.client';
 export * from './admin-reports.client';
 export * from './episode-progress.client';
+export * from './me-lists.client';

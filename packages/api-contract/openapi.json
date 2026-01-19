@@ -1838,6 +1838,9 @@
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Episode not found"
           }
         },
         "tags": [
@@ -8693,6 +8696,25 @@
           "poster"
         ]
       },
+      "ProgressSummaryDto": {
+        "type": "object",
+        "properties": {
+          "watched": {
+            "type": "number",
+            "description": "Number of watched episodes",
+            "example": 5
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of episodes",
+            "example": 10
+          }
+        },
+        "required": [
+          "watched",
+          "total"
+        ]
+      },
       "MeUserMediaListItemDto": {
         "type": "object",
         "properties": {
@@ -8767,6 +8789,15 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/MeUserMediaSummaryDto"
+              }
+            ]
+          },
+          "progressSummary": {
+            "nullable": true,
+            "description": "Episode progress summary (only for shows)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProgressSummaryDto"
               }
             ]
           }

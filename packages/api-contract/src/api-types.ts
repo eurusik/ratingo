@@ -2732,6 +2732,18 @@ export interface components {
             releaseDate?: string | null;
             card?: components["schemas"]["CardMetaDto"];
         };
+        ProgressSummaryDto: {
+            /**
+             * @description Number of watched episodes
+             * @example 5
+             */
+            watched: number;
+            /**
+             * @description Total number of episodes
+             * @example 10
+             */
+            total: number;
+        };
         MeUserMediaListItemDto: {
             /** @example 5f7c9b2c-1d2e-4f3a-9c4b-8a7d6e5f4c3b */
             id: string;
@@ -2786,6 +2798,8 @@ export interface components {
              *     }
              */
             mediaSummary: components["schemas"]["MeUserMediaSummaryDto"] | null;
+            /** @description Episode progress summary (only for shows) */
+            progressSummary?: components["schemas"]["ProgressSummaryDto"] | null;
         };
         PaginatedMeUserMediaResponseDto: {
             data: components["schemas"]["MeUserMediaListItemDto"][];
@@ -5951,6 +5965,13 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Episode not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

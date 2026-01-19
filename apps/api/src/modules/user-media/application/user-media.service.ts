@@ -61,6 +61,18 @@ export class UserMediaService {
   }
 
   /**
+   * Deletes user media state.
+   *
+   * @param {string} userId - User identifier
+   * @param {string} mediaItemId - Media item identifier
+   * @returns {Promise<void>}
+   */
+  async deleteState(userId: string, mediaItemId: string): Promise<void> {
+    await this.repo.delete(userId, mediaItemId);
+    this.logger.log(`Deleted user_media_state for user=${userId}, media=${mediaItemId}`);
+  }
+
+  /**
    * Gets state with media summary.
    *
    * @param {string} userId - User identifier

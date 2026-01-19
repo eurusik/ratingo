@@ -267,6 +267,15 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   async findOneWithMedia(userId: string, mediaItemId: string): Promise<any> {
     return this.states.find((s) => s.userId === userId && s.mediaItemId === mediaItemId) ?? null;
   }
+
+  async delete(userId: string, mediaItemId: string): Promise<void> {
+    const index = this.states.findIndex(
+      (s) => s.userId === userId && s.mediaItemId === mediaItemId,
+    );
+    if (index !== -1) {
+      this.states.splice(index, 1);
+    }
+  }
 }
 
 export class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {

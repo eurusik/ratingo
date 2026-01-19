@@ -140,6 +140,9 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   async findOneWithMedia(): Promise<any> {
     return null;
   }
+  async delete(): Promise<void> {
+    // no-op
+  }
 }
 
 class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {

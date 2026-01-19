@@ -7,6 +7,7 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
+  type EpisodeMediaInfo,
   type IEpisodeProgressRepository,
   type SeasonProgressInfo,
 } from '../../domain/repositories/episode-progress.repository.interface';
@@ -149,6 +150,34 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
       throw new DatabaseException('Failed to get show progress', {
         userId,
         showId,
+      });
+    }
+  }
+
+  /**
+   * Gets episode media info (showId, mediaItemId, season/episode numbers).
+   */
+  async getEpisodeMediaInfo(episodeId: string): Promise<EpisodeMediaInfo | null> {
+    try {
+      const rows = await this.db
+        .select({
+          episodeId: schema.episodes.id,
+          showId: schema.episodes.showId,
+          mediaItemId: schema.shows.mediaItemId,
+          seasonNumber: schema.seasons.number,
+          episodeNumber: schema.episodes.number,
+        })
+        .from(schema.episodes)
+        .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))
+        .innerJoin(schema.shows, eq(schema.episodes.showId, schema.shows.id))
+        .where(eq(schema.episodes.id, episodeId))
+        .limit(1);
+
+      return rows[0] ?? null;
+    } catch (error) {
+      this.logger.error(`getEpisodeMediaInfo failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to get episode media info', {
+        episodeId,
       });
     }
   }

@@ -24,6 +24,7 @@ type UserMediaWithSummary = UserMediaState & {
     poster: ImageDto | null;
     releaseDate?: Date | null;
   };
+  progressSummary?: { watched: number; total: number } | null;
 };
 
 /**
@@ -54,6 +55,7 @@ export class MeListsController {
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
       mediaSummary: item.mediaSummary,
+      progressSummary: item.progressSummary ?? null,
     };
   }
 

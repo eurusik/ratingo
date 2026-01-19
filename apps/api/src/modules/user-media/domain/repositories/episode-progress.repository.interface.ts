@@ -14,6 +14,17 @@ export interface SeasonProgressInfo {
 }
 
 /**
+ * Episode info needed for user-media sync.
+ */
+export interface EpisodeMediaInfo {
+  episodeId: string;
+  showId: string;
+  mediaItemId: string;
+  seasonNumber: number;
+  episodeNumber: number;
+}
+
+/**
  * Repository contract for episode watch progress operations.
  */
 export interface IEpisodeProgressRepository {
@@ -52,4 +63,12 @@ export interface IEpisodeProgressRepository {
    * @returns {Promise<string[]>} Watched episode IDs
    */
   getWatchedEpisodeIds(userId: string, showId: string): Promise<string[]>;
+
+  /**
+   * Gets episode media info (showId, mediaItemId, season/episode numbers).
+   *
+   * @param {string} episodeId - Episode identifier
+   * @returns {Promise<EpisodeMediaInfo | null>} Episode info or null if not found
+   */
+  getEpisodeMediaInfo(episodeId: string): Promise<EpisodeMediaInfo | null>;
 }

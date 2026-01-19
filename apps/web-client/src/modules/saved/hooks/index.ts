@@ -9,3 +9,4 @@ export {
   useUnsaveItem,
 } from './use-saved-items';
 export { useSubscriptions, useSubscribe, useUnsubscribe } from './use-subscriptions';
+export { useWatching, useCompleted, useWatchlist, useHistory } from './use-me-lists';

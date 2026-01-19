@@ -1,6 +1,6 @@
 /**
- * Saved page - user's bookmarks.
- * Contains tabs: For Later, Considering.
+ * Activity page - user's watching progress.
+ * Contains tabs: Watching, Completed (history).
  */
 
 'use client';
@@ -10,23 +10,29 @@ import { Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { SavedList } from '@/modules/saved';
+import { Watchlist, HistoryList } from '@/modules/saved';
+import { USER_MEDIA_STATE } from '@/core/api';
 
+/**
+ * Tab identifiers for URL params and Radix UI.
+ * WATCHING uses USER_MEDIA_STATE for consistency.
+ * HISTORY is a UI concept (shows completed items).
+ */
 const TAB_VALUES = {
-  FOR_LATER: 'for-later',
-  CONSIDERING: 'considering',
+  WATCHING: USER_MEDIA_STATE.WATCHING,
+  HISTORY: 'history',
 } as const;
 
 type TabValue = (typeof TAB_VALUES)[keyof typeof TAB_VALUES];
 
-const DEFAULT_TAB = TAB_VALUES.FOR_LATER;
+const DEFAULT_TAB = TAB_VALUES.WATCHING;
 
 function getTabFromParam(param: string | null): TabValue {
-  if (param === TAB_VALUES.CONSIDERING) return TAB_VALUES.CONSIDERING;
+  if (param === TAB_VALUES.HISTORY) return TAB_VALUES.HISTORY;
   return DEFAULT_TAB;
 }
 
-function SavedPageContent() {
+function ActivityPageContent() {
   const { dict } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
   const searchParams = useSearchParams();
@@ -49,7 +55,7 @@ function SavedPageContent() {
       <div className="min-h-screen pt-24 pb-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <h1 className="text-2xl font-bold text-cinema-text-primary mb-4">{dict.saved.title}</h1>
+            <h1 className="text-2xl font-bold text-cinema-text-primary mb-4">{dict.activity.title}</h1>
             <p className="text-cinema-text-muted">{dict.auth.loginSubtitle}</p>
           </div>
         </div>
@@ -60,24 +66,24 @@ function SavedPageContent() {
   return (
     <div className="min-h-screen pt-24 pb-12">
       <div className="container mx-auto px-4">
-        <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.saved.title}</h1>
+        <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.activity.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 flex-wrap h-auto gap-1 p-1">
-            <TabsTrigger value={TAB_VALUES.FOR_LATER} className="data-[state=active]:bg-cinema-elevated">
-              {dict.saved.tabs.forLater}
+            <TabsTrigger value={TAB_VALUES.WATCHING} className="data-[state=active]:bg-cinema-elevated">
+              {dict.activity.tabs.watching}
             </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.CONSIDERING} className="data-[state=active]:bg-cinema-elevated">
-              {dict.saved.tabs.considering}
+            <TabsTrigger value={TAB_VALUES.HISTORY} className="data-[state=active]:bg-cinema-elevated">
+              {dict.activity.tabs.history}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={TAB_VALUES.FOR_LATER} className="mt-0">
-            <SavedList list="for_later" />
+          <TabsContent value={TAB_VALUES.WATCHING} className="mt-0">
+            <Watchlist />
           </TabsContent>
 
-          <TabsContent value={TAB_VALUES.CONSIDERING} className="mt-0">
-            <SavedList list="considering" />
+          <TabsContent value={TAB_VALUES.HISTORY} className="mt-0">
+            <HistoryList />
           </TabsContent>
         </Tabs>
       </div>
@@ -85,7 +91,7 @@ function SavedPageContent() {
   );
 }
 
-export default function SavedPage() {
+export default function ActivityPage() {
   return (
     <Suspense
       fallback={
@@ -96,7 +102,7 @@ export default function SavedPage() {
         </div>
       }
     >
-      <SavedPageContent />
+      <ActivityPageContent />
     </Suspense>
   );
 }

@@ -7,6 +7,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Clock } from 'lucide-react';
+import { toast } from 'sonner';
 import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
 import { formatDate } from '@/shared/utils/format';
@@ -70,6 +71,18 @@ export function EpisodesSection({
     [currentSeasonProgress],
   );
 
+  // Calculate total progress across all seasons
+  const totalProgress = useMemo(() => {
+    if (!progressData) return { watched: 0, total: 0 };
+    return progressData.seasons.reduce(
+      (acc, s) => ({
+        watched: acc.watched + s.watchedCount,
+        total: acc.total + s.totalCount,
+      }),
+      { watched: 0, total: 0 },
+    );
+  }, [progressData]);
+
   // Episodes list from selected season
   const episodes = useMemo(
     () => selectedSeason?.episodes || [],
@@ -84,6 +97,9 @@ export function EpisodesSection({
       if (!isAuthenticated || toggleWatched.isPending || markMultipleWatched.isPending) return;
 
       const isCurrentlyWatched = watchedEpisodeIds.has(episodeId);
+      const wasCompleted = totalProgress.watched === totalProgress.total && totalProgress.total > 0;
+      const prevWatched = totalProgress.watched;
+
       setTogglingEpisodeId(episodeId);
 
       toggleWatched.mutate(
@@ -93,11 +109,27 @@ export function EpisodesSection({
           watched: !isCurrentlyWatched,
         },
         {
+          onSuccess: () => {
+            const newWatched = isCurrentlyWatched ? prevWatched - 1 : prevWatched + 1;
+            const prevTotal = totalProgress.total;
+            const isNowCompleted = newWatched === prevTotal && prevTotal > 0;
+
+            // Show toast based on state transition
+            if (!isCurrentlyWatched && isNowCompleted) {
+              toast.success(dict.activity.toast.completed);
+            } else if (!isCurrentlyWatched && prevWatched === 0) {
+              toast.success(dict.activity.toast.addedToWatching);
+            } else if (isCurrentlyWatched && wasCompleted) {
+              toast.info(dict.activity.toast.backToWatching);
+            } else if (isCurrentlyWatched && newWatched === 0) {
+              toast.info(dict.activity.toast.removedFromActivity);
+            }
+          },
           onSettled: () => setTogglingEpisodeId(null),
         },
       );
     },
-    [isAuthenticated, toggleWatched, markMultipleWatched.isPending, watchedEpisodeIds],
+    [isAuthenticated, toggleWatched, markMultipleWatched.isPending, watchedEpisodeIds, totalProgress, dict],
   );
 
   /**
@@ -118,6 +150,7 @@ export function EpisodesSection({
 
       if (episodesToMark.length === 0) return;
 
+      const prevWatched = totalProgress.watched;
       setTogglingEpisodeId(episodesToMark[episodesToMark.length - 1]);
 
       markMultipleWatched.mutate(
@@ -126,11 +159,21 @@ export function EpisodesSection({
           seasonNumber,
         },
         {
+          onSuccess: () => {
+            const newWatched = prevWatched + episodesToMark.length;
+            const isNowCompleted = newWatched === totalProgress.total && totalProgress.total > 0;
+
+            if (isNowCompleted) {
+              toast.success(dict.activity.toast.completed);
+            } else if (prevWatched === 0) {
+              toast.success(dict.activity.toast.addedToWatching);
+            }
+          },
           onSettled: () => setTogglingEpisodeId(null),
         },
       );
     },
-    [isAuthenticated, markMultipleWatched, toggleWatched.isPending, episodes, watchedEpisodeIds],
+    [isAuthenticated, markMultipleWatched, toggleWatched.isPending, episodes, watchedEpisodeIds, totalProgress, dict],
   );
 
   /**

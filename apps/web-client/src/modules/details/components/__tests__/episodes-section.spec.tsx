@@ -5,6 +5,18 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { EpisodesSection } from '../episodes-section';
 
+// Mock auth hook
+jest.mock('@/core/auth', () => ({
+  useAuth: () => ({ isAuthenticated: false }),
+}));
+
+// Mock query hooks
+jest.mock('@/core/query', () => ({
+  useShowProgress: () => ({ data: null }),
+  useToggleEpisodeWatched: () => ({ mutate: jest.fn(), isPending: false }),
+  useMarkMultipleWatched: () => ({ mutate: jest.fn(), isPending: false }),
+}));
+
 // Mock next/image
 jest.mock('next/image', () => ({
   __esModule: true,
@@ -136,9 +148,9 @@ describe('EpisodesSection', () => {
         <EpisodesSection seasons={seasons} dict={mockDict} />,
       );
 
-      // Check for collapsed state via CSS class
-      const animatedContainer = container.querySelector('.grid-rows-\\[0fr\\]');
-      expect(animatedContainer).toBeInTheDocument();
+      // Check for collapsed state via inline style
+      const animatedContainer = container.querySelector('.grid');
+      expect(animatedContainer).toHaveStyle({ gridTemplateRows: '0fr', opacity: '0' });
     });
 
     it('should expand when clicking season header', async () => {
@@ -155,10 +167,10 @@ describe('EpisodesSection', () => {
       // Click to expand
       fireEvent.click(screen.getByText('Сезон 1'));
 
-      // Check for expanded state via CSS class
+      // Check for expanded state via inline style
       await waitFor(() => {
-        const expandedContainer = container.querySelector('.grid-rows-\\[1fr\\]');
-        expect(expandedContainer).toBeInTheDocument();
+        const expandedContainer = container.querySelector('.grid');
+        expect(expandedContainer).toHaveStyle({ gridTemplateRows: '1fr', opacity: '1' });
       });
 
       // Episodes should be in DOM
@@ -179,13 +191,15 @@ describe('EpisodesSection', () => {
       // Expand
       fireEvent.click(seasonButton);
       await waitFor(() => {
-        expect(container.querySelector('.grid-rows-\\[1fr\\]')).toBeInTheDocument();
+        const container2 = document.querySelector('.grid');
+        expect(container2).toHaveStyle({ gridTemplateRows: '1fr', opacity: '1' });
       });
 
       // Collapse
       fireEvent.click(seasonButton);
       await waitFor(() => {
-        expect(container.querySelector('.grid-rows-\\[0fr\\]')).toBeInTheDocument();
+        const container3 = document.querySelector('.grid');
+        expect(container3).toHaveStyle({ gridTemplateRows: '0fr', opacity: '0' });
       });
     });
   });

@@ -71,6 +71,15 @@ export interface IUserMediaStateRepository {
   findOne(userId: string, mediaItemId: string): Promise<UserMediaState | null>;
 
   /**
+   * Deletes user media state.
+   *
+   * @param {string} userId - User identifier
+   * @param {string} mediaItemId - Media item identifier
+   * @returns {Promise<void>}
+   */
+  delete(userId: string, mediaItemId: string): Promise<void>;
+
+  /**
    * Lists states by user.
    *
    * @param {string} userId - User identifier

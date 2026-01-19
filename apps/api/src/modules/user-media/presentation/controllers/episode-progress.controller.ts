@@ -4,7 +4,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Inject,
   Param,
   Post,
   UseGuards,
@@ -12,6 +11,7 @@ import {
 import {
   ApiBearerAuth,
   ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -21,10 +21,7 @@ import {
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
-import {
-  EPISODE_PROGRESS_REPOSITORY,
-  type IEpisodeProgressRepository,
-} from '../../domain/repositories/episode-progress.repository.interface';
+import { EpisodeProgressService } from '../../application/episode-progress.service';
 import { ShowProgressDto } from '../dto/episode-progress.dto';
 
 /**
@@ -35,13 +32,13 @@ import { ShowProgressDto } from '../dto/episode-progress.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('user-media')
 export class EpisodeProgressController {
-  constructor(
-    @Inject(EPISODE_PROGRESS_REPOSITORY)
-    private readonly episodeProgressRepository: IEpisodeProgressRepository,
-  ) {}
+  constructor(private readonly episodeProgressService: EpisodeProgressService) {}
 
   /**
    * Marks an episode as watched.
+   *
+   * Also auto-creates/updates user_media_state with 'watching' status
+   * if no state exists or current state is 'planned'.
    *
    * @param {{ id: string }} user - Current user context
    * @param {string} episodeId - Episode UUID
@@ -49,6 +46,7 @@ export class EpisodeProgressController {
    */
   @ApiParam({ name: 'episodeId', type: String, description: 'Episode UUID' })
   @ApiNoContentResponse({ description: 'Episode marked as watched' })
+  @ApiNotFoundResponse({ description: 'Episode not found' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'Mark episode as watched (auth: Bearer)' })
   @Post('episodes/:episodeId/watch')
@@ -57,7 +55,7 @@ export class EpisodeProgressController {
     @CurrentUser() user: { id: string },
     @Param('episodeId') episodeId: string,
   ): Promise<void> {
-    await this.episodeProgressRepository.markWatched(user.id, episodeId);
+    await this.episodeProgressService.markWatched(user.id, episodeId);
   }
 
   /**
@@ -77,7 +75,7 @@ export class EpisodeProgressController {
     @CurrentUser() user: { id: string },
     @Param('episodeId') episodeId: string,
   ): Promise<void> {
-    await this.episodeProgressRepository.markUnwatched(user.id, episodeId);
+    await this.episodeProgressService.markUnwatched(user.id, episodeId);
   }
 
   /**
@@ -96,7 +94,7 @@ export class EpisodeProgressController {
     @CurrentUser() user: { id: string },
     @Param('showId') showId: string,
   ): Promise<ShowProgressDto> {
-    const seasons = await this.episodeProgressRepository.getShowProgress(user.id, showId);
+    const seasons = await this.episodeProgressService.getShowProgress(user.id, showId);
     return {
       showId,
       seasons,

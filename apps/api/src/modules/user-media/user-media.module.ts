@@ -4,6 +4,7 @@ import { DatabaseModule } from '../../database/database.module';
 import { AuthModule } from '../auth/auth.module';
 import { CardsModule } from '../shared/cards/cards.module';
 
+import { EpisodeProgressService } from './application/episode-progress.service';
 import { MeListsService } from './application/me-lists.service';
 import { UserMediaService } from './application/user-media.service';
 import { EPISODE_PROGRESS_REPOSITORY } from './domain/repositories/episode-progress.repository.interface';
@@ -22,6 +23,7 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
   providers: [
     UserMediaService,
     MeListsService,
+    EpisodeProgressService,
     {
       provide: USER_MEDIA_STATE_REPOSITORY,
       useClass: DrizzleUserMediaStateRepository,

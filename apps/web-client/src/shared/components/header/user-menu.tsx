@@ -7,7 +7,7 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { User, LogOut, Settings, Bookmark, Shield } from 'lucide-react';
+import { User, LogOut, Settings, Bookmark, Shield, Play } from 'lucide-react';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { useTranslation } from '@/shared/i18n';
 import {
@@ -64,6 +64,12 @@ export function UserMenu() {
           <Link href={'/saved' as Route}>
             <Bookmark className="w-4 h-4 mr-2" />
             {dict.auth.saved}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="text-cinema-text-secondary focus:bg-cinema-elevated focus:text-cinema-text-primary">
+          <Link href={'/activity' as Route}>
+            <Play className="w-4 h-4 mr-2" />
+            {dict.auth.activity}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild className="text-cinema-text-secondary focus:bg-cinema-elevated focus:text-cinema-text-primary">

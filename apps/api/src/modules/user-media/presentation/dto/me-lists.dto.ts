@@ -13,6 +13,17 @@ import {
 
 import { UserMediaStateDto } from './user-media-state.dto';
 
+/**
+ * Aggregated episode progress summary for shows.
+ */
+export class ProgressSummaryDto {
+  @ApiProperty({ description: 'Number of watched episodes', example: 5 })
+  watched!: number;
+
+  @ApiProperty({ description: 'Total number of episodes', example: 10 })
+  total!: number;
+}
+
 export const ME_USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
 
 /**
@@ -64,6 +75,13 @@ export class MeUserMediaSummaryDto {
 export class MeUserMediaListItemDto extends UserMediaStateDto {
   @ApiProperty({ type: MeUserMediaSummaryDto })
   mediaSummary!: MeUserMediaSummaryDto;
+
+  @ApiPropertyOptional({
+    type: ProgressSummaryDto,
+    nullable: true,
+    description: 'Episode progress summary (only for shows)',
+  })
+  progressSummary?: ProgressSummaryDto | null;
 }
 
 /**

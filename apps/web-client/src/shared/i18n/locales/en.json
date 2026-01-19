@@ -145,6 +145,7 @@
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "saved": "Saved",
+    "activity": "Activity",
     "settings": "Settings",
     "admin": "Admin Panel",
     "notifications": "Notifications",
@@ -543,6 +544,8 @@
     "tabs": {
       "forLater": "For Later",
       "considering": "Considering",
+      "watchlist": "Watchlist",
+      "history": "History",
       "notifications": "Notifications"
     },
     "empty": {
@@ -554,10 +557,24 @@
         "title": "Nothing here yet",
         "description": "Add content you're still deciding on"
       },
+      "watchlist": {
+        "title": "Watchlist is empty",
+        "description": "Add content to your watchlist"
+      },
+      "history": {
+        "title": "History is empty",
+        "description": "You haven't watched anything yet"
+      },
       "notifications": {
         "title": "No active notifications",
         "description": "Subscribe to releases or new seasons to stay updated"
       }
+    },
+    "states": {
+      "watching": "Watching",
+      "completed": "Completed",
+      "planned": "Planned",
+      "dropped": "Dropped"
     },
     "actions": {
       "remove": "Remove",
@@ -622,6 +639,29 @@
       "steadyInterest": "Steady interest",
       "classicChoice": "Classic",
       "timelessFavorite": "Timeless favorite"
+    }
+  },
+  "activity": {
+    "title": "Activity",
+    "tabs": {
+      "watching": "Watching",
+      "history": "Completed"
+    },
+    "empty": {
+      "watching": {
+        "title": "Not watching anything yet",
+        "description": "Start watching a show and it will appear here"
+      },
+      "history": {
+        "title": "History is empty",
+        "description": "You haven't watched anything yet"
+      }
+    },
+    "toast": {
+      "addedToWatching": "Added to Watching",
+      "completed": "Show marked as completed",
+      "backToWatching": "Back to Watching",
+      "removedFromActivity": "Removed from activity"
     }
   },
   "notifications": {
