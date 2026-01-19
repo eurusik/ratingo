@@ -17,14 +17,14 @@ export function TrendingToggle() {
   const isMoviesTrending = pathname.startsWith('/browse/movies-trending');
 
   return (
-    <div className="flex items-center rounded-full bg-muted/50 p-0.5">
+    <div className="flex items-center rounded-full bg-cinema-elevated/50 border border-cinema-border p-0.5">
       <Link
         href="/browse/shows-trending"
         className={cn(
           'px-3 py-1.5 text-sm rounded-full transition-all',
           isShowsTrending
-            ? 'bg-background text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground',
+            ? 'bg-cinema-card text-cinema-text-primary shadow-sm'
+            : 'text-cinema-text-muted hover:text-cinema-text-secondary',
         )}
       >
         {dict.nav.shows}
@@ -34,8 +34,8 @@ export function TrendingToggle() {
         className={cn(
           'px-3 py-1.5 text-sm rounded-full transition-all',
           isMoviesTrending
-            ? 'bg-background text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground',
+            ? 'bg-cinema-card text-cinema-text-primary shadow-sm'
+            : 'text-cinema-text-muted hover:text-cinema-text-secondary',
         )}
       >
         {dict.nav.movies}
