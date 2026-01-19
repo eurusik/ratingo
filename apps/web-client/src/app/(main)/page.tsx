@@ -14,7 +14,7 @@ import {
   mapNewEpisodes,
 } from '@/modules/home';
 import { getDictionary } from '@/shared/i18n';
-import { catalogApi } from '@/core/api';
+import { catalogApi, type HeroData } from '@/core/api';
 import { TrendingUp, Clapperboard, Sparkles, Film } from 'lucide-react';
 
 export default async function HomePage() {
@@ -29,7 +29,7 @@ export default async function HomePage() {
     newOnDigitalData,
     newEpisodesData,
   ] = await Promise.all([
-    catalogApi.getHeroItems({ type: 'show' }).catch(() => []),
+    catalogApi.getHeroItems({ type: 'show' }).catch((): HeroData => []),
     catalogApi.getTrendingShows({ limit: 12 }).catch(() => ({ data: [] })),
     catalogApi.getTrendingMovies({ limit: 12 }).catch(() => ({ data: [] })),
     catalogApi.getNowPlayingMovies({ limit: 12 }).catch(() => ({ data: [] })),
@@ -86,24 +86,12 @@ export default async function HomePage() {
     <MediaCardsWithStatus mediaItemIds={allMediaItemIds}>
       <main className="min-h-screen">
         {/* Hero Banner */}
-        {top3Cards[0] && (
+        {top3Cards[0] && heroItems[0] && (
           <HeroSection
             item={{
               ...top3Cards[0],
-              showProgress:
-                (heroItems[0] as { showProgress?: { season: number; episode: number; label: string } })
-                  ?.showProgress ?? null,
-              backdrop:
-                (
-                  heroItems[0] as {
-                    backdrop?: {
-                      small: string;
-                      medium: string;
-                      large: string;
-                      original: string;
-                    } | null;
-                  }
-                )?.backdrop ?? null,
+              showProgress: heroItems[0].showProgress ?? null,
+              backdrop: heroItems[0].backdrop ?? null,
             }}
             locale="uk"
           />
