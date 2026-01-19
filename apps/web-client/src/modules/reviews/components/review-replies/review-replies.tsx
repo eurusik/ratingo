@@ -92,40 +92,45 @@ export function ReviewReplies({
           </button>
         )}
 
-        {/* Replies list */}
-        {isExpanded && (
-          <div>
-            {isLoading ? (
-              <div className="text-sm text-cinema-text-muted animate-pulse pl-6">
-                {dict.reviews.replies.title}...
-              </div>
-            ) : replies && replies.length > 0 ? (
-              <div className="relative pl-6">
-                {nestedReplies.topLevel.map((reply, index) => (
-                  <ReplyItem
-                    key={reply.id}
-                    reply={reply}
-                    children={nestedReplies.childrenMap.get(reply.id)}
-                    locale={locale}
-                    currentUserId={currentUserId}
-                    isAuthenticated={isAuthenticated}
-                    isLast={index === nestedReplies.topLevel.length - 1}
-                    replyLabel={dict.reviews.replies.reply}
-                    replyingTo={replyingTo}
-                    onReply={(replyId, parentId, username) =>
-                      setReplyingTo({ replyId, parentId, username })
-                    }
-                    onDelete={handleDeleteReply}
-                    onCreateReply={handleCreateReply}
-                    onCancelReply={() => setReplyingTo(null)}
-                    isDeleting={deleteReply.isPending}
-                    isCreating={createReply.isPending}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm text-cinema-text-muted">{dict.reviews.replies.empty}</div>
-            )}
+        {/* Replies list with smooth animation */}
+        {repliesCount > 0 && (
+          <div
+            className="grid transition-[grid-template-rows] duration-300 ease-out"
+            style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
+          >
+            <div className="overflow-hidden min-h-0">
+              {isLoading ? (
+                <div className="text-sm text-cinema-text-muted animate-pulse pl-6 py-2">
+                  {dict.reviews.replies.title}...
+                </div>
+              ) : replies && replies.length > 0 ? (
+                <div className="relative pl-6">
+                  {nestedReplies.topLevel.map((reply, index) => (
+                    <ReplyItem
+                      key={reply.id}
+                      reply={reply}
+                      children={nestedReplies.childrenMap.get(reply.id)}
+                      locale={locale}
+                      currentUserId={currentUserId}
+                      isAuthenticated={isAuthenticated}
+                      isLast={index === nestedReplies.topLevel.length - 1}
+                      replyLabel={dict.reviews.replies.reply}
+                      replyingTo={replyingTo}
+                      onReply={(replyId, parentId, username) =>
+                        setReplyingTo({ replyId, parentId, username })
+                      }
+                      onDelete={handleDeleteReply}
+                      onCreateReply={handleCreateReply}
+                      onCancelReply={() => setReplyingTo(null)}
+                      isDeleting={deleteReply.isPending}
+                      isCreating={createReply.isPending}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-cinema-text-muted py-2">{dict.reviews.replies.empty}</div>
+              )}
+            </div>
           </div>
         )}
 
