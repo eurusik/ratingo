@@ -62,7 +62,7 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
               <span>№1 {dict.home.sections.trending || 'у трендах'}</span>
             </div>
 
-            {showProgress && <div className="text-zinc-300 text-sm">{showProgress.label}</div>}
+            {showProgress && <div className="text-cinema-text-secondary text-sm">{showProgress.label}</div>}
           </div>
 
           {/* Title */}
@@ -89,7 +89,7 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
                 <span className="text-xl font-semibold">
                   {externalRatings.imdb.rating.toFixed(1)}
                 </span>
-                <span className="text-sm text-zinc-400">IMDb</span>
+                <span className="text-sm text-cinema-text-muted">IMDb</span>
               </div>
             ) : externalRatings?.tmdb ? (
               <div className="flex items-center gap-2 text-white">
@@ -97,16 +97,16 @@ export function HeroSection({ item, locale = 'uk', className = '' }: HeroSection
                 <span className="text-xl font-semibold">
                   {externalRatings.tmdb.rating.toFixed(1)}
                 </span>
-                <span className="text-sm text-zinc-400">TMDB</span>
+                <span className="text-sm text-cinema-text-muted">TMDB</span>
               </div>
             ) : null}
 
             {/* Interest */}
             {stats?.liveWatchers && (
-              <div className="flex items-center gap-2 text-zinc-300">
+              <div className="flex items-center gap-2 text-cinema-text-secondary">
                 <TrendingUp className="w-5 h-5" />
                 <span>{stats.liveWatchers.toLocaleString()}</span>
-                <span className="text-sm text-zinc-400">{dict.details.watchingNow}</span>
+                <span className="text-sm text-cinema-text-muted">{dict.details.watchingNow}</span>
               </div>
             )}
           </div>

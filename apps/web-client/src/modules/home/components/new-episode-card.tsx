@@ -75,7 +75,7 @@ export function NewEpisodeCard({ item, locale = 'uk' }: NewEpisodeCardProps) {
             sizes="64px"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
+          <div className="w-full h-full flex items-center justify-center text-cinema-text-disabled text-xs">
             No poster
           </div>
         )}
@@ -86,7 +86,7 @@ export function NewEpisodeCard({ item, locale = 'uk' }: NewEpisodeCardProps) {
         <h3 className="font-medium text-sm text-white truncate group-hover:text-blue-400 transition-colors">
           {item.title}
         </h3>
-        <p className="text-xs text-zinc-400 mt-0.5">
+        <p className="text-xs text-cinema-text-muted mt-0.5">
           <span className="text-emerald-400 font-medium">{episodeLabel}</span>
           <span className="mx-1.5">•</span>
           <span
@@ -94,15 +94,15 @@ export function NewEpisodeCard({ item, locale = 'uk' }: NewEpisodeCardProps) {
               relativeDate.freshness === 'fresh'
                 ? 'text-amber-400 font-medium'
                 : relativeDate.freshness === 'recent'
-                  ? 'text-zinc-300'
-                  : 'text-zinc-500'
+                  ? 'text-cinema-text-secondary'
+                  : 'text-cinema-text-muted'
             }
           >
             {relativeDate.text}
           </span>
         </p>
         {item.episodeTitle && (
-          <p className="text-xs text-zinc-500 mt-0.5 truncate">{item.episodeTitle}</p>
+          <p className="text-xs text-cinema-text-muted mt-0.5 truncate">{item.episodeTitle}</p>
         )}
       </div>
     </Link>

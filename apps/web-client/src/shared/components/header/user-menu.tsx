@@ -46,27 +46,27 @@ export function UserMenu() {
         <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background">
           <Avatar className="h-8 w-8">
             {user?.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.username} />}
-            <AvatarFallback className="bg-zinc-700">
-              <User className="w-4 h-4 text-zinc-400" />
+            <AvatarFallback className="bg-cinema-border">
+              <User className="w-4 h-4 text-cinema-text-muted" />
             </AvatarFallback>
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-cinema-card border-zinc-800">
+      <DropdownMenuContent align="end" className="w-56 bg-cinema-card border-cinema-borderSoft">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium text-zinc-100">{user?.username}</p>
-            <p className="text-xs text-zinc-500">{user?.email}</p>
+            <p className="text-sm font-medium text-cinema-text-primary">{user?.username}</p>
+            <p className="text-xs text-cinema-text-muted">{user?.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-cinema-elevated" />
-        <DropdownMenuItem asChild className="text-zinc-300 focus:bg-cinema-elevated focus:text-zinc-100">
+        <DropdownMenuItem asChild className="text-cinema-text-secondary focus:bg-cinema-elevated focus:text-cinema-text-primary">
           <Link href={'/saved' as Route}>
             <Bookmark className="w-4 h-4 mr-2" />
             {dict.auth.saved}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="text-zinc-300 focus:bg-cinema-elevated focus:text-zinc-100">
+        <DropdownMenuItem asChild className="text-cinema-text-secondary focus:bg-cinema-elevated focus:text-cinema-text-primary">
           <Link href={'/settings' as Route}>
             <Settings className="w-4 h-4 mr-2" />
             {dict.auth.settings}
@@ -77,7 +77,7 @@ export function UserMenu() {
             <DropdownMenuSeparator className="bg-cinema-elevated" />
             <DropdownMenuItem
               asChild
-              className="text-zinc-300 focus:bg-cinema-elevated focus:text-zinc-100"
+              className="text-cinema-text-secondary focus:bg-cinema-elevated focus:text-cinema-text-primary"
             >
               <Link href={'/admin' as Route}>
                 <Shield className="w-4 h-4 mr-2" />

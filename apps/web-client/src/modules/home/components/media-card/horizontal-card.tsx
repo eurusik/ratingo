@@ -42,8 +42,8 @@ export function HorizontalCard(props: HorizontalCardProps) {
       href={href}
       className={cn(
         'group flex items-stretch gap-4 p-3 rounded-xl',
-        'bg-[#111113] border border-zinc-800/50',
-        'hover:border-zinc-700 hover:bg-cinema-card/80',
+        'bg-[#111113] border border-cinema-borderSoft/50',
+        'hover:border-cinema-border hover:bg-cinema-card/80',
         'transition-all duration-200',
       )}
     >
@@ -53,7 +53,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
           className={cn(
             'w-8 h-8 rounded-full flex items-center justify-center',
             'font-bold text-sm',
-            rankColors[rank] || 'bg-zinc-700 text-white',
+            rankColors[rank] || 'bg-cinema-border text-white',
           )}
         >
           {rank}
@@ -65,7 +65,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
         {posterUrl ? (
           <Image src={posterUrl} alt={title} fill className="object-cover" sizes="64px" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
+          <div className="w-full h-full flex items-center justify-center text-cinema-text-disabled text-xs">
             {dict.card.noPoster}
           </div>
         )}
@@ -82,7 +82,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
         <div className="flex items-center gap-4 mt-2 text-sm">
           {/* Rating */}
           {rating && (
-            <div className="flex items-center gap-1 text-zinc-300">
+            <div className="flex items-center gap-1 text-cinema-text-secondary">
               <Activity className="w-4 h-4 text-blue-400" />
               <span className="font-medium">{formatRating(rating)}</span>
             </div>
@@ -90,7 +90,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
 
           {/* Interest */}
           {watchers && (
-            <div className="flex items-center gap-1 text-zinc-400">
+            <div className="flex items-center gap-1 text-cinema-text-muted">
               <TrendingUp className="w-4 h-4" />
               <span>{watchers.toLocaleString()}</span>
             </div>
@@ -98,7 +98,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
 
           {/* Year */}
           {releaseDate && (
-            <div className="flex items-center gap-1 text-zinc-500">
+            <div className="flex items-center gap-1 text-cinema-text-muted">
               <Calendar className="w-3.5 h-3.5" />
               <span>{formatYear(releaseDate)}</span>
             </div>
@@ -107,7 +107,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
       </div>
 
       {/* Arrow indicator */}
-      <div className="flex items-center text-zinc-600 group-hover:text-zinc-400 transition-colors">
+      <div className="flex items-center text-cinema-text-disabled group-hover:text-cinema-text-muted transition-colors">
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>

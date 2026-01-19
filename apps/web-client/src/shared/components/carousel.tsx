@@ -71,14 +71,14 @@ export function Carousel({
           <div className="space-y-1">
             {title && (
               <div className="flex items-center gap-1.5">
-                <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+                <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
                   {title}
                 </h2>
                 {titleTooltip && (
                   <TooltipProvider delayDuration={300}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button className="text-zinc-500 hover:text-zinc-400 transition-colors">
+                        <button className="text-cinema-text-muted hover:text-cinema-text-muted transition-colors">
                           <Info className="w-3.5 h-3.5" />
                         </button>
                       </TooltipTrigger>
@@ -90,7 +90,7 @@ export function Carousel({
                 )}
               </div>
             )}
-            {subtitle && <p className="text-xs text-zinc-500">{subtitle}</p>}
+            {subtitle && <p className="text-xs text-cinema-text-muted">{subtitle}</p>}
           </div>
 
           <div className="flex items-center gap-3">
@@ -105,7 +105,7 @@ export function Carousel({
                 className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/10 to-zinc-800/60 hover:from-blue-500/20 hover:to-zinc-700/60 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:from-zinc-800/60 disabled:to-zinc-800/60"
                 aria-label="Попередній"
               >
-                <ChevronLeft className="w-5 h-5 text-zinc-400" />
+                <ChevronLeft className="w-5 h-5 text-cinema-text-muted" />
               </button>
               <button
                 onClick={scrollNext}
@@ -113,7 +113,7 @@ export function Carousel({
                 className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/10 to-zinc-800/60 hover:from-blue-500/20 hover:to-zinc-700/60 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:from-zinc-800/60 disabled:to-zinc-800/60"
                 aria-label="Наступний"
               >
-                <ChevronRight className="w-5 h-5 text-zinc-400" />
+                <ChevronRight className="w-5 h-5 text-cinema-text-muted" />
               </button>
             </div>
           </div>

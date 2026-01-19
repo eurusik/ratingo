@@ -54,7 +54,7 @@ export function CardPoster({
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </>
       ) : (
-        <div className="w-full h-full flex items-center justify-center text-zinc-600">
+        <div className="w-full h-full flex items-center justify-center text-cinema-text-disabled">
           <div className="text-center">
             {type === 'movie' ? (
               <Film className="w-12 h-12 mx-auto mb-2" />

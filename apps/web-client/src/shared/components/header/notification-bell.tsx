@@ -54,7 +54,7 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9 rounded-full text-zinc-400 hover:text-white hover:bg-cinema-elevated"
+          className="relative h-9 w-9 rounded-full text-cinema-text-muted hover:text-white hover:bg-cinema-elevated"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
@@ -63,14 +63,14 @@ export function NotificationBell() {
           <span className="sr-only">{dict.notifications.title}</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 p-0 bg-cinema-card border-zinc-800">
-        <div className="p-3 border-b border-zinc-800 flex items-center justify-between">
-          <h3 className="font-medium text-zinc-100">{dict.notifications.title}</h3>
+      <PopoverContent align="end" className="w-80 p-0 bg-cinema-card border-cinema-borderSoft">
+        <div className="p-3 border-b border-cinema-borderSoft flex items-center justify-between">
+          <h3 className="font-medium text-cinema-text-primary">{dict.notifications.title}</h3>
           {unreadCount > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-zinc-400 hover:text-white"
+              className="h-7 px-2 text-xs text-cinema-text-muted hover:text-white"
               onClick={handleMarkAllAsRead}
               disabled={markAllAsRead.isPending}
             >
@@ -82,9 +82,9 @@ export function NotificationBell() {
 
         <div className="max-h-80 overflow-y-auto">
           {isLoading ? (
-            <div className="p-4 text-center text-zinc-500 text-sm">...</div>
+            <div className="p-4 text-center text-cinema-text-muted text-sm">...</div>
           ) : !hasNotifications ? (
-            <div className="p-4 text-center text-zinc-500 text-sm">{dict.notifications.empty}</div>
+            <div className="p-4 text-center text-cinema-text-muted text-sm">{dict.notifications.empty}</div>
           ) : (
             <div className="divide-y divide-zinc-800">
               {notifications.slice(0, 5).map((item) => {
@@ -119,14 +119,14 @@ export function NotificationBell() {
                           className="object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
+                        <div className="w-full h-full flex items-center justify-center text-cinema-text-disabled text-xs">
                           —
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-zinc-400">{triggerLabel}</p>
-                      <p className="text-sm font-medium text-zinc-100 truncate">{media.title}</p>
+                      <p className="text-xs text-cinema-text-muted">{triggerLabel}</p>
+                      <p className="text-sm font-medium text-cinema-text-primary truncate">{media.title}</p>
                     </div>
                   </Link>
                 );
@@ -135,9 +135,9 @@ export function NotificationBell() {
           )}
         </div>
 
-        <div className="p-2 border-t border-zinc-800">
+        <div className="p-2 border-t border-cinema-borderSoft">
           <Link href={'/saved?tab=notifications' as Route}>
-            <Button variant="ghost" className="w-full text-sm text-zinc-400 hover:text-white">
+            <Button variant="ghost" className="w-full text-sm text-cinema-text-muted hover:text-white">
               {dict.notifications.viewAll}
             </Button>
           </Link>

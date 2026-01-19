@@ -43,11 +43,11 @@ export function SearchCommand() {
         variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
-        className="gap-2 text-zinc-400 hover:text-zinc-100 hover:bg-cinema-elevated/50"
+        className="gap-2 text-cinema-text-muted hover:text-cinema-text-primary hover:bg-cinema-elevated/50"
       >
         <Search className="h-4 w-4" />
         <span className="hidden sm:inline">{dict.search.placeholder}</span>
-        <kbd className="hidden md:inline-flex h-5 select-none items-center gap-1 rounded border border-zinc-700 bg-cinema-elevated px-1.5 font-mono text-[10px] font-medium text-zinc-400">
+        <kbd className="hidden md:inline-flex h-5 select-none items-center gap-1 rounded border border-cinema-border bg-cinema-elevated px-1.5 font-mono text-[10px] font-medium text-cinema-text-muted">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
@@ -63,7 +63,7 @@ export function SearchCommand() {
           {/* Loading */}
           {isLoading && debouncedQuery.length >= 2 && (
             <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-cinema-text-muted" />
             </div>
           )}
 
@@ -74,7 +74,7 @@ export function SearchCommand() {
 
           {/* Hint */}
           {debouncedQuery.length < 2 && (
-            <div className="py-6 text-center text-sm text-zinc-500">{dict.search.hint}</div>
+            <div className="py-6 text-center text-sm text-cinema-text-muted">{dict.search.hint}</div>
           )}
 
           {/* Local results */}

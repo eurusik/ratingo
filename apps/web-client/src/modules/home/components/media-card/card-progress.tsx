@@ -54,7 +54,7 @@ export function SeasonProgress({
             key={i}
             className={cn(
               'w-1.5 h-1.5 rounded-full',
-              i < filledDots ? 'bg-blue-400' : 'bg-zinc-700',
+              i < filledDots ? 'bg-blue-400' : 'bg-cinema-border',
             )}
           />
         ))}
@@ -64,8 +64,8 @@ export function SeasonProgress({
 
   // Text variant: "Вийшло: S2 • 4 з 8"
   return (
-    <div className={cn('text-xs text-zinc-400', className)}>
-      <span className="text-zinc-500">{t('card.season.released')}:</span>
+    <div className={cn('text-xs text-cinema-text-muted', className)}>
+      <span className="text-cinema-text-muted">{t('card.season.released')}:</span>
       <span className="ml-1">S{season}</span>
       <span className="mx-1">•</span>
       <span>

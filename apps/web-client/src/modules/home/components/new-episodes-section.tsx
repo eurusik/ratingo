@@ -23,9 +23,9 @@ const MAX_ITEMS = 15;
 
 /** Freshness-based text color classes */
 const FRESHNESS_COLORS: Record<DateFreshness, string> = {
-  fresh: 'text-zinc-400',
-  recent: 'text-zinc-500',
-  older: 'text-zinc-600',
+  fresh: 'text-cinema-text-muted',
+  recent: 'text-cinema-text-muted',
+  older: 'text-cinema-text-disabled',
 } as const;
 
 export interface NewEpisodeShowItem {
@@ -68,7 +68,7 @@ function EpisodeCard({ item, locale }: { item: NewEpisodeShowItem; locale: Local
         {item.posterUrl ? (
           <Image src={item.posterUrl} alt={item.title} fill className="object-cover" sizes="32px" />
         ) : (
-          <div className="w-full h-full bg-zinc-700" />
+          <div className="w-full h-full bg-cinema-border" />
         )}
       </div>
 
@@ -77,9 +77,9 @@ function EpisodeCard({ item, locale }: { item: NewEpisodeShowItem; locale: Local
         <h3 className="text-sm font-medium text-white truncate group-hover:text-blue-400 transition-colors">
           {item.title}
         </h3>
-        <p className="text-xs text-zinc-500 truncate">
+        <p className="text-xs text-cinema-text-muted truncate">
           <span className="text-emerald-500/80 font-medium">{episodeLabel}</span>
-          <span className="mx-1.5 text-zinc-600">·</span>
+          <span className="mx-1.5 text-cinema-text-disabled">·</span>
           <span className={FRESHNESS_COLORS[relativeDate.freshness]}>{relativeDate.text}</span>
         </p>
       </div>
@@ -145,7 +145,7 @@ export function NewEpisodesSection({ items, locale = 'uk', className }: NewEpiso
       {!isExpanded && (mobileHasMore || desktopHasMore) && (
         <button
           onClick={() => setIsExpanded(true)}
-          className="mt-3 text-sm text-zinc-500 hover:text-zinc-400 transition-colors"
+          className="mt-3 text-sm text-cinema-text-muted hover:text-cinema-text-muted transition-colors"
         >
           {/* Mobile text — hidden on desktop, or if no mobile overflow */}
           <span className={mobileHasMore ? 'sm:hidden' : 'hidden'}>

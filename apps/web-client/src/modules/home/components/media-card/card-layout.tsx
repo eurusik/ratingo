@@ -12,7 +12,7 @@ export const cardContainerStyles = [
   'bg-[#111113] rounded-xl overflow-hidden',
   'transition-all duration-300',
   'hover:shadow-2xl hover:shadow-blue-500/20',
-  'border border-zinc-800 hover:border-blue-500/50',
+  'border border-cinema-borderSoft hover:border-blue-500/50',
 ] as const;
 
 /** Title styles */

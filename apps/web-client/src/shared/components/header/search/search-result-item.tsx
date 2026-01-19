@@ -55,14 +55,14 @@ export function SearchResultItem({
         />
       ) : (
         <div className="w-8 h-12 bg-cinema-elevated rounded flex items-center justify-center">
-          <TypeIcon className="h-4 w-4 text-zinc-600" />
+          <TypeIcon className="h-4 w-4 text-cinema-text-disabled" />
         </div>
       )}
 
       {/* Info */}
       <div className="flex flex-col gap-0.5 min-w-0 flex-1">
         <span className={`truncate ${isLocal ? 'font-medium' : ''}`}>{title}</span>
-        <span className="text-xs text-zinc-500 flex items-center gap-1.5">
+        <span className="text-xs text-cinema-text-muted flex items-center gap-1.5">
           <TypeIcon className="h-3 w-3" />
           {year && year > 0 && <span>{year}</span>}
           {isLocal && rating && rating > 0 && (
@@ -83,9 +83,9 @@ export function SearchResultItem({
       {/* Import indicator */}
       {!isLocal &&
         (isImporting ? (
-          <Loader2 className="h-4 w-4 animate-spin text-zinc-400 shrink-0" />
+          <Loader2 className="h-4 w-4 animate-spin text-cinema-text-muted shrink-0" />
         ) : (
-          <Download className="h-4 w-4 text-zinc-500 shrink-0" />
+          <Download className="h-4 w-4 text-cinema-text-muted shrink-0" />
         ))}
     </CommandItem>
   );
