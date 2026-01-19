@@ -13,7 +13,7 @@ import { Button, Badge } from '@/shared/ui';
 const STATUS_COLORS: Record<string, string> = {
   [ReportStatus.PENDING]: 'bg-yellow-500/20 text-yellow-500',
   [ReportStatus.REVIEWED]: 'bg-blue-500/20 text-blue-500',
-  [ReportStatus.DISMISSED]: 'bg-zinc-500/20 text-zinc-400',
+  [ReportStatus.DISMISSED]: 'bg-zinc-500/20 text-cinema-text-muted',
   [ReportStatus.ACTIONED]: 'bg-green-500/20 text-green-500',
 };
 
@@ -51,7 +51,7 @@ export function ReportCard({
   };
 
   return (
-    <div className="bg-cinema-card/50 rounded-lg border border-zinc-800 p-4 space-y-4">
+    <div className="bg-cinema-card/50 rounded-lg border border-cinema-borderSoft p-4 space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
@@ -63,30 +63,30 @@ export function ReportCard({
             {getReasonLabel(report.reason)}
           </Badge>
         </div>
-        <span className="text-xs text-zinc-500">{timeAgo}</span>
+        <span className="text-xs text-cinema-text-muted">{timeAgo}</span>
       </div>
 
       {/* Reporter info */}
-      <div className="flex items-center gap-2 text-sm text-zinc-400">
+      <div className="flex items-center gap-2 text-sm text-cinema-text-muted">
         <User className="w-4 h-4" />
         <span>
-          {t.card.reportFrom} <span className="text-zinc-200">{report.reporter.username}</span>
+          {t.card.reportFrom} <span className="text-cinema-text-primary">{report.reporter.username}</span>
         </span>
       </div>
 
       {/* Report details */}
       {report.details && (
         <div className="bg-cinema-elevated/50 rounded p-3">
-          <p className="text-sm text-zinc-300">{report.details}</p>
+          <p className="text-sm text-cinema-text-secondary">{report.details}</p>
         </div>
       )}
 
       {/* Reported review */}
-      <div className="border-l-2 border-zinc-700 pl-4 space-y-2">
+      <div className="border-l-2 border-cinema-border pl-4 space-y-2">
         <div className="flex items-center gap-2 text-sm">
-          <MessageSquare className="w-4 h-4 text-zinc-500" />
-          <span className="text-zinc-400">
-            {t.card.reviewFrom} <span className="text-zinc-200">{report.review.author.username}</span>
+          <MessageSquare className="w-4 h-4 text-cinema-text-muted" />
+          <span className="text-cinema-text-muted">
+            {t.card.reviewFrom} <span className="text-cinema-text-primary">{report.review.author.username}</span>
           </span>
           {report.review.hasSpoiler && (
             <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/50">
@@ -99,7 +99,7 @@ export function ReportCard({
             </Badge>
           )}
         </div>
-        <p className="text-sm text-zinc-300 bg-cinema-elevated/30 rounded p-3">
+        <p className="text-sm text-cinema-text-secondary bg-cinema-elevated/30 rounded p-3">
           {report.review.content}
         </p>
       </div>
@@ -115,7 +115,7 @@ export function ReportCard({
 
       {/* Actions */}
       {isPending && (
-        <div className="flex items-center gap-2 pt-2 border-t border-zinc-800">
+        <div className="flex items-center gap-2 pt-2 border-t border-cinema-borderSoft">
           <Button
             size="sm"
             variant="outline"
@@ -131,7 +131,7 @@ export function ReportCard({
             variant="outline"
             onClick={() => onDismiss(report.id)}
             disabled={isResolving}
-            className="text-zinc-400 hover:bg-cinema-elevated"
+            className="text-cinema-text-muted hover:bg-cinema-elevated"
           >
             <X className="w-4 h-4 mr-1" />
             {t.actions.dismiss}

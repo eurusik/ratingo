@@ -157,7 +157,7 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
 
         {items.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-zinc-400">{dict.browse.noResults}</p>
+            <p className="text-cinema-text-muted">{dict.browse.noResults}</p>
           </div>
         ) : (
           <>

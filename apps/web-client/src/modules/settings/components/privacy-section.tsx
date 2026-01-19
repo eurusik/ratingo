@@ -34,10 +34,10 @@ function Toggle({ id, label, description, checked, onChange, disabled }: ToggleP
   return (
     <div className="flex items-center justify-between py-3">
       <div className="space-y-0.5">
-        <Label htmlFor={id} className="text-zinc-200 cursor-pointer">
+        <Label htmlFor={id} className="text-cinema-text-primary cursor-pointer">
           {label}
         </Label>
-        {description && <p className="text-sm text-zinc-400">{description}</p>}
+        {description && <p className="text-sm text-cinema-text-muted">{description}</p>}
       </div>
       <button
         type="button"
@@ -50,7 +50,7 @@ function Toggle({ id, label, description, checked, onChange, disabled }: ToggleP
           relative inline-flex h-6 w-11 items-center rounded-full transition-colors
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900
           disabled:cursor-not-allowed disabled:opacity-50
-          ${checked ? 'bg-blue-600' : 'bg-zinc-700'}
+          ${checked ? 'bg-blue-600' : 'bg-cinema-border'}
         `}
       >
         <span
@@ -111,7 +111,7 @@ export function PrivacySection({ user, onUpdate }: PrivacySectionProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-zinc-100 mb-4">{dict.settings.privacy.title}</h3>
+        <h3 className="text-lg font-medium text-cinema-text-primary mb-4">{dict.settings.privacy.title}</h3>
 
         <div className="space-y-1 divide-y divide-zinc-800">
           {privacyFields.map((field) => (

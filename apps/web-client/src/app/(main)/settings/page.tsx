@@ -36,8 +36,8 @@ export default function SettingsPage() {
       <div className="min-h-screen pt-24 pb-12">
         <div className="container max-w-xl mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <h1 className="text-2xl font-bold text-zinc-100 mb-4">{dict.settings.title}</h1>
-            <p className="text-zinc-500">{dict.auth.loginSubtitle}</p>
+            <h1 className="text-2xl font-bold text-cinema-text-primary mb-4">{dict.settings.title}</h1>
+            <p className="text-cinema-text-muted">{dict.auth.loginSubtitle}</p>
           </div>
         </div>
       </div>

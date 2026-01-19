@@ -141,10 +141,10 @@ export default async function HomePage() {
           {/* Visual Separator: Movies */}
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-zinc-800" />
+              <div className="w-full border-t border-cinema-borderSoft" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-cinema-page px-4 text-sm text-zinc-500 flex items-center gap-2">
+              <span className="bg-cinema-page px-4 text-sm text-cinema-text-muted flex items-center gap-2">
                 <Film className="w-4 h-4" />
                 {dict.mediaType.movies}
               </span>

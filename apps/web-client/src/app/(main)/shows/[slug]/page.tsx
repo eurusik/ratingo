@@ -214,7 +214,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           />
 
           <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+            <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
               {dict.details.showStatus.sectionTitle}
             </h2>
             <ShowStatus

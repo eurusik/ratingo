@@ -86,15 +86,15 @@ export function ReportsQueue() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Flag className="w-5 h-5 text-red-500" />
-          <h1 className="text-xl font-semibold text-zinc-100">{t.title}</h1>
+          <h1 className="text-xl font-semibold text-cinema-text-primary">{t.title}</h1>
           {total > 0 && (
-            <span className="text-sm text-zinc-500">({total})</span>
+            <span className="text-sm text-cinema-text-muted">({total})</span>
           )}
         </div>
 
         {/* Filter */}
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-zinc-500" />
+          <Filter className="w-4 h-4 text-cinema-text-muted" />
           <Select
             value={statusFilter}
             onValueChange={(value) => {
@@ -102,15 +102,15 @@ export function ReportsQueue() {
               setOffset(0);
             }}
           >
-            <SelectTrigger className="w-40 bg-cinema-elevated/50 border-zinc-700">
+            <SelectTrigger className="w-40 bg-cinema-elevated/50 border-cinema-border">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-cinema-elevated border-zinc-700">
+            <SelectContent className="bg-cinema-elevated border-cinema-border">
               {STATUS_FILTER_VALUES.map((value) => (
                 <SelectItem
                   key={value}
                   value={value}
-                  className="text-zinc-300 focus:bg-zinc-700"
+                  className="text-cinema-text-secondary focus:bg-cinema-border"
                 >
                   {getFilterLabel(value)}
                 </SelectItem>
@@ -128,7 +128,7 @@ export function ReportsQueue() {
           ))}
         </div>
       ) : reports.length === 0 ? (
-        <div className="text-center py-12 text-zinc-500">
+        <div className="text-center py-12 text-cinema-text-muted">
           <Flag className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p className="text-lg">{t.empty}</p>
           <p className="text-sm mt-1">

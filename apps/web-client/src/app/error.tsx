@@ -36,7 +36,7 @@ export default function Error({ error, reset }: ErrorProps) {
         <h1 className="text-2xl font-bold text-white mb-2">{t('error.title')}</h1>
 
         {/* Description */}
-        <p className="text-zinc-400 mb-8">{t('error.description')}</p>
+        <p className="text-cinema-text-muted mb-8">{t('error.description')}</p>
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -54,8 +54,8 @@ export default function Error({ error, reset }: ErrorProps) {
 
         {/* Error digest (for debugging) */}
         {error.digest && (
-          <Alert variant="destructive" className="mt-8 bg-cinema-card/50 border-zinc-800">
-            <AlertDescription className="text-xs text-zinc-500">
+          <Alert variant="destructive" className="mt-8 bg-cinema-card/50 border-cinema-borderSoft">
+            <AlertDescription className="text-xs text-cinema-text-muted">
               {t('error.errorCode')}: {error.digest}
             </AlertDescription>
           </Alert>

@@ -62,7 +62,7 @@ export function InfiniteScrollLoader({
   return (
     <div ref={loaderRef} className="flex items-center justify-center py-8">
       {isLoading && (
-        <div className="flex items-center gap-2 text-zinc-400">
+        <div className="flex items-center gap-2 text-cinema-text-muted">
           <Loader2 className="w-5 h-5 animate-spin" />
           <span>{loadingText}</span>
         </div>

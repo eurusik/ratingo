@@ -27,7 +27,7 @@ export function BrowsePageHeader({
     <header>
       <Link
         href={backHref}
-        className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-4"
+        className="inline-flex items-center gap-2 text-cinema-text-muted hover:text-white transition-colors mb-4"
       >
         <ArrowLeft className="w-4 h-4" />
         <span className="text-sm">{backLabel}</span>
@@ -35,7 +35,7 @@ export function BrowsePageHeader({
 
       <h1 className="text-3xl font-bold text-white">{title}</h1>
 
-      {subtitle && <p className="text-zinc-400 mt-2">{subtitle}</p>}
+      {subtitle && <p className="text-cinema-text-muted mt-2">{subtitle}</p>}
     </header>
   );
 }

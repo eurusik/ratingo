@@ -25,7 +25,7 @@ function getPostStatus(post: AdminJournalPost): PostStatus {
 }
 
 const STATUS_STYLES: Record<PostStatus, string> = {
-  draft: 'bg-zinc-500/20 text-zinc-300 border-zinc-500/30 hover:bg-zinc-500/30',
+  draft: 'bg-zinc-500/20 text-cinema-text-secondary border-zinc-500/30 hover:bg-zinc-500/30',
   published: 'bg-green-500/20 text-green-300 border-green-500/30 hover:bg-green-500/30',
   scheduled: 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30',
 };

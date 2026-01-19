@@ -57,7 +57,7 @@ export function SavedItemCard({
           {posterUrl ? (
             <Image src={posterUrl} alt={title} fill sizes="64px" className="object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
+            <div className="w-full h-full flex items-center justify-center text-cinema-text-disabled text-xs">
               —
             </div>
           )}
@@ -68,16 +68,16 @@ export function SavedItemCard({
       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
         <div>
           <Link href={href as Route} className="block">
-            <h3 className="font-medium text-zinc-100 truncate hover:text-white transition-colors">
+            <h3 className="font-medium text-cinema-text-primary truncate hover:text-white transition-colors">
               {title}
             </h3>
           </Link>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-cinema-text-muted">
             {typeLabel}
             {year && ` • ${year}`}
           </p>
           {reasonLabel && (
-            <p className="text-xs text-zinc-600 mt-1 flex items-center gap-1">
+            <p className="text-xs text-cinema-text-disabled mt-1 flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-amber-500/70" />
               <span>
                 {dict.saved.reason.label}: {reasonLabel}
@@ -106,7 +106,7 @@ export function SavedItemCard({
                     variant="ghost"
                     size="icon"
                     onClick={onMove}
-                    className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
+                    className="h-7 w-7 text-cinema-text-muted hover:text-cinema-text-primary"
                   >
                     <ArrowLeftRight className="w-3.5 h-3.5" />
                   </Button>
@@ -126,7 +126,7 @@ export function SavedItemCard({
                     disabled={isRemoving}
                     className={cn(
                       'h-7 w-7',
-                      'text-zinc-500 hover:text-red-400 hover:bg-red-400/10',
+                      'text-cinema-text-muted hover:text-red-400 hover:bg-red-400/10',
                     )}
                   >
                     <Trash2 className="w-3.5 h-3.5" />

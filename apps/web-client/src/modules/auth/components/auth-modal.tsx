@@ -39,12 +39,12 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
-      <DialogContent className="bg-cinema-card border-zinc-800 sm:max-w-md">
+      <DialogContent className="bg-cinema-card border-cinema-borderSoft sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-zinc-100">
+          <DialogTitle className="text-cinema-text-primary">
             {mode === 'login' ? dict.auth.loginTitle : dict.auth.registerTitle}
           </DialogTitle>
-          <DialogDescription className="text-zinc-400">
+          <DialogDescription className="text-cinema-text-muted">
             {mode === 'login' ? dict.auth.loginSubtitle : dict.auth.registerSubtitle}
           </DialogDescription>
         </DialogHeader>

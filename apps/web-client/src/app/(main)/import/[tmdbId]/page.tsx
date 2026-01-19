@@ -60,12 +60,12 @@ function ImportFailedView({ onBack }: { onBack: () => void }) {
           <XCircle className="w-8 h-8 text-red-500" />
         </div>
         <div className="space-y-2">
-          <h1 className="text-xl font-semibold text-zinc-100">{dict.import?.failed}</h1>
-          <p className="text-sm text-zinc-400">{dict.import?.failedHint}</p>
+          <h1 className="text-xl font-semibold text-cinema-text-primary">{dict.import?.failed}</h1>
+          <p className="text-sm text-cinema-text-muted">{dict.import?.failedHint}</p>
         </div>
         <button
           onClick={onBack}
-          className="px-4 py-2 bg-cinema-elevated hover:bg-zinc-700 text-zinc-100 rounded-lg transition-colors"
+          className="px-4 py-2 bg-cinema-elevated hover:bg-cinema-border text-cinema-text-primary rounded-lg transition-colors"
         >
           {dict.common.back}
         </button>

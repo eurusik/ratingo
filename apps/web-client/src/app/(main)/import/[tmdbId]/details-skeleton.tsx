@@ -52,7 +52,7 @@ export function DetailsSkeleton({
                   ) : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                       <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
-                      <span className="text-sm font-medium text-zinc-300">{statusMessage}</span>
+                      <span className="text-sm font-medium text-cinema-text-secondary">{statusMessage}</span>
                     </div>
                   )}
                 </div>
@@ -71,7 +71,7 @@ export function DetailsSkeleton({
 
                 {/* Meta line */}
                 {year ? (
-                  <p className="text-sm md:text-base text-zinc-300">{year}</p>
+                  <p className="text-sm md:text-base text-cinema-text-secondary">{year}</p>
                 ) : (
                   <div className="h-5 bg-cinema-elevated rounded animate-pulse w-32" />
                 )}
@@ -81,7 +81,7 @@ export function DetailsSkeleton({
                   <Loader2 className="w-5 h-5 animate-spin text-amber-500 shrink-0" />
                   <div>
                     <p className="text-amber-500 font-medium">{statusMessage}</p>
-                    <p className="text-zinc-400 text-sm">{statusHint}</p>
+                    <p className="text-cinema-text-muted text-sm">{statusHint}</p>
                   </div>
                 </div>
 

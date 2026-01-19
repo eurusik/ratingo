@@ -53,7 +53,7 @@ export function SubscriptionCard({
           {posterUrl ? (
             <Image src={posterUrl} alt={title} fill sizes="64px" className="object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs">
+            <div className="w-full h-full flex items-center justify-center text-cinema-text-disabled text-xs">
               —
             </div>
           )}
@@ -64,11 +64,11 @@ export function SubscriptionCard({
       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
         <div>
           <Link href={href as Route} className="block">
-            <h3 className="font-medium text-zinc-100 truncate hover:text-white transition-colors">
+            <h3 className="font-medium text-cinema-text-primary truncate hover:text-white transition-colors">
               {title}
             </h3>
           </Link>
-          <p className="flex items-center gap-1.5 mt-1.5 text-sm text-zinc-400">
+          <p className="flex items-center gap-1.5 mt-1.5 text-sm text-cinema-text-muted">
             <Bell className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             <span className="truncate">{triggerMessages[trigger]}</span>
           </p>
@@ -84,7 +84,7 @@ export function SubscriptionCard({
               disabled={isUnsubscribing}
               className={cn(
                 'h-7 px-2 text-xs',
-                'text-zinc-500 hover:text-red-400 hover:bg-red-400/10',
+                'text-cinema-text-muted hover:text-red-400 hover:bg-red-400/10',
               )}
             >
               <BellOff className="w-3 h-3 mr-1" />

@@ -71,12 +71,12 @@ export function SecuritySection() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium text-zinc-100 mb-4">{dict.settings.security.title}</h3>
+        <h3 className="text-lg font-medium text-cinema-text-primary mb-4">{dict.settings.security.title}</h3>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Current Password */}
           <div className="space-y-2">
-            <Label htmlFor="currentPassword" className="text-zinc-200">
+            <Label htmlFor="currentPassword" className="text-cinema-text-primary">
               {dict.settings.security.currentPassword}
             </Label>
             <Input
@@ -84,7 +84,7 @@ export function SecuritySection() {
               type="password"
               autoComplete="current-password"
               className={cn(
-                'bg-cinema-elevated border-zinc-700 text-zinc-100',
+                'bg-cinema-elevated border-cinema-border text-cinema-text-primary',
                 errors.currentPassword && 'border-red-500 focus-visible:ring-red-500',
               )}
               {...register('currentPassword')}
@@ -96,7 +96,7 @@ export function SecuritySection() {
 
           {/* New Password */}
           <div className="space-y-2">
-            <Label htmlFor="newPassword" className="text-zinc-200">
+            <Label htmlFor="newPassword" className="text-cinema-text-primary">
               {dict.settings.security.newPassword}
             </Label>
             <Input
@@ -104,7 +104,7 @@ export function SecuritySection() {
               type="password"
               autoComplete="new-password"
               className={cn(
-                'bg-cinema-elevated border-zinc-700 text-zinc-100',
+                'bg-cinema-elevated border-cinema-border text-cinema-text-primary',
                 errors.newPassword && 'border-red-500 focus-visible:ring-red-500',
               )}
               {...register('newPassword')}
@@ -116,7 +116,7 @@ export function SecuritySection() {
 
           {/* Confirm Password */}
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword" className="text-zinc-200">
+            <Label htmlFor="confirmPassword" className="text-cinema-text-primary">
               {dict.settings.security.confirmPassword}
             </Label>
             <Input
@@ -124,7 +124,7 @@ export function SecuritySection() {
               type="password"
               autoComplete="new-password"
               className={cn(
-                'bg-cinema-elevated border-zinc-700 text-zinc-100',
+                'bg-cinema-elevated border-cinema-border text-cinema-text-primary',
                 errors.confirmPassword && 'border-red-500 focus-visible:ring-red-500',
               )}
               {...register('confirmPassword')}

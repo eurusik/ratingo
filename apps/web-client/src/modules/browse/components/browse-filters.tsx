@@ -83,10 +83,10 @@ export function BrowseFilters({ labels }: BrowseFiltersProps) {
     <div className="flex items-center gap-2">
       {/* Sort */}
       <Select value={currentSort} onValueChange={handleSortChange}>
-        <SelectTrigger className="w-[160px] bg-cinema-card border-zinc-800">
+        <SelectTrigger className="w-[160px] bg-cinema-card border-cinema-borderSoft">
           <SelectValue placeholder={labels.sort} />
         </SelectTrigger>
-        <SelectContent className="bg-cinema-card border-zinc-800">
+        <SelectContent className="bg-cinema-card border-cinema-borderSoft">
           {SORT_OPTIONS.map((option) => (
             <SelectItem key={option} value={option}>
               {labels.sortOptions[option]}
@@ -102,7 +102,7 @@ export function BrowseFilters({ labels }: BrowseFiltersProps) {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="p-1.5 text-zinc-500 hover:text-zinc-300 transition-colors"
+                className="p-1.5 text-cinema-text-muted hover:text-cinema-text-secondary transition-colors"
                 aria-label="Інформація про сортування"
               >
                 <Info className="w-4 h-4" />
@@ -110,7 +110,7 @@ export function BrowseFilters({ labels }: BrowseFiltersProps) {
             </TooltipTrigger>
             <TooltipContent
               side="bottom"
-              className="max-w-[280px] bg-cinema-elevated border-zinc-700 text-zinc-200"
+              className="max-w-[280px] bg-cinema-elevated border-cinema-border text-cinema-text-primary"
             >
               <p className="text-sm">{labels.sortTooltips[currentSort]}</p>
             </TooltipContent>

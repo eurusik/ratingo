@@ -51,8 +51,8 @@ function SavedPageContent() {
       <div className="min-h-screen pt-24 pb-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <h1 className="text-2xl font-bold text-zinc-100 mb-4">{dict.saved.title}</h1>
-            <p className="text-zinc-500">{dict.auth.loginSubtitle}</p>
+            <h1 className="text-2xl font-bold text-cinema-text-primary mb-4">{dict.saved.title}</h1>
+            <p className="text-cinema-text-muted">{dict.auth.loginSubtitle}</p>
           </div>
         </div>
       </div>
@@ -62,10 +62,10 @@ function SavedPageContent() {
   return (
     <div className="min-h-screen pt-24 pb-12">
       <div className="container mx-auto px-4">
-        <h1 className="text-2xl font-bold text-zinc-100 mb-8">{dict.saved.title}</h1>
+        <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.saved.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="bg-cinema-card border border-zinc-800 mb-6">
+          <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6">
             <TabsTrigger value={TAB_VALUES.FOR_LATER} className="data-[state=active]:bg-cinema-elevated">
               {dict.saved.tabs.forLater}
             </TabsTrigger>

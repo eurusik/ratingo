@@ -59,16 +59,16 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-zinc-700" />
+          <span className="w-full border-t border-cinema-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-cinema-card px-2 text-zinc-500">{dict.auth.or}</span>
+          <span className="bg-cinema-card px-2 text-cinema-text-muted">{dict.auth.or}</span>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-zinc-200">
+          <Label htmlFor="email" className="text-cinema-text-primary">
             {dict.auth.email}
           </Label>
           <Input
@@ -77,7 +77,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
             autoComplete="email"
             placeholder="user@example.com"
             className={cn(
-              'bg-cinema-elevated border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              'bg-cinema-elevated border-cinema-border text-cinema-text-primary placeholder:text-cinema-text-muted',
               errors.email && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('email')}
@@ -86,7 +86,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="username" className="text-zinc-200">
+          <Label htmlFor="username" className="text-cinema-text-primary">
             {dict.auth.username}
           </Label>
           <Input
@@ -95,7 +95,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
             autoComplete="username"
             placeholder="ratingo_fan"
             className={cn(
-              'bg-cinema-elevated border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              'bg-cinema-elevated border-cinema-border text-cinema-text-primary placeholder:text-cinema-text-muted',
               errors.username && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('username')}
@@ -104,7 +104,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-zinc-200">
+          <Label htmlFor="password" className="text-cinema-text-primary">
             {dict.auth.password}
           </Label>
           <Input
@@ -113,7 +113,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
             autoComplete="new-password"
             placeholder="••••••"
             className={cn(
-              'bg-cinema-elevated border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              'bg-cinema-elevated border-cinema-border text-cinema-text-primary placeholder:text-cinema-text-muted',
               errors.password && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('password')}
@@ -122,7 +122,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword" className="text-zinc-200">
+          <Label htmlFor="confirmPassword" className="text-cinema-text-primary">
             {dict.auth.confirmPassword}
           </Label>
           <Input
@@ -131,7 +131,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
             autoComplete="new-password"
             placeholder="••••••"
             className={cn(
-              'bg-cinema-elevated border-zinc-700 text-zinc-100 placeholder:text-zinc-500',
+              'bg-cinema-elevated border-cinema-border text-cinema-text-primary placeholder:text-cinema-text-muted',
               errors.confirmPassword && 'border-red-500 focus-visible:ring-red-500',
             )}
             {...register('confirmPassword')}
@@ -153,7 +153,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
         </Button>
 
         {onSwitchToLogin && (
-          <p className="text-center text-sm text-zinc-400">
+          <p className="text-center text-sm text-cinema-text-muted">
             {dict.auth.hasAccount}{' '}
             <button
               type="button"
