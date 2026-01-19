@@ -50,7 +50,6 @@ export function ReplyCard({
   isOwn,
   isAuthenticated,
   isHighlighted = false,
-  variant = 'default',
   replyLabel,
   onReply,
   onDelete,
@@ -61,15 +60,13 @@ export function ReplyCard({
     locale: DATE_LOCALES[locale],
   });
 
-  const bgClass = variant === 'nested' ? 'bg-cinema-elevated/40' : 'bg-cinema-elevated/50';
-  const highlightBgClass = variant === 'nested' ? 'bg-cinema-elevated/60' : 'bg-cinema-elevated/70';
-
+  // No background - hierarchy via indent + connector line only
+  // Only highlight when being replied to
   return (
     <div
       className={cn(
-        'group rounded-lg p-3 transition-all duration-200 border border-cinema-borderSoft/30',
-        bgClass,
-        isHighlighted && `ring-1 ring-cinema-border ${highlightBgClass}`,
+        'group py-2 transition-all duration-200',
+        isHighlighted && 'bg-cinema-elevated/30 rounded-lg px-3 ring-1 ring-cinema-border/50',
       )}
     >
       {/* Header */}
