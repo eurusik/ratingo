@@ -55,6 +55,11 @@ interface ToggleEpisodeVariables {
   watched: boolean;
 }
 
+interface MarkMultipleWatchedVariables {
+  episodeIds: string[];
+  seasonNumber: number;
+}
+
 /**
  * Toggles episode watched status with optimistic updates.
  *
@@ -126,6 +131,80 @@ export function useToggleEpisodeWatched(showId: string) {
 
     onSettled: () => {
       // Always refetch after mutation settles
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.episodeProgress.showProgress(showId),
+      });
+    },
+  });
+}
+
+/**
+ * Marks multiple episodes as watched with optimistic updates.
+ * Used for "mark previous episodes" feature.
+ *
+ * @param showId - Show UUID for cache invalidation
+ * @returns Mutation with bulk mark function
+ */
+export function useMarkMultipleWatched(showId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (variables: MarkMultipleWatchedVariables) => {
+      // Mark all episodes in parallel
+      await Promise.all(
+        variables.episodeIds.map((episodeId) => episodeProgressApi.markWatched(episodeId)),
+      );
+    },
+
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.episodeProgress.showProgress(showId),
+      });
+
+      const previousProgress = queryClient.getQueryData<ShowProgressDto>(
+        queryKeys.episodeProgress.showProgress(showId),
+      );
+
+      // Optimistic update for all episodes
+      if (previousProgress) {
+        const updatedSeasons = previousProgress.seasons.map((season): SeasonProgressDto => {
+          if (season.seasonNumber !== variables.seasonNumber) {
+            return season;
+          }
+
+          const newWatchedIds = [
+            ...new Set([...season.watchedEpisodeIds, ...variables.episodeIds]),
+          ];
+
+          return {
+            ...season,
+            watchedCount: newWatchedIds.length,
+            watchedEpisodeIds: newWatchedIds,
+          };
+        });
+
+        queryClient.setQueryData<ShowProgressDto>(
+          queryKeys.episodeProgress.showProgress(showId),
+          {
+            ...previousProgress,
+            seasons: updatedSeasons,
+          },
+        );
+      }
+
+      return { previousProgress };
+    },
+
+    onError: (_error, _variables, context) => {
+      if (context?.previousProgress) {
+        queryClient.setQueryData(
+          queryKeys.episodeProgress.showProgress(showId),
+          context.previousProgress,
+        );
+      }
+    },
+
+    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.episodeProgress.showProgress(showId),
       });

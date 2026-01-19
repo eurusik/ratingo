@@ -283,6 +283,8 @@
       "seasons": "Seasons",
       "markWatched": "Mark as watched",
       "markUnwatched": "Mark as unwatched",
+      "thisEpisodeOnly": "This episode only",
+      "previousEpisodesToo": "Previous episodes too",
       "plurals": {
         "season": {
           "one": "season",

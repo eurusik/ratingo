@@ -283,6 +283,8 @@
       "seasons": "Сезони",
       "markWatched": "Позначити як переглянутий",
       "markUnwatched": "Прибрати позначку перегляду",
+      "thisEpisodeOnly": "Тільки цей епізод",
+      "previousEpisodesToo": "Разом з попередніми",
       "plurals": {
         "season": {
           "one": "сезон",

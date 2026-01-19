@@ -4,6 +4,7 @@
  * Episode card component for episode list.
  */
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { Tv } from 'lucide-react';
 import type { components } from '@ratingo/api-contract';
@@ -11,6 +12,7 @@ import type { getDictionary } from '@/shared/i18n';
 import { formatDate } from '@/shared/utils/format';
 import { cn, resolveMediaImageUrl, IMAGE_SIZES } from '@/shared/utils';
 import { EpisodeCheckbox } from './episode-checkbox';
+import { MarkWatchedPopover } from './mark-watched-popover';
 
 type EpisodeDto = components['schemas']['EpisodeDto'];
 
@@ -19,8 +21,12 @@ export interface EpisodeCardProps {
   dict: ReturnType<typeof getDictionary>;
   /** Whether this episode is marked as watched */
   isWatched?: boolean;
-  /** Called when user toggles watched status */
+  /** Called when user toggles watched status (mark/unmark this episode only) */
   onToggleWatched?: () => void;
+  /** Called when user wants to mark this + all previous unwatched episodes */
+  onMarkWithPrevious?: () => void;
+  /** Number of unwatched previous episodes */
+  unwatchedPreviousCount?: number;
   /** Whether the toggle is loading */
   isToggling?: boolean;
   /** Whether to show the checkbox (hidden when not authenticated) */
@@ -48,6 +54,8 @@ export function EpisodeCard({
   dict,
   isWatched = false,
   onToggleWatched,
+  onMarkWithPrevious,
+  unwatchedPreviousCount = 0,
   isToggling = false,
   showCheckbox = false,
 }: EpisodeCardProps) {
@@ -56,8 +64,19 @@ export function EpisodeCard({
   const runtime = formatRuntime(episode.runtime, dict.details.showStatus.minutes);
   const isClickable = showCheckbox && onToggleWatched && !upcoming && !isToggling;
 
+  // Show popover only when marking unwatched episode with previous unwatched episodes
+  const shouldShowPopover = !isWatched && unwatchedPreviousCount > 0 && onMarkWithPrevious;
+
+  // Controlled state for the dropdown menu
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
   const handleClick = () => {
-    if (isClickable) {
+    if (!isClickable) return;
+
+    // If should show popover, open it instead of directly toggling
+    if (shouldShowPopover) {
+      setIsPopoverOpen(true);
+    } else {
       onToggleWatched();
     }
   };
@@ -69,16 +88,35 @@ export function EpisodeCard({
         upcoming && 'opacity-60',
       )}
     >
-      {/* Checkbox - highlighted on row hover */}
+      {/* Checkbox with optional popover for marking previous episodes */}
       {showCheckbox && (
-        <EpisodeCheckbox
-          checked={isWatched}
-          onToggle={onToggleWatched || (() => {})}
-          disabled={upcoming || !onToggleWatched}
-          isLoading={isToggling}
-          title={isWatched ? dict.details.showStatus.markUnwatched : dict.details.showStatus.markWatched}
-          highlightOnGroupHover={isClickable}
-        />
+        shouldShowPopover ? (
+          <MarkWatchedPopover
+            isWatched={isWatched}
+            isLoading={isToggling}
+            disabled={upcoming || !onToggleWatched}
+            unwatchedPreviousCount={unwatchedPreviousCount}
+            onMarkThis={onToggleWatched!}
+            onMarkWithPrevious={onMarkWithPrevious!}
+            onUnmark={onToggleWatched!}
+            open={isPopoverOpen}
+            onOpenChange={setIsPopoverOpen}
+            labels={{
+              markAsWatched: dict.details.showStatus.markWatched,
+              thisEpisodeOnly: dict.details.showStatus.thisEpisodeOnly,
+              previousEpisodesToo: dict.details.showStatus.previousEpisodesToo,
+            }}
+          />
+        ) : (
+          <EpisodeCheckbox
+            checked={isWatched}
+            onToggle={onToggleWatched || (() => {})}
+            disabled={upcoming || !onToggleWatched}
+            isLoading={isToggling}
+            title={isWatched ? dict.details.showStatus.markUnwatched : dict.details.showStatus.markWatched}
+            highlightOnGroupHover={isClickable}
+          />
+        )
       )}
 
       {/* Content area with hover */}
@@ -99,7 +137,7 @@ export function EpisodeCard({
             ? (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  onToggleWatched();
+                  handleClick();
                 }
               }
             : undefined

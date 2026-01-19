@@ -12,7 +12,7 @@ import type { getDictionary } from '@/shared/i18n';
 import { formatDate } from '@/shared/utils/format';
 import { cn } from '@/shared/utils';
 import { useAuth } from '@/core/auth';
-import { useShowProgress, useToggleEpisodeWatched } from '@/core/query';
+import { useShowProgress, useToggleEpisodeWatched, useMarkMultipleWatched } from '@/core/query';
 import { EpisodeCard } from './episode-card';
 import { SeasonHeader } from './season-header';
 
@@ -57,6 +57,7 @@ export function EpisodesSection({
     enabled: isAuthenticated && !!showId,
   });
   const toggleWatched = useToggleEpisodeWatched(showId || '');
+  const markMultipleWatched = useMarkMultipleWatched(showId || '');
 
   // Get watched episode IDs for current season
   const currentSeasonProgress = useMemo(() => {
@@ -69,12 +70,18 @@ export function EpisodesSection({
     [currentSeasonProgress],
   );
 
+  // Episodes list from selected season
+  const episodes = useMemo(
+    () => selectedSeason?.episodes || [],
+    [selectedSeason?.episodes],
+  );
+
   // Track which episode is being toggled
   const [togglingEpisodeId, setTogglingEpisodeId] = useState<string | null>(null);
 
   const handleToggleWatched = useCallback(
     (episodeId: string, seasonNumber: number) => {
-      if (!isAuthenticated || toggleWatched.isPending) return;
+      if (!isAuthenticated || toggleWatched.isPending || markMultipleWatched.isPending) return;
 
       const isCurrentlyWatched = watchedEpisodeIds.has(episodeId);
       setTogglingEpisodeId(episodeId);
@@ -90,15 +97,63 @@ export function EpisodesSection({
         },
       );
     },
-    [isAuthenticated, toggleWatched, watchedEpisodeIds],
+    [isAuthenticated, toggleWatched, markMultipleWatched.isPending, watchedEpisodeIds],
+  );
+
+  /**
+   * Marks this episode + all unwatched previous episodes as watched.
+   */
+  const handleMarkWithPrevious = useCallback(
+    (episodeIndex: number, seasonNumber: number) => {
+      if (!isAuthenticated || markMultipleWatched.isPending || toggleWatched.isPending) return;
+
+      // Get all unwatched episodes from start up to and including this one
+      const episodesToMark: string[] = [];
+      for (let i = 0; i <= episodeIndex; i++) {
+        const ep = episodes[i];
+        if (ep.id && !watchedEpisodeIds.has(ep.id)) {
+          episodesToMark.push(ep.id);
+        }
+      }
+
+      if (episodesToMark.length === 0) return;
+
+      setTogglingEpisodeId(episodesToMark[episodesToMark.length - 1]);
+
+      markMultipleWatched.mutate(
+        {
+          episodeIds: episodesToMark,
+          seasonNumber,
+        },
+        {
+          onSettled: () => setTogglingEpisodeId(null),
+        },
+      );
+    },
+    [isAuthenticated, markMultipleWatched, toggleWatched.isPending, episodes, watchedEpisodeIds],
+  );
+
+  /**
+   * Counts unwatched episodes before the given index.
+   */
+  const getUnwatchedPreviousCount = useCallback(
+    (episodeIndex: number): number => {
+      let count = 0;
+      for (let i = 0; i < episodeIndex; i++) {
+        const ep = episodes[i];
+        if (ep.id && !watchedEpisodeIds.has(ep.id)) {
+          count++;
+        }
+      }
+      return count;
+    },
+    [episodes, watchedEpisodeIds],
   );
 
   // Don't render if no valid seasons
   if (!selectedSeason || validSeasons.length === 0) {
     return null;
   }
-
-  const episodes = selectedSeason.episodes || [];
 
   // Find last aired episode index (only if there are upcoming episodes)
   const lastAiredIndex = useMemo(() => {
@@ -174,19 +229,20 @@ export function EpisodesSection({
           showProgress={isAuthenticated && !!showId}
         />
 
-        {/* Episodes list with collapse animation */}
+        {/* Episodes list with smooth expand/collapse animation */}
         <div
-          className={cn(
-            'grid transition-all duration-300 ease-in-out',
-            isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
-          )}
+          className="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+          style={{
+            gridTemplateRows: isExpanded ? '1fr' : '0fr',
+            opacity: isExpanded ? 1 : 0,
+          }}
         >
-          <div className="overflow-hidden">
+          <div className="overflow-hidden min-h-0">
             <div
               ref={listRef}
-              className="max-h-[400px] overflow-y-auto scrollbar-thin mt-4 pt-4 border-t border-cinema-borderSoft/30"
+              className="max-h-[400px] overflow-y-auto scrollbar-thin mt-4 pt-4 pl-3 border-t border-cinema-borderSoft/30"
             >
-              {episodes.map((episode) => (
+              {episodes.map((episode, index) => (
                 <EpisodeCard
                   key={episode.id || episode.number}
                   episode={episode}
@@ -197,6 +253,12 @@ export function EpisodesSection({
                       ? () => handleToggleWatched(episode.id!, selectedSeason.number)
                       : undefined
                   }
+                  onMarkWithPrevious={
+                    episode.id
+                      ? () => handleMarkWithPrevious(index, selectedSeason.number)
+                      : undefined
+                  }
+                  unwatchedPreviousCount={getUnwatchedPreviousCount(index)}
                   isToggling={togglingEpisodeId === episode.id}
                   showCheckbox={isAuthenticated && !!showId && !!episode.id}
                 />
