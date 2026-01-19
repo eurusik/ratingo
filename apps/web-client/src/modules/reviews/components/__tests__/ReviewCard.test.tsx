@@ -84,16 +84,19 @@ describe('ReviewCard', () => {
     });
 
     it('should render rating when author allows it', async () => {
-      await renderWithI18n(<ReviewCard review={mockReview} mediaItemId={mediaItemId} />);
+      const { container } = await renderWithI18n(<ReviewCard review={mockReview} mediaItemId={mediaItemId} />);
 
-      expect(screen.getByText('⭐ 85')).toBeInTheDocument();
+      // Check for rating value and Star icon
+      expect(screen.getByText('85')).toBeInTheDocument();
+      expect(container.querySelector('.lucide-star')).toBeInTheDocument();
     });
 
     it('should not render rating when rating is null', async () => {
       const reviewWithoutRating = { ...mockReview, rating: null };
-      await renderWithI18n(<ReviewCard review={reviewWithoutRating} mediaItemId={mediaItemId} />);
+      const { container } = await renderWithI18n(<ReviewCard review={reviewWithoutRating} mediaItemId={mediaItemId} />);
 
-      expect(screen.queryByText(/⭐/)).not.toBeInTheDocument();
+      // No Star icon in rating badge (only in other places if any)
+      expect(container.querySelector('.fill-cinema-text-disabled')).not.toBeInTheDocument();
     });
 
     it('should render vote counts', async () => {
@@ -113,8 +116,9 @@ describe('ReviewCard', () => {
       const reviewWithoutReplies = { ...mockReview, repliesCount: 0 };
       const { container } = await renderWithI18n(<ReviewCard review={reviewWithoutReplies} mediaItemId={mediaItemId} />);
 
-      // MessageCircle icon should not be present - only ThumbsUp and ThumbsDown
-      expect(container.querySelectorAll('svg')).toHaveLength(2);
+      // MessageCircle icon should not be present - Star, ThumbsUp and ThumbsDown only
+      expect(container.querySelector('.lucide-message-circle')).not.toBeInTheDocument();
+      expect(container.querySelectorAll('svg')).toHaveLength(3); // Star + ThumbsUp + ThumbsDown
     });
   });
 

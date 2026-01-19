@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ThumbsUp, ThumbsDown, MessageCircle, Flag, Eye, EyeOff } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageCircle, Flag, Eye, EyeOff, Star } from 'lucide-react';
 import { isToday, isYesterday, differenceInDays, format } from 'date-fns';
 import { uk, enUS } from 'date-fns/locale';
 import { VOTE_TYPE, type ReviewResponseDto, type VoteType } from '@/core/api/reviews.client';
@@ -117,8 +117,9 @@ export function ReviewCard({
         </div>
 
         {review.rating !== null && (
-          <span className="px-2 py-0.5 bg-cinema-elevated rounded text-cinema-text-secondary text-sm font-medium">
-            ⭐ {review.rating}
+          <span className="flex items-center gap-1 px-2 py-0.5 bg-cinema-elevated/50 rounded text-cinema-text-muted text-sm">
+            <Star className="w-3.5 h-3.5 fill-cinema-text-disabled text-cinema-text-disabled" />
+            {review.rating}
           </span>
         )}
       </div>
@@ -160,15 +161,13 @@ export function ReviewCard({
       {/* Actions: Votes + Replies + Report */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {/* Like button */}
+          {/* Like button - neutral by default, green only when active */}
           <button
             onClick={() => handleVote(VOTE_TYPE.LIKE)}
             disabled={isVoteDisabled}
             className={cn(
-              'flex items-center gap-1.5 text-sm transition-colors',
-              review.currentUserVote === VOTE_TYPE.LIKE
-                ? 'text-green-500'
-                : 'text-cinema-text-muted hover:text-cinema-text-secondary',
+              'flex items-center gap-1.5 text-sm transition-colors text-cinema-text-muted hover:text-cinema-text-secondary',
+              review.currentUserVote === VOTE_TYPE.LIKE && 'text-green-500 hover:text-green-400',
               isVoteDisabled && 'opacity-50 cursor-not-allowed',
             )}
           >
@@ -180,7 +179,7 @@ export function ReviewCard({
                   animatingVote === VOTE_TYPE.LIKE && 'animate-vote-pop',
                 )}
               />
-              {animatingVote === VOTE_TYPE.LIKE && (
+              {animatingVote === VOTE_TYPE.LIKE && review.currentUserVote === VOTE_TYPE.LIKE && (
                 <span className="absolute inset-0 flex items-center justify-center">
                   <span className="absolute w-4 h-4 rounded-full border-2 border-green-500 animate-vote-burst" />
                 </span>
@@ -189,15 +188,13 @@ export function ReviewCard({
             <span>{review.likesCount}</span>
           </button>
 
-          {/* Dislike button */}
+          {/* Dislike button - neutral by default, red only when active */}
           <button
             onClick={() => handleVote(VOTE_TYPE.DISLIKE)}
             disabled={isVoteDisabled}
             className={cn(
-              'flex items-center gap-1.5 text-sm transition-colors',
-              review.currentUserVote === VOTE_TYPE.DISLIKE
-                ? 'text-red-500'
-                : 'text-cinema-text-muted hover:text-cinema-text-secondary',
+              'flex items-center gap-1.5 text-sm transition-colors text-cinema-text-muted hover:text-cinema-text-secondary',
+              review.currentUserVote === VOTE_TYPE.DISLIKE && 'text-red-500 hover:text-red-400',
               isVoteDisabled && 'opacity-50 cursor-not-allowed',
             )}
           >
@@ -209,7 +206,7 @@ export function ReviewCard({
                   animatingVote === VOTE_TYPE.DISLIKE && 'animate-vote-pop',
                 )}
               />
-              {animatingVote === VOTE_TYPE.DISLIKE && (
+              {animatingVote === VOTE_TYPE.DISLIKE && review.currentUserVote === VOTE_TYPE.DISLIKE && (
                 <span className="absolute inset-0 flex items-center justify-center">
                   <span className="absolute w-4 h-4 rounded-full border-2 border-red-500 animate-vote-burst" />
                 </span>
