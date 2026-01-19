@@ -21,12 +21,12 @@ export function ThreadConnector({
     <>
       {/* Vertical line segment - connects to next sibling */}
       {showVerticalLine && (
-        <div className="absolute -left-5 top-0 bottom-0 w-0.5 bg-zinc-700" />
+        <div className="absolute -left-5 top-0 bottom-0 w-0.5 bg-cinema-border" />
       )}
 
       {/* Curved hook ╰ pointing to content */}
       <div className={`absolute -left-5 top-0 w-4 ${hookHeight}`}>
-        <div className="w-full h-full border-l-2 border-b-2 border-zinc-700 rounded-bl-lg" />
+        <div className="w-full h-full border-l-2 border-b-2 border-cinema-border rounded-bl-lg" />
       </div>
     </>
   );

@@ -52,12 +52,19 @@ export function ReviewReplyForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="rounded-lg border border-zinc-700 bg-cinema-elevated/50 overflow-hidden">
+      <div
+        className={cn(
+          'rounded-lg border border-cinema-borderSoft/60 bg-cinema-elevated/50 overflow-hidden',
+          'transition-all duration-200',
+          'hover:border-cinema-border/80',
+          'focus-within:ring-2 focus-within:ring-cinema-focus/50 focus-within:border-transparent',
+        )}
+      >
           {/* Reply to indicator */}
           {replyToUsername && (
-            <div className="px-3 pt-2 text-xs text-zinc-500">
+            <div className="px-3 pt-2 text-xs text-cinema-text-muted">
               {dict.reviews.replies.replyTo}{' '}
-              <span className="text-zinc-400">@{replyToUsername}</span>
+              <span className="text-cinema-text-secondary">@{replyToUsername}</span>
             </div>
           )}
 
@@ -69,7 +76,7 @@ export function ReviewReplyForm({
             placeholder={dict.reviews.replies.placeholder}
             className={cn(
               'min-h-[50px] !border-0 !border-none bg-transparent resize-none text-sm overflow-hidden',
-              'text-zinc-200 placeholder-zinc-500 focus-visible:ring-0 shadow-none',
+              'text-cinema-text-primary placeholder:text-cinema-text-disabled focus-visible:ring-0 shadow-none',
             )}
             disabled={isSubmitting}
             autoFocus={autoFocus}
@@ -84,7 +91,7 @@ export function ReviewReplyForm({
                   ? 'text-red-500'
                   : charactersRemaining < 30
                     ? 'text-yellow-500'
-                    : 'text-zinc-600',
+                    : 'text-cinema-text-disabled',
               )}
             >
               {content.length} / {MAX_REPLY_LENGTH}
@@ -98,7 +105,7 @@ export function ReviewReplyForm({
                   size="sm"
                   onClick={onCancel}
                   disabled={isSubmitting}
-                  className="h-8 text-zinc-400 hover:text-zinc-200"
+                  className="h-8 text-cinema-text-muted hover:text-cinema-text-primary"
                 >
                   {dict.reviews.replies.cancel}
                 </Button>

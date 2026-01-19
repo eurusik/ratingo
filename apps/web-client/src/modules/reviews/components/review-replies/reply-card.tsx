@@ -69,7 +69,7 @@ export function ReplyCard({
       className={cn(
         'group rounded-lg p-3 transition-all duration-200',
         bgClass,
-        isHighlighted && `ring-1 ring-zinc-600 ${highlightBgClass}`,
+        isHighlighted && `ring-1 ring-cinema-border ${highlightBgClass}`,
       )}
     >
       {/* Header */}
@@ -79,12 +79,12 @@ export function ReplyCard({
             {author.avatarUrl && (
               <AvatarImage src={author.avatarUrl} alt={author.username} />
             )}
-            <AvatarFallback className="bg-cinema-elevated text-zinc-400 text-xs">
+            <AvatarFallback className="bg-cinema-elevated text-cinema-text-muted text-xs">
               {author.username.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm text-zinc-300">{author.username}</span>
-          <span className="text-xs text-zinc-600">{timeAgo}</span>
+          <span className="text-sm text-cinema-text-secondary">{author.username}</span>
+          <span className="text-xs text-cinema-text-disabled">{timeAgo}</span>
         </div>
 
         {/* Delete button - visible on hover */}
@@ -93,7 +93,7 @@ export function ReplyCard({
             onClick={onDelete}
             disabled={isDeleting}
             className={cn(
-              'text-zinc-600 hover:text-red-400 transition-all',
+              'text-cinema-text-disabled hover:text-red-400 transition-all',
               'opacity-0 group-hover:opacity-100',
               isDeleting && 'opacity-50 cursor-not-allowed',
             )}
@@ -104,9 +104,9 @@ export function ReplyCard({
       </div>
 
       {/* Content */}
-      <p className="text-sm text-zinc-300 leading-relaxed break-words">
+      <p className="text-sm text-cinema-text-secondary leading-relaxed break-words">
         {replyToUsername && (
-          <span className="text-zinc-500 mr-1 whitespace-nowrap">↪ @{replyToUsername}</span>
+          <span className="text-cinema-text-muted mr-1 whitespace-nowrap">↪ @{replyToUsername}</span>
         )}
         {content}
       </p>
@@ -115,7 +115,7 @@ export function ReplyCard({
       {isAuthenticated && !isOwn && onReply && (
         <button
           onClick={onReply}
-          className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors mt-2"
+          className="flex items-center gap-1 text-xs text-cinema-text-muted hover:text-cinema-text-secondary transition-colors mt-2"
         >
           <Reply className="w-3 h-3" />
           {replyLabel}

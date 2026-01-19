@@ -81,13 +81,13 @@ export function ReviewReplies({
         {repliesCount > 0 && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-cinema-text-muted hover:text-cinema-text-secondary transition-colors"
           >
             <MessageCircle className="w-4 h-4" />
             <span>
               {isExpanded ? dict.reviews.replies.hideReplies : dict.reviews.replies.showReplies}
             </span>
-            <span className="text-zinc-600">({repliesCount})</span>
+            <span className="text-cinema-text-disabled">({repliesCount})</span>
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         )}
@@ -96,7 +96,7 @@ export function ReviewReplies({
         {isExpanded && (
           <div>
             {isLoading ? (
-              <div className="text-sm text-zinc-500 animate-pulse pl-6">
+              <div className="text-sm text-cinema-text-muted animate-pulse pl-6">
                 {dict.reviews.replies.title}...
               </div>
             ) : replies && replies.length > 0 ? (
@@ -124,7 +124,7 @@ export function ReviewReplies({
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-zinc-500">{dict.reviews.replies.empty}</div>
+              <div className="text-sm text-cinema-text-muted">{dict.reviews.replies.empty}</div>
             )}
           </div>
         )}
@@ -142,7 +142,7 @@ export function ReviewReplies({
             ) : (
               <button
                 onClick={() => setShowReplyForm(true)}
-                className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+                className="flex items-center gap-1.5 text-sm text-cinema-text-muted hover:text-cinema-text-secondary transition-colors"
               >
                 <Reply className="w-4 h-4" />
                 {dict.reviews.replies.reply}

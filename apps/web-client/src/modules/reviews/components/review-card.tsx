@@ -100,24 +100,24 @@ export function ReviewCard({
             {review.author.avatarUrl && (
               <AvatarImage src={review.author.avatarUrl} alt={review.author.username} />
             )}
-            <AvatarFallback className="bg-cinema-elevated text-zinc-400 text-xs">
+            <AvatarFallback className="bg-cinema-elevated text-cinema-text-muted text-xs">
               {review.author.username.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-zinc-200">
+            <span className="text-sm font-medium text-cinema-text-primary">
               {review.author.username}
             </span>
             {!review.author.isProfilePublic && (
-              <span className="text-xs text-zinc-500">({dict.reviews.card.private})</span>
+              <span className="text-xs text-cinema-text-muted">({dict.reviews.card.private})</span>
             )}
-            <span className="text-xs text-zinc-500">·</span>
-            <span className="text-xs text-zinc-500">{reviewDate}</span>
+            <span className="text-xs text-cinema-text-muted">·</span>
+            <span className="text-xs text-cinema-text-muted">{reviewDate}</span>
           </div>
         </div>
 
         {review.rating !== null && (
-          <span className="px-2 py-0.5 bg-cinema-elevated rounded text-zinc-300 text-sm font-medium">
+          <span className="px-2 py-0.5 bg-cinema-elevated rounded text-cinema-text-secondary text-sm font-medium">
             ⭐ {review.rating}
           </span>
         )}
@@ -140,7 +140,7 @@ export function ReviewCard({
             showSpoilerOverlay && 'blur-sm select-none',
           )}
         >
-          <p className="text-zinc-300 leading-relaxed">{review.content}</p>
+          <p className="text-cinema-text-secondary leading-relaxed">{review.content}</p>
         </div>
 
         {/* Subtle reveal link */}
@@ -149,7 +149,7 @@ export function ReviewCard({
             onClick={() => setSpoilerRevealed(true)}
             className="absolute inset-0 flex items-center justify-center group"
           >
-            <span className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+            <span className="flex items-center gap-1.5 text-sm text-cinema-text-muted hover:text-cinema-text-secondary transition-colors">
               <Eye className="w-4 h-4" />
               <span>{dict.reviews.card.showSpoiler}</span>
             </span>
@@ -168,7 +168,7 @@ export function ReviewCard({
               'flex items-center gap-1.5 text-sm transition-colors',
               review.currentUserVote === VOTE_TYPE.LIKE
                 ? 'text-green-500'
-                : 'text-zinc-500 hover:text-zinc-300',
+                : 'text-cinema-text-muted hover:text-cinema-text-secondary',
               isVoteDisabled && 'opacity-50 cursor-not-allowed',
             )}
           >
@@ -197,7 +197,7 @@ export function ReviewCard({
               'flex items-center gap-1.5 text-sm transition-colors',
               review.currentUserVote === VOTE_TYPE.DISLIKE
                 ? 'text-red-500'
-                : 'text-zinc-500 hover:text-zinc-300',
+                : 'text-cinema-text-muted hover:text-cinema-text-secondary',
               isVoteDisabled && 'opacity-50 cursor-not-allowed',
             )}
           >
@@ -220,7 +220,7 @@ export function ReviewCard({
 
           {/* Replies count */}
           {review.repliesCount > 0 && (
-            <div className="flex items-center gap-1.5 text-sm text-zinc-500">
+            <div className="flex items-center gap-1.5 text-sm text-cinema-text-muted">
               <MessageCircle className="w-4 h-4" />
               <span>{review.repliesCount}</span>
             </div>
@@ -231,7 +231,7 @@ export function ReviewCard({
         {isAuthenticated && onReport && !isOwnReview && (
           <button
             onClick={() => onReport(review.id)}
-            className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-cinema-text-disabled hover:text-cinema-text-muted transition-colors"
           >
             <Flag className="w-3.5 h-3.5" />
             <span>{dict.reviews.card.report}</span>

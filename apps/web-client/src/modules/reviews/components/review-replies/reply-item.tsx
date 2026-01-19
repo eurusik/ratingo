@@ -84,7 +84,7 @@ export function ReplyItem({
         <div className="mt-2 ml-6 pl-5">
           <div className="relative">
             {children && children.length > 0 && (
-              <div className="absolute -left-5 top-0 -bottom-2 w-0.5 bg-zinc-700" />
+              <div className="absolute -left-5 top-0 -bottom-2 w-0.5 bg-cinema-border" />
             )}
             <ThreadConnector variant="small" />
             <ReviewReplyForm
@@ -201,19 +201,19 @@ function NestedReplyItem({
     <div className="relative pb-3">
       {/* Vertical line - full length when siblings exist */}
       {hasSiblingsBelow && (
-        <div className="absolute -left-5 top-0 bottom-0 w-0.5 bg-zinc-700" />
+        <div className="absolute -left-5 top-0 bottom-0 w-0.5 bg-cinema-border" />
       )}
       {/* Connector line for last item when replying - dynamically calculated */}
       {!hasSiblingsBelow && isReplyingToThis && connectorHeight > 0 && (
         <div
-          className="absolute -left-5 top-0 w-0.5 bg-zinc-700"
+          className="absolute -left-5 top-0 w-0.5 bg-cinema-border"
           style={{ height: connectorHeight }}
         />
       )}
 
       {/* Curved hook */}
       <div className="absolute -left-5 top-0 w-4 h-4">
-        <div className="w-full h-full border-l-2 border-b-2 border-zinc-700 rounded-bl-lg" />
+        <div className="w-full h-full border-l-2 border-b-2 border-cinema-border rounded-bl-lg" />
       </div>
 
       <div ref={cardRef}>
@@ -244,7 +244,7 @@ function NestedReplyItem({
         <div className="relative mt-3">
           {/* Curved hook for form */}
           <div className="absolute -left-5 top-0 w-4 h-4">
-            <div className="w-full h-full border-l-2 border-b-2 border-zinc-700 rounded-bl-lg" />
+            <div className="w-full h-full border-l-2 border-b-2 border-cinema-border rounded-bl-lg" />
           </div>
           <ReviewReplyForm
             onSubmit={onCreateReply}

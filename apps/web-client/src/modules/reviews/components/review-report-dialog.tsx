@@ -65,11 +65,11 @@ export function ReviewReportDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md bg-cinema-card border-cinema-borderSoft">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-zinc-100">
+          <DialogTitle className="flex items-center gap-2 text-cinema-text-primary">
             <Flag className="w-5 h-5 text-red-500" />
             {dict.reviews.report.title}
           </DialogTitle>
-          <DialogDescription className="text-zinc-400">
+          <DialogDescription className="text-cinema-text-muted">
             {dict.reviews.report.description}
           </DialogDescription>
         </DialogHeader>
@@ -77,7 +77,7 @@ export function ReviewReportDialog({
         <div className="space-y-4 mt-4">
           {/* Reason selection */}
           <div className="space-y-3">
-            <Label className="text-sm text-zinc-300">{dict.reviews.report.reason}</Label>
+            <Label className="text-sm text-cinema-text-secondary">{dict.reviews.report.reason}</Label>
             <RadioGroup
               value={reason ?? ''}
               onValueChange={(value) => setReason(value as ReportReason)}
@@ -90,18 +90,18 @@ export function ReviewReportDialog({
                     'flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer',
                     reason === reasonValue
                       ? 'border-red-500/50 bg-red-500/10'
-                      : 'border-cinema-borderSoft hover:border-zinc-700',
+                      : 'border-cinema-borderSoft hover:border-cinema-border',
                   )}
                   onClick={() => setReason(reasonValue)}
                 >
                   <RadioGroupItem
                     value={reasonValue}
                     id={reasonValue}
-                    className="border-zinc-600 text-red-500"
+                    className="border-cinema-border text-red-500"
                   />
                   <Label
                     htmlFor={reasonValue}
-                    className="text-sm text-zinc-300 cursor-pointer flex-1"
+                    className="text-sm text-cinema-text-secondary cursor-pointer flex-1"
                   >
                     {dict.reviews.report.reasons[reasonValue]}
                   </Label>
@@ -112,9 +112,9 @@ export function ReviewReportDialog({
 
           {/* Details textarea */}
           <div className="space-y-2">
-            <Label htmlFor="details" className="text-sm text-zinc-300">
+            <Label htmlFor="details" className="text-sm text-cinema-text-secondary">
               {dict.reviews.report.details}
-              <span className="text-zinc-500 ml-1">({dict.reviews.report.optional})</span>
+              <span className="text-cinema-text-muted ml-1">({dict.reviews.report.optional})</span>
             </Label>
             <Textarea
               id="details"
@@ -123,13 +123,13 @@ export function ReviewReportDialog({
               placeholder={dict.reviews.report.detailsPlaceholder}
               className={cn(
                 'min-h-[80px] bg-cinema-elevated/50 border resize-none text-sm',
-                'text-zinc-200 placeholder-zinc-500 border-zinc-700',
+                'text-cinema-text-primary placeholder:text-cinema-text-disabled border-cinema-borderSoft',
               )}
               maxLength={500}
               disabled={isSubmitting}
             />
             <div className="flex justify-end">
-              <span className="text-xs text-zinc-500">{500 - details.length}</span>
+              <span className="text-xs text-cinema-text-muted">{500 - details.length}</span>
             </div>
           </div>
 
@@ -146,7 +146,7 @@ export function ReviewReportDialog({
             variant="ghost"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="text-zinc-400 hover:text-zinc-200"
+            className="text-cinema-text-muted hover:text-cinema-text-primary"
           >
             {dict.reviews.report.cancel}
           </Button>
