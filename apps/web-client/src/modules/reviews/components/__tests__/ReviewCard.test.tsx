@@ -13,6 +13,10 @@ jest.mock('@/core/api/reviews.client', () => ({
 // Mock date-fns to avoid timezone issues
 jest.mock('date-fns', () => ({
   formatDistanceToNow: () => '2 days ago',
+  isToday: () => false,
+  isYesterday: () => false,
+  differenceInDays: () => 10,
+  format: () => '15 Jan 2024',
 }));
 
 jest.mock('date-fns/locale', () => ({

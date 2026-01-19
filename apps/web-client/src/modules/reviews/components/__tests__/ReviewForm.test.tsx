@@ -28,7 +28,7 @@ describe('ReviewForm', () => {
     it('should render rating label', async () => {
       await renderWithI18n(<ReviewForm onSubmit={mockOnSubmit} />);
 
-      expect(screen.getByText('Ваша оцінка')).toBeInTheDocument();
+      expect(screen.getByText('Як вам?')).toBeInTheDocument();
     });
 
     it('should render rating label for guest', async () => {
@@ -41,7 +41,7 @@ describe('ReviewForm', () => {
       await renderWithI18n(<ReviewForm onSubmit={mockOnSubmit} />);
 
       expect(
-        screen.getByPlaceholderText('Поділіться враженнями... (до 280 символів)'),
+        screen.getByPlaceholderText('Зайшло чи ні? Що сподобалось або розчарувало...'),
       ).toBeInTheDocument();
     });
 
@@ -51,20 +51,26 @@ describe('ReviewForm', () => {
       expect(screen.getByText('Містить спойлери')).toBeInTheDocument();
     });
 
-    it('should render submit button with correct text for create mode', async () => {
-      await renderWithI18n(<ReviewForm onSubmit={mockOnSubmit} mode={REVIEW_FORM_MODE.CREATE} />);
+    it('should render submit button with correct text for create mode when has content', async () => {
+      await renderWithI18n(
+        <ReviewForm onSubmit={mockOnSubmit} mode={REVIEW_FORM_MODE.CREATE} initialValues={{ content: 'Test' }} />,
+      );
 
       expect(screen.getByText('Опублікувати')).toBeInTheDocument();
     });
 
-    it('should render submit button with correct text for edit mode', async () => {
-      await renderWithI18n(<ReviewForm onSubmit={mockOnSubmit} mode={REVIEW_FORM_MODE.EDIT} />);
+    it('should render submit button with correct text for edit mode when has content', async () => {
+      await renderWithI18n(
+        <ReviewForm onSubmit={mockOnSubmit} mode={REVIEW_FORM_MODE.EDIT} initialValues={{ content: 'Test' }} />,
+      );
 
       expect(screen.getByText('Зберегти')).toBeInTheDocument();
     });
 
-    it('should show submitting text when isSubmitting is true', async () => {
-      await renderWithI18n(<ReviewForm onSubmit={mockOnSubmit} isSubmitting={true} />);
+    it('should show submitting text when isSubmitting is true and has content', async () => {
+      await renderWithI18n(
+        <ReviewForm onSubmit={mockOnSubmit} isSubmitting={true} initialValues={{ content: 'Test' }} />,
+      );
 
       expect(screen.getByText('Надсилання...')).toBeInTheDocument();
     });
@@ -101,36 +107,37 @@ describe('ReviewForm', () => {
     it('should show remaining characters', async () => {
       await renderWithI18n(<ReviewForm onSubmit={mockOnSubmit} />);
 
-      expect(screen.getByText(String(MAX_CONTENT_LENGTH))).toBeInTheDocument();
+      // Format is "{current} / {max}"
+      expect(screen.getByText(/0\s*\/\s*280/)).toBeInTheDocument();
     });
 
     it('should update character count as user types', async () => {
       await renderWithI18n(<ReviewForm onSubmit={mockOnSubmit} />);
 
       const textarea = screen.getByPlaceholderText(
-        'Поділіться враженнями... (до 280 символів)',
+        'Зайшло чи ні? Що сподобалось або розчарувало...',
       );
       await act(async () => {
         fireEvent.change(textarea, { target: { value: 'Hello' } });
       });
 
-      expect(screen.getByText(String(MAX_CONTENT_LENGTH - 5))).toBeInTheDocument();
+      // Format is "{current} / {max}"
+      expect(screen.getByText(/5\s*\/\s*280/)).toBeInTheDocument();
     });
   });
 
   describe('form submission', () => {
-    it('should disable submit button when form is invalid', async () => {
+    it('should not show submit button when content is empty', async () => {
       await renderWithI18n(<ReviewForm onSubmit={mockOnSubmit} />);
 
-      const submitButton = screen.getByText('Опублікувати');
-      expect(submitButton).toBeDisabled();
+      expect(screen.queryByText('Опублікувати')).not.toBeInTheDocument();
     });
 
     it('should enable submit button when content is entered', async () => {
       await renderWithI18n(<ReviewForm onSubmit={mockOnSubmit} />);
 
       const textarea = screen.getByPlaceholderText(
-        'Поділіться враженнями... (до 280 символів)',
+        'Зайшло чи ні? Що сподобалось або розчарувало...',
       );
       await act(async () => {
         fireEvent.change(textarea, { target: { value: 'Great movie!' } });
@@ -209,7 +216,7 @@ describe('ReviewForm', () => {
       await renderWithI18n(<ReviewForm onSubmit={mockOnSubmit} isSubmitting={true} />);
 
       const textarea = screen.getByPlaceholderText(
-        'Поділіться враженнями... (до 280 символів)',
+        'Зайшло чи ні? Що сподобалось або розчарувало...',
       );
       expect(textarea).toBeDisabled();
     });
