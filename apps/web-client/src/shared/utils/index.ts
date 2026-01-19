@@ -10,4 +10,5 @@ export {
   type RelativeDateResult,
 } from './format';
 export { resolveMediaImageUrl, IMAGE_SIZES, MEDIA_IMAGE_BASE } from './image';
+export { pluralize } from './pluralize';
 export { createMediaMetadata, createNotFoundMetadata, type SeoMediaItem } from './seo';

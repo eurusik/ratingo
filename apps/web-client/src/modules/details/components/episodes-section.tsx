@@ -11,7 +11,7 @@ import { ChevronDown, ChevronRight, Tv, Clock } from 'lucide-react';
 import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
 import { formatDate } from '@/shared/utils/format';
-import { cn, resolveMediaImageUrl, IMAGE_SIZES } from '@/shared/utils';
+import { cn, resolveMediaImageUrl, IMAGE_SIZES, pluralize } from '@/shared/utils';
 
 type SeasonDto = components['schemas']['SeasonDto'];
 type EpisodeDto = components['schemas']['EpisodeDto'];
@@ -20,19 +20,6 @@ export interface EpisodesSectionProps {
   seasons: SeasonDto[];
   nextEpisodeDate?: string | null;
   dict: ReturnType<typeof getDictionary>;
-}
-
-/**
- * Pluralizes words using Intl.PluralRules API.
- */
-function pluralize(
-  count: number,
-  forms: { one: string; few: string; many: string },
-  locale: string = 'uk',
-): string {
-  const pr = new Intl.PluralRules(locale);
-  const rule = pr.select(count);
-  return forms[rule as keyof typeof forms] ?? forms.many;
 }
 
 /**

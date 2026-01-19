@@ -5,27 +5,13 @@
 
 import { Clock } from 'lucide-react';
 import type { getDictionary } from '@/shared/i18n';
-import { formatDate } from '@/shared/utils/format';
+import { formatDate, pluralize } from '@/shared/utils';
 
 export interface ShowStatusProps {
   nextEpisodeDate?: string | null;
   totalSeasons?: number;
   totalEpisodes?: number;
   dict: ReturnType<typeof getDictionary>;
-}
-
-/**
- * Pluralizes words using Intl.PluralRules API.
- * Supports proper plural forms for Ukrainian and other languages.
- */
-function pluralize(
-  count: number,
-  forms: { one: string; few: string; many: string },
-  locale: string = 'uk',
-): string {
-  const pr = new Intl.PluralRules(locale);
-  const rule = pr.select(count);
-  return forms[rule as keyof typeof forms] ?? forms.many;
 }
 
 export function ShowStatus({
