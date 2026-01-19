@@ -184,7 +184,13 @@ function SeasonHeader({
                     setIsDropdownOpen(false);
                   }}
                 />
-                <div className="absolute top-full left-0 mt-2 z-20 min-w-48 bg-cinema-card rounded-xl border border-cinema-borderSoft shadow-xl overflow-hidden">
+                <div
+                  className={cn(
+                    'absolute top-full left-0 mt-2 z-20 bg-cinema-card rounded-xl border border-cinema-borderSoft shadow-xl overflow-hidden',
+                    'max-h-[320px] overflow-y-auto',
+                    seasons.length > 8 ? 'min-w-80 grid grid-cols-2' : 'min-w-48',
+                  )}
+                >
                   {seasons.map((season) => (
                     <button
                       key={season.number}
