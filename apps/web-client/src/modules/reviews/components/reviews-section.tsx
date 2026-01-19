@@ -157,10 +157,14 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
 
   return (
     <section className={className}>
-      {/* Header - only show when there are reviews */}
-      {totalReviews > 0 && (
-        <SectionHeader dict={dict} totalReviews={totalReviews} sort={sort} onSortChange={setSort} />
-      )}
+      {/* Header - always show, but hide sort when no reviews */}
+      <SectionHeader
+        dict={dict}
+        totalReviews={totalReviews}
+        sort={sort}
+        onSortChange={setSort}
+        showSort={totalReviews > 0}
+      />
 
       {/* Review form (show to guests too, they'll see login modal on submit) */}
       {showForm && (
@@ -178,7 +182,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
             <ReviewCardSkeleton key={i} />
           ))}
         </div>
-      ) : reviews.length > 0 && (
+      ) : reviews.length > 0 ? (
         <div className="space-y-6">
           {reviews.map((review) => (
             <ReviewCard
@@ -209,6 +213,9 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
             </div>
           )}
         </div>
+      ) : !showForm && (
+        /* Empty state - only show if form is hidden (user already reviewed) */
+        <EmptyState dict={dict} />
       )}
 
       {/* Report dialog */}
@@ -233,37 +240,48 @@ interface SectionHeaderProps {
   totalReviews: number;
   sort: ReviewSort;
   onSortChange: (sort: ReviewSort) => void;
+  showSort?: boolean;
 }
 
-function SectionHeader({ dict, totalReviews, sort, onSortChange }: SectionHeaderProps) {
+function SectionHeader({ dict, totalReviews, sort, onSortChange, showSort = true }: SectionHeaderProps) {
   return (
-    <div className="flex items-center justify-between pb-4">
+    <div className="flex items-center justify-between pb-6">
       <div className="flex items-center gap-2">
-        <MessageSquare className="w-5 h-5 text-cinema-text-muted" />
-        <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
+        <MessageSquare className="w-5 h-5 text-cinema-text-secondary" />
+        <h2 className="text-base font-semibold text-cinema-text-primary uppercase tracking-wider">
           {dict.reviews.title}
         </h2>
         {totalReviews > 0 && (
-          <span className="text-sm text-cinema-text-disabled">({totalReviews})</span>
+          <span className="text-sm text-cinema-text-muted">({totalReviews})</span>
         )}
       </div>
 
-      <Select value={sort} onValueChange={(value) => onSortChange(value as ReviewSort)}>
-        <SelectTrigger className="w-auto gap-2 bg-cinema-elevated/50 border-cinema-border text-cinema-text-secondary text-sm">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className="bg-cinema-elevated border-cinema-border">
-          {SORT_VALUES.map((value) => (
-            <SelectItem
-              key={value}
-              value={value}
-              className="text-cinema-text-secondary focus:bg-cinema-card focus:text-cinema-text-primary"
-            >
-              {dict.reviews.sort[value]}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {showSort && (
+        <Select value={sort} onValueChange={(value) => onSortChange(value as ReviewSort)}>
+          <SelectTrigger className="w-auto gap-2 bg-cinema-elevated/50 border-cinema-border text-cinema-text-secondary text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-cinema-elevated border-cinema-border">
+            {SORT_VALUES.map((value) => (
+              <SelectItem
+                key={value}
+                value={value}
+                className="text-cinema-text-secondary focus:bg-cinema-card focus:text-cinema-text-primary"
+              >
+                {dict.reviews.sort[value]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
+  );
+}
+
+function EmptyState({ dict }: { dict: Dict }) {
+  return (
+    <div className="text-center py-8">
+      <p className="text-cinema-text-muted">{dict.reviews.emptyHintAuth}</p>
     </div>
   );
 }

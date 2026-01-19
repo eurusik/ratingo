@@ -116,14 +116,14 @@ export function ReviewForm({
           <label className="text-sm text-cinema-text-muted">
             {isGuest ? dict.reviews.form.ratingGuest : dict.reviews.form.rating}
           </label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className={cn('text-lg font-bold', getRatingColor(rating))}>
               {rating}
             </span>
+            <span className="text-cinema-text-disabled">·</span>
             <span
               className={cn(
-                'text-sm transition-all duration-150',
-                getRatingColor(rating),
+                'text-sm text-cinema-text-muted transition-all duration-150',
                 isLabelAnimating ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0',
               )}
             >
