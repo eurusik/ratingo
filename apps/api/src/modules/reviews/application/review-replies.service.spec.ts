@@ -114,6 +114,7 @@ describe('ReviewRepliesService', () => {
         userId: 'user-id-1',
         reviewId: 'review-id-1',
         parentReplyId: null,
+        replyToUsername: null,
         content: 'Nice review!',
       });
       expect(reviewRepo.incrementRepliesCount).toHaveBeenCalledWith('review-id-1');
@@ -135,6 +136,7 @@ describe('ReviewRepliesService', () => {
         userId: 'user-id-1',
         reviewId: 'review-id-1',
         parentReplyId: 'parent-reply-id',
+        replyToUsername: null,
         content: 'Reply to reply!',
       });
     });
