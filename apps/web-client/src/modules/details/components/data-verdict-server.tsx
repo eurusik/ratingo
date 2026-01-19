@@ -97,7 +97,7 @@ const verdictConfig: Record<
   },
   general: {
     icon: Info,
-    iconColor: 'text-zinc-400',
+    iconColor: 'text-cinema-text-muted',
     textColor: 'text-white',
     bgGradient: 'bg-gradient-to-br from-zinc-500/15 via-zinc-500/5 to-transparent',
     borderColor: 'border-l-zinc-400/40',
@@ -179,7 +179,7 @@ export function DataVerdictServer({
 
           {/* Additional context (optional) */}
           {context && (
-            <p className="text-sm text-zinc-400 leading-relaxed">
+            <p className="text-sm text-cinema-text-muted leading-relaxed">
               {isNumericContext(context) ? dict.details.verdict.context.aggregatePublic : context}
             </p>
           )}

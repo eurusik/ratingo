@@ -16,7 +16,7 @@ export function SimilarCarousel({ items, locale = 'uk', dict }: SimilarCarouselP
 
   return (
     <section>
-      <h2 className="text-sm font-semibold text-zinc-400 mb-3">{dict.details.similar.title}</h2>
+      <h2 className="text-sm font-semibold text-cinema-text-muted mb-3">{dict.details.similar.title}</h2>
       <div className="grid grid-cols-3 gap-3">
         {items.map((item) => (
           <MediaCardServer key={item.id} {...item} locale={locale} />

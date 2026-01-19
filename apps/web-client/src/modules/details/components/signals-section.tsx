@@ -121,20 +121,20 @@ export function SignalsSection({
 
       {/* Активність — compact inline on mobile, with label on desktop */}
       {hasActivity && (
-        <div className="flex items-center gap-3 text-xs md:text-sm text-zinc-500">
+        <div className="flex items-center gap-3 text-xs md:text-sm text-cinema-text-muted">
           {hasLiveWatchers && (
             <span className="inline-flex items-center gap-1">
               <TrendingUp className="w-3 h-3 md:w-3.5 md:h-3.5" />
-              <span className="text-zinc-400">{stats!.liveWatchers!.toLocaleString()}</span>
+              <span className="text-cinema-text-muted">{stats!.liveWatchers!.toLocaleString()}</span>
               <span className="hidden md:inline">{dict.details.watchingNow}</span>
               <span className="md:hidden">зараз</span>
             </span>
           )}
-          {hasLiveWatchers && hasTotalWatchers && <span className="text-zinc-600">·</span>}
+          {hasLiveWatchers && hasTotalWatchers && <span className="text-cinema-text-disabled">·</span>}
           {hasTotalWatchers && (
             <span className="inline-flex items-center gap-1">
               <Users className="w-3 h-3 md:w-3.5 md:h-3.5" />
-              <span className="text-zinc-400">{stats!.totalWatchers!.toLocaleString()}</span>
+              <span className="text-cinema-text-muted">{stats!.totalWatchers!.toLocaleString()}</span>
               <span className="hidden md:inline">{dict.details.totalWatchers}</span>
               <span className="md:hidden">всього</span>
             </span>
@@ -150,7 +150,7 @@ export function SignalsSection({
             {genres.map((genre) => (
               <span
                 key={genre}
-                className="px-2 md:px-2.5 py-0.5 md:py-1 text-[11px] md:text-xs font-medium text-zinc-300 bg-cinema-elevated/60 rounded-full border border-zinc-700/50"
+                className="px-2 md:px-2.5 py-0.5 md:py-1 text-[11px] md:text-xs font-medium text-cinema-text-secondary bg-cinema-elevated/60 rounded-full border border-cinema-border/50"
               >
                 {genre}
               </span>

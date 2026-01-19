@@ -16,12 +16,12 @@ export function DetailsHeader({ backLabel }: DetailsHeaderProps) {
       <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
         <Link
           href={'/' as Route}
-          className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-cinema-text-muted hover:text-white transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="text-sm">{backLabel}</span>
         </Link>
-        <button className="text-zinc-400 hover:text-white transition-colors p-2">
+        <button className="text-cinema-text-muted hover:text-white transition-colors p-2">
           <Share2 className="w-5 h-5" />
         </button>
       </div>

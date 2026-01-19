@@ -67,8 +67,8 @@ function PersonAvatar({
 
       {/* Name & Role */}
       <div className="text-center">
-        <p className="text-xs font-medium text-zinc-200 line-clamp-1">{person.name}</p>
-        <p className="text-[10px] text-zinc-500 line-clamp-1">{role}</p>
+        <p className="text-xs font-medium text-cinema-text-primary line-clamp-1">{person.name}</p>
+        <p className="text-[10px] text-cinema-text-muted line-clamp-1">{role}</p>
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ export function RatingoScore({ score, dict }: RatingoScoreProps) {
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5 md:gap-2 bg-cinema-card/60 backdrop-blur-sm px-2.5 md:px-3 py-1.5 md:py-2 rounded-lg w-fit">
         <Activity className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
-        <span className="text-xs md:text-sm font-medium text-zinc-400">Ratingo</span>
+        <span className="text-xs md:text-sm font-medium text-cinema-text-muted">Ratingo</span>
         <span className="text-lg md:text-2xl font-bold text-white">{formatRating(score)}</span>
 
         {/* Info icon with tooltip for curious users */}
@@ -29,24 +29,24 @@ export function RatingoScore({ score, dict }: RatingoScoreProps) {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="ml-0.5 text-zinc-500 hover:text-zinc-400 transition-colors cursor-help"
+                className="ml-0.5 text-cinema-text-muted hover:text-cinema-text-muted transition-colors cursor-help"
                 onClick={(e) => e.preventDefault()}
               >
                 <Info className="w-3.5 h-3.5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-sm bg-cinema-elevated border border-zinc-700">
+            <TooltipContent side="top" className="max-w-sm bg-cinema-elevated border border-cinema-border">
               <div className="text-xs leading-relaxed space-y-3">
                 <div>
                   <p className="font-semibold text-white">{dict.details.ratingTooltip.title}</p>
-                  <p className="text-zinc-400 mt-0.5">{dict.details.ratingTooltip.subtitle}</p>
+                  <p className="text-cinema-text-muted mt-0.5">{dict.details.ratingTooltip.subtitle}</p>
                 </div>
-                <p className="text-zinc-300">{dict.details.ratingTooltip.description}</p>
+                <p className="text-cinema-text-secondary">{dict.details.ratingTooltip.description}</p>
                 <div>
                   <p className="font-medium text-white mb-1.5">
                     {dict.details.ratingTooltip.howToRead}
                   </p>
-                  <ul className="text-zinc-300 space-y-1.5">
+                  <ul className="text-cinema-text-secondary space-y-1.5">
                     <li>• {dict.details.ratingTooltip.exampleHigh}</li>
                     <li>• {dict.details.ratingTooltip.exampleTrending}</li>
                   </ul>
@@ -57,7 +57,7 @@ export function RatingoScore({ score, dict }: RatingoScoreProps) {
         </TooltipProvider>
       </div>
       {/* Subtitle explaining what Ratingo is */}
-      <span className="text-[10px] md:text-xs text-zinc-500 pl-0.5">
+      <span className="text-[10px] md:text-xs text-cinema-text-muted pl-0.5">
         {dict.details.ratingSubtitle}
       </span>
     </div>

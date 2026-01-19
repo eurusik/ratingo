@@ -27,19 +27,19 @@ export function WatchersStats({ stats, dict }: WatchersStatsProps) {
     <div className="flex items-center gap-4 md:gap-6 flex-wrap">
       {/* Active interest (Trakt watching) */}
       {hasLiveWatchers && (
-        <div className="flex items-center gap-2 text-zinc-300">
+        <div className="flex items-center gap-2 text-cinema-text-secondary">
           <TrendingUp className="w-5 h-5 text-blue-400" />
           <span className="text-base font-medium">{stats.liveWatchers!.toLocaleString()}</span>
-          <span className="text-sm text-zinc-400">{dict.watchingNow}</span>
+          <span className="text-sm text-cinema-text-muted">{dict.watchingNow}</span>
         </div>
       )}
 
       {/* Total watched (Trakt watchers) */}
       {hasTotalWatchers && (
-        <div className="flex items-center gap-2 text-zinc-400">
-          <Users className="w-5 h-5 text-zinc-500" />
+        <div className="flex items-center gap-2 text-cinema-text-muted">
+          <Users className="w-5 h-5 text-cinema-text-muted" />
           <span className="text-base font-medium">{stats.totalWatchers!.toLocaleString()}</span>
-          <span className="text-sm text-zinc-400">{dict.totalWatchers}</span>
+          <span className="text-sm text-cinema-text-muted">{dict.totalWatchers}</span>
         </div>
       )}
     </div>

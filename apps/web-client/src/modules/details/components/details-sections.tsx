@@ -42,7 +42,7 @@ export function SuitableForTags({ tags, label }: SuitableForTagsProps) {
       {tags.map((tag) => (
         <span
           key={tag}
-          className="px-3 py-1 text-xs font-medium text-zinc-300 bg-cinema-elevated/60 rounded-full border border-zinc-700/50"
+          className="px-3 py-1 text-xs font-medium text-cinema-text-secondary bg-cinema-elevated/60 rounded-full border border-cinema-border/50"
         >
           {tag}
         </span>
@@ -66,7 +66,7 @@ export function OverviewSection({ title, overview }: OverviewSectionProps) {
   return (
     <section id="overview-section" className="space-y-2 scroll-mt-8">
       <h3 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">{title}</h3>
-      <p className="text-base md:text-lg text-zinc-300 leading-relaxed">{overview}</p>
+      <p className="text-base md:text-lg text-cinema-text-secondary leading-relaxed">{overview}</p>
     </section>
   );
 }

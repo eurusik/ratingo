@@ -21,10 +21,10 @@ export function QuickPitchScroll({ text }: QuickPitchScrollProps) {
   return (
     <button
       onClick={handleClick}
-      className="text-left text-base md:text-lg text-zinc-300 leading-relaxed max-w-2xl hover:text-zinc-100 transition-colors cursor-pointer group"
+      className="text-left text-base md:text-lg text-cinema-text-secondary leading-relaxed max-w-2xl hover:text-cinema-text-primary transition-colors cursor-pointer group"
     >
       <span className="group-hover:opacity-80 transition-opacity">{text}</span>
-      <span className="inline-block ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500">
+      <span className="inline-block ml-2 opacity-0 group-hover:opacity-100 transition-opacity text-cinema-text-muted">
         <ChevronDown className="w-4 h-4 inline" />
       </span>
     </button>

@@ -15,12 +15,12 @@ export interface DetailsQuickPitchProps {
 export function DetailsQuickPitch({ pitch, suitableFor, dict }: DetailsQuickPitchProps) {
   return (
     <section className="bg-cinema-card/50 rounded-xl p-4 border border-cinema-borderSoft">
-      <h2 className="text-sm font-semibold text-zinc-400 mb-2">{dict.details.quickPitch.title}</h2>
+      <h2 className="text-sm font-semibold text-cinema-text-muted mb-2">{dict.details.quickPitch.title}</h2>
       <p className="text-white leading-relaxed mb-3">{pitch}</p>
       {suitableFor && suitableFor.length > 0 && (
-        <p className="text-sm text-zinc-400">
-          <span className="text-zinc-500">{dict.details.quickPitch.suitable}:</span>{' '}
-          <span className="text-zinc-300">{suitableFor.join(', ')}</span>
+        <p className="text-sm text-cinema-text-muted">
+          <span className="text-cinema-text-muted">{dict.details.quickPitch.suitable}:</span>{' '}
+          <span className="text-cinema-text-secondary">{suitableFor.join(', ')}</span>
         </p>
       )}
     </section>

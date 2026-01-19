@@ -20,21 +20,21 @@ export function InterestStats({ stats, watchingNowLabel, totalWatchersLabel }: I
   if (!hasLiveWatchers && !hasTotalWatchers) return null;
 
   return (
-    <div className="flex items-center gap-4 text-xs text-zinc-500">
+    <div className="flex items-center gap-4 text-xs text-cinema-text-muted">
       {hasLiveWatchers && (
         <span className="inline-flex items-center gap-1.5">
-          <TrendingUp className="w-3.5 h-3.5 text-zinc-500" />
-          <span className="text-zinc-400">{stats!.liveWatchers!.toLocaleString()}</span>
+          <TrendingUp className="w-3.5 h-3.5 text-cinema-text-muted" />
+          <span className="text-cinema-text-muted">{stats!.liveWatchers!.toLocaleString()}</span>
           <span>{watchingNowLabel}</span>
         </span>
       )}
 
-      {hasLiveWatchers && hasTotalWatchers && <span className="text-zinc-600">·</span>}
+      {hasLiveWatchers && hasTotalWatchers && <span className="text-cinema-text-disabled">·</span>}
 
       {hasTotalWatchers && (
         <span className="inline-flex items-center gap-1.5">
-          <Users className="w-3.5 h-3.5 text-zinc-600" />
-          <span className="text-zinc-400">{stats!.totalWatchers!.toLocaleString()}</span>
+          <Users className="w-3.5 h-3.5 text-cinema-text-disabled" />
+          <span className="text-cinema-text-muted">{stats!.totalWatchers!.toLocaleString()}</span>
           <span>{totalWatchersLabel}</span>
         </span>
       )}

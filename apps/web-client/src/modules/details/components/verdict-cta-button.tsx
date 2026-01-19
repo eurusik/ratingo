@@ -47,7 +47,7 @@ function CtaHintText({
   };
 
   return (
-    <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
+    <span className="text-xs text-cinema-text-muted group-hover:text-cinema-text-muted transition-colors">
       {getText()}
     </span>
   );
@@ -107,7 +107,7 @@ export function VerdictCtaButton({
   // Show skeleton while loading save status
   if (isLoading && primaryCta === PRIMARY_CTA.SAVE) {
     return (
-      <div className="flex items-center justify-between w-full mt-4 pt-4 border-t border-zinc-800/50 -mx-5 px-5 -mb-5 pb-5">
+      <div className="flex items-center justify-between w-full mt-4 pt-4 border-t border-cinema-borderSoft/50 -mx-5 px-5 -mb-5 pb-5">
         <div className="flex flex-col gap-1.5">
           <div className="h-4 w-20 bg-cinema-elevated rounded animate-pulse" />
           <div className="h-3 w-32 bg-cinema-elevated/60 rounded animate-pulse" />
@@ -135,8 +135,8 @@ export function VerdictCtaButton({
     [PRIMARY_CTA.SAVE]: {
       icon: isSaved ? Check : Bookmark,
       label: isSaved ? dict.details.saved : dict.details.save,
-      iconColor: isSaved ? 'text-green-500' : 'text-zinc-500 group-hover:text-zinc-300',
-      iconBg: isSaved ? 'bg-green-500/20' : 'bg-cinema-elevated group-hover:bg-zinc-700',
+      iconColor: isSaved ? 'text-green-500' : 'text-cinema-text-muted group-hover:text-cinema-text-secondary',
+      iconBg: isSaved ? 'bg-green-500/20' : 'bg-cinema-elevated group-hover:bg-cinema-border',
       showHint: !isSaved,
     },
     [PRIMARY_CTA.CONTINUE]: {
@@ -199,7 +199,7 @@ export function VerdictCtaButton({
           <span
             className={cn(
               'text-sm font-medium',
-              primaryCta === PRIMARY_CTA.SAVE && isSaved ? 'text-green-400' : 'text-zinc-200',
+              primaryCta === PRIMARY_CTA.SAVE && isSaved ? 'text-green-400' : 'text-cinema-text-primary',
             )}
           >
             {config.label}
@@ -238,12 +238,12 @@ export function VerdictCtaButton({
                 {isSubscribed ? (
                   <Bell className="w-3 h-3 text-emerald-400" />
                 ) : (
-                  <BellOff className="w-3 h-3 text-zinc-500" />
+                  <BellOff className="w-3 h-3 text-cinema-text-muted" />
                 )}
                 <span
                   className={cn(
                     'text-xs transition-colors',
-                    isSubscribed ? 'text-emerald-400' : 'text-zinc-500 hover:text-zinc-400',
+                    isSubscribed ? 'text-emerald-400' : 'text-cinema-text-muted hover:text-cinema-text-muted',
                   )}
                 >
                   {isSubscribed
@@ -267,7 +267,7 @@ export function VerdictCtaButton({
                     reason: subscriptionUnavailableReason,
                   });
                 }}
-                className="flex items-center gap-1.5 mt-1.5 text-zinc-600 cursor-not-allowed opacity-60"
+                className="flex items-center gap-1.5 mt-1.5 text-cinema-text-disabled cursor-not-allowed opacity-60"
               >
                 <BellOff className="w-3 h-3" />
                 <span className="text-xs">

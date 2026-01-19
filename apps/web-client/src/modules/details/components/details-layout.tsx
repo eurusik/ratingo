@@ -82,7 +82,7 @@ export function DetailsLayout({
 
       {/* Share button (floating) */}
       <button
-        className="fixed top-20 right-4 z-30 p-3 rounded-full bg-cinema-elevated/80 backdrop-blur text-zinc-400 hover:text-white hover:bg-zinc-700/80 transition-all"
+        className="fixed top-20 right-4 z-30 p-3 rounded-full bg-cinema-elevated/80 backdrop-blur text-cinema-text-muted hover:text-white hover:bg-cinema-border/80 transition-all"
         aria-label="Share"
       >
         <Share2 className="w-5 h-5" />
@@ -100,7 +100,7 @@ export function DetailsLayout({
               {suitableFor.map((tag) => (
                 <span
                   key={tag}
-                  className="px-3 py-1 text-xs font-medium text-zinc-300 bg-cinema-elevated/60 rounded-full border border-zinc-700/50"
+                  className="px-3 py-1 text-xs font-medium text-cinema-text-secondary bg-cinema-elevated/60 rounded-full border border-cinema-border/50"
                 >
                   {tag}
                 </span>
@@ -117,7 +117,7 @@ export function DetailsLayout({
               <h3 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
                 {dict.details.overview.title}
               </h3>
-              <p className="text-base md:text-lg text-zinc-300 leading-relaxed">{overview}</p>
+              <p className="text-base md:text-lg text-cinema-text-secondary leading-relaxed">{overview}</p>
             </section>
           )}
 

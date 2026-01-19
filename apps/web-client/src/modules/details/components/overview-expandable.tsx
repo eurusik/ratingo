@@ -42,7 +42,7 @@ export function OverviewExpandable({
       <div>
         <p
           className={cn(
-            'text-base md:text-lg text-zinc-300 leading-relaxed',
+            'text-base md:text-lg text-cinema-text-secondary leading-relaxed',
             !isExpanded && needsTruncation && 'line-clamp-3',
           )}
         >
@@ -53,7 +53,7 @@ export function OverviewExpandable({
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-2 inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
+            className="mt-2 inline-flex items-center gap-1 text-sm text-cinema-text-muted hover:text-cinema-text-primary transition-colors"
           >
             {isExpanded ? (
               <>

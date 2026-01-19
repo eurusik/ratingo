@@ -43,18 +43,18 @@ export function MovieRelease({
       <div className="space-y-1.5 text-sm">
         {/* Runtime */}
         {runtime && runtime > 0 && (
-          <div className="flex items-center gap-2 text-zinc-300">
-            <Clock className="w-4 h-4 text-zinc-500" />
+          <div className="flex items-center gap-2 text-cinema-text-secondary">
+            <Clock className="w-4 h-4 text-cinema-text-muted" />
             <span>{formatRuntime(runtime)}</span>
           </div>
         )}
 
         {/* Combined release (if dates match) */}
         {datesMatch && releaseDate && (
-          <div className="flex items-center gap-2 text-zinc-300">
+          <div className="flex items-center gap-2 text-cinema-text-secondary">
             <div className="flex items-center gap-0.5">
-              <Clapperboard className="w-4 h-4 text-zinc-500" />
-              <Tv className="w-4 h-4 text-zinc-500" />
+              <Clapperboard className="w-4 h-4 text-cinema-text-muted" />
+              <Tv className="w-4 h-4 text-cinema-text-muted" />
             </div>
             <span>
               {dict.details.movieRelease.combinedRelease} {formatDate(releaseDate)}
@@ -64,8 +64,8 @@ export function MovieRelease({
 
         {/* Separate theater release */}
         {!datesMatch && releaseDate && (
-          <div className="flex items-center gap-2 text-zinc-300">
-            <Clapperboard className="w-4 h-4 text-zinc-500" />
+          <div className="flex items-center gap-2 text-cinema-text-secondary">
+            <Clapperboard className="w-4 h-4 text-cinema-text-muted" />
             <span>
               {dict.details.movieRelease.theaterPrefix} {formatDate(releaseDate)}
             </span>
@@ -74,8 +74,8 @@ export function MovieRelease({
 
         {/* Separate digital release */}
         {!datesMatch && digitalReleaseDate && (
-          <div className="flex items-center gap-2 text-zinc-300">
-            <Tv className="w-4 h-4 text-zinc-500" />
+          <div className="flex items-center gap-2 text-cinema-text-secondary">
+            <Tv className="w-4 h-4 text-cinema-text-muted" />
             <span>
               {dict.details.movieRelease.digitalPrefix} {formatDate(digitalReleaseDate)}
             </span>
@@ -84,8 +84,8 @@ export function MovieRelease({
 
         {/* Status for unreleased */}
         {!releaseDate && status && status !== 'Released' && (
-          <div className="flex items-center gap-2 text-zinc-400">
-            <Calendar className="w-4 h-4 text-zinc-500" />
+          <div className="flex items-center gap-2 text-cinema-text-muted">
+            <Calendar className="w-4 h-4 text-cinema-text-muted" />
             <span>
               {status === 'In Production' && dict.details.movieRelease.inProduction}
               {status === 'Post Production' && dict.details.movieRelease.postProduction}

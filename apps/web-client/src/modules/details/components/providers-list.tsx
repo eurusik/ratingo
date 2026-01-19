@@ -22,7 +22,7 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
   if (!providers) {
     return (
       <div className="text-center py-8">
-        <p className="text-zinc-500 text-sm">{dict.details.providers.noInfo}</p>
+        <p className="text-cinema-text-muted text-sm">{dict.details.providers.noInfo}</p>
       </div>
     );
   }
@@ -34,10 +34,10 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
     return (
       <div className="space-y-4">
         <div className="text-center py-6">
-          <p className="text-zinc-400 text-sm font-medium">
+          <p className="text-cinema-text-muted text-sm font-medium">
             {dict.details.providers.notOnSubscription}
           </p>
-          <p className="text-zinc-500 text-xs mt-1">
+          <p className="text-cinema-text-muted text-xs mt-1">
             {dict.details.providers.availableForPurchase}
           </p>
         </div>
@@ -63,7 +63,7 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
   if (hint === 'none') {
     return (
       <div className="text-center py-8">
-        <p className="text-zinc-500 text-sm">{dict.details.providers.noInfo}</p>
+        <p className="text-cinema-text-muted text-sm">{dict.details.providers.noInfo}</p>
       </div>
     );
   }
@@ -78,7 +78,7 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
   if (allProviders.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-zinc-500 text-sm">{dict.details.providers.noProviders}</p>
+        <p className="text-cinema-text-muted text-sm">{dict.details.providers.noProviders}</p>
       </div>
     );
   }
@@ -113,7 +113,7 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
         )}
 
         {/* Official note */}
-        <p className="text-xs text-zinc-500">* {dict.details.providers.officialNote}</p>
+        <p className="text-xs text-cinema-text-muted">* {dict.details.providers.officialNote}</p>
       </div>
     </div>
   );

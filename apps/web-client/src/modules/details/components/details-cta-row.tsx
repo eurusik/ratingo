@@ -34,7 +34,7 @@ export function DetailsCtaRow({
           className="group flex items-center gap-3 px-4 py-3 rounded-xl border border-green-500/30 bg-green-500/5 hover:bg-green-500/10 transition-all"
         >
           <ArrowRight className="w-4 h-4 text-green-400 group-hover:translate-x-0.5 transition-transform" />
-          <span className="text-sm font-medium text-zinc-200">
+          <span className="text-sm font-medium text-cinema-text-primary">
             {dict.details.continue} S{continuePoint.season}E{continuePoint.episode}
           </span>
         </button>
@@ -44,8 +44,8 @@ export function DetailsCtaRow({
           className={cn(
             'group flex items-center justify-between w-full px-4 py-3 rounded-xl border transition-all',
             isSaved
-              ? 'border-zinc-700 bg-cinema-elevated/50'
-              : 'border-zinc-700/50 hover:border-zinc-600 hover:bg-cinema-elevated/30',
+              ? 'border-cinema-border bg-cinema-elevated/50'
+              : 'border-cinema-border/50 hover:border-cinema-border hover:bg-cinema-elevated/30',
           )}
         >
           <div className="flex items-center gap-3">
@@ -53,18 +53,18 @@ export function DetailsCtaRow({
               className={cn(
                 'w-4 h-4 transition-all',
                 isSaved
-                  ? 'text-zinc-400 fill-current'
-                  : 'text-zinc-500 group-hover:text-zinc-300 group-hover:scale-110',
+                  ? 'text-cinema-text-muted fill-current'
+                  : 'text-cinema-text-muted group-hover:text-cinema-text-secondary group-hover:scale-110',
               )}
             />
             <div className="flex flex-col items-start">
               <span
-                className={cn('text-sm font-medium', isSaved ? 'text-zinc-400' : 'text-zinc-200')}
+                className={cn('text-sm font-medium', isSaved ? 'text-cinema-text-muted' : 'text-cinema-text-primary')}
               >
                 {isSaved ? dict.details.saved : dict.details.save}
               </span>
               {!isSaved && (
-                <span className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">
+                <span className="text-xs text-cinema-text-muted group-hover:text-cinema-text-muted transition-colors">
                   {hasNewEpisodes
                     ? dict.details.cta.saveHint.newEpisodes
                     : dict.details.cta.saveHint.general}
@@ -73,7 +73,7 @@ export function DetailsCtaRow({
             </div>
           </div>
           {!isSaved && (
-            <span className="text-zinc-600 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all">
+            <span className="text-cinema-text-disabled group-hover:text-cinema-text-muted group-hover:translate-x-0.5 transition-all">
               →
             </span>
           )}

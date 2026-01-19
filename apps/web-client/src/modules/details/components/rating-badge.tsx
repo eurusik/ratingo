@@ -27,7 +27,7 @@ export function RatingBadge({ source, rating, isPercentage = false }: RatingBadg
       >
         {source}
       </span>
-      <span className="text-sm font-semibold text-zinc-300">{formattedRating}</span>
+      <span className="text-sm font-semibold text-cinema-text-secondary">{formattedRating}</span>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export function NotFoundView({ icon: Icon, message, backLabel }: NotFoundViewPro
   return (
     <main className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <Icon className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+        <Icon className="w-16 h-16 text-cinema-text-disabled mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-white mb-2">{message}</h1>
         <Link href={'/' as Route} className="text-blue-400 hover:text-blue-300">
           ← {backLabel}

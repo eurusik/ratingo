@@ -69,12 +69,12 @@ export function DetailsHero({
                   {title}
                 </h1>
                 {originalTitle && originalTitle !== title && (
-                  <p className="text-sm md:text-lg text-zinc-400 mt-1">{originalTitle}</p>
+                  <p className="text-sm md:text-lg text-cinema-text-muted mt-1">{originalTitle}</p>
                 )}
               </div>
 
               {/* Meta line */}
-              <p className="text-sm md:text-base text-zinc-300">
+              <p className="text-sm md:text-base text-cinema-text-secondary">
                 {formatYear(releaseDate)}
                 {genres && genres.length > 0 && ` • ${genres.map((g) => g.name).join(', ')}`}
               </p>

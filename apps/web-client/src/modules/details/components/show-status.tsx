@@ -44,10 +44,10 @@ export function ShowStatus({
       <div className="space-y-4">
         {/* Total seasons/episodes summary */}
         {totalSeasons !== undefined && totalEpisodes !== undefined && (
-          <div className="text-base text-zinc-300">
+          <div className="text-base text-cinema-text-secondary">
             <span className="font-medium">{totalSeasons}</span>{' '}
             {pluralize(totalSeasons, dict.details.showStatus.plurals.season)}
-            <span className="text-zinc-600 mx-2">•</span>
+            <span className="text-cinema-text-disabled mx-2">•</span>
             <span className="font-medium">{totalEpisodes}</span>{' '}
             {pluralize(totalEpisodes, dict.details.showStatus.plurals.episode)}
           </div>
@@ -57,7 +57,7 @@ export function ShowStatus({
         {nextEpisodeDate && (
           <div className="flex items-center gap-2.5">
             <Clock className="w-4 h-4 text-blue-400 flex-shrink-0" />
-            <span className="text-sm text-zinc-400">{dict.details.showStatus.nextEpisode}:</span>
+            <span className="text-sm text-cinema-text-muted">{dict.details.showStatus.nextEpisode}:</span>
             <span className="text-sm text-blue-400 font-medium">{formatDate(nextEpisodeDate)}</span>
           </div>
         )}
