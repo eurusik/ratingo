@@ -130,7 +130,7 @@ export function EpisodesSection({ seasons, nextEpisodeDate, dict }: EpisodesSect
           <div className="overflow-hidden">
             <div
               ref={listRef}
-              className="max-h-[400px] overflow-y-auto pr-1 -mr-1 mt-4 pt-4 border-t border-cinema-borderSoft/30"
+              className="max-h-[400px] overflow-y-auto scrollbar-thin mt-4 pt-4 border-t border-cinema-borderSoft/30"
             >
               {episodes.map((episode) => (
                 <EpisodeCard key={episode.number} episode={episode} dict={dict} />
