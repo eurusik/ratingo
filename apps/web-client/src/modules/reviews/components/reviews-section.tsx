@@ -147,11 +147,9 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
   if (reviewsError) {
     return (
       <section className={className}>
-        <div className="bg-cinema-surface rounded-lg border border-cinema-borderSoft">
-          <SectionHeader dict={dict} totalReviews={0} sort={sort} onSortChange={setSort} />
-          <div className="text-center py-8 text-cinema-text-muted">
-            {dict.reviews.loadError}
-          </div>
+        <SectionHeader dict={dict} totalReviews={0} sort={sort} onSortChange={setSort} />
+        <div className="text-center py-8 text-cinema-text-muted">
+          {dict.reviews.loadError}
         </div>
       </section>
     );
@@ -159,63 +157,59 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
 
   return (
     <section className={className}>
-      <div className="bg-cinema-surface rounded-lg border border-cinema-borderSoft">
-        {/* Header - only show when there are reviews */}
-        {totalReviews > 0 && (
-          <SectionHeader dict={dict} totalReviews={totalReviews} sort={sort} onSortChange={setSort} />
-        )}
+      {/* Header - only show when there are reviews */}
+      {totalReviews > 0 && (
+        <SectionHeader dict={dict} totalReviews={totalReviews} sort={sort} onSortChange={setSort} />
+      )}
 
-        {/* Review form (show to guests too, they'll see login modal on submit) */}
-        {showForm && (
-          <ReviewForm
-            onSubmit={handleCreateReview}
-            isSubmitting={createReview.isPending}
-            isGuest={!isAuthenticated}
-            className="p-4"
-          />
-        )}
+      {/* Review form (show to guests too, they'll see login modal on submit) */}
+      {showForm && (
+        <ReviewForm
+          onSubmit={handleCreateReview}
+          isSubmitting={createReview.isPending}
+          isGuest={!isAuthenticated}
+        />
+      )}
 
-        {/* Reviews list */}
-        {isLoadingReviews ? (
-          <div>
-            {[1, 2, 3].map((i) => (
-              <ReviewCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : reviews.length > 0 && (
-          <div>
-            {reviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                mediaItemId={mediaItemId}
-                onVote={handleVote}
-                onUnvote={handleUnvote}
-                onReport={handleReport}
-                isAuthenticated={isAuthenticated}
-                isVoting={voteReview.isPending || unvoteReview.isPending}
-                isOwnReview={user?.id === review.author.id}
-                currentUserId={user?.id}
-                className="px-4"
-              />
-            ))}
+      {/* Reviews list */}
+      {isLoadingReviews ? (
+        <div>
+          {[1, 2, 3].map((i) => (
+            <ReviewCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : reviews.length > 0 && (
+        <div>
+          {reviews.map((review) => (
+            <ReviewCard
+              key={review.id}
+              review={review}
+              mediaItemId={mediaItemId}
+              onVote={handleVote}
+              onUnvote={handleUnvote}
+              onReport={handleReport}
+              isAuthenticated={isAuthenticated}
+              isVoting={voteReview.isPending || unvoteReview.isPending}
+              isOwnReview={user?.id === review.author.id}
+              currentUserId={user?.id}
+            />
+          ))}
 
-            {/* Load more button */}
-            {hasMore && (
-              <div className="flex justify-center py-4">
-                <Button
-                  variant="outline"
-                  onClick={handleLoadMore}
-                  className="flex items-center gap-2"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                  {dict.reviews.loadMore}
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+          {/* Load more button */}
+          {hasMore && (
+            <div className="flex justify-center py-4">
+              <Button
+                variant="outline"
+                onClick={handleLoadMore}
+                className="flex items-center gap-2"
+              >
+                <ChevronDown className="w-4 h-4" />
+                {dict.reviews.loadMore}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Report dialog */}
       <ReviewReportDialog
@@ -243,7 +237,7 @@ interface SectionHeaderProps {
 
 function SectionHeader({ dict, totalReviews, sort, onSortChange }: SectionHeaderProps) {
   return (
-    <div className="flex items-center justify-between p-4 border-b border-cinema-borderSoft">
+    <div className="flex items-center justify-between pb-4">
       <div className="flex items-center gap-2">
         <MessageSquare className="w-5 h-5 text-cinema-text-muted" />
         <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
