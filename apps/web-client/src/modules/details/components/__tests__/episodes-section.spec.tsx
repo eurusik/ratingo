@@ -24,6 +24,11 @@ const mockDict = {
       upcoming: 'Скоро',
       noTitle: 'Епізод {number}',
       changeSeason: 'Змінити сезон',
+      currentSeason: 'Поточний',
+      lastSeason: 'Останній',
+      firstSeason: 'Перший',
+      allSeasons: 'Всі сезони',
+      seasons: 'Сезони',
       plurals: {
         season: { one: 'сезон', few: 'сезони', many: 'сезонів' },
         episode: { one: 'епізод', few: 'епізоди', many: 'епізодів' },
@@ -345,6 +350,183 @@ describe('lastAiredIndex calculation', () => {
     // Should show the upcoming badge
     await waitFor(() => {
       expect(screen.getByText('Скоро')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('SeasonSelector', () => {
+  describe('quick access', () => {
+    it('should show quick access with current season label', async () => {
+      const seasons = [
+        createSeason(1, [createEpisode(1, 'S1E1', '2024-01-01')]),
+        createSeason(2, [createEpisode(1, 'S2E1', '2024-06-01')]),
+        createSeason(3, [createEpisode(1, 'S3E1', '2025-01-01')]),
+      ];
+      render(<EpisodesSection seasons={seasons} dict={mockDict} />);
+
+      // Expand and open dropdown
+      fireEvent.click(screen.getByText('Сезон 3'));
+      await waitFor(() => {
+        expect(screen.getByText('Змінити сезон')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText('Змінити сезон'));
+
+      // Should show current season with label
+      await waitFor(() => {
+        expect(screen.getByText('Поточний')).toBeInTheDocument();
+      });
+    });
+
+    it('should show first and last season labels when different from current', async () => {
+      const seasons = [
+        createSeason(1, [createEpisode(1, 'S1E1', '2024-01-01')]),
+        createSeason(2, [createEpisode(1, 'S2E1', '2024-06-01')]),
+        createSeason(3, [createEpisode(1, 'S3E1', '2025-01-01')]),
+        createSeason(4, [createEpisode(1, 'S4E1', '2025-06-01')]),
+      ];
+      render(<EpisodesSection seasons={seasons} dict={mockDict} />);
+
+      // Select season 2 (not first, not last)
+      fireEvent.click(screen.getByText('Сезон 4'));
+      await waitFor(() => {
+        expect(screen.getByText('Змінити сезон')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText('Змінити сезон'));
+
+      // Should show all quick access labels
+      await waitFor(() => {
+        expect(screen.getByText('Поточний')).toBeInTheDocument();
+        expect(screen.getByText('Перший')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('season switching', () => {
+    it('should open dropdown and show all seasons section', async () => {
+      const seasons = [
+        createSeason(1, [createEpisode(1, 'S1 Episode', '2024-01-01')]),
+        createSeason(2, [createEpisode(1, 'S2 Episode', '2025-01-01')]),
+      ];
+      render(<EpisodesSection seasons={seasons} dict={mockDict} />);
+
+      // Initially shows season 2 (latest)
+      expect(screen.getByText('Сезон 2')).toBeInTheDocument();
+
+      // Expand and open dropdown
+      fireEvent.click(screen.getByText('Сезон 2'));
+      await waitFor(() => {
+        expect(screen.getByText('Змінити сезон')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText('Змінити сезон'));
+
+      // Dropdown should show all seasons section
+      await waitFor(() => {
+        expect(screen.getByText('Всі сезони')).toBeInTheDocument();
+        // Quick access shows current season
+        expect(screen.getByText('Поточний')).toBeInTheDocument();
+      });
+    });
+
+    it('should close dropdown when clicking outside', async () => {
+      const seasons = [
+        createSeason(1, [createEpisode(1, 'S1E1', '2024-01-01')]),
+        createSeason(2, [createEpisode(1, 'S2E1', '2025-01-01')]),
+      ];
+      render(<EpisodesSection seasons={seasons} dict={mockDict} />);
+
+      // Expand and open dropdown
+      fireEvent.click(screen.getByText('Сезон 2'));
+      await waitFor(() => {
+        expect(screen.getByText('Змінити сезон')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText('Змінити сезон'));
+
+      // Dropdown is open
+      await waitFor(() => {
+        expect(screen.getByText('Всі сезони')).toBeInTheDocument();
+      });
+
+      // Click outside (on the overlay)
+      const overlay = document.querySelector('.fixed.inset-0');
+      if (overlay) {
+        fireEvent.click(overlay);
+      }
+
+      // Dropdown should be closed
+      await waitFor(() => {
+        expect(screen.queryByText('Всі сезони')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('grouped ranges for many seasons', () => {
+    it('should show grouped ranges for shows with 7+ seasons', async () => {
+      // Create 12 seasons to trigger grouping
+      const seasons = Array.from({ length: 12 }, (_, i) =>
+        createSeason(i + 1, [createEpisode(1, `S${i + 1}E1`, '2024-01-01')]),
+      );
+      render(<EpisodesSection seasons={seasons} dict={mockDict} />);
+
+      // Expand and open dropdown
+      fireEvent.click(screen.getByText('Сезон 12'));
+      await waitFor(() => {
+        expect(screen.getByText('Змінити сезон')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText('Змінити сезон'));
+
+      // Should show range groups
+      await waitFor(() => {
+        expect(screen.getByText('Сезони 1–10')).toBeInTheDocument();
+        expect(screen.getByText('Сезони 11–12')).toBeInTheDocument();
+      });
+    });
+
+    it('should expand range group when clicked', async () => {
+      const seasons = Array.from({ length: 12 }, (_, i) =>
+        createSeason(i + 1, [createEpisode(1, `S${i + 1}E1`, '2024-01-01')]),
+      );
+      render(<EpisodesSection seasons={seasons} dict={mockDict} />);
+
+      // Expand and open dropdown
+      fireEvent.click(screen.getByText('Сезон 12'));
+      await waitFor(() => {
+        expect(screen.getByText('Змінити сезон')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText('Змінити сезон'));
+
+      // Click on range to expand
+      await waitFor(() => {
+        expect(screen.getByText('Сезони 1–10')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText('Сезони 1–10'));
+
+      // Should show individual seasons in the expanded range
+      // Look for the episode count badges which indicate individual seasons
+      await waitFor(() => {
+        const epBadges = screen.getAllByText('1 ep');
+        // Should have multiple "1 ep" badges (at least from expanded range)
+        expect(epBadges.length).toBeGreaterThan(3);
+      });
+    });
+
+    it('should not show grouped ranges for shows with 6 or fewer seasons', async () => {
+      const seasons = Array.from({ length: 6 }, (_, i) =>
+        createSeason(i + 1, [createEpisode(1, `S${i + 1}E1`, '2024-01-01')]),
+      );
+      render(<EpisodesSection seasons={seasons} dict={mockDict} />);
+
+      // Expand and open dropdown
+      fireEvent.click(screen.getByText('Сезон 6'));
+      await waitFor(() => {
+        expect(screen.getByText('Змінити сезон')).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText('Змінити сезон'));
+
+      // Should NOT show range groups
+      await waitFor(() => {
+        expect(screen.getByText('Всі сезони')).toBeInTheDocument();
+        expect(screen.queryByText('Сезони 1–6')).not.toBeInTheDocument();
+      });
     });
   });
 });
