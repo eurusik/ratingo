@@ -61,13 +61,13 @@ export function ReplyCard({
     locale: DATE_LOCALES[locale],
   });
 
-  const bgClass = variant === 'nested' ? 'bg-cinema-card/20' : 'bg-cinema-card/30';
-  const highlightBgClass = variant === 'nested' ? 'bg-cinema-card/40' : 'bg-cinema-card/50';
+  const bgClass = variant === 'nested' ? 'bg-cinema-elevated/40' : 'bg-cinema-elevated/50';
+  const highlightBgClass = variant === 'nested' ? 'bg-cinema-elevated/60' : 'bg-cinema-elevated/70';
 
   return (
     <div
       className={cn(
-        'group rounded-lg p-3 transition-all duration-200',
+        'group rounded-lg p-3 transition-all duration-200 border border-cinema-borderSoft/30',
         bgClass,
         isHighlighted && `ring-1 ring-cinema-border ${highlightBgClass}`,
       )}
