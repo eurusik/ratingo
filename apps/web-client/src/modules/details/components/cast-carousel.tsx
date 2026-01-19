@@ -56,7 +56,7 @@ function PersonAvatar({
   return (
     <div className="flex-shrink-0 w-20 space-y-2">
       {/* Photo */}
-      <Avatar className="w-20 h-20 border-2 border-zinc-800 opacity-90">
+      <Avatar className="w-20 h-20 border-2 border-cinema-borderSoft opacity-90">
         {profileUrl && <AvatarImage src={profileUrl} alt={person.name} />}
         <AvatarFallback
           className={`bg-gradient-to-br ${getColorFromName(person.name)} text-2xl font-bold text-white`}

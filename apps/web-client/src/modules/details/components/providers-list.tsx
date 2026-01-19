@@ -98,7 +98,7 @@ export function ProvidersList({ providers, dict }: ProvidersListProps) {
       <ProvidersCategory title={dict.details.providers.buy} providers={providers.buy || []} />
 
       {/* Footer */}
-      <div className="pt-4 border-t border-zinc-800/50 space-y-3">
+      <div className="pt-4 border-t border-cinema-borderSoft/50 space-y-3">
         {/* TMDB link */}
         {providers.link && (
           <a

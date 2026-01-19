@@ -147,9 +147,9 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
   if (reviewsError) {
     return (
       <section className={className}>
-        <div className="bg-cinema-card/50 rounded-lg border border-zinc-800/50">
+        <div className="bg-cinema-surface rounded-lg border border-cinema-borderSoft">
           <SectionHeader dict={dict} totalReviews={0} sort={sort} onSortChange={setSort} />
-          <div className="text-center py-8 text-zinc-500">
+          <div className="text-center py-8 text-cinema-text-muted">
             {dict.reviews.loadError}
           </div>
         </div>
@@ -159,7 +159,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
 
   return (
     <section className={className}>
-      <div className="bg-cinema-card/50 rounded-lg border border-zinc-800/50">
+      <div className="bg-cinema-surface rounded-lg border border-cinema-borderSoft">
         {/* Header - only show when there are reviews */}
         {totalReviews > 0 && (
           <SectionHeader dict={dict} totalReviews={totalReviews} sort={sort} onSortChange={setSort} />
@@ -243,27 +243,27 @@ interface SectionHeaderProps {
 
 function SectionHeader({ dict, totalReviews, sort, onSortChange }: SectionHeaderProps) {
   return (
-    <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+    <div className="flex items-center justify-between p-4 border-b border-cinema-borderSoft">
       <div className="flex items-center gap-2">
-        <MessageSquare className="w-5 h-5 text-zinc-400" />
-        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+        <MessageSquare className="w-5 h-5 text-cinema-text-muted" />
+        <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
           {dict.reviews.title}
         </h2>
         {totalReviews > 0 && (
-          <span className="text-sm text-zinc-500">({totalReviews})</span>
+          <span className="text-sm text-cinema-text-disabled">({totalReviews})</span>
         )}
       </div>
 
       <Select value={sort} onValueChange={(value) => onSortChange(value as ReviewSort)}>
-        <SelectTrigger className="w-auto gap-2 bg-cinema-elevated/50 border-zinc-700 text-zinc-300 text-sm">
+        <SelectTrigger className="w-auto gap-2 bg-cinema-elevated/50 border-cinema-border text-cinema-text-secondary text-sm">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent className="bg-cinema-elevated border-zinc-700">
+        <SelectContent className="bg-cinema-elevated border-cinema-border">
           {SORT_VALUES.map((value) => (
             <SelectItem
               key={value}
               value={value}
-              className="text-zinc-300 focus:bg-zinc-700 focus:text-zinc-100"
+              className="text-cinema-text-secondary focus:bg-cinema-card focus:text-cinema-text-primary"
             >
               {dict.reviews.sort[value]}
             </SelectItem>

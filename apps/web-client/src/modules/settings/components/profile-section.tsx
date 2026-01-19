@@ -263,7 +263,7 @@ export function ProfileSection({ user, onSuccess }: ProfileSectionProps) {
 
       {/* Username confirmation dialog */}
       <Dialog open={showUsernameConfirm} onOpenChange={setShowUsernameConfirm}>
-        <DialogContent className="bg-cinema-card border-zinc-800">
+        <DialogContent className="bg-cinema-card border-cinema-borderSoft">
           <DialogHeader>
             <DialogTitle className="text-zinc-100">
               {dict.settings.confirmUsernameChange.title}

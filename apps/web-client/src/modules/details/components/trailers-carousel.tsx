@@ -40,7 +40,7 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
           <button
             key={video.key}
             onClick={() => setSelectedVideo(video)}
-            className="group relative flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden bg-cinema-card border border-zinc-800 hover:border-blue-500 transition-all"
+            className="group relative flex-shrink-0 w-64 aspect-video rounded-xl overflow-hidden bg-cinema-card border border-cinema-borderSoft hover:border-blue-500 transition-all"
           >
             {/* Thumbnail */}
             <img
@@ -77,7 +77,7 @@ export function TrailersCarousel({ videos, primaryTrailer }: TrailersCarouselPro
         open={!!selectedVideo}
         onOpenChange={(open: boolean) => !open && setSelectedVideo(null)}
       >
-        <DialogContent className="max-w-4xl p-0 bg-black border-zinc-800 overflow-hidden">
+        <DialogContent className="max-w-4xl p-0 bg-black border-cinema-borderSoft overflow-hidden">
           <VisuallyHidden>
             <DialogTitle>{selectedVideo?.name || 'Video'}</DialogTitle>
           </VisuallyHidden>

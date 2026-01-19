@@ -63,7 +63,7 @@ export function ReviewReportDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-cinema-card border-zinc-800">
+      <DialogContent className="sm:max-w-md bg-cinema-card border-cinema-borderSoft">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-zinc-100">
             <Flag className="w-5 h-5 text-red-500" />
@@ -90,7 +90,7 @@ export function ReviewReportDialog({
                     'flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer',
                     reason === reasonValue
                       ? 'border-red-500/50 bg-red-500/10'
-                      : 'border-zinc-800 hover:border-zinc-700',
+                      : 'border-cinema-borderSoft hover:border-zinc-700',
                   )}
                   onClick={() => setReason(reasonValue)}
                 >
