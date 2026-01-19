@@ -276,6 +276,11 @@
       "upcoming": "Скоро",
       "noTitle": "Епізод {number}",
       "changeSeason": "Змінити сезон",
+      "currentSeason": "Поточний",
+      "lastSeason": "Останній",
+      "firstSeason": "Перший",
+      "allSeasons": "Всі сезони",
+      "seasons": "Сезони",
       "plurals": {
         "season": {
           "one": "сезон",

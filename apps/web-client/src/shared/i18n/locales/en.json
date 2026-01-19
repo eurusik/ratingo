@@ -276,6 +276,11 @@
       "upcoming": "Upcoming",
       "noTitle": "Episode {number}",
       "changeSeason": "Change season",
+      "currentSeason": "Current",
+      "lastSeason": "Last",
+      "firstSeason": "First",
+      "allSeasons": "All seasons",
+      "seasons": "Seasons",
       "plurals": {
         "season": {
           "one": "season",
