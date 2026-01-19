@@ -173,13 +173,13 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
 
       {/* Reviews list */}
       {isLoadingReviews ? (
-        <div>
+        <div className="space-y-6">
           {[1, 2, 3].map((i) => (
             <ReviewCardSkeleton key={i} />
           ))}
         </div>
       ) : reviews.length > 0 && (
-        <div>
+        <div className="space-y-6">
           {reviews.map((review) => (
             <ReviewCard
               key={review.id}
