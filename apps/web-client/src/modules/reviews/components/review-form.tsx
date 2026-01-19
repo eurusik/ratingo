@@ -106,14 +106,14 @@ export function ReviewForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className={cn('space-y-4', className)}>
       {/* Title */}
-      <h3 className="text-lg font-medium text-zinc-200">
+      <h3 className="text-lg font-medium text-cinema-text-primary">
         {dict.reviews.form.title}
       </h3>
 
       {/* Rating slider */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm text-zinc-400">
+          <label className="text-sm text-cinema-text-muted">
             {isGuest ? dict.reviews.form.ratingGuest : dict.reviews.form.rating}
           </label>
           <div className="flex items-center gap-2">
@@ -149,7 +149,14 @@ export function ReviewForm({
       </div>
 
       {/* Textarea container */}
-      <div className="rounded-lg border border-zinc-700 bg-cinema-elevated/50 overflow-hidden">
+      <div
+        className={cn(
+          'rounded-lg border border-cinema-borderSoft/60 bg-cinema-elevated/50 overflow-hidden',
+          'transition-all duration-200',
+          'hover:border-cinema-border/80',
+          'focus-within:ring-2 focus-within:ring-cinema-focus/50 focus-within:border-transparent',
+        )}
+      >
         <Textarea
           {...registerRest}
           ref={(e) => {
@@ -159,7 +166,7 @@ export function ReviewForm({
           placeholder={dict.reviews.form.placeholder}
           className={cn(
             'min-h-[80px] !border-0 !border-none bg-transparent resize-none text-sm overflow-hidden',
-            'text-zinc-200 placeholder-zinc-500 focus-visible:ring-0 shadow-none',
+            'text-cinema-text-primary placeholder:text-cinema-text-disabled focus-visible:ring-0 shadow-none',
           )}
           disabled={isSubmitting}
         />
@@ -182,7 +189,7 @@ export function ReviewForm({
                   />
                   <label
                     htmlFor="hasSpoiler"
-                    className="flex items-center gap-1 text-xs text-zinc-500 cursor-pointer"
+                    className="flex items-center gap-1 text-xs text-cinema-text-muted cursor-pointer"
                   >
                     <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
                     {dict.reviews.form.spoiler}
@@ -197,7 +204,7 @@ export function ReviewForm({
                   ? 'text-red-500'
                   : charactersRemaining < 50
                     ? 'text-yellow-500'
-                    : 'text-zinc-600',
+                    : 'text-cinema-text-disabled',
               )}
             >
               {content.length} / {MAX_CONTENT_LENGTH}
