@@ -272,6 +272,10 @@
       "returning": "Returning",
       "inProduction": "In production",
       "canceled": "Canceled",
+      "minutes": "min",
+      "upcoming": "Upcoming",
+      "noTitle": "Episode {number}",
+      "changeSeason": "Change season",
       "plurals": {
         "season": {
           "one": "season",

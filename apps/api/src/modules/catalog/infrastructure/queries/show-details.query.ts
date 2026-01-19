@@ -164,19 +164,52 @@ export class ShowDetailsQuery {
   }
 
   /**
-   * Fetches seasons for a show.
+   * Fetches seasons with episodes for a show.
    */
   private async fetchSeasons(showId: string) {
-    return this.db
-      .select({
-        number: schema.seasons.number,
-        name: schema.seasons.name,
-        episodeCount: schema.seasons.episodeCount,
-        posterPath: schema.seasons.posterPath,
-        airDate: schema.seasons.airDate,
-      })
-      .from(schema.seasons)
-      .where(eq(schema.seasons.showId, showId))
-      .orderBy(asc(schema.seasons.number));
+    // Fetch seasons and episodes in parallel
+    const [seasonsData, episodesData] = await Promise.all([
+      this.db
+        .select({
+          number: schema.seasons.number,
+          name: schema.seasons.name,
+          episodeCount: schema.seasons.episodeCount,
+          posterPath: schema.seasons.posterPath,
+          airDate: schema.seasons.airDate,
+        })
+        .from(schema.seasons)
+        .where(eq(schema.seasons.showId, showId))
+        .orderBy(asc(schema.seasons.number)),
+
+      this.db
+        .select({
+          seasonNumber: schema.seasons.number,
+          number: schema.episodes.number,
+          title: schema.episodes.title,
+          airDate: schema.episodes.airDate,
+          runtime: schema.episodes.runtime,
+          stillPath: schema.episodes.stillPath,
+        })
+        .from(schema.episodes)
+        .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))
+        .where(eq(schema.seasons.showId, showId))
+        .orderBy(asc(schema.seasons.number), asc(schema.episodes.number)),
+    ]);
+
+    // Group episodes by season number
+    const episodesBySeason = new Map<number, typeof episodesData>();
+    for (const ep of episodesData) {
+      const existing = episodesBySeason.get(ep.seasonNumber) ?? [];
+      existing.push(ep);
+      episodesBySeason.set(ep.seasonNumber, existing);
+    }
+
+    // Attach episodes to seasons
+    return seasonsData.map((season) => ({
+      ...season,
+      episodes: (episodesBySeason.get(season.number) ?? []).map(
+        ({ seasonNumber: _seasonNumber, ...ep }) => ep,
+      ),
+    }));
   }
 }

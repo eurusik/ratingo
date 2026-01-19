@@ -17,7 +17,7 @@ import {
   CastCrewSection,
   ProvidersSection,
   NotFoundView,
-  ShowStatus,
+  EpisodesSection,
   DataVerdict,
   SignalsSection,
   type BadgeKey,
@@ -213,17 +213,11 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             primaryTrailerKey={show.primaryTrailerKey}
           />
 
-          <section className="space-y-4">
-            <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
-              {dict.details.showStatus.sectionTitle}
-            </h2>
-            <ShowStatus
-              nextEpisodeDate={show.nextEpisodeDate}
-              totalSeasons={show.totalSeasons ?? undefined}
-              totalEpisodes={show.totalEpisodes ?? undefined}
-              dict={dict}
-            />
-          </section>
+          <EpisodesSection
+            seasons={show.seasons}
+            nextEpisodeDate={show.nextEpisodeDate}
+            dict={dict}
+          />
 
           <Separator className="my-12 bg-cinema-elevated/50" />
 

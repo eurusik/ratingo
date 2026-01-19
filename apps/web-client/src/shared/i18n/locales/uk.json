@@ -272,6 +272,10 @@
       "returning": "Продовжується",
       "inProduction": "У виробництві",
       "canceled": "Скасовано",
+      "minutes": "хв",
+      "upcoming": "Скоро",
+      "noTitle": "Епізод {number}",
+      "changeSeason": "Змінити сезон",
       "plurals": {
         "season": {
           "one": "сезон",

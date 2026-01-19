@@ -2475,6 +2475,18 @@ export interface components {
             endDate: string;
             days: components["schemas"]["CalendarDayDto"][];
         };
+        EpisodeDto: {
+            /** @example 1 */
+            number: number;
+            /** @example The Beginning */
+            title?: string | null;
+            /** Format: date-time */
+            airDate?: string | null;
+            /** @example 52 */
+            runtime?: number | null;
+            /** @example /path/to/still.jpg */
+            stillPath?: string | null;
+        };
         SeasonDto: {
             /** @example 1 */
             number: number;
@@ -2486,6 +2498,7 @@ export interface components {
             posterPath?: string | null;
             /** Format: date-time */
             airDate?: string | null;
+            episodes?: components["schemas"]["EpisodeDto"][];
         };
         ShowVerdictDto: {
             /**

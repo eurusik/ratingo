@@ -6,6 +6,23 @@ import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.d
 import { MediaBaseDto } from './common.dto';
 import { ShowVerdictDto, ShowStatusHintDto } from './verdict.dto';
 
+export class EpisodeDto {
+  @ApiProperty({ example: 1 })
+  number: number;
+
+  @ApiProperty({ example: 'The Beginning', required: false, nullable: true })
+  title: string | null;
+
+  @ApiProperty({ type: Date, required: false, nullable: true })
+  airDate: Date | null;
+
+  @ApiProperty({ example: 52, required: false, nullable: true })
+  runtime: number | null;
+
+  @ApiProperty({ example: '/path/to/still.jpg', required: false, nullable: true })
+  stillPath: string | null;
+}
+
 export class SeasonDto {
   @ApiProperty({ example: 1 })
   number: number;
@@ -21,6 +38,9 @@ export class SeasonDto {
 
   @ApiProperty({ type: Date, required: false, nullable: true })
   airDate: Date | null;
+
+  @ApiProperty({ type: [EpisodeDto], required: false })
+  episodes?: EpisodeDto[];
 }
 
 export class ShowResponseDto extends MediaBaseDto {

@@ -93,6 +93,17 @@ export interface CalendarEpisode {
 }
 
 /**
+ * Episode info for show details.
+ */
+export interface EpisodeInfo {
+  number: number;
+  title: string | null;
+  airDate: Date | null;
+  runtime: number | null;
+  stillPath: string | null;
+}
+
+/**
  * Season info for show details.
  */
 export interface SeasonInfo {
@@ -101,6 +112,7 @@ export interface SeasonInfo {
   episodeCount: number;
   posterPath: string | null;
   airDate: Date | null;
+  episodes?: EpisodeInfo[];
 }
 
 /**

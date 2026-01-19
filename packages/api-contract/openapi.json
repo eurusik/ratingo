@@ -7939,6 +7939,38 @@
           "days"
         ]
       },
+      "EpisodeDto": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "number",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "The Beginning",
+            "nullable": true
+          },
+          "airDate": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "runtime": {
+            "type": "number",
+            "example": 52,
+            "nullable": true
+          },
+          "stillPath": {
+            "type": "string",
+            "example": "/path/to/still.jpg",
+            "nullable": true
+          }
+        },
+        "required": [
+          "number"
+        ]
+      },
       "SeasonDto": {
         "type": "object",
         "properties": {
@@ -7965,6 +7997,12 @@
             "format": "date-time",
             "type": "string",
             "nullable": true
+          },
+          "episodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EpisodeDto"
+            }
           }
         },
         "required": [

@@ -1,31 +1,16 @@
 /**
  * TMDB image URL constants.
  * @see https://developer.themoviedb.org/docs/image-basics
+ * @deprecated Use resolveMediaImageUrl from '@/shared/utils' instead
  */
 
-/** Base URL for TMDB images */
-export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+import { resolveMediaImageUrl, IMAGE_SIZES, MEDIA_IMAGE_BASE } from '../utils/image';
 
-/** Poster sizes */
-export const TMDB_POSTER_SIZES = {
-  /** 92px width - tiny thumbnails */
-  W92: 'w92',
-  /** 154px width - small cards */
-  W154: 'w154',
-  /** 185px width - profile images */
-  W185: 'w185',
-  /** 342px width - medium cards */
-  W342: 'w342',
-  /** 500px width - large cards */
-  W500: 'w500',
-  /** 780px width - hero images */
-  W780: 'w780',
-  /** Original size */
-  ORIGINAL: 'original',
-} as const;
+/** @deprecated Use MEDIA_IMAGE_BASE from '@/shared/utils' */
+export const TMDB_IMAGE_BASE = MEDIA_IMAGE_BASE;
 
-/** Build TMDB image URL */
-export function tmdbImageUrl(path: string | null | undefined, size: string = TMDB_POSTER_SIZES.W342): string | null {
-  if (!path) return null;
-  return `${TMDB_IMAGE_BASE}/${size}${path}`;
-}
+/** @deprecated Use IMAGE_SIZES from '@/shared/utils' */
+export const TMDB_POSTER_SIZES = IMAGE_SIZES;
+
+/** @deprecated Use resolveMediaImageUrl from '@/shared/utils' */
+export const tmdbImageUrl = resolveMediaImageUrl;

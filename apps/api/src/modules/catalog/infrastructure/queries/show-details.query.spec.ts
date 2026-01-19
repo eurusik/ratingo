@@ -124,19 +124,26 @@ describe('ShowDetailsQuery', () => {
       },
     ];
 
+    const episodes = [
+      { seasonNumber: 1, number: 1, title: 'Ep1', airDate: null, runtime: 45, stillPath: null },
+      { seasonNumber: 1, number: 2, title: 'Ep2', airDate: null, runtime: 45, stillPath: null },
+    ];
+
     const watchOffers: any[] = []; // Empty watch offers for test
 
-    setup([[showRow], genres, seasons, watchOffers]);
+    setup([[showRow], genres, seasons, episodes, watchOffers]);
 
     const res = await query.execute('show');
 
-    expect(db.select).toHaveBeenCalledTimes(2); // main + seasons (genres + watch offers via mocks)
+    expect(db.select).toHaveBeenCalledTimes(3); // main + seasons + episodes (genres + watch offers via mocks)
     expect(res?.id).toBe('m1');
     expect(res?.primaryTrailer).toEqual({ key: 'trailer1' });
     expect(res?.poster).toEqual({ small: 'poster' });
     expect(res?.backdrop).toEqual({ small: 'backdrop' });
     expect(res?.genres).toHaveLength(2);
     expect(res?.seasons).toHaveLength(2);
+    expect(res?.seasons[0].episodes).toHaveLength(2);
+    expect(res?.seasons[0].episodes![0].title).toBe('Ep1');
     expect(CreditsMapper.toDto).toHaveBeenCalled();
     expect(MediaWatchOffersMapper.toAvailability).toHaveBeenCalled();
   });

@@ -2,6 +2,7 @@ export { DetailsHero, type DetailsHeroProps } from './details-hero';
 export { DetailsCtaRow, type DetailsCtaRowProps } from './details-cta-row';
 export { DetailsQuickPitch, type DetailsQuickPitchProps } from './details-quick-pitch';
 export { ShowStatus, type ShowStatusProps } from './show-status';
+export { EpisodesSection, type EpisodesSectionProps } from './episodes-section';
 export { MovieRelease, type MovieReleaseProps } from './movie-release';
 export { ProvidersList, type ProvidersListProps } from './providers-list';
 export { ProviderCard } from './provider-card';
