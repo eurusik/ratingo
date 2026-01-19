@@ -109,49 +109,44 @@ export class ShowDetailsQuery {
         this.watchOffersQuery.fetchForMediaItem(show.id),
       ]);
 
-      const { showId: _showId, ...showData } = show;
-
       return {
-        id: showData.id,
-        tmdbId: showData.tmdbId,
-        title: showData.title,
-        originalTitle: showData.originalTitle,
-        slug: showData.slug,
-        overview: showData.overview,
-        ingestionStatus: showData.ingestionStatus as IngestionStatus,
-        poster: ImageMapper.toPoster(showData.posterPath),
-        backdrop: ImageMapper.toBackdrop(showData.backdropPath),
-        videos: showData.videos,
-        primaryTrailer: showData.videos?.[0] || null,
-        credits: CreditsMapper.toDto(showData.credits),
+        id: show.id,
+        showId: show.showId,
+        tmdbId: show.tmdbId,
+        title: show.title,
+        originalTitle: show.originalTitle,
+        slug: show.slug,
+        overview: show.overview,
+        ingestionStatus: show.ingestionStatus as IngestionStatus,
+        poster: ImageMapper.toPoster(show.posterPath),
+        backdrop: ImageMapper.toBackdrop(show.backdropPath),
+        videos: show.videos,
+        primaryTrailer: show.videos?.[0] || null,
+        credits: CreditsMapper.toDto(show.credits),
         availability: MediaWatchOffersMapper.toAvailability(watchOffers, show.watchProvidersRaw),
-        releaseDate: showData.releaseDate,
+        releaseDate: show.releaseDate,
 
-        totalSeasons: showData.totalSeasons,
-        totalEpisodes: showData.totalEpisodes,
-        status: showData.status as ShowStatus | null,
-        lastAirDate: showData.lastAirDate,
-        nextAirDate: showData.nextAirDate,
+        totalSeasons: show.totalSeasons,
+        totalEpisodes: show.totalEpisodes,
+        status: show.status as ShowStatus | null,
+        lastAirDate: show.lastAirDate,
+        nextAirDate: show.nextAirDate,
 
         stats: {
-          ratingoScore: showData.ratingoScore,
-          qualityScore: showData.qualityScore,
-          popularityScore: showData.popularityScore,
-          liveWatchers: showData.watchersCount,
-          totalWatchers: showData.totalWatchers,
+          ratingoScore: show.ratingoScore,
+          qualityScore: show.qualityScore,
+          popularityScore: show.popularityScore,
+          liveWatchers: show.watchersCount,
+          totalWatchers: show.totalWatchers,
         },
         externalRatings: {
-          tmdb: { rating: showData.rating, voteCount: showData.voteCount },
-          imdb: showData.ratingImdb
-            ? { rating: showData.ratingImdb, voteCount: showData.voteCountImdb }
+          tmdb: { rating: show.rating, voteCount: show.voteCount },
+          imdb: show.ratingImdb ? { rating: show.ratingImdb, voteCount: show.voteCountImdb } : null,
+          trakt: show.ratingTrakt
+            ? { rating: show.ratingTrakt, voteCount: show.voteCountTrakt }
             : null,
-          trakt: showData.ratingTrakt
-            ? { rating: showData.ratingTrakt, voteCount: showData.voteCountTrakt }
-            : null,
-          metacritic: showData.ratingMetacritic ? { rating: showData.ratingMetacritic } : null,
-          rottenTomatoes: showData.ratingRottenTomatoes
-            ? { rating: showData.ratingRottenTomatoes }
-            : null,
+          metacritic: show.ratingMetacritic ? { rating: show.ratingMetacritic } : null,
+          rottenTomatoes: show.ratingRottenTomatoes ? { rating: show.ratingRottenTomatoes } : null,
         },
 
         genres,
@@ -184,6 +179,7 @@ export class ShowDetailsQuery {
       this.db
         .select({
           seasonNumber: schema.seasons.number,
+          id: schema.episodes.id,
           number: schema.episodes.number,
           title: schema.episodes.title,
           airDate: schema.episodes.airDate,

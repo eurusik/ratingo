@@ -216,6 +216,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           <EpisodesSection
             seasons={show.seasons}
             nextEpisodeDate={show.nextEpisodeDate}
+            showId={show.showId}
             dict={dict}
           />
 

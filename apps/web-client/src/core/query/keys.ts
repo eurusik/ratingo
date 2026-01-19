@@ -87,6 +87,12 @@ export const queryKeys = {
       [...queryKeys.userMedia.all, 'my-watchlist', limit ?? null, offset ?? null] as const,
   },
 
+  /** Episode progress queries. */
+  episodeProgress: {
+    all: ['episode-progress'] as const,
+    showProgress: (showId: string) => [...queryKeys.episodeProgress.all, 'show', showId] as const,
+  },
+
   /** Public user queries. */
   users: {
     profile: (username: string) => ['users', username] as const,

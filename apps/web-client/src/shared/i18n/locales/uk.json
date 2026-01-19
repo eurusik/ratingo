@@ -281,6 +281,8 @@
       "firstSeason": "Перший",
       "allSeasons": "Всі сезони",
       "seasons": "Сезони",
+      "markWatched": "Позначити як переглянутий",
+      "markUnwatched": "Прибрати позначку перегляду",
       "plurals": {
         "season": {
           "one": "сезон",

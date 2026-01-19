@@ -281,6 +281,8 @@
       "firstSeason": "First",
       "allSeasons": "All seasons",
       "seasons": "Seasons",
+      "markWatched": "Mark as watched",
+      "markUnwatched": "Mark as unwatched",
       "plurals": {
         "season": {
           "one": "season",

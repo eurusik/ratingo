@@ -1,0 +1,155 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
+
+import { and, eq, sql } from 'drizzle-orm';
+import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import * as schema from '../../../../database/schema';
+import {
+  type IEpisodeProgressRepository,
+  type SeasonProgressInfo,
+} from '../../domain/repositories/episode-progress.repository.interface';
+
+/**
+ * Drizzle implementation of episode progress repository.
+ */
+@Injectable()
+export class DrizzleEpisodeProgressRepository implements IEpisodeProgressRepository {
+  private readonly logger = new Logger(DrizzleEpisodeProgressRepository.name);
+
+  constructor(
+    @Inject(DATABASE_CONNECTION)
+    private readonly db: PostgresJsDatabase<typeof schema>,
+  ) {}
+
+  /**
+   * Marks an episode as watched.
+   */
+  async markWatched(userId: string, episodeId: string): Promise<void> {
+    try {
+      await this.db
+        .insert(schema.userEpisodeProgress)
+        .values({
+          userId,
+          episodeId,
+          watchedAt: new Date(),
+        })
+        .onConflictDoNothing();
+    } catch (error) {
+      this.logger.error(`markWatched failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to mark episode as watched', {
+        userId,
+        episodeId,
+      });
+    }
+  }
+
+  /**
+   * Marks an episode as unwatched.
+   */
+  async markUnwatched(userId: string, episodeId: string): Promise<void> {
+    try {
+      await this.db
+        .delete(schema.userEpisodeProgress)
+        .where(
+          and(
+            eq(schema.userEpisodeProgress.userId, userId),
+            eq(schema.userEpisodeProgress.episodeId, episodeId),
+          ),
+        );
+    } catch (error) {
+      this.logger.error(`markUnwatched failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to mark episode as unwatched', {
+        userId,
+        episodeId,
+      });
+    }
+  }
+
+  /**
+   * Gets watched episode IDs for a show.
+   */
+  async getWatchedEpisodeIds(userId: string, showId: string): Promise<string[]> {
+    try {
+      const rows = await this.db
+        .select({
+          episodeId: schema.userEpisodeProgress.episodeId,
+        })
+        .from(schema.userEpisodeProgress)
+        .innerJoin(schema.episodes, eq(schema.userEpisodeProgress.episodeId, schema.episodes.id))
+        .where(
+          and(eq(schema.userEpisodeProgress.userId, userId), eq(schema.episodes.showId, showId)),
+        );
+
+      return rows.map((r) => r.episodeId);
+    } catch (error) {
+      this.logger.error(`getWatchedEpisodeIds failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to get watched episode IDs', {
+        userId,
+        showId,
+      });
+    }
+  }
+
+  /**
+   * Gets progress for all seasons of a show.
+   */
+  async getShowProgress(userId: string, showId: string): Promise<SeasonProgressInfo[]> {
+    try {
+      // Get all seasons with episode counts and watched counts in one query
+      const rows = await this.db
+        .select({
+          seasonNumber: schema.seasons.number,
+          episodeId: schema.episodes.id,
+          isWatched: sql<boolean>`
+            EXISTS (
+              SELECT 1 FROM ${schema.userEpisodeProgress}
+              WHERE ${schema.userEpisodeProgress.episodeId} = ${schema.episodes.id}
+              AND ${schema.userEpisodeProgress.userId} = ${userId}
+            )
+          `.as('is_watched'),
+        })
+        .from(schema.seasons)
+        .innerJoin(schema.episodes, eq(schema.episodes.seasonId, schema.seasons.id))
+        .where(eq(schema.seasons.showId, showId))
+        .orderBy(schema.seasons.number, schema.episodes.number);
+
+      // Group by season
+      const seasonMap = new Map<number, { total: number; watched: number; watchedIds: string[] }>();
+
+      for (const row of rows) {
+        const existing = seasonMap.get(row.seasonNumber) || {
+          total: 0,
+          watched: 0,
+          watchedIds: [],
+        };
+        existing.total++;
+        if (row.isWatched) {
+          existing.watched++;
+          existing.watchedIds.push(row.episodeId);
+        }
+        seasonMap.set(row.seasonNumber, existing);
+      }
+
+      // Convert to array
+      const result: SeasonProgressInfo[] = [];
+      for (const [seasonNumber, data] of seasonMap) {
+        result.push({
+          seasonNumber,
+          watchedCount: data.watched,
+          totalCount: data.total,
+          watchedEpisodeIds: data.watchedIds,
+        });
+      }
+
+      return result.sort((a, b) => a.seasonNumber - b.seasonNumber);
+    } catch (error) {
+      this.logger.error(`getShowProgress failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to get show progress', {
+        userId,
+        showId,
+      });
+    }
+  }
+}

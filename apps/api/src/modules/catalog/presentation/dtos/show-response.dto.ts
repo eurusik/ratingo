@@ -7,6 +7,14 @@ import { MediaBaseDto } from './common.dto';
 import { ShowVerdictDto, ShowStatusHintDto } from './verdict.dto';
 
 export class EpisodeDto {
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
+    nullable: true,
+    description: 'Internal episode ID (null if not yet imported)',
+  })
+  id: string | null;
+
   @ApiProperty({ example: 1 })
   number: number;
 
@@ -44,6 +52,12 @@ export class SeasonDto {
 }
 
 export class ShowResponseDto extends MediaBaseDto {
+  @ApiProperty({
+    example: '123e4567-e89b-12d3-a456-426614174000',
+    description: 'Internal shows table ID (for episode progress tracking)',
+  })
+  showId: string;
+
   @ApiProperty({
     type: Date,
     required: false,

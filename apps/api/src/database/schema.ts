@@ -1423,3 +1423,41 @@ export const reviewReportsRelations = relations(reviewReports, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// --- USER EPISODE PROGRESS (Watch Tracking) ---
+
+/**
+ * User episode watch progress.
+ * Tracks which episodes a user has watched.
+ * Composite primary key: (user_id, episode_id).
+ */
+export const userEpisodeProgress = pgTable(
+  'user_episode_progress',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    episodeId: uuid('episode_id')
+      .notNull()
+      .references(() => episodes.id, { onDelete: 'cascade' }),
+    watchedAt: timestamp('watched_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userId, t.episodeId] }),
+    userIdx: index('user_episode_progress_user_idx').on(t.userId),
+    episodeIdx: index('user_episode_progress_episode_idx').on(t.episodeId),
+  }),
+);
+
+// --- USER EPISODE PROGRESS RELATIONS ---
+
+export const userEpisodeProgressRelations = relations(userEpisodeProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [userEpisodeProgress.userId],
+    references: [users.id],
+  }),
+  episode: one(episodes, {
+    fields: [userEpisodeProgress.episodeId],
+    references: [episodes.id],
+  }),
+}));

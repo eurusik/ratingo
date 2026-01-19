@@ -96,6 +96,7 @@ export interface CalendarEpisode {
  * Episode info for show details.
  */
 export interface EpisodeInfo {
+  id: string;
   number: number;
   title: string | null;
   airDate: Date | null;
@@ -120,6 +121,8 @@ export interface SeasonInfo {
  */
 export interface ShowDetails {
   id: string;
+  /** Internal shows table ID (for episode progress tracking) */
+  showId: string;
   tmdbId: number;
   title: string;
   originalTitle: string | null;

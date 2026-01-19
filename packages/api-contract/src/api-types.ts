@@ -392,6 +392,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-media/episodes/{episodeId}/watch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark episode as watched (auth: Bearer) */
+        post: operations["EpisodeProgressController_markWatched"];
+        /** Mark episode as unwatched (auth: Bearer) */
+        delete: operations["EpisodeProgressController_markUnwatched"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/shows/{showId}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get watch progress for a show (auth: Bearer) */
+        get: operations["EpisodeProgressController_getShowProgress"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/register": {
         parameters: {
             query?: never;
@@ -2375,19 +2410,13 @@ export interface components {
             verdict?: components["schemas"]["MovieVerdictDto"] | null;
         };
         ShowProgressDto: {
-            /** @description Null for trending list optimization */
-            season?: number | null;
-            /** @description Null for trending list optimization */
-            episode?: number | null;
             /**
-             * @description Null for trending list optimization
-             * @example S5E2
+             * @description Show ID
+             * @example uuid-show-id
              */
-            label?: string | null;
-            /** Format: date-time */
-            lastAirDate?: string | null;
-            /** Format: date-time */
-            nextAirDate?: string | null;
+            showId: string;
+            /** @description Progress per season */
+            seasons: components["schemas"]["SeasonProgressDto"][];
         };
         ShowTrendingItemDto: {
             id: string;
@@ -2476,6 +2505,11 @@ export interface components {
             days: components["schemas"]["CalendarDayDto"][];
         };
         EpisodeDto: {
+            /**
+             * @description Internal episode ID (null if not yet imported)
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            id?: string | null;
             /** @example 1 */
             number: number;
             /** @example The Beginning */
@@ -2574,6 +2608,11 @@ export interface components {
             credits?: components["schemas"]["CreditsDto"] | null;
             /** @description Where to watch - UA primary with US fallback */
             availability?: components["schemas"]["AvailabilityDto"] | null;
+            /**
+             * @description Internal shows table ID (for episode progress tracking)
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
+            showId: string;
             /**
              * Format: date-time
              * @description First air date of the show
@@ -2751,6 +2790,31 @@ export interface components {
         PaginatedMeUserMediaResponseDto: {
             data: components["schemas"]["MeUserMediaListItemDto"][];
             meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        SeasonProgressDto: {
+            /**
+             * @description Season number
+             * @example 1
+             */
+            seasonNumber: number;
+            /**
+             * @description Number of watched episodes
+             * @example 5
+             */
+            watchedCount: number;
+            /**
+             * @description Total episodes in season
+             * @example 8
+             */
+            totalCount: number;
+            /**
+             * @description IDs of watched episodes
+             * @example [
+             *       "uuid-1",
+             *       "uuid-2"
+             *     ]
+             */
+            watchedEpisodeIds: string[];
         };
         RegisterDto: {
             /** @example user@example.com */
@@ -5863,6 +5927,96 @@ export interface operations {
                         data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
                     };
                 };
+            };
+        };
+    };
+    EpisodeProgressController_markWatched: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Episode UUID */
+                episodeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Episode marked as watched */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    EpisodeProgressController_markUnwatched: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Episode UUID */
+                episodeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Episode marked as unwatched */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    EpisodeProgressController_getShowProgress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Show UUID */
+                showId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Show progress */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ShowProgressDto"];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

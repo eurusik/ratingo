@@ -1817,6 +1817,125 @@
         ]
       }
     },
+    "/api/user-media/episodes/{episodeId}/watch": {
+      "post": {
+        "operationId": "EpisodeProgressController_markWatched",
+        "summary": "Mark episode as watched (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "episodeId",
+            "required": true,
+            "in": "path",
+            "description": "Episode UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Episode marked as watched"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "Episode Progress"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "EpisodeProgressController_markUnwatched",
+        "summary": "Mark episode as unwatched (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "episodeId",
+            "required": true,
+            "in": "path",
+            "description": "Episode UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Episode marked as unwatched"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "Episode Progress"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/user-media/shows/{showId}/progress": {
+      "get": {
+        "operationId": "EpisodeProgressController_getShowProgress",
+        "summary": "Get watch progress for a show (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "showId",
+            "required": true,
+            "in": "path",
+            "description": "Show UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Show progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ShowProgressDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "Episode Progress"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/auth/register": {
       "post": {
         "operationId": "AuthController_register",
@@ -7640,33 +7759,23 @@
       "ShowProgressDto": {
         "type": "object",
         "properties": {
-          "season": {
-            "type": "number",
-            "nullable": true,
-            "description": "Null for trending list optimization"
-          },
-          "episode": {
-            "type": "number",
-            "nullable": true,
-            "description": "Null for trending list optimization"
-          },
-          "label": {
+          "showId": {
             "type": "string",
-            "nullable": true,
-            "example": "S5E2",
-            "description": "Null for trending list optimization"
+            "example": "uuid-show-id",
+            "description": "Show ID"
           },
-          "lastAirDate": {
-            "format": "date-time",
-            "type": "string",
-            "nullable": true
-          },
-          "nextAirDate": {
-            "format": "date-time",
-            "type": "string",
-            "nullable": true
+          "seasons": {
+            "description": "Progress per season",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SeasonProgressDto"
+            }
           }
-        }
+        },
+        "required": [
+          "showId",
+          "seasons"
+        ]
       },
       "ShowTrendingItemDto": {
         "type": "object",
@@ -7942,6 +8051,12 @@
       "EpisodeDto": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "nullable": true,
+            "description": "Internal episode ID (null if not yet imported)"
+          },
           "number": {
             "type": "number",
             "example": 1
@@ -8219,6 +8334,11 @@
               }
             ]
           },
+          "showId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "Internal shows table ID (for episode progress tracking)"
+          },
           "releaseDate": {
             "format": "date-time",
             "type": "string",
@@ -8299,6 +8419,7 @@
           "title",
           "slug",
           "ingestionStatus",
+          "showId",
           "seasons"
         ]
       },
@@ -8679,6 +8800,43 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "SeasonProgressDto": {
+        "type": "object",
+        "properties": {
+          "seasonNumber": {
+            "type": "number",
+            "example": 1,
+            "description": "Season number"
+          },
+          "watchedCount": {
+            "type": "number",
+            "example": 5,
+            "description": "Number of watched episodes"
+          },
+          "totalCount": {
+            "type": "number",
+            "example": 8,
+            "description": "Total episodes in season"
+          },
+          "watchedEpisodeIds": {
+            "example": [
+              "uuid-1",
+              "uuid-2"
+            ],
+            "description": "IDs of watched episodes",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "seasonNumber",
+          "watchedCount",
+          "totalCount",
+          "watchedEpisodeIds"
         ]
       },
       "RegisterDto": {

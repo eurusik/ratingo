@@ -11,6 +11,7 @@ import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
 import { cn, resolveMediaImageUrl, IMAGE_SIZES, pluralize } from '@/shared/utils';
 import { SeasonSelector } from './season-selector';
+import { SeasonProgressRing } from './season-progress-ring';
 
 type SeasonDto = components['schemas']['SeasonDto'];
 
@@ -21,6 +22,12 @@ export interface SeasonHeaderProps {
   isExpanded: boolean;
   onToggleExpand: () => void;
   dict: ReturnType<typeof getDictionary>;
+  /** Number of watched episodes in this season */
+  watchedCount?: number;
+  /** Total episodes in this season (for progress) */
+  totalCount?: number;
+  /** Whether to show the progress ring */
+  showProgress?: boolean;
 }
 
 export function SeasonHeader({
@@ -30,9 +37,13 @@ export function SeasonHeader({
   isExpanded,
   onToggleExpand,
   dict,
+  watchedCount = 0,
+  totalCount,
+  showProgress = false,
 }: SeasonHeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const episodeCount = selectedSeason.episodeCount || selectedSeason.episodes?.length || 0;
+  const progressTotal = totalCount ?? episodeCount;
 
   const handleContainerClick = (e: React.MouseEvent) => {
     // Only toggle if not clicking the change season button
@@ -115,6 +126,16 @@ export function SeasonHeader({
           </div>
         )}
       </div>
+
+      {/* Progress ring */}
+      {showProgress && progressTotal > 0 && (
+        <SeasonProgressRing
+          watched={watchedCount}
+          total={progressTotal}
+          size="md"
+          className="flex-shrink-0"
+        />
+      )}
     </div>
   );
 }
