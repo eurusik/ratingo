@@ -38,16 +38,18 @@ export function HeroBackdrop({ backdrop, poster }: HeroBackdropProps) {
             priority
             onError={() => setBackdropError(true)}
           />
-          {/* Balanced gradients for readability while showing backdrop */}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-zinc-950/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/60 via-zinc-950/30 to-transparent" />
+          {/* Gradients for smooth transition from UI background */}
+          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-cinema-page to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-cinema-page via-cinema-page/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-cinema-page/60 via-cinema-page/30 to-transparent" />
         </>
       ) : posterUrl ? (
         <>
           <Image src={posterUrl} alt="" fill className="object-cover scale-110 blur-xl" priority />
           {/* Darker gradients for blurred poster */}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/70 via-zinc-950/30 to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-cinema-page to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-cinema-page via-cinema-page/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-cinema-page/70 via-cinema-page/30 to-transparent" />
         </>
       ) : null}
     </div>
