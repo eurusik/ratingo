@@ -61,10 +61,13 @@ export function ReviewReportDialog({
     onOpenChange(false);
   };
 
+  const showDetailsField = reason === REPORT_REASONS.other;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-cinema-card border-cinema-borderSoft">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col p-0 gap-0 bg-cinema-card border-cinema-borderSoft">
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="flex items-center gap-2 text-cinema-text-primary">
             <Flag className="w-5 h-5 text-red-500" />
             {dict.reviews.report.title}
@@ -74,7 +77,8 @@ export function ReviewReportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-6 space-y-4">
           {/* Reason selection */}
           <div className="space-y-3">
             <Label className="text-sm text-cinema-text-secondary">{dict.reviews.report.reason}</Label>
@@ -87,7 +91,7 @@ export function ReviewReportDialog({
                 <div
                   key={reasonValue}
                   className={cn(
-                    'flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer',
+                    'flex items-center space-x-3 px-3 py-2.5 rounded-lg border transition-colors cursor-pointer',
                     reason === reasonValue
                       ? 'border-red-500/50 bg-red-500/10'
                       : 'border-cinema-borderSoft hover:border-cinema-border',
@@ -110,53 +114,56 @@ export function ReviewReportDialog({
             </RadioGroup>
           </div>
 
-          {/* Details textarea */}
-          <div className="space-y-2">
-            <Label htmlFor="details" className="text-sm text-cinema-text-secondary">
-              {dict.reviews.report.details}
-              <span className="text-cinema-text-muted ml-1">({dict.reviews.report.optional})</span>
-            </Label>
-            <Textarea
-              id="details"
-              value={details}
-              onChange={(e) => setDetails(e.target.value)}
-              placeholder={dict.reviews.report.detailsPlaceholder}
-              className={cn(
-                'min-h-[80px] bg-cinema-elevated/50 border resize-none text-sm',
-                'text-cinema-text-primary placeholder:text-cinema-text-disabled border-cinema-borderSoft',
-              )}
-              maxLength={500}
-              disabled={isSubmitting}
-            />
-            <div className="flex justify-end">
-              <span className="text-xs text-cinema-text-muted">{500 - details.length}</span>
+          {/* Details textarea - only for "other" */}
+          {showDetailsField && (
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              <Label htmlFor="details" className="text-sm text-cinema-text-secondary">
+                {dict.reviews.report.details}
+              </Label>
+              <Textarea
+                id="details"
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                placeholder={dict.reviews.report.detailsPlaceholder}
+                className={cn(
+                  'min-h-[80px] bg-cinema-elevated/50 border resize-none text-sm',
+                  'text-cinema-text-primary placeholder:text-cinema-text-disabled border-cinema-borderSoft',
+                )}
+                maxLength={500}
+                disabled={isSubmitting}
+              />
+              <div className="flex justify-end">
+                <span className="text-xs text-cinema-text-muted">{500 - details.length}</span>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Warning */}
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-            <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-amber-500/90">{dict.reviews.report.warning}</p>
-          </div>
+          {/* Inline warning */}
+          <p className="text-xs text-cinema-text-disabled flex items-center gap-1.5 pt-2 pb-4">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500/70 flex-shrink-0" />
+            {dict.reviews.report.warning}
+          </p>
         </div>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-2 mt-6">
-          <Button
-            variant="ghost"
-            onClick={handleClose}
-            disabled={isSubmitting}
-            className="text-cinema-text-muted hover:text-cinema-text-primary"
-          >
-            {dict.reviews.report.cancel}
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={!reason || isSubmitting}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            {isSubmitting ? dict.reviews.report.submitting : dict.reviews.report.submit}
-          </Button>
+        {/* Sticky footer - clean */}
+        <div className="border-t border-cinema-borderSoft px-6 py-4 bg-cinema-card">
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="text-cinema-text-muted hover:text-cinema-text-primary"
+            >
+              {dict.reviews.report.cancel}
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!reason || isSubmitting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isSubmitting ? dict.reviews.report.submitting : dict.reviews.report.submit}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
