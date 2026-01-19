@@ -40,22 +40,6 @@ export function toCardProps(item: ApiItem, type: 'show' | 'movie'): HomeCardProp
   };
 }
 
-/** Filter and map show cards to new episode items, sorted by airDate (newest first) */
-export function extractNewEpisodeItems(showCards: HomeCardProps[]): NewEpisodeShowItem[] {
-  return showCards
-    .filter((card) => card.hasRecentEpisode && card.showProgress)
-    .map((card) => ({
-      id: card.id,
-      slug: card.slug,
-      title: card.title,
-      posterUrl: card.poster?.medium ?? null,
-      seasonNumber: card.showProgress?.season ?? null,
-      episodeNumber: card.showProgress?.episode ?? null,
-      airDate: card.showProgress?.lastAirDate?.toString() ?? new Date().toISOString(),
-    }))
-    .sort((a, b) => new Date(b.airDate).getTime() - new Date(a.airDate).getTime());
-}
-
 /**
  * Map new episodes API response to component format.
  * Handles both array and {data: []} response shapes.

@@ -19,6 +19,7 @@ export type ListContext = NonNullable<components['schemas']['CardMetaDto']['list
 export type PrimaryCta = components['schemas']['CardMetaDto']['primaryCta'];
 export type ContinuePointDto = components['schemas']['ContinuePointDto'];
 export type ShowProgressDto = components['schemas']['ShowProgressDto'];
+export type HeroShowProgressDto = components['schemas']['HeroShowProgressDto'];
 
 /** Primary CTA constants - use instead of magic strings */
 export const PRIMARY_CTA = {

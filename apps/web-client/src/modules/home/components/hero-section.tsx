@@ -8,15 +8,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { Play, TrendingUp, Star, Activity } from 'lucide-react';
-import { type PrimaryCta, PRIMARY_CTA } from '@/shared/types';
+import { type PrimaryCta, PRIMARY_CTA, type HeroShowProgressDto } from '@/shared/types';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import { Button } from '@/shared/ui';
 import type { MediaCardServerProps } from './media-card/media-card-server';
 
 interface HeroSectionProps {
-  item: MediaCardServerProps & {
+  item: Omit<MediaCardServerProps, 'showProgress'> & {
     backdrop?: { small: string; medium: string; large: string; original: string } | null;
     ctaType?: PrimaryCta;
+    showProgress?: HeroShowProgressDto | null;
   };
   locale?: Locale;
   className?: string;

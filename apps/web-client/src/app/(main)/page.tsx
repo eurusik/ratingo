@@ -90,6 +90,9 @@ export default async function HomePage() {
           <HeroSection
             item={{
               ...top3Cards[0],
+              showProgress:
+                (heroItems[0] as { showProgress?: { season: number; episode: number; label: string } })
+                  ?.showProgress ?? null,
               backdrop:
                 (
                   heroItems[0] as {

@@ -8,6 +8,7 @@ export type {
   PrimaryCta,
   ContinuePointDto,
   ShowProgressDto,
+  HeroShowProgressDto,
   GenreDto,
   VideoDto,
   CastMemberDto,
