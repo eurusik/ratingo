@@ -23,7 +23,7 @@ interface SignalsSectionProps {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-[10px] md:text-xs text-zinc-500 uppercase tracking-wider">
+    <span className="text-[10px] md:text-xs text-cinema-text-muted uppercase tracking-wider">
       {children}
     </span>
   );

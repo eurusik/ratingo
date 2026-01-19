@@ -37,7 +37,7 @@ export function OverviewExpandable({
 
   return (
     <section id="overview-section" className="space-y-2 scroll-mt-8">
-      <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">{title}</h3>
+      <h3 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">{title}</h3>
 
       <div>
         <p

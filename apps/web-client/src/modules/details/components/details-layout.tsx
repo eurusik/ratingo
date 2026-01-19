@@ -94,7 +94,7 @@ export function DetailsLayout({
           {/* Suitable for tags */}
           {suitableFor && suitableFor.length > 0 && (
             <section className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-zinc-500 uppercase tracking-wider">
+              <span className="text-xs text-cinema-text-muted uppercase tracking-wider">
                 {dict.details.quickPitch.suitable}:
               </span>
               {suitableFor.map((tag) => (
@@ -114,7 +114,7 @@ export function DetailsLayout({
           {/* Overview */}
           {overview && (
             <section id="overview-section" className="space-y-2 scroll-mt-8">
-              <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
                 {dict.details.overview.title}
               </h3>
               <p className="text-base md:text-lg text-zinc-300 leading-relaxed">{overview}</p>
@@ -127,7 +127,7 @@ export function DetailsLayout({
           {hasVideos && (
             <>
               <section className="space-y-4">
-                <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+                <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
                   {dict.details.trailer.sectionTitle}
                 </h2>
                 <TrailersCarousel
@@ -161,7 +161,7 @@ export function DetailsLayout({
           {/* Where to watch */}
           {availability && (
             <section className="space-y-4">
-              <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+              <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
                 {dict.details.providers.title}
               </h2>
               <ProvidersList providers={availability} dict={dict} />

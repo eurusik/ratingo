@@ -36,7 +36,7 @@ export function MovieRelease({
 
   return (
     <section className="space-y-2">
-      <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+      <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
         {dict.details.movieRelease.title}
       </h2>
 

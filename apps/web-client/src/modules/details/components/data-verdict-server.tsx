@@ -166,7 +166,7 @@ export function DataVerdictServer({
 
         <div className="flex-1 min-w-0 space-y-2">
           {/* Header: "Based on Ratingo data" - always show */}
-          <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          <p className="text-xs font-medium text-cinema-text-muted uppercase tracking-wider">
             {dict.details.verdict.byData}
           </p>
 
