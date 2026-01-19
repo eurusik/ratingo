@@ -92,7 +92,7 @@ export function ReviewCard({
   const showSpoilerOverlay = review.hasSpoiler && !spoilerRevealed;
 
   return (
-    <div className={cn('py-6 space-y-4', className)}>
+    <div className={cn('p-4 rounded-xl bg-cinema-elevated/30 space-y-4', className)}>
       {/* Header: Author + Time | Rating */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
