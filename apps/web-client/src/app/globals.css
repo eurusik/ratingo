@@ -41,38 +41,53 @@
   }
 
   .dark {
-    /* Cinematic black palette */
-    --background: 216 18% 5%;        /* #0B0D10 - page background */
-    --foreground: 0 0% 88%;          /* white ~88% - primary text */
-    --card: 220 20% 9%;              /* #12151B - card background */
-    --card-foreground: 0 0% 88%;
-    --popover: 220 20% 9%;
-    --popover-foreground: 0 0% 88%;
+    /* =================================================================
+       CINEMATIC BLACK THEME
+       Maps shadcn tokens → cinema.* values for consistency
+       ================================================================= */
+
+    /* --- Surfaces (mapped to cinema.*) --- */
+    --background: 216 18% 5%;        /* cinema.page: #0B0D10 */
+    --card: 220 20% 9%;              /* cinema.card: #12151B */
+    --popover: 222 16% 12%;          /* cinema.elevated: #1A1D24 */
+    --secondary: 216 17% 7%;         /* cinema.surface: #0F1217 */
+    --muted: 216 17% 7%;             /* cinema.surface: #0F1217 */
+    --accent: 222 16% 12%;           /* cinema.elevated: #1A1D24 */
+
+    /* --- Text hierarchy (4 levels for "expensive black" look) --- */
+    --foreground: 220 20% 93%;       /* text-1: #E7EAF0 - primary text */
+    --card-foreground: 220 20% 93%;
+    --popover-foreground: 220 20% 93%;
+    --secondary-foreground: 220 15% 76%; /* text-2: #B9C0CC - subtitles */
+    --muted-foreground: 220 15% 60%;     /* text-3: #8A94A6 - meta/labels */
+    --accent-foreground: 220 20% 93%;
+
+    /* --- Borders --- */
+    --border: 220 16% 17%;           /* cinema.border: #262A33 */
+    --input: 220 17% 14%;            /* cinema.borderSoft: #1D212A */
+    --ring: 210 100% 65%;            /* cinema.focus: #4EA1FF */
+
+    /* --- Primary/destructive --- */
     --primary: 0 0% 98%;
     --primary-foreground: 220 20% 9%;
-    --secondary: 222 16% 12%;        /* #1A1D24 - elevated surfaces */
-    --secondary-foreground: 0 0% 88%;
-    --muted: 222 16% 12%;
-    --muted-foreground: 0 0% 45%;    /* white ~45% - meta text */
-    --accent: 222 16% 15%;
-    --accent-foreground: 0 0% 88%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 16% 16%;           /* slightly visible border */
-    --input: 220 16% 14%;
-    --ring: 0 0% 83.1%;
+
+    /* --- Charts --- */
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --sidebar-background: 220 20% 7%;
-    --sidebar-foreground: 0 0% 88%;
+
+    /* --- Sidebar --- */
+    --sidebar-background: 216 17% 7%;    /* cinema.surface */
+    --sidebar-foreground: 220 20% 93%;
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 222 16% 12%;
-    --sidebar-accent-foreground: 0 0% 88%;
-    --sidebar-border: 220 16% 16%;
+    --sidebar-accent-foreground: 220 20% 93%;
+    --sidebar-border: 220 17% 14%;       /* cinema.borderSoft */
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 

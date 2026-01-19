@@ -24,12 +24,28 @@ export default {
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
-  			// Cinematic black semantic colors
+  			// Cinematic black semantic colors - single source of truth
   			cinema: {
-  				page: '#0B0D10',
-  				card: '#12151B',
-  				elevated: '#1A1D24',
-  				border: '#262A33',
+  				// Surfaces (light → dark)
+  				page: '#0B0D10',        // Main background
+  				surface: '#0F1217',     // Sections without card container
+  				card: '#12151B',        // Card backgrounds
+  				elevated: '#1A1D24',    // Popover, dropdown, hover states
+  				// Borders
+  				border: '#262A33',      // Component borders (inputs, cards)
+  				borderSoft: '#1D212A',  // Dividers, subtle lines
+  				// Overlays
+  				overlay: 'rgba(0,0,0,0.55)',      // Card overlays
+  				overlayHeavy: 'rgba(0,0,0,0.75)', // Hero/backdrop overlays
+  				// Focus ring
+  				focus: '#4EA1FF',       // Focus state accent
+  				// Text hierarchy (use: text-cinema-text-primary, etc.)
+  				text: {
+  					primary: '#E7EAF0',   // ~93% - main content
+  					secondary: '#B9C0CC', // ~76% - subtitles
+  					muted: '#8A94A6',     // ~60% - meta/labels
+  					disabled: '#5C6472',  // ~40% - disabled state
+  				},
   			},
   			card: {
   				DEFAULT: 'hsl(var(--card))',
