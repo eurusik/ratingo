@@ -134,6 +134,10 @@ export function useToggleEpisodeWatched(showId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.episodeProgress.showProgress(showId),
       });
+      // Invalidate user media state (for verdict CTA continuePoint)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userMedia.all,
+      });
       // Invalidate activity lists (watching/completed may change)
       queryClient.invalidateQueries({
         queryKey: queryKeys.meLists.history,
@@ -217,6 +221,10 @@ export function useMarkMultipleWatched(showId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.episodeProgress.showProgress(showId),
+      });
+      // Invalidate user media state (for verdict CTA continuePoint)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userMedia.all,
       });
       // Invalidate activity lists (watching/completed may change)
       queryClient.invalidateQueries({
