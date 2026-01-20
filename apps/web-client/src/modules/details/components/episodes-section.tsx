@@ -28,7 +28,7 @@ import {
   useToggleEpisodeWatched,
   useMarkMultipleWatched,
   useMarkAllEpisodesWatched,
-  useRestoreEpisodeProgress,
+  useUnmarkEpisodes,
 } from '@/core/query';
 import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import { EpisodeCard } from './episode-card';
@@ -113,7 +113,7 @@ export function EpisodesSection({
   const toggleWatched = useToggleEpisodeWatched(showId || '');
   const markMultipleWatched = useMarkMultipleWatched(showId || '');
   const markAllWatched = useMarkAllEpisodesWatched(showId || '');
-  const restoreProgress = useRestoreEpisodeProgress(showId || '');
+  const unmarkEpisodes = useUnmarkEpisodes(showId || '');
 
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -167,13 +167,36 @@ export function EpisodesSection({
   // Store previous watched IDs for undo
   const previousWatchedIdsRef = useRef<Map<number, string[]> | null>(null);
 
-  const handleMarkAllClick = useCallback(() => {
-    if (totalProgress.watched > 0) {
-      setShowConfirmDialog(true);
-    } else {
-      handleConfirmMarkAll();
-    }
-  }, [totalProgress.watched]);
+  const handleUndo = useCallback(() => {
+    const previousWatched = previousWatchedIdsRef.current;
+    if (!previousWatched) return;
+
+    // Compute all episode IDs
+    const allEpisodeIds: string[] = [];
+    allEpisodesBySeasonNumber.forEach((ids) => {
+      allEpisodeIds.push(...ids);
+    });
+
+    // Get previously watched IDs as a set
+    const previouslyWatchedIds = new Set<string>();
+    previousWatched.forEach((ids) => {
+      ids.forEach((id) => previouslyWatchedIds.add(id));
+    });
+
+    // Episodes to unmark = all episodes that weren't watched before
+    const episodesToUnmark = allEpisodeIds.filter((id) => !previouslyWatchedIds.has(id));
+    if (episodesToUnmark.length === 0) return;
+
+    unmarkEpisodes.mutate(episodesToUnmark, {
+      onSuccess: () => {
+        toast.success(dict.details.showStatus.undone);
+        previousWatchedIdsRef.current = null;
+      },
+      onError: () => {
+        toast.error(dict.common?.error || 'Щось пішло не так');
+      },
+    });
+  }, [unmarkEpisodes, allEpisodesBySeasonNumber, dict]);
 
   const handleConfirmMarkAll = useCallback(() => {
     setShowConfirmDialog(false);
@@ -199,20 +222,20 @@ export function EpisodesSection({
             duration: 8000,
           });
         },
+        onError: () => {
+          toast.error(dict.common?.error || 'Щось пішло не так');
+        },
       },
     );
-  }, [progressData, allEpisodesBySeasonNumber, markAllWatched, dict]);
+  }, [progressData, allEpisodesBySeasonNumber, markAllWatched, dict, handleUndo]);
 
-  const handleUndo = useCallback(() => {
-    if (previousWatchedIdsRef.current) {
-      restoreProgress.mutate(previousWatchedIdsRef.current, {
-        onSuccess: () => {
-          toast.success(dict.details.showStatus.undone);
-          previousWatchedIdsRef.current = null;
-        },
-      });
+  const handleMarkAllClick = useCallback(() => {
+    if (totalProgress.watched > 0) {
+      setShowConfirmDialog(true);
+    } else {
+      handleConfirmMarkAll();
     }
-  }, [restoreProgress, dict]);
+  }, [totalProgress.watched, handleConfirmMarkAll]);
 
   // Track which episode is being toggled
   const [togglingEpisodeId, setTogglingEpisodeId] = useState<string | null>(null);

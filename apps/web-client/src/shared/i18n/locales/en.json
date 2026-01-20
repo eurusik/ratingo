@@ -292,6 +292,7 @@
       "markedAllWatched": "Show marked as watched",
       "undo": "Undo",
       "undone": "Progress restored",
+      "watched": "watched",
       "plurals": {
         "season": {
           "one": "season",

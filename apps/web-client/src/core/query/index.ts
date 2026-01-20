@@ -55,5 +55,5 @@ export {
   useToggleEpisodeWatched,
   useMarkMultipleWatched,
   useMarkAllEpisodesWatched,
-  useRestoreEpisodeProgress,
+  useUnmarkEpisodes,
 } from './episode-progress';

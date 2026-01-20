@@ -245,6 +245,18 @@ export function useMarkMultipleWatched(showId: string) {
   });
 }
 
+const BATCH_SIZE = 20;
+
+async function processInBatches<T>(
+  items: T[],
+  processor: (item: T) => Promise<void>,
+): Promise<void> {
+  for (let i = 0; i < items.length; i += BATCH_SIZE) {
+    const batch = items.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(processor));
+  }
+}
+
 /**
  * Marks ALL episodes of a show as watched.
  * Returns previous state for undo functionality.
@@ -258,9 +270,7 @@ export function useMarkAllEpisodesWatched(showId: string) {
       variables.episodesBySeasonNumber.forEach((ids) => {
         allEpisodeIds.push(...ids);
       });
-      await Promise.all(
-        allEpisodeIds.map((episodeId) => episodeProgressApi.markWatched(episodeId)),
-      );
+      await processInBatches(allEpisodeIds, (id) => episodeProgressApi.markWatched(id));
     },
 
     onMutate: async (variables) => {
@@ -321,34 +331,15 @@ export function useMarkAllEpisodesWatched(showId: string) {
 }
 
 /**
- * Restores episode progress to a previous state (for undo).
+ * Unmarks episodes (for undo). Accepts episode IDs directly to avoid race conditions.
  */
-export function useRestoreEpisodeProgress(showId: string) {
+export function useUnmarkEpisodes(showId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (previousWatchedIds: Map<number, string[]>) => {
-      const currentProgress = queryClient.getQueryData<ShowProgressDto>(
-        queryKeys.episodeProgress.showProgress(showId),
-      );
-
-      if (!currentProgress) return;
-
-      // Find episodes to unmark (currently watched but weren't before)
-      const toUnmark: string[] = [];
-      currentProgress.seasons.forEach((season) => {
-        const prevIds = previousWatchedIds.get(season.seasonNumber) || [];
-        const prevSet = new Set(prevIds);
-        season.watchedEpisodeIds.forEach((id) => {
-          if (!prevSet.has(id)) {
-            toUnmark.push(id);
-          }
-        });
-      });
-
-      await Promise.all(
-        toUnmark.map((episodeId) => episodeProgressApi.markUnwatched(episodeId)),
-      );
+    mutationFn: async (episodeIdsToUnmark: string[]) => {
+      if (episodeIdsToUnmark.length === 0) return;
+      await processInBatches(episodeIdsToUnmark, (id) => episodeProgressApi.markUnwatched(id));
     },
 
     onSettled: () => {

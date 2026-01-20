@@ -66,11 +66,13 @@ export function SeasonHeader({
     onToggleExpand();
   };
 
+  const showMarkAllButton = onMarkAllWatched && totalWatched < totalEpisodes;
+
   return (
     <div
       onClick={handleContainerClick}
       className={cn(
-        'flex items-center gap-4 w-full text-left transition-colors cursor-pointer',
+        'w-full text-left transition-colors cursor-pointer',
         !isExpanded && 'hover:bg-cinema-elevated/30 -mx-2 px-2 py-2 rounded-xl',
       )}
       role="button"
@@ -82,89 +84,121 @@ export function SeasonHeader({
         }
       }}
     >
-      {/* Season poster */}
-      <div className="relative flex-shrink-0 w-16 h-24 rounded-lg overflow-hidden bg-cinema-elevated">
-        {resolveMediaImageUrl(selectedSeason.posterPath, IMAGE_SIZES.W185) ? (
-          <Image
-            src={resolveMediaImageUrl(selectedSeason.posterPath, IMAGE_SIZES.W185)!}
-            alt={selectedSeason.name || `${dict.details.showStatus.season} ${selectedSeason.number}`}
-            fill
-            className="object-cover"
-            sizes="64px"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Tv className="w-6 h-6 text-cinema-text-disabled" />
-          </div>
-        )}
-      </div>
-
-      {/* Season info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-base font-medium text-cinema-text-primary">
-            {selectedSeason.name || `${dict.details.showStatus.season} ${selectedSeason.number}`}
-          </span>
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-cinema-text-muted" />
+      {/* Main row: poster + info + progress (desktop) */}
+      <div className="flex items-center gap-4 w-full">
+        {/* Season poster */}
+        <div className="relative flex-shrink-0 w-16 h-24 rounded-lg overflow-hidden bg-cinema-elevated">
+          {resolveMediaImageUrl(selectedSeason.posterPath, IMAGE_SIZES.W185) ? (
+            <Image
+              src={resolveMediaImageUrl(selectedSeason.posterPath, IMAGE_SIZES.W185)!}
+              alt={selectedSeason.name || `${dict.details.showStatus.season} ${selectedSeason.number}`}
+              fill
+              className="object-cover"
+              sizes="64px"
+            />
           ) : (
-            <ChevronRight className="w-4 h-4 text-cinema-text-muted" />
+            <div className="w-full h-full flex items-center justify-center">
+              <Tv className="w-6 h-6 text-cinema-text-disabled" />
+            </div>
           )}
         </div>
-        <div className="mt-1 text-sm text-cinema-text-muted">
-          {episodeCount} {pluralize(episodeCount, dict.details.showStatus.plurals.episode)}
+
+        {/* Season info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-base font-medium text-cinema-text-primary">
+              {selectedSeason.name || `${dict.details.showStatus.season} ${selectedSeason.number}`}
+            </span>
+            {isExpanded ? (
+              <ChevronDown className="w-4 h-4 text-cinema-text-muted" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-cinema-text-muted" />
+            )}
+          </div>
+          <div className="mt-1 text-sm text-cinema-text-muted">
+            {episodeCount} {pluralize(episodeCount, dict.details.showStatus.plurals.episode)}
+          </div>
+
+          {/* Season dropdown (only when expanded and multiple seasons) */}
+          {isExpanded && seasons.length > 1 && (
+            <div className="relative mt-2" data-season-dropdown>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDropdownOpen(!isDropdownOpen);
+                }}
+                className="text-xs text-cinema-text-secondary hover:text-cinema-text-primary transition-colors"
+              >
+                {dict.details.showStatus.changeSeason}
+              </button>
+
+              {isDropdownOpen && (
+                <SeasonSelector
+                  seasons={seasons}
+                  selectedSeason={selectedSeason}
+                  onSeasonChange={onSeasonChange}
+                  onClose={() => setIsDropdownOpen(false)}
+                  dict={dict}
+                />
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Season dropdown (only when expanded and multiple seasons) */}
-        {isExpanded && seasons.length > 1 && (
-          <div className="relative mt-2" data-season-dropdown>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDropdownOpen(!isDropdownOpen);
-              }}
-              className="text-xs text-cinema-text-secondary hover:text-cinema-text-primary transition-colors"
-            >
-              {dict.details.showStatus.changeSeason}
-            </button>
-
-            {isDropdownOpen && (
-              <SeasonSelector
-                seasons={seasons}
-                selectedSeason={selectedSeason}
-                onSeasonChange={onSeasonChange}
-                onClose={() => setIsDropdownOpen(false)}
-                dict={dict}
-              />
+        {/* Desktop: Progress ring + small button */}
+        {showProgress && progressTotal > 0 && (
+          <div className="hidden md:flex flex-col items-end gap-1 flex-shrink-0">
+            <SeasonProgressRing
+              watched={watchedCount}
+              total={progressTotal}
+              size="md"
+            />
+            {showMarkAllButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMarkAllWatched();
+                }}
+                disabled={isMarkingAll}
+                className="h-auto py-0.5 px-1.5 text-[11px] text-cinema-text-muted hover:text-cinema-text-primary"
+                data-mark-all-button
+              >
+                {isMarkingAll ? (
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                )}
+                {dict.details.showStatus.markAllWatched}
+              </Button>
             )}
           </div>
         )}
       </div>
 
-      {/* Progress and mark all button */}
+      {/* Mobile: Text progress + full-width button stacked */}
       {showProgress && progressTotal > 0 && (
-        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-          <SeasonProgressRing
-            watched={watchedCount}
-            total={progressTotal}
-            size="md"
-          />
-          {onMarkAllWatched && totalWatched < totalEpisodes && (
+        <div className="md:hidden mt-3 space-y-2">
+          <div className="text-sm text-cinema-text-muted">
+            {totalWatched}/{totalEpisodes} {dict.details.showStatus.watched}
+          </div>
+          {showMarkAllButton && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 onMarkAllWatched();
               }}
               disabled={isMarkingAll}
-              className="h-auto py-0.5 px-1.5 text-[11px] text-cinema-text-muted hover:text-cinema-text-primary"
+              className="w-full justify-center"
               data-mark-all-button
             >
               {isMarkingAll ? (
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <CheckCircle2 className="w-3 h-3 mr-1" />
+                <CheckCircle2 className="w-4 h-4 mr-2" />
               )}
               {dict.details.showStatus.markAllWatched}
             </Button>
