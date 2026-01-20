@@ -38,6 +38,8 @@ export interface MarkWatchedPopoverProps {
     thisEpisodeOnly: string;
     previousEpisodesToo: string;
   };
+  /** Whether to trigger animation (controlled from parent) */
+  shouldAnimate?: boolean;
 }
 
 export function MarkWatchedPopover({
@@ -51,6 +53,7 @@ export function MarkWatchedPopover({
   open,
   onOpenChange,
   labels,
+  shouldAnimate = false,
 }: MarkWatchedPopoverProps) {
   const handleMarkThis = () => {
     onOpenChange?.(false);
@@ -71,6 +74,7 @@ export function MarkWatchedPopover({
         isLoading={isLoading}
         disabled={disabled}
         highlightOnGroupHover
+        shouldAnimate={shouldAnimate}
       />
     );
   }
@@ -84,6 +88,7 @@ export function MarkWatchedPopover({
         isLoading={isLoading}
         disabled={disabled}
         highlightOnGroupHover
+        shouldAnimate={shouldAnimate}
       />
     );
   }
@@ -99,6 +104,7 @@ export function MarkWatchedPopover({
             isLoading={isLoading}
             disabled={disabled}
             highlightOnGroupHover
+            shouldAnimate={shouldAnimate}
           />
         </div>
       </DropdownMenuTrigger>

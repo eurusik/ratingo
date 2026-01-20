@@ -31,6 +31,8 @@ export interface EpisodeCardProps {
   isToggling?: boolean;
   /** Whether to show the checkbox (hidden when not authenticated) */
   showCheckbox?: boolean;
+  /** Whether to trigger animation (controlled from parent) */
+  shouldAnimate?: boolean;
 }
 
 /**
@@ -58,6 +60,7 @@ export function EpisodeCard({
   unwatchedPreviousCount = 0,
   isToggling = false,
   showCheckbox = false,
+  shouldAnimate = false,
 }: EpisodeCardProps) {
   const upcoming = isUpcoming(episode.airDate);
   const title = episode.title || dict.details.showStatus.noTitle.replace('{number}', String(episode.number));
@@ -106,6 +109,7 @@ export function EpisodeCard({
               thisEpisodeOnly: dict.details.showStatus.thisEpisodeOnly,
               previousEpisodesToo: dict.details.showStatus.previousEpisodesToo,
             }}
+            shouldAnimate={shouldAnimate}
           />
         ) : (
           <EpisodeCheckbox
@@ -115,6 +119,7 @@ export function EpisodeCard({
             isLoading={isToggling}
             title={isWatched ? dict.details.showStatus.markUnwatched : dict.details.showStatus.markWatched}
             highlightOnGroupHover={isClickable}
+            shouldAnimate={shouldAnimate}
           />
         )
       )}

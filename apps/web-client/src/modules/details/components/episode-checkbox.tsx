@@ -4,7 +4,7 @@
  * Circular checkbox for marking episodes as watched.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/shared/utils';
 
@@ -17,6 +17,8 @@ export interface EpisodeCheckboxProps {
   title?: string;
   /** Show ring highlight when parent group is hovered */
   highlightOnGroupHover?: boolean;
+  /** Trigger animation from parent (for bulk marking) */
+  shouldAnimate?: boolean;
 }
 
 export function EpisodeCheckbox({
@@ -27,17 +29,24 @@ export function EpisodeCheckbox({
   className,
   title,
   highlightOnGroupHover = false,
+  shouldAnimate = false,
 }: EpisodeCheckboxProps) {
   const [isAnimating, setIsAnimating] = useState(false);
-  const prevCheckedRef = useRef(checked);
+  const [animationKey, setAnimationKey] = useState(0);
 
-  // Trigger animation when checked changes from false to true (from any source)
+  // Trigger animation when shouldAnimate becomes true (parent-controlled for bulk marking)
   useEffect(() => {
-    if (checked && !prevCheckedRef.current) {
-      setIsAnimating(true);
+    if (shouldAnimate && checked) {
+      // Small random delay to stagger animations when multiple checkboxes are checked at once
+      const delay = Math.random() * 100;
+      const timeout = setTimeout(() => {
+        setIsAnimating(true);
+        // Increment key to force animation element remount (restarts CSS animation)
+        setAnimationKey((k) => k + 1);
+      }, delay);
+      return () => clearTimeout(timeout);
     }
-    prevCheckedRef.current = checked;
-  }, [checked]);
+  }, [shouldAnimate, checked]);
 
   // Clear animation after it completes
   useEffect(() => {
@@ -93,7 +102,10 @@ export function EpisodeCheckbox({
       )}
       {/* Burst animation on check */}
       {isAnimating && checked && (
-        <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span
+          key={animationKey}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
           <span className="absolute w-5 h-5 rounded-full border-2 border-green-500 animate-vote-burst" />
         </span>
       )}

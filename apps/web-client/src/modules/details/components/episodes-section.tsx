@@ -92,6 +92,9 @@ export function EpisodesSection({
   // Track which episode is being toggled
   const [togglingEpisodeId, setTogglingEpisodeId] = useState<string | null>(null);
 
+  // Track which episodes should animate (for bulk marking)
+  const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
+
   const handleToggleWatched = useCallback(
     (episodeId: string, seasonNumber: number) => {
       if (!isAuthenticated || toggleWatched.isPending || markMultipleWatched.isPending) return;
@@ -101,6 +104,11 @@ export function EpisodesSection({
       const prevWatched = totalProgress.watched;
 
       setTogglingEpisodeId(episodeId);
+
+      // Trigger animation for marking as watched
+      if (!isCurrentlyWatched) {
+        setAnimatingIds(new Set([episodeId]));
+      }
 
       toggleWatched.mutate(
         {
@@ -125,7 +133,11 @@ export function EpisodesSection({
               toast.info(dict.activity.toast.removedFromActivity);
             }
           },
-          onSettled: () => setTogglingEpisodeId(null),
+          onSettled: () => {
+            setTogglingEpisodeId(null);
+            // Clear animation after it completes
+            setTimeout(() => setAnimatingIds(new Set()), 350);
+          },
         },
       );
     },
@@ -153,6 +165,9 @@ export function EpisodesSection({
       const prevWatched = totalProgress.watched;
       setTogglingEpisodeId(episodesToMark[episodesToMark.length - 1]);
 
+      // Trigger animation for all episodes being marked
+      setAnimatingIds(new Set(episodesToMark));
+
       markMultipleWatched.mutate(
         {
           episodeIds: episodesToMark,
@@ -169,7 +184,11 @@ export function EpisodesSection({
               toast.success(dict.activity.toast.addedToWatching);
             }
           },
-          onSettled: () => setTogglingEpisodeId(null),
+          onSettled: () => {
+            setTogglingEpisodeId(null);
+            // Clear animation after it completes
+            setTimeout(() => setAnimatingIds(new Set()), 350);
+          },
         },
       );
     },
@@ -304,6 +323,7 @@ export function EpisodesSection({
                   unwatchedPreviousCount={getUnwatchedPreviousCount(index)}
                   isToggling={togglingEpisodeId === episode.id}
                   showCheckbox={isAuthenticated && !!showId && !!episode.id}
+                  shouldAnimate={episode.id ? animatingIds.has(episode.id) : false}
                 />
               ))}
             </div>
