@@ -141,36 +141,35 @@ export function SeasonHeader({
         )}
       </div>
 
-      {/* Progress ring */}
+      {/* Progress and mark all button */}
       {showProgress && progressTotal > 0 && (
-        <SeasonProgressRing
-          watched={watchedCount}
-          total={progressTotal}
-          size="md"
-          className="flex-shrink-0"
-        />
-      )}
-
-      {/* Mark all watched button */}
-      {showProgress && onMarkAllWatched && totalWatched < totalEpisodes && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onMarkAllWatched();
-          }}
-          disabled={isMarkingAll}
-          className="flex-shrink-0 text-xs text-cinema-text-secondary hover:text-cinema-text-primary"
-          data-mark-all-button
-        >
-          {isMarkingAll ? (
-            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-          ) : (
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          <SeasonProgressRing
+            watched={watchedCount}
+            total={progressTotal}
+            size="md"
+          />
+          {onMarkAllWatched && totalWatched < totalEpisodes && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkAllWatched();
+              }}
+              disabled={isMarkingAll}
+              className="h-auto py-0.5 px-1.5 text-[11px] text-cinema-text-muted hover:text-cinema-text-primary"
+              data-mark-all-button
+            >
+              {isMarkingAll ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+              )}
+              {dict.details.showStatus.markAllWatched}
+            </Button>
           )}
-          {dict.details.showStatus.markAllWatched}
-        </Button>
+        </div>
       )}
     </div>
   );
