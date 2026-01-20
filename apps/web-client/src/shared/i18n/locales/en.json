@@ -286,6 +286,12 @@
       "markUnwatched": "Mark as unwatched",
       "thisEpisodeOnly": "This episode only",
       "previousEpisodesToo": "Previous episodes too",
+      "markAllWatched": "Mark all watched",
+      "confirmMarkAll": "Mark all episodes as watched?",
+      "confirmMarkAllMessage": "Current progress will be overwritten.",
+      "markedAllWatched": "Show marked as watched",
+      "undo": "Undo",
+      "undone": "Progress restored",
       "plurals": {
         "season": {
           "one": "season",

@@ -60,6 +60,11 @@ interface MarkMultipleWatchedVariables {
   seasonNumber: number;
 }
 
+interface MarkAllEpisodesVariables {
+  /** All episode IDs grouped by season number */
+  episodesBySeasonNumber: Map<number, string[]>;
+}
+
 /**
  * Toggles episode watched status with optimistic updates.
  *
@@ -235,6 +240,130 @@ export function useMarkMultipleWatched(showId: string) {
         queryKey: queryKeys.userActions.savedItems.all,
       });
       // Invalidate legacy saved-items queries (used by saved module)
+      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+    },
+  });
+}
+
+/**
+ * Marks ALL episodes of a show as watched.
+ * Returns previous state for undo functionality.
+ */
+export function useMarkAllEpisodesWatched(showId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (variables: MarkAllEpisodesVariables) => {
+      const allEpisodeIds: string[] = [];
+      variables.episodesBySeasonNumber.forEach((ids) => {
+        allEpisodeIds.push(...ids);
+      });
+      await Promise.all(
+        allEpisodeIds.map((episodeId) => episodeProgressApi.markWatched(episodeId)),
+      );
+    },
+
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.episodeProgress.showProgress(showId),
+      });
+
+      const previousProgress = queryClient.getQueryData<ShowProgressDto>(
+        queryKeys.episodeProgress.showProgress(showId),
+      );
+
+      if (previousProgress) {
+        const updatedSeasons = previousProgress.seasons.map((season): SeasonProgressDto => {
+          const episodeIds = variables.episodesBySeasonNumber.get(season.seasonNumber);
+          if (!episodeIds) return season;
+
+          return {
+            ...season,
+            watchedCount: episodeIds.length,
+            watchedEpisodeIds: episodeIds,
+          };
+        });
+
+        queryClient.setQueryData<ShowProgressDto>(
+          queryKeys.episodeProgress.showProgress(showId),
+          { ...previousProgress, seasons: updatedSeasons },
+        );
+      }
+
+      return { previousProgress };
+    },
+
+    onError: (_error, _variables, context) => {
+      if (context?.previousProgress) {
+        queryClient.setQueryData(
+          queryKeys.episodeProgress.showProgress(showId),
+          context.previousProgress,
+        );
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.episodeProgress.showProgress(showId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userMedia.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.meLists.history,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.savedItems.all,
+      });
+      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+    },
+  });
+}
+
+/**
+ * Restores episode progress to a previous state (for undo).
+ */
+export function useRestoreEpisodeProgress(showId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (previousWatchedIds: Map<number, string[]>) => {
+      const currentProgress = queryClient.getQueryData<ShowProgressDto>(
+        queryKeys.episodeProgress.showProgress(showId),
+      );
+
+      if (!currentProgress) return;
+
+      // Find episodes to unmark (currently watched but weren't before)
+      const toUnmark: string[] = [];
+      currentProgress.seasons.forEach((season) => {
+        const prevIds = previousWatchedIds.get(season.seasonNumber) || [];
+        const prevSet = new Set(prevIds);
+        season.watchedEpisodeIds.forEach((id) => {
+          if (!prevSet.has(id)) {
+            toUnmark.push(id);
+          }
+        });
+      });
+
+      await Promise.all(
+        toUnmark.map((episodeId) => episodeProgressApi.markUnwatched(episodeId)),
+      );
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.episodeProgress.showProgress(showId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userMedia.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.meLists.history,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.savedItems.all,
+      });
       queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },
   });

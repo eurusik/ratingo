@@ -12,8 +12,24 @@ import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
 import { formatDate } from '@/shared/utils/format';
 import { cn } from '@/shared/utils';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/shared/ui';
 import { useAuth } from '@/core/auth';
-import { useShowProgress, useToggleEpisodeWatched, useMarkMultipleWatched } from '@/core/query';
+import {
+  useShowProgress,
+  useToggleEpisodeWatched,
+  useMarkMultipleWatched,
+  useMarkAllEpisodesWatched,
+  useRestoreEpisodeProgress,
+} from '@/core/query';
 import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import { EpisodeCard } from './episode-card';
 import { SeasonHeader } from './season-header';
@@ -96,6 +112,11 @@ export function EpisodesSection({
   });
   const toggleWatched = useToggleEpisodeWatched(showId || '');
   const markMultipleWatched = useMarkMultipleWatched(showId || '');
+  const markAllWatched = useMarkAllEpisodesWatched(showId || '');
+  const restoreProgress = useRestoreEpisodeProgress(showId || '');
+
+  // Confirmation dialog state
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Get watched episode IDs for current season
   const currentSeasonProgress = useMemo(() => {
@@ -125,6 +146,73 @@ export function EpisodesSection({
     () => selectedSeason?.episodes || [],
     [selectedSeason?.episodes],
   );
+
+  // Total episodes across all seasons (for mark all button visibility)
+  const totalEpisodesCount = useMemo(() => {
+    return validSeasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
+  }, [validSeasons]);
+
+  // Collect all episode IDs grouped by season number
+  const allEpisodesBySeasonNumber = useMemo(() => {
+    const map = new Map<number, string[]>();
+    validSeasons.forEach((season) => {
+      const ids = (season.episodes || []).map((ep) => ep.id).filter((id): id is string => !!id);
+      if (ids.length > 0) {
+        map.set(season.number, ids);
+      }
+    });
+    return map;
+  }, [validSeasons]);
+
+  // Store previous watched IDs for undo
+  const previousWatchedIdsRef = useRef<Map<number, string[]> | null>(null);
+
+  const handleMarkAllClick = useCallback(() => {
+    if (totalProgress.watched > 0) {
+      setShowConfirmDialog(true);
+    } else {
+      handleConfirmMarkAll();
+    }
+  }, [totalProgress.watched]);
+
+  const handleConfirmMarkAll = useCallback(() => {
+    setShowConfirmDialog(false);
+
+    // Save previous state for undo
+    if (progressData) {
+      const prevMap = new Map<number, string[]>();
+      progressData.seasons.forEach((s) => {
+        prevMap.set(s.seasonNumber, [...s.watchedEpisodeIds]);
+      });
+      previousWatchedIdsRef.current = prevMap;
+    }
+
+    markAllWatched.mutate(
+      { episodesBySeasonNumber: allEpisodesBySeasonNumber },
+      {
+        onSuccess: () => {
+          toast.success(dict.details.showStatus.markedAllWatched, {
+            action: {
+              label: dict.details.showStatus.undo,
+              onClick: handleUndo,
+            },
+            duration: 8000,
+          });
+        },
+      },
+    );
+  }, [progressData, allEpisodesBySeasonNumber, markAllWatched, dict]);
+
+  const handleUndo = useCallback(() => {
+    if (previousWatchedIdsRef.current) {
+      restoreProgress.mutate(previousWatchedIdsRef.current, {
+        onSuccess: () => {
+          toast.success(dict.details.showStatus.undone);
+          previousWatchedIdsRef.current = null;
+        },
+      });
+    }
+  }, [restoreProgress, dict]);
 
   // Track which episode is being toggled
   const [togglingEpisodeId, setTogglingEpisodeId] = useState<string | null>(null);
@@ -326,6 +414,10 @@ export function EpisodesSection({
           watchedCount={currentSeasonProgress?.watchedCount || 0}
           totalCount={currentSeasonProgress?.totalCount}
           showProgress={isAuthenticated && !!showId}
+          totalWatched={totalProgress.watched}
+          totalEpisodes={totalEpisodesCount}
+          onMarkAllWatched={handleMarkAllClick}
+          isMarkingAll={markAllWatched.isPending}
         />
 
         {/* Episodes list with smooth expand/collapse animation */}
@@ -367,6 +459,31 @@ export function EpisodesSection({
           </div>
         </div>
       </div>
+
+      {/* Confirmation dialog for mark all */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent className="bg-cinema-card border-cinema-borderSoft">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-cinema-text-primary">
+              {dict.details.showStatus.confirmMarkAll}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-cinema-text-muted">
+              {dict.details.showStatus.confirmMarkAllMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-cinema-elevated text-cinema-text-secondary hover:bg-cinema-border hover:text-cinema-text-primary">
+              {dict.common?.cancel || 'Скасувати'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmMarkAll}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {dict.details.showStatus.markAllWatched}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

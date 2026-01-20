@@ -1,4 +1,15 @@
 export { Alert, AlertTitle, AlertDescription } from './alert';
+export {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from './alert-dialog';
 export { Avatar, AvatarImage, AvatarFallback } from './avatar';
 export { Button, buttonVariants, type ButtonProps } from './button';
 export { Badge, badgeVariants, type BadgeProps } from './badge';

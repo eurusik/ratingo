@@ -6,10 +6,11 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ChevronDown, ChevronRight, Tv } from 'lucide-react';
+import { ChevronDown, ChevronRight, Tv, CheckCircle2, Loader2 } from 'lucide-react';
 import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
 import { cn, resolveMediaImageUrl, IMAGE_SIZES, pluralize } from '@/shared/utils';
+import { Button } from '@/shared/ui';
 import { SeasonSelector } from './season-selector';
 import { SeasonProgressRing } from './season-progress-ring';
 
@@ -28,6 +29,14 @@ export interface SeasonHeaderProps {
   totalCount?: number;
   /** Whether to show the progress ring */
   showProgress?: boolean;
+  /** Total watched across all seasons */
+  totalWatched?: number;
+  /** Total episodes across all seasons */
+  totalEpisodes?: number;
+  /** Handler for "mark all watched" */
+  onMarkAllWatched?: () => void;
+  /** Whether mark all mutation is pending */
+  isMarkingAll?: boolean;
 }
 
 export function SeasonHeader({
@@ -40,16 +49,21 @@ export function SeasonHeader({
   watchedCount = 0,
   totalCount,
   showProgress = false,
+  totalWatched = 0,
+  totalEpisodes = 0,
+  onMarkAllWatched,
+  isMarkingAll = false,
 }: SeasonHeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const episodeCount = selectedSeason.episodeCount || selectedSeason.episodes?.length || 0;
   const progressTotal = totalCount ?? episodeCount;
 
   const handleContainerClick = (e: React.MouseEvent) => {
-    // Only toggle if not clicking the change season button
-    if (!(e.target as HTMLElement).closest('[data-season-dropdown]')) {
-      onToggleExpand();
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-season-dropdown]') || target.closest('[data-mark-all-button]')) {
+      return;
     }
+    onToggleExpand();
   };
 
   return (
@@ -135,6 +149,28 @@ export function SeasonHeader({
           size="md"
           className="flex-shrink-0"
         />
+      )}
+
+      {/* Mark all watched button */}
+      {showProgress && onMarkAllWatched && totalWatched < totalEpisodes && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onMarkAllWatched();
+          }}
+          disabled={isMarkingAll}
+          className="flex-shrink-0 text-xs text-cinema-text-secondary hover:text-cinema-text-primary"
+          data-mark-all-button
+        >
+          {isMarkingAll ? (
+            <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+          ) : (
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+          )}
+          {dict.details.showStatus.markAllWatched}
+        </Button>
       )}
     </div>
   );

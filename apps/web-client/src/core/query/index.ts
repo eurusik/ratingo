@@ -50,4 +50,10 @@ export {
   useResolveReport,
   useForceDeleteReview,
 } from './admin-reports';
-export { useShowProgress, useToggleEpisodeWatched, useMarkMultipleWatched } from './episode-progress';
+export {
+  useShowProgress,
+  useToggleEpisodeWatched,
+  useMarkMultipleWatched,
+  useMarkAllEpisodesWatched,
+  useRestoreEpisodeProgress,
+} from './episode-progress';
