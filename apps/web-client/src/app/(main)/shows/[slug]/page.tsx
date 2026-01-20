@@ -217,8 +217,8 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
             seasons={show.seasons}
             nextEpisodeDate={show.nextEpisodeDate}
             showId={show.showId}
+            mediaItemId={show.id}
             dict={dict}
-            initialSeasonNumber={show.card?.continue?.season}
           />
 
           <Separator className="my-12 bg-cinema-elevated/50" />

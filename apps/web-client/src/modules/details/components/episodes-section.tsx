@@ -14,6 +14,7 @@ import { formatDate } from '@/shared/utils/format';
 import { cn } from '@/shared/utils';
 import { useAuth } from '@/core/auth';
 import { useShowProgress, useToggleEpisodeWatched, useMarkMultipleWatched } from '@/core/query';
+import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import { EpisodeCard } from './episode-card';
 import { SeasonHeader } from './season-header';
 
@@ -25,8 +26,8 @@ export interface EpisodesSectionProps {
   dict: ReturnType<typeof getDictionary>;
   /** Show ID (from shows table) for progress tracking */
   showId?: string;
-  /** Initial season number to select and expand to (used for "Continue" navigation) */
-  initialSeasonNumber?: number;
+  /** Media item ID for fetching user state (continuePoint) */
+  mediaItemId?: string;
 }
 
 export function EpisodesSection({
@@ -34,29 +35,38 @@ export function EpisodesSection({
   nextEpisodeDate,
   dict,
   showId,
-  initialSeasonNumber,
+  mediaItemId,
 }: EpisodesSectionProps) {
   const { isAuthenticated } = useAuth();
+
+  const { data: userMediaState } = useUserMediaState(mediaItemId || '', isAuthenticated && !!mediaItemId);
+  const continueSeasonNumber = userMediaState?.continuePoint?.season;
+
   // Filter out seasons with no episodes and season 0 (specials)
   const validSeasons = useMemo(
     () => seasons.filter((s) => s.number > 0 && (s.episodes?.length || 0) > 0),
     [seasons],
   );
 
-  // Default to first valid season or last season with episodes
+  // Default to last season, will be updated when continuePoint loads
   const [selectedSeason, setSelectedSeason] = useState<SeasonDto | null>(() => {
     if (validSeasons.length === 0) return null;
-    // If initialSeasonNumber provided, try to find that season
-    if (initialSeasonNumber) {
-      const targetSeason = validSeasons.find((s) => s.number === initialSeasonNumber);
-      if (targetSeason) return targetSeason;
-    }
-    // Start with the latest season
     return validSeasons[validSeasons.length - 1];
   });
 
-  // Expanded if initialSeasonNumber provided (for "Continue" navigation)
-  const [isExpanded, setIsExpanded] = useState(!!initialSeasonNumber);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [hasAppliedContinue, setHasAppliedContinue] = useState(false);
+
+  // Update selected season when continuePoint loads
+  useEffect(() => {
+    if (continueSeasonNumber && !hasAppliedContinue && validSeasons.length > 0) {
+      const targetSeason = validSeasons.find((s) => s.number === continueSeasonNumber);
+      if (targetSeason) {
+        setSelectedSeason(targetSeason);
+        setHasAppliedContinue(true);
+      }
+    }
+  }, [continueSeasonNumber, hasAppliedContinue, validSeasons]);
 
   // Ref for scrollable container
   const listRef = useRef<HTMLDivElement>(null);
