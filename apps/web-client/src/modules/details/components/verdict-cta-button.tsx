@@ -252,21 +252,13 @@ export function VerdictCtaButton({
                 </span>
               </div>
             )}
-          {/* Disabled subscription button when unavailable (e.g., Planned/Pilot without date) */}
+          {/* Disabled subscription info when unavailable (e.g., Planned/Pilot without date) */}
           {isSaved &&
             primaryCta === PRIMARY_CTA.SAVE &&
             !subscriptionLabel &&
             subscriptionUnavailableReason && (
-              <button
-                type="button"
-                disabled
+              <div
                 title={dict.saved.unavailable[subscriptionUnavailableReason]}
-                onClick={() => {
-                  // TODO: Track subscription_unavailable_click when analytics is implemented
-                  console.debug('[Analytics] subscription_unavailable_click', {
-                    reason: subscriptionUnavailableReason,
-                  });
-                }}
                 className="flex items-center gap-1.5 mt-1.5 text-cinema-text-disabled cursor-not-allowed opacity-60"
               >
                 <BellOff className="w-3 h-3" />
@@ -275,7 +267,7 @@ export function VerdictCtaButton({
                     ? `✓ ${dict.saved.unavailable.already_available}`
                     : dict.saved.actions.subscribe}
                 </span>
-              </button>
+              </div>
             )}
         </div>
         <div
