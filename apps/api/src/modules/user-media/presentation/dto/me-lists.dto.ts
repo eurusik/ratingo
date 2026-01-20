@@ -24,6 +24,17 @@ export class ProgressSummaryDto {
   total!: number;
 }
 
+/**
+ * Continue point for shows (next episode to watch).
+ */
+export class ContinuePointDto {
+  @ApiProperty({ description: 'Season number to continue from', example: 2 })
+  season!: number;
+
+  @ApiProperty({ description: 'Episode number to continue from', example: 5 })
+  episode!: number;
+}
+
 export const ME_USER_MEDIA_LIST_SORT_VALUES = Object.values(USER_MEDIA_LIST_SORT);
 
 /**
@@ -82,6 +93,13 @@ export class MeUserMediaListItemDto extends UserMediaStateDto {
     description: 'Episode progress summary (only for shows)',
   })
   progressSummary?: ProgressSummaryDto | null;
+
+  @ApiPropertyOptional({
+    type: ContinuePointDto,
+    nullable: true,
+    description: 'Next episode to continue watching (only for shows with progress)',
+  })
+  continuePoint?: ContinuePointDto | null;
 }
 
 /**

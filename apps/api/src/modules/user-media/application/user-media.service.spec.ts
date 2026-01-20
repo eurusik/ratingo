@@ -90,6 +90,51 @@ describe('UserMediaService', () => {
     expect(repo.upsert).not.toHaveBeenCalled();
   });
 
+  it('setState should auto-upgrade paused state to watching when progress is provided', async () => {
+    repo.upsert.mockResolvedValue({ id: 's1', state: 'watching' } as any);
+
+    await service.setState({
+      userId: 'u1',
+      mediaItemId: 'm1',
+      state: 'paused',
+      rating: null,
+      progress: { seasons: { 1: 5 } },
+      notes: null,
+    });
+
+    // Same behavior as planned - progress implies watching
+    expect(repo.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: 'watching',
+        progress: { seasons: { 1: 5 } },
+      }),
+    );
+  });
+
+  it('setState should allow paused state without progress', async () => {
+    repo.upsert.mockResolvedValue({ id: 's1', state: 'paused' } as any);
+
+    await service.setState({
+      userId: 'u1',
+      mediaItemId: 'm1',
+      state: 'paused',
+      rating: null,
+      progress: null,
+      notes: null,
+    });
+
+    expect(repo.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: 'paused',
+        progress: null,
+      }),
+    );
+  });
+
   it('getStateWithMedia should delegate to repo.findOneWithMedia', async () => {
     repo.findOneWithMedia.mockResolvedValue({ id: 's1', mediaSummary: { poster: null } } as any);
 
@@ -115,5 +160,72 @@ describe('UserMediaService', () => {
 
     expect(repo.findManyByMediaIds).toHaveBeenCalledWith('u1', ['m1']);
     expect(result).toEqual([{ id: 's1', mediaItemId: 'm1' }]);
+  });
+
+  describe('pauseMedia', () => {
+    it('should pause a watching media item', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: 'watching' } as any);
+      repo.upsert.mockResolvedValue({ id: 's1', state: 'paused' } as any);
+
+      const result = await service.pauseMedia('u1', 'm1');
+
+      expect(repo.upsert).toHaveBeenCalledWith({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: 'paused',
+      });
+      expect(result.state).toBe('paused');
+    });
+
+    it('should throw BadRequestException when no state exists', async () => {
+      repo.findOne.mockResolvedValue(null);
+
+      await expect(service.pauseMedia('u1', 'm1')).rejects.toBeInstanceOf(BadRequestException);
+      expect(repo.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when item is not watching', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: 'completed' } as any);
+
+      await expect(service.pauseMedia('u1', 'm1')).rejects.toBeInstanceOf(BadRequestException);
+      expect(repo.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when item is already paused', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: 'paused' } as any);
+
+      await expect(service.pauseMedia('u1', 'm1')).rejects.toBeInstanceOf(BadRequestException);
+      expect(repo.upsert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resumeMedia', () => {
+    it('should resume a paused media item', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: 'paused' } as any);
+      repo.upsert.mockResolvedValue({ id: 's1', state: 'watching' } as any);
+
+      const result = await service.resumeMedia('u1', 'm1');
+
+      expect(repo.upsert).toHaveBeenCalledWith({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: 'watching',
+      });
+      expect(result.state).toBe('watching');
+    });
+
+    it('should throw BadRequestException when no state exists', async () => {
+      repo.findOne.mockResolvedValue(null);
+
+      await expect(service.resumeMedia('u1', 'm1')).rejects.toBeInstanceOf(BadRequestException);
+      expect(repo.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when item is not paused', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: 'watching' } as any);
+
+      await expect(service.resumeMedia('u1', 'm1')).rejects.toBeInstanceOf(BadRequestException);
+      expect(repo.upsert).not.toHaveBeenCalled();
+    });
   });
 });

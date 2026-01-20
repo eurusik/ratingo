@@ -14,8 +14,11 @@ export class UserMediaStateDto implements UserMediaState {
   @ApiProperty({ example: 'c1f2c3d4-e5f6-7890-abcd-1234567890ab' })
   mediaItemId!: string;
 
-  @ApiProperty({ example: 'watching', enum: ['watching', 'completed', 'planned', 'dropped'] })
-  state!: 'watching' | 'completed' | 'planned' | 'dropped';
+  @ApiProperty({
+    example: 'watching',
+    enum: ['watching', 'completed', 'planned', 'dropped', 'paused'],
+  })
+  state!: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused';
 
   @ApiProperty({ example: 85, nullable: true, description: '0-100 rating' })
   rating!: number | null;

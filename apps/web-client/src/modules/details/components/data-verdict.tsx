@@ -20,6 +20,7 @@ import {
   useSubscribe,
   useUnsubscribe,
 } from '@/core/query';
+import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import {
   getSubscriptionTrigger,
   type ShowStatus,
@@ -74,6 +75,8 @@ export function DataVerdict({
     enabled: isAuthenticated && !!mediaItemId,
   });
 
+  const { data: userMediaState, isFetched: isUserMediaFetched } = useUserMediaState(mediaItemId, isAuthenticated && !!mediaItemId);
+
   const { data: subscriptionStatus } = useSubscriptionStatus(mediaItemId, {
     enabled: isAuthenticated && !!mediaItemId,
   });
@@ -85,7 +88,22 @@ export function DataVerdict({
 
   const isSaved = saveStatus?.isForLater ?? false;
   const isMutating = isSaving || isUnsaving;
-  const isCtaLoading = !isHydrated || isAuthLoading || (isAuthenticated && !isFetched);
+  const isCtaLoading = !isHydrated || isAuthLoading || (isAuthenticated && (!isFetched || !isUserMediaFetched));
+
+  const effectiveContinuePoint = userMediaState?.continuePoint ?? ctaProps?.continuePoint ?? null;
+
+  const computedPrimaryCta = (() => {
+    const baseCta = ctaProps?.primaryCta ?? PRIMARY_CTA.SAVE;
+
+    if (userMediaState) {
+      if (effectiveContinuePoint) {
+        return PRIMARY_CTA.CONTINUE;
+      }
+      return PRIMARY_CTA.OPEN;
+    }
+
+    return baseCta;
+  })();
 
   const { trigger: subscriptionTrigger, unavailableReason } = getSubscriptionTrigger({
     mediaType,
@@ -128,15 +146,12 @@ export function DataVerdict({
   const handleCtaAction = () => {
     if (!ctaProps || isMutating) return;
 
-    const primaryCta = ctaProps.primaryCta ?? PRIMARY_CTA.SAVE;
-
-    // Show login modal for guests
-    if (!isAuthenticated && primaryCta === PRIMARY_CTA.SAVE) {
+    if (!isAuthenticated && computedPrimaryCta === PRIMARY_CTA.SAVE) {
       openLogin();
       return;
     }
 
-    switch (primaryCta) {
+    switch (computedPrimaryCta) {
       case PRIMARY_CTA.SAVE:
         if (isSaved) {
           unsaveItem(
@@ -162,10 +177,13 @@ export function DataVerdict({
         }
         break;
       case PRIMARY_CTA.CONTINUE:
-        // TODO: Navigate to continue point
-        break;
       case PRIMARY_CTA.OPEN:
-        // TODO: Navigate to details/episodes
+        document.getElementById('episodes')?.scrollIntoView({ behavior: 'smooth' });
+        window.dispatchEvent(
+          new CustomEvent('expandEpisodes', {
+            detail: { season: effectiveContinuePoint?.season },
+          }),
+        );
         break;
     }
   };
@@ -177,11 +195,12 @@ export function DataVerdict({
         ctaProps
           ? {
               ...ctaProps,
+              primaryCta: computedPrimaryCta,
+              continuePoint: effectiveContinuePoint,
               isSaved,
               isLoading: isCtaLoading,
               isGuest: !isAuthenticated,
               onSave: handleCtaAction,
-              // Subscription props
               subscriptionTrigger,
               subscriptionUnavailableReason: unavailableReason,
               isSubscribed,

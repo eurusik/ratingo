@@ -25,6 +25,8 @@ export interface EpisodesSectionProps {
   dict: ReturnType<typeof getDictionary>;
   /** Show ID (from shows table) for progress tracking */
   showId?: string;
+  /** Initial season number to select and expand to (used for "Continue" navigation) */
+  initialSeasonNumber?: number;
 }
 
 export function EpisodesSection({
@@ -32,6 +34,7 @@ export function EpisodesSection({
   nextEpisodeDate,
   dict,
   showId,
+  initialSeasonNumber,
 }: EpisodesSectionProps) {
   const { isAuthenticated } = useAuth();
   // Filter out seasons with no episodes and season 0 (specials)
@@ -43,15 +46,39 @@ export function EpisodesSection({
   // Default to first valid season or last season with episodes
   const [selectedSeason, setSelectedSeason] = useState<SeasonDto | null>(() => {
     if (validSeasons.length === 0) return null;
+    // If initialSeasonNumber provided, try to find that season
+    if (initialSeasonNumber) {
+      const targetSeason = validSeasons.find((s) => s.number === initialSeasonNumber);
+      if (targetSeason) return targetSeason;
+    }
     // Start with the latest season
     return validSeasons[validSeasons.length - 1];
   });
 
-  // Collapsed by default (like Apple TV+)
-  const [isExpanded, setIsExpanded] = useState(false);
+  // Expanded if initialSeasonNumber provided (for "Continue" navigation)
+  const [isExpanded, setIsExpanded] = useState(!!initialSeasonNumber);
 
   // Ref for scrollable container
   const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleExpandEpisodes = (e: Event) => {
+      const customEvent = e as CustomEvent<{ season?: number }>;
+      const targetSeason = customEvent.detail?.season;
+
+      setIsExpanded(true);
+
+      if (targetSeason) {
+        const season = validSeasons.find((s) => s.number === targetSeason);
+        if (season) {
+          setSelectedSeason(season);
+        }
+      }
+    };
+
+    window.addEventListener('expandEpisodes', handleExpandEpisodes);
+    return () => window.removeEventListener('expandEpisodes', handleExpandEpisodes);
+  }, [validSeasons]);
 
   // Episode progress tracking
   const { data: progressData } = useShowProgress(showId, {
@@ -259,7 +286,7 @@ export function EpisodesSection({
   }, [isExpanded, lastAiredIndex, selectedSeason]);
 
   return (
-    <section className="space-y-4">
+    <section id="episodes" className="space-y-4 scroll-mt-24">
       <h2 className="text-sm font-semibold text-cinema-text-muted uppercase tracking-wider">
         {dict.details.showStatus.sectionTitle}
       </h2>

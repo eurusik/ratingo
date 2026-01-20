@@ -193,6 +193,32 @@ describe('cards selectors', () => {
       expect(badge).toBeNull();
     });
 
+    it('does NOT return NEW_EPISODE for paused user even with hasNewEpisode', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: true,
+          userState: USER_MEDIA_STATE.PAUSED,
+          hasNewEpisode: true,
+        },
+        CARD_LIST_CONTEXT.DEFAULT,
+      );
+      // Paused users should not get NEW_EPISODE badge - only watching users should
+      expect(badge?.key).not.toBe(BADGE_KEY.NEW_EPISODE);
+    });
+
+    it('returns CONTINUE for paused user with continuePoint', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: true,
+          userState: USER_MEDIA_STATE.PAUSED,
+          continuePoint: { season: 2, episode: 5 },
+        },
+        CARD_LIST_CONTEXT.DEFAULT,
+      );
+      // Paused users can still have CONTINUE badge if they have a continue point
+      expect(badge?.key).toBe(BADGE_KEY.CONTINUE);
+    });
+
     it('returns HIT when isHit is true and no higher priority badges', () => {
       const badge = selectBadge(
         {

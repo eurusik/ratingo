@@ -85,6 +85,13 @@
       "when": 1768842848030,
       "tag": "0011_sticky_energizer",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1768918133989,
+      "tag": "0012_add-paused-state",
+      "breakpoints": true
     }
   ]
 }

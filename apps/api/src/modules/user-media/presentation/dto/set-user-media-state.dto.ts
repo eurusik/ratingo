@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { IsIn, IsInt, IsObject, IsOptional, IsString, Max, Min, ValidateIf } from 'class-validator';
 
-const STATES = ['watching', 'completed', 'planned', 'dropped'] as const;
+const STATES = ['watching', 'completed', 'planned', 'dropped', 'paused'] as const;
 type State = (typeof STATES)[number];
 
 /**

@@ -5,7 +5,7 @@
  */
 
 import type { components } from '@ratingo/api-contract';
-import { apiGet } from './client';
+import { apiGet, apiPost } from './client';
 
 // ============================================================================
 // Types from api-contract
@@ -24,6 +24,7 @@ export const USER_MEDIA_STATE = {
   COMPLETED: 'completed',
   PLANNED: 'planned',
   DROPPED: 'dropped',
+  PAUSED: 'paused',
 } as const satisfies Record<string, UserMediaState>;
 
 export interface MeListsParams {
@@ -59,5 +60,51 @@ export const meListsApi = {
     return apiGet<PaginatedMeUserMediaResponseDto>('me/history', {
       searchParams: params as Record<string, string | number>,
     });
+  },
+
+  /**
+   * Get user's paused items.
+   *
+   * @param params - Pagination and sorting parameters
+   * @returns Paginated paused items
+   */
+  async getPaused(params?: MeListsParams): Promise<PaginatedMeUserMediaResponseDto> {
+    return apiGet<PaginatedMeUserMediaResponseDto>('me/paused', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Pause a media item.
+   *
+   * @param mediaItemId - Media item ID to pause
+   * @returns Updated user media state
+   */
+  async pauseMedia(mediaItemId: string): Promise<MeUserMediaListItemDto> {
+    return apiPost<MeUserMediaListItemDto>(`user-media/${mediaItemId}/pause`);
+  },
+
+  /**
+   * Resume a paused media item.
+   *
+   * @param mediaItemId - Media item ID to resume
+   * @returns Updated user media state
+   */
+  async resumeMedia(mediaItemId: string): Promise<MeUserMediaListItemDto> {
+    return apiPost<MeUserMediaListItemDto>(`user-media/${mediaItemId}/resume`);
+  },
+
+  /**
+   * Get user's state for a specific media item.
+   *
+   * @param mediaItemId - Media item ID
+   * @returns User media state or null if not found
+   */
+  async getState(mediaItemId: string): Promise<MeUserMediaListItemDto | null> {
+    try {
+      return await apiGet<MeUserMediaListItemDto>(`user-media/${mediaItemId}`);
+    } catch {
+      return null;
+    }
   },
 } as const;

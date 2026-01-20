@@ -201,4 +201,36 @@ export class MeListsController {
       },
     };
   }
+
+  /**
+   * Gets current user's paused items.
+   *
+   * @param {{ id: string }} user - Current user context
+   * @param {MeUserMediaListQueryDto} query - Pagination and sorting query
+   * @returns {Promise<PaginatedMeUserMediaResponseDto>} Paginated paused items list
+   */
+  @Get('paused')
+  @ApiOperation({ summary: 'My paused items (auth: Bearer)' })
+  @ApiOkResponse({ type: PaginatedMeUserMediaResponseDto })
+  async paused(
+    @CurrentUser() user: { id: string },
+    @Query() query: MeUserMediaListQueryDto,
+  ): Promise<PaginatedMeUserMediaResponseDto> {
+    const limit = query.limit ?? DEFAULT_PAGE_SIZE;
+    const offset = query.offset ?? 0;
+    const { total, data } = await this.meListsService.getPaused(user.id, limit, offset, query.sort);
+
+    const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));
+
+    return {
+      data: items,
+      meta: {
+        count: items.length,
+        total,
+        limit,
+        offset,
+        hasMore: offset + items.length < total,
+      },
+    };
+  }
 }

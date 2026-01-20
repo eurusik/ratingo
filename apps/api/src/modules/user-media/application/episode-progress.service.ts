@@ -58,7 +58,7 @@ export class EpisodeProgressService {
 
     const currentState = await this.userMediaService.getState(userId, episodeInfo.mediaItemId);
 
-    // All episodes watched → auto-complete
+    // All episodes watched → auto-complete (even if paused)
     if (totalEpisodes > 0 && watchedEpisodes === totalEpisodes) {
       if (currentState?.state !== USER_MEDIA_STATE.COMPLETED) {
         await this.userMediaService.setState({
@@ -71,6 +71,15 @@ export class EpisodeProgressService {
           `Auto-set user_media_state to 'completed' for user=${userId}, media=${episodeInfo.mediaItemId} (${watchedEpisodes}/${totalEpisodes} episodes)`,
         );
       }
+      return;
+    }
+
+    // If state is 'paused', do NOT auto-change to 'watching'
+    // User must explicitly resume
+    if (currentState?.state === USER_MEDIA_STATE.PAUSED) {
+      this.logger.log(
+        `Keeping user_media_state as 'paused' for user=${userId}, media=${episodeInfo.mediaItemId}`,
+      );
       return;
     }
 

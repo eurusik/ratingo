@@ -5,6 +5,7 @@ import { USER_MEDIA_LIST_SORT } from '../domain/repositories/user-media-state.re
 import {
   USER_MEDIA_HISTORY_STATES,
   USER_MEDIA_WATCHLIST_STATES,
+  USER_MEDIA_STATE,
 } from '../domain/entities/user-media-state.entity';
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { CardMeta } from '../../shared/cards/domain/card.types';
@@ -316,6 +317,27 @@ describe('MeListsService', () => {
 
       expect(result).toEqual({ total: 0, data: [] });
     });
+
+    it('should include paused items in history (paused is part of history states)', async () => {
+      const userId = 'user-1';
+      const limit = 10;
+      const offset = 0;
+
+      userMediaService.countWithMedia.mockResolvedValue(0);
+      userMediaService.listWithMedia.mockResolvedValue([]);
+
+      await service.getHistory(userId, limit, offset);
+
+      // Verify that the states filter includes paused
+      expect(userMediaService.listWithMedia).toHaveBeenCalledWith(
+        userId,
+        limit,
+        offset,
+        expect.objectContaining({
+          states: expect.arrayContaining([USER_MEDIA_STATE.PAUSED]),
+        }),
+      );
+    });
   });
 
   describe('getActivity', () => {
@@ -408,6 +430,82 @@ describe('MeListsService', () => {
       expect(result).toEqual({ total: mockTotal, data: mockData });
       expect(userMediaService.countActivityWithMedia).toHaveBeenCalledWith(userId);
       expect(userMediaService.listActivityWithMedia).toHaveBeenCalledWith(userId, limit, offset);
+    });
+  });
+
+  describe('getPaused', () => {
+    it('should get paused items with total count', async () => {
+      const userId = 'user-1';
+      const limit = 10;
+      const offset = 0;
+      const sort = USER_MEDIA_LIST_SORT.RECENT;
+
+      const mockTotal = 5;
+      const mockData = [
+        {
+          id: '1',
+          userId: 'user-1',
+          mediaItemId: 'media-1',
+          state: USER_MEDIA_STATE.PAUSED,
+          rating: null,
+          progress: { seasons: { 1: 5 } },
+          notes: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          mediaSummary: {
+            id: 'media-1',
+            type: MediaType.SHOW,
+            title: 'Paused Show',
+            slug: 'paused-show',
+            poster: null,
+            releaseDate: new Date(),
+            card: mockCard,
+          },
+        },
+      ];
+
+      userMediaService.countWithMedia.mockResolvedValue(mockTotal);
+      userMediaService.listWithMedia.mockResolvedValue(mockData);
+
+      const result = await service.getPaused(userId, limit, offset, sort);
+
+      expect(result).toEqual({ total: mockTotal, data: mockData });
+      expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, {
+        states: [USER_MEDIA_STATE.PAUSED],
+      });
+      expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
+        states: [USER_MEDIA_STATE.PAUSED],
+        sort,
+      });
+    });
+
+    it('should use default sort when not provided', async () => {
+      const userId = 'user-1';
+      const limit = 10;
+      const offset = 0;
+
+      userMediaService.countWithMedia.mockResolvedValue(0);
+      userMediaService.listWithMedia.mockResolvedValue([]);
+
+      await service.getPaused(userId, limit, offset);
+
+      expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
+        states: [USER_MEDIA_STATE.PAUSED],
+        sort: USER_MEDIA_LIST_SORT.RECENT,
+      });
+    });
+
+    it('should handle empty paused list', async () => {
+      const userId = 'user-1';
+      const limit = 10;
+      const offset = 0;
+
+      userMediaService.countWithMedia.mockResolvedValue(0);
+      userMediaService.listWithMedia.mockResolvedValue([]);
+
+      const result = await service.getPaused(userId, limit, offset);
+
+      expect(result).toEqual({ total: 0, data: [] });
     });
   });
 });

@@ -1517,6 +1517,122 @@
         ]
       }
     },
+    "/api/user-media/{mediaItemId}/pause": {
+      "post": {
+        "operationId": "UserMediaController_pauseMedia",
+        "summary": "Pause a media item (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media item paused",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserMediaStateDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot pause: item is not currently being watched"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "User Media"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/user-media/{mediaItemId}/resume": {
+      "post": {
+        "operationId": "UserMediaController_resumeMedia",
+        "summary": "Resume a paused media item (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Media item resumed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserMediaStateDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot resume: item is not paused"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "User Media"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/me/ratings": {
       "get": {
         "operationId": "MeListsController_ratings",
@@ -1746,6 +1862,81 @@
       "get": {
         "operationId": "MeListsController_activity",
         "summary": "My activity (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "enum": [
+                "recent",
+                "rating",
+                "releaseDate"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/paused": {
+      "get": {
+        "operationId": "MeListsController_paused",
+        "summary": "My paused items (auth: Bearer)",
         "parameters": [
           {
             "name": "limit",
@@ -2685,6 +2876,787 @@
         },
         "tags": [
           "Public: Users"
+        ]
+      }
+    },
+    "/api/me/notifications": {
+      "get": {
+        "operationId": "NotificationsController_list",
+        "summary": "List notifications (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationListResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/notifications/unread-count": {
+      "get": {
+        "operationId": "NotificationsController_getUnreadCount",
+        "summary": "Get unread notification count (auth: Bearer)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UnreadCountResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/notifications/{notificationId}/read": {
+      "post": {
+        "operationId": "NotificationsController_markAsRead",
+        "summary": "Mark notification as read (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "notificationId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MarkReadResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/notifications/read-all": {
+      "post": {
+        "operationId": "NotificationsController_markAllAsRead",
+        "summary": "Mark all notifications as read (auth: Bearer)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MarkReadResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Notifications"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-items/{mediaItemId}": {
+      "post": {
+        "operationId": "SavedItemsController_saveItem",
+        "summary": "Save media item to a list (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item saved with current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SaveActionResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "SavedItemsController_unsaveItem",
+        "summary": "Remove media item from a list (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnsaveItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Item removed with current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UnsaveActionResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-items/status/batch": {
+      "get": {
+        "operationId": "SavedItemsController_getBatchStatus",
+        "summary": "Get save status for multiple media items (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "ids",
+            "required": true,
+            "in": "query",
+            "description": "Comma-separated list of media item UUIDs (max 100)",
+            "schema": {
+              "example": "id1,id2,id3",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BatchStatusResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-items/{mediaItemId}/status": {
+      "get": {
+        "operationId": "SavedItemsController_getStatus",
+        "summary": "Get save status for media item (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MediaSaveStatusDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-items/for-later": {
+      "get": {
+        "operationId": "SavedItemsController_listForLater",
+        "summary": "List \"for later\" saved items (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/saved-items/considering": {
+      "get": {
+        "operationId": "SavedItemsController_listConsidering",
+        "summary": "List \"considering\" saved items (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Saved Items"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/subscriptions/{mediaItemId}": {
+      "post": {
+        "operationId": "SubscriptionsController_subscribe",
+        "summary": "Subscribe to notifications for media item (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscribeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscribed with current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SubscribeActionResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "SubscriptionsController_unsubscribe",
+        "summary": "Unsubscribe from notifications for media item (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnsubscribeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unsubscribed with current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UnsubscribeActionResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/subscriptions/{mediaItemId}/status": {
+      "get": {
+        "operationId": "SubscriptionsController_getStatus",
+        "summary": "Get subscription status for media item (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "mediaItemId",
+            "required": true,
+            "in": "path",
+            "description": "Media item UUID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/subscriptions": {
+      "get": {
+        "operationId": "SubscriptionsController_listActive",
+        "summary": "List active subscriptions (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SubscriptionWithMediaResponseDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Subscriptions"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       }
     },
@@ -4315,787 +5287,6 @@
         },
         "tags": [
           "Public: Stats"
-        ]
-      }
-    },
-    "/api/me/notifications": {
-      "get": {
-        "operationId": "NotificationsController_list",
-        "summary": "List notifications (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/NotificationListResponseDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Notifications"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/notifications/unread-count": {
-      "get": {
-        "operationId": "NotificationsController_getUnreadCount",
-        "summary": "Get unread notification count (auth: Bearer)",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/UnreadCountResponseDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Notifications"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/notifications/{notificationId}/read": {
-      "post": {
-        "operationId": "NotificationsController_markAsRead",
-        "summary": "Mark notification as read (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "notificationId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/MarkReadResponseDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Notifications"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/notifications/read-all": {
-      "post": {
-        "operationId": "NotificationsController_markAllAsRead",
-        "summary": "Mark all notifications as read (auth: Bearer)",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/MarkReadResponseDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Notifications"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/saved-items/{mediaItemId}": {
-      "post": {
-        "operationId": "SavedItemsController_saveItem",
-        "summary": "Save media item to a list (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "mediaItemId",
-            "required": true,
-            "in": "path",
-            "description": "Media item UUID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SaveItemDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Item saved with current status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/SaveActionResultDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Saved Items"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "SavedItemsController_unsaveItem",
-        "summary": "Remove media item from a list (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "mediaItemId",
-            "required": true,
-            "in": "path",
-            "description": "Media item UUID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UnsaveItemDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Item removed with current status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/UnsaveActionResultDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Saved Items"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/saved-items/status/batch": {
-      "get": {
-        "operationId": "SavedItemsController_getBatchStatus",
-        "summary": "Get save status for multiple media items (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "ids",
-            "required": true,
-            "in": "query",
-            "description": "Comma-separated list of media item UUIDs (max 100)",
-            "schema": {
-              "example": "id1,id2,id3",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/BatchStatusResponseDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Saved Items"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/saved-items/{mediaItemId}/status": {
-      "get": {
-        "operationId": "SavedItemsController_getStatus",
-        "summary": "Get save status for media item (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "mediaItemId",
-            "required": true,
-            "in": "path",
-            "description": "Media item UUID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/MediaSaveStatusDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Saved Items"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/saved-items/for-later": {
-      "get": {
-        "operationId": "SavedItemsController_listForLater",
-        "summary": "List \"for later\" saved items (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Saved Items"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/saved-items/considering": {
-      "get": {
-        "operationId": "SavedItemsController_listConsidering",
-        "summary": "List \"considering\" saved items (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/SavedItemWithMediaResponseDto"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Saved Items"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/subscriptions/{mediaItemId}": {
-      "post": {
-        "operationId": "SubscriptionsController_subscribe",
-        "summary": "Subscribe to notifications for media item (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "mediaItemId",
-            "required": true,
-            "in": "path",
-            "description": "Media item UUID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SubscribeDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Subscribed with current status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/SubscribeActionResultDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Subscriptions"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "SubscriptionsController_unsubscribe",
-        "summary": "Unsubscribe from notifications for media item (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "mediaItemId",
-            "required": true,
-            "in": "path",
-            "description": "Media item UUID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UnsubscribeDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Unsubscribed with current status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/UnsubscribeActionResultDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Subscriptions"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/subscriptions/{mediaItemId}/status": {
-      "get": {
-        "operationId": "SubscriptionsController_getStatus",
-        "summary": "Get subscription status for media item (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "mediaItemId",
-            "required": true,
-            "in": "path",
-            "description": "Media item UUID",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Subscriptions"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/me/subscriptions": {
-      "get": {
-        "operationId": "SubscriptionsController_listActive",
-        "summary": "List active subscriptions (auth: Bearer)",
-        "parameters": [
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "success",
-                    "data"
-                  ],
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "enum": [
-                        true
-                      ]
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/SubscriptionWithMediaResponseDto"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Subscriptions"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
         ]
       }
     },
@@ -7127,7 +7318,8 @@
               "watching",
               "completed",
               "planned",
-              "dropped"
+              "dropped",
+              "paused"
             ]
           },
           "rating": {
@@ -8618,7 +8810,8 @@
               "watching",
               "completed",
               "planned",
-              "dropped"
+              "dropped",
+              "paused"
             ],
             "example": "watching"
           },
@@ -8737,7 +8930,8 @@
               "watching",
               "completed",
               "planned",
-              "dropped"
+              "dropped",
+              "paused"
             ]
           },
           "rating": {
@@ -8798,6 +8992,15 @@
             "allOf": [
               {
                 "$ref": "#/components/schemas/ProgressSummaryDto"
+              }
+            ]
+          },
+          "continuePoint": {
+            "nullable": true,
+            "description": "Next episode to continue watching (only for shows with progress)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ContinuePointDto"
               }
             ]
           }
@@ -9246,7 +9449,8 @@
               "watching",
               "completed",
               "planned",
-              "dropped"
+              "dropped",
+              "paused"
             ]
           },
           "rating": {
@@ -9300,6 +9504,616 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "NotificationPayloadDto": {
+        "type": "object",
+        "properties": {
+          "seasonNumber": {
+            "type": "number",
+            "example": 3
+          },
+          "episodeKey": {
+            "type": "string",
+            "example": "S3E1"
+          },
+          "airDate": {
+            "type": "string",
+            "example": "2025-01-15"
+          }
+        }
+      },
+      "PosterDto": {
+        "type": "object",
+        "properties": {
+          "small": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/w92/poster.jpg"
+          },
+          "medium": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/w185/poster.jpg"
+          },
+          "large": {
+            "type": "string",
+            "example": "https://image.tmdb.org/t/p/w500/poster.jpg"
+          }
+        },
+        "required": [
+          "small",
+          "medium",
+          "large"
+        ]
+      },
+      "NotificationMediaSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-123"
+          },
+          "type": {
+            "type": "string",
+            "example": "show",
+            "enum": [
+              "movie",
+              "show"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "example": "Breaking Bad"
+          },
+          "slug": {
+            "type": "string",
+            "example": "breaking-bad"
+          },
+          "poster": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PosterDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "title",
+          "slug",
+          "poster"
+        ]
+      },
+      "NotificationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "uuid-123"
+          },
+          "trigger": {
+            "type": "string",
+            "example": "new_season",
+            "enum": [
+              "release",
+              "new_season",
+              "new_episode",
+              "on_streaming",
+              "status_changed"
+            ]
+          },
+          "payload": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationPayloadDto"
+              }
+            ]
+          },
+          "isRead": {
+            "type": "boolean",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2025-01-15T10:30:00.000Z"
+          },
+          "mediaSummary": {
+            "$ref": "#/components/schemas/NotificationMediaSummaryDto"
+          }
+        },
+        "required": [
+          "id",
+          "trigger",
+          "payload",
+          "isRead",
+          "createdAt",
+          "mediaSummary"
+        ]
+      },
+      "NotificationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationItemDto"
+            }
+          },
+          "unreadCount": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "data",
+          "unreadCount"
+        ]
+      },
+      "UnreadCountResponseDto": {
+        "type": "object",
+        "properties": {
+          "unreadCount": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": [
+          "unreadCount"
+        ]
+      },
+      "MarkReadResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "count": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "SaveItemDto": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later",
+            "description": "List to save to: for_later or considering"
+          },
+          "context": {
+            "type": "string",
+            "example": "verdict",
+            "description": "Where the action originated"
+          },
+          "reasonKey": {
+            "type": "string",
+            "example": "trendingNow",
+            "description": "Verdict/reason that triggered the action"
+          }
+        },
+        "required": [
+          "list"
+        ]
+      },
+      "MediaSaveStatusDto": {
+        "type": "object",
+        "properties": {
+          "isForLater": {
+            "type": "boolean",
+            "example": true,
+            "description": "Is saved in \"for later\" list"
+          },
+          "isConsidering": {
+            "type": "boolean",
+            "example": false,
+            "description": "Is saved in \"considering\" list"
+          }
+        },
+        "required": [
+          "isForLater",
+          "isConsidering"
+        ]
+      },
+      "SaveActionResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later"
+          },
+          "status": {
+            "description": "Current save status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSaveStatusDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "list",
+          "status",
+          "createdAt"
+        ]
+      },
+      "UnsaveItemDto": {
+        "type": "object",
+        "properties": {
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later",
+            "description": "List to remove from"
+          },
+          "context": {
+            "type": "string",
+            "example": "card"
+          }
+        },
+        "required": [
+          "list"
+        ]
+      },
+      "UnsaveActionResultDto": {
+        "type": "object",
+        "properties": {
+          "removed": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "description": "Current save status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSaveStatusDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "removed",
+          "status"
+        ]
+      },
+      "BatchStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "statuses": {
+            "type": "object",
+            "example": {
+              "id1": {
+                "isForLater": true,
+                "isConsidering": false
+              },
+              "id2": {
+                "isForLater": false,
+                "isConsidering": true
+              }
+            },
+            "description": "Map of mediaItemId to save status"
+          }
+        },
+        "required": [
+          "statuses"
+        ]
+      },
+      "SavedItemWithMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "list": {
+            "type": "string",
+            "enum": [
+              "for_later",
+              "considering"
+            ],
+            "example": "for_later"
+          },
+          "reasonKey": {
+            "type": "string",
+            "example": "trendingNow",
+            "nullable": true,
+            "description": "Verdict/reason that triggered the save action"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "mediaSummary": {
+            "type": "object",
+            "example": {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "movie",
+              "title": "Inception",
+              "slug": "inception-2010",
+              "poster": {
+                "w92": "...",
+                "w185": "...",
+                "w342": "...",
+                "w500": "...",
+                "w780": "...",
+                "original": "..."
+              }
+            }
+          },
+          "activeSubscriptionTriggers": {
+            "example": [
+              "release",
+              "new_season"
+            ],
+            "description": "Active subscription triggers for this media item. Empty array if no subscriptions.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "list",
+          "createdAt",
+          "mediaSummary",
+          "activeSubscriptionTriggers"
+        ]
+      },
+      "SubscribeDto": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "new_episode",
+              "on_streaming",
+              "status_changed"
+            ],
+            "example": "release",
+            "description": "Trigger type: release, new_season, or on_streaming"
+          },
+          "context": {
+            "type": "string",
+            "example": "verdict",
+            "description": "Where the action originated"
+          },
+          "reasonKey": {
+            "type": "string",
+            "example": "upcomingHit",
+            "description": "Verdict/reason that triggered the action"
+          }
+        },
+        "required": [
+          "trigger"
+        ]
+      },
+      "MediaSubscriptionStatusDto": {
+        "type": "object",
+        "properties": {
+          "triggers": {
+            "example": [
+              "release"
+            ],
+            "description": "Active subscription triggers",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "hasRelease": {
+            "type": "boolean",
+            "example": true,
+            "description": "Has active release subscription"
+          },
+          "hasNewSeason": {
+            "type": "boolean",
+            "example": false,
+            "description": "Has active new season subscription"
+          },
+          "hasOnStreaming": {
+            "type": "boolean",
+            "example": false,
+            "description": "Has active on streaming subscription"
+          }
+        },
+        "required": [
+          "triggers",
+          "hasRelease",
+          "hasNewSeason",
+          "hasOnStreaming"
+        ]
+      },
+      "SubscribeActionResultDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "new_episode",
+              "on_streaming",
+              "status_changed"
+            ],
+            "example": "release"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "description": "Current subscription status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "trigger",
+          "isActive",
+          "status",
+          "createdAt"
+        ]
+      },
+      "UnsubscribeDto": {
+        "type": "object",
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "new_episode",
+              "on_streaming",
+              "status_changed"
+            ],
+            "example": "release",
+            "description": "Trigger type to unsubscribe from"
+          },
+          "context": {
+            "type": "string",
+            "example": "card"
+          }
+        },
+        "required": [
+          "trigger"
+        ]
+      },
+      "UnsubscribeActionResultDto": {
+        "type": "object",
+        "properties": {
+          "unsubscribed": {
+            "type": "boolean",
+            "example": true
+          },
+          "status": {
+            "description": "Current subscription status after action",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "unsubscribed",
+          "status"
+        ]
+      },
+      "SubscriptionWithMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "release",
+              "new_season",
+              "new_episode",
+              "on_streaming",
+              "status_changed"
+            ],
+            "example": "release"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-01-15T10:30:00.000Z"
+          },
+          "mediaSummary": {
+            "type": "object",
+            "example": {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "type": "movie",
+              "title": "Inception",
+              "slug": "inception-2010",
+              "poster": {
+                "w92": "...",
+                "w185": "...",
+                "w342": "...",
+                "w500": "...",
+                "w780": "...",
+                "original": "..."
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "mediaItemId",
+          "trigger",
+          "isActive",
+          "createdAt",
+          "mediaSummary"
         ]
       },
       "SyncDto": {
@@ -11115,616 +11929,6 @@
           "tmdbProviderId",
           "region",
           "found"
-        ]
-      },
-      "NotificationPayloadDto": {
-        "type": "object",
-        "properties": {
-          "seasonNumber": {
-            "type": "number",
-            "example": 3
-          },
-          "episodeKey": {
-            "type": "string",
-            "example": "S3E1"
-          },
-          "airDate": {
-            "type": "string",
-            "example": "2025-01-15"
-          }
-        }
-      },
-      "PosterDto": {
-        "type": "object",
-        "properties": {
-          "small": {
-            "type": "string",
-            "example": "https://image.tmdb.org/t/p/w92/poster.jpg"
-          },
-          "medium": {
-            "type": "string",
-            "example": "https://image.tmdb.org/t/p/w185/poster.jpg"
-          },
-          "large": {
-            "type": "string",
-            "example": "https://image.tmdb.org/t/p/w500/poster.jpg"
-          }
-        },
-        "required": [
-          "small",
-          "medium",
-          "large"
-        ]
-      },
-      "NotificationMediaSummaryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "uuid-123"
-          },
-          "type": {
-            "type": "string",
-            "example": "show",
-            "enum": [
-              "movie",
-              "show"
-            ]
-          },
-          "title": {
-            "type": "string",
-            "example": "Breaking Bad"
-          },
-          "slug": {
-            "type": "string",
-            "example": "breaking-bad"
-          },
-          "poster": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/PosterDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "type",
-          "title",
-          "slug",
-          "poster"
-        ]
-      },
-      "NotificationItemDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "uuid-123"
-          },
-          "trigger": {
-            "type": "string",
-            "example": "new_season",
-            "enum": [
-              "release",
-              "new_season",
-              "new_episode",
-              "on_streaming",
-              "status_changed"
-            ]
-          },
-          "payload": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/NotificationPayloadDto"
-              }
-            ]
-          },
-          "isRead": {
-            "type": "boolean",
-            "example": false
-          },
-          "createdAt": {
-            "type": "string",
-            "example": "2025-01-15T10:30:00.000Z"
-          },
-          "mediaSummary": {
-            "$ref": "#/components/schemas/NotificationMediaSummaryDto"
-          }
-        },
-        "required": [
-          "id",
-          "trigger",
-          "payload",
-          "isRead",
-          "createdAt",
-          "mediaSummary"
-        ]
-      },
-      "NotificationListResponseDto": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationItemDto"
-            }
-          },
-          "unreadCount": {
-            "type": "number",
-            "example": 5
-          }
-        },
-        "required": [
-          "data",
-          "unreadCount"
-        ]
-      },
-      "UnreadCountResponseDto": {
-        "type": "object",
-        "properties": {
-          "unreadCount": {
-            "type": "number",
-            "example": 5
-          }
-        },
-        "required": [
-          "unreadCount"
-        ]
-      },
-      "MarkReadResponseDto": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          },
-          "count": {
-            "type": "number",
-            "example": 3
-          }
-        },
-        "required": [
-          "success"
-        ]
-      },
-      "SaveItemDto": {
-        "type": "object",
-        "properties": {
-          "list": {
-            "type": "string",
-            "enum": [
-              "for_later",
-              "considering"
-            ],
-            "example": "for_later",
-            "description": "List to save to: for_later or considering"
-          },
-          "context": {
-            "type": "string",
-            "example": "verdict",
-            "description": "Where the action originated"
-          },
-          "reasonKey": {
-            "type": "string",
-            "example": "trendingNow",
-            "description": "Verdict/reason that triggered the action"
-          }
-        },
-        "required": [
-          "list"
-        ]
-      },
-      "MediaSaveStatusDto": {
-        "type": "object",
-        "properties": {
-          "isForLater": {
-            "type": "boolean",
-            "example": true,
-            "description": "Is saved in \"for later\" list"
-          },
-          "isConsidering": {
-            "type": "boolean",
-            "example": false,
-            "description": "Is saved in \"considering\" list"
-          }
-        },
-        "required": [
-          "isForLater",
-          "isConsidering"
-        ]
-      },
-      "SaveActionResultDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "mediaItemId": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "list": {
-            "type": "string",
-            "enum": [
-              "for_later",
-              "considering"
-            ],
-            "example": "for_later"
-          },
-          "status": {
-            "description": "Current save status after action",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MediaSaveStatusDto"
-              }
-            ]
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2024-01-15T10:30:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "mediaItemId",
-          "list",
-          "status",
-          "createdAt"
-        ]
-      },
-      "UnsaveItemDto": {
-        "type": "object",
-        "properties": {
-          "list": {
-            "type": "string",
-            "enum": [
-              "for_later",
-              "considering"
-            ],
-            "example": "for_later",
-            "description": "List to remove from"
-          },
-          "context": {
-            "type": "string",
-            "example": "card"
-          }
-        },
-        "required": [
-          "list"
-        ]
-      },
-      "UnsaveActionResultDto": {
-        "type": "object",
-        "properties": {
-          "removed": {
-            "type": "boolean",
-            "example": true
-          },
-          "status": {
-            "description": "Current save status after action",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MediaSaveStatusDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "removed",
-          "status"
-        ]
-      },
-      "BatchStatusResponseDto": {
-        "type": "object",
-        "properties": {
-          "statuses": {
-            "type": "object",
-            "example": {
-              "id1": {
-                "isForLater": true,
-                "isConsidering": false
-              },
-              "id2": {
-                "isForLater": false,
-                "isConsidering": true
-              }
-            },
-            "description": "Map of mediaItemId to save status"
-          }
-        },
-        "required": [
-          "statuses"
-        ]
-      },
-      "SavedItemWithMediaResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "mediaItemId": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "list": {
-            "type": "string",
-            "enum": [
-              "for_later",
-              "considering"
-            ],
-            "example": "for_later"
-          },
-          "reasonKey": {
-            "type": "string",
-            "example": "trendingNow",
-            "nullable": true,
-            "description": "Verdict/reason that triggered the save action"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2024-01-15T10:30:00.000Z"
-          },
-          "mediaSummary": {
-            "type": "object",
-            "example": {
-              "id": "123e4567-e89b-12d3-a456-426614174000",
-              "type": "movie",
-              "title": "Inception",
-              "slug": "inception-2010",
-              "poster": {
-                "w92": "...",
-                "w185": "...",
-                "w342": "...",
-                "w500": "...",
-                "w780": "...",
-                "original": "..."
-              }
-            }
-          },
-          "activeSubscriptionTriggers": {
-            "example": [
-              "release",
-              "new_season"
-            ],
-            "description": "Active subscription triggers for this media item. Empty array if no subscriptions.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "id",
-          "mediaItemId",
-          "list",
-          "createdAt",
-          "mediaSummary",
-          "activeSubscriptionTriggers"
-        ]
-      },
-      "SubscribeDto": {
-        "type": "object",
-        "properties": {
-          "trigger": {
-            "type": "string",
-            "enum": [
-              "release",
-              "new_season",
-              "new_episode",
-              "on_streaming",
-              "status_changed"
-            ],
-            "example": "release",
-            "description": "Trigger type: release, new_season, or on_streaming"
-          },
-          "context": {
-            "type": "string",
-            "example": "verdict",
-            "description": "Where the action originated"
-          },
-          "reasonKey": {
-            "type": "string",
-            "example": "upcomingHit",
-            "description": "Verdict/reason that triggered the action"
-          }
-        },
-        "required": [
-          "trigger"
-        ]
-      },
-      "MediaSubscriptionStatusDto": {
-        "type": "object",
-        "properties": {
-          "triggers": {
-            "example": [
-              "release"
-            ],
-            "description": "Active subscription triggers",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "hasRelease": {
-            "type": "boolean",
-            "example": true,
-            "description": "Has active release subscription"
-          },
-          "hasNewSeason": {
-            "type": "boolean",
-            "example": false,
-            "description": "Has active new season subscription"
-          },
-          "hasOnStreaming": {
-            "type": "boolean",
-            "example": false,
-            "description": "Has active on streaming subscription"
-          }
-        },
-        "required": [
-          "triggers",
-          "hasRelease",
-          "hasNewSeason",
-          "hasOnStreaming"
-        ]
-      },
-      "SubscribeActionResultDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "mediaItemId": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "trigger": {
-            "type": "string",
-            "enum": [
-              "release",
-              "new_season",
-              "new_episode",
-              "on_streaming",
-              "status_changed"
-            ],
-            "example": "release"
-          },
-          "isActive": {
-            "type": "boolean",
-            "example": true
-          },
-          "status": {
-            "description": "Current subscription status after action",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
-              }
-            ]
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2024-01-15T10:30:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "mediaItemId",
-          "trigger",
-          "isActive",
-          "status",
-          "createdAt"
-        ]
-      },
-      "UnsubscribeDto": {
-        "type": "object",
-        "properties": {
-          "trigger": {
-            "type": "string",
-            "enum": [
-              "release",
-              "new_season",
-              "new_episode",
-              "on_streaming",
-              "status_changed"
-            ],
-            "example": "release",
-            "description": "Trigger type to unsubscribe from"
-          },
-          "context": {
-            "type": "string",
-            "example": "card"
-          }
-        },
-        "required": [
-          "trigger"
-        ]
-      },
-      "UnsubscribeActionResultDto": {
-        "type": "object",
-        "properties": {
-          "unsubscribed": {
-            "type": "boolean",
-            "example": true
-          },
-          "status": {
-            "description": "Current subscription status after action",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MediaSubscriptionStatusDto"
-              }
-            ]
-          }
-        },
-        "required": [
-          "unsubscribed",
-          "status"
-        ]
-      },
-      "SubscriptionWithMediaResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "mediaItemId": {
-            "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
-          },
-          "trigger": {
-            "type": "string",
-            "enum": [
-              "release",
-              "new_season",
-              "new_episode",
-              "on_streaming",
-              "status_changed"
-            ],
-            "example": "release"
-          },
-          "isActive": {
-            "type": "boolean",
-            "example": true
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "example": "2024-01-15T10:30:00.000Z"
-          },
-          "mediaSummary": {
-            "type": "object",
-            "example": {
-              "id": "123e4567-e89b-12d3-a456-426614174000",
-              "type": "movie",
-              "title": "Inception",
-              "slug": "inception-2010",
-              "poster": {
-                "w92": "...",
-                "w185": "...",
-                "w342": "...",
-                "w500": "...",
-                "w780": "...",
-                "original": "..."
-              }
-            }
-          }
-        },
-        "required": [
-          "id",
-          "mediaItemId",
-          "trigger",
-          "isActive",
-          "createdAt",
-          "mediaSummary"
         ]
       },
       "HeroShowProgressDto": {

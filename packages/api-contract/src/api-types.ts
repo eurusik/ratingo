@@ -324,6 +324,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-media/{mediaItemId}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pause a media item (auth: Bearer) */
+        post: operations["UserMediaController_pauseMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/{mediaItemId}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume a paused media item (auth: Bearer) */
+        post: operations["UserMediaController_resumeMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/ratings": {
         parameters: {
             query?: never;
@@ -384,6 +418,23 @@ export interface paths {
         };
         /** My activity (auth: Bearer) */
         get: operations["MeListsController_activity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/paused": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My paused items (auth: Bearer) */
+        get: operations["MeListsController_paused"];
         put?: never;
         post?: never;
         delete?: never;
@@ -692,6 +743,212 @@ export interface paths {
         };
         /** Get public user watch history (auth optional, privacy aware) */
         get: operations["PublicUsersController_getHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List notifications (auth: Bearer) */
+        get: operations["NotificationsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get unread notification count (auth: Bearer) */
+        get: operations["NotificationsController_getUnreadCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/{notificationId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark notification as read (auth: Bearer) */
+        post: operations["NotificationsController_markAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark all notifications as read (auth: Bearer) */
+        post: operations["NotificationsController_markAllAsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save media item to a list (auth: Bearer) */
+        post: operations["SavedItemsController_saveItem"];
+        /** Remove media item from a list (auth: Bearer) */
+        delete: operations["SavedItemsController_unsaveItem"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/status/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get save status for multiple media items (auth: Bearer) */
+        get: operations["SavedItemsController_getBatchStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/{mediaItemId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get save status for media item (auth: Bearer) */
+        get: operations["SavedItemsController_getStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/for-later": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List "for later" saved items (auth: Bearer) */
+        get: operations["SavedItemsController_listForLater"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/saved-items/considering": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List "considering" saved items (auth: Bearer) */
+        get: operations["SavedItemsController_listConsidering"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/subscriptions/{mediaItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Subscribe to notifications for media item (auth: Bearer) */
+        post: operations["SubscriptionsController_subscribe"];
+        /** Unsubscribe from notifications for media item (auth: Bearer) */
+        delete: operations["SubscriptionsController_unsubscribe"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/subscriptions/{mediaItemId}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get subscription status for media item (auth: Bearer) */
+        get: operations["SubscriptionsController_getStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List active subscriptions (auth: Bearer) */
+        get: operations["SubscriptionsController_listActive"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1306,212 +1563,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/me/notifications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List notifications (auth: Bearer) */
-        get: operations["NotificationsController_list"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/notifications/unread-count": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get unread notification count (auth: Bearer) */
-        get: operations["NotificationsController_getUnreadCount"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/notifications/{notificationId}/read": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Mark notification as read (auth: Bearer) */
-        post: operations["NotificationsController_markAsRead"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/notifications/read-all": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Mark all notifications as read (auth: Bearer) */
-        post: operations["NotificationsController_markAllAsRead"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/saved-items/{mediaItemId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Save media item to a list (auth: Bearer) */
-        post: operations["SavedItemsController_saveItem"];
-        /** Remove media item from a list (auth: Bearer) */
-        delete: operations["SavedItemsController_unsaveItem"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/saved-items/status/batch": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get save status for multiple media items (auth: Bearer) */
-        get: operations["SavedItemsController_getBatchStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/saved-items/{mediaItemId}/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get save status for media item (auth: Bearer) */
-        get: operations["SavedItemsController_getStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/saved-items/for-later": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List "for later" saved items (auth: Bearer) */
-        get: operations["SavedItemsController_listForLater"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/saved-items/considering": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List "considering" saved items (auth: Bearer) */
-        get: operations["SavedItemsController_listConsidering"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/subscriptions/{mediaItemId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Subscribe to notifications for media item (auth: Bearer) */
-        post: operations["SubscriptionsController_subscribe"];
-        /** Unsubscribe from notifications for media item (auth: Bearer) */
-        delete: operations["SubscriptionsController_unsubscribe"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/subscriptions/{mediaItemId}/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get subscription status for media item (auth: Bearer) */
-        get: operations["SubscriptionsController_getStatus"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/me/subscriptions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List active subscriptions (auth: Bearer) */
-        get: operations["SubscriptionsController_listActive"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/home/hero": {
         parameters: {
             query?: never;
@@ -2107,7 +2158,7 @@ export interface components {
              * @example watching
              * @enum {string}
              */
-            state: "watching" | "completed" | "planned" | "dropped";
+            state: "watching" | "completed" | "planned" | "dropped" | "paused";
             /**
              * @description 0-100 rating
              * @example 85
@@ -2705,7 +2756,7 @@ export interface components {
              * @example watching
              * @enum {string}
              */
-            state: "watching" | "completed" | "planned" | "dropped";
+            state: "watching" | "completed" | "planned" | "dropped" | "paused";
             /** @example null */
             rating?: number | null;
             /**
@@ -2755,7 +2806,7 @@ export interface components {
              * @example watching
              * @enum {string}
              */
-            state: "watching" | "completed" | "planned" | "dropped";
+            state: "watching" | "completed" | "planned" | "dropped" | "paused";
             /**
              * @description 0-100 rating
              * @example 85
@@ -2800,6 +2851,8 @@ export interface components {
             mediaSummary: components["schemas"]["MeUserMediaSummaryDto"] | null;
             /** @description Episode progress summary (only for shows) */
             progressSummary?: components["schemas"]["ProgressSummaryDto"] | null;
+            /** @description Next episode to continue watching (only for shows with progress) */
+            continuePoint?: components["schemas"]["ContinuePointDto"] | null;
         };
         PaginatedMeUserMediaResponseDto: {
             data: components["schemas"]["MeUserMediaListItemDto"][];
@@ -2969,7 +3022,7 @@ export interface components {
         PublicUserMediaListItemDto: {
             id: string;
             /** @enum {string} */
-            state: "watching" | "completed" | "planned" | "dropped";
+            state: "watching" | "completed" | "planned" | "dropped" | "paused";
             /** @description 0-100 rating */
             rating: number | null;
             /** @description Arbitrary progress payload (JSON) */
@@ -2984,6 +3037,305 @@ export interface components {
         PaginatedPublicUserMediaResponseDto: {
             data: components["schemas"]["PublicUserMediaListItemDto"][];
             meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        NotificationPayloadDto: {
+            /** @example 3 */
+            seasonNumber?: number;
+            /** @example S3E1 */
+            episodeKey?: string;
+            /** @example 2025-01-15 */
+            airDate?: string;
+        };
+        PosterDto: {
+            /** @example https://image.tmdb.org/t/p/w92/poster.jpg */
+            small: string;
+            /** @example https://image.tmdb.org/t/p/w185/poster.jpg */
+            medium: string;
+            /** @example https://image.tmdb.org/t/p/w500/poster.jpg */
+            large: string;
+        };
+        NotificationMediaSummaryDto: {
+            /** @example uuid-123 */
+            id: string;
+            /**
+             * @example show
+             * @enum {string}
+             */
+            type: "movie" | "show";
+            /** @example Breaking Bad */
+            title: string;
+            /** @example breaking-bad */
+            slug: string;
+            poster: components["schemas"]["PosterDto"] | null;
+        };
+        NotificationItemDto: {
+            /** @example uuid-123 */
+            id: string;
+            /**
+             * @example new_season
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            payload: components["schemas"]["NotificationPayloadDto"] | null;
+            /** @example false */
+            isRead: boolean;
+            /** @example 2025-01-15T10:30:00.000Z */
+            createdAt: string;
+            mediaSummary: components["schemas"]["NotificationMediaSummaryDto"];
+        };
+        NotificationListResponseDto: {
+            data: components["schemas"]["NotificationItemDto"][];
+            /** @example 5 */
+            unreadCount: number;
+        };
+        UnreadCountResponseDto: {
+            /** @example 5 */
+            unreadCount: number;
+        };
+        MarkReadResponseDto: {
+            /** @example true */
+            success: boolean;
+            /** @example 3 */
+            count?: number;
+        };
+        SaveItemDto: {
+            /**
+             * @description List to save to: for_later or considering
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /**
+             * @description Where the action originated
+             * @example verdict
+             */
+            context?: string;
+            /**
+             * @description Verdict/reason that triggered the action
+             * @example trendingNow
+             */
+            reasonKey?: string;
+        };
+        MediaSaveStatusDto: {
+            /**
+             * @description Is saved in "for later" list
+             * @example true
+             */
+            isForLater: boolean;
+            /**
+             * @description Is saved in "considering" list
+             * @example false
+             */
+            isConsidering: boolean;
+        };
+        SaveActionResultDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /** @description Current save status after action */
+            status: components["schemas"]["MediaSaveStatusDto"];
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        UnsaveItemDto: {
+            /**
+             * @description List to remove from
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /** @example card */
+            context?: string;
+        };
+        UnsaveActionResultDto: {
+            /** @example true */
+            removed: boolean;
+            /** @description Current save status after action */
+            status: components["schemas"]["MediaSaveStatusDto"];
+        };
+        BatchStatusResponseDto: {
+            /**
+             * @description Map of mediaItemId to save status
+             * @example {
+             *       "id1": {
+             *         "isForLater": true,
+             *         "isConsidering": false
+             *       },
+             *       "id2": {
+             *         "isForLater": false,
+             *         "isConsidering": true
+             *       }
+             *     }
+             */
+            statuses: Record<string, never>;
+        };
+        SavedItemWithMediaResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example for_later
+             * @enum {string}
+             */
+            list: "for_later" | "considering";
+            /**
+             * @description Verdict/reason that triggered the save action
+             * @example trendingNow
+             */
+            reasonKey?: string | null;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @example {
+             *       "id": "123e4567-e89b-12d3-a456-426614174000",
+             *       "type": "movie",
+             *       "title": "Inception",
+             *       "slug": "inception-2010",
+             *       "poster": {
+             *         "w92": "...",
+             *         "w185": "...",
+             *         "w342": "...",
+             *         "w500": "...",
+             *         "w780": "...",
+             *         "original": "..."
+             *       }
+             *     }
+             */
+            mediaSummary: Record<string, never>;
+            /**
+             * @description Active subscription triggers for this media item. Empty array if no subscriptions.
+             * @example [
+             *       "release",
+             *       "new_season"
+             *     ]
+             */
+            activeSubscriptionTriggers: string[];
+        };
+        SubscribeDto: {
+            /**
+             * @description Trigger type: release, new_season, or on_streaming
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /**
+             * @description Where the action originated
+             * @example verdict
+             */
+            context?: string;
+            /**
+             * @description Verdict/reason that triggered the action
+             * @example upcomingHit
+             */
+            reasonKey?: string;
+        };
+        MediaSubscriptionStatusDto: {
+            /**
+             * @description Active subscription triggers
+             * @example [
+             *       "release"
+             *     ]
+             */
+            triggers: string[];
+            /**
+             * @description Has active release subscription
+             * @example true
+             */
+            hasRelease: boolean;
+            /**
+             * @description Has active new season subscription
+             * @example false
+             */
+            hasNewSeason: boolean;
+            /**
+             * @description Has active on streaming subscription
+             * @example false
+             */
+            hasOnStreaming: boolean;
+        };
+        SubscribeActionResultDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /** @example true */
+            isActive: boolean;
+            /** @description Current subscription status after action */
+            status: components["schemas"]["MediaSubscriptionStatusDto"];
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+        };
+        UnsubscribeDto: {
+            /**
+             * @description Trigger type to unsubscribe from
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /** @example card */
+            context?: string;
+        };
+        UnsubscribeActionResultDto: {
+            /** @example true */
+            unsubscribed: boolean;
+            /** @description Current subscription status after action */
+            status: components["schemas"]["MediaSubscriptionStatusDto"];
+        };
+        SubscriptionWithMediaResponseDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            id: string;
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            mediaItemId: string;
+            /**
+             * @example release
+             * @enum {string}
+             */
+            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
+            /** @example true */
+            isActive: boolean;
+            /**
+             * Format: date-time
+             * @example 2024-01-15T10:30:00.000Z
+             */
+            createdAt: string;
+            /**
+             * @example {
+             *       "id": "123e4567-e89b-12d3-a456-426614174000",
+             *       "type": "movie",
+             *       "title": "Inception",
+             *       "slug": "inception-2010",
+             *       "poster": {
+             *         "w92": "...",
+             *         "w185": "...",
+             *         "w342": "...",
+             *         "w500": "...",
+             *         "w780": "...",
+             *         "original": "..."
+             *       }
+             *     }
+             */
+            mediaSummary: Record<string, never>;
         };
         SyncDto: {
             /**
@@ -4115,305 +4467,6 @@ export interface components {
              * @example region
              */
             source?: string;
-        };
-        NotificationPayloadDto: {
-            /** @example 3 */
-            seasonNumber?: number;
-            /** @example S3E1 */
-            episodeKey?: string;
-            /** @example 2025-01-15 */
-            airDate?: string;
-        };
-        PosterDto: {
-            /** @example https://image.tmdb.org/t/p/w92/poster.jpg */
-            small: string;
-            /** @example https://image.tmdb.org/t/p/w185/poster.jpg */
-            medium: string;
-            /** @example https://image.tmdb.org/t/p/w500/poster.jpg */
-            large: string;
-        };
-        NotificationMediaSummaryDto: {
-            /** @example uuid-123 */
-            id: string;
-            /**
-             * @example show
-             * @enum {string}
-             */
-            type: "movie" | "show";
-            /** @example Breaking Bad */
-            title: string;
-            /** @example breaking-bad */
-            slug: string;
-            poster: components["schemas"]["PosterDto"] | null;
-        };
-        NotificationItemDto: {
-            /** @example uuid-123 */
-            id: string;
-            /**
-             * @example new_season
-             * @enum {string}
-             */
-            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
-            payload: components["schemas"]["NotificationPayloadDto"] | null;
-            /** @example false */
-            isRead: boolean;
-            /** @example 2025-01-15T10:30:00.000Z */
-            createdAt: string;
-            mediaSummary: components["schemas"]["NotificationMediaSummaryDto"];
-        };
-        NotificationListResponseDto: {
-            data: components["schemas"]["NotificationItemDto"][];
-            /** @example 5 */
-            unreadCount: number;
-        };
-        UnreadCountResponseDto: {
-            /** @example 5 */
-            unreadCount: number;
-        };
-        MarkReadResponseDto: {
-            /** @example true */
-            success: boolean;
-            /** @example 3 */
-            count?: number;
-        };
-        SaveItemDto: {
-            /**
-             * @description List to save to: for_later or considering
-             * @example for_later
-             * @enum {string}
-             */
-            list: "for_later" | "considering";
-            /**
-             * @description Where the action originated
-             * @example verdict
-             */
-            context?: string;
-            /**
-             * @description Verdict/reason that triggered the action
-             * @example trendingNow
-             */
-            reasonKey?: string;
-        };
-        MediaSaveStatusDto: {
-            /**
-             * @description Is saved in "for later" list
-             * @example true
-             */
-            isForLater: boolean;
-            /**
-             * @description Is saved in "considering" list
-             * @example false
-             */
-            isConsidering: boolean;
-        };
-        SaveActionResultDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            id: string;
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            mediaItemId: string;
-            /**
-             * @example for_later
-             * @enum {string}
-             */
-            list: "for_later" | "considering";
-            /** @description Current save status after action */
-            status: components["schemas"]["MediaSaveStatusDto"];
-            /**
-             * Format: date-time
-             * @example 2024-01-15T10:30:00.000Z
-             */
-            createdAt: string;
-        };
-        UnsaveItemDto: {
-            /**
-             * @description List to remove from
-             * @example for_later
-             * @enum {string}
-             */
-            list: "for_later" | "considering";
-            /** @example card */
-            context?: string;
-        };
-        UnsaveActionResultDto: {
-            /** @example true */
-            removed: boolean;
-            /** @description Current save status after action */
-            status: components["schemas"]["MediaSaveStatusDto"];
-        };
-        BatchStatusResponseDto: {
-            /**
-             * @description Map of mediaItemId to save status
-             * @example {
-             *       "id1": {
-             *         "isForLater": true,
-             *         "isConsidering": false
-             *       },
-             *       "id2": {
-             *         "isForLater": false,
-             *         "isConsidering": true
-             *       }
-             *     }
-             */
-            statuses: Record<string, never>;
-        };
-        SavedItemWithMediaResponseDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            id: string;
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            mediaItemId: string;
-            /**
-             * @example for_later
-             * @enum {string}
-             */
-            list: "for_later" | "considering";
-            /**
-             * @description Verdict/reason that triggered the save action
-             * @example trendingNow
-             */
-            reasonKey?: string | null;
-            /**
-             * Format: date-time
-             * @example 2024-01-15T10:30:00.000Z
-             */
-            createdAt: string;
-            /**
-             * @example {
-             *       "id": "123e4567-e89b-12d3-a456-426614174000",
-             *       "type": "movie",
-             *       "title": "Inception",
-             *       "slug": "inception-2010",
-             *       "poster": {
-             *         "w92": "...",
-             *         "w185": "...",
-             *         "w342": "...",
-             *         "w500": "...",
-             *         "w780": "...",
-             *         "original": "..."
-             *       }
-             *     }
-             */
-            mediaSummary: Record<string, never>;
-            /**
-             * @description Active subscription triggers for this media item. Empty array if no subscriptions.
-             * @example [
-             *       "release",
-             *       "new_season"
-             *     ]
-             */
-            activeSubscriptionTriggers: string[];
-        };
-        SubscribeDto: {
-            /**
-             * @description Trigger type: release, new_season, or on_streaming
-             * @example release
-             * @enum {string}
-             */
-            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
-            /**
-             * @description Where the action originated
-             * @example verdict
-             */
-            context?: string;
-            /**
-             * @description Verdict/reason that triggered the action
-             * @example upcomingHit
-             */
-            reasonKey?: string;
-        };
-        MediaSubscriptionStatusDto: {
-            /**
-             * @description Active subscription triggers
-             * @example [
-             *       "release"
-             *     ]
-             */
-            triggers: string[];
-            /**
-             * @description Has active release subscription
-             * @example true
-             */
-            hasRelease: boolean;
-            /**
-             * @description Has active new season subscription
-             * @example false
-             */
-            hasNewSeason: boolean;
-            /**
-             * @description Has active on streaming subscription
-             * @example false
-             */
-            hasOnStreaming: boolean;
-        };
-        SubscribeActionResultDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            id: string;
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            mediaItemId: string;
-            /**
-             * @example release
-             * @enum {string}
-             */
-            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
-            /** @example true */
-            isActive: boolean;
-            /** @description Current subscription status after action */
-            status: components["schemas"]["MediaSubscriptionStatusDto"];
-            /**
-             * Format: date-time
-             * @example 2024-01-15T10:30:00.000Z
-             */
-            createdAt: string;
-        };
-        UnsubscribeDto: {
-            /**
-             * @description Trigger type to unsubscribe from
-             * @example release
-             * @enum {string}
-             */
-            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
-            /** @example card */
-            context?: string;
-        };
-        UnsubscribeActionResultDto: {
-            /** @example true */
-            unsubscribed: boolean;
-            /** @description Current subscription status after action */
-            status: components["schemas"]["MediaSubscriptionStatusDto"];
-        };
-        SubscriptionWithMediaResponseDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            id: string;
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
-            mediaItemId: string;
-            /**
-             * @example release
-             * @enum {string}
-             */
-            trigger: "release" | "new_season" | "new_episode" | "on_streaming" | "status_changed";
-            /** @example true */
-            isActive: boolean;
-            /**
-             * Format: date-time
-             * @example 2024-01-15T10:30:00.000Z
-             */
-            createdAt: string;
-            /**
-             * @example {
-             *       "id": "123e4567-e89b-12d3-a456-426614174000",
-             *       "type": "movie",
-             *       "title": "Inception",
-             *       "slug": "inception-2010",
-             *       "poster": {
-             *         "w92": "...",
-             *         "w185": "...",
-             *         "w342": "...",
-             *         "w500": "...",
-             *         "w780": "...",
-             *         "original": "..."
-             *       }
-             *     }
-             */
-            mediaSummary: Record<string, never>;
         };
         HeroShowProgressDto: {
             /** @example 5 */
@@ -5836,6 +5889,88 @@ export interface operations {
             };
         };
     };
+    UserMediaController_pauseMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Media item paused */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"];
+                    };
+                };
+            };
+            /** @description Cannot pause: item is not currently being watched */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UserMediaController_resumeMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Media item resumed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UserMediaStateDto"];
+                    };
+                };
+            };
+            /** @description Cannot resume: item is not paused */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     MeListsController_ratings: {
         parameters: {
             query?: {
@@ -5918,6 +6053,33 @@ export interface operations {
         };
     };
     MeListsController_activity: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    MeListsController_paused: {
         parameters: {
             query?: {
                 limit?: number;
@@ -6507,6 +6669,383 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["PaginatedPublicUserMediaResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    NotificationsController_list: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["NotificationListResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    NotificationsController_getUnreadCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnreadCountResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    NotificationsController_markAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MarkReadResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    NotificationsController_markAllAsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MarkReadResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_saveItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveItemDto"];
+            };
+        };
+        responses: {
+            /** @description Item saved with current status */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SaveActionResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_unsaveItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnsaveItemDto"];
+            };
+        };
+        responses: {
+            /** @description Item removed with current status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnsaveActionResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_getBatchStatus: {
+        parameters: {
+            query: {
+                /** @description Comma-separated list of media item UUIDs (max 100) */
+                ids: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["BatchStatusResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_getStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MediaSaveStatusDto"];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_listForLater: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+                    };
+                };
+            };
+        };
+    };
+    SavedItemsController_listConsidering: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
+                    };
+                };
+            };
+        };
+    };
+    SubscriptionsController_subscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubscribeDto"];
+            };
+        };
+        responses: {
+            /** @description Subscribed with current status */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SubscribeActionResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    SubscriptionsController_unsubscribe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnsubscribeDto"];
+            };
+        };
+        responses: {
+            /** @description Unsubscribed with current status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["UnsubscribeActionResultDto"];
+                    };
+                };
+            };
+        };
+    };
+    SubscriptionsController_getStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Media item UUID */
+                mediaItemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MediaSubscriptionStatusDto"];
+                    };
+                };
+            };
+        };
+    };
+    SubscriptionsController_listActive: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SubscriptionWithMediaResponseDto"][];
                     };
                 };
             };
@@ -7390,383 +7929,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    NotificationsController_list: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["NotificationListResponseDto"];
-                    };
-                };
-            };
-        };
-    };
-    NotificationsController_getUnreadCount: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UnreadCountResponseDto"];
-                    };
-                };
-            };
-        };
-    };
-    NotificationsController_markAsRead: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                notificationId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MarkReadResponseDto"];
-                    };
-                };
-            };
-        };
-    };
-    NotificationsController_markAllAsRead: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MarkReadResponseDto"];
-                    };
-                };
-            };
-        };
-    };
-    SavedItemsController_saveItem: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Media item UUID */
-                mediaItemId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SaveItemDto"];
-            };
-        };
-        responses: {
-            /** @description Item saved with current status */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SaveActionResultDto"];
-                    };
-                };
-            };
-        };
-    };
-    SavedItemsController_unsaveItem: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Media item UUID */
-                mediaItemId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UnsaveItemDto"];
-            };
-        };
-        responses: {
-            /** @description Item removed with current status */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UnsaveActionResultDto"];
-                    };
-                };
-            };
-        };
-    };
-    SavedItemsController_getBatchStatus: {
-        parameters: {
-            query: {
-                /** @description Comma-separated list of media item UUIDs (max 100) */
-                ids: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["BatchStatusResponseDto"];
-                    };
-                };
-            };
-        };
-    };
-    SavedItemsController_getStatus: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Media item UUID */
-                mediaItemId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MediaSaveStatusDto"];
-                    };
-                };
-            };
-        };
-    };
-    SavedItemsController_listForLater: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
-                    };
-                };
-            };
-        };
-    };
-    SavedItemsController_listConsidering: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SavedItemWithMediaResponseDto"][];
-                    };
-                };
-            };
-        };
-    };
-    SubscriptionsController_subscribe: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Media item UUID */
-                mediaItemId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SubscribeDto"];
-            };
-        };
-        responses: {
-            /** @description Subscribed with current status */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SubscribeActionResultDto"];
-                    };
-                };
-            };
-        };
-    };
-    SubscriptionsController_unsubscribe: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Media item UUID */
-                mediaItemId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UnsubscribeDto"];
-            };
-        };
-        responses: {
-            /** @description Unsubscribed with current status */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["UnsubscribeActionResultDto"];
-                    };
-                };
-            };
-        };
-    };
-    SubscriptionsController_getStatus: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Media item UUID */
-                mediaItemId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["MediaSubscriptionStatusDto"];
-                    };
-                };
-            };
-        };
-    };
-    SubscriptionsController_listActive: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        success: true;
-                        data: components["schemas"]["SubscriptionWithMediaResponseDto"][];
-                    };
-                };
             };
         };
     };

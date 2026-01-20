@@ -1,6 +1,6 @@
 /**
  * Activity page - user's watching progress.
- * Contains tabs: Watching, Completed (history).
+ * Contains tabs: Watching, Paused, Completed (history).
  */
 
 'use client';
@@ -10,16 +10,17 @@ import { Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { Watchlist, HistoryList } from '@/modules/saved';
+import { Watchlist, HistoryList, PausedList } from '@/modules/saved';
 import { USER_MEDIA_STATE } from '@/core/api';
 
 /**
  * Tab identifiers for URL params and Radix UI.
- * WATCHING uses USER_MEDIA_STATE for consistency.
+ * WATCHING and PAUSED use USER_MEDIA_STATE for consistency.
  * HISTORY is a UI concept (shows completed items).
  */
 const TAB_VALUES = {
   WATCHING: USER_MEDIA_STATE.WATCHING,
+  PAUSED: USER_MEDIA_STATE.PAUSED,
   HISTORY: 'history',
 } as const;
 
@@ -28,6 +29,7 @@ type TabValue = (typeof TAB_VALUES)[keyof typeof TAB_VALUES];
 const DEFAULT_TAB = TAB_VALUES.WATCHING;
 
 function getTabFromParam(param: string | null): TabValue {
+  if (param === TAB_VALUES.PAUSED) return TAB_VALUES.PAUSED;
   if (param === TAB_VALUES.HISTORY) return TAB_VALUES.HISTORY;
   return DEFAULT_TAB;
 }
@@ -73,6 +75,9 @@ function ActivityPageContent() {
             <TabsTrigger value={TAB_VALUES.WATCHING} className="data-[state=active]:bg-cinema-elevated">
               {dict.activity.tabs.watching}
             </TabsTrigger>
+            <TabsTrigger value={TAB_VALUES.PAUSED} className="data-[state=active]:bg-cinema-elevated">
+              {dict.activity.tabs.paused}
+            </TabsTrigger>
             <TabsTrigger value={TAB_VALUES.HISTORY} className="data-[state=active]:bg-cinema-elevated">
               {dict.activity.tabs.history}
             </TabsTrigger>
@@ -80,6 +85,10 @@ function ActivityPageContent() {
 
           <TabsContent value={TAB_VALUES.WATCHING} className="mt-0">
             <Watchlist />
+          </TabsContent>
+
+          <TabsContent value={TAB_VALUES.PAUSED} className="mt-0">
+            <PausedList />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.HISTORY} className="mt-0">

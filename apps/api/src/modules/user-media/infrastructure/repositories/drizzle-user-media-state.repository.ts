@@ -328,7 +328,6 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             posterPath: schema.mediaItems.posterPath,
             releaseDate: schema.mediaItems.releaseDate,
           },
-          // Progress for shows: total episodes and watched count
           progressTotal: sql<number | null>`
             CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
               SELECT COUNT(*)::int FROM ${schema.episodes} e
@@ -567,6 +566,8 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           poster: ImageDto | null;
           releaseDate?: Date | null;
         };
+        progressSummary?: { watched: number; total: number } | null;
+        continuePoint?: { season: number; episode: number } | null;
       })
     | null
   > {
@@ -582,6 +583,84 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             posterPath: schema.mediaItems.posterPath,
             releaseDate: schema.mediaItems.releaseDate,
           },
+          progressTotal: sql<number | null>`
+            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+              SELECT COUNT(*)::int FROM ${schema.episodes} e
+              JOIN ${schema.seasons} s ON s.id = e.season_id
+              JOIN ${schema.shows} sh ON sh.id = s.show_id
+              WHERE sh.media_item_id = ${schema.mediaItems.id}
+            ) ELSE NULL END
+          `.as('progress_total'),
+          progressWatched: sql<number | null>`
+            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+              SELECT COUNT(*)::int FROM ${schema.userEpisodeProgress} uep
+              JOIN ${schema.episodes} e ON e.id = uep.episode_id
+              JOIN ${schema.seasons} s ON s.id = e.season_id
+              JOIN ${schema.shows} sh ON sh.id = s.show_id
+              WHERE sh.media_item_id = ${schema.mediaItems.id}
+              AND uep.user_id = ${userId}
+            ) ELSE NULL END
+          `.as('progress_watched'),
+          continueSeasonNumber: sql<number | null>`
+            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+              WITH last_watched AS (
+                SELECT s.number AS sn, e.number AS en
+                FROM ${schema.userEpisodeProgress} uep
+                JOIN ${schema.episodes} e ON e.id = uep.episode_id
+                JOIN ${schema.seasons} s ON s.id = e.season_id
+                JOIN ${schema.shows} sh ON sh.id = s.show_id
+                WHERE sh.media_item_id = ${schema.mediaItems.id}
+                AND uep.user_id = ${userId}
+                ORDER BY s.number DESC, e.number DESC
+                LIMIT 1
+              )
+              SELECT s.number FROM ${schema.episodes} e
+              JOIN ${schema.seasons} s ON s.id = e.season_id
+              JOIN ${schema.shows} sh ON sh.id = s.show_id
+              WHERE sh.media_item_id = ${schema.mediaItems.id}
+              AND s.number > 0
+              AND e.id NOT IN (
+                SELECT uep.episode_id FROM ${schema.userEpisodeProgress} uep
+                WHERE uep.user_id = ${userId}
+              )
+              AND (
+                s.number > (SELECT sn FROM last_watched)
+                OR (s.number = (SELECT sn FROM last_watched) AND e.number > (SELECT en FROM last_watched))
+              )
+              ORDER BY s.number ASC, e.number ASC
+              LIMIT 1
+            ) ELSE NULL END
+          `.as('continue_season'),
+          continueEpisodeNumber: sql<number | null>`
+            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+              WITH last_watched AS (
+                SELECT s.number AS sn, e.number AS en
+                FROM ${schema.userEpisodeProgress} uep
+                JOIN ${schema.episodes} e ON e.id = uep.episode_id
+                JOIN ${schema.seasons} s ON s.id = e.season_id
+                JOIN ${schema.shows} sh ON sh.id = s.show_id
+                WHERE sh.media_item_id = ${schema.mediaItems.id}
+                AND uep.user_id = ${userId}
+                ORDER BY s.number DESC, e.number DESC
+                LIMIT 1
+              )
+              SELECT e.number FROM ${schema.episodes} e
+              JOIN ${schema.seasons} s ON s.id = e.season_id
+              JOIN ${schema.shows} sh ON sh.id = s.show_id
+              WHERE sh.media_item_id = ${schema.mediaItems.id}
+              AND s.number > 0
+              AND e.id NOT IN (
+                SELECT uep.episode_id FROM ${schema.userEpisodeProgress} uep
+                WHERE uep.user_id = ${userId}
+              )
+              AND (
+                s.number > (SELECT sn FROM last_watched)
+                OR (s.number = (SELECT sn FROM last_watched) AND e.number > (SELECT en FROM last_watched))
+              )
+              ORDER BY s.number ASC, e.number ASC
+              LIMIT 1
+            ) ELSE NULL END
+          `.as('continue_episode'),
         })
         .from(schema.userMediaState)
         .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
@@ -605,6 +684,14 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           poster: ImageMapper.toPoster(row.media.posterPath),
           releaseDate: row.media.releaseDate,
         },
+        progressSummary:
+          row.progressTotal !== null && row.progressWatched !== null
+            ? { watched: row.progressWatched, total: row.progressTotal }
+            : null,
+        continuePoint:
+          row.continueSeasonNumber !== null && row.continueEpisodeNumber !== null
+            ? { season: row.continueSeasonNumber, episode: row.continueEpisodeNumber }
+            : null,
       };
     } catch (error) {
       this.logger.error(`findOneWithMedia failed: ${error.message}`, error.stack);

@@ -574,14 +574,17 @@
       "watching": "Watching",
       "completed": "Completed",
       "planned": "Planned",
-      "dropped": "Dropped"
+      "dropped": "Dropped",
+      "paused": "Paused"
     },
     "actions": {
       "remove": "Remove",
       "moveToForLater": "Move to For Later",
       "moveToConsidering": "Move to Considering",
       "subscribe": "Notify",
-      "unsubscribe": "Unsubscribe"
+      "unsubscribe": "Unsubscribe",
+      "pause": "Pause",
+      "resume": "Resume"
     },
     "toast": {
       "saved": "Saved",
@@ -645,12 +648,17 @@
     "title": "Activity",
     "tabs": {
       "watching": "Watching",
+      "paused": "Paused",
       "history": "Completed"
     },
     "empty": {
       "watching": {
         "title": "Not watching anything yet",
         "description": "Start watching a show and it will appear here"
+      },
+      "paused": {
+        "title": "No paused content",
+        "description": "Pause a show if you want to come back to it later"
       },
       "history": {
         "title": "History is empty",
@@ -661,7 +669,9 @@
       "addedToWatching": "Added to Watching",
       "completed": "Show marked as completed",
       "backToWatching": "Back to Watching",
-      "removedFromActivity": "Removed from activity"
+      "removedFromActivity": "Removed from activity",
+      "paused": "Paused",
+      "resumed": "Resumed watching"
     }
   },
   "notifications": {

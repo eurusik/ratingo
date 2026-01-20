@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import {
   USER_MEDIA_HISTORY_STATES,
+  USER_MEDIA_STATE,
   USER_MEDIA_WATCHLIST_STATES,
 } from '../domain/entities/user-media-state.entity';
 import {
@@ -94,6 +95,27 @@ export class MeListsService {
     const [total, data] = await Promise.all([
       this.userMediaService.countActivityWithMedia(userId),
       this.userMediaService.listActivityWithMedia(userId, limit, offset),
+    ]);
+
+    return { total, data };
+  }
+
+  /**
+   * Gets paused items for the current user.
+   *
+   * @param {string} userId - User identifier
+   * @param {number} limit - Page size
+   * @param {number} offset - Offset
+   * @param {UserMediaListSort} sort - Sort order
+   * @returns {Promise<{ total: number; data: any }>} Total count and page items
+   */
+  async getPaused(userId: string, limit: number, offset: number, sort?: UserMediaListSort) {
+    const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
+    const options = { states: [USER_MEDIA_STATE.PAUSED], sort: effectiveSort };
+
+    const [total, data] = await Promise.all([
+      this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.PAUSED] }),
+      this.userMediaService.listWithMedia(userId, limit, offset, options),
     ]);
 
     return { total, data };

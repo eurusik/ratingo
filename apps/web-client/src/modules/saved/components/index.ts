@@ -10,3 +10,4 @@ export { SubscriptionsList } from './subscriptions-list';
 export { MeListItemCard } from './me-list-item-card';
 export { Watchlist } from './watchlist';
 export { HistoryList } from './history-list';
+export { PausedList } from './paused-list';

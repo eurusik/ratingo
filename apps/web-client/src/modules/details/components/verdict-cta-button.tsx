@@ -74,7 +74,6 @@ interface VerdictCtaButtonProps {
   dict: ReturnType<typeof getDictionary>;
   /** Callback for save/unsave action. */
   onSave?: () => void;
-  /** Media type for subscription trigger label. */
   /** Specific subscription trigger to show. Null means no subscription available. */
   subscriptionTrigger?: SubscriptionTrigger | null;
   /** Reason why subscription is unavailable (for tooltip). */
@@ -117,17 +116,7 @@ export function VerdictCtaButton({
     );
   }
   const handleClick = () => {
-    switch (primaryCta) {
-      case PRIMARY_CTA.SAVE:
-        onSave?.();
-        break;
-      case PRIMARY_CTA.CONTINUE:
-        // TODO: Navigate to continue point
-        break;
-      case PRIMARY_CTA.OPEN:
-        // TODO: Navigate to details/episodes
-        break;
-    }
+    onSave?.();
   };
 
   // CTA config based on primaryCta type
@@ -178,8 +167,6 @@ export function VerdictCtaButton({
       'bg-gradient-to-r from-orange-500/10 via-transparent to-transparent border-orange-500/20 hover:border-orange-500/30 hover:from-orange-500/15',
   };
 
-  // Subscription label based on trigger (passed from parent)
-  // If subscriptionTrigger is null, subscription is not available for this item
   const subscriptionLabel = subscriptionTrigger
     ? dict.saved.trigger.label[subscriptionTrigger]
     : null;

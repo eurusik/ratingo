@@ -1,0 +1,1 @@
+ALTER TYPE "public"."user_media_status" ADD VALUE 'paused';

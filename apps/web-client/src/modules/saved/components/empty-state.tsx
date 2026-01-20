@@ -2,10 +2,10 @@
  * Empty state component for saved lists.
  */
 
-import { Bookmark, HelpCircle, Bell, ListVideo, History } from 'lucide-react';
+import { Bookmark, HelpCircle, Bell, ListVideo, History, Pause } from 'lucide-react';
 
 interface EmptyStateProps {
-  type: 'forLater' | 'considering' | 'notifications' | 'watchlist' | 'history';
+  type: 'forLater' | 'considering' | 'notifications' | 'watchlist' | 'history' | 'paused';
   title: string;
   description: string;
 }
@@ -16,6 +16,7 @@ const icons = {
   notifications: Bell,
   watchlist: ListVideo,
   history: History,
+  paused: Pause,
 };
 
 export function EmptyState({ type, title, description }: EmptyStateProps) {

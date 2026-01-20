@@ -574,14 +574,17 @@
       "watching": "Дивлюсь",
       "completed": "Переглянуто",
       "planned": "Заплановано",
-      "dropped": "Покинуто"
+      "dropped": "Покинуто",
+      "paused": "На паузі"
     },
     "actions": {
       "remove": "Видалити",
       "moveToForLater": "Перемістити в «На потім»",
       "moveToConsidering": "Перемістити в «Роздумую»",
       "subscribe": "Сповістити",
-      "unsubscribe": "Відписатись"
+      "unsubscribe": "Відписатись",
+      "pause": "На паузу",
+      "resume": "Продовжити"
     },
     "toast": {
       "saved": "Збережено",
@@ -645,12 +648,17 @@
     "title": "Активність",
     "tabs": {
       "watching": "Дивлюсь",
+      "paused": "На паузі",
       "history": "Переглянуті"
     },
     "empty": {
       "watching": {
         "title": "Ще нічого не дивитесь",
         "description": "Почніть дивитись серіал і він з'явиться тут"
+      },
+      "paused": {
+        "title": "Немає контенту на паузі",
+        "description": "Поставте серіал на паузу, якщо хочете повернутись пізніше"
       },
       "history": {
         "title": "Історія порожня",
@@ -661,7 +669,9 @@
       "addedToWatching": "Додано до «Дивлюсь»",
       "completed": "Серіал позначено як переглянутий",
       "backToWatching": "Повернено до «Дивлюсь»",
-      "removedFromActivity": "Видалено з активності"
+      "removedFromActivity": "Видалено з активності",
+      "paused": "Поставлено на паузу",
+      "resumed": "Продовжено перегляд"
     }
   },
   "notifications": {

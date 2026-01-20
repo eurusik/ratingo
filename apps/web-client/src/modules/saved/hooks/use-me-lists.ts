@@ -1,11 +1,11 @@
 /**
- * Hooks for managing activity lists (watching/completed).
+ * Hooks for managing activity lists (watching/completed/paused).
  * Uses React Query for caching.
  */
 
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { meListsApi, USER_MEDIA_STATE } from '@/core/api/me-lists.client';
 import { queryKeys } from '@/core/query/keys';
 
@@ -54,6 +54,61 @@ export function useCompleted(enabled = true) {
         }
       : undefined,
   };
+}
+
+/**
+ * Get paused items.
+ */
+export function usePaused(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.meLists.paused,
+    queryFn: () => meListsApi.getPaused(),
+    enabled,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+/**
+ * Mutation hook to pause a media item.
+ */
+export function usePauseMedia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (mediaItemId: string) => meListsApi.pauseMedia(mediaItemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.history });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.paused });
+    },
+  });
+}
+
+/**
+ * Mutation hook to resume a paused media item.
+ */
+export function useResumeMedia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (mediaItemId: string) => meListsApi.resumeMedia(mediaItemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.history });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.paused });
+    },
+  });
+}
+
+/**
+ * Get user's media state for a specific item.
+ * Returns null if user has no state for this media.
+ */
+export function useUserMediaState(mediaItemId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.userMedia.state(mediaItemId),
+    queryFn: () => meListsApi.getState(mediaItemId),
+    enabled: enabled && !!mediaItemId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 }
 
 // Legacy exports for backwards compatibility

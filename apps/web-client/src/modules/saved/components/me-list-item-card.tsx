@@ -1,18 +1,20 @@
 /**
  * Card component for watchlist and history items.
- * Shows state badge, progress, and rating.
+ * Clean design: info layer + action layer separated.
  */
 
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import Image from 'next/image';
-import { Star, Clock, Play, CheckCircle, XCircle, Calendar } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Pause, Clock } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/shared/utils';
 import { useTranslation } from '@/shared/i18n';
 import type { MeUserMediaListItemDto } from '@/core/api/me-lists.client';
-import { SeasonProgressRing } from '@/modules/details/components/season-progress-ring';
+import { USER_MEDIA_STATE } from '@/core/api/me-lists.client';
+import { usePauseMedia, useResumeMedia } from '../hooks/use-me-lists';
 
 type UserMediaState = MeUserMediaListItemDto['state'];
 
@@ -22,65 +24,46 @@ interface MeListItemCardProps {
 
 const stateConfig: Record<
   UserMediaState,
-  { icon: typeof Play; colorClass: string; bgClass: string }
+  { icon: typeof Play; label: string; colorClass: string; bgClass: string }
 > = {
   watching: {
     icon: Play,
+    label: 'watching',
     colorClass: 'text-blue-400',
     bgClass: 'bg-blue-500/10',
   },
   completed: {
     icon: CheckCircle,
+    label: 'completed',
     colorClass: 'text-emerald-400',
     bgClass: 'bg-emerald-500/10',
   },
   planned: {
     icon: Clock,
+    label: 'planned',
     colorClass: 'text-amber-400',
     bgClass: 'bg-amber-500/10',
   },
   dropped: {
     icon: XCircle,
+    label: 'dropped',
     colorClass: 'text-red-400',
     bgClass: 'bg-red-500/10',
   },
+  paused: {
+    icon: Pause,
+    label: 'paused',
+    colorClass: 'text-orange-400',
+    bgClass: 'bg-orange-500/10',
+  },
 };
-
-function formatProgress(progress: Record<string, unknown> | null): string | null {
-  if (!progress) return null;
-
-  // Handle seasons progress format: { seasons: { "1": 3, "2": 5 } }
-  const seasons = progress.seasons as Record<string, number> | undefined;
-  if (seasons) {
-    const seasonNumbers = Object.keys(seasons)
-      .map(Number)
-      .sort((a, b) => b - a);
-    if (seasonNumbers.length > 0) {
-      const latestSeason = seasonNumbers[0];
-      const episodeCount = seasons[latestSeason.toString()];
-      return `S${latestSeason}:E${episodeCount}`;
-    }
-  }
-
-  return null;
-}
-
-function formatRelativeDate(dateString: string, dict: Record<string, string>): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return dict.today;
-  if (diffDays === 1) return dict.yesterday;
-  if (diffDays < 30) return dict.daysAgo.replace('{count}', String(diffDays));
-
-  return date.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
-}
 
 export function MeListItemCard({ item }: MeListItemCardProps) {
   const { dict } = useTranslation();
+  const router = useRouter();
   const media = item.mediaSummary;
+  const pauseMutation = usePauseMedia();
+  const resumeMutation = useResumeMedia();
 
   if (!media) return null;
 
@@ -90,19 +73,63 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
 
   const stateInfo = stateConfig[item.state];
   const StateIcon = stateInfo.icon;
-  const stateLabel = dict.saved.states?.[item.state as keyof typeof dict.saved.states] ?? item.state;
-
-  const progress = formatProgress(item.progress as Record<string, unknown> | null);
+  const stateLabel = dict.saved?.states?.[item.state as keyof typeof dict.saved.states] ?? item.state;
   const typeLabel = media.type === 'movie' ? dict.mediaType.movie : dict.mediaType.show;
 
+  const hasProgress = item.progressSummary && media.type === 'show';
+  const watched = item.progressSummary?.watched ?? 0;
+  const total = item.progressSummary?.total ?? 0;
+  const progressPercent = total > 0 ? (watched / total) * 100 : 0;
+
+  const canPause = item.state === USER_MEDIA_STATE.WATCHING;
+  const canResume = item.state === USER_MEDIA_STATE.PAUSED;
+  const hasAction = canPause || canResume;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on a button
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    router.push(href as Route);
+  };
+
+  const handlePause = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    pauseMutation.mutate(item.mediaItemId, {
+      onSuccess: () => {
+        toast.success(dict.activity?.toast?.paused ?? 'Поставлено на паузу');
+      },
+      onError: () => {
+        toast.error('Помилка');
+      },
+    });
+  };
+
+  const handleResume = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    resumeMutation.mutate(item.mediaItemId, {
+      onSuccess: () => {
+        toast.success(dict.activity?.toast?.resumed ?? 'Продовжено перегляд');
+      },
+      onError: () => {
+        toast.error('Помилка');
+      },
+    });
+  };
+
   return (
-    <Link
-      href={href as Route}
-      className="group relative flex gap-3 p-3 rounded-lg bg-cinema-card/50 hover:bg-cinema-elevated/50 transition-colors"
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={(e) => e.key === 'Enter' && !(e.target as HTMLElement).closest('button') && router.push(href as Route)}
+      className="group relative flex gap-4 p-4 rounded-xl bg-cinema-card/50 hover:bg-cinema-elevated/50 transition-colors cursor-pointer"
     >
       {/* Poster */}
       <div className="shrink-0">
-        <div className="relative w-16 h-24 rounded-md overflow-hidden bg-cinema-elevated">
+        <div className="relative w-16 h-24 rounded-lg overflow-hidden bg-cinema-elevated">
           {poster?.small ? (
             <Image src={poster.small} alt={media.title} fill sizes="64px" className="object-cover" />
           ) : (
@@ -113,66 +140,63 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
         </div>
       </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-        <div>
-          {/* Title row with progress ring */}
-          <div className="flex items-start gap-2">
-            <h3 className="font-medium text-cinema-text-primary truncate group-hover:text-white transition-colors flex-1 min-w-0">
-              {media.title}
-            </h3>
-            {/* Progress ring for shows */}
-            {item.progressSummary && media.type === 'show' && (
-              <SeasonProgressRing
-                watched={item.progressSummary.watched}
-                total={item.progressSummary.total}
-                size="md"
-              />
-            )}
-          </div>
-          <p className="text-sm text-cinema-text-muted">
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Info layer */}
+        <div className="flex-1">
+          <h3 className="font-medium text-cinema-text-primary truncate group-hover:text-white transition-colors">
+            {media.title}
+          </h3>
+          <p className="text-sm text-cinema-text-muted mt-0.5">
             {typeLabel}
-            {year && ` • ${year}`}
+            {year && ` · ${year}`}
+            {` · `}
+            <span className={stateInfo.colorClass}>{stateLabel}</span>
           </p>
 
-          {/* State badge */}
-          <div className="flex items-center gap-2 mt-2">
-            <span
-              className={cn(
-                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
-                stateInfo.bgClass,
-                stateInfo.colorClass,
-              )}
-            >
-              <StateIcon className="w-3 h-3" />
-              {stateLabel}
-            </span>
+          {/* Progress bar for shows */}
+          {hasProgress && (
+            <div className="flex items-center gap-2 mt-2">
+              <div className="flex-1 h-1 bg-cinema-elevated rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 rounded-full transition-all"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <span className="text-xs text-cinema-text-muted tabular-nums">
+                {watched}/{total}
+              </span>
+            </div>
+          )}
+        </div>
 
-            {/* Progress for shows */}
-            {progress && media.type === 'show' && (
-              <span className="text-xs text-cinema-text-muted">{progress}</span>
+        {/* Action layer - only show if there's an action */}
+        {hasAction && (
+          <div className="flex items-center justify-end mt-3">
+            {canPause && (
+              <button
+                onClick={handlePause}
+                disabled={pauseMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-cinema-text-secondary hover:text-cinema-text-primary hover:bg-cinema-elevated/50 transition-colors disabled:opacity-50"
+              >
+                <Pause className="w-3.5 h-3.5" />
+                {dict.saved?.actions?.pause ?? 'На паузу'}
+              </button>
+            )}
+
+            {canResume && (
+              <button
+                onClick={handleResume}
+                disabled={resumeMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors disabled:opacity-50"
+              >
+                <Play className="w-3.5 h-3.5" />
+                {dict.saved?.actions?.resume ?? 'Продовжити'}
+              </button>
             )}
           </div>
-        </div>
-
-        {/* Bottom row: rating and date */}
-        <div className="flex items-center gap-3 mt-2 text-xs text-cinema-text-disabled">
-          {item.rating !== null && (
-            <span className="flex items-center gap-1">
-              <Star className="w-3 h-3 text-amber-500" fill="currentColor" />
-              {item.rating}
-            </span>
-          )}
-          <span className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            {formatRelativeDate(item.updatedAt, {
-              today: dict.reviews?.card?.today ?? 'сьогодні',
-              yesterday: dict.reviews?.card?.yesterday ?? 'вчора',
-              daysAgo: dict.reviews?.card?.daysAgo ?? '{count} дн. тому',
-            })}
-          </span>
-        </div>
+        )}
       </div>
-    </Link>
+    </div>
   );
 }

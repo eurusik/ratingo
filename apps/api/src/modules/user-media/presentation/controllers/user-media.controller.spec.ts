@@ -9,6 +9,8 @@ describe('UserMediaController', () => {
     setState: jest.fn(),
     listWithMedia: jest.fn(),
     listContinueWithMedia: jest.fn(),
+    pauseMedia: jest.fn(),
+    resumeMedia: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -74,5 +76,47 @@ describe('UserMediaController', () => {
 
     expect(userMediaService.listContinueWithMedia).toHaveBeenCalledWith('u1', 10, 5);
     expect(result).toEqual([{ id: 's1' }]);
+  });
+
+  describe('pauseMedia', () => {
+    it('should pause media and return updated state with media', async () => {
+      userMediaService.pauseMedia.mockResolvedValue({ id: 's1', state: 'paused' } as any);
+      userMediaService.getStateWithMedia.mockResolvedValue({
+        id: 's1',
+        state: 'paused',
+        mediaSummary: { poster: null },
+      } as any);
+
+      const result = await controller.pauseMedia({ id: 'u1' }, 'm1');
+
+      expect(userMediaService.pauseMedia).toHaveBeenCalledWith('u1', 'm1');
+      expect(userMediaService.getStateWithMedia).toHaveBeenCalledWith('u1', 'm1');
+      expect(result).toEqual({
+        id: 's1',
+        state: 'paused',
+        mediaSummary: { poster: null },
+      });
+    });
+  });
+
+  describe('resumeMedia', () => {
+    it('should resume media and return updated state with media', async () => {
+      userMediaService.resumeMedia.mockResolvedValue({ id: 's1', state: 'watching' } as any);
+      userMediaService.getStateWithMedia.mockResolvedValue({
+        id: 's1',
+        state: 'watching',
+        mediaSummary: { poster: null },
+      } as any);
+
+      const result = await controller.resumeMedia({ id: 'u1' }, 'm1');
+
+      expect(userMediaService.resumeMedia).toHaveBeenCalledWith('u1', 'm1');
+      expect(userMediaService.getStateWithMedia).toHaveBeenCalledWith('u1', 'm1');
+      expect(result).toEqual({
+        id: 's1',
+        state: 'watching',
+        mediaSummary: { poster: null },
+      });
+    });
   });
 });

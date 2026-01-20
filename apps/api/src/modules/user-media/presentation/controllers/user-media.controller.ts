@@ -6,10 +6,12 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
   ApiOkResponse,
@@ -131,5 +133,48 @@ export class UserMediaController {
     const parsedLimit = Number(limit) || DEFAULT_PAGE_SIZE;
     const parsedOffset = Number(offset) || 0;
     return this.userMediaService.listWithMedia(user.id, parsedLimit, parsedOffset);
+  }
+
+  /**
+   * Pauses a media item.
+   *
+   * Changes state from 'watching' to 'paused'.
+   *
+   * @param {string} mediaItemId - Media item identifier
+   * @returns {Promise<any>} Updated state with media summary
+   */
+  @ApiParam({ name: 'mediaItemId', type: String, description: 'Media item UUID' })
+  @ApiOkResponse({ description: 'Media item paused', type: UserMediaStateDto })
+  @ApiBadRequestResponse({ description: 'Cannot pause: item is not currently being watched' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiOperation({ summary: 'Pause a media item (auth: Bearer)' })
+  @Post(':mediaItemId/pause')
+  @HttpCode(HttpStatus.OK)
+  async pauseMedia(@CurrentUser() user: { id: string }, @Param('mediaItemId') mediaItemId: string) {
+    await this.userMediaService.pauseMedia(user.id, mediaItemId);
+    return this.userMediaService.getStateWithMedia(user.id, mediaItemId);
+  }
+
+  /**
+   * Resumes a paused media item.
+   *
+   * Changes state from 'paused' to 'watching'.
+   *
+   * @param {string} mediaItemId - Media item identifier
+   * @returns {Promise<any>} Updated state with media summary
+   */
+  @ApiParam({ name: 'mediaItemId', type: String, description: 'Media item UUID' })
+  @ApiOkResponse({ description: 'Media item resumed', type: UserMediaStateDto })
+  @ApiBadRequestResponse({ description: 'Cannot resume: item is not paused' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiOperation({ summary: 'Resume a paused media item (auth: Bearer)' })
+  @Post(':mediaItemId/resume')
+  @HttpCode(HttpStatus.OK)
+  async resumeMedia(
+    @CurrentUser() user: { id: string },
+    @Param('mediaItemId') mediaItemId: string,
+  ) {
+    await this.userMediaService.resumeMedia(user.id, mediaItemId);
+    return this.userMediaService.getStateWithMedia(user.id, mediaItemId);
   }
 }

@@ -148,6 +148,19 @@ describe('EpisodeProgressService', () => {
         expect(mockSavedItemsService.unsaveItem).not.toHaveBeenCalled();
       });
 
+      it('should NOT change state when marking episode and current state is "paused" (user must explicitly resume)', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 5, totalCount: 10, watchedEpisodeIds: [] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.PAUSED });
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockUserMediaService.setState).not.toHaveBeenCalled();
+        expect(mockSavedItemsService.unsaveItem).not.toHaveBeenCalled();
+      });
+
       it('should auto-complete when all episodes are watched', async () => {
         mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
         mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
@@ -191,6 +204,22 @@ describe('EpisodeProgressService', () => {
         await service.markWatched('user-1', 'ep-1');
 
         expect(mockUserMediaService.setState).not.toHaveBeenCalled();
+      });
+
+      it('should auto-complete when all episodes are watched while paused', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 10, totalCount: 10, watchedEpisodeIds: [] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.PAUSED });
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockUserMediaService.setState).toHaveBeenCalledWith({
+          userId: 'user-1',
+          mediaItemId: 'media-1',
+          state: USER_MEDIA_STATE.COMPLETED,
+        });
       });
     });
   });

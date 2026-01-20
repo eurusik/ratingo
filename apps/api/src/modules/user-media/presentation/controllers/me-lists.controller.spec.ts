@@ -46,6 +46,7 @@ describe('MeListsController', () => {
       getWatchlist: jest.fn(),
       getHistory: jest.fn(),
       getActivity: jest.fn(),
+      getPaused: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -321,6 +322,66 @@ describe('MeListsController', () => {
       expect(result.data).toEqual([]);
       expect(result.meta.hasMore).toBe(false);
       expect(result.meta.total).toBe(0);
+    });
+  });
+
+  describe('paused', () => {
+    it('should return paginated paused list', async () => {
+      const query = { limit: 10, offset: 0, sort: USER_MEDIA_LIST_SORT.RECENT };
+      const mockPausedItem = {
+        ...mockUserMediaWithSummary,
+        state: 'paused' as const,
+        progress: { seasons: { 1: 5 } },
+      };
+      const mockServiceResponse = {
+        total: 3,
+        data: [mockPausedItem],
+      };
+
+      meListsService.getPaused.mockResolvedValue(mockServiceResponse);
+
+      const result = await controller.paused(mockUser, query);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].state).toBe('paused');
+      expect(result.meta).toEqual({
+        count: 1,
+        total: 3,
+        limit: 10,
+        offset: 0,
+        hasMore: true,
+      });
+
+      expect(meListsService.getPaused).toHaveBeenCalledWith(
+        'user-1',
+        10,
+        0,
+        USER_MEDIA_LIST_SORT.RECENT,
+      );
+    });
+
+    it('should use default pagination values', async () => {
+      const query = {};
+      const mockServiceResponse = { total: 0, data: [] };
+
+      meListsService.getPaused.mockResolvedValue(mockServiceResponse);
+
+      await controller.paused(mockUser, query);
+
+      expect(meListsService.getPaused).toHaveBeenCalledWith('user-1', 20, 0, undefined);
+    });
+
+    it('should handle empty paused list', async () => {
+      const query = { limit: 10, offset: 0 };
+      const mockServiceResponse = { total: 0, data: [] };
+
+      meListsService.getPaused.mockResolvedValue(mockServiceResponse);
+
+      const result = await controller.paused(mockUser, query);
+
+      expect(result.data).toEqual([]);
+      expect(result.meta.total).toBe(0);
+      expect(result.meta.hasMore).toBe(false);
     });
   });
 

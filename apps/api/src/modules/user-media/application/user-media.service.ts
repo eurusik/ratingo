@@ -223,4 +223,83 @@ export class UserMediaService {
   async getStats(userId: string): Promise<UserMediaStats> {
     return this.repo.getStats(userId);
   }
+
+  /**
+   * Pauses a media item.
+   *
+   * Can only pause items that are currently being watched (have progress).
+   *
+   * @param {string} userId - User identifier
+   * @param {string} mediaItemId - Media item identifier
+   * @returns {Promise<UserMediaState>} Updated state
+   * @throws {BadRequestException} When item has no progress or is not in watching state
+   */
+  async pauseMedia(userId: string, mediaItemId: string): Promise<UserMediaState> {
+    const currentState = await this.repo.findOne(userId, mediaItemId);
+
+    if (!currentState) {
+      throw new BadRequestException('Cannot pause: no media state found');
+    }
+
+    if (currentState.state !== USER_MEDIA_STATE.WATCHING) {
+      throw new BadRequestException('Cannot pause: item is not currently being watched');
+    }
+
+    return this.repo.upsert({
+      userId,
+      mediaItemId,
+      state: USER_MEDIA_STATE.PAUSED,
+    });
+  }
+
+  /**
+   * Resumes a paused media item.
+   *
+   * @param {string} userId - User identifier
+   * @param {string} mediaItemId - Media item identifier
+   * @returns {Promise<UserMediaState>} Updated state
+   * @throws {BadRequestException} When item is not paused
+   */
+  async resumeMedia(userId: string, mediaItemId: string): Promise<UserMediaState> {
+    const currentState = await this.repo.findOne(userId, mediaItemId);
+
+    if (!currentState) {
+      throw new BadRequestException('Cannot resume: no media state found');
+    }
+
+    if (currentState.state !== USER_MEDIA_STATE.PAUSED) {
+      throw new BadRequestException('Cannot resume: item is not paused');
+    }
+
+    return this.repo.upsert({
+      userId,
+      mediaItemId,
+      state: USER_MEDIA_STATE.WATCHING,
+    });
+  }
+
+  /**
+   * Lists paused items with media summary.
+   *
+   * @param {string} userId - User identifier
+   * @param {number} limit - Page size
+   * @param {number} offset - Offset
+   * @returns {Promise<Array>} Paused items with media summary
+   */
+  async listPausedWithMedia(userId: string, limit = DEFAULT_PAGE_SIZE, offset = 0) {
+    const items = await this.repo.listWithMedia(userId, limit, offset, {
+      states: [USER_MEDIA_STATE.PAUSED],
+    });
+    return this.cards.enrichUserMedia(items, { context: CARD_LIST_CONTEXT.USER_LIBRARY });
+  }
+
+  /**
+   * Counts paused items.
+   *
+   * @param {string} userId - User identifier
+   * @returns {Promise<number>} Total paused items
+   */
+  async countPausedWithMedia(userId: string): Promise<number> {
+    return this.repo.countWithMedia(userId, { states: [USER_MEDIA_STATE.PAUSED] });
+  }
 }
