@@ -560,7 +560,8 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
                   WHERE uep.user_id = ${userId}
                 )
                 AND (
-                  s.number > (SELECT sn FROM last_watched)
+                  NOT EXISTS (SELECT 1 FROM last_watched)
+                  OR s.number > (SELECT sn FROM last_watched)
                   OR (s.number = (SELECT sn FROM last_watched) AND e.number > (SELECT en FROM last_watched))
                 )
                 ORDER BY s.number ASC, e.number ASC
