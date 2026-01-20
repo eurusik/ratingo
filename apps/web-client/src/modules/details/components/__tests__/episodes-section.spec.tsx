@@ -17,6 +17,11 @@ jest.mock('@/core/query', () => ({
   useMarkMultipleWatched: () => ({ mutate: jest.fn(), isPending: false }),
 }));
 
+// Mock user media state hook
+jest.mock('@/modules/saved/hooks/use-me-lists', () => ({
+  useUserMediaState: () => ({ data: null }),
+}));
+
 // Mock next/image
 jest.mock('next/image', () => ({
   __esModule: true,

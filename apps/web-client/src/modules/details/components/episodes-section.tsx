@@ -39,7 +39,7 @@ export function EpisodesSection({
 }: EpisodesSectionProps) {
   const { isAuthenticated } = useAuth();
 
-  const { data: userMediaState } = useUserMediaState(mediaItemId || '', isAuthenticated && !!mediaItemId);
+  const { data: userMediaState } = useUserMediaState(mediaItemId ?? '', isAuthenticated && !!mediaItemId);
   const continueSeasonNumber = userMediaState?.continuePoint?.season;
 
   // Filter out seasons with no episodes and season 0 (specials)
@@ -57,12 +57,12 @@ export function EpisodesSection({
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasAppliedContinue, setHasAppliedContinue] = useState(false);
 
-  // Update selected season when continuePoint loads
   useEffect(() => {
     if (continueSeasonNumber && !hasAppliedContinue && validSeasons.length > 0) {
       const targetSeason = validSeasons.find((s) => s.number === continueSeasonNumber);
       if (targetSeason) {
         setSelectedSeason(targetSeason);
+        setIsExpanded(true);
         setHasAppliedContinue(true);
       }
     }
