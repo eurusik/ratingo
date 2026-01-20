@@ -1,6 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { SavedItemsService } from '../../user-actions/application/saved-items.service';
+import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
 import {
   EPISODE_PROGRESS_REPOSITORY,
@@ -28,6 +30,10 @@ describe('EpisodeProgressService', () => {
     deleteState: jest.fn(),
   };
 
+  const mockSavedItemsService = {
+    unsaveItem: jest.fn(),
+  };
+
   const episodeInfo: EpisodeMediaInfo = {
     episodeId: 'ep-1',
     showId: 'show-1',
@@ -42,6 +48,7 @@ describe('EpisodeProgressService', () => {
         EpisodeProgressService,
         { provide: EPISODE_PROGRESS_REPOSITORY, useValue: mockEpisodeProgressRepo },
         { provide: UserMediaService, useValue: mockUserMediaService },
+        { provide: SavedItemsService, useValue: mockSavedItemsService },
       ],
     }).compile();
 
@@ -85,6 +92,12 @@ describe('EpisodeProgressService', () => {
           mediaItemId: 'media-1',
           state: USER_MEDIA_STATE.WATCHING,
         });
+        expect(mockSavedItemsService.unsaveItem).toHaveBeenCalledWith(
+          'user-1',
+          'media-1',
+          SAVED_ITEM_LIST.FOR_LATER,
+          'auto_started_watching',
+        );
       });
 
       it('should set state to "watching" when marking episode and current state is "planned"', async () => {
@@ -101,6 +114,12 @@ describe('EpisodeProgressService', () => {
           mediaItemId: 'media-1',
           state: USER_MEDIA_STATE.WATCHING,
         });
+        expect(mockSavedItemsService.unsaveItem).toHaveBeenCalledWith(
+          'user-1',
+          'media-1',
+          SAVED_ITEM_LIST.FOR_LATER,
+          'auto_started_watching',
+        );
       });
 
       it('should NOT change state when marking episode and current state is "watching"', async () => {
@@ -113,6 +132,7 @@ describe('EpisodeProgressService', () => {
         await service.markWatched('user-1', 'ep-1');
 
         expect(mockUserMediaService.setState).not.toHaveBeenCalled();
+        expect(mockSavedItemsService.unsaveItem).not.toHaveBeenCalled();
       });
 
       it('should NOT change state when marking episode and current state is "dropped"', async () => {
@@ -125,6 +145,7 @@ describe('EpisodeProgressService', () => {
         await service.markWatched('user-1', 'ep-1');
 
         expect(mockUserMediaService.setState).not.toHaveBeenCalled();
+        expect(mockSavedItemsService.unsaveItem).not.toHaveBeenCalled();
       });
 
       it('should auto-complete when all episodes are watched', async () => {

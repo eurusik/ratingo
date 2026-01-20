@@ -4,7 +4,7 @@
  * Circular checkbox for marking episodes as watched.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/shared/utils';
 
@@ -29,6 +29,15 @@ export function EpisodeCheckbox({
   highlightOnGroupHover = false,
 }: EpisodeCheckboxProps) {
   const [isAnimating, setIsAnimating] = useState(false);
+  const prevCheckedRef = useRef(checked);
+
+  // Trigger animation when checked changes from false to true (from any source)
+  useEffect(() => {
+    if (checked && !prevCheckedRef.current) {
+      setIsAnimating(true);
+    }
+    prevCheckedRef.current = checked;
+  }, [checked]);
 
   // Clear animation after it completes
   useEffect(() => {
@@ -41,7 +50,6 @@ export function EpisodeCheckbox({
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!disabled && !isLoading) {
-      setIsAnimating(true);
       onToggle();
     }
   };
@@ -50,7 +58,6 @@ export function EpisodeCheckbox({
     if ((e.key === 'Enter' || e.key === ' ') && !disabled && !isLoading) {
       e.preventDefault();
       e.stopPropagation();
-      setIsAnimating(true);
       onToggle();
     }
   };
@@ -70,7 +77,7 @@ export function EpisodeCheckbox({
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-cinema-page',
         checked
           ? 'bg-green-500 border-green-500 text-white hover:bg-green-400 hover:border-green-400'
-          : 'border-cinema-borderSoft/60 bg-transparent hover:border-cinema-text-secondary hover:bg-white/5',
+          : 'border-cinema-text-disabled bg-transparent hover:border-cinema-text-secondary hover:bg-white/5',
         // Group hover - subtle ring to indicate "this is the control"
         highlightOnGroupHover && !checked && 'group-hover:border-cinema-text-muted group-hover:ring-2 group-hover:ring-cinema-accent/20',
         highlightOnGroupHover && checked && 'group-hover:ring-2 group-hover:ring-green-500/30',

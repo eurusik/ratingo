@@ -3,6 +3,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
 import { AuthModule } from '../auth/auth.module';
 import { CardsModule } from '../shared/cards/cards.module';
+import { UserActionsModule } from '../user-actions/user-actions.module';
 
 import { EpisodeProgressService } from './application/episode-progress.service';
 import { MeListsService } from './application/me-lists.service';
@@ -19,7 +20,7 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
  * User Media module wiring.
  */
 @Module({
-  imports: [DatabaseModule, forwardRef(() => AuthModule), CardsModule],
+  imports: [DatabaseModule, forwardRef(() => AuthModule), CardsModule, UserActionsModule],
   providers: [
     UserMediaService,
     MeListsService,

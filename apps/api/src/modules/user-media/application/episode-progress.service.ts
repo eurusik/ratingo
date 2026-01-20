@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
+import { SavedItemsService } from '../../user-actions/application/saved-items.service';
+import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
 import {
   EPISODE_PROGRESS_REPOSITORY,
@@ -24,6 +26,7 @@ export class EpisodeProgressService {
     @Inject(EPISODE_PROGRESS_REPOSITORY)
     private readonly episodeProgressRepo: IEpisodeProgressRepository,
     private readonly userMediaService: UserMediaService,
+    private readonly savedItemsService: SavedItemsService,
   ) {}
 
   /**
@@ -81,6 +84,14 @@ export class EpisodeProgressService {
         mediaItemId: episodeInfo.mediaItemId,
         state: USER_MEDIA_STATE.WATCHING,
       });
+
+      // Remove from "for_later" saved list since user started watching
+      await this.savedItemsService.unsaveItem(
+        userId,
+        episodeInfo.mediaItemId,
+        SAVED_ITEM_LIST.FOR_LATER,
+        'auto_started_watching',
+      );
 
       this.logger.log(
         `Auto-set user_media_state to 'watching' for user=${userId}, media=${episodeInfo.mediaItemId}`,

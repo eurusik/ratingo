@@ -138,6 +138,10 @@ export function useToggleEpisodeWatched(showId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.meLists.history,
       });
+      // Invalidate saved items (for_later is auto-removed when starting to watch)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.savedItems.all,
+      });
     },
   });
 }
@@ -215,6 +219,10 @@ export function useMarkMultipleWatched(showId: string) {
       // Invalidate activity lists (watching/completed may change)
       queryClient.invalidateQueries({
         queryKey: queryKeys.meLists.history,
+      });
+      // Invalidate saved items (for_later is auto-removed when starting to watch)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.savedItems.all,
       });
     },
   });
