@@ -92,6 +92,13 @@
       "when": 1768918133989,
       "tag": "0012_add-paused-state",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1768930461185,
+      "tag": "0013_pale_manta",
+      "breakpoints": true
     }
   ]
 }

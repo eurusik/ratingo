@@ -364,6 +364,7 @@ export const episodes = pgTable(
   },
   (t) => ({
     seasonEpisodeIdx: uniqueIndex('episodes_season_number_uniq').on(t.seasonId, t.number),
+    seasonIdx: index('episodes_season_idx').on(t.seasonId),
     airDateIdx: index('episodes_air_date_idx').on(t.airDate),
     showIdx: index('episodes_show_idx').on(t.showId),
     showAirDateIdx: index('episodes_show_air_date_idx').on(t.showId, t.airDate),

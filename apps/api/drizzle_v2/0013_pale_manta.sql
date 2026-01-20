@@ -1,0 +1,1 @@
+CREATE INDEX "episodes_season_idx" ON "episodes" USING btree ("season_id");

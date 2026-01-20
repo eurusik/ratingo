@@ -3,6 +3,34 @@ import { type MediaType } from '../../../../common/enums/media-type.enum';
 import { type UserMediaState } from '../entities/user-media-state.entity';
 
 /**
+ * Media summary attached to user media state.
+ */
+export interface UserMediaSummary {
+  id: string;
+  type: MediaType;
+  title: string;
+  slug: string;
+  poster: ImageDto | null;
+  releaseDate?: Date | null;
+}
+
+/**
+ * Episode progress summary for shows.
+ */
+export interface ProgressSummary {
+  watched: number;
+  total: number;
+}
+
+/**
+ * Continue point for shows.
+ */
+export interface ContinuePoint {
+  season: number;
+  episode: number;
+}
+
+/**
  * Injection token for user media state repository.
  */
 export const USER_MEDIA_STATE_REPOSITORY = Symbol('USER_MEDIA_STATE_REPOSITORY');
@@ -107,13 +135,7 @@ export interface IUserMediaStateRepository {
   getStats(userId: string): Promise<UserMediaStats>;
 
   /**
-   * Returns user media states with attached media summary (id, type, title, slug, poster).
-   *
-   * @param {string} userId - User identifier
-   * @param {number} limit - Page size
-   * @param {number} offset - Offset
-   * @param {ListWithMediaOptions} options - Filtering and sorting options
-   * @returns {Promise<Array<UserMediaState & { mediaSummary: { id: string; type: MediaType; title: string; slug: string; poster: ImageDto | null; releaseDate?: Date | null } }>>} States with media summary
+   * Returns user media states with attached media summary.
    */
   listWithMedia(
     userId: string,
@@ -123,67 +145,33 @@ export interface IUserMediaStateRepository {
   ): Promise<
     Array<
       UserMediaState & {
-        mediaSummary: {
-          id: string;
-          type: MediaType;
-          title: string;
-          slug: string;
-          poster: ImageDto | null;
-          releaseDate?: Date | null;
-        };
+        mediaSummary: UserMediaSummary;
+        progressSummary?: ProgressSummary | null;
       }
     >
   >;
 
   /**
    * Lists "Continue" items with media summary.
-   *
    * Semantics: `progress IS NOT NULL`.
-   *
-   * @param {string} userId - User identifier
-   * @param {number} limit - Page size
-   * @param {number} offset - Offset
-   * @returns {Promise<Array<UserMediaState & { mediaSummary: { id: string; type: MediaType; title: string; slug: string; poster: ImageDto | null; releaseDate?: Date | null } }>>} Continue items
    */
   listContinueWithMedia(
     userId: string,
     limit?: number,
     offset?: number,
-  ): Promise<
-    Array<
-      UserMediaState & {
-        mediaSummary: {
-          id: string;
-          type: MediaType;
-          title: string;
-          slug: string;
-          poster: ImageDto | null;
-          releaseDate?: Date | null;
-        };
-      }
-    >
-  >;
+  ): Promise<Array<UserMediaState & { mediaSummary: UserMediaSummary }>>;
 
   /**
-   * Returns a single state with media summary.
-   *
-   * @param {string} userId - User identifier
-   * @param {string} mediaItemId - Media item identifier
-   * @returns {Promise<(UserMediaState & { mediaSummary: { id: string; type: MediaType; title: string; slug: string; poster: ImageDto | null; releaseDate?: Date | null } }) | null>} State with media summary or null
+   * Returns a single state with media summary, progress, and continue point.
    */
   findOneWithMedia(
     userId: string,
     mediaItemId: string,
   ): Promise<
     | (UserMediaState & {
-        mediaSummary: {
-          id: string;
-          type: MediaType;
-          title: string;
-          slug: string;
-          poster: ImageDto | null;
-          releaseDate?: Date | null;
-        };
+        mediaSummary: UserMediaSummary;
+        progressSummary?: ProgressSummary | null;
+        continuePoint?: ContinuePoint | null;
       })
     | null
   >;
@@ -200,30 +188,12 @@ export interface IUserMediaStateRepository {
   /**
    * Activity feed: states that are in-progress or have progress.
    * Semantics: state = 'watching' OR progress IS NOT NULL.
-   *
-   * @param {string} userId - User identifier
-   * @param {number} limit - Page size
-   * @param {number} offset - Offset
-   * @returns {Promise<Array<UserMediaState & { mediaSummary: { id: string; type: MediaType; title: string; slug: string; poster: ImageDto | null; releaseDate?: Date | null } }>>} Activity items
    */
   listActivityWithMedia(
     userId: string,
     limit?: number,
     offset?: number,
-  ): Promise<
-    Array<
-      UserMediaState & {
-        mediaSummary: {
-          id: string;
-          type: MediaType;
-          title: string;
-          slug: string;
-          poster: ImageDto | null;
-          releaseDate?: Date | null;
-        };
-      }
-    >
-  >;
+  ): Promise<Array<UserMediaState & { mediaSummary: UserMediaSummary }>>;
 
   /**
    * Counts activity items.

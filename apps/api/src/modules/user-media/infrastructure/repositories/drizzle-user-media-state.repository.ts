@@ -5,7 +5,6 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
-import { type ImageDto } from '../../../../common/dtos/image.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
@@ -14,10 +13,13 @@ import * as schema from '../../../../database/schema';
 import { type UserMediaState } from '../../domain/entities/user-media-state.entity';
 import { USER_MEDIA_STATE } from '../../domain/entities/user-media-state.entity';
 import {
+  type ContinuePoint,
   type IUserMediaStateRepository,
   type ListWithMediaOptions,
+  type ProgressSummary,
   USER_MEDIA_LIST_SORT,
   type UserMediaStats,
+  type UserMediaSummary,
   type UpsertUserMediaStateData,
 } from '../../domain/repositories/user-media-state.repository.interface';
 
@@ -134,14 +136,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
 
       return rows.map((r) => ({
         ...this.mapRow(r.state),
-        mediaSummary: {
-          id: r.media.id,
-          type: r.media.type as MediaType,
-          title: r.media.title,
-          slug: r.media.slug,
-          poster: ImageMapper.toPoster(r.media.posterPath),
-          releaseDate: r.media.releaseDate,
-        },
+        mediaSummary: this.mapMediaSummary(r.media),
       }));
     } catch (error) {
       this.logger.error(`listContinueWithMedia failed: ${error.message}`, error.stack);
@@ -263,26 +258,6 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
 
   /**
    * Lists states with media summary.
-   *
-   * @param {string} userId - User identifier
-   * @param {number} limit - Page size
-   * @param {number} offset - Offset
-   * @param {ListWithMediaOptions} options - List options
-   * @returns {Promise<
-   *   Array<
-   *     UserMediaState & {
-   *       mediaSummary: {
-   *         id: string;
-   *         type: MediaType;
-   *         title: string;
-   *         slug: string;
-   *         poster: ImageDto | null;
-   *         releaseDate?: Date | null;
-   *       };
-   *     }
-   *   >
-   * >} List items with media summary
-   * @throws {DatabaseException} When query fails
    */
   async listWithMedia(
     userId: string,
@@ -292,15 +267,8 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   ): Promise<
     Array<
       UserMediaState & {
-        mediaSummary: {
-          id: string;
-          type: MediaType;
-          title: string;
-          slug: string;
-          poster: ImageDto | null;
-          releaseDate?: Date | null;
-        };
-        progressSummary?: { watched: number; total: number } | null;
+        mediaSummary: UserMediaSummary;
+        progressSummary?: ProgressSummary | null;
       }
     >
   > {
@@ -329,21 +297,23 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             releaseDate: schema.mediaItems.releaseDate,
           },
           progressTotal: sql<number | null>`
-            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+            CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
               SELECT COUNT(*)::int FROM ${schema.episodes} e
               JOIN ${schema.seasons} s ON s.id = e.season_id
               JOIN ${schema.shows} sh ON sh.id = s.show_id
               WHERE sh.media_item_id = ${schema.mediaItems.id}
+              AND s.number > 0
             ) ELSE NULL END
           `.as('progress_total'),
           progressWatched: sql<number | null>`
-            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+            CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
               SELECT COUNT(*)::int FROM ${schema.userEpisodeProgress} uep
               JOIN ${schema.episodes} e ON e.id = uep.episode_id
               JOIN ${schema.seasons} s ON s.id = e.season_id
               JOIN ${schema.shows} sh ON sh.id = s.show_id
               WHERE sh.media_item_id = ${schema.mediaItems.id}
               AND uep.user_id = ${userId}
+              AND s.number > 0
             ) ELSE NULL END
           `.as('progress_watched'),
         })
@@ -356,14 +326,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
 
       return rows.map((r) => ({
         ...this.mapRow(r.state),
-        mediaSummary: {
-          id: r.media.id,
-          type: r.media.type as MediaType,
-          title: r.media.title,
-          slug: r.media.slug,
-          poster: ImageMapper.toPoster(r.media.posterPath),
-          releaseDate: r.media.releaseDate,
-        },
+        mediaSummary: this.mapMediaSummary(r.media),
         progressSummary:
           r.progressTotal !== null && r.progressWatched !== null
             ? { watched: r.progressWatched, total: r.progressTotal }
@@ -448,14 +411,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
 
       return rows.map((r) => ({
         ...this.mapRow(r.state),
-        mediaSummary: {
-          id: r.media.id,
-          type: r.media.type as MediaType,
-          title: r.media.title,
-          slug: r.media.slug,
-          poster: ImageMapper.toPoster(r.media.posterPath),
-          releaseDate: r.media.releaseDate,
-        },
+        mediaSummary: this.mapMediaSummary(r.media),
       }));
     } catch (error) {
       this.logger.error(`listActivityWithMedia failed: ${error.message}`, error.stack);
@@ -534,40 +490,16 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   }
 
   /**
-   * Finds a single state with media summary.
-   *
-   * @param {string} userId - User identifier
-   * @param {string} mediaItemId - Media item identifier
-   * @returns {Promise<
-   *   | (UserMediaState & {
-   *       mediaSummary: {
-   *         id: string;
-   *         type: MediaType;
-   *         title: string;
-   *         slug: string;
-   *         poster: ImageDto | null;
-   *         releaseDate?: Date | null;
-   *       };
-   *     })
-   *   | null
-   * >} State with media summary or null
-   * @throws {DatabaseException} When query fails
+   * Finds a single state with media summary, progress, and continue point.
    */
   async findOneWithMedia(
     userId: string,
     mediaItemId: string,
   ): Promise<
     | (UserMediaState & {
-        mediaSummary: {
-          id: string;
-          type: MediaType;
-          title: string;
-          slug: string;
-          poster: ImageDto | null;
-          releaseDate?: Date | null;
-        };
-        progressSummary?: { watched: number; total: number } | null;
-        continuePoint?: { season: number; episode: number } | null;
+        mediaSummary: UserMediaSummary;
+        progressSummary?: ProgressSummary | null;
+        continuePoint?: ContinuePoint | null;
       })
     | null
   > {
@@ -584,25 +516,27 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
             releaseDate: schema.mediaItems.releaseDate,
           },
           progressTotal: sql<number | null>`
-            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+            CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
               SELECT COUNT(*)::int FROM ${schema.episodes} e
               JOIN ${schema.seasons} s ON s.id = e.season_id
               JOIN ${schema.shows} sh ON sh.id = s.show_id
               WHERE sh.media_item_id = ${schema.mediaItems.id}
+              AND s.number > 0
             ) ELSE NULL END
           `.as('progress_total'),
           progressWatched: sql<number | null>`
-            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+            CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
               SELECT COUNT(*)::int FROM ${schema.userEpisodeProgress} uep
               JOIN ${schema.episodes} e ON e.id = uep.episode_id
               JOIN ${schema.seasons} s ON s.id = e.season_id
               JOIN ${schema.shows} sh ON sh.id = s.show_id
               WHERE sh.media_item_id = ${schema.mediaItems.id}
               AND uep.user_id = ${userId}
+              AND s.number > 0
             ) ELSE NULL END
           `.as('progress_watched'),
-          continueSeasonNumber: sql<number | null>`
-            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
+          continuePoint: sql<{ season: number; episode: number } | null>`
+            CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
               WITH last_watched AS (
                 SELECT s.number AS sn, e.number AS en
                 FROM ${schema.userEpisodeProgress} uep
@@ -613,54 +547,28 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
                 AND uep.user_id = ${userId}
                 ORDER BY s.number DESC, e.number DESC
                 LIMIT 1
-              )
-              SELECT s.number FROM ${schema.episodes} e
-              JOIN ${schema.seasons} s ON s.id = e.season_id
-              JOIN ${schema.shows} sh ON sh.id = s.show_id
-              WHERE sh.media_item_id = ${schema.mediaItems.id}
-              AND s.number > 0
-              AND e.id NOT IN (
-                SELECT uep.episode_id FROM ${schema.userEpisodeProgress} uep
-                WHERE uep.user_id = ${userId}
-              )
-              AND (
-                s.number > (SELECT sn FROM last_watched)
-                OR (s.number = (SELECT sn FROM last_watched) AND e.number > (SELECT en FROM last_watched))
-              )
-              ORDER BY s.number ASC, e.number ASC
-              LIMIT 1
-            ) ELSE NULL END
-          `.as('continue_season'),
-          continueEpisodeNumber: sql<number | null>`
-            CASE WHEN ${schema.mediaItems.type} = 'show' THEN (
-              WITH last_watched AS (
-                SELECT s.number AS sn, e.number AS en
-                FROM ${schema.userEpisodeProgress} uep
-                JOIN ${schema.episodes} e ON e.id = uep.episode_id
+              ),
+              next_episode AS (
+                SELECT s.number AS season, e.number AS episode
+                FROM ${schema.episodes} e
                 JOIN ${schema.seasons} s ON s.id = e.season_id
                 JOIN ${schema.shows} sh ON sh.id = s.show_id
                 WHERE sh.media_item_id = ${schema.mediaItems.id}
-                AND uep.user_id = ${userId}
-                ORDER BY s.number DESC, e.number DESC
+                AND s.number > 0
+                AND e.id NOT IN (
+                  SELECT uep.episode_id FROM ${schema.userEpisodeProgress} uep
+                  WHERE uep.user_id = ${userId}
+                )
+                AND (
+                  s.number > (SELECT sn FROM last_watched)
+                  OR (s.number = (SELECT sn FROM last_watched) AND e.number > (SELECT en FROM last_watched))
+                )
+                ORDER BY s.number ASC, e.number ASC
                 LIMIT 1
               )
-              SELECT e.number FROM ${schema.episodes} e
-              JOIN ${schema.seasons} s ON s.id = e.season_id
-              JOIN ${schema.shows} sh ON sh.id = s.show_id
-              WHERE sh.media_item_id = ${schema.mediaItems.id}
-              AND s.number > 0
-              AND e.id NOT IN (
-                SELECT uep.episode_id FROM ${schema.userEpisodeProgress} uep
-                WHERE uep.user_id = ${userId}
-              )
-              AND (
-                s.number > (SELECT sn FROM last_watched)
-                OR (s.number = (SELECT sn FROM last_watched) AND e.number > (SELECT en FROM last_watched))
-              )
-              ORDER BY s.number ASC, e.number ASC
-              LIMIT 1
+              SELECT json_build_object('season', season, 'episode', episode) FROM next_episode
             ) ELSE NULL END
-          `.as('continue_episode'),
+          `.as('continue_point'),
         })
         .from(schema.userMediaState)
         .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
@@ -676,22 +584,12 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
 
       return {
         ...this.mapRow(row.state),
-        mediaSummary: {
-          id: row.media.id,
-          type: row.media.type as MediaType,
-          title: row.media.title,
-          slug: row.media.slug,
-          poster: ImageMapper.toPoster(row.media.posterPath),
-          releaseDate: row.media.releaseDate,
-        },
+        mediaSummary: this.mapMediaSummary(row.media),
         progressSummary:
           row.progressTotal !== null && row.progressWatched !== null
             ? { watched: row.progressWatched, total: row.progressTotal }
             : null,
-        continuePoint:
-          row.continueSeasonNumber !== null && row.continueEpisodeNumber !== null
-            ? { season: row.continueSeasonNumber, episode: row.continueEpisodeNumber }
-            : null,
+        continuePoint: row.continuePoint ?? null,
       };
     } catch (error) {
       this.logger.error(`findOneWithMedia failed: ${error.message}`, error.stack);
@@ -713,6 +611,24 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       notes: row.notes,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
+    };
+  }
+
+  private mapMediaSummary(media: {
+    id: string;
+    type: string;
+    title: string;
+    slug: string;
+    posterPath: string | null;
+    releaseDate: Date | null;
+  }): UserMediaSummary {
+    return {
+      id: media.id,
+      type: media.type as MediaType,
+      title: media.title,
+      slug: media.slug,
+      poster: ImageMapper.toPoster(media.posterPath),
+      releaseDate: media.releaseDate,
     };
   }
 }

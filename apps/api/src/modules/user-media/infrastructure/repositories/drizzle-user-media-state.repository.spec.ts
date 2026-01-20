@@ -52,8 +52,7 @@ describe('DrizzleUserMediaStateRepository', () => {
       },
       progressTotal: 42,
       progressWatched: 5,
-      continueSeasonNumber: 2,
-      continueEpisodeNumber: 3,
+      continuePoint: { season: 2, episode: 3 },
     },
   ];
 
@@ -180,8 +179,7 @@ describe('DrizzleUserMediaStateRepository', () => {
       const rowsWithNullProgress = [
         {
           ...rowsWithProgress[0],
-          continueSeasonNumber: null,
-          continueEpisodeNumber: null,
+          continuePoint: null,
         },
       ];
       const dbMock = makeDbMock(rowsWithNullProgress);
@@ -199,8 +197,7 @@ describe('DrizzleUserMediaStateRepository', () => {
           ...rows[0],
           progressTotal: null,
           progressWatched: null,
-          continueSeasonNumber: null,
-          continueEpisodeNumber: null,
+          continuePoint: null,
         },
       ];
       const dbMock = makeDbMock(movieRows);
