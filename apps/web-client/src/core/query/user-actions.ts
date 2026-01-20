@@ -129,6 +129,8 @@ export function useSaveItem() {
           return Array.isArray(key) && key.includes('list');
         },
       });
+      // Invalidate legacy saved-items queries (used by saved module)
+      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },
 
     onError: (_error, variables, context) => {
@@ -205,6 +207,8 @@ export function useUnsaveItem() {
           return Array.isArray(key) && key.includes('list');
         },
       });
+      // Invalidate legacy saved-items queries (used by saved module)
+      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },
 
     onError: (_error, variables, context) => {

@@ -142,6 +142,8 @@ export function useToggleEpisodeWatched(showId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.userActions.savedItems.all,
       });
+      // Invalidate legacy saved-items queries (used by saved module)
+      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },
   });
 }
@@ -224,6 +226,8 @@ export function useMarkMultipleWatched(showId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.userActions.savedItems.all,
       });
+      // Invalidate legacy saved-items queries (used by saved module)
+      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },
   });
 }
