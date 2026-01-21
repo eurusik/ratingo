@@ -186,30 +186,37 @@ export class StatsController {
   }
 
   /**
-   * Backfills watchers_count (live watchers) for items with corrupted data.
-   * Finds items where watchers_count = 0 but total_watchers > minTotalWatchers.
+   * Queues backfill jobs for watchers_count (live watchers) for items with corrupted data.
+   * Finds items where watchers_count = 0 but total_watchers > minTotalWatchers,
+   * then queues chunk jobs to re-fetch from Trakt API with proper rate limiting.
    */
   @Post('backfill/watchers-count')
   @ApiBearerAuth()
   @UseGuards(AdminJwtGuard)
   @ApiTags('Service: Stats')
   @ApiOperation({
-    summary: 'Backfill watchers_count for corrupted items',
+    summary: 'Queue backfill jobs for watchers_count',
     description:
-      'Finds items where watchers_count = 0 but total_watchers > 100, then re-fetches live watchers from Trakt API.',
+      'Finds items where watchers_count = 0 but total_watchers > threshold, then queues chunk jobs to re-fetch live watchers from Trakt API with proper rate limiting and exponential backoff.',
   })
   async backfillWatchersCount(@Query() query: BackfillWatchersCountQueryDto) {
     const mediaType =
       query.type === 'movie' ? MediaType.MOVIE : query.type === 'show' ? MediaType.SHOW : undefined;
 
-    const result = await this.statsService.backfillWatchersCount({
-      type: mediaType,
-      limit: query.limit,
-      minTotalWatchers: query.minTotalWatchers,
-    });
+    const result = await this.statsService.queueWatchersCountBackfill(
+      {
+        type: mediaType,
+        limit: query.limit,
+        minTotalWatchers: query.minTotalWatchers,
+      },
+      this.statsQueue,
+    );
 
     return {
-      message: 'Watchers count backfill complete',
+      message:
+        result.total === 0
+          ? 'No corrupted items found'
+          : `Queued ${result.chunksQueued} backfill jobs for ${result.total} items`,
       ...result,
     };
   }

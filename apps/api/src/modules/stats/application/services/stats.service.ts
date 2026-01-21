@@ -1,5 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { type Queue } from 'bullmq';
+
 import { MAX_PAGE_SIZE, MS_PER_MINUTE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 
@@ -22,6 +24,7 @@ import {
   type MediaStatsData,
   STATS_REPOSITORY,
 } from '../../domain/repositories/stats.repository.interface';
+import { BACKFILL_CONFIG, STATS_JOBS } from '../../stats.constants';
 
 /**
  * Application service for managing media statistics.
@@ -491,30 +494,31 @@ export class StatsService {
   }
 
   /**
-   * Backfills watchers_count for items with corrupted live watchers data.
-   * Finds items where watchers_count = 0 but total_watchers > minTotalWatchers,
-   * then re-fetches from Trakt API.
-   *
-   * Uses batching and rate limiting to avoid API throttling.
+   * Queues backfill jobs for items with corrupted watchers_count.
+   * Splits work into chunks and processes via BullMQ for proper rate limiting.
    *
    * @param options.type - Filter by media type (movie/show)
    * @param options.limit - Max items to process
    * @param options.minTotalWatchers - Minimum total_watchers to consider (default: 100)
-   * @returns Count of backfilled items
+   * @param queue - BullMQ queue to add jobs to
+   * @returns Number of items found and jobs queued
    */
-  async backfillWatchersCount(options: {
-    type?: MediaType;
-    limit?: number;
-    minTotalWatchers?: number;
-  }): Promise<{ total: number; success: number; failed: number }> {
-    const limit = options.limit ?? 100;
+  async queueWatchersCountBackfill(
+    options: {
+      type?: MediaType;
+      limit?: number;
+      minTotalWatchers?: number;
+    },
+    queue: Queue,
+  ): Promise<{ total: number; chunksQueued: number }> {
+    const limit = options.limit ?? 500;
     const minTotalWatchers = options.minTotalWatchers ?? 100;
 
     this.logger.log(
-      `Starting watchers_count backfill (type: ${options.type ?? 'all'}, limit: ${limit}, minTotalWatchers: ${minTotalWatchers})...`,
+      `Queueing watchers_count backfill (type: ${options.type ?? 'all'}, limit: ${limit}, minTotalWatchers: ${minTotalWatchers})...`,
     );
 
-    // Find items with corrupted data: watchers_count = 0 but total_watchers > minTotalWatchers
+    // Find items with corrupted data
     const corruptedItems = await this.mediaRepository.findItemsWithCorruptedWatchersCount({
       type: options.type,
       limit,
@@ -523,62 +527,120 @@ export class StatsService {
 
     if (corruptedItems.length === 0) {
       this.logger.log('No items with corrupted watchers_count found');
-      return { total: 0, success: 0, failed: 0 };
+      return { total: 0, chunksQueued: 0 };
     }
 
     this.logger.log(`Found ${corruptedItems.length} items with corrupted watchers_count`);
 
-    // Separate by type for batch API calls
-    const movieItems = corruptedItems.filter((i) => i.type === MediaType.MOVIE);
-    const showItems = corruptedItems.filter((i) => i.type === MediaType.SHOW);
+    // Split into chunks
+    const chunks: Array<{ id: string; tmdbId: number; type: MediaType }[]> = [];
+    for (let i = 0; i < corruptedItems.length; i += BACKFILL_CONFIG.CHUNK_SIZE) {
+      chunks.push(corruptedItems.slice(i, i + BACKFILL_CONFIG.CHUNK_SIZE));
+    }
+
+    // Queue each chunk as a separate job with staggered delays
+    for (let i = 0; i < chunks.length; i++) {
+      await queue.add(
+        STATS_JOBS.BACKFILL_WATCHERS_CHUNK,
+        {
+          items: chunks[i],
+          chunkIndex: i,
+          totalChunks: chunks.length,
+        },
+        {
+          delay: i * BACKFILL_CONFIG.CHUNK_DELAY_MS, // Stagger chunks
+          attempts: BACKFILL_CONFIG.MAX_RETRIES,
+          backoff: {
+            type: 'exponential',
+            delay: BACKFILL_CONFIG.BACKOFF_BASE_MS,
+          },
+          removeOnComplete: true,
+          removeOnFail: false, // Keep failed jobs for inspection
+        },
+      );
+    }
+
+    this.logger.log(`Queued ${chunks.length} backfill chunks for ${corruptedItems.length} items`);
+    return { total: corruptedItems.length, chunksQueued: chunks.length };
+  }
+
+  /**
+   * Processes a single chunk of items for watchers_count backfill.
+   * Called by the worker. Throws on rate limiting so BullMQ can retry.
+   *
+   * @param items - Items to process in this chunk
+   * @returns Processing results
+   */
+  async processWatchersChunk(
+    items: Array<{ id: string; tmdbId: number; type: MediaType }>,
+  ): Promise<{ success: number; failed: number }> {
+    const movieItems = items.filter((i) => i.type === MediaType.MOVIE);
+    const showItems = items.filter((i) => i.type === MediaType.SHOW);
 
     let success = 0;
     let failed = 0;
 
-    // Process movies
-    if (movieItems.length > 0) {
-      const movieTmdbIds = movieItems.map((i) => i.tmdbId);
-      const movieWatchers = await this.traktRatingsPort.getMovieWatchersByTmdbIds(
-        movieTmdbIds,
-        1, // concurrency = 1 to avoid rate limiting
-      );
+    // Process movies one by one to properly handle rate limiting
+    for (const item of movieItems) {
+      try {
+        const watchersMap = await this.traktRatingsPort.getMovieWatchersByTmdbIds([item.tmdbId], 1);
+        const watchers = watchersMap.get(item.tmdbId);
 
-      for (const item of movieItems) {
-        const watchers = movieWatchers.get(item.tmdbId);
         if (watchers !== null && watchers !== undefined) {
           await this.statsRepository.updateWatchersCount(item.id, watchers);
           success++;
           this.logger.debug(`Updated movie ${item.tmdbId}: watchers_count = ${watchers}`);
         } else {
+          // null = API error, don't update (preserve existing data)
           failed++;
-          this.logger.debug(`Failed to get watchers for movie ${item.tmdbId}`);
+          this.logger.debug(`Skipped movie ${item.tmdbId}: no data from API`);
         }
+      } catch (error) {
+        // Re-throw rate limit errors so BullMQ can retry the whole chunk
+        if (this.isRateLimitError(error)) {
+          this.logger.warn(`Rate limited processing movie ${item.tmdbId}, will retry chunk`);
+          throw error;
+        }
+        failed++;
+        this.logger.warn(`Failed to process movie ${item.tmdbId}: ${error.message}`);
       }
     }
 
-    // Process shows
-    if (showItems.length > 0) {
-      const showTmdbIds = showItems.map((i) => i.tmdbId);
-      const showWatchers = await this.traktRatingsPort.getShowWatchersByTmdbIds(
-        showTmdbIds,
-        1, // concurrency = 1 to avoid rate limiting
-      );
+    // Process shows one by one
+    for (const item of showItems) {
+      try {
+        const watchersMap = await this.traktRatingsPort.getShowWatchersByTmdbIds([item.tmdbId], 1);
+        const watchers = watchersMap.get(item.tmdbId);
 
-      for (const item of showItems) {
-        const watchers = showWatchers.get(item.tmdbId);
         if (watchers !== null && watchers !== undefined) {
           await this.statsRepository.updateWatchersCount(item.id, watchers);
           success++;
           this.logger.debug(`Updated show ${item.tmdbId}: watchers_count = ${watchers}`);
         } else {
           failed++;
-          this.logger.debug(`Failed to get watchers for show ${item.tmdbId}`);
+          this.logger.debug(`Skipped show ${item.tmdbId}: no data from API`);
         }
+      } catch (error) {
+        if (this.isRateLimitError(error)) {
+          this.logger.warn(`Rate limited processing show ${item.tmdbId}, will retry chunk`);
+          throw error;
+        }
+        failed++;
+        this.logger.warn(`Failed to process show ${item.tmdbId}: ${error.message}`);
       }
     }
 
-    this.logger.log(`Watchers count backfill complete: ${success} success, ${failed} failed`);
-    return { total: corruptedItems.length, success, failed };
+    this.logger.log(`Chunk complete: ${success} success, ${failed} failed`);
+    return { success, failed };
+  }
+
+  /**
+   * Checks if an error is a rate limit error (429).
+   */
+  private isRateLimitError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const err = error as { status?: number; response?: { status?: number }; message?: string };
+    return err.status === 429 || err.response?.status === 429 || err.message?.includes('429');
   }
 
   /**

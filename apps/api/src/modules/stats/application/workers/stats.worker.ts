@@ -50,6 +50,10 @@ export class StatsWorker extends WorkerHost {
           }
           break;
 
+        case STATS_JOBS.BACKFILL_WATCHERS_CHUNK:
+          await this.processBackfillChunk(job);
+          break;
+
         default:
           this.logger.warn(`Unknown job type: ${job.name}`);
       }
@@ -57,5 +61,26 @@ export class StatsWorker extends WorkerHost {
       this.logger.error(`Job ${job.id} failed: ${error.message}`, error.stack);
       throw error; // Let BullMQ handle retry
     }
+  }
+
+  /**
+   * Processes a single chunk of items for watchers count backfill.
+   * Re-throws rate limit errors so BullMQ can retry with backoff.
+   *
+   * @param {Job} job - Job containing items array
+   * @returns {Promise<void>}
+   */
+  private async processBackfillChunk(job: Job): Promise<void> {
+    const { items, chunkIndex, totalChunks } = job.data;
+
+    this.logger.log(
+      `Processing backfill chunk ${chunkIndex + 1}/${totalChunks} with ${items.length} items`,
+    );
+
+    const result = await this.statsService.processWatchersChunk(items);
+
+    this.logger.log(
+      `Chunk ${chunkIndex + 1}/${totalChunks} completed: ${result.success} success, ${result.failed} failed`,
+    );
   }
 }
