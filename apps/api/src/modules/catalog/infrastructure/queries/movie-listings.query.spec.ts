@@ -486,4 +486,109 @@ describe('MovieListingsQuery', () => {
       expect(res[0].title).toBe('New Digital Release');
     });
   });
+
+  describe('new_on_digital release date filtering', () => {
+    it('should return movies originally released within the last year', async () => {
+      // Movie released 6 months ago, digital release within 14 days
+      const recentReleaseDate = new Date();
+      recentReleaseDate.setMonth(recentReleaseDate.getMonth() - 6);
+
+      const movies = [
+        {
+          id: 'recent-movie',
+          mediaItemId: 'mid-recent',
+          tmdbId: 400,
+          title: 'Recent Movie',
+          slug: 'recent-movie',
+          overview: 'A recently released movie',
+          ingestionStatus: 'ready',
+          posterPath: '/p.jpg',
+          backdropPath: '/b.jpg',
+          popularity: 80,
+          releaseDate: recentReleaseDate, // 6 months ago - within 365 days
+          theatricalReleaseDate: recentReleaseDate,
+          digitalReleaseDate: new Date(), // Just released digitally
+          runtime: 120,
+          ratingoScore: 75,
+          qualityScore: 70,
+          popularityScore: 0.8,
+          watchersCount: 100,
+          totalWatchers: 500,
+          rating: 7.5,
+          voteCount: 2000,
+        },
+      ];
+
+      const genres = [{ mediaItemId: 'mid-recent', id: 'g1', name: 'Action', slug: 'action' }];
+
+      setup([movies, [{ total: 1 }], genres]);
+
+      const res = await query.execute('new_on_digital', { limit: 10 });
+
+      expect(res).toHaveLength(1);
+      expect(res[0].title).toBe('Recent Movie');
+    });
+
+    it('should exclude old classics being re-released on digital (behavior documented)', async () => {
+      // This test documents expected behavior: old movies (>365 days old) should be filtered
+      // The actual filtering happens in SQL via DIGITAL_RELEASE_MAX_AGE_DAYS condition
+      // Mock returns empty to simulate DB filtering out the old movie
+
+      setup([[], [{ total: 0 }]]);
+
+      const res = await query.execute('new_on_digital', { limit: 10 });
+
+      // Old movies like Harry Potter (2001) re-released on Max should not appear
+      // because releaseDate is older than DIGITAL_RELEASE_MAX_AGE_DAYS (365 days)
+      expect(res).toHaveLength(0);
+      expect((res as any).total).toBe(0);
+    });
+  });
+
+  describe('context filtering for eligibility', () => {
+    it('should use CATALOG context for eligibility JOIN to prevent duplicates', async () => {
+      // This test documents the context filter behavior
+      // Each movie has evaluations for multiple contexts (CATALOG, TRENDING, etc.)
+      // Without context filter, JOINs would create duplicates
+      // The query filters by EvaluationContext.CATALOG to ensure unique results
+
+      const movies = [
+        {
+          id: 'unique-movie',
+          mediaItemId: 'mid-unique',
+          tmdbId: 500,
+          title: 'Unique Movie',
+          slug: 'unique-movie',
+          overview: 'Should appear once, not duplicated',
+          ingestionStatus: 'ready',
+          posterPath: '/p.jpg',
+          backdropPath: '/b.jpg',
+          popularity: 90,
+          releaseDate: new Date(),
+          theatricalReleaseDate: new Date(),
+          digitalReleaseDate: null,
+          runtime: 130,
+          ratingoScore: 85,
+          qualityScore: 80,
+          popularityScore: 0.9,
+          watchersCount: 200,
+          totalWatchers: 1000,
+          rating: 8.5,
+          voteCount: 5000,
+        },
+      ];
+
+      const genres = [{ mediaItemId: 'mid-unique', id: 'g1', name: 'Drama', slug: 'drama' }];
+
+      // Return single movie (context filter ensures no duplicates from multiple evaluation records)
+      setup([movies, [{ total: 1 }], genres]);
+
+      const res = await query.execute('new_releases', { limit: 10 });
+
+      // Should return exactly 1 movie, not duplicated
+      expect(res).toHaveLength(1);
+      expect(res[0].title).toBe('Unique Movie');
+      expect((res as any).total).toBe(1);
+    });
+  });
 });

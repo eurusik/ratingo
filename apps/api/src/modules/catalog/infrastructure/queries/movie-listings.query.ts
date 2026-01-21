@@ -20,6 +20,7 @@ import {
   DEFAULT_PAGE_SIZE,
   CATALOG_DEFAULT_NEW_RELEASE_DAYS,
   CATALOG_DEFAULT_DIGITAL_DAYS,
+  DIGITAL_RELEASE_MAX_AGE_DAYS,
   MS_PER_DAY,
 } from '@/common/constants';
 
@@ -27,7 +28,7 @@ import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum'
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { EligibilityStatus } from '../../../catalog-policy/public';
+import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import {
   type MovieWithMedia,
   type WithTotal,
@@ -166,6 +167,7 @@ export class MovieListingsQuery {
             and(
               eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
               eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+              eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
             ),
           )
           .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
@@ -296,10 +298,17 @@ export class MovieListingsQuery {
         const cutoffDate = new Date(
           now.getTime() - (daysBack ?? CATALOG_DEFAULT_DIGITAL_DAYS) * MS_PER_DAY,
         );
+        // Exclude re-releases of old classics - only show movies originally released within max age window
+        const originalReleaseCutoff = new Date(
+          now.getTime() - DIGITAL_RELEASE_MAX_AGE_DAYS * MS_PER_DAY,
+        );
         conditions.push(
           isNotNull(schema.movies.digitalReleaseDate),
           gte(schema.movies.digitalReleaseDate, cutoffDate),
           lte(schema.movies.digitalReleaseDate, now),
+          // Filter out old movies being re-released on digital
+          isNotNull(schema.mediaItems.releaseDate),
+          gte(schema.mediaItems.releaseDate, originalReleaseCutoff),
         );
         return { conditions, orderBy: this.buildOrder(sort, order) };
       }
@@ -370,6 +379,7 @@ export class MovieListingsQuery {
         and(
           eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
           eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+          eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
         ),
       )
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
