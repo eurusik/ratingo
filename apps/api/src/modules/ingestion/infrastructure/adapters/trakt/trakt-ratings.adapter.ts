@@ -104,6 +104,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
 
   /**
    * Generic method to get ratings by TMDB ID for both movies and shows.
+   * Uses bulk time budget since this is called during backfill/sync operations.
    *
    * IMPORTANT: Both watchers and totalWatchers can be null if their respective endpoints fail.
    * This prevents silent data corruption where 0 is written on API failures.
@@ -122,7 +123,8 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
     totalWatchers: number | null;
   } | null> {
     try {
-      const results = await this.fetch<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
+      // Use bulk mode for backfill/sync operations - 10 min time budget
+      const results = await this.fetchBulk<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
         `/search/tmdb/${tmdbId}?type=${type}`,
       );
       const firstResult = results[0];
@@ -143,10 +145,13 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       const endpoint: TraktEndpoint =
         type === TRAKT_MEDIA_TYPE.MOVIE ? TRAKT_ENDPOINT.MOVIES : TRAKT_ENDPOINT.SHOWS;
 
+      // Use bulk mode for all calls since this is called during mass operations
       const [ratingsResult, watchersResult, statsResult] = await Promise.allSettled([
-        this.fetch<TraktRatingsResponse>(`/${endpoint}/${traktId}/ratings`),
-        this.fetch<TraktWatchingUser[]>(`/${endpoint}/${traktId}/watching`).then((w) => w.length),
-        this.fetch<TraktStatsResponse>(`/${endpoint}/${traktId}/stats`),
+        this.fetchBulk<TraktRatingsResponse>(`/${endpoint}/${traktId}/ratings`),
+        this.fetchBulk<TraktWatchingUser[]>(`/${endpoint}/${traktId}/watching`).then(
+          (w) => w.length,
+        ),
+        this.fetchBulk<TraktStatsResponse>(`/${endpoint}/${traktId}/stats`),
       ]);
 
       if (ratingsResult.status === 'rejected') {
@@ -430,6 +435,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
 
   /**
    * Generic method to get stats by TMDB ID.
+   * Uses bulk time budget for backfill operations.
    *
    * @param {'movie' | 'show'} type - Media type
    * @param {number} tmdbId - TMDB ID
@@ -440,7 +446,8 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
     tmdbId: number,
   ): Promise<{ watchers: number } | null> {
     try {
-      const results = await this.fetch<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
+      // Use bulk mode for backfill operations - 10 min time budget
+      const results = await this.fetchBulk<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
         `/search/tmdb/${tmdbId}?type=${type}`,
       );
       const firstResult = results[0];
@@ -461,7 +468,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       const endpoint: TraktEndpoint =
         type === TRAKT_MEDIA_TYPE.MOVIE ? TRAKT_ENDPOINT.MOVIES : TRAKT_ENDPOINT.SHOWS;
 
-      const stats = await this.fetch<TraktStatsResponse>(`/${endpoint}/${traktId}/stats`);
+      const stats = await this.fetchBulk<TraktStatsResponse>(`/${endpoint}/${traktId}/stats`);
       return { watchers: stats.watchers };
     } catch (error) {
       this.logger.warn(`Failed to get Trakt stats for ${type} TMDB ${tmdbId}: ${error}`);
