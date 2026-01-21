@@ -127,6 +127,17 @@ export class BreakoutRuleRequirementsDto {
   @IsArray()
   @IsString({ each: true })
   originCountries?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Exclude origin countries filter (ISO 3166-1 alpha-2 codes). Rule does NOT match if media has ANY of these countries.',
+    example: ['JP', 'KR', 'CN'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  excludeOriginCountries?: string[];
 }
 
 /**
