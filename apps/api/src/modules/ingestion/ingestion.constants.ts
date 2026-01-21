@@ -79,8 +79,10 @@ export const TRENDING_DEFAULT_PAGES = 10;
 
 /**
  * Default limit for trending stats sync.
+ * Reduced from 200 to 50 to avoid Trakt rate limiting.
+ * Each item requires ~4 API calls, so 50 items = ~200 calls.
  */
-export const TRENDING_DEFAULT_STATS_LIMIT = 200;
+export const TRENDING_DEFAULT_STATS_LIMIT = 50;
 
 /**
  * Items per page in TMDB trending API.
@@ -89,8 +91,10 @@ export const TMDB_TRENDING_PAGE_SIZE = 20;
 
 /**
  * Default concurrency for Trakt API batch requests.
+ * Set to 1 to avoid rate limiting (Trakt allows ~10 req/s but we share the limit).
+ * With 4 API calls per item, concurrency=1 means ~4 req/s, safely within limits.
  */
-export const TRAKT_BATCH_CONCURRENCY = 3;
+export const TRAKT_BATCH_CONCURRENCY = 1;
 
 /**
  * Concurrency for job deduplication checks in Redis.

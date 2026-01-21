@@ -12,19 +12,23 @@ import traktConfig from '../../../../../config/trakt.config';
 /**
  * Trakt-specific retry configuration.
  * Conservative retries due to strict rate limits.
+ * Increased time budget to handle batch operations (50 items × 4 calls = ~70s).
  */
 const TRAKT_RETRY_CONFIG: Partial<RetryConfig> = {
   maxRetries: 2,
   baseDelayMs: 2000, // Longer base delay for Trakt
-  maxTotalTimeMs: 30000,
+  maxTotalTimeMs: 120000, // 2 minutes for batch operations
   timeoutMs: 15000,
 };
 
 // Rate limiter configuration
+// With concurrency=1 and 4 calls per item, we need:
+// - Queue size: 50 items × 4 calls = 200 (with buffer = 250)
+// - Timeout: 200 calls / 3 req/s = ~70s (with buffer = 120s)
 const RATE_LIMITER_MAX_TOKENS = 3;
 const RATE_LIMITER_REFILL_INTERVAL_MS = 333; // ~3 req/s
-const RATE_LIMITER_MAX_QUEUE_SIZE = 100;
-const RATE_LIMITER_ACQUIRE_TIMEOUT_MS = 30000;
+const RATE_LIMITER_MAX_QUEUE_SIZE = 250;
+const RATE_LIMITER_ACQUIRE_TIMEOUT_MS = 120000; // 2 minutes
 
 /**
  * Token bucket rate limiter with timeout and max queue size.

@@ -181,16 +181,18 @@ export class TrendingPipeline {
     });
   }
 
-  private async queueStatsJob(startedAt: Date, pages: number, window: string): Promise<void> {
-    const expectedLimit = pages * TMDB_TRENDING_PAGE_SIZE * 2;
+  private async queueStatsJob(startedAt: Date, _pages: number, window: string): Promise<void> {
+    // Use constant limit instead of dynamic calculation to avoid rate limiting.
+    // With 4 API calls per item and ~3 req/s rate limit, 50 items takes ~70 seconds.
+    const limit = TRENDING_DEFAULT_STATS_LIMIT;
 
     await this.bulkJobService.addDelayed(
       IngestionJob.SYNC_TRENDING_STATS,
-      { since: startedAt.toISOString(), limit: expectedLimit },
+      { since: startedAt.toISOString(), limit },
       `trending-stats_${window}`,
       TRENDING_STATS_DELAY_MS,
     );
 
-    this.logger.log(`Queued trending stats job (delay: 3min, limit: ${expectedLimit})`);
+    this.logger.log(`Queued trending stats job (delay: 3min, limit: ${limit})`);
   }
 }

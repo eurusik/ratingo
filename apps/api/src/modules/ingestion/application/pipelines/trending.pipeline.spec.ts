@@ -81,9 +81,11 @@ describe('TrendingPipeline', () => {
     it('should enqueue stats job with delay when syncStats=true', async () => {
       await pipeline.dispatch(2, true, false);
 
+      // Uses TRENDING_DEFAULT_STATS_LIMIT (50) instead of calculated limit
+      // to avoid Trakt rate limiting
       expect(bulkJobService.addDelayed).toHaveBeenCalledWith(
         IngestionJob.SYNC_TRENDING_STATS,
-        expect.objectContaining({ since: expect.any(String), limit: 80 }),
+        expect.objectContaining({ since: expect.any(String), limit: 50 }),
         expect.any(String),
         180000,
       );
