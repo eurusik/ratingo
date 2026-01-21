@@ -42,6 +42,44 @@ export class BackfillTotalWatchersQueryDto {
 }
 
 /**
+ * Query DTO for backfill watchers count endpoint.
+ * Validates and transforms query parameters.
+ */
+export class BackfillWatchersCountQueryDto {
+  @ApiPropertyOptional({
+    description: 'Filter by media type',
+    enum: ['movie', 'show'],
+    example: 'show',
+  })
+  @IsOptional()
+  @IsIn(['movie', 'show'])
+  type?: 'movie' | 'show';
+
+  @ApiPropertyOptional({
+    description: 'Max items to backfill',
+    example: 100,
+    default: 100,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  limit?: number = 100;
+
+  @ApiPropertyOptional({
+    description: 'Minimum total_watchers to consider item as corrupted',
+    example: 100,
+    default: 100,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  minTotalWatchers?: number = 100;
+}
+
+/**
  * Query DTO for score recalculation endpoint.
  * Validates and transforms query parameters.
  */

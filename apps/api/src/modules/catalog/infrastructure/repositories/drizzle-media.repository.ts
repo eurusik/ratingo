@@ -808,4 +808,51 @@ export class DrizzleMediaRepository implements IMediaRepository {
       throw new DatabaseException('Failed to find items with missing watchers');
     }
   }
+
+  /**
+   * Finds items with corrupted watchers_count (live watchers).
+   * Items where watchers_count = 0 but total_watchers > minTotalWatchers.
+   */
+  async findItemsWithCorruptedWatchersCount(options: {
+    type?: MediaType;
+    limit: number;
+    minTotalWatchers: number;
+  }): Promise<CorruptedWatchersItem[]> {
+    try {
+      const conditions = [
+        isNull(schema.mediaItems.deletedAt),
+        eq(schema.mediaStats.watchersCount, 0),
+        gte(schema.mediaStats.totalWatchers, options.minTotalWatchers),
+      ];
+
+      if (options.type) {
+        conditions.push(eq(schema.mediaItems.type, options.type));
+      }
+
+      const rows = await this.db
+        .select({
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          type: schema.mediaItems.type,
+          voteCountTrakt: schema.mediaItems.voteCountTrakt,
+        })
+        .from(schema.mediaItems)
+        .innerJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
+        .where(and(...conditions))
+        .orderBy(desc(schema.mediaStats.totalWatchers))
+        .limit(options.limit);
+
+      return rows
+        .filter((r) => r.tmdbId !== null)
+        .map((r) => ({
+          id: r.id,
+          tmdbId: r.tmdbId!,
+          type: r.type,
+          voteCountTrakt: r.voteCountTrakt ?? 0,
+        }));
+    } catch (error) {
+      this.logger.error(`Failed to find items with corrupted watchers count: ${error.message}`);
+      throw new DatabaseException('Failed to find items with corrupted watchers count');
+    }
+  }
 }

@@ -75,4 +75,15 @@ export interface IStatsRepository {
    * @returns {Promise<void>} Nothing
    */
   updateTotalWatchers(mediaItemId: string, totalWatchers: number): Promise<void>;
+
+  /**
+   * Upserts only the watchers_count field for a media item.
+   * Creates the stats row if it doesn't exist.
+   * Used for backfilling corrupted live watchers data.
+   *
+   * @param {string} mediaItemId - Internal UUID of the media item
+   * @param {number} watchersCount - The live watchers count to set
+   * @returns {Promise<void>} Nothing
+   */
+  updateWatchersCount(mediaItemId: string, watchersCount: number): Promise<void>;
 }

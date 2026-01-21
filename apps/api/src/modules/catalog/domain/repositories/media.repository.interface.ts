@@ -198,6 +198,23 @@ export interface IMediaRepository {
     limit: number;
     minVotes: number;
   }): Promise<CorruptedWatchersItem[]>;
+
+  /**
+   * Finds items with corrupted watchers_count (live watchers).
+   * Items where watchers_count = 0 but total_watchers > minTotalWatchers.
+   * These items had their live watchers data corrupted by API failures.
+   *
+   * @param {object} options - Query options
+   * @param {MediaType} options.type - Filter by media type
+   * @param {number} options.limit - Max items to return
+   * @param {number} options.minTotalWatchers - Minimum total_watchers to consider (default: 100)
+   * @returns {Promise<CorruptedWatchersItem[]>} Items with corrupted live watchers
+   */
+  findItemsWithCorruptedWatchersCount(options: {
+    type?: MediaType;
+    limit: number;
+    minTotalWatchers: number;
+  }): Promise<CorruptedWatchersItem[]>;
 }
 
 /**

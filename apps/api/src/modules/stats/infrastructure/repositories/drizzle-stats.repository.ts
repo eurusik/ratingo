@@ -185,4 +185,33 @@ export class DrizzleStatsRepository implements IStatsRepository {
       { mediaItemId, totalWatchers },
     );
   }
+
+  /**
+   * Upserts only the watchers_count field for a media item.
+   * Used for backfilling corrupted live watchers data.
+   * Uses INSERT ON CONFLICT to handle missing rows.
+   */
+  async updateWatchersCount(mediaItemId: string, watchersCount: number): Promise<void> {
+    return withDbError(
+      'upsert watchers count',
+      this.logger,
+      async () => {
+        await this.db
+          .insert(schema.mediaStats)
+          .values({
+            mediaItemId,
+            watchersCount,
+            updatedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: schema.mediaStats.mediaItemId,
+            set: {
+              watchersCount,
+              updatedAt: new Date(),
+            },
+          });
+      },
+      { mediaItemId, watchersCount },
+    );
+  }
 }

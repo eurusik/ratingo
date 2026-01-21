@@ -491,6 +491,97 @@ export class StatsService {
   }
 
   /**
+   * Backfills watchers_count for items with corrupted live watchers data.
+   * Finds items where watchers_count = 0 but total_watchers > minTotalWatchers,
+   * then re-fetches from Trakt API.
+   *
+   * Uses batching and rate limiting to avoid API throttling.
+   *
+   * @param options.type - Filter by media type (movie/show)
+   * @param options.limit - Max items to process
+   * @param options.minTotalWatchers - Minimum total_watchers to consider (default: 100)
+   * @returns Count of backfilled items
+   */
+  async backfillWatchersCount(options: {
+    type?: MediaType;
+    limit?: number;
+    minTotalWatchers?: number;
+  }): Promise<{ total: number; success: number; failed: number }> {
+    const limit = options.limit ?? 100;
+    const minTotalWatchers = options.minTotalWatchers ?? 100;
+
+    this.logger.log(
+      `Starting watchers_count backfill (type: ${options.type ?? 'all'}, limit: ${limit}, minTotalWatchers: ${minTotalWatchers})...`,
+    );
+
+    // Find items with corrupted data: watchers_count = 0 but total_watchers > minTotalWatchers
+    const corruptedItems = await this.mediaRepository.findItemsWithCorruptedWatchersCount({
+      type: options.type,
+      limit,
+      minTotalWatchers,
+    });
+
+    if (corruptedItems.length === 0) {
+      this.logger.log('No items with corrupted watchers_count found');
+      return { total: 0, success: 0, failed: 0 };
+    }
+
+    this.logger.log(`Found ${corruptedItems.length} items with corrupted watchers_count`);
+
+    // Separate by type for batch API calls
+    const movieItems = corruptedItems.filter((i) => i.type === MediaType.MOVIE);
+    const showItems = corruptedItems.filter((i) => i.type === MediaType.SHOW);
+
+    let success = 0;
+    let failed = 0;
+
+    // Process movies
+    if (movieItems.length > 0) {
+      const movieTmdbIds = movieItems.map((i) => i.tmdbId);
+      const movieWatchers = await this.traktRatingsPort.getMovieWatchersByTmdbIds(
+        movieTmdbIds,
+        1, // concurrency = 1 to avoid rate limiting
+      );
+
+      for (const item of movieItems) {
+        const watchers = movieWatchers.get(item.tmdbId);
+        if (watchers !== null && watchers !== undefined) {
+          await this.statsRepository.updateWatchersCount(item.id, watchers);
+          success++;
+          this.logger.debug(`Updated movie ${item.tmdbId}: watchers_count = ${watchers}`);
+        } else {
+          failed++;
+          this.logger.debug(`Failed to get watchers for movie ${item.tmdbId}`);
+        }
+      }
+    }
+
+    // Process shows
+    if (showItems.length > 0) {
+      const showTmdbIds = showItems.map((i) => i.tmdbId);
+      const showWatchers = await this.traktRatingsPort.getShowWatchersByTmdbIds(
+        showTmdbIds,
+        1, // concurrency = 1 to avoid rate limiting
+      );
+
+      for (const item of showItems) {
+        const watchers = showWatchers.get(item.tmdbId);
+        if (watchers !== null && watchers !== undefined) {
+          await this.statsRepository.updateWatchersCount(item.id, watchers);
+          success++;
+          this.logger.debug(`Updated show ${item.tmdbId}: watchers_count = ${watchers}`);
+        } else {
+          failed++;
+          this.logger.debug(`Failed to get watchers for show ${item.tmdbId}`);
+        }
+      }
+    }
+
+    this.logger.log(`Watchers count backfill complete: ${success} success, ${failed} failed`);
+    return { total: corruptedItems.length, success, failed };
+  }
+
+  /**
    * Fetches stats with retry logic and exponential backoff.
    *
    * @param type - Media type
