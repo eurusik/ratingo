@@ -155,12 +155,9 @@ export class DrizzleMovieRepository implements IMovieRepository {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_RELEASES, options);
   }
 
-  /** Finds movies recently released on digital platforms. No eligibility filtering. */
+  /** Finds movies recently released on digital platforms. Uses catalog eligibility mode. */
   async findNewOnDigital(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
-    return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_ON_DIGITAL, {
-      ...options,
-      eligibilityMode: ELIGIBILITY_MODE.NONE,
-    });
+    return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_ON_DIGITAL, options);
   }
 
   private normalizeGenres(genres?: string | string[]): string[] | undefined {

@@ -234,17 +234,15 @@ describe('DrizzleMovieRepository', () => {
       });
     });
 
-    it('findNewOnDigital delegates to movieListingsQuery with no eligibility filtering', async () => {
+    it('findNewOnDigital delegates to movieListingsQuery with default eligibility', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleMovieRepository);
 
       await repository.findNewOnDigital({} as any);
-      expect(movieListingsQuery.execute).toHaveBeenCalledWith('new_on_digital', {
-        eligibilityMode: 'none',
-      });
+      expect(movieListingsQuery.execute).toHaveBeenCalledWith('new_on_digital', {});
     });
 
-    it('findNewOnDigital passes through options with no eligibility filtering', async () => {
+    it('findNewOnDigital passes through options with default eligibility', async () => {
       const module: TestingModule = await setup();
       repository = module.get(DrizzleMovieRepository);
 
@@ -253,7 +251,6 @@ describe('DrizzleMovieRepository', () => {
         limit: 20,
         offset: 10,
         daysBack: 14,
-        eligibilityMode: 'none',
       });
     });
   });
