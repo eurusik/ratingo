@@ -19,8 +19,10 @@ export interface MediaScoreData {
   ratingRottenTomatoes: number | null;
   voteCountImdb: number | null;
   voteCountTrakt: number | null;
-  /** Current Trakt watchers count from media_stats (for score recalculation) */
+  /** Live Trakt watchers count from media_stats (for optional bonus) */
   watchersCount: number | null;
+  /** Total Trakt watchers from media_stats (primary popularity signal) */
+  totalWatchers: number | null;
 }
 
 /**

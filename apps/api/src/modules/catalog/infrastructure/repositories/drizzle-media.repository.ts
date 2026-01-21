@@ -511,6 +511,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           voteCountImdb: schema.mediaItems.voteCountImdb,
           voteCountTrakt: schema.mediaItems.voteCountTrakt,
           watchersCount: schema.mediaStats.watchersCount,
+          totalWatchers: schema.mediaStats.totalWatchers,
         })
         .from(schema.mediaItems)
         .leftJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
@@ -574,6 +575,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           voteCountImdb: schema.mediaItems.voteCountImdb,
           voteCountTrakt: schema.mediaItems.voteCountTrakt,
           watchersCount: schema.mediaStats.watchersCount,
+          totalWatchers: schema.mediaStats.totalWatchers,
         })
         .from(schema.mediaItems)
         .leftJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))

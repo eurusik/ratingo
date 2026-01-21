@@ -105,7 +105,8 @@ export class StatsService {
       const scores = scoreData
         ? this.scoreCalculator.calculate({
             tmdbPopularity: scoreData.popularity,
-            traktWatchers: item.watchers,
+            traktTotalWatchers: scoreData.totalWatchers ?? 0,
+            traktLiveWatchers: item.watchers, // Live watchers from trending (optional bonus)
             imdbRating: scoreData.ratingImdb,
             traktRating: scoreData.ratingTrakt,
             metacriticRating: scoreData.ratingMetacritic,
@@ -248,7 +249,8 @@ export class StatsService {
       const scores = scoreData
         ? this.scoreCalculator.calculate({
             tmdbPopularity: scoreData.popularity,
-            traktWatchers: watchers,
+            traktTotalWatchers: scoreData.totalWatchers ?? 0,
+            traktLiveWatchers: watchers, // Fresh live watchers from Trakt (optional bonus)
             imdbRating: scoreData.ratingImdb,
             traktRating: scoreData.ratingTrakt,
             metacriticRating: scoreData.ratingMetacritic,
@@ -368,7 +370,8 @@ export class StatsService {
       for (const scoreData of scoreDataList) {
         const scores = this.scoreCalculator.calculate({
           tmdbPopularity: scoreData.popularity,
-          traktWatchers: scoreData.watchersCount ?? 0,
+          traktTotalWatchers: scoreData.totalWatchers ?? 0,
+          traktLiveWatchers: scoreData.watchersCount, // Optional live watchers from DB
           imdbRating: scoreData.ratingImdb,
           traktRating: scoreData.ratingTrakt,
           metacriticRating: scoreData.ratingMetacritic,

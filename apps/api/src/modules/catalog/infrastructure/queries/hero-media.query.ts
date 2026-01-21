@@ -40,6 +40,7 @@ type HeroQueryRow = {
   videos: unknown;
   ratingoScore: number | null;
   qualityScore: number | null;
+  popularityScore: number | null;
   watchersCount: number | null;
   totalWatchers: number | null;
   rating: number;
@@ -170,6 +171,7 @@ export class HeroMediaQuery {
 
         ratingoScore: schema.mediaStats.ratingoScore,
         qualityScore: schema.mediaStats.qualityScore,
+        popularityScore: schema.mediaStats.popularityScore,
         watchersCount: schema.mediaStats.watchersCount,
         totalWatchers: schema.mediaStats.totalWatchers,
 
@@ -194,8 +196,8 @@ export class HeroMediaQuery {
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(and(...whereConditions))
       .orderBy(
+        desc(schema.mediaStats.ratingoScore), // Primary: composite score with freshness
         desc(schema.mediaStats.popularityScore),
-        desc(schema.mediaStats.ratingoScore),
         desc(schema.mediaItems.id), // Stable sort tiebreaker
       )
       .limit(limit);
@@ -324,7 +326,7 @@ export class HeroMediaQuery {
         stats: {
           ratingoScore: item.ratingoScore,
           qualityScore: item.qualityScore,
-          popularityScore: null,
+          popularityScore: item.popularityScore,
           liveWatchers: item.watchersCount,
           totalWatchers: item.totalWatchers,
         },

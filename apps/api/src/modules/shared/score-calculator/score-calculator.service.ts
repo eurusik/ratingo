@@ -29,8 +29,12 @@ const TRAKT_CONFIDENCE_K = 300;
  */
 export interface ScoreInput {
   // Popularity metrics
+  /** TMDB popularity score (0-1000+, volatile but responsive) */
   tmdbPopularity: number;
-  traktWatchers: number;
+  /** Trakt all-time watchers from /stats endpoint (stable, primary popularity signal) */
+  traktTotalWatchers: number;
+  /** Trakt live watchers from /watching endpoint (optional bonus, volatile) */
+  traktLiveWatchers?: number | null;
 
   // Ratings (0-10 scale, except MC/RT which are 0-100)
   imdbRating?: number | null;
@@ -89,18 +93,20 @@ export class ScoreCalculatorService {
    * @returns {ScoreOutput} Calculated scores
    */
   calculate(input: ScoreInput): ScoreOutput {
-    const { weights, normalization, penalties } = this.config;
+    const { weights, normalization, votePenalty, liveWatchersBonus } = this.config;
 
-    // === NORMALIZE ALL VALUES TO [0, 1] ===
+    // === NORMALIZE ALL VALUES TO [0, 1] USING LOG SCALE ===
 
+    // TMDB popularity: log normalization for smoother distribution
     const tmdbPopularityNorm = this.clamp(
-      input.tmdbPopularity / normalization.tmdbPopularityMax,
+      Math.log1p(input.tmdbPopularity) / Math.log1p(normalization.tmdbPopularityMax),
       0,
       1,
     );
 
-    const traktWatchersNorm = this.clamp(
-      Math.log1p(input.traktWatchers) / Math.log1p(normalization.traktWatchersMax),
+    // Trakt total watchers: log normalization (stable, all-time metric)
+    const traktTotalWatchersNorm = this.clamp(
+      Math.log1p(input.traktTotalWatchers) / Math.log1p(normalization.traktTotalWatchersMax),
       0,
       1,
     );
@@ -126,7 +132,8 @@ export class ScoreCalculatorService {
     // === CALCULATE COMPONENT SCORES ===
 
     const popularityScore =
-      tmdbPopularityNorm * weights.tmdbPopularity + traktWatchersNorm * weights.traktWatchers;
+      tmdbPopularityNorm * weights.tmdbPopularity +
+      traktTotalWatchersNorm * weights.traktTotalWatchers;
 
     const qualityScore =
       avgRatingNorm * weights.avgRating + voteConfidenceNorm * weights.voteConfidence;
@@ -137,12 +144,29 @@ export class ScoreCalculatorService {
 
     let ratingoScore = popularityScore + qualityScore + freshnessScore;
 
-    // Apply penalty for low vote count ("new junk" protection)
-    if (totalVotes < penalties.lowVoteThreshold) {
-      ratingoScore *= penalties.lowVotePenalty;
+    // Optional: Add small bonus for live watchers (max ~3 points)
+    // This rewards currently trending content without making it a requirement
+    if (input.traktLiveWatchers && input.traktLiveWatchers > 0) {
+      const liveWatchersNorm = this.clamp(
+        Math.log1p(input.traktLiveWatchers) / Math.log1p(liveWatchersBonus.cap),
+        0,
+        1,
+      );
+      ratingoScore += liveWatchersNorm * liveWatchersBonus.maxBonus;
     }
 
+    // Apply gradual penalty for low vote count ("new junk" protection)
+    // Linear gradient from minMultiplier at minVotes to 1.0 at maxVotes
+    const voteMultiplier = this.calculateVoteMultiplier(
+      totalVotes,
+      votePenalty.minVotes,
+      votePenalty.maxVotes,
+      votePenalty.minMultiplier,
+    );
+    ratingoScore *= voteMultiplier;
+
     // Return scores normalized to 0-100 range
+    const popularityWeightSum = weights.tmdbPopularity + weights.traktTotalWatchers;
     return {
       ratingoScore: this.clamp(ratingoScore * PERCENT_SCALE, 0, PERCENT_SCALE),
       qualityScore: this.clamp(
@@ -151,7 +175,7 @@ export class ScoreCalculatorService {
         PERCENT_SCALE,
       ),
       popularityScore: this.clamp(
-        (popularityScore / (weights.tmdbPopularity + weights.traktWatchers)) * PERCENT_SCALE,
+        (popularityScore / popularityWeightSum) * PERCENT_SCALE,
         0,
         PERCENT_SCALE,
       ),
@@ -246,6 +270,30 @@ export class ScoreCalculatorService {
     const avgConfidence = confidences.reduce((sum, c) => sum + c, 0) / confidences.length;
 
     return this.clamp(avgConfidence, 0, 1);
+  }
+
+  /**
+   * Calculates vote-based multiplier using linear interpolation.
+   * Provides gradual penalty instead of cliff at threshold.
+   *
+   * @param votes - Total vote count
+   * @param minVotes - Below this: full penalty (minMultiplier)
+   * @param maxVotes - Above this: no penalty (1.0)
+   * @param minMultiplier - Multiplier at or below minVotes
+   * @returns Multiplier between minMultiplier and 1.0
+   */
+  private calculateVoteMultiplier(
+    votes: number,
+    minVotes: number,
+    maxVotes: number,
+    minMultiplier: number,
+  ): number {
+    if (votes <= minVotes) return minMultiplier;
+    if (votes >= maxVotes) return 1.0;
+
+    // Linear interpolation: t goes from 0 to 1 as votes go from minVotes to maxVotes
+    const t = (votes - minVotes) / (maxVotes - minVotes);
+    return minMultiplier + t * (1.0 - minMultiplier);
   }
 
   /**

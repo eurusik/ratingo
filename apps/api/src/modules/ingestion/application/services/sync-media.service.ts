@@ -257,7 +257,8 @@ export class SyncMediaService {
   private calculateScores(media: NormalizedMedia): NormalizedMedia {
     const scoreInput: ScoreInput = {
       tmdbPopularity: media.popularity,
-      traktWatchers: 0, // Updated by Stats module
+      traktTotalWatchers: media.totalWatchers ?? 0, // From Trakt /stats endpoint
+      traktLiveWatchers: media.watchersCount, // From Trakt /watching endpoint (optional bonus)
       imdbRating: media.ratingImdb,
       traktRating: media.ratingTrakt,
       metacriticRating: media.ratingMetacritic,
@@ -265,6 +266,7 @@ export class SyncMediaService {
       imdbVotes: media.voteCountImdb,
       traktVotes: media.voteCountTrakt,
       releaseDate: media.releaseDate,
+      lastAirDate: media.details?.lastAirDate, // For shows: use last episode date for freshness
     };
 
     const scores = this.scoreCalculator.calculate(scoreInput);

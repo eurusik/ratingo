@@ -354,7 +354,8 @@ describe('SyncMediaService', () => {
       expect(scoreCalculator.calculate).toHaveBeenCalledWith(
         expect.objectContaining({
           tmdbPopularity: 150,
-          traktWatchers: 0, // Always 0, updated by Stats module
+          traktTotalWatchers: 3000, // From Trakt /stats endpoint
+          traktLiveWatchers: 80, // From Trakt /watching endpoint
           imdbRating: 7.5,
           traktRating: 7.8,
           metacriticRating: 65,

@@ -411,7 +411,8 @@ describe('StatsService', () => {
           voteCountTrakt: 5000,
           releaseDate: new Date('2020-01-01'),
           lastAirDate: null,
-          watchersCount: 1500, // Has watchers
+          watchersCount: 1500, // Live watchers
+          totalWatchers: 50000, // All-time watchers
         },
         {
           id: 'uuid-2',
@@ -423,7 +424,8 @@ describe('StatsService', () => {
           voteCountTrakt: 2000,
           releaseDate: new Date('2021-01-01'),
           lastAirDate: null,
-          watchersCount: null, // No watchers (null should become 0)
+          watchersCount: null, // No live watchers
+          totalWatchers: null, // No total watchers (null should become 0)
         },
       ]);
 
@@ -438,15 +440,17 @@ describe('StatsService', () => {
 
       await service.recalculateScores({ batchSize: 100 });
 
-      // Verify watchersCount is passed correctly
+      // Verify totalWatchers and liveWatchers are passed correctly
       expect(scoreCalculator.calculate).toHaveBeenCalledWith(
         expect.objectContaining({
-          traktWatchers: 1500, // First item has watchers
+          traktTotalWatchers: 50000, // First item has total watchers
+          traktLiveWatchers: 1500, // First item has live watchers
         }),
       );
       expect(scoreCalculator.calculate).toHaveBeenCalledWith(
         expect.objectContaining({
-          traktWatchers: 0, // Second item: null → 0
+          traktTotalWatchers: 0, // Second item: null → 0
+          traktLiveWatchers: null, // Second item: null stays null
         }),
       );
     });

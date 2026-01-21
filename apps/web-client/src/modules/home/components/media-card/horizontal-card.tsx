@@ -89,7 +89,7 @@ export function HorizontalCard(props: HorizontalCardProps) {
           )}
 
           {/* Interest */}
-          {watchers && (
+          {watchers != null && watchers > 0 && (
             <div className="flex items-center gap-1 text-cinema-text-muted">
               <TrendingUp className="w-4 h-4" />
               <span>{watchers.toLocaleString()}</span>

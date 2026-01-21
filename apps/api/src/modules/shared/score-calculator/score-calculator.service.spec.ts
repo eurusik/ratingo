@@ -6,28 +6,32 @@ describe('ScoreCalculatorService', () => {
   // Default config matching score.config.ts
   const mockConfig = {
     weights: {
-      tmdbPopularity: 0.2,
-      traktWatchers: 0.2,
+      tmdbPopularity: 0.24,
+      traktTotalWatchers: 0.16,
       avgRating: 0.25,
       voteConfidence: 0.15,
       freshness: 0.2,
     },
     ratingWeights: {
-      imdb: 0.4,
-      trakt: 0.25,
-      metacritic: 0.2,
+      imdb: 0.35,
+      trakt: 0.35,
+      metacritic: 0.15,
       rottenTomatoes: 0.15,
     },
     normalization: {
       tmdbPopularityMax: 500,
-      traktWatchersMax: 10000,
-      voteConfidenceK: 5000,
+      traktTotalWatchersMax: 500_000,
       freshnessDecayDays: 180,
       freshnessMinFloor: 0.2,
     },
-    penalties: {
-      lowVoteThreshold: 100,
-      lowVotePenalty: 0.7,
+    liveWatchersBonus: {
+      maxBonus: 0.03,
+      cap: 5000,
+    },
+    votePenalty: {
+      minVotes: 10,
+      maxVotes: 50,
+      minMultiplier: 0.85,
     },
   };
 
@@ -39,7 +43,7 @@ describe('ScoreCalculatorService', () => {
     it('should return scores between 0 and 1', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 1000,
+        traktTotalWatchers: 1000,
         imdbRating: 7.5,
         traktRating: 7.0,
         metacriticRating: 70,
@@ -64,7 +68,7 @@ describe('ScoreCalculatorService', () => {
     it('should give higher score to popular content with good ratings', () => {
       const popular: ScoreInput = {
         tmdbPopularity: 400,
-        traktWatchers: 8000,
+        traktTotalWatchers: 8000,
         imdbRating: 8.5,
         traktRating: 8.0,
         imdbVotes: 50000,
@@ -74,7 +78,7 @@ describe('ScoreCalculatorService', () => {
 
       const unpopular: ScoreInput = {
         tmdbPopularity: 10,
-        traktWatchers: 100,
+        traktTotalWatchers: 100,
         imdbRating: 5.0,
         traktRating: 5.0,
         imdbVotes: 500,
@@ -88,38 +92,77 @@ describe('ScoreCalculatorService', () => {
       expect(popularScore.ratingoScore).toBeGreaterThan(unpopularScore.ratingoScore);
     });
 
-    it('should apply low vote penalty for content with few votes', () => {
-      const fewVotes: ScoreInput = {
+    it('should apply gradual penalty for content with few votes', () => {
+      const veryFewVotes: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 9.0,
         traktRating: 9.0,
-        imdbVotes: 50, // Below threshold
-        traktVotes: 30,
+        imdbVotes: 5, // Below minVotes (10) - full penalty
+        traktVotes: 3,
+        releaseDate: new Date(),
+      };
+
+      const someVotes: ScoreInput = {
+        tmdbPopularity: 100,
+        traktTotalWatchers: 500,
+        imdbRating: 9.0,
+        traktRating: 9.0,
+        imdbVotes: 20, // Between minVotes (10) and maxVotes (50) - partial penalty
+        traktVotes: 10,
         releaseDate: new Date(),
       };
 
       const manyVotes: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 9.0,
         traktRating: 9.0,
-        imdbVotes: 5000,
+        imdbVotes: 5000, // Above maxVotes (50) - no penalty
         traktVotes: 3000,
         releaseDate: new Date(),
       };
 
-      const fewVotesScore = service.calculate(fewVotes);
+      const veryFewVotesScore = service.calculate(veryFewVotes);
+      const someVotesScore = service.calculate(someVotes);
       const manyVotesScore = service.calculate(manyVotes);
 
-      // Few votes should be penalized
-      expect(fewVotesScore.ratingoScore).toBeLessThan(manyVotesScore.ratingoScore);
+      // Gradual penalty: veryFew < some < many
+      expect(veryFewVotesScore.ratingoScore).toBeLessThan(someVotesScore.ratingoScore);
+      expect(someVotesScore.ratingoScore).toBeLessThan(manyVotesScore.ratingoScore);
+    });
+
+    it('should have monotonically increasing score within penalty gradient range', () => {
+      const baseInput = {
+        tmdbPopularity: 100,
+        traktTotalWatchers: 500,
+        imdbRating: 8.0,
+        traktRating: 8.0,
+        releaseDate: new Date(),
+      };
+
+      // Test within gradient range (10-50 votes) where penalty eases off
+      // Note: 0 votes uses neutral confidence (0.5), so excluding from monotonicity test
+      const votePoints = [10, 20, 30, 40, 50];
+      const scores = votePoints.map(
+        (votes) =>
+          service.calculate({
+            ...baseInput,
+            imdbVotes: votes,
+            traktVotes: 0,
+          }).ratingoScore,
+      );
+
+      // Each score should be >= previous within gradient range
+      for (let i = 1; i < scores.length; i++) {
+        expect(scores[i]).toBeGreaterThanOrEqual(scores[i - 1]);
+      }
     });
 
     it('should handle missing ratings gracefully', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         // No ratings provided
         releaseDate: new Date(),
       };
@@ -133,14 +176,14 @@ describe('ScoreCalculatorService', () => {
     it('should give higher freshness score to recent releases', () => {
       const recent: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 7.0,
         releaseDate: new Date(), // Today
       };
 
       const old: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 7.0,
         releaseDate: new Date('2020-01-01'), // Old
       };
@@ -154,7 +197,7 @@ describe('ScoreCalculatorService', () => {
     it('should not let freshness drop below minimum floor', () => {
       const veryOld: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 7.0,
         releaseDate: new Date('1990-01-01'), // Very old
       };
@@ -170,7 +213,7 @@ describe('ScoreCalculatorService', () => {
     it('should handle null release date', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 7.0,
         releaseDate: null,
       };
@@ -184,7 +227,7 @@ describe('ScoreCalculatorService', () => {
     it('should handle releaseDate as string (ISO format)', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 7.0,
         releaseDate: '2024-01-15' as any, // String instead of Date
       };
@@ -198,7 +241,7 @@ describe('ScoreCalculatorService', () => {
     it('should handle invalid releaseDate string gracefully', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 7.0,
         releaseDate: 'invalid-date' as any, // Invalid string
       };
@@ -213,7 +256,7 @@ describe('ScoreCalculatorService', () => {
       // MC and RT are 0-100, IMDb and Trakt are 0-10
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 8.0, // 0-10 scale
         traktRating: 7.5, // 0-10 scale
         metacriticRating: 80, // 0-100 scale
@@ -235,7 +278,7 @@ describe('ScoreCalculatorService', () => {
     it('should return avgRating as weighted average of available ratings', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 8.0,
         traktRating: 7.0,
         imdbVotes: 10000,
@@ -245,15 +288,15 @@ describe('ScoreCalculatorService', () => {
 
       const result = service.calculate(input);
 
-      // avgRating should be weighted average (imdb: 0.4, trakt: 0.25)
-      // (8.0 * 0.4 + 7.0 * 0.25) / (0.4 + 0.25) = (3.2 + 1.75) / 0.65 = 7.615
-      expect(result.avgRating).toBeCloseTo(7.615, 1);
+      // avgRating should be weighted average (imdb: 0.35, trakt: 0.35)
+      // (8.0 * 0.35 + 7.0 * 0.35) / (0.35 + 0.35) = (2.8 + 2.45) / 0.7 = 7.5
+      expect(result.avgRating).toBeCloseTo(7.5, 1);
     });
 
     it('should return totalVotes as sum of IMDb and Trakt votes', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 8.0,
         traktRating: 7.0,
         imdbVotes: 10000,
@@ -269,7 +312,7 @@ describe('ScoreCalculatorService', () => {
     it('should return avgRating of 5.0 when no ratings provided', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         releaseDate: new Date(),
       };
 
@@ -281,7 +324,7 @@ describe('ScoreCalculatorService', () => {
     it('should return totalVotes of 0 when no votes provided', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 8.0,
         releaseDate: new Date(),
       };
@@ -294,7 +337,7 @@ describe('ScoreCalculatorService', () => {
     it('should clamp avgRating between 0 and 10', () => {
       const input: ScoreInput = {
         tmdbPopularity: 100,
-        traktWatchers: 500,
+        traktTotalWatchers: 500,
         imdbRating: 10,
         traktRating: 10,
         metacriticRating: 100, // Converts to 10
@@ -315,7 +358,7 @@ describe('ScoreCalculatorService', () => {
     it('should handle zero values', () => {
       const inputZero: ScoreInput = {
         tmdbPopularity: 0,
-        traktWatchers: 0,
+        traktTotalWatchers: 0,
         imdbRating: 0,
         traktRating: 0,
         metacriticRating: 0,
@@ -334,7 +377,7 @@ describe('ScoreCalculatorService', () => {
     it('should handle extremely high values', () => {
       const inputHigh: ScoreInput = {
         tmdbPopularity: 1000000,
-        traktWatchers: 1000000,
+        traktTotalWatchers: 1000000,
         imdbRating: 10,
         traktRating: 10,
         metacriticRating: 100,
@@ -346,6 +389,91 @@ describe('ScoreCalculatorService', () => {
 
       const result = service.calculate(inputHigh);
       expect(result.ratingoScore).toBeLessThanOrEqual(100);
+    });
+  });
+
+  describe('popularity calculation with totalWatchers', () => {
+    it('should use totalWatchers as primary popularity signal', () => {
+      const withHighWatchers: ScoreInput = {
+        tmdbPopularity: 100,
+        traktTotalWatchers: 200000, // High total watchers
+        imdbRating: 7.0,
+        imdbVotes: 1000,
+        releaseDate: new Date(),
+      };
+
+      const withLowWatchers: ScoreInput = {
+        tmdbPopularity: 100,
+        traktTotalWatchers: 1000, // Low total watchers
+        imdbRating: 7.0,
+        imdbVotes: 1000,
+        releaseDate: new Date(),
+      };
+
+      const highResult = service.calculate(withHighWatchers);
+      const lowResult = service.calculate(withLowWatchers);
+
+      // Higher total watchers should give higher popularity score
+      expect(highResult.popularityScore).toBeGreaterThan(lowResult.popularityScore);
+    });
+
+    it('should give reasonable popularity score even without totalWatchers', () => {
+      const noWatchers: ScoreInput = {
+        tmdbPopularity: 200, // Good TMDB popularity
+        traktTotalWatchers: 0, // No watchers data
+        imdbRating: 7.0,
+        imdbVotes: 1000,
+        releaseDate: new Date(),
+      };
+
+      const result = service.calculate(noWatchers);
+
+      // Should still have decent popularity from TMDB alone
+      expect(result.popularityScore).toBeGreaterThan(30);
+    });
+
+    it('should add small bonus for live watchers (max ~3 points)', () => {
+      const noLiveWatchers: ScoreInput = {
+        tmdbPopularity: 100,
+        traktTotalWatchers: 50000,
+        traktLiveWatchers: 0,
+        imdbRating: 7.0,
+        imdbVotes: 1000,
+        releaseDate: new Date(),
+      };
+
+      const withLiveWatchers: ScoreInput = {
+        tmdbPopularity: 100,
+        traktTotalWatchers: 50000,
+        traktLiveWatchers: 5000, // Max live watchers cap
+        imdbRating: 7.0,
+        imdbVotes: 1000,
+        releaseDate: new Date(),
+      };
+
+      const noLiveResult = service.calculate(noLiveWatchers);
+      const withLiveResult = service.calculate(withLiveWatchers);
+
+      // Live watchers bonus should be small (max ~3 points on 100 scale)
+      const bonus = withLiveResult.ratingoScore - noLiveResult.ratingoScore;
+      expect(bonus).toBeGreaterThan(0);
+      expect(bonus).toBeLessThanOrEqual(4); // Allow small margin
+    });
+
+    it('should handle null traktLiveWatchers gracefully', () => {
+      const input: ScoreInput = {
+        tmdbPopularity: 100,
+        traktTotalWatchers: 50000,
+        traktLiveWatchers: null,
+        imdbRating: 7.0,
+        releaseDate: new Date(),
+      };
+
+      const result = service.calculate(input);
+
+      // Should not throw and should return valid scores
+      expect(result.ratingoScore).toBeGreaterThanOrEqual(0);
+      expect(result.popularityScore).toBeGreaterThanOrEqual(0);
     });
   });
 });
