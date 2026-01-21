@@ -35,6 +35,11 @@ export const VOTE_TYPE = {
 
 export type VoteType = (typeof VOTE_TYPE)[keyof typeof VOTE_TYPE];
 
+export const REVIEWS_DEFAULTS = {
+  SORT: 'newest' as ReviewSort,
+  LIMIT: 10,
+} as const;
+
 export interface ListReviewsParams {
   mediaItemId: string;
   sort?: ReviewSort;

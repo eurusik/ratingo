@@ -8,6 +8,7 @@ import { Tv } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
 import { createMediaMetadata, createNotFoundMetadata } from '@/shared/utils';
 import { catalogApi, type ShowDetailsDto } from '@/core/api';
+import { getReviewsForMedia } from '@/core/api/reviews.server';
 import {
   DetailsHero,
   DetailsContent,
@@ -133,6 +134,8 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
   // Enrich with computed fields
   const show = enrichShowDetails(apiShow);
 
+  const initialReviews = await getReviewsForMedia({ mediaItemId: show.id });
+
   // Get verdict message
   const verdictMessage = apiShow.verdict?.messageKey
     ? dict.details.verdict.show[
@@ -234,7 +237,7 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           <Separator className="my-12 bg-cinema-elevated/50" />
 
           {/* Reviews Section */}
-          <ReviewsSection mediaItemId={show.id} />
+          <ReviewsSection mediaItemId={show.id} initialData={initialReviews} />
         </DetailsContent>
       </main>
     </DetailsPageClient>

@@ -12,7 +12,7 @@ import {
 } from '@/core/query';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { getApiErrorCode, ErrorCode } from '@/core/api';
-import type { ReviewSort, VoteType, ReportReason } from '@/core/api/reviews.client';
+import { REVIEWS_DEFAULTS, type ReviewSort, type VoteType, type ReportReason, type ReviewListResponseDto } from '@/core/api/reviews.client';
 import { useTranslation } from '@/shared/i18n';
 import {
   Button,
@@ -31,26 +31,32 @@ import type { ReviewFormData } from '../schemas';
 interface ReviewsSectionProps {
   mediaItemId: string;
   className?: string;
+  initialData?: ReviewListResponseDto | null;
 }
 
 const SORT_VALUES: ReviewSort[] = ['newest', 'oldest', 'most_liked'];
 
-const PAGE_SIZE = 10;
-
-export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) {
+export function ReviewsSection({ mediaItemId, className, initialData }: ReviewsSectionProps) {
   const { dict } = useTranslation();
   const { isAuthenticated, user } = useAuth();
   const { openLogin } = useAuthModalStore();
-  const [sort, setSort] = useState<ReviewSort>('newest');
-  const [limit, setLimit] = useState(PAGE_SIZE);
+  const [sort, setSort] = useState<ReviewSort>(REVIEWS_DEFAULTS.SORT);
+  const [limit, setLimit] = useState(REVIEWS_DEFAULTS.LIMIT);
   const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
 
-  // Queries
   const {
     data: reviewsData,
     isLoading: isLoadingReviews,
     error: reviewsError,
-  } = useReviews({ mediaItemId, sort, limit });
+  } = useReviews(
+    { mediaItemId, sort, limit },
+    {
+      initialData:
+        sort === REVIEWS_DEFAULTS.SORT && limit === REVIEWS_DEFAULTS.LIMIT && initialData
+          ? initialData
+          : undefined,
+    },
+  );
 
   // Mutations
   const createReview = useCreateReview();
@@ -115,7 +121,7 @@ export function ReviewsSection({ mediaItemId, className }: ReviewsSectionProps) 
   };
 
   const handleLoadMore = () => {
-    setLimit((prev) => prev + PAGE_SIZE);
+    setLimit((prev) => prev + REVIEWS_DEFAULTS.LIMIT);
   };
 
   const handleReport = (reviewId: string) => {

@@ -8,6 +8,7 @@ import { Film } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
 import { createMediaMetadata, createNotFoundMetadata } from '@/shared/utils';
 import { catalogApi, type MovieDetailsDto } from '@/core/api';
+import { getReviewsForMedia } from '@/core/api/reviews.server';
 import {
   DetailsHero,
   DetailsContent,
@@ -128,6 +129,8 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
   // Enrich with computed fields
   const movie = enrichMovieDetails(apiMovie);
 
+  const initialReviews = await getReviewsForMedia({ mediaItemId: movie.id });
+
   // Get verdict for rendering
   const verdict = (movie as { verdict?: MovieVerdict }).verdict;
   const verdictMessage = verdict?.messageKey
@@ -225,7 +228,7 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           <Separator className="my-12 bg-cinema-elevated/50" />
 
           {/* Reviews Section */}
-          <ReviewsSection mediaItemId={movie.id} />
+          <ReviewsSection mediaItemId={movie.id} initialData={initialReviews} />
         </DetailsContent>
       </main>
     </DetailsPageClient>
