@@ -345,10 +345,11 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       const promises = batch.map(async (tmdbId) => {
         try {
           const data = await fetchFn.call(this, tmdbId);
-          // CRITICAL: Preserve null from /watching failure - don't substitute with 0
-          // Only return 0 if item not found in Trakt (data is null)
+          // CRITICAL: data === null means API call failed (rate limit, network error, etc.)
+          // OR item not found in Trakt. In both cases, return null to skip update
+          // and preserve existing data in the database.
           if (data === null) {
-            return { tmdbId, watchers: 0 }; // Item not found in Trakt
+            return { tmdbId, watchers: null }; // Skip update, preserve existing data
           }
           return { tmdbId, watchers: data.watchers }; // Can be number or null
         } catch (error: unknown) {
@@ -364,7 +365,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
             );
             return { tmdbId, watchers: null };
           }
-          return { tmdbId, watchers: 0 };
+          return { tmdbId, watchers: null }; // Also skip on other errors to be safe
         }
       });
 
