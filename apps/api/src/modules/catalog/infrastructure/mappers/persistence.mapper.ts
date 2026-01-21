@@ -135,18 +135,22 @@ export class PersistenceMapper {
   static toMediaStatsInsert(mediaId: string, media: NormalizedMedia): MediaStatsInsert | null {
     if (media.ratingoScore === undefined) return null;
 
-    // CRITICAL: Don't set totalWatchers to 0 when it's null/undefined.
-    // This prevents silent data corruption when Trakt /stats API fails.
-    // The repository upsert will preserve existing value if totalWatchers is undefined.
+    // CRITICAL: Don't set watchersCount/totalWatchers to 0 when it's null/undefined.
+    // This prevents silent data corruption when Trakt API fails.
+    // The repository upsert will preserve existing value via COALESCE.
     const stats: MediaStatsInsert = {
       mediaItemId: mediaId,
       ratingoScore: media.ratingoScore,
       qualityScore: media.qualityScore,
       popularityScore: media.popularityScore,
       freshnessScore: media.freshnessScore,
-      watchersCount: media.watchersCount ?? 0,
       updatedAt: new Date(),
     };
+
+    // Only include watchersCount if we have actual data (not null/undefined)
+    if (media.watchersCount != null) {
+      stats.watchersCount = media.watchersCount;
+    }
 
     // Only include totalWatchers if we have actual data (not null/undefined)
     if (media.totalWatchers != null) {

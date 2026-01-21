@@ -366,16 +366,21 @@ export class DrizzleMediaRepository implements IMediaRepository {
       // Upsert Ratingo Scores to media_stats
       const statsInsert = PersistenceMapper.toMediaStatsInsert(mediaId, media);
       if (statsInsert) {
-        // Build update set - only include totalWatchers if we have actual data
+        // Build update set - only include fields with actual data
         // This prevents overwriting valid data with null/0 on API failures
         const updateSet: Record<string, unknown> = {
           ratingoScore: statsInsert.ratingoScore,
           qualityScore: statsInsert.qualityScore,
           popularityScore: statsInsert.popularityScore,
           freshnessScore: statsInsert.freshnessScore,
-          watchersCount: statsInsert.watchersCount,
           updatedAt: new Date(),
         };
+
+        // CRITICAL: Only update watchersCount if we have actual data
+        // If watchersCount is undefined in statsInsert, preserve existing DB value
+        if (statsInsert.watchersCount !== undefined) {
+          updateSet.watchersCount = statsInsert.watchersCount;
+        }
 
         // CRITICAL: Only update totalWatchers if we have actual data
         // If totalWatchers is undefined in statsInsert, preserve existing DB value
