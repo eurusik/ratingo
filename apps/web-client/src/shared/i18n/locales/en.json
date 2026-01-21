@@ -84,13 +84,13 @@
         "trending": "Trending",
         "popularity": "Popular",
         "ratingo": "Hits",
-        "releaseDate": "New releases"
+        "releaseDate": "By release date"
       },
       "sortTooltips": {
         "trending": "Shows with the highest current viewing activity. Based on recent viewer engagement and overall popularity.",
         "popularity": "Shows that consistently appeal to a large audience. Based on all-time popularity.",
         "ratingo": "Hits — shows with the highest Ratingo score. Combines ratings, popularity, and freshness, not just average score.",
-        "releaseDate": "Newest shows, sorted by release date."
+        "releaseDate": "Sorted by release date, newest to oldest."
       },
       "year": "Year",
       "allYears": "All years"
