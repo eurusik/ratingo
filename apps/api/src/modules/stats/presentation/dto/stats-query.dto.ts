@@ -73,16 +73,16 @@ export class RecalculateScoresQueryDto {
  */
 export class SyncTrendingQueryDto {
   @ApiPropertyOptional({
-    description: 'Number of items to sync',
-    example: 20,
-    default: 20,
+    description: 'Number of trending items to sync per type (movies + shows)',
+    example: 100,
+    default: 100,
   })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
-  limit?: number;
+  limit?: number = 100;
 }
 
 /**

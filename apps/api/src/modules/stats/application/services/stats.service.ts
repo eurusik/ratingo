@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { DEFAULT_PAGE_SIZE, MS_PER_MINUTE } from '@/common/constants';
+import { MAX_PAGE_SIZE, MS_PER_MINUTE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 
 // Stats sync constants
@@ -57,7 +57,7 @@ export class StatsService {
    * @param {number} limit - Number of trending items to fetch per type
    * @returns {Promise<{ movies: number; shows: number }>} Count of updated items
    */
-  async syncTrendingStats(limit = DEFAULT_PAGE_SIZE): Promise<{ movies: number; shows: number }> {
+  async syncTrendingStats(limit = MAX_PAGE_SIZE): Promise<{ movies: number; shows: number }> {
     this.logger.log(`Syncing trending stats (limit: ${limit})...`);
 
     // Fetch trending from Trakt (parallel)

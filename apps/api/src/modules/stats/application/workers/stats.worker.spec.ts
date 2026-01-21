@@ -45,7 +45,7 @@ describe('StatsWorker', () => {
     it('should use default limit for SYNC_TRENDING job', async () => {
       const job = { name: STATS_JOBS.SYNC_TRENDING, data: {}, id: '2' } as Job;
       await worker.process(job);
-      expect(statsService.syncTrendingStats).toHaveBeenCalledWith(20);
+      expect(statsService.syncTrendingStats).toHaveBeenCalledWith(100);
     });
 
     it('should process ANALYZE_DROP_OFF job for single show', async () => {

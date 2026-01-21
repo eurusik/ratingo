@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 
 import { type Job } from 'bullmq';
 
-import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/constants';
+import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '../../../../common/constants';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 import { DropOffService } from '../services/drop-off.service';
 import { StatsService } from '../services/stats.service';
@@ -37,7 +37,7 @@ export class StatsWorker extends WorkerHost {
     try {
       switch (job.name) {
         case STATS_JOBS.SYNC_TRENDING:
-          await this.statsService.syncTrendingStats(job.data.limit || DEFAULT_PAGE_SIZE);
+          await this.statsService.syncTrendingStats(job.data.limit || MAX_PAGE_SIZE);
           break;
 
         case STATS_JOBS.ANALYZE_DROP_OFF:
