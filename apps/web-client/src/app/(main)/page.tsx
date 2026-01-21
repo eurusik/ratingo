@@ -2,6 +2,9 @@
  * Home page with trending shows and movies.
  */
 
+// Revalidate every 60 seconds to keep trending data fresh
+export const revalidate = 60;
+
 import Link from 'next/link';
 import {
   MediaCardServer,
