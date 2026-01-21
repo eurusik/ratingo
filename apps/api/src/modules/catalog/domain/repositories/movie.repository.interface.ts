@@ -10,11 +10,23 @@ import type {
   RatingoStats,
   ExternalRatings,
 } from '../types/common.types';
-import type { WithTotal, CatalogSort, SortOrder, VoteSource } from '../types/query.types';
+import type {
+  WithTotal,
+  CatalogSort,
+  SortOrder,
+  VoteSource,
+  ListContext,
+} from '../types/query.types';
 import { type DatabaseTransaction } from '../types/transaction.type';
 
 // Re-export query types for convenience
-export type { WithTotal, CatalogSort, SortOrder, VoteSource } from '../types/query.types';
+export type {
+  WithTotal,
+  CatalogSort,
+  SortOrder,
+  VoteSource,
+  ListContext,
+} from '../types/query.types';
 
 /**
  * Release info for movies (theatrical/digital releases by region).
@@ -79,6 +91,8 @@ export interface NowPlayingOptions {
   year?: number;
   yearFrom?: number;
   yearTo?: number;
+  /** List context for freshness filtering (default: catalog) */
+  context?: ListContext;
 }
 
 /**

@@ -43,6 +43,22 @@ export const NEW_RELEASE_THRESHOLDS = {
 } as const;
 
 /**
+ * Freshness score floor (minimum value for very old content).
+ * Matches score.config.ts freshnessMinFloor * 100.
+ */
+export const FRESHNESS_FLOOR = 20;
+
+/**
+ * List context for freshness filtering.
+ * - home: stricter freshness (exclude floor/classics)
+ * - catalog: permissive (show all eligible content)
+ */
+export const LIST_CONTEXT = {
+  HOME: 'home',
+  CATALOG: 'catalog',
+} as const;
+
+/**
  * Trending algorithm thresholds.
  */
 export const TRENDING_THRESHOLDS = {
@@ -52,6 +68,35 @@ export const TRENDING_THRESHOLDS = {
   MIN_FRESHNESS_POPULARITY: 30,
   /** Minimum live watchers to appear in trending */
   MIN_WATCHERS: 10,
+} as const;
+
+/**
+ * Context-based freshness thresholds.
+ * Used to filter content based on where it's displayed.
+ */
+export const CONTEXT_FRESHNESS = {
+  /**
+   * Home context: stricter filtering to exclude finished classics.
+   * ratingo: > FRESHNESS_FLOOR (exclude floor)
+   */
+  home: {
+    trending: TRENDING_THRESHOLDS.MIN_FRESHNESS,
+    popularity: TRENDING_THRESHOLDS.MIN_FRESHNESS_POPULARITY,
+    ratingo: FRESHNESS_FLOOR + 1, // > floor, exclude classics
+    releaseDate: 0,
+    tmdbPopularity: 0,
+  },
+  /**
+   * Catalog context: permissive, show all eligible content.
+   * Only trending and popularity have gates (consistency).
+   */
+  catalog: {
+    trending: TRENDING_THRESHOLDS.MIN_FRESHNESS,
+    popularity: TRENDING_THRESHOLDS.MIN_FRESHNESS_POPULARITY,
+    ratingo: 0, // no gate - show classics
+    releaseDate: 0,
+    tmdbPopularity: 0,
+  },
 } as const;
 
 /**

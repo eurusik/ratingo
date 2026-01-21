@@ -1563,6 +1563,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats/backfill/total-watchers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill total_watchers for corrupted items
+         * @description Finds items where total_watchers = 0 but have Trakt votes, then re-fetches from Trakt API.
+         */
+        post: operations["StatsController_backfillTotalWatchers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/recalculate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recalculate scores for all media items
+         * @description Recalculates ratingo_score, quality_score, popularity_score, and freshness_score for all items. Use type=show to recalculate only shows.
+         */
+        post: operations["StatsController_recalculateScores"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/home/hero": {
         parameters: {
             query?: never;
@@ -5310,6 +5350,8 @@ export interface operations {
                 yearFrom?: number;
                 /** @description Release year to (inclusive) */
                 yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
             };
             header?: never;
             path?: never;
@@ -5353,6 +5395,8 @@ export interface operations {
                 yearFrom?: number;
                 /** @description Release year to (inclusive) */
                 yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
             };
             header?: never;
             path?: never;
@@ -5396,6 +5440,8 @@ export interface operations {
                 yearFrom?: number;
                 /** @description Release year to (inclusive) */
                 yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
                 /** @description Days to look back */
                 daysBack?: number;
             };
@@ -5441,6 +5487,8 @@ export interface operations {
                 yearFrom?: number;
                 /** @description Release year to (inclusive) */
                 yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
                 /** @description Days to look back */
                 daysBack?: number;
             };
@@ -5511,6 +5559,8 @@ export interface operations {
                 yearFrom?: number;
                 /** @description Release year to (inclusive) */
                 yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
             };
             header?: never;
             path?: never;
@@ -7833,7 +7883,7 @@ export interface operations {
     StatsController_syncTrendingStats: {
         parameters: {
             query?: {
-                /** @description Number of items to sync (default: 20) */
+                /** @description Number of items to sync */
                 limit?: number;
             };
             header?: never;
@@ -7875,7 +7925,7 @@ export interface operations {
             query?: {
                 /** @description TMDB ID of specific show to analyze */
                 tmdbId?: number;
-                /** @description Max shows to analyze (default: 50) */
+                /** @description Max shows to analyze */
                 limit?: number;
             };
             header?: never;
@@ -7925,6 +7975,52 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StatsController_backfillTotalWatchers: {
+        parameters: {
+            query?: {
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+                /** @description Max items to backfill */
+                limit?: number;
+                /** @description Minimum Trakt votes to consider item as corrupted */
+                minVotes?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StatsController_recalculateScores: {
+        parameters: {
+            query?: {
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+                /** @description Number of items per batch */
+                batchSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

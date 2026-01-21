@@ -13,8 +13,9 @@ import {
   type EvaluationContextType,
 } from '../../../catalog-policy/public';
 import {
-  TRENDING_THRESHOLDS,
+  CONTEXT_FRESHNESS,
   MOVIE_TRENDING_WEIGHTS,
+  LIST_CONTEXT,
 } from '../../domain/constants/catalog.constants';
 import type { TrendingMovieItem } from '../../domain/repositories/movie.repository.interface';
 import type { TrendingQueryResult } from '../../domain/types/query.types';
@@ -22,6 +23,7 @@ import {
   type CatalogSort,
   type SortOrder,
   type VoteSource,
+  type ListContext,
   CATALOG_SORT,
   SORT_ORDER,
   VOTE_SOURCE,
@@ -46,6 +48,8 @@ export interface TrendingMoviesOptions {
   year?: number;
   yearFrom?: number;
   yearTo?: number;
+  /** List context for freshness filtering (default: catalog) */
+  context?: ListContext;
 }
 
 /**
@@ -90,6 +94,7 @@ export class TrendingMoviesQuery {
       year,
       yearFrom,
       yearTo,
+      context = LIST_CONTEXT.CATALOG,
     } = options;
 
     try {
@@ -119,19 +124,13 @@ export class TrendingMoviesQuery {
         isNull(schema.mediaItems.deletedAt),
       ];
 
-      // Freshness gates: filter out old content based on sort mode
-      if (sort === CATALOG_SORT.TRENDING) {
-        // Trending: strict freshness (only recent releases)
+      // Freshness gate: threshold based on context and sort mode
+      const freshnessThreshold = CONTEXT_FRESHNESS[context][sort] ?? 0;
+      if (freshnessThreshold > 0) {
         conditions.push(
-          sql`COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}`,
-        );
-      } else if (sort === CATALOG_SORT.POPULARITY) {
-        // Popularity: softer freshness (allows ~3-4 year old content)
-        conditions.push(
-          sql`COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS_POPULARITY}`,
+          sql`COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${freshnessThreshold}`,
         );
       }
-      // Note: ratingo sort has no freshness gate (freshness already in score)
 
       if (minRatingo !== undefined) {
         conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));

@@ -18,10 +18,11 @@ import {
   type EvaluationContextType,
 } from '../../../catalog-policy/public';
 import {
-  TRENDING_THRESHOLDS,
+  CONTEXT_FRESHNESS,
   SHOW_TRENDING_WEIGHTS,
   NEW_RELEASE_THRESHOLDS,
   CLASSIC_THRESHOLDS,
+  LIST_CONTEXT,
 } from '../../domain/constants/catalog.constants';
 import {
   type TrendingShowItem,
@@ -113,6 +114,7 @@ export class TrendingShowsQuery {
       year,
       yearFrom,
       yearTo,
+      context = LIST_CONTEXT.CATALOG,
     } = options;
 
     try {
@@ -144,19 +146,11 @@ export class TrendingShowsQuery {
         sql`mi.ingestion_status = ${IngestionStatus.READY}`,
       ];
 
-      // Freshness gates: filter out old content based on sort mode
-      if (sort === CATALOG_SORT.TRENDING) {
-        // Trending: strict freshness (only shows with recent episodes)
-        whereConditions.push(
-          sql`COALESCE(ms.freshness_score, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}`,
-        );
-      } else if (sort === CATALOG_SORT.POPULARITY) {
-        // Popularity: softer freshness (allows shows not updated for ~1-2 years)
-        whereConditions.push(
-          sql`COALESCE(ms.freshness_score, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS_POPULARITY}`,
-        );
+      // Freshness gate: threshold based on context and sort mode
+      const freshnessThreshold = CONTEXT_FRESHNESS[context][sort] ?? 0;
+      if (freshnessThreshold > 0) {
+        whereConditions.push(sql`COALESCE(ms.freshness_score, 0) >= ${freshnessThreshold}`);
       }
-      // Note: ratingo sort has no freshness gate (freshness already in score)
 
       if (minRatingo !== undefined) {
         whereConditions.push(sql`ms.ratingo_score >= ${minRatingo}`);

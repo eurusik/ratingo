@@ -23,6 +23,11 @@ export type SortOrder = 'asc' | 'desc';
 export type VoteSource = 'tmdb' | 'trakt';
 
 /**
+ * List context for freshness filtering.
+ */
+export type ListContext = 'home' | 'catalog';
+
+/**
  * Metadata for trending query results.
  * Indicates whether the response is in a degraded state.
  */

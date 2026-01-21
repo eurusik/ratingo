@@ -20,10 +20,18 @@ export interface PaginationParams {
 }
 
 /**
+ * List context for freshness filtering.
+ * - home: stricter freshness (exclude classics)
+ * - catalog: permissive (show all eligible content)
+ */
+export type ListContext = 'home' | 'catalog';
+
+/**
  * Trending shows query params.
  */
 export interface TrendingShowsParams extends PaginationParams {
   sort?: 'trending' | 'rating' | 'popularity';
+  context?: ListContext;
 }
 
 /**
@@ -31,6 +39,7 @@ export interface TrendingShowsParams extends PaginationParams {
  */
 export interface TrendingMoviesParams extends PaginationParams {
   sort?: 'trending' | 'rating' | 'popularity';
+  context?: ListContext;
 }
 
 /**

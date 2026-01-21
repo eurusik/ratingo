@@ -21,6 +21,7 @@ export default async function HomePage() {
   const dict = getDictionary('uk');
 
   // Fetch all data in parallel (silent fallback on error)
+  // Home context applies stricter freshness filtering (excludes finished classics)
   const [
     heroItems,
     trendingShowsData,
@@ -30,8 +31,8 @@ export default async function HomePage() {
     newEpisodesData,
   ] = await Promise.all([
     catalogApi.getHeroItems({ type: 'show' }).catch((): HeroData => []),
-    catalogApi.getTrendingShows({ limit: 12 }).catch(() => ({ data: [] })),
-    catalogApi.getTrendingMovies({ limit: 12 }).catch(() => ({ data: [] })),
+    catalogApi.getTrendingShows({ limit: 12, context: 'home' }).catch(() => ({ data: [] })),
+    catalogApi.getTrendingMovies({ limit: 12, context: 'home' }).catch(() => ({ data: [] })),
     catalogApi.getNowPlayingMovies({ limit: 12 }).catch(() => ({ data: [] })),
     catalogApi.getNewOnDigitalMovies({ limit: 12 }).catch(() => ({ data: [] })),
     catalogApi.getNewEpisodes({ days: 7, limit: 15 }).catch(() => ({ data: [] })),

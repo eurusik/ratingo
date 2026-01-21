@@ -17,6 +17,7 @@ import {
 } from 'class-validator';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
+import { LIST_CONTEXT } from '../../domain/constants/catalog.constants';
 
 @ValidatorConstraint({ name: 'YearRange', async: false })
 class YearRangeConstraint implements ValidatorConstraintInterface {
@@ -65,6 +66,11 @@ export const VOTE_SOURCE = {
   TRAKT: 'trakt',
 } as const;
 export type VoteSource = (typeof VOTE_SOURCE)[keyof typeof VOTE_SOURCE];
+
+// Re-export from domain for convenience
+export { LIST_CONTEXT };
+export const LIST_CONTEXT_VALUES = Object.values(LIST_CONTEXT);
+export type ListContext = (typeof LIST_CONTEXT)[keyof typeof LIST_CONTEXT];
 
 /**
  * Unified list query parameters for catalog endpoints.
@@ -159,4 +165,13 @@ export class CatalogListQueryDto {
   @Max(2100)
   @Type(() => Number)
   yearTo?: number;
+
+  @ApiPropertyOptional({
+    enum: LIST_CONTEXT_VALUES,
+    default: LIST_CONTEXT.CATALOG,
+    description: 'List context: home = stricter freshness filtering; catalog = permissive',
+  })
+  @IsOptional()
+  @IsIn(LIST_CONTEXT_VALUES)
+  context: ListContext = LIST_CONTEXT.CATALOG;
 }

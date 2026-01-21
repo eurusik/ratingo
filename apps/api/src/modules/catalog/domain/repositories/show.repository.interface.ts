@@ -13,7 +13,13 @@ import type {
   ExternalRatings,
   GenreInfo,
 } from '../types/common.types';
-import type { WithTotal, CatalogSort, SortOrder, VoteSource } from '../types/query.types';
+import type {
+  WithTotal,
+  CatalogSort,
+  SortOrder,
+  VoteSource,
+  ListContext,
+} from '../types/query.types';
 import { type DatabaseTransaction } from '../types/transaction.type';
 
 /**
@@ -31,6 +37,8 @@ export interface TrendingShowsOptions {
   year?: number;
   yearFrom?: number;
   yearTo?: number;
+  /** List context for freshness filtering (default: catalog) */
+  context?: ListContext;
 }
 
 /**

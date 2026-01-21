@@ -126,6 +126,20 @@
             "schema": {
               "type": "number"
             }
+          },
+          {
+            "name": "context",
+            "required": false,
+            "in": "query",
+            "description": "List context: home = stricter freshness filtering; catalog = permissive",
+            "schema": {
+              "default": "catalog",
+              "enum": [
+                "home",
+                "catalog"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -285,6 +299,20 @@
             "schema": {
               "type": "number"
             }
+          },
+          {
+            "name": "context",
+            "required": false,
+            "in": "query",
+            "description": "List context: home = stricter freshness filtering; catalog = permissive",
+            "schema": {
+              "default": "catalog",
+              "enum": [
+                "home",
+                "catalog"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -443,6 +471,20 @@
             "description": "Release year to (inclusive)",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "context",
+            "required": false,
+            "in": "query",
+            "description": "List context: home = stricter freshness filtering; catalog = permissive",
+            "schema": {
+              "default": "catalog",
+              "enum": [
+                "home",
+                "catalog"
+              ],
+              "type": "string"
             }
           },
           {
@@ -611,6 +653,20 @@
             "description": "Release year to (inclusive)",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "context",
+            "required": false,
+            "in": "query",
+            "description": "List context: home = stricter freshness filtering; catalog = permissive",
+            "schema": {
+              "default": "catalog",
+              "enum": [
+                "home",
+                "catalog"
+              ],
+              "type": "string"
             }
           },
           {
@@ -826,6 +882,20 @@
             "description": "Release year to (inclusive)",
             "schema": {
               "type": "number"
+            }
+          },
+          {
+            "name": "context",
+            "required": false,
+            "in": "query",
+            "description": "List context: home = stricter freshness filtering; catalog = permissive",
+            "schema": {
+              "default": "catalog",
+              "enum": [
+                "home",
+                "catalog"
+              ],
+              "type": "string"
             }
           }
         ],
@@ -5146,8 +5216,10 @@
             "name": "limit",
             "required": false,
             "in": "query",
-            "description": "Number of items to sync (default: 20)",
+            "description": "Number of items to sync",
             "schema": {
+              "default": 20,
+              "example": 20,
               "type": "number"
             }
           }
@@ -5205,6 +5277,7 @@
             "in": "query",
             "description": "TMDB ID of specific show to analyze",
             "schema": {
+              "example": 12345,
               "type": "number"
             }
           },
@@ -5212,8 +5285,10 @@
             "name": "limit",
             "required": false,
             "in": "query",
-            "description": "Max shows to analyze (default: 50)",
+            "description": "Max shows to analyze",
             "schema": {
+              "default": 50,
+              "example": 50,
               "type": "number"
             }
           }
@@ -5287,6 +5362,111 @@
         },
         "tags": [
           "Public: Stats"
+        ]
+      }
+    },
+    "/api/stats/backfill/total-watchers": {
+      "post": {
+        "operationId": "StatsController_backfillTotalWatchers",
+        "summary": "Backfill total_watchers for corrupted items",
+        "description": "Finds items where total_watchers = 0 but have Trakt votes, then re-fetches from Trakt API.",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "example": "show",
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max items to backfill",
+            "schema": {
+              "default": 100,
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "minVotes",
+            "required": false,
+            "in": "query",
+            "description": "Minimum Trakt votes to consider item as corrupted",
+            "schema": {
+              "default": 100,
+              "example": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Service: Stats"
+        ]
+      }
+    },
+    "/api/stats/recalculate": {
+      "post": {
+        "operationId": "StatsController_recalculateScores",
+        "summary": "Recalculate scores for all media items",
+        "description": "Recalculates ratingo_score, quality_score, popularity_score, and freshness_score for all items. Use type=show to recalculate only shows.",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "example": "show",
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "batchSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per batch",
+            "schema": {
+              "default": 100,
+              "example": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Service: Stats"
         ]
       }
     },
