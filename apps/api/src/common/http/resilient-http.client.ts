@@ -134,13 +134,6 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Adds random jitter to avoid thundering herd.
- */
-function addJitter(ms: number, maxJitterMs = 500): number {
-  return ms + Math.floor(Math.random() * maxJitterMs);
-}
-
-/**
  * Custom error class for HTTP errors with status code.
  */
 export class HttpError extends Error {
