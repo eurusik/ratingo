@@ -46,8 +46,10 @@ export const NEW_RELEASE_THRESHOLDS = {
  * Trending algorithm thresholds.
  */
 export const TRENDING_THRESHOLDS = {
-  /** Minimum freshness score to appear in trending */
+  /** Minimum freshness score to appear in trending (strict) */
   MIN_FRESHNESS: 50,
+  /** Minimum freshness score for popularity sort (softer, ~3-4 year old content ok) */
+  MIN_FRESHNESS_POPULARITY: 30,
   /** Minimum live watchers to appear in trending */
   MIN_WATCHERS: 10,
 } as const;

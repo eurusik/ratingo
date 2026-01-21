@@ -144,13 +144,19 @@ export class TrendingShowsQuery {
         sql`mi.ingestion_status = ${IngestionStatus.READY}`,
       ];
 
-      // Trending hard gate: only fresh content (recent episodes for shows)
-      // This prevents old shows without new episodes from appearing in trending
+      // Freshness gates: filter out old content based on sort mode
       if (sort === CATALOG_SORT.TRENDING) {
+        // Trending: strict freshness (only shows with recent episodes)
         whereConditions.push(
           sql`COALESCE(ms.freshness_score, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}`,
         );
+      } else if (sort === CATALOG_SORT.POPULARITY) {
+        // Popularity: softer freshness (allows shows not updated for ~1-2 years)
+        whereConditions.push(
+          sql`COALESCE(ms.freshness_score, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS_POPULARITY}`,
+        );
       }
+      // Note: ratingo sort has no freshness gate (freshness already in score)
 
       if (minRatingo !== undefined) {
         whereConditions.push(sql`ms.ratingo_score >= ${minRatingo}`);

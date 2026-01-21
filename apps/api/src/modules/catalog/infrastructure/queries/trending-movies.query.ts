@@ -119,12 +119,19 @@ export class TrendingMoviesQuery {
         isNull(schema.mediaItems.deletedAt),
       ];
 
-      // Trending hard gate: only fresh content (recent releases)
+      // Freshness gates: filter out old content based on sort mode
       if (sort === CATALOG_SORT.TRENDING) {
+        // Trending: strict freshness (only recent releases)
         conditions.push(
           sql`COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}`,
         );
+      } else if (sort === CATALOG_SORT.POPULARITY) {
+        // Popularity: softer freshness (allows ~3-4 year old content)
+        conditions.push(
+          sql`COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS_POPULARITY}`,
+        );
       }
+      // Note: ratingo sort has no freshness gate (freshness already in score)
 
       if (minRatingo !== undefined) {
         conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
