@@ -1,7 +1,12 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { type TraktRatingsPort } from '../../../domain/ports/trakt-ratings.port';
-import { TRAKT_BATCH_CONCURRENCY, MAX_SEASONS_FOR_ANALYSIS } from '../../../ingestion.constants';
+import {
+  TRAKT_BATCH_CONCURRENCY,
+  TRAKT_BULK_CHUNK_SIZE,
+  TRAKT_BULK_CHUNK_DELAY_MS,
+  MAX_SEASONS_FOR_ANALYSIS,
+} from '../../../ingestion.constants';
 
 import { BaseTraktHttp } from './base-trakt-http';
 import {
@@ -47,58 +52,62 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
   /**
    * Gets count of users currently watching a movie.
    *
-   * @param {string | number} traktIdOrSlug - Trakt ID or slug
-   * @returns {Promise<number>} Current watchers count
+   * @param traktIdOrSlug - Trakt ID or slug
+   * @returns Current watchers count, or null on error (skip update)
    */
-  async getMovieWatchers(traktIdOrSlug: string | number): Promise<number> {
+  async getMovieWatchers(traktIdOrSlug: string | number): Promise<number | null> {
     try {
       const watchers = await this.fetch<TraktWatchingUser[]>(`/movies/${traktIdOrSlug}/watching`);
       return watchers.length;
-    } catch {
-      return 0;
+    } catch (error) {
+      this.logger.warn(`Failed to get movie watchers for ${traktIdOrSlug}: ${error}`);
+      return null;
     }
   }
 
   /**
    * Retrieves full stats for a movie (watchers, plays, collected, etc.)
    *
-   * @param {string | number} traktIdOrSlug - Trakt ID or slug
-   * @returns {Promise<TraktStatsResponse>} Movie stats payload
+   * @param traktIdOrSlug - Trakt ID or slug
+   * @returns Movie stats payload, or null on error (skip update)
    */
-  async getMovieStats(traktIdOrSlug: string | number): Promise<TraktStatsResponse> {
+  async getMovieStats(traktIdOrSlug: string | number): Promise<TraktStatsResponse | null> {
     try {
       return await this.fetch(`/movies/${traktIdOrSlug}/stats`);
-    } catch {
-      return { watchers: 0, plays: 0, votes: 0 };
+    } catch (error) {
+      this.logger.warn(`Failed to get movie stats for ${traktIdOrSlug}: ${error}`);
+      return null;
     }
   }
 
   /**
    * Gets count of users currently watching a show.
    *
-   * @param {string | number} traktIdOrSlug - Trakt ID or slug
-   * @returns {Promise<number>} Current watchers count
+   * @param traktIdOrSlug - Trakt ID or slug
+   * @returns Current watchers count, or null on error (skip update)
    */
-  async getShowWatchers(traktIdOrSlug: string | number): Promise<number> {
+  async getShowWatchers(traktIdOrSlug: string | number): Promise<number | null> {
     try {
       const watchers = await this.fetch<TraktWatchingUser[]>(`/shows/${traktIdOrSlug}/watching`);
       return watchers.length;
-    } catch {
-      return 0;
+    } catch (error) {
+      this.logger.warn(`Failed to get show watchers for ${traktIdOrSlug}: ${error}`);
+      return null;
     }
   }
 
   /**
    * Retrieves full stats for a show.
    *
-   * @param {string | number} traktIdOrSlug - Trakt ID or slug
-   * @returns {Promise<TraktStatsResponse>} Show stats payload
+   * @param traktIdOrSlug - Trakt ID or slug
+   * @returns Show stats payload, or null on error (skip update)
    */
-  async getShowStats(traktIdOrSlug: string | number): Promise<TraktStatsResponse> {
+  async getShowStats(traktIdOrSlug: string | number): Promise<TraktStatsResponse | null> {
     try {
       return await this.fetch(`/shows/${traktIdOrSlug}/stats`);
-    } catch {
-      return { watchers: 0, plays: 0, votes: 0 };
+    } catch (error) {
+      this.logger.warn(`Failed to get show stats for ${traktIdOrSlug}: ${error}`);
+      return null;
     }
   }
 
@@ -324,16 +333,74 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
   }
 
   /**
-   * Generic method to get watchers count for multiple items by TMDB IDs.
-   * Uses concurrency limit to avoid rate limiting.
+   * Lightweight method to get live watchers count for a single item.
+   * Only makes 2 API calls: search + watching (instead of 4 in getRatingsByTmdbId).
+   * Uses bulk time budget for rate limit resilience.
    *
-   * Returns null for items that failed due to transient errors (429, 5xx, network, /watching failure).
-   * Returns 0 only for items not found in Trakt (404) or items with genuinely 0 watchers.
+   * @param type - Media type
+   * @param tmdbId - TMDB ID
+   * @returns watchers count, or null on transient error (skip update)
+   */
+  private async getLiveWatchersByTmdbId(
+    type: TraktMediaType,
+    tmdbId: number,
+  ): Promise<number | null> {
+    try {
+      // 1. Search for Trakt ID (1 API call)
+      const results = await this.fetchBulk<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
+        `/search/tmdb/${tmdbId}?type=${type}`,
+      );
+
+      const firstResult = results[0];
+      let traktId: number | undefined;
+
+      if (firstResult) {
+        if ('movie' in firstResult) {
+          traktId = firstResult.movie?.ids?.trakt;
+        } else if ('show' in firstResult) {
+          traktId = firstResult.show?.ids?.trakt;
+        }
+      }
+
+      if (!results.length || !traktId) {
+        // Not found in Trakt - this is expected for some items
+        return null;
+      }
+
+      // 2. Get live watchers (1 API call)
+      const endpoint: TraktEndpoint =
+        type === TRAKT_MEDIA_TYPE.MOVIE ? TRAKT_ENDPOINT.MOVIES : TRAKT_ENDPOINT.SHOWS;
+
+      const watchers = await this.fetchBulk<TraktWatchingUser[]>(
+        `/${endpoint}/${traktId}/watching`,
+      );
+
+      return watchers.length;
+    } catch (error) {
+      this.logger.warn(`Failed to get live watchers for ${type} TMDB ${tmdbId}: ${error}`);
+      return null; // Transient error - skip update
+    }
+  }
+
+  /**
+   * Sleep utility for chunking delays.
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Gets live watchers count for multiple items by TMDB IDs.
+   * Uses chunking with delays to avoid rate limiting.
+   * Only makes 2 API calls per item (search + watching).
    *
-   * @param {'movie' | 'show'} type - Media type
-   * @param {number[]} tmdbIds - TMDB IDs
-   * @param {number} concurrency - Max concurrent requests (default: 3)
-   * @returns {Promise<Map<number, number | null>>} Map of tmdbId -> watchers (null = error, skip update)
+   * Returns null for items that failed (transient error) - skip DB update.
+   * Returns number (including 0) for successful fetches.
+   *
+   * @param type - Media type
+   * @param tmdbIds - TMDB IDs
+   * @param concurrency - Max concurrent requests within a chunk
+   * @returns Map of tmdbId -> watchers (null = error, skip update)
    */
   private async getWatchersByTmdbIds(
     type: TraktMediaType,
@@ -343,40 +410,39 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
     const result = new Map<number, number | null>();
     if (tmdbIds.length === 0) return result;
 
-    const fetchFn = type === 'movie' ? this.getMovieRatingsByTmdbId : this.getShowRatingsByTmdbId;
+    // Split into chunks for rate limit safety
+    const chunks: number[][] = [];
+    for (let i = 0; i < tmdbIds.length; i += TRAKT_BULK_CHUNK_SIZE) {
+      chunks.push(tmdbIds.slice(i, i + TRAKT_BULK_CHUNK_SIZE));
+    }
 
-    for (let i = 0; i < tmdbIds.length; i += concurrency) {
-      const batch = tmdbIds.slice(i, i + concurrency);
-      const promises = batch.map(async (tmdbId) => {
-        try {
-          const data = await fetchFn.call(this, tmdbId);
-          // CRITICAL: data === null means API call failed (rate limit, network error, etc.)
-          // OR item not found in Trakt. In both cases, return null to skip update
-          // and preserve existing data in the database.
-          if (data === null) {
-            return { tmdbId, watchers: null }; // Skip update, preserve existing data
-          }
-          return { tmdbId, watchers: data.watchers }; // Can be number or null
-        } catch (error: unknown) {
-          const err = error as { response?: { status?: number }; message?: string };
-          const status = err?.response?.status;
-          if (
-            status === HttpStatus.TOO_MANY_REQUESTS ||
-            (status && status >= HttpStatus.INTERNAL_SERVER_ERROR) ||
-            !status
-          ) {
-            this.logger.warn(
-              `Transient error for ${type} ${tmdbId}: ${err.message || String(error)}`,
-            );
-            return { tmdbId, watchers: null };
-          }
-          return { tmdbId, watchers: null }; // Also skip on other errors to be safe
+    this.logger.log(
+      `Processing ${tmdbIds.length} ${type}s in ${chunks.length} chunks (chunk size: ${TRAKT_BULK_CHUNK_SIZE})`,
+    );
+
+    for (let chunkIdx = 0; chunkIdx < chunks.length; chunkIdx++) {
+      const chunk = chunks[chunkIdx];
+
+      // Process items within chunk with concurrency limit
+      for (let i = 0; i < chunk.length; i += concurrency) {
+        const batch = chunk.slice(i, i + concurrency);
+        const promises = batch.map(async (tmdbId) => {
+          const watchers = await this.getLiveWatchersByTmdbId(type, tmdbId);
+          return { tmdbId, watchers };
+        });
+
+        const batchResults = await Promise.all(promises);
+        for (const { tmdbId, watchers } of batchResults) {
+          result.set(tmdbId, watchers);
         }
-      });
+      }
 
-      const batchResults = await Promise.all(promises);
-      for (const { tmdbId, watchers } of batchResults) {
-        result.set(tmdbId, watchers);
+      // Delay between chunks (except after last chunk)
+      if (chunkIdx < chunks.length - 1) {
+        this.logger.debug(
+          `Chunk ${chunkIdx + 1}/${chunks.length} complete, waiting ${TRAKT_BULK_CHUNK_DELAY_MS}ms`,
+        );
+        await this.sleep(TRAKT_BULK_CHUNK_DELAY_MS);
       }
     }
 

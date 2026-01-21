@@ -92,9 +92,21 @@ export const TMDB_TRENDING_PAGE_SIZE = 20;
 /**
  * Default concurrency for Trakt API batch requests.
  * Set to 1 to avoid rate limiting (Trakt allows ~10 req/s but we share the limit).
- * With 4 API calls per item, concurrency=1 means ~4 req/s, safely within limits.
+ * With 2 API calls per item (search + watching), concurrency=1 means ~2 req/s.
  */
 export const TRAKT_BATCH_CONCURRENCY = 1;
+
+/**
+ * Chunk size for bulk Trakt operations.
+ * Process this many items, then pause before next chunk.
+ */
+export const TRAKT_BULK_CHUNK_SIZE = 10;
+
+/**
+ * Delay between chunks in bulk Trakt operations (ms).
+ * Helps avoid hitting rate limits.
+ */
+export const TRAKT_BULK_CHUNK_DELAY_MS = 2000;
 
 /**
  * Concurrency for job deduplication checks in Redis.
