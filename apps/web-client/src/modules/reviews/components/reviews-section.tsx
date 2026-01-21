@@ -41,7 +41,7 @@ export function ReviewsSection({ mediaItemId, className, initialData }: ReviewsS
   const { isAuthenticated, user } = useAuth();
   const { openLogin } = useAuthModalStore();
   const [sort, setSort] = useState<ReviewSort>(REVIEWS_DEFAULTS.SORT);
-  const [limit, setLimit] = useState(REVIEWS_DEFAULTS.LIMIT);
+  const [limit, setLimit] = useState<number>(REVIEWS_DEFAULTS.LIMIT);
   const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
 
   const {
