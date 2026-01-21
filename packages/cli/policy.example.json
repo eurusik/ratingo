@@ -1,16 +1,72 @@
 {
   "allowedCountries": ["US", "UA", "GB", "CA", "AU", "DE", "FR", "ES", "IT", "NL", "SE", "PL"],
-  "blockedCountries": ["JP", "KR", "CN", "IN", "TR", "ID"],
+  "blockedCountries": ["JP", "KR", "CN", "TW", "HK", "IN", "TR", "ID"],
   "blockedCountryMode": "ANY",
   "allowedLanguages": ["en", "uk", "de", "fr", "es", "it", "pl"],
   "blockedLanguages": ["ja", "ko", "zh", "hi", "tr", "id", "ar"],
   "globalProviders": ["netflix", "prime_video", "disney_plus", "apple_tv_plus", "max", "paramount_plus", "hulu", "peacock"],
   "breakoutRules": [
-    { "id": "early-viral", "name": "Early Viral", "priority": 1, "requirements": { "minImdbVotes": 8000, "minQualityScoreNormalized": 0.62 } },
-    { "id": "viral-hit", "name": "Viral Hit", "priority": 2, "requirements": { "minImdbVotes": 100000, "minQualityScoreNormalized": 0.55 } },
-    { "id": "streaming-original", "name": "Streaming Original", "priority": 3, "requirements": { "minImdbVotes": 3000, "requireAnyOfProviders": ["netflix", "prime_video", "disney_plus", "apple_tv_plus", "max"] } },
-    { "id": "critically-acclaimed", "name": "Critically Acclaimed", "priority": 4, "requirements": { "minQualityScoreNormalized": 0.74, "requireAnyOfRatingsPresent": ["imdb", "metacritic", "rt"] } },
-    { "id": "top-foreign", "name": "Top Foreign", "priority": 5, "requirements": { "minQualityScoreNormalized": 0.65, "requireAnyOfRatingsPresent": ["imdb", "trakt"], "minImdbVotes": 10000, "minTraktVotes": 10000 } }
+    {
+      "id": "global-phenomenon",
+      "name": "Global Phenomenon",
+      "priority": 0,
+      "requirements": {
+        "minImdbVotes": 500000,
+        "minQualityScoreNormalized": 0.70
+      }
+    },
+    {
+      "id": "early-viral",
+      "name": "Early Viral",
+      "priority": 1,
+      "requirements": {
+        "minImdbVotes": 8000,
+        "minQualityScoreNormalized": 0.62,
+        "excludeOriginCountries": ["JP", "KR", "CN", "TW", "HK", "IN", "TR", "ID"]
+      }
+    },
+    {
+      "id": "viral-hit",
+      "name": "Viral Hit",
+      "priority": 2,
+      "requirements": {
+        "minImdbVotes": 100000,
+        "minQualityScoreNormalized": 0.55,
+        "excludeOriginCountries": ["JP", "KR", "CN", "TW", "HK", "IN", "TR", "ID"]
+      }
+    },
+    {
+      "id": "streaming-original",
+      "name": "Streaming Original",
+      "priority": 3,
+      "requirements": {
+        "minImdbVotes": 3000,
+        "requireAnyOfProviders": ["netflix", "prime_video", "disney_plus", "apple_tv_plus", "max"],
+        "excludeOriginCountries": ["JP", "KR", "CN", "TW", "HK", "IN", "TR", "ID"]
+      }
+    },
+    {
+      "id": "critically-acclaimed",
+      "name": "Critically Acclaimed",
+      "priority": 4,
+      "requirements": {
+        "minQualityScoreNormalized": 0.74,
+        "requireAnyOfRatingsPresent": ["imdb", "metacritic", "rt"],
+        "excludeOriginCountries": ["JP", "KR", "CN", "TW", "HK", "IN", "TR", "ID"]
+      }
+    },
+    {
+      "id": "top-foreign",
+      "name": "Top Foreign",
+      "priority": 5,
+      "requirements": {
+        "minQualityScoreNormalized": 0.65,
+        "requireAnyOfRatingsPresent": ["imdb", "trakt"],
+        "minImdbVotes": 10000,
+        "minTraktVotes": 10000,
+        "excludeOriginCountries": ["JP", "KR", "CN", "TW", "HK", "IN", "TR", "ID"]
+      }
+    }
   ],
   "eligibilityMode": "STRICT",
   "homepage": { "minRelevanceScore": 35 },

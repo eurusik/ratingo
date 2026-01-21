@@ -178,10 +178,7 @@ export class PublicCatalogRepository implements IPublicCatalogRepository {
     try {
       let query = sql`
         SELECT * FROM public_media_items
-        WHERE (
-          COALESCE(freshness_score, 0) >= ${TRENDING_GATE.MIN_FRESHNESS_SCORE}
-          OR COALESCE(watchers_count, 0) >= ${TRENDING_GATE.MIN_WATCHERS_COUNT}
-        )
+        WHERE COALESCE(freshness_score, 0) >= ${TRENDING_GATE.MIN_FRESHNESS_SCORE}
       `;
 
       if (options?.type) {

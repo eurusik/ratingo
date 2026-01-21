@@ -60,6 +60,24 @@ export interface TraktRatingsPort {
    * @returns {Promise<ShowEpisodesAnalysisPayload | null>} Analysis payload or null
    */
   getShowEpisodesForAnalysis(tmdbId: number): Promise<ShowEpisodesAnalysisPayload | null>;
+
+  /**
+   * Gets stats (total watchers) for a movie by TMDB ID.
+   * Used for backfilling corrupted data.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<{ watchers: number } | null>} Stats or null if not found
+   */
+  getMovieStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null>;
+
+  /**
+   * Gets stats (total watchers) for a show by TMDB ID.
+   * Used for backfilling corrupted data.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<{ watchers: number } | null>} Stats or null if not found
+   */
+  getShowStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null>;
 }
 
 /**

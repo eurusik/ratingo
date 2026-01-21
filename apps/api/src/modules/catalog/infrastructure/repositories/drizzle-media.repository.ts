@@ -27,6 +27,7 @@ import {
   type MediaScoreData,
   type MediaWithTmdbId,
   type MediaScoreDataWithTmdbId,
+  type CorruptedWatchersItem,
 } from '../../domain/repositories/media.repository.interface';
 import {
   type IMovieRepository,
@@ -365,21 +366,35 @@ export class DrizzleMediaRepository implements IMediaRepository {
       // Upsert Ratingo Scores to media_stats
       const statsInsert = PersistenceMapper.toMediaStatsInsert(mediaId, media);
       if (statsInsert) {
-        await tx
-          .insert(schema.mediaStats)
-          .values(statsInsert)
-          .onConflictDoUpdate({
-            target: schema.mediaStats.mediaItemId,
-            set: {
-              ratingoScore: statsInsert.ratingoScore,
-              qualityScore: statsInsert.qualityScore,
-              popularityScore: statsInsert.popularityScore,
-              freshnessScore: statsInsert.freshnessScore,
-              watchersCount: statsInsert.watchersCount,
-              totalWatchers: statsInsert.totalWatchers,
-              updatedAt: new Date(),
-            },
-          });
+        // Build update set - only include totalWatchers if we have actual data
+        // This prevents overwriting valid data with null/0 on API failures
+        const updateSet: Record<string, unknown> = {
+          ratingoScore: statsInsert.ratingoScore,
+          qualityScore: statsInsert.qualityScore,
+          popularityScore: statsInsert.popularityScore,
+          freshnessScore: statsInsert.freshnessScore,
+          watchersCount: statsInsert.watchersCount,
+          updatedAt: new Date(),
+        };
+
+        // CRITICAL: Only update totalWatchers if we have actual data
+        // If totalWatchers is undefined in statsInsert, preserve existing DB value
+        if (statsInsert.totalWatchers !== undefined) {
+          // Extra safeguard: don't overwrite positive value with 0
+          // (a popular show suddenly having 0 watchers is almost always an API error)
+          updateSet.totalWatchers = sql`
+            CASE
+              WHEN ${statsInsert.totalWatchers} = 0 AND ${schema.mediaStats.totalWatchers} > 0
+              THEN ${schema.mediaStats.totalWatchers}
+              ELSE ${statsInsert.totalWatchers}
+            END
+          `;
+        }
+
+        await tx.insert(schema.mediaStats).values(statsInsert).onConflictDoUpdate({
+          target: schema.mediaStats.mediaItemId,
+          set: updateSet,
+        });
       }
 
       // Upsert Catalog Evaluation (INELIGIBLE by default)
@@ -488,14 +503,18 @@ export class DrizzleMediaRepository implements IMediaRepository {
           id: schema.mediaItems.id,
           popularity: schema.mediaItems.popularity,
           releaseDate: schema.mediaItems.releaseDate,
+          lastAirDate: schema.shows.lastAirDate,
           ratingImdb: schema.mediaItems.ratingImdb,
           ratingTrakt: schema.mediaItems.ratingTrakt,
           ratingMetacritic: schema.mediaItems.ratingMetacritic,
           ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
           voteCountImdb: schema.mediaItems.voteCountImdb,
           voteCountTrakt: schema.mediaItems.voteCountTrakt,
+          watchersCount: schema.mediaStats.watchersCount,
         })
         .from(schema.mediaItems)
+        .leftJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+        .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
         .where(eq(schema.mediaItems.id, id))
         .limit(1);
 
@@ -547,14 +566,18 @@ export class DrizzleMediaRepository implements IMediaRepository {
           tmdbId: schema.mediaItems.tmdbId,
           popularity: schema.mediaItems.popularity,
           releaseDate: schema.mediaItems.releaseDate,
+          lastAirDate: schema.shows.lastAirDate,
           ratingImdb: schema.mediaItems.ratingImdb,
           ratingTrakt: schema.mediaItems.ratingTrakt,
           ratingMetacritic: schema.mediaItems.ratingMetacritic,
           ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
           voteCountImdb: schema.mediaItems.voteCountImdb,
           voteCountTrakt: schema.mediaItems.voteCountTrakt,
+          watchersCount: schema.mediaStats.watchersCount,
         })
         .from(schema.mediaItems)
+        .leftJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+        .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
         .where(inArray(schema.mediaItems.id, ids));
 
       return result;
@@ -702,6 +725,80 @@ export class DrizzleMediaRepository implements IMediaRepository {
     } catch (error) {
       this.logger.error(`Failed to find IDs for snapshots: ${error.message}`);
       throw new DatabaseException('Failed to find IDs for snapshots');
+    }
+  }
+
+  async findIdsForRecalculation(options: {
+    type?: MediaType;
+    limit: number;
+    offset: number;
+  }): Promise<string[]> {
+    try {
+      const conditions = [isNull(schema.mediaItems.deletedAt)];
+
+      if (options.type) {
+        conditions.push(eq(schema.mediaItems.type, options.type));
+      }
+
+      const rows = await this.db
+        .select({ id: schema.mediaItems.id })
+        .from(schema.mediaItems)
+        .where(and(...conditions))
+        .orderBy(schema.mediaItems.id)
+        .limit(options.limit)
+        .offset(options.offset);
+
+      return rows.map((r) => r.id);
+    } catch (error) {
+      this.logger.error(`Failed to find IDs for recalculation: ${error.message}`);
+      throw new DatabaseException('Failed to find IDs for recalculation');
+    }
+  }
+
+  /**
+   * Finds items with corrupted total_watchers data.
+   * Items where total_watchers = 0 (or null) but have Trakt votes indicate API failure during sync.
+   */
+  async findItemsWithMissingWatchers(options: {
+    type?: MediaType;
+    limit: number;
+    minVotes: number;
+  }): Promise<CorruptedWatchersItem[]> {
+    try {
+      const conditions = [
+        isNull(schema.mediaItems.deletedAt),
+        gte(schema.mediaItems.voteCountTrakt, options.minVotes),
+        sql`(${schema.mediaStats.totalWatchers} IS NULL OR ${schema.mediaStats.totalWatchers} = 0)`,
+      ];
+
+      if (options.type) {
+        conditions.push(eq(schema.mediaItems.type, options.type));
+      }
+
+      const rows = await this.db
+        .select({
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          type: schema.mediaItems.type,
+          voteCountTrakt: schema.mediaItems.voteCountTrakt,
+        })
+        .from(schema.mediaItems)
+        .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
+        .where(and(...conditions))
+        .orderBy(desc(schema.mediaItems.voteCountTrakt))
+        .limit(options.limit);
+
+      return rows
+        .filter((r) => r.tmdbId !== null && r.voteCountTrakt !== null)
+        .map((r) => ({
+          id: r.id,
+          tmdbId: r.tmdbId!,
+          type: r.type,
+          voteCountTrakt: r.voteCountTrakt!,
+        }));
+    } catch (error) {
+      this.logger.error(`Failed to find items with missing watchers: ${error.message}`);
+      throw new DatabaseException('Failed to find items with missing watchers');
     }
   }
 }

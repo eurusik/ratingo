@@ -144,14 +144,11 @@ export class TrendingShowsQuery {
         sql`mi.ingestion_status = ${IngestionStatus.READY}`,
       ];
 
-      // Trending hard gate: only new content OR actively watched
-      // This prevents old shows with low engagement from appearing in trending
+      // Trending hard gate: only fresh content (recent episodes for shows)
+      // This prevents old shows without new episodes from appearing in trending
       if (sort === CATALOG_SORT.TRENDING) {
         whereConditions.push(
-          sql`(
-            COALESCE(ms.freshness_score, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}
-            OR COALESCE(ms.watchers_count, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS}
-          )`,
+          sql`COALESCE(ms.freshness_score, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}`,
         );
       }
 
@@ -424,7 +421,9 @@ export class TrendingShowsQuery {
       case 'ratingo':
         return sql`ms.ratingo_score ${dir} NULLS LAST, mi.id DESC`;
       case 'releaseDate':
-        return sql`mi.release_date ${dir} NULLS LAST, mi.id DESC`;
+        // For shows: prioritize last_air_date (recent episodes) over release_date (premiere)
+        // Fallback to created_at for incomplete data
+        return sql`COALESCE(s.last_air_date, mi.release_date, mi.created_at) ${dir} NULLS LAST, mi.id DESC`;
       case 'tmdbPopularity':
         return sql`mi.popularity ${dir}, mi.id DESC`;
       default:

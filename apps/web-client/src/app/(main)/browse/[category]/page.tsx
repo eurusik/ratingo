@@ -167,9 +167,11 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
             {/* Client-side infinite scroll */}
             {hasMore && (
               <BrowseInfiniteList
+                key={`${category}-${sort || 'trending'}`}
                 category={category as BrowseCategory}
                 initialPage={page}
                 pageSize={config.pageSize}
+                sort={sort}
                 loadingText={dict.browse.loading}
               />
             )}

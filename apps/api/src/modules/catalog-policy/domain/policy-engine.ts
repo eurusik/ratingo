@@ -477,6 +477,20 @@ function matchesBreakoutRule(
   const { mediaItem } = input;
   const { requirements } = rule;
 
+  // Check excludeOriginCountries (ANY intersection = exclude)
+  if (requirements.excludeOriginCountries && requirements.excludeOriginCountries.length > 0) {
+    // Defensive: if origin countries are empty/missing, cannot verify exclusion - fail safe
+    if (!mediaItem.originCountries || mediaItem.originCountries.length === 0) {
+      return false;
+    }
+    const hasExcludedCountry = requirements.excludeOriginCountries.some((country) =>
+      mediaItem.originCountries!.includes(country),
+    );
+    if (hasExcludedCountry) {
+      return false;
+    }
+  }
+
   // Check originCountries (ANY intersection)
   if (requirements.originCountries && requirements.originCountries.length > 0) {
     if (!mediaItem.originCountries || mediaItem.originCountries.length === 0) {

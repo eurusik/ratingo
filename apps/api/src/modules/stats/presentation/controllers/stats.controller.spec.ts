@@ -41,7 +41,7 @@ describe('StatsController', () => {
 
   describe('syncTrendingStats', () => {
     it('should add sync job to queue', async () => {
-      const result = await controller.syncTrendingStats();
+      const result = await controller.syncTrendingStats({});
 
       expect(result).toEqual({
         message: 'Stats sync job added to queue',
@@ -51,7 +51,7 @@ describe('StatsController', () => {
     });
 
     it('should use custom limit when provided', async () => {
-      await controller.syncTrendingStats(50);
+      await controller.syncTrendingStats({ limit: 50 });
 
       expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.SYNC_TRENDING, { limit: 50 });
     });
@@ -82,7 +82,7 @@ describe('StatsController', () => {
 
   describe('analyzeDropOff', () => {
     it('should add batch analysis job when no tmdbId provided', async () => {
-      const result = await controller.analyzeDropOff();
+      const result = await controller.analyzeDropOff({});
 
       expect(result).toEqual({
         message: 'Drop-off analysis job for 50 shows added to queue',
@@ -95,7 +95,7 @@ describe('StatsController', () => {
     });
 
     it('should add single show analysis job when tmdbId provided', async () => {
-      const result = await controller.analyzeDropOff(12345);
+      const result = await controller.analyzeDropOff({ tmdbId: 12345 });
 
       expect(result).toEqual({
         message: 'Drop-off analysis job for show 12345 added to queue',
@@ -108,7 +108,7 @@ describe('StatsController', () => {
     });
 
     it('should use custom limit', async () => {
-      await controller.analyzeDropOff(undefined, 100);
+      await controller.analyzeDropOff({ limit: 100 });
 
       expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.ANALYZE_DROP_OFF, {
         tmdbId: undefined,

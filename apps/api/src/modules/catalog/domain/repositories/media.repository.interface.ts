@@ -12,12 +12,15 @@ export interface MediaScoreData {
   id: string;
   popularity: number;
   releaseDate: Date | null;
+  lastAirDate: Date | null;
   ratingImdb: number | null;
   ratingTrakt: number | null;
   ratingMetacritic: number | null;
   ratingRottenTomatoes: number | null;
   voteCountImdb: number | null;
   voteCountTrakt: number | null;
+  /** Current Trakt watchers count from media_stats (for score recalculation) */
+  watchersCount: number | null;
 }
 
 /**
@@ -162,6 +165,37 @@ export interface IMediaRepository {
    * @returns {Promise<string[]>} List of media item IDs
    */
   findIdsForSnapshots(options: { cursor?: string; limit: number }): Promise<string[]>;
+
+  /**
+   * Retrieves IDs of media items for score recalculation with pagination.
+   *
+   * @param {object} options - Query options
+   * @param {MediaType} options.type - Filter by media type
+   * @param {number} options.limit - Number of IDs per batch
+   * @param {number} options.offset - Offset for pagination
+   * @returns {Promise<string[]>} List of media item IDs
+   */
+  findIdsForRecalculation(options: {
+    type?: MediaType;
+    limit: number;
+    offset: number;
+  }): Promise<string[]>;
+
+  /**
+   * Finds media items with corrupted total_watchers data.
+   * Items where total_watchers = 0 but have Trakt votes (indicating API failure during sync).
+   *
+   * @param {object} options - Query options
+   * @param {MediaType} options.type - Filter by media type
+   * @param {number} options.limit - Max items to return
+   * @param {number} options.minVotes - Minimum Trakt votes (default: 100)
+   * @returns {Promise<CorruptedWatchersItem[]>} Items with corrupted data
+   */
+  findItemsWithMissingWatchers(options: {
+    type?: MediaType;
+    limit: number;
+    minVotes: number;
+  }): Promise<CorruptedWatchersItem[]>;
 }
 
 /**
@@ -171,6 +205,17 @@ export interface TrendingUpdatedItem {
   id: string;
   tmdbId: number;
   type: MediaType;
+}
+
+/**
+ * Item returned by findItemsWithMissingWatchers.
+ * Represents items with corrupted total_watchers data.
+ */
+export interface CorruptedWatchersItem {
+  id: string;
+  tmdbId: number;
+  type: MediaType;
+  voteCountTrakt: number;
 }
 
 /**

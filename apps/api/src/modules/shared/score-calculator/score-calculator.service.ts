@@ -44,6 +44,7 @@ export interface ScoreInput {
 
   // Release info
   releaseDate?: Date | null;
+  lastAirDate?: Date | null;
 }
 
 /**
@@ -115,8 +116,9 @@ export class ScoreCalculatorService {
     const totalVotes = (input.imdbVotes || 0) + (input.traktVotes || 0);
     const voteConfidenceNorm = this.calculateVoteConfidence(input.imdbVotes, input.traktVotes);
 
+    const effectiveDate = input.lastAirDate ?? input.releaseDate;
     const freshnessNorm = this.calculateFreshness(
-      input.releaseDate,
+      effectiveDate,
       normalization.freshnessDecayDays,
       normalization.freshnessMinFloor,
     );

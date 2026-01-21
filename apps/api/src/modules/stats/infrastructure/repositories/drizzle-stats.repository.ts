@@ -87,13 +87,14 @@ export class DrizzleStatsRepository implements IStatsRepository {
           .onConflictDoUpdate({
             target: schema.mediaStats.mediaItemId,
             set: {
-              watchersCount: sql`excluded.watchers_count`,
-              trendingRank: sql`excluded.trending_rank`,
-              popularity24h: sql`excluded.popularity_24h`,
-              ratingoScore: sql`excluded.ratingo_score`,
-              qualityScore: sql`excluded.quality_score`,
-              popularityScore: sql`excluded.popularity_score`,
-              freshnessScore: sql`excluded.freshness_score`,
+              // Use COALESCE to preserve existing values when new value is NULL
+              watchersCount: sql`COALESCE(excluded.watchers_count, media_stats.watchers_count)`,
+              trendingRank: sql`COALESCE(excluded.trending_rank, media_stats.trending_rank)`,
+              popularity24h: sql`COALESCE(excluded.popularity_24h, media_stats.popularity_24h)`,
+              ratingoScore: sql`COALESCE(excluded.ratingo_score, media_stats.ratingo_score)`,
+              qualityScore: sql`COALESCE(excluded.quality_score, media_stats.quality_score)`,
+              popularityScore: sql`COALESCE(excluded.popularity_score, media_stats.popularity_score)`,
+              freshnessScore: sql`COALESCE(excluded.freshness_score, media_stats.freshness_score)`,
               updatedAt: sql`excluded.updated_at`,
             },
           });
@@ -153,6 +154,35 @@ export class DrizzleStatsRepository implements IStatsRepository {
         };
       },
       { tmdbId },
+    );
+  }
+
+  /**
+   * Upserts only the total_watchers field for a media item.
+   * Used for backfilling corrupted data.
+   * Uses INSERT ON CONFLICT to handle missing rows.
+   */
+  async updateTotalWatchers(mediaItemId: string, totalWatchers: number): Promise<void> {
+    return withDbError(
+      'upsert total watchers',
+      this.logger,
+      async () => {
+        await this.db
+          .insert(schema.mediaStats)
+          .values({
+            mediaItemId,
+            totalWatchers,
+            updatedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: schema.mediaStats.mediaItemId,
+            set: {
+              totalWatchers,
+              updatedAt: new Date(),
+            },
+          });
+      },
+      { mediaItemId, totalWatchers },
     );
   }
 }

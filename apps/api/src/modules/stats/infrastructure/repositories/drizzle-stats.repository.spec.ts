@@ -242,4 +242,35 @@ describe('DrizzleStatsRepository', () => {
       await expect(repository.findByTmdbId(550)).rejects.toThrow(DatabaseException);
     });
   });
+
+  describe('updateTotalWatchers', () => {
+    it('should upsert total watchers successfully', async () => {
+      const mockDb = createMockDb();
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      await repository.updateTotalWatchers('media-1', 5000);
+
+      // Should use INSERT ... ON CONFLICT (upsert pattern)
+      expect(mockDb.insert).toHaveBeenCalled();
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const mockDb = createMockDb({ rejectWith: new Error('DB Error') });
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      await expect(repository.updateTotalWatchers('media-1', 5000)).rejects.toThrow(
+        DatabaseException,
+      );
+    });
+  });
 });

@@ -9,11 +9,13 @@ import { useState, useCallback } from 'react';
 import { MediaCardServer, type MediaCardServerProps } from '@/modules/home';
 import { InfiniteScrollLoader } from '@/modules/browse';
 import type { BrowseCategory } from '@/modules/browse';
+import { useLocale } from '@/shared/i18n';
 
 interface BrowseInfiniteListProps {
   category: BrowseCategory;
   initialPage: number;
   pageSize: number;
+  sort?: string;
   loadingText?: string;
 }
 
@@ -24,8 +26,10 @@ export function BrowseInfiniteList({
   category,
   initialPage,
   pageSize,
+  sort,
   loadingText = 'Завантаження...',
 }: BrowseInfiniteListProps) {
+  const locale = useLocale();
   const [items, setItems] = useState<MediaCardServerProps[]>([]);
   const [page, setPage] = useState(initialPage + 1);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +41,8 @@ export function BrowseInfiniteList({
     setIsLoading(true);
     try {
       // Fetch next page via API route
-      const response = await fetch(`/api/browse/${category}?page=${page}&limit=${pageSize}`);
+      const sortParam = sort ? `&sort=${sort}` : '';
+      const response = await fetch(`/api/browse/${category}?page=${page}&limit=${pageSize}${sortParam}`);
       if (!response.ok) throw new Error('Failed to fetch');
 
       const data = await response.json();
@@ -51,7 +56,7 @@ export function BrowseInfiniteList({
     } finally {
       setIsLoading(false);
     }
-  }, [category, page, pageSize, isLoading, hasMore]);
+  }, [category, page, pageSize, sort, isLoading, hasMore]);
 
   return (
     <>
@@ -59,7 +64,7 @@ export function BrowseInfiniteList({
       {items.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
           {items.map((item) => (
-            <MediaCardServer key={item.id} {...item} locale="uk" />
+            <MediaCardServer key={item.id} {...item} locale={locale} />
           ))}
         </div>
       )}

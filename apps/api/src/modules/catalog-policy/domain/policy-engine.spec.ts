@@ -571,6 +571,175 @@ describe('Policy Engine', () => {
       expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
       expect(result.breakoutRuleId).toBe('eastern-european');
     });
+
+    it('should NOT match breakout rule when media has ANY excludeOriginCountries', () => {
+      const policy = createPolicy({
+        blockedCountries: ['JP'],
+        breakoutRules: [
+          {
+            id: 'viral-hit',
+            name: 'Viral Hit',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 100000,
+              excludeOriginCountries: ['JP', 'KR', 'CN'],
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['JP'], // Blocked AND in excludeOriginCountries
+          voteCountImdb: 200000, // Meets votes requirement
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.breakoutRuleId).toBeNull();
+    });
+
+    it('should match breakout rule when media has NO overlap with excludeOriginCountries', () => {
+      const policy = createPolicy({
+        blockedCountries: ['DE'],
+        breakoutRules: [
+          {
+            id: 'viral-hit',
+            name: 'Viral Hit',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 100000,
+              excludeOriginCountries: ['JP', 'KR', 'CN'],
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['DE'], // Blocked but NOT in excludeOriginCountries
+          voteCountImdb: 200000, // Meets votes requirement
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.reasons).toContain('BREAKOUT_ALLOWED');
+      expect(result.breakoutRuleId).toBe('viral-hit');
+    });
+
+    it('should NOT match breakout rule when ANY origin country is in excludeOriginCountries (co-production)', () => {
+      const policy = createPolicy({
+        blockedCountries: ['JP'],
+        breakoutRules: [
+          {
+            id: 'global-phenomenon',
+            name: 'Global Phenomenon',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 500000,
+              excludeOriginCountries: ['JP', 'KR', 'CN'],
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['US', 'JP'], // Co-production with JP
+          voteCountImdb: 600000, // Meets votes requirement
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      // JP is in excludeOriginCountries, so breakout should NOT match
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.breakoutRuleId).toBeNull();
+    });
+
+    it('should use breakout rule without excludeOriginCountries for global phenomena', () => {
+      const policy = createPolicy({
+        blockedCountries: ['KR'],
+        breakoutRules: [
+          {
+            id: 'global-phenomenon',
+            name: 'Global Phenomenon',
+            priority: 0, // Highest priority
+            requirements: {
+              minImdbVotes: 500000,
+              // NO excludeOriginCountries - allows any origin
+            },
+          },
+          {
+            id: 'viral-hit',
+            name: 'Viral Hit',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 100000,
+              excludeOriginCountries: ['JP', 'KR', 'CN'],
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['KR'], // Squid Game case
+          voteCountImdb: 700000, // Meets both rules
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      // Should match global-phenomenon (no excludeOriginCountries)
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.breakoutRuleId).toBe('global-phenomenon');
+    });
+
+    it('should fallback to rule without excludeOriginCountries when excluded rule fails', () => {
+      const policy = createPolicy({
+        blockedCountries: ['KR'],
+        breakoutRules: [
+          {
+            id: 'viral-hit-excluded',
+            name: 'Viral Hit (Excluded Countries)',
+            priority: 1, // Higher priority number = lower priority
+            requirements: {
+              minImdbVotes: 100000,
+              excludeOriginCountries: ['KR'],
+            },
+          },
+          {
+            id: 'viral-hit-any',
+            name: 'Viral Hit (Any Country)',
+            priority: 2, // Lower priority, but should still match
+            requirements: {
+              minImdbVotes: 100000,
+              // No excludeOriginCountries
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['KR'],
+          voteCountImdb: 150000,
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      // First rule fails due to excludeOriginCountries, fallback to second rule
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.breakoutRuleId).toBe('viral-hit-any');
+    });
   });
 
   describe('evaluateEligibility - Neutral Returns INELIGIBLE', () => {

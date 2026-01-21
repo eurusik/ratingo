@@ -119,13 +119,10 @@ export class TrendingMoviesQuery {
         isNull(schema.mediaItems.deletedAt),
       ];
 
-      // Trending hard gate: only new content OR actively watched
+      // Trending hard gate: only fresh content (recent releases)
       if (sort === CATALOG_SORT.TRENDING) {
         conditions.push(
-          sql`(
-            COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}
-            OR COALESCE(${schema.mediaStats.watchersCount}, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS}
-          )`,
+          sql`COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}`,
         );
       }
 
@@ -272,8 +269,9 @@ export class TrendingMoviesQuery {
       return [sql`${schema.mediaStats.ratingoScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
     }
     if (sort === 'releaseDate') {
+      // Fallback to created_at for incomplete data
       return [
-        sql`${schema.mediaItems.releaseDate} ${dir} ${nullsLast}`,
+        sql`COALESCE(${schema.mediaItems.releaseDate}, ${schema.mediaItems.createdAt}) ${dir} ${nullsLast}`,
         sql`${schema.mediaItems.id} desc`,
       ];
     }

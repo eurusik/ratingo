@@ -10,8 +10,8 @@ export const STATS_REPOSITORY = Symbol('STATS_REPOSITORY');
 export interface MediaStatsData {
   /** Internal media item UUID */
   mediaItemId: string;
-  /** Number of users currently watching this media on Trakt */
-  watchersCount: number;
+  /** Number of users currently watching this media on Trakt (optional for score-only updates) */
+  watchersCount?: number;
   /** Position in the trending list (1 = most trending) */
   trendingRank?: number;
   /** Popularity score over the last 24 hours */
@@ -64,4 +64,15 @@ export interface IStatsRepository {
    * @returns {Promise<MediaStatsData | null>} Stats or null if not found
    */
   findByTmdbId(tmdbId: number): Promise<MediaStatsData | null>;
+
+  /**
+   * Upserts only the total_watchers field for a media item.
+   * Creates the stats row if it doesn't exist.
+   * Used for backfilling corrupted data.
+   *
+   * @param {string} mediaItemId - Internal UUID of the media item
+   * @param {number} totalWatchers - The total watchers count to set
+   * @returns {Promise<void>} Nothing
+   */
+  updateTotalWatchers(mediaItemId: string, totalWatchers: number): Promise<void>;
 }

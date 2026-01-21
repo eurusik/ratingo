@@ -7,6 +7,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { catalogApi } from '@/core/api';
 import { getCategoryConfig } from '@/modules/browse';
 
+/** Allowed sort values for catalog browsing */
+const ALLOWED_SORTS = ['trending', 'popularity', 'ratingo', 'releaseDate'] as const;
+type CatalogSort = (typeof ALLOWED_SORTS)[number];
+
+/**
+ * Validates and returns the sort parameter if valid.
+ */
+function validateSort(value: string | null): CatalogSort | undefined {
+  if (!value) return undefined;
+  return ALLOWED_SORTS.includes(value as CatalogSort) ? (value as CatalogSort) : undefined;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ category: string }> },
@@ -21,12 +33,16 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || String(config.pageSize), 10);
+  const sort = validateSort(searchParams.get('sort'));
   const offset = (page - 1) * limit;
 
   try {
     // Call the appropriate API method based on category config
     const apiMethod = catalogApi[config.apiMethod];
-    const response = (await apiMethod({ offset, limit })) as unknown as {
+    const params: Record<string, string | number | undefined> = { offset, limit };
+    if (sort) params.sort = sort;
+
+    const response = (await apiMethod(params as Parameters<typeof apiMethod>[0])) as unknown as {
       data: Array<{
         id: string;
         slug: string;

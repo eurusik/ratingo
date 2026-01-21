@@ -39,6 +39,7 @@ describe('StatsService', () => {
       findManyByTmdbIds: jest.fn(),
       findManyForScoring: jest.fn(),
       findTrendingUpdatedItems: jest.fn(),
+      findIdsForRecalculation: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -390,6 +391,73 @@ describe('StatsService', () => {
           watchersCount: 0,
         }),
       ]);
+    });
+  });
+
+  describe('recalculateScores', () => {
+    it('should use watchersCount from scoreData', async () => {
+      mediaRepository.findIdsForRecalculation
+        .mockResolvedValueOnce(['uuid-1', 'uuid-2'])
+        .mockResolvedValueOnce([]); // End pagination
+
+      mediaRepository.findManyForScoring.mockResolvedValue([
+        {
+          id: 'uuid-1',
+          tmdbId: 550,
+          popularity: 100,
+          ratingImdb: 8.5,
+          ratingTrakt: 8.0,
+          voteCountImdb: 10000,
+          voteCountTrakt: 5000,
+          releaseDate: new Date('2020-01-01'),
+          lastAirDate: null,
+          watchersCount: 1500, // Has watchers
+        },
+        {
+          id: 'uuid-2',
+          tmdbId: 551,
+          popularity: 80,
+          ratingImdb: 7.5,
+          ratingTrakt: 7.0,
+          voteCountImdb: 5000,
+          voteCountTrakt: 2000,
+          releaseDate: new Date('2021-01-01'),
+          lastAirDate: null,
+          watchersCount: null, // No watchers (null should become 0)
+        },
+      ]);
+
+      scoreCalculator.calculate.mockReturnValue({
+        ratingoScore: 0.75,
+        qualityScore: 0.8,
+        popularityScore: 0.7,
+        freshnessScore: 0.6,
+        avgRating: 7.5,
+        totalVotes: 10000,
+      });
+
+      await service.recalculateScores({ batchSize: 100 });
+
+      // Verify watchersCount is passed correctly
+      expect(scoreCalculator.calculate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          traktWatchers: 1500, // First item has watchers
+        }),
+      );
+      expect(scoreCalculator.calculate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          traktWatchers: 0, // Second item: null → 0
+        }),
+      );
+    });
+
+    it('should return early if no items to recalculate', async () => {
+      mediaRepository.findIdsForRecalculation.mockResolvedValue([]);
+
+      const result = await service.recalculateScores({});
+
+      expect(result).toEqual({ total: 0 });
+      expect(mediaRepository.findManyForScoring).not.toHaveBeenCalled();
     });
   });
 });

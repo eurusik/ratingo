@@ -105,14 +105,22 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
   /**
    * Generic method to get ratings by TMDB ID for both movies and shows.
    *
+   * IMPORTANT: Both watchers and totalWatchers can be null if their respective endpoints fail.
+   * This prevents silent data corruption where 0 is written on API failures.
+   *
    * @param {'movie' | 'show'} type - Media type
    * @param {number} tmdbId - TMDB ID
-   * @returns {Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null>} Ratings payload or null
+   * @returns {Promise<{ rating: number; votes: number; watchers: number | null; totalWatchers: number | null } | null>} Ratings payload or null
    */
   private async getRatingsByTmdbId(
     type: TraktMediaType,
     tmdbId: number,
-  ): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
+  ): Promise<{
+    rating: number;
+    votes: number;
+    watchers: number | null;
+    totalWatchers: number | null;
+  } | null> {
     try {
       const results = await this.fetch<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
         `/search/tmdb/${tmdbId}?type=${type}`,
@@ -137,12 +145,8 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
 
       const [ratingsResult, watchersResult, statsResult] = await Promise.allSettled([
         this.fetch<TraktRatingsResponse>(`/${endpoint}/${traktId}/ratings`),
-        this.fetch<TraktWatchingUser[]>(`/${endpoint}/${traktId}/watching`)
-          .then((w) => w.length)
-          .catch(() => 0),
-        this.fetch<TraktStatsResponse>(`/${endpoint}/${traktId}/stats`).catch(() => ({
-          watchers: 0,
-        })),
+        this.fetch<TraktWatchingUser[]>(`/${endpoint}/${traktId}/watching`).then((w) => w.length),
+        this.fetch<TraktStatsResponse>(`/${endpoint}/${traktId}/stats`),
       ]);
 
       if (ratingsResult.status === 'rejected') {
@@ -150,14 +154,32 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       }
 
       const ratings = ratingsResult.value;
-      const watchers = watchersResult.status === 'fulfilled' ? watchersResult.value : 0;
-      const stats = statsResult.status === 'fulfilled' ? statsResult.value : { watchers: 0 };
+
+      // CRITICAL: Don't substitute 0 on /watching failure - return null to preserve existing data
+      let watchers: number | null = null;
+      if (watchersResult.status === 'fulfilled') {
+        watchers = watchersResult.value;
+      } else {
+        this.logger.warn(
+          `Trakt /watching failed for ${type} TMDB:${tmdbId} (traktId:${traktId}): ${watchersResult.reason}`,
+        );
+      }
+
+      // CRITICAL: Don't substitute 0 on /stats failure - return null to preserve existing data
+      let totalWatchers: number | null = null;
+      if (statsResult.status === 'fulfilled') {
+        totalWatchers = statsResult.value.watchers;
+      } else {
+        this.logger.warn(
+          `Trakt /stats failed for ${type} TMDB:${tmdbId} (traktId:${traktId}): ${statsResult.reason}`,
+        );
+      }
 
       return {
         rating: ratings.rating,
         votes: ratings.votes,
         watchers,
-        totalWatchers: stats.watchers,
+        totalWatchers,
       };
     } catch (error) {
       this.logger.warn(`Failed to get Trakt data for TMDB ${tmdbId}: ${error}`);
@@ -169,11 +191,14 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
    * Get movie ratings and watchers by TMDB ID.
    *
    * @param {number} tmdbId - TMDB ID
-   * @returns {Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null>} Ratings payload or null
+   * @returns {Promise<{ rating: number; votes: number; watchers: number | null; totalWatchers: number | null } | null>} Ratings payload or null
    */
-  async getMovieRatingsByTmdbId(
-    tmdbId: number,
-  ): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
+  async getMovieRatingsByTmdbId(tmdbId: number): Promise<{
+    rating: number;
+    votes: number;
+    watchers: number | null;
+    totalWatchers: number | null;
+  } | null> {
     return this.getRatingsByTmdbId(TRAKT_MEDIA_TYPE.MOVIE, tmdbId);
   }
 
@@ -181,11 +206,14 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
    * Get show ratings and watchers by TMDB ID.
    *
    * @param {number} tmdbId - TMDB ID
-   * @returns {Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null>} Ratings payload or null
+   * @returns {Promise<{ rating: number; votes: number; watchers: number | null; totalWatchers: number | null } | null>} Ratings payload or null
    */
-  async getShowRatingsByTmdbId(
-    tmdbId: number,
-  ): Promise<{ rating: number; votes: number; watchers: number; totalWatchers: number } | null> {
+  async getShowRatingsByTmdbId(tmdbId: number): Promise<{
+    rating: number;
+    votes: number;
+    watchers: number | null;
+    totalWatchers: number | null;
+  } | null> {
     return this.getRatingsByTmdbId(TRAKT_MEDIA_TYPE.SHOW, tmdbId);
   }
 
@@ -294,8 +322,8 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
    * Generic method to get watchers count for multiple items by TMDB IDs.
    * Uses concurrency limit to avoid rate limiting.
    *
-   * Returns null for items that failed due to transient errors (429, 5xx, network).
-   * Returns 0 for items not found in Trakt (404).
+   * Returns null for items that failed due to transient errors (429, 5xx, network, /watching failure).
+   * Returns 0 only for items not found in Trakt (404) or items with genuinely 0 watchers.
    *
    * @param {'movie' | 'show'} type - Media type
    * @param {number[]} tmdbIds - TMDB IDs
@@ -317,7 +345,12 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       const promises = batch.map(async (tmdbId) => {
         try {
           const data = await fetchFn.call(this, tmdbId);
-          return { tmdbId, watchers: data?.watchers ?? 0 };
+          // CRITICAL: Preserve null from /watching failure - don't substitute with 0
+          // Only return 0 if item not found in Trakt (data is null)
+          if (data === null) {
+            return { tmdbId, watchers: 0 }; // Item not found in Trakt
+          }
+          return { tmdbId, watchers: data.watchers }; // Can be number or null
         } catch (error: unknown) {
           const err = error as { response?: { status?: number }; message?: string };
           const status = err?.response?.status;
@@ -370,5 +403,68 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
     concurrency = TRAKT_BATCH_CONCURRENCY,
   ): Promise<Map<number, number | null>> {
     return this.getWatchersByTmdbIds(TRAKT_MEDIA_TYPE.SHOW, tmdbIds, concurrency);
+  }
+
+  /**
+   * Gets stats (total watchers) for a movie by TMDB ID.
+   * Used for backfilling corrupted data.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<{ watchers: number } | null>} Stats or null if not found
+   */
+  async getMovieStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null> {
+    return this.getStatsByTmdbId(TRAKT_MEDIA_TYPE.MOVIE, tmdbId);
+  }
+
+  /**
+   * Gets stats (total watchers) for a show by TMDB ID.
+   * Used for backfilling corrupted data.
+   *
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<{ watchers: number } | null>} Stats or null if not found
+   */
+  async getShowStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null> {
+    return this.getStatsByTmdbId(TRAKT_MEDIA_TYPE.SHOW, tmdbId);
+  }
+
+  /**
+   * Generic method to get stats by TMDB ID.
+   *
+   * @param {'movie' | 'show'} type - Media type
+   * @param {number} tmdbId - TMDB ID
+   * @returns {Promise<{ watchers: number } | null>} Stats or null
+   */
+  private async getStatsByTmdbId(
+    type: TraktMediaType,
+    tmdbId: number,
+  ): Promise<{ watchers: number } | null> {
+    try {
+      const results = await this.fetch<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
+        `/search/tmdb/${tmdbId}?type=${type}`,
+      );
+      const firstResult = results[0];
+      let traktId: number | undefined;
+
+      if (firstResult) {
+        if ('movie' in firstResult) {
+          traktId = firstResult.movie?.ids?.trakt;
+        } else if ('show' in firstResult) {
+          traktId = firstResult.show?.ids?.trakt;
+        }
+      }
+
+      if (!results.length || !traktId) {
+        return null;
+      }
+
+      const endpoint: TraktEndpoint =
+        type === TRAKT_MEDIA_TYPE.MOVIE ? TRAKT_ENDPOINT.MOVIES : TRAKT_ENDPOINT.SHOWS;
+
+      const stats = await this.fetch<TraktStatsResponse>(`/${endpoint}/${traktId}/stats`);
+      return { watchers: stats.watchers };
+    } catch (error) {
+      this.logger.warn(`Failed to get Trakt stats for ${type} TMDB ${tmdbId}: ${error}`);
+      return null;
+    }
   }
 }

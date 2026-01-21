@@ -110,10 +110,7 @@ export class NewEpisodesQuery {
             AND mce.status = ${EligibilityStatus.ELIGIBLE}
           LEFT JOIN ${schema.mediaStats} ms ON ms.media_item_id = mi.id
           WHERE mi.type = 'show'
-            AND (
-              COALESCE(ms.freshness_score, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}
-              OR COALESCE(ms.watchers_count, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS}
-            )
+            AND COALESCE(ms.freshness_score, 0) >= ${TRENDING_THRESHOLDS.MIN_FRESHNESS}
         )
         SELECT media_item_id, slug, title, poster_path, season_number, episode_number, episode_title, air_date
         FROM (

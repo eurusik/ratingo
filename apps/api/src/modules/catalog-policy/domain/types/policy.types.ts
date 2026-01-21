@@ -137,6 +137,12 @@ export interface BreakoutRule {
      * Rule matches if media has ANY of these countries (intersection).
      */
     originCountries?: string[];
+    /**
+     * Excluded origin countries (ISO 3166-1 alpha-2 codes).
+     * Rule does NOT match if media has ANY of these countries.
+     * Used to prevent breakout for specific blocked countries.
+     */
+    excludeOriginCountries?: string[];
   };
 }
 

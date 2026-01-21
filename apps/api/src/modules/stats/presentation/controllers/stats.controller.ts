@@ -1,14 +1,21 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 import { type Queue } from 'bullmq';
 
 import { DEFAULT_BATCH_SIZE, DEFAULT_PAGE_SIZE } from '../../../../common/constants';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
 import { DropOffService } from '../../application/services/drop-off.service';
 import { StatsService } from '../../application/services/stats.service';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
+import {
+  BackfillTotalWatchersQueryDto,
+  RecalculateScoresQueryDto,
+  SyncTrendingQueryDto,
+  AnalyzeDropOffQueryDto,
+} from '../dto';
 
 /**
  * REST controller for media statistics endpoints.
@@ -37,15 +44,9 @@ export class StatsController {
     description:
       'Adds a job to the queue to fetch current watchers count and trending rank from Trakt API.',
   })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: `Number of items to sync (default: ${DEFAULT_PAGE_SIZE})`,
-  })
-  async syncTrendingStats(@Query('limit') limit?: number) {
+  async syncTrendingStats(@Query() query: SyncTrendingQueryDto) {
     const job = await this.statsQueue.add(STATS_JOBS.SYNC_TRENDING, {
-      limit: limit || DEFAULT_PAGE_SIZE,
+      limit: query.limit || DEFAULT_PAGE_SIZE,
     });
 
     return {
@@ -89,28 +90,16 @@ export class StatsController {
     description:
       'Adds a job to analyze viewer drop-off for shows. Can analyze a single show or all shows.',
   })
-  @ApiQuery({
-    name: 'tmdbId',
-    required: false,
-    type: Number,
-    description: 'TMDB ID of specific show to analyze',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: `Max shows to analyze (default: ${DEFAULT_BATCH_SIZE})`,
-  })
-  async analyzeDropOff(@Query('tmdbId') tmdbId?: number, @Query('limit') limit?: number) {
+  async analyzeDropOff(@Query() query: AnalyzeDropOffQueryDto) {
     const job = await this.statsQueue.add(STATS_JOBS.ANALYZE_DROP_OFF, {
-      tmdbId,
-      limit: limit || DEFAULT_BATCH_SIZE,
+      tmdbId: query.tmdbId,
+      limit: query.limit || DEFAULT_BATCH_SIZE,
     });
 
     return {
-      message: tmdbId
-        ? `Drop-off analysis job for show ${tmdbId} added to queue`
-        : `Drop-off analysis job for ${limit || DEFAULT_BATCH_SIZE} shows added to queue`,
+      message: query.tmdbId
+        ? `Drop-off analysis job for show ${query.tmdbId} added to queue`
+        : `Drop-off analysis job for ${query.limit || DEFAULT_BATCH_SIZE} shows added to queue`,
       jobId: job.id,
     };
   }
@@ -162,5 +151,66 @@ export class StatsController {
       };
     }
     return analysis;
+  }
+
+  // === BACKFILL ===
+
+  /**
+   * Backfills total_watchers for items with corrupted data.
+   * Finds items where total_watchers = 0 but have Trakt votes (indicating API failure during sync).
+   */
+  @Post('backfill/total-watchers')
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtGuard)
+  @ApiTags('Service: Stats')
+  @ApiOperation({
+    summary: 'Backfill total_watchers for corrupted items',
+    description:
+      'Finds items where total_watchers = 0 but have Trakt votes, then re-fetches from Trakt API.',
+  })
+  async backfillTotalWatchers(@Query() query: BackfillTotalWatchersQueryDto) {
+    const mediaType =
+      query.type === 'movie' ? MediaType.MOVIE : query.type === 'show' ? MediaType.SHOW : undefined;
+
+    const result = await this.statsService.backfillTotalWatchers({
+      type: mediaType,
+      limit: query.limit,
+      minVotes: query.minVotes,
+    });
+
+    return {
+      message: 'Backfill complete',
+      ...result,
+    };
+  }
+
+  // === SCORE RECALCULATION ===
+
+  /**
+   * Recalculates scores for all media items.
+   * Used after changes to scoring logic (e.g., freshness formula).
+   */
+  @Post('recalculate')
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtGuard)
+  @ApiTags('Service: Stats')
+  @ApiOperation({
+    summary: 'Recalculate scores for all media items',
+    description:
+      'Recalculates ratingo_score, quality_score, popularity_score, and freshness_score for all items. Use type=show to recalculate only shows.',
+  })
+  async recalculateScores(@Query() query: RecalculateScoresQueryDto) {
+    const mediaType =
+      query.type === 'movie' ? MediaType.MOVIE : query.type === 'show' ? MediaType.SHOW : undefined;
+
+    const result = await this.statsService.recalculateScores({
+      type: mediaType,
+      batchSize: query.batchSize,
+    });
+
+    return {
+      message: `Score recalculation complete`,
+      total: result.total,
+    };
   }
 }

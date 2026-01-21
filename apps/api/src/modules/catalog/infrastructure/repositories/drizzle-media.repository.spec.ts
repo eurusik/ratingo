@@ -20,6 +20,7 @@ const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods:
     'where',
     'limit',
     'innerJoin',
+    'leftJoin',
     'insert',
     'values',
     'onConflictDoUpdate',
