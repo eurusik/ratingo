@@ -23,6 +23,7 @@ import {
   NEW_RELEASE_THRESHOLDS,
   CLASSIC_THRESHOLDS,
   LIST_CONTEXT,
+  WATCHERS_FALLBACK,
 } from '../../domain/constants/catalog.constants';
 import {
   type TrendingShowItem,
@@ -411,10 +412,16 @@ export class TrendingShowsQuery {
       case 'trending': {
         // Combined trending score with live engagement signal
         // Uses weights from domain constants for consistency
+        // Fallback formula: when watchers_count=0, use log-compressed total_watchers
         return sql`(
           COALESCE(ms.ratingo_score, 0) * ${w.RATINGO} +
           COALESCE(ms.popularity_score, 0) * ${w.POPULARITY} +
-          (COALESCE(ms.watchers_count, 0)::float / (COALESCE(ms.watchers_count, 0) + ${w.WATCHERS_SATURATION_K})) * 100 * ${w.WATCHERS} +
+          CASE
+            WHEN COALESCE(ms.watchers_count, 0) > 0 THEN
+              (ms.watchers_count::float / (ms.watchers_count + ${w.WATCHERS_SATURATION_K})) * 100
+            ELSE
+              LEAST(LN(1 + COALESCE(ms.total_watchers, 0)) * ${WATCHERS_FALLBACK.LOG_MULTIPLIER}, ${WATCHERS_FALLBACK.MAX_SIGNAL})
+          END * ${w.WATCHERS} +
           COALESCE(mi.trending_score, 0) / 100.0 * ${w.TMDB}
         ) ${dir} NULLS LAST, mi.id DESC`;
       }

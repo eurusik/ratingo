@@ -30,6 +30,9 @@ describe('TrendingPipeline', () => {
     const mockTrendingSyncService = {
       syncTrendingStatsForUpdatedItems: jest.fn().mockResolvedValue({ movies: 0, shows: 0 }),
       syncTrendingStats: jest.fn().mockResolvedValue(undefined),
+      syncEligibleTrendingStats: jest
+        .fn()
+        .mockResolvedValue({ movies: 0, shows: 0, total: 0, hasMore: false }),
     };
 
     const mockCatalogEvaluator = {
@@ -142,6 +145,33 @@ describe('TrendingPipeline', () => {
       expect(trendingSyncService.syncTrendingStatsForUpdatedItems).toHaveBeenCalledWith({
         since: expect.any(Date),
         limit: 200,
+      });
+    });
+
+    it('should run eligible trending backfill after stats sync', async () => {
+      await pipeline.processStats();
+
+      expect(trendingSyncService.syncEligibleTrendingStats).toHaveBeenCalledWith({
+        batchSize: 50,
+        offset: 0,
+      });
+    });
+
+    it('should process multiple batches if hasMore is true', async () => {
+      trendingSyncService.syncEligibleTrendingStats
+        .mockResolvedValueOnce({ movies: 10, shows: 15, total: 25, hasMore: true })
+        .mockResolvedValueOnce({ movies: 5, shows: 3, total: 8, hasMore: false });
+
+      await pipeline.processStats();
+
+      expect(trendingSyncService.syncEligibleTrendingStats).toHaveBeenCalledTimes(2);
+      expect(trendingSyncService.syncEligibleTrendingStats).toHaveBeenNthCalledWith(1, {
+        batchSize: 50,
+        offset: 0,
+      });
+      expect(trendingSyncService.syncEligibleTrendingStats).toHaveBeenNthCalledWith(2, {
+        batchSize: 50,
+        offset: 50,
       });
     });
 

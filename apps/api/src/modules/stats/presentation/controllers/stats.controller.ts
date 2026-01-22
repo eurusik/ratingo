@@ -20,6 +20,7 @@ import {
   RecalculateScoresQueryDto,
   SyncTrendingQueryDto,
   AnalyzeDropOffQueryDto,
+  SyncEligibleTrendingQueryDto,
 } from '../dto';
 
 /**
@@ -59,6 +60,40 @@ export class StatsController {
     return {
       message: 'Stats sync job added to queue',
       jobId: job.id,
+    };
+  }
+
+  /**
+   * Triggers sync job for ELIGIBLE items in trending context.
+   * Syncs watchers data for items that are already in the trending list
+   * but have watchers_count=0 (e.g., items that were never in Trakt trending top-100).
+   *
+   * @param {SyncEligibleTrendingQueryDto} query - Query params
+   * @returns {Promise<any>} Job info
+   */
+  @Post('sync-eligible-trending')
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtGuard)
+  @ApiTags('Service: Stats')
+  @ApiOperation({
+    summary: 'Sync watchers for ELIGIBLE trending items',
+    description:
+      'Adds a job to the queue to sync watchers data for ELIGIBLE items in trending context. ' +
+      'Use this to backfill watchers for items that are never in Trakt trending top-100.',
+  })
+  async syncEligibleTrending(@Query() query: SyncEligibleTrendingQueryDto) {
+    const job = await this.statsQueue.add(STATS_JOBS.SYNC_ELIGIBLE_TRENDING, {
+      batchSize: query.batchSize || DEFAULT_BATCH_SIZE,
+      offset: query.offset || 0,
+    });
+
+    return {
+      message: 'Eligible trending sync job added to queue',
+      jobId: job.id,
+      params: {
+        batchSize: query.batchSize || DEFAULT_BATCH_SIZE,
+        offset: query.offset || 0,
+      },
     };
   }
 

@@ -16,6 +16,7 @@ import {
   CONTEXT_FRESHNESS,
   MOVIE_TRENDING_WEIGHTS,
   LIST_CONTEXT,
+  WATCHERS_FALLBACK,
 } from '../../domain/constants/catalog.constants';
 import type { TrendingMovieItem } from '../../domain/repositories/movie.repository.interface';
 import type { TrendingQueryResult } from '../../domain/types/query.types';
@@ -261,11 +262,17 @@ export class TrendingMoviesQuery {
 
     if (sort === 'trending') {
       const w = MOVIE_TRENDING_WEIGHTS;
+      // Fallback formula: when watchers_count=0, use log-compressed total_watchers
       return [
         sql`(
           COALESCE(${schema.mediaStats.ratingoScore}, 0) * ${w.RATINGO} +
           COALESCE(${schema.mediaStats.popularityScore}, 0) * ${w.POPULARITY} +
-          (COALESCE(${schema.mediaStats.watchersCount}, 0)::float / (COALESCE(${schema.mediaStats.watchersCount}, 0) + ${w.WATCHERS_SATURATION_K})) * 100 * ${w.WATCHERS} +
+          CASE
+            WHEN COALESCE(${schema.mediaStats.watchersCount}, 0) > 0 THEN
+              (${schema.mediaStats.watchersCount}::float / (${schema.mediaStats.watchersCount} + ${w.WATCHERS_SATURATION_K})) * 100
+            ELSE
+              LEAST(LN(1 + COALESCE(${schema.mediaStats.totalWatchers}, 0)) * ${WATCHERS_FALLBACK.LOG_MULTIPLIER}, ${WATCHERS_FALLBACK.MAX_SIGNAL})
+          END * ${w.WATCHERS} +
           COALESCE(${schema.mediaItems.trendingScore}, 0) / 100.0 * ${w.TMDB}
         ) ${dir} ${nullsLast}`,
         sql`${schema.mediaItems.id} desc`,

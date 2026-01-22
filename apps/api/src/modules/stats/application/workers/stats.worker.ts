@@ -40,6 +40,13 @@ export class StatsWorker extends WorkerHost {
           await this.trendingSyncService.syncTrendingStats(job.data.limit || MAX_PAGE_SIZE);
           break;
 
+        case STATS_JOBS.SYNC_ELIGIBLE_TRENDING:
+          await this.trendingSyncService.syncEligibleTrendingStats({
+            batchSize: job.data.batchSize,
+            offset: job.data.offset,
+          });
+          break;
+
         case STATS_JOBS.ANALYZE_DROP_OFF:
           if (job.data.tmdbId) {
             // Analyze single show

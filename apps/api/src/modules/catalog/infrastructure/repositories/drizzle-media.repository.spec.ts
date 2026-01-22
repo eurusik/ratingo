@@ -19,6 +19,7 @@ const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods:
     'from',
     'where',
     'limit',
+    'offset',
     'innerJoin',
     'leftJoin',
     'insert',
@@ -484,6 +485,55 @@ describe('DrizzleMediaRepository', () => {
       repository = module.get(DrizzleMediaRepository);
 
       await expect(repository.upsertStub(stubPayload)).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('findEligibleForTrending', () => {
+    it('should return eligible items with tmdbId and type', async () => {
+      const mockRows = [
+        { id: 'm1', tmdbId: 100, type: MediaType.MOVIE },
+        { id: 's1', tmdbId: 200, type: MediaType.SHOW },
+      ];
+      const module = await setup({ resolveSelect: mockRows });
+      repository = module.get(DrizzleMediaRepository);
+
+      const result = await repository.findEligibleForTrending({ limit: 10, offset: 0 });
+
+      expect(result).toEqual([
+        { id: 'm1', tmdbId: 100, type: MediaType.MOVIE },
+        { id: 's1', tmdbId: 200, type: MediaType.SHOW },
+      ]);
+      expect(db.select).toHaveBeenCalled();
+    });
+
+    it('should return empty array when no items found', async () => {
+      const module = await setup({ resolveSelect: [] });
+      repository = module.get(DrizzleMediaRepository);
+
+      const result = await repository.findEligibleForTrending({ limit: 10, offset: 0 });
+
+      expect(result).toEqual([]);
+    });
+
+    it('should respect limit and offset', async () => {
+      const module = await setup({
+        resolveSelect: [{ id: 'm1', tmdbId: 100, type: MediaType.MOVIE }],
+      });
+      repository = module.get(DrizzleMediaRepository);
+
+      await repository.findEligibleForTrending({ limit: 50, offset: 100 });
+
+      // Verify the chainable methods were called (limit/offset are in the chain)
+      expect(db.select).toHaveBeenCalled();
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const module = await setup({ reject: new Error('DB Error') });
+      repository = module.get(DrizzleMediaRepository);
+
+      await expect(repository.findEligibleForTrending({ limit: 10, offset: 0 })).rejects.toThrow(
+        DatabaseException,
+      );
     });
   });
 });

@@ -215,12 +215,36 @@ export interface IMediaRepository {
     limit: number;
     minTotalWatchers: number;
   }): Promise<CorruptedWatchersItem[]>;
+
+  /**
+   * Finds ELIGIBLE items for trending context.
+   * Used to sync watchers data for items that are already in the trending list.
+   *
+   * @param {object} options - Query options
+   * @param {number} options.limit - Max items to return
+   * @param {number} options.offset - Offset for pagination
+   * @returns {Promise<EligibleTrendingItem[]>} ELIGIBLE trending items with tmdbId and type
+   */
+  findEligibleForTrending(options: {
+    limit: number;
+    offset: number;
+  }): Promise<EligibleTrendingItem[]>;
 }
 
 /**
  * Item returned by findTrendingUpdatedItems.
  */
 export interface TrendingUpdatedItem {
+  id: string;
+  tmdbId: number;
+  type: MediaType;
+}
+
+/**
+ * Item returned by findEligibleForTrending.
+ * Represents ELIGIBLE items in trending context that need stats sync.
+ */
+export interface EligibleTrendingItem {
   id: string;
   tmdbId: number;
   type: MediaType;

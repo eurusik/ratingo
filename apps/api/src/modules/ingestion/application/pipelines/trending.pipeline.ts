@@ -92,6 +92,7 @@ export class TrendingPipeline {
       `Syncing Trakt stats (since: ${sinceDate?.toISOString() || 'all'}, limit: ${limit || 'default'})...`,
     );
 
+    // 1. Sync stats for recently updated items (top trending from TMDB)
     const result = await this.trendingSyncService.syncTrendingStatsForUpdatedItems({
       since: sinceDate,
       limit: limit || TRENDING_DEFAULT_STATS_LIMIT,
@@ -99,8 +100,42 @@ export class TrendingPipeline {
 
     this.logger.log(`Trending stats sync complete: ${result.movies} movies, ${result.shows} shows`);
 
+    // 2. Backfill watchers for ELIGIBLE items not in top trending (watchers_count = 0)
+    await this.syncEligibleTrendingBackfill();
+
     // Log eligibility stats for monitoring Policy Engine effectiveness
     await this.logEligibilityStats();
+  }
+
+  /**
+   * Backfills watchers data for ELIGIBLE trending items with watchers_count = 0.
+   * Runs in batches until all eligible items are processed.
+   */
+  private async syncEligibleTrendingBackfill(): Promise<void> {
+    this.logger.log('Starting eligible trending backfill...');
+
+    let totalSynced = 0;
+    let offset = 0;
+    const batchSize = TRENDING_DEFAULT_STATS_LIMIT;
+
+    // Process in batches until no more items
+
+    while (true) {
+      const result = await this.trendingSyncService.syncEligibleTrendingStats({
+        batchSize,
+        offset,
+      });
+
+      totalSynced += result.total;
+
+      if (!result.hasMore || result.total === 0) {
+        break;
+      }
+
+      offset += batchSize;
+    }
+
+    this.logger.log(`Eligible trending backfill complete: ${totalSynced} items synced`);
   }
 
   /** Logs eligibility statistics for trending context. */

@@ -28,6 +28,7 @@ import {
   type MediaWithTmdbId,
   type MediaScoreDataWithTmdbId,
   type CorruptedWatchersItem,
+  type EligibleTrendingItem,
 } from '../../domain/repositories/media.repository.interface';
 import {
   type IMovieRepository,
@@ -853,6 +854,57 @@ export class DrizzleMediaRepository implements IMediaRepository {
     } catch (error) {
       this.logger.error(`Failed to find items with corrupted watchers count: ${error.message}`);
       throw new DatabaseException('Failed to find items with corrupted watchers count');
+    }
+  }
+
+  /**
+   * Finds ELIGIBLE items for trending context that need watchers sync.
+   * Only returns items with watchers_count = 0 or NULL (never synced or stale).
+   * Used to backfill watchers data for items not in Trakt trending top-100.
+   */
+  async findEligibleForTrending(options: {
+    limit: number;
+    offset: number;
+  }): Promise<EligibleTrendingItem[]> {
+    try {
+      const rows = await this.db
+        .select({
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          type: schema.mediaItems.type,
+        })
+        .from(schema.mediaItems)
+        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          and(
+            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
+            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+          ),
+        )
+        .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
+        .where(
+          and(
+            isNull(schema.mediaItems.deletedAt),
+            isNotNull(schema.mediaItems.tmdbId),
+            // Only items that need sync (no watchers data yet)
+            sql`(${schema.mediaStats.watchersCount} IS NULL OR ${schema.mediaStats.watchersCount} = 0)`,
+          ),
+        )
+        .orderBy(schema.mediaItems.id)
+        .limit(options.limit)
+        .offset(options.offset);
+
+      return rows.map((r) => ({
+        id: r.id,
+        tmdbId: r.tmdbId!,
+        type: r.type,
+      }));
+    } catch (error) {
+      this.logger.error(`Failed to find eligible items for trending: ${error.message}`);
+      throw new DatabaseException('Failed to find eligible items for trending');
     }
   }
 }

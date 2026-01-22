@@ -20,6 +20,7 @@ export {
   MediaWithTmdbId,
   MediaScoreDataWithTmdbId,
   TrendingUpdatedItem,
+  EligibleTrendingItem,
 } from '../domain/repositories/media.repository.interface';
 
 export {

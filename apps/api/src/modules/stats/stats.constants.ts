@@ -8,6 +8,7 @@ export const STATS_QUEUE = 'stats-queue';
  */
 export const STATS_JOBS = {
   SYNC_TRENDING: 'sync-trending',
+  SYNC_ELIGIBLE_TRENDING: 'sync-eligible-trending',
   ANALYZE_DROP_OFF: 'analyze-drop-off',
   BACKFILL_WATCHERS_CHUNK: 'backfill-watchers-chunk',
 } as const;

@@ -149,3 +149,32 @@ export class AnalyzeDropOffQueryDto {
   @Max(200)
   limit?: number;
 }
+
+/**
+ * Query DTO for sync eligible trending stats endpoint.
+ * Syncs watchers data for ELIGIBLE items in trending context.
+ */
+export class SyncEligibleTrendingQueryDto {
+  @ApiPropertyOptional({
+    description: 'Number of items per batch',
+    example: 50,
+    default: 50,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(200)
+  batchSize?: number = 50;
+
+  @ApiPropertyOptional({
+    description: 'Offset for pagination',
+    example: 0,
+    default: 0,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  offset?: number = 0;
+}

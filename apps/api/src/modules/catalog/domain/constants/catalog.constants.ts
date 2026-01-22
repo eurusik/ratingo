@@ -134,6 +134,26 @@ export const SHOW_TRENDING_WEIGHTS = {
 } as const;
 
 /**
+ * Fallback formula for items without live watchers data.
+ * Uses total_watchers (historical) with log compression.
+ *
+ * When watchers_count = 0 but total_watchers has data, we use:
+ * LEAST(LN(1 + total_watchers) * LOG_MULTIPLIER, MAX_SIGNAL)
+ *
+ * Examples:
+ * - total_watchers = 100    → 13.8
+ * - total_watchers = 1,000  → 20.7
+ * - total_watchers = 10,000 → 25 (capped)
+ * - total_watchers = 100,000 → 25 (capped)
+ */
+export const WATCHERS_FALLBACK = {
+  /** Multiplier for log-compressed total_watchers */
+  LOG_MULTIPLIER: 3,
+  /** Maximum signal value for fallback (25/100 scale) */
+  MAX_SIGNAL: 25,
+} as const;
+
+/**
  * Hero block thresholds.
  * Used for selecting high-quality content for homepage hero section.
  */
