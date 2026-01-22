@@ -27,31 +27,36 @@ export interface ShowEpisodesAnalysisPayload {
 /**
  * Port interface for ratings and watchers operations.
  * Abstracts external API calls for media ratings and viewer statistics.
+ *
+ * Return value semantics for watchers methods:
+ * - number (including 0) = success, update DB
+ * - undefined = not found in Trakt, can write 0 or skip
+ * - null = transient error (429/5xx), skip DB update
  */
 export interface TraktRatingsPort {
   /**
    * Gets watchers count for multiple movies by TMDB IDs.
    *
-   * @param {number[]} tmdbIds - TMDB IDs
-   * @param {number} concurrency - Max concurrent requests
-   * @returns {Promise<Map<number, number | null>>} Map of tmdbId -> watchers (null = error)
+   * @param tmdbIds - TMDB IDs
+   * @param concurrency - Max concurrent requests
+   * @returns Map of tmdbId -> watchers
    */
   getMovieWatchersByTmdbIds(
     tmdbIds: number[],
     concurrency?: number,
-  ): Promise<Map<number, number | null>>;
+  ): Promise<Map<number, number | null | undefined>>;
 
   /**
    * Gets watchers count for multiple shows by TMDB IDs.
    *
-   * @param {number[]} tmdbIds - TMDB IDs
-   * @param {number} concurrency - Max concurrent requests
-   * @returns {Promise<Map<number, number | null>>} Map of tmdbId -> watchers (null = error)
+   * @param tmdbIds - TMDB IDs
+   * @param concurrency - Max concurrent requests
+   * @returns Map of tmdbId -> watchers
    */
   getShowWatchersByTmdbIds(
     tmdbIds: number[],
     concurrency?: number,
-  ): Promise<Map<number, number | null>>;
+  ): Promise<Map<number, number | null | undefined>>;
 
   /**
    * Gets all episodes for a show for drop-off analysis.

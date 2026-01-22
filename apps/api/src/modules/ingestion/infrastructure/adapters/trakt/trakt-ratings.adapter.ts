@@ -337,14 +337,18 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
    * Only makes 2 API calls: search + watching (instead of 4 in getRatingsByTmdbId).
    * Uses bulk time budget for rate limit resilience.
    *
+   * Returns:
+   * - number (including 0) = success
+   * - undefined = not found in Trakt (no match / no traktId)
+   * - null = transient error (429/5xx/network) - skip DB update
+   *
    * @param type - Media type
    * @param tmdbId - TMDB ID
-   * @returns watchers count, or null on transient error (skip update)
    */
   private async getLiveWatchersByTmdbId(
     type: TraktMediaType,
     tmdbId: number,
-  ): Promise<number | null> {
+  ): Promise<number | null | undefined> {
     try {
       // 1. Search for Trakt ID (1 API call)
       const results = await this.fetchBulk<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
@@ -363,8 +367,8 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       }
 
       if (!results.length || !traktId) {
-        // Not found in Trakt - this is expected for some items
-        return null;
+        // Not found in Trakt - can write 0 or mark as "unlinked"
+        return undefined;
       }
 
       // 2. Get live watchers (1 API call)
@@ -378,7 +382,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       return watchers.length;
     } catch (error) {
       this.logger.warn(`Failed to get live watchers for ${type} TMDB ${tmdbId}: ${error}`);
-      return null; // Transient error - skip update
+      return null; // Transient error - skip DB update
     }
   }
 
@@ -394,20 +398,22 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
    * Uses chunking with delays to avoid rate limiting.
    * Only makes 2 API calls per item (search + watching).
    *
-   * Returns null for items that failed (transient error) - skip DB update.
-   * Returns number (including 0) for successful fetches.
+   * Return value semantics:
+   * - number (including 0) = success, update DB
+   * - undefined = not found in Trakt, can write 0 or skip
+   * - null = transient error (429/5xx), skip DB update
    *
    * @param type - Media type
    * @param tmdbIds - TMDB IDs
    * @param concurrency - Max concurrent requests within a chunk
-   * @returns Map of tmdbId -> watchers (null = error, skip update)
+   * @returns Map of tmdbId -> watchers
    */
   private async getWatchersByTmdbIds(
     type: TraktMediaType,
     tmdbIds: number[],
     concurrency = TRAKT_BATCH_CONCURRENCY,
-  ): Promise<Map<number, number | null>> {
-    const result = new Map<number, number | null>();
+  ): Promise<Map<number, number | null | undefined>> {
+    const result = new Map<number, number | null | undefined>();
     if (tmdbIds.length === 0) return result;
 
     // Split into chunks for rate limit safety
@@ -415,6 +421,11 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
     for (let i = 0; i < tmdbIds.length; i += TRAKT_BULK_CHUNK_SIZE) {
       chunks.push(tmdbIds.slice(i, i + TRAKT_BULK_CHUNK_SIZE));
     }
+
+    // Stats for logging
+    let okCount = 0;
+    let notFoundCount = 0;
+    let errorCount = 0;
 
     this.logger.log(
       `Processing ${tmdbIds.length} ${type}s in ${chunks.length} chunks (chunk size: ${TRAKT_BULK_CHUNK_SIZE})`,
@@ -426,14 +437,24 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       // Process items within chunk with concurrency limit
       for (let i = 0; i < chunk.length; i += concurrency) {
         const batch = chunk.slice(i, i + concurrency);
+
+        // Use allSettled to not fail entire batch on single error
         const promises = batch.map(async (tmdbId) => {
-          const watchers = await this.getLiveWatchersByTmdbId(type, tmdbId);
-          return { tmdbId, watchers };
+          try {
+            const watchers = await this.getLiveWatchersByTmdbId(type, tmdbId);
+            return { tmdbId, watchers };
+          } catch (error) {
+            this.logger.warn(`Unexpected error for ${type} ${tmdbId}: ${error}`);
+            return { tmdbId, watchers: null as null };
+          }
         });
 
         const batchResults = await Promise.all(promises);
         for (const { tmdbId, watchers } of batchResults) {
           result.set(tmdbId, watchers);
+          if (typeof watchers === 'number') okCount++;
+          else if (watchers === undefined) notFoundCount++;
+          else errorCount++;
         }
       }
 
@@ -446,34 +467,40 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       }
     }
 
+    this.logger.log(
+      `Completed ${type}s: ${okCount} ok, ${notFoundCount} not found, ${errorCount} errors`,
+    );
+
     return result;
   }
 
   /**
    * Gets watchers count for multiple movies by TMDB IDs.
    *
-   * @param {number[]} tmdbIds - TMDB IDs
-   * @param {number} concurrency - Max concurrent requests (default: 3)
-   * @returns {Promise<Map<number, number | null>>} Map of tmdbId -> watchers (null = error, skip update)
+   * Return value semantics:
+   * - number = success (including 0)
+   * - undefined = not found in Trakt
+   * - null = transient error, skip DB update
    */
   async getMovieWatchersByTmdbIds(
     tmdbIds: number[],
     concurrency = TRAKT_BATCH_CONCURRENCY,
-  ): Promise<Map<number, number | null>> {
+  ): Promise<Map<number, number | null | undefined>> {
     return this.getWatchersByTmdbIds(TRAKT_MEDIA_TYPE.MOVIE, tmdbIds, concurrency);
   }
 
   /**
    * Gets watchers count for multiple shows by TMDB IDs.
    *
-   * @param {number[]} tmdbIds - TMDB IDs
-   * @param {number} concurrency - Max concurrent requests (default: 3)
-   * @returns {Promise<Map<number, number | null>>} Map of tmdbId -> watchers (null = error, skip update)
+   * Return value semantics:
+   * - number = success (including 0)
+   * - undefined = not found in Trakt
+   * - null = transient error, skip DB update
    */
   async getShowWatchersByTmdbIds(
     tmdbIds: number[],
     concurrency = TRAKT_BATCH_CONCURRENCY,
-  ): Promise<Map<number, number | null>> {
+  ): Promise<Map<number, number | null | undefined>> {
     return this.getWatchersByTmdbIds(TRAKT_MEDIA_TYPE.SHOW, tmdbIds, concurrency);
   }
 
