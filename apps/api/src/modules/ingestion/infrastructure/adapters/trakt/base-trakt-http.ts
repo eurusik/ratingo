@@ -34,11 +34,11 @@ const TRAKT_BULK_RETRY_CONFIG: Partial<RetryConfig> = {
 const RETRY_AFTER_JITTER_MS = 1000;
 
 // Rate limiter configuration
-// With concurrency=1 and 4 calls per item, we need:
-// - Queue size: 50 items × 4 calls = 200 (with buffer = 250)
-// - Timeout: 200 calls / 3 req/s = ~70s (with buffer = 120s)
-const RATE_LIMITER_MAX_TOKENS = 3;
-const RATE_LIMITER_REFILL_INTERVAL_MS = 333; // ~3 req/s
+// Trakt limit: 1000 req / 5 min = 3.33 req/s
+// We use 2 req/s to stay safely under the limit with margin for retries.
+// With concurrency=2 and 4 calls per job = 8 concurrent requests max.
+const RATE_LIMITER_MAX_TOKENS = 2;
+const RATE_LIMITER_REFILL_INTERVAL_MS = 500; // 2 req/s (1 token every 500ms)
 const RATE_LIMITER_MAX_QUEUE_SIZE = 250;
 const RATE_LIMITER_ACQUIRE_TIMEOUT_MS = 120000; // 2 minutes
 
@@ -64,7 +64,9 @@ class RateLimiter {
     private readonly maxQueueSize: number = RATE_LIMITER_MAX_QUEUE_SIZE,
     private readonly acquireTimeoutMs: number = RATE_LIMITER_ACQUIRE_TIMEOUT_MS,
   ) {
-    this.tokens = maxTokens;
+    // Start with empty bucket to prevent initial burst on API startup.
+    // Tokens will refill gradually, spreading out the first requests.
+    this.tokens = 0;
     this.startRefillInterval();
   }
 

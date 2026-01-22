@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { type Job } from 'bullmq';
 
 import { type MediaType } from '@/common/enums/media-type.enum';
+import { WORKER_CONFIG } from '@/config/queue.config';
 
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
@@ -22,9 +23,15 @@ const JOB_ID_SUFFIX_LENGTH = 8;
  * Thin worker router: delegates all pipeline logic to specialized pipeline classes.
  * Handles job routing and error logging only.
  *
- * Concurrency: 5 jobs processed in parallel for faster throughput.
+ * Concurrency: 2 jobs in parallel. Lower than before (was 5) to reduce Trakt API
+ * burst pressure. With 4 HTTP calls per job, this means max 8 concurrent requests.
+ * Combined with 2 req/s HTTP rate limiter, prevents 429 errors.
  */
-@Processor(INGESTION_QUEUE, { concurrency: 5 })
+@Processor(INGESTION_QUEUE, {
+  concurrency: 2,
+  lockDuration: WORKER_CONFIG.ingestion.lockDuration,
+  limiter: WORKER_CONFIG.ingestion.limiter,
+})
 export class SyncWorker extends WorkerHost {
   private readonly logger = new Logger(SyncWorker.name);
 
@@ -91,13 +98,6 @@ export class SyncWorker extends WorkerHost {
         case IngestionJob.SYNC_SNAPSHOTS:
         case IngestionJob.SYNC_SNAPSHOTS_DISPATCHER:
           await this.snapshotsPipeline.dispatch(job.data.region);
-          break;
-        case IngestionJob.SYNC_SNAPSHOT_ITEM:
-          await this.snapshotsPipeline.processItem(
-            job.data.mediaItemId!,
-            job.data.dayId!,
-            job.data.region!,
-          );
           break;
 
         // Trending pipeline
