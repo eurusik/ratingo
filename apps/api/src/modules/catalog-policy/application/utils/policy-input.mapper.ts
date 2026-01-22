@@ -107,13 +107,15 @@ export function mapRowToPolicyEngineInput(
       title: row.title ?? null,
       overview: row.overview ?? null,
     },
+    // Normalize scores from 0-100 (DB format) to 0-1 (policy engine format)
+    // Policy engine expects normalized values for minQualityScoreNormalized comparisons
     stats:
       row.qualityScore !== null
         ? {
-            qualityScore: row.qualityScore,
-            popularityScore: row.popularityScore,
-            freshnessScore: row.freshnessScore,
-            ratingoScore: row.ratingoScore,
+            qualityScore: row.qualityScore / 100,
+            popularityScore: row.popularityScore !== null ? row.popularityScore / 100 : null,
+            freshnessScore: row.freshnessScore !== null ? row.freshnessScore / 100 : null,
+            ratingoScore: row.ratingoScore !== null ? row.ratingoScore / 100 : null,
           }
         : null,
   };
