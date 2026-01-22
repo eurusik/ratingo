@@ -4,11 +4,15 @@ import { ApiBearerAuth, ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger'
 
 import { type Queue } from 'bullmq';
 
-import { DEFAULT_BATCH_SIZE, DEFAULT_PAGE_SIZE } from '../../../../common/constants';
+import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '../../../../common/constants';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
-import { DropOffService } from '../../application/services/drop-off.service';
-import { StatsService } from '../../application/services/stats.service';
+import {
+  DropOffService,
+  ScoreRecalculationService,
+  StatsBackfillService,
+  StatsQueryService,
+} from '../../application/services';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 import {
   BackfillTotalWatchersQueryDto,
@@ -25,7 +29,9 @@ import {
 @Controller('stats')
 export class StatsController {
   constructor(
-    private readonly statsService: StatsService,
+    private readonly statsQueryService: StatsQueryService,
+    private readonly scoreRecalculationService: ScoreRecalculationService,
+    private readonly statsBackfillService: StatsBackfillService,
     private readonly dropOffService: DropOffService,
     @InjectQueue(STATS_QUEUE) private readonly statsQueue: Queue,
   ) {}
@@ -47,7 +53,7 @@ export class StatsController {
   })
   async syncTrendingStats(@Query() query: SyncTrendingQueryDto) {
     const job = await this.statsQueue.add(STATS_JOBS.SYNC_TRENDING, {
-      limit: query.limit || DEFAULT_PAGE_SIZE,
+      limit: query.limit || MAX_PAGE_SIZE,
     });
 
     return {
@@ -70,7 +76,7 @@ export class StatsController {
   })
   @ApiParam({ name: 'tmdbId', type: Number, description: 'TMDB ID of the media item' })
   async getStatsByTmdbId(@Param('tmdbId') tmdbId: number) {
-    return this.statsService.getStatsByTmdbId(tmdbId);
+    return this.statsQueryService.getStatsByTmdbId(tmdbId);
   }
 
   // === DROP-OFF ANALYSIS ===
@@ -173,7 +179,7 @@ export class StatsController {
     const mediaType =
       query.type === 'movie' ? MediaType.MOVIE : query.type === 'show' ? MediaType.SHOW : undefined;
 
-    const result = await this.statsService.backfillTotalWatchers({
+    const result = await this.statsBackfillService.backfillTotalWatchers({
       type: mediaType,
       limit: query.limit,
       minVotes: query.minVotes,
@@ -203,14 +209,11 @@ export class StatsController {
     const mediaType =
       query.type === 'movie' ? MediaType.MOVIE : query.type === 'show' ? MediaType.SHOW : undefined;
 
-    const result = await this.statsService.queueWatchersCountBackfill(
-      {
-        type: mediaType,
-        limit: query.limit,
-        minTotalWatchers: query.minTotalWatchers,
-      },
-      this.statsQueue,
-    );
+    const result = await this.statsBackfillService.queueWatchersCountBackfill({
+      type: mediaType,
+      limit: query.limit,
+      minTotalWatchers: query.minTotalWatchers,
+    });
 
     return {
       message:
@@ -240,7 +243,7 @@ export class StatsController {
     const mediaType =
       query.type === 'movie' ? MediaType.MOVIE : query.type === 'show' ? MediaType.SHOW : undefined;
 
-    const result = await this.statsService.recalculateScores({
+    const result = await this.scoreRecalculationService.recalculateScores({
       type: mediaType,
       batchSize: query.batchSize,
     });

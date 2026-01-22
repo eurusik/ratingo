@@ -138,9 +138,13 @@ class RateLimiter {
   }
 
   async acquire(): Promise<void> {
-    // If paused, wait for the pause to end first
-    const remainingPauseMs = this.getRemainingPauseMs();
-    if (remainingPauseMs > 0) {
+    // Wait for any pause to end (loop in case pause is extended while waiting)
+    // This prevents race condition where pause is extended by another request
+    // while we're sleeping
+    while (true) {
+      const remainingPauseMs = this.getRemainingPauseMs();
+      if (remainingPauseMs <= 0) break;
+
       this.logger.debug(`Waiting ${Math.round(remainingPauseMs / 1000)}s for rate limit pause`);
       await new Promise((resolve) => setTimeout(resolve, remainingPauseMs));
     }

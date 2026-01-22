@@ -5,8 +5,7 @@ import { type Job } from 'bullmq';
 
 import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '../../../../common/constants';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
-import { DropOffService } from '../services/drop-off.service';
-import { StatsService } from '../services/stats.service';
+import { DropOffService, StatsBackfillService, TrendingSyncService } from '../services';
 
 /**
  * Background worker for processing stats-related jobs.
@@ -19,7 +18,8 @@ export class StatsWorker extends WorkerHost {
   private readonly logger = new Logger(StatsWorker.name);
 
   constructor(
-    private readonly statsService: StatsService,
+    private readonly trendingSyncService: TrendingSyncService,
+    private readonly statsBackfillService: StatsBackfillService,
     private readonly dropOffService: DropOffService,
   ) {
     super();
@@ -37,7 +37,7 @@ export class StatsWorker extends WorkerHost {
     try {
       switch (job.name) {
         case STATS_JOBS.SYNC_TRENDING:
-          await this.statsService.syncTrendingStats(job.data.limit || MAX_PAGE_SIZE);
+          await this.trendingSyncService.syncTrendingStats(job.data.limit || MAX_PAGE_SIZE);
           break;
 
         case STATS_JOBS.ANALYZE_DROP_OFF:
@@ -77,7 +77,7 @@ export class StatsWorker extends WorkerHost {
       `Processing backfill chunk ${chunkIndex + 1}/${totalChunks} with ${items.length} items`,
     );
 
-    const result = await this.statsService.processWatchersChunk(items);
+    const result = await this.statsBackfillService.processWatchersChunk(items);
 
     this.logger.log(
       `Chunk ${chunkIndex + 1}/${totalChunks} completed: ${result.success} success, ${result.failed} failed`,

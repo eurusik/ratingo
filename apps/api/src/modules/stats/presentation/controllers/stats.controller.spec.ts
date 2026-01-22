@@ -1,20 +1,33 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StatsController } from './stats.controller';
-import { StatsService } from '../../application/services/stats.service';
-import { DropOffService } from '../../application/services/drop-off.service';
+import {
+  DropOffService,
+  ScoreRecalculationService,
+  StatsBackfillService,
+  StatsQueryService,
+} from '../../application/services';
 import { getQueueToken } from '@nestjs/bullmq';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 import { StatsNotFoundException } from '@/common/exceptions';
 
 describe('StatsController', () => {
   let controller: StatsController;
-  let statsService: jest.Mocked<StatsService>;
+  let statsQueryService: jest.Mocked<StatsQueryService>;
   let dropOffService: jest.Mocked<DropOffService>;
   let mockQueue: any;
 
   beforeEach(async () => {
-    const mockStatsService = {
+    const mockStatsQueryService = {
       getStatsByTmdbId: jest.fn(),
+    };
+
+    const mockScoreRecalculationService = {
+      recalculateScores: jest.fn(),
+    };
+
+    const mockStatsBackfillService = {
+      backfillTotalWatchers: jest.fn(),
+      queueWatchersCountBackfill: jest.fn(),
     };
 
     const mockDropOffService = {
@@ -28,14 +41,16 @@ describe('StatsController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StatsController],
       providers: [
-        { provide: StatsService, useValue: mockStatsService },
+        { provide: StatsQueryService, useValue: mockStatsQueryService },
+        { provide: ScoreRecalculationService, useValue: mockScoreRecalculationService },
+        { provide: StatsBackfillService, useValue: mockStatsBackfillService },
         { provide: DropOffService, useValue: mockDropOffService },
         { provide: getQueueToken(STATS_QUEUE), useValue: mockQueue },
       ],
     }).compile();
 
     controller = module.get<StatsController>(StatsController);
-    statsService = module.get(StatsService);
+    statsQueryService = module.get(StatsQueryService);
     dropOffService = module.get(DropOffService);
   });
 
@@ -47,7 +62,7 @@ describe('StatsController', () => {
         message: 'Stats sync job added to queue',
         jobId: 'job-123',
       });
-      expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.SYNC_TRENDING, { limit: 20 });
+      expect(mockQueue.add).toHaveBeenCalledWith(STATS_JOBS.SYNC_TRENDING, { limit: 100 });
     });
 
     it('should use custom limit when provided', async () => {
@@ -65,16 +80,18 @@ describe('StatsController', () => {
         trendingRank: 5,
         ratingoScore: 0.75,
       };
-      statsService.getStatsByTmdbId.mockResolvedValue(mockStats);
+      statsQueryService.getStatsByTmdbId.mockResolvedValue(mockStats);
 
       const result = await controller.getStatsByTmdbId(550);
 
       expect(result).toEqual(mockStats);
-      expect(statsService.getStatsByTmdbId).toHaveBeenCalledWith(550);
+      expect(statsQueryService.getStatsByTmdbId).toHaveBeenCalledWith(550);
     });
 
     it('should propagate StatsNotFoundException', async () => {
-      statsService.getStatsByTmdbId.mockRejectedValue(new StatsNotFoundException(999, 'tmdbId'));
+      statsQueryService.getStatsByTmdbId.mockRejectedValue(
+        new StatsNotFoundException(999, 'tmdbId'),
+      );
 
       await expect(controller.getStatsByTmdbId(999)).rejects.toThrow(StatsNotFoundException);
     });

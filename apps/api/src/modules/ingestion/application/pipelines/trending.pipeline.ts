@@ -8,7 +8,7 @@ import {
   CATALOG_POLICY_EVALUATOR,
   EvaluationContext,
 } from '../../../catalog-policy/public';
-import { StatsService } from '../../../stats/public';
+import { TrendingSyncService } from '../../../stats/public';
 import {
   IngestionJob,
   TRENDING_STATS_DELAY_MS,
@@ -35,7 +35,7 @@ export class TrendingPipeline {
   constructor(
     private readonly syncService: SyncMediaService,
     private readonly bulkJobService: BulkJobService,
-    private readonly statsService: StatsService,
+    private readonly trendingSyncService: TrendingSyncService,
 
     @Optional()
     @Inject(CATALOG_POLICY_EVALUATOR)
@@ -92,7 +92,7 @@ export class TrendingPipeline {
       `Syncing Trakt stats (since: ${sinceDate?.toISOString() || 'all'}, limit: ${limit || 'default'})...`,
     );
 
-    const result = await this.statsService.syncTrendingStatsForUpdatedItems({
+    const result = await this.trendingSyncService.syncTrendingStatsForUpdatedItems({
       since: sinceDate,
       limit: limit || TRENDING_DEFAULT_STATS_LIMIT,
     });
@@ -138,7 +138,7 @@ export class TrendingPipeline {
     }
 
     if (syncStats) {
-      await this.statsService.syncTrendingStats();
+      await this.trendingSyncService.syncTrendingStats();
     }
 
     this.logger.log(`Full trending sync complete: ${items.length} items`);

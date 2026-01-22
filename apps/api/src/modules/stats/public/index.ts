@@ -5,11 +5,17 @@
  *
  * @example
  * // ✅ Correct
- * import { StatsService } from '../stats/public';
+ * import { TrendingSyncService } from '../stats/public';
  *
  * // ❌ Wrong - breaks module boundaries
- * import { StatsService } from '../stats/application/services/stats.service';
+ * import { TrendingSyncService } from '../stats/application/services/trending-sync.service';
  */
 
 // Application Services
-export { StatsService } from '../application/services/stats.service';
+export {
+  DropOffService,
+  ScoreRecalculationService,
+  StatsBackfillService,
+  StatsQueryService,
+  TrendingSyncService,
+} from '../application/services';

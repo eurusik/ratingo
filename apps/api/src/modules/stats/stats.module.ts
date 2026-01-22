@@ -6,8 +6,13 @@ import { IngestionModule } from '../ingestion/ingestion.module';
 import { DropOffAnalyzerModule } from '../shared/drop-off-analyzer';
 import { ScoreCalculatorModule } from '../shared/score-calculator';
 
-import { DropOffService } from './application/services/drop-off.service';
-import { StatsService } from './application/services/stats.service';
+import {
+  DropOffService,
+  ScoreRecalculationService,
+  StatsBackfillService,
+  StatsQueryService,
+  TrendingSyncService,
+} from './application/services';
 import { StatsWorker } from './application/workers/stats.worker';
 import { STATS_REPOSITORY } from './domain/repositories/stats.repository.interface';
 import { DrizzleStatsRepository } from './infrastructure/repositories/drizzle-stats.repository';
@@ -31,7 +36,10 @@ import { STATS_QUEUE } from './stats.constants';
   ],
   controllers: [StatsController],
   providers: [
-    StatsService,
+    TrendingSyncService,
+    ScoreRecalculationService,
+    StatsBackfillService,
+    StatsQueryService,
     DropOffService,
     StatsWorker,
     {
@@ -39,6 +47,6 @@ import { STATS_QUEUE } from './stats.constants';
       useClass: DrizzleStatsRepository,
     },
   ],
-  exports: [StatsService, DropOffService, STATS_REPOSITORY],
+  exports: [TrendingSyncService, StatsQueryService, DropOffService, STATS_REPOSITORY],
 })
 export class StatsModule {}

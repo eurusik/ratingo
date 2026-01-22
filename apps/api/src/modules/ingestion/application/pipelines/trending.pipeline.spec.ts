@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TrendingPipeline } from './trending.pipeline';
 import { SyncMediaService } from '../services/sync-media.service';
 import { BulkJobService } from '../services/bulk-job.service';
-import { StatsService } from '../../../stats/application/services/stats.service';
+import { TrendingSyncService } from '../../../stats/public';
 import { CATALOG_POLICY_EVALUATOR } from '../../../catalog-policy/public';
 import { IngestionJob } from '../../ingestion.constants';
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -11,7 +11,7 @@ describe('TrendingPipeline', () => {
   let pipeline: TrendingPipeline;
   let syncService: jest.Mocked<SyncMediaService>;
   let bulkJobService: jest.Mocked<BulkJobService>;
-  let statsService: jest.Mocked<StatsService>;
+  let trendingSyncService: jest.Mocked<TrendingSyncService>;
   let catalogEvaluator: jest.Mocked<{ getEligibilityStats: jest.Mock }>;
 
   beforeEach(async () => {
@@ -27,7 +27,7 @@ describe('TrendingPipeline', () => {
       addDelayed: jest.fn().mockResolvedValue(undefined),
     };
 
-    const mockStatsService = {
+    const mockTrendingSyncService = {
       syncTrendingStatsForUpdatedItems: jest.fn().mockResolvedValue({ movies: 0, shows: 0 }),
       syncTrendingStats: jest.fn().mockResolvedValue(undefined),
     };
@@ -46,7 +46,7 @@ describe('TrendingPipeline', () => {
         TrendingPipeline,
         { provide: SyncMediaService, useValue: mockSyncService },
         { provide: BulkJobService, useValue: mockBulkJobService },
-        { provide: StatsService, useValue: mockStatsService },
+        { provide: TrendingSyncService, useValue: mockTrendingSyncService },
         { provide: CATALOG_POLICY_EVALUATOR, useValue: mockCatalogEvaluator },
       ],
     }).compile();
@@ -54,7 +54,7 @@ describe('TrendingPipeline', () => {
     pipeline = module.get<TrendingPipeline>(TrendingPipeline);
     syncService = module.get(SyncMediaService);
     bulkJobService = module.get(BulkJobService);
-    statsService = module.get(StatsService);
+    trendingSyncService = module.get(TrendingSyncService);
     catalogEvaluator = module.get(CATALOG_POLICY_EVALUATOR);
   });
 
@@ -139,7 +139,7 @@ describe('TrendingPipeline', () => {
 
       await pipeline.processStats(since, 200);
 
-      expect(statsService.syncTrendingStatsForUpdatedItems).toHaveBeenCalledWith({
+      expect(trendingSyncService.syncTrendingStatsForUpdatedItems).toHaveBeenCalledWith({
         since: expect.any(Date),
         limit: 200,
       });
@@ -163,7 +163,7 @@ describe('TrendingPipeline', () => {
 
       expect(syncService.syncMovie).toHaveBeenCalledWith(100);
       expect(syncService.syncShow).toHaveBeenCalledWith(200);
-      expect(statsService.syncTrendingStats).toHaveBeenCalled();
+      expect(trendingSyncService.syncTrendingStats).toHaveBeenCalled();
     });
   });
 });
