@@ -15,6 +15,7 @@ import {
   TRENDING_DEFAULT_PAGES,
   TRENDING_DEFAULT_STATS_LIMIT,
   TMDB_TRENDING_PAGE_SIZE,
+  ELIGIBLE_BACKFILL_MAX_BATCHES,
 } from '../../ingestion.constants';
 import { formatHourWindow } from '../helpers/queue.helpers';
 import { BulkJobService } from '../services/bulk-job.service';
@@ -109,24 +110,27 @@ export class TrendingPipeline {
 
   /**
    * Backfills watchers data for ELIGIBLE trending items with watchers_count = 0.
-   * Runs in batches until all eligible items are processed.
+   * Runs in limited batches to avoid rate limiting. Remaining items processed in next run.
    */
   private async syncEligibleTrendingBackfill(): Promise<void> {
     this.logger.log('Starting eligible trending backfill...');
 
     let totalSynced = 0;
     let offset = 0;
+    let batchCount = 0;
+    let hasMoreRemaining = false;
     const batchSize = TRENDING_DEFAULT_STATS_LIMIT;
 
-    // Process in batches until no more items
-
-    while (true) {
+    // Process limited batches to avoid rate limiting
+    while (batchCount < ELIGIBLE_BACKFILL_MAX_BATCHES) {
       const result = await this.trendingSyncService.syncEligibleTrendingStats({
         batchSize,
         offset,
       });
 
       totalSynced += result.total;
+      batchCount++;
+      hasMoreRemaining = result.hasMore;
 
       if (!result.hasMore || result.total === 0) {
         break;
@@ -135,7 +139,11 @@ export class TrendingPipeline {
       offset += batchSize;
     }
 
-    this.logger.log(`Eligible trending backfill complete: ${totalSynced} items synced`);
+    this.logger.log(
+      `Eligible trending backfill complete: processed=${totalSynced}, ` +
+        `batches=${batchCount}/${ELIGIBLE_BACKFILL_MAX_BATCHES}, ` +
+        `hasMore=${hasMoreRemaining}`,
+    );
   }
 
   /** Logs eligibility statistics for trending context. */

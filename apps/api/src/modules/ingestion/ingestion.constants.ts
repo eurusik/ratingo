@@ -85,6 +85,15 @@ export const TRENDING_DEFAULT_PAGES = 10;
 export const TRENDING_DEFAULT_STATS_LIMIT = 50;
 
 /**
+ * Maximum batches for eligible trending backfill per pipeline run.
+ * Limits API calls to avoid rate limiting during scheduled sync.
+ * 2 batches × 50 items = 100 items max; HTTP calls bounded by chunking
+ * (e.g., ceil(50/10) = 5 calls per media type per batch).
+ * Remaining items will be processed in next scheduled run.
+ */
+export const ELIGIBLE_BACKFILL_MAX_BATCHES = 2;
+
+/**
  * Items per page in TMDB trending API.
  */
 export const TMDB_TRENDING_PAGE_SIZE = 20;

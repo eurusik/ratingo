@@ -175,6 +175,21 @@ describe('TrendingPipeline', () => {
       });
     });
 
+    it('should stop backfill after max batches even if hasMore is true', async () => {
+      // Always return hasMore: true to simulate large dataset
+      trendingSyncService.syncEligibleTrendingStats.mockResolvedValue({
+        movies: 25,
+        shows: 25,
+        total: 50,
+        hasMore: true,
+      });
+
+      await pipeline.processStats();
+
+      // ELIGIBLE_BACKFILL_MAX_BATCHES = 2, so should stop after 2 batches
+      expect(trendingSyncService.syncEligibleTrendingStats).toHaveBeenCalledTimes(2);
+    });
+
     it('should log eligibility stats after sync', async () => {
       await pipeline.processStats();
 
