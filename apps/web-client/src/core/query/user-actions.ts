@@ -13,6 +13,7 @@ import {
   type SubscriptionTrigger,
 } from '../api';
 import { queryKeys } from './keys';
+import { updateBatchCaches } from '../saved-status/saved-status-provider';
 
 /** Checks if error is a 401 Unauthorized. */
 function isUnauthorized(error: unknown): boolean {
@@ -84,44 +85,34 @@ export function useSaveItem() {
     mutationFn: (variables: SaveItemVariables) => userActionsApi.saveItem(variables),
 
     onMutate: async (variables) => {
-      // Cancel outgoing refetches
       await queryClient.cancelQueries({
         queryKey: queryKeys.userActions.savedItems.status(variables.mediaItemId),
       });
 
-      // Snapshot previous value
       const previousStatus = queryClient.getQueryData<MediaSaveStatusDto>(
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
       );
 
-      // Optimistic update
+      const optimisticStatus: MediaSaveStatusDto = {
+        isForLater: variables.list === SAVED_ITEM_LIST.FOR_LATER,
+        isConsidering: variables.list === SAVED_ITEM_LIST.CONSIDERING,
+      };
+
       queryClient.setQueryData<MediaSaveStatusDto>(
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
-        {
-          isForLater: variables.list === SAVED_ITEM_LIST.FOR_LATER,
-          isConsidering: variables.list === SAVED_ITEM_LIST.CONSIDERING,
-        },
+        optimisticStatus,
       );
+      updateBatchCaches(queryClient, variables.mediaItemId, optimisticStatus);
 
       return { previousStatus };
     },
 
     onSuccess: (data, variables) => {
-      // Update individual status cache
       queryClient.setQueryData<MediaSaveStatusDto>(
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
         data.status,
       );
-      // Invalidate batch caches (SavedStatusProvider will refetch)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userActions.savedItems.all,
-        predicate: (query) => {
-          // Invalidate batch queries that might contain this item
-          const key = query.queryKey;
-          return Array.isArray(key) && key.includes('batch');
-        },
-      });
-      // Invalidate saved items lists so /saved page updates
+      updateBatchCaches(queryClient, variables.mediaItemId, data.status);
       queryClient.invalidateQueries({
         queryKey: queryKeys.userActions.savedItems.all,
         predicate: (query) => {
@@ -129,7 +120,6 @@ export function useSaveItem() {
           return Array.isArray(key) && key.includes('list');
         },
       });
-      // Invalidate legacy saved-items queries (used by saved module)
       queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },
 
@@ -139,6 +129,7 @@ export function useSaveItem() {
           queryKeys.userActions.savedItems.status(variables.mediaItemId),
           context.previousStatus,
         );
+        updateBatchCaches(queryClient, variables.mediaItemId, context.previousStatus);
       }
     },
   });
@@ -170,36 +161,28 @@ export function useUnsaveItem() {
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
       );
 
-      // Optimistic update
+      const optimisticStatus: MediaSaveStatusDto = {
+        isForLater:
+          variables.list === SAVED_ITEM_LIST.FOR_LATER ? false : (previousStatus?.isForLater ?? false),
+        isConsidering:
+          variables.list === SAVED_ITEM_LIST.CONSIDERING ? false : (previousStatus?.isConsidering ?? false),
+      };
+
       queryClient.setQueryData<MediaSaveStatusDto>(
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
-        (old) => ({
-          isForLater:
-            variables.list === SAVED_ITEM_LIST.FOR_LATER ? false : (old?.isForLater ?? false),
-          isConsidering:
-            variables.list === SAVED_ITEM_LIST.CONSIDERING ? false : (old?.isConsidering ?? false),
-        }),
+        optimisticStatus,
       );
+      updateBatchCaches(queryClient, variables.mediaItemId, optimisticStatus);
 
       return { previousStatus };
     },
 
     onSuccess: (data, variables) => {
-      // Update individual status cache
       queryClient.setQueryData<MediaSaveStatusDto>(
         queryKeys.userActions.savedItems.status(variables.mediaItemId),
         data.status,
       );
-      // Invalidate batch caches (SavedStatusProvider will refetch)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userActions.savedItems.all,
-        predicate: (query) => {
-          // Invalidate batch queries that might contain this item
-          const key = query.queryKey;
-          return Array.isArray(key) && key.includes('batch');
-        },
-      });
-      // Invalidate saved items lists so /saved page updates
+      updateBatchCaches(queryClient, variables.mediaItemId, data.status);
       queryClient.invalidateQueries({
         queryKey: queryKeys.userActions.savedItems.all,
         predicate: (query) => {
@@ -207,7 +190,6 @@ export function useUnsaveItem() {
           return Array.isArray(key) && key.includes('list');
         },
       });
-      // Invalidate legacy saved-items queries (used by saved module)
       queryClient.invalidateQueries({ queryKey: ['saved-items'] });
     },
 
@@ -217,6 +199,7 @@ export function useUnsaveItem() {
           queryKeys.userActions.savedItems.status(variables.mediaItemId),
           context.previousStatus,
         );
+        updateBatchCaches(queryClient, variables.mediaItemId, context.previousStatus);
       }
     },
   });

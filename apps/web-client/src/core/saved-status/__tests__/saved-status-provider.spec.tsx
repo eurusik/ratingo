@@ -1,6 +1,6 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SavedStatusProvider, useSavedStatusContext } from '../saved-status-provider';
+import { SavedStatusProvider, useSavedStatusContext, updateBatchCaches } from '../saved-status-provider';
 
 jest.mock('@/core/auth', () => ({
   useAuth: jest.fn(() => ({ isAuthenticated: true })),
@@ -69,13 +69,8 @@ describe('SavedStatusProvider', () => {
   });
 
   describe('getStatus', () => {
-    it('returns individual cache data first (optimistic updates)', async () => {
+    it('reflects optimistic updates via updateBatchCaches', async () => {
       const mediaItemId = 'item-1';
-
-      queryClient.setQueryData(['user-actions', 'saved-items', 'status', mediaItemId], {
-        isForLater: true,
-        isConsidering: false,
-      });
 
       mockGetBatchSaveStatus.mockResolvedValue({
         [mediaItemId]: { isForLater: false, isConsidering: false },
@@ -83,7 +78,17 @@ describe('SavedStatusProvider', () => {
 
       renderWithProvider([mediaItemId], mediaItemId, queryClient);
 
-      expect(screen.getByTestId('is-for-later').textContent).toBe('true');
+      await waitFor(() => {
+        expect(screen.getByTestId('is-for-later').textContent).toBe('false');
+      });
+
+      act(() => {
+        updateBatchCaches(queryClient, mediaItemId, { isForLater: true, isConsidering: false });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('is-for-later').textContent).toBe('true');
+      });
     });
 
     it('falls back to batch data when individual cache is empty', async () => {
