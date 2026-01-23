@@ -32,6 +32,10 @@ import { STATS_QUEUE } from './stats.constants';
     DropOffAnalyzerModule,
     BullModule.registerQueue({
       name: STATS_QUEUE,
+      defaultJobOptions: {
+        removeOnComplete: { age: 3600, count: 1000 }, // Keep max 1000 or 1 hour
+        removeOnFail: { age: 86400, count: 500 }, // Keep max 500 or 24 hours
+      },
     }),
   ],
   controllers: [StatsController],
