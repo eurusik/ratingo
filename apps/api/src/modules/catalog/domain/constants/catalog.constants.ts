@@ -88,10 +88,10 @@ export const CONTEXT_FRESHNESS = {
   },
   /**
    * Catalog context: permissive, show all eligible content.
-   * Only trending and popularity have gates (consistency).
+   * Trending uses softer threshold (~7 months) to include quality older releases.
    */
   catalog: {
-    trending: TRENDING_THRESHOLDS.MIN_FRESHNESS,
+    trending: TRENDING_THRESHOLDS.MIN_FRESHNESS_POPULARITY,
     popularity: TRENDING_THRESHOLDS.MIN_FRESHNESS_POPULARITY,
     ratingo: 0, // no gate - show classics
     releaseDate: 0,
