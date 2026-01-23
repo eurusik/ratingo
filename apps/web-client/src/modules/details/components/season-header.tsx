@@ -85,7 +85,7 @@ export function SeasonHeader({
       }}
     >
       {/* Main row: poster + info + progress (desktop) */}
-      <div className="flex items-center gap-4 w-full">
+      <div className="flex items-center gap-4">
         {/* Season poster */}
         <div className="relative flex-shrink-0 w-16 h-24 rounded-lg overflow-hidden bg-cinema-elevated">
           {resolveMediaImageUrl(selectedSeason.posterPath, IMAGE_SIZES.W185) ? (
