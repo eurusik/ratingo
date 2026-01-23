@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, useContext, useCallback, useMemo, useEffect, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useMemo,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/core/auth';
 import { userActionsApi, type MediaSaveStatusDto } from '@/core/api/user-actions.client';
@@ -64,23 +72,28 @@ export function SavedStatusProvider({ mediaItemIds, children }: SavedStatusProvi
     });
   }, [statuses, queryClient]);
 
+  const [cacheVersion, setCacheVersion] = useState(0);
+
   const getStatus = useCallback(
     (mediaItemId: string): MediaSaveStatusDto | undefined => {
-      return statuses?.[mediaItemId];
+      const individualStatus = queryClient.getQueryData<MediaSaveStatusDto>(
+        queryKeys.userActions.savedItems.status(mediaItemId),
+      );
+      return individualStatus ?? statuses?.[mediaItemId];
     },
-    [statuses],
+    [statuses, queryClient, cacheVersion],
   );
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: queryKeys.userActions.savedItems.batch(batchHash),
     });
-    // Also invalidate individual status queries
     uniqueIds.forEach((id) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.userActions.savedItems.status(id),
       });
     });
+    setCacheVersion((v) => v + 1);
   }, [queryClient, batchHash, uniqueIds]);
 
   const value = useMemo(
