@@ -13,7 +13,7 @@ import {
   categorySupportsFilters,
   type BrowseCategory,
 } from '@/modules/browse';
-import { BrowsePageHeader, MediaGrid, BrowseFilters } from '@/modules/browse';
+import { BrowsePageHeader, BrowseMediaGrid, BrowseFilters } from '@/modules/browse';
 import { BrowseInfiniteList } from './browse-infinite-list';
 import type { MediaCardServerProps } from '@/modules/home';
 
@@ -161,8 +161,8 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
           </div>
         ) : (
           <>
-            {/* SSR rendered grid */}
-            <MediaGrid items={items} locale="uk" />
+            {/* SSR rendered grid with SavedStatusProvider */}
+            <BrowseMediaGrid items={items} locale="uk" />
 
             {/* Client-side infinite scroll */}
             {hasMore && (

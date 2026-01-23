@@ -5,11 +5,12 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { MediaCardServer, type MediaCardServerProps } from '@/modules/home';
 import { InfiniteScrollLoader } from '@/modules/browse';
 import type { BrowseCategory } from '@/modules/browse';
 import { useLocale } from '@/shared/i18n';
+import { SavedStatusProvider } from '@/core/saved-status';
 
 interface BrowseInfiniteListProps {
   category: BrowseCategory;
@@ -58,15 +59,19 @@ export function BrowseInfiniteList({
     }
   }, [category, page, pageSize, sort, isLoading, hasMore]);
 
+  const mediaItemIds = useMemo(() => items.map((item) => item.id), [items]);
+
   return (
     <>
-      {/* Client-loaded items */}
+      {/* Client-loaded items with SavedStatusProvider */}
       {items.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
-          {items.map((item) => (
-            <MediaCardServer key={item.id} {...item} locale={locale} />
-          ))}
-        </div>
+        <SavedStatusProvider mediaItemIds={mediaItemIds}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
+            {items.map((item) => (
+              <MediaCardServer key={item.id} {...item} locale={locale} />
+            ))}
+          </div>
+        </SavedStatusProvider>
       )}
 
       {/* Infinite scroll trigger */}

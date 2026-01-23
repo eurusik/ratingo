@@ -1,5 +1,6 @@
 export {
   MediaGrid,
+  BrowseMediaGrid,
   InfiniteScrollLoader,
   BrowsePageHeader,
   BrowseFilters,
