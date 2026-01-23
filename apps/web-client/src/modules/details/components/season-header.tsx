@@ -72,7 +72,7 @@ export function SeasonHeader({
     <div
       onClick={handleContainerClick}
       className={cn(
-        'w-full text-left transition-colors cursor-pointer',
+        'text-left transition-colors cursor-pointer',
         !isExpanded && 'hover:bg-cinema-elevated/30 -mx-2 px-2 py-2 rounded-xl',
       )}
       role="button"
