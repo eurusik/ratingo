@@ -229,12 +229,35 @@ export interface IMediaRepository {
     limit: number;
     offset: number;
   }): Promise<EligibleTrendingItem[]>;
+
+  /**
+   * Retrieves ELIGIBLE media items for snapshots sync.
+   * Filters to items that:
+   * 1. Pass Policy Engine (ELIGIBLE in TRENDING context)
+   * 2. Have tmdbId (required for Trakt API)
+   * 3. Not soft-deleted
+   *
+   * Uses cursor pagination for memory efficiency.
+   *
+   * @param options - Query options (cursor, limit)
+   * @returns Array of snapshot candidates
+   */
+  findSnapshotCandidates(options: { cursor?: string; limit: number }): Promise<SnapshotCandidate[]>;
 }
 
 /**
  * Item returned by findTrendingUpdatedItems.
  */
 export interface TrendingUpdatedItem {
+  id: string;
+  tmdbId: number;
+  type: MediaType;
+}
+
+/**
+ * Snapshot candidate item - minimal data needed for batch snapshot sync.
+ */
+export interface SnapshotCandidate {
   id: string;
   tmdbId: number;
   type: MediaType;

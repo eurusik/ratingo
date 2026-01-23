@@ -52,7 +52,7 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
   {
     name: 'snapshots',
     jobType: 'sync-snapshots',
-    pattern: '30 */6 * * *', // Every 6 hours (30 min after trending)
+    pattern: '30 3 * * *', // Once daily at 3:30 UTC (off-peak)
     jobId: 'scheduled-snapshots',
     data: {},
   },

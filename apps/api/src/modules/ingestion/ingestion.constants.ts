@@ -17,7 +17,7 @@ export enum IngestionJob {
 
   /** Dispatcher job: iterates over all media and queues item jobs */
   SYNC_SNAPSHOTS_DISPATCHER = 'sync-snapshots-dispatcher',
-  /** Item job: syncs watchers snapshot for a single media item */
+  /** @deprecated Use batch processing in SnapshotsPipeline.dispatch() */
   SYNC_SNAPSHOT_ITEM = 'sync-snapshot-item',
 
   /** Dispatcher job: fetches tracked show IDs and queues batch jobs */

@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { type Job } from 'bullmq';
 
 import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '../../../../common/constants';
+import { WORKER_CONFIG } from '../../../../config/queue.config';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 import { DropOffService, StatsBackfillService, TrendingSyncService } from '../services';
 
@@ -13,7 +14,10 @@ import { DropOffService, StatsBackfillService, TrendingSyncService } from '../se
  *
  * Concurrency: 1 (jobs are already batched internally)
  */
-@Processor(STATS_QUEUE, { concurrency: 1 })
+@Processor(STATS_QUEUE, {
+  concurrency: 1,
+  lockDuration: WORKER_CONFIG.stats.lockDuration,
+})
 export class StatsWorker extends WorkerHost {
   private readonly logger = new Logger(StatsWorker.name);
 

@@ -532,12 +532,12 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
    *
    * @param {'movie' | 'show'} type - Media type
    * @param {number} tmdbId - TMDB ID
-   * @returns {Promise<{ watchers: number } | null>} Stats or null
+   * @returns {Promise<{ watchers: number } | null | undefined>} Stats, null (error), or undefined (not found)
    */
   private async getStatsByTmdbId(
     type: TraktMediaType,
     tmdbId: number,
-  ): Promise<{ watchers: number } | null> {
+  ): Promise<{ watchers: number } | null | undefined> {
     try {
       // Use bulk mode for backfill operations - 10 min time budget
       const results = await this.fetchBulk<(TraktSearchMovieResult | TraktSearchShowResult)[]>(
@@ -555,7 +555,7 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       }
 
       if (!results.length || !traktId) {
-        return null;
+        return undefined; // Not found in Trakt
       }
 
       const endpoint: TraktEndpoint =
@@ -565,7 +565,77 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
       return { watchers: stats.watchers };
     } catch (error) {
       this.logger.warn(`Failed to get Trakt stats for ${type} TMDB ${tmdbId}: ${error}`);
-      return null;
+      return null; // Transient error
     }
+  }
+
+  /**
+   * Gets total watchers count for multiple items by TMDB IDs.
+   * Uses chunking with delays to avoid rate limiting.
+   * Only makes 2 API calls per item (search + stats).
+   *
+   * Return value semantics:
+   * - number (including 0) = success, update DB
+   * - undefined = not found in Trakt, can write 0 or skip
+   * - null = transient error (429/5xx), skip DB update
+   *
+   * @param type - Media type
+   * @param tmdbIds - TMDB IDs
+   * @returns Map of tmdbId -> totalWatchers
+   */
+  async getTotalWatchersByTmdbIds(
+    type: TraktMediaType,
+    tmdbIds: number[],
+  ): Promise<Map<number, number | null | undefined>> {
+    const result = new Map<number, number | null | undefined>();
+    if (tmdbIds.length === 0) return result;
+
+    // Split into chunks for rate limit safety
+    const chunks: number[][] = [];
+    for (let i = 0; i < tmdbIds.length; i += TRAKT_BULK_CHUNK_SIZE) {
+      chunks.push(tmdbIds.slice(i, i + TRAKT_BULK_CHUNK_SIZE));
+    }
+
+    // Stats for logging
+    let okCount = 0;
+    let notFoundCount = 0;
+    let errorCount = 0;
+
+    this.logger.log(
+      `Fetching total watchers for ${tmdbIds.length} ${type}s in ${chunks.length} chunks`,
+    );
+
+    for (let chunkIdx = 0; chunkIdx < chunks.length; chunkIdx++) {
+      const chunk = chunks[chunkIdx];
+
+      for (const tmdbId of chunk) {
+        const stats = await this.getStatsByTmdbId(type, tmdbId);
+
+        if (stats !== null && stats !== undefined) {
+          result.set(tmdbId, stats.watchers);
+          okCount++;
+        } else if (stats === undefined) {
+          result.set(tmdbId, undefined);
+          notFoundCount++;
+        } else {
+          result.set(tmdbId, null);
+          errorCount++;
+        }
+      }
+
+      // Delay between chunks (except after last chunk)
+      if (chunkIdx < chunks.length - 1) {
+        this.logger.debug(
+          `Chunk ${chunkIdx + 1}/${chunks.length} complete, waiting ${TRAKT_BULK_CHUNK_DELAY_MS}ms`,
+        );
+        await this.sleep(TRAKT_BULK_CHUNK_DELAY_MS);
+      }
+    }
+
+    this.logger.log(
+      `Completed total watchers for ${type}s: ${okCount} ok, ${notFoundCount} not found, ${errorCount} errors`,
+    );
+
+    return result;
   }
 }

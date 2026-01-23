@@ -14,6 +14,7 @@ import { eq, and, isNull, lte, gt } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
+import { WORKER_CONFIG } from '../../../../config/queue.config';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.constants';
@@ -53,7 +54,10 @@ interface EvaluateCatalogItemPayload {
 const ERROR_STACK_MAX_LENGTH = 500;
 const STALE_RUN_MAX_AGE_MINUTES = 1;
 
-@Processor(CATALOG_POLICY_QUEUE, { concurrency: 1 })
+@Processor(CATALOG_POLICY_QUEUE, {
+  concurrency: 1,
+  lockDuration: WORKER_CONFIG.catalogPolicy.lockDuration,
+})
 export class CatalogPolicyWorker extends WorkerHost implements OnModuleInit {
   private readonly logger = new Logger(CatalogPolicyWorker.name);
 

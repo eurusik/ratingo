@@ -112,15 +112,7 @@ describe('SyncWorker', () => {
       expect(snapshotsPipeline.dispatch).toHaveBeenCalledWith('UA');
     });
 
-    it('should delegate SYNC_SNAPSHOT_ITEM to snapshots pipeline', async () => {
-      const job = {
-        name: IngestionJob.SYNC_SNAPSHOT_ITEM,
-        data: { mediaItemId: 'media-1', dayId: '20251221', region: 'UA' },
-        id: '4',
-      } as Job;
-      await worker.process(job);
-      expect(snapshotsPipeline.processItem).toHaveBeenCalledWith('media-1', '20251221', 'UA');
-    });
+    // Note: SYNC_SNAPSHOT_ITEM is deprecated - batch processing is now used directly in SnapshotsPipeline.dispatch()
   });
 
   describe('process - trending pipeline', () => {

@@ -29,6 +29,7 @@ import {
   type MediaScoreDataWithTmdbId,
   type CorruptedWatchersItem,
   type EligibleTrendingItem,
+  type SnapshotCandidate,
 } from '../../domain/repositories/media.repository.interface';
 import {
   type IMovieRepository,
@@ -905,6 +906,65 @@ export class DrizzleMediaRepository implements IMediaRepository {
     } catch (error) {
       this.logger.error(`Failed to find eligible items for trending: ${error.message}`);
       throw new DatabaseException('Failed to find eligible items for trending');
+    }
+  }
+
+  /**
+   * Retrieves ELIGIBLE media items for snapshots sync with cursor pagination.
+   * Filters to items that pass Policy Engine in TRENDING context.
+   */
+  async findSnapshotCandidates(options: {
+    cursor?: string;
+    limit: number;
+  }): Promise<SnapshotCandidate[]> {
+    try {
+      // Get active policy version
+      const activePolicy = await this.db
+        .select({ version: schema.catalogPolicies.version })
+        .from(schema.catalogPolicies)
+        .where(eq(schema.catalogPolicies.isActive, true))
+        .limit(1);
+
+      if (!activePolicy.length) {
+        this.logger.warn('No active policy found for snapshot candidates');
+        return [];
+      }
+
+      const conditions = [
+        isNull(schema.mediaItems.deletedAt),
+        isNotNull(schema.mediaItems.tmdbId),
+        eq(schema.mediaCatalogEvaluations.policyVersion, activePolicy[0].version),
+        eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
+        eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+      ];
+
+      if (options.cursor) {
+        conditions.push(gt(schema.mediaItems.id, options.cursor));
+      }
+
+      const rows = await this.db
+        .select({
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          type: schema.mediaItems.type,
+        })
+        .from(schema.mediaItems)
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          eq(schema.mediaCatalogEvaluations.mediaItemId, schema.mediaItems.id),
+        )
+        .where(and(...conditions))
+        .orderBy(schema.mediaItems.id)
+        .limit(options.limit);
+
+      return rows.map((r) => ({
+        id: r.id,
+        tmdbId: r.tmdbId!,
+        type: r.type,
+      }));
+    } catch (error) {
+      this.logger.error(`Failed to find snapshot candidates: ${error.message}`);
+      throw new DatabaseException('Failed to find snapshot candidates');
     }
   }
 }

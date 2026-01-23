@@ -83,6 +83,24 @@ export interface TraktRatingsPort {
    * @returns {Promise<{ watchers: number } | null>} Stats or null if not found
    */
   getShowStatsByTmdbId(tmdbId: number): Promise<{ watchers: number } | null>;
+
+  /**
+   * Gets total watchers count for multiple items by TMDB IDs.
+   * Optimized for batch operations: uses 2 API calls per item (search + stats).
+   *
+   * Return value semantics:
+   * - number (including 0) = success, update DB
+   * - undefined = not found in Trakt, can write 0 or skip
+   * - null = transient error (429/5xx), skip DB update
+   *
+   * @param type - Media type ('movie' | 'show')
+   * @param tmdbIds - Array of TMDB IDs
+   * @returns Map of tmdbId -> totalWatchers
+   */
+  getTotalWatchersByTmdbIds(
+    type: 'movie' | 'show',
+    tmdbIds: number[],
+  ): Promise<Map<number, number | null | undefined>>;
 }
 
 /**

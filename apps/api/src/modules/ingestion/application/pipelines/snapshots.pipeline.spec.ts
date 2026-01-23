@@ -1,119 +1,149 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SnapshotsPipeline } from './snapshots.pipeline';
-import { SnapshotsService } from '../services/snapshots.service';
-import { BulkJobService } from '../services/bulk-job.service';
-import { MEDIA_REPOSITORY } from '../../../catalog/public';
-import { IngestionJob } from '../../ingestion.constants';
+import { SnapshotsService, SnapshotBatchResult } from '../services/snapshots.service';
+import { MEDIA_REPOSITORY, SnapshotCandidate } from '../../../catalog/public';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
 describe('SnapshotsPipeline', () => {
   let pipeline: SnapshotsPipeline;
   let snapshotsService: jest.Mocked<SnapshotsService>;
-  let bulkJobService: jest.Mocked<BulkJobService>;
-  let mediaRepository: any;
+  let mediaRepository: {
+    findSnapshotCandidates: jest.Mock;
+  };
 
   beforeEach(async () => {
     const mockSnapshotsService = {
       syncSnapshotItem: jest.fn().mockResolvedValue(undefined),
-    };
-
-    const mockBulkJobService = {
-      enqueueBulk: jest.fn().mockResolvedValue({ found: 0, enqueued: 0, deduped: 0 }),
-      enqueueBatch: jest
+      syncSnapshotBatch: jest
         .fn()
-        .mockImplementation(
-          (jobs, logger, context, cumulative = { found: 0, enqueued: 0, deduped: 0 }) =>
-            Promise.resolve({
-              found: cumulative.found + jobs.length,
-              enqueued: cumulative.enqueued + jobs.length,
-              deduped: cumulative.deduped,
-            }),
-        ),
+        .mockResolvedValue({ synced: 0, skipped: 0, errors: 0 } as SnapshotBatchResult),
     };
 
     const mockMediaRepository = {
-      findIdsForSnapshots: jest.fn().mockResolvedValue([]),
+      findSnapshotCandidates: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SnapshotsPipeline,
         { provide: SnapshotsService, useValue: mockSnapshotsService },
-        { provide: BulkJobService, useValue: mockBulkJobService },
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
       ],
     }).compile();
 
     pipeline = module.get<SnapshotsPipeline>(SnapshotsPipeline);
     snapshotsService = module.get(SnapshotsService);
-    bulkJobService = module.get(BulkJobService);
     mediaRepository = module.get(MEDIA_REPOSITORY);
   });
 
   describe('dispatch', () => {
-    it('should iterate through all media items and enqueue snapshot jobs', async () => {
-      mediaRepository.findIdsForSnapshots
-        .mockResolvedValueOnce(['id1', 'id2', 'id3'])
-        .mockResolvedValueOnce(['id4', 'id5'])
+    it('should iterate through all ELIGIBLE media items and sync snapshots in batches', async () => {
+      const batch1: SnapshotCandidate[] = [
+        { id: 'id1', tmdbId: 101, type: MediaType.MOVIE },
+        { id: 'id2', tmdbId: 102, type: MediaType.SHOW },
+        { id: 'id3', tmdbId: 103, type: MediaType.MOVIE },
+      ];
+      const batch2: SnapshotCandidate[] = [
+        { id: 'id4', tmdbId: 104, type: MediaType.SHOW },
+        { id: 'id5', tmdbId: 105, type: MediaType.MOVIE },
+      ];
+
+      mediaRepository.findSnapshotCandidates
+        .mockResolvedValueOnce(batch1)
+        .mockResolvedValueOnce(batch2)
         .mockResolvedValueOnce([]);
 
-      await pipeline.dispatch('UA');
-
-      expect(mediaRepository.findIdsForSnapshots).toHaveBeenCalledTimes(3);
-      expect(bulkJobService.enqueueBatch).toHaveBeenCalledTimes(2);
-      expect(bulkJobService.enqueueBatch).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({
-            name: IngestionJob.SYNC_SNAPSHOT_ITEM,
-            data: expect.objectContaining({ mediaItemId: 'id1', region: 'UA' }),
-          }),
-        ]),
-        expect.any(Object),
-        expect.any(String),
-        expect.any(Object),
-      );
-    });
-
-    it('should normalize region', async () => {
-      mediaRepository.findIdsForSnapshots.mockResolvedValueOnce(['id1']).mockResolvedValueOnce([]);
-
-      await pipeline.dispatch('ua');
-
-      expect(bulkJobService.enqueueBatch).toHaveBeenCalledWith(
-        [
-          expect.objectContaining({
-            data: expect.objectContaining({ region: 'UA' }),
-          }),
-        ],
-        expect.any(Object),
-        expect.any(String),
-        expect.any(Object),
-      );
-    });
-
-    it('should handle empty result set', async () => {
-      mediaRepository.findIdsForSnapshots.mockResolvedValue([]);
+      snapshotsService.syncSnapshotBatch
+        .mockResolvedValueOnce({ synced: 3, skipped: 0, errors: 0 })
+        .mockResolvedValueOnce({ synced: 2, skipped: 0, errors: 0 });
 
       await pipeline.dispatch('UA');
 
-      expect(bulkJobService.enqueueBatch).not.toHaveBeenCalled();
-    });
-  });
+      expect(mediaRepository.findSnapshotCandidates).toHaveBeenCalledTimes(3);
+      expect(mediaRepository.findSnapshotCandidates).toHaveBeenNthCalledWith(1, {
+        limit: 500,
+        cursor: undefined,
+      });
+      expect(mediaRepository.findSnapshotCandidates).toHaveBeenNthCalledWith(2, {
+        limit: 500,
+        cursor: 'id3',
+      });
+      expect(mediaRepository.findSnapshotCandidates).toHaveBeenNthCalledWith(3, {
+        limit: 500,
+        cursor: 'id5',
+      });
 
-  describe('processItem', () => {
-    it('should call snapshotsService with parsed date', async () => {
-      await pipeline.processItem('media-123', '20251221', 'UA');
-
-      expect(snapshotsService.syncSnapshotItem).toHaveBeenCalledWith(
-        'media-123',
+      expect(snapshotsService.syncSnapshotBatch).toHaveBeenCalledTimes(2);
+      expect(snapshotsService.syncSnapshotBatch).toHaveBeenNthCalledWith(
+        1,
+        batch1,
+        expect.any(Date),
+        'UA',
+      );
+      expect(snapshotsService.syncSnapshotBatch).toHaveBeenNthCalledWith(
+        2,
+        batch2,
         expect.any(Date),
         'UA',
       );
     });
 
-    it('should throw error for invalid dayId', async () => {
-      await expect(pipeline.processItem('media-123', 'invalid', 'UA')).rejects.toThrow(
-        /Invalid snapshot dayId/,
+    it('should normalize region', async () => {
+      const batch: SnapshotCandidate[] = [{ id: 'id1', tmdbId: 101, type: MediaType.MOVIE }];
+      mediaRepository.findSnapshotCandidates.mockResolvedValueOnce(batch).mockResolvedValueOnce([]);
+      snapshotsService.syncSnapshotBatch.mockResolvedValue({ synced: 1, skipped: 0, errors: 0 });
+
+      await pipeline.dispatch('ua');
+
+      expect(snapshotsService.syncSnapshotBatch).toHaveBeenCalledWith(
+        batch,
+        expect.any(Date),
+        'UA',
       );
+    });
+
+    it('should use global region by default', async () => {
+      const batch: SnapshotCandidate[] = [{ id: 'id1', tmdbId: 101, type: MediaType.MOVIE }];
+      mediaRepository.findSnapshotCandidates.mockResolvedValueOnce(batch).mockResolvedValueOnce([]);
+      snapshotsService.syncSnapshotBatch.mockResolvedValue({ synced: 1, skipped: 0, errors: 0 });
+
+      await pipeline.dispatch();
+
+      expect(snapshotsService.syncSnapshotBatch).toHaveBeenCalledWith(
+        batch,
+        expect.any(Date),
+        'global',
+      );
+    });
+
+    it('should handle empty result set', async () => {
+      mediaRepository.findSnapshotCandidates.mockResolvedValue([]);
+
+      await pipeline.dispatch('UA');
+
+      expect(snapshotsService.syncSnapshotBatch).not.toHaveBeenCalled();
+    });
+
+    it('should accumulate results from all batches', async () => {
+      const batch1: SnapshotCandidate[] = [
+        { id: 'id1', tmdbId: 101, type: MediaType.MOVIE },
+        { id: 'id2', tmdbId: 102, type: MediaType.SHOW },
+      ];
+      const batch2: SnapshotCandidate[] = [{ id: 'id3', tmdbId: 103, type: MediaType.MOVIE }];
+
+      mediaRepository.findSnapshotCandidates
+        .mockResolvedValueOnce(batch1)
+        .mockResolvedValueOnce(batch2)
+        .mockResolvedValueOnce([]);
+
+      snapshotsService.syncSnapshotBatch
+        .mockResolvedValueOnce({ synced: 1, skipped: 1, errors: 0 })
+        .mockResolvedValueOnce({ synced: 0, skipped: 0, errors: 1 });
+
+      // Should complete without error - results are logged
+      await pipeline.dispatch('UA');
+
+      expect(snapshotsService.syncSnapshotBatch).toHaveBeenCalledTimes(2);
     });
   });
 });
