@@ -21,7 +21,10 @@ import { RunFinalizeService } from './application/services/run-finalize.service'
 import { CatalogPolicyWorker } from './application/workers/catalog-policy.worker';
 import { CATALOG_POLICY_QUEUE } from './catalog-policy.constants';
 import { CATALOG_POLICY_EVALUATOR } from './domain/ports/catalog-policy-evaluator.port';
-import { POLICY_INPUT_REPOSITORY } from './domain/repositories/policy-input.repository.interface';
+import {
+  POLICY_INPUT_REPOSITORY,
+  MEDIA_CATALOG_EVALUATION_REPOSITORY,
+} from './domain/repositories';
 import {
   AdminCatalogRepository,
   ADMIN_CATALOG_REPOSITORY,
@@ -34,10 +37,7 @@ import {
   CatalogPolicyRepository,
   CATALOG_POLICY_REPOSITORY,
 } from './infrastructure/repositories/catalog-policy.repository';
-import {
-  MediaCatalogEvaluationRepository,
-  MEDIA_CATALOG_EVALUATION_REPOSITORY,
-} from './infrastructure/repositories/media-catalog-evaluation.repository';
+import { MediaCatalogEvaluationRepository } from './infrastructure/repositories/media-catalog-evaluation.repository';
 import { PolicyInputRepository } from './infrastructure/repositories/policy-input.repository';
 import {
   PublicCatalogRepository,

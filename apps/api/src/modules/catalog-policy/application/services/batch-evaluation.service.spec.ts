@@ -12,9 +12,11 @@ import {
   EvaluationContext,
   type EvaluationContextType,
 } from '../../domain/constants/evaluation.constants';
-import { POLICY_INPUT_REPOSITORY } from '../../domain/repositories/policy-input.repository.interface';
+import {
+  POLICY_INPUT_REPOSITORY,
+  MEDIA_CATALOG_EVALUATION_REPOSITORY,
+} from '../../domain/repositories';
 import type { PolicyEngineInput, PolicyConfig } from '../../domain/types/policy.types';
-import { MEDIA_CATALOG_EVALUATION_REPOSITORY } from '../../infrastructure/repositories/media-catalog-evaluation.repository';
 
 import { BatchEvaluationService } from './batch-evaluation.service';
 import { CatalogPolicyService } from './catalog-policy.service';

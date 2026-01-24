@@ -25,12 +25,10 @@ import {
 import {
   POLICY_INPUT_REPOSITORY,
   type IPolicyInputRepository,
-} from '../../domain/repositories/policy-input.repository.interface';
-import { type MediaCatalogEvaluation } from '../../domain/types/policy.types';
-import {
-  type IMediaCatalogEvaluationRepository,
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
-} from '../../infrastructure/repositories/media-catalog-evaluation.repository';
+  type IMediaCatalogEvaluationRepository,
+} from '../../domain/repositories';
+import { type MediaCatalogEvaluation } from '../../domain/types/policy.types';
 
 import { CatalogPolicyService } from './catalog-policy.service';
 
