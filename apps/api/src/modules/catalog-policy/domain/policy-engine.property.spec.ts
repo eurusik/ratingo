@@ -968,14 +968,14 @@ describe('Global Quality Gate Properties', () => {
     );
   });
 
-  it('Property 8: should prevent breakout when global gate fails', () => {
+  it('Property 8: blocked content is always INELIGIBLE (HARD filter)', () => {
+    // Blocked content is a HARD filter - breakout rules do NOT apply, gate not checked
     fc.assert(
       fc.property(
         fc.nat({ max: 100000 }),
         fc.nat({ max: 50000 }),
         fc.option(fc.nat({ max: 100000 })),
         (gateThreshold, breakoutThreshold, votes) => {
-          // Ensure gate threshold is higher than breakout threshold
           fc.pre(gateThreshold > breakoutThreshold);
 
           const policy: PolicyConfig = {
@@ -1024,27 +1024,13 @@ describe('Global Quality Gate Properties', () => {
 
           const result = evaluateEligibility(input, policy);
 
-          const passesGate = votes !== null && votes >= gateThreshold;
-          const passesBreakout = votes !== null && votes >= breakoutThreshold;
-
-          if (!passesGate) {
-            // Gate fails → INELIGIBLE with BLOCKED reason, breakout not attempted
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('BLOCKED_COUNTRY');
-            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-            expect(result.breakoutRuleId).toBeNull();
-            expect(result.globalGateDetails).toBeDefined();
-          } else if (passesBreakout) {
-            // Gate passes AND breakout passes → ELIGIBLE
-            expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-            expect(result.reasons).toContain('BREAKOUT_ALLOWED');
-            expect(result.breakoutRuleId).toBe('breakout-1');
-          } else {
-            // Gate passes but breakout fails → INELIGIBLE with BLOCKED reason
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('BLOCKED_COUNTRY');
-            expect(result.breakoutRuleId).toBeNull();
-          }
+          // Blocked is HARD filter - ALWAYS INELIGIBLE regardless of votes or breakout
+          expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+          expect(result.reasons).toContain('BLOCKED_COUNTRY');
+          expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
+          expect(result.breakoutRuleId).toBeNull();
+          // Global gate is NOT checked for blocked content
+          expect(result.globalGateDetails).toBeUndefined();
         },
       ),
       { numRuns: 100 },
@@ -1393,7 +1379,8 @@ describe('Global Quality Gate Properties', () => {
     });
   });
 
-  it('Property 10: should use BLOCKED reason for blocked content that fails gate', () => {
+  it('Property 10: blocked content is HARD filter (gate not checked)', () => {
+    // Blocked content is immediately INELIGIBLE - global gate is not checked at all
     fc.assert(
       fc.property(
         fc.nat({ max: 100000 }),
@@ -1436,23 +1423,15 @@ describe('Global Quality Gate Properties', () => {
 
           const result = evaluateEligibility(input, policy);
 
-          const passesGate = votes !== null && votes >= threshold;
+          // Blocked is a HARD filter - always INELIGIBLE, gate not checked
+          expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+          expect(result.reasons).toContain('BLOCKED_COUNTRY');
+          expect(result.reasons).toContain('BLOCKED_LANGUAGE');
+          expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
 
-          if (!passesGate) {
-            // Blocked AND gate fails → BLOCKED reason takes precedence
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('BLOCKED_COUNTRY');
-            expect(result.reasons).toContain('BLOCKED_LANGUAGE');
-            expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-            expect(result.globalGateDetails).toBeDefined();
-            expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
-          } else {
-            // Blocked but gate passes → still INELIGIBLE with BLOCKED reason
-            expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-            expect(result.reasons).toContain('BLOCKED_COUNTRY');
-            expect(result.reasons).toContain('BLOCKED_LANGUAGE');
-            expect(result.globalGateDetails).toBeUndefined();
-          }
+          // Global gate is NOT checked for blocked content (HARD filter)
+          expect(result.globalGateDetails).toBeUndefined();
+          expect(result.breakoutRuleId).toBeNull();
         },
       ),
       { numRuns: 100 },
@@ -2188,17 +2167,17 @@ describe('Readability Classification Properties', () => {
       );
     });
 
-    it('should classify short CJK titles (length <= 6) as readable', () => {
+    it('should classify CJK-only titles as unreadable (no length exception)', () => {
       fc.assert(
         fc.property(
-          // Generate short CJK-only title (1-6 characters)
-          fc.array(cjkCharArb, { minLength: 1, maxLength: 6 }),
+          // Generate any CJK-only title (any length)
+          fc.array(cjkCharArb, { minLength: 1, maxLength: 20 }),
           (cjkChars) => {
             const title = cjkChars.join('');
 
-            // Short titles are readable regardless of script
-            // (Rule 3: short titles = readable)
-            expect(isReadableTitle(title)).toBe(true);
+            // CJK-only titles are NOT readable, regardless of length
+            // No exception for short titles like 功夫
+            expect(isReadableTitle(title)).toBe(false);
           },
         ),
         { numRuns: 100 },

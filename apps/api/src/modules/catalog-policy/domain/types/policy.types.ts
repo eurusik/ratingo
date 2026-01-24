@@ -44,14 +44,46 @@ export interface Evaluation {
 }
 
 /**
- * Valid rating source identifiers.
+ * Rating source constants.
  */
-export type RatingSource = 'imdb' | 'metacritic' | 'rt' | 'trakt';
+export const RatingSource = {
+  IMDB: 'imdb',
+  METACRITIC: 'metacritic',
+  RT: 'rt',
+  TRAKT: 'trakt',
+} as const;
 
 /**
- * Valid vote source identifiers.
+ * Rating source type.
  */
-export type VoteSource = 'imdb' | 'trakt';
+export type RatingSource = (typeof RatingSource)[keyof typeof RatingSource];
+
+/**
+ * Vote source constants.
+ */
+export const VoteSource = {
+  IMDB: 'imdb',
+  TRAKT: 'trakt',
+} as const;
+
+/**
+ * Vote source type.
+ */
+export type VoteSource = (typeof VoteSource)[keyof typeof VoteSource];
+
+/**
+ * Global gate failed check constants.
+ */
+export const GlobalGateCheck = {
+  MIN_QUALITY_SCORE: 'minQualityScoreNormalized',
+  REQUIRE_RATINGS: 'requireAnyOfRatingsPresent',
+  MIN_VOTES: 'minVotesAnyOf',
+} as const;
+
+/**
+ * Global gate failed check type.
+ */
+export type GlobalGateCheckType = (typeof GlobalGateCheck)[keyof typeof GlobalGateCheck];
 
 /**
  * Global quality gate requirements.
@@ -90,16 +122,52 @@ export interface GlobalRequirements {
  */
 export interface GlobalGateDetails {
   /** List of checks that failed */
-  failedChecks: ('minQualityScoreNormalized' | 'requireAnyOfRatingsPresent' | 'minVotesAnyOf')[];
+  failedChecks: GlobalGateCheckType[];
 }
 
 /**
- * Availability mode for provider filtering.
- * - subscription_only: Only flatrate offers (streaming subscriptions)
- * - transactional_only: Only rent/buy offers
- * - any: All offer types
+ * Availability mode constants for provider filtering.
  */
-export type AvailabilityMode = 'subscription_only' | 'transactional_only' | 'any';
+export const AvailabilityMode = {
+  SUBSCRIPTION_ONLY: 'subscription_only',
+  TRANSACTIONAL_ONLY: 'transactional_only',
+  ANY: 'any',
+} as const;
+
+/**
+ * Availability mode type for provider filtering.
+ */
+export type AvailabilityMode = (typeof AvailabilityMode)[keyof typeof AvailabilityMode];
+
+/**
+ * Eligibility mode constants.
+ */
+export const EligibilityMode = {
+  /** Country AND language must be allowed */
+  STRICT: 'STRICT',
+  /** Country OR language must be allowed */
+  RELAXED: 'RELAXED',
+} as const;
+
+/**
+ * Eligibility mode type.
+ */
+export type EligibilityModeType = (typeof EligibilityMode)[keyof typeof EligibilityMode];
+
+/**
+ * Blocked country mode constants.
+ */
+export const BlockedCountryMode = {
+  /** Any blocked country = blocked */
+  ANY: 'ANY',
+  /** Majority of countries must be blocked */
+  MAJORITY: 'MAJORITY',
+} as const;
+
+/**
+ * Blocked country mode type.
+ */
+export type BlockedCountryModeType = (typeof BlockedCountryMode)[keyof typeof BlockedCountryMode];
 
 /**
  * Breakout rule requirements for provider filtering.
@@ -175,17 +243,13 @@ export interface ContextRequirements {
 export interface PolicyConfig {
   allowedCountries: string[];
   blockedCountries: string[];
-  blockedCountryMode: 'ANY' | 'MAJORITY';
+  blockedCountryMode: BlockedCountryModeType;
   allowedLanguages: string[];
   blockedLanguages: string[];
   globalProviders: string[];
   breakoutRules: BreakoutRule[];
-  /**
-   * Eligibility mode.
-   * STRICT = country AND language must be allowed.
-   * RELAXED = country OR language must be allowed.
-   */
-  eligibilityMode: 'STRICT' | 'RELAXED';
+  /** Eligibility mode - STRICT (AND) or RELAXED (OR) for country/language. */
+  eligibilityMode: EligibilityModeType;
   homepage: {
     minRelevanceScore: number;
   };
@@ -208,9 +272,35 @@ export interface PolicyConfig {
 }
 
 /**
+ * Offer type constants for normalized watch offers.
+ */
+export const OfferType = {
+  FLATRATE: 'flatrate',
+  RENT: 'rent',
+  BUY: 'buy',
+  ADS: 'ads',
+  FREE: 'free',
+} as const;
+
+/**
  * Offer type for normalized watch offers.
  */
-export type NormalizedOfferType = 'flatrate' | 'rent' | 'buy' | 'ads' | 'free';
+export type NormalizedOfferType = (typeof OfferType)[keyof typeof OfferType];
+
+/**
+ * Distribution channel constants.
+ */
+export const DistributionChannel = {
+  DIRECT: 'direct',
+  AMAZON_CHANNEL: 'amazon_channel',
+  APPLE_TV_CHANNEL: 'apple_tv_channel',
+} as const;
+
+/**
+ * Distribution channel type.
+ */
+export type DistributionChannelType =
+  (typeof DistributionChannel)[keyof typeof DistributionChannel];
 
 /**
  * Normalized watch offer for policy evaluation.
@@ -222,7 +312,7 @@ export interface NormalizedOffer {
   /** Offer type */
   offerType: NormalizedOfferType;
   /** Distribution channel */
-  distributionChannel: 'direct' | 'amazon_channel' | 'apple_tv_channel';
+  distributionChannel: DistributionChannelType;
   /** Whether this is an ads-supported tier (for excludeAdsTiers filtering) */
   isAdsTier?: boolean;
 }
