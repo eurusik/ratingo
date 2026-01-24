@@ -57,6 +57,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .kiro/
+.claude/
+.agents/
 
 # =============================================================================
 # DEPLOYMENT & SERVICES
