@@ -237,6 +237,50 @@ describe('Policy Schema Validation', () => {
     });
   });
 
+  describe('contextRequirements validation', () => {
+    it('should accept valid contextRequirements', () => {
+      const policy = createValidPolicy({
+        contextRequirements: {
+          catalog: { requireReadableTitle: true, requireOverview: false },
+          trending: { requireReadableTitle: true, requireOverview: true, minOverviewChars: 60 },
+        },
+      });
+
+      const result = validatePolicyOrThrow(policy);
+      expect(result.contextRequirements).toBeDefined();
+      expect(result.contextRequirements?.catalog?.requireOverview).toBe(false);
+      expect(result.contextRequirements?.trending?.minOverviewChars).toBe(60);
+    });
+
+    it('should accept policy without contextRequirements', () => {
+      const policy = createValidPolicy();
+      delete (policy as Record<string, unknown>).contextRequirements;
+
+      const result = validatePolicyOrThrow(policy);
+      expect(result.contextRequirements).toBeUndefined();
+    });
+
+    it('should reject invalid context key', () => {
+      const policy = createValidPolicy();
+      // Bypass TypeScript to test runtime validation
+      (policy as Record<string, unknown>).contextRequirements = {
+        invalid_context: { requireReadableTitle: true },
+      };
+
+      expect(() => validatePolicyOrThrow(policy)).toThrow();
+    });
+
+    it('should reject invalid minOverviewChars value', () => {
+      const policy = createValidPolicy();
+      // Bypass TypeScript to test runtime validation
+      (policy as Record<string, unknown>).contextRequirements = {
+        trending: { minOverviewChars: -1 },
+      };
+
+      expect(() => validatePolicyOrThrow(policy)).toThrow();
+    });
+  });
+
   describe('isPolicyConfig', () => {
     it('should return true for valid policy', () => {
       const policy = createValidPolicy();

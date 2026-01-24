@@ -1,19 +1,25 @@
 /**
- * Catalog Policy Schema Validation
- *
- * Zod schemas for validating and normalizing policy configurations.
- * Ensures policy data is valid before storage and execution.
+ * Policy configuration validation using Zod schemas.
+ * Validates structure, normalizes data, and enforces business rules.
  */
 
 import { z } from 'zod';
 
 import { type ContentClass, VALID_CONTENT_CLASSES } from '../classification.service';
+import { EvaluationContext } from '../constants/evaluation.constants';
 import { PolicyValidationError } from '../errors';
 import { type PolicyConfig } from '../types/policy.types';
 
-/**
- * Breakout rule schema
- */
+// Schema validation constants
+const MIN_OVERVIEW_CHARS = 0;
+const MAX_OVERVIEW_CHARS = 1000;
+const MAX_RELEVANCE_SCORE = 100;
+
+const VALID_CONTEXTS = Object.values(EvaluationContext) as [string, ...string[]];
+const VALID_RATING_SOURCES = ['imdb', 'metacritic', 'rt', 'trakt'] as const;
+const VALID_VOTE_SOURCES = ['imdb', 'trakt'] as const;
+
+/** Breakout rule requirements schema. */
 const BreakoutRuleSchema = z.object({
   id: z.string().min(1, 'Breakout rule ID is required'),
   name: z.string().min(1, 'Breakout rule name is required'),
@@ -23,7 +29,7 @@ const BreakoutRuleSchema = z.object({
     minTraktVotes: z.number().int().min(0).optional(),
     minQualityScoreNormalized: z.number().min(0).max(1).optional(),
     requireAnyOfProviders: z.array(z.string()).optional(),
-    requireAnyOfRatingsPresent: z.array(z.enum(['imdb', 'metacritic', 'rt', 'trakt'])).optional(),
+    requireAnyOfRatingsPresent: z.array(z.enum(VALID_RATING_SOURCES)).optional(),
     originCountries: z
       .array(z.string().length(2, 'Country codes must be 2 characters (ISO 3166-1 alpha-2)'))
       .optional(),
@@ -33,29 +39,39 @@ const BreakoutRuleSchema = z.object({
   }),
 });
 
-/**
- * Global requirements schema
- */
-// Schema validation constants
-const MAX_RELEVANCE_SCORE = 100;
-
+/** Global quality gate requirements schema. */
 const GlobalRequirementsSchema = z.object({
   minQualityScoreNormalized: z.number().min(0).max(1).optional(),
-  requireAnyOfRatingsPresent: z.array(z.enum(['imdb', 'metacritic', 'rt', 'trakt'])).optional(),
+  requireAnyOfRatingsPresent: z.array(z.enum(VALID_RATING_SOURCES)).optional(),
   minVotesAnyOf: z
     .object({
-      sources: z.array(z.enum(['imdb', 'trakt'])).min(1),
+      sources: z.array(z.enum(VALID_VOTE_SOURCES)).min(1),
       min: z.number().int().min(0),
     })
     .optional(),
-  appliesTo: z
-    .array(z.enum(['catalog', 'homepage', 'trending', 'now_playing', 'new_digital', 'search']))
-    .optional(),
+  appliesTo: z.array(z.enum(VALID_CONTEXTS)).optional(),
 });
 
-/**
- * Policy configuration schema
- */
+/** Context-specific display requirements schema. */
+const ContextRequirementsSchema = z.object({
+  requireReadableTitle: z.boolean().optional(),
+  requireOverview: z.boolean().optional(),
+  minOverviewChars: z.number().int().min(MIN_OVERVIEW_CHARS).max(MAX_OVERVIEW_CHARS).optional(),
+});
+
+/** Partial map of context to requirements. Rejects unknown context keys. */
+const ContextRequirementsMapSchema = z
+  .object({
+    catalog: ContextRequirementsSchema.optional(),
+    homepage: ContextRequirementsSchema.optional(),
+    trending: ContextRequirementsSchema.optional(),
+    now_playing: ContextRequirementsSchema.optional(),
+    new_digital: ContextRequirementsSchema.optional(),
+    search: ContextRequirementsSchema.optional(),
+  })
+  .strict();
+
+/** Full policy configuration schema. */
 const PolicyConfigSchema = z.object({
   allowedCountries: z.array(
     z.string().length(2, 'Country codes must be 2 characters (ISO 3166-1 alpha-2)'),
@@ -84,27 +100,26 @@ const PolicyConfigSchema = z.object({
     .array(z.enum(VALID_CONTENT_CLASSES as [string, ...string[]]))
     .optional()
     .default([]),
+  contextRequirements: ContextRequirementsMapSchema.optional(),
 });
 
 /**
- * Validates and normalizes a policy configuration
+ * Validates and normalizes policy configuration.
  *
- * Normalization steps:
- * 1. Uppercase all country codes
- * 2. Lowercase all language codes
- * 3. Sort breakout rules by priority (ascending)
- * 4. Apply defaults where needed
+ * Normalization: uppercase countries, lowercase languages, sort breakout rules by priority.
  *
  * @param policy - Raw policy configuration object
  * @returns Validated and normalized PolicyConfig
- * @throws ZodError if validation fails
+ * @throws {ZodError} When schema validation fails
+ * @throws {PolicyValidationError} When business rules violated
  */
 export function validatePolicyOrThrow(policy: unknown): PolicyConfig {
   // First, validate the structure
   const validated = PolicyConfigSchema.parse(policy);
 
   // Normalize the data
-  const normalized: PolicyConfig = {
+  // Cast to PolicyConfig since Zod validates the shape but returns looser types
+  const normalized = {
     ...validated,
     // Uppercase country codes
     allowedCountries: validated.allowedCountries.map((c) => c.toUpperCase()),
@@ -114,9 +129,7 @@ export function validatePolicyOrThrow(policy: unknown): PolicyConfig {
     blockedLanguages: validated.blockedLanguages.map((l) => l.toLowerCase()),
     // Sort breakout rules by priority (ascending - lower number = higher priority)
     breakoutRules: [...validated.breakoutRules].sort((a, b) => a.priority - b.priority),
-    // Pass through excludedContentClasses
-    excludedContentClasses: validated.excludedContentClasses as ContentClass[],
-  };
+  } as PolicyConfig;
 
   // Additional business logic validations
   validateBusinessRules(normalized);
@@ -125,7 +138,9 @@ export function validatePolicyOrThrow(policy: unknown): PolicyConfig {
 }
 
 /**
- * Additional business logic validations that go beyond schema structure
+ * Validates business rules beyond schema structure.
+ *
+ * @throws {PolicyValidationError} When business rules violated
  */
 function validateBusinessRules(policy: PolicyConfig): void {
   // Check for overlapping allowed/blocked countries
@@ -183,7 +198,10 @@ function validateBusinessRules(policy: PolicyConfig): void {
 }
 
 /**
- * Type guard to check if a value is a valid PolicyConfig
+ * Type guard for PolicyConfig.
+ *
+ * @param value - Value to check
+ * @returns True if value is valid PolicyConfig
  */
 export function isPolicyConfig(value: unknown): value is PolicyConfig {
   try {
