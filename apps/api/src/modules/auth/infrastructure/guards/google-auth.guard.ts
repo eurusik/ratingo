@@ -31,6 +31,32 @@ import { type OAuthStatePayload } from '../types/oauth.types';
 // Import for module augmentation side effects
 import '../types/oauth.types';
 
+/**
+ * Cookie options for setCookie method.
+ */
+interface CookieOptions {
+  httpOnly?: boolean;
+  sameSite?: 'strict' | 'lax' | 'none';
+  secure?: boolean;
+  maxAge?: number;
+  path?: string;
+}
+
+/**
+ * Type for Fastify reply with cookie methods (added by @fastify/cookie plugin).
+ */
+type ReplyWithCookies = FastifyReply & {
+  setCookie(name: string, value: string, options?: CookieOptions): FastifyReply;
+  clearCookie(name: string, options?: { path?: string }): FastifyReply;
+};
+
+/**
+ * Type for Fastify request with cookies (added by @fastify/cookie plugin).
+ */
+type RequestWithCookies = FastifyRequest & {
+  cookies?: Record<string, string>;
+};
+
 /** Milliseconds per second (for cookie maxAge conversion) */
 const MS_PER_SECOND = 1000;
 
@@ -205,8 +231,7 @@ export class GoogleAuthGuard extends AuthGuard('google') {
 
   private setStateCookie(res: FastifyReply, state: string): void {
     const isProd = process.env.NODE_ENV === 'production';
-    // @fastify/cookie adds setCookie method at runtime
-    (res as any).setCookie(OAUTH_STATE_COOKIE, state, {
+    (res as ReplyWithCookies).setCookie(OAUTH_STATE_COOKIE, state, {
       httpOnly: true,
       sameSite: 'lax',
       secure: isProd,
@@ -216,13 +241,11 @@ export class GoogleAuthGuard extends AuthGuard('google') {
   }
 
   private getStateCookie(req: FastifyRequest): string | undefined {
-    // @fastify/cookie adds cookies property at runtime
-    return (req as any).cookies?.[OAUTH_STATE_COOKIE];
+    return (req as RequestWithCookies).cookies?.[OAUTH_STATE_COOKIE];
   }
 
   private clearStateCookie(res: FastifyReply): void {
-    // @fastify/cookie adds clearCookie method at runtime
-    (res as any).clearCookie(OAUTH_STATE_COOKIE, { path: GOOGLE_AUTH_COOKIE_PATH });
+    (res as ReplyWithCookies).clearCookie(OAUTH_STATE_COOKIE, { path: GOOGLE_AUTH_COOKIE_PATH });
   }
 
   private validateReturnTo(returnTo?: string): string | null {

@@ -11,6 +11,9 @@ import * as schema from '../../../../database/schema';
 import { type ContentClass, isValidContentClass } from '../../domain/classification.service';
 import { type PolicyEngineInput, type NormalizedOffer } from '../../domain/types/policy.types';
 
+/** Divisor for normalizing scores from DB format (0-100) to policy engine format (0-1) */
+const SCORE_NORMALIZATION_DIVISOR = 100;
+
 /**
  * Raw media item row from database query.
  * Matches the SELECT fields used in evaluation queries.
@@ -112,10 +115,15 @@ export function mapRowToPolicyEngineInput(
     stats:
       row.qualityScore !== null
         ? {
-            qualityScore: row.qualityScore / 100,
-            popularityScore: row.popularityScore !== null ? row.popularityScore / 100 : null,
-            freshnessScore: row.freshnessScore !== null ? row.freshnessScore / 100 : null,
-            ratingoScore: row.ratingoScore !== null ? row.ratingoScore / 100 : null,
+            qualityScore: row.qualityScore / SCORE_NORMALIZATION_DIVISOR,
+            popularityScore:
+              row.popularityScore !== null
+                ? row.popularityScore / SCORE_NORMALIZATION_DIVISOR
+                : null,
+            freshnessScore:
+              row.freshnessScore !== null ? row.freshnessScore / SCORE_NORMALIZATION_DIVISOR : null,
+            ratingoScore:
+              row.ratingoScore !== null ? row.ratingoScore / SCORE_NORMALIZATION_DIVISOR : null,
           }
         : null,
   };

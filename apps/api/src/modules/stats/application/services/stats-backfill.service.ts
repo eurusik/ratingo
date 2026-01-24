@@ -18,6 +18,19 @@ import {
 import { BACKFILL_CONFIG, STATS_JOBS, STATS_QUEUE } from '../../stats.constants';
 import { type BackfillChunkItem } from '../types/backfill.types';
 
+/** Default limit for total watchers backfill */
+const DEFAULT_TOTAL_WATCHERS_LIMIT = 100;
+/** Default minimum votes threshold for backfill */
+const DEFAULT_MIN_VOTES = 100;
+/** Default limit for watchers count backfill */
+const DEFAULT_WATCHERS_COUNT_LIMIT = 500;
+/** Default minimum total watchers for backfill */
+const DEFAULT_MIN_TOTAL_WATCHERS = 100;
+/** HTTP status code for rate limiting */
+const HTTP_STATUS_TOO_MANY_REQUESTS = 429;
+/** HTTP status range for server errors */
+const HTTP_STATUS_SERVER_ERROR_MIN = 500;
+
 /**
  * Service for backfilling missing or corrupted stats data.
  */
@@ -52,8 +65,8 @@ export class StatsBackfillService {
   async backfillTotalWatchers(
     options: BackfillTotalWatchersOptions,
   ): Promise<{ total: number; success: number; failed: number }> {
-    const limit = options.limit ?? 100;
-    const minVotes = options.minVotes ?? 100;
+    const limit = options.limit ?? DEFAULT_TOTAL_WATCHERS_LIMIT;
+    const minVotes = options.minVotes ?? DEFAULT_MIN_VOTES;
 
     this.logger.log(
       `Starting total_watchers backfill (type: ${options.type ?? 'all'}, limit: ${limit}, minVotes: ${minVotes})...`,
@@ -134,8 +147,8 @@ export class StatsBackfillService {
   async queueWatchersCountBackfill(
     options: QueueWatchersCountBackfillOptions,
   ): Promise<{ total: number; chunksQueued: number }> {
-    const limit = options.limit ?? 500;
-    const minTotalWatchers = options.minTotalWatchers ?? 100;
+    const limit = options.limit ?? DEFAULT_WATCHERS_COUNT_LIMIT;
+    const minTotalWatchers = options.minTotalWatchers ?? DEFAULT_MIN_TOTAL_WATCHERS;
 
     this.logger.log(
       `Queueing watchers_count backfill (type: ${options.type ?? 'all'}, limit: ${limit}, minTotalWatchers: ${minTotalWatchers})...`,
@@ -263,7 +276,10 @@ export class StatsBackfillService {
   private isRateLimitError(error: unknown): boolean {
     if (!error || typeof error !== 'object') return false;
     const err = error as { status?: number; response?: { status?: number } };
-    return err.status === 429 || err.response?.status === 429;
+    return (
+      err.status === HTTP_STATUS_TOO_MANY_REQUESTS ||
+      err.response?.status === HTTP_STATUS_TOO_MANY_REQUESTS
+    );
   }
 
   /**
@@ -292,18 +308,18 @@ export class StatsBackfillService {
       } catch (error: unknown) {
         const err = error as { response?: { status?: number }; message?: string };
         const status = err?.response?.status;
-        const isRateLimited = status === 429;
-        const isServerError = status && status >= 500;
+        const isRateLimited = status === HTTP_STATUS_TOO_MANY_REQUESTS;
+        const isServerError = status && status >= HTTP_STATUS_SERVER_ERROR_MIN;
+        const canRetry = attempt < maxRetries;
 
-        if (isRateLimited || isServerError) {
-          if (attempt < maxRetries) {
-            const delay = BASE_RETRY_DELAY_MS * Math.pow(2, attempt);
-            this.logger.debug(
-              `Retry ${attempt + 1}/${maxRetries} for ${type} ${tmdbId} after ${delay}ms (status: ${status})`,
-            );
-            await this.sleep(delay);
-            continue;
-          }
+        // Retry on rate limit or server errors
+        if ((isRateLimited || isServerError) && canRetry) {
+          const delay = BASE_RETRY_DELAY_MS * Math.pow(2, attempt);
+          this.logger.debug(
+            `Retry ${attempt + 1}/${maxRetries} for ${type} ${tmdbId} after ${delay}ms (status: ${status})`,
+          );
+          await this.sleep(delay);
+          continue;
         }
 
         this.logger.warn(`Failed to fetch stats for ${type} ${tmdbId}: ${err.message || error}`);

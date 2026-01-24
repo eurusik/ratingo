@@ -452,10 +452,11 @@ export class TraktRatingsAdapter extends BaseTraktHttp implements TraktRatingsPo
         const batchResults = await Promise.all(promises);
         for (const { tmdbId, watchers } of batchResults) {
           result.set(tmdbId, watchers);
-          if (typeof watchers === 'number') okCount++;
-          else if (watchers === undefined) notFoundCount++;
-          else errorCount++;
         }
+        // Count results outside the deeply nested loop
+        okCount += batchResults.filter((r) => typeof r.watchers === 'number').length;
+        notFoundCount += batchResults.filter((r) => r.watchers === undefined).length;
+        errorCount += batchResults.filter((r) => r.watchers === null).length;
       }
 
       // Delay between chunks (except after last chunk)

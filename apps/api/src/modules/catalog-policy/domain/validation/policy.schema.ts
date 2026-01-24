@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import { type ContentClass, VALID_CONTENT_CLASSES } from '../classification.service';
+import { VALID_CONTENT_CLASSES } from '../classification.service';
 import { EvaluationContext } from '../constants/evaluation.constants';
 import { PolicyValidationError } from '../errors';
 import { type PolicyConfig } from '../types/policy.types';

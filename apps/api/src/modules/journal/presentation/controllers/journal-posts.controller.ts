@@ -17,6 +17,9 @@ import {
   PostQueryDto,
 } from '../dto';
 
+/** Default page limit for paginated queries */
+const DEFAULT_PAGE_LIMIT = 10;
+
 /**
  * Public journal posts controller.
  * Provides read-only access to published journal posts.
@@ -46,22 +49,25 @@ export class JournalPostsController {
     description: 'Paginated list of posts',
   })
   async getPosts(@Query() query: PostQueryDto): Promise<PostListResponseDto> {
+    const limit = query.limit ?? DEFAULT_PAGE_LIMIT;
+    const page = query.page ?? 1;
+
     const { posts, total } = await this.repository.findPublished({
       types: query.type,
       contextId: query.context,
-      page: query.page ?? 1,
-      limit: query.limit ?? 10,
+      page,
+      limit,
     });
 
-    const totalPages = Math.ceil(total / (query.limit ?? 10));
+    const totalPages = Math.ceil(total / limit);
 
     return {
       posts: posts.map((post) => this.mapToListItem(post)),
       meta: {
         total,
-        page: query.page ?? 1,
+        page,
         totalPages,
-        limit: query.limit ?? 10,
+        limit,
       },
     };
   }
