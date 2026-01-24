@@ -25,7 +25,6 @@ import * as schema from '../../../../database/schema';
 import {
   type IMediaWatchOffersRepository,
   MEDIA_WATCH_OFFERS_REPOSITORY,
-  type MediaWatchOfferView,
 } from '../../../provider/public';
 import {
   EligibilityStatus,
@@ -33,7 +32,8 @@ import {
   type EvaluationReasonType,
 } from '../../domain/constants/evaluation.constants';
 import { evaluateEligibility, computeRelevance } from '../../domain/policy-engine';
-import { type PolicyConfig, type NormalizedOffer } from '../../domain/types/policy.types';
+import { type PolicyConfig } from '../../domain/types/policy.types';
+import { mapOffersToNormalized } from '../utils/offer-mapper';
 import {
   type MediaItemRow,
   mapRowToPolicyEngineInput,
@@ -181,7 +181,7 @@ export class DryRunService {
         break;
       }
 
-      const normalizedOffers = this.mapOffersToNormalized(offersMap.get(item.id) ?? []);
+      const normalizedOffers = mapOffersToNormalized(offersMap.get(item.id) ?? []);
       const input = mapRowToPolicyEngineInput(item, normalizedOffers, this.logger);
       const evalResult = evaluateEligibility(input, proposedPolicy);
       const relevanceScore = computeRelevance(input, proposedPolicy);
@@ -469,17 +469,5 @@ export class DryRunService {
       },
       items: [],
     };
-  }
-
-  /**
-   * Maps MediaWatchOfferView to NormalizedOffer for policy engine.
-   */
-  private mapOffersToNormalized(offers: MediaWatchOfferView[]): NormalizedOffer[] {
-    return offers.map((offer) => ({
-      providerId: offer.providerId,
-      offerType: offer.offerType,
-      distributionChannel: offer.distributionChannel,
-      isAdsTier: offer.variantIsAdsTier,
-    }));
   }
 }

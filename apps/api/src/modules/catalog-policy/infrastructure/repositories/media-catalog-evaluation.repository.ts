@@ -9,7 +9,7 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DatabaseException } from '../../../../common/exceptions';
@@ -44,6 +44,15 @@ export interface IMediaCatalogEvaluationRepository {
     mediaItemId: string,
     context?: EvaluationContextType,
   ): Promise<MediaCatalogEvaluation | null>;
+
+  /**
+   * Finds evaluations by media item ID for multiple contexts (batch).
+   * Returns a Map of context → evaluation for efficient lookup.
+   */
+  findByMediaIdForContexts(
+    mediaItemId: string,
+    contexts: EvaluationContextType[],
+  ): Promise<Map<EvaluationContextType, MediaCatalogEvaluation>>;
 
   /**
    * Finds evaluation by media item ID, policy version, and context.
@@ -201,6 +210,39 @@ export class MediaCatalogEvaluationRepository implements IMediaCatalogEvaluation
     } catch (error) {
       this.logger.error(`Failed to find evaluation for ${mediaItemId}`, error);
       throw new DatabaseException('Failed to find evaluation', error);
+    }
+  }
+
+  async findByMediaIdForContexts(
+    mediaItemId: string,
+    contexts: EvaluationContextType[],
+  ): Promise<Map<EvaluationContextType, MediaCatalogEvaluation>> {
+    const resultMap = new Map<EvaluationContextType, MediaCatalogEvaluation>();
+
+    if (contexts.length === 0) {
+      return resultMap;
+    }
+
+    try {
+      const result = await this.db
+        .select()
+        .from(schema.mediaCatalogEvaluations)
+        .where(
+          and(
+            eq(schema.mediaCatalogEvaluations.mediaItemId, mediaItemId),
+            inArray(schema.mediaCatalogEvaluations.context, contexts),
+          ),
+        );
+
+      for (const row of result) {
+        const entity = this.mapToEntity(row);
+        resultMap.set(entity.context, entity);
+      }
+
+      return resultMap;
+    } catch (error) {
+      this.logger.error(`Failed to find evaluations for ${mediaItemId} across contexts`, error);
+      throw new DatabaseException('Failed to find evaluations for contexts', error);
     }
   }
 

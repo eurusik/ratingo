@@ -265,6 +265,90 @@ describe('MediaCatalogEvaluationRepository', () => {
     });
   });
 
+  describe('findByMediaIdForContexts', () => {
+    it('should return empty map for empty contexts array', async () => {
+      const result = await repository.findByMediaIdForContexts('media-1', []);
+
+      expect(result).toBeInstanceOf(Map);
+      expect(result.size).toBe(0);
+      expect(mockDb.select).not.toHaveBeenCalled();
+    });
+
+    it('should return map with evaluations by context', async () => {
+      const mockResults = [
+        {
+          mediaItemId: 'media-1',
+          status: 'eligible',
+          reasons: ['ALLOWED_COUNTRY'],
+          relevanceScore: 85,
+          policyVersion: 1,
+          evaluatedAt: new Date(),
+          breakoutRuleId: null,
+          context: 'catalog',
+          runId: null,
+        },
+        {
+          mediaItemId: 'media-1',
+          status: 'ineligible',
+          reasons: ['BLOCKED_COUNTRY'],
+          relevanceScore: 25,
+          policyVersion: 1,
+          evaluatedAt: new Date(),
+          breakoutRuleId: null,
+          context: 'trending',
+          runId: null,
+        },
+      ];
+
+      // findByMediaIdForContexts uses where() without limit()
+      mockDb.where.mockResolvedValue(mockResults);
+
+      const result = await repository.findByMediaIdForContexts('media-1', ['catalog', 'trending']);
+
+      expect(result).toBeInstanceOf(Map);
+      expect(result.size).toBe(2);
+      expect(result.get('catalog')?.status).toBe('eligible');
+      expect(result.get('trending')?.status).toBe('ineligible');
+    });
+
+    it('should return partial map when some contexts have no evaluations', async () => {
+      const mockResults = [
+        {
+          mediaItemId: 'media-1',
+          status: 'eligible',
+          reasons: ['ALLOWED_COUNTRY'],
+          relevanceScore: 85,
+          policyVersion: 1,
+          evaluatedAt: new Date(),
+          breakoutRuleId: null,
+          context: 'catalog',
+          runId: null,
+        },
+      ];
+
+      mockDb.where.mockResolvedValue(mockResults);
+
+      const result = await repository.findByMediaIdForContexts('media-1', [
+        'catalog',
+        'trending',
+        'homepage',
+      ]);
+
+      expect(result.size).toBe(1);
+      expect(result.has('catalog')).toBe(true);
+      expect(result.has('trending')).toBe(false);
+      expect(result.has('homepage')).toBe(false);
+    });
+
+    it('should throw DatabaseException when query fails', async () => {
+      mockDb.where.mockRejectedValue(new Error('DB Error'));
+
+      await expect(repository.findByMediaIdForContexts('media-1', ['catalog'])).rejects.toThrow(
+        DatabaseException,
+      );
+    });
+  });
+
   describe('error handling', () => {
     it('should throw DatabaseException when upsert fails', async () => {
       const evaluation: MediaCatalogEvaluation = {

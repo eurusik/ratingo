@@ -10,6 +10,7 @@ import { Module } from '@nestjs/common';
 
 import { ProviderModule } from '../provider/public';
 
+import { BatchEvaluationService } from './application/services/batch-evaluation.service';
 import { CatalogEvaluationService } from './application/services/catalog-evaluation.service';
 import { CatalogPolicyService } from './application/services/catalog-policy.service';
 import { DiffService } from './application/services/diff.service';
@@ -20,6 +21,7 @@ import { RunFinalizeService } from './application/services/run-finalize.service'
 import { CatalogPolicyWorker } from './application/workers/catalog-policy.worker';
 import { CATALOG_POLICY_QUEUE } from './catalog-policy.constants';
 import { CATALOG_POLICY_EVALUATOR } from './domain/ports/catalog-policy-evaluator.port';
+import { POLICY_INPUT_REPOSITORY } from './domain/repositories/policy-input.repository.interface';
 import {
   AdminCatalogRepository,
   ADMIN_CATALOG_REPOSITORY,
@@ -36,6 +38,7 @@ import {
   MediaCatalogEvaluationRepository,
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
 } from './infrastructure/repositories/media-catalog-evaluation.repository';
+import { PolicyInputRepository } from './infrastructure/repositories/policy-input.repository';
 import {
   PublicCatalogRepository,
   PUBLIC_CATALOG_REPOSITORY,
@@ -76,9 +79,14 @@ import { PolicyController, RunController, DryRunController } from './presentatio
       provide: ADMIN_CATALOG_REPOSITORY,
       useClass: AdminCatalogRepository,
     },
+    {
+      provide: POLICY_INPUT_REPOSITORY,
+      useClass: PolicyInputRepository,
+    },
     // Services
     CatalogPolicyService,
     CatalogEvaluationService,
+    BatchEvaluationService,
     // Port binding - other modules inject CATALOG_POLICY_EVALUATOR
     {
       provide: CATALOG_POLICY_EVALUATOR,
@@ -98,6 +106,7 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     // Export services for internal use and backward compatibility
     CatalogPolicyService,
     CatalogEvaluationService,
+    BatchEvaluationService,
     PolicyActivationService,
     DiffService,
     DryRunService,
