@@ -57,7 +57,7 @@ export {
   EvaluateOneInput,
   EvaluationResult,
   EligibilityStats,
-} from '../domain/ports/catalog-policy-evaluator.port';
+} from '../domain/ports';
 
 // Re-export EvaluationContext type alias for backward compatibility
 export type { EvaluationContext as PolicyEvaluationContext } from '../domain/types/policy.types';
