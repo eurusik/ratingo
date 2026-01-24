@@ -3,6 +3,7 @@
  */
 export {
   InvalidEligibilityStatusError,
+  InvalidRunStatusError,
   InvalidBreakoutRuleError,
   InvalidRunStateTransitionError,
   RunNotFoundError,
