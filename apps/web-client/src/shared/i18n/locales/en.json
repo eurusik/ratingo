@@ -11,6 +11,13 @@
     "back": "Back",
     "home": "Go home"
   },
+  "announcement": {
+    "tracking": {
+      "message": "Never lose track of your shows — Ratingo helps you easily track what you watch",
+      "cta": "Learn more"
+    },
+    "closeLabel": "Close announcement"
+  },
   "search": {
     "placeholder": "Find a movie or show",
     "hint": "Enter movie or show title",

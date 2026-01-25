@@ -8,4 +8,9 @@ export { HeaderContextProvider, useHeaderContext } from './header-context';
 export { SearchCommand } from './search';
 export { TrendingToggle } from './trending-toggle';
 export { Logo } from './logo';
+export {
+  AnnouncementBar,
+  AnnouncementBarProvider,
+  useAnnouncementBar,
+} from './announcement-bar';
 export type { HeaderContextValue } from './header-context';

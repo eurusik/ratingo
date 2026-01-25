@@ -11,6 +11,7 @@ import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 import { useScrollPosition } from '@/shared/hooks';
 import { useHeaderContext } from './header-context';
+import { useAnnouncementBar } from './announcement-bar';
 import { UserMenu } from './user-menu';
 import { SearchCommand } from './search';
 import { NotificationBell } from './notification-bell';
@@ -23,14 +24,16 @@ export function Header() {
   const { dict } = useTranslation();
   const isScrolled = useScrollPosition({ threshold: 50 });
   const { breadcrumb, backUrl } = useHeaderContext();
+  const { height: announcementHeight } = useAnnouncementBar();
 
   const hasContext = !!breadcrumb || !!backUrl;
   const showBreadcrumb = isScrolled && hasContext;
 
   return (
     <header
+      style={{ top: announcementHeight }}
       className={cn(
-        'fixed top-0 left-0 right-0 z-40',
+        'fixed left-0 right-0 z-40',
         'transition-all duration-200',
         // Default: transparent
         'bg-transparent',
