@@ -119,14 +119,14 @@ export function EpisodesSection({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Get watched episode IDs for current season
-  const currentSeasonProgress = useMemo(() => {
-    if (!progressData || !selectedSeason) return null;
-    return progressData.seasons.find((s) => s.seasonNumber === selectedSeason.number);
-  }, [progressData, selectedSeason]);
+  // Simple .find() doesn't need useMemo per rerender-simple-expression-in-memo rule
+  const currentSeasonProgress = progressData?.seasons.find(
+    (s) => s.seasonNumber === selectedSeason?.number
+  ) ?? null;
 
   const watchedEpisodeIds = useMemo(
     () => new Set(currentSeasonProgress?.watchedEpisodeIds || []),
-    [currentSeasonProgress],
+    [currentSeasonProgress?.watchedEpisodeIds],
   );
 
   // Calculate total progress across all seasons
@@ -142,10 +142,8 @@ export function EpisodesSection({
   }, [progressData]);
 
   // Episodes list from selected season
-  const episodes = useMemo(
-    () => selectedSeason?.episodes || [],
-    [selectedSeason?.episodes],
-  );
+  // Simple property access doesn't need useMemo per rerender-simple-expression-in-memo rule
+  const episodes = selectedSeason?.episodes || [];
 
   // Collect all aired episode IDs grouped by season number and count total
   // Combined iteration per js-combine-iterations rule
@@ -160,7 +158,9 @@ export function EpisodesSection({
 
       for (const ep of episodes) {
         // Skip episodes with future air dates
-        if (ep.airDate && new Date(ep.airDate).getTime() > now) continue;
+        // Cache property access per js-cache-property-access rule
+        const airDate = ep.airDate;
+        if (airDate && new Date(airDate).getTime() > now) continue;
         total++;
         if (ep.id) ids.push(ep.id);
       }
@@ -369,23 +369,24 @@ export function EpisodesSection({
     [episodes, watchedEpisodeIds],
   );
 
-  // Don't render if no valid seasons
-  if (!selectedSeason || validSeasons.length === 0) {
-    return null;
-  }
-
   // Find last aired episode index (only if there are upcoming episodes)
+  // Moved above early return to comply with Rules of Hooks
   const lastAiredIndex = useMemo(() => {
-    const now = new Date();
+    if (episodes.length === 0) return -1;
+
+    const now = Date.now();
     let lastIndex = -1;
     let hasUpcoming = false;
 
     for (let i = 0; i < episodes.length; i++) {
       const airDate = episodes[i].airDate;
-      if (airDate && new Date(airDate) <= now) {
-        lastIndex = i;
-      } else if (airDate && new Date(airDate) > now) {
-        hasUpcoming = true;
+      if (airDate) {
+        const airTime = new Date(airDate).getTime();
+        if (airTime <= now) {
+          lastIndex = i;
+        } else {
+          hasUpcoming = true;
+        }
       }
     }
 
@@ -414,6 +415,11 @@ export function EpisodesSection({
       return () => clearTimeout(timer);
     }
   }, [isExpanded, lastAiredIndex, selectedSeason]);
+
+  // Don't render if no valid seasons
+  if (!selectedSeason || validSeasons.length === 0) {
+    return null;
+  }
 
   return (
     <section id="episodes" className="space-y-4 scroll-mt-24">
