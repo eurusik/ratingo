@@ -84,9 +84,7 @@ export function SeasonHeader({
         }
       }}
     >
-      {/* Main row: poster + info + progress (desktop) */}
       <div className="flex items-center gap-4">
-        {/* Season poster */}
         <div className="relative flex-shrink-0 w-16 h-24 rounded-lg overflow-hidden bg-cinema-elevated">
           {resolveMediaImageUrl(selectedSeason.posterPath, IMAGE_SIZES.W185) ? (
             <Image
@@ -103,7 +101,6 @@ export function SeasonHeader({
           )}
         </div>
 
-        {/* Season info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-base font-medium text-cinema-text-primary">
@@ -119,7 +116,6 @@ export function SeasonHeader({
             {episodeCount} {pluralize(episodeCount, dict.details.showStatus.plurals.episode)}
           </div>
 
-          {/* Season dropdown (only when expanded and multiple seasons) */}
           {isExpanded && seasons.length > 1 && (
             <div className="relative mt-2" data-season-dropdown>
               <button
@@ -145,7 +141,6 @@ export function SeasonHeader({
           )}
         </div>
 
-        {/* Desktop: Progress ring + small button */}
         {showProgress && progressTotal > 0 && (
           <div className="hidden md:flex flex-col items-end gap-1 flex-shrink-0">
             <SeasonProgressRing
@@ -153,7 +148,7 @@ export function SeasonHeader({
               total={progressTotal}
               size="md"
             />
-            {showMarkAllButton && (
+            {isExpanded && showMarkAllButton && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -162,13 +157,13 @@ export function SeasonHeader({
                   onMarkAllWatched();
                 }}
                 disabled={isMarkingAll}
-                className="h-auto py-0.5 px-1.5 text-[11px] text-cinema-text-muted hover:text-cinema-text-primary"
+                className="h-auto py-1.5 px-3 text-xs text-cinema-text-muted hover:text-cinema-text-primary hover:bg-cinema-elevated/50"
                 data-mark-all-button
               >
                 {isMarkingAll ? (
-                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                 ) : (
-                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
                 )}
                 {dict.details.showStatus.markAllWatched}
               </Button>
@@ -177,13 +172,12 @@ export function SeasonHeader({
         )}
       </div>
 
-      {/* Mobile: Text progress + full-width button stacked */}
       {showProgress && progressTotal > 0 && (
         <div className="md:hidden mt-3 space-y-2">
           <div className="text-sm text-cinema-text-muted">
             {totalWatched}/{totalEpisodes} {dict.details.showStatus.watched}
           </div>
-          {showMarkAllButton && (
+          {isExpanded && showMarkAllButton && (
             <Button
               variant="outline"
               size="sm"
