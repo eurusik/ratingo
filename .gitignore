@@ -77,3 +77,4 @@ docs/sync-trending.md
 .yarn/
 .pnpm-store/
 .agents/
+.claude/
