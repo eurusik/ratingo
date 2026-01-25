@@ -145,24 +145,31 @@ export function EpisodesSection({
   // Simple property access doesn't need useMemo per rerender-simple-expression-in-memo rule
   const episodes = selectedSeason?.episodes || [];
 
-  // Collect all aired episode IDs grouped by season number and count total
+  // Collect all aired episode IDs grouped by season number, count totals, and track last aired episode
   // Combined iteration per js-combine-iterations rule
-  const { allEpisodesBySeasonNumber, totalEpisodesCount } = useMemo(() => {
+  const { allEpisodesBySeasonNumber, totalEpisodesCount, totalAllEpisodes, lastAiredEpisodeInfo } = useMemo(() => {
     const now = Date.now();
     const map = new Map<number, string[]>();
-    let total = 0;
+    let airedCount = 0;
+    let allCount = 0;
+    let lastSeason = 0;
+    let lastEpisode = 0;
 
     for (const season of validSeasons) {
       const episodes = season.episodes || [];
       const ids: string[] = [];
+      allCount += episodes.length;
 
       for (const ep of episodes) {
         // Skip episodes with future air dates
         // Cache property access per js-cache-property-access rule
         const airDate = ep.airDate;
         if (airDate && new Date(airDate).getTime() > now) continue;
-        total++;
+        airedCount++;
         if (ep.id) ids.push(ep.id);
+        // Track last aired episode for success message
+        lastSeason = season.number;
+        lastEpisode = ep.number;
       }
 
       if (ids.length > 0) {
@@ -170,7 +177,12 @@ export function EpisodesSection({
       }
     }
 
-    return { allEpisodesBySeasonNumber: map, totalEpisodesCount: total };
+    return {
+      allEpisodesBySeasonNumber: map,
+      totalEpisodesCount: airedCount,
+      totalAllEpisodes: allCount,
+      lastAiredEpisodeInfo: { season: lastSeason, episode: lastEpisode },
+    };
   }, [validSeasons]);
 
   // Store previous watched IDs for undo
@@ -219,11 +231,21 @@ export function EpisodesSection({
       previousWatchedIdsRef.current = prevMap;
     }
 
+    // Check if show is complete (all episodes have aired)
+    const isShowComplete = totalEpisodesCount === totalAllEpisodes;
+
     markAllWatched.mutate(
       { episodesBySeasonNumber: allEpisodesBySeasonNumber },
       {
         onSuccess: () => {
-          toast.success(dict.details.showStatus.markedAllWatched, {
+          // Show different message based on whether show is complete
+          const message = isShowComplete
+            ? dict.details.showStatus.caughtUpAll
+            : dict.details.showStatus.caughtUp
+                .replace('{season}', String(lastAiredEpisodeInfo.season))
+                .replace('{episode}', String(lastAiredEpisodeInfo.episode));
+
+          toast.success(message, {
             action: {
               label: dict.details.showStatus.undo,
               onClick: handleUndo,
@@ -236,7 +258,7 @@ export function EpisodesSection({
         },
       },
     );
-  }, [progressData, allEpisodesBySeasonNumber, markAllWatched, dict, handleUndo]);
+  }, [progressData, allEpisodesBySeasonNumber, markAllWatched, dict, handleUndo, totalEpisodesCount, totalAllEpisodes, lastAiredEpisodeInfo]);
 
   const handleMarkAllClick = useCallback(() => {
     if (totalProgress.watched > 0) {
@@ -394,6 +416,9 @@ export function EpisodesSection({
     return hasUpcoming ? lastIndex : -1;
   }, [episodes]);
 
+  // Episode card height for scroll calculations (64px card + 12px gap)
+  const EPISODE_CARD_HEIGHT = 76;
+
   // Scroll to last aired episode when expanded
   useEffect(() => {
     if (isExpanded && lastAiredIndex > 0 && listRef.current) {
@@ -402,9 +427,7 @@ export function EpisodesSection({
         const container = listRef.current;
         if (!container) return;
 
-        // Each episode card is ~76px (64px height + 12px padding)
-        const episodeHeight = 76;
-        const scrollPosition = lastAiredIndex * episodeHeight;
+        const scrollPosition = lastAiredIndex * EPISODE_CARD_HEIGHT;
 
         container.scrollTo({
           top: scrollPosition,
