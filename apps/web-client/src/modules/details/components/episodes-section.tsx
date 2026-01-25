@@ -147,21 +147,30 @@ export function EpisodesSection({
     [selectedSeason?.episodes],
   );
 
-  // Total episodes across all seasons (for mark all button visibility)
-  const totalEpisodesCount = useMemo(() => {
-    return validSeasons.reduce((acc, s) => acc + (s.episodes?.length || 0), 0);
-  }, [validSeasons]);
-
-  // Collect all episode IDs grouped by season number
-  const allEpisodesBySeasonNumber = useMemo(() => {
+  // Collect all aired episode IDs grouped by season number and count total
+  // Combined iteration per js-combine-iterations rule
+  const { allEpisodesBySeasonNumber, totalEpisodesCount } = useMemo(() => {
+    const now = Date.now();
     const map = new Map<number, string[]>();
-    validSeasons.forEach((season) => {
-      const ids = (season.episodes || []).map((ep) => ep.id).filter((id): id is string => !!id);
+    let total = 0;
+
+    for (const season of validSeasons) {
+      const episodes = season.episodes || [];
+      const ids: string[] = [];
+
+      for (const ep of episodes) {
+        // Skip episodes with future air dates
+        if (ep.airDate && new Date(ep.airDate).getTime() > now) continue;
+        total++;
+        if (ep.id) ids.push(ep.id);
+      }
+
       if (ids.length > 0) {
         map.set(season.number, ids);
       }
-    });
-    return map;
+    }
+
+    return { allEpisodesBySeasonNumber: map, totalEpisodesCount: total };
   }, [validSeasons]);
 
   // Store previous watched IDs for undo
