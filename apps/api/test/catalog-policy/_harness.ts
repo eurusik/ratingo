@@ -26,17 +26,15 @@ import { RunAggregationService } from '../../src/modules/catalog-policy/applicat
 import { AdminJwtGuard } from '../../src/modules/auth/infrastructure/guards/admin-jwt.guard';
 import { CATALOG_POLICY_QUEUE } from '../../src/modules/catalog-policy/catalog-policy.constants';
 import {
-  ICatalogPolicyRepository,
   CATALOG_POLICY_REPOSITORY,
-} from '../../src/modules/catalog-policy/infrastructure/repositories/catalog-policy.repository';
-import {
-  ICatalogEvaluationRunRepository,
+  type ICatalogPolicyRepository,
   CATALOG_EVALUATION_RUN_REPOSITORY,
-  CatalogEvaluationRun,
-  CreateRunInput,
-  UpdateRunInput,
-  IncrementCountersInput,
-} from '../../src/modules/catalog-policy/infrastructure/repositories/catalog-evaluation-run.repository';
+  type ICatalogEvaluationRunRepository,
+  type CatalogEvaluationRun,
+  type CreateRunInput,
+  type UpdateRunInput,
+  type IncrementCountersInput,
+} from '../../src/modules/catalog-policy/domain/repositories';
 import {
   IMediaCatalogEvaluationRepository,
   MEDIA_CATALOG_EVALUATION_REPOSITORY,

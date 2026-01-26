@@ -21,9 +21,9 @@ import { CATALOG_POLICY_QUEUE, CATALOG_POLICY_JOBS } from '../../catalog-policy.
 import { RunStatus, type EvaluationContextType } from '../../domain/constants/evaluation.constants';
 import { RunNotFoundError } from '../../domain/errors';
 import {
-  type ICatalogEvaluationRunRepository,
   CATALOG_EVALUATION_RUN_REPOSITORY,
-} from '../../infrastructure/repositories/catalog-evaluation-run.repository';
+  type ICatalogEvaluationRunRepository,
+} from '../../domain/repositories';
 import { CatalogEvaluationService } from '../services/catalog-evaluation.service';
 import { RunFinalizeService } from '../services/run-finalize.service';
 

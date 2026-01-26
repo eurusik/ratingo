@@ -8,14 +8,15 @@
 import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 
 import { DIFFABLE_RUN_STATUSES } from '../../domain/constants/evaluation.constants';
-import { DIFF_REPOSITORY, type IDiffRepository } from '../../domain/repositories';
-import { DEFAULT_DIFF_SAMPLE_SIZE, type DiffReport } from '../../domain/types/diff.types';
 import {
+  DIFF_REPOSITORY,
+  type IDiffRepository,
   CATALOG_EVALUATION_RUN_REPOSITORY,
   type ICatalogEvaluationRunRepository,
   CATALOG_POLICY_REPOSITORY,
   type ICatalogPolicyRepository,
-} from '../../infrastructure/repositories';
+} from '../../domain/repositories';
+import { DEFAULT_DIFF_SAMPLE_SIZE, type DiffReport } from '../../domain/types/diff.types';
 
 // Re-export types and utils for backward compatibility
 export { isDiffRegression, isDiffImprovement } from '../../domain/utils/diff.utils';

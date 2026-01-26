@@ -10,10 +10,8 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  CatalogEvaluationRunRepository,
-  CatalogEvaluationRun,
-} from './catalog-evaluation-run.repository';
+import { type CatalogEvaluationRun } from '../../domain/repositories';
+import { CatalogEvaluationRunRepository } from './catalog-evaluation-run.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { InvalidRunStatusError } from '../../domain/errors/policy.errors';
 import { DatabaseException } from '../../../../common/exceptions';

@@ -26,22 +26,20 @@ import {
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
   DIFF_REPOSITORY,
   DRY_RUN_REPOSITORY,
+  POLICY_ACTIVATION_REPOSITORY,
+  CATALOG_POLICY_REPOSITORY,
+  CATALOG_EVALUATION_RUN_REPOSITORY,
 } from './domain/repositories';
 import {
   AdminCatalogRepository,
   ADMIN_CATALOG_REPOSITORY,
 } from './infrastructure/repositories/admin-catalog.repository';
-import {
-  CatalogEvaluationRunRepository,
-  CATALOG_EVALUATION_RUN_REPOSITORY,
-} from './infrastructure/repositories/catalog-evaluation-run.repository';
-import {
-  CatalogPolicyRepository,
-  CATALOG_POLICY_REPOSITORY,
-} from './infrastructure/repositories/catalog-policy.repository';
+import { CatalogEvaluationRunRepository } from './infrastructure/repositories/catalog-evaluation-run.repository';
+import { CatalogPolicyRepository } from './infrastructure/repositories/catalog-policy.repository';
 import { DiffRepository } from './infrastructure/repositories/diff.repository';
 import { DryRunRepository } from './infrastructure/repositories/dry-run.repository';
 import { MediaCatalogEvaluationRepository } from './infrastructure/repositories/media-catalog-evaluation.repository';
+import { PolicyActivationRepository } from './infrastructure/repositories/policy-activation.repository';
 import { PolicyInputRepository } from './infrastructure/repositories/policy-input.repository';
 import {
   PublicCatalogRepository,
@@ -94,6 +92,10 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     {
       provide: DRY_RUN_REPOSITORY,
       useClass: DryRunRepository,
+    },
+    {
+      provide: POLICY_ACTIVATION_REPOSITORY,
+      useClass: PolicyActivationRepository,
     },
     // Services
     CatalogPolicyService,

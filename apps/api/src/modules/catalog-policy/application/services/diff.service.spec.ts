@@ -9,9 +9,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
-import { DIFF_REPOSITORY } from '../../domain/repositories';
-import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../infrastructure/repositories/catalog-evaluation-run.repository';
-import { CATALOG_POLICY_REPOSITORY } from '../../infrastructure/repositories/catalog-policy.repository';
+import {
+  DIFF_REPOSITORY,
+  CATALOG_EVALUATION_RUN_REPOSITORY,
+  CATALOG_POLICY_REPOSITORY,
+} from '../../domain/repositories';
 import { EligibilityStatus, DIFF_STATUS_NONE } from '../../domain/constants/evaluation.constants';
 import { DiffService, isDiffRegression, isDiffImprovement } from './diff.service';
 

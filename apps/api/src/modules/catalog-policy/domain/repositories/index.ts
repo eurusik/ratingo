@@ -1,7 +1,5 @@
 /**
  * Domain Repositories Index
- *
- * Exports repository interfaces (ports) for dependency injection.
  */
 
 export {
@@ -23,3 +21,27 @@ export {
   type DryRunMediaItem,
   type CurrentEvaluation,
 } from './dry-run.repository.interface';
+
+export {
+  CATALOG_POLICY_REPOSITORY,
+  type ICatalogPolicyRepository,
+} from './catalog-policy.repository.interface';
+
+export {
+  CATALOG_EVALUATION_RUN_REPOSITORY,
+  type ICatalogEvaluationRunRepository,
+  type CatalogEvaluationRun,
+  type CreateRunInput,
+  type UpdateRunInput,
+  type IncrementCountersInput,
+  type ErrorSample,
+} from './catalog-evaluation-run.repository.interface';
+
+export {
+  POLICY_ACTIVATION_REPOSITORY,
+  type IPolicyActivationRepository,
+  type SnapshotData,
+  type CreateRunWithSnapshotInput,
+  type CreateRunWithSnapshotResult,
+  type PromoteRunInput,
+} from './policy-activation.repository.interface';

@@ -16,115 +16,13 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { RunStatus, type RunStatusType } from '../../domain/constants/evaluation.constants';
 import { InvalidRunStatusError } from '../../domain/errors/policy.errors';
-
-export const CATALOG_EVALUATION_RUN_REPOSITORY = 'CATALOG_EVALUATION_RUN_REPOSITORY';
-
-export interface CatalogEvaluationRun {
-  id: string;
-  policyVersion: number;
-  status: RunStatusType;
-  startedAt: Date;
-  finishedAt: Date | null;
-  cursor: string | null;
-  // Policy Activation Flow fields
-  targetPolicyId: string | null;
-  targetPolicyVersion: number | null;
-  /** Version of active policy when run was created (for diff calculation) */
-  baselinePolicyVersion: number | null;
-  totalReadySnapshot: number;
-  snapshotCutoff: Date | null;
-  processed: number;
-  eligible: number;
-  ineligible: number;
-  errors: number;
-  errorSample: Array<{
-    mediaItemId: string;
-    error: string;
-    stack?: string;
-    timestamp: string;
-  }>;
-  promotedAt: Date | null;
-  promotedBy: string | null;
-}
-
-export interface CreateRunInput {
-  targetPolicyId: string;
-  targetPolicyVersion: number;
-  /** Version of active policy when run was created (for diff calculation) */
-  baselinePolicyVersion: number | null;
-  totalReadySnapshot: number;
-  snapshotCutoff: Date;
-}
-
-export interface UpdateRunInput {
-  status?: RunStatusType;
-  finishedAt?: Date;
-  cursor?: string;
-  processed?: number;
-  eligible?: number;
-  ineligible?: number;
-  errors?: number;
-  errorSample?: Array<{
-    mediaItemId: string;
-    error: string;
-    stack?: string;
-    timestamp: string;
-  }>;
-  promotedAt?: Date;
-  promotedBy?: string;
-}
-
-export interface IncrementCountersInput {
-  processed?: number;
-  eligible?: number;
-  ineligible?: number;
-  errors?: number;
-}
-
-export interface ICatalogEvaluationRunRepository {
-  /**
-   * Creates a new evaluation run.
-   */
-  create(input: CreateRunInput): Promise<CatalogEvaluationRun>;
-
-  /**
-   * Finds a run by ID.
-   */
-  findById(id: string): Promise<CatalogEvaluationRun | null>;
-
-  /**
-   * Updates a run.
-   */
-  update(id: string, updates: UpdateRunInput): Promise<void>;
-
-  /**
-   * Atomically increments counters (prevents race conditions).
-   */
-  incrementCounters(id: string, increments: IncrementCountersInput): Promise<void>;
-
-  /**
-   * Records error atomically: increments errors counter AND appends to errorSample in one UPDATE.
-   */
-  recordError(
-    id: string,
-    error: { mediaItemId: string; error: string; stack?: string; timestamp: string },
-  ): Promise<void>;
-
-  /**
-   * Finds runs by policy ID.
-   */
-  findByPolicyId(policyId: string): Promise<CatalogEvaluationRun[]>;
-
-  /**
-   * Finds runs by status.
-   */
-  findByStatus(status: string): Promise<CatalogEvaluationRun[]>;
-
-  /**
-   * Finds all runs with optional pagination.
-   */
-  findAll(options?: { limit?: number; offset?: number }): Promise<CatalogEvaluationRun[]>;
-}
+import {
+  type ICatalogEvaluationRunRepository,
+  type CatalogEvaluationRun,
+  type CreateRunInput,
+  type UpdateRunInput,
+  type IncrementCountersInput,
+} from '../../domain/repositories';
 
 @Injectable()
 export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepository {

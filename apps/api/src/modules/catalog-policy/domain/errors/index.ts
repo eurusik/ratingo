@@ -9,6 +9,12 @@ export {
   RunNotFoundError,
   PolicyNotFoundError,
   PolicyValidationError,
+  PolicyActivationError,
+  PolicyAlreadyActiveError,
+  RunAlreadyInProgressError,
+  PromotionNotAllowedError,
+  InvalidContextError,
+  NoActivePolicyError,
 } from './policy.errors';
 
 export {

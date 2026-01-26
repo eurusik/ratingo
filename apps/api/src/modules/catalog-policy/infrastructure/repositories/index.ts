@@ -10,21 +10,21 @@ export {
   type AdminQueryOptions,
 } from './admin-catalog.repository';
 
+export { CatalogEvaluationRunRepository } from './catalog-evaluation-run.repository';
+
+export { CatalogPolicyRepository } from './catalog-policy.repository';
+
+// Re-export domain types for convenience
 export {
-  CatalogEvaluationRunRepository,
   CATALOG_EVALUATION_RUN_REPOSITORY,
   type ICatalogEvaluationRunRepository,
   type CatalogEvaluationRun,
   type CreateRunInput,
   type UpdateRunInput,
   type IncrementCountersInput,
-} from './catalog-evaluation-run.repository';
-
-export {
-  CatalogPolicyRepository,
   CATALOG_POLICY_REPOSITORY,
   type ICatalogPolicyRepository,
-} from './catalog-policy.repository';
+} from '../../domain/repositories';
 
 export {
   MediaCatalogEvaluationRepository,

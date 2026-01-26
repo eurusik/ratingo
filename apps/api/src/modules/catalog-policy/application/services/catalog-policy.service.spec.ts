@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 
 import { InvalidEligibilityStatusError, InvalidBreakoutRuleError } from '../../domain/errors';
 import type { CatalogPolicy, PolicyConfig } from '../../domain/types/policy.types';
-import { CATALOG_POLICY_REPOSITORY } from '../../infrastructure/repositories/catalog-policy.repository';
+import { CATALOG_POLICY_REPOSITORY } from '../../domain/repositories';
 
 import { CatalogPolicyService } from './catalog-policy.service';
 
