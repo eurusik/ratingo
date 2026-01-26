@@ -158,3 +158,9 @@ export const ACTIVE_EVALUATION_CONTEXTS: readonly EvaluationContextType[] = [
   EvaluationContext.CATALOG,
   EvaluationContext.TRENDING,
 ] as const;
+
+/**
+ * Default max age (in minutes) before a running run is considered stale.
+ * Used by RunFinalizeService.finalizeStaleRuns().
+ */
+export const DEFAULT_STALE_RUN_MAX_AGE_MINUTES = 5;

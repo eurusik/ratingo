@@ -6,6 +6,7 @@
  */
 
 import { type RunStatusType } from '../constants/evaluation.constants';
+import { type AggregatedCounters, type RunAnomaly } from '../types';
 
 export const CATALOG_EVALUATION_RUN_REPOSITORY = Symbol('CATALOG_EVALUATION_RUN_REPOSITORY');
 
@@ -92,4 +93,35 @@ export interface ICatalogEvaluationRunRepository {
 
   /** Returns all runs with pagination, ordered by startedAt desc. */
   findAll(options?: { limit?: number; offset?: number }): Promise<CatalogEvaluationRun[]>;
+
+  /**
+   * Aggregates counters from evaluations table for a specific run.
+   * Uses COUNT(DISTINCT media_item_id) to avoid double-counting.
+   */
+  aggregateCounters(runId: string): Promise<AggregatedCounters>;
+
+  /**
+   * Syncs cached counters with actual aggregated values.
+   * Aggregates from evaluations table and updates the run.
+   */
+  syncRunCounters(runId: string): Promise<AggregatedCounters>;
+
+  /**
+   * Finds runs that are RUNNING and started before the cutoff date.
+   * Used to detect stale runs that may need finalization.
+   */
+  findStaleRunning(cutoff: Date): Promise<Array<{ id: string }>>;
+
+  /**
+   * Records an anomaly in the run's errorSample.
+   * Used for tracking issues like processed > total.
+   */
+  recordAnomaly(runId: string, anomaly: RunAnomaly): Promise<void>;
+
+  /**
+   * Atomically transitions a run from RUNNING to PREPARED.
+   * Uses WHERE guard to prevent race conditions.
+   * @returns true if transition succeeded, false if already transitioned
+   */
+  transitionToPrepared(runId: string, counters: AggregatedCounters): Promise<boolean>;
 }

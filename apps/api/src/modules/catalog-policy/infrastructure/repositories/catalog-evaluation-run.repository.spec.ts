@@ -352,4 +352,149 @@ describe('CatalogEvaluationRunRepository', () => {
       expect(result?.id).toBe('run-123');
     });
   });
+
+  describe('aggregateCounters', () => {
+    it('should aggregate counters from evaluations and errors column', async () => {
+      // First call: select from mediaCatalogEvaluations (ends at where, no limit)
+      // Second call: select errors from catalogEvaluationRuns (uses limit)
+      mockDb.where
+        .mockResolvedValueOnce([{ processed: 100, eligible: 80, ineligible: 15, review: 5 }])
+        .mockReturnThis(); // For the second select's from().where()
+      mockDb.limit.mockResolvedValueOnce([{ errors: 2 }]);
+
+      const result = await repository.aggregateCounters('run-123');
+
+      expect(result.processed).toBe(100);
+      expect(result.eligible).toBe(80);
+      expect(result.ineligible).toBe(15);
+      expect(result.review).toBe(5);
+      expect(result.errors).toBe(2);
+    });
+
+    it('should default to 0 when no evaluations exist', async () => {
+      mockDb.where
+        .mockResolvedValueOnce([]) // No evaluation results
+        .mockReturnThis();
+      mockDb.limit.mockResolvedValueOnce([{ errors: null }]);
+
+      const result = await repository.aggregateCounters('run-123');
+
+      expect(result.processed).toBe(0);
+      expect(result.eligible).toBe(0);
+      expect(result.ineligible).toBe(0);
+      expect(result.review).toBe(0);
+      expect(result.errors).toBe(0);
+    });
+  });
+
+  describe('syncRunCounters', () => {
+    it('should atomically update counters with subqueries and return results', async () => {
+      // Atomic UPDATE with .returning()
+      mockDb.returning.mockResolvedValueOnce([
+        {
+          processed: 50,
+          eligible: 40,
+          ineligible: 8,
+          errors: 1,
+        },
+      ]);
+
+      const result = await repository.syncRunCounters('run-123');
+
+      expect(result.processed).toBe(50);
+      expect(result.eligible).toBe(40);
+      expect(result.ineligible).toBe(8);
+      expect(result.review).toBe(2); // 50 - 40 - 8 = 2
+      expect(result.errors).toBe(1);
+      expect(mockDb.update).toHaveBeenCalled();
+      // Verify set was called with SQL subqueries (not plain values)
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          processed: expect.anything(),
+          eligible: expect.anything(),
+          ineligible: expect.anything(),
+        }),
+      );
+    });
+  });
+
+  describe('findStaleRunning', () => {
+    it('should return runs that are RUNNING and started before cutoff', async () => {
+      mockDb.where.mockResolvedValue([{ id: 'run-1' }, { id: 'run-2' }]);
+
+      const cutoff = new Date('2024-01-01');
+      const result = await repository.findStaleRunning(cutoff);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].id).toBe('run-1');
+      expect(result[1].id).toBe('run-2');
+    });
+
+    it('should return empty array when no stale runs exist', async () => {
+      mockDb.where.mockResolvedValue([]);
+
+      const result = await repository.findStaleRunning(new Date());
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('recordAnomaly', () => {
+    it('should append anomaly to errorSample using JSONB concat', async () => {
+      mockDb.where.mockResolvedValue(undefined);
+
+      await repository.recordAnomaly('run-123', {
+        type: 'ANOMALY_PROCESSED_GT_TOTAL',
+        processed: 150,
+        total: 100,
+        timestamp: '2024-01-01T00:00:00Z',
+      });
+
+      expect(mockDb.update).toHaveBeenCalled();
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          errorSample: expect.anything(),
+        }),
+      );
+    });
+  });
+
+  describe('transitionToPrepared', () => {
+    it('should return true when transition succeeds', async () => {
+      mockDb.returning.mockResolvedValue([{ id: 'run-123' }]);
+
+      const result = await repository.transitionToPrepared('run-123', {
+        processed: 100,
+        eligible: 80,
+        ineligible: 15,
+        review: 5,
+        errors: 0,
+      });
+
+      expect(result).toBe(true);
+      expect(mockDb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 'prepared',
+          processed: 100,
+          eligible: 80,
+          ineligible: 15,
+          errors: 0,
+        }),
+      );
+    });
+
+    it('should return false when run was already transitioned', async () => {
+      mockDb.returning.mockResolvedValue([]);
+
+      const result = await repository.transitionToPrepared('run-123', {
+        processed: 100,
+        eligible: 80,
+        ineligible: 15,
+        review: 5,
+        errors: 0,
+      });
+
+      expect(result).toBe(false);
+    });
+  });
 });

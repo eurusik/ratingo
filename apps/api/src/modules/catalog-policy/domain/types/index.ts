@@ -15,3 +15,5 @@ export {
 } from './diff.types';
 
 export { type DryRunMode } from './dry-run.types';
+
+export { type AggregatedCounters, type FinalizeResult, type RunAnomaly } from './run.types';
