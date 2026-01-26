@@ -44,3 +44,5 @@ export {
 } from './public-catalog.repository';
 
 export { DiffRepository } from './diff.repository';
+
+export { DryRunRepository } from './dry-run.repository';

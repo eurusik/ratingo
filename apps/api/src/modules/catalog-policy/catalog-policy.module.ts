@@ -25,6 +25,7 @@ import {
   POLICY_INPUT_REPOSITORY,
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
   DIFF_REPOSITORY,
+  DRY_RUN_REPOSITORY,
 } from './domain/repositories';
 import {
   AdminCatalogRepository,
@@ -39,6 +40,7 @@ import {
   CATALOG_POLICY_REPOSITORY,
 } from './infrastructure/repositories/catalog-policy.repository';
 import { DiffRepository } from './infrastructure/repositories/diff.repository';
+import { DryRunRepository } from './infrastructure/repositories/dry-run.repository';
 import { MediaCatalogEvaluationRepository } from './infrastructure/repositories/media-catalog-evaluation.repository';
 import { PolicyInputRepository } from './infrastructure/repositories/policy-input.repository';
 import {
@@ -88,6 +90,10 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     {
       provide: DIFF_REPOSITORY,
       useClass: DiffRepository,
+    },
+    {
+      provide: DRY_RUN_REPOSITORY,
+      useClass: DryRunRepository,
     },
     // Services
     CatalogPolicyService,

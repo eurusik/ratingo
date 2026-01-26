@@ -1,9 +1,5 @@
 /**
  * Dry-Run Controller Tests
- *
- * Unit tests for DryRunController endpoints:
- * - POST /admin/catalog-policies/dry-run
- * - POST /admin/catalog-policies/dry-run/diff
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -132,6 +128,71 @@ describe('DryRunController', () => {
         }),
         expect.any(Object),
       );
+    });
+
+    it('should apply default for excludedContentClasses', async () => {
+      const dto = createValidDto();
+
+      mockDryRunService.execute.mockResolvedValue({
+        summary: { total: 0, eligible: 0, ineligible: 0 },
+        items: [],
+      });
+
+      await controller.executeDryRun(dto);
+
+      expect(mockDryRunService.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          excludedContentClasses: [],
+        }),
+        expect.any(Object),
+      );
+    });
+
+    it('should include globalRequirements in policy passed to service', async () => {
+      const dto = createValidDto();
+
+      mockDryRunService.execute.mockResolvedValue({
+        summary: { total: 0, eligible: 0, ineligible: 0 },
+        items: [],
+      });
+
+      await controller.executeDryRun(dto);
+
+      const calledPolicy = mockDryRunService.execute.mock.calls[0][0];
+      expect(calledPolicy).toHaveProperty('globalRequirements');
+    });
+
+    it('should map all item fields in response', async () => {
+      const dto = createValidDto();
+
+      mockDryRunService.execute.mockResolvedValue({
+        summary: { total: 1, eligible: 1, ineligible: 0 },
+        items: [
+          {
+            mediaItemId: 'item-1',
+            title: 'Test Movie',
+            currentStatus: 'INELIGIBLE',
+            proposedStatus: 'ELIGIBLE',
+            reasons: ['ALLOWED_COUNTRY', 'ALLOWED_LANGUAGE'],
+            relevanceScore: 85,
+            breakoutRuleId: 'GLOBAL_HIT',
+            statusChanged: true,
+          },
+        ],
+      });
+
+      const result = await controller.executeDryRun(dto);
+
+      expect(result.items[0]).toEqual({
+        mediaItemId: 'item-1',
+        title: 'Test Movie',
+        currentStatus: 'INELIGIBLE',
+        proposedStatus: 'ELIGIBLE',
+        reasons: ['ALLOWED_COUNTRY', 'ALLOWED_LANGUAGE'],
+        relevanceScore: 85,
+        breakoutRuleId: 'GLOBAL_HIT',
+        statusChanged: true,
+      });
     });
   });
 

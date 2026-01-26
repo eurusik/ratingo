@@ -13,3 +13,5 @@ export {
   type ReasonBreakdown,
   type DiffReport,
 } from './diff.types';
+
+export { type DryRunMode } from './dry-run.types';

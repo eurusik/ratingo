@@ -1,8 +1,5 @@
 /**
  * Dry-Run DTOs
- *
- * Request and response DTOs for policy dry-run testing.
- * Allows testing policy changes without persisting results.
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -14,6 +11,7 @@ import {
   IsString,
   IsArray,
   IsEnum,
+  IsBoolean,
   ValidateNested,
   Min,
   Max,
@@ -22,15 +20,8 @@ import {
 
 import { CreatePolicyDto } from './index';
 
-/**
- * Dry-run mode selection.
- */
 export type DryRunModeType = 'sample' | 'top' | 'byType' | 'byCountry';
 
-/**
- * Dry-run options DTO.
- * Configuration for dry-run evaluation.
- */
 export class DryRunOptionsDto {
   @ApiProperty({
     description: 'Selection mode for items to evaluate',
@@ -85,10 +76,6 @@ export class DryRunOptionsDto {
   samplePercent?: number;
 }
 
-/**
- * Dry-run request DTO.
- * Request body for dry-run evaluation.
- */
 export class DryRunRequestDto {
   @ApiProperty({
     description: 'Proposed policy configuration to test',
@@ -107,10 +94,6 @@ export class DryRunRequestDto {
   options: DryRunOptionsDto;
 }
 
-/**
- * Dry-run item result DTO.
- * Single item evaluation result in dry-run response.
- */
 export class DryRunItemResultDto {
   @ApiProperty({
     description: 'Media item ID',
@@ -174,10 +157,6 @@ export class DryRunItemResultDto {
   statusChanged: boolean;
 }
 
-/**
- * Reason breakdown DTO.
- * Count of items by evaluation reason.
- */
 export class ReasonBreakdownDto {
   @ApiProperty({
     description: 'Evaluation reason',
@@ -194,10 +173,6 @@ export class ReasonBreakdownDto {
   count: number;
 }
 
-/**
- * Dry-run summary DTO.
- * Aggregated statistics for dry-run evaluation.
- */
 export class DryRunSummaryDto {
   @ApiProperty({
     description: 'Total items evaluated',
@@ -249,6 +224,13 @@ export class DryRunSummaryDto {
   unchanged: number;
 
   @ApiProperty({
+    description: 'Items without previous evaluation (first-time evaluation)',
+    example: 40,
+  })
+  @IsNumber()
+  newItems: number;
+
+  @ApiProperty({
     description: 'Breakdown of evaluation reasons',
     type: [ReasonBreakdownDto],
   })
@@ -277,12 +259,15 @@ export class DryRunSummaryDto {
   })
   @IsNumber()
   limit: number;
+
+  @ApiProperty({
+    description: 'Whether evaluation was stopped due to timeout',
+    example: false,
+  })
+  @IsBoolean()
+  timedOut: boolean;
 }
 
-/**
- * Dry-run response DTO.
- * Complete dry-run evaluation results.
- */
 export class DryRunResponseDto {
   @ApiProperty({
     description: 'Dry-run summary',

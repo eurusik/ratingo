@@ -10,3 +10,11 @@ export {
   PolicyNotFoundError,
   PolicyValidationError,
 } from './policy.errors';
+
+export {
+  DryRunValidationError,
+  MissingModeParameterError,
+  InvalidLimitError,
+  InvalidSamplePercentError,
+  UnknownDryRunModeError,
+} from './dry-run.errors';

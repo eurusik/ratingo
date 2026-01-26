@@ -45,7 +45,13 @@ import {
   MEDIA_WATCH_OFFERS_REPOSITORY,
   type IMediaWatchOffersRepository,
 } from '../../src/modules/provider/public';
-import { DATABASE_CONNECTION } from '../../src/database/database.module';
+import { DRY_RUN_REPOSITORY } from '../../src/modules/catalog-policy/domain/repositories';
+import type {
+  IDryRunRepository,
+  DryRunMediaItem,
+  CurrentEvaluation,
+} from '../../src/modules/catalog-policy/domain/repositories/dry-run.repository.interface';
+import { MediaType } from '../../src/common/enums/media-type.enum';
 import {
   CatalogPolicy,
   PolicyConfig,
@@ -359,6 +365,32 @@ class MockAdminJwtGuard implements CanActivate {
 // Mock Watch Offers Repository
 // ============================================================================
 
+class MockDryRunRepository implements IDryRunRepository {
+  async fetchSampleItems(_limit: number, _samplePercent: number): Promise<DryRunMediaItem[]> {
+    return [];
+  }
+
+  async fetchTopItems(_limit: number): Promise<DryRunMediaItem[]> {
+    return [];
+  }
+
+  async fetchByTypeItems(_mediaType: MediaType, _limit: number): Promise<DryRunMediaItem[]> {
+    return [];
+  }
+
+  async fetchByCountryItems(_country: string, _limit: number): Promise<DryRunMediaItem[]> {
+    return [];
+  }
+
+  async getCurrentEvaluations(_mediaItemIds: string[]): Promise<Map<string, CurrentEvaluation>> {
+    return new Map();
+  }
+}
+
+// ============================================================================
+// Mock Watch Offers Repository
+// ============================================================================
+
 class MockWatchOffersRepository implements IMediaWatchOffersRepository {
   async upsertMany(_mediaItemId: string, _region: string, _offers: any[]): Promise<void> {
     // No-op for tests
@@ -515,6 +547,7 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
   const mockDb = createMockDb();
   const mockAggregationService = createMockRunAggregationService(runRepo);
   const mockWatchOffersRepo = new MockWatchOffersRepository();
+  const mockDryRunRepo = new MockDryRunRepository();
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     controllers: [PolicyController, RunController, DryRunController],
@@ -528,8 +561,8 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
       { provide: CATALOG_EVALUATION_RUN_REPOSITORY, useValue: runRepo },
       { provide: MEDIA_CATALOG_EVALUATION_REPOSITORY, useValue: evaluationRepo },
       { provide: MEDIA_WATCH_OFFERS_REPOSITORY, useValue: mockWatchOffersRepo },
+      { provide: DRY_RUN_REPOSITORY, useValue: mockDryRunRepo },
       { provide: getQueueToken(CATALOG_POLICY_QUEUE), useValue: queue },
-      { provide: DATABASE_CONNECTION, useValue: mockDb },
     ],
   })
     .overrideGuard(AdminJwtGuard)
