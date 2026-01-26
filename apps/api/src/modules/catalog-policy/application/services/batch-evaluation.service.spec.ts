@@ -232,6 +232,19 @@ describe('BatchEvaluationService', () => {
       // First item should process, second might error depending on policy engine behavior
       expect(result.processed + result.errors).toBe(2);
     });
+
+    it('should use active policy when no version specified', async () => {
+      const mediaItemIds = ['media-1'];
+      const inputs = mediaItemIds.map(createMockPolicyEngineInput);
+
+      mockPolicyInputRepository.findManyForEvaluation.mockResolvedValue(inputs);
+      mockEvaluationRepository.bulkUpsert.mockResolvedValue(1);
+
+      await service.evaluateBatch(mediaItemIds);
+
+      expect(mockPolicyService.getActiveOrThrow).toHaveBeenCalled();
+      expect(mockPolicyService.getByVersion).not.toHaveBeenCalled();
+    });
   });
 
   describe('reEvaluateAll', () => {
@@ -309,6 +322,49 @@ describe('BatchEvaluationService', () => {
 
       expect(result.processed).toBe(3);
       expect(result.eligible).toBe(3);
+    });
+
+    it('should pass context to evaluateBatch', async () => {
+      const context: EvaluationContextType = EvaluationContext.TRENDING;
+      const ids = ['media-1'];
+
+      mockPolicyService.getByVersion.mockResolvedValue(defaultPolicy);
+      mockPolicyInputRepository.countEligibleItems.mockResolvedValue(1);
+      mockPolicyInputRepository.fetchBatchIds.mockResolvedValueOnce(ids).mockResolvedValueOnce([]);
+      mockPolicyInputRepository.findManyForEvaluation.mockResolvedValue(
+        ids.map(createMockPolicyEngineInput),
+      );
+      mockEvaluationRepository.bulkUpsert.mockResolvedValue(1);
+
+      await service.reEvaluateAll(1, { context });
+
+      expect(mockEvaluationRepository.bulkUpsert).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ context })]),
+      );
+    });
+
+    it('should call onProgress with correct values', async () => {
+      const batch1Ids = ['media-1', 'media-2'];
+      const batch2Ids = ['media-3'];
+      const total = 3;
+
+      mockPolicyService.getByVersion.mockResolvedValue(defaultPolicy);
+      mockPolicyInputRepository.countEligibleItems.mockResolvedValue(total);
+      mockPolicyInputRepository.fetchBatchIds
+        .mockResolvedValueOnce(batch1Ids)
+        .mockResolvedValueOnce(batch2Ids)
+        .mockResolvedValueOnce([]);
+      mockPolicyInputRepository.findManyForEvaluation.mockImplementation((ids: string[]) =>
+        Promise.resolve(ids.map(createMockPolicyEngineInput)),
+      );
+      mockEvaluationRepository.bulkUpsert.mockResolvedValue(2);
+
+      const onProgress = jest.fn();
+      await service.reEvaluateAll(1, { batchSize: 2, onProgress });
+
+      expect(onProgress).toHaveBeenCalledTimes(2);
+      expect(onProgress).toHaveBeenNthCalledWith(1, 2, total);
+      expect(onProgress).toHaveBeenNthCalledWith(2, 3, total);
     });
   });
 });
