@@ -226,6 +226,27 @@ describe('CatalogEvaluationService', () => {
       expect(result.changed).toBe(false);
     });
 
+    it('should detect change when policy version differs', async () => {
+      const mediaItemId = 'test-media-1';
+      const engineInput = createMockPolicyEngineInput();
+      const previousEvaluation = {
+        mediaItemId,
+        status: EligibilityStatus.ELIGIBLE,
+        policyVersion: 0, // Old version
+      };
+
+      mockPolicyInputRepository.findOneForEvaluation.mockResolvedValue(engineInput);
+      mockEvaluationRepository.findByMediaId.mockResolvedValue(previousEvaluation);
+      mockEvaluationRepository.upsert.mockImplementation((evaluation) =>
+        Promise.resolve(evaluation),
+      );
+
+      const result = await service.evaluateOne({ mediaItemId });
+
+      expect(result.evaluation.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.changed).toBe(true);
+    });
+
     it('should pass context to evaluation repository', async () => {
       const mediaItemId = 'test-media-1';
       const context: EvaluationContextType = EvaluationContext.TRENDING;
@@ -340,6 +361,65 @@ describe('CatalogEvaluationService', () => {
       await expect(
         service.evaluateOneForContexts({ mediaItemId }, [EvaluationContext.CATALOG]),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException when policy version not found', async () => {
+      const mediaItemId = 'test-media-1';
+      const policyVersion = 999;
+
+      mockPolicyService.getByVersion.mockResolvedValue(null);
+
+      await expect(
+        service.evaluateOneForContexts({ mediaItemId, policyVersion }, [EvaluationContext.CATALOG]),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return count of changed evaluations', async () => {
+      const mediaItemId = 'test-media-1';
+      const contexts: EvaluationContextType[] = [
+        EvaluationContext.CATALOG,
+        EvaluationContext.TRENDING,
+      ];
+      const engineInput = createMockPolicyEngineInput();
+
+      // CATALOG has previous with same status, TRENDING is new
+      const previousEvaluationsMap = new Map<EvaluationContextType, unknown>([
+        [EvaluationContext.CATALOG, { status: EligibilityStatus.ELIGIBLE, policyVersion: 1 }],
+      ]);
+
+      mockPolicyInputRepository.findOneForEvaluation.mockResolvedValue(engineInput);
+      mockEvaluationRepository.findByMediaIdForContexts.mockResolvedValue(previousEvaluationsMap);
+      mockEvaluationRepository.bulkUpsert.mockResolvedValue(undefined);
+
+      const changedCount = await service.evaluateOneForContexts({ mediaItemId }, contexts);
+
+      // Only TRENDING should count as changed (new), CATALOG unchanged
+      expect(changedCount).toBe(1);
+    });
+
+    it('should return zero when no evaluations changed', async () => {
+      const mediaItemId = 'test-media-1';
+      const contexts: EvaluationContextType[] = [EvaluationContext.CATALOG];
+      const engineInput = createMockPolicyEngineInput();
+
+      const previousEvaluationsMap = new Map<EvaluationContextType, unknown>([
+        [EvaluationContext.CATALOG, { status: EligibilityStatus.ELIGIBLE, policyVersion: 1 }],
+      ]);
+
+      mockPolicyInputRepository.findOneForEvaluation.mockResolvedValue(engineInput);
+      mockEvaluationRepository.findByMediaIdForContexts.mockResolvedValue(previousEvaluationsMap);
+      mockEvaluationRepository.bulkUpsert.mockResolvedValue(undefined);
+
+      const changedCount = await service.evaluateOneForContexts({ mediaItemId }, contexts);
+
+      expect(changedCount).toBe(0);
+    });
+
+    it('should return zero for empty contexts without calling repositories', async () => {
+      const changedCount = await service.evaluateOneForContexts({ mediaItemId: 'test' }, []);
+
+      expect(changedCount).toBe(0);
+      expect(mockPolicyService.getActiveOrThrow).not.toHaveBeenCalled();
     });
   });
 
