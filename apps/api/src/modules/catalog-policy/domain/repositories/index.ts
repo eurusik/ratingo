@@ -14,3 +14,5 @@ export {
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
   type IMediaCatalogEvaluationRepository,
 } from './media-catalog-evaluation.repository.interface';
+
+export { DIFF_REPOSITORY, type IDiffRepository } from './diff.repository.interface';

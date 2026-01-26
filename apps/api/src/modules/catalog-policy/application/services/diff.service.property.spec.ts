@@ -12,13 +12,10 @@ function filterAndLimitSamples(
   limit: number,
 ): DiffSample[] {
   const filtered = samples.filter((sample) => {
-    const oldStatus = sample.oldStatus as DiffStatus;
-    const newStatus = sample.newStatus as DiffStatus;
-
     if (type === 'regression') {
-      return isDiffRegression(oldStatus, newStatus);
+      return isDiffRegression(sample.oldStatus, sample.newStatus);
     } else {
-      return isDiffImprovement(oldStatus, newStatus);
+      return isDiffImprovement(sample.oldStatus, sample.newStatus);
     }
   });
 
@@ -45,8 +42,8 @@ describe('DiffService - Property-Based Tests', () => {
   const diffSampleArb = fc.record({
     mediaItemId: fc.uuid(),
     title: fc.option(fc.string({ minLength: 1, maxLength: 100 }), { nil: null }),
-    oldStatus: diffStatusArb.map((s) => s as string),
-    newStatus: diffStatusArb.map((s) => s as string),
+    oldStatus: diffStatusArb,
+    newStatus: diffStatusArb,
     trendingScore: fc.option(fc.integer({ min: 0, max: 1000 }), { nil: null }),
   });
 
@@ -77,8 +74,8 @@ describe('DiffService - Property-Based Tests', () => {
           fc.record({
             mediaItemId: fc.uuid(),
             title: fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: null }),
-            oldStatus: fc.constant(EligibilityStatus.ELIGIBLE as string),
-            newStatus: fc.constant(EligibilityStatus.INELIGIBLE as string),
+            oldStatus: fc.constant(EligibilityStatus.ELIGIBLE as DiffStatus),
+            newStatus: fc.constant(EligibilityStatus.INELIGIBLE as DiffStatus),
             trendingScore: fc.option(fc.integer({ min: 0, max: 1000 }), { nil: null }),
           }),
           { minLength: count, maxLength: count },
@@ -109,11 +106,9 @@ describe('DiffService - Property-Based Tests', () => {
 
             // Count how many samples match the type
             const matchingCount = samples.filter((s) => {
-              const oldStatus = s.oldStatus as DiffStatus;
-              const newStatus = s.newStatus as DiffStatus;
               return type === 'regression'
-                ? isDiffRegression(oldStatus, newStatus)
-                : isDiffImprovement(oldStatus, newStatus);
+                ? isDiffRegression(s.oldStatus, s.newStatus)
+                : isDiffImprovement(s.oldStatus, s.newStatus);
             }).length;
 
             // When we have fewer matching samples than limit, return all matching

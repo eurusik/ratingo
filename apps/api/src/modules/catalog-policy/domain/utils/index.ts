@@ -13,3 +13,6 @@ export {
   filterOffersByRequirements,
   hasAnyProvider,
 } from './offer-filter';
+
+// Diff utilities (pure functions for status comparison)
+export { isDiffRegression, isDiffImprovement } from './diff.utils';

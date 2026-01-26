@@ -42,3 +42,5 @@ export {
   type SearchOptions,
   type HomepageOptions,
 } from './public-catalog.repository';
+
+export { DiffRepository } from './diff.repository';
