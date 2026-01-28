@@ -7,21 +7,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { Type } from 'class-transformer';
-import {
-  IsString,
-  IsDate,
-  IsOptional,
-  IsArray,
-  IsNumber,
-  ValidateNested,
-  IsIn,
-  IsEnum,
-} from 'class-validator';
+import { IsString, IsOptional, IsArray, ValidateNested, IsIn } from 'class-validator';
 
 import { PolicyStatus, type PolicyStatusType } from '../../catalog-policy.constants';
-import { type ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
 
 import { BreakoutRuleDto } from './breakout-rule.dto';
+import {
+  ELIGIBILITY_MODES,
+  BLOCKED_COUNTRY_MODES,
+  CONTENT_CLASSES,
+  type ContentClassType,
+} from './constants';
 import { type ContextRequirementsDto } from './context-requirements.dto';
 import { GlobalRequirementsDto } from './global-requirements.dto';
 import { HomepageConfigDto, PolicyConfigDto } from './policy-config.dto';
@@ -37,21 +33,18 @@ export class PolicyDetailDto {
     description: 'Policy ID',
     example: 'policy-123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsString()
   id: string;
 
   @ApiProperty({
     description: 'Policy name',
     example: 'Policy v2',
   })
-  @IsString()
   name: string;
 
   @ApiProperty({
     description: 'Policy version',
     example: '2',
   })
-  @IsString()
   version: string;
 
   @ApiProperty({
@@ -59,14 +52,12 @@ export class PolicyDetailDto {
     example: 'active',
     enum: POLICY_STATUS_VALUES,
   })
-  @IsIn(POLICY_STATUS_VALUES)
   status: PolicyStatusType;
 
   @ApiProperty({
     description: 'Policy configuration',
     type: PolicyConfigDto,
   })
-  @ValidateNested()
   @Type(() => PolicyConfigDto)
   config: PolicyConfigDto;
 
@@ -75,16 +66,13 @@ export class PolicyDetailDto {
     example: '2024-12-20T10:00:00Z',
   })
   @Type(() => Date)
-  @IsDate()
   createdAt: Date;
 
   @ApiPropertyOptional({
     description: 'When the policy was activated',
     example: '2024-12-20T12:00:00Z',
   })
-  @IsOptional()
   @Type(() => Date)
-  @IsDate()
   activatedAt?: Date;
 }
 
@@ -97,21 +85,18 @@ export class PolicyDto {
     description: 'Policy ID',
     example: 'policy-123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsString()
   id: string;
 
   @ApiProperty({
     description: 'Policy name',
     example: 'Content Filtering Policy',
   })
-  @IsString()
   name: string;
 
   @ApiProperty({
     description: 'Policy version',
     example: '1.0',
   })
-  @IsString()
   version: string;
 
   @ApiProperty({
@@ -119,15 +104,12 @@ export class PolicyDto {
     example: 'active',
     enum: POLICY_STATUS_VALUES,
   })
-  @IsIn(POLICY_STATUS_VALUES)
   status: PolicyStatusType;
 
   @ApiPropertyOptional({
     description: 'Policy description',
     example: 'Filters content based on quality and popularity thresholds',
   })
-  @IsOptional()
-  @IsString()
   description?: string;
 
   @ApiProperty({
@@ -135,7 +117,6 @@ export class PolicyDto {
     example: '2024-12-20T10:00:00Z',
   })
   @Type(() => Date)
-  @IsDate()
   updatedAt: Date;
 }
 
@@ -165,10 +146,10 @@ export class CreatePolicyDto {
   @ApiPropertyOptional({
     description: 'Blocked country mode',
     example: 'ANY',
-    enum: ['ANY', 'MAJORITY'],
+    enum: BLOCKED_COUNTRY_MODES,
   })
   @IsOptional()
-  @IsEnum(['ANY', 'MAJORITY'])
+  @IsIn([...BLOCKED_COUNTRY_MODES])
   blockedCountryMode?: 'ANY' | 'MAJORITY';
 
   @ApiProperty({
@@ -212,10 +193,10 @@ export class CreatePolicyDto {
   @ApiPropertyOptional({
     description: 'Eligibility mode',
     example: 'STRICT',
-    enum: ['STRICT', 'RELAXED'],
+    enum: ELIGIBILITY_MODES,
   })
   @IsOptional()
-  @IsEnum(['STRICT', 'RELAXED'])
+  @IsIn([...ELIGIBILITY_MODES])
   eligibilityMode?: 'STRICT' | 'RELAXED';
 
   @ApiPropertyOptional({
@@ -239,13 +220,13 @@ export class CreatePolicyDto {
     description:
       'Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.',
     example: ['anime', 'reality'],
-    enum: ['mainstream', 'anime', 'documentary', 'reality', 'kids'],
+    enum: CONTENT_CLASSES,
     isArray: true,
   })
   @IsOptional()
   @IsArray()
-  @IsIn(VALID_CONTENT_CLASSES, { each: true })
-  excludedContentClasses?: ContentClass[];
+  @IsIn([...CONTENT_CLASSES], { each: true })
+  excludedContentClasses?: ContentClassType[];
 
   @ApiPropertyOptional({
     description: 'Context-specific requirements for display surfaces (readability, overview)',
@@ -268,14 +249,12 @@ export class CreatePolicyResponseDto {
     description: 'Created policy ID',
     example: 'policy-123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsString()
   id: string;
 
   @ApiProperty({
     description: 'Policy version',
     example: 2,
   })
-  @IsNumber()
   version: number;
 
   @ApiProperty({
@@ -283,6 +262,5 @@ export class CreatePolicyResponseDto {
     example:
       'Policy v2 created successfully. Use POST /admin/catalog-policies/:id/prepare to start evaluation.',
   })
-  @IsString()
   message: string;
 }

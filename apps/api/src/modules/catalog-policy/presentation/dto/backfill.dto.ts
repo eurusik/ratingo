@@ -6,12 +6,9 @@
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsString, IsNumber, IsEnum, IsOptional, IsIn } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsIn } from 'class-validator';
 
-import {
-  ACTIVE_EVALUATION_CONTEXTS,
-  type EvaluationContextType,
-} from '../../domain/constants/evaluation.constants';
+import { EVALUATION_CONTEXTS, type EvaluationContextType, RUN_STATUSES } from './constants';
 
 /**
  * Backfill request DTO.
@@ -21,10 +18,10 @@ export class BackfillRequestDto {
   @ApiProperty({
     description: 'Evaluation context to backfill',
     example: 'trending',
-    enum: ACTIVE_EVALUATION_CONTEXTS,
+    enum: EVALUATION_CONTEXTS,
   })
   @IsString()
-  @IsIn([...ACTIVE_EVALUATION_CONTEXTS])
+  @IsIn([...EVALUATION_CONTEXTS])
   context: EvaluationContextType;
 
   @ApiPropertyOptional({
@@ -47,23 +44,20 @@ export class BackfillResponseDto {
     description: 'ID of the created backfill run',
     example: 'run-123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsString()
   runId: string;
 
   @ApiProperty({
     description: 'Current status of the run',
     example: 'running',
-    enum: ['running', 'prepared', 'failed', 'cancelled', 'promoted'],
+    enum: RUN_STATUSES,
   })
-  @IsEnum(['running', 'prepared', 'failed', 'cancelled', 'promoted'])
   status: string;
 
   @ApiProperty({
     description: 'Context being backfilled',
     example: 'trending',
-    enum: ACTIVE_EVALUATION_CONTEXTS,
+    enum: EVALUATION_CONTEXTS,
   })
-  @IsString()
   context: string;
 
   @ApiProperty({
@@ -71,6 +65,5 @@ export class BackfillResponseDto {
     example:
       'Backfill started for context=trending. Use GET /admin/catalog-policies/runs/run-123 to track progress.',
   })
-  @IsString()
   message: string;
 }

@@ -2,11 +2,9 @@ import 'reflect-metadata';
 import * as fc from 'fast-check';
 import { plainToInstance } from 'class-transformer';
 import { validateSync, ValidationError } from 'class-validator';
-import {
-  BreakoutRuleDto,
-  BreakoutRuleRequirementsDto,
-  VALID_RATING_SOURCES,
-} from './breakout-rule.dto';
+
+import { BreakoutRuleDto, BreakoutRuleRequirementsDto } from './breakout-rule.dto';
+import { RATING_SOURCES } from './constants';
 
 describe('BreakoutRuleDto - Property-Based Tests', () => {
   // Helper to get all validation error messages
@@ -32,7 +30,7 @@ describe('BreakoutRuleDto - Property-Based Tests', () => {
     .stringMatching(/^[a-zA-Z0-9_ -]+$/)
     .filter((s) => s.trim().length >= 1 && s.length <= 100);
   const validPriorityArb = fc.nat({ max: 1000 });
-  const validRatingSourceArb = fc.constantFrom(...VALID_RATING_SOURCES);
+  const validRatingSourceArb = fc.constantFrom(...RATING_SOURCES);
 
   // Use noNaN option to exclude NaN values from double generation
   const validRequirementsArb = fc.record({
@@ -116,10 +114,10 @@ describe('BreakoutRuleDto - Property-Based Tests', () => {
     });
 
     it('should reject requirements with invalid rating sources', () => {
-      // Generate invalid rating sources (not in VALID_RATING_SOURCES)
+      // Generate invalid rating sources (not in RATING_SOURCES)
       const invalidRatingSourceArb = fc
         .string({ minLength: 1, maxLength: 20 })
-        .filter((s) => !VALID_RATING_SOURCES.includes(s as any));
+        .filter((s) => !RATING_SOURCES.includes(s as any));
 
       fc.assert(
         fc.property(

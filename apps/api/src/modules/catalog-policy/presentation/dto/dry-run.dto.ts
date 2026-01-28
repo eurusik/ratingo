@@ -9,26 +9,23 @@ import {
   IsOptional,
   IsNumber,
   IsString,
-  IsArray,
-  IsEnum,
-  IsBoolean,
+  IsIn,
   ValidateNested,
   Min,
   Max,
   Matches,
 } from 'class-validator';
 
-import { CreatePolicyDto } from './index';
-
-export type DryRunModeType = 'sample' | 'top' | 'byType' | 'byCountry';
+import { DRY_RUN_MODES, type DryRunModeType, MEDIA_TYPES, ELIGIBILITY_STATUSES } from './constants';
+import { CreatePolicyDto } from './policy.dto';
 
 export class DryRunOptionsDto {
   @ApiProperty({
     description: 'Selection mode for items to evaluate',
     example: 'sample',
-    enum: ['sample', 'top', 'byType', 'byCountry'],
+    enum: DRY_RUN_MODES,
   })
-  @IsEnum(['sample', 'top', 'byType', 'byCountry'])
+  @IsIn([...DRY_RUN_MODES])
   mode: DryRunModeType;
 
   @ApiPropertyOptional({
@@ -46,10 +43,10 @@ export class DryRunOptionsDto {
   @ApiPropertyOptional({
     description: 'Media type filter (required for byType mode)',
     example: 'movie',
-    enum: ['movie', 'show'],
+    enum: MEDIA_TYPES,
   })
   @IsOptional()
-  @IsEnum(['movie', 'show'])
+  @IsIn([...MEDIA_TYPES])
   mediaType?: 'movie' | 'show';
 
   @ApiPropertyOptional({
@@ -99,31 +96,26 @@ export class DryRunItemResultDto {
     description: 'Media item ID',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsString()
   mediaItemId: string;
 
   @ApiProperty({
     description: 'Media item title',
     example: 'The Matrix',
   })
-  @IsString()
   title: string;
 
   @ApiPropertyOptional({
     description: 'Current eligibility status (null if not evaluated)',
     example: 'ELIGIBLE',
-    enum: ['ELIGIBLE', 'INELIGIBLE', 'REVIEW'],
+    enum: ELIGIBILITY_STATUSES,
   })
-  @IsOptional()
-  @IsString()
   currentStatus?: string | null;
 
   @ApiProperty({
     description: 'Proposed eligibility status under new policy',
     example: 'ELIGIBLE',
-    enum: ['ELIGIBLE', 'INELIGIBLE', 'REVIEW'],
+    enum: ELIGIBILITY_STATUSES,
   })
-  @IsString()
   proposedStatus: string;
 
   @ApiProperty({
@@ -131,23 +123,18 @@ export class DryRunItemResultDto {
     example: ['ALLOWED_COUNTRY', 'ALLOWED_LANGUAGE'],
     type: [String],
   })
-  @IsArray()
-  @IsString({ each: true })
   reasons: string[];
 
   @ApiProperty({
     description: 'Relevance score (0-100)',
     example: 75,
   })
-  @IsNumber()
   relevanceScore: number;
 
   @ApiPropertyOptional({
     description: 'Breakout rule ID if applicable',
     example: 'GLOBAL_HIT',
   })
-  @IsOptional()
-  @IsString()
   breakoutRuleId?: string | null;
 
   @ApiProperty({
@@ -157,19 +144,21 @@ export class DryRunItemResultDto {
   statusChanged: boolean;
 }
 
-export class ReasonBreakdownDto {
+/**
+ * Reason count DTO.
+ * Single reason with count for dry-run breakdown.
+ */
+export class ReasonCountDto {
   @ApiProperty({
     description: 'Evaluation reason',
     example: 'ALLOWED_COUNTRY',
   })
-  @IsString()
   reason: string;
 
   @ApiProperty({
     description: 'Count of items with this reason',
     example: 500,
   })
-  @IsNumber()
   count: number;
 }
 
@@ -178,93 +167,80 @@ export class DryRunSummaryDto {
     description: 'Total items evaluated',
     example: 1000,
   })
-  @IsNumber()
   totalEvaluated: number;
 
   @ApiProperty({
     description: 'Items that would be eligible',
     example: 750,
   })
-  @IsNumber()
   eligible: number;
 
   @ApiProperty({
     description: 'Items that would be ineligible',
     example: 200,
   })
-  @IsNumber()
   ineligible: number;
 
   @ApiProperty({
     description: 'Items that would need review',
     example: 10,
   })
-  @IsNumber()
   review: number;
 
   @ApiProperty({
     description: 'Items that would become newly eligible',
     example: 50,
   })
-  @IsNumber()
   newlyEligible: number;
 
   @ApiProperty({
     description: 'Items that would become newly ineligible',
     example: 25,
   })
-  @IsNumber()
   newlyIneligible: number;
 
   @ApiProperty({
     description: 'Items with unchanged status',
     example: 925,
   })
-  @IsNumber()
   unchanged: number;
 
   @ApiProperty({
     description: 'Items without previous evaluation (first-time evaluation)',
     example: 40,
   })
-  @IsNumber()
   newItems: number;
 
   @ApiProperty({
     description: 'Breakdown of evaluation reasons',
-    type: [ReasonBreakdownDto],
+    type: [ReasonCountDto],
   })
-  @Type(() => ReasonBreakdownDto)
-  @IsArray()
-  reasonBreakdown: ReasonBreakdownDto[];
+  @Type(() => ReasonCountDto)
+  reasonBreakdown: ReasonCountDto[];
 
   @ApiProperty({
     description: 'Execution time in milliseconds',
     example: 1500,
   })
-  @IsNumber()
   executionTimeMs: number;
 
   @ApiProperty({
     description: 'Selection mode used',
     example: 'sample',
-    enum: ['sample', 'top', 'byType', 'byCountry'],
+    enum: DRY_RUN_MODES,
   })
-  @IsString()
   mode: string;
 
   @ApiProperty({
     description: 'Item limit used',
     example: 1000,
   })
-  @IsNumber()
   limit: number;
 
   @ApiProperty({
     description: 'Whether evaluation was stopped due to timeout',
     example: false,
   })
-  @IsBoolean()
   timedOut: boolean;
 }
 
@@ -281,14 +257,11 @@ export class DryRunResponseDto {
     type: [DryRunItemResultDto],
   })
   @Type(() => DryRunItemResultDto)
-  @IsArray()
   items: DryRunItemResultDto[];
 
   @ApiPropertyOptional({
     description: 'Current active policy version (for diff mode)',
     example: 1,
   })
-  @IsOptional()
-  @IsNumber()
   currentPolicyVersion?: number | null;
 }

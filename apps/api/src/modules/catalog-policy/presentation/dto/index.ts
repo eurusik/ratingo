@@ -4,6 +4,9 @@
  * Centralized export for all policy-related DTOs.
  */
 
+// Constants
+export * from './constants';
+
 // Global Requirements
 export { GlobalRequirementsDto } from './global-requirements.dto';
 
@@ -38,3 +41,13 @@ export { ContextRequirementsDto } from './context-requirements.dto';
 
 // Backfill
 export { BackfillRequestDto, BackfillResponseDto } from './backfill.dto';
+
+// Dry-Run
+export {
+  DryRunRequestDto,
+  DryRunOptionsDto,
+  DryRunResponseDto,
+  DryRunSummaryDto,
+  DryRunItemResultDto,
+  ReasonCountDto,
+} from './dry-run.dto';
