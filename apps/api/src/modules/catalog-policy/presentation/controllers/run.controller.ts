@@ -17,6 +17,7 @@ import {
 
 import { DEFAULT_PAGE_SIZE, DEFAULT_BATCH_SIZE } from '../../../../common/constants';
 import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { RunMapper } from '../../application/mappers';
 import { DiffService } from '../../application/services/diff.service';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import {
@@ -27,7 +28,6 @@ import {
   RunsListDto,
   BackfillRequestDto,
   BackfillResponseDto,
-  type EvaluationRunDto,
 } from '../dto';
 
 @ApiTags('Admin - Policy Activation')
@@ -78,19 +78,7 @@ export class RunController {
 
     const runs = await this.policyActivationService.listRuns({ limit, offset });
 
-    const data: EvaluationRunDto[] = runs.map((run) => ({
-      id: run.id,
-      policyId: run.policyId,
-      policyName: run.policyName,
-      policyVersion: run.policyVersion,
-      status: run.status,
-      progress: run.progress,
-      startedAt: run.startedAt,
-      finishedAt: run.finishedAt,
-      readyToPromote: run.readyToPromote,
-    }));
-
-    return { data };
+    return { data: RunMapper.toListDtos(runs) };
   }
 
   /**
@@ -117,28 +105,7 @@ export class RunController {
   })
   async getRunStatus(@Param('runId') runId: string): Promise<RunStatusDto> {
     const runStatus = await this.policyActivationService.getRunStatus(runId);
-
-    return {
-      id: runStatus.id,
-      targetPolicyId: runStatus.targetPolicyId,
-      targetPolicyVersion: runStatus.targetPolicyVersion,
-      status: runStatus.status,
-      progress: {
-        processed: runStatus.processed,
-        total: runStatus.totalReadySnapshot,
-        eligible: runStatus.eligible,
-        ineligible: runStatus.ineligible,
-        errors: runStatus.errors,
-      },
-      startedAt: runStatus.startedAt,
-      finishedAt: runStatus.finishedAt,
-      promotedAt: runStatus.promotedAt,
-      promotedBy: runStatus.promotedBy,
-      readyToPromote: runStatus.readyToPromote,
-      blockingReasons: runStatus.blockingReasons,
-      coverage: runStatus.coverage,
-      errorSample: [], // Error sample not yet exposed via RunStatus interface
-    };
+    return RunMapper.toStatusDto(runStatus);
   }
 
   /**
@@ -258,28 +225,7 @@ export class RunController {
   ): Promise<DiffReportDto> {
     const size = sampleSize ? parseInt(sampleSize, 10) : DEFAULT_BATCH_SIZE;
     const diffReport = await this.diffService.computeDiff(runId, size);
-
-    return {
-      runId: diffReport.runId,
-      targetPolicyVersion: diffReport.targetPolicyVersion,
-      currentPolicyVersion: diffReport.currentPolicyVersion,
-      counts: {
-        regressions: diffReport.counts.regressions,
-        improvements: diffReport.counts.improvements,
-        netChange: diffReport.counts.improvements - diffReport.counts.regressions,
-      },
-      topRegressions: diffReport.topRegressions.map((item) => ({
-        mediaItemId: item.mediaItemId,
-        title: item.title || 'Unknown',
-        reason: `Status change: ${item.oldStatus} → ${item.newStatus}`,
-      })),
-      topImprovements: diffReport.topImprovements.map((item) => ({
-        mediaItemId: item.mediaItemId,
-        title: item.title || 'Unknown',
-        reason: `Status change: ${item.oldStatus} → ${item.newStatus}`,
-      })),
-      reasonBreakdown: diffReport.reasonBreakdown,
-    };
+    return RunMapper.toDiffReportDto(diffReport);
   }
 
   /**
