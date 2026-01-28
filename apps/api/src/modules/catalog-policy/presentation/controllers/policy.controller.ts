@@ -25,13 +25,13 @@ import {
 } from '@nestjs/swagger';
 
 import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
+import { PolicyMapper } from '../../application/mappers/policy.mapper';
 import { CatalogPolicyService } from '../../application/services/catalog-policy.service';
 import { PolicyActivationService } from '../../application/services/policy-activation.service';
 import {
   PrepareOptionsDto,
   PrepareResponseDto,
   PoliciesListDto,
-  type PolicyDto,
   PolicyDetailDto,
   CreatePolicyDto,
   CreatePolicyResponseDto,
@@ -64,19 +64,7 @@ export class PolicyController {
   })
   async getPolicies(): Promise<PoliciesListDto> {
     const policies = await this.catalogPolicyService.listAll();
-
-    const data: PolicyDto[] = policies.map((p) => ({
-      id: p.id,
-      name: `Policy v${p.version}`,
-      version: String(p.version),
-      status: p.isActive ? 'active' : 'inactive',
-      description: p.policy.eligibilityMode
-        ? `${p.policy.eligibilityMode} mode, ${p.policy.allowedCountries?.length || 0} allowed countries`
-        : undefined,
-      updatedAt: p.activatedAt || p.createdAt,
-    }));
-
-    return { data };
+    return { data: PolicyMapper.toListDtos(policies) };
   }
 
   /**
@@ -111,27 +99,7 @@ export class PolicyController {
       throw new NotFoundException(`Policy with ID ${policyId} not found`);
     }
 
-    return {
-      id: policy.id,
-      name: `Policy v${policy.version}`,
-      version: String(policy.version),
-      status: policy.isActive ? 'active' : 'inactive',
-      config: {
-        allowedCountries: policy.policy.allowedCountries,
-        blockedCountries: policy.policy.blockedCountries,
-        blockedCountryMode: policy.policy.blockedCountryMode,
-        allowedLanguages: policy.policy.allowedLanguages,
-        blockedLanguages: policy.policy.blockedLanguages,
-        globalProviders: policy.policy.globalProviders,
-        breakoutRules: policy.policy.breakoutRules,
-        eligibilityMode: policy.policy.eligibilityMode,
-        homepage: policy.policy.homepage,
-        globalRequirements: policy.policy.globalRequirements,
-        excludedContentClasses: policy.policy.excludedContentClasses,
-      },
-      createdAt: policy.createdAt,
-      activatedAt: policy.activatedAt ?? undefined,
-    };
+    return PolicyMapper.toDetailDto(policy);
   }
 
   /**
