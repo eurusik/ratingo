@@ -19,6 +19,11 @@ import { PolicyActivationService } from './application/services/policy-activatio
 import { RunAggregationService } from './application/services/run-aggregation.service';
 import { RunFinalizeService } from './application/services/run-finalize.service';
 import { CatalogPolicyWorker } from './application/workers/catalog-policy.worker';
+import {
+  ReEvaluateAllHandler,
+  EvaluateItemHandler,
+  WatchdogHandler,
+} from './application/workers/handlers';
 import { CATALOG_POLICY_QUEUE } from './catalog-policy.constants';
 import { CATALOG_POLICY_EVALUATOR } from './domain/ports/catalog-policy-evaluator.port';
 import {
@@ -111,7 +116,11 @@ import { PolicyController, RunController, DryRunController } from './presentatio
     DryRunService,
     RunAggregationService,
     RunFinalizeService,
-    // Workers
+    // Worker handlers (SRP: one handler per job type)
+    ReEvaluateAllHandler,
+    EvaluateItemHandler,
+    WatchdogHandler,
+    // Worker (thin router)
     CatalogPolicyWorker,
   ],
   exports: [
