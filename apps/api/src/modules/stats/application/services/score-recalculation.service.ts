@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { MAX_PAGE_SIZE } from '../../../../common/constants';
 import { type IMediaRepository, MEDIA_REPOSITORY } from '../../../catalog/public';
 import { ScoreCalculatorService } from '../../../shared/score-calculator';
 import {
@@ -37,7 +38,7 @@ export class ScoreRecalculationService {
    * @returns Total count of recalculated items
    */
   async recalculateScores(options: RecalculateScoresOptions): Promise<{ total: number }> {
-    const batchSize = options.batchSize ?? 100;
+    const batchSize = options.batchSize ?? MAX_PAGE_SIZE;
     let offset = 0;
     let total = 0;
 

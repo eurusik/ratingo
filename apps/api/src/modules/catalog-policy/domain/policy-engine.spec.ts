@@ -302,8 +302,9 @@ describe('Policy Engine', () => {
     });
   });
 
-  describe('evaluateEligibility - Breakout Overrides Blocked', () => {
-    it('should return ELIGIBLE when blocked country matches breakout rule', () => {
+  describe('evaluateEligibility - Blocked is HARD Filter', () => {
+    it('should return INELIGIBLE when blocked country even with breakout rule match', () => {
+      // HARD filter: blocked country cannot be overridden by breakout
       const policy = createPolicy({
         breakoutRules: [
           {
@@ -320,18 +321,20 @@ describe('Policy Engine', () => {
         mediaItem: {
           ...createInput().mediaItem,
           originCountries: ['RU'], // Blocked
-          voteCountImdb: 100000, // Meets breakout requirement
+          voteCountImdb: 100000, // Meets breakout requirement but irrelevant
         },
       });
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-      expect(result.reasons).toEqual(['BREAKOUT_ALLOWED']);
-      expect(result.breakoutRuleId).toBe('global-hit');
+      // Blocked is a HARD filter - breakout cannot override
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should return ELIGIBLE when blocked language matches breakout rule', () => {
+    it('should return INELIGIBLE when blocked language even with breakout rule match', () => {
+      // HARD filter: blocked language cannot be overridden by breakout
       const policy = createPolicy({
         breakoutRules: [
           {
@@ -350,7 +353,7 @@ describe('Policy Engine', () => {
           originalLanguage: 'ru', // Blocked
         },
         stats: {
-          qualityScore: 0.8, // Meets breakout requirement
+          qualityScore: 0.8, // Meets breakout requirement but irrelevant
           popularityScore: null,
           freshnessScore: null,
           ratingoScore: null,
@@ -359,12 +362,13 @@ describe('Policy Engine', () => {
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-      expect(result.reasons).toEqual(['BREAKOUT_ALLOWED']);
-      expect(result.breakoutRuleId).toBe('quality-content');
+      // Blocked is a HARD filter - breakout cannot override
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('BLOCKED_LANGUAGE');
+      expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should use first matching breakout rule by priority', () => {
+    it('should return INELIGIBLE for blocked country regardless of breakout rules', () => {
       const policy = createPolicy({
         breakoutRules: [
           {
@@ -389,17 +393,19 @@ describe('Policy Engine', () => {
         mediaItem: {
           ...createInput().mediaItem,
           originCountries: ['RU'],
-          voteCountImdb: 60000, // Meets both rules
+          voteCountImdb: 60000, // Meets both rules but blocked is HARD
         },
       });
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-      expect(result.breakoutRuleId).toBe('high-priority');
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should NOT apply breakout when requirements are not met', () => {
+    it('should return INELIGIBLE for blocked country regardless of breakout requirements', () => {
+      // Even if breakout requirements aren't met, the main reason is still BLOCKED
       const policy = createPolicy({
         breakoutRules: [
           {
@@ -416,7 +422,7 @@ describe('Policy Engine', () => {
         mediaItem: {
           ...createInput().mediaItem,
           originCountries: ['RU'],
-          voteCountImdb: 10000, // Does NOT meet requirement
+          voteCountImdb: 10000, // Does NOT meet requirement - but irrelevant
         },
       });
 
@@ -427,42 +433,8 @@ describe('Policy Engine', () => {
       expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should check multiple breakout requirements (all must pass)', () => {
-      const policy = createPolicy({
-        breakoutRules: [
-          {
-            id: 'premium-content',
-            name: 'Premium Content',
-            priority: 1,
-            requirements: {
-              minImdbVotes: 50000,
-              minQualityScoreNormalized: 0.7,
-            },
-          },
-        ],
-      });
-      const input = createInput({
-        mediaItem: {
-          ...createInput().mediaItem,
-          originCountries: ['RU'],
-          voteCountImdb: 60000, // Meets first requirement
-        },
-        stats: {
-          qualityScore: 0.5, // Does NOT meet second requirement
-          popularityScore: null,
-          freshnessScore: null,
-          ratingoScore: null,
-        },
-      });
-
-      const result = evaluateEligibility(input, policy);
-
-      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-      expect(result.reasons).toContain('BLOCKED_COUNTRY');
-      expect(result.breakoutRuleId).toBeNull();
-    });
-
-    it('should match breakout rule when media has ANY of required originCountries', () => {
+    it('should return INELIGIBLE for blocked co-production even with UA', () => {
+      // Co-production with blocked country is still INELIGIBLE
       const policy = createPolicy({
         breakoutRules: [
           {
@@ -479,130 +451,20 @@ describe('Policy Engine', () => {
       const input = createInput({
         mediaItem: {
           ...createInput().mediaItem,
-          originCountries: ['RU', 'UA'], // Co-production with UA
+          originCountries: ['RU', 'UA'], // Co-production with UA but RU is blocked
           voteCountImdb: 500,
         },
       });
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-      expect(result.breakoutRuleId).toBe('ukrainian-content');
-    });
-
-    it('should NOT match breakout rule when media has NONE of required originCountries', () => {
-      const policy = createPolicy({
-        breakoutRules: [
-          {
-            id: 'ukrainian-content',
-            name: 'Ukrainian Content',
-            priority: 1,
-            requirements: {
-              minImdbVotes: 200,
-              originCountries: ['UA'],
-            },
-          },
-        ],
-      });
-      const input = createInput({
-        mediaItem: {
-          ...createInput().mediaItem,
-          originCountries: ['RU'], // Blocked, no UA
-          voteCountImdb: 500,
-        },
-      });
-
-      const result = evaluateEligibility(input, policy);
-
+      // Blocked is HARD filter - even co-productions are blocked
       expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should NOT match breakout rule when media originCountries is empty', () => {
-      const policy = createPolicy({
-        breakoutRules: [
-          {
-            id: 'ukrainian-content',
-            name: 'Ukrainian Content',
-            priority: 1,
-            requirements: {
-              originCountries: ['UA'],
-            },
-          },
-        ],
-      });
-      const input = createInput({
-        mediaItem: {
-          ...createInput().mediaItem,
-          originCountries: ['RU'], // Blocked
-        },
-      });
-
-      const result = evaluateEligibility(input, policy);
-
-      // Breakout doesn't match (no UA), so blocked country applies
-      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-      expect(result.breakoutRuleId).toBeNull();
-    });
-
-    it('should match breakout rule with multiple required originCountries (ANY match)', () => {
-      const policy = createPolicy({
-        breakoutRules: [
-          {
-            id: 'eastern-european',
-            name: 'Eastern European Content',
-            priority: 1,
-            requirements: {
-              originCountries: ['UA', 'PL', 'CZ'],
-            },
-          },
-        ],
-      });
-      const input = createInput({
-        mediaItem: {
-          ...createInput().mediaItem,
-          originCountries: ['RU', 'PL'], // Blocked RU, but has PL from requirements
-        },
-      });
-
-      const result = evaluateEligibility(input, policy);
-
-      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-      expect(result.breakoutRuleId).toBe('eastern-european');
-    });
-
-    it('should NOT match breakout rule when media has ANY excludeOriginCountries', () => {
-      const policy = createPolicy({
-        blockedCountries: ['JP'],
-        breakoutRules: [
-          {
-            id: 'viral-hit',
-            name: 'Viral Hit',
-            priority: 1,
-            requirements: {
-              minImdbVotes: 100000,
-              excludeOriginCountries: ['JP', 'KR', 'CN'],
-            },
-          },
-        ],
-      });
-      const input = createInput({
-        mediaItem: {
-          ...createInput().mediaItem,
-          originCountries: ['JP'], // Blocked AND in excludeOriginCountries
-          voteCountImdb: 200000, // Meets votes requirement
-        },
-      });
-
-      const result = evaluateEligibility(input, policy);
-
-      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-      expect(result.reasons).toContain('BLOCKED_COUNTRY');
-      expect(result.breakoutRuleId).toBeNull();
-    });
-
-    it('should match breakout rule when media has NO overlap with excludeOriginCountries', () => {
+    it('should return INELIGIBLE for blocked content regardless of excludeOriginCountries', () => {
       const policy = createPolicy({
         blockedCountries: ['DE'],
         breakoutRules: [
@@ -620,29 +482,53 @@ describe('Policy Engine', () => {
       const input = createInput({
         mediaItem: {
           ...createInput().mediaItem,
-          originCountries: ['DE'], // Blocked but NOT in excludeOriginCountries
-          voteCountImdb: 200000, // Meets votes requirement
+          originCountries: ['DE'], // Blocked
+          voteCountImdb: 200000, // Meets breakout requirements
         },
       });
 
       const result = evaluateEligibility(input, policy);
 
-      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-      expect(result.reasons).toContain('BREAKOUT_ALLOWED');
-      expect(result.breakoutRuleId).toBe('viral-hit');
+      // Blocked is HARD filter
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should NOT match breakout rule when ANY origin country is in excludeOriginCountries (co-production)', () => {
+    it('should include EXCLUDED_CONTENT_CLASS reason when blocked AND excluded', () => {
       const policy = createPolicy({
-        blockedCountries: ['JP'],
+        blockedCountries: ['RU'],
+        excludedContentClasses: ['anime'],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['RU'], // Blocked
+          contentClass: 'anime', // Also excluded
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      // Both reasons should be present
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('EXCLUDED_CONTENT_CLASS');
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.breakoutRuleId).toBeNull();
+    });
+  });
+
+  describe('evaluateEligibility - Neutral Breakout (SOFT filter)', () => {
+    it('should return ELIGIBLE when neutral country matches breakout rule', () => {
+      // Neutral (not in allowed/blocked) content CAN breakout
+      const policy = createPolicy({
         breakoutRules: [
           {
-            id: 'global-phenomenon',
-            name: 'Global Phenomenon',
+            id: 'global-hit',
+            name: 'Global Hit',
             priority: 1,
             requirements: {
               minImdbVotes: 500000,
-              excludeOriginCountries: ['JP', 'KR', 'CN'],
             },
           },
         ],
@@ -650,22 +536,51 @@ describe('Policy Engine', () => {
       const input = createInput({
         mediaItem: {
           ...createInput().mediaItem,
-          originCountries: ['US', 'JP'], // Co-production with JP
-          voteCountImdb: 600000, // Meets votes requirement
+          originCountries: ['KR'], // Neutral (not in allowed or blocked)
+          originalLanguage: 'ko', // Neutral
+          voteCountImdb: 700000, // Squid Game case - meets breakout
         },
       });
 
       const result = evaluateEligibility(input, policy);
 
-      // JP is in excludeOriginCountries, so breakout should NOT match
+      // Neutral content CAN breakout
+      expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
+      expect(result.reasons).toContain('BREAKOUT_ALLOWED');
+      expect(result.breakoutRuleId).toBe('global-hit');
+    });
+
+    it('should return INELIGIBLE when neutral country does NOT match breakout rule', () => {
+      const policy = createPolicy({
+        breakoutRules: [
+          {
+            id: 'global-hit',
+            name: 'Global Hit',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 500000,
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['KR'], // Neutral
+          originalLanguage: 'ko', // Neutral
+          voteCountImdb: 10000, // Does NOT meet breakout threshold
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
       expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
-      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.reasons).toContain('NEUTRAL_COUNTRY');
       expect(result.breakoutRuleId).toBeNull();
     });
 
-    it('should use breakout rule without excludeOriginCountries for global phenomena', () => {
+    it('should use first matching breakout rule by priority for neutral content', () => {
       const policy = createPolicy({
-        blockedCountries: ['KR'],
         breakoutRules: [
           {
             id: 'global-phenomenon',
@@ -673,7 +588,6 @@ describe('Policy Engine', () => {
             priority: 0, // Highest priority
             requirements: {
               minImdbVotes: 500000,
-              // NO excludeOriginCountries - allows any origin
             },
           },
           {
@@ -682,7 +596,6 @@ describe('Policy Engine', () => {
             priority: 1,
             requirements: {
               minImdbVotes: 100000,
-              excludeOriginCountries: ['JP', 'KR', 'CN'],
             },
           },
         ],
@@ -690,35 +603,34 @@ describe('Policy Engine', () => {
       const input = createInput({
         mediaItem: {
           ...createInput().mediaItem,
-          originCountries: ['KR'], // Squid Game case
+          originCountries: ['KR'], // Neutral
+          originalLanguage: 'ko',
           voteCountImdb: 700000, // Meets both rules
         },
       });
 
       const result = evaluateEligibility(input, policy);
 
-      // Should match global-phenomenon (no excludeOriginCountries)
       expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
       expect(result.breakoutRuleId).toBe('global-phenomenon');
     });
 
-    it('should fallback to rule without excludeOriginCountries when excluded rule fails', () => {
+    it('should fallback to lower priority breakout rule when higher priority fails', () => {
       const policy = createPolicy({
-        blockedCountries: ['KR'],
         breakoutRules: [
           {
-            id: 'viral-hit-excluded',
-            name: 'Viral Hit (Excluded Countries)',
-            priority: 1, // Higher priority number = lower priority
+            id: 'global-phenomenon',
+            name: 'Global Phenomenon',
+            priority: 0,
             requirements: {
-              minImdbVotes: 100000,
-              excludeOriginCountries: ['KR'],
+              minImdbVotes: 500000,
+              excludeOriginCountries: ['KR'], // Excludes Korean content
             },
           },
           {
-            id: 'viral-hit-any',
-            name: 'Viral Hit (Any Country)',
-            priority: 2, // Lower priority, but should still match
+            id: 'viral-hit',
+            name: 'Viral Hit',
+            priority: 1,
             requirements: {
               minImdbVotes: 100000,
               // No excludeOriginCountries
@@ -729,16 +641,17 @@ describe('Policy Engine', () => {
       const input = createInput({
         mediaItem: {
           ...createInput().mediaItem,
-          originCountries: ['KR'],
-          voteCountImdb: 150000,
+          originCountries: ['KR'], // Neutral, excluded by first rule
+          originalLanguage: 'ko',
+          voteCountImdb: 700000, // Meets both vote requirements
         },
       });
 
       const result = evaluateEligibility(input, policy);
 
-      // First rule fails due to excludeOriginCountries, fallback to second rule
+      // First rule fails (KR excluded), fallback to viral-hit
       expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-      expect(result.breakoutRuleId).toBe('viral-hit-any');
+      expect(result.breakoutRuleId).toBe('viral-hit');
     });
   });
 
@@ -898,10 +811,8 @@ describe('Policy Engine', () => {
   });
 
   describe('evaluateEligibility - Global Quality Gate', () => {
-    it('should return INELIGIBLE with BLOCKED reason when blocked content fails global gate (breakout not attempted)', () => {
-      // This is a critical business invariant:
-      // Blocked content that fails global gate should return BLOCKED reason
-      // and NOT attempt breakout evaluation
+    it('should return INELIGIBLE with BLOCKED reason for blocked content (global gate not checked)', () => {
+      // Blocked content is HARD filter - immediately INELIGIBLE without checking global gate
       const policy = createPolicy({
         blockedCountries: ['RU'],
         globalRequirements: {
@@ -913,7 +824,7 @@ describe('Policy Engine', () => {
             name: 'Global Hit',
             priority: 1,
             requirements: {
-              minImdbVotes: 10000, // Lower threshold - would match if evaluated
+              minImdbVotes: 10000,
             },
           },
         ],
@@ -922,23 +833,20 @@ describe('Policy Engine', () => {
         mediaItem: {
           ...createInput().mediaItem,
           originCountries: ['RU'], // Blocked
-          voteCountImdb: 20000, // Meets breakout (10k) but NOT global gate (50k)
+          voteCountImdb: 20000,
         },
       });
 
       const result = evaluateEligibility(input, policy);
 
-      // Should be INELIGIBLE with BLOCKED_COUNTRY reason
+      // Blocked is HARD filter - immediately INELIGIBLE
       expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
       expect(result.reasons).toContain('BLOCKED_COUNTRY');
       expect(result.reasons).not.toContain('MISSING_GLOBAL_SIGNALS');
-
-      // Breakout should NOT be applied (not attempted)
       expect(result.breakoutRuleId).toBeNull();
 
-      // Should include globalGateDetails showing which checks failed
-      expect(result.globalGateDetails).toBeDefined();
-      expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
+      // Global gate is NOT checked for blocked content (no globalGateDetails)
+      expect(result.globalGateDetails).toBeUndefined();
     });
 
     it('should return INELIGIBLE with MISSING_GLOBAL_SIGNALS when non-blocked content fails global gate', () => {
@@ -965,7 +873,8 @@ describe('Policy Engine', () => {
       expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
     });
 
-    it('should allow breakout when blocked content passes global gate', () => {
+    it('should return INELIGIBLE for blocked content even with high votes', () => {
+      // Blocked is HARD filter - no amount of votes can override
       const policy = createPolicy({
         blockedCountries: ['RU'],
         globalRequirements: {
@@ -986,17 +895,85 @@ describe('Policy Engine', () => {
         mediaItem: {
           ...createInput().mediaItem,
           originCountries: ['RU'], // Blocked
+          voteCountImdb: 60000, // Would meet breakout if allowed
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      // Blocked is HARD filter - INELIGIBLE regardless of votes
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('BLOCKED_COUNTRY');
+      expect(result.breakoutRuleId).toBeNull();
+    });
+
+    it('should allow breakout for neutral content when global gate passes', () => {
+      const policy = createPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 10000 },
+        },
+        breakoutRules: [
+          {
+            id: 'global-hit',
+            name: 'Global Hit',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 50000,
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['KR'], // Neutral
+          originalLanguage: 'ko', // Neutral
           voteCountImdb: 60000, // Meets both global gate (10k) AND breakout (50k)
         },
       });
 
       const result = evaluateEligibility(input, policy);
 
-      // Should be ELIGIBLE via breakout (gate passed)
+      // Neutral content CAN breakout
       expect(result.status).toBe(EligibilityStatus.ELIGIBLE);
-      expect(result.reasons).toEqual(['BREAKOUT_ALLOWED']);
+      expect(result.reasons).toContain('BREAKOUT_ALLOWED');
       expect(result.breakoutRuleId).toBe('global-hit');
-      expect(result.globalGateDetails).toBeUndefined();
+    });
+
+    it('should return INELIGIBLE with MISSING_GLOBAL_SIGNALS when content fails global gate (before neutral check)', () => {
+      // Global gate is checked BEFORE neutral/allowed status
+      const policy = createPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 100000 },
+        },
+        breakoutRules: [
+          {
+            id: 'global-hit',
+            name: 'Global Hit',
+            priority: 1,
+            requirements: {
+              minImdbVotes: 50000,
+            },
+          },
+        ],
+      });
+      const input = createInput({
+        mediaItem: {
+          ...createInput().mediaItem,
+          originCountries: ['KR'], // Would be neutral
+          originalLanguage: 'ko', // Would be neutral
+          voteCountImdb: 60000, // Meets breakout (50k) but NOT global gate (100k)
+        },
+      });
+
+      const result = evaluateEligibility(input, policy);
+
+      // Global gate is checked first - reason is MISSING_GLOBAL_SIGNALS
+      expect(result.status).toBe(EligibilityStatus.INELIGIBLE);
+      expect(result.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+      expect(result.breakoutRuleId).toBeNull();
+      expect(result.globalGateDetails).toBeDefined();
+      expect(result.globalGateDetails?.failedChecks).toContain('minVotesAnyOf');
     });
 
     it('should skip global gate when not configured (backward compatibility)', () => {

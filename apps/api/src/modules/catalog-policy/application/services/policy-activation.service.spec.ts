@@ -1,29 +1,32 @@
 /**
  * Policy Activation Service Tests
- *
- * Unit tests for the two-phase policy activation flow (Prepare → Promote).
- * Tests cover core business logic without database dependencies.
- *
- * Feature: policy-activation-flow
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { getQueueToken } from '@nestjs/bullmq';
+
 import { PolicyActivationService } from './policy-activation.service';
 import { RunAggregationService } from './run-aggregation.service';
 import { CatalogPolicyService } from './catalog-policy.service';
-import { CATALOG_POLICY_REPOSITORY } from '../../infrastructure/repositories/catalog-policy.repository';
-import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../infrastructure/repositories/catalog-evaluation-run.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import {
+  CATALOG_POLICY_REPOSITORY,
+  CATALOG_EVALUATION_RUN_REPOSITORY,
+  POLICY_ACTIVATION_REPOSITORY,
+} from '../../domain/repositories';
 import { CATALOG_POLICY_QUEUE } from '../../catalog-policy.constants';
-import { getQueueToken } from '@nestjs/bullmq';
+import {
+  PolicyNotFoundError,
+  RunNotFoundError,
+  PolicyAlreadyActiveError,
+  RunAlreadyInProgressError,
+} from '../../domain/errors';
 
 describe('PolicyActivationService', () => {
   let service: PolicyActivationService;
   let mockPolicyRepository: any;
   let mockRunRepository: any;
+  let mockPolicyActivationRepository: any;
   let mockQueue: any;
-  let mockDb: any;
   let mockAggregationService: any;
   let mockCatalogPolicyService: any;
 
@@ -44,36 +47,19 @@ describe('PolicyActivationService', () => {
       recordError: jest.fn(),
     };
 
-    mockQueue = {
-      add: jest.fn(),
+    mockPolicyActivationRepository = {
+      createRunWithSnapshot: jest.fn().mockResolvedValue({
+        runId: 'run-123',
+        baselinePolicyVersion: 1,
+        totalReadySnapshot: 1000,
+        snapshotCutoff: new Date(),
+      }),
+      promoteRun: jest.fn(),
+      countReadyMediaItems: jest.fn().mockResolvedValue(1000),
     };
 
-    mockDb = {
-      select: jest.fn().mockReturnThis(),
-      from: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue([{ count: 1000 }]),
-      transaction: jest.fn().mockImplementation(async (callback) => {
-        // Create a mock transaction context that mimics the db interface
-        const txMock = {
-          select: jest.fn().mockReturnThis(),
-          from: jest.fn().mockReturnThis(),
-          where: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockResolvedValue([{ version: 1 }]), // active policy
-        };
-        // Override where to return count for the second query (media items count)
-        let callCount = 0;
-        txMock.where.mockImplementation(() => {
-          callCount++;
-          if (callCount === 1) {
-            // First where: active policy query - returns chainable with limit
-            return txMock;
-          }
-          // Second where: count query - returns result directly
-          return Promise.resolve([{ count: 1000 }]);
-        });
-        return callback(txMock);
-      }),
+    mockQueue = {
+      add: jest.fn(),
     };
 
     mockAggregationService = {
@@ -96,7 +82,7 @@ describe('PolicyActivationService', () => {
         PolicyActivationService,
         { provide: CATALOG_POLICY_REPOSITORY, useValue: mockPolicyRepository },
         { provide: CATALOG_EVALUATION_RUN_REPOSITORY, useValue: mockRunRepository },
-        { provide: DATABASE_CONNECTION, useValue: mockDb },
+        { provide: POLICY_ACTIVATION_REPOSITORY, useValue: mockPolicyActivationRepository },
         { provide: getQueueToken(CATALOG_POLICY_QUEUE), useValue: mockQueue },
         { provide: RunAggregationService, useValue: mockAggregationService },
         { provide: CatalogPolicyService, useValue: mockCatalogPolicyService },
@@ -107,23 +93,23 @@ describe('PolicyActivationService', () => {
   });
 
   describe('preparePolicy', () => {
-    it('should throw NotFoundException when policy does not exist', async () => {
+    it('should throw PolicyNotFoundError when policy does not exist', async () => {
       mockPolicyRepository.findById.mockResolvedValue(null);
 
-      await expect(service.preparePolicy('non-existent-id')).rejects.toThrow(NotFoundException);
+      await expect(service.preparePolicy('non-existent-id')).rejects.toThrow(PolicyNotFoundError);
     });
 
-    it('should throw BadRequestException when policy is already active', async () => {
+    it('should throw PolicyAlreadyActiveError when policy is already active', async () => {
       mockPolicyRepository.findById.mockResolvedValue({
         id: 'policy-1',
         version: 2,
         isActive: true,
       });
 
-      await expect(service.preparePolicy('policy-1')).rejects.toThrow(BadRequestException);
+      await expect(service.preparePolicy('policy-1')).rejects.toThrow(PolicyAlreadyActiveError);
     });
 
-    it('should throw BadRequestException when a run is already in progress', async () => {
+    it('should throw RunAlreadyInProgressError when a run is already in progress', async () => {
       mockPolicyRepository.findById.mockResolvedValue({
         id: 'policy-1',
         version: 2,
@@ -131,7 +117,7 @@ describe('PolicyActivationService', () => {
       });
       mockRunRepository.findByPolicyId.mockResolvedValue([{ id: 'run-1', status: 'running' }]);
 
-      await expect(service.preparePolicy('policy-1')).rejects.toThrow(BadRequestException);
+      await expect(service.preparePolicy('policy-1')).rejects.toThrow(RunAlreadyInProgressError);
     });
 
     it('should create run and queue job when policy is valid', async () => {
@@ -141,23 +127,15 @@ describe('PolicyActivationService', () => {
         isActive: false,
       });
       mockRunRepository.findByPolicyId.mockResolvedValue([]);
-      mockRunRepository.create.mockResolvedValue({
-        id: 'run-123',
-        status: 'running',
-      });
 
       const result = await service.preparePolicy('policy-1');
 
       expect(result.runId).toBe('run-123');
       expect(result.status).toBe('running');
-      expect(mockRunRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          targetPolicyId: 'policy-1',
-          targetPolicyVersion: 2,
-          baselinePolicyVersion: 1, // From transaction mock
-          totalReadySnapshot: 1000, // From transaction mock
-        }),
-      );
+      expect(mockPolicyActivationRepository.createRunWithSnapshot).toHaveBeenCalledWith({
+        targetPolicyId: 'policy-1',
+        targetPolicyVersion: 2,
+      });
       // Fan-out: should queue jobs for all active contexts (catalog, trending)
       expect(mockQueue.add).toHaveBeenCalledTimes(2);
       expect(mockQueue.add).toHaveBeenCalledWith(
@@ -182,10 +160,10 @@ describe('PolicyActivationService', () => {
   });
 
   describe('getRunStatus', () => {
-    it('should throw NotFoundException when run does not exist', async () => {
+    it('should throw RunNotFoundError when run does not exist', async () => {
       mockRunRepository.findById.mockResolvedValue(null);
 
-      await expect(service.getRunStatus('non-existent-run')).rejects.toThrow(NotFoundException);
+      await expect(service.getRunStatus('non-existent-run')).rejects.toThrow(RunNotFoundError);
     });
 
     it('should calculate coverage correctly', async () => {
@@ -243,11 +221,6 @@ describe('PolicyActivationService', () => {
   });
 
   describe('readyToPromote flag', () => {
-    /**
-     * Property 12: Ready To Promote Flag
-     *
-     * readyToPromote = status=PREPARED AND coverage >= threshold AND errors <= max
-     */
     it('should be true only when status=prepared, coverage=100%, errors=0', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
@@ -406,11 +379,6 @@ describe('PolicyActivationService', () => {
   });
 
   describe('promoteRun', () => {
-    /**
-     * Property 7: Promote Status Validation
-     *
-     * Promote only allowed when status=PREPARED
-     */
     it('should fail when run not found', async () => {
       mockRunRepository.findById.mockResolvedValue(null);
 
@@ -499,19 +467,16 @@ describe('PolicyActivationService', () => {
         targetPolicyId: 'policy-1',
         targetPolicyVersion: 2,
       });
-      mockPolicyRepository.activate.mockResolvedValue(undefined);
-      mockRunRepository.update.mockResolvedValue(undefined);
 
       const result = await service.promoteRun('run-1');
 
       expect(result.success).toBe(true);
-      expect(mockPolicyRepository.activate).toHaveBeenCalledWith('policy-1');
-      expect(mockRunRepository.update).toHaveBeenCalledWith(
-        'run-1',
-        expect.objectContaining({
-          status: 'promoted',
-        }),
-      );
+      expect(mockPolicyActivationRepository.promoteRun).toHaveBeenCalledWith({
+        runId: 'run-1',
+        targetPolicyId: 'policy-1',
+        newStatus: 'promoted',
+        promotedBy: 'system',
+      });
     });
 
     it('should allow custom coverage threshold', async () => {
@@ -525,12 +490,11 @@ describe('PolicyActivationService', () => {
         targetPolicyId: 'policy-1',
         targetPolicyVersion: 2,
       });
-      mockPolicyRepository.activate.mockResolvedValue(undefined);
-      mockRunRepository.update.mockResolvedValue(undefined);
 
       const result = await service.promoteRun('run-1', { coverageThreshold: 0.95 });
 
       expect(result.success).toBe(true);
+      expect(mockPolicyActivationRepository.promoteRun).toHaveBeenCalled();
     });
 
     it('should allow custom error threshold', async () => {
@@ -544,12 +508,11 @@ describe('PolicyActivationService', () => {
         targetPolicyId: 'policy-1',
         targetPolicyVersion: 2,
       });
-      mockPolicyRepository.activate.mockResolvedValue(undefined);
-      mockRunRepository.update.mockResolvedValue(undefined);
 
       const result = await service.promoteRun('run-1', { maxErrors: 10 });
 
       expect(result.success).toBe(true);
+      expect(mockPolicyActivationRepository.promoteRun).toHaveBeenCalled();
     });
   });
 

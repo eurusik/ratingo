@@ -6,36 +6,26 @@
 
 import { Injectable, Logger, Inject } from '@nestjs/common';
 
-import { eq, and, lt, sql } from 'drizzle-orm';
-import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-
 import { MS_PER_MINUTE } from '../../../../common/constants';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
-import * as schema from '../../../../database/schema';
-import { RunStatus } from '../../domain/constants/evaluation.constants';
+import {
+  DEFAULT_STALE_RUN_MAX_AGE_MINUTES,
+  RunStatus,
+} from '../../domain/constants/evaluation.constants';
+import {
+  CATALOG_EVALUATION_RUN_REPOSITORY,
+  type ICatalogEvaluationRunRepository,
+} from '../../domain/repositories';
+import { type FinalizeResult, type RunAnomaly } from '../../domain/types';
 
 import { RunAggregationService } from './run-aggregation.service';
-
-export interface FinalizeResult {
-  runId: string;
-  finalized: boolean;
-  reason: string;
-  counters?: {
-    processed: number;
-    total: number;
-    eligible: number;
-    ineligible: number;
-    errors: number;
-  };
-}
 
 @Injectable()
 export class RunFinalizeService {
   private readonly logger = new Logger(RunFinalizeService.name);
 
   constructor(
-    @Inject(DATABASE_CONNECTION)
-    private readonly db: PostgresJsDatabase<typeof schema>,
+    @Inject(CATALOG_EVALUATION_RUN_REPOSITORY)
+    private readonly runRepository: ICatalogEvaluationRunRepository,
     private readonly aggregationService: RunAggregationService,
   ) {}
 
@@ -46,21 +36,11 @@ export class RunFinalizeService {
    * @returns Finalization result with status and counters
    */
   async finalizeRun(runId: string): Promise<FinalizeResult> {
-    const runs = await this.db
-      .select({
-        id: schema.catalogEvaluationRuns.id,
-        status: schema.catalogEvaluationRuns.status,
-        totalReadySnapshot: schema.catalogEvaluationRuns.totalReadySnapshot,
-      })
-      .from(schema.catalogEvaluationRuns)
-      .where(eq(schema.catalogEvaluationRuns.id, runId))
-      .limit(1);
+    const run = await this.runRepository.findById(runId);
 
-    if (runs.length === 0) {
+    if (!run) {
       return { runId, finalized: false, reason: 'Run not found' };
     }
-
-    const run = runs[0];
 
     if (run.status !== RunStatus.RUNNING) {
       return {
@@ -81,19 +61,13 @@ export class RunFinalizeService {
       );
 
       try {
-        await this.db
-          .update(schema.catalogEvaluationRuns)
-          .set({
-            errorSample: sql`COALESCE(error_sample, '[]'::jsonb) || ${JSON.stringify([
-              {
-                type: 'ANOMALY_PROCESSED_GT_TOTAL',
-                processed: counters.processed,
-                total,
-                timestamp: new Date().toISOString(),
-              },
-            ])}::jsonb`,
-          })
-          .where(eq(schema.catalogEvaluationRuns.id, runId));
+        const anomaly: RunAnomaly = {
+          type: 'ANOMALY_PROCESSED_GT_TOTAL',
+          processed: counters.processed,
+          total,
+          timestamp: new Date().toISOString(),
+        };
+        await this.runRepository.recordAnomaly(runId, anomaly);
       } catch (e) {
         this.logger.warn(`Failed to record anomaly for run ${runId}`, e);
       }
@@ -111,25 +85,9 @@ export class RunFinalizeService {
     }
 
     // Transition to PREPARED with WHERE guard (prevents race conditions)
-    const result = await this.db
-      .update(schema.catalogEvaluationRuns)
-      .set({
-        status: RunStatus.PREPARED,
-        finishedAt: new Date(),
-        processed: counters.processed,
-        eligible: counters.eligible,
-        ineligible: counters.ineligible,
-        errors: counters.errors,
-      })
-      .where(
-        and(
-          eq(schema.catalogEvaluationRuns.id, runId),
-          eq(schema.catalogEvaluationRuns.status, RunStatus.RUNNING),
-        ),
-      )
-      .returning({ id: schema.catalogEvaluationRuns.id });
+    const transitioned = await this.runRepository.transitionToPrepared(runId, counters);
 
-    if (result.length === 0) {
+    if (!transitioned) {
       return {
         runId,
         finalized: false,
@@ -157,18 +115,12 @@ export class RunFinalizeService {
    * @param maxAgeMinutes - Max age before run is considered stale
    * @returns Array of finalization results
    */
-  async finalizeStaleRuns(maxAgeMinutes: number = 5): Promise<FinalizeResult[]> {
+  async finalizeStaleRuns(
+    maxAgeMinutes: number = DEFAULT_STALE_RUN_MAX_AGE_MINUTES,
+  ): Promise<FinalizeResult[]> {
     const cutoff = new Date(Date.now() - maxAgeMinutes * MS_PER_MINUTE);
 
-    const staleRuns = await this.db
-      .select({ id: schema.catalogEvaluationRuns.id })
-      .from(schema.catalogEvaluationRuns)
-      .where(
-        and(
-          eq(schema.catalogEvaluationRuns.status, RunStatus.RUNNING),
-          lt(schema.catalogEvaluationRuns.startedAt, cutoff),
-        ),
-      );
+    const staleRuns = await this.runRepository.findStaleRunning(cutoff);
 
     if (staleRuns.length === 0) {
       return [];

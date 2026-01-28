@@ -4,10 +4,10 @@ import {
   ClassificationInput,
   ContentClass,
   ContentClassValues,
-  TMDB_GENRES,
   VALID_CONTENT_CLASSES,
   isValidContentClass,
 } from './classification.service';
+import { TMDB_GENRE_IDS } from './constants/genre-mapping.constants';
 
 describe('Classification Service - Property-Based Tests', () => {
   // Arbitraries (generators)
@@ -16,11 +16,11 @@ describe('Classification Service - Property-Based Tests', () => {
 
   const genreIdArb = fc.oneof(
     fc.constantFrom(
-      TMDB_GENRES.ANIMATION,
-      TMDB_GENRES.DOCUMENTARY,
-      TMDB_GENRES.REALITY,
-      TMDB_GENRES.KIDS,
-      TMDB_GENRES.FAMILY,
+      TMDB_GENRE_IDS.ANIMATION,
+      TMDB_GENRE_IDS.DOCUMENTARY,
+      TMDB_GENRE_IDS.REALITY,
+      TMDB_GENRE_IDS.KIDS,
+      TMDB_GENRE_IDS.FAMILY,
     ),
     fc.constantFrom(
       28,
@@ -65,7 +65,7 @@ describe('Classification Service - Property-Based Tests', () => {
     originalLanguage: fc.oneof(fc.constant('ja'), fc.constant('en'), languageCodeArb),
     genreIds: fc
       .array(genreIdArb, { minLength: 0, maxLength: 5 })
-      .map((genres) => [TMDB_GENRES.ANIMATION, ...genres]),
+      .map((genres) => [TMDB_GENRE_IDS.ANIMATION, ...genres]),
   });
 
   const westernAnimationInputArb: fc.Arbitrary<ClassificationInput> = fc.record({
@@ -76,7 +76,7 @@ describe('Classification Service - Property-Based Tests', () => {
     originalLanguage: languageCodeArb.filter((l) => l !== 'ja'),
     genreIds: fc
       .array(genreIdArb, { minLength: 0, maxLength: 5 })
-      .map((genres) => [TMDB_GENRES.ANIMATION, ...genres]),
+      .map((genres) => [TMDB_GENRE_IDS.ANIMATION, ...genres]),
   });
 
   describe('Property 1: Classification Determinism', () => {
@@ -197,7 +197,7 @@ describe('Classification Service - Property-Based Tests', () => {
             originalLanguage: fc.constant('ja'),
             genreIds: fc
               .array(genreIdArb, { minLength: 0, maxLength: 5 })
-              .map((genres) => [TMDB_GENRES.ANIMATION, ...genres]),
+              .map((genres) => [TMDB_GENRE_IDS.ANIMATION, ...genres]),
           }),
           (input) => {
             const result = classifyContent(input);
@@ -239,8 +239,8 @@ describe('Classification Service - Property-Based Tests', () => {
             genreIds: fc
               .array(genreIdArb, { minLength: 0, maxLength: 5 })
               .map((genres) => [
-                TMDB_GENRES.DOCUMENTARY,
-                ...genres.filter((g) => g !== TMDB_GENRES.ANIMATION),
+                TMDB_GENRE_IDS.DOCUMENTARY,
+                ...genres.filter((g) => g !== TMDB_GENRE_IDS.ANIMATION),
               ]),
           }),
           (input) => {
@@ -273,9 +273,9 @@ describe('Classification Service - Property-Based Tests', () => {
             genreIds: fc
               .array(genreIdArb, { minLength: 0, maxLength: 5 })
               .map((genres) => [
-                TMDB_GENRES.REALITY,
+                TMDB_GENRE_IDS.REALITY,
                 ...genres.filter(
-                  (g) => g !== TMDB_GENRES.ANIMATION && g !== TMDB_GENRES.DOCUMENTARY,
+                  (g) => g !== TMDB_GENRE_IDS.ANIMATION && g !== TMDB_GENRE_IDS.DOCUMENTARY,
                 ),
               ]),
           }),
@@ -309,12 +309,12 @@ describe('Classification Service - Property-Based Tests', () => {
             genreIds: fc
               .array(genreIdArb, { minLength: 0, maxLength: 5 })
               .map((genres) => [
-                TMDB_GENRES.KIDS,
+                TMDB_GENRE_IDS.KIDS,
                 ...genres.filter(
                   (g) =>
-                    g !== TMDB_GENRES.ANIMATION &&
-                    g !== TMDB_GENRES.DOCUMENTARY &&
-                    g !== TMDB_GENRES.REALITY,
+                    g !== TMDB_GENRE_IDS.ANIMATION &&
+                    g !== TMDB_GENRE_IDS.DOCUMENTARY &&
+                    g !== TMDB_GENRE_IDS.REALITY,
                 ),
               ]),
           }),
@@ -342,7 +342,7 @@ describe('Classification Service - Property-Based Tests', () => {
               languageCodeArb.filter((l) => l !== 'ja'),
               { nil: null },
             ),
-            genreIds: fc.constant([TMDB_GENRES.FAMILY] as number[]),
+            genreIds: fc.constant([TMDB_GENRE_IDS.FAMILY] as number[]),
           }),
           (input) => {
             const result = classifyContent(input);
@@ -377,10 +377,10 @@ describe('Classification Service - Property-Based Tests', () => {
                 .nat({ max: 20000 })
                 .filter(
                   (g) =>
-                    g !== TMDB_GENRES.ANIMATION &&
-                    g !== TMDB_GENRES.DOCUMENTARY &&
-                    g !== TMDB_GENRES.REALITY &&
-                    g !== TMDB_GENRES.KIDS,
+                    g !== TMDB_GENRE_IDS.ANIMATION &&
+                    g !== TMDB_GENRE_IDS.DOCUMENTARY &&
+                    g !== TMDB_GENRE_IDS.REALITY &&
+                    g !== TMDB_GENRE_IDS.KIDS,
                 ),
               { minLength: 0, maxLength: 5 },
             ),
@@ -481,7 +481,10 @@ describe('Classification Service - Property-Based Tests', () => {
           fc.record({
             originCountries: fc.constant(['JP'] as string[]),
             originalLanguage: fc.oneof(fc.constant('ja'), fc.constant('en')),
-            genreIds: fc.constant([TMDB_GENRES.ANIMATION, TMDB_GENRES.DOCUMENTARY] as number[]),
+            genreIds: fc.constant([
+              TMDB_GENRE_IDS.ANIMATION,
+              TMDB_GENRE_IDS.DOCUMENTARY,
+            ] as number[]),
           }),
           (input) => {
             const result = classifyContent(input);
@@ -507,7 +510,7 @@ describe('Classification Service - Property-Based Tests', () => {
               languageCodeArb.filter((l) => l !== 'ja'),
               { nil: null },
             ),
-            genreIds: fc.constant([TMDB_GENRES.DOCUMENTARY, TMDB_GENRES.REALITY] as number[]),
+            genreIds: fc.constant([TMDB_GENRE_IDS.DOCUMENTARY, TMDB_GENRE_IDS.REALITY] as number[]),
           }),
           (input) => {
             const result = classifyContent(input);
@@ -533,7 +536,7 @@ describe('Classification Service - Property-Based Tests', () => {
               languageCodeArb.filter((l) => l !== 'ja'),
               { nil: null },
             ),
-            genreIds: fc.constant([TMDB_GENRES.REALITY, TMDB_GENRES.KIDS] as number[]),
+            genreIds: fc.constant([TMDB_GENRE_IDS.REALITY, TMDB_GENRE_IDS.KIDS] as number[]),
           }),
           (input) => {
             const result = classifyContent(input);

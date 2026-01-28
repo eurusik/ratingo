@@ -62,6 +62,9 @@ import {
   UpdatePostDto,
 } from '../dto';
 
+/** Default page limit for paginated queries */
+const DEFAULT_PAGE_LIMIT = 10;
+
 /**
  * Admin journal controller.
  * Provides CRUD operations for journal posts with admin authentication.
@@ -92,9 +95,12 @@ export class AdminJournalController {
     description: 'Paginated list of posts',
   })
   async getPosts(@Query() query: AdminPostQueryDto): Promise<AdminPostListResponseDto> {
+    const limit = query.limit ?? DEFAULT_PAGE_LIMIT;
+    const page = query.page ?? 1;
+
     const { posts, total } = await this.repository.findAll({
-      page: query.page ?? 1,
-      limit: query.limit ?? 10,
+      page,
+      limit,
       status: query.status === 'scheduled' ? 'published' : query.status,
     });
 
@@ -105,15 +111,15 @@ export class AdminJournalController {
         ? posts.filter((p) => !p.isDraft && p.publishedAt && p.publishedAt > now)
         : posts;
 
-    const totalPages = Math.ceil(total / (query.limit ?? 10));
+    const totalPages = Math.ceil(total / limit);
 
     return {
       posts: filteredPosts.map((post) => this.mapToAdminDto(post)),
       meta: {
         total: query.status === 'scheduled' ? filteredPosts.length : total,
-        page: query.page ?? 1,
+        page,
         totalPages,
-        limit: query.limit ?? 10,
+        limit,
       },
     };
   }
@@ -238,12 +244,12 @@ export class AdminJournalController {
 
     // Determine final state values
     const isDraft = dto.isDraft ?? existing.isDraft;
-    const publishedAt =
-      dto.publishedAt !== undefined
-        ? dto.publishedAt
-          ? new Date(dto.publishedAt)
-          : null
-        : existing.publishedAt;
+    let publishedAt: Date | null;
+    if (dto.publishedAt !== undefined) {
+      publishedAt = dto.publishedAt ? new Date(dto.publishedAt) : null;
+    } else {
+      ({ publishedAt } = existing);
+    }
 
     // Validate post state
     validatePostState(isDraft, publishedAt);
@@ -255,7 +261,7 @@ export class AdminJournalController {
       if (slugExists) {
         throw new ValidationException('Slug already exists', { slug: dto.slug });
       }
-      slug = dto.slug;
+      ({ slug } = dto);
     }
 
     // Re-render markdown if body changed

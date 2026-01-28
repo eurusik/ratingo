@@ -3,10 +3,10 @@ import {
   ClassificationInput,
   ContentClass,
   ContentClassValues,
-  TMDB_GENRES,
   isValidContentClass,
   VALID_CONTENT_CLASSES,
 } from './classification.service';
+import { TMDB_GENRE_IDS } from './constants/genre-mapping.constants';
 
 describe('Classification Service', () => {
   describe('classifyContent', () => {
@@ -15,7 +15,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['JP'],
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.ANIME);
@@ -25,7 +25,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['US'],
           originalLanguage: 'ja',
-          genreIds: [TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.ANIME);
@@ -35,7 +35,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['JP'],
           originalLanguage: 'ja',
-          genreIds: [TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.ANIME);
@@ -45,7 +45,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['US', 'JP'],
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.ANIME);
@@ -55,7 +55,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['US'],
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.MAINSTREAM);
@@ -65,7 +65,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['FR'],
           originalLanguage: 'fr',
-          genreIds: [TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.MAINSTREAM);
@@ -77,7 +77,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['US'],
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.DOCUMENTARY],
+          genreIds: [TMDB_GENRE_IDS.DOCUMENTARY],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.DOCUMENTARY);
@@ -87,7 +87,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['JP'],
           originalLanguage: 'ja',
-          genreIds: [TMDB_GENRES.DOCUMENTARY],
+          genreIds: [TMDB_GENRE_IDS.DOCUMENTARY],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.DOCUMENTARY);
@@ -99,7 +99,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['US'],
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.REALITY],
+          genreIds: [TMDB_GENRE_IDS.REALITY],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.REALITY);
@@ -111,7 +111,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['US'],
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.KIDS],
+          genreIds: [TMDB_GENRE_IDS.KIDS],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.KIDS);
@@ -121,7 +121,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['US'],
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.FAMILY],
+          genreIds: [TMDB_GENRE_IDS.FAMILY],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.MAINSTREAM);
@@ -131,7 +131,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['US'],
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.FAMILY, TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.FAMILY, TMDB_GENRE_IDS.ANIMATION],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.MAINSTREAM);
@@ -165,7 +165,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: null,
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.MAINSTREAM);
@@ -175,7 +175,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['JP'],
           originalLanguage: null,
-          genreIds: [TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION],
         };
 
         // JP origin is enough for anime classification
@@ -186,7 +186,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: null,
           originalLanguage: null,
-          genreIds: [TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.MAINSTREAM);
@@ -196,7 +196,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: [],
           originalLanguage: 'ja',
-          genreIds: [TMDB_GENRES.ANIMATION],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION],
         };
 
         // ja language is enough for anime classification
@@ -229,7 +229,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['JP'],
           originalLanguage: 'ja',
-          genreIds: [TMDB_GENRES.ANIMATION, TMDB_GENRES.DOCUMENTARY],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION, TMDB_GENRE_IDS.DOCUMENTARY],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.ANIME);
@@ -239,7 +239,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['US'],
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.DOCUMENTARY, TMDB_GENRES.REALITY],
+          genreIds: [TMDB_GENRE_IDS.DOCUMENTARY, TMDB_GENRE_IDS.REALITY],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.DOCUMENTARY);
@@ -249,7 +249,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['US'],
           originalLanguage: 'en',
-          genreIds: [TMDB_GENRES.REALITY, TMDB_GENRES.KIDS],
+          genreIds: [TMDB_GENRE_IDS.REALITY, TMDB_GENRE_IDS.KIDS],
         };
 
         expect(classifyContent(input)).toBe(ContentClassValues.REALITY);
@@ -261,7 +261,7 @@ describe('Classification Service', () => {
         const input: ClassificationInput = {
           originCountries: ['JP'],
           originalLanguage: 'ja',
-          genreIds: [TMDB_GENRES.ANIMATION, 28, 12],
+          genreIds: [TMDB_GENRE_IDS.ANIMATION, 28, 12],
         };
 
         const result1 = classifyContent(input);
@@ -305,13 +305,13 @@ describe('Classification Service', () => {
     });
   });
 
-  describe('TMDB_GENRES constants', () => {
+  describe('TMDB_GENRE_IDS constants', () => {
     it('should have correct TMDB genre IDs', () => {
-      expect(TMDB_GENRES.ANIMATION).toBe(16);
-      expect(TMDB_GENRES.DOCUMENTARY).toBe(99);
-      expect(TMDB_GENRES.REALITY).toBe(10764);
-      expect(TMDB_GENRES.KIDS).toBe(10762);
-      expect(TMDB_GENRES.FAMILY).toBe(10751);
+      expect(TMDB_GENRE_IDS.ANIMATION).toBe(16);
+      expect(TMDB_GENRE_IDS.DOCUMENTARY).toBe(99);
+      expect(TMDB_GENRE_IDS.REALITY).toBe(10764);
+      expect(TMDB_GENRE_IDS.KIDS).toBe(10762);
+      expect(TMDB_GENRE_IDS.FAMILY).toBe(10751);
     });
   });
 });

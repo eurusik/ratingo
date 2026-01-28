@@ -7,19 +7,15 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsString,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  ValidateNested,
-  IsIn,
-} from 'class-validator';
-
-import { type ContentClass, VALID_CONTENT_CLASSES } from '../../domain/classification.service';
+import { IsArray, IsString, IsNumber, IsOptional, ValidateNested, IsIn } from 'class-validator';
 
 import { BreakoutRuleDto } from './breakout-rule.dto';
+import {
+  ELIGIBILITY_MODES,
+  BLOCKED_COUNTRY_MODES,
+  CONTENT_CLASSES,
+  type ContentClassType,
+} from './constants';
 import { type ContextRequirementsDto } from './context-requirements.dto';
 import { GlobalRequirementsDto } from './global-requirements.dto';
 
@@ -62,9 +58,9 @@ export class PolicyConfigDto {
   @ApiProperty({
     description: 'Blocked country mode',
     example: 'ANY',
-    enum: ['ANY', 'MAJORITY'],
+    enum: BLOCKED_COUNTRY_MODES,
   })
-  @IsEnum(['ANY', 'MAJORITY'])
+  @IsIn([...BLOCKED_COUNTRY_MODES])
   blockedCountryMode: 'ANY' | 'MAJORITY';
 
   @ApiProperty({
@@ -106,9 +102,9 @@ export class PolicyConfigDto {
   @ApiProperty({
     description: 'Eligibility mode (STRICT = country AND language, RELAXED = country OR language)',
     example: 'STRICT',
-    enum: ['STRICT', 'RELAXED'],
+    enum: ELIGIBILITY_MODES,
   })
-  @IsEnum(['STRICT', 'RELAXED'])
+  @IsIn([...ELIGIBILITY_MODES])
   eligibilityMode: 'STRICT' | 'RELAXED';
 
   @ApiProperty({
@@ -133,12 +129,12 @@ export class PolicyConfigDto {
       'Content classes to exclude from catalog. SOFT filter: breakout rules CAN override.',
     example: ['anime', 'reality'],
     isArray: true,
-    enum: ['mainstream', 'anime', 'documentary', 'reality', 'kids'],
+    enum: CONTENT_CLASSES,
   })
   @IsOptional()
   @IsArray()
-  @IsIn(VALID_CONTENT_CLASSES, { each: true })
-  excludedContentClasses?: ContentClass[];
+  @IsIn([...CONTENT_CLASSES], { each: true })
+  excludedContentClasses?: ContentClassType[];
 
   @ApiPropertyOptional({
     description: 'Context-specific requirements for display surfaces (readability, overview)',

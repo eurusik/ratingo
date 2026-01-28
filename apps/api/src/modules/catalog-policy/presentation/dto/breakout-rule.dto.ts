@@ -20,17 +20,12 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-/**
- * Valid rating sources for breakout rules.
- */
-export const VALID_RATING_SOURCES = ['imdb', 'metacritic', 'rt', 'trakt'] as const;
-export type RatingSource = (typeof VALID_RATING_SOURCES)[number];
-
-/**
- * Valid availability modes for provider filtering.
- */
-export const VALID_AVAILABILITY_MODES = ['subscription_only', 'transactional_only', 'any'] as const;
-export type AvailabilityMode = (typeof VALID_AVAILABILITY_MODES)[number];
+import {
+  RATING_SOURCES,
+  type RatingSourceType,
+  AVAILABILITY_MODES,
+  type AvailabilityModeType,
+} from './constants';
 
 /**
  * Breakout rule requirements DTO.
@@ -84,22 +79,22 @@ export class BreakoutRuleRequirementsDto {
       'Rating sources - at least one must have a rating present. Valid values: imdb, metacritic, rt, trakt',
     example: ['imdb', 'rt'],
     isArray: true,
-    enum: VALID_RATING_SOURCES,
+    enum: RATING_SOURCES,
   })
   @IsOptional()
   @IsArray()
-  @IsIn(VALID_RATING_SOURCES, { each: true })
-  requireAnyOfRatingsPresent?: RatingSource[];
+  @IsIn(RATING_SOURCES, { each: true })
+  requireAnyOfRatingsPresent?: RatingSourceType[];
 
   @ApiPropertyOptional({
     description:
       'Availability mode for provider filtering. subscription_only = flatrate only, transactional_only = rent/buy only, any = all types',
     example: 'subscription_only',
-    enum: VALID_AVAILABILITY_MODES,
+    enum: AVAILABILITY_MODES,
   })
   @IsOptional()
-  @IsIn(VALID_AVAILABILITY_MODES)
-  availabilityMode?: AvailabilityMode;
+  @IsIn(AVAILABILITY_MODES)
+  availabilityMode?: AvailabilityModeType;
 
   @ApiPropertyOptional({
     description: 'Exclude ads-tier variants from provider matching',

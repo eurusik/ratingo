@@ -8,19 +8,20 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { DiffService, isDiffRegression, isDiffImprovement } from './diff.service';
-import { CATALOG_EVALUATION_RUN_REPOSITORY } from '../../infrastructure/repositories/catalog-evaluation-run.repository';
-import { CATALOG_POLICY_REPOSITORY } from '../../infrastructure/repositories/catalog-policy.repository';
-import { DATABASE_CONNECTION } from '../../../../database/database.module';
+
+import {
+  DIFF_REPOSITORY,
+  CATALOG_EVALUATION_RUN_REPOSITORY,
+  CATALOG_POLICY_REPOSITORY,
+} from '../../domain/repositories';
 import { EligibilityStatus, DIFF_STATUS_NONE } from '../../domain/constants/evaluation.constants';
+import { DiffService, isDiffRegression, isDiffImprovement } from './diff.service';
 
 describe('DiffService', () => {
   let service: DiffService;
   let mockRunRepository: any;
   let mockPolicyRepository: any;
-  let mockDb: any;
-  let whereResults: any[];
-  let executeResult: any;
+  let mockDiffRepository: any;
 
   beforeEach(async () => {
     mockRunRepository = {
@@ -31,33 +32,18 @@ describe('DiffService', () => {
       findActive: jest.fn(),
     };
 
-    // Track which query is being made to return appropriate results
-    whereResults = [];
-    let whereCallIndex = 0;
-    executeResult = [
-      { regressions: '0', improvements: '0', unchanged: '0', still_ineligible: '0' },
-    ];
-
-    // Create a chainable mock that supports all query builder methods
-    mockDb = {
-      select: jest.fn().mockReturnThis(),
-      from: jest.fn().mockReturnThis(),
-      leftJoin: jest.fn().mockReturnThis(),
-      where: jest.fn().mockImplementation(() => {
-        const result = whereResults[whereCallIndex] ?? [];
-        whereCallIndex++;
-        return Promise.resolve(result);
-      }),
-      limit: jest.fn().mockResolvedValue([]),
-      execute: jest.fn().mockImplementation(() => Promise.resolve(executeResult)),
+    mockDiffRepository = {
+      computeDiffCounts: jest.fn(),
+      getDiffSamples: jest.fn(),
+      computeReasonBreakdown: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DiffService,
+        { provide: DIFF_REPOSITORY, useValue: mockDiffRepository },
         { provide: CATALOG_EVALUATION_RUN_REPOSITORY, useValue: mockRunRepository },
         { provide: CATALOG_POLICY_REPOSITORY, useValue: mockPolicyRepository },
-        { provide: DATABASE_CONNECTION, useValue: mockDb },
       ],
     }).compile();
 
@@ -141,6 +127,20 @@ describe('DiffService', () => {
       await expect(service.computeDiff('run-1')).rejects.toThrow(BadRequestException);
     });
 
+    it('should throw BadRequestException when run has no target policy version', async () => {
+      mockRunRepository.findById.mockResolvedValue({
+        id: 'run-1',
+        status: 'prepared',
+        targetPolicyVersion: null,
+        baselinePolicyVersion: 1,
+      });
+
+      await expect(service.computeDiff('run-1')).rejects.toThrow(BadRequestException);
+      await expect(service.computeDiff('run-1')).rejects.toThrow(
+        'Run has no target policy version',
+      );
+    });
+
     it('should allow diff for prepared status', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
@@ -149,22 +149,17 @@ describe('DiffService', () => {
         baselinePolicyVersion: 1,
       });
 
-      // SQL aggregation result
-      executeResult = [
-        { regressions: '0', improvements: '0', unchanged: '1', still_ineligible: '0' },
-      ];
-
-      // Query sequence for getSampleItems:
-      // 1. Old evals for getSampleItems (regressions)
-      // 2. New evals with join for getSampleItems (regressions)
-      // 3. Old evals for getSampleItems (improvements)
-      // 4. New evals with join for getSampleItems (improvements)
-      whereResults = [
-        [{ mediaItemId: 'item-1', status: 'eligible' }], // old evals for regressions
-        [{ mediaItemId: 'item-1', status: 'eligible', title: 'Movie 1', trendingScore: 100 }], // new evals with join
-        [{ mediaItemId: 'item-1', status: 'eligible' }], // old evals for improvements
-        [{ mediaItemId: 'item-1', status: 'eligible', title: 'Movie 1', trendingScore: 100 }], // new evals with join
-      ];
+      mockDiffRepository.computeDiffCounts.mockResolvedValue({
+        regressions: 0,
+        improvements: 0,
+        unchanged: 1,
+        stillIneligible: 0,
+      });
+      mockDiffRepository.getDiffSamples.mockResolvedValue([]);
+      mockDiffRepository.computeReasonBreakdown.mockResolvedValue({
+        regressionReasons: {},
+        improvementReasons: {},
+      });
 
       const result = await service.computeDiff('run-1');
 
@@ -178,24 +173,24 @@ describe('DiffService', () => {
         id: 'run-1',
         status: 'promoted',
         targetPolicyVersion: 2,
-        baselinePolicyVersion: 1, // Captured at run creation, not current active
+        baselinePolicyVersion: 1,
       });
 
-      executeResult = [
-        { regressions: '0', improvements: '0', unchanged: '0', still_ineligible: '0' },
-      ];
-
-      whereResults = [
-        [], // old evals for regressions
-        [], // new evals with join
-        [], // old evals for improvements
-        [], // new evals with join
-      ];
+      mockDiffRepository.computeDiffCounts.mockResolvedValue({
+        regressions: 0,
+        improvements: 0,
+        unchanged: 0,
+        stillIneligible: 0,
+      });
+      mockDiffRepository.getDiffSamples.mockResolvedValue([]);
+      mockDiffRepository.computeReasonBreakdown.mockResolvedValue({
+        regressionReasons: {},
+        improvementReasons: {},
+      });
 
       const result = await service.computeDiff('run-1');
 
       expect(result.runId).toBe('run-1');
-      // Should use baselinePolicyVersion (1), not current active policy
       expect(result.currentPolicyVersion).toBe(1);
     });
 
@@ -204,22 +199,21 @@ describe('DiffService', () => {
         id: 'run-1',
         status: 'prepared',
         targetPolicyVersion: 1,
-        baselinePolicyVersion: null, // No active policy when run was created
+        baselinePolicyVersion: null,
       });
-      // Fallback: check current active policy
       mockPolicyRepository.findActive.mockResolvedValue(null);
 
-      // When no current policy, SQL aggregation handles it with FALSE filter
-      executeResult = [
-        { regressions: '0', improvements: '800', unchanged: '0', still_ineligible: '200' },
-      ];
-
-      whereResults = [
-        [], // old evals for regressions (empty - no current policy)
-        [{ mediaItemId: 'item-1', status: 'eligible', title: 'Movie 1', trendingScore: 100 }], // new evals
-        [], // old evals for improvements
-        [{ mediaItemId: 'item-1', status: 'eligible', title: 'Movie 1', trendingScore: 100 }], // new evals
-      ];
+      mockDiffRepository.computeDiffCounts.mockResolvedValue({
+        regressions: 0,
+        improvements: 800,
+        unchanged: 0,
+        stillIneligible: 200,
+      });
+      mockDiffRepository.getDiffSamples.mockResolvedValue([]);
+      mockDiffRepository.computeReasonBreakdown.mockResolvedValue({
+        regressionReasons: {},
+        improvementReasons: {},
+      });
 
       const result = await service.computeDiff('run-1');
 
@@ -228,7 +222,35 @@ describe('DiffService', () => {
       expect(result.counts.improvements).toBe(800);
     });
 
-    it('should return counts from database', async () => {
+    it('should fallback to active policy when baselinePolicyVersion is null', async () => {
+      mockRunRepository.findById.mockResolvedValue({
+        id: 'run-1',
+        status: 'prepared',
+        targetPolicyVersion: 2,
+        baselinePolicyVersion: null,
+      });
+      mockPolicyRepository.findActive.mockResolvedValue({ version: 1 });
+
+      mockDiffRepository.computeDiffCounts.mockResolvedValue({
+        regressions: 5,
+        improvements: 10,
+        unchanged: 100,
+        stillIneligible: 50,
+      });
+      mockDiffRepository.getDiffSamples.mockResolvedValue([]);
+      mockDiffRepository.computeReasonBreakdown.mockResolvedValue({
+        regressionReasons: {},
+        improvementReasons: {},
+      });
+
+      const result = await service.computeDiff('run-1');
+
+      expect(mockPolicyRepository.findActive).toHaveBeenCalled();
+      expect(result.currentPolicyVersion).toBe(1);
+      expect(mockDiffRepository.computeDiffCounts).toHaveBeenCalledWith(2, 1);
+    });
+
+    it('should return counts from repository', async () => {
       mockRunRepository.findById.mockResolvedValue({
         id: 'run-1',
         status: 'prepared',
@@ -236,45 +258,17 @@ describe('DiffService', () => {
         baselinePolicyVersion: 1,
       });
 
-      // SQL aggregation result: 2 regressions, 1 improvement, 1 unchanged, 1 stillIneligible
-      executeResult = [
-        { regressions: '2', improvements: '1', unchanged: '1', still_ineligible: '1' },
-      ];
-
-      whereResults = [
-        // Old evals for getSampleItems (regressions)
-        [
-          { mediaItemId: 'item-1', status: 'eligible' },
-          { mediaItemId: 'item-2', status: 'eligible' },
-          { mediaItemId: 'item-3', status: 'ineligible' },
-          { mediaItemId: 'item-4', status: 'eligible' },
-          { mediaItemId: 'item-5', status: 'ineligible' },
-        ],
-        // New evals with join for getSampleItems (regressions)
-        [
-          { mediaItemId: 'item-1', status: 'ineligible', title: 'Movie 1', trendingScore: 100 },
-          { mediaItemId: 'item-2', status: 'ineligible', title: 'Movie 2', trendingScore: 90 },
-          { mediaItemId: 'item-3', status: 'eligible', title: 'Movie 3', trendingScore: 80 },
-          { mediaItemId: 'item-4', status: 'eligible', title: 'Movie 4', trendingScore: 70 },
-          { mediaItemId: 'item-5', status: 'ineligible', title: 'Movie 5', trendingScore: 60 },
-        ],
-        // Old evals for getSampleItems (improvements)
-        [
-          { mediaItemId: 'item-1', status: 'eligible' },
-          { mediaItemId: 'item-2', status: 'eligible' },
-          { mediaItemId: 'item-3', status: 'ineligible' },
-          { mediaItemId: 'item-4', status: 'eligible' },
-          { mediaItemId: 'item-5', status: 'ineligible' },
-        ],
-        // New evals with join for getSampleItems (improvements)
-        [
-          { mediaItemId: 'item-1', status: 'ineligible', title: 'Movie 1', trendingScore: 100 },
-          { mediaItemId: 'item-2', status: 'ineligible', title: 'Movie 2', trendingScore: 90 },
-          { mediaItemId: 'item-3', status: 'eligible', title: 'Movie 3', trendingScore: 80 },
-          { mediaItemId: 'item-4', status: 'eligible', title: 'Movie 4', trendingScore: 70 },
-          { mediaItemId: 'item-5', status: 'ineligible', title: 'Movie 5', trendingScore: 60 },
-        ],
-      ];
+      mockDiffRepository.computeDiffCounts.mockResolvedValue({
+        regressions: 2,
+        improvements: 1,
+        unchanged: 1,
+        stillIneligible: 1,
+      });
+      mockDiffRepository.getDiffSamples.mockResolvedValue([]);
+      mockDiffRepository.computeReasonBreakdown.mockResolvedValue({
+        regressionReasons: {},
+        improvementReasons: {},
+      });
 
       const result = await service.computeDiff('run-1');
 
@@ -294,32 +288,35 @@ describe('DiffService', () => {
         baselinePolicyVersion: 1,
       });
 
-      executeResult = [
-        { regressions: '1', improvements: '1', unchanged: '0', still_ineligible: '0' },
-      ];
-
-      whereResults = [
-        // Old evals for getSampleItems (regressions)
-        [
-          { mediaItemId: 'item-1', status: 'eligible' },
-          { mediaItemId: 'item-2', status: 'ineligible' },
-        ],
-        // New evals with join for getSampleItems (regressions)
-        [
-          { mediaItemId: 'item-1', status: 'ineligible', title: 'Movie 1', trendingScore: 95 },
-          { mediaItemId: 'item-2', status: 'eligible', title: 'Movie 2', trendingScore: 88 },
-        ],
-        // Old evals for getSampleItems (improvements)
-        [
-          { mediaItemId: 'item-1', status: 'eligible' },
-          { mediaItemId: 'item-2', status: 'ineligible' },
-        ],
-        // New evals with join for getSampleItems (improvements)
-        [
-          { mediaItemId: 'item-1', status: 'ineligible', title: 'Movie 1', trendingScore: 95 },
-          { mediaItemId: 'item-2', status: 'eligible', title: 'Movie 2', trendingScore: 88 },
-        ],
-      ];
+      mockDiffRepository.computeDiffCounts.mockResolvedValue({
+        regressions: 1,
+        improvements: 1,
+        unchanged: 0,
+        stillIneligible: 0,
+      });
+      mockDiffRepository.getDiffSamples
+        .mockResolvedValueOnce([
+          {
+            mediaItemId: 'item-1',
+            title: 'Movie 1',
+            oldStatus: 'eligible',
+            newStatus: 'ineligible',
+            trendingScore: 95,
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            mediaItemId: 'item-2',
+            title: 'Movie 2',
+            oldStatus: 'ineligible',
+            newStatus: 'eligible',
+            trendingScore: 88,
+          },
+        ]);
+      mockDiffRepository.computeReasonBreakdown.mockResolvedValue({
+        regressionReasons: { BLOCKED_COUNTRY: 1 },
+        improvementReasons: { ALLOWED_COUNTRY: 1 },
+      });
 
       const result = await service.computeDiff('run-1');
 
@@ -337,23 +334,111 @@ describe('DiffService', () => {
         baselinePolicyVersion: 1,
       });
 
-      executeResult = [
-        { regressions: '0', improvements: '0', unchanged: '0', still_ineligible: '0' },
-      ];
-
-      whereResults = [
-        [], // old evals for regressions
-        [], // new evals with join
-        [], // old evals for improvements
-        [], // new evals with join
-      ];
+      mockDiffRepository.computeDiffCounts.mockResolvedValue({
+        regressions: 0,
+        improvements: 0,
+        unchanged: 0,
+        stillIneligible: 0,
+      });
+      mockDiffRepository.getDiffSamples.mockResolvedValue([]);
+      mockDiffRepository.computeReasonBreakdown.mockResolvedValue({
+        regressionReasons: {},
+        improvementReasons: {},
+      });
 
       await service.computeDiff('run-1', 10);
 
-      // Verify db.execute was called for SQL aggregation
-      expect(mockDb.execute).toHaveBeenCalled();
-      // Verify db.select was called for sample retrieval
-      expect(mockDb.select).toHaveBeenCalled();
+      // Verify getDiffSamples was called with the correct limit
+      expect(mockDiffRepository.getDiffSamples).toHaveBeenCalledWith(2, 1, 'regression', 10);
+      expect(mockDiffRepository.getDiffSamples).toHaveBeenCalledWith(2, 1, 'improvement', 10);
+    });
+
+    it('should use default sampleSize of 50 when not specified', async () => {
+      mockRunRepository.findById.mockResolvedValue({
+        id: 'run-1',
+        status: 'prepared',
+        targetPolicyVersion: 2,
+        baselinePolicyVersion: 1,
+      });
+
+      mockDiffRepository.computeDiffCounts.mockResolvedValue({
+        regressions: 0,
+        improvements: 0,
+        unchanged: 0,
+        stillIneligible: 0,
+      });
+      mockDiffRepository.getDiffSamples.mockResolvedValue([]);
+      mockDiffRepository.computeReasonBreakdown.mockResolvedValue({
+        regressionReasons: {},
+        improvementReasons: {},
+      });
+
+      await service.computeDiff('run-1');
+
+      expect(mockDiffRepository.getDiffSamples).toHaveBeenCalledWith(2, 1, 'regression', 50);
+      expect(mockDiffRepository.getDiffSamples).toHaveBeenCalledWith(2, 1, 'improvement', 50);
+    });
+
+    it('should include reasonBreakdown in result', async () => {
+      mockRunRepository.findById.mockResolvedValue({
+        id: 'run-1',
+        status: 'prepared',
+        targetPolicyVersion: 2,
+        baselinePolicyVersion: 1,
+      });
+
+      mockDiffRepository.computeDiffCounts.mockResolvedValue({
+        regressions: 2,
+        improvements: 3,
+        unchanged: 10,
+        stillIneligible: 5,
+      });
+      mockDiffRepository.getDiffSamples.mockResolvedValue([]);
+      mockDiffRepository.computeReasonBreakdown.mockResolvedValue({
+        regressionReasons: { BLOCKED_COUNTRY: 2 },
+        improvementReasons: { ALLOWED_LANGUAGE: 3 },
+      });
+
+      const result = await service.computeDiff('run-1');
+
+      expect(result.reasonBreakdown).toEqual({
+        regressionReasons: { BLOCKED_COUNTRY: 2 },
+        improvementReasons: { ALLOWED_LANGUAGE: 3 },
+      });
+    });
+
+    it('should call repository methods in parallel', async () => {
+      mockRunRepository.findById.mockResolvedValue({
+        id: 'run-1',
+        status: 'prepared',
+        targetPolicyVersion: 2,
+        baselinePolicyVersion: 1,
+      });
+
+      // Track call order
+      const callOrder: string[] = [];
+      mockDiffRepository.computeDiffCounts.mockImplementation(async () => {
+        callOrder.push('computeDiffCounts');
+        return { regressions: 0, improvements: 0, unchanged: 0, stillIneligible: 0 };
+      });
+      mockDiffRepository.getDiffSamples.mockImplementation(
+        async (_target: number, _baseline: number, type: string) => {
+          callOrder.push(`getDiffSamples:${type}`);
+          return [];
+        },
+      );
+      mockDiffRepository.computeReasonBreakdown.mockImplementation(async () => {
+        callOrder.push('computeReasonBreakdown');
+        return { regressionReasons: {}, improvementReasons: {} };
+      });
+
+      await service.computeDiff('run-1');
+
+      // Verify all methods were called
+      expect(callOrder).toContain('computeDiffCounts');
+      expect(callOrder).toContain('getDiffSamples:regression');
+      expect(callOrder).toContain('getDiffSamples:improvement');
+      expect(callOrder).toContain('computeReasonBreakdown');
     });
   });
 });

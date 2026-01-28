@@ -27,22 +27,25 @@ export {
   GLOBAL_REGION,
 } from '../domain/utils/region-normalizer';
 
-// Types
-export type {
-  Provider,
-  ProviderVariant,
-  ProviderMapping,
-  UnmappedProvider,
-  MediaWatchOffer,
-  ResolvedMapping,
-  ProviderWithVariants,
-  DistributionChannel,
-  OfferType,
-  MappingSource,
-  CreateProviderDto,
-  UpdateProviderDto,
-  CreateMappingDto,
-  UpdateMappingDto,
+// Types & Constants
+export {
+  DISTRIBUTION_CHANNEL,
+  OFFER_TYPE,
+  MAPPING_SOURCE,
+  type Provider,
+  type ProviderVariant,
+  type ProviderMapping,
+  type UnmappedProvider,
+  type MediaWatchOffer,
+  type ResolvedMapping,
+  type ProviderWithVariants,
+  type DistributionChannel,
+  type OfferType,
+  type MappingSource,
+  type CreateProviderDto,
+  type UpdateProviderDto,
+  type CreateMappingDto,
+  type UpdateMappingDto,
 } from '../domain/types/provider.types';
 
 // Repository interfaces

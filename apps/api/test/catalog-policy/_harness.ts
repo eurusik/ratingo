@@ -12,6 +12,8 @@ import * as request from 'supertest';
 
 import { ResponseInterceptor } from '../../src/common/interceptors/response.interceptor';
 import { AllExceptionsFilter } from '../../src/common/filters/all-exceptions.filter';
+import { PolicyActivationExceptionFilter } from '../../src/modules/catalog-policy/presentation/filters/policy-activation-exception.filter';
+import { DryRunExceptionFilter } from '../../src/modules/catalog-policy/presentation/filters/dry-run-exception.filter';
 
 import {
   PolicyController,
@@ -26,17 +28,27 @@ import { RunAggregationService } from '../../src/modules/catalog-policy/applicat
 import { AdminJwtGuard } from '../../src/modules/auth/infrastructure/guards/admin-jwt.guard';
 import { CATALOG_POLICY_QUEUE } from '../../src/modules/catalog-policy/catalog-policy.constants';
 import {
-  ICatalogPolicyRepository,
   CATALOG_POLICY_REPOSITORY,
-} from '../../src/modules/catalog-policy/infrastructure/repositories/catalog-policy.repository';
-import {
-  ICatalogEvaluationRunRepository,
+  type ICatalogPolicyRepository,
   CATALOG_EVALUATION_RUN_REPOSITORY,
-  CatalogEvaluationRun,
-  CreateRunInput,
-  UpdateRunInput,
-  IncrementCountersInput,
-} from '../../src/modules/catalog-policy/infrastructure/repositories/catalog-evaluation-run.repository';
+  type ICatalogEvaluationRunRepository,
+  type CatalogEvaluationRun,
+  type CreateRunInput,
+  type UpdateRunInput,
+  type IncrementCountersInput,
+  POLICY_ACTIVATION_REPOSITORY,
+  type IPolicyActivationRepository,
+  type CreateRunWithSnapshotInput,
+  type CreateRunWithSnapshotResult,
+  type PromoteRunInput,
+  DIFF_REPOSITORY,
+  type IDiffRepository,
+} from '../../src/modules/catalog-policy/domain/repositories';
+import type {
+  DiffCounts,
+  DiffSample,
+  ReasonBreakdown,
+} from '../../src/modules/catalog-policy/domain/types/diff.types';
 import {
   IMediaCatalogEvaluationRepository,
   MEDIA_CATALOG_EVALUATION_REPOSITORY,
@@ -45,7 +57,13 @@ import {
   MEDIA_WATCH_OFFERS_REPOSITORY,
   type IMediaWatchOffersRepository,
 } from '../../src/modules/provider/public';
-import { DATABASE_CONNECTION } from '../../src/database/database.module';
+import { DRY_RUN_REPOSITORY } from '../../src/modules/catalog-policy/domain/repositories';
+import type {
+  IDryRunRepository,
+  DryRunMediaItem,
+  CurrentEvaluation,
+} from '../../src/modules/catalog-policy/domain/repositories/dry-run.repository.interface';
+import { MediaType } from '../../src/common/enums/media-type.enum';
 import {
   CatalogPolicy,
   PolicyConfig,
@@ -55,7 +73,9 @@ import {
   RunStatus,
   RunStatusType,
   EligibilityStatusType,
+  type EvaluationContextType,
 } from '../../src/modules/catalog-policy/domain/constants/evaluation.constants';
+import type { AggregatedCounters, RunAnomaly } from '../../src/modules/catalog-policy/domain/types';
 
 // ============================================================================
 // Test Helpers
@@ -217,6 +237,54 @@ class InMemoryRunRepository implements ICatalogEvaluationRunRepository {
     return this.runs.slice(offset, offset + limit);
   }
 
+  async aggregateCounters(runId: string): Promise<AggregatedCounters> {
+    const run = this.runs.find((r) => r.id === runId);
+    if (!run) {
+      return { processed: 0, eligible: 0, ineligible: 0, review: 0, errors: 0 };
+    }
+    return {
+      processed: run.processed,
+      eligible: run.eligible,
+      ineligible: run.ineligible,
+      review: 0,
+      errors: run.errors,
+    };
+  }
+
+  async syncRunCounters(runId: string): Promise<AggregatedCounters> {
+    return this.aggregateCounters(runId);
+  }
+
+  async findStaleRunning(cutoff: Date): Promise<Array<{ id: string }>> {
+    return this.runs
+      .filter((r) => r.status === RunStatus.RUNNING && r.startedAt < cutoff)
+      .map((r) => ({ id: r.id }));
+  }
+
+  async recordAnomaly(runId: string, anomaly: RunAnomaly): Promise<void> {
+    const run = this.runs.find((r) => r.id === runId);
+    if (run) {
+      run.errorSample = [
+        { mediaItemId: 'anomaly', error: JSON.stringify(anomaly), timestamp: anomaly.timestamp },
+        ...run.errorSample,
+      ].slice(0, 10);
+    }
+  }
+
+  async transitionToPrepared(runId: string, counters: AggregatedCounters): Promise<boolean> {
+    const run = this.runs.find((r) => r.id === runId);
+    if (!run || run.status !== RunStatus.RUNNING) {
+      return false;
+    }
+    run.status = RunStatus.PREPARED;
+    run.processed = counters.processed;
+    run.eligible = counters.eligible;
+    run.ineligible = counters.ineligible;
+    run.errors = counters.errors;
+    run.finishedAt = new Date();
+    return true;
+  }
+
   // Test helper
   clear(): void {
     this.runs = [];
@@ -252,6 +320,22 @@ class InMemoryEvaluationRepository implements IMediaCatalogEvaluationRepository 
 
   async findByMediaId(mediaItemId: string): Promise<MediaCatalogEvaluation | null> {
     return this.evaluations.find((e) => e.mediaItemId === mediaItemId) ?? null;
+  }
+
+  async findByMediaIdForContexts(
+    mediaItemId: string,
+    contexts: EvaluationContextType[],
+  ): Promise<Map<EvaluationContextType, MediaCatalogEvaluation>> {
+    const result = new Map<EvaluationContextType, MediaCatalogEvaluation>();
+    for (const ctx of contexts) {
+      const evaluation = this.evaluations.find(
+        (e) => e.mediaItemId === mediaItemId && e.context === ctx,
+      );
+      if (evaluation) {
+        result.set(ctx, evaluation);
+      }
+    }
+    return result;
   }
 
   async findByMediaIdAndPolicyVersion(
@@ -335,6 +419,55 @@ class MockQueue {
 class MockAdminJwtGuard implements CanActivate {
   canActivate(_context: ExecutionContext): boolean {
     return true;
+  }
+}
+
+// ============================================================================
+// Mock Watch Offers Repository
+// ============================================================================
+
+class MockDryRunRepository implements IDryRunRepository {
+  private items: DryRunMediaItem[] = [];
+  private evaluations: Map<string, CurrentEvaluation> = new Map();
+
+  setItems(items: DryRunMediaItem[]): void {
+    this.items = items;
+  }
+
+  setEvaluations(evaluations: Map<string, CurrentEvaluation>): void {
+    this.evaluations = evaluations;
+  }
+
+  async fetchSampleItems(limit: number, _samplePercent: number): Promise<DryRunMediaItem[]> {
+    return this.items.slice(0, limit);
+  }
+
+  async fetchTopItems(limit: number): Promise<DryRunMediaItem[]> {
+    return this.items.slice(0, limit);
+  }
+
+  async fetchByTypeItems(_mediaType: MediaType, limit: number): Promise<DryRunMediaItem[]> {
+    return this.items.slice(0, limit);
+  }
+
+  async fetchByCountryItems(country: string, limit: number): Promise<DryRunMediaItem[]> {
+    return this.items.filter((item) => item.originCountries?.includes(country)).slice(0, limit);
+  }
+
+  async getCurrentEvaluations(mediaItemIds: string[]): Promise<Map<string, CurrentEvaluation>> {
+    const result = new Map<string, CurrentEvaluation>();
+    for (const id of mediaItemIds) {
+      const eval_ = this.evaluations.get(id);
+      if (eval_) {
+        result.set(id, eval_);
+      }
+    }
+    return result;
+  }
+
+  clear(): void {
+    this.items = [];
+    this.evaluations = new Map();
   }
 }
 
@@ -446,6 +579,110 @@ function createMockDb() {
 }
 
 // ============================================================================
+// Mock Diff Repository
+// ============================================================================
+
+class MockDiffRepository implements IDiffRepository {
+  async computeDiffCounts(
+    _targetVersion: number,
+    _baselineVersion: number | null,
+  ): Promise<DiffCounts> {
+    return {
+      regressions: 1,
+      improvements: 1,
+      unchanged: 0,
+      stillIneligible: 0,
+    };
+  }
+
+  async getDiffSamples(
+    _targetVersion: number,
+    _baselineVersion: number | null,
+    type: 'regression' | 'improvement',
+    _limit: number,
+  ): Promise<DiffSample[]> {
+    if (type === 'regression') {
+      return [
+        {
+          mediaItemId: 'item-1',
+          title: 'Movie 1',
+          trendingScore: 100,
+          oldStatus: 'eligible',
+          newStatus: 'ineligible',
+        },
+      ];
+    }
+    return [
+      {
+        mediaItemId: 'item-2',
+        title: 'Movie 2',
+        trendingScore: 90,
+        oldStatus: 'ineligible',
+        newStatus: 'eligible',
+      },
+    ];
+  }
+
+  async computeReasonBreakdown(
+    _targetVersion: number,
+    _baselineVersion: number | null,
+  ): Promise<ReasonBreakdown> {
+    return {
+      regressionReasons: { BLOCKED_COUNTRY: 1 },
+      improvementReasons: { ALLOWED_COUNTRY: 1 },
+    };
+  }
+}
+
+// ============================================================================
+// Mock Policy Activation Repository
+// ============================================================================
+
+function createMockPolicyActivationRepository(
+  policyRepo: InMemoryPolicyRepository,
+  runRepo: InMemoryRunRepository,
+): IPolicyActivationRepository {
+  return {
+    async createRunWithSnapshot(
+      input: CreateRunWithSnapshotInput,
+    ): Promise<CreateRunWithSnapshotResult> {
+      const activePolicy = await policyRepo.findActive();
+      const baselinePolicyVersion = activePolicy?.version ?? null;
+      const snapshotCutoff = new Date();
+      const totalReadySnapshot = 1000; // Mock count
+
+      const run = await runRepo.create({
+        targetPolicyId: input.targetPolicyId,
+        targetPolicyVersion: input.targetPolicyVersion,
+        baselinePolicyVersion,
+        totalReadySnapshot,
+        snapshotCutoff,
+      });
+
+      return {
+        runId: run.id,
+        baselinePolicyVersion,
+        totalReadySnapshot,
+        snapshotCutoff,
+      };
+    },
+
+    async promoteRun(input: PromoteRunInput): Promise<void> {
+      await policyRepo.activate(input.targetPolicyId);
+      await runRepo.update(input.runId, {
+        status: input.newStatus,
+        promotedAt: new Date(),
+        promotedBy: input.promotedBy,
+      });
+    },
+
+    async countReadyMediaItems(_cutoffDate: Date): Promise<number> {
+      return 1000; // Mock count
+    },
+  };
+}
+
+// ============================================================================
 // Mock RunAggregationService
 // ============================================================================
 
@@ -483,6 +720,7 @@ export interface CatalogPolicyE2eContext {
   policyRepo: InMemoryPolicyRepository;
   runRepo: InMemoryRunRepository;
   evaluationRepo: InMemoryEvaluationRepository;
+  dryRunRepo: MockDryRunRepository;
   queue: MockQueue;
   mockDb: ReturnType<typeof createMockDb>;
   post: (path: string, body?: any) => request.Test;
@@ -498,6 +736,9 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
   const mockDb = createMockDb();
   const mockAggregationService = createMockRunAggregationService(runRepo);
   const mockWatchOffersRepo = new MockWatchOffersRepository();
+  const mockDryRunRepo = new MockDryRunRepository();
+  const mockPolicyActivationRepo = createMockPolicyActivationRepository(policyRepo, runRepo);
+  const mockDiffRepo = new MockDiffRepository();
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     controllers: [PolicyController, RunController, DryRunController],
@@ -509,10 +750,12 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
       { provide: RunAggregationService, useValue: mockAggregationService },
       { provide: CATALOG_POLICY_REPOSITORY, useValue: policyRepo },
       { provide: CATALOG_EVALUATION_RUN_REPOSITORY, useValue: runRepo },
+      { provide: POLICY_ACTIVATION_REPOSITORY, useValue: mockPolicyActivationRepo },
+      { provide: DIFF_REPOSITORY, useValue: mockDiffRepo },
       { provide: MEDIA_CATALOG_EVALUATION_REPOSITORY, useValue: evaluationRepo },
       { provide: MEDIA_WATCH_OFFERS_REPOSITORY, useValue: mockWatchOffersRepo },
+      { provide: DRY_RUN_REPOSITORY, useValue: mockDryRunRepo },
       { provide: getQueueToken(CATALOG_POLICY_QUEUE), useValue: queue },
-      { provide: DATABASE_CONNECTION, useValue: mockDb },
     ],
   })
     .overrideGuard(AdminJwtGuard)
@@ -529,7 +772,11 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
       transformOptions: { enableImplicitConversion: true },
     }),
   );
-  app.useGlobalFilters(new AllExceptionsFilter());
+  app.useGlobalFilters(
+    new AllExceptionsFilter(),
+    new PolicyActivationExceptionFilter(),
+    new DryRunExceptionFilter(),
+  );
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   await app.init();
@@ -541,6 +788,7 @@ export async function createCatalogPolicyApp(): Promise<CatalogPolicyE2eContext>
     policyRepo,
     runRepo,
     evaluationRepo,
+    dryRunRepo: mockDryRunRepo,
     queue,
     mockDb,
     post: (path: string, body?: any) => {

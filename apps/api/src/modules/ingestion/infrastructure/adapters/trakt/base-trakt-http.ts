@@ -33,6 +33,9 @@ const TRAKT_BULK_RETRY_CONFIG: Partial<RetryConfig> = {
 // Jitter for Retry-After to avoid thundering herd
 const RETRY_AFTER_JITTER_MS = 1000;
 
+// Milliseconds per second for time conversions
+const MS_PER_SECOND = 1000;
+
 // Rate limiter configuration
 // Trakt limit: 1000 req / 5 min = 3.33 req/s
 // We use 2 req/s to stay safely under the limit with margin for retries.
@@ -125,7 +128,9 @@ class RateLimiter {
     // Only extend pause, never shorten
     if (newPauseUntil > this.pauseUntil) {
       this.pauseUntil = newPauseUntil;
-      this.logger.warn(`Rate limiter paused for ${Math.round(durationMs / 1000)}s due to 429`);
+      this.logger.warn(
+        `Rate limiter paused for ${Math.round(durationMs / MS_PER_SECOND)}s due to 429`,
+      );
     }
   }
 
@@ -147,7 +152,9 @@ class RateLimiter {
       const remainingPauseMs = this.getRemainingPauseMs();
       if (remainingPauseMs <= 0) break;
 
-      this.logger.debug(`Waiting ${Math.round(remainingPauseMs / 1000)}s for rate limit pause`);
+      this.logger.debug(
+        `Waiting ${Math.round(remainingPauseMs / MS_PER_SECOND)}s for rate limit pause`,
+      );
       await new Promise((resolve) => setTimeout(resolve, remainingPauseMs));
     }
 

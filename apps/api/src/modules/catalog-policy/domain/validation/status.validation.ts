@@ -1,7 +1,5 @@
 /**
- * Status Validation Functions
- *
- * Implements fail-fast principle for eligibility status validation.
+ * Status validation with fail-fast principle.
  */
 
 import {
@@ -13,15 +11,11 @@ import {
 import { InvalidEligibilityStatusError } from '../errors/policy.errors';
 
 /**
- * Validates status is canonical eligibility value.
+ * Validates eligibility status is canonical value.
  *
  * @param status - Status value to validate
- * @returns Validated status as EligibilityStatusType
- * @throws {InvalidEligibilityStatusError} If status is not valid
- *
- * @example
- * validateStatus('eligible');  // Returns 'eligible'
- * validateStatus('ELIGIBLE');  // Throws InvalidEligibilityStatusError
+ * @returns Validated status
+ * @throws {InvalidEligibilityStatusError} When status invalid
  */
 export function validateStatus(status: string): EligibilityStatusType {
   const validStatuses = Object.values(EligibilityStatus) as string[];
@@ -35,28 +29,16 @@ export function validateStatus(status: string): EligibilityStatusType {
 
 /**
  * Type guard for eligibility status.
- *
- * @param status - Value to check
- * @returns True if status is valid EligibilityStatusType
  */
 export function isValidEligibilityStatus(status: unknown): status is EligibilityStatusType {
-  if (typeof status !== 'string') {
-    return false;
-  }
-  const validStatuses = Object.values(EligibilityStatus) as string[];
-  return validStatuses.includes(status);
+  if (typeof status !== 'string') return false;
+  return (Object.values(EligibilityStatus) as string[]).includes(status);
 }
 
 /**
  * Type guard for run status.
- *
- * @param status - Value to check
- * @returns True if status is valid RunStatusType
  */
 export function isValidRunStatus(status: unknown): status is RunStatusType {
-  if (typeof status !== 'string') {
-    return false;
-  }
-  const validStatuses = Object.values(RunStatus) as string[];
-  return validStatuses.includes(status);
+  if (typeof status !== 'string') return false;
+  return (Object.values(RunStatus) as string[]).includes(status);
 }

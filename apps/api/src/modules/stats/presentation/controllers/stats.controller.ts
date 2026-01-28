@@ -24,6 +24,15 @@ import {
 } from '../dto';
 
 /**
+ * Converts query type string to MediaType enum.
+ */
+function parseMediaType(type?: 'movie' | 'show'): MediaType | undefined {
+  if (type === 'movie') return MediaType.MOVIE;
+  if (type === 'show') return MediaType.SHOW;
+  return undefined;
+}
+
+/**
  * REST controller for media statistics endpoints.
  * Provides endpoints for syncing and retrieving real-time stats and drop-off analysis.
  */
@@ -211,8 +220,7 @@ export class StatsController {
       'Finds items where total_watchers = 0 but have Trakt votes, then re-fetches from Trakt API.',
   })
   async backfillTotalWatchers(@Query() query: BackfillTotalWatchersQueryDto) {
-    const mediaType =
-      query.type === 'movie' ? MediaType.MOVIE : query.type === 'show' ? MediaType.SHOW : undefined;
+    const mediaType = parseMediaType(query.type);
 
     const result = await this.statsBackfillService.backfillTotalWatchers({
       type: mediaType,
@@ -241,8 +249,7 @@ export class StatsController {
       'Finds items where watchers_count = 0 but total_watchers > threshold, then queues chunk jobs to re-fetch live watchers from Trakt API with proper rate limiting and exponential backoff.',
   })
   async backfillWatchersCount(@Query() query: BackfillWatchersCountQueryDto) {
-    const mediaType =
-      query.type === 'movie' ? MediaType.MOVIE : query.type === 'show' ? MediaType.SHOW : undefined;
+    const mediaType = parseMediaType(query.type);
 
     const result = await this.statsBackfillService.queueWatchersCountBackfill({
       type: mediaType,
@@ -275,8 +282,7 @@ export class StatsController {
       'Recalculates ratingo_score, quality_score, popularity_score, and freshness_score for all items. Use type=show to recalculate only shows.',
   })
   async recalculateScores(@Query() query: RecalculateScoresQueryDto) {
-    const mediaType =
-      query.type === 'movie' ? MediaType.MOVIE : query.type === 'show' ? MediaType.SHOW : undefined;
+    const mediaType = parseMediaType(query.type);
 
     const result = await this.scoreRecalculationService.recalculateScores({
       type: mediaType,

@@ -1,8 +1,5 @@
 /**
  * Catalog Policy Repository
- *
- * Repository for managing catalog policies with versioning and activation.
- * Ensures single active policy invariant via database constraints.
  */
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -14,47 +11,8 @@ import { DatabaseException } from '../../../../common/exceptions';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { PolicyNotFoundError } from '../../domain/errors';
-import { type CatalogPolicy, type PolicyConfig } from '../../domain/types/policy.types';
-
-export const CATALOG_POLICY_REPOSITORY = 'CATALOG_POLICY_REPOSITORY';
-
-export interface ICatalogPolicyRepository {
-  /**
-   * Finds the currently active policy.
-   * Returns null if no policy is active (should not happen after seed).
-   */
-  findActive(): Promise<CatalogPolicy | null>;
-
-  /**
-   * Finds a policy by ID.
-   */
-  findById(id: string): Promise<CatalogPolicy | null>;
-
-  /**
-   * Finds a policy by version number.
-   */
-  findByVersion(version: number): Promise<CatalogPolicy | null>;
-
-  /**
-   * Creates a new policy with auto-incremented version.
-   * Does NOT activate it automatically.
-   */
-  create(policy: PolicyConfig): Promise<CatalogPolicy>;
-
-  /**
-   * Activates a policy by ID.
-   * Deactivates the previous active policy in a transaction.
-   *
-   * Design Decision DD-2: Active policy always exists after seed.
-   * This ensures NO_ACTIVE_POLICY is only a fallback state.
-   */
-  activate(id: string): Promise<void>;
-
-  /**
-   * Finds all policies ordered by version descending.
-   */
-  findAll(): Promise<CatalogPolicy[]>;
-}
+import type { ICatalogPolicyRepository } from '../../domain/repositories';
+import type { CatalogPolicy, PolicyConfig } from '../../domain/types/policy.types';
 
 @Injectable()
 export class CatalogPolicyRepository implements ICatalogPolicyRepository {

@@ -7,124 +7,27 @@
 
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql, and, lt } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
 import { DatabaseException } from '../../../../common/exceptions';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { RunStatus, type RunStatusType } from '../../domain/constants/evaluation.constants';
+import {
+  EligibilityStatus,
+  RunStatus,
+  type RunStatusType,
+} from '../../domain/constants/evaluation.constants';
 import { InvalidRunStatusError } from '../../domain/errors/policy.errors';
-
-export const CATALOG_EVALUATION_RUN_REPOSITORY = 'CATALOG_EVALUATION_RUN_REPOSITORY';
-
-export interface CatalogEvaluationRun {
-  id: string;
-  policyVersion: number;
-  status: RunStatusType;
-  startedAt: Date;
-  finishedAt: Date | null;
-  cursor: string | null;
-  // Policy Activation Flow fields
-  targetPolicyId: string | null;
-  targetPolicyVersion: number | null;
-  /** Version of active policy when run was created (for diff calculation) */
-  baselinePolicyVersion: number | null;
-  totalReadySnapshot: number;
-  snapshotCutoff: Date | null;
-  processed: number;
-  eligible: number;
-  ineligible: number;
-  errors: number;
-  errorSample: Array<{
-    mediaItemId: string;
-    error: string;
-    stack?: string;
-    timestamp: string;
-  }>;
-  promotedAt: Date | null;
-  promotedBy: string | null;
-}
-
-export interface CreateRunInput {
-  targetPolicyId: string;
-  targetPolicyVersion: number;
-  /** Version of active policy when run was created (for diff calculation) */
-  baselinePolicyVersion: number | null;
-  totalReadySnapshot: number;
-  snapshotCutoff: Date;
-}
-
-export interface UpdateRunInput {
-  status?: RunStatusType;
-  finishedAt?: Date;
-  cursor?: string;
-  processed?: number;
-  eligible?: number;
-  ineligible?: number;
-  errors?: number;
-  errorSample?: Array<{
-    mediaItemId: string;
-    error: string;
-    stack?: string;
-    timestamp: string;
-  }>;
-  promotedAt?: Date;
-  promotedBy?: string;
-}
-
-export interface IncrementCountersInput {
-  processed?: number;
-  eligible?: number;
-  ineligible?: number;
-  errors?: number;
-}
-
-export interface ICatalogEvaluationRunRepository {
-  /**
-   * Creates a new evaluation run.
-   */
-  create(input: CreateRunInput): Promise<CatalogEvaluationRun>;
-
-  /**
-   * Finds a run by ID.
-   */
-  findById(id: string): Promise<CatalogEvaluationRun | null>;
-
-  /**
-   * Updates a run.
-   */
-  update(id: string, updates: UpdateRunInput): Promise<void>;
-
-  /**
-   * Atomically increments counters (prevents race conditions).
-   */
-  incrementCounters(id: string, increments: IncrementCountersInput): Promise<void>;
-
-  /**
-   * Records error atomically: increments errors counter AND appends to errorSample in one UPDATE.
-   */
-  recordError(
-    id: string,
-    error: { mediaItemId: string; error: string; stack?: string; timestamp: string },
-  ): Promise<void>;
-
-  /**
-   * Finds runs by policy ID.
-   */
-  findByPolicyId(policyId: string): Promise<CatalogEvaluationRun[]>;
-
-  /**
-   * Finds runs by status.
-   */
-  findByStatus(status: string): Promise<CatalogEvaluationRun[]>;
-
-  /**
-   * Finds all runs with optional pagination.
-   */
-  findAll(options?: { limit?: number; offset?: number }): Promise<CatalogEvaluationRun[]>;
-}
+import {
+  type ICatalogEvaluationRunRepository,
+  type CatalogEvaluationRun,
+  type CreateRunInput,
+  type UpdateRunInput,
+  type IncrementCountersInput,
+} from '../../domain/repositories';
+import { type AggregatedCounters, type RunAnomaly } from '../../domain/types';
 
 @Injectable()
 export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepository {
@@ -327,6 +230,165 @@ export class CatalogEvaluationRunRepository implements ICatalogEvaluationRunRepo
     } catch (err) {
       this.logger.error(`Failed to record error for run ${id}`, err);
       throw new DatabaseException(`Failed to record error for run ${id}`, err);
+    }
+  }
+
+  /**
+   * Aggregates counters from evaluations table for a specific run.
+   * Uses COUNT(DISTINCT media_item_id) to avoid double-counting.
+   */
+  async aggregateCounters(runId: string): Promise<AggregatedCounters> {
+    try {
+      const result = await this.db
+        .select({
+          processed: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId})::int`,
+          eligible: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.ELIGIBLE})::int`,
+          ineligible: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.INELIGIBLE})::int`,
+          review: sql<number>`COUNT(DISTINCT ${schema.mediaCatalogEvaluations.mediaItemId}) FILTER (WHERE ${schema.mediaCatalogEvaluations.status} = ${EligibilityStatus.REVIEW})::int`,
+        })
+        .from(schema.mediaCatalogEvaluations)
+        .where(eq(schema.mediaCatalogEvaluations.runId, runId));
+
+      const counters = result[0] || { processed: 0, eligible: 0, ineligible: 0, review: 0 };
+
+      // Get error count from run's errors column (atomic counter, source of truth)
+      const run = await this.db
+        .select({ errors: schema.catalogEvaluationRuns.errors })
+        .from(schema.catalogEvaluationRuns)
+        .where(eq(schema.catalogEvaluationRuns.id, runId))
+        .limit(1);
+
+      return {
+        ...counters,
+        errors: run[0]?.errors ?? 0,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to aggregate counters for run ${runId}`, error);
+      throw new DatabaseException(`Failed to aggregate counters for run ${runId}`, error);
+    }
+  }
+
+  /**
+   * Syncs cached counters with actual aggregated values.
+   * Uses atomic UPDATE with subqueries to prevent race conditions.
+   */
+  async syncRunCounters(runId: string): Promise<AggregatedCounters> {
+    try {
+      // Atomic UPDATE with subqueries - no race condition between read and write
+      const result = await this.db
+        .update(schema.catalogEvaluationRuns)
+        .set({
+          processed: sql`(
+            SELECT COUNT(DISTINCT media_item_id)::int
+            FROM ${schema.mediaCatalogEvaluations}
+            WHERE run_id = ${runId}
+          )`,
+          eligible: sql`(
+            SELECT COUNT(DISTINCT media_item_id)::int
+            FROM ${schema.mediaCatalogEvaluations}
+            WHERE run_id = ${runId} AND status = ${EligibilityStatus.ELIGIBLE}
+          )`,
+          ineligible: sql`(
+            SELECT COUNT(DISTINCT media_item_id)::int
+            FROM ${schema.mediaCatalogEvaluations}
+            WHERE run_id = ${runId} AND status = ${EligibilityStatus.INELIGIBLE}
+          )`,
+          // errors column is not updated here - it's managed by recordError atomically
+        })
+        .where(eq(schema.catalogEvaluationRuns.id, runId))
+        .returning({
+          processed: schema.catalogEvaluationRuns.processed,
+          eligible: schema.catalogEvaluationRuns.eligible,
+          ineligible: schema.catalogEvaluationRuns.ineligible,
+          errors: schema.catalogEvaluationRuns.errors,
+        });
+
+      // Calculate review from the difference (processed - eligible - ineligible)
+      const counters: AggregatedCounters = {
+        processed: result[0]?.processed ?? 0,
+        eligible: result[0]?.eligible ?? 0,
+        ineligible: result[0]?.ineligible ?? 0,
+        review:
+          (result[0]?.processed ?? 0) - (result[0]?.eligible ?? 0) - (result[0]?.ineligible ?? 0),
+        errors: result[0]?.errors ?? 0,
+      };
+
+      this.logger.debug(`Synced counters for run ${runId}: ${JSON.stringify(counters)}`);
+
+      return counters;
+    } catch (error) {
+      this.logger.error(`Failed to sync counters for run ${runId}`, error);
+      throw new DatabaseException(`Failed to sync counters for run ${runId}`, error);
+    }
+  }
+
+  /**
+   * Finds runs that are RUNNING and started before the cutoff date.
+   */
+  async findStaleRunning(cutoff: Date): Promise<Array<{ id: string }>> {
+    try {
+      return await this.db
+        .select({ id: schema.catalogEvaluationRuns.id })
+        .from(schema.catalogEvaluationRuns)
+        .where(
+          and(
+            eq(schema.catalogEvaluationRuns.status, RunStatus.RUNNING),
+            lt(schema.catalogEvaluationRuns.startedAt, cutoff),
+          ),
+        );
+    } catch (error) {
+      this.logger.error('Failed to find stale running runs', error);
+      throw new DatabaseException('Failed to find stale running runs', error);
+    }
+  }
+
+  /**
+   * Records an anomaly in the run's errorSample.
+   */
+  async recordAnomaly(runId: string, anomaly: RunAnomaly): Promise<void> {
+    try {
+      await this.db
+        .update(schema.catalogEvaluationRuns)
+        .set({
+          errorSample: sql`COALESCE(error_sample, '[]'::jsonb) || ${JSON.stringify([anomaly])}::jsonb`,
+        })
+        .where(eq(schema.catalogEvaluationRuns.id, runId));
+
+      this.logger.debug(`Recorded anomaly for run ${runId}: ${anomaly.type}`);
+    } catch (error) {
+      this.logger.error(`Failed to record anomaly for run ${runId}`, error);
+      throw new DatabaseException(`Failed to record anomaly for run ${runId}`, error);
+    }
+  }
+
+  /**
+   * Atomically transitions a run from RUNNING to PREPARED.
+   * Uses WHERE guard to prevent race conditions.
+   */
+  async transitionToPrepared(runId: string, counters: AggregatedCounters): Promise<boolean> {
+    try {
+      const result = await this.db
+        .update(schema.catalogEvaluationRuns)
+        .set({
+          status: RunStatus.PREPARED,
+          finishedAt: new Date(),
+          processed: counters.processed,
+          eligible: counters.eligible,
+          ineligible: counters.ineligible,
+          errors: counters.errors,
+        })
+        .where(
+          and(
+            eq(schema.catalogEvaluationRuns.id, runId),
+            eq(schema.catalogEvaluationRuns.status, RunStatus.RUNNING),
+          ),
+        )
+        .returning({ id: schema.catalogEvaluationRuns.id });
+
+      return result.length > 0;
+    } catch (error) {
+      this.logger.error(`Failed to transition run ${runId} to PREPARED`, error);
+      throw new DatabaseException(`Failed to transition run ${runId} to PREPARED`, error);
     }
   }
 

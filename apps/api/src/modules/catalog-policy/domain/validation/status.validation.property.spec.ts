@@ -1,6 +1,11 @@
 import * as fc from 'fast-check';
-import { validateStatus, isValidEligibilityStatus } from './status.validation';
-import { EligibilityStatus, EligibilityStatusType } from '../constants/evaluation.constants';
+import { validateStatus, isValidEligibilityStatus, isValidRunStatus } from './status.validation';
+import {
+  EligibilityStatus,
+  EligibilityStatusType,
+  RunStatus,
+  RunStatusType,
+} from '../constants/evaluation.constants';
 import { InvalidEligibilityStatusError } from '../errors/policy.errors';
 
 describe('Status Validation - Property-Based Tests', () => {
@@ -159,6 +164,40 @@ describe('Status Validation - Property-Based Tests', () => {
         }),
         { numRuns: 100 },
       );
+    });
+  });
+
+  describe('isValidRunStatus', () => {
+    const CANONICAL_RUN_STATUSES: RunStatusType[] = Object.values(RunStatus);
+    const validRunStatusArb = fc.constantFrom(...CANONICAL_RUN_STATUSES);
+    const invalidRunStatusArb = fc
+      .string({ minLength: 1, maxLength: 20 })
+      .filter((s) => !CANONICAL_RUN_STATUSES.includes(s as RunStatusType));
+
+    it('should return true for valid run status values', () => {
+      fc.assert(
+        fc.property(validRunStatusArb, (status) => {
+          expect(isValidRunStatus(status)).toBe(true);
+        }),
+        { numRuns: 50 },
+      );
+    });
+
+    it('should return false for invalid run status values', () => {
+      fc.assert(
+        fc.property(invalidRunStatusArb, (status) => {
+          expect(isValidRunStatus(status)).toBe(false);
+        }),
+        { numRuns: 50 },
+      );
+    });
+
+    it('should return false for non-string values', () => {
+      expect(isValidRunStatus(null)).toBe(false);
+      expect(isValidRunStatus(undefined)).toBe(false);
+      expect(isValidRunStatus(123)).toBe(false);
+      expect(isValidRunStatus({})).toBe(false);
+      expect(isValidRunStatus([])).toBe(false);
     });
   });
 });

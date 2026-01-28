@@ -30,6 +30,9 @@ import {
   ResolveReportDto,
 } from '../dto';
 
+/** Default page limit for reports list */
+const DEFAULT_REPORTS_LIMIT = 20;
+
 @ApiTags('Admin - Reviews')
 @ApiBearerAuth()
 @UseGuards(AdminJwtGuard)
@@ -55,7 +58,7 @@ export class AdminReviewsController {
   async listReports(@Query() query: AdminReportQueryDto): Promise<AdminReportListResponseDto> {
     const { data, total } = await this.reportsService.listForModeration({
       status: query.status,
-      limit: query.limit ?? 20,
+      limit: query.limit ?? DEFAULT_REPORTS_LIMIT,
       offset: query.offset ?? 0,
     });
 

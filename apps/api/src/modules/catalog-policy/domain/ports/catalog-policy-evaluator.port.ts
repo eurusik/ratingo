@@ -1,6 +1,8 @@
 /**
+ * Catalog Policy Evaluator Port
+ *
  * Contract for evaluating media items against catalog policies.
- * Other modules should inject this port, not the concrete service.
+ * Other modules inject this port, not the concrete service.
  */
 
 import {
@@ -8,17 +10,29 @@ import {
   type EvaluationContextType,
 } from '../constants/evaluation.constants';
 
-/** Input for single media item evaluation. */
+/**
+ * Input for single media item evaluation.
+ */
 export interface EvaluateOneInput {
+  /** Media item ID to evaluate. */
   mediaItemId: string;
+  /** Policy version to use. Defaults to active policy. */
   policyVersion?: number;
+  /** Run ID to link evaluation to a batch run. */
   runId?: string;
+  /** Evaluation context. Defaults to 'catalog'. */
   context?: EvaluationContextType;
 }
 
-/** Result of evaluating a single media item. */
+/**
+ * Result of evaluating a single media item.
+ *
+ * Note: `evaluation` shape matches persisted MediaCatalogEvaluation entity.
+ */
 export interface EvaluationResult {
+  /** Media item ID (convenience accessor). */
   mediaItemId: string;
+  /** Persisted evaluation entity. */
   evaluation: {
     mediaItemId: string;
     status: EligibilityStatusType;
@@ -29,10 +43,13 @@ export interface EvaluationResult {
     evaluatedAt: Date;
     runId?: string;
   };
+  /** True if status or policy version changed from previous evaluation. */
   changed: boolean;
 }
 
-/** Eligibility statistics by status. */
+/**
+ * Eligibility statistics by status.
+ */
 export interface EligibilityStats {
   eligible: number;
   ineligible: number;
@@ -52,21 +69,15 @@ export interface EligibilityStats {
 export interface ICatalogPolicyEvaluator {
   /**
    * Evaluates a single media item against the active (or specified) policy.
-   *
-   * @param {EvaluateOneInput} input - Evaluation input with mediaItemId and optional parameters
-   * @returns {Promise<EvaluationResult>} Evaluation result with status, reasons, and change detection
    */
   evaluateOne(input: EvaluateOneInput): Promise<EvaluationResult>;
 
   /**
    * Gets eligibility statistics for a specific context.
    * Used for monitoring pipeline effectiveness.
-   *
-   * @param {EvaluationContextType} context - Evaluation context (e.g., 'trending', 'catalog')
-   * @returns {Promise<EligibilityStats>} Counts by eligibility status
    */
   getEligibilityStats(context: EvaluationContextType): Promise<EligibilityStats>;
 }
 
-/** DI token for ICatalogPolicyEvaluator */
+/** DI token for ICatalogPolicyEvaluator. */
 export const CATALOG_POLICY_EVALUATOR = Symbol('CATALOG_POLICY_EVALUATOR');
