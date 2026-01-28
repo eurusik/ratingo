@@ -65,6 +65,38 @@ export class MinVotesAnyOfDto {
 }
 
 /**
+ * Local maturity override configuration DTO.
+ * Alternative path for fresh content with strong local platform engagement.
+ */
+export class LocalMaturityOverrideDto {
+  @ApiPropertyOptional({
+    description:
+      'Minimum freshness score normalized (0-1). ' +
+      'Higher values = stricter freshness requirement. ' +
+      'Example: 0.90 = must be in top 10% freshest content.',
+    example: 0.9,
+    minimum: 0,
+    maximum: 1,
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  minFreshnessScoreNormalized: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Minimum Ratingo platform watchers count. ' +
+      'Validates local engagement signal. ' +
+      'Example: 30 = at least 30 users actively watching on platform.',
+    example: 30,
+    minimum: 0,
+  })
+  @IsInt()
+  @Min(0)
+  minLocalWatchers: number;
+}
+
+/**
  * Global requirements DTO for API validation.
  * Defines minimum quality thresholds for all content.
  */
@@ -116,4 +148,16 @@ export class GlobalRequirementsDto {
   @IsArray()
   @IsIn(EVALUATION_CONTEXTS, { each: true })
   appliesTo?: EvaluationContext[];
+
+  @ApiPropertyOptional({
+    description:
+      'Alternative path for fresh content with local engagement. ' +
+      'Applied only when minVotesAnyOf check fails. ' +
+      'Allows new releases with strong platform signals to bypass vote requirements.',
+    type: LocalMaturityOverrideDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LocalMaturityOverrideDto)
+  localMaturityOverride?: LocalMaturityOverrideDto;
 }

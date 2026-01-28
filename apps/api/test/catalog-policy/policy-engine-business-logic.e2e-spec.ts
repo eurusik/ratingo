@@ -35,6 +35,7 @@ function createMediaItem(overrides: Partial<DryRunMediaItem> = {}): DryRunMediaI
     popularityScore: 60,
     freshnessScore: 50,
     ratingoScore: 70,
+    watchersCount: null,
     ...overrides,
   };
 }
@@ -181,6 +182,63 @@ const MISSING_METADATA = createMediaItem({
   voteCountImdb: 50000,
   qualityScore: 70,
   ratingoScore: 65,
+});
+
+// Local Maturity Override test items - fresh content with local engagement
+const FRESH_WITH_WATCHERS = createMediaItem({
+  id: 'fresh-with-watchers',
+  title: 'Knight of the Seven Kingdoms',
+  originCountries: ['US'],
+  originalLanguage: 'en',
+  contentClass: 'mainstream',
+  voteCountImdb: 500, // Low - fails minVotesAnyOf
+  voteCountTrakt: 367, // Low - fails minVotesAnyOf
+  qualityScore: 80,
+  freshnessScore: 95, // High freshness (0.95 normalized)
+  watchersCount: 69, // Strong local engagement
+  ratingoScore: 75,
+});
+
+const FRESH_LOW_WATCHERS = createMediaItem({
+  id: 'fresh-low-watchers',
+  title: 'New Show Low Engagement',
+  originCountries: ['US'],
+  originalLanguage: 'en',
+  contentClass: 'mainstream',
+  voteCountImdb: 500, // Low
+  voteCountTrakt: 300, // Low
+  qualityScore: 70,
+  freshnessScore: 95, // High freshness
+  watchersCount: 10, // Too few watchers
+  ratingoScore: 65,
+});
+
+const OLD_WITH_WATCHERS = createMediaItem({
+  id: 'old-with-watchers',
+  title: 'Old Show With Engagement',
+  originCountries: ['US'],
+  originalLanguage: 'en',
+  contentClass: 'mainstream',
+  voteCountImdb: 500, // Low
+  voteCountTrakt: 400, // Low
+  qualityScore: 75,
+  freshnessScore: 30, // Low freshness - old content
+  watchersCount: 100, // High watchers
+  ratingoScore: 70,
+});
+
+const HIGH_VOTES_LOW_FRESHNESS = createMediaItem({
+  id: 'high-votes-low-freshness',
+  title: 'Established Hit',
+  originCountries: ['US'],
+  originalLanguage: 'en',
+  contentClass: 'mainstream',
+  voteCountImdb: 100000, // High - passes minVotesAnyOf
+  voteCountTrakt: 50000, // High
+  qualityScore: 85,
+  freshnessScore: 20, // Low freshness
+  watchersCount: 5, // Low watchers - doesn't matter since votes pass
+  ratingoScore: 80,
 });
 
 // ============================================================================
@@ -877,6 +935,153 @@ describe('Policy Engine Business Logic (e2e)', () => {
       const breakdown = res.body.data.summary.reasonBreakdown;
       expect(breakdown).toBeDefined();
       expect(Array.isArray(breakdown)).toBe(true);
+    });
+  });
+
+  // ==========================================================================
+  // Local Maturity Override (Fresh Content with Local Engagement)
+  // ==========================================================================
+
+  describe('Local Maturity Override', () => {
+    const localMaturityPolicy = createTestPolicy({
+      allowedCountries: ['US', 'UA'],
+      blockedCountries: ['RU'],
+      allowedLanguages: ['en', 'uk'],
+      blockedLanguages: ['ru'],
+      globalRequirements: {
+        appliesTo: ['catalog'],
+        minVotesAnyOf: {
+          min: 1000, // Requires 1000 votes from IMDb or Trakt
+          sources: ['imdb', 'trakt'],
+        },
+        localMaturityOverride: {
+          minFreshnessScoreNormalized: 0.9, // 90% freshness (score >= 90)
+          minLocalWatchers: 30, // At least 30 Ratingo users watching
+        },
+      },
+    });
+
+    it('should allow fresh content with local engagement despite low votes', async () => {
+      ctx.dryRunRepo.setItems([FRESH_WITH_WATCHERS]);
+
+      const res = await ctx
+        .post('/dry-run', {
+          policy: localMaturityPolicy,
+          options: { mode: 'sample', limit: 10 },
+        })
+        .expect(200);
+
+      const item = res.body.data.items[0];
+      expect(item.proposedStatus).toBe('eligible');
+      expect(item.reasons).toContain('ALLOWED_LOCAL_MATURITY');
+    });
+
+    it('should reject fresh content with insufficient local watchers', async () => {
+      ctx.dryRunRepo.setItems([FRESH_LOW_WATCHERS]);
+
+      const res = await ctx
+        .post('/dry-run', {
+          policy: localMaturityPolicy,
+          options: { mode: 'sample', limit: 10 },
+        })
+        .expect(200);
+
+      const item = res.body.data.items[0];
+      expect(item.proposedStatus).toBe('ineligible');
+      expect(item.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+    });
+
+    it('should reject old content with local watchers (freshness too low)', async () => {
+      ctx.dryRunRepo.setItems([OLD_WITH_WATCHERS]);
+
+      const res = await ctx
+        .post('/dry-run', {
+          policy: localMaturityPolicy,
+          options: { mode: 'sample', limit: 10 },
+        })
+        .expect(200);
+
+      const item = res.body.data.items[0];
+      expect(item.proposedStatus).toBe('ineligible');
+      expect(item.reasons).toContain('MISSING_GLOBAL_SIGNALS');
+    });
+
+    it('should allow content with high votes regardless of freshness/watchers', async () => {
+      ctx.dryRunRepo.setItems([HIGH_VOTES_LOW_FRESHNESS]);
+
+      const res = await ctx
+        .post('/dry-run', {
+          policy: localMaturityPolicy,
+          options: { mode: 'sample', limit: 10 },
+        })
+        .expect(200);
+
+      const item = res.body.data.items[0];
+      expect(item.proposedStatus).toBe('eligible');
+      // Should NOT have ALLOWED_LOCAL_MATURITY since votes passed directly
+      expect(item.reasons).not.toContain('ALLOWED_LOCAL_MATURITY');
+    });
+
+    it('should work correctly with mixed items', async () => {
+      ctx.dryRunRepo.setItems([
+        FRESH_WITH_WATCHERS, // Should pass via local maturity
+        FRESH_LOW_WATCHERS, // Should fail - low watchers
+        OLD_WITH_WATCHERS, // Should fail - low freshness
+        HIGH_VOTES_LOW_FRESHNESS, // Should pass via votes
+      ]);
+
+      const res = await ctx
+        .post('/dry-run', {
+          policy: localMaturityPolicy,
+          options: { mode: 'sample', limit: 10 },
+        })
+        .expect(200);
+
+      const items = res.body.data.items;
+
+      const freshWithWatchers = items.find((i: any) => i.mediaItemId === 'fresh-with-watchers');
+      const freshLowWatchers = items.find((i: any) => i.mediaItemId === 'fresh-low-watchers');
+      const oldWithWatchers = items.find((i: any) => i.mediaItemId === 'old-with-watchers');
+      const highVotes = items.find((i: any) => i.mediaItemId === 'high-votes-low-freshness');
+
+      expect(freshWithWatchers.proposedStatus).toBe('eligible');
+      expect(freshLowWatchers.proposedStatus).toBe('ineligible');
+      expect(oldWithWatchers.proposedStatus).toBe('ineligible');
+      expect(highVotes.proposedStatus).toBe('eligible');
+
+      // Summary should show 2 eligible, 2 ineligible
+      expect(res.body.data.summary.eligible).toBe(2);
+      expect(res.body.data.summary.ineligible).toBe(2);
+    });
+
+    it('should NOT apply local maturity override when not configured', async () => {
+      ctx.dryRunRepo.setItems([FRESH_WITH_WATCHERS]);
+
+      const policyWithoutOverride = createTestPolicy({
+        allowedCountries: ['US'],
+        blockedCountries: ['RU'],
+        allowedLanguages: ['en'],
+        blockedLanguages: ['ru'],
+        globalRequirements: {
+          appliesTo: ['catalog'],
+          minVotesAnyOf: {
+            min: 1000,
+            sources: ['imdb', 'trakt'],
+          },
+          // No localMaturityOverride configured
+        },
+      });
+
+      const res = await ctx
+        .post('/dry-run', {
+          policy: policyWithoutOverride,
+          options: { mode: 'sample', limit: 10 },
+        })
+        .expect(200);
+
+      const item = res.body.data.items[0];
+      expect(item.proposedStatus).toBe('ineligible');
+      expect(item.reasons).toContain('MISSING_GLOBAL_SIGNALS');
     });
   });
 });
