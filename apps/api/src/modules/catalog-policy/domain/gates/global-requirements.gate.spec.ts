@@ -4,8 +4,13 @@ import {
   shouldApplyGlobalGate,
   hasAnyRating,
   checkGlobalRequirements,
+  checkLocalMaturityOverride,
 } from './global-requirements.gate';
-import type { GlobalRequirements, PolicyEngineInput } from '../types/policy.types';
+import type {
+  GlobalRequirements,
+  LocalMaturityOverride,
+  PolicyEngineInput,
+} from '../types/policy.types';
 
 describe('GlobalRequirementsGate', () => {
   const createMediaItem = (
@@ -226,6 +231,214 @@ describe('GlobalRequirementsGate', () => {
 
       expect(result.passes).toBe(false);
       expect(result.failedChecks).toHaveLength(3);
+    });
+
+    describe('localMaturityOverride', () => {
+      const overrideConfig: LocalMaturityOverride = {
+        minFreshnessScoreNormalized: 0.9,
+        minLocalWatchers: 30,
+      };
+
+      it('should apply override when votes fail but freshness and watchers pass', () => {
+        const input = createInput(
+          { voteCountImdb: 500, voteCountTrakt: 500 },
+          {
+            qualityScore: 0.7,
+            popularityScore: 0.5,
+            freshnessScore: 0.95,
+            ratingoScore: 70,
+            watchersCount: 50,
+          },
+        );
+        const requirements: GlobalRequirements = {
+          minVotesAnyOf: { sources: [VoteSource.IMDB, VoteSource.TRAKT], min: 1000 },
+          localMaturityOverride: overrideConfig,
+        };
+
+        const result = checkGlobalRequirements(input, requirements);
+
+        expect(result.passes).toBe(true);
+        expect(result.localMaturityOverrideApplied).toBe(true);
+        expect(result.failedChecks).toHaveLength(0);
+      });
+
+      it('should NOT apply override when freshness is below threshold', () => {
+        const input = createInput(
+          { voteCountImdb: 500 },
+          {
+            qualityScore: 0.7,
+            popularityScore: 0.5,
+            freshnessScore: 0.5, // Below 0.9 threshold
+            ratingoScore: 70,
+            watchersCount: 50,
+          },
+        );
+        const requirements: GlobalRequirements = {
+          minVotesAnyOf: { sources: [VoteSource.IMDB], min: 1000 },
+          localMaturityOverride: overrideConfig,
+        };
+
+        const result = checkGlobalRequirements(input, requirements);
+
+        expect(result.passes).toBe(false);
+        expect(result.localMaturityOverrideApplied).toBeFalsy();
+        expect(result.failedChecks).toContain(GlobalGateCheck.MIN_VOTES);
+      });
+
+      it('should NOT apply override when watchers are below threshold', () => {
+        const input = createInput(
+          { voteCountImdb: 500 },
+          {
+            qualityScore: 0.7,
+            popularityScore: 0.5,
+            freshnessScore: 0.95,
+            ratingoScore: 70,
+            watchersCount: 10, // Below 30 threshold
+          },
+        );
+        const requirements: GlobalRequirements = {
+          minVotesAnyOf: { sources: [VoteSource.IMDB], min: 1000 },
+          localMaturityOverride: overrideConfig,
+        };
+
+        const result = checkGlobalRequirements(input, requirements);
+
+        expect(result.passes).toBe(false);
+        expect(result.localMaturityOverrideApplied).toBeFalsy();
+        expect(result.failedChecks).toContain(GlobalGateCheck.MIN_VOTES);
+      });
+
+      it('should NOT apply override when watchersCount is null', () => {
+        const input = createInput(
+          { voteCountImdb: 500 },
+          {
+            qualityScore: 0.7,
+            popularityScore: 0.5,
+            freshnessScore: 0.95,
+            ratingoScore: 70,
+            watchersCount: null,
+          },
+        );
+        const requirements: GlobalRequirements = {
+          minVotesAnyOf: { sources: [VoteSource.IMDB], min: 1000 },
+          localMaturityOverride: overrideConfig,
+        };
+
+        const result = checkGlobalRequirements(input, requirements);
+
+        expect(result.passes).toBe(false);
+        expect(result.failedChecks).toContain(GlobalGateCheck.MIN_VOTES);
+      });
+
+      it('should NOT check override when votes pass', () => {
+        const input = createInput(
+          { voteCountImdb: 5000 }, // Above threshold
+          {
+            qualityScore: 0.7,
+            popularityScore: 0.5,
+            freshnessScore: 0.1, // Low freshness - wouldn't pass override
+            ratingoScore: 70,
+            watchersCount: 5, // Low watchers - wouldn't pass override
+          },
+        );
+        const requirements: GlobalRequirements = {
+          minVotesAnyOf: { sources: [VoteSource.IMDB], min: 1000 },
+          localMaturityOverride: overrideConfig,
+        };
+
+        const result = checkGlobalRequirements(input, requirements);
+
+        expect(result.passes).toBe(true);
+        expect(result.localMaturityOverrideApplied).toBeFalsy();
+      });
+    });
+  });
+
+  describe('checkLocalMaturityOverride', () => {
+    const override: LocalMaturityOverride = {
+      minFreshnessScoreNormalized: 0.9,
+      minLocalWatchers: 30,
+    };
+
+    it('should return true when both freshness and watchers meet thresholds', () => {
+      const input = createInput(
+        {},
+        {
+          qualityScore: 0.5,
+          popularityScore: 0.5,
+          freshnessScore: 0.95,
+          ratingoScore: 50,
+          watchersCount: 50,
+        },
+      );
+
+      expect(checkLocalMaturityOverride(input, override)).toBe(true);
+    });
+
+    it('should return false when freshness is below threshold', () => {
+      const input = createInput(
+        {},
+        {
+          qualityScore: 0.5,
+          popularityScore: 0.5,
+          freshnessScore: 0.8,
+          ratingoScore: 50,
+          watchersCount: 50,
+        },
+      );
+
+      expect(checkLocalMaturityOverride(input, override)).toBe(false);
+    });
+
+    it('should return false when watchers are below threshold', () => {
+      const input = createInput(
+        {},
+        {
+          qualityScore: 0.5,
+          popularityScore: 0.5,
+          freshnessScore: 0.95,
+          ratingoScore: 50,
+          watchersCount: 20,
+        },
+      );
+
+      expect(checkLocalMaturityOverride(input, override)).toBe(false);
+    });
+
+    it('should return false when stats is null', () => {
+      const input = createInput({}, null);
+
+      expect(checkLocalMaturityOverride(input, override)).toBe(false);
+    });
+
+    it('should return false when freshnessScore is null', () => {
+      const input = createInput(
+        {},
+        {
+          qualityScore: 0.5,
+          popularityScore: 0.5,
+          freshnessScore: null,
+          ratingoScore: 50,
+          watchersCount: 50,
+        },
+      );
+
+      expect(checkLocalMaturityOverride(input, override)).toBe(false);
+    });
+
+    it('should return true when values exactly meet thresholds', () => {
+      const input = createInput(
+        {},
+        {
+          qualityScore: 0.5,
+          popularityScore: 0.5,
+          freshnessScore: 0.9, // Exactly at threshold
+          ratingoScore: 50,
+          watchersCount: 30, // Exactly at threshold
+        },
+      );
+
+      expect(checkLocalMaturityOverride(input, override)).toBe(true);
     });
   });
 });

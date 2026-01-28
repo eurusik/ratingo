@@ -37,6 +37,7 @@ const DRY_RUN_SELECT_FIELDS = {
   popularityScore: schema.mediaStats.popularityScore,
   freshnessScore: schema.mediaStats.freshnessScore,
   ratingoScore: schema.mediaStats.ratingoScore,
+  watchersCount: schema.mediaStats.watchersCount,
 };
 
 @Injectable()
@@ -64,7 +65,8 @@ export class DryRunRepository implements IDryRunRepository {
         ms.quality_score as "qualityScore",
         ms.popularity_score as "popularityScore",
         ms.freshness_score as "freshnessScore",
-        ms.ratingo_score as "ratingoScore"
+        ms.ratingo_score as "ratingoScore",
+        ms.watchers_count as "watchersCount"
       FROM media_items mi TABLESAMPLE BERNOULLI(${samplePercent})
       LEFT JOIN media_stats ms ON mi.id = ms.media_item_id
       WHERE mi.deleted_at IS NULL

@@ -31,6 +31,7 @@ export interface DryRunMediaItem {
   popularityScore: number | null;
   freshnessScore: number | null;
   ratingoScore: number | null;
+  watchersCount: number | null;
 }
 
 /**

@@ -27,6 +27,7 @@ export {
 // Global Requirements Gate
 export {
   checkGlobalRequirements,
+  checkLocalMaturityOverride,
   hasAnyRating,
   shouldApplyGlobalGate,
   type GlobalGateFailedCheck,

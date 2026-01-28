@@ -11,6 +11,7 @@ import {
   VoteSource,
   GlobalGateCheck,
   type GlobalRequirements,
+  type LocalMaturityOverride,
   type PolicyEngineInput,
   type GlobalGateCheckType,
 } from '../types/policy.types';
@@ -37,6 +38,8 @@ export interface GlobalRequirementsResult {
   passes: boolean;
   /** List of checks that failed */
   failedChecks: GlobalGateCheckType[];
+  /** True if local maturity override was applied (fresh content with local engagement) */
+  localMaturityOverrideApplied?: boolean;
 }
 
 /**
@@ -92,8 +95,39 @@ export function hasAnyRating(
 }
 
 /**
+ * Checks if local maturity override requirements are met.
+ * Validates freshness and local watchers thresholds.
+ *
+ * @param input - Media item data and stats
+ * @param override - Local maturity override configuration
+ * @returns True if both freshness and watchers requirements are met
+ */
+export function checkLocalMaturityOverride(
+  input: PolicyEngineInput,
+  override: LocalMaturityOverride,
+): boolean {
+  const { freshnessScore, watchersCount } = input.stats ?? {};
+
+  // Both freshness and watchers must meet thresholds
+  const hasFreshness =
+    freshnessScore !== null &&
+    freshnessScore !== undefined &&
+    freshnessScore >= override.minFreshnessScoreNormalized;
+
+  const hasWatchers =
+    watchersCount !== null &&
+    watchersCount !== undefined &&
+    watchersCount >= override.minLocalWatchers;
+
+  return hasFreshness && hasWatchers;
+}
+
+/**
  * Checks if media meets global quality requirements.
  * All configured conditions are combined with AND logic.
+ *
+ * When minVotesAnyOf fails and localMaturityOverride is configured,
+ * the override provides an alternative path for fresh content with local engagement.
  *
  * @param input - Media item data and stats
  * @param requirements - Global requirements configuration
@@ -109,6 +143,7 @@ export function checkGlobalRequirements(
 
   const failedChecks: GlobalGateCheckType[] = [];
   const { mediaItem } = input;
+  let localMaturityOverrideApplied = false;
 
   // Check minQualityScoreNormalized (null/undefined = fail)
   if (requirements.minQualityScoreNormalized !== undefined) {
@@ -139,13 +174,24 @@ export function checkGlobalRequirements(
       const votes = source === VoteSource.IMDB ? mediaItem.voteCountImdb : mediaItem.voteCountTrakt;
       return votes !== null && votes !== undefined && votes >= min;
     });
+
     if (!hasEnoughVotes) {
-      failedChecks.push(GlobalGateCheck.MIN_VOTES);
+      // Try localMaturityOverride as alternative path
+      if (
+        requirements.localMaturityOverride &&
+        checkLocalMaturityOverride(input, requirements.localMaturityOverride)
+      ) {
+        // Override applied - don't fail the votes check
+        localMaturityOverrideApplied = true;
+      } else {
+        failedChecks.push(GlobalGateCheck.MIN_VOTES);
+      }
     }
   }
 
   return {
     passes: failedChecks.length === 0,
     failedChecks,
+    localMaturityOverrideApplied,
   };
 }

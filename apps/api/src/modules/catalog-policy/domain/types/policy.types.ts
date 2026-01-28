@@ -78,12 +78,40 @@ export const GlobalGateCheck = {
   MIN_QUALITY_SCORE: 'minQualityScoreNormalized',
   REQUIRE_RATINGS: 'requireAnyOfRatingsPresent',
   MIN_VOTES: 'minVotesAnyOf',
+  LOCAL_MATURITY_OVERRIDE: 'localMaturityOverride',
 } as const;
 
 /**
  * Global gate failed check type.
  */
 export type GlobalGateCheckType = (typeof GlobalGateCheck)[keyof typeof GlobalGateCheck];
+
+/**
+ * Local maturity override configuration.
+ * Alternative path for fresh content with strong local platform engagement.
+ *
+ * When minVotesAnyOf fails, content can still pass if:
+ * - Freshness score meets threshold (indicating new release)
+ * - Local watchers count meets threshold (indicating platform engagement)
+ *
+ * This allows new releases that users are watching to appear in trending
+ * before they accumulate external votes from IMDb/Trakt.
+ */
+export interface LocalMaturityOverride {
+  /**
+   * Minimum freshness score normalized (0-1).
+   * Higher values = stricter freshness requirement.
+   * Example: 0.90 = must be in top 10% freshest content.
+   */
+  minFreshnessScoreNormalized: number;
+
+  /**
+   * Minimum Ratingo platform watchers count.
+   * Validates local engagement signal.
+   * Example: 30 = at least 30 users actively watching on platform.
+   */
+  minLocalWatchers: number;
+}
 
 /**
  * Global quality gate requirements.
@@ -115,6 +143,13 @@ export interface GlobalRequirements {
    * Defaults to ['catalog', 'homepage', 'trending', 'search'].
    */
   appliesTo?: EvaluationContext[];
+
+  /**
+   * Alternative path for fresh content with local engagement.
+   * Applied only when minVotesAnyOf check fails.
+   * Allows new releases with strong platform signals to bypass vote requirements.
+   */
+  localMaturityOverride?: LocalMaturityOverride;
 }
 
 /**
@@ -357,6 +392,11 @@ export interface PolicyEngineInput {
     popularityScore: number | null;
     freshnessScore: number | null;
     ratingoScore: number | null;
+    /**
+     * Current live watchers count from Ratingo platform.
+     * Used for localMaturityOverride gate checks.
+     */
+    watchersCount?: number | null;
   } | null;
 }
 

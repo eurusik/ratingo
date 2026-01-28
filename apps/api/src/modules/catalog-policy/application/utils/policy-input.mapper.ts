@@ -35,6 +35,7 @@ export interface MediaItemRow {
   popularityScore: number | null;
   freshnessScore: number | null;
   ratingoScore: number | null;
+  watchersCount: number | null;
 }
 
 /**
@@ -58,6 +59,7 @@ export const POLICY_EVALUATION_SELECT_FIELDS = {
   popularityScore: schema.mediaStats.popularityScore,
   freshnessScore: schema.mediaStats.freshnessScore,
   ratingoScore: schema.mediaStats.ratingoScore,
+  watchersCount: schema.mediaStats.watchersCount,
 };
 
 const DEFAULT_CONTENT_CLASS: ContentClass = 'mainstream';
@@ -112,6 +114,7 @@ export function mapRowToPolicyEngineInput(
     },
     // Normalize scores from 0-100 (DB format) to 0-1 (policy engine format)
     // Policy engine expects normalized values for minQualityScoreNormalized comparisons
+    // watchersCount is NOT normalized - it's a raw count, not a score
     stats:
       row.qualityScore !== null
         ? {
@@ -124,6 +127,7 @@ export function mapRowToPolicyEngineInput(
               row.freshnessScore !== null ? row.freshnessScore / SCORE_NORMALIZATION_DIVISOR : null,
             ratingoScore:
               row.ratingoScore !== null ? row.ratingoScore / SCORE_NORMALIZATION_DIVISOR : null,
+            watchersCount: row.watchersCount,
           }
         : null,
   };

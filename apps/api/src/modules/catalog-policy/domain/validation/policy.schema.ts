@@ -39,6 +39,12 @@ const BreakoutRuleSchema = z.object({
   }),
 });
 
+/** Local maturity override schema. */
+const LocalMaturityOverrideSchema = z.object({
+  minFreshnessScoreNormalized: z.number().min(0).max(1),
+  minLocalWatchers: z.number().int().min(0),
+});
+
 /** Global quality gate requirements schema. */
 const GlobalRequirementsSchema = z.object({
   minQualityScoreNormalized: z.number().min(0).max(1).optional(),
@@ -50,6 +56,7 @@ const GlobalRequirementsSchema = z.object({
     })
     .optional(),
   appliesTo: z.array(z.enum(VALID_CONTEXTS)).optional(),
+  localMaturityOverride: LocalMaturityOverrideSchema.optional(),
 });
 
 /** Context-specific display requirements schema. */
