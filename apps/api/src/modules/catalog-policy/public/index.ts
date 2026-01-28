@@ -5,59 +5,48 @@
  * Do NOT import directly from domain/ or application/ folders.
  *
  * @example
- * // ✅ Correct
+ * // Correct
  * import { ContentClass, classifyContent, EligibilityStatus } from '../catalog-policy/public';
  *
- * // ❌ Wrong - breaks module boundaries
+ * // Wrong - breaks module boundaries
  * import { ContentClass } from '../catalog-policy/domain/classification.service';
  */
 
 // =============================================================================
-// Domain Types (Ubiquitous Language)
+// Domain Types
 // =============================================================================
 
-export {
-  ContentClass,
-  ContentClassValues,
-  VALID_CONTENT_CLASSES,
-  isValidContentClass,
-  classifyContent,
-  ClassificationInput,
-} from '../domain/classification.service';
+export { type ContentClass, classifyContent } from '../domain/classification.service';
 
 // =============================================================================
-// Evaluation Constants (Contract Types)
+// Evaluation Constants
 // =============================================================================
 
 export {
   EligibilityStatus,
-  EligibilityStatusType,
+  type EligibilityStatusType,
   EvaluationReason,
-  EvaluationReasonType,
-  DEFAULT_POLICY_VERSION,
+  type EvaluationReasonType,
   EvaluationContext,
-  EvaluationContextType,
+  type EvaluationContextType,
   DEFAULT_EVALUATION_CONTEXT,
-  ACTIVE_EVALUATION_CONTEXTS,
+  DEFAULT_POLICY_VERSION,
 } from '../domain/constants/evaluation.constants';
 
 // =============================================================================
-// Policy Types (for normalized offers)
+// Normalized Offer Type (for ingestion integration)
 // =============================================================================
 
 export type { NormalizedOffer, NormalizedOfferType } from '../domain/types/policy.types';
 
 // =============================================================================
-// Ports (for cross-module DI)
+// Port (for cross-module DI)
 // =============================================================================
 
 export {
-  ICatalogPolicyEvaluator,
+  type ICatalogPolicyEvaluator,
   CATALOG_POLICY_EVALUATOR,
-  EvaluateOneInput,
-  EvaluationResult,
-  EligibilityStats,
+  type EvaluateOneInput,
+  type EvaluationResult,
+  type EligibilityStats,
 } from '../domain/ports';
-
-// Re-export EvaluationContext type alias for backward compatibility
-export type { EvaluationContext as PolicyEvaluationContext } from '../domain/types/policy.types';

@@ -6,6 +6,8 @@
  * NOT a direct TMDB genre mapping.
  */
 
+import { TMDB_GENRE_IDS } from './constants/genre-mapping.constants';
+
 /**
  * Content class constants.
  * Use these instead of magic strings throughout the codebase.
@@ -23,19 +25,6 @@ export const ContentClassValues = {
  * Matches the content_class_enum in database schema.
  */
 export type ContentClass = (typeof ContentClassValues)[keyof typeof ContentClassValues];
-
-/**
- * TMDB Genre IDs for classification.
- * These are stable IDs from TMDB API.
- */
-export const TMDB_GENRES = {
-  ANIMATION: 16,
-  DOCUMENTARY: 99,
-  REALITY: 10764,
-  KIDS: 10762,
-  /** Family genre - NOT auto-classified as kids (too broad, includes mainstream content) */
-  FAMILY: 10751,
-} as const;
 
 /**
  * Input for content classification.
@@ -71,7 +60,7 @@ export function classifyContent(input: ClassificationInput): ContentClass {
   const safeGenreIds = genreIds ?? [];
 
   // Rule 1: Anime = Animation + Japanese origin
-  if (safeGenreIds.includes(TMDB_GENRES.ANIMATION)) {
+  if (safeGenreIds.includes(TMDB_GENRE_IDS.ANIMATION)) {
     const isJapanese =
       (originCountries && originCountries.includes('JP')) || originalLanguage === 'ja';
 
@@ -81,18 +70,18 @@ export function classifyContent(input: ClassificationInput): ContentClass {
   }
 
   // Rule 2: Documentary
-  if (safeGenreIds.includes(TMDB_GENRES.DOCUMENTARY)) {
+  if (safeGenreIds.includes(TMDB_GENRE_IDS.DOCUMENTARY)) {
     return ContentClassValues.DOCUMENTARY;
   }
 
   // Rule 3: Reality
-  if (safeGenreIds.includes(TMDB_GENRES.REALITY)) {
+  if (safeGenreIds.includes(TMDB_GENRE_IDS.REALITY)) {
     return ContentClassValues.REALITY;
   }
 
   // Rule 4: Kids - ONLY explicit Kids genre, NOT Family
   // Family (10751) stays mainstream until target_audience is implemented
-  if (safeGenreIds.includes(TMDB_GENRES.KIDS)) {
+  if (safeGenreIds.includes(TMDB_GENRE_IDS.KIDS)) {
     return ContentClassValues.KIDS;
   }
 
