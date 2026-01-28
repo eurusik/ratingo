@@ -7,6 +7,9 @@
 // Constants
 export * from './constants';
 
+// Error Response
+export { ErrorResponseDto, ErrorDetailsDto } from './error-response.dto';
+
 // Global Requirements
 export { GlobalRequirementsDto } from './global-requirements.dto';
 

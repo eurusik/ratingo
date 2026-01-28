@@ -106,6 +106,7 @@ export class InvalidRunStateTransitionError extends Error {
  * // Error: Run run-123 not found
  */
 export class RunNotFoundError extends Error {
+  readonly code = 'RUN_NOT_FOUND';
   readonly runId: string;
 
   constructor(runId: string) {
@@ -123,6 +124,7 @@ export class RunNotFoundError extends Error {
  * // Error: Policy with id policy-123 not found
  */
 export class PolicyNotFoundError extends Error {
+  readonly code = 'POLICY_NOT_FOUND';
   readonly policyId: string;
 
   constructor(policyId: string) {

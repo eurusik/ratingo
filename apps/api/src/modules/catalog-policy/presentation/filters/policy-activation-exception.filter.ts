@@ -24,6 +24,8 @@ import {
   PolicyNotFoundError,
   RunNotFoundError,
 } from '../../domain/errors';
+import { type ErrorResponseDto } from '../dto/error-response.dto';
+import { ErrorResponseBuilder } from '../utils';
 
 type CaughtError = PolicyActivationError | PolicyNotFoundError | RunNotFoundError;
 
@@ -44,141 +46,64 @@ export class PolicyActivationExceptionFilter implements ExceptionFilter {
 
   private buildResponse(exception: CaughtError): {
     statusCode: number;
-    errorResponse: {
-      success: false;
-      error: {
-        code: string;
-        message: string;
-        statusCode: number;
-        details?: Record<string, unknown>;
-      };
-    };
+    errorResponse: ErrorResponseDto;
   } {
     if (exception instanceof PolicyNotFoundError) {
-      return {
-        statusCode: HttpStatus.NOT_FOUND,
-        errorResponse: {
-          success: false,
-          error: {
-            code: 'POLICY_NOT_FOUND',
-            message: exception.message,
-            statusCode: HttpStatus.NOT_FOUND,
-            details: { policyId: exception.policyId },
-          },
-        },
-      };
+      return this.createResponse(exception, HttpStatus.NOT_FOUND, {
+        policyId: exception.policyId,
+      });
     }
 
     if (exception instanceof RunNotFoundError) {
-      return {
-        statusCode: HttpStatus.NOT_FOUND,
-        errorResponse: {
-          success: false,
-          error: {
-            code: 'RUN_NOT_FOUND',
-            message: exception.message,
-            statusCode: HttpStatus.NOT_FOUND,
-            details: { runId: exception.runId },
-          },
-        },
-      };
+      return this.createResponse(exception, HttpStatus.NOT_FOUND, {
+        runId: exception.runId,
+      });
     }
 
     if (exception instanceof PolicyAlreadyActiveError) {
-      return {
-        statusCode: HttpStatus.CONFLICT,
-        errorResponse: {
-          success: false,
-          error: {
-            code: exception.code,
-            message: exception.message,
-            statusCode: HttpStatus.CONFLICT,
-            details: { policyId: exception.policyId },
-          },
-        },
-      };
+      return this.createResponse(exception, HttpStatus.CONFLICT, {
+        policyId: exception.policyId,
+      });
     }
 
     if (exception instanceof RunAlreadyInProgressError) {
-      return {
-        statusCode: HttpStatus.CONFLICT,
-        errorResponse: {
-          success: false,
-          error: {
-            code: exception.code,
-            message: exception.message,
-            statusCode: HttpStatus.CONFLICT,
-            details: {
-              policyId: exception.policyId,
-              existingRunId: exception.existingRunId,
-            },
-          },
-        },
-      };
+      return this.createResponse(exception, HttpStatus.CONFLICT, {
+        policyId: exception.policyId,
+        existingRunId: exception.existingRunId,
+      });
     }
 
     if (exception instanceof PromotionNotAllowedError) {
-      return {
-        statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-        errorResponse: {
-          success: false,
-          error: {
-            code: exception.code,
-            message: exception.message,
-            statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-            details: {
-              runId: exception.runId,
-              reason: exception.reason,
-              ...exception.details,
-            },
-          },
-        },
-      };
+      return this.createResponse(exception, HttpStatus.UNPROCESSABLE_ENTITY, {
+        runId: exception.runId,
+        reason: exception.reason,
+        ...exception.details,
+      });
     }
 
     if (exception instanceof InvalidContextError) {
-      return {
-        statusCode: HttpStatus.BAD_REQUEST,
-        errorResponse: {
-          success: false,
-          error: {
-            code: exception.code,
-            message: exception.message,
-            statusCode: HttpStatus.BAD_REQUEST,
-            details: {
-              providedContext: exception.providedContext,
-              validContexts: exception.validContexts,
-            },
-          },
-        },
-      };
+      return this.createResponse(exception, HttpStatus.BAD_REQUEST, {
+        providedContext: exception.providedContext,
+        validContexts: exception.validContexts,
+      });
     }
 
     if (exception instanceof NoActivePolicyError) {
-      return {
-        statusCode: HttpStatus.PRECONDITION_FAILED,
-        errorResponse: {
-          success: false,
-          error: {
-            code: exception.code,
-            message: exception.message,
-            statusCode: HttpStatus.PRECONDITION_FAILED,
-          },
-        },
-      };
+      return this.createResponse(exception, HttpStatus.PRECONDITION_FAILED);
     }
 
-    // Generic PolicyActivationError fallback
+    // Fallback for generic PolicyActivationError
+    return this.createResponse(exception, HttpStatus.BAD_REQUEST);
+  }
+
+  private createResponse(
+    exception: CaughtError,
+    statusCode: number,
+    details?: Record<string, unknown>,
+  ): { statusCode: number; errorResponse: ErrorResponseDto } {
     return {
-      statusCode: HttpStatus.BAD_REQUEST,
-      errorResponse: {
-        success: false,
-        error: {
-          code: (exception as PolicyActivationError).code,
-          message: exception.message,
-          statusCode: HttpStatus.BAD_REQUEST,
-        },
-      },
+      statusCode,
+      errorResponse: ErrorResponseBuilder.build(exception, statusCode, details),
     };
   }
 }

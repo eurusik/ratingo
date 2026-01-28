@@ -2,18 +2,23 @@
  * Dry-Run Exception Filter Tests
  */
 
-import { ArgumentsHost, HttpStatus } from '@nestjs/common';
-import { DryRunExceptionFilter } from './dry-run-exception.filter';
+import { type ArgumentsHost, HttpStatus } from '@nestjs/common';
+
+import { type FastifyReply } from 'fastify';
+
 import {
   MissingModeParameterError,
   InvalidLimitError,
   InvalidSamplePercentError,
   UnknownDryRunModeError,
 } from '../../domain/errors';
+import { DRY_RUN_MODES } from '../dto/constants';
+
+import { DryRunExceptionFilter } from './dry-run-exception.filter';
 
 describe('DryRunExceptionFilter', () => {
   let filter: DryRunExceptionFilter;
-  let mockResponse: any;
+  let mockResponse: { status: jest.Mock; send: jest.Mock };
   let mockHost: ArgumentsHost;
 
   beforeEach(() => {
@@ -26,7 +31,7 @@ describe('DryRunExceptionFilter', () => {
 
     mockHost = {
       switchToHttp: jest.fn().mockReturnValue({
-        getResponse: () => mockResponse,
+        getResponse: (): FastifyReply => mockResponse as unknown as FastifyReply,
       }),
     } as unknown as ArgumentsHost;
   });
@@ -107,7 +112,7 @@ describe('DryRunExceptionFilter', () => {
         statusCode: HttpStatus.BAD_REQUEST,
         details: {
           providedMode: 'invalid',
-          validModes: ['sample', 'top', 'byType', 'byCountry'],
+          validModes: [...DRY_RUN_MODES],
         },
       },
     });

@@ -2,8 +2,10 @@
  * Policy Activation Exception Filter Tests
  */
 
-import { HttpStatus } from '@nestjs/common';
-import { PolicyActivationExceptionFilter } from './policy-activation-exception.filter';
+import { type ArgumentsHost, HttpStatus } from '@nestjs/common';
+
+import { type FastifyReply } from 'fastify';
+
 import {
   PolicyAlreadyActiveError,
   RunAlreadyInProgressError,
@@ -14,10 +16,12 @@ import {
   RunNotFoundError,
 } from '../../domain/errors';
 
+import { PolicyActivationExceptionFilter } from './policy-activation-exception.filter';
+
 describe('PolicyActivationExceptionFilter', () => {
   let filter: PolicyActivationExceptionFilter;
   let mockResponse: { status: jest.Mock; send: jest.Mock };
-  let mockHost: { switchToHttp: jest.Mock };
+  let mockHost: ArgumentsHost;
 
   beforeEach(() => {
     filter = new PolicyActivationExceptionFilter();
@@ -27,15 +31,15 @@ describe('PolicyActivationExceptionFilter', () => {
     };
     mockHost = {
       switchToHttp: jest.fn().mockReturnValue({
-        getResponse: () => mockResponse,
+        getResponse: (): FastifyReply => mockResponse as unknown as FastifyReply,
       }),
-    };
+    } as unknown as ArgumentsHost;
   });
 
   it('should handle PolicyNotFoundError with 404', () => {
     const error = new PolicyNotFoundError('policy-123');
 
-    filter.catch(error, mockHost as any);
+    filter.catch(error, mockHost);
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
     expect(mockResponse.send).toHaveBeenCalledWith({
@@ -52,7 +56,7 @@ describe('PolicyActivationExceptionFilter', () => {
   it('should handle RunNotFoundError with 404', () => {
     const error = new RunNotFoundError('run-456');
 
-    filter.catch(error, mockHost as any);
+    filter.catch(error, mockHost);
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
     expect(mockResponse.send).toHaveBeenCalledWith({
@@ -69,7 +73,7 @@ describe('PolicyActivationExceptionFilter', () => {
   it('should handle PolicyAlreadyActiveError with 409', () => {
     const error = new PolicyAlreadyActiveError('policy-123');
 
-    filter.catch(error, mockHost as any);
+    filter.catch(error, mockHost);
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.CONFLICT);
     expect(mockResponse.send).toHaveBeenCalledWith({
@@ -86,7 +90,7 @@ describe('PolicyActivationExceptionFilter', () => {
   it('should handle RunAlreadyInProgressError with 409', () => {
     const error = new RunAlreadyInProgressError('policy-123', 'run-456');
 
-    filter.catch(error, mockHost as any);
+    filter.catch(error, mockHost);
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.CONFLICT);
     expect(mockResponse.send).toHaveBeenCalledWith({
@@ -108,7 +112,7 @@ describe('PolicyActivationExceptionFilter', () => {
       coverage: 0.95,
     });
 
-    filter.catch(error, mockHost as any);
+    filter.catch(error, mockHost);
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.UNPROCESSABLE_ENTITY);
     expect(mockResponse.send).toHaveBeenCalledWith({
@@ -129,7 +133,7 @@ describe('PolicyActivationExceptionFilter', () => {
   it('should handle InvalidContextError with 400', () => {
     const error = new InvalidContextError('invalid', ['catalog', 'trending']);
 
-    filter.catch(error, mockHost as any);
+    filter.catch(error, mockHost);
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockResponse.send).toHaveBeenCalledWith({
@@ -149,7 +153,7 @@ describe('PolicyActivationExceptionFilter', () => {
   it('should handle NoActivePolicyError with 412', () => {
     const error = new NoActivePolicyError();
 
-    filter.catch(error, mockHost as any);
+    filter.catch(error, mockHost);
 
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.PRECONDITION_FAILED);
     expect(mockResponse.send).toHaveBeenCalledWith({

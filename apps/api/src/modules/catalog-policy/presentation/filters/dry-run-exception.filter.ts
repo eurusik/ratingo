@@ -21,6 +21,9 @@ import {
   InvalidSamplePercentError,
   UnknownDryRunModeError,
 } from '../../domain/errors';
+import { DRY_RUN_MODES } from '../dto/constants';
+import { type ErrorResponseDto } from '../dto/error-response.dto';
+import { ErrorResponseBuilder } from '../utils';
 
 @Catch(DryRunValidationError)
 export class DryRunExceptionFilter implements ExceptionFilter {
@@ -37,79 +40,43 @@ export class DryRunExceptionFilter implements ExceptionFilter {
     void response.status(HttpStatus.BAD_REQUEST).send(errorResponse);
   }
 
-  private buildErrorResponse(exception: DryRunValidationError): {
-    success: false;
-    error: {
-      code: string;
-      message: string;
-      statusCode: number;
-      details?: Record<string, unknown>;
-    };
-  } {
-    const baseResponse = {
-      success: false as const,
-      error: {
-        code: exception.code,
-        message: exception.message,
-        statusCode: HttpStatus.BAD_REQUEST,
-      },
-    };
+  private buildErrorResponse(exception: DryRunValidationError): ErrorResponseDto {
+    const details = this.extractDetails(exception);
 
-    // Add specific details based on error type
+    return ErrorResponseBuilder.build(exception, HttpStatus.BAD_REQUEST, details);
+  }
+
+  private extractDetails(exception: DryRunValidationError): Record<string, unknown> | undefined {
     if (exception instanceof MissingModeParameterError) {
       return {
-        ...baseResponse,
-        error: {
-          ...baseResponse.error,
-          details: {
-            mode: exception.mode,
-            requiredParameter: exception.parameter,
-          },
-        },
+        mode: exception.mode,
+        requiredParameter: exception.parameter,
       };
     }
 
     if (exception instanceof InvalidLimitError) {
       return {
-        ...baseResponse,
-        error: {
-          ...baseResponse.error,
-          details: {
-            provided: exception.provided,
-            min: exception.min,
-            max: exception.max,
-          },
-        },
+        provided: exception.provided,
+        min: exception.min,
+        max: exception.max,
       };
     }
 
     if (exception instanceof InvalidSamplePercentError) {
       return {
-        ...baseResponse,
-        error: {
-          ...baseResponse.error,
-          details: {
-            provided: exception.provided,
-            min: exception.min,
-            max: exception.max,
-          },
-        },
+        provided: exception.provided,
+        min: exception.min,
+        max: exception.max,
       };
     }
 
     if (exception instanceof UnknownDryRunModeError) {
       return {
-        ...baseResponse,
-        error: {
-          ...baseResponse.error,
-          details: {
-            providedMode: exception.providedMode,
-            validModes: ['sample', 'top', 'byType', 'byCountry'],
-          },
-        },
+        providedMode: exception.providedMode,
+        validModes: [...DRY_RUN_MODES],
       };
     }
 
-    return baseResponse;
+    return undefined;
   }
 }
