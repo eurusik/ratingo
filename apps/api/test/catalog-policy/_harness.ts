@@ -61,6 +61,7 @@ import {
   EligibilityStatusType,
   type EvaluationContextType,
 } from '../../src/modules/catalog-policy/domain/constants/evaluation.constants';
+import type { AggregatedCounters, RunAnomaly } from '../../src/modules/catalog-policy/domain/types';
 
 // ============================================================================
 // Test Helpers
@@ -220,6 +221,54 @@ class InMemoryRunRepository implements ICatalogEvaluationRunRepository {
     const limit = options?.limit ?? 20;
     const offset = options?.offset ?? 0;
     return this.runs.slice(offset, offset + limit);
+  }
+
+  async aggregateCounters(runId: string): Promise<AggregatedCounters> {
+    const run = this.runs.find((r) => r.id === runId);
+    if (!run) {
+      return { processed: 0, eligible: 0, ineligible: 0, review: 0, errors: 0 };
+    }
+    return {
+      processed: run.processed,
+      eligible: run.eligible,
+      ineligible: run.ineligible,
+      review: 0,
+      errors: run.errors,
+    };
+  }
+
+  async syncRunCounters(runId: string): Promise<AggregatedCounters> {
+    return this.aggregateCounters(runId);
+  }
+
+  async findStaleRunning(cutoff: Date): Promise<Array<{ id: string }>> {
+    return this.runs
+      .filter((r) => r.status === RunStatus.RUNNING && r.startedAt < cutoff)
+      .map((r) => ({ id: r.id }));
+  }
+
+  async recordAnomaly(runId: string, anomaly: RunAnomaly): Promise<void> {
+    const run = this.runs.find((r) => r.id === runId);
+    if (run) {
+      run.errorSample = [
+        { mediaItemId: 'anomaly', error: JSON.stringify(anomaly), timestamp: anomaly.timestamp },
+        ...run.errorSample,
+      ].slice(0, 10);
+    }
+  }
+
+  async transitionToPrepared(runId: string, counters: AggregatedCounters): Promise<boolean> {
+    const run = this.runs.find((r) => r.id === runId);
+    if (!run || run.status !== RunStatus.RUNNING) {
+      return false;
+    }
+    run.status = RunStatus.PREPARED;
+    run.processed = counters.processed;
+    run.eligible = counters.eligible;
+    run.ineligible = counters.ineligible;
+    run.errors = counters.errors;
+    run.finishedAt = new Date();
+    return true;
   }
 
   // Test helper
