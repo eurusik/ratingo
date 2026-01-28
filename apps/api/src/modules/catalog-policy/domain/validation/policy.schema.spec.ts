@@ -281,6 +281,90 @@ describe('Policy Schema Validation', () => {
     });
   });
 
+  describe('localMaturityOverride validation', () => {
+    it('should accept valid localMaturityOverride', () => {
+      const policy = createValidPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb', 'trakt'], min: 1000 },
+          localMaturityOverride: {
+            minFreshnessScoreNormalized: 0.9,
+            minLocalWatchers: 30,
+          },
+        },
+      });
+
+      const result = validatePolicyOrThrow(policy);
+      expect(result.globalRequirements?.localMaturityOverride).toBeDefined();
+      expect(result.globalRequirements?.localMaturityOverride?.minFreshnessScoreNormalized).toBe(
+        0.9,
+      );
+      expect(result.globalRequirements?.localMaturityOverride?.minLocalWatchers).toBe(30);
+    });
+
+    it('should accept globalRequirements without localMaturityOverride', () => {
+      const policy = createValidPolicy({
+        globalRequirements: {
+          minVotesAnyOf: { sources: ['imdb'], min: 1000 },
+        },
+      });
+
+      const result = validatePolicyOrThrow(policy);
+      expect(result.globalRequirements?.localMaturityOverride).toBeUndefined();
+    });
+
+    it('should reject localMaturityOverride with minFreshnessScoreNormalized > 1', () => {
+      const policy = createValidPolicy({
+        globalRequirements: {
+          localMaturityOverride: {
+            minFreshnessScoreNormalized: 1.5,
+            minLocalWatchers: 30,
+          },
+        },
+      });
+
+      expect(() => validatePolicyOrThrow(policy)).toThrow();
+    });
+
+    it('should reject localMaturityOverride with minFreshnessScoreNormalized < 0', () => {
+      const policy = createValidPolicy({
+        globalRequirements: {
+          localMaturityOverride: {
+            minFreshnessScoreNormalized: -0.1,
+            minLocalWatchers: 30,
+          },
+        },
+      });
+
+      expect(() => validatePolicyOrThrow(policy)).toThrow();
+    });
+
+    it('should reject localMaturityOverride with negative minLocalWatchers', () => {
+      const policy = createValidPolicy({
+        globalRequirements: {
+          localMaturityOverride: {
+            minFreshnessScoreNormalized: 0.9,
+            minLocalWatchers: -10,
+          },
+        },
+      });
+
+      expect(() => validatePolicyOrThrow(policy)).toThrow();
+    });
+
+    it('should reject localMaturityOverride with missing required fields', () => {
+      const policy = createValidPolicy({
+        globalRequirements: {
+          localMaturityOverride: {
+            minFreshnessScoreNormalized: 0.9,
+            // missing minLocalWatchers
+          } as any,
+        },
+      });
+
+      expect(() => validatePolicyOrThrow(policy)).toThrow();
+    });
+  });
+
   describe('isPolicyConfig', () => {
     it('should return true for valid policy', () => {
       const policy = createValidPolicy();

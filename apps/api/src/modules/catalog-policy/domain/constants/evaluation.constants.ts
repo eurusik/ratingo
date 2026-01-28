@@ -102,6 +102,9 @@ export const EvaluationReason = {
   // Missing global signals (for breakout evaluation)
   MISSING_GLOBAL_SIGNALS: 'MISSING_GLOBAL_SIGNALS',
 
+  // Local maturity override (fresh content with strong local engagement)
+  ALLOWED_LOCAL_MATURITY: 'ALLOWED_LOCAL_MATURITY',
+
   // Success reasons (return ELIGIBLE)
   BREAKOUT_ALLOWED: 'BREAKOUT_ALLOWED',
   ALLOWED_COUNTRY: 'ALLOWED_COUNTRY',

@@ -115,6 +115,7 @@ export function evaluateEligibility(
   }
 
   // STEP 5: GLOBAL QUALITY GATE - CONTEXT AWARE
+  let localMaturityOverrideApplied = false;
   if (shouldApplyGlobalGate(policy.globalRequirements, context)) {
     const gateResult = checkGlobalRequirements(input, policy.globalRequirements);
     if (!gateResult.passes) {
@@ -125,19 +126,28 @@ export function evaluateEligibility(
         globalGateDetails: { failedChecks: gateResult.failedChecks },
       };
     }
+    localMaturityOverrideApplied = gateResult.localMaturityOverrideApplied ?? false;
   }
 
   // STEP 6: NEUTRAL/ALLOWED CHECKS with breakout opportunity
   const neutralResult = checkNeutral(mediaItem, policy);
 
   if (neutralResult.isNeutral) {
-    return handleNeutralContent(input, policy, neutralResult.reasons);
+    return handleNeutralContent(input, policy, neutralResult.reasons, localMaturityOverrideApplied);
   }
 
   // Content is in allowed lists
+  const reasons: EvaluationReasonType[] = [
+    EvaluationReason.ALLOWED_COUNTRY,
+    EvaluationReason.ALLOWED_LANGUAGE,
+  ];
+  if (localMaturityOverrideApplied) {
+    reasons.push(EvaluationReason.ALLOWED_LOCAL_MATURITY);
+  }
+
   return {
     status: EligibilityStatus.ELIGIBLE,
-    reasons: [EvaluationReason.ALLOWED_COUNTRY, EvaluationReason.ALLOWED_LANGUAGE],
+    reasons,
     breakoutRuleId: null,
   };
 }
@@ -214,19 +224,29 @@ function handleNeutralContent(
   input: PolicyEngineInput,
   policy: PolicyConfig,
   neutralReasons: EvaluationReasonType[],
+  localMaturityOverrideApplied = false,
 ): Evaluation {
   // First try RELAXED mode eligibility
   const relaxedResult = tryRelaxedModeEligibility(input.mediaItem, policy);
-  if (relaxedResult) return relaxedResult;
+  if (relaxedResult) {
+    if (localMaturityOverrideApplied) {
+      relaxedResult.reasons = [...relaxedResult.reasons, EvaluationReason.ALLOWED_LOCAL_MATURITY];
+    }
+    return relaxedResult;
+  }
 
   // Global gate has already passed at this point (checked in main flow).
   // Try breakout rules for neutral content.
   const breakoutRule = findMatchingBreakoutRule(input, policy);
 
   if (breakoutRule) {
+    const reasons: EvaluationReasonType[] = [EvaluationReason.BREAKOUT_ALLOWED];
+    if (localMaturityOverrideApplied) {
+      reasons.push(EvaluationReason.ALLOWED_LOCAL_MATURITY);
+    }
     return {
       status: EligibilityStatus.ELIGIBLE,
-      reasons: [EvaluationReason.BREAKOUT_ALLOWED],
+      reasons,
       breakoutRuleId: breakoutRule.id,
     };
   }
@@ -300,6 +320,8 @@ export function getReasonDescriptions(
     [EvaluationReason.NEUTRAL_LANGUAGE]: 'Content is in a neutral language (not in allowed list)',
     [EvaluationReason.MISSING_GLOBAL_SIGNALS]:
       'Content lacks required global signals (ratings, votes, providers)',
+    [EvaluationReason.ALLOWED_LOCAL_MATURITY]:
+      'Content passed via local maturity override (fresh content with strong platform engagement)',
     [EvaluationReason.BREAKOUT_ALLOWED]: 'Content meets breakout rule requirements',
     [EvaluationReason.ALLOWED_COUNTRY]: 'Content is from an allowed country',
     [EvaluationReason.ALLOWED_LANGUAGE]: 'Content is in an allowed language',
