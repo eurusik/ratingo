@@ -24,6 +24,7 @@ import {
   CLASSIC_THRESHOLDS,
   LIST_CONTEXT,
   WATCHERS_FALLBACK,
+  TRENDING_THRESHOLDS,
 } from '../../domain/constants/catalog.constants';
 import {
   type TrendingShowItem,
@@ -152,6 +153,11 @@ export class TrendingShowsQuery {
       if (freshnessThreshold > 0) {
         whereConditions.push(sql`COALESCE(ms.freshness_score, 0) >= ${freshnessThreshold}`);
       }
+
+      // Trending without audience is just "recent" — enforce minimum traction
+      whereConditions.push(
+        sql`COALESCE(ms.watchers_count, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS_SHOWS}`,
+      );
 
       if (minRatingo !== undefined) {
         whereConditions.push(sql`ms.ratingo_score >= ${minRatingo}`);
