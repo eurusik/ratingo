@@ -17,6 +17,7 @@ import {
   MOVIE_TRENDING_WEIGHTS,
   LIST_CONTEXT,
   WATCHERS_FALLBACK,
+  TRENDING_THRESHOLDS,
 } from '../../domain/constants/catalog.constants';
 import type { TrendingMovieItem } from '../../domain/repositories/movie.repository.interface';
 import type { TrendingQueryResult } from '../../domain/types/query.types';
@@ -132,6 +133,11 @@ export class TrendingMoviesQuery {
           sql`COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${freshnessThreshold}`,
         );
       }
+
+      // Trending without audience is just "recent" — enforce minimum traction
+      conditions.push(
+        sql`COALESCE(${schema.mediaStats.watchersCount}, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES}`,
+      );
 
       if (minRatingo !== undefined) {
         conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));

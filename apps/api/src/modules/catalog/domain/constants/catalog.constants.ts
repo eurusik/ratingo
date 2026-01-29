@@ -66,8 +66,10 @@ export const TRENDING_THRESHOLDS = {
   MIN_FRESHNESS: 50,
   /** Minimum freshness score for popularity sort (softer, ~3-4 year old content ok) */
   MIN_FRESHNESS_POPULARITY: 30,
-  /** Minimum live watchers to appear in trending */
-  MIN_WATCHERS: 10,
+  /** Minimum live watchers for shows to appear in trending (strong live signal) */
+  MIN_WATCHERS_SHOWS: 10,
+  /** Minimum live watchers for movies to appear in trending (weaker live signal) */
+  MIN_WATCHERS_MOVIES: 5,
 } as const;
 
 /**
