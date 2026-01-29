@@ -113,6 +113,46 @@ export class CatalogShowsController {
   }
 
   /**
+   * Returns popular shows list with pagination.
+   * Shows historically popular shows without freshness gate.
+   *
+   * @param {TrendingShowsQueryDto} query - Query params
+   * @param {{ id: string } | null} user - Optional authenticated user
+   * @returns {Promise<TrendingShowsResponseDto>} Popular shows response
+   */
+  @Get('popular')
+  @ApiOperation({
+    summary: 'Popular TV shows (Hits)',
+    description: 'Returns historically popular shows. Includes classics.',
+  })
+  @ApiOkResponse({ type: TrendingShowsResponseDto })
+  async getPopularShows(
+    @Query() query: TrendingShowsQueryDto,
+    @CurrentUser() user: { id: string } | null,
+  ): Promise<TrendingShowsResponseDto> {
+    const normalizedQuery = normalizeListQuery(query);
+    const shows = await this.showRepository.findPopular(normalizedQuery);
+    const data = await this.catalogUserListEnrich(user, shows);
+    const withCards = this.cards.enrichCatalogItems(data, {
+      context: CARD_LIST_CONTEXT.POPULAR_LIST,
+    });
+    const limit = normalizedQuery.limit ?? CATALOG_DEFAULT_LIMIT;
+    const offset = normalizedQuery.offset ?? CATALOG_DEFAULT_OFFSET;
+    const total = shows.total ?? shows.length;
+
+    return {
+      data: withCards,
+      meta: {
+        count: shows.length,
+        total,
+        limit,
+        offset,
+        hasMore: offset + shows.length < total,
+      },
+    };
+  }
+
+  /**
    * Returns shows with new episodes (update feed).
    * Groups by show - one entry per show with the latest episode.
    *

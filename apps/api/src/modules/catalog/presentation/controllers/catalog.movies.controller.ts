@@ -85,6 +85,44 @@ export class CatalogMoviesController {
   }
 
   /**
+   * Returns popular movies list with pagination.
+   * Shows historically popular movies without freshness gate.
+   *
+   * @param {CatalogListQueryDto} query - Pagination params
+   * @param {{ id: string } | null} user - Optional authenticated user
+   * @returns {Promise<PaginatedMovieResponseDto>} Paginated popular movies enriched with user state
+   */
+  @Get('popular')
+  @ApiOperation({
+    summary: 'Popular movies (Hits)',
+    description: 'Returns historically popular movies. Includes classics.',
+  })
+  @ApiOkResponse({ type: PaginatedMovieResponseDto })
+  async getPopularMovies(
+    @Query() query: CatalogListQueryDto,
+    @CurrentUser() user: { id: string } | null,
+  ): Promise<PaginatedMovieResponseDto> {
+    const normalizedQuery = normalizeListQuery(query);
+    const movies = await this.movieRepository.findPopular(normalizedQuery);
+    const total = movies.total ?? movies.length;
+    const data = await this.catalogUserListEnrich(user, movies);
+    const withCards = this.cards.enrichCatalogItems(data, {
+      context: CARD_LIST_CONTEXT.POPULAR_LIST,
+    });
+
+    return {
+      data: withCards,
+      meta: {
+        count: movies.length,
+        total,
+        limit: normalizedQuery.limit ?? CATALOG_DEFAULT_LIMIT,
+        offset: normalizedQuery.offset ?? CATALOG_DEFAULT_OFFSET,
+        hasMore: (normalizedQuery.offset ?? 0) + movies.length < total,
+      },
+    };
+  }
+
+  /**
    * Lists movies currently in theaters with optional sort.
    *
    * @param {CatalogListQueryDto} query - Pagination and sort params

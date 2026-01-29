@@ -153,6 +153,11 @@ export interface IMovieRepository {
   findTrending(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>>;
 
   /**
+   * Finds popular movies (historically popular, no freshness gate).
+   */
+  findPopular(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>>;
+
+  /**
    * Sets isNowPlaying flag for movies.
    */
   setNowPlaying(tmdbIds: number[]): Promise<void>;

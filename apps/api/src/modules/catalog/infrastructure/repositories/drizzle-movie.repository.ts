@@ -23,6 +23,7 @@ import {
   MOVIE_LISTING_TYPE,
   ELIGIBILITY_MODE,
 } from '../queries/movie-listings.query';
+import { PopularMoviesQuery } from '../queries/popular-movies.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';
 
 /**
@@ -51,6 +52,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly movieDetailsQuery: MovieDetailsQuery,
     private readonly trendingMoviesQuery: TrendingMoviesQuery,
+    private readonly popularMoviesQuery: PopularMoviesQuery,
     private readonly movieListingsQuery: MovieListingsQuery,
   ) {}
 
@@ -140,6 +142,12 @@ export class DrizzleMovieRepository implements IMovieRepository {
   async findTrending(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>> {
     const normalized = { ...options, genres: this.normalizeGenres(options.genres) };
     return this.trendingMoviesQuery.execute(normalized) as unknown as WithTotal<TrendingMovieItem>;
+  }
+
+  /** Finds popular movies (historically popular, no freshness gate). */
+  async findPopular(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>> {
+    const normalized = { ...options, genres: this.normalizeGenres(options.genres) };
+    return this.popularMoviesQuery.execute(normalized) as unknown as WithTotal<TrendingMovieItem>;
   }
 
   /** Finds movies currently in theaters. No eligibility filtering - show all. */

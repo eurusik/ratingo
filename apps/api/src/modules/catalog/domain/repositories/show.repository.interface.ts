@@ -206,6 +206,11 @@ export interface IShowRepository {
   findTrending(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>>;
 
   /**
+   * Finds popular shows (historically popular, no freshness gate).
+   */
+  findPopular(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>>;
+
+  /**
    * Finds full show details by slug.
    */
   findBySlug(slug: string): Promise<ShowDetails | null>;
