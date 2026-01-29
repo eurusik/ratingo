@@ -1,6 +1,18 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, gte, lte, isNotNull, inArray, and, exists, sql, isNull, type SQL } from 'drizzle-orm';
+import {
+  eq,
+  gte,
+  lt,
+  lte,
+  isNotNull,
+  inArray,
+  and,
+  exists,
+  sql,
+  isNull,
+  type SQL,
+} from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
@@ -175,7 +187,7 @@ export class PopularMoviesQuery {
           const end = this.buildYearStart(yearTo + 1);
           conditions.push(
             isNotNull(schema.mediaItems.releaseDate),
-            lte(schema.mediaItems.releaseDate, end),
+            lt(schema.mediaItems.releaseDate, end),
           );
         }
       }
