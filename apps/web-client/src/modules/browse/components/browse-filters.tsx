@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * Browse page filters component.
- * Provides sort filtering for catalog pages.
- */
-
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useCallback } from 'react';
 import type { Route } from 'next';
@@ -20,40 +15,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/shared/ui';
-
-export type CatalogSort = 'trending' | 'popularity' | 'ratingo' | 'releaseDate';
+import { CATALOG_SORT_OPTIONS, DEFAULT_CATALOG_SORT, type CatalogSort } from '../config';
 
 interface BrowseFiltersProps {
-  /** i18n labels */
   labels: {
     sort: string;
-    sortOptions: {
-      trending: string;
-      popularity: string;
-      ratingo: string;
-      releaseDate: string;
-    };
-    sortTooltips?: {
-      trending: string;
-      popularity: string;
-      ratingo: string;
-      releaseDate: string;
-    };
+    sortOptions: Record<CatalogSort, string>;
+    sortTooltips?: Record<CatalogSort, string>;
   };
 }
 
-const SORT_OPTIONS: CatalogSort[] = ['trending', 'popularity', 'ratingo', 'releaseDate'];
-
-/**
- * Filters for browse pages.
- * Updates URL search params on change.
- */
 export function BrowseFilters({ labels }: BrowseFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const currentSort = (searchParams.get('sort') as CatalogSort) || 'trending';
+  const currentSort = (searchParams.get('sort') as CatalogSort) || DEFAULT_CATALOG_SORT;
 
   const updateParams = useCallback(
     (key: string, value: string | null) => {
@@ -65,7 +42,6 @@ export function BrowseFilters({ labels }: BrowseFiltersProps) {
         params.delete(key);
       }
 
-      // Reset to page 1 when filters change
       params.delete('page');
 
       const query = params.toString();
@@ -76,18 +52,17 @@ export function BrowseFilters({ labels }: BrowseFiltersProps) {
   );
 
   const handleSortChange = (value: string) => {
-    updateParams('sort', value === 'trending' ? null : value);
+    updateParams('sort', value === DEFAULT_CATALOG_SORT ? null : value);
   };
 
   return (
     <div className="flex items-center gap-2">
-      {/* Sort */}
       <Select value={currentSort} onValueChange={handleSortChange}>
         <SelectTrigger className="w-[160px] bg-cinema-card border-cinema-borderSoft">
           <SelectValue placeholder={labels.sort} />
         </SelectTrigger>
         <SelectContent className="bg-cinema-card border-cinema-borderSoft">
-          {SORT_OPTIONS.map((option) => (
+          {CATALOG_SORT_OPTIONS.map((option) => (
             <SelectItem key={option} value={option}>
               {labels.sortOptions[option]}
             </SelectItem>
@@ -95,7 +70,6 @@ export function BrowseFilters({ labels }: BrowseFiltersProps) {
         </SelectContent>
       </Select>
 
-      {/* Tooltip with info about current sort */}
       {labels.sortTooltips && (
         <TooltipProvider>
           <Tooltip>

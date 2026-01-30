@@ -4,14 +4,20 @@ export {
   InfiniteScrollLoader,
   BrowsePageHeader,
   BrowseFilters,
-  type CatalogSort,
+  PoolSelector,
 } from './components';
 export {
   BROWSE_CATEGORIES,
+  CATALOG_SORT,
+  CATALOG_SORT_OPTIONS,
+  DEFAULT_CATALOG_SORT,
   getCategoryConfig,
   getValidCategorySlugs,
   buildBrowseUrl,
   categorySupportsFilters,
+  categoryHasPoolSelector,
   type BrowseCategory,
   type CategoryConfig,
+  type PoolType,
+  type CatalogSort,
 } from './config';

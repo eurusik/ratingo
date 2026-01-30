@@ -24,6 +24,19 @@ export type BrowseCategory =
   | 'shows' // All shows (trending)
   | 'movies'; // All movies (trending)
 
+export type PoolType = 'trending' | 'popular';
+
+export const CATALOG_SORT = {
+  RATINGO: 'ratingo',
+  RELEASE_DATE: 'releaseDate',
+} as const;
+
+export type CatalogSort = (typeof CATALOG_SORT)[keyof typeof CATALOG_SORT];
+
+export const CATALOG_SORT_OPTIONS = [CATALOG_SORT.RATINGO, CATALOG_SORT.RELEASE_DATE] as const;
+
+export const DEFAULT_CATALOG_SORT = CATALOG_SORT.RATINGO;
+
 export interface CategoryConfig {
   /** URL slug */
   slug: BrowseCategory;
@@ -44,6 +57,10 @@ export interface CategoryConfig {
   mediaType: 'movie' | 'show';
   /** Items per page */
   pageSize: number;
+  /** Pool type (trending or popular) - if set, shows pool selector */
+  pool?: PoolType;
+  /** Counterpart category for pool switching */
+  poolCounterpart?: BrowseCategory;
 }
 
 /**
@@ -59,6 +76,8 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
     apiMethod: 'getTrendingShows',
     mediaType: 'show',
     pageSize: 24,
+    pool: 'trending',
+    poolCounterpart: 'shows-popular',
   },
   'shows-popular': {
     slug: 'shows-popular',
@@ -67,6 +86,8 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
     apiMethod: 'getPopularShows',
     mediaType: 'show',
     pageSize: 24,
+    pool: 'popular',
+    poolCounterpart: 'shows-trending',
   },
   shows: {
     slug: 'shows',
@@ -93,6 +114,8 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
     apiMethod: 'getTrendingMovies',
     mediaType: 'movie',
     pageSize: 24,
+    pool: 'trending',
+    poolCounterpart: 'movies-popular',
   },
   'movies-popular': {
     slug: 'movies-popular',
@@ -101,6 +124,8 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
     apiMethod: 'getPopularMovies',
     mediaType: 'movie',
     pageSize: 24,
+    pool: 'popular',
+    poolCounterpart: 'movies-trending',
   },
   'movies-now-playing': {
     slug: 'movies-now-playing',
@@ -143,6 +168,13 @@ const FILTERABLE_API_METHODS = [
  */
 export function categorySupportsFilters(config: CategoryConfig): boolean {
   return (FILTERABLE_API_METHODS as readonly string[]).includes(config.apiMethod);
+}
+
+/**
+ * Check if category has pool selector (trending/popular toggle).
+ */
+export function categoryHasPoolSelector(config: CategoryConfig): boolean {
+  return config.pool !== undefined && config.poolCounterpart !== undefined;
 }
 
 /**

@@ -126,8 +126,7 @@ export class TrendingMoviesQuery {
         isNull(schema.mediaItems.deletedAt),
       ];
 
-      // Freshness gate: threshold based on context and sort mode
-      const freshnessThreshold = CONTEXT_FRESHNESS[context][sort] ?? 0;
+      const freshnessThreshold = CONTEXT_FRESHNESS[context].trending;
       if (freshnessThreshold > 0) {
         conditions.push(
           sql`COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${freshnessThreshold}`,

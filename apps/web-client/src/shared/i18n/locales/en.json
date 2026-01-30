@@ -54,7 +54,7 @@
   },
   "browse": {
     "trending": {
-      "title": "Watching now: Shows",
+      "title": "Trending Shows",
       "description": "Shows that are currently most watched"
     },
     "shows": {
@@ -66,19 +66,19 @@
       "description": "All movies on Ratingo"
     },
     "showsTrending": {
-      "title": "Watching now: Shows",
+      "title": "Trending Shows",
       "description": "Shows that are currently most watched"
     },
     "showsPopular": {
-      "title": "Hits: Shows",
+      "title": "Hit Shows",
       "description": "Most popular shows of all time"
     },
     "moviesTrending": {
-      "title": "Watching now: Movies",
+      "title": "Trending Movies",
       "description": "Movies that are currently most watched"
     },
     "moviesPopular": {
-      "title": "Hits: Movies",
+      "title": "Hit Movies",
       "description": "Most popular movies of all time"
     },
     "moviesNowPlaying": {
@@ -97,18 +97,18 @@
     "noResults": "Nothing found",
     "backToHome": "Back to home",
     "resultsCount": "{count} results",
+    "pool": {
+      "trending": "Trending",
+      "popular": "Hits"
+    },
     "filters": {
       "sort": "Sort by",
       "sortOptions": {
-        "trending": "Trending",
-        "popularity": "Popular",
-        "ratingo": "Hits",
+        "ratingo": "By rating",
         "releaseDate": "By release date"
       },
       "sortTooltips": {
-        "trending": "Shows with the highest current viewing activity. Based on recent viewer engagement and overall popularity.",
-        "popularity": "Shows that consistently appeal to a large audience. Based on all-time popularity.",
-        "ratingo": "Hits — shows with the highest Ratingo score. Combines ratings, popularity, and freshness, not just average score.",
+        "ratingo": "Sorted by Ratingo score. Combines ratings, popularity, and freshness.",
         "releaseDate": "Sorted by release date, newest to oldest."
       },
       "year": "Year",

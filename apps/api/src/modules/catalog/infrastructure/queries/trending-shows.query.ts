@@ -149,8 +149,7 @@ export class TrendingShowsQuery {
         sql`mi.ingestion_status = ${IngestionStatus.READY}`,
       ];
 
-      // Freshness gate: threshold based on context and sort mode
-      const freshnessThreshold = CONTEXT_FRESHNESS[context][sort] ?? 0;
+      const freshnessThreshold = CONTEXT_FRESHNESS[context].trending;
       if (freshnessThreshold > 0) {
         whereConditions.push(sql`COALESCE(ms.freshness_score, 0) >= ${freshnessThreshold}`);
       }

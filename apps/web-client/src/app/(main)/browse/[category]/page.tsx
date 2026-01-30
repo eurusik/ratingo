@@ -4,6 +4,7 @@
  */
 
 import type { Metadata } from 'next';
+import type { Route } from 'next';
 import { notFound } from 'next/navigation';
 import { getDictionary, getByPath } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
@@ -11,9 +12,10 @@ import {
   getCategoryConfig,
   getValidCategorySlugs,
   categorySupportsFilters,
+  categoryHasPoolSelector,
   type BrowseCategory,
 } from '@/modules/browse';
-import { BrowsePageHeader, BrowseMediaGrid, BrowseFilters } from '@/modules/browse';
+import { BrowsePageHeader, BrowseMediaGrid, BrowseFilters, PoolSelector } from '@/modules/browse';
 import { BrowseInfiniteList } from './browse-infinite-list';
 import type { MediaCardServerProps } from '@/modules/home';
 
@@ -134,6 +136,9 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
   // Check if this category supports filters (trending endpoints)
   const supportsFilters = categorySupportsFilters(config);
 
+  // Check if this category has pool selector
+  const hasPoolSelector = categoryHasPoolSelector(config);
+
   return (
     <main className="min-h-screen bg-cinema-page">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -144,15 +149,33 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
             backLabel={dict.browse.backToHome}
           />
 
-          {supportsFilters && (
-            <BrowseFilters
-              labels={{
-                sort: dict.browse.filters.sort,
-                sortOptions: dict.browse.filters.sortOptions,
-                sortTooltips: dict.browse.filters.sortTooltips,
-              }}
-            />
-          )}
+          <div className="flex items-center gap-3">
+            {hasPoolSelector && config.pool && config.poolCounterpart && (
+              <PoolSelector
+                currentPool={config.pool}
+                trendingHref={
+                  `/browse/${config.pool === 'trending' ? config.slug : config.poolCounterpart}` as Route
+                }
+                popularHref={
+                  `/browse/${config.pool === 'popular' ? config.slug : config.poolCounterpart}` as Route
+                }
+                labels={{
+                  trending: dict.browse.pool.trending,
+                  popular: dict.browse.pool.popular,
+                }}
+              />
+            )}
+
+            {supportsFilters && (
+              <BrowseFilters
+                labels={{
+                  sort: dict.browse.filters.sort,
+                  sortOptions: dict.browse.filters.sortOptions,
+                  sortTooltips: dict.browse.filters.sortTooltips,
+                }}
+              />
+            )}
+          </div>
         </div>
 
         {items.length === 0 ? (

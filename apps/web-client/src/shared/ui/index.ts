@@ -68,3 +68,8 @@ export { Textarea } from './textarea';
 export { Slider } from './slider';
 export { Checkbox } from './checkbox';
 export { RadioGroup, RadioGroupItem } from './radio-group';
+export {
+  LinkToggleGroup,
+  type LinkToggleItem,
+  type LinkToggleGroupProps,
+} from './link-toggle-group';
