@@ -34,6 +34,8 @@ export const queryKeys = {
     all: ['shows'] as const,
     trending: (limit?: number, offset?: number, sort?: string) =>
       [...queryKeys.shows.all, 'trending', limit ?? null, offset ?? null, sort ?? null] as const,
+    popular: (limit?: number, offset?: number, sort?: string) =>
+      [...queryKeys.shows.all, 'popular', limit ?? null, offset ?? null, sort ?? null] as const,
     detail: (slug: string) => [...queryKeys.shows.all, 'detail', slug] as const,
     calendar: (startDate?: string, days?: number) =>
       [...queryKeys.shows.all, 'calendar', startDate ?? null, days ?? null] as const,
@@ -44,6 +46,8 @@ export const queryKeys = {
     all: ['movies'] as const,
     trending: (limit?: number, offset?: number, sort?: string) =>
       [...queryKeys.movies.all, 'trending', limit ?? null, offset ?? null, sort ?? null] as const,
+    popular: (limit?: number, offset?: number, sort?: string) =>
+      [...queryKeys.movies.all, 'popular', limit ?? null, offset ?? null, sort ?? null] as const,
     nowPlaying: (limit?: number, offset?: number) =>
       [...queryKeys.movies.all, 'now-playing', limit ?? null, offset ?? null] as const,
     newReleases: (limit?: number, offset?: number) =>

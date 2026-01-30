@@ -65,9 +65,21 @@
       "title": "Фільми",
       "description": "Всі фільми на Ratingo"
     },
+    "showsTrending": {
+      "title": "Серіали у тренді",
+      "description": "Серіали, які зараз найбільш актуальні"
+    },
+    "showsPopular": {
+      "title": "Хіти серіалів",
+      "description": "Найпопулярніші серіали за весь час"
+    },
     "moviesTrending": {
       "title": "Фільми у тренді",
       "description": "Фільми, які зараз найбільш актуальні"
+    },
+    "moviesPopular": {
+      "title": "Хіти фільмів",
+      "description": "Найпопулярніші фільми за весь час"
     },
     "moviesNowPlaying": {
       "title": "Зараз у кіно",

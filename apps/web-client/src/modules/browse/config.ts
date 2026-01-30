@@ -15,7 +15,9 @@ import type { Route } from 'next';
 
 export type BrowseCategory =
   | 'shows-trending' // Shows trending
+  | 'shows-popular' // Shows popular (hits)
   | 'movies-trending' // Movies trending
+  | 'movies-popular' // Movies popular (hits)
   | 'movies-now-playing' // Movies in theaters
   | 'movies-new-releases' // Movies recently released
   | 'movies-digital' // Movies new on digital
@@ -32,7 +34,9 @@ export interface CategoryConfig {
   /** API method name in catalogApi */
   apiMethod:
     | 'getTrendingShows'
+    | 'getPopularShows'
     | 'getTrendingMovies'
+    | 'getPopularMovies'
     | 'getNowPlayingMovies'
     | 'getNewReleasesMovies'
     | 'getNewOnDigitalMovies';
@@ -50,9 +54,17 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
   // Shows
   'shows-trending': {
     slug: 'shows-trending',
-    titleKey: 'browse.shows.title',
-    descriptionKey: 'browse.trending.description',
+    titleKey: 'browse.showsTrending.title',
+    descriptionKey: 'browse.showsTrending.description',
     apiMethod: 'getTrendingShows',
+    mediaType: 'show',
+    pageSize: 24,
+  },
+  'shows-popular': {
+    slug: 'shows-popular',
+    titleKey: 'browse.showsPopular.title',
+    descriptionKey: 'browse.showsPopular.description',
+    apiMethod: 'getPopularShows',
     mediaType: 'show',
     pageSize: 24,
   },
@@ -76,9 +88,17 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
   },
   'movies-trending': {
     slug: 'movies-trending',
-    titleKey: 'browse.movies.title',
+    titleKey: 'browse.moviesTrending.title',
     descriptionKey: 'browse.moviesTrending.description',
     apiMethod: 'getTrendingMovies',
+    mediaType: 'movie',
+    pageSize: 24,
+  },
+  'movies-popular': {
+    slug: 'movies-popular',
+    titleKey: 'browse.moviesPopular.title',
+    descriptionKey: 'browse.moviesPopular.description',
+    apiMethod: 'getPopularMovies',
     mediaType: 'movie',
     pageSize: 24,
   },
@@ -111,7 +131,12 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
 /**
  * API methods that support sort/filter parameters.
  */
-const FILTERABLE_API_METHODS = ['getTrendingShows', 'getTrendingMovies'] as const;
+const FILTERABLE_API_METHODS = [
+  'getTrendingShows',
+  'getPopularShows',
+  'getTrendingMovies',
+  'getPopularMovies',
+] as const;
 
 /**
  * Check if category supports filters (sort, year, etc).

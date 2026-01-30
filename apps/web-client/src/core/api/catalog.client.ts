@@ -111,6 +111,20 @@ export interface NewEpisodesDto {
 export type TrendingMoviesDto = GetData<'/api/catalog/movies/trending'>;
 
 /**
+ * Popular shows response.
+ * NOTE: Uses TrendingShowsDto as fallback until api-contract is regenerated.
+ * The response structure is identical (same DTO on backend).
+ */
+export type PopularShowsDto = TrendingShowsDto;
+
+/**
+ * Popular movies response.
+ * NOTE: Uses TrendingMoviesDto as fallback until api-contract is regenerated.
+ * The response structure is identical (same DTO on backend).
+ */
+export type PopularMoviesDto = TrendingMoviesDto;
+
+/**
  * Now playing movies response.
  */
 export type NowPlayingMoviesDto = GetData<'/api/catalog/movies/now-playing'>;
@@ -209,6 +223,21 @@ export const catalogApi = {
   },
 
   /**
+   * Fetches popular shows (Hits pool).
+   *
+   * @param params - Query parameters
+   * @returns Popular shows data (unwrapped)
+   *
+   * @example
+   * const popularData = await catalogApi.getPopularShows({ limit: 20 });
+   */
+  async getPopularShows(params?: TrendingShowsParams): Promise<PopularShowsDto> {
+    return apiGet<PopularShowsDto>('catalog/shows/popular', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
    * Fetches show details by slug.
    *
    * @param slug - Show slug
@@ -257,6 +286,15 @@ export const catalogApi = {
    */
   async getTrendingMovies(params?: TrendingMoviesParams): Promise<TrendingMoviesDto> {
     return apiGet<TrendingMoviesDto>('catalog/movies/trending', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Fetches popular movies (Hits pool).
+   */
+  async getPopularMovies(params?: TrendingMoviesParams): Promise<PopularMoviesDto> {
+    return apiGet<PopularMoviesDto>('catalog/movies/popular', {
       searchParams: params as Record<string, string | number>,
     });
   },

@@ -65,9 +65,21 @@
       "title": "Movies",
       "description": "All movies on Ratingo"
     },
+    "showsTrending": {
+      "title": "Watching now: Shows",
+      "description": "Shows that are currently most watched"
+    },
+    "showsPopular": {
+      "title": "Hits: Shows",
+      "description": "Most popular shows of all time"
+    },
     "moviesTrending": {
       "title": "Watching now: Movies",
       "description": "Movies that are currently most watched"
+    },
+    "moviesPopular": {
+      "title": "Hits: Movies",
+      "description": "Most popular movies of all time"
     },
     "moviesNowPlaying": {
       "title": "Now in theaters",
