@@ -2,6 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
+  expireTime: 3600,
+  experimental: {
+    staleTimes: {
+      dynamic: 60,
+      static: 300,
+    },
+  },
   images: {
     remotePatterns: [
       {
