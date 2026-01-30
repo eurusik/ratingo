@@ -14,13 +14,11 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import {
-  CONTEXT_FRESHNESS,
   SHOW_TRENDING_WEIGHTS,
   NEW_RELEASE_THRESHOLDS,
   CLASSIC_THRESHOLDS,
-  LIST_CONTEXT,
   WATCHERS_FALLBACK,
-  TRENDING_THRESHOLDS,
+  POPULAR_THRESHOLDS,
 } from '../../domain/constants/catalog.constants';
 import {
   type TrendingShowItem,
@@ -39,9 +37,9 @@ import {
 import { checkContextEvaluationsExist } from './shared/evaluation-check.util';
 
 /**
- * Raw row type from trending shows query.
+ * Raw row type from popular shows query.
  */
-interface TrendingShowRow {
+interface PopularShowRow {
   id: string;
   tmdb_id: number;
   title: string;
@@ -74,16 +72,18 @@ interface TrendingShowRow {
 }
 
 /**
- * Fetches trending TV shows with episode progress.
+ * Fetches popular TV shows (Hits pool).
  *
- * Uses PostgreSQL LATERAL JOIN to efficiently retrieve the latest aired
- * episode for each show in a single query, avoiding N+1 problems.
+ * Key differences from TrendingShowsQuery:
+ * - Uses EvaluationContext.CATALOG (not TRENDING)
+ * - No freshness gate
+ * - Gate: total_watchers >= POPULAR_THRESHOLDS.MIN_TOTAL_WATCHERS_SHOWS
  *
  * @throws {DatabaseException} When database query fails
  */
 @Injectable()
-export class TrendingShowsQuery {
-  private readonly logger = new Logger(TrendingShowsQuery.name);
+export class PopularShowsQuery {
+  private readonly logger = new Logger(PopularShowsQuery.name);
 
   constructor(
     @Inject(DATABASE_CONNECTION)
@@ -91,14 +91,14 @@ export class TrendingShowsQuery {
   ) {}
 
   /**
-   * Executes the trending shows query.
+   * Executes the popular shows query.
    * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
-   * Returns degraded state if no evaluations exist for the trending context
+   * Returns degraded state if no evaluations exist for the catalog context
    * with the active policy version.
    *
    * @param {TrendingShowsOptions} options - Query options (limit, offset, filters)
-   * @returns {Promise<TrendingQueryResult<TrendingShowItem>>} List of trending shows with stats and progress
+   * @returns {Promise<TrendingQueryResult<TrendingShowItem>>} List of popular shows with stats and progress
    * @throws {DatabaseException} When database query fails
    */
   async execute(options: TrendingShowsOptions): Promise<TrendingQueryResult<TrendingShowItem>> {
@@ -107,26 +107,25 @@ export class TrendingShowsQuery {
       offset = 0,
       minRatingo,
       genres,
-      sort = CATALOG_SORT.TRENDING,
+      sort = CATALOG_SORT.POPULARITY,
       order = SORT_ORDER.DESC,
       voteSource = VOTE_SOURCE.TMDB,
       minVotes,
       year,
       yearFrom,
       yearTo,
-      context = LIST_CONTEXT.CATALOG,
     } = options;
 
     try {
       // Check for degraded state before executing main query
       const evaluationsExist = await checkContextEvaluationsExist(
         this.db,
-        EvaluationContext.TRENDING,
+        EvaluationContext.CATALOG,
       );
 
       if (!evaluationsExist) {
         this.logger.warn(
-          `Degraded state: no evaluations for context=${EvaluationContext.TRENDING} with active policy`,
+          `Degraded state: no evaluations for context=${EvaluationContext.CATALOG} with active policy`,
         );
 
         const emptyResult: TrendingQueryResult<TrendingShowItem> =
@@ -142,21 +141,16 @@ export class TrendingShowsQuery {
       const whereConditions: SQL[] = [
         sql`mi.type = ${MediaType.SHOW}`,
         sql`mi.deleted_at IS NULL`,
-        // Eligibility filter: only show ELIGIBLE items with trending context
+        // Eligibility filter: only show ELIGIBLE items with catalog context
         sql`mce.status = ${EligibilityStatus.ELIGIBLE}`,
-        sql`mce.context = ${EvaluationContext.TRENDING}`,
+        sql`mce.context = ${EvaluationContext.CATALOG}`,
         // Ready filter: only show items with ready ingestion status
         sql`mi.ingestion_status = ${IngestionStatus.READY}`,
       ];
 
-      const freshnessThreshold = CONTEXT_FRESHNESS[context].trending;
-      if (freshnessThreshold > 0) {
-        whereConditions.push(sql`COALESCE(ms.freshness_score, 0) >= ${freshnessThreshold}`);
-      }
-
-      // Trending without audience is just "recent" — enforce minimum traction
+      // Popular pool gate: historical watchers (no freshness requirement)
       whereConditions.push(
-        sql`COALESCE(ms.watchers_count, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS_SHOWS}`,
+        sql`COALESCE(ms.total_watchers, 0) >= ${POPULAR_THRESHOLDS.MIN_TOTAL_WATCHERS_SHOWS}`,
       );
 
       if (minRatingo !== undefined) {
@@ -170,7 +164,7 @@ export class TrendingShowsQuery {
         );
         whereConditions.push(sql`
           EXISTS (
-            SELECT 1 FROM ${schema.mediaGenres} mg 
+            SELECT 1 FROM ${schema.mediaGenres} mg
             JOIN ${schema.genres} g ON g.id = mg.genre_id
             WHERE mg.media_item_id = mi.id AND g.slug IN (${genreList})
           )
@@ -221,7 +215,7 @@ export class TrendingShowsQuery {
           mi.release_date,
           mi.videos,
           mi.ingestion_status,
-          
+
           mi.rating,
           mi.vote_count,
           mi.rating_imdb,
@@ -240,24 +234,24 @@ export class TrendingShowsQuery {
 
           s.last_air_date,
           s.next_air_date,
-          
+
           se.number AS season_number,
           ep.number AS episode_number
 
         FROM ${schema.mediaItems} mi
         JOIN ${schema.shows} s ON s.media_item_id = mi.id
         JOIN ${schema.catalogPolicies} cp ON cp.is_active = true
-        JOIN ${schema.mediaCatalogEvaluations} mce 
-          ON mce.media_item_id = mi.id 
+        JOIN ${schema.mediaCatalogEvaluations} mce
+          ON mce.media_item_id = mi.id
           AND mce.policy_version = cp.version
-          AND mce.context = ${EvaluationContext.TRENDING}
+          AND mce.context = ${EvaluationContext.CATALOG}
         LEFT JOIN ${schema.mediaStats} ms ON ms.media_item_id = mi.id
-        
+
         LEFT JOIN LATERAL (
           SELECT e.season_id, e.number
           FROM ${schema.episodes} e
-          WHERE e.show_id = s.id 
-            AND e.air_date IS NOT NULL 
+          WHERE e.show_id = s.id
+            AND e.air_date IS NOT NULL
             AND e.air_date <= NOW()
           ORDER BY e.air_date DESC
           LIMIT 1
@@ -275,10 +269,10 @@ export class TrendingShowsQuery {
         FROM ${schema.mediaItems} mi
         JOIN ${schema.shows} s ON s.media_item_id = mi.id
         JOIN ${schema.catalogPolicies} cp ON cp.is_active = true
-        JOIN ${schema.mediaCatalogEvaluations} mce 
-          ON mce.media_item_id = mi.id 
+        JOIN ${schema.mediaCatalogEvaluations} mce
+          ON mce.media_item_id = mi.id
           AND mce.policy_version = cp.version
-          AND mce.context = ${EvaluationContext.TRENDING}
+          AND mce.context = ${EvaluationContext.CATALOG}
         LEFT JOIN ${schema.mediaStats} ms ON ms.media_item_id = mi.id
         WHERE ${whereSql}
       `;
@@ -290,14 +284,14 @@ export class TrendingShowsQuery {
       const typedTotalRows = totalRows as Array<{ total?: number | null }>;
       const total = Number(typedTotalRows[0]?.total ?? 0);
 
-      const mapped = this.mapResults(results as unknown as TrendingShowRow[]);
+      const mapped = this.mapResults(results as unknown as PopularShowRow[]);
       const withTotal = mapped as TrendingQueryResult<TrendingShowItem>;
       withTotal.total = total;
       withTotal.meta = { degraded: false };
       return withTotal;
     } catch (error) {
-      this.logger.error(`Failed to find trending shows: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch trending shows', {
+      this.logger.error(`Failed to find popular shows: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to fetch popular shows', {
         originalError: error.message,
       });
     }
@@ -306,7 +300,7 @@ export class TrendingShowsQuery {
   /**
    * Maps raw database rows to TrendingShowItem DTOs.
    */
-  private mapResults(results: TrendingShowRow[]): TrendingShowItem[] {
+  private mapResults(results: PopularShowRow[]): TrendingShowItem[] {
     const now = new Date();
     const newReleaseCutoff = new Date();
     newReleaseCutoff.setDate(now.getDate() - NEW_RELEASE_THRESHOLDS.DAYS);
@@ -314,7 +308,7 @@ export class TrendingShowsQuery {
     const classicCutoff = new Date();
     classicCutoff.setFullYear(now.getFullYear() - CLASSIC_THRESHOLDS.YEARS_OLD);
 
-    return results.map((row: TrendingShowRow) => {
+    return results.map((row: PopularShowRow) => {
       const releaseDate = row.release_date ? new Date(row.release_date) : null;
 
       return {
@@ -369,7 +363,7 @@ export class TrendingShowsQuery {
   /**
    * Builds show progress object with season/episode label.
    */
-  private buildShowProgress(row: TrendingShowRow) {
+  private buildShowProgress(row: PopularShowRow) {
     let label: string | null = null;
     if (row.season_number != null && row.episode_number != null) {
       label = `S${row.season_number}E${row.episode_number}`;
@@ -393,8 +387,6 @@ export class TrendingShowsQuery {
     switch (sort) {
       case 'trending': {
         // Combined trending score with live engagement signal
-        // Uses weights from domain constants for consistency
-        // Fallback formula: when watchers_count=0, use log-compressed total_watchers
         return sql`(
           COALESCE(ms.ratingo_score, 0) * ${w.RATINGO} +
           COALESCE(ms.popularity_score, 0) * ${w.POPULARITY} +
@@ -410,8 +402,6 @@ export class TrendingShowsQuery {
       case 'ratingo':
         return sql`ms.ratingo_score ${dir} NULLS LAST, mi.id DESC`;
       case 'releaseDate':
-        // For shows: prioritize last_air_date (recent episodes) over release_date (premiere)
-        // Fallback to created_at for incomplete data
         return sql`COALESCE(s.last_air_date, mi.release_date, mi.created_at) ${dir} NULLS LAST, mi.id DESC`;
       case 'tmdbPopularity':
         return sql`mi.popularity ${dir}, mi.id DESC`;

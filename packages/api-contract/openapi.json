@@ -174,6 +174,179 @@
         ]
       }
     },
+    "/api/catalog/movies/popular": {
+      "get": {
+        "operationId": "CatalogMoviesController_getPopularMovies",
+        "summary": "Popular movies (Hits)",
+        "description": "Returns historically popular movies. Includes classics.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "schema": {
+              "default": "trending",
+              "enum": [
+                "trending",
+                "popularity",
+                "ratingo",
+                "releaseDate",
+                "tmdbPopularity"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "genres",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated genre slugs (OR logic), e.g. \"komediya,zhakhy\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minRatingo",
+            "required": false,
+            "in": "query",
+            "description": "Min ratingoScore (0-100)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "voteSource",
+            "required": false,
+            "in": "query",
+            "description": "Vote source for minVotes filter",
+            "schema": {
+              "default": "tmdb",
+              "enum": [
+                "tmdb",
+                "trakt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "minVotes",
+            "required": false,
+            "in": "query",
+            "description": "Min votes for selected voteSource",
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Release year (shortcut)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearFrom",
+            "required": false,
+            "in": "query",
+            "description": "Release year from (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearTo",
+            "required": false,
+            "in": "query",
+            "description": "Release year to (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "context",
+            "required": false,
+            "in": "query",
+            "description": "List context: home = stricter freshness filtering; catalog = permissive",
+            "schema": {
+              "default": "catalog",
+              "enum": [
+                "home",
+                "catalog"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PaginatedMovieResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
     "/api/catalog/movies/now-playing": {
       "get": {
         "operationId": "CatalogMoviesController_getNowPlaying",
@@ -763,6 +936,179 @@
         "operationId": "CatalogShowsController_getTrendingShows",
         "summary": "Trending TV shows",
         "description": "Returns trending shows sorted by popularity and rating.",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "schema": {
+              "default": "trending",
+              "enum": [
+                "trending",
+                "popularity",
+                "ratingo",
+                "releaseDate",
+                "tmdbPopularity"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "genres",
+            "required": false,
+            "in": "query",
+            "description": "Comma-separated genre slugs (OR logic), e.g. \"komediya,zhakhy\"",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "minRatingo",
+            "required": false,
+            "in": "query",
+            "description": "Min ratingoScore (0-100)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "voteSource",
+            "required": false,
+            "in": "query",
+            "description": "Vote source for minVotes filter",
+            "schema": {
+              "default": "tmdb",
+              "enum": [
+                "tmdb",
+                "trakt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "minVotes",
+            "required": false,
+            "in": "query",
+            "description": "Min votes for selected voteSource",
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "year",
+            "required": false,
+            "in": "query",
+            "description": "Release year (shortcut)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearFrom",
+            "required": false,
+            "in": "query",
+            "description": "Release year from (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "yearTo",
+            "required": false,
+            "in": "query",
+            "description": "Release year to (inclusive)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "context",
+            "required": false,
+            "in": "query",
+            "description": "List context: home = stricter freshness filtering; catalog = permissive",
+            "schema": {
+              "default": "catalog",
+              "enum": [
+                "home",
+                "catalog"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TrendingShowsResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/shows/popular": {
+      "get": {
+        "operationId": "CatalogShowsController_getPopularShows",
+        "summary": "Popular TV shows (Hits)",
+        "description": "Returns historically popular shows. Includes classics.",
         "parameters": [
           {
             "name": "limit",
@@ -4678,7 +5024,6 @@
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "Proposed policy and dry-run options",
           "content": {
             "application/json": {
               "schema": {
@@ -4689,7 +5034,7 @@
         },
         "responses": {
           "200": {
-            "description": "Dry-run results",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -4728,11 +5073,10 @@
       "post": {
         "operationId": "DryRunController_executeDryRunDiff",
         "summary": "Execute dry-run with diff",
-        "description": "Same as dry-run but also includes comparison against current active policy version.",
+        "description": "Same as dry-run but includes comparison against current active policy version.",
         "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "Proposed policy and dry-run options",
           "content": {
             "application/json": {
               "schema": {
@@ -4743,7 +5087,7 @@
         },
         "responses": {
           "200": {
-            "description": "Dry-run results with current policy version",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
@@ -5216,10 +5560,54 @@
             "name": "limit",
             "required": false,
             "in": "query",
-            "description": "Number of items to sync",
+            "description": "Number of trending items to sync per type (movies + shows)",
             "schema": {
-              "default": 20,
-              "example": 20,
+              "default": 100,
+              "example": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Service: Stats"
+        ]
+      }
+    },
+    "/api/stats/sync-eligible-trending": {
+      "post": {
+        "operationId": "StatsController_syncEligibleTrending",
+        "summary": "Sync watchers for ELIGIBLE trending items",
+        "description": "Adds a job to the queue to sync watchers data for ELIGIBLE items in trending context. Use this to backfill watchers for items that are never in Trakt trending top-100.",
+        "parameters": [
+          {
+            "name": "batchSize",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per batch",
+            "schema": {
+              "default": 50,
+              "example": 50,
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset for pagination",
+            "schema": {
+              "default": 0,
+              "example": 0,
               "type": "number"
             }
           }
@@ -5401,6 +5789,64 @@
             "required": false,
             "in": "query",
             "description": "Minimum Trakt votes to consider item as corrupted",
+            "schema": {
+              "default": 100,
+              "example": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Service: Stats"
+        ]
+      }
+    },
+    "/api/stats/backfill/watchers-count": {
+      "post": {
+        "operationId": "StatsController_backfillWatchersCount",
+        "summary": "Queue backfill jobs for watchers_count",
+        "description": "Finds items where watchers_count = 0 but total_watchers > threshold, then queues chunk jobs to re-fetch live watchers from Trakt API with proper rate limiting and exponential backoff.",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "example": "show",
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max items to backfill",
+            "schema": {
+              "default": 100,
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "minTotalWatchers",
+            "required": false,
+            "in": "query",
+            "description": "Minimum total_watchers to consider item as corrupted",
             "schema": {
               "default": 100,
               "example": 100,
@@ -7299,6 +7745,7 @@
             "type": "string",
             "enum": [
               "TRENDING_LIST",
+              "POPULAR_LIST",
               "NEW_RELEASES_LIST",
               "IN_THEATERS_LIST",
               "NEW_ON_STREAMING_LIST",
@@ -10531,6 +10978,18 @@
             "items": {
               "type": "string"
             }
+          },
+          "excludeOriginCountries": {
+            "description": "Exclude origin countries filter (ISO 3166-1 alpha-2 codes). Rule does NOT match if media has ANY of these countries.",
+            "example": [
+              "JP",
+              "KR",
+              "CN"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -10610,6 +11069,24 @@
           }
         }
       },
+      "LocalMaturityOverrideDto": {
+        "type": "object",
+        "properties": {
+          "minFreshnessScoreNormalized": {
+            "type": "number",
+            "description": "Minimum freshness score normalized (0-1). Higher values = stricter freshness requirement. Example: 0.90 = must be in top 10% freshest content.",
+            "example": 0.9,
+            "minimum": 0,
+            "maximum": 1
+          },
+          "minLocalWatchers": {
+            "type": "number",
+            "description": "Minimum Ratingo platform watchers count. Validates local engagement signal. Example: 30 = at least 30 users actively watching on platform.",
+            "example": 30,
+            "minimum": 0
+          }
+        }
+      },
       "GlobalRequirementsDto": {
         "type": "object",
         "properties": {
@@ -10665,6 +11142,14 @@
                 "search"
               ]
             }
+          },
+          "localMaturityOverride": {
+            "description": "Alternative path for fresh content with local engagement. Applied only when minVotesAnyOf check fails. Allows new releases with strong platform signals to bypass vote requirements.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalMaturityOverrideDto"
+              }
+            ]
           }
         }
       },
@@ -11554,7 +12039,9 @@
             "example": "trending",
             "enum": [
               "catalog",
-              "trending"
+              "trending",
+              "homepage",
+              "search"
             ]
           },
           "batchSize": {
@@ -11595,7 +12082,9 @@
             "example": "trending",
             "enum": [
               "catalog",
-              "trending"
+              "trending",
+              "homepage",
+              "search"
             ]
           },
           "message": {
@@ -11683,6 +12172,25 @@
           "options"
         ]
       },
+      "ReasonCountDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Evaluation reason",
+            "example": "ALLOWED_COUNTRY"
+          },
+          "count": {
+            "type": "number",
+            "description": "Count of items with this reason",
+            "example": 500
+          }
+        },
+        "required": [
+          "reason",
+          "count"
+        ]
+      },
       "DryRunSummaryDto": {
         "type": "object",
         "properties": {
@@ -11721,11 +12229,16 @@
             "description": "Items with unchanged status",
             "example": 925
           },
+          "newItems": {
+            "type": "number",
+            "description": "Items without previous evaluation (first-time evaluation)",
+            "example": 40
+          },
           "reasonBreakdown": {
             "description": "Breakdown of evaluation reasons",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ReasonBreakdownDto"
+              "$ref": "#/components/schemas/ReasonCountDto"
             }
           },
           "executionTimeMs": {
@@ -11748,6 +12261,11 @@
             "type": "number",
             "description": "Item limit used",
             "example": 1000
+          },
+          "timedOut": {
+            "type": "boolean",
+            "description": "Whether evaluation was stopped due to timeout",
+            "example": false
           }
         },
         "required": [
@@ -11758,10 +12276,12 @@
           "newlyEligible",
           "newlyIneligible",
           "unchanged",
+          "newItems",
           "reasonBreakdown",
           "executionTimeMs",
           "mode",
-          "limit"
+          "limit",
+          "timedOut"
         ]
       },
       "DryRunItemResultDto": {

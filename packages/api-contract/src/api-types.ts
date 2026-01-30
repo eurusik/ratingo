@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/movies/popular": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Popular movies (Hits)
+         * @description Returns historically popular movies. Includes classics.
+         */
+        get: operations["CatalogMoviesController_getPopularMovies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/catalog/movies/now-playing": {
         parameters: {
             query?: never;
@@ -116,6 +136,26 @@ export interface paths {
          * @description Returns trending shows sorted by popularity and rating.
          */
         get: operations["CatalogShowsController_getTrendingShows"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/shows/popular": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Popular TV shows (Hits)
+         * @description Returns historically popular shows. Includes classics.
+         */
+        get: operations["CatalogShowsController_getPopularShows"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1346,7 +1386,7 @@ export interface paths {
         put?: never;
         /**
          * Execute dry-run with diff
-         * @description Same as dry-run but also includes comparison against current active policy version.
+         * @description Same as dry-run but includes comparison against current active policy version.
          */
         post: operations["DryRunController_executeDryRunDiff"];
         delete?: never;
@@ -1483,6 +1523,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats/sync-eligible-trending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sync watchers for ELIGIBLE trending items
+         * @description Adds a job to the queue to sync watchers data for ELIGIBLE items in trending context. Use this to backfill watchers for items that are never in Trakt trending top-100.
+         */
+        post: operations["StatsController_syncEligibleTrending"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/stats/tmdb/{tmdbId}": {
         parameters: {
             query?: never;
@@ -1577,6 +1637,26 @@ export interface paths {
          * @description Finds items where total_watchers = 0 but have Trakt votes, then re-fetches from Trakt API.
          */
         post: operations["StatsController_backfillTotalWatchers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/backfill/watchers-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Queue backfill jobs for watchers_count
+         * @description Finds items where watchers_count = 0 but total_watchers > threshold, then queues chunk jobs to re-fetch live watchers from Trakt API with proper rate limiting and exponential backoff.
+         */
+        post: operations["StatsController_backfillWatchersCount"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2137,7 +2217,7 @@ export interface components {
             /** @enum {string|null} */
             badgeKey?: "NEW_EPISODE" | "CONTINUE" | "IN_WATCHLIST" | "HIT" | "NEW_RELEASE" | "RISING" | "TRENDING" | "IN_THEATERS" | "NEW_ON_STREAMING" | null;
             /** @enum {string} */
-            listContext?: "TRENDING_LIST" | "NEW_RELEASES_LIST" | "IN_THEATERS_LIST" | "NEW_ON_STREAMING_LIST" | "USER_LIBRARY" | "CONTINUE_LIST" | "DEFAULT";
+            listContext?: "TRENDING_LIST" | "POPULAR_LIST" | "NEW_RELEASES_LIST" | "IN_THEATERS_LIST" | "NEW_ON_STREAMING_LIST" | "USER_LIBRARY" | "CONTINUE_LIST" | "DEFAULT";
             /** @enum {string} */
             primaryCta: "SAVE" | "CONTINUE" | "OPEN";
             continue?: components["schemas"]["ContinuePointDto"] | null;
@@ -3542,6 +3622,15 @@ export interface components {
              *     ]
              */
             originCountries?: string[];
+            /**
+             * @description Exclude origin countries filter (ISO 3166-1 alpha-2 codes). Rule does NOT match if media has ANY of these countries.
+             * @example [
+             *       "JP",
+             *       "KR",
+             *       "CN"
+             *     ]
+             */
+            excludeOriginCountries?: string[];
         };
         BreakoutRuleDto: {
             /**
@@ -3584,6 +3673,18 @@ export interface components {
              */
             min?: number;
         };
+        LocalMaturityOverrideDto: {
+            /**
+             * @description Minimum freshness score normalized (0-1). Higher values = stricter freshness requirement. Example: 0.90 = must be in top 10% freshest content.
+             * @example 0.9
+             */
+            minFreshnessScoreNormalized?: number;
+            /**
+             * @description Minimum Ratingo platform watchers count. Validates local engagement signal. Example: 30 = at least 30 users actively watching on platform.
+             * @example 30
+             */
+            minLocalWatchers?: number;
+        };
         GlobalRequirementsDto: {
             /**
              * @description Minimum quality score normalized (0-1)
@@ -3610,6 +3711,8 @@ export interface components {
              *     ]
              */
             appliesTo?: ("catalog" | "homepage" | "trending" | "now_playing" | "new_digital" | "search")[];
+            /** @description Alternative path for fresh content with local engagement. Applied only when minVotesAnyOf check fails. Allows new releases with strong platform signals to bypass vote requirements. */
+            localMaturityOverride?: components["schemas"]["LocalMaturityOverrideDto"];
         };
         PolicyConfigDto: {
             /**
@@ -4169,7 +4272,7 @@ export interface components {
              * @example trending
              * @enum {string}
              */
-            context: "catalog" | "trending";
+            context: "catalog" | "trending" | "homepage" | "search";
             /**
              * @description Batch size for processing items
              * @example 500
@@ -4193,7 +4296,7 @@ export interface components {
              * @example trending
              * @enum {string}
              */
-            context: "catalog" | "trending";
+            context: "catalog" | "trending" | "homepage" | "search";
             /**
              * @description Human-readable message
              * @example Backfill started for context=trending. Use GET /admin/catalog-policies/runs/run-123 to track progress.
@@ -4235,6 +4338,18 @@ export interface components {
             /** @description Dry-run options */
             options: components["schemas"]["DryRunOptionsDto"];
         };
+        ReasonCountDto: {
+            /**
+             * @description Evaluation reason
+             * @example ALLOWED_COUNTRY
+             */
+            reason: string;
+            /**
+             * @description Count of items with this reason
+             * @example 500
+             */
+            count: number;
+        };
         DryRunSummaryDto: {
             /**
              * @description Total items evaluated
@@ -4271,8 +4386,13 @@ export interface components {
              * @example 925
              */
             unchanged: number;
+            /**
+             * @description Items without previous evaluation (first-time evaluation)
+             * @example 40
+             */
+            newItems: number;
             /** @description Breakdown of evaluation reasons */
-            reasonBreakdown: components["schemas"]["ReasonBreakdownDto"][];
+            reasonBreakdown: components["schemas"]["ReasonCountDto"][];
             /**
              * @description Execution time in milliseconds
              * @example 1500
@@ -4289,6 +4409,11 @@ export interface components {
              * @example 1000
              */
             limit: number;
+            /**
+             * @description Whether evaluation was stopped due to timeout
+             * @example false
+             */
+            timedOut: boolean;
         };
         DryRunItemResultDto: {
             /**
@@ -5373,6 +5498,51 @@ export interface operations {
             };
         };
     };
+    CatalogMoviesController_getPopularMovies: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
+                order?: "asc" | "desc";
+                /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
+                genres?: string;
+                /** @description Min ratingoScore (0-100) */
+                minRatingo?: number;
+                /** @description Vote source for minVotes filter */
+                voteSource?: "tmdb" | "trakt";
+                /** @description Min votes for selected voteSource */
+                minVotes?: number;
+                /** @description Release year (shortcut) */
+                year?: number;
+                /** @description Release year from (inclusive) */
+                yearFrom?: number;
+                /** @description Release year to (inclusive) */
+                yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMovieResponseDto"];
+                    };
+                };
+            };
+        };
+    };
     CatalogMoviesController_getNowPlaying: {
         parameters: {
             query?: {
@@ -5538,6 +5708,51 @@ export interface operations {
         };
     };
     CatalogShowsController_getTrendingShows: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore */
+                sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "tmdbPopularity";
+                order?: "asc" | "desc";
+                /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
+                genres?: string;
+                /** @description Min ratingoScore (0-100) */
+                minRatingo?: number;
+                /** @description Vote source for minVotes filter */
+                voteSource?: "tmdb" | "trakt";
+                /** @description Min votes for selected voteSource */
+                minVotes?: number;
+                /** @description Release year (shortcut) */
+                year?: number;
+                /** @description Release year from (inclusive) */
+                yearFrom?: number;
+                /** @description Release year to (inclusive) */
+                yearTo?: number;
+                /** @description List context: home = stricter freshness filtering; catalog = permissive */
+                context?: "home" | "catalog";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["TrendingShowsResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    CatalogShowsController_getPopularShows: {
         parameters: {
             query?: {
                 limit?: number;
@@ -7619,14 +7834,12 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Proposed policy and dry-run options */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["DryRunRequestDto"];
             };
         };
         responses: {
-            /** @description Dry-run results */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -7648,14 +7861,12 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Proposed policy and dry-run options */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["DryRunRequestDto"];
             };
         };
         responses: {
-            /** @description Dry-run results with current policy version */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -7883,8 +8094,30 @@ export interface operations {
     StatsController_syncTrendingStats: {
         parameters: {
             query?: {
-                /** @description Number of items to sync */
+                /** @description Number of trending items to sync per type (movies + shows) */
                 limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StatsController_syncEligibleTrending: {
+        parameters: {
+            query?: {
+                /** @description Number of items per batch */
+                batchSize?: number;
+                /** @description Offset for pagination */
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -7991,6 +8224,30 @@ export interface operations {
                 limit?: number;
                 /** @description Minimum Trakt votes to consider item as corrupted */
                 minVotes?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StatsController_backfillWatchersCount: {
+        parameters: {
+            query?: {
+                /** @description Filter by media type */
+                type?: "movie" | "show";
+                /** @description Max items to backfill */
+                limit?: number;
+                /** @description Minimum total_watchers to consider item as corrupted */
+                minTotalWatchers?: number;
             };
             header?: never;
             path?: never;

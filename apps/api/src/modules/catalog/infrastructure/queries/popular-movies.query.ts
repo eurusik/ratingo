@@ -1,6 +1,18 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, gte, lte, isNotNull, inArray, and, exists, sql, isNull, type SQL } from 'drizzle-orm';
+import {
+  eq,
+  gte,
+  lt,
+  lte,
+  isNotNull,
+  inArray,
+  and,
+  exists,
+  sql,
+  isNull,
+  type SQL,
+} from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
@@ -9,11 +21,9 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import {
-  CONTEXT_FRESHNESS,
   MOVIE_TRENDING_WEIGHTS,
-  LIST_CONTEXT,
   WATCHERS_FALLBACK,
-  TRENDING_THRESHOLDS,
+  POPULAR_THRESHOLDS,
 } from '../../domain/constants/catalog.constants';
 import type { TrendingMovieItem } from '../../domain/repositories/movie.repository.interface';
 import type { TrendingQueryResult } from '../../domain/types/query.types';
@@ -21,7 +31,6 @@ import {
   type CatalogSort,
   type SortOrder,
   type VoteSource,
-  type ListContext,
   CATALOG_SORT,
   SORT_ORDER,
   VOTE_SOURCE,
@@ -33,9 +42,9 @@ import { MovieResultMapper } from './shared/movie-result.mapper';
 import { movieSelectFields, type MovieSelectRow } from './shared/movie-select.fields';
 
 /**
- * Options for trending movies query.
+ * Options for popular movies query.
  */
-export interface TrendingMoviesOptions {
+export interface PopularMoviesOptions {
   limit?: number;
   offset?: number;
   minRatingo?: number;
@@ -47,21 +56,21 @@ export interface TrendingMoviesOptions {
   year?: number;
   yearFrom?: number;
   yearTo?: number;
-  /** List context for freshness filtering (default: catalog) */
-  context?: ListContext;
 }
 
 /**
- * Fetches trending movies sorted by popularity and rating.
+ * Fetches popular movies (Hits pool).
  *
- * Retrieves movies with stats, external ratings, and genres,
- * applying optional filters for rating and genre.
+ * Key differences from TrendingMoviesQuery:
+ * - Uses EvaluationContext.CATALOG (not TRENDING)
+ * - No freshness gate
+ * - Gate: total_watchers >= POPULAR_THRESHOLDS.MIN_TOTAL_WATCHERS_MOVIES
  *
  * @throws {DatabaseException} When database query fails
  */
 @Injectable()
-export class TrendingMoviesQuery {
-  private readonly logger = new Logger(TrendingMoviesQuery.name);
+export class PopularMoviesQuery {
+  private readonly logger = new Logger(PopularMoviesQuery.name);
 
   constructor(
     @Inject(DATABASE_CONNECTION)
@@ -70,42 +79,41 @@ export class TrendingMoviesQuery {
   ) {}
 
   /**
-   * Executes the trending movies query.
+   * Executes the popular movies query.
    * Only returns ELIGIBLE items (filtered via media_catalog_evaluations).
    *
-   * Returns degraded state if no evaluations exist for the trending context
+   * Returns degraded state if no evaluations exist for the catalog context
    * with the active policy version.
    *
-   * @param {TrendingMoviesOptions} options - Query options (limit, offset, filters)
-   * @returns {Promise<TrendingQueryResult<TrendingMovieItem>>} List of trending movies with stats and genres
+   * @param {PopularMoviesOptions} options - Query options (limit, offset, filters)
+   * @returns {Promise<TrendingQueryResult<TrendingMovieItem>>} List of popular movies with stats and genres
    * @throws {DatabaseException} When database query fails
    */
-  async execute(options: TrendingMoviesOptions): Promise<TrendingQueryResult<TrendingMovieItem>> {
+  async execute(options: PopularMoviesOptions): Promise<TrendingQueryResult<TrendingMovieItem>> {
     const {
       limit = 20,
       offset = 0,
       minRatingo,
       genres,
-      sort = CATALOG_SORT.TRENDING,
+      sort = CATALOG_SORT.POPULARITY,
       order = SORT_ORDER.DESC,
       voteSource = VOTE_SOURCE.TMDB,
       minVotes,
       year,
       yearFrom,
       yearTo,
-      context = LIST_CONTEXT.CATALOG,
     } = options;
 
     try {
       // Check for degraded state before executing main query
       const evaluationsExist = await checkContextEvaluationsExist(
         this.db,
-        EvaluationContext.TRENDING,
+        EvaluationContext.CATALOG,
       );
 
       if (!evaluationsExist) {
         this.logger.warn(
-          `Degraded state: no evaluations for context=${EvaluationContext.TRENDING} with active policy`,
+          `Degraded state: no evaluations for context=${EvaluationContext.CATALOG} with active policy`,
         );
 
         const emptyResult: TrendingQueryResult<TrendingMovieItem> =
@@ -121,21 +129,14 @@ export class TrendingMoviesQuery {
       const conditions: SQL[] = [
         isNotNull(schema.mediaStats.popularityScore),
         eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-        eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
+        eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
         eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
         isNull(schema.mediaItems.deletedAt),
       ];
 
-      const freshnessThreshold = CONTEXT_FRESHNESS[context].trending;
-      if (freshnessThreshold > 0) {
-        conditions.push(
-          sql`COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${freshnessThreshold}`,
-        );
-      }
-
-      // Trending without audience is just "recent" — enforce minimum traction
+      // Popular pool gate: historical watchers (no freshness requirement)
       conditions.push(
-        sql`COALESCE(${schema.mediaStats.watchersCount}, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES}`,
+        sql`COALESCE(${schema.mediaStats.totalWatchers}, 0) >= ${POPULAR_THRESHOLDS.MIN_TOTAL_WATCHERS_MOVIES}`,
       );
 
       if (minRatingo !== undefined) {
@@ -186,7 +187,7 @@ export class TrendingMoviesQuery {
           const end = this.buildYearStart(yearTo + 1);
           conditions.push(
             isNotNull(schema.mediaItems.releaseDate),
-            lte(schema.mediaItems.releaseDate, end),
+            lt(schema.mediaItems.releaseDate, end),
           );
         }
       }
@@ -201,7 +202,7 @@ export class TrendingMoviesQuery {
           and(
             eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
             eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
+            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
           ),
         )
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
@@ -220,8 +221,8 @@ export class TrendingMoviesQuery {
       withTotal.meta = { degraded: false };
       return withTotal;
     } catch (error) {
-      this.logger.error(`Failed to find trending movies: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch trending movies', {
+      this.logger.error(`Failed to find popular movies: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to fetch popular movies', {
         originalError: error.message,
       });
     }
@@ -243,7 +244,7 @@ export class TrendingMoviesQuery {
 
     if (sort === 'trending') {
       const w = MOVIE_TRENDING_WEIGHTS;
-      // Fallback formula: when watchers_count=0, use log-compressed total_watchers
+      // For popular pool, use same formula but without live watchers emphasis
       return [
         sql`(
           COALESCE(${schema.mediaStats.ratingoScore}, 0) * ${w.RATINGO} +
@@ -263,7 +264,6 @@ export class TrendingMoviesQuery {
       return [sql`${schema.mediaStats.ratingoScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
     }
     if (sort === 'releaseDate') {
-      // Fallback to created_at for incomplete data
       return [
         sql`COALESCE(${schema.mediaItems.releaseDate}, ${schema.mediaItems.createdAt}) ${dir} ${nullsLast}`,
         sql`${schema.mediaItems.id} desc`,
@@ -286,7 +286,7 @@ export class TrendingMoviesQuery {
         and(
           eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
           eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-          eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
+          eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
         ),
       )
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))

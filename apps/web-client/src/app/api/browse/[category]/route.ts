@@ -5,18 +5,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { catalogApi } from '@/core/api';
-import { getCategoryConfig } from '@/modules/browse';
+import { getCategoryConfig, CATALOG_SORT_OPTIONS, type CatalogSort } from '@/modules/browse';
 
-/** Allowed sort values for catalog browsing */
-const ALLOWED_SORTS = ['trending', 'popularity', 'ratingo', 'releaseDate'] as const;
-type CatalogSort = (typeof ALLOWED_SORTS)[number];
-
-/**
- * Validates and returns the sort parameter if valid.
- */
 function validateSort(value: string | null): CatalogSort | undefined {
   if (!value) return undefined;
-  return ALLOWED_SORTS.includes(value as CatalogSort) ? (value as CatalogSort) : undefined;
+  return (CATALOG_SORT_OPTIONS as readonly string[]).includes(value)
+    ? (value as CatalogSort)
+    : undefined;
 }
 
 export async function GET(

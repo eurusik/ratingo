@@ -22,7 +22,9 @@ const STATIC_PAGES: Array<{
   { path: '/browse/shows', changeFrequency: 'daily', priority: 0.9 },
   { path: '/browse/movies', changeFrequency: 'daily', priority: 0.9 },
   { path: '/browse/shows-trending', changeFrequency: 'daily', priority: 0.8 },
+  { path: '/browse/shows-popular', changeFrequency: 'daily', priority: 0.8 },
   { path: '/browse/movies-trending', changeFrequency: 'daily', priority: 0.8 },
+  { path: '/browse/movies-popular', changeFrequency: 'daily', priority: 0.8 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

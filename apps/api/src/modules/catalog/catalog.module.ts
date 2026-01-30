@@ -22,6 +22,8 @@ import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
 import { MovieDetailsQuery } from './infrastructure/queries/movie-details.query';
 import { MovieListingsQuery } from './infrastructure/queries/movie-listings.query';
 import { NewEpisodesQuery } from './infrastructure/queries/new-episodes.query';
+import { PopularMoviesQuery } from './infrastructure/queries/popular-movies.query';
+import { PopularShowsQuery } from './infrastructure/queries/popular-shows.query';
 import { ProvidersQuery } from './infrastructure/queries/providers.query';
 import { GenreQuery } from './infrastructure/queries/shared/genre.query';
 import { WatchOffersQuery } from './infrastructure/queries/shared/watch-offers.query';
@@ -71,6 +73,7 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
     MovieDetailsService,
     // Query Objects - Shows
     TrendingShowsQuery,
+    PopularShowsQuery,
     ShowDetailsQuery,
     CalendarEpisodesQuery,
     NewEpisodesQuery,
@@ -78,6 +81,7 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
     // Query Objects - Movies
     MovieDetailsQuery,
     TrendingMoviesQuery,
+    PopularMoviesQuery,
     MovieListingsQuery,
 
     // Query Objects - Mixed Media

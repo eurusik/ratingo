@@ -21,6 +21,7 @@ import type { WithTotal } from '../../domain/types/query.types';
 import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
+import { PopularShowsQuery } from '../queries/popular-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
 
@@ -48,6 +49,7 @@ export class DrizzleShowRepository implements IShowRepository {
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly trendingShowsQuery: TrendingShowsQuery,
+    private readonly popularShowsQuery: PopularShowsQuery,
     private readonly showDetailsQuery: ShowDetailsQuery,
     private readonly calendarEpisodesQuery: CalendarEpisodesQuery,
   ) {}
@@ -171,6 +173,13 @@ export class DrizzleShowRepository implements IShowRepository {
    */
   async findTrending(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>> {
     return this.trendingShowsQuery.execute(options) as unknown as WithTotal<TrendingShowItem>;
+  }
+
+  /**
+   * Finds popular shows (historically popular, no freshness gate).
+   */
+  async findPopular(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>> {
+    return this.popularShowsQuery.execute(options) as unknown as WithTotal<TrendingShowItem>;
   }
 
   /**

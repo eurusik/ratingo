@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DrizzleShowRepository } from './drizzle-show.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { PopularShowsQuery } from '../queries/popular-shows.query';
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
@@ -39,6 +40,7 @@ describe('DrizzleShowRepository', () => {
   let repository: DrizzleShowRepository;
   let db: any;
   let trendingQuery: any;
+  let popularQuery: any;
   let detailsQuery: any;
   let calendarQuery: any;
   let insertChain: any;
@@ -57,6 +59,7 @@ describe('DrizzleShowRepository', () => {
     };
 
     trendingQuery = { execute: jest.fn().mockResolvedValue(['trending']) };
+    popularQuery = { execute: jest.fn().mockResolvedValue(['popular']) };
     detailsQuery = { execute: jest.fn().mockResolvedValue('details') };
     calendarQuery = { execute: jest.fn().mockResolvedValue(['calendar']) };
 
@@ -65,6 +68,7 @@ describe('DrizzleShowRepository', () => {
         DrizzleShowRepository,
         { provide: DATABASE_CONNECTION, useValue: db },
         { provide: TrendingShowsQuery, useValue: trendingQuery },
+        { provide: PopularShowsQuery, useValue: popularQuery },
         { provide: ShowDetailsQuery, useValue: detailsQuery },
         { provide: CalendarEpisodesQuery, useValue: calendarQuery },
       ],

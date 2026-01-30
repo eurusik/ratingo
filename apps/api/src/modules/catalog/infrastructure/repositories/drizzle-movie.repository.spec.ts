@@ -3,6 +3,7 @@ import { DrizzleMovieRepository } from './drizzle-movie.repository';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { MovieDetailsQuery } from '../queries/movie-details.query';
+import { PopularMoviesQuery } from '../queries/popular-movies.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';
 import { MovieListingsQuery } from '../queries/movie-listings.query';
 
@@ -39,6 +40,7 @@ describe('DrizzleMovieRepository', () => {
   let db: any;
   let movieDetailsQuery: any;
   let trendingMoviesQuery: any;
+  let popularMoviesQuery: any;
   let movieListingsQuery: any;
   let insertChain: any;
   let selectChain: any;
@@ -60,6 +62,7 @@ describe('DrizzleMovieRepository', () => {
 
     movieDetailsQuery = { execute: jest.fn().mockResolvedValue('details') };
     trendingMoviesQuery = { execute: jest.fn().mockResolvedValue(['trending']) };
+    popularMoviesQuery = { execute: jest.fn().mockResolvedValue(['popular']) };
     movieListingsQuery = { execute: jest.fn().mockResolvedValue(['listings']) };
 
     return Test.createTestingModule({
@@ -68,6 +71,7 @@ describe('DrizzleMovieRepository', () => {
         { provide: DATABASE_CONNECTION, useValue: db },
         { provide: MovieDetailsQuery, useValue: movieDetailsQuery },
         { provide: TrendingMoviesQuery, useValue: trendingMoviesQuery },
+        { provide: PopularMoviesQuery, useValue: popularMoviesQuery },
         { provide: MovieListingsQuery, useValue: movieListingsQuery },
       ],
     }).compile();
@@ -142,6 +146,7 @@ describe('DrizzleMovieRepository', () => {
           { provide: DATABASE_CONNECTION, useValue: db },
           { provide: MovieDetailsQuery, useValue: movieDetailsQuery },
           { provide: TrendingMoviesQuery, useValue: trendingMoviesQuery },
+          { provide: PopularMoviesQuery, useValue: popularMoviesQuery },
           { provide: MovieListingsQuery, useValue: movieListingsQuery },
         ],
       }).compile();

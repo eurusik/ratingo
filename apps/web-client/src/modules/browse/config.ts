@@ -15,12 +15,27 @@ import type { Route } from 'next';
 
 export type BrowseCategory =
   | 'shows-trending' // Shows trending
+  | 'shows-popular' // Shows popular (hits)
   | 'movies-trending' // Movies trending
+  | 'movies-popular' // Movies popular (hits)
   | 'movies-now-playing' // Movies in theaters
   | 'movies-new-releases' // Movies recently released
   | 'movies-digital' // Movies new on digital
   | 'shows' // All shows (trending)
   | 'movies'; // All movies (trending)
+
+export type PoolType = 'trending' | 'popular';
+
+export const CATALOG_SORT = {
+  RATINGO: 'ratingo',
+  RELEASE_DATE: 'releaseDate',
+} as const;
+
+export type CatalogSort = (typeof CATALOG_SORT)[keyof typeof CATALOG_SORT];
+
+export const CATALOG_SORT_OPTIONS = [CATALOG_SORT.RATINGO, CATALOG_SORT.RELEASE_DATE] as const;
+
+export const DEFAULT_CATALOG_SORT = CATALOG_SORT.RATINGO;
 
 export interface CategoryConfig {
   /** URL slug */
@@ -32,7 +47,9 @@ export interface CategoryConfig {
   /** API method name in catalogApi */
   apiMethod:
     | 'getTrendingShows'
+    | 'getPopularShows'
     | 'getTrendingMovies'
+    | 'getPopularMovies'
     | 'getNowPlayingMovies'
     | 'getNewReleasesMovies'
     | 'getNewOnDigitalMovies';
@@ -40,6 +57,10 @@ export interface CategoryConfig {
   mediaType: 'movie' | 'show';
   /** Items per page */
   pageSize: number;
+  /** Pool type (trending or popular) - if set, shows pool selector */
+  pool?: PoolType;
+  /** Counterpart category for pool switching */
+  poolCounterpart?: BrowseCategory;
 }
 
 /**
@@ -50,11 +71,23 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
   // Shows
   'shows-trending': {
     slug: 'shows-trending',
-    titleKey: 'browse.shows.title',
-    descriptionKey: 'browse.trending.description',
+    titleKey: 'browse.showsTrending.title',
+    descriptionKey: 'browse.showsTrending.description',
     apiMethod: 'getTrendingShows',
     mediaType: 'show',
     pageSize: 24,
+    pool: 'trending',
+    poolCounterpart: 'shows-popular',
+  },
+  'shows-popular': {
+    slug: 'shows-popular',
+    titleKey: 'browse.showsPopular.title',
+    descriptionKey: 'browse.showsPopular.description',
+    apiMethod: 'getPopularShows',
+    mediaType: 'show',
+    pageSize: 24,
+    pool: 'popular',
+    poolCounterpart: 'shows-trending',
   },
   shows: {
     slug: 'shows',
@@ -76,11 +109,23 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
   },
   'movies-trending': {
     slug: 'movies-trending',
-    titleKey: 'browse.movies.title',
+    titleKey: 'browse.moviesTrending.title',
     descriptionKey: 'browse.moviesTrending.description',
     apiMethod: 'getTrendingMovies',
     mediaType: 'movie',
     pageSize: 24,
+    pool: 'trending',
+    poolCounterpart: 'movies-popular',
+  },
+  'movies-popular': {
+    slug: 'movies-popular',
+    titleKey: 'browse.moviesPopular.title',
+    descriptionKey: 'browse.moviesPopular.description',
+    apiMethod: 'getPopularMovies',
+    mediaType: 'movie',
+    pageSize: 24,
+    pool: 'popular',
+    poolCounterpart: 'movies-trending',
   },
   'movies-now-playing': {
     slug: 'movies-now-playing',
@@ -111,13 +156,25 @@ export const BROWSE_CATEGORIES: Record<BrowseCategory, CategoryConfig> = {
 /**
  * API methods that support sort/filter parameters.
  */
-const FILTERABLE_API_METHODS = ['getTrendingShows', 'getTrendingMovies'] as const;
+const FILTERABLE_API_METHODS = [
+  'getTrendingShows',
+  'getPopularShows',
+  'getTrendingMovies',
+  'getPopularMovies',
+] as const;
 
 /**
  * Check if category supports filters (sort, year, etc).
  */
 export function categorySupportsFilters(config: CategoryConfig): boolean {
   return (FILTERABLE_API_METHODS as readonly string[]).includes(config.apiMethod);
+}
+
+/**
+ * Check if category has pool selector (trending/popular toggle).
+ */
+export function categoryHasPoolSelector(config: CategoryConfig): boolean {
+  return config.pool !== undefined && config.poolCounterpart !== undefined;
 }
 
 /**

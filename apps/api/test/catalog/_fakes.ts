@@ -178,6 +178,17 @@ export class FakeMovieRepository implements IMovieRepository {
     return paginate(sorted, options?.limit, options?.offset);
   }
 
+  async findPopular(options?: any): Promise<any[]> {
+    const filtered = applyMovieFilters(this.items, options);
+    const sorted = applySort(filtered, options?.sort, options?.order, {
+      popularity: (m) => m.stats?.popularityScore ?? 0,
+      tmdbPopularity: (m) => m.popularity ?? 0,
+      ratingo: (m) => m.stats?.ratingoScore ?? 0,
+      releaseDate: (m) => (m.releaseDate ? m.releaseDate.getTime() : -Infinity),
+    });
+    return paginate(sorted, options?.limit, options?.offset);
+  }
+
   async setNowPlaying(): Promise<void> {
     return;
   }
@@ -234,6 +245,21 @@ export class FakeShowRepository implements IShowRepository {
 
   async findTrending(options: TrendingShowsOptions): Promise<any[]> {
     this.lastTrendingOptions = options;
+    const filtered = applyShowFilters(this.items as any, options);
+    const sorted = applySort(filtered, options?.sort, options?.order, {
+      popularity: (s: any) => (s.stats?.popularityScore ?? 0) as number,
+      tmdbPopularity: (s: any) => (s.popularity ?? 0) as number,
+      ratingo: (s: any) => (s.stats?.ratingoScore ?? 0) as number,
+      releaseDate: (s: any) => (s.releaseDate ? s.releaseDate.getTime() : -Infinity),
+    });
+    const limit = options?.limit ?? filtered.length;
+    const offset = options?.offset ?? 0;
+    const page = sorted.slice(offset, offset + limit);
+    (page as any).total = sorted.length;
+    return page;
+  }
+
+  async findPopular(options: TrendingShowsOptions): Promise<any[]> {
     const filtered = applyShowFilters(this.items as any, options);
     const sorted = applySort(filtered, options?.sort, options?.order, {
       popularity: (s: any) => (s.stats?.popularityScore ?? 0) as number,

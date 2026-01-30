@@ -59,6 +59,17 @@ export const LIST_CONTEXT = {
 } as const;
 
 /**
+ * Popular pool thresholds.
+ * Used for "Hits" tab - historically popular content without freshness gate.
+ */
+export const POPULAR_THRESHOLDS = {
+  /** Minimum total watchers for movies to appear in popular */
+  MIN_TOTAL_WATCHERS_MOVIES: 5000,
+  /** Minimum total watchers for shows to appear in popular */
+  MIN_TOTAL_WATCHERS_SHOWS: 5000,
+} as const;
+
+/**
  * Trending algorithm thresholds.
  */
 export const TRENDING_THRESHOLDS = {
