@@ -112,17 +112,13 @@ export type TrendingMoviesDto = GetData<'/api/catalog/movies/trending'>;
 
 /**
  * Popular shows response.
- * NOTE: Uses TrendingShowsDto as fallback until api-contract is regenerated.
- * The response structure is identical (same DTO on backend).
  */
-export type PopularShowsDto = TrendingShowsDto;
+export type PopularShowsDto = GetData<'/api/catalog/shows/popular'>;
 
 /**
  * Popular movies response.
- * NOTE: Uses TrendingMoviesDto as fallback until api-contract is regenerated.
- * The response structure is identical (same DTO on backend).
  */
-export type PopularMoviesDto = TrendingMoviesDto;
+export type PopularMoviesDto = GetData<'/api/catalog/movies/popular'>;
 
 /**
  * Now playing movies response.
