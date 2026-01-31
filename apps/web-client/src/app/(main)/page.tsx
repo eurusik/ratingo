@@ -17,6 +17,7 @@ import {
   mapNewEpisodes,
 } from '@/modules/home';
 import { getDictionary } from '@/shared/i18n';
+import { LazySection } from '@/shared/components';
 import { catalogApi, type HeroData } from '@/core/api';
 import { TrendingUp, Clapperboard, Sparkles, Film } from 'lucide-react';
 
@@ -133,93 +134,96 @@ export default async function HomePage() {
           {/* New Episodes */}
           {newEpisodeItems.length > 0 && <NewEpisodesSection items={newEpisodeItems} locale="uk" />}
 
-          {/* Visual Separator: Movies */}
-          <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-cinema-borderSoft" />
+          {/* Movies Section - Lazy loaded (below fold) */}
+          <LazySection minHeight="600px" rootMargin="200px">
+            {/* Visual Separator: Movies */}
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="w-full border-t border-cinema-borderSoft" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-cinema-page px-4 text-sm text-cinema-text-muted flex items-center gap-2">
+                  <Film className="w-4 h-4" />
+                  {dict.mediaType.movies}
+                </span>
+              </div>
             </div>
-            <div className="relative flex justify-center">
-              <span className="bg-cinema-page px-4 text-sm text-cinema-text-muted flex items-center gap-2">
-                <Film className="w-4 h-4" />
-                {dict.mediaType.movies}
-              </span>
-            </div>
-          </div>
 
-          {/* Now Playing */}
-          {nowPlayingCards.length > 0 && (
-            <TrendingCarousel
-              title={dict.browse.moviesNowPlaying.title}
-              titleIcon={<Clapperboard className="w-5 h-5 text-red-500" />}
-              actions={
-                <Link
-                  href="/browse/movies-now-playing"
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  {dict.common.showAll} →
-                </Link>
-              }
-            >
-              {nowPlayingCards.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
-                >
-                  <MediaCardServer {...item} locale="uk" />
-                </div>
-              ))}
-            </TrendingCarousel>
-          )}
+            {/* Now Playing */}
+            {nowPlayingCards.length > 0 && (
+              <TrendingCarousel
+                title={dict.browse.moviesNowPlaying.title}
+                titleIcon={<Clapperboard className="w-5 h-5 text-red-500" />}
+                actions={
+                  <Link
+                    href="/browse/movies-now-playing"
+                    className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    {dict.common.showAll} →
+                  </Link>
+                }
+              >
+                {nowPlayingCards.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
+                  >
+                    <MediaCardServer {...item} locale="uk" />
+                  </div>
+                ))}
+              </TrendingCarousel>
+            )}
 
-          {/* New on Streaming */}
-          {newDigitalCards.length > 0 && (
-            <TrendingCarousel
-              title={dict.browse.moviesDigital.title}
-              titleIcon={<Sparkles className="w-5 h-5 text-amber-400" />}
-              actions={
-                <Link
-                  href="/browse/movies-digital"
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  {dict.common.showAll} →
-                </Link>
-              }
-            >
-              {newDigitalCards.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
-                >
-                  <MediaCardServer {...item} locale="uk" />
-                </div>
-              ))}
-            </TrendingCarousel>
-          )}
+            {/* New on Streaming */}
+            {newDigitalCards.length > 0 && (
+              <TrendingCarousel
+                title={dict.browse.moviesDigital.title}
+                titleIcon={<Sparkles className="w-5 h-5 text-amber-400" />}
+                actions={
+                  <Link
+                    href="/browse/movies-digital"
+                    className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    {dict.common.showAll} →
+                  </Link>
+                }
+              >
+                {newDigitalCards.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
+                  >
+                    <MediaCardServer {...item} locale="uk" />
+                  </div>
+                ))}
+              </TrendingCarousel>
+            )}
 
-          {/* Trending Movies */}
-          {trendingMovieCards.length > 0 && (
-            <TrendingCarousel
-              title={dict.home.sections.movies}
-              titleIcon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
-              actions={
-                <Link
-                  href="/browse/movies-trending"
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  {dict.common.showAll} →
-                </Link>
-              }
-            >
-              {trendingMovieCards.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
-                >
-                  <MediaCardServer {...item} locale="uk" />
-                </div>
-              ))}
-            </TrendingCarousel>
-          )}
+            {/* Trending Movies */}
+            {trendingMovieCards.length > 0 && (
+              <TrendingCarousel
+                title={dict.home.sections.movies}
+                titleIcon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
+                actions={
+                  <Link
+                    href="/browse/movies-trending"
+                    className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    {dict.common.showAll} →
+                  </Link>
+                }
+              >
+                {trendingMovieCards.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex-none w-[150px] sm:w-[180px] md:w-[200px] lg:w-[220px]"
+                  >
+                    <MediaCardServer {...item} locale="uk" />
+                  </div>
+                ))}
+              </TrendingCarousel>
+            )}
+          </LazySection>
         </div>
       </main>
     </MediaCardsWithStatus>
