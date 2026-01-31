@@ -80,3 +80,4 @@ docs/sync-trending.md
 .pnpm-store/
 .agents/
 .claude/
+.env*.local
