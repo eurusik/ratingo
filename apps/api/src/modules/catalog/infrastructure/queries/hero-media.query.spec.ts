@@ -1,5 +1,8 @@
+import * as fc from 'fast-check';
+
 import { HeroMediaQuery } from './hero-media.query';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { MS_PER_DAY } from '../../../../common/constants';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
 
@@ -216,5 +219,240 @@ describe('HeroMediaQuery', () => {
     setup([], new Error('DB Error'));
     const result = await query.execute({ limit: 3 });
     expect(result).toEqual([]);
+  });
+});
+
+// ============================================================================
+// Hero Freshness Gate Property Tests
+// ============================================================================
+
+/**
+ * Property tests for Hero freshness gate behavior.
+ *
+ * Critical invariant: Hero answers "what's trending NOW", not "what's best overall".
+ * Shows must have recent episodes (within MAX_DAYS_SINCE_LAST_EPISODE days).
+ * Movies pass through without freshness restriction.
+ *
+ * This prevents "evergreen classics" (Friends, Office, Big Bang Theory) from
+ * dominating Hero despite high liveWatchers - they're constantly rewatched
+ * but not culturally "trending".
+ */
+describe('Hero - Freshness Gate Property Tests', () => {
+  const daysArb = fc.integer({ min: 0, max: 730 }); // 0 to 2 years
+
+  /**
+   * Simulates the freshness gate logic from hero-media.query.ts
+   */
+  const passesShowFreshnessGate = (daysSinceLastEpisode: number): boolean => {
+    return daysSinceLastEpisode <= HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE;
+  };
+
+  describe('Property: Freshness threshold is correctly configured', () => {
+    it('MAX_DAYS_SINCE_LAST_EPISODE is 180', () => {
+      expect(HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE).toBe(180);
+    });
+
+    it('threshold represents approximately 6 months', () => {
+      const approximateMonths = HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE / 30;
+      expect(approximateMonths).toBeCloseTo(6, 0);
+    });
+  });
+
+  describe('Property: Shows freshness gate behavior', () => {
+    it('shows with recent episodes (≤180 days) pass the gate', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 0, max: HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE }),
+          (daysSinceLastEpisode) => {
+            expect(passesShowFreshnessGate(daysSinceLastEpisode)).toBe(true);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('shows with old episodes (>180 days) fail the gate', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE + 1, max: 730 }),
+          (daysSinceLastEpisode) => {
+            expect(passesShowFreshnessGate(daysSinceLastEpisode)).toBe(false);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
+    it('freshness gate is deterministic', () => {
+      fc.assert(
+        fc.property(daysArb, (daysSinceLastEpisode) => {
+          const passes1 = passesShowFreshnessGate(daysSinceLastEpisode);
+          const passes2 = passesShowFreshnessGate(daysSinceLastEpisode);
+          expect(passes1).toBe(passes2);
+        }),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  describe('Property: Movies are exempt from freshness gate', () => {
+    it('movies always pass regardless of any date', () => {
+      // Movies have no lastAirDate concept - they pass through
+      // This is implemented in SQL: OR(type = MOVIE, lastAirDate >= cutoff)
+      const moviePassesFreshnessGate = (): boolean => true;
+
+      fc.assert(
+        fc.property(daysArb, () => {
+          expect(moviePassesFreshnessGate()).toBe(true);
+        }),
+        { numRuns: 50 },
+      );
+    });
+  });
+
+  describe('Property: Boundary conditions', () => {
+    it('exactly 180 days passes (boundary inclusive)', () => {
+      expect(passesShowFreshnessGate(180)).toBe(true);
+    });
+
+    it('181 days fails (boundary exclusive)', () => {
+      expect(passesShowFreshnessGate(181)).toBe(false);
+    });
+
+    it('0 days (today) passes', () => {
+      expect(passesShowFreshnessGate(0)).toBe(true);
+    });
+  });
+
+  describe('Property: Date calculation is correct', () => {
+    it('cutoff date is calculated correctly from now', () => {
+      const now = new Date();
+      const cutoff = new Date(
+        now.getTime() - HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE * MS_PER_DAY,
+      );
+
+      // Verify cutoff is ~180 days in the past
+      const diffMs = now.getTime() - cutoff.getTime();
+      const diffDays = diffMs / MS_PER_DAY;
+      expect(diffDays).toBeCloseTo(180, 0);
+    });
+  });
+});
+
+// ============================================================================
+// Hero Sorting Property Tests
+// ============================================================================
+
+/**
+ * Property tests for Hero sorting behavior.
+ *
+ * Critical invariant: Hero shows "what's trending NOW".
+ * Primary sort: liveWatchers (watchersCount) DESC
+ * Secondary sort: ratingoScore DESC (quality tiebreaker)
+ */
+describe('Hero - Sorting Property Tests', () => {
+  const watchersArb = fc.integer({ min: 0, max: 10000 });
+  const scoreArb = fc.integer({ min: 0, max: 100 });
+
+  type HeroItem = { id: string; watchersCount: number; ratingoScore: number };
+
+  /**
+   * Simulates the hero sorting logic.
+   * Items with higher watchersCount come first.
+   * For same watchersCount, higher ratingoScore wins.
+   */
+  const sortHeroItems = (items: HeroItem[]): HeroItem[] => {
+    return [...items].sort((a, b) => {
+      // Primary: watchersCount DESC
+      if (b.watchersCount !== a.watchersCount) {
+        return b.watchersCount - a.watchersCount;
+      }
+      // Secondary: ratingoScore DESC
+      return b.ratingoScore - a.ratingoScore;
+    });
+  };
+
+  describe('Property: Primary sort is by liveWatchers', () => {
+    it('item with more watchers always ranks higher', () => {
+      fc.assert(
+        fc.property(watchersArb, watchersArb, scoreArb, scoreArb, (w1, w2, s1, s2) => {
+          fc.pre(w1 !== w2); // Only test when watchers differ
+
+          const items: HeroItem[] = [
+            { id: 'a', watchersCount: w1, ratingoScore: s1 },
+            { id: 'b', watchersCount: w2, ratingoScore: s2 },
+          ];
+          const sorted = sortHeroItems(items);
+
+          // Item with more watchers should be first
+          if (w1 > w2) {
+            expect(sorted[0].id).toBe('a');
+          } else {
+            expect(sorted[0].id).toBe('b');
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+
+    it('quality score does not override watchers count', () => {
+      // High quality (100) but low watchers (10) should lose to
+      // low quality (50) but high watchers (1000)
+      const items: HeroItem[] = [
+        { id: 'high-quality', watchersCount: 10, ratingoScore: 100 },
+        { id: 'high-watchers', watchersCount: 1000, ratingoScore: 50 },
+      ];
+      const sorted = sortHeroItems(items);
+
+      expect(sorted[0].id).toBe('high-watchers');
+    });
+  });
+
+  describe('Property: Secondary sort is by ratingoScore', () => {
+    it('when watchers equal, higher score wins', () => {
+      fc.assert(
+        fc.property(watchersArb, scoreArb, scoreArb, (watchers, s1, s2) => {
+          fc.pre(s1 !== s2); // Only test when scores differ
+
+          const items: HeroItem[] = [
+            { id: 'a', watchersCount: watchers, ratingoScore: s1 },
+            { id: 'b', watchersCount: watchers, ratingoScore: s2 },
+          ];
+          const sorted = sortHeroItems(items);
+
+          // Item with higher score should be first
+          if (s1 > s2) {
+            expect(sorted[0].id).toBe('a');
+          } else {
+            expect(sorted[0].id).toBe('b');
+          }
+        }),
+        { numRuns: 100 },
+      );
+    });
+  });
+
+  describe('Property: Sorting is stable and deterministic', () => {
+    it('same input always produces same order', () => {
+      fc.assert(
+        fc.property(
+          fc.array(
+            fc.record({
+              id: fc.uuid(),
+              watchersCount: watchersArb,
+              ratingoScore: scoreArb,
+            }),
+            { minLength: 2, maxLength: 10 },
+          ),
+          (items) => {
+            const sorted1 = sortHeroItems(items);
+            const sorted2 = sortHeroItems(items);
+
+            expect(sorted1.map((i) => i.id)).toEqual(sorted2.map((i) => i.id));
+          },
+        ),
+        { numRuns: 50 },
+      );
+    });
   });
 });

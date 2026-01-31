@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, desc, and, lte, isNotNull, gte, inArray, isNull, notInArray } from 'drizzle-orm';
+import { eq, desc, and, lte, isNotNull, gte, inArray, isNull, notInArray, or } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MS_PER_DAY } from '../../../../common/constants';
@@ -136,6 +136,11 @@ export class HeroMediaQuery {
   }): Promise<HeroQueryRow[]> {
     const { limit, type, now, minPopularityScore, excludeIds } = params;
 
+    // Calculate freshness cutoff for shows (exclude finished/dormant series)
+    const showFreshnessCutoff = new Date(
+      now.getTime() - HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE * MS_PER_DAY,
+    );
+
     const whereConditions = [
       lte(schema.mediaItems.releaseDate, now),
       isNotNull(schema.mediaItems.posterPath),
@@ -146,6 +151,12 @@ export class HeroMediaQuery {
       eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
       isNull(schema.mediaItems.deletedAt),
+      // Freshness gate: movies pass through, shows must have recent episodes
+      // This excludes "evergreen classics" (Friends, Office, Big Bang) from Hero
+      or(
+        eq(schema.mediaItems.type, MediaType.MOVIE),
+        gte(schema.shows.lastAirDate, showFreshnessCutoff),
+      ),
     ];
 
     if (type) {
@@ -194,6 +205,7 @@ export class HeroMediaQuery {
         ),
       )
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+      .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
       .where(and(...whereConditions))
       .orderBy(
         desc(schema.mediaStats.watchersCount), // Primary: what's trending NOW (liveWatchers)

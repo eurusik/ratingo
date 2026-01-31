@@ -181,4 +181,10 @@ export const HERO_THRESHOLDS = {
   NEW_RELEASE_DAYS: 90,
   /** Years since release to be considered "classic" in hero */
   CLASSIC_YEARS: 5,
+  /**
+   * Maximum days since last episode for shows to appear in Hero.
+   * Excludes finished/dormant shows that are just being rewatched.
+   * Hero = "what's happening NOW", not "evergreen classics".
+   */
+  MAX_DAYS_SINCE_LAST_EPISODE: 180,
 } as const;
