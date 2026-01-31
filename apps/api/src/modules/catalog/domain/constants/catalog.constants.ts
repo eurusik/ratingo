@@ -183,8 +183,9 @@ export const HERO_THRESHOLDS = {
   CLASSIC_YEARS: 5,
   /**
    * Maximum days since last episode for shows to appear in Hero.
+   * Shows pass if: lastAirDate ≤ 90 days OR nextAirDate exists.
+   * This allows shows between seasons (with announced next episode) to stay in Hero.
    * Excludes finished/dormant shows that are just being rewatched.
-   * Hero = "what's happening NOW", not "evergreen classics".
    */
-  MAX_DAYS_SINCE_LAST_EPISODE: 180,
+  MAX_DAYS_SINCE_LAST_EPISODE: 90,
 } as const;

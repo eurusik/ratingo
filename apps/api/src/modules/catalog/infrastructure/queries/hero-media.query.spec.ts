@@ -248,18 +248,18 @@ describe('Hero - Freshness Gate Property Tests', () => {
   };
 
   describe('Property: Freshness threshold is correctly configured', () => {
-    it('MAX_DAYS_SINCE_LAST_EPISODE is 180', () => {
-      expect(HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE).toBe(180);
+    it('MAX_DAYS_SINCE_LAST_EPISODE is 90', () => {
+      expect(HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE).toBe(90);
     });
 
-    it('threshold represents approximately 6 months', () => {
+    it('threshold represents approximately 3 months', () => {
       const approximateMonths = HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE / 30;
-      expect(approximateMonths).toBeCloseTo(6, 0);
+      expect(approximateMonths).toBeCloseTo(3, 0);
     });
   });
 
   describe('Property: Shows freshness gate behavior', () => {
-    it('shows with recent episodes (≤180 days) pass the gate', () => {
+    it('shows with recent episodes pass the gate', () => {
       fc.assert(
         fc.property(
           fc.integer({ min: 0, max: HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE }),
@@ -271,7 +271,7 @@ describe('Hero - Freshness Gate Property Tests', () => {
       );
     });
 
-    it('shows with old episodes (>180 days) fail the gate', () => {
+    it('shows with old episodes fail the gate', () => {
       fc.assert(
         fc.property(
           fc.integer({ min: HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE + 1, max: 730 }),
@@ -311,12 +311,12 @@ describe('Hero - Freshness Gate Property Tests', () => {
   });
 
   describe('Property: Boundary conditions', () => {
-    it('exactly 180 days passes (boundary inclusive)', () => {
-      expect(passesShowFreshnessGate(180)).toBe(true);
+    it('exactly 90 days passes (boundary inclusive)', () => {
+      expect(passesShowFreshnessGate(90)).toBe(true);
     });
 
-    it('181 days fails (boundary exclusive)', () => {
-      expect(passesShowFreshnessGate(181)).toBe(false);
+    it('91 days fails (boundary exclusive)', () => {
+      expect(passesShowFreshnessGate(91)).toBe(false);
     });
 
     it('0 days (today) passes', () => {
@@ -331,10 +331,9 @@ describe('Hero - Freshness Gate Property Tests', () => {
         now.getTime() - HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE * MS_PER_DAY,
       );
 
-      // Verify cutoff is ~180 days in the past
       const diffMs = now.getTime() - cutoff.getTime();
       const diffDays = diffMs / MS_PER_DAY;
-      expect(diffDays).toBeCloseTo(180, 0);
+      expect(diffDays).toBeCloseTo(90, 0);
     });
   });
 });

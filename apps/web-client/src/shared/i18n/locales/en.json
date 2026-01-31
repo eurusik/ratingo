@@ -45,6 +45,7 @@
     "subtitle": "Trending movies and shows without the noise. Ratings, viewers, new episodes — all in one place.",
     "sections": {
       "trending": "Watching now",
+      "watchingNow": "Watching now",
       "popularNow": "Popular now",
       "movies": "Watching now",
       "shows": "Watching now",

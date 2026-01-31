@@ -136,7 +136,6 @@ export class HeroMediaQuery {
   }): Promise<HeroQueryRow[]> {
     const { limit, type, now, minPopularityScore, excludeIds } = params;
 
-    // Calculate freshness cutoff for shows (exclude finished/dormant series)
     const showFreshnessCutoff = new Date(
       now.getTime() - HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE * MS_PER_DAY,
     );
@@ -151,11 +150,10 @@ export class HeroMediaQuery {
       eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
       eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
       isNull(schema.mediaItems.deletedAt),
-      // Freshness gate: movies pass through, shows must have recent episodes
-      // This excludes "evergreen classics" (Friends, Office, Big Bang) from Hero
       or(
         eq(schema.mediaItems.type, MediaType.MOVIE),
         gte(schema.shows.lastAirDate, showFreshnessCutoff),
+        isNotNull(schema.shows.nextAirDate),
       ),
     ];
 
@@ -208,9 +206,9 @@ export class HeroMediaQuery {
       .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
       .where(and(...whereConditions))
       .orderBy(
-        desc(schema.mediaStats.watchersCount), // Primary: what's trending NOW (liveWatchers)
-        desc(schema.mediaStats.ratingoScore), // Secondary: quality tiebreaker
-        desc(schema.mediaItems.id), // Stable sort tiebreaker
+        desc(schema.mediaStats.watchersCount),
+        desc(schema.mediaStats.ratingoScore),
+        desc(schema.mediaItems.releaseDate),
       )
       .limit(limit);
   }
