@@ -2,6 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
+  // CDN stale-while-revalidate: serve stale for 1 hour max (default is 1 year)
+  expireTime: 3600,
   images: {
     remotePatterns: [
       {
