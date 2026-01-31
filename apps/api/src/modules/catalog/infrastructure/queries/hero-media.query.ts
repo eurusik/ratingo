@@ -196,8 +196,8 @@ export class HeroMediaQuery {
       .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
       .where(and(...whereConditions))
       .orderBy(
-        desc(schema.mediaStats.ratingoScore), // Primary: composite score with freshness
-        desc(schema.mediaStats.popularityScore),
+        desc(schema.mediaStats.watchersCount), // Primary: what's trending NOW (liveWatchers)
+        desc(schema.mediaStats.ratingoScore), // Secondary: quality tiebreaker
         desc(schema.mediaItems.id), // Stable sort tiebreaker
       )
       .limit(limit);
