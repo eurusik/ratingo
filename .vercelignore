@@ -2,6 +2,7 @@ node_modules
 build
 dist
 .git
+.turbo
 .trae
 .log
 .figma
