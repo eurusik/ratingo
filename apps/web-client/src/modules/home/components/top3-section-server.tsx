@@ -76,7 +76,9 @@ export function Top3SectionServer({
           <HorizontalCard
             key={item.id}
             {...item}
-            rank={badge ? undefined : startRank + index}
+            // Only show ranks for watchingNow variant (ranked by watchers)
+            // topPicks has no ranking - it's a quality selection
+            rank={variant === 'watchingNow' ? startRank + index : undefined}
             badge={badge}
             variant={variant}
             locale={locale}

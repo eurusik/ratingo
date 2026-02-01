@@ -118,7 +118,7 @@ export default async function HomePage() {
         )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
-          {/* Top Picks (Hero items #2-4 with "Хіт" badge) */}
+          {/* Top Picks (Hero items #2-4) */}
           {heroCards.length >= 4 && (
             <Top3SectionServer
               items={heroCards.slice(1, 4)}
@@ -126,7 +126,6 @@ export default async function HomePage() {
               locale="uk"
               className="mb-12"
               count={3}
-              badge={dict.home.sections.hit}
             />
           )}
 
