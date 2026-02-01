@@ -50,9 +50,6 @@ export function Top3SectionServer({
 
   const displayItems = items.slice(0, count);
 
-  // Icon and color based on variant
-  // watchingNow: Eye (viewing activity), emerald (active but not urgent)
-  // topPicks: TrendingUp (quality ranking), orange (warm/premium)
   const Icon = variant === 'watchingNow' ? Eye : TrendingUp;
   const iconColor = variant === 'watchingNow' ? 'text-emerald-500' : 'text-orange-500';
 

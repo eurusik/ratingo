@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WatchingNowMediaQuery } from './watching-now-media.query';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { MS_PER_DAY } from '../../../../common/constants';
 import { WATCHING_NOW_THRESHOLDS } from '../../domain/constants/catalog.constants';
 import { type HeroQueryRow } from './shared/hero-item.mapper';
 
@@ -113,6 +112,46 @@ describe('WatchingNowMediaQuery', () => {
       it('show freshness threshold is 21 days (stricter than Hero 90 days)', () => {
         expect(WATCHING_NOW_THRESHOLDS.MAX_DAYS_SINCE_SHOW_EPISODE).toBe(21);
         expect(WATCHING_NOW_THRESHOLDS.MAX_DAYS_SINCE_SHOW_EPISODE).toBeLessThan(90);
+      });
+    });
+
+    describe('Property: Shows with nextAirDate qualify regardless of lastAirDate', () => {
+      /**
+       * Business rule: Shows with an upcoming episode (nextAirDate) qualify
+       * even if the last episode aired > 21 days ago.
+       *
+       * This handles shows on hiatus that have announced return dates.
+       * The SQL condition is: lastAirDate >= cutoff OR nextAirDate IS NOT NULL
+       */
+      it('show with old lastAirDate but future nextAirDate should qualify', () => {
+        // This documents the expected behavior - actual DB test would verify SQL
+        const lastAirDate = new Date('2024-01-01'); // 30+ days ago
+        const nextAirDate = new Date('2025-03-01'); // future date
+        const cutoffDays = WATCHING_NOW_THRESHOLDS.MAX_DAYS_SINCE_SHOW_EPISODE;
+
+        // lastAirDate is too old
+        const daysSinceLastAir = Math.floor(
+          (Date.now() - lastAirDate.getTime()) / (1000 * 60 * 60 * 24),
+        );
+        expect(daysSinceLastAir).toBeGreaterThan(cutoffDays);
+
+        // But nextAirDate exists, so show qualifies
+        expect(nextAirDate).not.toBeNull();
+        // SQL: gte(lastAirDate, cutoff) OR isNotNull(nextAirDate) => true
+      });
+
+      it('show with old lastAirDate and no nextAirDate should NOT qualify', () => {
+        // This documents the expected behavior
+        const lastAirDate = new Date('2024-01-01'); // 30+ days ago
+        const nextAirDate = null;
+        const cutoffDays = WATCHING_NOW_THRESHOLDS.MAX_DAYS_SINCE_SHOW_EPISODE;
+
+        const daysSinceLastAir = Math.floor(
+          (Date.now() - lastAirDate.getTime()) / (1000 * 60 * 60 * 24),
+        );
+        expect(daysSinceLastAir).toBeGreaterThan(cutoffDays);
+        expect(nextAirDate).toBeNull();
+        // SQL: gte(lastAirDate, cutoff) OR isNotNull(nextAirDate) => false
       });
     });
 

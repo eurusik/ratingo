@@ -154,6 +154,8 @@ export class WatchingNowMediaQuery {
           ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
         })
         .from(schema.mediaItems)
+        // Join with active policy (exactly 1 row due to DB constraint on isActive)
+        // This enables joining evaluations by policy version
         .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
         .innerJoin(
           schema.mediaCatalogEvaluations,
@@ -166,7 +168,11 @@ export class WatchingNowMediaQuery {
         .innerJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
         .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
         .where(and(...whereConditions))
-        .orderBy(desc(schema.mediaStats.watchersCount), desc(schema.mediaStats.ratingoScore))
+        .orderBy(
+          desc(schema.mediaStats.watchersCount),
+          desc(schema.mediaStats.ratingoScore),
+          schema.mediaItems.id, // deterministic tiebreaker for stable ordering
+        )
         .limit(limit)
     );
   }
