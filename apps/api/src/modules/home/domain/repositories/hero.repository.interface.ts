@@ -14,6 +14,21 @@ export interface IHeroRepository {
    * @returns Hero media items
    */
   findHero(limit: number, type?: MediaType): Promise<HeroMediaItem[]>;
+
+  /**
+   * Retrieves top FRESH media items for "Watching Now" (Зараз дивляться) block.
+   *
+   * Unlike Hero, this uses strict freshness criteria:
+   * - Movies: released within last 45 days
+   * - Shows: last episode within 21 days OR has next episode scheduled
+   * - Must have watchers_count > 0 (live watchers)
+   *
+   * Sorted by watchers_count DESC (most watched first).
+   *
+   * @param limit - Max items to return (typically 3)
+   * @returns Fresh, actively watched media items
+   */
+  findWatchingNow(limit: number): Promise<HeroMediaItem[]>;
 }
 
 /**

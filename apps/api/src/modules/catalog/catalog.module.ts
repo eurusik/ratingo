@@ -30,6 +30,7 @@ import { WatchOffersQuery } from './infrastructure/queries/shared/watch-offers.q
 import { ShowDetailsQuery } from './infrastructure/queries/show-details.query';
 import { TrendingMoviesQuery } from './infrastructure/queries/trending-movies.query';
 import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
+import { WatchingNowMediaQuery } from './infrastructure/queries/watching-now-media.query';
 import { DrizzleGenreRepository } from './infrastructure/repositories/drizzle-genre.repository';
 import { DrizzleMediaRepository } from './infrastructure/repositories/drizzle-media.repository';
 import { DrizzleMovieRepository } from './infrastructure/repositories/drizzle-movie.repository';
@@ -86,6 +87,7 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
 
     // Query Objects - Mixed Media
     HeroMediaQuery,
+    WatchingNowMediaQuery,
 
     // Query Objects - Shared
     GenreQuery,

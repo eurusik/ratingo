@@ -12,4 +12,4 @@ export { CardEpisodeInfo } from './card-episode-info';
 export { CardProgress, SeasonProgress } from './card-progress';
 export { CardBookmark } from './card-cta';
 export { CardBadge, RankBadge } from './card-badge';
-export { HorizontalCard } from './horizontal-card';
+export { HorizontalCard, type HorizontalCardVariant } from './horizontal-card';

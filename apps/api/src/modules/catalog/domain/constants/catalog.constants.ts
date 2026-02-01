@@ -189,3 +189,21 @@ export const HERO_THRESHOLDS = {
    */
   MAX_DAYS_SINCE_LAST_EPISODE: 90,
 } as const;
+
+/**
+ * "Watching Now" (Зараз дивляться) thresholds.
+ * Used for the Top-3 live watchers block on homepage.
+ *
+ * Shows FRESH content with active live watchers - excludes "eternal" shows
+ * like Friends that are always being watched but aren't new/relevant.
+ */
+export const WATCHING_NOW_THRESHOLDS = {
+  /** Maximum days since movie release to be considered "fresh" (30-60 days) */
+  MAX_DAYS_SINCE_MOVIE_RELEASE: 45,
+  /** Maximum days since last episode for shows (14-30 days) */
+  MAX_DAYS_SINCE_SHOW_EPISODE: 21,
+  /** Minimum live watchers required (strong signal of actual viewing) */
+  MIN_WATCHERS: 1,
+  /** Minimum quality score (sanity check) */
+  MIN_QUALITY_SCORE: 50,
+} as const;

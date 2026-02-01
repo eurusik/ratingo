@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { HomeService } from './home.service';
 import { HERO_REPOSITORY } from '../domain/repositories/hero.repository.interface';
 import { MediaType } from '../../../common/enums/media-type.enum';
-import { HERO_CONFIG } from '../home.constants';
+import { HERO_CONFIG, WATCHING_NOW_CONFIG } from '../home.constants';
 
 describe('HomeService', () => {
   let service: HomeService;
@@ -11,6 +11,7 @@ describe('HomeService', () => {
   beforeEach(async () => {
     heroRepositoryMock = {
       findHero: jest.fn(),
+      findWatchingNow: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -129,6 +130,59 @@ describe('HomeService', () => {
       heroRepositoryMock.findHero.mockRejectedValue(new Error('DB Error'));
 
       const result = await service.getHero();
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getWatchingNow', () => {
+    const mockWatchingNowItems = [
+      {
+        id: '1',
+        mediaItemId: '1',
+        title: 'Fresh Movie',
+        originalTitle: 'Fresh Movie',
+        type: MediaType.MOVIE,
+        slug: 'fresh-movie',
+        primaryTrailerKey: 'key1',
+        isNew: true,
+        isClassic: false,
+        overview: 'A fresh movie',
+        poster: { small: '', medium: '', large: '', original: '' },
+        backdrop: { small: '', medium: '', large: '', original: '' },
+        releaseDate: new Date(),
+        stats: {
+          ratingoScore: 80,
+          qualityScore: 80,
+          popularityScore: 70,
+          liveWatchers: 500,
+          totalWatchers: 1000,
+        },
+        externalRatings: {
+          tmdb: { rating: 8.0, voteCount: 1000 },
+          imdb: null,
+          trakt: null,
+          metacritic: null,
+          rottenTomatoes: null,
+        },
+      },
+    ];
+
+    it('should return watching now items from repository with configured limit', async () => {
+      heroRepositoryMock.findWatchingNow.mockResolvedValue(mockWatchingNowItems);
+
+      const result = await service.getWatchingNow();
+
+      expect(heroRepositoryMock.findWatchingNow).toHaveBeenCalledWith(
+        WATCHING_NOW_CONFIG.DEFAULT_LIMIT,
+      );
+      expect(result).toEqual(mockWatchingNowItems);
+    });
+
+    it('should return empty array on repository error', async () => {
+      heroRepositoryMock.findWatchingNow.mockRejectedValue(new Error('DB Error'));
+
+      const result = await service.getWatchingNow();
 
       expect(result).toEqual([]);
     });

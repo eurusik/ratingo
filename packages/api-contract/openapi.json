@@ -5954,6 +5954,32 @@
         ]
       }
     },
+    "/api/home/watching-now": {
+      "get": {
+        "operationId": "HomeController_getWatchingNow",
+        "summary": "Get \"Watching Now\" items (Top 3 fresh content by live watchers)",
+        "description": "Returns fresh content with most live Trakt watchers. Movies: released within 45 days. Shows: last episode within 21 days or has upcoming episode.",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HeroItemDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Home"
+        ]
+      }
+    },
     "/api/insights/movements": {
       "get": {
         "operationId": "InsightsController_getMovements",

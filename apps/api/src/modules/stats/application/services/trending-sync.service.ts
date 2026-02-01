@@ -428,4 +428,95 @@ export class TrendingSyncService {
       hasMore,
     };
   }
+
+  /** Refreshes watchers and scores for hero candidates with stale stats. */
+  async syncHeroCandidatesStats(options: {
+    staleThresholdHours: number;
+    limit: number;
+    minQualityScore?: number;
+  }): Promise<{ movies: number; shows: number; total: number }> {
+    this.logger.log(
+      `Syncing homepage candidates stats (staleThreshold: ${options.staleThresholdHours}h, limit: ${options.limit}, minQuality: ${options.minQualityScore ?? 'default'})...`,
+    );
+
+    const candidates = await this.mediaRepository.findHeroCandidatesForStatsRefresh({
+      staleThresholdHours: options.staleThresholdHours,
+      limit: options.limit,
+      minQualityScore: options.minQualityScore,
+    });
+
+    if (candidates.length === 0) {
+      this.logger.log('No stale hero candidates found');
+      return { movies: 0, shows: 0, total: 0 };
+    }
+
+    const movieItems = candidates.filter((i) => i.type === MediaType.MOVIE);
+    const showItems = candidates.filter((i) => i.type === MediaType.SHOW);
+
+    this.logger.log(
+      `Found ${candidates.length} stale hero candidates (${movieItems.length} movies, ${showItems.length} shows)`,
+    );
+
+    const [movieWatchers, showWatchers] = await Promise.all([
+      this.traktRatingsPort.getMovieWatchersByTmdbIds(movieItems.map((i) => i.tmdbId)),
+      this.traktRatingsPort.getShowWatchersByTmdbIds(showItems.map((i) => i.tmdbId)),
+    ]);
+
+    const watchersMap = new Map<number, number | null | undefined>();
+    for (const [tmdbId, watchers] of movieWatchers) {
+      watchersMap.set(tmdbId, watchers);
+    }
+    for (const [tmdbId, watchers] of showWatchers) {
+      watchersMap.set(tmdbId, watchers);
+    }
+
+    const { fetched, skipped, notFound } = this.aggregateWatchersResults(watchersMap, candidates);
+
+    this.logger.log(
+      `Trakt watchers: requested=${candidates.length}, fetched=${fetched}, skipped=${skipped}, notFound=${notFound}`,
+    );
+
+    const itemsToUpdate = candidates.filter((i) => typeof watchersMap.get(i.tmdbId) === 'number');
+    const scoreDataList = await this.mediaRepository.findManyForScoring(
+      itemsToUpdate.map((i) => i.id),
+    );
+    const scoreDataMap = new Map(scoreDataList.map((s) => [s.tmdbId, s]));
+
+    const statsToUpsert: MediaStatsData[] = [];
+
+    for (const item of itemsToUpdate) {
+      const watchers = watchersMap.get(item.tmdbId)!;
+      const scoreData = scoreDataMap.get(item.tmdbId);
+
+      const scores = scoreData
+        ? this.scoreCalculator.calculate(toScoreInput(scoreData, watchers))
+        : null;
+
+      statsToUpsert.push({
+        mediaItemId: item.id,
+        watchersCount: watchers,
+        ratingoScore: scores?.ratingoScore,
+        qualityScore: scores?.qualityScore,
+        popularityScore: scores?.popularityScore,
+        freshnessScore: scores?.freshnessScore,
+      });
+    }
+
+    if (statsToUpsert.length > 0) {
+      await this.statsRepository.bulkUpsert(statsToUpsert);
+    }
+
+    const moviesUpdated = itemsToUpdate.filter((i) => i.type === MediaType.MOVIE).length;
+    const showsUpdated = itemsToUpdate.filter((i) => i.type === MediaType.SHOW).length;
+
+    this.logger.log(
+      `Synced hero candidates stats: ${moviesUpdated} movies, ${showsUpdated} shows (${skipped} skipped)`,
+    );
+
+    return {
+      movies: moviesUpdated,
+      shows: showsUpdated,
+      total: moviesUpdated + showsUpdated,
+    };
+  }
 }

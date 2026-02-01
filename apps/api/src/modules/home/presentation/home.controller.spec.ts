@@ -42,6 +42,7 @@ describe('HomeController', () => {
   beforeEach(async () => {
     homeServiceMock = {
       getHero: jest.fn(),
+      getWatchingNow: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -120,6 +121,29 @@ describe('HomeController', () => {
 
       expect(result[0].externalRatings?.tmdb).toBeNull();
       expect(result[0].externalRatings?.imdb).toBeNull();
+    });
+  });
+
+  describe('getWatchingNow', () => {
+    it('should return mapped DTOs from service', async () => {
+      const mockData = [
+        createMockHeroItem({ stats: { ...createMockHeroItem().stats, liveWatchers: 500 } }),
+      ];
+      homeServiceMock.getWatchingNow.mockResolvedValue(mockData);
+
+      const result = await controller.getWatchingNow();
+
+      expect(homeServiceMock.getWatchingNow).toHaveBeenCalled();
+      expect(result).toHaveLength(1);
+      expect(result[0].stats.liveWatchers).toBe(500);
+    });
+
+    it('should return empty array when no fresh content available', async () => {
+      homeServiceMock.getWatchingNow.mockResolvedValue([]);
+
+      const result = await controller.getWatchingNow();
+
+      expect(result).toEqual([]);
     });
   });
 });

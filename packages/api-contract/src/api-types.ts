@@ -1700,6 +1700,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/home/watching-now": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get "Watching Now" items (Top 3 fresh content by live watchers)
+         * @description Returns fresh content with most live Trakt watchers. Movies: released within 45 days. Shows: last episode within 21 days or has upcoming episode.
+         */
+        get: operations["HomeController_getWatchingNow"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/insights/movements": {
         parameters: {
             query?: never;
@@ -8290,6 +8310,25 @@ export interface operations {
             query?: {
                 type?: "movie" | "show";
             };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HeroItemDto"][];
+                };
+            };
+        };
+    };
+    HomeController_getWatchingNow: {
+        parameters: {
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;

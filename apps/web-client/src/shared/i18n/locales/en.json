@@ -43,12 +43,15 @@
   "home": {
     "tagline": "Quick way to decide what to watch now",
     "subtitle": "Trending movies and shows without the noise. Ratings, viewers, new episodes — all in one place.",
+    "watchingNowLabel": "watching",
     "sections": {
-      "trending": "Watching now",
-      "watchingNow": "Watching now",
+      "trending": "Trending",
+      "watchingNow": "Watching",
       "popularNow": "Popular now",
-      "movies": "Watching now",
-      "shows": "Watching now",
+      "hit": "Hit",
+      "topPicks": "Top Picks",
+      "movies": "Trending Movies",
+      "shows": "Trending Shows",
       "newEpisodes": "Fresh episodes from trending shows",
       "upcoming": "Coming soon"
     }

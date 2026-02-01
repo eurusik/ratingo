@@ -60,6 +60,7 @@ describe('TrendingSyncService', () => {
       findManyByTmdbIds: jest.fn().mockResolvedValue([]),
       findManyForScoring: jest.fn().mockResolvedValue([]),
       findTrendingUpdatedItems: jest.fn().mockResolvedValue([]),
+      findHeroCandidatesForStatsRefresh: jest.fn().mockResolvedValue([]),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -313,6 +314,97 @@ describe('TrendingSyncService', () => {
       expect(mediaRepository.findTrendingUpdatedItems).toHaveBeenCalledWith({
         since: undefined,
         limit: 100,
+      });
+    });
+  });
+
+  describe('syncHeroCandidatesStats', () => {
+    it('should return zeros when no stale hero candidates', async () => {
+      mediaRepository.findHeroCandidatesForStatsRefresh.mockResolvedValue([]);
+
+      const result = await service.syncHeroCandidatesStats({
+        staleThresholdHours: 24,
+        limit: 30,
+      });
+
+      expect(result).toEqual({ movies: 0, shows: 0, total: 0 });
+      expect(statsRepository.bulkUpsert).not.toHaveBeenCalled();
+    });
+
+    it('should sync stats for stale hero candidates', async () => {
+      const candidates = [
+        { id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE },
+        { id: 'show-1', tmdbId: 200, type: MediaType.SHOW },
+      ];
+
+      mediaRepository.findHeroCandidatesForStatsRefresh.mockResolvedValue(candidates);
+      traktRatingsPort.getMovieWatchersByTmdbIds.mockResolvedValue(new Map([[100, 500]]));
+      traktRatingsPort.getShowWatchersByTmdbIds.mockResolvedValue(new Map([[200, 1000]]));
+      mediaRepository.findManyForScoring.mockResolvedValue([
+        createScoreData('movie-1', 100),
+        createScoreData('show-1', 200),
+      ]);
+
+      const result = await service.syncHeroCandidatesStats({
+        staleThresholdHours: 24,
+        limit: 30,
+      });
+
+      expect(result).toEqual({ movies: 1, shows: 1, total: 2 });
+      expect(statsRepository.bulkUpsert).toHaveBeenCalled();
+    });
+
+    it('should skip items with null watchers (transient error)', async () => {
+      const candidates = [
+        { id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE },
+        { id: 'movie-2', tmdbId: 101, type: MediaType.MOVIE },
+      ];
+
+      mediaRepository.findHeroCandidatesForStatsRefresh.mockResolvedValue(candidates);
+      traktRatingsPort.getMovieWatchersByTmdbIds.mockResolvedValue(
+        new Map([
+          [100, 500],
+          [101, null],
+        ]),
+      );
+      mediaRepository.findManyForScoring.mockResolvedValue([createScoreData('movie-1', 100)]);
+
+      const result = await service.syncHeroCandidatesStats({
+        staleThresholdHours: 24,
+        limit: 30,
+      });
+
+      expect(result).toEqual({ movies: 1, shows: 0, total: 1 });
+    });
+
+    it('should pass correct options to repository', async () => {
+      mediaRepository.findHeroCandidatesForStatsRefresh.mockResolvedValue([]);
+
+      await service.syncHeroCandidatesStats({
+        staleThresholdHours: 48,
+        limit: 50,
+      });
+
+      expect(mediaRepository.findHeroCandidatesForStatsRefresh).toHaveBeenCalledWith({
+        staleThresholdHours: 48,
+        limit: 50,
+        minQualityScore: undefined,
+      });
+    });
+
+    it('should pass minQualityScore to repository for homepage coverage', async () => {
+      mediaRepository.findHeroCandidatesForStatsRefresh.mockResolvedValue([]);
+
+      await service.syncHeroCandidatesStats({
+        staleThresholdHours: 24,
+        limit: 30,
+        minQualityScore: 50, // covers both hero (60) and watching-now (50)
+      });
+
+      expect(mediaRepository.findHeroCandidatesForStatsRefresh).toHaveBeenCalledWith({
+        staleThresholdHours: 24,
+        limit: 30,
+        minQualityScore: 50,
       });
     });
   });

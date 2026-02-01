@@ -18,7 +18,7 @@ import {
 } from '@/modules/home';
 import { getDictionary } from '@/shared/i18n';
 import { LazySection } from '@/shared/components';
-import { catalogApi, type HeroData } from '@/core/api';
+import { catalogApi, type HeroData, type WatchingNowData } from '@/core/api';
 import { TrendingUp, Clapperboard, Sparkles, Film } from 'lucide-react';
 
 export default async function HomePage() {
@@ -28,6 +28,7 @@ export default async function HomePage() {
   // Home context applies stricter freshness filtering (excludes finished classics)
   const [
     heroItems,
+    watchingNowItems,
     trendingShowsData,
     trendingMoviesData,
     nowPlayingData,
@@ -35,6 +36,7 @@ export default async function HomePage() {
     newEpisodesData,
   ] = await Promise.all([
     catalogApi.getHeroItems({ type: 'show' }).catch((): HeroData => []),
+    catalogApi.getWatchingNow().catch((): WatchingNowData => []),
     catalogApi.getTrendingShows({ limit: 12, context: 'home' }).catch(() => ({ data: [] })),
     catalogApi.getTrendingMovies({ limit: 12, context: 'home' }).catch(() => ({ data: [] })),
     catalogApi.getNowPlayingMovies({ limit: 12 }).catch(() => ({ data: [] })),
@@ -57,9 +59,19 @@ export default async function HomePage() {
     : (((newOnDigitalData as Record<string, unknown>).data as unknown[]) ?? []);
 
   // Map to card props
-  const top3Cards = (heroItems ?? []).map((item) =>
+  const heroCards = (heroItems ?? []).map((item) =>
     toCardProps(item as Record<string, unknown>, (item as { type: 'show' | 'movie' }).type),
   );
+
+  // Filter watching-now to exclude items already in hero (avoid duplicates)
+  const heroMediaItemIds = new Set((heroItems ?? []).map((item) => item.mediaItemId));
+  const filteredWatchingNowItems = (watchingNowItems ?? []).filter(
+    (item) => !heroMediaItemIds.has(item.mediaItemId),
+  );
+  const watchingNowCards = filteredWatchingNowItems.map((item) =>
+    toCardProps(item as Record<string, unknown>, (item as { type: 'show' | 'movie' }).type),
+  );
+
   const showCards = shows.map((show) => toCardProps(show as Record<string, unknown>, 'show'));
   const trendingMovieCards = trendingMovies.map((m) =>
     toCardProps(m as Record<string, unknown>, 'movie'),
@@ -71,16 +83,19 @@ export default async function HomePage() {
     toCardProps(m as Record<string, unknown>, 'movie'),
   );
 
-  // Filter out hero items from trending shows
-  const heroMediaItemIds = new Set((heroItems ?? []).map((item) => item.mediaItemId));
-  const catalogCards = showCards.filter((card) => !heroMediaItemIds.has(card.id));
+  // Filter out hero and watching-now items from trending shows
+  const watchingNowMediaItemIds = new Set((watchingNowItems ?? []).map((item) => item.mediaItemId));
+  const catalogCards = showCards.filter(
+    (card) => !heroMediaItemIds.has(card.id) && !watchingNowMediaItemIds.has(card.id),
+  );
 
   // Map new episodes API response to component format
   const newEpisodeItems = mapNewEpisodes(newEpisodesData);
 
   // Collect all media item IDs for batch status fetching
   const allMediaItemIds = [
-    ...top3Cards.map((c) => c.id),
+    ...heroCards.map((c) => c.id),
+    ...watchingNowCards.map((c) => c.id),
     ...catalogCards.map((c) => c.id),
     ...trendingMovieCards.map((c) => c.id),
     ...nowPlayingCards.map((c) => c.id),
@@ -91,10 +106,10 @@ export default async function HomePage() {
     <MediaCardsWithStatus mediaItemIds={allMediaItemIds}>
       <main className="min-h-screen">
         {/* Hero Banner */}
-        {top3Cards[0] && heroItems[0] && (
+        {heroCards[0] && heroItems[0] && (
           <HeroSection
             item={{
-              ...top3Cards[0],
+              ...heroCards[0],
               showProgress: heroItems[0].showProgress ?? null,
               backdrop: heroItems[0].backdrop ?? null,
             }}
@@ -103,9 +118,15 @@ export default async function HomePage() {
         )}
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12">
-          {/* Top 2-3 */}
-          {top3Cards.length >= 3 && (
-            <Top3SectionServer items={top3Cards.slice(1, 3)} locale="uk" className="mb-12" />
+          {/* Top Picks (Hero items #2-4) */}
+          {heroCards.length >= 4 && (
+            <Top3SectionServer
+              items={heroCards.slice(1, 4)}
+              title={dict.home.sections.topPicks}
+              locale="uk"
+              className="mb-12"
+              count={3}
+            />
           )}
 
           {/* Trending Shows */}
@@ -130,6 +151,19 @@ export default async function HomePage() {
               </div>
             ))}
           </TrendingCarousel>
+
+          {/* Watching Now (fresh content by watchers - bridges shows and movies) */}
+          {watchingNowCards.length > 0 && (
+            <Top3SectionServer
+              items={watchingNowCards}
+              title={dict.home.sections.watchingNow}
+              locale="uk"
+              className="my-12"
+              count={3}
+              startRank={1}
+              variant="watchingNow"
+            />
+          )}
 
           {/* New Episodes */}
           {newEpisodeItems.length > 0 && <NewEpisodesSection items={newEpisodeItems} locale="uk" />}

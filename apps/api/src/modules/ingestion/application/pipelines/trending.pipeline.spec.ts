@@ -33,6 +33,7 @@ describe('TrendingPipeline', () => {
       syncEligibleTrendingStats: jest
         .fn()
         .mockResolvedValue({ movies: 0, shows: 0, total: 0, hasMore: false }),
+      syncHeroCandidatesStats: jest.fn().mockResolvedValue({ movies: 0, shows: 0, total: 0 }),
     };
 
     const mockCatalogEvaluator = {
@@ -194,6 +195,24 @@ describe('TrendingPipeline', () => {
       await pipeline.processStats();
 
       expect(catalogEvaluator.getEligibilityStats).toHaveBeenCalledWith('trending');
+    });
+
+    it('should refresh homepage candidates after backfill', async () => {
+      await pipeline.processStats();
+
+      expect(trendingSyncService.syncHeroCandidatesStats).toHaveBeenCalledWith({
+        staleThresholdHours: 24,
+        limit: 30,
+        minQualityScore: 50,
+      });
+    });
+
+    it('should continue pipeline if hero candidates refresh fails', async () => {
+      trendingSyncService.syncHeroCandidatesStats.mockRejectedValue(new Error('Trakt API error'));
+
+      await expect(pipeline.processStats()).resolves.not.toThrow();
+
+      expect(catalogEvaluator.getEligibilityStats).toHaveBeenCalled();
     });
   });
 
