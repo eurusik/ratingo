@@ -65,7 +65,8 @@ export function HorizontalCard(props: HorizontalCardProps) {
   };
 
   // Badge style (for text badges like "Хіт")
-  const badgeStyle = 'bg-red-600 text-white';
+  // Yellow/gold = quality/top pick (stable), red reserved for live indicators
+  const badgeStyle = 'bg-amber-500 text-amber-950';
 
   // Determine what to show based on variant
   const showRating = variant === 'topPicks' && rating;
