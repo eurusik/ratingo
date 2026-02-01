@@ -144,15 +144,10 @@ export function HorizontalCard(props: HorizontalCardProps) {
             </div>
           )}
 
-          {/* watchingNow: Live watchers with indicator */}
+          {/* watchingNow: Watchers count (no fake live indicator) */}
           {showWatchers && (
-            <div className="flex items-center gap-2 text-cinema-text-secondary">
-              {/* Live indicator dot */}
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
-              </span>
-              <Eye className="w-4 h-4 text-emerald-400" />
+            <div className="flex items-center gap-1.5 text-cinema-text-secondary">
+              <Eye className="w-4 h-4 text-emerald-500" />
               <span className="font-medium">{watchers.toLocaleString()}</span>
               <span className="text-cinema-text-muted">{dict.home.watchingNowLabel}</span>
             </div>

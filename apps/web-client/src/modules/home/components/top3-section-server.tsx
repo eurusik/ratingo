@@ -5,7 +5,7 @@
  * Supports variants for different display contexts.
  */
 
-import { TrendingUp, Radio } from 'lucide-react';
+import { TrendingUp, Eye } from 'lucide-react';
 import { HorizontalCard, type HorizontalCardVariant } from './media-card/horizontal-card';
 import type { MediaCardServerProps } from './media-card/media-card-server';
 import { getDictionary, type Locale } from '@/shared/i18n';
@@ -51,8 +51,10 @@ export function Top3SectionServer({
   const displayItems = items.slice(0, count);
 
   // Icon and color based on variant
-  const Icon = variant === 'watchingNow' ? Radio : TrendingUp;
-  const iconColor = variant === 'watchingNow' ? 'text-red-500' : 'text-orange-500';
+  // watchingNow: Eye (viewing activity), emerald (active but not urgent)
+  // topPicks: TrendingUp (quality ranking), orange (warm/premium)
+  const Icon = variant === 'watchingNow' ? Eye : TrendingUp;
+  const iconColor = variant === 'watchingNow' ? 'text-emerald-500' : 'text-orange-500';
 
   return (
     <section className={className}>
