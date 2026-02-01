@@ -129,19 +129,6 @@ export default async function HomePage() {
             />
           )}
 
-          {/* Watching Now (fresh content by live watchers, excluding hero items) */}
-          {watchingNowCards.length > 0 && (
-            <Top3SectionServer
-              items={watchingNowCards}
-              title={dict.home.sections.watchingNow}
-              locale="uk"
-              className="mb-12"
-              count={3}
-              startRank={1}
-              variant="watchingNow"
-            />
-          )}
-
           {/* Trending Shows */}
           <TrendingCarousel
             title={dict.home.sections.shows}
@@ -164,6 +151,19 @@ export default async function HomePage() {
               </div>
             ))}
           </TrendingCarousel>
+
+          {/* Watching Now (fresh content by watchers - bridges shows and movies) */}
+          {watchingNowCards.length > 0 && (
+            <Top3SectionServer
+              items={watchingNowCards}
+              title={dict.home.sections.watchingNow}
+              locale="uk"
+              className="my-12"
+              count={3}
+              startRank={1}
+              variant="watchingNow"
+            />
+          )}
 
           {/* New Episodes */}
           {newEpisodeItems.length > 0 && <NewEpisodesSection items={newEpisodeItems} locale="uk" />}
