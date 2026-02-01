@@ -2,31 +2,54 @@
  * Horizontal media card for Top-3 section.
  *
  * Compact layout: poster left, info right.
+ * Supports variants for different display contexts.
  */
 
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Activity, TrendingUp, Calendar } from 'lucide-react';
+import { Activity, Calendar, Eye } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { formatYear, formatRating } from '@/shared/utils/format';
 import { getDictionary, type Locale } from '@/shared/i18n';
 import type { MediaCardServerProps } from './media-card-server';
+
+/** Card display variants */
+export type HorizontalCardVariant =
+  /** "У топі" - stable quality picks: rating + year, no watchers */
+  | 'topPicks'
+  /** "Зараз дивляться" - live activity: watchers only with live indicator */
+  | 'watchingNow';
 
 interface HorizontalCardProps extends Omit<MediaCardServerProps, 'badgeKey'> {
   /** Rank number to display (1, 2, 3...) */
   rank?: number;
   /** Badge text to show instead of rank (e.g., "Хіт") */
   badge?: string;
+  /** Display variant for different contexts */
+  variant?: HorizontalCardVariant;
 }
 
 /**
  * Horizontal card for Top-3 display.
  *
- * Layout: [Rank] [Poster] | Title, Rating, Year →
+ * Variants:
+ * - `topPicks`: rating + year (stable quality)
+ * - `watchingNow`: watchers + live indicator (live activity)
  */
 export function HorizontalCard(props: HorizontalCardProps) {
-  const { slug, type, title, poster, stats, releaseDate, rank, badge, locale = 'uk' } = props;
+  const {
+    slug,
+    type,
+    title,
+    poster,
+    stats,
+    releaseDate,
+    rank,
+    badge,
+    variant = 'topPicks',
+    locale = 'uk',
+  } = props;
 
   const dict = getDictionary(locale);
   const href = (type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`) as Route;
@@ -43,6 +66,11 @@ export function HorizontalCard(props: HorizontalCardProps) {
 
   // Badge style (for text badges like "Хіт")
   const badgeStyle = 'bg-red-600 text-white';
+
+  // Determine what to show based on variant
+  const showRating = variant === 'topPicks' && rating;
+  const showYear = variant === 'topPicks' && releaseDate;
+  const showWatchers = variant === 'watchingNow' && watchers != null && watchers > 0;
 
   return (
     <Link
@@ -97,29 +125,35 @@ export function HorizontalCard(props: HorizontalCardProps) {
           {title}
         </h3>
 
-        {/* Meta row */}
+        {/* Meta row - variant-specific content */}
         <div className="flex items-center gap-4 mt-2 text-sm">
-          {/* Rating */}
-          {rating && (
+          {/* topPicks: Rating */}
+          {showRating && (
             <div className="flex items-center gap-1 text-cinema-text-secondary">
               <Activity className="w-4 h-4 text-blue-400" />
               <span className="font-medium">{formatRating(rating)}</span>
             </div>
           )}
 
-          {/* Interest */}
-          {watchers != null && watchers > 0 && (
-            <div className="flex items-center gap-1 text-cinema-text-muted">
-              <TrendingUp className="w-4 h-4" />
-              <span>{watchers.toLocaleString()}</span>
-            </div>
-          )}
-
-          {/* Year */}
-          {releaseDate && (
+          {/* topPicks: Year */}
+          {showYear && (
             <div className="flex items-center gap-1 text-cinema-text-muted">
               <Calendar className="w-3.5 h-3.5" />
               <span>{formatYear(releaseDate)}</span>
+            </div>
+          )}
+
+          {/* watchingNow: Live watchers with indicator */}
+          {showWatchers && (
+            <div className="flex items-center gap-2 text-cinema-text-secondary">
+              {/* Live indicator dot */}
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+              </span>
+              <Eye className="w-4 h-4 text-emerald-400" />
+              <span className="font-medium">{watchers.toLocaleString()}</span>
+              <span className="text-cinema-text-muted">{dict.home.watchingNowLabel}</span>
             </div>
           )}
         </div>

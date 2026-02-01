@@ -139,6 +139,7 @@ export default async function HomePage() {
               className="mb-12"
               count={3}
               startRank={1}
+              variant="watchingNow"
             />
           )}
 

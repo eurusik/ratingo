@@ -2,10 +2,11 @@
  * Server-rendered Top-3 section for SSR/SSG.
  *
  * Horizontal cards layout for compact display.
+ * Supports variants for different display contexts.
  */
 
-import { TrendingUp } from 'lucide-react';
-import { HorizontalCard } from './media-card/horizontal-card';
+import { TrendingUp, Radio } from 'lucide-react';
+import { HorizontalCard, type HorizontalCardVariant } from './media-card/horizontal-card';
 import type { MediaCardServerProps } from './media-card/media-card-server';
 import { getDictionary, type Locale } from '@/shared/i18n';
 
@@ -22,11 +23,16 @@ interface Top3SectionServerProps {
   startRank?: number;
   /** Badge text to show instead of rank numbers (e.g., "Хіт") */
   badge?: string;
+  /** Display variant for cards */
+  variant?: HorizontalCardVariant;
 }
 
 /**
  * Top-3 section with horizontal cards.
  *
+ * Variants:
+ * - `topPicks`: stable quality picks with TrendingUp icon
+ * - `watchingNow`: live activity with Radio (live) icon
  */
 export function Top3SectionServer({
   items,
@@ -36,6 +42,7 @@ export function Top3SectionServer({
   count = 2,
   startRank = 2,
   badge,
+  variant = 'topPicks',
 }: Top3SectionServerProps) {
   const dict = getDictionary(locale);
 
@@ -43,10 +50,14 @@ export function Top3SectionServer({
 
   const displayItems = items.slice(0, count);
 
+  // Icon and color based on variant
+  const Icon = variant === 'watchingNow' ? Radio : TrendingUp;
+  const iconColor = variant === 'watchingNow' ? 'text-red-500' : 'text-orange-500';
+
   return (
     <section className={className}>
       <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-        <TrendingUp className="w-5 h-5 text-orange-500" />
+        <Icon className={`w-5 h-5 ${iconColor}`} />
         <span>{title || dict.home.sections.popularNow}</span>
       </h2>
 
@@ -65,6 +76,7 @@ export function Top3SectionServer({
             {...item}
             rank={badge ? undefined : startRank + index}
             badge={badge}
+            variant={variant}
             locale={locale}
           />
         ))}
