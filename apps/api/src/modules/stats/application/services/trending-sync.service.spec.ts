@@ -375,6 +375,38 @@ describe('TrendingSyncService', () => {
       });
 
       expect(result).toEqual({ movies: 1, shows: 0, total: 1 });
+      // Only movie-1 should be upserted (null = transient error, skip entirely)
+      expect(statsRepository.bulkUpsert).toHaveBeenCalledWith([
+        expect.objectContaining({ mediaItemId: 'movie-1', watchersCount: 500 }),
+      ]);
+    });
+
+    it('should touch updated_at for items not found in Trakt (undefined)', async () => {
+      const candidates = [
+        { id: 'movie-1', tmdbId: 100, type: MediaType.MOVIE },
+        { id: 'movie-2', tmdbId: 101, type: MediaType.MOVIE },
+      ];
+
+      mediaRepository.findHeroCandidatesForStatsRefresh.mockResolvedValue(candidates);
+      traktRatingsPort.getMovieWatchersByTmdbIds.mockResolvedValue(
+        new Map([
+          [100, 500],
+          [101, undefined], // not found in Trakt
+        ]),
+      );
+      mediaRepository.findManyForScoring.mockResolvedValue([createScoreData('movie-1', 100)]);
+
+      const result = await service.syncHeroCandidatesStats({
+        staleThresholdHours: 24,
+        limit: 30,
+      });
+
+      expect(result).toEqual({ movies: 1, shows: 0, total: 1 });
+      // Both items should be upserted - movie-1 with data, movie-2 just to touch updated_at
+      expect(statsRepository.bulkUpsert).toHaveBeenCalledWith([
+        expect.objectContaining({ mediaItemId: 'movie-1', watchersCount: 500 }),
+        { mediaItemId: 'movie-2' }, // only mediaItemId, COALESCE keeps existing values
+      ]);
     });
 
     it('should pass correct options to repository', async () => {
