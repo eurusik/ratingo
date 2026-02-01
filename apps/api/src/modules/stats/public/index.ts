@@ -19,3 +19,6 @@ export {
   StatsQueryService,
   TrendingSyncService,
 } from '../application/services';
+
+// Constants
+export { HOMEPAGE_REFRESH_CONFIG, HERO_REFRESH_CONFIG } from '../stats.constants';

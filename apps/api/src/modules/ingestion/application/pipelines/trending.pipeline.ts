@@ -8,7 +8,7 @@ import {
   CATALOG_POLICY_EVALUATOR,
   EvaluationContext,
 } from '../../../catalog-policy/public';
-import { TrendingSyncService } from '../../../stats/public';
+import { TrendingSyncService, HOMEPAGE_REFRESH_CONFIG } from '../../../stats/public';
 import {
   IngestionJob,
   TRENDING_STATS_DELAY_MS,
@@ -93,19 +93,46 @@ export class TrendingPipeline {
       `Syncing Trakt stats (since: ${sinceDate?.toISOString() || 'all'}, limit: ${limit || 'default'})...`,
     );
 
-    // 1. Sync stats for recently updated items (top trending from TMDB)
+    // Phase 1: Sync stats for recently updated items (top trending from TMDB)
     const result = await this.trendingSyncService.syncTrendingStatsForUpdatedItems({
       since: sinceDate,
       limit: limit || TRENDING_DEFAULT_STATS_LIMIT,
     });
 
-    this.logger.log(`Trending stats sync complete: ${result.movies} movies, ${result.shows} shows`);
+    this.logger.log(`Phase 1 complete: ${result.movies} movies, ${result.shows} shows`);
 
-    // 2. Backfill watchers for ELIGIBLE items not in top trending (watchers_count = 0)
+    // Phase 2: Backfill watchers for ELIGIBLE items not in top trending (watchers_count = 0)
     await this.syncEligibleTrendingBackfill();
+
+    // Phase 3: Refresh stale hero candidates (watchers_count > 0 but updated_at > 24h)
+    await this.syncHeroCandidatesRefresh();
 
     // Log eligibility stats for monitoring Policy Engine effectiveness
     await this.logEligibilityStats();
+  }
+
+  /**
+   * Refreshes stats for homepage candidates (Hero + Watching-Now) with stale data.
+   * Targets items that already have watchers_count > 0 but haven't been updated in 24h.
+   * Uses lower quality threshold (50) to cover both Hero (60) and Watching-Now (50).
+   * Non-critical: failures are logged but don't stop the pipeline.
+   */
+  private async syncHeroCandidatesRefresh(): Promise<void> {
+    try {
+      this.logger.log('Starting homepage candidates refresh...');
+
+      const result = await this.trendingSyncService.syncHeroCandidatesStats({
+        staleThresholdHours: HOMEPAGE_REFRESH_CONFIG.STALE_THRESHOLD_HOURS,
+        limit: HOMEPAGE_REFRESH_CONFIG.BATCH_SIZE,
+        minQualityScore: HOMEPAGE_REFRESH_CONFIG.MIN_QUALITY_SCORE,
+      });
+
+      this.logger.log(
+        `Homepage candidates refresh complete: ${result.movies} movies, ${result.shows} shows`,
+      );
+    } catch (error) {
+      this.logger.warn(`Homepage candidates refresh failed: ${(error as Error).message}`);
+    }
   }
 
   /**

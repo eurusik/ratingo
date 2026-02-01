@@ -65,9 +65,19 @@ export type MovieDetailsDto = GetData<'/api/catalog/movies/{slug}'>;
 export type HeroData = GetArrayItem<'/api/home/hero'>[];
 
 /**
- * Hero block item (Top 3).
+ * Hero block item.
  */
 export type HeroItemDto = GetArrayItem<'/api/home/hero'>;
+
+/**
+ * Watching Now data (array unwrapped from {success, data} by apiGet).
+ */
+export type WatchingNowData = GetArrayItem<'/api/home/watching-now'>[];
+
+/**
+ * Watching Now item (Top 3 fresh content by live watchers).
+ */
+export type WatchingNowItemDto = GetArrayItem<'/api/home/watching-now'>;
 
 /**
  * Trending shows response (has {data, meta} structure).
@@ -189,7 +199,7 @@ export const JobStatus = {
  */
 export const catalogApi = {
   /**
-   * Fetches hero block items (Top 3 hottest media).
+   * Fetches hero block items (Top 4 hottest media).
    *
    * @param params - Query parameters
    * @returns Hero items array (unwrapped)
@@ -201,6 +211,23 @@ export const catalogApi = {
     return apiGet<HeroData>('home/hero', {
       searchParams: params as Record<string, string>,
     });
+  },
+
+  /**
+   * Fetches "Watching Now" items (Top 3 fresh content by live watchers).
+   *
+   * Returns items that are currently being actively watched:
+   * - Movies: released within last 45 days
+   * - Shows: last episode within 21 days OR has upcoming episode
+   * - Must have live watchers (watchers_count > 0)
+   *
+   * @returns Watching now items array (unwrapped)
+   *
+   * @example
+   * const watchingNow = await catalogApi.getWatchingNow();
+   */
+  async getWatchingNow(): Promise<WatchingNowData> {
+    return apiGet<WatchingNowData>('home/watching-now');
   },
 
   /**

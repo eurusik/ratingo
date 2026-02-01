@@ -428,4 +428,117 @@ export class TrendingSyncService {
       hasMore,
     };
   }
+
+  /**
+   * Syncs stats for hero candidates with stale data.
+   * Targets items that qualify for hero display but haven't been refreshed recently.
+   *
+   * Flow:
+   * 1. Get hero candidates from DB with stale stats
+   * 2. Fetch watchers from Trakt by TMDB IDs
+   * 3. Calculate scores and update stats
+   *
+   * @param options - Sync options
+   * @param options.staleThresholdHours - Hours since last update to consider stale
+   * @param options.limit - Max items to refresh
+   * @param options.minQualityScore - Minimum quality score (50 covers hero + watching-now)
+   * @returns Sync result with counts
+   */
+  async syncHeroCandidatesStats(options: {
+    staleThresholdHours: number;
+    limit: number;
+    minQualityScore?: number;
+  }): Promise<{ movies: number; shows: number; total: number }> {
+    this.logger.log(
+      `Syncing homepage candidates stats (staleThreshold: ${options.staleThresholdHours}h, limit: ${options.limit}, minQuality: ${options.minQualityScore ?? 'default'})...`,
+    );
+
+    // 1. Get homepage candidates (hero + watching-now) with stale stats
+    const candidates = await this.mediaRepository.findHeroCandidatesForStatsRefresh({
+      staleThresholdHours: options.staleThresholdHours,
+      limit: options.limit,
+      minQualityScore: options.minQualityScore,
+    });
+
+    if (candidates.length === 0) {
+      this.logger.log('No stale hero candidates found');
+      return { movies: 0, shows: 0, total: 0 };
+    }
+
+    // Separate by type
+    const movieItems = candidates.filter((i) => i.type === MediaType.MOVIE);
+    const showItems = candidates.filter((i) => i.type === MediaType.SHOW);
+
+    this.logger.log(
+      `Found ${candidates.length} stale hero candidates (${movieItems.length} movies, ${showItems.length} shows)`,
+    );
+
+    // 2. Fetch watchers from Trakt by TMDB IDs
+    const [movieWatchers, showWatchers] = await Promise.all([
+      this.traktRatingsPort.getMovieWatchersByTmdbIds(movieItems.map((i) => i.tmdbId)),
+      this.traktRatingsPort.getShowWatchersByTmdbIds(showItems.map((i) => i.tmdbId)),
+    ]);
+
+    // Merge watchers maps
+    const watchersMap = new Map<number, number | null | undefined>();
+    for (const [tmdbId, watchers] of movieWatchers) {
+      watchersMap.set(tmdbId, watchers);
+    }
+    for (const [tmdbId, watchers] of showWatchers) {
+      watchersMap.set(tmdbId, watchers);
+    }
+
+    // Aggregate results for logging
+    const { fetched, skipped, notFound } = this.aggregateWatchersResults(watchersMap, candidates);
+
+    this.logger.log(
+      `Trakt watchers: requested=${candidates.length}, fetched=${fetched}, skipped=${skipped}, notFound=${notFound}`,
+    );
+
+    // 3. Get score data for items we'll update
+    const itemsToUpdate = candidates.filter((i) => typeof watchersMap.get(i.tmdbId) === 'number');
+    const scoreDataList = await this.mediaRepository.findManyForScoring(
+      itemsToUpdate.map((i) => i.id),
+    );
+    const scoreDataMap = new Map(scoreDataList.map((s) => [s.tmdbId, s]));
+
+    // 4. Build stats to upsert
+    const statsToUpsert: MediaStatsData[] = [];
+
+    for (const item of itemsToUpdate) {
+      const watchers = watchersMap.get(item.tmdbId)!;
+      const scoreData = scoreDataMap.get(item.tmdbId);
+
+      const scores = scoreData
+        ? this.scoreCalculator.calculate(toScoreInput(scoreData, watchers))
+        : null;
+
+      statsToUpsert.push({
+        mediaItemId: item.id,
+        watchersCount: watchers,
+        ratingoScore: scores?.ratingoScore,
+        qualityScore: scores?.qualityScore,
+        popularityScore: scores?.popularityScore,
+        freshnessScore: scores?.freshnessScore,
+      });
+    }
+
+    // Batch upsert
+    if (statsToUpsert.length > 0) {
+      await this.statsRepository.bulkUpsert(statsToUpsert);
+    }
+
+    const moviesUpdated = itemsToUpdate.filter((i) => i.type === MediaType.MOVIE).length;
+    const showsUpdated = itemsToUpdate.filter((i) => i.type === MediaType.SHOW).length;
+
+    this.logger.log(
+      `Synced hero candidates stats: ${moviesUpdated} movies, ${showsUpdated} shows (${skipped} skipped)`,
+    );
+
+    return {
+      movies: moviesUpdated,
+      shows: showsUpdated,
+      total: moviesUpdated + showsUpdated,
+    };
+  }
 }

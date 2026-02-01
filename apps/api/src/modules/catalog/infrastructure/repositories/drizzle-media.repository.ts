@@ -1,8 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, inArray, sql, and, desc, gt, gte, isNull, isNotNull } from 'drizzle-orm';
+import { eq, inArray, sql, and, desc, gt, gte, lt, or, isNull, isNotNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { MS_PER_HOUR, MS_PER_DAY } from '../../../../common/constants';
 import { PG_ERROR_CODE, DB_CONSTRAINT } from '../../../../common/constants/database.constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
@@ -17,6 +18,7 @@ import {
   EvaluationContext,
 } from '../../../catalog-policy/public';
 import type { NormalizedMedia } from '../../../ingestion/public';
+import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
 import { type LocalSearchResult } from '../../domain/models/search-result.model';
 import {
   type IGenreRepository,
@@ -30,6 +32,7 @@ import {
   type CorruptedWatchersItem,
   type EligibleTrendingItem,
   type SnapshotCandidate,
+  type HeroCandidateItem,
 } from '../../domain/repositories/media.repository.interface';
 import {
   type IMovieRepository,
@@ -965,6 +968,85 @@ export class DrizzleMediaRepository implements IMediaRepository {
     } catch (error) {
       this.logger.error(`Failed to find snapshot candidates: ${error.message}`);
       throw new DatabaseException('Failed to find snapshot candidates');
+    }
+  }
+
+  /**
+   * Finds homepage candidates with stale stats that need refresh.
+   * Targets items that may appear in Hero or Watching-Now sections.
+   * Uses configurable quality threshold to cover both (hero@60, watching-now@50).
+   */
+  async findHeroCandidatesForStatsRefresh(options: {
+    staleThresholdHours: number;
+    limit: number;
+    /** Minimum quality score (use 50 to cover both hero and watching-now) */
+    minQualityScore?: number;
+  }): Promise<HeroCandidateItem[]> {
+    try {
+      const now = new Date();
+      const staleThreshold = new Date(now.getTime() - options.staleThresholdHours * MS_PER_HOUR);
+      const showFreshnessCutoff = new Date(
+        now.getTime() - HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE * MS_PER_DAY,
+      );
+      // Default to hero threshold for backwards compatibility
+      const minQuality = options.minQualityScore ?? HERO_THRESHOLDS.MIN_QUALITY_SCORE;
+
+      const rows = await this.db
+        .select({
+          id: schema.mediaItems.id,
+          tmdbId: schema.mediaItems.tmdbId,
+          type: schema.mediaItems.type,
+        })
+        .from(schema.mediaItems)
+        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          and(
+            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
+            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+          ),
+        )
+        .innerJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+        .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
+        .where(
+          and(
+            isNull(schema.mediaItems.deletedAt),
+            isNotNull(schema.mediaItems.tmdbId),
+            isNotNull(schema.mediaItems.posterPath),
+            isNotNull(schema.mediaItems.backdropPath),
+            gte(schema.mediaStats.qualityScore, minQuality),
+            gte(schema.mediaStats.popularityScore, HERO_THRESHOLDS.MIN_POPULARITY_SCORE_FALLBACK),
+            gt(schema.mediaStats.watchersCount, 0),
+            lt(schema.mediaStats.updatedAt, staleThreshold),
+            // Movies: no freshness gate (theatrical releases have different lifecycle)
+            // Shows: must be fresh (recent episode OR upcoming episode announced)
+            or(
+              eq(schema.mediaItems.type, MediaType.MOVIE),
+              and(
+                eq(schema.mediaItems.type, MediaType.SHOW),
+                or(
+                  gte(schema.shows.lastAirDate, showFreshnessCutoff),
+                  isNotNull(schema.shows.nextAirDate),
+                ),
+              ),
+            ),
+          ),
+        )
+        .orderBy(desc(schema.mediaStats.watchersCount), desc(schema.mediaStats.ratingoScore))
+        .limit(options.limit);
+
+      return rows
+        .filter((r) => r.tmdbId !== null)
+        .map((r) => ({
+          id: r.id,
+          tmdbId: r.tmdbId!,
+          type: r.type,
+        }));
+    } catch (error) {
+      this.logger.error(`Failed to find homepage candidates for stats refresh: ${error.message}`);
+      throw new DatabaseException('Failed to find homepage candidates for stats refresh');
     }
   }
 }

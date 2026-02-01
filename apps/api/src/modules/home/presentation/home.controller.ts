@@ -29,4 +29,23 @@ export class HomeController {
     const items = await this.homeService.getHero(type);
     return HeroItemMapper.toDtoList(items);
   }
+
+  /**
+   * Gets "Watching Now" (Зараз дивляться) items.
+   * Returns Top-3 FRESH content sorted by live watchers count.
+   *
+   * @returns Fresh, actively watched media items
+   */
+  @Get('watching-now')
+  @ApiOperation({
+    summary: 'Get "Watching Now" items (Top 3 fresh content by live watchers)',
+    description:
+      'Returns fresh content with most live Trakt watchers. ' +
+      'Movies: released within 45 days. Shows: last episode within 21 days or has upcoming episode.',
+  })
+  @ApiResponse({ type: [HeroItemDto] })
+  async getWatchingNow(): Promise<HeroItemDto[]> {
+    const items = await this.homeService.getWatchingNow();
+    return HeroItemMapper.toDtoList(items);
+  }
 }

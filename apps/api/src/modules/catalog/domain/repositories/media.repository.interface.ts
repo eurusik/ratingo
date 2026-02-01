@@ -243,6 +243,39 @@ export interface IMediaRepository {
    * @returns Array of snapshot candidates
    */
   findSnapshotCandidates(options: { cursor?: string; limit: number }): Promise<SnapshotCandidate[]>;
+
+  /**
+   * Finds homepage candidates with stale stats that need refresh.
+   * Covers both Hero and Watching-Now sections.
+   *
+   * Returns items that:
+   * 1. Are ELIGIBLE for trending display
+   * 2. Have images (poster/backdrop)
+   * 3. Have watchers_count > 0 (already synced at least once)
+   * 4. Have media_stats.updated_at older than staleThresholdHours
+   * 5. Meet quality threshold (configurable, default 60 for hero-only, 50 for hero+watching-now)
+   *
+   * @param options - Query options
+   * @param options.staleThresholdHours - Hours since last update to consider stale
+   * @param options.limit - Max items to return
+   * @param options.minQualityScore - Minimum quality score (50 covers both hero and watching-now)
+   * @returns Homepage candidates with stale stats
+   */
+  findHeroCandidatesForStatsRefresh(options: {
+    staleThresholdHours: number;
+    limit: number;
+    minQualityScore?: number;
+  }): Promise<HeroCandidateItem[]>;
+}
+
+/**
+ * Item returned by findHeroCandidatesForStatsRefresh.
+ * Represents hero candidates that need stats refresh.
+ */
+export interface HeroCandidateItem {
+  id: string;
+  tmdbId: number;
+  type: MediaType;
 }
 
 /**

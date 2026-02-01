@@ -14,7 +14,10 @@ import { getDictionary, type Locale } from '@/shared/i18n';
 import type { MediaCardServerProps } from './media-card-server';
 
 interface HorizontalCardProps extends Omit<MediaCardServerProps, 'badgeKey'> {
-  rank: number;
+  /** Rank number to display (1, 2, 3...) */
+  rank?: number;
+  /** Badge text to show instead of rank (e.g., "Хіт") */
+  badge?: string;
 }
 
 /**
@@ -23,7 +26,7 @@ interface HorizontalCardProps extends Omit<MediaCardServerProps, 'badgeKey'> {
  * Layout: [Rank] [Poster] | Title, Rating, Year →
  */
 export function HorizontalCard(props: HorizontalCardProps) {
-  const { slug, type, title, poster, stats, releaseDate, rank, locale = 'uk' } = props;
+  const { slug, type, title, poster, stats, releaseDate, rank, badge, locale = 'uk' } = props;
 
   const dict = getDictionary(locale);
   const href = (type === 'movie' ? `/movies/${slug}` : `/shows/${slug}`) as Route;
@@ -31,11 +34,15 @@ export function HorizontalCard(props: HorizontalCardProps) {
   const rating = stats?.qualityScore ?? null;
   const watchers = stats?.liveWatchers ?? null;
 
-  // Rank colors
+  // Rank colors (for numbered ranks)
   const rankColors: Record<number, string> = {
+    1: 'bg-yellow-500 text-yellow-900', // Gold
     2: 'bg-zinc-400 text-zinc-900', // Silver
     3: 'bg-amber-700 text-white', // Bronze
   };
+
+  // Badge style (for text badges like "Хіт")
+  const badgeStyle = 'bg-red-600 text-white';
 
   return (
     <Link
@@ -47,17 +54,29 @@ export function HorizontalCard(props: HorizontalCardProps) {
         'transition-all duration-200',
       )}
     >
-      {/* Rank Badge */}
+      {/* Rank or Badge */}
       <div className="flex items-center">
-        <div
-          className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center',
-            'font-bold text-sm',
-            rankColors[rank] || 'bg-cinema-border text-white',
-          )}
-        >
-          {rank}
-        </div>
+        {badge ? (
+          <div
+            className={cn(
+              'px-2.5 py-1 rounded-full flex items-center justify-center',
+              'font-bold text-xs',
+              badgeStyle,
+            )}
+          >
+            {badge}
+          </div>
+        ) : rank ? (
+          <div
+            className={cn(
+              'w-8 h-8 rounded-full flex items-center justify-center',
+              'font-bold text-sm',
+              rankColors[rank] || 'bg-cinema-border text-white',
+            )}
+          >
+            {rank}
+          </div>
+        ) : null}
       </div>
 
       {/* Poster */}

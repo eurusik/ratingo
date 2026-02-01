@@ -16,6 +16,12 @@ interface Top3SectionServerProps {
   title?: string;
   locale?: Locale;
   className?: string;
+  /** Number of items to display (default: 2 for hero companion, 3 for standalone) */
+  count?: 2 | 3;
+  /** Starting rank number (default: 2 for hero companion showing #2 and #3) */
+  startRank?: number;
+  /** Badge text to show instead of rank numbers (e.g., "Хіт") */
+  badge?: string;
 }
 
 /**
@@ -27,13 +33,15 @@ export function Top3SectionServer({
   title,
   locale = 'uk',
   className,
+  count = 2,
+  startRank = 2,
+  badge,
 }: Top3SectionServerProps) {
   const dict = getDictionary(locale);
 
   if (!Array.isArray(items) || items.length === 0) return null;
 
-  // Show only 2 items (№2 and №3, since №1 is in Hero)
-  const displayItems = items.slice(0, 2);
+  const displayItems = items.slice(0, count);
 
   return (
     <section className={className}>
@@ -42,9 +50,23 @@ export function Top3SectionServer({
         <span>{title || dict.home.sections.popularNow}</span>
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div
+        className={
+          displayItems.length === 3
+            ? 'grid grid-cols-1 md:grid-cols-3 gap-4'
+            : displayItems.length === 2
+              ? 'grid grid-cols-1 md:grid-cols-2 gap-4'
+              : 'grid grid-cols-1 gap-4'
+        }
+      >
         {displayItems.map((item, index) => (
-          <HorizontalCard key={item.id} {...item} rank={index + 2} locale={locale} />
+          <HorizontalCard
+            key={item.id}
+            {...item}
+            rank={badge ? undefined : startRank + index}
+            badge={badge}
+            locale={locale}
+          />
         ))}
       </div>
     </section>
