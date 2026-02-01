@@ -476,15 +476,21 @@ export class TrendingSyncService {
       `Trakt watchers: requested=${candidates.length}, fetched=${fetched}, skipped=${skipped}, notFound=${notFound}`,
     );
 
-    const itemsToUpdate = candidates.filter((i) => typeof watchersMap.get(i.tmdbId) === 'number');
+    // Items with successful response (number) - update watchers and scores
+    const itemsWithData = candidates.filter((i) => typeof watchersMap.get(i.tmdbId) === 'number');
+    // Items not found in Trakt (undefined) - just touch updated_at to unblock queue
+    const itemsNotFound = candidates.filter((i) => watchersMap.get(i.tmdbId) === undefined);
+    // Items with transient errors (null) - skip, will retry next run
+
     const scoreDataList = await this.mediaRepository.findManyForScoring(
-      itemsToUpdate.map((i) => i.id),
+      itemsWithData.map((i) => i.id),
     );
     const scoreDataMap = new Map(scoreDataList.map((s) => [s.tmdbId, s]));
 
     const statsToUpsert: MediaStatsData[] = [];
 
-    for (const item of itemsToUpdate) {
+    // Add items with watchers data
+    for (const item of itemsWithData) {
       const watchers = watchersMap.get(item.tmdbId)!;
       const scoreData = scoreDataMap.get(item.tmdbId);
 
@@ -502,15 +508,20 @@ export class TrendingSyncService {
       });
     }
 
+    // Add items not found in Trakt - just touch updated_at (COALESCE keeps existing values)
+    for (const item of itemsNotFound) {
+      statsToUpsert.push({ mediaItemId: item.id });
+    }
+
     if (statsToUpsert.length > 0) {
       await this.statsRepository.bulkUpsert(statsToUpsert);
     }
 
-    const moviesUpdated = itemsToUpdate.filter((i) => i.type === MediaType.MOVIE).length;
-    const showsUpdated = itemsToUpdate.filter((i) => i.type === MediaType.SHOW).length;
+    const moviesUpdated = itemsWithData.filter((i) => i.type === MediaType.MOVIE).length;
+    const showsUpdated = itemsWithData.filter((i) => i.type === MediaType.SHOW).length;
 
     this.logger.log(
-      `Synced hero candidates stats: ${moviesUpdated} movies, ${showsUpdated} shows (${skipped} skipped)`,
+      `Synced hero candidates stats: ${moviesUpdated} movies, ${showsUpdated} shows, ${itemsNotFound.length} not found (${skipped} transient errors)`,
     );
 
     return {
