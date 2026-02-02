@@ -12,6 +12,7 @@ import { CatalogSearchService } from './application/services/catalog-search.serv
 import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from './application/services/movie-details.service';
 import { IMPORT_JOB_PORT } from './domain/ports/import-job.port';
+import { USER_STATE_PROVIDER } from './domain/ports/user-state-provider.port';
 import { GENRE_REPOSITORY } from './domain/repositories/genre.repository.interface';
 import { MEDIA_REPOSITORY } from './domain/repositories/media.repository.interface';
 import { MOVIE_REPOSITORY } from './domain/repositories/movie.repository.interface';
@@ -19,6 +20,7 @@ import { PROVIDERS_REPOSITORY } from './domain/repositories/providers.repository
 import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface';
 import { BullMQImportJobAdapter } from './infrastructure/adapters/bullmq-import-job.adapter';
 import { HeroRepositoryAdapter } from './infrastructure/adapters/hero.repository.adapter';
+import { UserStateAdapter } from './infrastructure/adapters/user-state.adapter';
 import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
 import { MovieDetailsQuery } from './infrastructure/queries/movie-details.query';
@@ -111,6 +113,10 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
     {
       provide: IMPORT_JOB_PORT,
       useClass: BullMQImportJobAdapter,
+    },
+    {
+      provide: USER_STATE_PROVIDER,
+      useClass: UserStateAdapter,
     },
     {
       provide: HERO_REPOSITORY,
