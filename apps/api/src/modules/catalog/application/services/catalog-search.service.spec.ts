@@ -1,9 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CatalogSearchService } from './catalog-search.service';
+
+import { MediaType } from '@/common/enums/media-type.enum';
+import { TmdbAdapter } from '@/modules/tmdb/public';
+
 import { MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { SearchSource } from '../../presentation/dtos/search.dto';
+import { SearchSource } from '../../domain/types/search.types';
+
+import { CatalogSearchService } from './catalog-search.service';
 
 describe('CatalogSearchService', () => {
   let service: CatalogSearchService;
@@ -27,17 +30,19 @@ describe('CatalogSearchService', () => {
     type: MediaType.MOVIE,
     title: 'TMDB Movie',
     originalTitle: 'Original TMDB',
-    slug: 'tmdb-movie',
     posterPath: '/tmdb.jpg',
     rating: 7.0,
-    releaseDate: new Date('2024-01-01'),
+    releaseDate: '2024-01-01',
   };
 
   const mockDuplicateTmdbMovie = {
-    externalIds: { tmdbId: 100, imdbId: 'tt100' }, // Same ID as local
+    externalIds: { tmdbId: 100, imdbId: 'tt100' },
     type: MediaType.MOVIE,
     title: 'Duplicate Movie',
+    originalTitle: null,
     posterPath: '/duplicate.jpg',
+    rating: 0,
+    releaseDate: null,
   };
 
   beforeEach(async () => {
@@ -81,11 +86,13 @@ describe('CatalogSearchService', () => {
     expect(result.local).toHaveLength(1);
     expect(result.local[0]).toEqual(
       expect.objectContaining({
-        id: 'uuid-1',
-        tmdbId: 100,
         source: SearchSource.LOCAL,
-        isImported: true,
+        id: 'uuid-1',
+        slug: 'local-movie',
+        tmdbId: 100,
         title: 'Local Movie',
+        posterPath: '/local.jpg',
+        year: 2023,
       }),
     );
 
@@ -93,17 +100,17 @@ describe('CatalogSearchService', () => {
     expect(result.tmdb).toHaveLength(1);
     expect(result.tmdb[0]).toEqual(
       expect.objectContaining({
-        tmdbId: 200,
         source: SearchSource.TMDB,
-        isImported: false,
+        tmdbId: 200,
         title: 'TMDB Movie',
+        posterPath: '/tmdb.jpg',
+        year: 2024,
       }),
     );
   });
 
   it('should filter out TMDB results that exist locally (deduplication)', async () => {
     mediaRepository.search.mockResolvedValue([mockLocalMovie]);
-    // TMDB returns a new movie AND a duplicate of the local one
     tmdbAdapter.searchMulti.mockResolvedValue([mockTmdbMovie, mockDuplicateTmdbMovie]);
 
     const result = await service.search('movie');
@@ -112,31 +119,24 @@ describe('CatalogSearchService', () => {
     expect(result.local[0].tmdbId).toBe(100);
 
     expect(result.tmdb).toHaveLength(1);
-    expect(result.tmdb[0].tmdbId).toBe(200); // Only the new one
+    expect(result.tmdb[0].tmdbId).toBe(200);
 
-    // Ensure duplicate (ID 100) is NOT in tmdb array
     const duplicate = result.tmdb.find((m) => m.tmdbId === 100);
     expect(duplicate).toBeUndefined();
   });
 
-  it('should handle TMDB failure gracefully (return local only)', async () => {
+  it('should handle errors gracefully and return empty results', async () => {
     mediaRepository.search.mockResolvedValue([mockLocalMovie]);
     tmdbAdapter.searchMulti.mockRejectedValue(new Error('TMDB Down'));
 
     const result = await service.search('movie');
 
-    expect(result.local).toHaveLength(0); // Current implementation catches error and returns empty everything?
-    // Let's check implementation.
-    // Implementation: try { ... Promise.all ... } catch { return empty }
-    // So if ONE fails, Promise.all fails, and it returns empty.
-
-    // Ideally it should use Promise.allSettled or separate try-catch if we want partial results.
-    // But based on current code:
+    // Promise.all fails if any promise fails, so both are empty
     expect(result.local).toEqual([]);
     expect(result.tmdb).toEqual([]);
   });
 
-  it('should limit TMDB results to 10', async () => {
+  it('should limit TMDB results to configured limit', async () => {
     const manyMovies = Array.from({ length: 15 }, (_, i) => ({
       ...mockTmdbMovie,
       externalIds: { tmdbId: 200 + i },
@@ -146,5 +146,24 @@ describe('CatalogSearchService', () => {
     const result = await service.search('movie');
 
     expect(result.tmdb).toHaveLength(10);
+  });
+
+  it('should handle null releaseDate correctly', async () => {
+    const movieWithNoDate = {
+      ...mockLocalMovie,
+      releaseDate: null,
+    };
+    mediaRepository.search.mockResolvedValue([movieWithNoDate]);
+
+    const result = await service.search('movie');
+
+    expect(result.local[0].year).toBeNull();
+  });
+
+  it('should pass correct parameters to repository and adapter', async () => {
+    await service.search('test query');
+
+    expect(mediaRepository.search).toHaveBeenCalledWith('test query', 10);
+    expect(tmdbAdapter.searchMulti).toHaveBeenCalledWith('test query', 1);
   });
 });

@@ -1,16 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { ImageDto } from '../../../../common/dtos/image.dto';
-import { MediaType } from '../../../../common/enums/media-type.enum';
+import { ImageDto } from '@/common/dtos/image.dto';
+import { MediaType } from '@/common/enums/media-type.enum';
 
-export enum SearchSource {
-  LOCAL = 'local',
-  TMDB = 'tmdb',
-}
+// Re-export from domain for backward compatibility
+export { SearchSource } from '../../domain/types/search.types';
 
 export class SearchItemDto {
-  @ApiProperty({ enum: SearchSource })
-  source: SearchSource;
+  @ApiProperty({ enum: ['local', 'tmdb'] })
+  source: 'local' | 'tmdb';
 
   @ApiProperty({ enum: MediaType })
   type: MediaType;
@@ -44,9 +42,9 @@ export class SearchItemDto {
 
   @ApiProperty({
     example: false,
-    description: 'If true, this TMDB item already exists in local DB',
+    description: 'If true, this item exists in local DB',
   })
-  isImported?: boolean;
+  isImported: boolean;
 }
 
 export class SearchResponseDto {

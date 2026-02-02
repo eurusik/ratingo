@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CatalogSearchController } from './catalog.search.controller';
-import { CatalogSearchService } from '../../application/services/catalog-search.service';
+
+import { MediaType } from '@/common/enums/media-type.enum';
+
 import { CatalogImportService } from '../../application/services/catalog-import.service';
+import { CatalogSearchService } from '../../application/services/catalog-search.service';
+import { SearchSource } from '../../domain/types/search.types';
+
+import { CatalogSearchController } from './catalog.search.controller';
 
 describe('CatalogSearchController', () => {
   let controller: CatalogSearchController;
@@ -12,6 +17,7 @@ describe('CatalogSearchController', () => {
 
   const catalogImportService = {
     importMedia: jest.fn(),
+    getImportJobStatus: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -27,12 +33,62 @@ describe('CatalogSearchController', () => {
     jest.clearAllMocks();
   });
 
-  it('should delegate search to service', async () => {
-    catalogSearchService.search.mockResolvedValue({ query: 'mo', local: [], tmdb: [] });
+  describe('search', () => {
+    it('should call service and map results to DTO', async () => {
+      const domainResult = {
+        query: 'matrix',
+        local: [
+          {
+            source: SearchSource.LOCAL,
+            type: MediaType.MOVIE,
+            id: 'uuid-1',
+            slug: 'the-matrix',
+            tmdbId: 603,
+            title: 'The Matrix',
+            originalTitle: 'The Matrix',
+            year: 1999,
+            posterPath: '/poster.jpg',
+            rating: 8.7,
+          },
+        ],
+        tmdb: [
+          {
+            source: SearchSource.TMDB,
+            type: MediaType.MOVIE,
+            tmdbId: 604,
+            title: 'Matrix Reloaded',
+            originalTitle: 'The Matrix Reloaded',
+            year: 2003,
+            posterPath: '/poster2.jpg',
+            rating: 7.0,
+          },
+        ],
+      };
+      catalogSearchService.search.mockResolvedValue(domainResult);
 
-    const res = await controller.search('mo');
+      const result = await controller.search('matrix');
 
-    expect(catalogSearchService.search).toHaveBeenCalledWith('mo');
-    expect(res).toEqual({ query: 'mo', local: [], tmdb: [] });
+      expect(catalogSearchService.search).toHaveBeenCalledWith('matrix');
+
+      // Verify mapper added isImported and poster URLs
+      expect(result.local[0].isImported).toBe(true);
+      expect(result.local[0].poster).toEqual({
+        small: 'https://image.tmdb.org/t/p/w342/poster.jpg',
+        medium: 'https://image.tmdb.org/t/p/w500/poster.jpg',
+        large: 'https://image.tmdb.org/t/p/w780/poster.jpg',
+        original: 'https://image.tmdb.org/t/p/original/poster.jpg',
+      });
+
+      expect(result.tmdb[0].isImported).toBe(false);
+      expect(result.tmdb[0].poster).toBeDefined();
+    });
+
+    it('should return empty arrays for empty query', async () => {
+      catalogSearchService.search.mockResolvedValue({ query: '', local: [], tmdb: [] });
+
+      const result = await controller.search('');
+
+      expect(result).toEqual({ query: '', local: [], tmdb: [] });
+    });
   });
 });
