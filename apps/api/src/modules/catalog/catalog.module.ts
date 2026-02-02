@@ -11,11 +11,13 @@ import { CatalogImportService } from './application/services/catalog-import.serv
 import { CatalogSearchService } from './application/services/catalog-search.service';
 import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from './application/services/movie-details.service';
+import { IMPORT_JOB_PORT } from './domain/ports/import-job.port';
 import { GENRE_REPOSITORY } from './domain/repositories/genre.repository.interface';
 import { MEDIA_REPOSITORY } from './domain/repositories/media.repository.interface';
 import { MOVIE_REPOSITORY } from './domain/repositories/movie.repository.interface';
 import { PROVIDERS_REPOSITORY } from './domain/repositories/providers.repository.interface';
 import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface';
+import { BullMQImportJobAdapter } from './infrastructure/adapters/bullmq-import-job.adapter';
 import { HeroRepositoryAdapter } from './infrastructure/adapters/hero.repository.adapter';
 import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
@@ -40,16 +42,6 @@ import { CatalogMoviesController } from './presentation/controllers/catalog.movi
 import { CatalogProvidersController } from './presentation/controllers/catalog.providers.controller';
 import { CatalogSearchController } from './presentation/controllers/catalog.search.controller';
 import { CatalogShowsController } from './presentation/controllers/catalog.shows.controller';
-
-// Query Objects - Shows
-
-// Query Objects - Movies
-
-// Query Objects - Mixed Media
-
-// Query Objects - Shared
-
-// Adapters
 
 /**
  * Catalog module.
@@ -115,7 +107,11 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
       provide: PROVIDERS_REPOSITORY,
       useClass: DrizzleProvidersRepository,
     },
-    // Adapters for other modules
+    // Adapters
+    {
+      provide: IMPORT_JOB_PORT,
+      useClass: BullMQImportJobAdapter,
+    },
     {
       provide: HERO_REPOSITORY,
       useClass: HeroRepositoryAdapter,
