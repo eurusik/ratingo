@@ -13,6 +13,7 @@ import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/pu
 import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
 
 import { type HeroQueryRow, fetchShowProgress, mapHeroResults } from './shared/hero-item.mapper';
+import { HERO_SELECT_FIELDS } from './shared/hero-select-fields';
 
 /**
  * Options for hero media query.
@@ -132,33 +133,7 @@ export class HeroMediaQuery {
     }
 
     return this.db
-      .select({
-        id: schema.mediaItems.id,
-        type: schema.mediaItems.type,
-        slug: schema.mediaItems.slug,
-        title: schema.mediaItems.title,
-        originalTitle: schema.mediaItems.originalTitle,
-        overview: schema.mediaItems.overview,
-        posterPath: schema.mediaItems.posterPath,
-        backdropPath: schema.mediaItems.backdropPath,
-        releaseDate: schema.mediaItems.releaseDate,
-        videos: schema.mediaItems.videos,
-
-        ratingoScore: schema.mediaStats.ratingoScore,
-        qualityScore: schema.mediaStats.qualityScore,
-        popularityScore: schema.mediaStats.popularityScore,
-        watchersCount: schema.mediaStats.watchersCount,
-        totalWatchers: schema.mediaStats.totalWatchers,
-
-        rating: schema.mediaItems.rating,
-        voteCount: schema.mediaItems.voteCount,
-        ratingImdb: schema.mediaItems.ratingImdb,
-        voteCountImdb: schema.mediaItems.voteCountImdb,
-        ratingTrakt: schema.mediaItems.ratingTrakt,
-        voteCountTrakt: schema.mediaItems.voteCountTrakt,
-        ratingMetacritic: schema.mediaItems.ratingMetacritic,
-        ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-      })
+      .select(HERO_SELECT_FIELDS)
       .from(schema.mediaItems)
       .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
       .innerJoin(
