@@ -4,7 +4,7 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 
 import { MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
-import { SearchSource } from '../../domain/types/search.types';
+import { SEARCH_SOURCE } from '../../domain/types/search.types';
 
 import { CatalogSearchService } from './catalog-search.service';
 
@@ -86,7 +86,7 @@ describe('CatalogSearchService', () => {
     expect(result.local).toHaveLength(1);
     expect(result.local[0]).toEqual(
       expect.objectContaining({
-        source: SearchSource.LOCAL,
+        source: SEARCH_SOURCE.LOCAL,
         id: 'uuid-1',
         slug: 'local-movie',
         tmdbId: 100,
@@ -100,7 +100,7 @@ describe('CatalogSearchService', () => {
     expect(result.tmdb).toHaveLength(1);
     expect(result.tmdb[0]).toEqual(
       expect.objectContaining({
-        source: SearchSource.TMDB,
+        source: SEARCH_SOURCE.TMDB,
         tmdbId: 200,
         title: 'TMDB Movie',
         posterPath: '/tmdb.jpg',

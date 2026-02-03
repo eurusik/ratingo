@@ -10,7 +10,7 @@ import {
 import {
   type HybridSearchResult,
   type LocalSearchResultItem,
-  SearchSource,
+  SEARCH_SOURCE,
   type TmdbSearchResultItem,
 } from '../../domain/types/search.types';
 
@@ -45,7 +45,7 @@ export class CatalogSearchService {
       const localTmdbIds = new Set(localResults.map((r) => r.tmdbId));
 
       const local: LocalSearchResultItem[] = localResults.map((r) => ({
-        source: SearchSource.LOCAL,
+        source: SEARCH_SOURCE.LOCAL,
         type: r.type,
         id: r.id,
         slug: r.slug,
@@ -61,7 +61,7 @@ export class CatalogSearchService {
         .filter((r) => !localTmdbIds.has(r.externalIds.tmdbId))
         .slice(0, SEARCH_CONFIG.RESULTS_LIMIT)
         .map((r) => ({
-          source: SearchSource.TMDB,
+          source: SEARCH_SOURCE.TMDB,
           type: r.type,
           tmdbId: r.externalIds.tmdbId,
           title: r.title,

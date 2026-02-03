@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common';
 
 import { Queue } from 'bullmq';
 
-import { BULL_STATE_TO_JOB_STATUS, JobStatus } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
+import { mapBullStateToJobStatus } from '@/common/infrastructure/bullmq/job-status-mapper';
 import { INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
 
 import { IImportJobPort, JobStatusResult, QueuedJob } from '../../domain/ports/import-job.port';
@@ -49,10 +49,7 @@ export class BullMQImportJobAdapter implements IImportJobPort {
     }
 
     const state = await job.getState();
-    const status =
-      BULL_STATE_TO_JOB_STATUS[state] ??
-      BULL_STATE_TO_JOB_STATUS[job.finishedOn ? 'completed' : 'failed'] ??
-      JobStatus.FAILED;
+    const status = mapBullStateToJobStatus(state, job.finishedOn);
 
     return {
       status,

@@ -1,14 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
-import { MovieDetailsService } from './movie-details.service';
-import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
-import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
+
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
+import { CLOCK_PORT } from '../../../shared/clock';
+import { MovieVerdictService } from '../../../shared/verdict';
+import { MovieNotFoundError } from '../../domain/errors';
+import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
+
+import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
+import { MovieDetailsService } from './movie-details.service';
 
 describe('MovieDetailsService', () => {
   let service: MovieDetailsService;
   let movieRepository: any;
   let userStateEnricher: any;
+  let clock: any;
 
   const mockMovie = {
     id: 'movie-1',
@@ -36,6 +41,9 @@ describe('MovieDetailsService', () => {
     genres: [{ id: 'g1', name: 'Action', slug: 'action' }],
   };
 
+  // Fixed test date for predictable tests
+  const testNow = new Date('2025-01-15T12:00:00.000Z');
+
   beforeEach(async () => {
     const mockMovieRepository = {
       findBySlug: jest.fn(),
@@ -48,17 +56,33 @@ describe('MovieDetailsService', () => {
       })),
     };
 
+    const mockClock = {
+      now: jest.fn(() => testNow),
+    };
+
+    const mockVerdictService = {
+      compute: jest.fn(() => ({
+        type: 'quality',
+        messageKey: 'strongRatings',
+        context: '7.5',
+        hintKey: 'forLater',
+      })),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MovieDetailsService,
         { provide: MOVIE_REPOSITORY, useValue: mockMovieRepository },
+        { provide: CLOCK_PORT, useValue: mockClock },
         { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
+        { provide: MovieVerdictService, useValue: mockVerdictService },
       ],
     }).compile();
 
     service = module.get<MovieDetailsService>(MovieDetailsService);
     movieRepository = module.get(MOVIE_REPOSITORY);
     userStateEnricher = module.get(CatalogUserStateEnricher);
+    clock = module.get(CLOCK_PORT);
   });
 
   describe('getBySlug', () => {
@@ -74,10 +98,10 @@ describe('MovieDetailsService', () => {
       expect(result.userState).toBeNull();
     });
 
-    it('should throw NotFoundException when movie not found', async () => {
+    it('should throw MovieNotFoundError when movie not found', async () => {
       movieRepository.findBySlug.mockResolvedValue(null);
 
-      await expect(service.getBySlug('unknown-movie')).rejects.toThrow(NotFoundException);
+      await expect(service.getBySlug('unknown-movie')).rejects.toThrow(MovieNotFoundError);
       await expect(service.getBySlug('unknown-movie')).rejects.toThrow(
         'Movie with slug "unknown-movie" not found',
       );
@@ -96,14 +120,12 @@ describe('MovieDetailsService', () => {
 
       const result = await service.getBySlug('test-movie');
 
-      // Movie with digitalReleaseDate in the past should be STREAMING or NEW_ON_STREAMING
-      expect([ReleaseStatus.STREAMING, ReleaseStatus.NEW_ON_STREAMING]).toContain(
-        result.releaseStatus,
-      );
+      // Movie with digitalReleaseDate in the past should be STREAMING
+      expect(result.releaseStatus).toBe(ReleaseStatus.STREAMING);
     });
 
     it('should compute releaseStatus as upcoming for future release', async () => {
-      const futureDate = new Date();
+      const futureDate = new Date(testNow);
       futureDate.setFullYear(futureDate.getFullYear() + 1);
 
       const upcomingMovie = {
@@ -120,9 +142,8 @@ describe('MovieDetailsService', () => {
     });
 
     it('should compute releaseStatus as in_theaters when only theatrical release', async () => {
-      const now = new Date();
-      const recentTheatrical = new Date(now);
-      recentTheatrical.setDate(now.getDate() - 7); // Released 7 days ago
+      const recentTheatrical = new Date(testNow);
+      recentTheatrical.setDate(testNow.getDate() - 7); // Released 7 days ago
 
       const inTheatersMovie = {
         ...mockMovie,
@@ -187,26 +208,12 @@ describe('MovieDetailsService', () => {
       expect(result.userState).toEqual(mockUserState);
     });
 
-    it('should compute warning verdict for low-rated movie', async () => {
-      const lowRatedMovie = {
-        ...mockMovie,
-        stats: {
-          ...mockMovie.stats,
-          ratingoScore: 30,
-        },
-        externalRatings: {
-          imdb: { rating: 4.0, voteCount: 500 },
-          tmdb: null,
-          trakt: null,
-          metacritic: null,
-          rottenTomatoes: null,
-        },
-      };
-      movieRepository.findBySlug.mockResolvedValue(lowRatedMovie);
+    it('should use clock.now() for release status computation', async () => {
+      movieRepository.findBySlug.mockResolvedValue(mockMovie);
 
-      const result = await service.getBySlug('test-movie');
+      await service.getBySlug('test-movie');
 
-      expect(result.verdict.type).toBe('warning');
+      expect(clock.now).toHaveBeenCalled();
     });
 
     it('should handle movie with null stats gracefully', async () => {

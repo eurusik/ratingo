@@ -1,6 +1,5 @@
 import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { type MovieStatus } from '../../../../common/enums/movie-status.enum';
-import type { CardMeta } from '../../../shared/cards/domain/card.types';
 import type {
   ImageData,
   VideoData,
@@ -124,8 +123,6 @@ export interface MovieDetails {
   stats: RatingoStats;
   externalRatings: ExternalRatings;
   genres: GenreInfo[];
-
-  card?: CardMeta;
 }
 
 /**

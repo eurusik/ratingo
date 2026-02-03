@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 import { HERO_REPOSITORY } from '../home/public';
 import { INGESTION_QUEUE } from '../ingestion/public';
 import { CardsModule } from '../shared/cards/cards.module';
+import { VerdictModule } from '../shared/verdict';
 import { TmdbModule } from '../tmdb/public';
 import { UserMediaModule } from '../user-media/user-media.module';
 
@@ -53,6 +54,7 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
     TmdbModule,
     UserMediaModule,
     CardsModule,
+    VerdictModule,
     BullModule.registerQueue({ name: INGESTION_QUEUE }),
   ],
   controllers: [

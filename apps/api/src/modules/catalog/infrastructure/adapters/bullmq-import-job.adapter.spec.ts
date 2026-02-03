@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 
-import { JobStatus } from '@/common/enums/job-status.enum';
+import { JOB_STATUS } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { INGESTION_QUEUE, IngestionJob } from '@/modules/ingestion/ingestion.constants';
 
@@ -103,7 +103,7 @@ describe('BullMQImportJobAdapter', () => {
       const result = await adapter.getJobStatus('sync-movie_123');
 
       expect(result).toEqual({
-        status: JobStatus.QUEUED,
+        status: JOB_STATUS.QUEUED,
         errorMessage: null,
         tmdbId: 123,
       });
@@ -119,7 +119,7 @@ describe('BullMQImportJobAdapter', () => {
       const result = await adapter.getJobStatus('sync-movie_123');
 
       expect(result).toEqual({
-        status: JobStatus.PROCESSING,
+        status: JOB_STATUS.PROCESSING,
         errorMessage: null,
         tmdbId: 123,
       });
@@ -135,7 +135,7 @@ describe('BullMQImportJobAdapter', () => {
       const result = await adapter.getJobStatus('sync-movie_123');
 
       expect(result).toEqual({
-        status: JobStatus.READY,
+        status: JOB_STATUS.READY,
         errorMessage: null,
         tmdbId: 123,
       });
@@ -151,7 +151,7 @@ describe('BullMQImportJobAdapter', () => {
       const result = await adapter.getJobStatus('sync-movie_123');
 
       expect(result).toEqual({
-        status: JobStatus.FAILED,
+        status: JOB_STATUS.FAILED,
         errorMessage: 'TMDB API timeout',
         tmdbId: 123,
       });
@@ -166,7 +166,7 @@ describe('BullMQImportJobAdapter', () => {
 
       const result = await adapter.getJobStatus('sync-movie_123');
 
-      expect(result?.status).toBe(JobStatus.QUEUED);
+      expect(result?.status).toBe(JOB_STATUS.QUEUED);
     });
 
     it('should map stalled state to FAILED', async () => {
@@ -178,7 +178,7 @@ describe('BullMQImportJobAdapter', () => {
 
       const result = await adapter.getJobStatus('sync-movie_123');
 
-      expect(result?.status).toBe(JobStatus.FAILED);
+      expect(result?.status).toBe(JOB_STATUS.FAILED);
     });
   });
 

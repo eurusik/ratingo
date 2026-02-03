@@ -1,45 +1,22 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
-import { type ReleaseStatus } from '../../../../common/enums/release-status.enum';
 import { getBestRating, isNewRelease } from '../../../../common/utils/media.utils';
-import { BADGE_KEY, CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
-import type { CardMeta, BadgeKey } from '../../../shared/cards/domain/card.types';
+import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
 import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
-import { computeMovieVerdict, type MovieVerdict } from '../../../shared/verdict';
-import {
-  POPULARITY_SIGNAL,
-  type PopularitySignal,
-} from '../../../shared/verdict/domain/popularity-signal';
-import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
+import { CLOCK_PORT, type IClockPort } from '../../../shared/clock';
+import { MovieVerdictService } from '../../../shared/verdict';
+import { mapBadgeToPopularitySignal } from '../../../shared/verdict/domain/popularity-signal';
+import { MovieNotFoundError } from '../../domain/errors';
 import {
   type IMovieRepository,
   MOVIE_REPOSITORY,
   type MovieDetails,
 } from '../../domain/repositories/movie.repository.interface';
+import type { EnrichedMovieDetails } from '../../domain/types';
 import { computeReleaseStatus } from '../../domain/utils/release-status.utils';
 
 import { CatalogUserStateEnricher } from './catalog-userstate-enricher.service';
-
-/**
- * Maps card badge key to verdict popularity signal.
- */
-function mapBadgeToPopularitySignal(badgeKey: BadgeKey | null | undefined): PopularitySignal {
-  if (badgeKey === BADGE_KEY.TRENDING) return POPULARITY_SIGNAL.TRENDING;
-  if (badgeKey === BADGE_KEY.HIT) return POPULARITY_SIGNAL.HIT;
-  if (badgeKey === BADGE_KEY.RISING) return POPULARITY_SIGNAL.RISING;
-  return null;
-}
-
-/**
- * Result of movie details enrichment.
- */
-export interface EnrichedMovieDetails extends MovieDetails {
-  userState: UserMediaState | null;
-  card: CardMeta | null;
-  releaseStatus: ReleaseStatus;
-  verdict: MovieVerdict;
-}
 
 /**
  * Application service for movie details operations.
@@ -50,42 +27,39 @@ export class MovieDetailsService {
   constructor(
     @Inject(MOVIE_REPOSITORY)
     private readonly movieRepository: IMovieRepository,
+    @Inject(CLOCK_PORT)
+    private readonly clock: IClockPort,
     private readonly userStateEnricher: CatalogUserStateEnricher,
+    private readonly verdictService: MovieVerdictService,
   ) {}
 
   /**
    * Fetches movie details by slug and enriches with user state, card, and verdict.
    *
-   * @param slug - Movie slug
-   * @param userId - Optional user ID for personalization
-   * @returns Enriched movie details
-   * @throws NotFoundException if movie not found
+   * @throws MovieNotFoundError if movie not found
    */
   async getBySlug(slug: string, userId?: string | null): Promise<EnrichedMovieDetails> {
     const movie = await this.movieRepository.findBySlug(slug);
 
     if (!movie) {
-      throw new NotFoundException(`Movie with slug "${slug}" not found`);
+      throw new MovieNotFoundError(slug);
     }
 
-    // Enrich with user state
     const enriched = await this.userStateEnricher.enrichOne(userId, {
       ...movie,
       userState: null,
     });
 
-    // Build card metadata
     const card = this.buildCard(movie, enriched.userState);
+    const now = this.clock.now();
 
-    // Compute release status
     const releaseStatus = computeReleaseStatus(
       movie.releaseDate,
       movie.theatricalReleaseDate,
       movie.digitalReleaseDate,
-      new Date(),
+      now,
     );
 
-    // Compute verdict
     const verdict = this.computeVerdict(movie, releaseStatus, card);
 
     return {
@@ -96,16 +70,16 @@ export class MovieDetailsService {
     };
   }
 
-  /**
-   * Builds card metadata for movie details page.
-   */
-  private buildCard(movie: MovieDetails, userState: UserMediaState | null): CardMeta | null {
+  private buildCard(
+    movie: MovieDetails,
+    userState: EnrichedMovieDetails['userState'],
+  ): EnrichedMovieDetails['card'] {
     return buildCardMeta(
       {
         hasUserEntry: Boolean(userState),
         userState: userState?.state ?? null,
         continuePoint: extractContinuePoint(userState?.progress ?? null),
-        hasNewEpisode: false, // Movies don't have episodes
+        hasNewEpisode: false,
         isNewRelease: isNewRelease(movie.releaseDate),
         isHit: isHitQuality(movie.externalRatings),
         trendDelta: null,
@@ -115,17 +89,14 @@ export class MovieDetailsService {
     );
   }
 
-  /**
-   * Computes verdict for movie details page.
-   */
   private computeVerdict(
     movie: MovieDetails,
-    releaseStatus: ReleaseStatus,
-    card: CardMeta | null,
-  ): MovieVerdict {
+    releaseStatus: EnrichedMovieDetails['releaseStatus'],
+    card: EnrichedMovieDetails['card'],
+  ): EnrichedMovieDetails['verdict'] {
     const { rating: bestRating, source: bestRatingSource } = getBestRating(movie.externalRatings);
 
-    return computeMovieVerdict({
+    return this.verdictService.compute({
       releaseStatus,
       ratingoScore: movie.stats?.ratingoScore ?? null,
       avgRating: bestRating?.rating ?? null,

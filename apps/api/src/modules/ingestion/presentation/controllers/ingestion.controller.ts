@@ -20,8 +20,9 @@ import { formatUtcDayId } from '@/common/utils/date.util';
 
 import { DEFAULT_REGION, CATALOG_DEFAULT_NEW_RELEASE_DAYS } from '../../../../common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { JobStatus, BULL_STATE_TO_JOB_STATUS } from '../../../../common/enums/job-status.enum';
+import { JOB_STATUS } from '../../../../common/enums/job-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
+import { mapBullStateToJobStatus } from '../../../../common/infrastructure/bullmq/job-status-mapper';
 import { AdminJwtGuard } from '../../../auth/infrastructure/guards/admin-jwt.guard';
 import { normalizeRegion, formatHourWindow } from '../../application/helpers/queue.helpers';
 import { SyncMediaService } from '../../application/services/sync-media.service';
@@ -79,10 +80,7 @@ export class IngestionController {
     }
 
     const state = await job.getState();
-    const status =
-      BULL_STATE_TO_JOB_STATUS[state] ??
-      BULL_STATE_TO_JOB_STATUS[job.finishedOn ? 'completed' : 'failed'] ??
-      JobStatus.FAILED;
+    const status = mapBullStateToJobStatus(state, job.finishedOn);
 
     const updatedAt =
       (job.finishedOn ?? job.processedOn ?? job.timestamp)
@@ -91,7 +89,7 @@ export class IngestionController {
 
     // Get slug from DB if job is completed and has tmdbId
     let slug: string | null = null;
-    if (status === JobStatus.READY && job.data?.tmdbId) {
+    if (status === JOB_STATUS.READY && job.data?.tmdbId) {
       slug = await this.syncService.getSlugByTmdbId(job.data.tmdbId);
     }
 

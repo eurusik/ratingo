@@ -3,7 +3,7 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import {
   HybridSearchResult,
   LocalSearchResultItem,
-  SearchSource,
+  SEARCH_SOURCE,
   TmdbSearchResultItem,
 } from '../../domain/types/search.types';
 
@@ -27,7 +27,7 @@ describe('SearchMapper', () => {
 
     it('should map local results with poster URLs and isImported=true', () => {
       const localItem: LocalSearchResultItem = {
-        source: SearchSource.LOCAL,
+        source: SEARCH_SOURCE.LOCAL,
         type: MediaType.MOVIE,
         id: 'uuid-123',
         slug: 'the-matrix',
@@ -71,7 +71,7 @@ describe('SearchMapper', () => {
 
     it('should map TMDB results with poster URLs and isImported=false', () => {
       const tmdbItem: TmdbSearchResultItem = {
-        source: SearchSource.TMDB,
+        source: SEARCH_SOURCE.TMDB,
         type: MediaType.SHOW,
         tmdbId: 1399,
         title: 'Game of Thrones',
@@ -110,7 +110,7 @@ describe('SearchMapper', () => {
 
     it('should handle null posterPath', () => {
       const localItem: LocalSearchResultItem = {
-        source: SearchSource.LOCAL,
+        source: SEARCH_SOURCE.LOCAL,
         type: MediaType.MOVIE,
         id: 'uuid-123',
         slug: 'no-poster',
@@ -140,7 +140,7 @@ describe('SearchMapper', () => {
         query: 'batman',
         local: [
           {
-            source: SearchSource.LOCAL,
+            source: SEARCH_SOURCE.LOCAL,
             type: MediaType.MOVIE,
             id: 'local-1',
             slug: 'batman-begins',
@@ -154,7 +154,7 @@ describe('SearchMapper', () => {
         ],
         tmdb: [
           {
-            source: SearchSource.TMDB,
+            source: SEARCH_SOURCE.TMDB,
             type: MediaType.MOVIE,
             tmdbId: 155,
             title: 'The Dark Knight',

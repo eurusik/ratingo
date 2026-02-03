@@ -2,7 +2,6 @@ import { type IngestionStatus } from '../../../../common/enums/ingestion-status.
 import { type MediaType } from '../../../../common/enums/media-type.enum';
 import { type ShowStatus } from '../../../../common/enums/show-status.enum';
 import { type NormalizedSeason } from '../../../ingestion/public';
-import type { CardMeta } from '../../../shared/cards/domain/card.types';
 import { type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import type {
   ImageData,
@@ -156,8 +155,6 @@ export interface ShowDetails {
 
   genres: GenreInfo[];
   seasons: SeasonInfo[];
-
-  card?: CardMeta;
 }
 
 /**

@@ -3,10 +3,12 @@ import { MediaType } from '@/common/enums/media-type.enum';
 /**
  * Source of the search result.
  */
-export enum SearchSource {
-  LOCAL = 'local',
-  TMDB = 'tmdb',
-}
+export const SEARCH_SOURCE = {
+  LOCAL: 'local',
+  TMDB: 'tmdb',
+} as const;
+
+export type SearchSource = (typeof SEARCH_SOURCE)[keyof typeof SEARCH_SOURCE];
 
 /**
  * Base search result item (common fields).
@@ -26,7 +28,7 @@ interface BaseSearchResultItem {
  * Local search result item (from our database).
  */
 export interface LocalSearchResultItem extends BaseSearchResultItem {
-  source: SearchSource.LOCAL;
+  source: typeof SEARCH_SOURCE.LOCAL;
   id: string;
   slug: string;
 }
@@ -35,7 +37,7 @@ export interface LocalSearchResultItem extends BaseSearchResultItem {
  * TMDB search result item (from external API).
  */
 export interface TmdbSearchResultItem extends BaseSearchResultItem {
-  source: SearchSource.TMDB;
+  source: typeof SEARCH_SOURCE.TMDB;
 }
 
 /**

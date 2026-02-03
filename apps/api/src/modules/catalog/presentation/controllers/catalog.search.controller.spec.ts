@@ -4,7 +4,7 @@ import { MediaType } from '@/common/enums/media-type.enum';
 
 import { CatalogImportService } from '../../application/services/catalog-import.service';
 import { CatalogSearchService } from '../../application/services/catalog-search.service';
-import { SearchSource } from '../../domain/types/search.types';
+import { SEARCH_SOURCE } from '../../domain/types/search.types';
 
 import { CatalogSearchController } from './catalog.search.controller';
 
@@ -39,7 +39,7 @@ describe('CatalogSearchController', () => {
         query: 'matrix',
         local: [
           {
-            source: SearchSource.LOCAL,
+            source: SEARCH_SOURCE.LOCAL,
             type: MediaType.MOVIE,
             id: 'uuid-1',
             slug: 'the-matrix',
@@ -53,7 +53,7 @@ describe('CatalogSearchController', () => {
         ],
         tmdb: [
           {
-            source: SearchSource.TMDB,
+            source: SEARCH_SOURCE.TMDB,
             type: MediaType.MOVIE,
             tmdbId: 604,
             title: 'Matrix Reloaded',

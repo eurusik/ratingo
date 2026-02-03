@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
-import { JobStatus } from '@/common/enums/job-status.enum';
+import { JOB_STATUS, type JobStatus } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 
@@ -10,7 +10,7 @@ import {
   type IMediaRepository,
   MEDIA_REPOSITORY,
 } from '../../domain/repositories/media.repository.interface';
-import { ImportStatus, type ImportResult } from '../../domain/types/import.types';
+import { IMPORT_STATUS, type ImportResult } from '../../domain/types/import.types';
 import { generateSlug } from '../../domain/utils/slug.utils';
 
 /**
@@ -74,7 +74,7 @@ export class CatalogImportService {
       // If already ready, just return
       if (existing.ingestionStatus === IngestionStatus.READY) {
         return {
-          status: ImportStatus.READY,
+          status: IMPORT_STATUS.READY,
           id: existing.id,
           slug: existing.slug,
           type: existing.type,
@@ -89,7 +89,7 @@ export class CatalogImportService {
       if (existingJobId) {
         // Job exists, return for polling
         return {
-          status: ImportStatus.IMPORTING,
+          status: IMPORT_STATUS.IMPORTING,
           id: existing.id,
           slug: existing.slug,
           type: existing.type,
@@ -104,7 +104,7 @@ export class CatalogImportService {
       const { jobId } = await this.importJobPort.queueImport(tmdbId, type);
 
       return {
-        status: ImportStatus.IMPORTING,
+        status: IMPORT_STATUS.IMPORTING,
         id: existing.id,
         slug: existing.slug,
         type: existing.type,
@@ -123,7 +123,7 @@ export class CatalogImportService {
     if (!media) {
       this.logger.warn(`TMDB returned null for ${type} ${tmdbId}`);
       return {
-        status: ImportStatus.NOT_FOUND,
+        status: IMPORT_STATUS.NOT_FOUND,
         type,
         tmdbId,
       };
@@ -146,7 +146,7 @@ export class CatalogImportService {
     this.logger.log(`Queued import for ${type} ${tmdbId}: ${media.title} (job: ${jobId})`);
 
     return {
-      status: ImportStatus.IMPORTING,
+      status: IMPORT_STATUS.IMPORTING,
       id: stub.id,
       slug: stub.slug,
       type,
@@ -179,7 +179,7 @@ export class CatalogImportService {
 
     // Get slug from DB if job is completed
     let slug: string | null = null;
-    if (jobStatus.status === JobStatus.READY && jobStatus.tmdbId) {
+    if (jobStatus.status === JOB_STATUS.READY && jobStatus.tmdbId) {
       const media = await this.mediaRepository.findByTmdbId(jobStatus.tmdbId);
       slug = media?.slug ?? null;
     }

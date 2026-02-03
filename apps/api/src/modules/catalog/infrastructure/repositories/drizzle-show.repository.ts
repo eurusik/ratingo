@@ -18,12 +18,13 @@ import {
   type TrendingShowsOptions,
 } from '../../domain/repositories/show.repository.interface';
 import type { WithTotal } from '../../domain/types/query.types';
-import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
+import { type DatabaseTransaction } from '../../domain/types/transaction.type';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
 import { PopularShowsQuery } from '../queries/popular-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
+import { toDrizzleTx } from '../utils/drizzle-transaction';
 
 /**
  * Show details payload for upsert operation.

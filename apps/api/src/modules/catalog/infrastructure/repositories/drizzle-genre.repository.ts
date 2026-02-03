@@ -10,7 +10,8 @@ import {
   type IGenreRepository,
   type GenreData,
 } from '../../domain/repositories/genre.repository.interface';
-import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
+import { type DatabaseTransaction } from '../../domain/types/transaction.type';
+import { toDrizzleTx } from '../utils/drizzle-transaction';
 
 /**
  * Drizzle implementation of IGenreRepository.

@@ -2,13 +2,13 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
-import { JobStatus } from '@/common/enums/job-status.enum';
+import { JOB_STATUS } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
 import { TmdbAdapter } from '@/modules/tmdb/public';
 
 import { IMPORT_JOB_PORT, IImportJobPort } from '../../domain/ports/import-job.port';
 import { MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
-import { ImportStatus } from '../../domain/types/import.types';
+import { IMPORT_STATUS } from '../../domain/types/import.types';
 
 import { CatalogImportService } from './catalog-import.service';
 
@@ -63,7 +63,7 @@ describe('CatalogImportService', () => {
 
         const result = await service.importMedia(123, MediaType.MOVIE);
 
-        expect(result.status).toBe(ImportStatus.READY);
+        expect(result.status).toBe(IMPORT_STATUS.READY);
         expect(result.id).toBe('existing-id');
         expect(result.slug).toBe('existing-movie');
         expect(result.ingestionStatus).toBe(IngestionStatus.READY);
@@ -83,7 +83,7 @@ describe('CatalogImportService', () => {
 
         const result = await service.importMedia(123, MediaType.MOVIE);
 
-        expect(result.status).toBe(ImportStatus.IMPORTING);
+        expect(result.status).toBe(IMPORT_STATUS.IMPORTING);
         expect(result.ingestionStatus).toBe(IngestionStatus.IMPORTING);
         expect(result.jobId).toBe('sync-movie_123');
         expect(importJobPort.queueImport).not.toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe('CatalogImportService', () => {
 
         const result = await service.importMedia(123, MediaType.MOVIE);
 
-        expect(result.status).toBe(ImportStatus.IMPORTING);
+        expect(result.status).toBe(IMPORT_STATUS.IMPORTING);
         expect(result.jobId).toBe('sync-movie_123');
         // Should re-queue the job
         expect(importJobPort.queueImport).toHaveBeenCalledWith(123, MediaType.MOVIE);
@@ -136,7 +136,7 @@ describe('CatalogImportService', () => {
           ingestionStatus: IngestionStatus.IMPORTING,
         });
         expect(importJobPort.queueImport).toHaveBeenCalledWith(123, MediaType.MOVIE);
-        expect(result.status).toBe(ImportStatus.IMPORTING);
+        expect(result.status).toBe(IMPORT_STATUS.IMPORTING);
         expect(result.id).toBe('new-id');
         expect(result.slug).toBe('the-matrix');
         expect(result.jobId).toBe('sync-movie_123');
@@ -157,7 +157,7 @@ describe('CatalogImportService', () => {
 
         expect(tmdbAdapter.getShow).toHaveBeenCalledWith(456);
         expect(importJobPort.queueImport).toHaveBeenCalledWith(456, MediaType.SHOW);
-        expect(result.status).toBe(ImportStatus.IMPORTING);
+        expect(result.status).toBe(IMPORT_STATUS.IMPORTING);
         expect(result.type).toBe(MediaType.SHOW);
       });
 
@@ -166,7 +166,7 @@ describe('CatalogImportService', () => {
 
         const result = await service.importMedia(999, MediaType.MOVIE);
 
-        expect(result.status).toBe(ImportStatus.NOT_FOUND);
+        expect(result.status).toBe(IMPORT_STATUS.NOT_FOUND);
         expect(result.tmdbId).toBe(999);
         expect(result.type).toBe(MediaType.MOVIE);
         expect(result.id).toBeUndefined();
@@ -228,7 +228,7 @@ describe('CatalogImportService', () => {
 
         const result = await service.importMedia(789, MediaType.MOVIE);
 
-        expect(result.status).toBe(ImportStatus.IMPORTING);
+        expect(result.status).toBe(IMPORT_STATUS.IMPORTING);
         expect(mediaRepository.upsertStub).toHaveBeenCalled();
       });
 
@@ -286,7 +286,7 @@ describe('CatalogImportService', () => {
     it('should return job status with slug when job is READY', async () => {
       importJobPort.isValidImportJobId.mockReturnValue(true);
       importJobPort.getJobStatus.mockResolvedValue({
-        status: JobStatus.READY,
+        status: JOB_STATUS.READY,
         errorMessage: null,
         tmdbId: 123,
       });
@@ -299,7 +299,7 @@ describe('CatalogImportService', () => {
 
       const result = await service.getImportJobStatus('sync-movie_123');
 
-      expect(result.status).toBe(JobStatus.READY);
+      expect(result.status).toBe(JOB_STATUS.READY);
       expect(result.slug).toBe('the-matrix');
       expect(result.errorMessage).toBeNull();
       expect(mediaRepository.findByTmdbId).toHaveBeenCalledWith(123);
@@ -308,14 +308,14 @@ describe('CatalogImportService', () => {
     it('should return job status without slug when job is PROCESSING', async () => {
       importJobPort.isValidImportJobId.mockReturnValue(true);
       importJobPort.getJobStatus.mockResolvedValue({
-        status: JobStatus.PROCESSING,
+        status: JOB_STATUS.PROCESSING,
         errorMessage: null,
         tmdbId: 123,
       });
 
       const result = await service.getImportJobStatus('sync-movie_123');
 
-      expect(result.status).toBe(JobStatus.PROCESSING);
+      expect(result.status).toBe(JOB_STATUS.PROCESSING);
       expect(result.slug).toBeNull();
       expect(mediaRepository.findByTmdbId).not.toHaveBeenCalled();
     });
@@ -323,14 +323,14 @@ describe('CatalogImportService', () => {
     it('should return job status with error message when job FAILED', async () => {
       importJobPort.isValidImportJobId.mockReturnValue(true);
       importJobPort.getJobStatus.mockResolvedValue({
-        status: JobStatus.FAILED,
+        status: JOB_STATUS.FAILED,
         errorMessage: 'TMDB API error',
         tmdbId: 123,
       });
 
       const result = await service.getImportJobStatus('sync-movie_123');
 
-      expect(result.status).toBe(JobStatus.FAILED);
+      expect(result.status).toBe(JOB_STATUS.FAILED);
       expect(result.slug).toBeNull();
       expect(result.errorMessage).toBe('TMDB API error');
     });
@@ -338,7 +338,7 @@ describe('CatalogImportService', () => {
     it('should return null slug when media not found in DB after READY', async () => {
       importJobPort.isValidImportJobId.mockReturnValue(true);
       importJobPort.getJobStatus.mockResolvedValue({
-        status: JobStatus.READY,
+        status: JOB_STATUS.READY,
         errorMessage: null,
         tmdbId: 123,
       });
@@ -346,7 +346,7 @@ describe('CatalogImportService', () => {
 
       const result = await service.getImportJobStatus('sync-movie_123');
 
-      expect(result.status).toBe(JobStatus.READY);
+      expect(result.status).toBe(JOB_STATUS.READY);
       expect(result.slug).toBeNull();
     });
   });

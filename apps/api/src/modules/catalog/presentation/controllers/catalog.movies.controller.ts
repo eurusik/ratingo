@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Param, Query, UseFilters, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import {
@@ -13,18 +13,17 @@ import { CardEnrichmentService } from '../../../shared/cards/application/card-en
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
-import {
-  MovieDetailsService,
-  type EnrichedMovieDetails,
-} from '../../application/services/movie-details.service';
+import { MovieDetailsService } from '../../application/services/movie-details.service';
 import {
   type IMovieRepository,
   MOVIE_REPOSITORY,
 } from '../../domain/repositories/movie.repository.interface';
+import type { EnrichedMovieDetails } from '../../domain/types';
 import { CatalogListQueryWithDaysDto } from '../dtos/catalog-list-query-with-days.dto';
 import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
 import { MovieResponseDto } from '../dtos/movie-response.dto';
 import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
+import { CatalogDomainExceptionFilter } from '../filters';
 import { normalizeListQuery } from '../utils/query-normalizer';
 
 /**
@@ -32,6 +31,7 @@ import { normalizeListQuery } from '../utils/query-normalizer';
  */
 @ApiTags('Public: Catalog')
 @UseGuards(OptionalJwtAuthGuard)
+@UseFilters(CatalogDomainExceptionFilter)
 @Controller('catalog/movies')
 export class CatalogMoviesController {
   /**

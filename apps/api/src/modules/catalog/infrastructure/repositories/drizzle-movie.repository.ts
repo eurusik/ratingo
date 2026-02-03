@@ -15,7 +15,7 @@ import {
   type WithTotal,
   type ReleaseInfo,
 } from '../../domain/repositories/movie.repository.interface';
-import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
+import { type DatabaseTransaction } from '../../domain/types/transaction.type';
 import { PersistenceMapper } from '../mappers/persistence.mapper';
 import { MovieDetailsQuery } from '../queries/movie-details.query';
 import {
@@ -25,6 +25,7 @@ import {
 } from '../queries/movie-listings.query';
 import { PopularMoviesQuery } from '../queries/popular-movies.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';
+import { toDrizzleTx } from '../utils/drizzle-transaction';
 
 /**
  * Movie details payload for upsert operation.
