@@ -188,6 +188,11 @@ export const HERO_THRESHOLDS = {
    * Excludes finished/dormant shows that are just being rewatched.
    */
   MAX_DAYS_SINCE_LAST_EPISODE: 90,
+  /**
+   * Buffer for fallback query to account for potential duplicates.
+   * Fetches (remaining + buffer) items, then slices to exact count.
+   */
+  FALLBACK_BUFFER: 2,
 } as const;
 
 /**

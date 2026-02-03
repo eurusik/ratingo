@@ -67,10 +67,9 @@ export class HeroMediaQuery {
 
       const remaining = limit - strictResults.length;
       const strictIds = strictResults.map((r) => r.id);
-      const fallbackBuffer = 2;
 
       const fallbackResults = await this.queryHeroItems({
-        limit: remaining + fallbackBuffer,
+        limit: remaining + HERO_THRESHOLDS.FALLBACK_BUFFER,
         type,
         now,
         minPopularityScore: HERO_THRESHOLDS.MIN_POPULARITY_SCORE_FALLBACK,
