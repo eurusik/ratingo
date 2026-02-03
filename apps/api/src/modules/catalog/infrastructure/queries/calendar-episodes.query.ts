@@ -38,6 +38,7 @@ export class CalendarEpisodesQuery {
       const results = await this.db
         .select({
           showId: schema.shows.mediaItemId,
+          showSlug: schema.mediaItems.slug,
           showTitle: schema.mediaItems.title,
           posterPath: schema.mediaItems.posterPath,
           seasonNumber: schema.seasons.number,
@@ -57,6 +58,7 @@ export class CalendarEpisodesQuery {
 
       return results.map((row) => ({
         showId: row.showId,
+        showSlug: row.showSlug,
         showTitle: row.showTitle,
         posterPath: row.posterPath,
         seasonNumber: row.seasonNumber,

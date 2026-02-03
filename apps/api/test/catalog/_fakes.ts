@@ -230,6 +230,7 @@ export class FakeShowRepository implements IShowRepository {
     return [
       {
         showId: 'sid-1',
+        showSlug: 'show-one',
         showTitle: 'Show One',
         posterPath: null,
         seasonNumber: 1,

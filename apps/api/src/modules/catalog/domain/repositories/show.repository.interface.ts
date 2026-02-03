@@ -88,6 +88,7 @@ export interface ShowListItem {
  */
 export interface CalendarEpisode {
   showId: string;
+  showSlug: string;
   showTitle: string;
   posterPath: string | null;
   seasonNumber: number;
