@@ -42,7 +42,7 @@ import {
   type IShowRepository,
   SHOW_REPOSITORY,
 } from '../../domain/repositories/show.repository.interface';
-import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { MediaItemPersistenceMapper } from '../mappers/media-item-persistence.mapper';
 import { HeroMediaQuery } from '../queries/hero-media.query';
 
 /**
@@ -335,13 +335,13 @@ export class DrizzleMediaRepository implements IMediaRepository {
   private async upsertWithSlug(media: NormalizedMedia, slug: string | undefined): Promise<void> {
     await this.db.transaction(async (tx) => {
       // Upsert Base Media Item
-      const insertValues = PersistenceMapper.toMediaItemInsert(media);
+      const insertValues = MediaItemPersistenceMapper.toMediaItemInsert(media);
       // Override slug if provided (for retry with unique slug)
       if (slug) {
         insertValues.slug = slug;
       }
 
-      const updateValues = PersistenceMapper.toMediaItemUpdate(media);
+      const updateValues = MediaItemPersistenceMapper.toMediaItemUpdate(media);
       // Also update slug on conflict if we're using a unique slug
       if (slug && slug !== media.slug) {
         updateValues.slug = slug;
@@ -369,7 +369,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
       await this.genreRepository.syncGenres(tx, mediaId, media.genres);
 
       // Upsert Ratingo Scores to media_stats
-      const statsInsert = PersistenceMapper.toMediaStatsInsert(mediaId, media);
+      const statsInsert = MediaItemPersistenceMapper.toMediaStatsInsert(mediaId, media);
       if (statsInsert) {
         // Build update set - only include fields with actual data
         // This prevents overwriting valid data with null/0 on API failures

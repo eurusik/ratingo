@@ -19,7 +19,8 @@ import {
 } from '../../domain/repositories/show.repository.interface';
 import type { WithTotal } from '../../domain/types/query.types';
 import { type DatabaseTransaction } from '../../domain/types/transaction.type';
-import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { SeasonEpisodePersistenceMapper } from '../mappers/season-episode-persistence.mapper';
+import { ShowPersistenceMapper } from '../mappers/show-persistence.mapper';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
 import { PopularShowsQuery } from '../queries/popular-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
@@ -66,10 +67,10 @@ export class DrizzleShowRepository implements IShowRepository {
     const drizzleTx = toDrizzleTx(tx);
     const [show] = await drizzleTx
       .insert(schema.shows)
-      .values(PersistenceMapper.toShowInsert(mediaId, details))
+      .values(ShowPersistenceMapper.toShowInsert(mediaId, details))
       .onConflictDoUpdate({
         target: schema.shows.mediaItemId,
-        set: PersistenceMapper.toShowUpdate(details),
+        set: ShowPersistenceMapper.toShowUpdate(details),
       })
       .returning({ id: schema.shows.id });
 
@@ -93,10 +94,10 @@ export class DrizzleShowRepository implements IShowRepository {
     for (const season of seasons) {
       const [seasonRecord] = await drizzleTx
         .insert(schema.seasons)
-        .values(PersistenceMapper.toSeasonInsert(showId, season))
+        .values(SeasonEpisodePersistenceMapper.toSeasonInsert(showId, season))
         .onConflictDoUpdate({
           target: [schema.seasons.showId, schema.seasons.number],
-          set: PersistenceMapper.toSeasonUpdate(season),
+          set: SeasonEpisodePersistenceMapper.toSeasonUpdate(season),
         })
         .returning({ id: schema.seasons.id });
 
@@ -116,7 +117,9 @@ export class DrizzleShowRepository implements IShowRepository {
   ): Promise<void> {
     if (!episodes?.length) return;
 
-    const values = episodes.map((ep) => PersistenceMapper.toEpisodeInsert(seasonId, showId, ep));
+    const values = episodes.map((ep) =>
+      SeasonEpisodePersistenceMapper.toEpisodeInsert(seasonId, showId, ep),
+    );
 
     await drizzleTx
       .insert(schema.episodes)

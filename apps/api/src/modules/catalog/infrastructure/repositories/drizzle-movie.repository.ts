@@ -16,7 +16,7 @@ import {
   type ReleaseInfo,
 } from '../../domain/repositories/movie.repository.interface';
 import { type DatabaseTransaction } from '../../domain/types/transaction.type';
-import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { MoviePersistenceMapper } from '../mappers/movie-persistence.mapper';
 import { MovieDetailsQuery } from '../queries/movie-details.query';
 import {
   MovieListingsQuery,
@@ -66,10 +66,10 @@ export class DrizzleMovieRepository implements IMovieRepository {
     const drizzleTx = toDrizzleTx(tx);
     await drizzleTx
       .insert(schema.movies)
-      .values(PersistenceMapper.toMovieInsert(mediaId, details))
+      .values(MoviePersistenceMapper.toMovieInsert(mediaId, details))
       .onConflictDoUpdate({
         target: schema.movies.mediaItemId,
-        set: PersistenceMapper.toMovieUpdate(details),
+        set: MoviePersistenceMapper.toMovieUpdate(details),
       });
   }
 

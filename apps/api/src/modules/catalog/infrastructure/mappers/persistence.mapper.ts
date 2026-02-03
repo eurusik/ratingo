@@ -1,296 +1,41 @@
-import { type InferInsertModel } from 'drizzle-orm';
+/**
+ * Re-exports for backward compatibility.
+ * Prefer importing from specific mappers directly:
+ * - MediaItemPersistenceMapper for media_items and media_stats
+ * - MoviePersistenceMapper for movies
+ * - ShowPersistenceMapper for shows
+ * - SeasonEpisodePersistenceMapper for seasons and episodes
+ */
 
-import type * as schema from '../../../../database/schema';
-import type {
-  NormalizedMedia,
-  NormalizedSeason,
-  NormalizedEpisode,
-} from '../../../ingestion/public';
-
-type MediaItemInsert = InferInsertModel<typeof schema.mediaItems>;
-type MediaStatsInsert = InferInsertModel<typeof schema.mediaStats>;
-
-/** Movie-specific details from NormalizedMedia.details */
-type MovieDetails = NonNullable<NormalizedMedia['details']>;
-
-/** Show-specific details from NormalizedMedia.details */
-type ShowDetails = NonNullable<NormalizedMedia['details']>;
+import { MediaItemPersistenceMapper } from './media-item-persistence.mapper';
+import { MoviePersistenceMapper } from './movie-persistence.mapper';
+import { SeasonEpisodePersistenceMapper } from './season-episode-persistence.mapper';
+import { ShowPersistenceMapper } from './show-persistence.mapper';
 
 /**
- * Filters out undefined values from an object.
- * Prevents "No values to set" error in Drizzle upserts.
+ * @deprecated Use specific mappers directly:
+ * - MediaItemPersistenceMapper
+ * - MoviePersistenceMapper
+ * - ShowPersistenceMapper
+ * - SeasonEpisodePersistenceMapper
  */
-const pickDefined = <T extends Record<string, unknown>>(obj: T): Partial<T> =>
-  Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as Partial<T>;
-
-/**
- * Converts a date value to Date object or null.
- */
-function toDateOrNull(value: Date | string | null | undefined): Date | null {
-  if (!value) return null;
-  return value instanceof Date ? value : new Date(value);
-}
-
 export class PersistenceMapper {
-  static toMediaItemInsert(media: NormalizedMedia): MediaItemInsert {
-    // Ensure slug is never empty (required by UNIQUE NOT NULL constraint)
-    const slug = media.slug?.trim() || `${media.type}-${media.externalIds.tmdbId}`;
+  // MediaItem methods
+  static toMediaItemInsert = MediaItemPersistenceMapper.toMediaItemInsert;
+  static toMediaItemUpdate = MediaItemPersistenceMapper.toMediaItemUpdate;
+  static toMediaStatsInsert = MediaItemPersistenceMapper.toMediaStatsInsert;
 
-    return {
-      type: media.type,
-      tmdbId: media.externalIds.tmdbId,
-      imdbId: media.externalIds.imdbId || null,
-      title: media.title || media.originalTitle || `Untitled ${media.externalIds.tmdbId}`,
-      originalTitle: media.originalTitle,
-      slug,
-      overview: media.overview || null,
-      ingestionStatus: media.ingestionStatus,
-      posterPath: media.posterPath,
-      backdropPath: media.backdropPath,
-      videos: media.videos || null,
-      credits: media.credits || null,
-      watchProvidersRaw: media.watchProvidersRaw || null,
+  // Movie methods
+  static toMovieInsert = MoviePersistenceMapper.toMovieInsert;
+  static toMovieUpdate = MoviePersistenceMapper.toMovieUpdate;
 
-      // Metrics
-      rating: media.rating,
-      voteCount: media.voteCount,
-      popularity: media.popularity,
-      trendingScore: media.trendingScore ?? 0,
-      trendingRank: media.trendingRank ?? null,
-      trendingUpdatedAt: toDateOrNull(media.trendingUpdatedAt),
+  // Show methods
+  static toShowInsert = ShowPersistenceMapper.toShowInsert;
+  static toShowUpdate = ShowPersistenceMapper.toShowUpdate;
 
-      // External Ratings
-      ratingImdb: media.ratingImdb,
-      voteCountImdb: media.voteCountImdb,
-      ratingTrakt: media.ratingTrakt,
-      voteCountTrakt: media.voteCountTrakt,
-      ratingMetacritic: media.ratingMetacritic,
-      ratingRottenTomatoes: media.ratingRottenTomatoes,
-
-      releaseDate: toDateOrNull(media.releaseDate),
-
-      // Origin metadata for catalog policy
-      originCountries: media.originCountries || null,
-      originalLanguage: media.originalLanguage || null,
-
-      updatedAt: new Date(),
-    };
-  }
-
-  /**
-   * Creates update payload for media item.
-   *
-   * IMPORTANT: Fields like originCountries, originalLanguage, overview are only
-   * included when explicitly provided (not undefined). This prevents overwriting
-   * existing data with NULL when sync payload is incomplete (e.g., fallback path).
-   */
-  static toMediaItemUpdate(media: NormalizedMedia): Partial<MediaItemInsert> {
-    const releaseDate = toDateOrNull(media.releaseDate);
-    const trendingUpdatedAt = toDateOrNull(media.trendingUpdatedAt) ?? new Date();
-
-    const update: Partial<MediaItemInsert> = {
-      imdbId: media.externalIds.imdbId || null,
-      title: media.title,
-      originalTitle: media.originalTitle,
-      ingestionStatus: media.ingestionStatus,
-      rating: media.rating,
-      voteCount: media.voteCount,
-      popularity: media.popularity,
-      ratingImdb: media.ratingImdb,
-      voteCountImdb: media.voteCountImdb,
-      ratingTrakt: media.ratingTrakt,
-      voteCountTrakt: media.voteCountTrakt,
-      ratingMetacritic: media.ratingMetacritic,
-      ratingRottenTomatoes: media.ratingRottenTomatoes,
-      posterPath: media.posterPath,
-      backdropPath: media.backdropPath,
-      videos: media.videos || null,
-      credits: media.credits || null,
-      watchProvidersRaw: media.watchProvidersRaw || null,
-      releaseDate,
-      updatedAt: new Date(),
-      ...(media.trendingScore !== undefined && {
-        trendingScore: media.trendingScore,
-        trendingRank: media.trendingRank ?? null,
-        trendingUpdatedAt,
-      }),
-      // Only update these fields if explicitly provided (not undefined)
-      // This prevents overwriting existing data when sync uses fallback path
-      ...(media.overview !== undefined && { overview: media.overview }),
-      ...(media.originCountries !== undefined && { originCountries: media.originCountries }),
-      ...(media.originalLanguage !== undefined && { originalLanguage: media.originalLanguage }),
-    };
-
-    // Filter out undefined values
-    const filtered = Object.fromEntries(
-      Object.entries(update).filter(([, v]) => v !== undefined),
-    ) as Partial<MediaItemInsert>;
-
-    // Always ensure updatedAt is present to prevent "No values to set" error
-    filtered.updatedAt = new Date();
-
-    return filtered;
-  }
-
-  static toMediaStatsInsert(mediaId: string, media: NormalizedMedia): MediaStatsInsert | null {
-    if (media.ratingoScore === undefined) return null;
-
-    // CRITICAL: Don't set watchersCount/totalWatchers to 0 when it's null/undefined.
-    // This prevents silent data corruption when Trakt API fails.
-    // The repository upsert will preserve existing value via COALESCE.
-    const stats: MediaStatsInsert = {
-      mediaItemId: mediaId,
-      ratingoScore: media.ratingoScore,
-      qualityScore: media.qualityScore,
-      popularityScore: media.popularityScore,
-      freshnessScore: media.freshnessScore,
-      updatedAt: new Date(),
-    };
-
-    // Only include watchersCount if we have actual data (not null/undefined)
-    if (media.watchersCount != null) {
-      stats.watchersCount = media.watchersCount;
-    }
-
-    // Only include totalWatchers if we have actual data (not null/undefined)
-    if (media.totalWatchers != null) {
-      stats.totalWatchers = media.totalWatchers;
-    }
-
-    return stats;
-  }
-
-  static toMovieInsert(
-    mediaId: string,
-    details: MovieDetails,
-  ): InferInsertModel<typeof schema.movies> {
-    return {
-      mediaItemId: mediaId,
-      runtime: details.runtime,
-      budget: details.budget,
-      revenue: details.revenue,
-      status: details.status,
-      theatricalReleaseDate: details.theatricalReleaseDate,
-      digitalReleaseDate: details.digitalReleaseDate,
-      releases: details.releases,
-    };
-  }
-
-  static toMovieUpdate(details: MovieDetails): Partial<InferInsertModel<typeof schema.movies>> {
-    const update = pickDefined({
-      runtime: details.runtime,
-      budget: details.budget,
-      revenue: details.revenue,
-      status: details.status,
-      theatricalReleaseDate: details.theatricalReleaseDate,
-      digitalReleaseDate: details.digitalReleaseDate,
-      releases: details.releases,
-    });
-    // Ensure at least one field for upsert
-    if (Object.keys(update).length === 0) {
-      return { runtime: null };
-    }
-    return update;
-  }
-
-  static toShowInsert(
-    mediaId: string,
-    details: ShowDetails,
-  ): InferInsertModel<typeof schema.shows> {
-    return {
-      mediaItemId: mediaId,
-      totalSeasons: details.totalSeasons,
-      totalEpisodes: details.totalEpisodes,
-      lastAirDate: details.lastAirDate,
-      nextAirDate: details.nextAirDate,
-      status: details.status,
-    };
-  }
-
-  static toShowUpdate(details: ShowDetails): Partial<InferInsertModel<typeof schema.shows>> {
-    const update = pickDefined({
-      totalSeasons: details.totalSeasons,
-      totalEpisodes: details.totalEpisodes,
-      lastAirDate: details.lastAirDate,
-      nextAirDate: details.nextAirDate,
-      status: details.status,
-    });
-    // Ensure at least one field for upsert
-    if (Object.keys(update).length === 0) {
-      return { totalSeasons: null };
-    }
-    return update;
-  }
-
-  static toSeasonInsert(
-    showId: string,
-    season: NormalizedSeason,
-  ): InferInsertModel<typeof schema.seasons> {
-    return {
-      showId: showId,
-      tmdbId: season.tmdbId,
-      number: season.number,
-      name: season.name,
-      overview: season.overview,
-      posterPath: season.posterPath,
-      airDate: season.airDate,
-      episodeCount: season.episodeCount,
-    };
-  }
-
-  static toSeasonUpdate(
-    season: NormalizedSeason,
-  ): Partial<InferInsertModel<typeof schema.seasons>> {
-    const update = pickDefined({
-      tmdbId: season.tmdbId,
-      name: season.name,
-      overview: season.overview,
-      posterPath: season.posterPath,
-      airDate: season.airDate,
-      episodeCount: season.episodeCount,
-    });
-    // Ensure at least one field for upsert
-    if (Object.keys(update).length === 0) {
-      return { episodeCount: null };
-    }
-    return update;
-  }
-
-  static toEpisodeInsert(
-    seasonId: string,
-    showId: string,
-    episode: NormalizedEpisode,
-  ): InferInsertModel<typeof schema.episodes> {
-    return {
-      seasonId: seasonId,
-      showId: showId,
-      tmdbId: episode.tmdbId,
-      number: episode.number,
-      title: episode.title,
-      overview: episode.overview,
-      airDate: episode.airDate,
-      runtime: episode.runtime,
-      stillPath: episode.stillPath,
-      voteAverage: episode.rating,
-    };
-  }
-
-  static toEpisodeUpdate(
-    episode: NormalizedEpisode,
-  ): Partial<InferInsertModel<typeof schema.episodes>> {
-    const update = pickDefined({
-      tmdbId: episode.tmdbId,
-      title: episode.title,
-      overview: episode.overview,
-      airDate: episode.airDate,
-      runtime: episode.runtime,
-      stillPath: episode.stillPath,
-      voteAverage: episode.rating,
-    });
-    // Ensure at least one field for upsert
-    if (Object.keys(update).length === 0) {
-      return { runtime: null };
-    }
-    return update;
-  }
+  // Season/Episode methods
+  static toSeasonInsert = SeasonEpisodePersistenceMapper.toSeasonInsert;
+  static toSeasonUpdate = SeasonEpisodePersistenceMapper.toSeasonUpdate;
+  static toEpisodeInsert = SeasonEpisodePersistenceMapper.toEpisodeInsert;
+  static toEpisodeUpdate = SeasonEpisodePersistenceMapper.toEpisodeUpdate;
 }
