@@ -1,13 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, gte, isNotNull, inArray, and, exists, sql, isNull, type SQL } from 'drizzle-orm';
+import { eq, and, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
+import { EvaluationContext } from '../../../catalog-policy/public';
 import {
   type CatalogSort,
   type SortOrder,
@@ -16,20 +15,21 @@ import {
   SORT_ORDER,
   VOTE_SOURCE,
 } from '../../domain/constants/catalog-query.constants';
-import {
-  CONTEXT_FRESHNESS,
-  LIST_CONTEXT,
-  TRENDING_THRESHOLDS,
-} from '../../domain/constants/catalog.constants';
+import { LIST_CONTEXT } from '../../domain/constants/catalog.constants';
 import type { TrendingMovieItem } from '../../domain/repositories/movie.repository.interface';
 import type { TrendingQueryResult, ListContext } from '../../domain/types/query.types';
 
-import { checkContextEvaluationsExist } from './shared/evaluation-check.util';
-import { GenreQuery } from './shared/genre.query';
-import { MovieResultMapper } from './shared/movie-result.mapper';
-import { movieSelectFields, type MovieSelectRow } from './shared/movie-select.fields';
-import { buildMovieSortOrder } from './shared/sort-order.builder';
-import { buildYearConditions } from './shared/year-range.util';
+import {
+  buildTrendingMovieConditions,
+  checkContextEvaluationsExist,
+  createDegradedResponse,
+  createSuccessMeta,
+  GenreQuery,
+  MovieResultMapper,
+  movieSelectFields,
+  type MovieSelectRow,
+  buildMovieSortOrder,
+} from './shared';
 
 /**
  * Options for trending movies query.
@@ -106,69 +106,21 @@ export class TrendingMoviesQuery {
         this.logger.warn(
           `Degraded state: no evaluations for context=${EvaluationContext.TRENDING} with active policy`,
         );
-
-        const emptyResult: TrendingQueryResult<TrendingMovieItem> =
-          [] as TrendingQueryResult<TrendingMovieItem>;
-        emptyResult.total = 0;
-        emptyResult.meta = {
-          degraded: true,
-          degradedReason: 'Context evaluations missing - evaluation in progress',
-        };
-        return emptyResult;
-      }
-
-      const conditions: SQL[] = [
-        isNotNull(schema.mediaStats.popularityScore),
-        eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-        eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
-        eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
-        isNull(schema.mediaItems.deletedAt),
-      ];
-
-      const freshnessThreshold = CONTEXT_FRESHNESS[context].trending;
-      if (freshnessThreshold > 0) {
-        conditions.push(
-          sql`COALESCE(${schema.mediaStats.freshnessScore}, 0) >= ${freshnessThreshold}`,
+        return createDegradedResponse<TrendingMovieItem>(
+          'Context evaluations missing - evaluation in progress',
         );
       }
 
-      // Trending without audience is just "recent" — enforce minimum traction
-      conditions.push(
-        sql`COALESCE(${schema.mediaStats.watchersCount}, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES}`,
-      );
-
-      if (minRatingo !== undefined) {
-        conditions.push(gte(schema.mediaStats.ratingoScore, minRatingo));
-      }
-
-      if (genres && genres.length) {
-        conditions.push(
-          exists(
-            this.db
-              .select({ id: schema.mediaGenres.id })
-              .from(schema.mediaGenres)
-              .innerJoin(schema.genres, eq(schema.mediaGenres.genreId, schema.genres.id))
-              .where(
-                and(
-                  eq(schema.mediaGenres.mediaItemId, schema.mediaItems.id),
-                  inArray(schema.genres.slug, genres),
-                ),
-              ),
-          ),
-        );
-      }
-
-      if (minVotes !== undefined) {
-        if (voteSource === 'trakt') {
-          conditions.push(gte(schema.mediaItems.voteCountTrakt, minVotes));
-        } else {
-          conditions.push(gte(schema.mediaItems.voteCount, minVotes));
-        }
-      }
-
-      conditions.push(
-        ...buildYearConditions(schema.mediaItems.releaseDate, year, yearFrom, yearTo),
-      );
+      const conditions = buildTrendingMovieConditions(this.db, {
+        context,
+        minRatingo,
+        genres,
+        voteSource,
+        minVotes,
+        year,
+        yearFrom,
+        yearTo,
+      });
 
       const results = await this.db
         .select(movieSelectFields)
@@ -196,7 +148,7 @@ export class TrendingMoviesQuery {
       const mapped = MovieResultMapper.mapManyTrending(results as MovieSelectRow[], genresMap);
       const withTotal = mapped as TrendingQueryResult<TrendingMovieItem>;
       withTotal.total = total;
-      withTotal.meta = { degraded: false };
+      withTotal.meta = createSuccessMeta();
       return withTotal;
     } catch (error) {
       this.logger.error(`Failed to find trending movies: ${error.message}`, error.stack);
