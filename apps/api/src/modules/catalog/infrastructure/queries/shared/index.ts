@@ -14,5 +14,6 @@ export * from './show-details.mapper';
 export * from './show-details-select-fields';
 export * from './sort-order.builder';
 export * from './trending-conditions.builder';
+export * from './watching-now-conditions.builder';
 export * from './degraded-state.util';
 export * from './show-conditions.builder';
