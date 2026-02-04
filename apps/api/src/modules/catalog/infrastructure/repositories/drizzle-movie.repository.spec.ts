@@ -6,34 +6,7 @@ import { MovieDetailsQuery } from '../queries/movie-details.query';
 import { PopularMoviesQuery } from '../queries/popular-movies.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';
 import { MovieListingsQuery } from '../queries/movie-listings.query';
-
-// Chainable thenable mock for Drizzle-like fluent API
-const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {
-  const thenable: any = {};
-  const chainMethods = [
-    'insert',
-    'values',
-    'onConflictDoUpdate',
-    'update',
-    'set',
-    'where',
-    'select',
-    'from',
-    'innerJoin',
-    'limit',
-    ...extraMethods,
-  ];
-  chainMethods.forEach((m) => {
-    thenable[m] = jest.fn().mockReturnValue(thenable);
-  });
-
-  if (rejectWith) {
-    thenable.then = (_res: any, rej: any) => Promise.reject(rejectWith).catch(rej);
-  } else {
-    thenable.then = (res: any) => Promise.resolve(resolveWith).then(res);
-  }
-  return thenable;
-};
+import { createDrizzleThenable } from '../__test__/drizzle-mock.utils';
 
 describe('DrizzleMovieRepository', () => {
   let repository: DrizzleMovieRepository;
@@ -47,9 +20,9 @@ describe('DrizzleMovieRepository', () => {
   let updateChain: any;
 
   const setup = (options: { resolveSelect?: any; reject?: Error } = {}) => {
-    selectChain = createThenable(options.resolveSelect ?? [], options.reject);
-    insertChain = createThenable([], options.reject);
-    updateChain = createThenable([], options.reject);
+    selectChain = createDrizzleThenable(options.resolveSelect ?? [], options.reject);
+    insertChain = createDrizzleThenable([], options.reject);
+    updateChain = createDrizzleThenable([], options.reject);
 
     db = {
       select: jest.fn().mockReturnValue(selectChain),
@@ -90,7 +63,7 @@ describe('DrizzleMovieRepository', () => {
     });
 
     it('should propagate errors', async () => {
-      const txChain = createThenable([], new Error('DB Error'));
+      const txChain = createDrizzleThenable([], new Error('DB Error'));
       const tx = { insert: jest.fn().mockReturnValue(txChain) } as any;
       const module: TestingModule = await setup();
       repository = module.get(DrizzleMovieRepository);
@@ -130,7 +103,7 @@ describe('DrizzleMovieRepository', () => {
       expect(db.select).toHaveBeenCalledTimes(1);
     });
 
-    it('should propagate transaction errors', async () => {
+    it('should throw DatabaseException on transaction errors', async () => {
       const error = new Error('TX Error');
       db = {
         select: jest.fn().mockReturnValue(selectChain),
@@ -152,7 +125,7 @@ describe('DrizzleMovieRepository', () => {
       }).compile();
       repository = module.get(DrizzleMovieRepository);
 
-      await expect(repository.setNowPlaying([1])).rejects.toThrow('TX Error');
+      await expect(repository.setNowPlaying([1])).rejects.toThrow(DatabaseException);
     });
   });
 
