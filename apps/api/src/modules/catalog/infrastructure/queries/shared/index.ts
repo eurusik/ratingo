@@ -3,6 +3,7 @@ export * from './movie-select.fields';
 export * from './movie-result.mapper';
 export * from './movie-details.mapper';
 export * from './movie-details-select-fields';
+export * from './new-episode.mapper';
 export * from './release-flags.util';
 export * from './watch-offers.query';
 export * from './evaluation-check.util';

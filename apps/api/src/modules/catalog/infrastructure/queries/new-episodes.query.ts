@@ -11,6 +11,8 @@ import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import { TRENDING_THRESHOLDS } from '../../domain/constants/catalog.constants';
 
+import { type NewEpisodeRow, mapNewEpisodeRows } from './shared/new-episode.mapper';
+
 /**
  * New episode item for the update feed.
  * Grouped by show - one entry per show with the latest episode.
@@ -25,21 +27,6 @@ export interface NewEpisodeItem {
   episodeNumber: number;
   episodeTitle: string;
   airDate: Date;
-}
-
-/**
- * Raw row from the new episodes query.
- */
-interface NewEpisodeRow {
-  media_item_id: string;
-  slug: string;
-  title: string;
-  poster_path: string | null;
-  season_number: number;
-  episode_number: number;
-  episode_title: string | null;
-  air_date: Date;
-  [key: string]: unknown;
 }
 
 /**
@@ -140,16 +127,7 @@ export class NewEpisodesQuery {
           ? result
           : ((result as { rows?: NewEpisodeRow[] }).rows ?? []);
 
-        return rows.map((row) => ({
-          mediaItemId: row.media_item_id,
-          slug: row.slug,
-          title: row.title,
-          posterPath: row.poster_path,
-          seasonNumber: row.season_number,
-          episodeNumber: row.episode_number,
-          episodeTitle: row.episode_title ?? `Episode ${row.episode_number}`,
-          airDate: row.air_date,
-        }));
+        return mapNewEpisodeRows(rows);
       },
       { days, limit },
     );
