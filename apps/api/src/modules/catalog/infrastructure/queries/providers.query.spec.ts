@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProvidersQuery } from './providers.query';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import { DatabaseException } from '../../../../common/exceptions/database.exception';
 
 describe('ProvidersQuery', () => {
   let query: ProvidersQuery;
@@ -70,11 +71,12 @@ describe('ProvidersQuery', () => {
       expect(result[1].count).toBe(0);
     });
 
-    it('should propagate errors', async () => {
+    it('should throw DatabaseException on error', async () => {
       const module: TestingModule = await setup({ rejectWith: new Error('Connection failed') });
       query = module.get(ProvidersQuery);
 
-      await expect(query.execute()).rejects.toThrow('Connection failed');
+      await expect(query.execute()).rejects.toThrow(DatabaseException);
+      await expect(query.execute()).rejects.toThrow('Failed to fetch providers');
     });
 
     it('should map all fields correctly from raw result', async () => {
