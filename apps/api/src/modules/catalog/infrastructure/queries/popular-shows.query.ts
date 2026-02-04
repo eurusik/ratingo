@@ -8,68 +8,26 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { hasRecentEpisode } from '../../../../common/utils/media.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import {
-  SHOW_TRENDING_WEIGHTS,
-  NEW_RELEASE_THRESHOLDS,
-  CLASSIC_THRESHOLDS,
-  WATCHERS_FALLBACK,
-  POPULAR_THRESHOLDS,
-} from '../../domain/constants/catalog.constants';
+  CATALOG_SORT,
+  SORT_ORDER,
+  VOTE_SOURCE,
+  type VoteSource,
+} from '../../domain/constants/catalog-query.constants';
+import { POPULAR_THRESHOLDS } from '../../domain/constants/catalog.constants';
 import {
   type TrendingShowItem,
   type TrendingShowsOptions,
 } from '../../domain/repositories/show.repository.interface';
 import type { TrendingQueryResult } from '../../domain/types/query.types';
-import {
-  type CatalogSort,
-  type SortOrder,
-  type VoteSource,
-  VOTE_SOURCE,
-  CATALOG_SORT,
-  SORT_ORDER,
-} from '../../presentation/dtos/catalog-list-query.dto';
 
 import { checkContextEvaluationsExist } from './shared/evaluation-check.util';
-
-/**
- * Raw row type from popular shows query.
- */
-interface PopularShowRow {
-  id: string;
-  tmdb_id: number;
-  title: string;
-  original_title: string | null;
-  slug: string;
-  overview: string | null;
-  poster_path: string | null;
-  backdrop_path: string | null;
-  release_date: Date | null;
-  videos: unknown;
-  ingestion_status: string;
-  rating: number;
-  vote_count: number;
-  rating_imdb: number | null;
-  vote_count_imdb: number | null;
-  rating_trakt: number | null;
-  vote_count_trakt: number | null;
-  rating_metacritic: number | null;
-  rating_rotten_tomatoes: number | null;
-  popularity: number;
-  ratingo_score: number | null;
-  quality_score: number | null;
-  popularity_score: number | null;
-  watchers_count: number | null;
-  total_watchers: number | null;
-  last_air_date: Date | null;
-  next_air_date: Date | null;
-  season_number: number | null;
-  episode_number: number | null;
-}
+import { ShowResultMapper } from './shared/show-result.mapper';
+import type { ShowSelectRow } from './shared/show-select.fields';
+import { buildShowSortOrder } from './shared/sort-order.builder';
 
 /**
  * Fetches popular TV shows (Hits pool).
@@ -260,7 +218,7 @@ export class PopularShowsQuery {
 
         WHERE ${whereSql}
 
-        ORDER BY ${this.buildOrderBy(sort, order)}
+        ORDER BY ${buildShowSortOrder(sort, order)}
         LIMIT ${limit} OFFSET ${offset}
       `;
 
@@ -284,7 +242,7 @@ export class PopularShowsQuery {
       const typedTotalRows = totalRows as Array<{ total?: number | null }>;
       const total = Number(typedTotalRows[0]?.total ?? 0);
 
-      const mapped = this.mapResults(results as unknown as PopularShowRow[]);
+      const mapped = ShowResultMapper.mapManyTrending(results as unknown as ShowSelectRow[]);
       const withTotal = mapped as TrendingQueryResult<TrendingShowItem>;
       withTotal.total = total;
       withTotal.meta = { degraded: false };
@@ -294,119 +252,6 @@ export class PopularShowsQuery {
       throw new DatabaseException('Failed to fetch popular shows', {
         originalError: error.message,
       });
-    }
-  }
-
-  /**
-   * Maps raw database rows to TrendingShowItem DTOs.
-   */
-  private mapResults(results: PopularShowRow[]): TrendingShowItem[] {
-    const now = new Date();
-    const newReleaseCutoff = new Date();
-    newReleaseCutoff.setDate(now.getDate() - NEW_RELEASE_THRESHOLDS.DAYS);
-
-    const classicCutoff = new Date();
-    classicCutoff.setFullYear(now.getFullYear() - CLASSIC_THRESHOLDS.YEARS_OLD);
-
-    return results.map((row: PopularShowRow) => {
-      const releaseDate = row.release_date ? new Date(row.release_date) : null;
-
-      return {
-        id: row.id,
-        mediaItemId: row.id,
-        type: MediaType.SHOW,
-        slug: row.slug,
-        title: row.title,
-        originalTitle: row.original_title,
-        overview: row.overview,
-        ingestionStatus: row.ingestion_status as IngestionStatus,
-        primaryTrailerKey: row.videos?.[0]?.key || null,
-        poster: ImageMapper.toPoster(row.poster_path),
-        backdrop: ImageMapper.toBackdrop(row.backdrop_path),
-        releaseDate,
-
-        isNew: releaseDate ? releaseDate >= newReleaseCutoff : false,
-        isClassic: releaseDate
-          ? releaseDate <= classicCutoff ||
-            ((row.ratingo_score || 0) >= CLASSIC_THRESHOLDS.RATINGO_SCORE &&
-              (row.total_watchers || 0) > CLASSIC_THRESHOLDS.TOTAL_WATCHERS)
-          : false,
-
-        stats: {
-          ratingoScore: row.ratingo_score,
-          qualityScore: row.quality_score,
-          popularityScore: row.popularity_score,
-          liveWatchers: row.watchers_count,
-          totalWatchers: row.total_watchers,
-        },
-        externalRatings: {
-          tmdb: { rating: row.rating, voteCount: row.vote_count },
-          imdb: row.rating_imdb
-            ? { rating: row.rating_imdb, voteCount: row.vote_count_imdb }
-            : null,
-          trakt: row.rating_trakt
-            ? { rating: row.rating_trakt, voteCount: row.vote_count_trakt }
-            : null,
-          metacritic: row.rating_metacritic ? { rating: row.rating_metacritic } : null,
-          rottenTomatoes: row.rating_rotten_tomatoes
-            ? { rating: row.rating_rotten_tomatoes }
-            : null,
-        },
-
-        showProgress: this.buildShowProgress(row),
-
-        hasRecentEpisode: hasRecentEpisode(row.last_air_date),
-      };
-    });
-  }
-
-  /**
-   * Builds show progress object with season/episode label.
-   */
-  private buildShowProgress(row: PopularShowRow) {
-    let label: string | null = null;
-    if (row.season_number != null && row.episode_number != null) {
-      label = `S${row.season_number}E${row.episode_number}`;
-    }
-
-    return {
-      lastAirDate: row.last_air_date ? new Date(row.last_air_date) : null,
-      nextAirDate: row.next_air_date ? new Date(row.next_air_date) : null,
-      season: row.season_number ?? null,
-      episode: row.episode_number ?? null,
-      label,
-    };
-  }
-
-  /**
-   * Builds ORDER BY clause based on sort option.
-   */
-  private buildOrderBy(sort: CatalogSort | undefined, order: SortOrder) {
-    const dir = order === 'asc' ? sql`ASC` : sql`DESC`;
-    const w = SHOW_TRENDING_WEIGHTS;
-    switch (sort) {
-      case 'trending': {
-        // Combined trending score with live engagement signal
-        return sql`(
-          COALESCE(ms.ratingo_score, 0) * ${w.RATINGO} +
-          COALESCE(ms.popularity_score, 0) * ${w.POPULARITY} +
-          CASE
-            WHEN COALESCE(ms.watchers_count, 0) > 0 THEN
-              (ms.watchers_count::float / (ms.watchers_count + ${w.WATCHERS_SATURATION_K})) * 100
-            ELSE
-              LEAST(LN(1 + COALESCE(ms.total_watchers, 0)) * ${WATCHERS_FALLBACK.LOG_MULTIPLIER}, ${WATCHERS_FALLBACK.MAX_SIGNAL})
-          END * ${w.WATCHERS} +
-          COALESCE(mi.trending_score, 0) / 100.0 * ${w.TMDB}
-        ) ${dir} NULLS LAST, mi.id DESC`;
-      }
-      case 'ratingo':
-        return sql`ms.ratingo_score ${dir} NULLS LAST, mi.id DESC`;
-      case 'releaseDate':
-        return sql`COALESCE(s.last_air_date, mi.release_date, mi.created_at) ${dir} NULLS LAST, mi.id DESC`;
-      case 'tmdbPopularity':
-        return sql`mi.popularity ${dir}, mi.id DESC`;
-      default:
-        return sql`ms.popularity_score ${dir} NULLS LAST, mi.id DESC`;
     }
   }
 }

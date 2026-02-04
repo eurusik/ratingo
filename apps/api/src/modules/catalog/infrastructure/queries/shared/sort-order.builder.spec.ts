@@ -1,6 +1,6 @@
 import { CATALOG_SORT, SORT_ORDER } from '../../../domain/constants/catalog-query.constants';
 
-import { buildMovieSortOrder } from './sort-order.builder';
+import { buildMovieSortOrder, buildShowSortOrder } from './sort-order.builder';
 
 describe('sort-order.builder', () => {
   describe('buildMovieSortOrder', () => {
@@ -87,6 +87,86 @@ describe('sort-order.builder', () => {
         for (const sort of allSortValues) {
           expect(() => buildMovieSortOrder(sort, SORT_ORDER.DESC)).not.toThrow();
           expect(() => buildMovieSortOrder(sort, SORT_ORDER.ASC)).not.toThrow();
+        }
+      });
+    });
+  });
+
+  describe('buildShowSortOrder', () => {
+    describe('sort options', () => {
+      it('returns SQL expression for trending sort', () => {
+        const result = buildShowSortOrder(CATALOG_SORT.TRENDING, SORT_ORDER.DESC);
+
+        // Show sort returns a single SQL expression (not array) with embedded tiebreaker
+        expect(result).toBeDefined();
+        expect(typeof result).toBe('object');
+      });
+
+      it('returns SQL expression for ratingo sort', () => {
+        const result = buildShowSortOrder(CATALOG_SORT.RATINGO, SORT_ORDER.DESC);
+
+        expect(result).toBeDefined();
+      });
+
+      it('returns SQL expression for releaseDate sort', () => {
+        const result = buildShowSortOrder(CATALOG_SORT.RELEASE_DATE, SORT_ORDER.DESC);
+
+        expect(result).toBeDefined();
+      });
+
+      it('returns SQL expression for tmdbPopularity sort', () => {
+        const result = buildShowSortOrder(CATALOG_SORT.TMDB_POPULARITY, SORT_ORDER.DESC);
+
+        expect(result).toBeDefined();
+      });
+
+      it('returns SQL expression for popularity sort (default)', () => {
+        const result = buildShowSortOrder(CATALOG_SORT.POPULARITY, SORT_ORDER.DESC);
+
+        expect(result).toBeDefined();
+      });
+    });
+
+    describe('sort order direction', () => {
+      it('accepts ascending order', () => {
+        const result = buildShowSortOrder(CATALOG_SORT.RATINGO, SORT_ORDER.ASC);
+
+        expect(result).toBeDefined();
+      });
+
+      it('accepts descending order', () => {
+        const result = buildShowSortOrder(CATALOG_SORT.RATINGO, SORT_ORDER.DESC);
+
+        expect(result).toBeDefined();
+      });
+    });
+
+    describe('all sort values are handled', () => {
+      it('handles all CATALOG_SORT values without throwing', () => {
+        const allSortValues = Object.values(CATALOG_SORT);
+
+        for (const sort of allSortValues) {
+          expect(() => buildShowSortOrder(sort, SORT_ORDER.DESC)).not.toThrow();
+          expect(() => buildShowSortOrder(sort, SORT_ORDER.ASC)).not.toThrow();
+        }
+      });
+    });
+
+    describe('return type', () => {
+      it('returns single SQL expression (not array) for raw SQL query compatibility', () => {
+        const sortOptions = [
+          CATALOG_SORT.TRENDING,
+          CATALOG_SORT.RATINGO,
+          CATALOG_SORT.RELEASE_DATE,
+          CATALOG_SORT.TMDB_POPULARITY,
+          CATALOG_SORT.POPULARITY,
+        ] as const;
+
+        for (const sort of sortOptions) {
+          const result = buildShowSortOrder(sort, SORT_ORDER.DESC);
+          // Should not be an array (unlike buildMovieSortOrder)
+          expect(Array.isArray(result)).toBe(false);
+          expect(result).toBeDefined();
         }
       });
     });
