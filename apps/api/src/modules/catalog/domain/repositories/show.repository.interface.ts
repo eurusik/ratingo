@@ -13,7 +13,7 @@ import type {
   GenreInfo,
 } from '../types/common.types';
 import type {
-  WithTotal,
+  TrendingQueryResult,
   CatalogSort,
   SortOrder,
   VoteSource,
@@ -201,12 +201,12 @@ export interface IShowRepository {
   /**
    * Finds trending shows with filtering and pagination.
    */
-  findTrending(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>>;
+  findTrending(options: TrendingShowsOptions): Promise<TrendingQueryResult<TrendingShowItem>>;
 
   /**
    * Finds popular shows (historically popular, no freshness gate).
    */
-  findPopular(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>>;
+  findPopular(options: TrendingShowsOptions): Promise<TrendingQueryResult<TrendingShowItem>>;
 
   /**
    * Finds full show details by slug.
