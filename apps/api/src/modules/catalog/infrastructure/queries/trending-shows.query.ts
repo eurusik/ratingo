@@ -1,37 +1,35 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { sql, type SQL } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
+import { EvaluationContext } from '../../../catalog-policy/public';
 import {
   CATALOG_SORT,
   SORT_ORDER,
   VOTE_SOURCE,
-  type VoteSource,
 } from '../../domain/constants/catalog-query.constants';
-import {
-  CONTEXT_FRESHNESS,
-  LIST_CONTEXT,
-  TRENDING_THRESHOLDS,
-} from '../../domain/constants/catalog.constants';
+import { LIST_CONTEXT } from '../../domain/constants/catalog.constants';
 import {
   type TrendingShowItem,
   type TrendingShowsOptions,
 } from '../../domain/repositories/show.repository.interface';
 import type { TrendingQueryResult } from '../../domain/types/query.types';
 
-import { checkContextEvaluationsExist } from './shared/evaluation-check.util';
-import { ShowResultMapper } from './shared/show-result.mapper';
-import type { ShowSelectRow } from './shared/show-select.fields';
-import { buildShowSortOrder } from './shared/sort-order.builder';
+import {
+  buildShowSortOrder,
+  buildTrendingShowConditions,
+  checkContextEvaluationsExist,
+  createDegradedResponse,
+  createSuccessMeta,
+  ShowResultMapper,
+  type ShowSelectRow,
+} from './shared';
 
 /**
  * Fetches trending TV shows with episode progress.
@@ -89,82 +87,21 @@ export class TrendingShowsQuery {
           `Degraded state: no evaluations for context=${EvaluationContext.TRENDING} with active policy`,
         );
 
-        const emptyResult: TrendingQueryResult<TrendingShowItem> =
-          [] as TrendingQueryResult<TrendingShowItem>;
-        emptyResult.total = 0;
-        emptyResult.meta = {
-          degraded: true,
-          degradedReason: 'Context evaluations missing - evaluation in progress',
-        };
-        return emptyResult;
-      }
-
-      const whereConditions: SQL[] = [
-        sql`mi.type = ${MediaType.SHOW}`,
-        sql`mi.deleted_at IS NULL`,
-        // Eligibility filter: only show ELIGIBLE items with trending context
-        sql`mce.status = ${EligibilityStatus.ELIGIBLE}`,
-        sql`mce.context = ${EvaluationContext.TRENDING}`,
-        // Ready filter: only show items with ready ingestion status
-        sql`mi.ingestion_status = ${IngestionStatus.READY}`,
-      ];
-
-      const freshnessThreshold = CONTEXT_FRESHNESS[context].trending;
-      if (freshnessThreshold > 0) {
-        whereConditions.push(sql`COALESCE(ms.freshness_score, 0) >= ${freshnessThreshold}`);
-      }
-
-      // Trending without audience is just "recent" - enforce minimum traction
-      whereConditions.push(
-        sql`COALESCE(ms.watchers_count, 0) >= ${TRENDING_THRESHOLDS.MIN_WATCHERS_SHOWS}`,
-      );
-
-      if (minRatingo !== undefined) {
-        whereConditions.push(sql`ms.ratingo_score >= ${minRatingo}`);
-      }
-
-      if (genres && genres.length) {
-        const genreList = sql.join(
-          genres.map((g) => sql`${g}`),
-          sql`, `,
+        return createDegradedResponse<TrendingShowItem>(
+          'Context evaluations missing - evaluation in progress',
         );
-        whereConditions.push(sql`
-          EXISTS (
-            SELECT 1 FROM ${schema.mediaGenres} mg
-            JOIN ${schema.genres} g ON g.id = mg.genre_id
-            WHERE mg.media_item_id = mi.id AND g.slug IN (${genreList})
-          )
-        `);
       }
 
-      if (minVotes !== undefined) {
-        if (voteSource === ('trakt' satisfies VoteSource)) {
-          whereConditions.push(sql`mi.vote_count_trakt >= ${minVotes}`);
-        } else {
-          whereConditions.push(sql`mi.vote_count >= ${minVotes}`);
-        }
-      }
-
-      if (year !== undefined) {
-        whereConditions.push(
-          sql`mi.release_date IS NOT NULL`,
-          sql`mi.release_date >= ${new Date(Date.UTC(year, 0, 1))}`,
-          sql`mi.release_date < ${new Date(Date.UTC(year + 1, 0, 1))}`,
-        );
-      } else if (yearFrom !== undefined || yearTo !== undefined) {
-        if (yearFrom !== undefined) {
-          whereConditions.push(
-            sql`mi.release_date IS NOT NULL`,
-            sql`mi.release_date >= ${new Date(Date.UTC(yearFrom, 0, 1))}`,
-          );
-        }
-        if (yearTo !== undefined) {
-          whereConditions.push(
-            sql`mi.release_date IS NOT NULL`,
-            sql`mi.release_date < ${new Date(Date.UTC(yearTo + 1, 0, 1))}`,
-          );
-        }
-      }
+      const whereConditions = buildTrendingShowConditions({
+        listContext: context,
+        minRatingo,
+        genres,
+        voteSource,
+        minVotes,
+        year,
+        yearFrom,
+        yearTo,
+      });
 
       const whereSql = sql.join(whereConditions, sql` AND `);
 
@@ -253,7 +190,7 @@ export class TrendingShowsQuery {
       const mapped = ShowResultMapper.mapManyTrending(results as unknown as ShowSelectRow[]);
       const withTotal = mapped as TrendingQueryResult<TrendingShowItem>;
       withTotal.total = total;
-      withTotal.meta = { degraded: false };
+      withTotal.meta = createSuccessMeta();
       return withTotal;
     } catch (error) {
       this.logger.error(`Failed to find trending shows: ${error.message}`, error.stack);
