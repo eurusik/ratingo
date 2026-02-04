@@ -12,6 +12,7 @@ import { CatalogImportService } from './application/services/catalog-import.serv
 import { CatalogSearchService } from './application/services/catalog-search.service';
 import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from './application/services/movie-details.service';
+import { ShowDetailsService } from './application/services/show-details.service';
 import { IMPORT_JOB_PORT } from './domain/ports/import-job.port';
 import { USER_STATE_PROVIDER } from './domain/ports/user-state-provider.port';
 import { GENRE_REPOSITORY } from './domain/repositories/genre.repository.interface';
@@ -68,6 +69,7 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
     CatalogImportService,
     CatalogUserStateEnricher,
     MovieDetailsService,
+    ShowDetailsService,
     // Query Objects - Shows
     TrendingShowsQuery,
     PopularShowsQuery,
