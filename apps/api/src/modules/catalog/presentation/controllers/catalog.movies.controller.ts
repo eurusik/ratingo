@@ -2,8 +2,6 @@ import { Controller, Get, Inject, Param, Query, UseFilters, UseGuards } from '@n
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import {
-  CATALOG_DEFAULT_LIMIT,
-  CATALOG_DEFAULT_OFFSET,
   CATALOG_DEFAULT_NEW_RELEASE_DAYS,
   CATALOG_DEFAULT_DIGITAL_DAYS,
 } from '../../../../common/constants';
@@ -24,7 +22,12 @@ import { CatalogListQueryDto } from '../dtos/catalog-list-query.dto';
 import { MovieResponseDto } from '../dtos/movie-response.dto';
 import { PaginatedMovieResponseDto } from '../dtos/paginated-movie-response.dto';
 import { CatalogDomainExceptionFilter } from '../filters';
-import { normalizeListQuery } from '../utils/query-normalizer';
+import { buildPaginationMeta } from '../utils/pagination.utils';
+import {
+  applyPaginationDefaults,
+  normalizeListQuery,
+  resolveDaysBack,
+} from '../utils/query-normalizer';
 
 /**
  * Public movie catalog endpoints (trending, listings, details).
@@ -62,26 +65,14 @@ export class CatalogMoviesController {
     @Query() query: CatalogListQueryDto,
     @CurrentUser() user: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const normalizedQuery = normalizeListQuery(query);
+    const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const movies = await this.movieRepository.findTrending(normalizedQuery);
-    const limit = normalizedQuery.limit ?? CATALOG_DEFAULT_LIMIT;
-    const offset = normalizedQuery.offset ?? CATALOG_DEFAULT_OFFSET;
-    const total = movies.total ?? movies.length;
     const data = await this.catalogUserListEnrich(user, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.TRENDING_LIST,
     });
 
-    return {
-      data: withCards,
-      meta: {
-        count: movies.length,
-        total,
-        limit,
-        offset,
-        hasMore: offset + movies.length < total,
-      },
-    };
+    return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
   }
 
   /**
@@ -102,24 +93,14 @@ export class CatalogMoviesController {
     @Query() query: CatalogListQueryDto,
     @CurrentUser() user: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const normalizedQuery = normalizeListQuery(query);
+    const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const movies = await this.movieRepository.findPopular(normalizedQuery);
-    const total = movies.total ?? movies.length;
     const data = await this.catalogUserListEnrich(user, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.POPULAR_LIST,
     });
 
-    return {
-      data: withCards,
-      meta: {
-        count: movies.length,
-        total,
-        limit: normalizedQuery.limit ?? CATALOG_DEFAULT_LIMIT,
-        offset: normalizedQuery.offset ?? CATALOG_DEFAULT_OFFSET,
-        hasMore: (normalizedQuery.offset ?? 0) + movies.length < total,
-      },
-    };
+    return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
   }
 
   /**
@@ -140,24 +121,14 @@ export class CatalogMoviesController {
     @Query() query: CatalogListQueryDto,
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const normalizedQuery = normalizeListQuery(query);
-    const { limit = CATALOG_DEFAULT_LIMIT, offset = CATALOG_DEFAULT_OFFSET } = normalizedQuery;
-    const movies = await this.movieRepository.findNowPlaying({ ...normalizedQuery, limit, offset });
+    const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
+    const movies = await this.movieRepository.findNowPlaying(normalizedQuery);
     const data = await this.catalogUserListEnrich(user, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.IN_THEATERS_LIST,
     });
-    const total = movies.total ?? movies.length;
-    return {
-      data: withCards,
-      meta: {
-        count: movies.length,
-        total,
-        limit,
-        offset,
-        hasMore: offset + movies.length < total,
-      },
-    };
+
+    return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
   }
 
   /**
@@ -178,33 +149,15 @@ export class CatalogMoviesController {
     @Query() query: CatalogListQueryWithDaysDto,
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const normalizedQuery = normalizeListQuery(query);
-    const { limit = CATALOG_DEFAULT_LIMIT, offset = CATALOG_DEFAULT_OFFSET } = normalizedQuery;
-    const daysBack =
-      normalizedQuery.daysBack !== undefined && normalizedQuery.daysBack > 0
-        ? normalizedQuery.daysBack
-        : CATALOG_DEFAULT_NEW_RELEASE_DAYS;
-    const movies = await this.movieRepository.findNewReleases({
-      ...normalizedQuery,
-      limit,
-      offset,
-      daysBack,
-    });
+    const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
+    const daysBack = resolveDaysBack(normalizedQuery.daysBack, CATALOG_DEFAULT_NEW_RELEASE_DAYS);
+    const movies = await this.movieRepository.findNewReleases({ ...normalizedQuery, daysBack });
     const data = await this.catalogUserListEnrich(user, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.NEW_RELEASES_LIST,
     });
-    const total = movies.total ?? movies.length;
-    return {
-      data: withCards,
-      meta: {
-        count: movies.length,
-        total,
-        limit,
-        offset,
-        hasMore: offset + movies.length < total,
-      },
-    };
+
+    return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
   }
 
   /**
@@ -224,33 +177,15 @@ export class CatalogMoviesController {
     @Query() query: CatalogListQueryWithDaysDto,
     @CurrentUser() user?: { id: string } | null,
   ): Promise<PaginatedMovieResponseDto> {
-    const normalizedQuery = normalizeListQuery(query);
-    const { limit = CATALOG_DEFAULT_LIMIT, offset = CATALOG_DEFAULT_OFFSET } = normalizedQuery;
-    const daysBack =
-      normalizedQuery.daysBack !== undefined && normalizedQuery.daysBack > 0
-        ? normalizedQuery.daysBack
-        : CATALOG_DEFAULT_DIGITAL_DAYS;
-    const movies = await this.movieRepository.findNewOnDigital({
-      ...normalizedQuery,
-      limit,
-      offset,
-      daysBack,
-    });
+    const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
+    const daysBack = resolveDaysBack(normalizedQuery.daysBack, CATALOG_DEFAULT_DIGITAL_DAYS);
+    const movies = await this.movieRepository.findNewOnDigital({ ...normalizedQuery, daysBack });
     const data = await this.catalogUserListEnrich(user, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.NEW_ON_STREAMING_LIST,
     });
-    const total = movies.total ?? movies.length;
-    return {
-      data: withCards,
-      meta: {
-        count: movies.length,
-        total,
-        limit,
-        offset,
-        hasMore: offset + movies.length < total,
-      },
-    };
+
+    return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
   }
 
   /**
@@ -286,19 +221,5 @@ export class CatalogMoviesController {
   ): Promise<Array<T & { userState: UserMediaState | null }>> {
     const typed = items.map((i) => ({ ...i, userState: null }));
     return this.userStateEnricher.enrichList(user?.id, typed);
-  }
-
-  /**
-   * Enriches a single catalog item with user state.
-   *
-   * @param {{ id: string } | null | undefined} user - Optional authenticated user
-   * @param {T} item - Catalog item to enrich
-   * @returns {Promise<T & { userState: any | null }>} Enriched item
-   */
-  private async catalogUserOneEnrich<T extends { id: string }>(
-    user: { id: string } | null | undefined,
-    item: T,
-  ): Promise<T & { userState: UserMediaState | null }> {
-    return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
   }
 }

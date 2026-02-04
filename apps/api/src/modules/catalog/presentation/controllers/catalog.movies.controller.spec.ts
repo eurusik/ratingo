@@ -75,13 +75,14 @@ describe('CatalogMoviesController', () => {
   });
 
   describe('getNowPlaying', () => {
-    it('uses defaults and enriches', async () => {
+    it('applies pagination defaults and enriches result', async () => {
       const result = await controller.getNowPlaying({} as any);
 
       expect(movieRepository.findNowPlaying).toHaveBeenCalledWith(
         expect.objectContaining({ limit: 20, offset: 0 }),
       );
       expect(result.data).toHaveLength(1);
+      expect(result.meta).toEqual({ count: 1, total: 1, limit: 20, offset: 0, hasMore: false });
       expect(userStateEnricher.enrichList).toHaveBeenCalled();
     });
   });
