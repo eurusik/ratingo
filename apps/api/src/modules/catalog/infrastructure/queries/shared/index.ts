@@ -1,3 +1,4 @@
+export * from './genre.mapper';
 export * from './genre.query';
 export * from './movie-select.fields';
 export * from './movie-result.mapper';

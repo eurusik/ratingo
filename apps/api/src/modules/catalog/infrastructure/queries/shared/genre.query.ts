@@ -1,11 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { eq, inArray } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { withDbError } from '../../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../../database/database.module';
 import * as schema from '../../../../../database/schema';
 import type { GenreInfo } from '../../../domain/types/common.types';
+
+import { groupGenresByMediaId, mapGenreRow } from './genre.mapper';
 
 /**
  * Shared genre query utilities.
@@ -13,6 +16,8 @@ import type { GenreInfo } from '../../../domain/types/common.types';
  */
 @Injectable()
 export class GenreQuery {
+  private readonly logger = new Logger(GenreQuery.name);
+
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
@@ -25,15 +30,24 @@ export class GenreQuery {
    * @returns Array of genre info
    */
   async fetchForMediaItem(mediaItemId: string): Promise<GenreInfo[]> {
-    return this.db
-      .select({
-        id: schema.genres.id,
-        name: schema.genres.name,
-        slug: schema.genres.slug,
-      })
-      .from(schema.genres)
-      .innerJoin(schema.mediaGenres, eq(schema.genres.id, schema.mediaGenres.genreId))
-      .where(eq(schema.mediaGenres.mediaItemId, mediaItemId));
+    return withDbError(
+      'fetch genres for media item',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({
+            id: schema.genres.id,
+            name: schema.genres.name,
+            slug: schema.genres.slug,
+          })
+          .from(schema.genres)
+          .innerJoin(schema.mediaGenres, eq(schema.genres.id, schema.mediaGenres.genreId))
+          .where(eq(schema.mediaGenres.mediaItemId, mediaItemId));
+
+        return rows.map(mapGenreRow);
+      },
+      { mediaItemId },
+    );
   }
 
   /**
@@ -48,25 +62,24 @@ export class GenreQuery {
       return new Map();
     }
 
-    const genresData = await this.db
-      .select({
-        mediaItemId: schema.mediaGenres.mediaItemId,
-        id: schema.genres.id,
-        name: schema.genres.name,
-        slug: schema.genres.slug,
-      })
-      .from(schema.mediaGenres)
-      .innerJoin(schema.genres, eq(schema.mediaGenres.genreId, schema.genres.id))
-      .where(inArray(schema.mediaGenres.mediaItemId, mediaItemIds));
+    return withDbError(
+      'fetch genres for media items',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({
+            mediaItemId: schema.mediaGenres.mediaItemId,
+            id: schema.genres.id,
+            name: schema.genres.name,
+            slug: schema.genres.slug,
+          })
+          .from(schema.mediaGenres)
+          .innerJoin(schema.genres, eq(schema.mediaGenres.genreId, schema.genres.id))
+          .where(inArray(schema.mediaGenres.mediaItemId, mediaItemIds));
 
-    const genresMap = new Map<string, GenreInfo[]>();
-
-    for (const g of genresData) {
-      const existing = genresMap.get(g.mediaItemId) || [];
-      existing.push({ id: g.id, name: g.name, slug: g.slug });
-      genresMap.set(g.mediaItemId, existing);
-    }
-
-    return genresMap;
+        return groupGenresByMediaId(rows);
+      },
+      { count: mediaItemIds.length },
+    );
   }
 }
