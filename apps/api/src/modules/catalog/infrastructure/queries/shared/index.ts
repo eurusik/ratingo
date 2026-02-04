@@ -18,3 +18,7 @@ export * from './trending-conditions.builder';
 export * from './watching-now-conditions.builder';
 export * from './degraded-state.util';
 export * from './show-conditions.builder';
+export * from './media-item-result.mapper';
+export * from './corrupted-watchers-conditions.builder';
+export * from './snapshot-conditions.builder';
+export * from './hero-candidates-conditions.builder';

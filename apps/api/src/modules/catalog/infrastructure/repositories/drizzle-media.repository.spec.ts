@@ -5,6 +5,7 @@ import { GENRE_REPOSITORY } from '../../domain/repositories/genre.repository.int
 import { MOVIE_REPOSITORY } from '../../domain/repositories/movie.repository.interface';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
 import { HeroMediaQuery } from '../queries/hero-media.query';
+import { SlugCollisionService } from '../../application/services/slug-collision.service';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { DatabaseException } from '../../../../common/exceptions';
@@ -73,6 +74,7 @@ describe('DrizzleMediaRepository', () => {
     return Test.createTestingModule({
       providers: [
         DrizzleMediaRepository,
+        SlugCollisionService,
         { provide: DATABASE_CONNECTION, useValue: db },
         { provide: GENRE_REPOSITORY, useValue: genreRepo },
         { provide: MOVIE_REPOSITORY, useValue: movieRepo },
@@ -254,6 +256,7 @@ describe('DrizzleMediaRepository', () => {
             provide: DATABASE_CONNECTION,
             useValue: { insert: jest.fn().mockReturnValue(insertChain) },
           },
+          SlugCollisionService,
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
@@ -285,6 +288,7 @@ describe('DrizzleMediaRepository', () => {
         providers: [
           DrizzleMediaRepository,
           { provide: DATABASE_CONNECTION, useValue: mockDb },
+          SlugCollisionService,
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
@@ -324,6 +328,7 @@ describe('DrizzleMediaRepository', () => {
         providers: [
           DrizzleMediaRepository,
           { provide: DATABASE_CONNECTION, useValue: mockDb },
+          SlugCollisionService,
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
@@ -354,6 +359,7 @@ describe('DrizzleMediaRepository', () => {
             provide: DATABASE_CONNECTION,
             useValue: { insert: jest.fn().mockReturnValue(insertChain) },
           },
+          SlugCollisionService,
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
@@ -385,6 +391,7 @@ describe('DrizzleMediaRepository', () => {
         providers: [
           DrizzleMediaRepository,
           { provide: DATABASE_CONNECTION, useValue: mockDb },
+          SlugCollisionService,
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
@@ -417,6 +424,7 @@ describe('DrizzleMediaRepository', () => {
         providers: [
           DrizzleMediaRepository,
           { provide: DATABASE_CONNECTION, useValue: mockDb },
+          SlugCollisionService,
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
@@ -453,6 +461,7 @@ describe('DrizzleMediaRepository', () => {
         providers: [
           DrizzleMediaRepository,
           { provide: DATABASE_CONNECTION, useValue: mockDb },
+          SlugCollisionService,
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
@@ -476,6 +485,7 @@ describe('DrizzleMediaRepository', () => {
             provide: DATABASE_CONNECTION,
             useValue: { insert: jest.fn().mockReturnValue(insertChain) },
           },
+          SlugCollisionService,
           { provide: GENRE_REPOSITORY, useValue: {} },
           { provide: MOVIE_REPOSITORY, useValue: {} },
           { provide: SHOW_REPOSITORY, useValue: {} },
