@@ -11,6 +11,7 @@ import type {
 } from '../types/common.types';
 import type {
   WithTotal,
+  TrendingQueryResult,
   CatalogSort,
   SortOrder,
   VoteSource,
@@ -21,6 +22,7 @@ import { type DatabaseTransaction } from '../types/transaction.type';
 // Re-export query types for convenience
 export type {
   WithTotal,
+  TrendingQueryResult,
   CatalogSort,
   SortOrder,
   VoteSource,
@@ -147,12 +149,12 @@ export interface IMovieRepository {
   /**
    * Finds trending movies sorted by popularity and rating.
    */
-  findTrending(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>>;
+  findTrending(options?: NowPlayingOptions): Promise<TrendingQueryResult<TrendingMovieItem>>;
 
   /**
    * Finds popular movies (historically popular, no freshness gate).
    */
-  findPopular(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>>;
+  findPopular(options?: NowPlayingOptions): Promise<TrendingQueryResult<TrendingMovieItem>>;
 
   /**
    * Sets isNowPlaying flag for movies.
