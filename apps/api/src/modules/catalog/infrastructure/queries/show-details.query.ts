@@ -4,17 +4,18 @@ import { eq, asc, and, isNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { type ShowStatus } from '../../../../common/enums/show-status.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { type ShowDetails } from '../../domain/repositories/show.repository.interface';
-import { CreditsMapper } from '../mappers/credits.mapper';
-import { MediaWatchOffersMapper } from '../mappers/media-watch-offers.mapper';
 
-import { GenreQuery } from './shared/genre.query';
-import { WatchOffersQuery } from './shared/watch-offers.query';
+import {
+  GenreQuery,
+  WatchOffersQuery,
+  SHOW_DETAILS_SELECT_FIELDS,
+  type ShowDetailsQueryRow,
+  mapShowDetails,
+} from './shared';
 
 /**
  * Fetches complete TV show details by slug.
@@ -47,44 +48,7 @@ export class ShowDetailsQuery {
   async execute(slug: string): Promise<ShowDetails | null> {
     try {
       const result = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          title: schema.mediaItems.title,
-          originalTitle: schema.mediaItems.originalTitle,
-          slug: schema.mediaItems.slug,
-          overview: schema.mediaItems.overview,
-          posterPath: schema.mediaItems.posterPath,
-          ingestionStatus: schema.mediaItems.ingestionStatus,
-          backdropPath: schema.mediaItems.backdropPath,
-          videos: schema.mediaItems.videos,
-          credits: schema.mediaItems.credits,
-          watchProvidersRaw: schema.mediaItems.watchProvidersRaw,
-          rating: schema.mediaItems.rating,
-          voteCount: schema.mediaItems.voteCount,
-          releaseDate: schema.mediaItems.releaseDate,
-
-          ratingImdb: schema.mediaItems.ratingImdb,
-          voteCountImdb: schema.mediaItems.voteCountImdb,
-          ratingTrakt: schema.mediaItems.ratingTrakt,
-          voteCountTrakt: schema.mediaItems.voteCountTrakt,
-          ratingMetacritic: schema.mediaItems.ratingMetacritic,
-          ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-
-          totalSeasons: schema.shows.totalSeasons,
-          totalEpisodes: schema.shows.totalEpisodes,
-          status: schema.shows.status,
-          lastAirDate: schema.shows.lastAirDate,
-          nextAirDate: schema.shows.nextAirDate,
-
-          ratingoScore: schema.mediaStats.ratingoScore,
-          qualityScore: schema.mediaStats.qualityScore,
-          popularityScore: schema.mediaStats.popularityScore,
-          watchersCount: schema.mediaStats.watchersCount,
-          totalWatchers: schema.mediaStats.totalWatchers,
-
-          showId: schema.shows.id,
-        })
+        .select(SHOW_DETAILS_SELECT_FIELDS)
         .from(schema.mediaItems)
         .innerJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
         .leftJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
@@ -100,7 +64,7 @@ export class ShowDetailsQuery {
         .limit(1);
 
       if (result.length === 0) return null;
-      const show = result[0];
+      const show = result[0] as ShowDetailsQueryRow;
 
       // Fetch genres, seasons, and watch offers in parallel
       const [genres, seasons, watchOffers] = await Promise.all([
@@ -109,49 +73,7 @@ export class ShowDetailsQuery {
         this.watchOffersQuery.fetchForMediaItem(show.id),
       ]);
 
-      return {
-        id: show.id,
-        showId: show.showId,
-        tmdbId: show.tmdbId,
-        title: show.title,
-        originalTitle: show.originalTitle,
-        slug: show.slug,
-        overview: show.overview,
-        ingestionStatus: show.ingestionStatus as IngestionStatus,
-        poster: ImageMapper.toPoster(show.posterPath),
-        backdrop: ImageMapper.toBackdrop(show.backdropPath),
-        videos: show.videos,
-        primaryTrailer: show.videos?.[0] || null,
-        credits: CreditsMapper.toDto(show.credits),
-        availability: MediaWatchOffersMapper.toAvailability(watchOffers, show.watchProvidersRaw),
-        releaseDate: show.releaseDate,
-
-        totalSeasons: show.totalSeasons,
-        totalEpisodes: show.totalEpisodes,
-        status: show.status as ShowStatus | null,
-        lastAirDate: show.lastAirDate,
-        nextAirDate: show.nextAirDate,
-
-        stats: {
-          ratingoScore: show.ratingoScore,
-          qualityScore: show.qualityScore,
-          popularityScore: show.popularityScore,
-          liveWatchers: show.watchersCount,
-          totalWatchers: show.totalWatchers,
-        },
-        externalRatings: {
-          tmdb: { rating: show.rating, voteCount: show.voteCount },
-          imdb: show.ratingImdb ? { rating: show.ratingImdb, voteCount: show.voteCountImdb } : null,
-          trakt: show.ratingTrakt
-            ? { rating: show.ratingTrakt, voteCount: show.voteCountTrakt }
-            : null,
-          metacritic: show.ratingMetacritic ? { rating: show.ratingMetacritic } : null,
-          rottenTomatoes: show.ratingRottenTomatoes ? { rating: show.ratingRottenTomatoes } : null,
-        },
-
-        genres,
-        seasons,
-      };
+      return mapShowDetails(show, genres, seasons, watchOffers);
     } catch (error) {
       this.logger.error(`Failed to find show by slug ${slug}: ${error.message}`, error.stack);
       throw new DatabaseException(`Failed to fetch show ${slug}`, { originalError: error.message });

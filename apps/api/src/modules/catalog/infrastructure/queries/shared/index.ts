@@ -10,4 +10,6 @@ export * from './evaluation-check.util';
 export * from './year-range.util';
 export * from './show-select.fields';
 export * from './show-result.mapper';
+export * from './show-details.mapper';
+export * from './show-details-select-fields';
 export * from './sort-order.builder';
