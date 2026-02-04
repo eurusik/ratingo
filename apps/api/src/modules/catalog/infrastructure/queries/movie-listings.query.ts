@@ -35,14 +35,14 @@ import {
   EvaluationReason,
 } from '../../../catalog-policy/public';
 import {
-  type MovieWithMedia,
-  type WithTotal,
-} from '../../domain/repositories/movie.repository.interface';
-import {
   type CatalogSort,
   type SortOrder,
   type VoteSource,
-} from '../../presentation/dtos/catalog-list-query.dto';
+} from '../../domain/constants/catalog-query.constants';
+import {
+  type MovieWithMedia,
+  type WithTotal,
+} from '../../domain/repositories/movie.repository.interface';
 
 import { GenreQuery } from './shared/genre.query';
 import { MovieResultMapper } from './shared/movie-result.mapper';

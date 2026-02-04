@@ -7,3 +7,5 @@ export * from './new-episode.mapper';
 export * from './release-flags.util';
 export * from './watch-offers.query';
 export * from './evaluation-check.util';
+export * from './year-range.util';
+export * from './sort-order.builder';
