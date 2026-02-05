@@ -124,6 +124,115 @@ describe('TvMazeEnrichmentService', () => {
       expect(result.details?.nextAirDate).toEqual(futureDate);
     });
 
+    it('should calculate lastAirDate from already-aired episodes', async () => {
+      const pastDate1 = new Date('2024-01-01');
+      const pastDate2 = new Date('2024-01-15'); // Most recent
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Episode 1',
+          airDate: pastDate1,
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+        {
+          seasonNumber: 1,
+          number: 2,
+          title: 'Episode 2',
+          airDate: pastDate2,
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+        {
+          seasonNumber: 1,
+          number: 3,
+          title: 'Future Episode',
+          airDate: futureDate,
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich(mockShow);
+
+      expect(result.details?.lastAirDate).toEqual(pastDate2);
+      expect(result.details?.nextAirDate).toEqual(futureDate);
+    });
+
+    it('should override TMDB lastAirDate with TVMaze data', async () => {
+      const tmdbLastAirDate = new Date('2023-06-01');
+      const tvMazeLastAirDate = new Date('2024-02-05');
+
+      const showWithTmdbDate = {
+        ...mockShow,
+        details: {
+          ...mockShow.details,
+          lastAirDate: tmdbLastAirDate,
+        },
+      };
+
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Recent Episode',
+          airDate: tvMazeLastAirDate,
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich(showWithTmdbDate);
+
+      // TVMaze date should override TMDB date
+      expect(result.details?.lastAirDate).toEqual(tvMazeLastAirDate);
+    });
+
+    it('should fallback to TMDB lastAirDate if no aired episodes in TVMaze', async () => {
+      const tmdbLastAirDate = new Date('2023-06-01');
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+
+      const showWithTmdbDate = {
+        ...mockShow,
+        details: {
+          ...mockShow.details,
+          lastAirDate: tmdbLastAirDate,
+        },
+      };
+
+      // Only future episodes from TVMaze
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Future Episode',
+          airDate: futureDate,
+          runtime: 60,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich(showWithTmdbDate);
+
+      // Should keep TMDB date as fallback
+      expect(result.details?.lastAirDate).toEqual(tmdbLastAirDate);
+    });
+
     it('should preserve TMDB-only seasons (e.g. Specials)', async () => {
       const showWithSpecials = {
         ...mockShow,

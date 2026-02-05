@@ -39,6 +39,7 @@ export class TvMazeEnrichmentService {
 
       const mergedSeasons = this.mergeSeasons(episodes, media.details?.seasons);
       const nextAirDate = this.findNextAirDate(episodes);
+      const lastAirDate = this.findLastAirDate(episodes);
 
       return {
         ...media,
@@ -46,6 +47,8 @@ export class TvMazeEnrichmentService {
           ...media.details,
           seasons: mergedSeasons,
           nextAirDate: nextAirDate ?? media.details?.nextAirDate,
+          // TVMaze overrides TMDB's lastAirDate as TVMaze is "time authority"
+          lastAirDate: lastAirDate ?? media.details?.lastAirDate,
         },
       };
     } catch (err) {
@@ -119,5 +122,15 @@ export class TvMazeEnrichmentService {
       .sort((a, b) => a.airDate!.getTime() - b.airDate!.getTime());
 
     return future.length > 0 ? future[0].airDate! : null;
+  }
+
+  /** Finds last air date from already-aired episodes. */
+  private findLastAirDate(episodes: TvMazeEpisode[]): Date | null {
+    const now = new Date();
+    const aired = episodes
+      .filter((e) => e.airDate && e.airDate <= now)
+      .sort((a, b) => b.airDate!.getTime() - a.airDate!.getTime());
+
+    return aired.length > 0 ? aired[0].airDate! : null;
   }
 }
