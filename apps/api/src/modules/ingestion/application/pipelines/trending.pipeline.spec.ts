@@ -34,6 +34,7 @@ describe('TrendingPipeline', () => {
         .fn()
         .mockResolvedValue({ movies: 0, shows: 0, total: 0, hasMore: false }),
       syncHeroCandidatesStats: jest.fn().mockResolvedValue({ movies: 0, shows: 0, total: 0 }),
+      clearStaleTrendingRanks: jest.fn().mockResolvedValue(0),
     };
 
     const mockCatalogEvaluator = {
@@ -147,6 +148,20 @@ describe('TrendingPipeline', () => {
         since: expect.any(Date),
         limit: 200,
       });
+    });
+
+    it('should clear stale trending ranks when since is provided', async () => {
+      const since = new Date().toISOString();
+
+      await pipeline.processStats(since);
+
+      expect(trendingSyncService.clearStaleTrendingRanks).toHaveBeenCalledWith(expect.any(Date));
+    });
+
+    it('should not clear stale trending ranks when since is not provided', async () => {
+      await pipeline.processStats();
+
+      expect(trendingSyncService.clearStaleTrendingRanks).not.toHaveBeenCalled();
     });
 
     it('should run eligible trending backfill after stats sync', async () => {

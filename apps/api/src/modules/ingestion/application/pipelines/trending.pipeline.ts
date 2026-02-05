@@ -93,6 +93,12 @@ export class TrendingPipeline {
       `Syncing Trakt stats (since: ${sinceDate?.toISOString() || 'all'}, limit: ${limit || 'default'})...`,
     );
 
+    // Phase 0: Clear stale trending ranks from items not updated in this sync cycle
+    if (sinceDate) {
+      const cleared = await this.trendingSyncService.clearStaleTrendingRanks(sinceDate);
+      this.logger.log(`Phase 0 complete: cleared ${cleared} stale trending ranks`);
+    }
+
     // Phase 1: Sync stats for recently updated items (top trending from TMDB)
     const result = await this.trendingSyncService.syncTrendingStatsForUpdatedItems({
       since: sinceDate,

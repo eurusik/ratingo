@@ -52,6 +52,22 @@ export class TrendingSyncService {
   ) {}
 
   /**
+   * Clears trending_rank and trending_score for items not updated since `before`.
+   * Removes stale trending data from items that dropped out of TMDB trending.
+   *
+   * @param {Date} before - Cutoff date
+   * @returns {Promise<number>} Number of items cleared
+   */
+  async clearStaleTrendingRanks(before: Date): Promise<number> {
+    this.logger.log(`Clearing stale trending ranks (before: ${before.toISOString()})...`);
+
+    const cleared = await this.mediaRepository.clearStaleTrendingRanks(before);
+
+    this.logger.log(`Cleared ${cleared} stale trending ranks`);
+    return cleared;
+  }
+
+  /**
    * Syncs trending stats from Trakt API using batch operations.
    * Fetches current watchers count and trending rank for movies and shows,
    * then updates the media_stats table for items that exist in our database.

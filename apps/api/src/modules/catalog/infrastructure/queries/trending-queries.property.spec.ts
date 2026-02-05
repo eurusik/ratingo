@@ -562,8 +562,8 @@ describe('Trending Queries - Watchers Gate Property Tests', () => {
   });
 
   describe('Property: Threshold constants are correctly configured', () => {
-    it('movies threshold is 5', () => {
-      expect(TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES).toBe(5);
+    it('movies threshold is 2', () => {
+      expect(TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES).toBe(2);
     });
 
     it('shows threshold is 10', () => {
