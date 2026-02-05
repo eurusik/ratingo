@@ -56,6 +56,7 @@ export function ReviewsSection({ mediaItemId, className, initialData }: ReviewsS
         sort === REVIEWS_DEFAULTS.SORT && limit === REVIEWS_DEFAULTS.LIMIT && initialData
           ? initialData
           : undefined,
+      initialDataUpdatedAt: isAuthenticated ? 0 : undefined,
     },
   );
 
