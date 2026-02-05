@@ -13,6 +13,7 @@ import { CatalogShowsController } from './catalog.shows.controller';
 describe('CatalogShowsController', () => {
   let controller: CatalogShowsController;
   let showRepository: any;
+  let userStateEnricher: any;
   let showDetailsService: any;
 
   beforeEach(async () => {
@@ -36,7 +37,7 @@ describe('CatalogShowsController', () => {
     };
 
     const mockUserStateEnricher = {
-      enrichList: jest.fn(async (_userId: string | null, items: any[]) =>
+      enrichItemList: jest.fn(async (_userId: string | null, items: any[]) =>
         items.map((i) => ({ ...i, userState: null })),
       ),
       enrichOne: jest.fn(async (_userId: string | null, item: any) => ({
@@ -66,6 +67,7 @@ describe('CatalogShowsController', () => {
 
     controller = module.get<CatalogShowsController>(CatalogShowsController);
     showRepository = module.get(SHOW_REPOSITORY);
+    userStateEnricher = module.get(CatalogUserStateEnricher);
     showDetailsService = module.get(ShowDetailsService);
   });
 
@@ -75,6 +77,7 @@ describe('CatalogShowsController', () => {
 
       expect(showRepository.findTrending).toHaveBeenCalledWith({ limit: 10, offset: 0 });
       expect(result.meta).toEqual({ count: 1, total: 1, limit: 10, offset: 0, hasMore: false });
+      expect(userStateEnricher.enrichItemList).toHaveBeenCalled();
     });
   });
 
@@ -84,6 +87,7 @@ describe('CatalogShowsController', () => {
 
       expect(showRepository.findPopular).toHaveBeenCalledWith({ limit: 10, offset: 0 });
       expect(result.meta).toEqual({ count: 1, total: 1, limit: 10, offset: 0, hasMore: false });
+      expect(userStateEnricher.enrichItemList).toHaveBeenCalled();
     });
   });
 

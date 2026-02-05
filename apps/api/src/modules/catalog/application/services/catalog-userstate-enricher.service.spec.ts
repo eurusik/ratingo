@@ -84,6 +84,45 @@ describe('CatalogUserStateEnricher', () => {
     });
   });
 
+  describe('enrichItemList', () => {
+    it('should enrich plain items without pre-attached userState', async () => {
+      userStateProvider.findMany.mockResolvedValue([]);
+
+      const result = await enricher.enrichItemList('user-1', [{ id: 'm1' }, { id: 'm2' }]);
+
+      expect(userStateProvider.findMany).toHaveBeenCalledWith('user-1', ['m1', 'm2']);
+      expect(result).toEqual([
+        { id: 'm1', userState: null },
+        { id: 'm2', userState: null },
+      ]);
+    });
+
+    it('should return items with null userState when no userId', async () => {
+      const result = await enricher.enrichItemList(null, [{ id: 'm1' }]);
+
+      expect(userStateProvider.findMany).not.toHaveBeenCalled();
+      expect(result).toEqual([{ id: 'm1', userState: null }]);
+    });
+
+    it('should return empty array when items is empty', async () => {
+      const result = await enricher.enrichItemList('user-1', []);
+
+      expect(userStateProvider.findMany).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it('should map found states to items', async () => {
+      userStateProvider.findMany.mockResolvedValue([
+        { mediaItemId: 'm1', state: 'watching' } as any,
+      ]);
+
+      const result = await enricher.enrichItemList('u1', [{ id: 'm1' }, { id: 'm2' }]);
+
+      expect(result[0].userState).toEqual({ mediaItemId: 'm1', state: 'watching' });
+      expect(result[1].userState).toBeNull();
+    });
+  });
+
   describe('enrichOne', () => {
     it('should return userState null when userId is null', async () => {
       const result = await enricher.enrichOne(null, { id: 'm1' } as any);

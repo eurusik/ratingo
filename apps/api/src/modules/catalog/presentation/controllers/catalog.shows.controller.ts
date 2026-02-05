@@ -17,7 +17,6 @@ import { CurrentUser } from '../../../auth/infrastructure/decorators/current-use
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
-import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { ShowDetailsService } from '../../application/services/show-details.service';
 import {
@@ -73,7 +72,7 @@ export class CatalogShowsController {
   ): Promise<TrendingShowsResponseDto> {
     const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const shows = await this.showRepository.findTrending(normalizedQuery);
-    const data = await this.catalogUserListEnrich(user, shows);
+    const data = await this.userStateEnricher.enrichItemList(user?.id, shows);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.TRENDING_LIST,
     });
@@ -104,7 +103,7 @@ export class CatalogShowsController {
   ): Promise<TrendingShowsResponseDto> {
     const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const shows = await this.showRepository.findPopular(normalizedQuery);
-    const data = await this.catalogUserListEnrich(user, shows);
+    const data = await this.userStateEnricher.enrichItemList(user?.id, shows);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.POPULAR_LIST,
     });
@@ -220,16 +219,5 @@ export class CatalogShowsController {
   @ApiOkResponse({ type: ShowResponseDto })
   async getShowBySlug(@Param('slug') slug: string, @CurrentUser() user?: { id: string } | null) {
     return this.showDetailsService.getBySlug(slug, user?.id);
-  }
-
-  /**
-   * Enriches catalog items with user state.
-   */
-  private async catalogUserListEnrich<T extends { id: string }>(
-    user: { id: string } | null | undefined,
-    items: T[],
-  ): Promise<Array<T & { userState: UserMediaState | null }>> {
-    const typed = items.map((i) => ({ ...i, userState: null }));
-    return this.userStateEnricher.enrichList(user?.id, typed);
   }
 }

@@ -9,7 +9,6 @@ import { CurrentUser } from '../../../auth/infrastructure/decorators/current-use
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
-import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from '../../application/services/movie-details.service';
 import {
@@ -67,7 +66,7 @@ export class CatalogMoviesController {
   ): Promise<PaginatedMovieResponseDto> {
     const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const movies = await this.movieRepository.findTrending(normalizedQuery);
-    const data = await this.catalogUserListEnrich(user, movies);
+    const data = await this.userStateEnricher.enrichItemList(user?.id, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.TRENDING_LIST,
     });
@@ -95,7 +94,7 @@ export class CatalogMoviesController {
   ): Promise<PaginatedMovieResponseDto> {
     const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const movies = await this.movieRepository.findPopular(normalizedQuery);
-    const data = await this.catalogUserListEnrich(user, movies);
+    const data = await this.userStateEnricher.enrichItemList(user?.id, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.POPULAR_LIST,
     });
@@ -123,7 +122,7 @@ export class CatalogMoviesController {
   ): Promise<PaginatedMovieResponseDto> {
     const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const movies = await this.movieRepository.findNowPlaying(normalizedQuery);
-    const data = await this.catalogUserListEnrich(user, movies);
+    const data = await this.userStateEnricher.enrichItemList(user?.id, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.IN_THEATERS_LIST,
     });
@@ -152,7 +151,7 @@ export class CatalogMoviesController {
     const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const daysBack = resolveDaysBack(normalizedQuery.daysBack, CATALOG_DEFAULT_NEW_RELEASE_DAYS);
     const movies = await this.movieRepository.findNewReleases({ ...normalizedQuery, daysBack });
-    const data = await this.catalogUserListEnrich(user, movies);
+    const data = await this.userStateEnricher.enrichItemList(user?.id, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.NEW_RELEASES_LIST,
     });
@@ -180,7 +179,7 @@ export class CatalogMoviesController {
     const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const daysBack = resolveDaysBack(normalizedQuery.daysBack, CATALOG_DEFAULT_DIGITAL_DAYS);
     const movies = await this.movieRepository.findNewOnDigital({ ...normalizedQuery, daysBack });
-    const data = await this.catalogUserListEnrich(user, movies);
+    const data = await this.userStateEnricher.enrichItemList(user?.id, movies);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.NEW_ON_STREAMING_LIST,
     });
@@ -206,20 +205,5 @@ export class CatalogMoviesController {
     @CurrentUser() user?: { id: string } | null,
   ): Promise<EnrichedMovieDetails> {
     return this.movieDetailsService.getBySlug(slug, user?.id);
-  }
-
-  /**
-   * Enriches a list of catalog items with user state.
-   *
-   * @param {{ id: string } | null | undefined} user - Optional authenticated user
-   * @param {T[]} items - Catalog items to enrich
-   * @returns {Promise<Array<T & { userState: UserMediaState | null }>>} Enriched list
-   */
-  private async catalogUserListEnrich<T extends { id: string }>(
-    user: { id: string } | null | undefined,
-    items: T[],
-  ): Promise<Array<T & { userState: UserMediaState | null }>> {
-    const typed = items.map((i) => ({ ...i, userState: null }));
-    return this.userStateEnricher.enrichList(user?.id, typed);
   }
 }

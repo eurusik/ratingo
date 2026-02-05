@@ -39,6 +39,18 @@ export class CatalogUserStateEnricher {
   }
 
   /**
+   * Enriches a list of plain items (without pre-attached userState) with user state.
+   * Convenience wrapper that initializes userState before enrichment.
+   */
+  async enrichItemList<T extends Identifiable>(
+    userId: string | null | undefined,
+    items: T[],
+  ): Promise<WithUserState<T>[]> {
+    const withState = items.map((i) => ({ ...i, userState: null }));
+    return this.enrichList(userId, withState);
+  }
+
+  /**
    * Enriches a single item with userState.
    */
   async enrichOne<T extends Identifiable>(
