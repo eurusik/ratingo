@@ -61,6 +61,7 @@ describe('CatalogSearchController', () => {
             year: 2003,
             posterPath: '/poster2.jpg',
             rating: 7.0,
+            isImported: false,
           },
         ],
       };

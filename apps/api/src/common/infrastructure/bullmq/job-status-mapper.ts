@@ -6,6 +6,7 @@ import { JOB_STATUS, type JobStatus } from '@/common/enums/job-status.enum';
  */
 const BULL_STATE_TO_JOB_STATUS: Record<string, JobStatus> = {
   waiting: JOB_STATUS.QUEUED,
+  prioritized: JOB_STATUS.QUEUED,
   delayed: JOB_STATUS.QUEUED,
   active: JOB_STATUS.PROCESSING,
   completed: JOB_STATUS.READY,

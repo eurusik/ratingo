@@ -51,6 +51,7 @@ describe('CatalogSearchService', () => {
   beforeEach(async () => {
     mediaRepository = {
       search: jest.fn().mockResolvedValue([]),
+      findManyByTmdbIds: jest.fn().mockResolvedValue([]),
     };
 
     const mockMetadataPort: jest.Mocked<IMediaMetadataPort> = {
@@ -111,6 +112,7 @@ describe('CatalogSearchService', () => {
         title: 'TMDB Movie',
         posterPath: '/tmdb.jpg',
         year: 2024,
+        isImported: false,
       }),
     );
   });
@@ -129,6 +131,17 @@ describe('CatalogSearchService', () => {
 
     const duplicate = result.tmdb.find((m) => m.tmdbId === 100);
     expect(duplicate).toBeUndefined();
+  });
+
+  it('should mark TMDB results as imported when they exist in DB', async () => {
+    metadataPort.searchMulti.mockResolvedValue([mockTmdbMovie]);
+    mediaRepository.findManyByTmdbIds.mockResolvedValue([{ id: 'uuid-2', tmdbId: 200 }]);
+
+    const result = await service.search('movie');
+
+    expect(result.tmdb).toHaveLength(1);
+    expect(result.tmdb[0].isImported).toBe(true);
+    expect(mediaRepository.findManyByTmdbIds).toHaveBeenCalledWith([200]);
   });
 
   it('should handle errors gracefully and return empty results', async () => {

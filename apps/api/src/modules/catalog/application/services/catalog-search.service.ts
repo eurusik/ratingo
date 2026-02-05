@@ -60,19 +60,28 @@ export class CatalogSearchService {
         rating: r.rating || 0,
       }));
 
-      const tmdb: TmdbSearchResultItem[] = tmdbResults
+      const filteredTmdb = tmdbResults
         .filter((r) => !localTmdbIds.has(r.externalIds.tmdbId))
-        .slice(0, SEARCH_CONFIG.RESULTS_LIMIT)
-        .map((r) => ({
-          source: SEARCH_SOURCE.TMDB,
-          type: r.type,
-          tmdbId: r.externalIds.tmdbId,
-          title: r.title,
-          originalTitle: r.originalTitle,
-          year: r.releaseDate ? new Date(r.releaseDate).getFullYear() || null : null,
-          posterPath: r.posterPath,
-          rating: r.rating || 0,
-        }));
+        .slice(0, SEARCH_CONFIG.RESULTS_LIMIT);
+
+      // Batch-check which TMDB results are already imported in our DB
+      const tmdbIdsToCheck = filteredTmdb.map((r) => r.externalIds.tmdbId);
+      const importedItems = tmdbIdsToCheck.length
+        ? await this.mediaRepository.findManyByTmdbIds(tmdbIdsToCheck)
+        : [];
+      const importedTmdbIds = new Set(importedItems.map((item) => item.tmdbId));
+
+      const tmdb: TmdbSearchResultItem[] = filteredTmdb.map((r) => ({
+        source: SEARCH_SOURCE.TMDB,
+        type: r.type,
+        tmdbId: r.externalIds.tmdbId,
+        title: r.title,
+        originalTitle: r.originalTitle,
+        year: r.releaseDate ? new Date(r.releaseDate).getFullYear() || null : null,
+        posterPath: r.posterPath,
+        rating: r.rating || 0,
+        isImported: importedTmdbIds.has(r.externalIds.tmdbId),
+      }));
 
       return { query, local, tmdb };
     } catch (error) {
