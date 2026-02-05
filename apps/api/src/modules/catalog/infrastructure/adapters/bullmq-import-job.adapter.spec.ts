@@ -37,7 +37,7 @@ describe('BullMQImportJobAdapter', () => {
       expect(queue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_MOVIE,
         { tmdbId: 123 },
-        { jobId: 'sync-movie_123' },
+        { jobId: 'sync-movie_123', priority: 1 },
       );
       expect(result.jobId).toBe('sync-movie_123');
     });
@@ -50,7 +50,7 @@ describe('BullMQImportJobAdapter', () => {
       expect(queue.add).toHaveBeenCalledWith(
         IngestionJob.SYNC_SHOW,
         { tmdbId: 456 },
-        { jobId: 'sync-show_456' },
+        { jobId: 'sync-show_456', priority: 1 },
       );
       expect(result.jobId).toBe('sync-show_456');
     });

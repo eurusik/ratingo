@@ -17,6 +17,9 @@ const MEDIA_TYPE_TO_JOB: Record<MediaType, IngestionJob> = {
   [MediaType.SHOW]: IngestionJob.SYNC_SHOW,
 };
 
+/** User-triggered imports jump ahead of batch sync jobs in the queue. */
+const IMPORT_JOB_PRIORITY = 1;
+
 /**
  * BullMQ implementation of IImportJobPort.
  * Encapsulates all BullMQ-specific logic for import job operations.
@@ -31,7 +34,7 @@ export class BullMQImportJobAdapter implements IImportJobPort {
   async queueImport(tmdbId: number, type: MediaType): Promise<QueuedJob> {
     const jobName = MEDIA_TYPE_TO_JOB[type];
     const jobId = this.buildJobId(jobName, tmdbId);
-    const job = await this.queue.add(jobName, { tmdbId }, { jobId });
+    const job = await this.queue.add(jobName, { tmdbId }, { jobId, priority: IMPORT_JOB_PRIORITY });
     return { jobId: job.id! };
   }
 
