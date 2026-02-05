@@ -80,7 +80,7 @@ export const TRENDING_THRESHOLDS = {
   /** Minimum live watchers for shows to appear in trending (strong live signal) */
   MIN_WATCHERS_SHOWS: 10,
   /** Minimum live watchers for movies to appear in trending (weaker live signal) */
-  MIN_WATCHERS_MOVIES: 5,
+  MIN_WATCHERS_MOVIES: 2,
 } as const;
 
 /**

@@ -239,6 +239,15 @@ export interface IMediaRepository {
   findSnapshotCandidates(options: { cursor?: string; limit: number }): Promise<SnapshotCandidate[]>;
 
   /**
+   * Clears trending_rank and trending_score for items not updated since `before`.
+   * Used to remove stale trending data after a fresh sync cycle completes.
+   *
+   * @param {Date} before - Cutoff date; items with trending_updated_at < before are cleared
+   * @returns {Promise<number>} Number of items cleared
+   */
+  clearStaleTrendingRanks(before: Date): Promise<number>;
+
+  /**
    * Finds homepage candidates with stale stats that need refresh.
    * Covers both Hero and Watching-Now sections.
    *

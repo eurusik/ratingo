@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, inArray, sql, and, desc, gt, gte, isNull, isNotNull } from 'drizzle-orm';
+import { eq, inArray, sql, and, desc, gt, gte, lt, isNull, isNotNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DB_CONSTRAINT } from '../../../../common/constants/database.constants';
@@ -988,5 +988,23 @@ export class DrizzleMediaRepository implements IMediaRepository {
         minQualityScore: options.minQualityScore,
       },
     );
+  }
+
+  async clearStaleTrendingRanks(before: Date): Promise<number> {
+    return withDbError('clear stale trending ranks', this.logger, async () => {
+      const result = await this.db
+        .update(schema.mediaItems)
+        .set({ trendingRank: null, trendingScore: 0 })
+        .where(
+          and(
+            isNotNull(schema.mediaItems.trendingRank),
+            lt(schema.mediaItems.trendingUpdatedAt, before),
+            isNull(schema.mediaItems.deletedAt),
+          ),
+        )
+        .returning({ id: schema.mediaItems.id });
+
+      return result.length;
+    });
   }
 }

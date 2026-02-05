@@ -79,8 +79,8 @@ describe('trending-conditions.builder', () => {
         const options: TrendingMovieConditionsOptions = { context: 'catalog' };
         const conditions = buildTrendingMovieConditions(mockDb, options);
 
-        // MIN_WATCHERS_MOVIES = 5
-        expect(TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES).toBe(5);
+        // MIN_WATCHERS_MOVIES = 2
+        expect(TRENDING_THRESHOLDS.MIN_WATCHERS_MOVIES).toBe(2);
         // Condition is always added (7th base condition)
         expect(conditions.length).toBeGreaterThanOrEqual(7);
       });
