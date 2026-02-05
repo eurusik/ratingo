@@ -5,6 +5,7 @@ import { MessageSquare, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useReviews,
+  useMyReview,
   useCreateReview,
   useVoteReview,
   useUnvoteReview,
@@ -68,8 +69,8 @@ export function ReviewsSection({ mediaItemId, className, initialData }: ReviewsS
   const totalReviews = reviewsData?.meta?.total ?? 0;
   const hasMore = reviews.length < totalReviews;
 
-  // Check if current user already has a review in the list
-  const userHasReview = user ? reviews.some((r) => r.author.id === user.id) : false;
+  const { data: myReview } = useMyReview(mediaItemId, { enabled: isAuthenticated });
+  const userHasReview = !!myReview;
   // Show form to guests too (they'll see login modal on submit)
   const showForm = !userHasReview && !isLoadingReviews;
 
