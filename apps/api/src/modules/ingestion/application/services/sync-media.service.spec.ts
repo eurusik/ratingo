@@ -5,7 +5,7 @@ import { TmdbAdapter } from '../../../tmdb/public';
 import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { ScoreCalculatorService } from '@/modules/shared/score-calculator';
-import { MEDIA_REPOSITORY } from '@/modules/catalog/domain/repositories/media.repository.interface';
+import { MEDIA_REPOSITORY } from '@/modules/catalog/public';
 import { NormalizationService } from '@/modules/provider/public';
 import { CATALOG_POLICY_EVALUATOR, EvaluationContext } from '@/modules/catalog-policy/public';
 import { MediaType } from '@/common/enums/media-type.enum';

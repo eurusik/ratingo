@@ -1,6 +1,6 @@
 import {
   MovieWithMedia,
-  NowPlayingOptions,
+  MovieListQueryOptions,
   IMovieRepository,
   WithTotal,
 } from '../../src/modules/catalog/domain/repositories/movie.repository.interface';
@@ -9,6 +9,7 @@ import {
   TrendingShowItem,
   TrendingShowsOptions,
   CalendarEpisode,
+  NewEpisodeItem,
 } from '../../src/modules/catalog/domain/repositories/show.repository.interface';
 import { moviesFixture, showsFixture, daysAgo } from './_fixtures';
 
@@ -100,15 +101,15 @@ const paginate = <T>(items: T[], limit = 20, offset = 0) => {
 
 export class FakeMovieRepository implements IMovieRepository {
   public throwOnTrending = false;
-  public lastNowPlayingOptions: NowPlayingOptions | undefined;
-  public lastNewReleasesOptions: NowPlayingOptions | undefined;
-  public lastNewOnDigitalOptions: NowPlayingOptions | undefined;
+  public lastMovieListQueryOptions: MovieListQueryOptions | undefined;
+  public lastNewReleasesOptions: MovieListQueryOptions | undefined;
+  public lastNewOnDigitalOptions: MovieListQueryOptions | undefined;
   public lastTrendingOptions: any;
 
   private items = moviesFixture;
 
-  async findNowPlaying(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>> {
-    this.lastNowPlayingOptions = options;
+  async findNowPlaying(options?: MovieListQueryOptions): Promise<WithTotal<MovieWithMedia>> {
+    this.lastMovieListQueryOptions = options;
     const filtered = applyMovieFilters(this.items, options);
     const sorted = applySort(filtered, options?.sort, options?.order, {
       popularity: (m) => m.stats?.popularityScore ?? 0,
@@ -119,7 +120,7 @@ export class FakeMovieRepository implements IMovieRepository {
     return paginate(sorted, options?.limit, options?.offset);
   }
 
-  async findNewReleases(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>> {
+  async findNewReleases(options?: MovieListQueryOptions): Promise<WithTotal<MovieWithMedia>> {
     this.lastNewReleasesOptions = options;
     const daysBack = options?.daysBack;
     const windowed =
@@ -141,7 +142,7 @@ export class FakeMovieRepository implements IMovieRepository {
     return paginate(sorted, options?.limit, options?.offset);
   }
 
-  async findNewOnDigital(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>> {
+  async findNewOnDigital(options?: MovieListQueryOptions): Promise<WithTotal<MovieWithMedia>> {
     this.lastNewOnDigitalOptions = options;
     const daysBack = options?.daysBack;
     const windowed =
@@ -226,10 +227,15 @@ export class FakeShowRepository implements IShowRepository {
     return null;
   }
 
+  async findNewEpisodes(_days: number, _limit: number): Promise<NewEpisodeItem[]> {
+    return [];
+  }
+
   async findEpisodesByDateRange(start: Date, end: Date): Promise<CalendarEpisode[]> {
     return [
       {
         showId: 'sid-1',
+        showSlug: 'show-one',
         showTitle: 'Show One',
         posterPath: null,
         seasonNumber: 1,

@@ -1,14 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CatalogSearchService } from './catalog-search.service';
+
+import { MediaType } from '@/common/enums/media-type.enum';
+
+import {
+  type IMediaMetadataPort,
+  MEDIA_METADATA_PORT,
+} from '../../domain/ports/media-metadata.port';
 import { MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
-import { TmdbAdapter } from '../../../tmdb/public';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { SearchSource } from '../../presentation/dtos/search.dto';
+import { SEARCH_SOURCE } from '../../domain/types/search.types';
+
+import { CatalogSearchService } from './catalog-search.service';
 
 describe('CatalogSearchService', () => {
   let service: CatalogSearchService;
   let mediaRepository: any;
-  let tmdbAdapter: any;
+  let metadataPort: jest.Mocked<IMediaMetadataPort>;
 
   const mockLocalMovie = {
     id: 'uuid-1',
@@ -27,17 +33,19 @@ describe('CatalogSearchService', () => {
     type: MediaType.MOVIE,
     title: 'TMDB Movie',
     originalTitle: 'Original TMDB',
-    slug: 'tmdb-movie',
     posterPath: '/tmdb.jpg',
     rating: 7.0,
-    releaseDate: new Date('2024-01-01'),
+    releaseDate: '2024-01-01',
   };
 
   const mockDuplicateTmdbMovie = {
-    externalIds: { tmdbId: 100, imdbId: 'tt100' }, // Same ID as local
+    externalIds: { tmdbId: 100, imdbId: 'tt100' },
     type: MediaType.MOVIE,
     title: 'Duplicate Movie',
+    originalTitle: null,
     posterPath: '/duplicate.jpg',
+    rating: 0,
+    releaseDate: null,
   };
 
   beforeEach(async () => {
@@ -45,7 +53,9 @@ describe('CatalogSearchService', () => {
       search: jest.fn().mockResolvedValue([]),
     };
 
-    tmdbAdapter = {
+    const mockMetadataPort: jest.Mocked<IMediaMetadataPort> = {
+      getMovie: jest.fn(),
+      getShow: jest.fn(),
       searchMulti: jest.fn().mockResolvedValue([]),
     };
 
@@ -53,11 +63,12 @@ describe('CatalogSearchService', () => {
       providers: [
         CatalogSearchService,
         { provide: MEDIA_REPOSITORY, useValue: mediaRepository },
-        { provide: TmdbAdapter, useValue: tmdbAdapter },
+        { provide: MEDIA_METADATA_PORT, useValue: mockMetadataPort },
       ],
     }).compile();
 
     service = module.get<CatalogSearchService>(CatalogSearchService);
+    metadataPort = module.get(MEDIA_METADATA_PORT);
   });
 
   it('should return empty results for short query', async () => {
@@ -66,12 +77,12 @@ describe('CatalogSearchService', () => {
     expect(result.local).toEqual([]);
     expect(result.tmdb).toEqual([]);
     expect(mediaRepository.search).not.toHaveBeenCalled();
-    expect(tmdbAdapter.searchMulti).not.toHaveBeenCalled();
+    expect(metadataPort.searchMulti).not.toHaveBeenCalled();
   });
 
   it('should combine local and tmdb results', async () => {
     mediaRepository.search.mockResolvedValue([mockLocalMovie]);
-    tmdbAdapter.searchMulti.mockResolvedValue([mockTmdbMovie]);
+    metadataPort.searchMulti.mockResolvedValue([mockTmdbMovie]);
 
     const result = await service.search('movie');
 
@@ -81,11 +92,13 @@ describe('CatalogSearchService', () => {
     expect(result.local).toHaveLength(1);
     expect(result.local[0]).toEqual(
       expect.objectContaining({
+        source: SEARCH_SOURCE.LOCAL,
         id: 'uuid-1',
+        slug: 'local-movie',
         tmdbId: 100,
-        source: SearchSource.LOCAL,
-        isImported: true,
         title: 'Local Movie',
+        posterPath: '/local.jpg',
+        year: 2023,
       }),
     );
 
@@ -93,18 +106,18 @@ describe('CatalogSearchService', () => {
     expect(result.tmdb).toHaveLength(1);
     expect(result.tmdb[0]).toEqual(
       expect.objectContaining({
+        source: SEARCH_SOURCE.TMDB,
         tmdbId: 200,
-        source: SearchSource.TMDB,
-        isImported: false,
         title: 'TMDB Movie',
+        posterPath: '/tmdb.jpg',
+        year: 2024,
       }),
     );
   });
 
   it('should filter out TMDB results that exist locally (deduplication)', async () => {
     mediaRepository.search.mockResolvedValue([mockLocalMovie]);
-    // TMDB returns a new movie AND a duplicate of the local one
-    tmdbAdapter.searchMulti.mockResolvedValue([mockTmdbMovie, mockDuplicateTmdbMovie]);
+    metadataPort.searchMulti.mockResolvedValue([mockTmdbMovie, mockDuplicateTmdbMovie]);
 
     const result = await service.search('movie');
 
@@ -112,39 +125,51 @@ describe('CatalogSearchService', () => {
     expect(result.local[0].tmdbId).toBe(100);
 
     expect(result.tmdb).toHaveLength(1);
-    expect(result.tmdb[0].tmdbId).toBe(200); // Only the new one
+    expect(result.tmdb[0].tmdbId).toBe(200);
 
-    // Ensure duplicate (ID 100) is NOT in tmdb array
     const duplicate = result.tmdb.find((m) => m.tmdbId === 100);
     expect(duplicate).toBeUndefined();
   });
 
-  it('should handle TMDB failure gracefully (return local only)', async () => {
+  it('should handle errors gracefully and return empty results', async () => {
     mediaRepository.search.mockResolvedValue([mockLocalMovie]);
-    tmdbAdapter.searchMulti.mockRejectedValue(new Error('TMDB Down'));
+    metadataPort.searchMulti.mockRejectedValue(new Error('TMDB Down'));
 
     const result = await service.search('movie');
 
-    expect(result.local).toHaveLength(0); // Current implementation catches error and returns empty everything?
-    // Let's check implementation.
-    // Implementation: try { ... Promise.all ... } catch { return empty }
-    // So if ONE fails, Promise.all fails, and it returns empty.
-
-    // Ideally it should use Promise.allSettled or separate try-catch if we want partial results.
-    // But based on current code:
+    // Promise.all fails if any promise fails, so both are empty
     expect(result.local).toEqual([]);
     expect(result.tmdb).toEqual([]);
   });
 
-  it('should limit TMDB results to 10', async () => {
+  it('should limit TMDB results to configured limit', async () => {
     const manyMovies = Array.from({ length: 15 }, (_, i) => ({
       ...mockTmdbMovie,
       externalIds: { tmdbId: 200 + i },
     }));
-    tmdbAdapter.searchMulti.mockResolvedValue(manyMovies);
+    metadataPort.searchMulti.mockResolvedValue(manyMovies);
 
     const result = await service.search('movie');
 
     expect(result.tmdb).toHaveLength(10);
+  });
+
+  it('should handle null releaseDate correctly', async () => {
+    const movieWithNoDate = {
+      ...mockLocalMovie,
+      releaseDate: null,
+    };
+    mediaRepository.search.mockResolvedValue([movieWithNoDate]);
+
+    const result = await service.search('movie');
+
+    expect(result.local[0].year).toBeNull();
+  });
+
+  it('should pass correct parameters to repository and adapter', async () => {
+    await service.search('test query');
+
+    expect(mediaRepository.search).toHaveBeenCalledWith('test query', 10);
+    expect(metadataPort.searchMulti).toHaveBeenCalledWith('test query', 1);
   });
 });

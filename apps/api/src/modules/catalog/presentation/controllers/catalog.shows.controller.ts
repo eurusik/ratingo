@@ -1,85 +1,53 @@
 import {
+  BadRequestException,
   Controller,
+  DefaultValuePipe,
   Get,
   Inject,
-  Query,
-  UseGuards,
   Param,
-  NotFoundException,
-  BadRequestException,
+  ParseIntPipe,
+  Query,
+  UseFilters,
+  UseGuards,
 } from '@nestjs/common';
-import { DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
-import {
-  CATALOG_DEFAULT_LIMIT,
-  CATALOG_DEFAULT_OFFSET,
-  CATALOG_DEFAULT_CALENDAR_DAYS,
-  DEFAULT_PAGE_SIZE,
-} from '../../../../common/constants';
-import { DevTiming } from '../../../../common/utils/dev-timing';
-import { isNewRelease, hasRecentEpisode } from '../../../../common/utils/media.utils';
+import { CATALOG_DEFAULT_CALENDAR_DAYS, DEFAULT_PAGE_SIZE } from '../../../../common/constants';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
-import { BADGE_KEY, CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
-import type { BadgeKey } from '../../../shared/cards/domain/card.types';
-import { isHitQuality } from '../../../shared/cards/domain/quality.utils';
-import { buildCardMeta, extractContinuePoint } from '../../../shared/cards/domain/selectors';
-import { computeShowVerdict } from '../../../shared/verdict';
-import {
-  POPULARITY_SIGNAL,
-  type PopularitySignal,
-} from '../../../shared/verdict/domain/popularity-signal';
-import type { UserMediaState } from '../../../user-media/domain/entities/user-media-state.entity';
+import { CARD_LIST_CONTEXT } from '../../../shared/cards/domain/card.constants';
 import { CatalogUserStateEnricher } from '../../application/services/catalog-userstate-enricher.service';
+import { ShowDetailsService } from '../../application/services/show-details.service';
 import {
   type IShowRepository,
   SHOW_REPOSITORY,
-  type CalendarEpisode,
 } from '../../domain/repositories/show.repository.interface';
-import { NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.query';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
 import { TrendingShowsQueryDto, TrendingShowsResponseDto } from '../dtos/trending.dto';
-import { normalizeListQuery } from '../utils/query-normalizer';
-
-/**
- * Maps card badge key to verdict popularity signal.
- */
-function mapBadgeToPopularitySignal(badgeKey: BadgeKey | null | undefined): PopularitySignal {
-  if (badgeKey === BADGE_KEY.TRENDING) return POPULARITY_SIGNAL.TRENDING;
-  if (badgeKey === BADGE_KEY.HIT) return POPULARITY_SIGNAL.HIT;
-  if (badgeKey === BADGE_KEY.RISING) return POPULARITY_SIGNAL.RISING;
-  return null;
-}
+import { CatalogDomainExceptionFilter } from '../filters';
+import { groupEpisodesByDate } from '../utils/calendar.utils';
+import { buildPaginationMeta } from '../utils/pagination.utils';
+import { applyPaginationDefaults, normalizeListQuery } from '../utils/query-normalizer';
 
 /**
  * Public show catalog endpoints (trending, calendar, details).
  */
 @ApiTags('Public: Catalog')
 @UseGuards(OptionalJwtAuthGuard)
+@UseFilters(CatalogDomainExceptionFilter)
 @Controller('catalog/shows')
 export class CatalogShowsController {
-  /**
-   * Public show catalog endpoints (trending, calendar, details).
-   */
   constructor(
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
     private readonly userStateEnricher: CatalogUserStateEnricher,
     private readonly cards: CardEnrichmentService,
-    private readonly newEpisodesQuery: NewEpisodesQuery,
+    private readonly showDetailsService: ShowDetailsService,
   ) {}
 
-  /**
-   * Returns trending shows list with pagination.
-   *
-   * @param {TrendingShowsQueryDto} query - Query params
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<TrendingShowsResponseDto>} Trending shows response
-   */
   @Get('trending')
   @ApiOperation({
     summary: 'Trending TV shows',
@@ -90,36 +58,19 @@ export class CatalogShowsController {
     @Query() query: TrendingShowsQueryDto,
     @CurrentUser() user: { id: string } | null,
   ): Promise<TrendingShowsResponseDto> {
-    const normalizedQuery = normalizeListQuery(query);
+    const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const shows = await this.showRepository.findTrending(normalizedQuery);
-    const data = await this.catalogUserListEnrich(user, shows);
+    const data = await this.userStateEnricher.enrichItemList(user?.id, shows);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.TRENDING_LIST,
     });
-    const limit = normalizedQuery.limit ?? CATALOG_DEFAULT_LIMIT;
-    const offset = normalizedQuery.offset ?? CATALOG_DEFAULT_OFFSET;
-    const total = shows.total ?? shows.length;
 
     return {
       data: withCards,
-      meta: {
-        count: shows.length,
-        total,
-        limit,
-        offset,
-        hasMore: offset + shows.length < total,
-      },
+      meta: buildPaginationMeta(normalizedQuery, shows),
     };
   }
 
-  /**
-   * Returns popular shows list with pagination.
-   * Shows historically popular shows without freshness gate.
-   *
-   * @param {TrendingShowsQueryDto} query - Query params
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<TrendingShowsResponseDto>} Popular shows response
-   */
   @Get('popular')
   @ApiOperation({
     summary: 'Popular TV shows (Hits)',
@@ -130,36 +81,19 @@ export class CatalogShowsController {
     @Query() query: TrendingShowsQueryDto,
     @CurrentUser() user: { id: string } | null,
   ): Promise<TrendingShowsResponseDto> {
-    const normalizedQuery = normalizeListQuery(query);
+    const normalizedQuery = applyPaginationDefaults(normalizeListQuery(query));
     const shows = await this.showRepository.findPopular(normalizedQuery);
-    const data = await this.catalogUserListEnrich(user, shows);
+    const data = await this.userStateEnricher.enrichItemList(user?.id, shows);
     const withCards = this.cards.enrichCatalogItems(data, {
       context: CARD_LIST_CONTEXT.POPULAR_LIST,
     });
-    const limit = normalizedQuery.limit ?? CATALOG_DEFAULT_LIMIT;
-    const offset = normalizedQuery.offset ?? CATALOG_DEFAULT_OFFSET;
-    const total = shows.total ?? shows.length;
 
     return {
       data: withCards,
-      meta: {
-        count: shows.length,
-        total,
-        limit,
-        offset,
-        hasMore: offset + shows.length < total,
-      },
+      meta: buildPaginationMeta(normalizedQuery, shows),
     };
   }
 
-  /**
-   * Returns shows with new episodes (update feed).
-   * Groups by show - one entry per show with the latest episode.
-   *
-   * @param {number} days - Number of days to look back (default: 7)
-   * @param {number} limit - Max number of shows (default: 20)
-   * @returns {Promise<NewEpisodesResponseDto>} New episodes response
-   */
   @Get('new-episodes')
   @ApiOperation({
     summary: 'Shows with new episodes',
@@ -183,17 +117,10 @@ export class CatalogShowsController {
     @Query('days', new DefaultValuePipe(CATALOG_DEFAULT_CALENDAR_DAYS), ParseIntPipe) days: number,
     @Query('limit', new DefaultValuePipe(DEFAULT_PAGE_SIZE), ParseIntPipe) limit: number,
   ): Promise<NewEpisodesResponseDto> {
-    const episodes = await this.newEpisodesQuery.execute(days, limit);
+    const episodes = await this.showRepository.findNewEpisodes(days, limit);
     return { data: episodes };
   }
 
-  /**
-   * Returns show episodes grouped by date within a range.
-   *
-   * @param {string} startDateString - Start date ISO string
-   * @param {number} days - Number of days to include
-   * @returns {Promise<CalendarResponseDto>} Calendar response
-   */
   @Get('calendar')
   @ApiOperation({
     summary: 'Global release calendar for TV shows',
@@ -233,7 +160,7 @@ export class CatalogShowsController {
 
     const episodes = await this.showRepository.findEpisodesByDateRange(start, end);
 
-    const grouped = this.groupEpisodesByDate(episodes);
+    const grouped = groupEpisodesByDate(episodes);
 
     return {
       startDate: start.toISOString(),
@@ -242,13 +169,6 @@ export class CatalogShowsController {
     };
   }
 
-  /**
-   * Returns show details by slug.
-   *
-   * @param {string} slug - Show slug
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<ShowResponseDto>} Show details
-   */
   @Get(':slug')
   @ApiOperation({
     summary: 'Get show details by slug',
@@ -256,111 +176,6 @@ export class CatalogShowsController {
   })
   @ApiOkResponse({ type: ShowResponseDto })
   async getShowBySlug(@Param('slug') slug: string, @CurrentUser() user?: { id: string } | null) {
-    const t = DevTiming.start('showBySlug', { slug, userId: user?.id ?? 'anon' });
-
-    t.mark('before_db_show');
-    const show = await this.showRepository.findBySlug(slug);
-    t.mark('after_db_show');
-
-    if (!show) {
-      throw new NotFoundException(`Show with slug "${slug}" not found`);
-    }
-
-    t.mark('before_enrich');
-    const enriched = await this.catalogUserOneEnrich(user, show);
-    t.mark('after_enrich');
-
-    t.mark('before_card');
-    // Build card metadata for details page
-    const card = buildCardMeta(
-      {
-        hasUserEntry: Boolean(enriched.userState),
-        userState: enriched.userState?.state ?? null,
-        continuePoint: extractContinuePoint(enriched.userState?.progress ?? null),
-        hasNewEpisode: hasRecentEpisode(show.nextAirDate),
-        isNewRelease: isNewRelease(show.releaseDate),
-        isHit: isHitQuality(show.externalRatings),
-        trendDelta: null,
-        isTrending: false,
-      },
-      CARD_LIST_CONTEXT.DEFAULT,
-    );
-    t.mark('after_card');
-
-    t.mark('before_verdict');
-    // Compute verdict for details page using consensus rating (median of all sources)
-    const { verdict, statusHint } = computeShowVerdict({
-      status: show.status,
-      externalRatings: show.externalRatings,
-      popularitySignal: mapBadgeToPopularitySignal(card?.badgeKey),
-      popularity: show.stats?.popularityScore ?? null,
-      totalSeasons: show.totalSeasons,
-      lastAirDate: show.lastAirDate,
-      firstAirDate: show.releaseDate ?? null,
-    });
-    t.mark('after_verdict');
-
-    t.end();
-
-    return { ...enriched, card, verdict, statusHint };
-  }
-
-  /**
-   * Enriches a list of catalog items with user state.
-   *
-   * @param {{ id: string } | null | undefined} user - Optional authenticated user
-   * @param {T[]} items - Items to enrich
-   * @returns {Promise<Array<T & { type: MediaType; userState: any | null }>>} Enriched items
-   */
-  private async catalogUserListEnrich<T extends { id: string }>(
-    user: { id: string } | null | undefined,
-    items: T[],
-  ): Promise<Array<T & { userState: UserMediaState | null }>> {
-    const typed = items.map((i) => ({ ...i, userState: null as UserMediaState | null }));
-    return this.userStateEnricher.enrichList(user?.id, typed);
-  }
-
-  /**
-   * Enriches a single catalog item with user state.
-   *
-   * @param {{ id: string } | null | undefined} user - Optional authenticated user
-   * @param {T} item - Item to enrich
-   * @returns {Promise<T & { userState: any | null }>} Enriched item
-   */
-  private async catalogUserOneEnrich<T extends { id: string }>(
-    user: { id: string } | null | undefined,
-    item: T,
-  ): Promise<T & { userState: UserMediaState | null }> {
-    return this.userStateEnricher.enrichOne(user?.id, { ...item, userState: null });
-  }
-
-  /**
-   * Groups calendar episodes by air date.
-   *
-   * @param {CalendarEpisode[]} episodes - Episodes to group
-   * @returns {Array<{ date: string; episodes: CalendarEpisode[] }>} Days list
-   */
-  private groupEpisodesByDate(
-    episodes: CalendarEpisode[],
-  ): Array<{ date: string; episodes: CalendarEpisode[] }> {
-    const map = new Map<string, CalendarEpisode[]>();
-
-    for (const ep of episodes) {
-      const dateKey = ep.airDate.toISOString().split('T')[0];
-      if (!map.has(dateKey)) map.set(dateKey, []);
-      map.get(dateKey)!.push(ep);
-    }
-
-    const result: Array<{ date: string; episodes: CalendarEpisode[] }> = [];
-    const sortedKeys = Array.from(map.keys()).sort();
-
-    for (const date of sortedKeys) {
-      result.push({
-        date,
-        episodes: map.get(date)!,
-      });
-    }
-
-    return result;
+    return this.showDetailsService.getBySlug(slug, user?.id);
   }
 }

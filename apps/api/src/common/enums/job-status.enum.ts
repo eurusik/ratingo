@@ -2,22 +2,14 @@
  * Public job status for API responses.
  * Maps internal BullMQ states to user-friendly statuses.
  */
-export enum JobStatus {
-  QUEUED = 'queued',
-  PROCESSING = 'processing',
-  READY = 'ready',
-  FAILED = 'failed',
-}
+export const JOB_STATUS = {
+  QUEUED: 'queued',
+  PROCESSING: 'processing',
+  READY: 'ready',
+  FAILED: 'failed',
+} as const;
 
-/**
- * Mapping from BullMQ internal states to public JobStatus.
- */
-export const BULL_STATE_TO_JOB_STATUS: Record<string, JobStatus> = {
-  waiting: JobStatus.QUEUED,
-  delayed: JobStatus.QUEUED,
-  active: JobStatus.PROCESSING,
-  completed: JobStatus.READY,
-  failed: JobStatus.FAILED,
-  paused: JobStatus.QUEUED,
-  stalled: JobStatus.FAILED,
-};
+export type JobStatus = (typeof JOB_STATUS)[keyof typeof JOB_STATUS];
+
+/** For Swagger @ApiProperty({ enum: JOB_STATUS_VALUES }) */
+export const JOB_STATUS_VALUES: JobStatus[] = Object.values(JOB_STATUS);

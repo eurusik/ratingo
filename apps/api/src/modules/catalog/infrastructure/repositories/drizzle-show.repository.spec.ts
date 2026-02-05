@@ -6,6 +6,7 @@ import { PopularShowsQuery } from '../queries/popular-shows.query';
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
+import { NewEpisodesQuery } from '../queries/new-episodes.query';
 
 // Chainable thenable mock
 const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {
@@ -43,6 +44,7 @@ describe('DrizzleShowRepository', () => {
   let popularQuery: any;
   let detailsQuery: any;
   let calendarQuery: any;
+  let newEpisodesQuery: any;
   let insertChain: any;
   let updateChain: any;
   let selectChain: any;
@@ -62,6 +64,7 @@ describe('DrizzleShowRepository', () => {
     popularQuery = { execute: jest.fn().mockResolvedValue(['popular']) };
     detailsQuery = { execute: jest.fn().mockResolvedValue('details') };
     calendarQuery = { execute: jest.fn().mockResolvedValue(['calendar']) };
+    newEpisodesQuery = { execute: jest.fn().mockResolvedValue([]) };
 
     return Test.createTestingModule({
       providers: [
@@ -71,6 +74,7 @@ describe('DrizzleShowRepository', () => {
         { provide: PopularShowsQuery, useValue: popularQuery },
         { provide: ShowDetailsQuery, useValue: detailsQuery },
         { provide: CalendarEpisodesQuery, useValue: calendarQuery },
+        { provide: NewEpisodesQuery, useValue: newEpisodesQuery },
       ],
     }).compile();
   };
@@ -101,14 +105,27 @@ describe('DrizzleShowRepository', () => {
   });
 
   describe('saveDropOffAnalysis', () => {
-    it('should update drop-off analysis', async () => {
-      const module: TestingModule = await setup();
+    it('should update drop-off analysis when show exists', async () => {
+      const module: TestingModule = await setup({
+        resolveSelect: [{ mediaItemId: 'media-item-id' }],
+      });
       repository = module.get(DrizzleShowRepository);
 
       await repository.saveDropOffAnalysis(1, { chart: [] } as any);
+      expect(db.select).toHaveBeenCalled();
+      expect(selectChain.innerJoin).toHaveBeenCalled();
       expect(db.update).toHaveBeenCalled();
       expect(updateChain.set).toHaveBeenCalled();
       expect(updateChain.where).toHaveBeenCalled();
+    });
+
+    it('should skip update when show not found', async () => {
+      const module: TestingModule = await setup({ resolveSelect: [] });
+      repository = module.get(DrizzleShowRepository);
+
+      await repository.saveDropOffAnalysis(1, { chart: [] } as any);
+      expect(db.select).toHaveBeenCalled();
+      expect(db.update).not.toHaveBeenCalled();
     });
 
     it('should throw DatabaseException on error', async () => {
@@ -183,6 +200,15 @@ describe('DrizzleShowRepository', () => {
       const res = await repository.findTrending({} as any);
       expect(res).toEqual(['trending']);
       expect(trendingQuery.execute).toHaveBeenCalled();
+    });
+
+    it('findPopular delegates to popularShowsQuery', async () => {
+      const module: TestingModule = await setup();
+      repository = module.get(DrizzleShowRepository);
+
+      const res = await repository.findPopular({} as any);
+      expect(res).toEqual(['popular']);
+      expect(popularQuery.execute).toHaveBeenCalled();
     });
 
     it('findEpisodesByDateRange delegates to calendarEpisodesQuery', async () => {

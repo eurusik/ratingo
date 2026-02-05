@@ -41,15 +41,12 @@ export class ShowProgressDto {
   nextAirDate: Date | null;
 }
 
-export class ShowTrendingItemDto {
+export class TrendingItemBaseDto {
   @ApiProperty()
   id: string;
 
   @ApiProperty()
   mediaItemId: string;
-
-  @ApiProperty({ example: MediaType.SHOW, enum: [MediaType.SHOW] })
-  type: MediaType.SHOW;
 
   @ApiProperty()
   slug: string;
@@ -86,6 +83,11 @@ export class ShowTrendingItemDto {
 
   @ApiProperty({ type: ExternalRatingsDto })
   externalRatings: ExternalRatingsDto;
+}
+
+export class ShowTrendingItemDto extends TrendingItemBaseDto {
+  @ApiProperty({ example: MediaType.SHOW, enum: [MediaType.SHOW] })
+  type: MediaType.SHOW;
 
   @ApiProperty({ type: ShowProgressDto, required: false, nullable: true })
   showProgress?: ShowProgressDto | null;
@@ -102,57 +104,7 @@ export class TrendingShowsResponseDto {
   meta: OffsetPaginationMetaDto;
 }
 
-export class MovieTrendingItemDto {
-  @ApiProperty()
-  id: string;
-
-  @ApiProperty()
-  mediaItemId: string;
-
+export class MovieTrendingItemDto extends TrendingItemBaseDto {
   @ApiProperty({ example: MediaType.MOVIE, enum: [MediaType.MOVIE] })
   type: MediaType.MOVIE;
-
-  @ApiProperty()
-  slug: string;
-
-  @ApiProperty()
-  title: string;
-
-  @ApiProperty({ required: false, nullable: true })
-  originalTitle?: string | null;
-
-  @ApiProperty({ required: false, nullable: true })
-  overview?: string | null;
-
-  @ApiProperty({ required: false, nullable: true })
-  primaryTrailerKey?: string | null;
-
-  @ApiProperty({ type: ImageDto, required: false, nullable: true })
-  poster?: ImageDto | null;
-
-  @ApiProperty({ type: ImageDto, required: false, nullable: true })
-  backdrop?: ImageDto | null;
-
-  @ApiProperty({ required: false, nullable: true })
-  releaseDate: Date | null;
-
-  @ApiProperty()
-  isNew: boolean;
-
-  @ApiProperty()
-  isClassic: boolean;
-
-  @ApiProperty({ type: RatingoStatsDto })
-  stats: RatingoStatsDto;
-
-  @ApiProperty({ type: ExternalRatingsDto })
-  externalRatings: ExternalRatingsDto;
-}
-
-export class TrendingMoviesResponseDto {
-  @ApiProperty({ type: [MovieTrendingItemDto] })
-  data: MovieTrendingItemDto[];
-
-  @ApiProperty({ type: OffsetPaginationMetaDto })
-  meta: OffsetPaginationMetaDto;
 }

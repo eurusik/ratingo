@@ -18,7 +18,7 @@ import {
   TRENDING_THRESHOLDS,
 } from '../../domain/constants/catalog.constants';
 import type { TrendingQueryMeta, TrendingQueryResult } from '../../domain/types/query.types';
-import { CATALOG_SORT, type CatalogSort } from '../../presentation/dtos/catalog-list-query.dto';
+import { CATALOG_SORT, type CatalogSort } from '../../domain/constants/catalog-query.constants';
 
 // ============================================================================
 // In-Memory Query Simulator for Property Testing

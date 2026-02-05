@@ -25,6 +25,7 @@ export const CATALOG_DEFAULT_OFFSET = 0;
 export const CATALOG_DEFAULT_CALENDAR_DAYS = 7;
 export const CATALOG_DEFAULT_NEW_RELEASE_DAYS = 30;
 export const CATALOG_DEFAULT_DIGITAL_DAYS = 14;
+export const CATALOG_MAX_DAYS_BACK = 365;
 
 // Digital Release Freshness — only show movies originally released within this window
 // Excludes re-releases of old classics (e.g., Harry Potter re-released on Max)

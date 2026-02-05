@@ -75,7 +75,7 @@ export class MediaWatchOffersMapper {
       return {
         region,
         isFallback,
-        hint: hasSvod ? 'svod' : 'svod', // Has normalized offers = svod
+        hint: hasSvod ? 'svod' : 'tvod_only',
         ...grouped,
       };
     }

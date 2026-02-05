@@ -4,13 +4,17 @@ import { type MediaType } from '../../../../common/enums/media-type.enum';
 /**
  * Status of an import operation.
  */
-export enum ImportStatus {
-  EXISTS = 'exists',
-  IMPORTING = 'importing',
-  READY = 'ready',
-  FAILED = 'failed',
-  NOT_FOUND = 'not_found',
-}
+export const IMPORT_STATUS = {
+  EXISTS: 'exists',
+  IMPORTING: 'importing',
+  READY: 'ready',
+  FAILED: 'failed',
+  NOT_FOUND: 'not_found',
+} as const;
+
+export type ImportStatus = (typeof IMPORT_STATUS)[keyof typeof IMPORT_STATUS];
+
+export const IMPORT_STATUS_VALUES: ImportStatus[] = Object.values(IMPORT_STATUS);
 
 /**
  * Result of an import operation.

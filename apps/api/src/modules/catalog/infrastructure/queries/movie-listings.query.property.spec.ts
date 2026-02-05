@@ -1,5 +1,5 @@
 import * as fc from 'fast-check';
-import { EligibilityStatus } from '../../../catalog-policy/public';
+import { EligibilityStatus, EvaluationReason } from '../../../catalog-policy/public';
 import { EligibilityMode } from './movie-listings.query';
 
 function matchesEligibilityCondition(
@@ -12,7 +12,7 @@ function matchesEligibilityCondition(
       evaluation.status === EligibilityStatus.ELIGIBLE ||
       (evaluation.status === EligibilityStatus.INELIGIBLE &&
         evaluation.reasons.length === 1 &&
-        evaluation.reasons[0] === 'MISSING_GLOBAL_SIGNALS')
+        evaluation.reasons[0] === EvaluationReason.MISSING_GLOBAL_SIGNALS)
     );
   }
 
@@ -30,16 +30,16 @@ describe('Movie Listings Query - Property-Based Tests', () => {
   );
 
   const reasonArb = fc.constantFrom(
-    'MISSING_GLOBAL_SIGNALS',
-    'BLOCKED_COUNTRY',
-    'BLOCKED_LANGUAGE',
-    'NEUTRAL_COUNTRY',
-    'NEUTRAL_LANGUAGE',
-    'ALLOWED_COUNTRY',
-    'ALLOWED_LANGUAGE',
-    'BREAKOUT_ALLOWED',
-    'MISSING_ORIGIN_COUNTRY',
-    'MISSING_ORIGINAL_LANGUAGE',
+    EvaluationReason.MISSING_GLOBAL_SIGNALS,
+    EvaluationReason.BLOCKED_COUNTRY,
+    EvaluationReason.BLOCKED_LANGUAGE,
+    EvaluationReason.NEUTRAL_COUNTRY,
+    EvaluationReason.NEUTRAL_LANGUAGE,
+    EvaluationReason.ALLOWED_COUNTRY,
+    EvaluationReason.ALLOWED_LANGUAGE,
+    EvaluationReason.BREAKOUT_ALLOWED,
+    EvaluationReason.MISSING_ORIGIN_COUNTRY,
+    EvaluationReason.MISSING_ORIGINAL_LANGUAGE,
   );
 
   const evaluationArb = fc.record({
@@ -177,12 +177,12 @@ describe('Movie Listings Query - Property-Based Tests', () => {
         fc.property(fc.nat({ max: 100 }), (relevanceScore) => {
           const evaluation = {
             status: EligibilityStatus.INELIGIBLE,
-            reasons: ['MISSING_GLOBAL_SIGNALS'],
+            reasons: [EvaluationReason.MISSING_GLOBAL_SIGNALS],
             relevanceScore,
           };
 
           const matches = matchesEligibilityCondition(evaluation, 'freshness');
-          // Ineligible with exactly ['MISSING_GLOBAL_SIGNALS'] MUST match
+          // Ineligible with exactly [EvaluationReason.MISSING_GLOBAL_SIGNALS] MUST match
           expect(matches).toBe(true);
         }),
         { numRuns: 100 },
@@ -315,13 +315,13 @@ describe('Movie Listings Query - Property-Based Tests', () => {
           (otherReasons, relevanceScore) => {
             const evaluation = {
               status: EligibilityStatus.INELIGIBLE,
-              reasons: ['MISSING_GLOBAL_SIGNALS', ...otherReasons],
+              reasons: [EvaluationReason.MISSING_GLOBAL_SIGNALS, ...otherReasons],
               relevanceScore,
             };
 
             const matches = matchesEligibilityCondition(evaluation, 'freshness');
             // Items with MISSING_GLOBAL_SIGNALS + other reasons MUST NOT match
-            // Only exactly ['MISSING_GLOBAL_SIGNALS'] is allowed
+            // Only exactly [EvaluationReason.MISSING_GLOBAL_SIGNALS] is allowed
             expect(matches).toBe(false);
           },
         ),
@@ -353,13 +353,13 @@ describe('Movie Listings Query - Property-Based Tests', () => {
 
           // All filtered items must be either:
           // 1. Eligible, OR
-          // 2. Ineligible with exactly ['MISSING_GLOBAL_SIGNALS']
+          // 2. Ineligible with exactly [EvaluationReason.MISSING_GLOBAL_SIGNALS]
           filtered.forEach((e) => {
             const isEligible = e.status === EligibilityStatus.ELIGIBLE;
             const isSoftBlockedOnly =
               e.status === EligibilityStatus.INELIGIBLE &&
               e.reasons.length === 1 &&
-              e.reasons[0] === 'MISSING_GLOBAL_SIGNALS';
+              e.reasons[0] === EvaluationReason.MISSING_GLOBAL_SIGNALS;
 
             expect(isEligible || isSoftBlockedOnly).toBe(true);
           });

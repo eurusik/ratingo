@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 
+import { MovieVerdictService } from './application/movie-verdict.service';
+import { ShowVerdictService } from './application/show-verdict.service';
+
 /**
  * Verdict Engine Module
  *
@@ -9,7 +12,7 @@ import { Module } from '@nestjs/common';
  * DNA Ratingo: "honesty before hype"
  */
 @Module({
-  providers: [],
-  exports: [],
+  providers: [MovieVerdictService, ShowVerdictService],
+  exports: [MovieVerdictService, ShowVerdictService],
 })
 export class VerdictModule {}

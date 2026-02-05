@@ -3,20 +3,21 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq, inArray } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
   type IMovieRepository,
   type MovieWithMedia,
   type MovieDetails,
-  type NowPlayingOptions,
+  type MovieListQueryOptions,
   type TrendingMovieItem,
+  type TrendingQueryResult,
   type WithTotal,
   type ReleaseInfo,
 } from '../../domain/repositories/movie.repository.interface';
-import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
-import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { type DatabaseTransaction } from '../../domain/types/transaction.type';
+import { MoviePersistenceMapper } from '../mappers/movie-persistence.mapper';
 import { MovieDetailsQuery } from '../queries/movie-details.query';
 import {
   MovieListingsQuery,
@@ -25,6 +26,7 @@ import {
 } from '../queries/movie-listings.query';
 import { PopularMoviesQuery } from '../queries/popular-movies.query';
 import { TrendingMoviesQuery } from '../queries/trending-movies.query';
+import { toDrizzleTx } from '../utils/drizzle-transaction';
 
 /**
  * Movie details payload for upsert operation.
@@ -56,7 +58,13 @@ export class DrizzleMovieRepository implements IMovieRepository {
     private readonly movieListingsQuery: MovieListingsQuery,
   ) {}
 
-  /** Upserts movie details transactionally. */
+  /**
+   * Upserts movie details transactionally.
+   *
+   * Note: Does not use withDbError() intentionally - errors should propagate
+   * to parent transaction scope for proper rollback handling. The caller
+   * (typically DrizzleMediaRepository.upsert) is responsible for error handling.
+   */
   async upsertDetails(
     tx: DatabaseTransaction,
     mediaId: string,
@@ -65,10 +73,10 @@ export class DrizzleMovieRepository implements IMovieRepository {
     const drizzleTx = toDrizzleTx(tx);
     await drizzleTx
       .insert(schema.movies)
-      .values(PersistenceMapper.toMovieInsert(mediaId, details))
+      .values(MoviePersistenceMapper.toMovieInsert(mediaId, details))
       .onConflictDoUpdate({
         target: schema.movies.mediaItemId,
-        set: PersistenceMapper.toMovieUpdate(details),
+        set: MoviePersistenceMapper.toMovieUpdate(details),
       });
   }
 
@@ -79,31 +87,38 @@ export class DrizzleMovieRepository implements IMovieRepository {
       return;
     }
 
-    await this.db.transaction(async (tx) => {
-      await tx
-        .update(schema.movies)
-        .set({ isNowPlaying: false })
-        .where(eq(schema.movies.isNowPlaying, true));
+    return withDbError(
+      'set now playing movies',
+      this.logger,
+      async () => {
+        await this.db.transaction(async (tx) => {
+          await tx
+            .update(schema.movies)
+            .set({ isNowPlaying: false })
+            .where(eq(schema.movies.isNowPlaying, true));
 
-      const mediaItems = await tx
-        .select({ id: schema.mediaItems.id })
-        .from(schema.mediaItems)
-        .where(inArray(schema.mediaItems.tmdbId, tmdbIds));
+          const mediaItems = await tx
+            .select({ id: schema.mediaItems.id })
+            .from(schema.mediaItems)
+            .where(inArray(schema.mediaItems.tmdbId, tmdbIds));
 
-      if (mediaItems.length === 0) {
-        this.logger.warn('No media items found for now playing TMDB IDs');
-        return;
-      }
+          if (mediaItems.length === 0) {
+            this.logger.warn('No media items found for now playing TMDB IDs');
+            return;
+          }
 
-      const mediaItemIds = mediaItems.map((m) => m.id);
+          const mediaItemIds = mediaItems.map((m) => m.id);
 
-      await tx
-        .update(schema.movies)
-        .set({ isNowPlaying: true })
-        .where(inArray(schema.movies.mediaItemId, mediaItemIds));
+          await tx
+            .update(schema.movies)
+            .set({ isNowPlaying: true })
+            .where(inArray(schema.movies.mediaItemId, mediaItemIds));
 
-      this.logger.log(`Set ${mediaItemIds.length} movies as now playing`);
-    });
+          this.logger.log(`Set ${mediaItemIds.length} movies as now playing`);
+        });
+      },
+      { count: tmdbIds.length },
+    );
   }
 
   /** Updates release dates for a movie. */
@@ -115,22 +130,21 @@ export class DrizzleMovieRepository implements IMovieRepository {
       releases?: ReleaseInfo[];
     },
   ): Promise<void> {
-    try {
-      await this.db
-        .update(schema.movies)
-        .set({
-          theatricalReleaseDate: data.theatricalReleaseDate,
-          digitalReleaseDate: data.digitalReleaseDate,
-          releases: data.releases,
-        })
-        .where(eq(schema.movies.mediaItemId, mediaItemId));
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to update release dates: ${message}`);
-      throw new DatabaseException('Failed to update release dates', {
-        originalError: message,
-      });
-    }
+    return withDbError(
+      'update release dates',
+      this.logger,
+      async () => {
+        await this.db
+          .update(schema.movies)
+          .set({
+            theatricalReleaseDate: data.theatricalReleaseDate,
+            digitalReleaseDate: data.digitalReleaseDate,
+            releases: data.releases,
+          })
+          .where(eq(schema.movies.mediaItemId, mediaItemId));
+      },
+      { mediaItemId },
+    );
   }
 
   /** Finds full movie details by slug. */
@@ -139,19 +153,23 @@ export class DrizzleMovieRepository implements IMovieRepository {
   }
 
   /** Finds trending movies sorted by popularity and rating. */
-  async findTrending(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>> {
+  async findTrending(
+    options: MovieListQueryOptions = {},
+  ): Promise<TrendingQueryResult<TrendingMovieItem>> {
     const normalized = { ...options, genres: this.normalizeGenres(options.genres) };
-    return this.trendingMoviesQuery.execute(normalized) as unknown as WithTotal<TrendingMovieItem>;
+    return this.trendingMoviesQuery.execute(normalized);
   }
 
   /** Finds popular movies (historically popular, no freshness gate). */
-  async findPopular(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>> {
+  async findPopular(
+    options: MovieListQueryOptions = {},
+  ): Promise<TrendingQueryResult<TrendingMovieItem>> {
     const normalized = { ...options, genres: this.normalizeGenres(options.genres) };
-    return this.popularMoviesQuery.execute(normalized) as unknown as WithTotal<TrendingMovieItem>;
+    return this.popularMoviesQuery.execute(normalized);
   }
 
   /** Finds movies currently in theaters. No eligibility filtering - show all. */
-  async findNowPlaying(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
+  async findNowPlaying(options: MovieListQueryOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NOW_PLAYING, {
       ...options,
       eligibilityMode: ELIGIBILITY_MODE.NONE,
@@ -159,12 +177,12 @@ export class DrizzleMovieRepository implements IMovieRepository {
   }
 
   /** Finds movies recently released in theaters. Uses catalog eligibility mode. */
-  async findNewReleases(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
+  async findNewReleases(options: MovieListQueryOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_RELEASES, options);
   }
 
   /** Finds movies recently released on digital platforms. Uses catalog eligibility mode. */
-  async findNewOnDigital(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
+  async findNewOnDigital(options: MovieListQueryOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_ON_DIGITAL, options);
   }
 

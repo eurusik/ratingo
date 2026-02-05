@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 import { HERO_REPOSITORY } from '../home/public';
 import { INGESTION_QUEUE } from '../ingestion/public';
 import { CardsModule } from '../shared/cards/cards.module';
+import { VerdictModule } from '../shared/verdict';
 import { TmdbModule } from '../tmdb/public';
 import { UserMediaModule } from '../user-media/user-media.module';
 
@@ -11,12 +12,19 @@ import { CatalogImportService } from './application/services/catalog-import.serv
 import { CatalogSearchService } from './application/services/catalog-search.service';
 import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from './application/services/movie-details.service';
+import { ShowDetailsService } from './application/services/show-details.service';
+import { IMPORT_JOB_PORT } from './domain/ports/import-job.port';
+import { MEDIA_METADATA_PORT } from './domain/ports/media-metadata.port';
+import { USER_STATE_PROVIDER } from './domain/ports/user-state-provider.port';
 import { GENRE_REPOSITORY } from './domain/repositories/genre.repository.interface';
 import { MEDIA_REPOSITORY } from './domain/repositories/media.repository.interface';
 import { MOVIE_REPOSITORY } from './domain/repositories/movie.repository.interface';
 import { PROVIDERS_REPOSITORY } from './domain/repositories/providers.repository.interface';
 import { SHOW_REPOSITORY } from './domain/repositories/show.repository.interface';
+import { BullMQImportJobAdapter } from './infrastructure/adapters/bullmq-import-job.adapter';
 import { HeroRepositoryAdapter } from './infrastructure/adapters/hero.repository.adapter';
+import { TmdbMetadataAdapter } from './infrastructure/adapters/tmdb-metadata.adapter';
+import { UserStateAdapter } from './infrastructure/adapters/user-state.adapter';
 import { CalendarEpisodesQuery } from './infrastructure/queries/calendar-episodes.query';
 import { HeroMediaQuery } from './infrastructure/queries/hero-media.query';
 import { MovieDetailsQuery } from './infrastructure/queries/movie-details.query';
@@ -41,16 +49,6 @@ import { CatalogProvidersController } from './presentation/controllers/catalog.p
 import { CatalogSearchController } from './presentation/controllers/catalog.search.controller';
 import { CatalogShowsController } from './presentation/controllers/catalog.shows.controller';
 
-// Query Objects - Shows
-
-// Query Objects - Movies
-
-// Query Objects - Mixed Media
-
-// Query Objects - Shared
-
-// Adapters
-
 /**
  * Catalog module.
  */
@@ -59,6 +57,7 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
     TmdbModule,
     UserMediaModule,
     CardsModule,
+    VerdictModule,
     BullModule.registerQueue({ name: INGESTION_QUEUE }),
   ],
   controllers: [
@@ -72,6 +71,7 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
     CatalogImportService,
     CatalogUserStateEnricher,
     MovieDetailsService,
+    ShowDetailsService,
     // Query Objects - Shows
     TrendingShowsQuery,
     PopularShowsQuery,
@@ -115,7 +115,19 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
       provide: PROVIDERS_REPOSITORY,
       useClass: DrizzleProvidersRepository,
     },
-    // Adapters for other modules
+    // Adapters
+    {
+      provide: IMPORT_JOB_PORT,
+      useClass: BullMQImportJobAdapter,
+    },
+    {
+      provide: MEDIA_METADATA_PORT,
+      useClass: TmdbMetadataAdapter,
+    },
+    {
+      provide: USER_STATE_PROVIDER,
+      useClass: UserStateAdapter,
+    },
     {
       provide: HERO_REPOSITORY,
       useClass: HeroRepositoryAdapter,

@@ -1,6 +1,5 @@
 import { type IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { type MovieStatus } from '../../../../common/enums/movie-status.enum';
-import type { CardMeta } from '../../../shared/cards/domain/card.types';
 import type {
   ImageData,
   VideoData,
@@ -12,6 +11,7 @@ import type {
 } from '../types/common.types';
 import type {
   WithTotal,
+  TrendingQueryResult,
   CatalogSort,
   SortOrder,
   VoteSource,
@@ -22,6 +22,7 @@ import { type DatabaseTransaction } from '../types/transaction.type';
 // Re-export query types for convenience
 export type {
   WithTotal,
+  TrendingQueryResult,
   CatalogSort,
   SortOrder,
   VoteSource,
@@ -74,9 +75,9 @@ export type TrendingMovieItem = MovieWithMedia & {
 };
 
 /**
- * Options for now playing query.
+ * Shared query options for movie list endpoints.
  */
-export interface NowPlayingOptions {
+export interface MovieListQueryOptions {
   limit?: number;
   offset?: number;
   /** Number of days to look back (default: 30) */
@@ -124,8 +125,6 @@ export interface MovieDetails {
   stats: RatingoStats;
   externalRatings: ExternalRatings;
   genres: GenreInfo[];
-
-  card?: CardMeta;
 }
 
 /**
@@ -135,27 +134,27 @@ export interface IMovieRepository {
   /**
    * Finds movies currently in theaters (isNowPlaying = true).
    */
-  findNowPlaying(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
+  findNowPlaying(options?: MovieListQueryOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds movies recently released in theaters.
    */
-  findNewReleases(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
+  findNewReleases(options?: MovieListQueryOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds movies recently released on digital platforms.
    */
-  findNewOnDigital(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
+  findNewOnDigital(options?: MovieListQueryOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds trending movies sorted by popularity and rating.
    */
-  findTrending(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>>;
+  findTrending(options?: MovieListQueryOptions): Promise<TrendingQueryResult<TrendingMovieItem>>;
 
   /**
    * Finds popular movies (historically popular, no freshness gate).
    */
-  findPopular(options: NowPlayingOptions): Promise<WithTotal<TrendingMovieItem>>;
+  findPopular(options?: MovieListQueryOptions): Promise<TrendingQueryResult<TrendingMovieItem>>;
 
   /**
    * Sets isNowPlaying flag for movies.

@@ -1,14 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, inArray, sql, and, desc, gt, gte, lt, or, isNull, isNotNull } from 'drizzle-orm';
+import { eq, inArray, sql, and, desc, gt, gte, isNull, isNotNull } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { MS_PER_HOUR, MS_PER_DAY } from '../../../../common/constants';
-import { PG_ERROR_CODE, DB_CONSTRAINT } from '../../../../common/constants/database.constants';
+import { DB_CONSTRAINT } from '../../../../common/constants/database.constants';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions';
 import { type HeroMediaItem } from '../../../../common/types/hero-media.types';
+import { withDbError } from '../../../../common/utils/db-error.utils';
+import { isSlugCollision, extractPgError } from '../../../../common/utils/pg-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
@@ -18,7 +19,6 @@ import {
   EvaluationContext,
 } from '../../../catalog-policy/public';
 import type { NormalizedMedia } from '../../../ingestion/public';
-import { HERO_THRESHOLDS } from '../../domain/constants/catalog.constants';
 import { type LocalSearchResult } from '../../domain/models/search-result.model';
 import {
   type IGenreRepository,
@@ -30,9 +30,8 @@ import {
   type MediaWithTmdbId,
   type MediaScoreDataWithTmdbId,
   type CorruptedWatchersItem,
-  type EligibleTrendingItem,
+  type MediaSyncItem,
   type SnapshotCandidate,
-  type HeroCandidateItem,
 } from '../../domain/repositories/media.repository.interface';
 import {
   type IMovieRepository,
@@ -42,8 +41,18 @@ import {
   type IShowRepository,
   SHOW_REPOSITORY,
 } from '../../domain/repositories/show.repository.interface';
-import { PersistenceMapper } from '../mappers/persistence.mapper';
+import { createRetrySlug, generateUniqueSlug } from '../../domain/utils/slug.utils';
+import { MediaItemPersistenceMapper } from '../mappers/media-item-persistence.mapper';
 import { HeroMediaQuery } from '../queries/hero-media.query';
+import {
+  toMediaIdItems,
+  buildMissingWatchersConditions,
+  buildCorruptedWatchersCountConditions,
+  buildSnapshotCandidateConditions,
+  buildHeroCandidatesConditions,
+  buildHeroCandidatesEvaluationConditions,
+} from '../queries/shared';
+import { preserveTotalWatchers } from '../utils/stats-preservation.utils';
 
 /**
  * Drizzle ORM implementation of the Media Repository.
@@ -83,48 +92,52 @@ export class DrizzleMediaRepository implements IMediaRepository {
     type: MediaType;
     ingestionStatus: IngestionStatus;
   } | null> {
-    try {
-      const conditions = [eq(schema.mediaItems.tmdbId, tmdbId)];
-      if (type) {
-        conditions.push(eq(schema.mediaItems.type, type));
-      }
+    return withDbError(
+      'find media by TMDB ID',
+      this.logger,
+      async () => {
+        const conditions = [eq(schema.mediaItems.tmdbId, tmdbId)];
+        if (type) {
+          conditions.push(eq(schema.mediaItems.type, type));
+        }
 
-      const result = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          slug: schema.mediaItems.slug,
-          type: schema.mediaItems.type,
-          ingestionStatus: schema.mediaItems.ingestionStatus,
-        })
-        .from(schema.mediaItems)
-        .where(and(...conditions))
-        .limit(1);
+        const result = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            slug: schema.mediaItems.slug,
+            type: schema.mediaItems.type,
+            ingestionStatus: schema.mediaItems.ingestionStatus,
+          })
+          .from(schema.mediaItems)
+          .where(and(...conditions))
+          .limit(1);
 
-      if (!result[0]) return null;
-      const row = result[0];
-      return {
-        ...row,
-        ingestionStatus: row.ingestionStatus as IngestionStatus,
-      };
-    } catch (error) {
-      this.logger.error(`Failed to find media by TMDB ID ${tmdbId}: ${error.message}`);
-      throw new DatabaseException(`Failed to find media: ${error.message}`, { tmdbId });
-    }
+        if (!result[0]) return null;
+        const row = result[0];
+        return {
+          ...row,
+          ingestionStatus: row.ingestionStatus as IngestionStatus,
+        };
+      },
+      { tmdbId, type },
+    );
   }
 
   /**
    * Updates ingestion status by TMDB ID (noop if not found).
    */
   async updateIngestionStatus(tmdbId: number, status: IngestionStatus): Promise<void> {
-    try {
-      await this.db
-        .update(schema.mediaItems)
-        .set({ ingestionStatus: status, updatedAt: new Date() })
-        .where(eq(schema.mediaItems.tmdbId, tmdbId));
-    } catch (error) {
-      this.logger.error(`Failed to update ingestion status for TMDB ${tmdbId}: ${error.message}`);
-      throw new DatabaseException('Failed to update ingestion status', { tmdbId, status });
-    }
+    return withDbError(
+      'update ingestion status',
+      this.logger,
+      async () => {
+        await this.db
+          .update(schema.mediaItems)
+          .set({ ingestionStatus: status, updatedAt: new Date() })
+          .where(eq(schema.mediaItems.tmdbId, tmdbId));
+      },
+      { tmdbId, status },
+    );
   }
 
   /**
@@ -178,11 +191,12 @@ export class DrizzleMediaRepository implements IMediaRepository {
       if (result) return result;
 
       // Log full error details for debugging
-      const err = error as { message?: string; cause?: { code?: string; message?: string } };
+      const pgError = extractPgError(error);
       this.logger.error(`Failed to upsert stub for tmdbId ${payload.tmdbId}`, {
-        message: err.message,
-        causeCode: err.cause?.code,
-        causeMessage: err.cause?.message,
+        message: pgError.message,
+        code: pgError.code,
+        detail: pgError.detail,
+        constraint: pgError.constraint,
       });
       throw new DatabaseException('Failed to upsert stub media item', error, {
         tmdbId: payload.tmdbId,
@@ -204,20 +218,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
       ingestionStatus: IngestionStatus;
     },
   ): Promise<{ id: string; slug: string } | null> {
-    // postgres.js uses 'constraint_name' (not 'constraint') for the PostgreSQL 'n' field
-    const err = error as {
-      code?: string;
-      constraint_name?: string;
-      cause?: { code?: string; constraint_name?: string };
-    };
-    const pgCode = err.cause?.code ?? err.code;
-    const pgConstraint = err.cause?.constraint_name ?? err.constraint_name;
-
-    // Not a slug conflict — let caller handle
-    if (
-      pgCode !== PG_ERROR_CODE.UNIQUE_VIOLATION ||
-      pgConstraint !== DB_CONSTRAINT.MEDIA_TYPE_SLUG
-    ) {
+    // Not a slug collision — let caller handle
+    if (!isSlugCollision(error, DB_CONSTRAINT.MEDIA_TYPE_SLUG)) {
       return null;
     }
 
@@ -263,9 +265,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     },
     conflictingTmdbId: number,
   ): Promise<{ id: string; slug: string }> {
-    // Avoid double suffix if slug already ends with tmdbId
-    const suffix = `-${payload.tmdbId}`;
-    const uniqueSlug = payload.slug.endsWith(suffix) ? payload.slug : `${payload.slug}${suffix}`;
+    const uniqueSlug = generateUniqueSlug(payload.slug, payload.tmdbId);
 
     this.logger.warn(
       `Slug collision: "${payload.slug}" owned by tmdbId ${conflictingTmdbId}, ` +
@@ -315,8 +315,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
       await this.upsertWithSlug(media, media.slug);
     } catch (error: unknown) {
       // Check if it's a slug collision - retry with unique slug
-      const retrySlug = this.extractSlugCollisionRetry(error, media);
-      if (retrySlug) {
+      if (isSlugCollision(error, DB_CONSTRAINT.MEDIA_TYPE_SLUG)) {
+        const retrySlug = createRetrySlug(media.slug, media.externalIds.tmdbId);
         this.logger.warn(
           `Slug collision for "${media.slug}", retrying with "${retrySlug}" (tmdbId: ${media.externalIds.tmdbId})`,
         );
@@ -334,170 +334,148 @@ export class DrizzleMediaRepository implements IMediaRepository {
    */
   private async upsertWithSlug(media: NormalizedMedia, slug: string | undefined): Promise<void> {
     await this.db.transaction(async (tx) => {
-      // Upsert Base Media Item
-      const insertValues = PersistenceMapper.toMediaItemInsert(media);
-      // Override slug if provided (for retry with unique slug)
-      if (slug) {
-        insertValues.slug = slug;
-      }
-
-      const updateValues = PersistenceMapper.toMediaItemUpdate(media);
-      // Also update slug on conflict if we're using a unique slug
-      if (slug && slug !== media.slug) {
-        updateValues.slug = slug;
-      }
-
-      const [mediaItem] = await tx
-        .insert(schema.mediaItems)
-        .values(insertValues)
-        .onConflictDoUpdate({
-          target: [schema.mediaItems.type, schema.mediaItems.tmdbId], // Composite key: type + tmdb_id
-          set: updateValues,
-        })
-        .returning({ id: schema.mediaItems.id });
-
-      const mediaId = mediaItem.id;
-
-      // Delegate type-specific upsert
-      if (media.type === MediaType.MOVIE) {
-        await this.movieRepository.upsertDetails(tx, mediaId, media.details || {});
-      } else {
-        await this.showRepository.upsertDetails(tx, mediaId, media.details || {});
-      }
-
-      // Sync Genres
+      const mediaId = await this.upsertMediaItem(tx, media, slug);
+      await this.upsertTypeDetails(tx, mediaId, media);
       await this.genreRepository.syncGenres(tx, mediaId, media.genres);
-
-      // Upsert Ratingo Scores to media_stats
-      const statsInsert = PersistenceMapper.toMediaStatsInsert(mediaId, media);
-      if (statsInsert) {
-        // Build update set - only include fields with actual data
-        // This prevents overwriting valid data with null/0 on API failures
-        const updateSet: Record<string, unknown> = {
-          ratingoScore: statsInsert.ratingoScore,
-          qualityScore: statsInsert.qualityScore,
-          popularityScore: statsInsert.popularityScore,
-          freshnessScore: statsInsert.freshnessScore,
-          updatedAt: new Date(),
-        };
-
-        // CRITICAL: Only update watchersCount if we have actual data
-        // If watchersCount is undefined in statsInsert, preserve existing DB value
-        if (statsInsert.watchersCount !== undefined) {
-          updateSet.watchersCount = statsInsert.watchersCount;
-        }
-
-        // CRITICAL: Only update totalWatchers if we have actual data
-        // If totalWatchers is undefined in statsInsert, preserve existing DB value
-        if (statsInsert.totalWatchers !== undefined) {
-          // Extra safeguard: don't overwrite positive value with 0
-          // (a popular show suddenly having 0 watchers is almost always an API error)
-          updateSet.totalWatchers = sql`
-            CASE
-              WHEN ${statsInsert.totalWatchers} = 0 AND ${schema.mediaStats.totalWatchers} > 0
-              THEN ${schema.mediaStats.totalWatchers}
-              ELSE ${statsInsert.totalWatchers}
-            END
-          `;
-        }
-
-        await tx.insert(schema.mediaStats).values(statsInsert).onConflictDoUpdate({
-          target: schema.mediaStats.mediaItemId,
-          set: updateSet,
-        });
-      }
-
-      // Upsert Catalog Evaluation (INELIGIBLE by default)
-      // Design Decision DD-3: Every media_item MUST have a corresponding evaluation record
-      // This ensures the 1:1 invariant and prevents items from being "stuck" without evaluation
-      //
-      // Per Readability & Pending Reform: PENDING is no longer used.
-      // New items start as INELIGIBLE with NO_ACTIVE_POLICY reason until evaluated.
-      await tx
-        .insert(schema.mediaCatalogEvaluations)
-        .values({
-          mediaItemId: mediaId,
-          status: EligibilityStatus.INELIGIBLE,
-          policyVersion: DEFAULT_POLICY_VERSION,
-          reasons: [EvaluationReason.NO_ACTIVE_POLICY],
-          relevanceScore: 0,
-          evaluatedAt: null, // NULL for items not yet evaluated by Policy Engine
-          context: EvaluationContext.CATALOG, // Default context for catalog evaluation
-        })
-        .onConflictDoNothing(); // If already exists, don't overwrite (evaluation job will update it)
+      await this.upsertMediaStats(tx, mediaId, media);
+      await this.upsertDefaultEvaluation(tx, mediaId);
     });
   }
 
   /**
-   * Checks if error is a slug collision and returns retry slug, or null if not.
+   * Upserts the base media item record.
+   * @returns The media item ID
    */
-  private extractSlugCollisionRetry(error: unknown, media: NormalizedMedia): string | null {
-    // postgres.js uses 'constraint_name' (not 'constraint') for the PostgreSQL 'n' field
-    const err = error as {
-      code?: string;
-      constraint_name?: string;
-      cause?: { code?: string; constraint_name?: string };
-    };
-    const pgCode = err.cause?.code ?? err.code;
-    const pgConstraint = err.cause?.constraint_name ?? err.constraint_name;
-
-    // Not a slug collision
-    if (
-      pgCode !== PG_ERROR_CODE.UNIQUE_VIOLATION ||
-      pgConstraint !== DB_CONSTRAINT.MEDIA_TYPE_SLUG
-    ) {
-      return null;
+  private async upsertMediaItem(
+    tx: PostgresJsDatabase<typeof schema>,
+    media: NormalizedMedia,
+    slug: string | undefined,
+  ): Promise<string> {
+    const insertValues = MediaItemPersistenceMapper.toMediaItemInsert(media);
+    // Override slug if provided (for retry with unique slug)
+    if (slug) {
+      insertValues.slug = slug;
     }
 
-    // Generate unique slug with tmdbId suffix
-    // Avoid double suffix if slug already ends with tmdbId (e.g., tmdb-1614580 → tmdb-1614580-1614580)
-    const { tmdbId } = media.externalIds;
-    const baseSlug = media.slug || `tmdb-${tmdbId}`;
-    const suffix = `-${tmdbId}`;
+    const updateValues = MediaItemPersistenceMapper.toMediaItemUpdate(media);
+    // Also update slug on conflict if we're using a unique slug
+    if (slug && slug !== media.slug) {
+      updateValues.slug = slug;
+    }
 
-    return baseSlug.endsWith(suffix) ? baseSlug : `${baseSlug}${suffix}`;
+    const [mediaItem] = await tx
+      .insert(schema.mediaItems)
+      .values(insertValues)
+      .onConflictDoUpdate({
+        target: [schema.mediaItems.type, schema.mediaItems.tmdbId], // Composite key: type + tmdb_id
+        set: updateValues,
+      })
+      .returning({ id: schema.mediaItems.id });
+
+    return mediaItem.id;
+  }
+
+  /**
+   * Upserts type-specific details (movie or show).
+   */
+  private async upsertTypeDetails(
+    tx: PostgresJsDatabase<typeof schema>,
+    mediaId: string,
+    media: NormalizedMedia,
+  ): Promise<void> {
+    if (media.type === MediaType.MOVIE) {
+      await this.movieRepository.upsertDetails(tx, mediaId, media.details || {});
+    } else {
+      await this.showRepository.upsertDetails(tx, mediaId, media.details || {});
+    }
+  }
+
+  /**
+   * Upserts media stats (Ratingo scores, watchers data).
+   */
+  private async upsertMediaStats(
+    tx: PostgresJsDatabase<typeof schema>,
+    mediaId: string,
+    media: NormalizedMedia,
+  ): Promise<void> {
+    const statsInsert = MediaItemPersistenceMapper.toMediaStatsInsert(mediaId, media);
+    if (!statsInsert) return;
+
+    // Build update set - only include fields with actual data
+    // This prevents overwriting valid data with null/0 on API failures
+    const updateSet: Record<string, unknown> = {
+      ratingoScore: statsInsert.ratingoScore,
+      qualityScore: statsInsert.qualityScore,
+      popularityScore: statsInsert.popularityScore,
+      freshnessScore: statsInsert.freshnessScore,
+      updatedAt: new Date(),
+    };
+
+    // CRITICAL: Only update watchersCount if we have actual data
+    // If watchersCount is undefined in statsInsert, preserve existing DB value
+    if (statsInsert.watchersCount !== undefined) {
+      updateSet.watchersCount = statsInsert.watchersCount;
+    }
+
+    // CRITICAL: Only update totalWatchers if we have actual data
+    // If totalWatchers is undefined in statsInsert, preserve existing DB value
+    if (statsInsert.totalWatchers !== undefined) {
+      // Safeguard: don't overwrite positive value with 0 (likely API error)
+      updateSet.totalWatchers = preserveTotalWatchers(statsInsert.totalWatchers);
+    }
+
+    await tx.insert(schema.mediaStats).values(statsInsert).onConflictDoUpdate({
+      target: schema.mediaStats.mediaItemId,
+      set: updateSet,
+    });
+  }
+
+  /**
+   * Upserts default catalog evaluation (INELIGIBLE until evaluated by Policy Engine).
+   */
+  private async upsertDefaultEvaluation(
+    tx: PostgresJsDatabase<typeof schema>,
+    mediaId: string,
+  ): Promise<void> {
+    // Design Decision DD-3: Every media_item MUST have a corresponding evaluation record
+    // This ensures the 1:1 invariant and prevents items from being "stuck" without evaluation
+    //
+    // Per Readability & Pending Reform: PENDING is no longer used.
+    // New items start as INELIGIBLE with NO_ACTIVE_POLICY reason until evaluated.
+    await tx
+      .insert(schema.mediaCatalogEvaluations)
+      .values({
+        mediaItemId: mediaId,
+        status: EligibilityStatus.INELIGIBLE,
+        policyVersion: DEFAULT_POLICY_VERSION,
+        reasons: [EvaluationReason.NO_ACTIVE_POLICY],
+        relevanceScore: 0,
+        evaluatedAt: null, // NULL for items not yet evaluated by Policy Engine
+        context: EvaluationContext.CATALOG, // Default context for catalog evaluation
+      })
+      .onConflictDoNothing(); // If already exists, don't overwrite (evaluation job will update it)
   }
 
   /**
    * Handles upsert errors by logging and throwing DatabaseException.
    */
   private handleUpsertError(error: unknown, media: NormalizedMedia): never {
-    // Drizzle wraps PostgreSQL errors - extract the actual DB error
-    // postgres.js uses 'constraint_name' (not 'constraint') for the PostgreSQL 'n' field
-    const err = error as {
-      message?: string;
-      code?: string;
-      detail?: string;
-      constraint_name?: string;
-      cause?: {
-        message?: string;
-        code?: string;
-        detail?: string;
-        constraint_name?: string;
-      };
-    };
-
-    // PostgreSQL error is often in cause (wrapped by Drizzle)
-    const pgError = err.cause ?? err;
-    const pgCode = pgError.code ?? err.code;
-    const pgDetail = pgError.detail ?? err.detail;
-    const pgConstraint = pgError.constraint_name ?? err.constraint_name;
-    const pgMessage = pgError.message ?? err.message;
+    const pgError = extractPgError(error);
 
     this.logger.error(`Failed to upsert media ${media.title}`, {
-      message: pgMessage,
-      code: pgCode,
-      detail: pgDetail,
-      constraint: pgConstraint,
+      message: pgError.message,
+      code: pgError.code,
+      detail: pgError.detail,
+      constraint: pgError.constraint,
       tmdbId: media.externalIds.tmdbId,
     });
 
-    throw new DatabaseException(`Failed to upsert media: ${pgMessage}`, error, {
+    throw new DatabaseException(`Failed to upsert media: ${pgError.message}`, error, {
       tmdbId: media.externalIds.tmdbId,
       title: media.title,
-      code: pgCode,
-      detail: pgDetail,
-      constraint: pgConstraint,
+      code: pgError.code,
+      detail: pgError.detail,
+      constraint: pgError.constraint,
     });
   }
 
@@ -507,33 +485,35 @@ export class DrizzleMediaRepository implements IMediaRepository {
    * @throws {DatabaseException} If database query fails
    */
   async findByIdForScoring(id: string): Promise<MediaScoreData | null> {
-    try {
-      const result = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          popularity: schema.mediaItems.popularity,
-          releaseDate: schema.mediaItems.releaseDate,
-          lastAirDate: schema.shows.lastAirDate,
-          ratingImdb: schema.mediaItems.ratingImdb,
-          ratingTrakt: schema.mediaItems.ratingTrakt,
-          ratingMetacritic: schema.mediaItems.ratingMetacritic,
-          ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-          voteCountImdb: schema.mediaItems.voteCountImdb,
-          voteCountTrakt: schema.mediaItems.voteCountTrakt,
-          watchersCount: schema.mediaStats.watchersCount,
-          totalWatchers: schema.mediaStats.totalWatchers,
-        })
-        .from(schema.mediaItems)
-        .leftJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-        .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
-        .where(eq(schema.mediaItems.id, id))
-        .limit(1);
+    return withDbError(
+      'find media for scoring',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            popularity: schema.mediaItems.popularity,
+            releaseDate: schema.mediaItems.releaseDate,
+            lastAirDate: schema.shows.lastAirDate,
+            ratingImdb: schema.mediaItems.ratingImdb,
+            ratingTrakt: schema.mediaItems.ratingTrakt,
+            ratingMetacritic: schema.mediaItems.ratingMetacritic,
+            ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+            voteCountImdb: schema.mediaItems.voteCountImdb,
+            voteCountTrakt: schema.mediaItems.voteCountTrakt,
+            watchersCount: schema.mediaStats.watchersCount,
+            totalWatchers: schema.mediaStats.totalWatchers,
+          })
+          .from(schema.mediaItems)
+          .leftJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+          .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
+          .where(eq(schema.mediaItems.id, id))
+          .limit(1);
 
-      return result[0] || null;
-    } catch (error) {
-      this.logger.error(`Failed to find media for scoring ${id}: ${error.message}`);
-      throw new DatabaseException(`Failed to find media for scoring: ${error.message}`, { id });
-    }
+        return result[0] || null;
+      },
+      { id },
+    );
   }
 
   /**
@@ -544,22 +524,22 @@ export class DrizzleMediaRepository implements IMediaRepository {
   async findManyByTmdbIds(tmdbIds: number[]): Promise<MediaWithTmdbId[]> {
     if (tmdbIds.length === 0) return [];
 
-    try {
-      const result = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-        })
-        .from(schema.mediaItems)
-        .where(inArray(schema.mediaItems.tmdbId, tmdbIds));
+    return withDbError(
+      'find media by TMDB IDs',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+          })
+          .from(schema.mediaItems)
+          .where(inArray(schema.mediaItems.tmdbId, tmdbIds));
 
-      return result;
-    } catch (error) {
-      this.logger.error(`Failed to find media by TMDB IDs: ${error.message}`);
-      throw new DatabaseException(`Failed to find media by TMDB IDs: ${error.message}`, {
-        count: tmdbIds.length,
-      });
-    }
+        return result as MediaWithTmdbId[];
+      },
+      { count: tmdbIds.length },
+    );
   }
 
   /**
@@ -570,35 +550,35 @@ export class DrizzleMediaRepository implements IMediaRepository {
   async findManyForScoring(ids: string[]): Promise<MediaScoreDataWithTmdbId[]> {
     if (ids.length === 0) return [];
 
-    try {
-      const result = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          popularity: schema.mediaItems.popularity,
-          releaseDate: schema.mediaItems.releaseDate,
-          lastAirDate: schema.shows.lastAirDate,
-          ratingImdb: schema.mediaItems.ratingImdb,
-          ratingTrakt: schema.mediaItems.ratingTrakt,
-          ratingMetacritic: schema.mediaItems.ratingMetacritic,
-          ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
-          voteCountImdb: schema.mediaItems.voteCountImdb,
-          voteCountTrakt: schema.mediaItems.voteCountTrakt,
-          watchersCount: schema.mediaStats.watchersCount,
-          totalWatchers: schema.mediaStats.totalWatchers,
-        })
-        .from(schema.mediaItems)
-        .leftJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-        .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
-        .where(inArray(schema.mediaItems.id, ids));
+    return withDbError(
+      'find media for batch scoring',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+            popularity: schema.mediaItems.popularity,
+            releaseDate: schema.mediaItems.releaseDate,
+            lastAirDate: schema.shows.lastAirDate,
+            ratingImdb: schema.mediaItems.ratingImdb,
+            ratingTrakt: schema.mediaItems.ratingTrakt,
+            ratingMetacritic: schema.mediaItems.ratingMetacritic,
+            ratingRottenTomatoes: schema.mediaItems.ratingRottenTomatoes,
+            voteCountImdb: schema.mediaItems.voteCountImdb,
+            voteCountTrakt: schema.mediaItems.voteCountTrakt,
+            watchersCount: schema.mediaStats.watchersCount,
+            totalWatchers: schema.mediaStats.totalWatchers,
+          })
+          .from(schema.mediaItems)
+          .leftJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+          .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
+          .where(inArray(schema.mediaItems.id, ids));
 
-      return result;
-    } catch (error) {
-      this.logger.error(`Failed to find media for scoring: ${error.message}`);
-      throw new DatabaseException(`Failed to find media for scoring: ${error.message}`, {
-        count: ids.length,
-      });
-    }
+        return result as MediaScoreDataWithTmdbId[];
+      },
+      { count: ids.length },
+    );
   }
 
   /**
@@ -680,91 +660,94 @@ export class DrizzleMediaRepository implements IMediaRepository {
     since?: Date;
     limit: number;
   }): Promise<{ id: string; tmdbId: number; type: MediaType }[]> {
-    try {
-      const conditions = [
-        isNull(schema.mediaItems.deletedAt),
-        gt(schema.mediaItems.trendingScore, 0),
-        isNotNull(schema.mediaItems.tmdbId),
-      ];
+    return withDbError(
+      'find trending updated items',
+      this.logger,
+      async () => {
+        const conditions = [
+          isNull(schema.mediaItems.deletedAt),
+          gt(schema.mediaItems.trendingScore, 0),
+          isNotNull(schema.mediaItems.tmdbId),
+        ];
 
-      if (options.since) {
-        conditions.push(gte(schema.mediaItems.trendingUpdatedAt, options.since));
-      }
+        if (options.since) {
+          conditions.push(gte(schema.mediaItems.trendingUpdatedAt, options.since));
+        }
 
-      const rows = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          type: schema.mediaItems.type,
-        })
-        .from(schema.mediaItems)
-        .where(and(...conditions))
-        .orderBy(desc(schema.mediaItems.trendingScore))
-        .limit(options.limit);
+        const rows = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+            type: schema.mediaItems.type,
+          })
+          .from(schema.mediaItems)
+          .where(and(...conditions))
+          .orderBy(desc(schema.mediaItems.trendingScore))
+          .limit(options.limit);
 
-      return rows
-        .filter((r) => r.tmdbId !== null)
-        .map((r) => ({
-          id: r.id,
-          tmdbId: r.tmdbId!,
-          type: r.type,
-        }));
-    } catch (error) {
-      this.logger.error(`Failed to find trending updated items: ${error.message}`);
-      throw new DatabaseException('Failed to find trending updated items');
-    }
+        return toMediaIdItems(rows);
+      },
+      { since: options.since?.toISOString(), limit: options.limit },
+    );
   }
 
   /**
    * Retrieves IDs of active media items for snapshots sync with cursor pagination.
    */
   async findIdsForSnapshots(options: { cursor?: string; limit: number }): Promise<string[]> {
-    try {
-      const conditions = [isNull(schema.mediaItems.deletedAt)];
+    return withDbError(
+      'find IDs for snapshots',
+      this.logger,
+      async () => {
+        const conditions = [isNull(schema.mediaItems.deletedAt)];
 
-      if (options.cursor) {
-        conditions.push(gt(schema.mediaItems.id, options.cursor));
-      }
+        if (options.cursor) {
+          conditions.push(gt(schema.mediaItems.id, options.cursor));
+        }
 
-      const rows = await this.db
-        .select({ id: schema.mediaItems.id })
-        .from(schema.mediaItems)
-        .where(and(...conditions))
-        .orderBy(schema.mediaItems.id)
-        .limit(options.limit);
+        const rows = await this.db
+          .select({ id: schema.mediaItems.id })
+          .from(schema.mediaItems)
+          .where(and(...conditions))
+          .orderBy(schema.mediaItems.id)
+          .limit(options.limit);
 
-      return rows.map((r) => r.id);
-    } catch (error) {
-      this.logger.error(`Failed to find IDs for snapshots: ${error.message}`);
-      throw new DatabaseException('Failed to find IDs for snapshots');
-    }
+        return rows.map((r) => r.id);
+      },
+      { cursor: options.cursor, limit: options.limit },
+    );
   }
 
+  /**
+   * Retrieves IDs of media items for score recalculation with pagination.
+   */
   async findIdsForRecalculation(options: {
     type?: MediaType;
     limit: number;
     offset: number;
   }): Promise<string[]> {
-    try {
-      const conditions = [isNull(schema.mediaItems.deletedAt)];
+    return withDbError(
+      'find IDs for recalculation',
+      this.logger,
+      async () => {
+        const conditions = [isNull(schema.mediaItems.deletedAt)];
 
-      if (options.type) {
-        conditions.push(eq(schema.mediaItems.type, options.type));
-      }
+        if (options.type) {
+          conditions.push(eq(schema.mediaItems.type, options.type));
+        }
 
-      const rows = await this.db
-        .select({ id: schema.mediaItems.id })
-        .from(schema.mediaItems)
-        .where(and(...conditions))
-        .orderBy(schema.mediaItems.id)
-        .limit(options.limit)
-        .offset(options.offset);
+        const rows = await this.db
+          .select({ id: schema.mediaItems.id })
+          .from(schema.mediaItems)
+          .where(and(...conditions))
+          .orderBy(schema.mediaItems.id)
+          .limit(options.limit)
+          .offset(options.offset);
 
-      return rows.map((r) => r.id);
-    } catch (error) {
-      this.logger.error(`Failed to find IDs for recalculation: ${error.message}`);
-      throw new DatabaseException('Failed to find IDs for recalculation');
-    }
+        return rows.map((r) => r.id);
+      },
+      { type: options.type, limit: options.limit, offset: options.offset },
+    );
   }
 
   /**
@@ -776,42 +759,39 @@ export class DrizzleMediaRepository implements IMediaRepository {
     limit: number;
     minVotes: number;
   }): Promise<CorruptedWatchersItem[]> {
-    try {
-      const conditions = [
-        isNull(schema.mediaItems.deletedAt),
-        gte(schema.mediaItems.voteCountTrakt, options.minVotes),
-        sql`(${schema.mediaStats.totalWatchers} IS NULL OR ${schema.mediaStats.totalWatchers} = 0)`,
-      ];
+    return withDbError(
+      'find items with missing watchers',
+      this.logger,
+      async () => {
+        const conditions = buildMissingWatchersConditions({
+          type: options.type,
+          minVotes: options.minVotes,
+        });
 
-      if (options.type) {
-        conditions.push(eq(schema.mediaItems.type, options.type));
-      }
+        const rows = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+            type: schema.mediaItems.type,
+            voteCountTrakt: schema.mediaItems.voteCountTrakt,
+          })
+          .from(schema.mediaItems)
+          .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
+          .where(and(...conditions))
+          .orderBy(desc(schema.mediaItems.voteCountTrakt))
+          .limit(options.limit);
 
-      const rows = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          type: schema.mediaItems.type,
-          voteCountTrakt: schema.mediaItems.voteCountTrakt,
-        })
-        .from(schema.mediaItems)
-        .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
-        .where(and(...conditions))
-        .orderBy(desc(schema.mediaItems.voteCountTrakt))
-        .limit(options.limit);
-
-      return rows
-        .filter((r) => r.tmdbId !== null && r.voteCountTrakt !== null)
-        .map((r) => ({
-          id: r.id,
-          tmdbId: r.tmdbId!,
-          type: r.type,
-          voteCountTrakt: r.voteCountTrakt!,
-        }));
-    } catch (error) {
-      this.logger.error(`Failed to find items with missing watchers: ${error.message}`);
-      throw new DatabaseException('Failed to find items with missing watchers');
-    }
+        return rows
+          .filter((r) => r.tmdbId !== null && r.voteCountTrakt !== null)
+          .map((r) => ({
+            id: r.id,
+            tmdbId: r.tmdbId!,
+            type: r.type,
+            voteCountTrakt: r.voteCountTrakt!,
+          }));
+      },
+      { type: options.type, limit: options.limit, minVotes: options.minVotes },
+    );
   }
 
   /**
@@ -823,42 +803,39 @@ export class DrizzleMediaRepository implements IMediaRepository {
     limit: number;
     minTotalWatchers: number;
   }): Promise<CorruptedWatchersItem[]> {
-    try {
-      const conditions = [
-        isNull(schema.mediaItems.deletedAt),
-        eq(schema.mediaStats.watchersCount, 0),
-        gte(schema.mediaStats.totalWatchers, options.minTotalWatchers),
-      ];
+    return withDbError(
+      'find items with corrupted watchers count',
+      this.logger,
+      async () => {
+        const conditions = buildCorruptedWatchersCountConditions({
+          type: options.type,
+          minTotalWatchers: options.minTotalWatchers,
+        });
 
-      if (options.type) {
-        conditions.push(eq(schema.mediaItems.type, options.type));
-      }
+        const rows = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+            type: schema.mediaItems.type,
+            voteCountTrakt: schema.mediaItems.voteCountTrakt,
+          })
+          .from(schema.mediaItems)
+          .innerJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
+          .where(and(...conditions))
+          .orderBy(desc(schema.mediaStats.totalWatchers))
+          .limit(options.limit);
 
-      const rows = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          type: schema.mediaItems.type,
-          voteCountTrakt: schema.mediaItems.voteCountTrakt,
-        })
-        .from(schema.mediaItems)
-        .innerJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
-        .where(and(...conditions))
-        .orderBy(desc(schema.mediaStats.totalWatchers))
-        .limit(options.limit);
-
-      return rows
-        .filter((r) => r.tmdbId !== null)
-        .map((r) => ({
-          id: r.id,
-          tmdbId: r.tmdbId!,
-          type: r.type,
-          voteCountTrakt: r.voteCountTrakt ?? 0,
-        }));
-    } catch (error) {
-      this.logger.error(`Failed to find items with corrupted watchers count: ${error.message}`);
-      throw new DatabaseException('Failed to find items with corrupted watchers count');
-    }
+        return rows
+          .filter((r) => r.tmdbId !== null)
+          .map((r) => ({
+            id: r.id,
+            tmdbId: r.tmdbId!,
+            type: r.type,
+            voteCountTrakt: r.voteCountTrakt ?? 0,
+          }));
+      },
+      { type: options.type, limit: options.limit, minTotalWatchers: options.minTotalWatchers },
+    );
   }
 
   /**
@@ -869,47 +846,45 @@ export class DrizzleMediaRepository implements IMediaRepository {
   async findEligibleForTrending(options: {
     limit: number;
     offset: number;
-  }): Promise<EligibleTrendingItem[]> {
-    try {
-      const rows = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          type: schema.mediaItems.type,
-        })
-        .from(schema.mediaItems)
-        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
-        .innerJoin(
-          schema.mediaCatalogEvaluations,
-          and(
-            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
-            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
-            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-          ),
-        )
-        .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
-        .where(
-          and(
-            isNull(schema.mediaItems.deletedAt),
-            isNotNull(schema.mediaItems.tmdbId),
-            // Only items that need sync (no watchers data yet)
-            sql`(${schema.mediaStats.watchersCount} IS NULL OR ${schema.mediaStats.watchersCount} = 0)`,
-          ),
-        )
-        .orderBy(schema.mediaItems.id)
-        .limit(options.limit)
-        .offset(options.offset);
+  }): Promise<MediaSyncItem[]> {
+    return withDbError(
+      'find eligible items for trending',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+            type: schema.mediaItems.type,
+          })
+          .from(schema.mediaItems)
+          .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
+          .innerJoin(
+            schema.mediaCatalogEvaluations,
+            and(
+              eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+              eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+              eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
+              eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+            ),
+          )
+          .leftJoin(schema.mediaStats, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
+          .where(
+            and(
+              isNull(schema.mediaItems.deletedAt),
+              isNotNull(schema.mediaItems.tmdbId),
+              // Only items that need sync (no watchers data yet)
+              sql`(${schema.mediaStats.watchersCount} IS NULL OR ${schema.mediaStats.watchersCount} = 0)`,
+            ),
+          )
+          .orderBy(schema.mediaItems.id)
+          .limit(options.limit)
+          .offset(options.offset);
 
-      return rows.map((r) => ({
-        id: r.id,
-        tmdbId: r.tmdbId!,
-        type: r.type,
-      }));
-    } catch (error) {
-      this.logger.error(`Failed to find eligible items for trending: ${error.message}`);
-      throw new DatabaseException('Failed to find eligible items for trending');
-    }
+        return toMediaIdItems(rows);
+      },
+      { limit: options.limit, offset: options.offset },
+    );
   }
 
   /**
@@ -920,55 +895,46 @@ export class DrizzleMediaRepository implements IMediaRepository {
     cursor?: string;
     limit: number;
   }): Promise<SnapshotCandidate[]> {
-    try {
-      // Get active policy version
-      const activePolicy = await this.db
-        .select({ version: schema.catalogPolicies.version })
-        .from(schema.catalogPolicies)
-        .where(eq(schema.catalogPolicies.isActive, true))
-        .limit(1);
+    return withDbError(
+      'find snapshot candidates',
+      this.logger,
+      async () => {
+        // Get active policy version
+        const activePolicy = await this.db
+          .select({ version: schema.catalogPolicies.version })
+          .from(schema.catalogPolicies)
+          .where(eq(schema.catalogPolicies.isActive, true))
+          .limit(1);
 
-      if (!activePolicy.length) {
-        this.logger.warn('No active policy found for snapshot candidates');
-        return [];
-      }
+        if (!activePolicy.length) {
+          this.logger.warn('No active policy found for snapshot candidates');
+          return [];
+        }
 
-      const conditions = [
-        isNull(schema.mediaItems.deletedAt),
-        isNotNull(schema.mediaItems.tmdbId),
-        eq(schema.mediaCatalogEvaluations.policyVersion, activePolicy[0].version),
-        eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
-        eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-      ];
+        const conditions = buildSnapshotCandidateConditions({
+          policyVersion: activePolicy[0].version,
+          cursor: options.cursor,
+        });
 
-      if (options.cursor) {
-        conditions.push(gt(schema.mediaItems.id, options.cursor));
-      }
+        const rows = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+            type: schema.mediaItems.type,
+          })
+          .from(schema.mediaItems)
+          .innerJoin(
+            schema.mediaCatalogEvaluations,
+            eq(schema.mediaCatalogEvaluations.mediaItemId, schema.mediaItems.id),
+          )
+          .where(and(...conditions))
+          .orderBy(schema.mediaItems.id)
+          .limit(options.limit);
 
-      const rows = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          type: schema.mediaItems.type,
-        })
-        .from(schema.mediaItems)
-        .innerJoin(
-          schema.mediaCatalogEvaluations,
-          eq(schema.mediaCatalogEvaluations.mediaItemId, schema.mediaItems.id),
-        )
-        .where(and(...conditions))
-        .orderBy(schema.mediaItems.id)
-        .limit(options.limit);
-
-      return rows.map((r) => ({
-        id: r.id,
-        tmdbId: r.tmdbId!,
-        type: r.type,
-      }));
-    } catch (error) {
-      this.logger.error(`Failed to find snapshot candidates: ${error.message}`);
-      throw new DatabaseException('Failed to find snapshot candidates');
-    }
+        return toMediaIdItems(rows);
+      },
+      { cursor: options.cursor, limit: options.limit },
+    );
   }
 
   /**
@@ -981,72 +947,46 @@ export class DrizzleMediaRepository implements IMediaRepository {
     limit: number;
     /** Minimum quality score (use 50 to cover both hero and watching-now) */
     minQualityScore?: number;
-  }): Promise<HeroCandidateItem[]> {
-    try {
-      const now = new Date();
-      const staleThreshold = new Date(now.getTime() - options.staleThresholdHours * MS_PER_HOUR);
-      const showFreshnessCutoff = new Date(
-        now.getTime() - HERO_THRESHOLDS.MAX_DAYS_SINCE_LAST_EPISODE * MS_PER_DAY,
-      );
-      // Default to hero threshold for backwards compatibility
-      const minQuality = options.minQualityScore ?? HERO_THRESHOLDS.MIN_QUALITY_SCORE;
+  }): Promise<MediaSyncItem[]> {
+    return withDbError(
+      'find homepage candidates for stats refresh',
+      this.logger,
+      async () => {
+        const conditions = buildHeroCandidatesConditions({
+          staleThresholdHours: options.staleThresholdHours,
+          minQualityScore: options.minQualityScore,
+        });
 
-      const rows = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          type: schema.mediaItems.type,
-        })
-        .from(schema.mediaItems)
-        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
-        .innerJoin(
-          schema.mediaCatalogEvaluations,
-          and(
-            eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
-            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
-            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.TRENDING),
-            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
-          ),
-        )
-        .innerJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
-        .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
-        .where(
-          and(
-            isNull(schema.mediaItems.deletedAt),
-            isNotNull(schema.mediaItems.tmdbId),
-            isNotNull(schema.mediaItems.posterPath),
-            isNotNull(schema.mediaItems.backdropPath),
-            gte(schema.mediaStats.qualityScore, minQuality),
-            gte(schema.mediaStats.popularityScore, HERO_THRESHOLDS.MIN_POPULARITY_SCORE_FALLBACK),
-            gt(schema.mediaStats.watchersCount, 0),
-            lt(schema.mediaStats.updatedAt, staleThreshold),
-            // Movies: no freshness gate (theatrical releases have different lifecycle)
-            // Shows: must be fresh (recent episode OR upcoming episode announced)
-            or(
-              eq(schema.mediaItems.type, MediaType.MOVIE),
-              and(
-                eq(schema.mediaItems.type, MediaType.SHOW),
-                or(
-                  gte(schema.shows.lastAirDate, showFreshnessCutoff),
-                  isNotNull(schema.shows.nextAirDate),
-                ),
-              ),
+        const evaluationConditions = buildHeroCandidatesEvaluationConditions();
+
+        const rows = await this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+            type: schema.mediaItems.type,
+          })
+          .from(schema.mediaItems)
+          .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
+          .innerJoin(
+            schema.mediaCatalogEvaluations,
+            and(
+              eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
+              ...evaluationConditions,
             ),
-          ),
-        )
-        .orderBy(desc(schema.mediaStats.watchersCount), desc(schema.mediaStats.ratingoScore))
-        .limit(options.limit);
+          )
+          .innerJoin(schema.mediaStats, eq(schema.mediaItems.id, schema.mediaStats.mediaItemId))
+          .leftJoin(schema.shows, eq(schema.mediaItems.id, schema.shows.mediaItemId))
+          .where(and(...conditions))
+          .orderBy(desc(schema.mediaStats.watchersCount), desc(schema.mediaStats.ratingoScore))
+          .limit(options.limit);
 
-      return rows
-        .filter((r) => r.tmdbId !== null)
-        .map((r) => ({
-          id: r.id,
-          tmdbId: r.tmdbId!,
-          type: r.type,
-        }));
-    } catch (error) {
-      this.logger.error(`Failed to find homepage candidates for stats refresh: ${error.message}`);
-      throw new DatabaseException('Failed to find homepage candidates for stats refresh');
-    }
+        return toMediaIdItems(rows);
+      },
+      {
+        staleThresholdHours: options.staleThresholdHours,
+        limit: options.limit,
+        minQualityScore: options.minQualityScore,
+      },
+    );
   }
 }

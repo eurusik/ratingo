@@ -4,7 +4,7 @@ import { eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import type { NormalizedSeason } from '../../../ingestion/public';
@@ -12,18 +12,22 @@ import { type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import {
   type CalendarEpisode,
   type IShowRepository,
+  type NewEpisodeItem,
   type ShowDetails,
   type ShowListItem,
   type TrendingShowItem,
   type TrendingShowsOptions,
 } from '../../domain/repositories/show.repository.interface';
-import type { WithTotal } from '../../domain/types/query.types';
-import { type DatabaseTransaction, toDrizzleTx } from '../../domain/types/transaction.type';
-import { PersistenceMapper } from '../mappers/persistence.mapper';
+import type { TrendingQueryResult } from '../../domain/types/query.types';
+import { type DatabaseTransaction } from '../../domain/types/transaction.type';
+import { SeasonEpisodePersistenceMapper } from '../mappers/season-episode-persistence.mapper';
+import { ShowPersistenceMapper } from '../mappers/show-persistence.mapper';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
+import { NewEpisodesQuery } from '../queries/new-episodes.query';
 import { PopularShowsQuery } from '../queries/popular-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
+import { toDrizzleTx, type DrizzleTransaction } from '../utils/drizzle-transaction';
 
 /**
  * Show details payload for upsert operation.
@@ -52,6 +56,7 @@ export class DrizzleShowRepository implements IShowRepository {
     private readonly popularShowsQuery: PopularShowsQuery,
     private readonly showDetailsQuery: ShowDetailsQuery,
     private readonly calendarEpisodesQuery: CalendarEpisodesQuery,
+    private readonly newEpisodesQuery: NewEpisodesQuery,
   ) {}
 
   /**
@@ -65,10 +70,10 @@ export class DrizzleShowRepository implements IShowRepository {
     const drizzleTx = toDrizzleTx(tx);
     const [show] = await drizzleTx
       .insert(schema.shows)
-      .values(PersistenceMapper.toShowInsert(mediaId, details))
+      .values(ShowPersistenceMapper.toShowInsert(mediaId, details))
       .onConflictDoUpdate({
         target: schema.shows.mediaItemId,
-        set: PersistenceMapper.toShowUpdate(details),
+        set: ShowPersistenceMapper.toShowUpdate(details),
       })
       .returning({ id: schema.shows.id });
 
@@ -83,7 +88,7 @@ export class DrizzleShowRepository implements IShowRepository {
    * Upserts seasons and their episodes.
    */
   private async upsertSeasons(
-    drizzleTx: ReturnType<typeof toDrizzleTx>,
+    drizzleTx: DrizzleTransaction,
     showId: string,
     seasons: ShowDetailsPayload['seasons'],
   ): Promise<void> {
@@ -92,10 +97,10 @@ export class DrizzleShowRepository implements IShowRepository {
     for (const season of seasons) {
       const [seasonRecord] = await drizzleTx
         .insert(schema.seasons)
-        .values(PersistenceMapper.toSeasonInsert(showId, season))
+        .values(SeasonEpisodePersistenceMapper.toSeasonInsert(showId, season))
         .onConflictDoUpdate({
           target: [schema.seasons.showId, schema.seasons.number],
-          set: PersistenceMapper.toSeasonUpdate(season),
+          set: SeasonEpisodePersistenceMapper.toSeasonUpdate(season),
         })
         .returning({ id: schema.seasons.id });
 
@@ -108,14 +113,16 @@ export class DrizzleShowRepository implements IShowRepository {
    * Uses single INSERT with ON CONFLICT DO UPDATE for better performance.
    */
   private async upsertEpisodes(
-    drizzleTx: ReturnType<typeof toDrizzleTx>,
+    drizzleTx: DrizzleTransaction,
     seasonId: string,
     showId: string,
     episodes: ShowDetailsPayload['seasons'][number]['episodes'] | undefined,
   ): Promise<void> {
     if (!episodes?.length) return;
 
-    const values = episodes.map((ep) => PersistenceMapper.toEpisodeInsert(seasonId, showId, ep));
+    const values = episodes.map((ep) =>
+      SeasonEpisodePersistenceMapper.toEpisodeInsert(seasonId, showId, ep),
+    );
 
     await drizzleTx
       .insert(schema.episodes)
@@ -138,27 +145,29 @@ export class DrizzleShowRepository implements IShowRepository {
    * Saves drop-off analysis for a show.
    */
   async saveDropOffAnalysis(tmdbId: number, analysis: DropOffAnalysis): Promise<void> {
-    try {
-      await this.db
-        .update(schema.shows)
-        .set({ dropOffAnalysis: analysis })
-        .where(
-          eq(
-            schema.shows.mediaItemId,
-            this.db
-              .select({ id: schema.mediaItems.id })
-              .from(schema.mediaItems)
-              .where(eq(schema.mediaItems.tmdbId, tmdbId))
-              .limit(1),
-          ),
-        );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to save drop-off analysis for ${tmdbId}: ${message}`);
-      throw new DatabaseException(`Failed to save drop-off analysis for ${tmdbId}`, {
-        originalError: message,
-      });
-    }
+    return withDbError(
+      'save drop-off analysis',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .select({ mediaItemId: schema.shows.mediaItemId })
+          .from(schema.shows)
+          .innerJoin(schema.mediaItems, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+          .where(eq(schema.mediaItems.tmdbId, tmdbId))
+          .limit(1);
+
+        if (result.length === 0) {
+          this.logger.warn(`No show found for tmdbId ${tmdbId}, skipping drop-off analysis save`);
+          return;
+        }
+
+        await this.db
+          .update(schema.shows)
+          .set({ dropOffAnalysis: analysis })
+          .where(eq(schema.shows.mediaItemId, result[0].mediaItemId));
+      },
+      { tmdbId },
+    );
   }
 
   /**
@@ -171,15 +180,25 @@ export class DrizzleShowRepository implements IShowRepository {
   /**
    * Finds trending shows with filtering and pagination.
    */
-  async findTrending(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>> {
-    return this.trendingShowsQuery.execute(options) as unknown as WithTotal<TrendingShowItem>;
+  async findTrending(
+    options: TrendingShowsOptions,
+  ): Promise<TrendingQueryResult<TrendingShowItem>> {
+    return this.trendingShowsQuery.execute(options);
   }
 
   /**
    * Finds popular shows (historically popular, no freshness gate).
    */
-  async findPopular(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>> {
-    return this.popularShowsQuery.execute(options) as unknown as WithTotal<TrendingShowItem>;
+  async findPopular(options: TrendingShowsOptions): Promise<TrendingQueryResult<TrendingShowItem>> {
+    return this.popularShowsQuery.execute(options);
+  }
+
+  /**
+   * Finds shows with new episodes within a recent time window.
+   * Groups by show and returns only the latest episode per show.
+   */
+  async findNewEpisodes(days: number, limit: number): Promise<NewEpisodeItem[]> {
+    return this.newEpisodesQuery.execute(days, limit);
   }
 
   /**
@@ -193,46 +212,42 @@ export class DrizzleShowRepository implements IShowRepository {
    * Gets shows for drop-off analysis.
    */
   async findShowsForAnalysis(limit: number): Promise<ShowListItem[]> {
-    try {
-      const shows = await this.db
-        .select({
-          tmdbId: schema.mediaItems.tmdbId,
-          title: schema.mediaItems.title,
-        })
-        .from(schema.mediaItems)
-        .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-        .where(eq(schema.mediaItems.type, MediaType.SHOW))
-        .limit(limit);
-
-      return shows;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to find shows for analysis: ${message}`);
-      throw new DatabaseException('Failed to fetch shows for analysis', {
-        originalError: message,
-      });
-    }
+    return withDbError(
+      'find shows for analysis',
+      this.logger,
+      async () => {
+        return this.db
+          .select({
+            tmdbId: schema.mediaItems.tmdbId,
+            title: schema.mediaItems.title,
+          })
+          .from(schema.mediaItems)
+          .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+          .where(eq(schema.mediaItems.type, MediaType.SHOW))
+          .limit(limit);
+      },
+      { limit },
+    );
   }
 
   /**
    * Gets drop-off analysis for a show by TMDB ID.
    */
   async getDropOffAnalysis(tmdbId: number): Promise<DropOffAnalysis | null> {
-    try {
-      const result = await this.db
-        .select({ dropOffAnalysis: schema.shows.dropOffAnalysis })
-        .from(schema.shows)
-        .innerJoin(schema.mediaItems, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-        .where(eq(schema.mediaItems.tmdbId, tmdbId))
-        .limit(1);
+    return withDbError(
+      'get drop-off analysis',
+      this.logger,
+      async () => {
+        const result = await this.db
+          .select({ dropOffAnalysis: schema.shows.dropOffAnalysis })
+          .from(schema.shows)
+          .innerJoin(schema.mediaItems, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+          .where(eq(schema.mediaItems.tmdbId, tmdbId))
+          .limit(1);
 
-      return result[0]?.dropOffAnalysis || null;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to get drop-off analysis for ${tmdbId}: ${message}`);
-      throw new DatabaseException(`Failed to get drop-off analysis for ${tmdbId}`, {
-        originalError: message,
-      });
-    }
+        return result[0]?.dropOffAnalysis ?? null;
+      },
+      { tmdbId },
+    );
   }
 }

@@ -2,7 +2,6 @@ import { type IngestionStatus } from '../../../../common/enums/ingestion-status.
 import { type MediaType } from '../../../../common/enums/media-type.enum';
 import { type ShowStatus } from '../../../../common/enums/show-status.enum';
 import { type NormalizedSeason } from '../../../ingestion/public';
-import type { CardMeta } from '../../../shared/cards/domain/card.types';
 import { type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import type {
   ImageData,
@@ -14,7 +13,7 @@ import type {
   GenreInfo,
 } from '../types/common.types';
 import type {
-  WithTotal,
+  TrendingQueryResult,
   CatalogSort,
   SortOrder,
   VoteSource,
@@ -85,10 +84,27 @@ export interface ShowListItem {
 }
 
 /**
+ * New episode item for the update feed.
+ * Grouped by show - one entry per show with the latest episode.
+ */
+export interface NewEpisodeItem {
+  /** Media item ID (from media_items table, not shows.id) */
+  mediaItemId: string;
+  slug: string;
+  title: string;
+  posterPath: string | null;
+  seasonNumber: number;
+  episodeNumber: number;
+  episodeTitle: string;
+  airDate: Date;
+}
+
+/**
  * Calendar episode item for the global show calendar.
  */
 export interface CalendarEpisode {
   showId: string;
+  showSlug: string;
   showTitle: string;
   posterPath: string | null;
   seasonNumber: number;
@@ -156,8 +172,6 @@ export interface ShowDetails {
 
   genres: GenreInfo[];
   seasons: SeasonInfo[];
-
-  card?: CardMeta;
 }
 
 /**
@@ -196,6 +210,15 @@ export interface IShowRepository {
   getDropOffAnalysis(tmdbId: number): Promise<DropOffAnalysis | null>;
 
   /**
+   * Finds shows with new episodes within a recent time window.
+   * Groups by show and returns only the latest episode per show.
+   *
+   * @param days - Number of days to look back
+   * @param limit - Max number of shows to return
+   */
+  findNewEpisodes(days: number, limit: number): Promise<NewEpisodeItem[]>;
+
+  /**
    * Finds episodes airing within a date range for the global calendar.
    */
   findEpisodesByDateRange(startDate: Date, endDate: Date): Promise<CalendarEpisode[]>;
@@ -203,12 +226,12 @@ export interface IShowRepository {
   /**
    * Finds trending shows with filtering and pagination.
    */
-  findTrending(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>>;
+  findTrending(options: TrendingShowsOptions): Promise<TrendingQueryResult<TrendingShowItem>>;
 
   /**
    * Finds popular shows (historically popular, no freshness gate).
    */
-  findPopular(options: TrendingShowsOptions): Promise<WithTotal<TrendingShowItem>>;
+  findPopular(options: TrendingShowsOptions): Promise<TrendingQueryResult<TrendingShowItem>>;
 
   /**
    * Finds full show details by slug.

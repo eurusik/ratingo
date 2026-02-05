@@ -11,66 +11,23 @@ import {
   Max,
   Min,
   Validate,
-  ValidationArguments,
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
 } from 'class-validator';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
+import {
+  CATALOG_SORT,
+  CATALOG_SORT_VALUES,
+  type CatalogSort,
+  SORT_ORDER,
+  type SortOrder,
+  VOTE_SOURCE,
+  type VoteSource,
+} from '../../domain/constants/catalog-query.constants';
 import { LIST_CONTEXT } from '../../domain/constants/catalog.constants';
+import type { ListContext } from '../../domain/types/query.types';
+import { YearExclusiveConstraint, YearRangeConstraint } from '../validators/year-range.validator';
 
-@ValidatorConstraint({ name: 'YearRange', async: false })
-class YearRangeConstraint implements ValidatorConstraintInterface {
-  validate(yearTo: unknown, args: ValidationArguments): boolean {
-    const o = args.object as { yearFrom?: number; yearTo?: number };
-    if (o.yearFrom === undefined || yearTo === undefined) return true;
-    return o.yearFrom <= (yearTo as number);
-  }
-
-  defaultMessage(): string {
-    return 'yearFrom must be less than or equal to yearTo';
-  }
-}
-
-@ValidatorConstraint({ name: 'YearExclusive', async: false })
-class YearExclusiveConstraint implements ValidatorConstraintInterface {
-  validate(year: unknown, args: ValidationArguments): boolean {
-    const o = args.object as { yearFrom?: number; yearTo?: number };
-    if (year === undefined) return true;
-    return o.yearFrom === undefined && o.yearTo === undefined;
-  }
-
-  defaultMessage(): string {
-    return 'year cannot be used with yearFrom/yearTo';
-  }
-}
-
-export const CATALOG_SORT = {
-  TRENDING: 'trending',
-  POPULARITY: 'popularity',
-  RATINGO: 'ratingo',
-  RELEASE_DATE: 'releaseDate',
-  TMDB_POPULARITY: 'tmdbPopularity',
-} as const;
-export const CATALOG_SORT_VALUES = Object.values(CATALOG_SORT);
-export type CatalogSort = (typeof CATALOG_SORT_VALUES)[number];
-
-export const SORT_ORDER = {
-  ASC: 'asc',
-  DESC: 'desc',
-} as const;
-export type SortOrder = (typeof SORT_ORDER)[keyof typeof SORT_ORDER];
-
-export const VOTE_SOURCE = {
-  TMDB: 'tmdb',
-  TRAKT: 'trakt',
-} as const;
-export type VoteSource = (typeof VOTE_SOURCE)[keyof typeof VOTE_SOURCE];
-
-// Re-export from domain for convenience
-export { LIST_CONTEXT };
-export const LIST_CONTEXT_VALUES = Object.values(LIST_CONTEXT);
-export type ListContext = (typeof LIST_CONTEXT)[keyof typeof LIST_CONTEXT];
+const LIST_CONTEXT_VALUES = Object.values(LIST_CONTEXT);
 
 /**
  * Unified list query parameters for catalog endpoints.

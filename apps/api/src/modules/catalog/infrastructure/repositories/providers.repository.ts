@@ -6,7 +6,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 
-import { DatabaseException } from '../../../../common/exceptions';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import {
   type IProvidersRepository,
   type ProviderInfo,
@@ -26,11 +26,6 @@ export class DrizzleProvidersRepository implements IProvidersRepository {
    * @throws {DatabaseException} On query failure
    */
   async findAllProviders(): Promise<ProviderInfo[]> {
-    try {
-      return await this.providersQuery.execute();
-    } catch (error) {
-      this.logger.error('Failed to extract providers from media items', error);
-      throw new DatabaseException('Failed to extract providers', error);
-    }
+    return withDbError('find all providers', this.logger, () => this.providersQuery.execute());
   }
 }

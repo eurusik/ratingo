@@ -1,27 +1,20 @@
-import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
-import { type Queue } from 'bullmq';
+import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
+import { JOB_STATUS, type JobStatus } from '@/common/enums/job-status.enum';
+import { MediaType } from '@/common/enums/media-type.enum';
 
-import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
-import { BULL_STATE_TO_JOB_STATUS, JobStatus } from '../../../../common/enums/job-status.enum';
-import { MediaType } from '../../../../common/enums/media-type.enum';
-import { INGESTION_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
-import { TmdbAdapter } from '../../../tmdb/public';
+import { IMPORT_JOB_PORT, IImportJobPort } from '../../domain/ports/import-job.port';
+import {
+  type IMediaMetadataPort,
+  MEDIA_METADATA_PORT,
+} from '../../domain/ports/media-metadata.port';
 import {
   type IMediaRepository,
   MEDIA_REPOSITORY,
 } from '../../domain/repositories/media.repository.interface';
-import { ImportStatus, type ImportResult } from '../../domain/types/import.types';
+import { IMPORT_STATUS, type ImportResult } from '../../domain/types/import.types';
 import { generateSlug } from '../../domain/utils/slug.utils';
-
-/**
- * Maps MediaType to corresponding IngestionJob.
- */
-const MEDIA_TYPE_TO_JOB: Record<MediaType, IngestionJob> = {
-  [MediaType.MOVIE]: IngestionJob.SYNC_MOVIE,
-  [MediaType.SHOW]: IngestionJob.SYNC_SHOW,
-};
 
 /**
  * Service for on-demand import of media from TMDB.
@@ -40,9 +33,10 @@ export class CatalogImportService {
   constructor(
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
-    private readonly tmdbAdapter: TmdbAdapter,
-    @InjectQueue(INGESTION_QUEUE)
-    private readonly ingestionQueue: Queue,
+    @Inject(MEDIA_METADATA_PORT)
+    private readonly metadataPort: IMediaMetadataPort,
+    @Inject(IMPORT_JOB_PORT)
+    private readonly importJobPort: IImportJobPort,
   ) {}
 
   /**
@@ -84,7 +78,7 @@ export class CatalogImportService {
       // If already ready, just return
       if (existing.ingestionStatus === IngestionStatus.READY) {
         return {
-          status: ImportStatus.READY,
+          status: IMPORT_STATUS.READY,
           id: existing.id,
           slug: existing.slug,
           type: existing.type,
@@ -94,48 +88,46 @@ export class CatalogImportService {
       }
 
       // Media is in IMPORTING state - check if job exists
-      const jobName = MEDIA_TYPE_TO_JOB[type];
-      const expectedJobId = `${jobName}_${tmdbId}`;
-      const existingJob = await this.ingestionQueue.getJob(expectedJobId);
+      const existingJobId = await this.importJobPort.hasActiveJob(tmdbId, type);
 
-      if (existingJob) {
+      if (existingJobId) {
         // Job exists, return for polling
         return {
-          status: ImportStatus.IMPORTING,
+          status: IMPORT_STATUS.IMPORTING,
           id: existing.id,
           slug: existing.slug,
           type: existing.type,
           tmdbId,
           ingestionStatus: existing.ingestionStatus,
-          jobId: expectedJobId,
+          jobId: existingJobId,
         };
       }
 
       // Job doesn't exist but media is stuck in IMPORTING - re-queue
-      this.logger.warn(`Media ${tmdbId} stuck in IMPORTING state, re-queuing job ${expectedJobId}`);
-      const job = await this.ingestionQueue.add(jobName, { tmdbId }, { jobId: expectedJobId });
+      this.logger.warn(`Media ${tmdbId} stuck in IMPORTING state, re-queuing job`);
+      const { jobId } = await this.importJobPort.queueImport(tmdbId, type);
 
       return {
-        status: ImportStatus.IMPORTING,
+        status: IMPORT_STATUS.IMPORTING,
         id: existing.id,
         slug: existing.slug,
         type: existing.type,
         tmdbId,
         ingestionStatus: existing.ingestionStatus,
-        jobId: job.id,
+        jobId,
       };
     }
 
-    // Fetch basic info from TMDB to get title for slug
+    // Fetch basic info from metadata provider to get title for slug
     const media =
       type === MediaType.MOVIE
-        ? await this.tmdbAdapter.getMovie(tmdbId)
-        : await this.tmdbAdapter.getShow(tmdbId);
+        ? await this.metadataPort.getMovie(tmdbId)
+        : await this.metadataPort.getShow(tmdbId);
 
     if (!media) {
       this.logger.warn(`TMDB returned null for ${type} ${tmdbId}`);
       return {
-        status: ImportStatus.NOT_FOUND,
+        status: IMPORT_STATUS.NOT_FOUND,
         type,
         tmdbId,
       };
@@ -153,20 +145,18 @@ export class CatalogImportService {
     });
 
     // Queue for full sync with deduplication by jobId
-    const jobName = MEDIA_TYPE_TO_JOB[type];
-    const jobId = `${jobName}_${tmdbId}`;
-    const job = await this.ingestionQueue.add(jobName, { tmdbId }, { jobId });
+    const { jobId } = await this.importJobPort.queueImport(tmdbId, type);
 
-    this.logger.log(`Queued import for ${type} ${tmdbId}: ${media.title} (job: ${job.id})`);
+    this.logger.log(`Queued import for ${type} ${tmdbId}: ${media.title} (job: ${jobId})`);
 
     return {
-      status: ImportStatus.IMPORTING,
+      status: IMPORT_STATUS.IMPORTING,
       id: stub.id,
       slug: stub.slug,
       type,
       tmdbId,
       ingestionStatus: IngestionStatus.IMPORTING,
-      jobId: job.id,
+      jobId,
     };
   }
 
@@ -182,37 +172,26 @@ export class CatalogImportService {
     slug: string | null;
     errorMessage: string | null;
   }> {
-    // Validate jobId format - must be sync-movie_* or sync-show_*
-    const isValidImportJob =
-      jobId.startsWith(`${IngestionJob.SYNC_MOVIE}_`) ||
-      jobId.startsWith(`${IngestionJob.SYNC_SHOW}_`);
-
-    if (!isValidImportJob) {
+    if (!this.importJobPort.isValidImportJobId(jobId)) {
       throw new BadRequestException('Invalid import job ID');
     }
 
-    const job = await this.ingestionQueue.getJob(jobId);
-    if (!job) {
+    const jobStatus = await this.importJobPort.getJobStatus(jobId);
+    if (!jobStatus) {
       throw new NotFoundException('Job not found');
     }
 
-    const state = await job.getState();
-    const status =
-      BULL_STATE_TO_JOB_STATUS[state] ??
-      BULL_STATE_TO_JOB_STATUS[job.finishedOn ? 'completed' : 'failed'] ??
-      JobStatus.FAILED;
-
     // Get slug from DB if job is completed
     let slug: string | null = null;
-    if (status === JobStatus.READY && job.data?.tmdbId) {
-      const media = await this.mediaRepository.findByTmdbId(job.data.tmdbId);
+    if (jobStatus.status === JOB_STATUS.READY && jobStatus.tmdbId) {
+      const media = await this.mediaRepository.findByTmdbId(jobStatus.tmdbId);
       slug = media?.slug ?? null;
     }
 
     return {
-      status,
+      status: jobStatus.status,
       slug,
-      errorMessage: job.failedReason ?? null,
+      errorMessage: jobStatus.errorMessage,
     };
   }
 }

@@ -4,7 +4,7 @@ import { MovieStatus } from '../../../../common/enums/movie-status.enum';
 import { ReleaseStatus } from '../../../../common/enums/release-status.enum';
 import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 
-import { MediaBaseDto } from './common.dto';
+import { MediaBaseDto } from './media-base.dto';
 import { MovieVerdictDto } from './verdict.dto';
 
 export class MovieResponseDto extends MediaBaseDto {

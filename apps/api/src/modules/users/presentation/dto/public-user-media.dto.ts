@@ -2,9 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { IsIn, IsOptional } from 'class-validator';
 
+import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../../common/dtos';
 import { type ImageDto } from '../../../../common/dtos/image.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../catalog/public';
 import {
   type UserMediaState,
   USER_MEDIA_STATE_VALUES,

@@ -1,18 +1,20 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { type MediaType } from '../../../../common/enums/media-type.enum';
-import { ImageMapper } from '../../../../common/mappers/image.mapper';
-import { TmdbAdapter } from '../../../tmdb/public';
 import { SEARCH_CONFIG } from '../../domain/constants/catalog.constants';
+import {
+  type IMediaMetadataPort,
+  MEDIA_METADATA_PORT,
+} from '../../domain/ports/media-metadata.port';
 import {
   type IMediaRepository,
   MEDIA_REPOSITORY,
 } from '../../domain/repositories/media.repository.interface';
 import {
-  type SearchResponseDto,
-  type SearchItemDto,
-  SearchSource,
-} from '../../presentation/dtos/search.dto';
+  type HybridSearchResult,
+  type LocalSearchResultItem,
+  SEARCH_SOURCE,
+  type TmdbSearchResultItem,
+} from '../../domain/types/search.types';
 
 /**
  * Orchestrates search across local database and TMDB.
@@ -25,70 +27,56 @@ export class CatalogSearchService {
   constructor(
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
-    private readonly tmdbAdapter: TmdbAdapter,
+    @Inject(MEDIA_METADATA_PORT)
+    private readonly metadataPort: IMediaMetadataPort,
   ) {}
 
   /**
-   * Performs hybrid search.
-   *
-   * @param {string} query - Search string
-   * @returns {Promise<SearchResponseDto>} Combined search results split by source
+   * Performs hybrid search across local DB and TMDB.
    */
-  async search(query: string): Promise<SearchResponseDto> {
+  async search(query: string): Promise<HybridSearchResult> {
     if (!query || query.trim().length < SEARCH_CONFIG.MIN_QUERY_LENGTH) {
       return { query, local: [], tmdb: [] };
     }
 
     try {
-      // Parallel search
-      const [localResults, tmdbResultsRaw] = await Promise.all([
+      const [localResults, tmdbResults] = await Promise.all([
         this.mediaRepository.search(query, SEARCH_CONFIG.RESULTS_LIMIT),
-        this.tmdbAdapter.searchMulti(query, 1),
+        this.metadataPort.searchMulti(query, 1),
       ]);
 
-      // Collect TMDB IDs from local results to filter duplicates
       const localTmdbIds = new Set(localResults.map((r) => r.tmdbId));
 
-      // Map local results
-      const local: SearchItemDto[] = localResults.map((r) => ({
-        source: SearchSource.LOCAL,
-        type: r.type as MediaType,
+      const local: LocalSearchResultItem[] = localResults.map((r) => ({
+        source: SEARCH_SOURCE.LOCAL,
+        type: r.type,
         id: r.id,
-        mediaItemId: r.id,
         slug: r.slug,
         tmdbId: r.tmdbId,
         title: r.title,
         originalTitle: r.originalTitle,
         year: r.releaseDate ? new Date(r.releaseDate).getFullYear() || null : null,
-        poster: ImageMapper.toPoster(r.posterPath),
+        posterPath: r.posterPath,
         rating: r.rating || 0,
-        isImported: true,
       }));
 
-      // Filter and map TMDB results
-      const tmdb: SearchItemDto[] = tmdbResultsRaw
+      const tmdb: TmdbSearchResultItem[] = tmdbResults
         .filter((r) => !localTmdbIds.has(r.externalIds.tmdbId))
+        .slice(0, SEARCH_CONFIG.RESULTS_LIMIT)
         .map((r) => ({
-          source: SearchSource.TMDB,
+          source: SEARCH_SOURCE.TMDB,
           type: r.type,
           tmdbId: r.externalIds.tmdbId,
           title: r.title,
           originalTitle: r.originalTitle,
           year: r.releaseDate ? new Date(r.releaseDate).getFullYear() || null : null,
-          poster: ImageMapper.toPoster(r.posterPath),
+          posterPath: r.posterPath,
           rating: r.rating || 0,
-          isImported: false,
-        }))
-        .slice(0, SEARCH_CONFIG.RESULTS_LIMIT);
+        }));
 
-      return {
-        query,
-        local,
-        tmdb,
-      };
+      return { query, local, tmdb };
     } catch (error) {
       this.logger.error(`Search failed for "${query}": ${error.message}`, error.stack);
-      // Fallback: return empty results instead of crashing
       return { query, local: [], tmdb: [] };
     }
   }

@@ -18,6 +18,7 @@ import { CatalogSearchService } from '../../application/services/catalog-search.
 import { type ImportResult } from '../../domain/types/import.types';
 import { ImportResultDto } from '../dtos/import-result.dto';
 import { SearchResponseDto } from '../dtos/search.dto';
+import { SearchMapper } from '../mappers/search.mapper';
 
 /**
  * Public catalog search endpoints.
@@ -41,7 +42,8 @@ export class CatalogSearchController {
   @ApiOperation({ summary: 'Search movies and shows' })
   @ApiResponse({ status: 200, type: SearchResponseDto })
   async search(@Query('query') query: string): Promise<SearchResponseDto> {
-    return this.catalogSearchService.search(query);
+    const result = await this.catalogSearchService.search(query);
+    return SearchMapper.toResponseDto(result);
   }
 
   /**

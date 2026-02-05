@@ -2664,6 +2664,8 @@ export interface components {
         CalendarEpisodeDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
             showId: string;
+            /** @example arcane */
+            showSlug: string;
             /** @example Arcane */
             showTitle: string;
             /** @example /path/to/poster.jpg */

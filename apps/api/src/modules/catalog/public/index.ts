@@ -12,53 +12,25 @@
  * import { IMediaRepository } from '../catalog/domain/repositories/media.repository.interface';
  */
 
-// Repository interfaces and tokens
-export {
-  IMediaRepository,
-  MEDIA_REPOSITORY,
-  MediaScoreData,
-  MediaWithTmdbId,
+// Repository tokens (runtime values)
+export { MEDIA_REPOSITORY } from '../domain/repositories/media.repository.interface';
+export { MOVIE_REPOSITORY } from '../domain/repositories/movie.repository.interface';
+export { SHOW_REPOSITORY } from '../domain/repositories/show.repository.interface';
+export { GENRE_REPOSITORY } from '../domain/repositories/genre.repository.interface';
+export { PROVIDERS_REPOSITORY } from '../domain/repositories/providers.repository.interface';
+
+// Repository interfaces (type-only)
+export type { IMediaRepository } from '../domain/repositories/media.repository.interface';
+export type { IMovieRepository } from '../domain/repositories/movie.repository.interface';
+export type { IShowRepository } from '../domain/repositories/show.repository.interface';
+export type { IGenreRepository } from '../domain/repositories/genre.repository.interface';
+export type { IProvidersRepository } from '../domain/repositories/providers.repository.interface';
+
+// Domain types consumed by external modules
+export type {
   MediaScoreDataWithTmdbId,
-  TrendingUpdatedItem,
-  EligibleTrendingItem,
   SnapshotCandidate,
 } from '../domain/repositories/media.repository.interface';
 
-export {
-  IMovieRepository,
-  MOVIE_REPOSITORY,
-} from '../domain/repositories/movie.repository.interface';
-
-export { IShowRepository, SHOW_REPOSITORY } from '../domain/repositories/show.repository.interface';
-
-export type {
-  TrendingShowsOptions,
-  TrendingShowItem,
-  ShowListItem,
-  CalendarEpisode,
-  SeasonInfo,
-  ShowDetails,
-} from '../domain/repositories/show.repository.interface';
-
-export {
-  IGenreRepository,
-  GENRE_REPOSITORY,
-} from '../domain/repositories/genre.repository.interface';
-
-export {
-  IProvidersRepository,
-  PROVIDERS_REPOSITORY,
-} from '../domain/repositories/providers.repository.interface';
-
 // Domain utilities
-export { generateSlug, generateUniqueSlug } from '../domain/utils/slug.utils';
-
-// Presentation DTOs (from common)
-export {
-  OffsetPaginationQueryDto,
-  OffsetPaginationMetaDto,
-  LISTING_SORT,
-  LISTING_SORT_VALUES,
-} from '../../../common/dtos';
-
-export type { ListingSort, OffsetPaginationMeta } from '../../../common/dtos';
+export { generateSlug } from '../domain/utils/slug.utils';

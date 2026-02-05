@@ -39,6 +39,7 @@ describe('CalendarEpisodesQuery', () => {
     const episodes = [
       {
         showId: 's1',
+        showSlug: 'show-slug',
         showTitle: 'Show',
         posterPath: '/p.jpg',
         seasonNumber: 2,
@@ -59,6 +60,7 @@ describe('CalendarEpisodesQuery', () => {
     expect(res).toEqual([
       {
         showId: 's1',
+        showSlug: 'show-slug',
         showTitle: 'Show',
         posterPath: '/p.jpg',
         seasonNumber: 2,
