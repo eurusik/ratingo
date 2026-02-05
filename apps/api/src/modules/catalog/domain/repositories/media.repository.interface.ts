@@ -151,12 +151,9 @@ export interface IMediaRepository {
    * @param {object} options - Query options
    * @param {Date} options.since - Only items updated after this date
    * @param {number} options.limit - Max items to return
-   * @returns {Promise<TrendingUpdatedItem[]>} Items with tmdbId and type
+   * @returns {Promise<MediaSyncItem[]>} Items with tmdbId and type
    */
-  findTrendingUpdatedItems(options: {
-    since?: Date;
-    limit: number;
-  }): Promise<TrendingUpdatedItem[]>;
+  findTrendingUpdatedItems(options: { since?: Date; limit: number }): Promise<MediaSyncItem[]>;
 
   /**
    * Retrieves IDs of active media items for snapshots sync with cursor pagination.
@@ -223,12 +220,9 @@ export interface IMediaRepository {
    * @param {object} options - Query options
    * @param {number} options.limit - Max items to return
    * @param {number} options.offset - Offset for pagination
-   * @returns {Promise<EligibleTrendingItem[]>} ELIGIBLE trending items with tmdbId and type
+   * @returns {Promise<MediaSyncItem[]>} ELIGIBLE trending items with tmdbId and type
    */
-  findEligibleForTrending(options: {
-    limit: number;
-    offset: number;
-  }): Promise<EligibleTrendingItem[]>;
+  findEligibleForTrending(options: { limit: number; offset: number }): Promise<MediaSyncItem[]>;
 
   /**
    * Retrieves ELIGIBLE media items for snapshots sync.
@@ -265,55 +259,26 @@ export interface IMediaRepository {
     staleThresholdHours: number;
     limit: number;
     minQualityScore?: number;
-  }): Promise<HeroCandidateItem[]>;
+  }): Promise<MediaSyncItem[]>;
 }
 
 /**
- * Item returned by findHeroCandidatesForStatsRefresh.
- * Represents hero candidates that need stats refresh.
+ * Minimal media identity used by batch sync operations
+ * (trending sync, snapshot sync, eligibility checks, hero stats refresh).
  */
-export interface HeroCandidateItem {
+export interface MediaSyncItem {
   id: string;
   tmdbId: number;
   type: MediaType;
 }
 
-/**
- * Item returned by findTrendingUpdatedItems.
- */
-export interface TrendingUpdatedItem {
-  id: string;
-  tmdbId: number;
-  type: MediaType;
-}
+/** Backward-compatible alias for external consumers. */
+export type SnapshotCandidate = MediaSyncItem;
 
 /**
- * Snapshot candidate item - minimal data needed for batch snapshot sync.
+ * Item with corrupted watchers data — extends base with Trakt vote count for diagnostics.
  */
-export interface SnapshotCandidate {
-  id: string;
-  tmdbId: number;
-  type: MediaType;
-}
-
-/**
- * Item returned by findEligibleForTrending.
- * Represents ELIGIBLE items in trending context that need stats sync.
- */
-export interface EligibleTrendingItem {
-  id: string;
-  tmdbId: number;
-  type: MediaType;
-}
-
-/**
- * Item returned by findItemsWithMissingWatchers.
- * Represents items with corrupted total_watchers data.
- */
-export interface CorruptedWatchersItem {
-  id: string;
-  tmdbId: number;
-  type: MediaType;
+export interface CorruptedWatchersItem extends MediaSyncItem {
   voteCountTrakt: number;
 }
 

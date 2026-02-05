@@ -1,8 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { MediaType } from '@/common/enums/media-type.enum';
-import { TmdbAdapter } from '@/modules/tmdb/public';
 
+import {
+  type IMediaMetadataPort,
+  MEDIA_METADATA_PORT,
+} from '../../domain/ports/media-metadata.port';
 import { MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
 import { SEARCH_SOURCE } from '../../domain/types/search.types';
 
@@ -11,7 +14,7 @@ import { CatalogSearchService } from './catalog-search.service';
 describe('CatalogSearchService', () => {
   let service: CatalogSearchService;
   let mediaRepository: any;
-  let tmdbAdapter: any;
+  let metadataPort: jest.Mocked<IMediaMetadataPort>;
 
   const mockLocalMovie = {
     id: 'uuid-1',
@@ -50,7 +53,9 @@ describe('CatalogSearchService', () => {
       search: jest.fn().mockResolvedValue([]),
     };
 
-    tmdbAdapter = {
+    const mockMetadataPort: jest.Mocked<IMediaMetadataPort> = {
+      getMovie: jest.fn(),
+      getShow: jest.fn(),
       searchMulti: jest.fn().mockResolvedValue([]),
     };
 
@@ -58,11 +63,12 @@ describe('CatalogSearchService', () => {
       providers: [
         CatalogSearchService,
         { provide: MEDIA_REPOSITORY, useValue: mediaRepository },
-        { provide: TmdbAdapter, useValue: tmdbAdapter },
+        { provide: MEDIA_METADATA_PORT, useValue: mockMetadataPort },
       ],
     }).compile();
 
     service = module.get<CatalogSearchService>(CatalogSearchService);
+    metadataPort = module.get(MEDIA_METADATA_PORT);
   });
 
   it('should return empty results for short query', async () => {
@@ -71,12 +77,12 @@ describe('CatalogSearchService', () => {
     expect(result.local).toEqual([]);
     expect(result.tmdb).toEqual([]);
     expect(mediaRepository.search).not.toHaveBeenCalled();
-    expect(tmdbAdapter.searchMulti).not.toHaveBeenCalled();
+    expect(metadataPort.searchMulti).not.toHaveBeenCalled();
   });
 
   it('should combine local and tmdb results', async () => {
     mediaRepository.search.mockResolvedValue([mockLocalMovie]);
-    tmdbAdapter.searchMulti.mockResolvedValue([mockTmdbMovie]);
+    metadataPort.searchMulti.mockResolvedValue([mockTmdbMovie]);
 
     const result = await service.search('movie');
 
@@ -111,7 +117,7 @@ describe('CatalogSearchService', () => {
 
   it('should filter out TMDB results that exist locally (deduplication)', async () => {
     mediaRepository.search.mockResolvedValue([mockLocalMovie]);
-    tmdbAdapter.searchMulti.mockResolvedValue([mockTmdbMovie, mockDuplicateTmdbMovie]);
+    metadataPort.searchMulti.mockResolvedValue([mockTmdbMovie, mockDuplicateTmdbMovie]);
 
     const result = await service.search('movie');
 
@@ -127,7 +133,7 @@ describe('CatalogSearchService', () => {
 
   it('should handle errors gracefully and return empty results', async () => {
     mediaRepository.search.mockResolvedValue([mockLocalMovie]);
-    tmdbAdapter.searchMulti.mockRejectedValue(new Error('TMDB Down'));
+    metadataPort.searchMulti.mockRejectedValue(new Error('TMDB Down'));
 
     const result = await service.search('movie');
 
@@ -141,7 +147,7 @@ describe('CatalogSearchService', () => {
       ...mockTmdbMovie,
       externalIds: { tmdbId: 200 + i },
     }));
-    tmdbAdapter.searchMulti.mockResolvedValue(manyMovies);
+    metadataPort.searchMulti.mockResolvedValue(manyMovies);
 
     const result = await service.search('movie');
 
@@ -164,6 +170,6 @@ describe('CatalogSearchService', () => {
     await service.search('test query');
 
     expect(mediaRepository.search).toHaveBeenCalledWith('test query', 10);
-    expect(tmdbAdapter.searchMulti).toHaveBeenCalledWith('test query', 1);
+    expect(metadataPort.searchMulti).toHaveBeenCalledWith('test query', 1);
   });
 });

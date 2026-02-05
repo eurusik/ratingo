@@ -36,9 +36,6 @@ import {
 @UseFilters(CatalogDomainExceptionFilter)
 @Controller('catalog/movies')
 export class CatalogMoviesController {
-  /**
-   * Public movie catalog endpoints (trending, listings, details).
-   */
   constructor(
     @Inject(MOVIE_REPOSITORY)
     private readonly movieRepository: IMovieRepository,
@@ -47,13 +44,6 @@ export class CatalogMoviesController {
     private readonly movieDetailsService: MovieDetailsService,
   ) {}
 
-  /**
-   * Returns trending movies list with pagination.
-   *
-   * @param {CatalogListQueryDto} query - Pagination params
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<PaginatedMovieResponseDto>} Paginated trending movies enriched with user state
-   */
   @Get('trending')
   @ApiOperation({
     summary: 'Trending movies',
@@ -74,14 +64,6 @@ export class CatalogMoviesController {
     return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
   }
 
-  /**
-   * Returns popular movies list with pagination.
-   * Shows historically popular movies without freshness gate.
-   *
-   * @param {CatalogListQueryDto} query - Pagination params
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<PaginatedMovieResponseDto>} Paginated popular movies enriched with user state
-   */
   @Get('popular')
   @ApiOperation({
     summary: 'Popular movies (Hits)',
@@ -102,13 +84,6 @@ export class CatalogMoviesController {
     return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
   }
 
-  /**
-   * Lists movies currently in theaters with optional sort.
-   *
-   * @param {CatalogListQueryDto} query - Pagination and sort params
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<PaginatedMovieResponseDto>} Paginated now-playing movies enriched with user state
-   */
   @Get('now-playing')
   @ApiOperation({
     summary: 'Movies currently in theaters',
@@ -130,13 +105,6 @@ export class CatalogMoviesController {
     return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
   }
 
-  /**
-   * Lists recent theatrical releases within a window.
-   *
-   * @param {CatalogListQueryWithDaysDto} query - Pagination, daysBack, sort params
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<PaginatedMovieResponseDto>} Paginated new releases enriched with user state
-   */
   @Get('new-releases')
   @ApiOperation({
     summary: 'Movies recently released in theaters',
@@ -159,13 +127,6 @@ export class CatalogMoviesController {
     return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
   }
 
-  /**
-   * Lists movies recently released on digital platforms.
-   *
-   * @param {CatalogListQueryWithDaysDto} query - Pagination, daysBack, sort params
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<PaginatedMovieResponseDto>} Paginated digital releases enriched with user state
-   */
   @Get('new-on-digital')
   @ApiOperation({
     summary: 'Movies recently released on digital platforms',
@@ -187,13 +148,6 @@ export class CatalogMoviesController {
     return { data: withCards, meta: buildPaginationMeta(normalizedQuery, movies) };
   }
 
-  /**
-   * Returns movie details by slug.
-   *
-   * @param {string} slug - Movie slug
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<EnrichedMovieDetails>} Movie details enriched with user state
-   */
   @Get(':slug')
   @ApiOperation({
     summary: 'Get movie details by slug',

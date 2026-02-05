@@ -4,9 +4,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { JOB_STATUS } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
-import { TmdbAdapter } from '@/modules/tmdb/public';
 
 import { IMPORT_JOB_PORT, IImportJobPort } from '../../domain/ports/import-job.port';
+import {
+  type IMediaMetadataPort,
+  type MediaMetadata,
+  MEDIA_METADATA_PORT,
+} from '../../domain/ports/media-metadata.port';
 import { MEDIA_REPOSITORY } from '../../domain/repositories/media.repository.interface';
 import { IMPORT_STATUS } from '../../domain/types/import.types';
 
@@ -15,7 +19,7 @@ import { CatalogImportService } from './catalog-import.service';
 describe('CatalogImportService', () => {
   let service: CatalogImportService;
   let mediaRepository: any;
-  let tmdbAdapter: any;
+  let metadataPort: jest.Mocked<IMediaMetadataPort>;
   let importJobPort: jest.Mocked<IImportJobPort>;
 
   beforeEach(async () => {
@@ -24,9 +28,10 @@ describe('CatalogImportService', () => {
       upsertStub: jest.fn(),
     };
 
-    const mockTmdbAdapter = {
+    const mockMetadataPort: jest.Mocked<IMediaMetadataPort> = {
       getMovie: jest.fn(),
       getShow: jest.fn(),
+      searchMulti: jest.fn(),
     };
 
     const mockImportJobPort: jest.Mocked<IImportJobPort> = {
@@ -40,14 +45,14 @@ describe('CatalogImportService', () => {
       providers: [
         CatalogImportService,
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
-        { provide: TmdbAdapter, useValue: mockTmdbAdapter },
+        { provide: MEDIA_METADATA_PORT, useValue: mockMetadataPort },
         { provide: IMPORT_JOB_PORT, useValue: mockImportJobPort },
       ],
     }).compile();
 
     service = module.get<CatalogImportService>(CatalogImportService);
     mediaRepository = module.get(MEDIA_REPOSITORY);
-    tmdbAdapter = module.get(TmdbAdapter);
+    metadataPort = module.get(MEDIA_METADATA_PORT);
     importJobPort = module.get(IMPORT_JOB_PORT);
   });
 
@@ -67,7 +72,7 @@ describe('CatalogImportService', () => {
         expect(result.id).toBe('existing-id');
         expect(result.slug).toBe('existing-movie');
         expect(result.ingestionStatus).toBe(IngestionStatus.READY);
-        expect(tmdbAdapter.getMovie).not.toHaveBeenCalled();
+        expect(metadataPort.getMovie).not.toHaveBeenCalled();
         expect(importJobPort.queueImport).not.toHaveBeenCalled();
       });
 
@@ -115,9 +120,8 @@ describe('CatalogImportService', () => {
       });
 
       it('should import movie from TMDB and queue for sync', async () => {
-        tmdbAdapter.getMovie.mockResolvedValue({
+        metadataPort.getMovie.mockResolvedValue({
           title: 'The Matrix',
-          tmdbId: 123,
         });
         mediaRepository.upsertStub.mockResolvedValue({
           id: 'new-id',
@@ -127,7 +131,7 @@ describe('CatalogImportService', () => {
 
         const result = await service.importMedia(123, MediaType.MOVIE);
 
-        expect(tmdbAdapter.getMovie).toHaveBeenCalledWith(123);
+        expect(metadataPort.getMovie).toHaveBeenCalledWith(123);
         expect(mediaRepository.upsertStub).toHaveBeenCalledWith({
           tmdbId: 123,
           type: MediaType.MOVIE,
@@ -143,9 +147,8 @@ describe('CatalogImportService', () => {
       });
 
       it('should import show from TMDB and queue for sync', async () => {
-        tmdbAdapter.getShow.mockResolvedValue({
+        metadataPort.getShow.mockResolvedValue({
           title: 'Breaking Bad',
-          tmdbId: 456,
         });
         mediaRepository.upsertStub.mockResolvedValue({
           id: 'new-show-id',
@@ -155,14 +158,14 @@ describe('CatalogImportService', () => {
 
         const result = await service.importMedia(456, MediaType.SHOW);
 
-        expect(tmdbAdapter.getShow).toHaveBeenCalledWith(456);
+        expect(metadataPort.getShow).toHaveBeenCalledWith(456);
         expect(importJobPort.queueImport).toHaveBeenCalledWith(456, MediaType.SHOW);
         expect(result.status).toBe(IMPORT_STATUS.IMPORTING);
         expect(result.type).toBe(MediaType.SHOW);
       });
 
       it('should return NOT_FOUND when TMDB returns null', async () => {
-        tmdbAdapter.getMovie.mockResolvedValue(null);
+        metadataPort.getMovie.mockResolvedValue(null);
 
         const result = await service.importMedia(999, MediaType.MOVIE);
 
@@ -175,9 +178,8 @@ describe('CatalogImportService', () => {
       });
 
       it('should generate fallback slug when title is empty', async () => {
-        tmdbAdapter.getMovie.mockResolvedValue({
+        metadataPort.getMovie.mockResolvedValue({
           title: '',
-          tmdbId: 123,
         });
         mediaRepository.upsertStub.mockResolvedValue({
           id: 'new-id',
@@ -196,9 +198,8 @@ describe('CatalogImportService', () => {
       });
 
       it('should generate fallback slug when title is null', async () => {
-        tmdbAdapter.getMovie.mockResolvedValue({
+        metadataPort.getMovie.mockResolvedValue({
           title: null,
-          tmdbId: 123,
         });
         mediaRepository.upsertStub.mockResolvedValue({
           id: 'new-id',
@@ -216,9 +217,8 @@ describe('CatalogImportService', () => {
       });
 
       it('should handle Cyrillic titles in slug generation', async () => {
-        tmdbAdapter.getMovie.mockResolvedValue({
+        metadataPort.getMovie.mockResolvedValue({
           title: 'Тіні забутих предків',
-          tmdbId: 789,
         });
         mediaRepository.upsertStub.mockResolvedValue({
           id: 'new-id',
@@ -233,12 +233,12 @@ describe('CatalogImportService', () => {
       });
 
       it('should deduplicate concurrent requests for the same media', async () => {
-        // Simulate slow TMDB response
-        let resolveGetMovie: (value: any) => void;
-        const slowPromise = new Promise((resolve) => {
+        // Simulate slow metadata response
+        let resolveGetMovie: (value: MediaMetadata) => void;
+        const slowPromise = new Promise<MediaMetadata>((resolve) => {
           resolveGetMovie = resolve;
         });
-        tmdbAdapter.getMovie.mockReturnValue(slowPromise);
+        metadataPort.getMovie.mockReturnValue(slowPromise);
         mediaRepository.upsertStub.mockResolvedValue({
           id: 'new-id',
           slug: 'the-matrix',
@@ -249,15 +249,15 @@ describe('CatalogImportService', () => {
         const promise1 = service.importMedia(123, MediaType.MOVIE);
         const promise2 = service.importMedia(123, MediaType.MOVIE);
 
-        // Resolve TMDB response
-        resolveGetMovie!({ title: 'The Matrix', tmdbId: 123 });
+        // Resolve metadata response
+        resolveGetMovie!({ title: 'The Matrix' });
 
         // Both should return the same result
         const [result1, result2] = await Promise.all([promise1, promise2]);
 
         expect(result1).toEqual(result2);
         // TMDB should be called only once
-        expect(tmdbAdapter.getMovie).toHaveBeenCalledTimes(1);
+        expect(metadataPort.getMovie).toHaveBeenCalledTimes(1);
         // upsertStub should be called only once
         expect(mediaRepository.upsertStub).toHaveBeenCalledTimes(1);
         // Queue should be called only once

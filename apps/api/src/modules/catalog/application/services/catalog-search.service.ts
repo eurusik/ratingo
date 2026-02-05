@@ -1,8 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { TmdbAdapter } from '@/modules/tmdb/public';
-
 import { SEARCH_CONFIG } from '../../domain/constants/catalog.constants';
+import {
+  type IMediaMetadataPort,
+  MEDIA_METADATA_PORT,
+} from '../../domain/ports/media-metadata.port';
 import {
   type IMediaRepository,
   MEDIA_REPOSITORY,
@@ -25,7 +27,8 @@ export class CatalogSearchService {
   constructor(
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
-    private readonly tmdbAdapter: TmdbAdapter,
+    @Inject(MEDIA_METADATA_PORT)
+    private readonly metadataPort: IMediaMetadataPort,
   ) {}
 
   /**
@@ -39,7 +42,7 @@ export class CatalogSearchService {
     try {
       const [localResults, tmdbResults] = await Promise.all([
         this.mediaRepository.search(query, SEARCH_CONFIG.RESULTS_LIMIT),
-        this.tmdbAdapter.searchMulti(query, 1),
+        this.metadataPort.searchMulti(query, 1),
       ]);
 
       const localTmdbIds = new Set(localResults.map((r) => r.tmdbId));

@@ -10,24 +10,9 @@ import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import { TRENDING_THRESHOLDS } from '../../domain/constants/catalog.constants';
+import { type NewEpisodeItem } from '../../domain/repositories/show.repository.interface';
 
 import { type NewEpisodeRow, mapNewEpisodeRows } from './shared/new-episode.mapper';
-
-/**
- * New episode item for the update feed.
- * Grouped by show - one entry per show with the latest episode.
- */
-export interface NewEpisodeItem {
-  /** Media item ID (from media_items table, not shows.id) */
-  mediaItemId: string;
-  slug: string;
-  title: string;
-  posterPath: string | null;
-  seasonNumber: number;
-  episodeNumber: number;
-  episodeTitle: string;
-  airDate: Date;
-}
 
 /**
  * Fetches shows with new episodes within a date range.

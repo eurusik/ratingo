@@ -84,6 +84,22 @@ export interface ShowListItem {
 }
 
 /**
+ * New episode item for the update feed.
+ * Grouped by show - one entry per show with the latest episode.
+ */
+export interface NewEpisodeItem {
+  /** Media item ID (from media_items table, not shows.id) */
+  mediaItemId: string;
+  slug: string;
+  title: string;
+  posterPath: string | null;
+  seasonNumber: number;
+  episodeNumber: number;
+  episodeTitle: string;
+  airDate: Date;
+}
+
+/**
  * Calendar episode item for the global show calendar.
  */
 export interface CalendarEpisode {
@@ -192,6 +208,15 @@ export interface IShowRepository {
    * Gets drop-off analysis for a show by TMDB ID.
    */
   getDropOffAnalysis(tmdbId: number): Promise<DropOffAnalysis | null>;
+
+  /**
+   * Finds shows with new episodes within a recent time window.
+   * Groups by show and returns only the latest episode per show.
+   *
+   * @param days - Number of days to look back
+   * @param limit - Max number of shows to return
+   */
+  findNewEpisodes(days: number, limit: number): Promise<NewEpisodeItem[]>;
 
   /**
    * Finds episodes airing within a date range for the global calendar.

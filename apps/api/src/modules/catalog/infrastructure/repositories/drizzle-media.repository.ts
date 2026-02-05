@@ -19,7 +19,6 @@ import {
   EvaluationContext,
 } from '../../../catalog-policy/public';
 import type { NormalizedMedia } from '../../../ingestion/public';
-import { SlugCollisionService } from '../../application/services/slug-collision.service';
 import { type LocalSearchResult } from '../../domain/models/search-result.model';
 import {
   type IGenreRepository,
@@ -31,9 +30,8 @@ import {
   type MediaWithTmdbId,
   type MediaScoreDataWithTmdbId,
   type CorruptedWatchersItem,
-  type EligibleTrendingItem,
+  type MediaSyncItem,
   type SnapshotCandidate,
-  type HeroCandidateItem,
 } from '../../domain/repositories/media.repository.interface';
 import {
   type IMovieRepository,
@@ -43,6 +41,7 @@ import {
   type IShowRepository,
   SHOW_REPOSITORY,
 } from '../../domain/repositories/show.repository.interface';
+import { createRetrySlug, generateUniqueSlug } from '../../domain/utils/slug.utils';
 import { MediaItemPersistenceMapper } from '../mappers/media-item-persistence.mapper';
 import { HeroMediaQuery } from '../queries/hero-media.query';
 import {
@@ -73,7 +72,6 @@ export class DrizzleMediaRepository implements IMediaRepository {
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
     private readonly heroMediaQuery: HeroMediaQuery,
-    private readonly slugCollisionService: SlugCollisionService,
   ) {}
 
   /**
@@ -267,7 +265,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     },
     conflictingTmdbId: number,
   ): Promise<{ id: string; slug: string }> {
-    const uniqueSlug = this.slugCollisionService.generateUniqueSlug(payload.slug, payload.tmdbId);
+    const uniqueSlug = generateUniqueSlug(payload.slug, payload.tmdbId);
 
     this.logger.warn(
       `Slug collision: "${payload.slug}" owned by tmdbId ${conflictingTmdbId}, ` +
@@ -318,10 +316,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     } catch (error: unknown) {
       // Check if it's a slug collision - retry with unique slug
       if (isSlugCollision(error, DB_CONSTRAINT.MEDIA_TYPE_SLUG)) {
-        const retrySlug = this.slugCollisionService.createRetrySlug(
-          media.slug,
-          media.externalIds.tmdbId,
-        );
+        const retrySlug = createRetrySlug(media.slug, media.externalIds.tmdbId);
         this.logger.warn(
           `Slug collision for "${media.slug}", retrying with "${retrySlug}" (tmdbId: ${media.externalIds.tmdbId})`,
         );
@@ -851,7 +846,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
   async findEligibleForTrending(options: {
     limit: number;
     offset: number;
-  }): Promise<EligibleTrendingItem[]> {
+  }): Promise<MediaSyncItem[]> {
     return withDbError(
       'find eligible items for trending',
       this.logger,
@@ -952,7 +947,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
     limit: number;
     /** Minimum quality score (use 50 to cover both hero and watching-now) */
     minQualityScore?: number;
-  }): Promise<HeroCandidateItem[]> {
+  }): Promise<MediaSyncItem[]> {
     return withDbError(
       'find homepage candidates for stats refresh',
       this.logger,

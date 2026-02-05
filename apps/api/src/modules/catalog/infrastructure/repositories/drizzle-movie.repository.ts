@@ -10,7 +10,7 @@ import {
   type IMovieRepository,
   type MovieWithMedia,
   type MovieDetails,
-  type NowPlayingOptions,
+  type MovieListQueryOptions,
   type TrendingMovieItem,
   type TrendingQueryResult,
   type WithTotal,
@@ -154,7 +154,7 @@ export class DrizzleMovieRepository implements IMovieRepository {
 
   /** Finds trending movies sorted by popularity and rating. */
   async findTrending(
-    options: NowPlayingOptions = {},
+    options: MovieListQueryOptions = {},
   ): Promise<TrendingQueryResult<TrendingMovieItem>> {
     const normalized = { ...options, genres: this.normalizeGenres(options.genres) };
     return this.trendingMoviesQuery.execute(normalized);
@@ -162,14 +162,14 @@ export class DrizzleMovieRepository implements IMovieRepository {
 
   /** Finds popular movies (historically popular, no freshness gate). */
   async findPopular(
-    options: NowPlayingOptions = {},
+    options: MovieListQueryOptions = {},
   ): Promise<TrendingQueryResult<TrendingMovieItem>> {
     const normalized = { ...options, genres: this.normalizeGenres(options.genres) };
     return this.popularMoviesQuery.execute(normalized);
   }
 
   /** Finds movies currently in theaters. No eligibility filtering - show all. */
-  async findNowPlaying(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
+  async findNowPlaying(options: MovieListQueryOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NOW_PLAYING, {
       ...options,
       eligibilityMode: ELIGIBILITY_MODE.NONE,
@@ -177,12 +177,12 @@ export class DrizzleMovieRepository implements IMovieRepository {
   }
 
   /** Finds movies recently released in theaters. Uses catalog eligibility mode. */
-  async findNewReleases(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
+  async findNewReleases(options: MovieListQueryOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_RELEASES, options);
   }
 
   /** Finds movies recently released on digital platforms. Uses catalog eligibility mode. */
-  async findNewOnDigital(options: NowPlayingOptions = {}): Promise<WithTotal<MovieWithMedia>> {
+  async findNewOnDigital(options: MovieListQueryOptions = {}): Promise<WithTotal<MovieWithMedia>> {
     return this.movieListingsQuery.execute(MOVIE_LISTING_TYPE.NEW_ON_DIGITAL, options);
   }
 

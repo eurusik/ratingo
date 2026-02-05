@@ -23,7 +23,6 @@ import {
   type IShowRepository,
   SHOW_REPOSITORY,
 } from '../../domain/repositories/show.repository.interface';
-import { NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.query';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
@@ -41,25 +40,14 @@ import { applyPaginationDefaults, normalizeListQuery } from '../utils/query-norm
 @UseFilters(CatalogDomainExceptionFilter)
 @Controller('catalog/shows')
 export class CatalogShowsController {
-  /**
-   * Public show catalog endpoints (trending, calendar, details).
-   */
   constructor(
     @Inject(SHOW_REPOSITORY)
     private readonly showRepository: IShowRepository,
     private readonly userStateEnricher: CatalogUserStateEnricher,
     private readonly cards: CardEnrichmentService,
-    private readonly newEpisodesQuery: NewEpisodesQuery,
     private readonly showDetailsService: ShowDetailsService,
   ) {}
 
-  /**
-   * Returns trending shows list with pagination.
-   *
-   * @param {TrendingShowsQueryDto} query - Query params
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<TrendingShowsResponseDto>} Trending shows response
-   */
   @Get('trending')
   @ApiOperation({
     summary: 'Trending TV shows',
@@ -83,14 +71,6 @@ export class CatalogShowsController {
     };
   }
 
-  /**
-   * Returns popular shows list with pagination.
-   * Shows historically popular shows without freshness gate.
-   *
-   * @param {TrendingShowsQueryDto} query - Query params
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<TrendingShowsResponseDto>} Popular shows response
-   */
   @Get('popular')
   @ApiOperation({
     summary: 'Popular TV shows (Hits)',
@@ -114,14 +94,6 @@ export class CatalogShowsController {
     };
   }
 
-  /**
-   * Returns shows with new episodes (update feed).
-   * Groups by show - one entry per show with the latest episode.
-   *
-   * @param {number} days - Number of days to look back (default: 7)
-   * @param {number} limit - Max number of shows (default: 20)
-   * @returns {Promise<NewEpisodesResponseDto>} New episodes response
-   */
   @Get('new-episodes')
   @ApiOperation({
     summary: 'Shows with new episodes',
@@ -145,17 +117,10 @@ export class CatalogShowsController {
     @Query('days', new DefaultValuePipe(CATALOG_DEFAULT_CALENDAR_DAYS), ParseIntPipe) days: number,
     @Query('limit', new DefaultValuePipe(DEFAULT_PAGE_SIZE), ParseIntPipe) limit: number,
   ): Promise<NewEpisodesResponseDto> {
-    const episodes = await this.newEpisodesQuery.execute(days, limit);
+    const episodes = await this.showRepository.findNewEpisodes(days, limit);
     return { data: episodes };
   }
 
-  /**
-   * Returns show episodes grouped by date within a range.
-   *
-   * @param {string} startDateString - Start date ISO string
-   * @param {number} days - Number of days to include
-   * @returns {Promise<CalendarResponseDto>} Calendar response
-   */
   @Get('calendar')
   @ApiOperation({
     summary: 'Global release calendar for TV shows',
@@ -204,13 +169,6 @@ export class CatalogShowsController {
     };
   }
 
-  /**
-   * Returns show details by slug.
-   *
-   * @param {string} slug - Show slug
-   * @param {{ id: string } | null} user - Optional authenticated user
-   * @returns {Promise<ShowResponseDto>} Show details
-   */
   @Get(':slug')
   @ApiOperation({
     summary: 'Get show details by slug',

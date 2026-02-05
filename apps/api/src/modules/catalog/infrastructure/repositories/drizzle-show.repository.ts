@@ -12,6 +12,7 @@ import { type DropOffAnalysis } from '../../../shared/drop-off-analyzer';
 import {
   type CalendarEpisode,
   type IShowRepository,
+  type NewEpisodeItem,
   type ShowDetails,
   type ShowListItem,
   type TrendingShowItem,
@@ -22,6 +23,7 @@ import { type DatabaseTransaction } from '../../domain/types/transaction.type';
 import { SeasonEpisodePersistenceMapper } from '../mappers/season-episode-persistence.mapper';
 import { ShowPersistenceMapper } from '../mappers/show-persistence.mapper';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
+import { NewEpisodesQuery } from '../queries/new-episodes.query';
 import { PopularShowsQuery } from '../queries/popular-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
@@ -54,6 +56,7 @@ export class DrizzleShowRepository implements IShowRepository {
     private readonly popularShowsQuery: PopularShowsQuery,
     private readonly showDetailsQuery: ShowDetailsQuery,
     private readonly calendarEpisodesQuery: CalendarEpisodesQuery,
+    private readonly newEpisodesQuery: NewEpisodesQuery,
   ) {}
 
   /**
@@ -188,6 +191,14 @@ export class DrizzleShowRepository implements IShowRepository {
    */
   async findPopular(options: TrendingShowsOptions): Promise<TrendingQueryResult<TrendingShowItem>> {
     return this.popularShowsQuery.execute(options);
+  }
+
+  /**
+   * Finds shows with new episodes within a recent time window.
+   * Groups by show and returns only the latest episode per show.
+   */
+  async findNewEpisodes(days: number, limit: number): Promise<NewEpisodeItem[]> {
+    return this.newEpisodesQuery.execute(days, limit);
   }
 
   /**

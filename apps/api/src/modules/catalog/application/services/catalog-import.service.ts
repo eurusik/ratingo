@@ -3,9 +3,12 @@ import { BadRequestException, Inject, Injectable, Logger, NotFoundException } fr
 import { IngestionStatus } from '@/common/enums/ingestion-status.enum';
 import { JOB_STATUS, type JobStatus } from '@/common/enums/job-status.enum';
 import { MediaType } from '@/common/enums/media-type.enum';
-import { TmdbAdapter } from '@/modules/tmdb/public';
 
 import { IMPORT_JOB_PORT, IImportJobPort } from '../../domain/ports/import-job.port';
+import {
+  type IMediaMetadataPort,
+  MEDIA_METADATA_PORT,
+} from '../../domain/ports/media-metadata.port';
 import {
   type IMediaRepository,
   MEDIA_REPOSITORY,
@@ -30,7 +33,8 @@ export class CatalogImportService {
   constructor(
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
-    private readonly tmdbAdapter: TmdbAdapter,
+    @Inject(MEDIA_METADATA_PORT)
+    private readonly metadataPort: IMediaMetadataPort,
     @Inject(IMPORT_JOB_PORT)
     private readonly importJobPort: IImportJobPort,
   ) {}
@@ -114,11 +118,11 @@ export class CatalogImportService {
       };
     }
 
-    // Fetch basic info from TMDB to get title for slug
+    // Fetch basic info from metadata provider to get title for slug
     const media =
       type === MediaType.MOVIE
-        ? await this.tmdbAdapter.getMovie(tmdbId)
-        : await this.tmdbAdapter.getShow(tmdbId);
+        ? await this.metadataPort.getMovie(tmdbId)
+        : await this.metadataPort.getShow(tmdbId);
 
     if (!media) {
       this.logger.warn(`TMDB returned null for ${type} ${tmdbId}`);

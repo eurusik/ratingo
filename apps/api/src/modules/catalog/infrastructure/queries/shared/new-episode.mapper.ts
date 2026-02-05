@@ -1,4 +1,4 @@
-import type { NewEpisodeItem } from '../new-episodes.query';
+import type { NewEpisodeItem } from '../../../domain/repositories/show.repository.interface';
 
 /**
  * Raw row from the new episodes SQL query.

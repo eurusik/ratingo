@@ -6,6 +6,7 @@ import { PopularShowsQuery } from '../queries/popular-shows.query';
 import { TrendingShowsQuery } from '../queries/trending-shows.query';
 import { ShowDetailsQuery } from '../queries/show-details.query';
 import { CalendarEpisodesQuery } from '../queries/calendar-episodes.query';
+import { NewEpisodesQuery } from '../queries/new-episodes.query';
 
 // Chainable thenable mock
 const createThenable = (resolveWith: any = [], rejectWith?: Error, extraMethods: string[] = []) => {
@@ -43,6 +44,7 @@ describe('DrizzleShowRepository', () => {
   let popularQuery: any;
   let detailsQuery: any;
   let calendarQuery: any;
+  let newEpisodesQuery: any;
   let insertChain: any;
   let updateChain: any;
   let selectChain: any;
@@ -62,6 +64,7 @@ describe('DrizzleShowRepository', () => {
     popularQuery = { execute: jest.fn().mockResolvedValue(['popular']) };
     detailsQuery = { execute: jest.fn().mockResolvedValue('details') };
     calendarQuery = { execute: jest.fn().mockResolvedValue(['calendar']) };
+    newEpisodesQuery = { execute: jest.fn().mockResolvedValue([]) };
 
     return Test.createTestingModule({
       providers: [
@@ -71,6 +74,7 @@ describe('DrizzleShowRepository', () => {
         { provide: PopularShowsQuery, useValue: popularQuery },
         { provide: ShowDetailsQuery, useValue: detailsQuery },
         { provide: CalendarEpisodesQuery, useValue: calendarQuery },
+        { provide: NewEpisodesQuery, useValue: newEpisodesQuery },
       ],
     }).compile();
   };

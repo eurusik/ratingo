@@ -75,9 +75,9 @@ export type TrendingMovieItem = MovieWithMedia & {
 };
 
 /**
- * Options for now playing query.
+ * Shared query options for movie list endpoints.
  */
-export interface NowPlayingOptions {
+export interface MovieListQueryOptions {
   limit?: number;
   offset?: number;
   /** Number of days to look back (default: 30) */
@@ -134,27 +134,27 @@ export interface IMovieRepository {
   /**
    * Finds movies currently in theaters (isNowPlaying = true).
    */
-  findNowPlaying(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
+  findNowPlaying(options?: MovieListQueryOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds movies recently released in theaters.
    */
-  findNewReleases(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
+  findNewReleases(options?: MovieListQueryOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds movies recently released on digital platforms.
    */
-  findNewOnDigital(options?: NowPlayingOptions): Promise<WithTotal<MovieWithMedia>>;
+  findNewOnDigital(options?: MovieListQueryOptions): Promise<WithTotal<MovieWithMedia>>;
 
   /**
    * Finds trending movies sorted by popularity and rating.
    */
-  findTrending(options?: NowPlayingOptions): Promise<TrendingQueryResult<TrendingMovieItem>>;
+  findTrending(options?: MovieListQueryOptions): Promise<TrendingQueryResult<TrendingMovieItem>>;
 
   /**
    * Finds popular movies (historically popular, no freshness gate).
    */
-  findPopular(options?: NowPlayingOptions): Promise<TrendingQueryResult<TrendingMovieItem>>;
+  findPopular(options?: MovieListQueryOptions): Promise<TrendingQueryResult<TrendingMovieItem>>;
 
   /**
    * Sets isNowPlaying flag for movies.

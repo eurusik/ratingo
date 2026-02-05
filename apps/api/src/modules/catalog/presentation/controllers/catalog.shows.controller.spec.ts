@@ -6,7 +6,6 @@ import { CatalogUserStateEnricher } from '../../application/services/catalog-use
 import { ShowDetailsService } from '../../application/services/show-details.service';
 import { ShowNotFoundError } from '../../domain/errors';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
-import { NewEpisodesQuery } from '../../infrastructure/queries/new-episodes.query';
 
 import { CatalogShowsController } from './catalog.shows.controller';
 
@@ -24,6 +23,7 @@ describe('CatalogShowsController', () => {
       findPopular: jest
         .fn()
         .mockResolvedValue([{ id: 'popular-1', title: 'Popular Show', type: 'show' }]),
+      findNewEpisodes: jest.fn().mockResolvedValue([]),
       findEpisodesByDateRange: jest.fn().mockResolvedValue([
         { airDate: new Date('2024-01-01T10:00:00Z'), title: 'Ep1' },
         { airDate: new Date('2024-01-01T11:00:00Z'), title: 'Ep2' },
@@ -46,10 +46,6 @@ describe('CatalogShowsController', () => {
       })),
     };
 
-    const mockNewEpisodesQuery = {
-      execute: jest.fn().mockResolvedValue([]),
-    };
-
     const mockShowDetailsService = {
       getBySlug: jest.fn(),
     };
@@ -60,7 +56,6 @@ describe('CatalogShowsController', () => {
         { provide: SHOW_REPOSITORY, useValue: mockShowRepository },
         { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
         { provide: CardEnrichmentService, useValue: mockCards },
-        { provide: NewEpisodesQuery, useValue: mockNewEpisodesQuery },
         { provide: ShowDetailsService, useValue: mockShowDetailsService },
       ],
     }).compile();
