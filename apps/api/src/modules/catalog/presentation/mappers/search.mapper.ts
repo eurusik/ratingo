@@ -46,7 +46,7 @@ export class SearchMapper {
       year: item.year,
       poster: ImageMapper.toPoster(item.posterPath),
       rating: item.rating,
-      isImported: false,
+      isImported: item.isImported,
     };
   }
 }

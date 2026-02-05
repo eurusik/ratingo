@@ -79,6 +79,7 @@ describe('SearchMapper', () => {
         year: 2011,
         posterPath: '/got.jpg',
         rating: 9.3,
+        isImported: false,
       };
 
       const input: HybridSearchResult = {
@@ -162,6 +163,7 @@ describe('SearchMapper', () => {
             year: 2008,
             posterPath: '/batman2.jpg',
             rating: 9.0,
+            isImported: false,
           },
         ],
       };

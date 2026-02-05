@@ -38,6 +38,7 @@ export interface LocalSearchResultItem extends BaseSearchResultItem {
  */
 export interface TmdbSearchResultItem extends BaseSearchResultItem {
   source: typeof SEARCH_SOURCE.TMDB;
+  isImported: boolean;
 }
 
 /**
