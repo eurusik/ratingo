@@ -14,6 +14,8 @@ import {
 
 import { type FastifyReply } from 'fastify';
 
+import { type ErrorResponseDto } from '../../../../common/dtos/error-response.dto';
+import { ErrorResponseBuilder } from '../../../../common/utils/error-response.builder';
 import { CatalogDomainError, MovieNotFoundError, ShowNotFoundError } from '../../domain/errors';
 
 type CaughtError = CatalogDomainError;
@@ -35,56 +37,23 @@ export class CatalogDomainExceptionFilter implements ExceptionFilter {
 
   private buildResponse(exception: CaughtError): {
     statusCode: number;
-    body: {
-      success: false;
-      error: {
-        code: string;
-        message: string;
-        statusCode: number;
-        details?: Record<string, unknown>;
-      };
-    };
+    body: ErrorResponseDto;
   } {
-    if (exception instanceof MovieNotFoundError) {
-      return {
-        statusCode: HttpStatus.NOT_FOUND,
-        body: {
-          success: false,
-          error: {
-            code: exception.code,
-            message: exception.message,
-            statusCode: HttpStatus.NOT_FOUND,
-            details: { slug: exception.slug },
-          },
-        },
-      };
+    if (exception instanceof MovieNotFoundError || exception instanceof ShowNotFoundError) {
+      return this.createResponse(exception, HttpStatus.NOT_FOUND, { slug: exception.slug });
     }
 
-    if (exception instanceof ShowNotFoundError) {
-      return {
-        statusCode: HttpStatus.NOT_FOUND,
-        body: {
-          success: false,
-          error: {
-            code: exception.code,
-            message: exception.message,
-            statusCode: HttpStatus.NOT_FOUND,
-            details: { slug: exception.slug },
-          },
-        },
-      };
-    }
+    return this.createResponse(exception, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
 
+  private createResponse(
+    exception: CaughtError,
+    statusCode: number,
+    details?: Record<string, unknown>,
+  ): { statusCode: number; body: ErrorResponseDto } {
     return {
-      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      body: {
-        success: false,
-        error: {
-          code: exception.code,
-          message: exception.message,
-          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        },
-      },
+      statusCode,
+      body: ErrorResponseBuilder.build(exception, statusCode, details),
     };
   }
 }
