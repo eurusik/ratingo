@@ -11,9 +11,6 @@ import {
   Max,
   Min,
   Validate,
-  ValidationArguments,
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
 } from 'class-validator';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../common/constants';
@@ -27,46 +24,10 @@ import {
   type VoteSource,
 } from '../../domain/constants/catalog-query.constants';
 import { LIST_CONTEXT } from '../../domain/constants/catalog.constants';
+import type { ListContext } from '../../domain/types/query.types';
+import { YearExclusiveConstraint, YearRangeConstraint } from '../validators/year-range.validator';
 
-// Re-export from domain for backward compatibility
-export {
-  CATALOG_SORT,
-  CATALOG_SORT_VALUES,
-  type CatalogSort,
-  SORT_ORDER,
-  type SortOrder,
-  VOTE_SOURCE,
-  type VoteSource,
-  LIST_CONTEXT,
-};
-export const LIST_CONTEXT_VALUES = Object.values(LIST_CONTEXT);
-export type ListContext = (typeof LIST_CONTEXT)[keyof typeof LIST_CONTEXT];
-
-@ValidatorConstraint({ name: 'YearRange', async: false })
-class YearRangeConstraint implements ValidatorConstraintInterface {
-  validate(yearTo: unknown, args: ValidationArguments): boolean {
-    const o = args.object as { yearFrom?: number; yearTo?: number };
-    if (o.yearFrom === undefined || yearTo === undefined) return true;
-    return o.yearFrom <= (yearTo as number);
-  }
-
-  defaultMessage(): string {
-    return 'yearFrom must be less than or equal to yearTo';
-  }
-}
-
-@ValidatorConstraint({ name: 'YearExclusive', async: false })
-class YearExclusiveConstraint implements ValidatorConstraintInterface {
-  validate(year: unknown, args: ValidationArguments): boolean {
-    const o = args.object as { yearFrom?: number; yearTo?: number };
-    if (year === undefined) return true;
-    return o.yearFrom === undefined && o.yearTo === undefined;
-  }
-
-  defaultMessage(): string {
-    return 'year cannot be used with yearFrom/yearTo';
-  }
-}
+const LIST_CONTEXT_VALUES = Object.values(LIST_CONTEXT);
 
 /**
  * Unified list query parameters for catalog endpoints.

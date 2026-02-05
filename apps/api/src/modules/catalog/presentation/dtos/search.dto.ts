@@ -3,9 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ImageDto } from '@/common/dtos/image.dto';
 import { MediaType } from '@/common/enums/media-type.enum';
 
-// Re-export from domain for backward compatibility
-export { SearchSource } from '../../domain/types/search.types';
-
 export class SearchItemDto {
   @ApiProperty({ enum: ['local', 'tmdb'] })
   source: 'local' | 'tmdb';

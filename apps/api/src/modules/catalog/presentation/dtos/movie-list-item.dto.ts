@@ -6,7 +6,7 @@ import { RatingoStatsDto } from '../../../../common/dtos/ratingo-stats.dto';
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
 
-import { GenreDto } from './common.dto';
+import { GenreDto } from './genre.dto';
 
 export class MovieListItemDto {
   @ApiProperty()
