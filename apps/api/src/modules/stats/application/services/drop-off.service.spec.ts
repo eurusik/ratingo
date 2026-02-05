@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DropOffService } from './drop-off.service';
 import { TRAKT_RATINGS_PORT } from '@/modules/ingestion/domain/ports';
 import { DropOffAnalyzerService } from '@/modules/shared/drop-off-analyzer';
-import { SHOW_REPOSITORY } from '@/modules/catalog/domain/repositories/show.repository.interface';
+import { SHOW_REPOSITORY } from '@/modules/catalog/public';
 
 describe('DropOffService', () => {
   let service: DropOffService;
