@@ -16,6 +16,12 @@ export interface EpisodeMediaInfo {
   episodeNumber: number;
 }
 
+/** Result of validating a batch of episode IDs. */
+export interface EpisodeBatchValidation {
+  existingCount: number;
+  distinctShowCount: number;
+}
+
 export interface IEpisodeProgressRepository {
   markWatched(userId: string, episodeId: string): Promise<void>;
   markUnwatched(userId: string, episodeId: string): Promise<void>;
@@ -23,6 +29,7 @@ export interface IEpisodeProgressRepository {
   getWatchedEpisodeIds(userId: string, showId: string): Promise<string[]>;
   markManyWatched(userId: string, episodeIds: string[]): Promise<void>;
   markManyUnwatched(userId: string, episodeIds: string[]): Promise<void>;
-  countDistinctShowsForEpisodes(episodeIds: string[]): Promise<number>;
+  /** Validates a batch of episode IDs in a single query, returning existing count and distinct show count. */
+  validateEpisodeBatch(episodeIds: string[]): Promise<EpisodeBatchValidation>;
   getEpisodeMediaInfo(episodeId: string): Promise<EpisodeMediaInfo | null>;
 }

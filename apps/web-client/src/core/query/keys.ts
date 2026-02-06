@@ -113,6 +113,14 @@ export const queryKeys = {
       ['users', username, 'ratings', limit ?? null, offset ?? null] as const,
   },
 
+  /**
+   * Legacy saved items queries (used by use-saved-items.ts).
+   * Prefix matches local QUERY_KEYS in use-saved-items.ts: ['saved-items', ...].
+   */
+  savedItems: {
+    all: ['saved-items'] as const,
+  },
+
   /** User actions (saved items, subscriptions). */
   userActions: {
     all: ['user-actions'] as const,

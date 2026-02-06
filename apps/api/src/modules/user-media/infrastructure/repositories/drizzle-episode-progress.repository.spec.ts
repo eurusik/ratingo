@@ -136,34 +136,42 @@ describe('DrizzleEpisodeProgressRepository', () => {
     });
   });
 
-  describe('countDistinctShowsForEpisodes', () => {
-    it('should return 0 for empty array', async () => {
+  describe('validateEpisodeBatch', () => {
+    it('should return zeros for empty array', async () => {
       const db = makeDbMock();
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
-      const result = await repo.countDistinctShowsForEpisodes([]);
+      const result = await repo.validateEpisodeBatch([]);
 
-      expect(result).toBe(0);
+      expect(result).toEqual({ existingCount: 0, distinctShowCount: 0 });
       expect(db.select).not.toHaveBeenCalled();
     });
 
-    it('should return count of distinct shows', async () => {
+    it('should return both counts in a single query', async () => {
       const db = makeDbMock();
-      db.selectDistinctChain.where.mockResolvedValue([{ showId: 'show-1' }]);
+      db.whereMock.mockImplementation(() => {
+        const result: any = Promise.resolve([{ existingCount: 3, distinctShowCount: 1 }]);
+        result.orderBy = db.orderByMock;
+        return result;
+      });
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
-      const result = await repo.countDistinctShowsForEpisodes(['ep-1', 'ep-2']);
+      const result = await repo.validateEpisodeBatch(['ep-1', 'ep-2', 'ep-3']);
 
-      expect(result).toBe(1);
-      expect(db.selectDistinct).toHaveBeenCalled();
+      expect(result).toEqual({ existingCount: 3, distinctShowCount: 1 });
+      expect(db.select).toHaveBeenCalledTimes(1);
     });
 
     it('should throw DatabaseException on error', async () => {
       const db = makeDbMock();
-      db.selectDistinctChain.where.mockRejectedValue(new Error('DB error'));
+      db.whereMock.mockImplementation(() => {
+        const result: any = Promise.reject(new Error('DB error'));
+        result.orderBy = db.orderByMock;
+        return result;
+      });
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
-      await expect(repo.countDistinctShowsForEpisodes(['ep-1'])).rejects.toThrow(DatabaseException);
+      await expect(repo.validateEpisodeBatch(['ep-1'])).rejects.toThrow(DatabaseException);
     });
   });
 

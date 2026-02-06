@@ -7,6 +7,7 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import {
+  type EpisodeBatchValidation,
   type EpisodeMediaInfo,
   type IEpisodeProgressRepository,
   type SeasonProgressInfo,
@@ -179,18 +180,24 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
     }
   }
 
-  async countDistinctShowsForEpisodes(episodeIds: string[]): Promise<number> {
-    if (episodeIds.length === 0) return 0;
+  async validateEpisodeBatch(episodeIds: string[]): Promise<EpisodeBatchValidation> {
+    if (episodeIds.length === 0) return { existingCount: 0, distinctShowCount: 0 };
     try {
-      const rows = await this.db
-        .selectDistinct({ showId: schema.episodes.showId })
+      const [row] = await this.db
+        .select({
+          existingCount: sql<number>`count(*)`,
+          distinctShowCount: sql<number>`count(distinct ${schema.episodes.showId})`,
+        })
         .from(schema.episodes)
         .where(inArray(schema.episodes.id, episodeIds));
 
-      return rows.length;
+      return {
+        existingCount: Number(row?.existingCount ?? 0),
+        distinctShowCount: Number(row?.distinctShowCount ?? 0),
+      };
     } catch (error) {
-      this.logger.error(`countDistinctShowsForEpisodes failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to count distinct shows for episodes', {
+      this.logger.error(`validateEpisodeBatch failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to validate episode batch', {
         count: episodeIds.length,
       });
     }
