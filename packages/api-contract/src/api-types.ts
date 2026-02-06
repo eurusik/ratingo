@@ -483,6 +483,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-media/episodes/batch/watch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch mark episodes as watched (auth: Bearer) */
+        post: operations["EpisodeProgressController_markBatchWatched"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/episodes/batch/unwatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batch mark episodes as unwatched (auth: Bearer) */
+        post: operations["EpisodeProgressController_markBatchUnwatched"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user-media/episodes/{episodeId}/watch": {
         parameters: {
             query?: never;
@@ -2518,11 +2552,6 @@ export interface components {
              */
             type: "warning" | "release" | "quality" | "popularity" | "general";
             /**
-             * @description Message key for i18n lookup on client (details.verdict.movie.*)
-             * @example strongRatings
-             */
-            messageKey: string | null;
-            /**
              * @description Additional context to display with verdict
              * @example IMDb: 6.3
              */
@@ -2533,6 +2562,11 @@ export interface components {
              * @enum {string}
              */
             hintKey: "newEpisodes" | "afterAllEpisodes" | "whenOnStreaming" | "notifyNewEpisode" | "general" | "forLater" | "notifyRelease" | "decideToWatch";
+            /**
+             * @description Message key for i18n lookup on client (details.verdict.movie.*)
+             * @example strongRatings
+             */
+            messageKey: string | null;
         };
         MovieResponseDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
@@ -2612,11 +2646,6 @@ export interface components {
         ShowTrendingItemDto: {
             id: string;
             mediaItemId: string;
-            /**
-             * @example show
-             * @enum {string}
-             */
-            type: "show";
             slug: string;
             title: string;
             originalTitle?: string | null;
@@ -2630,6 +2659,11 @@ export interface components {
             isClassic: boolean;
             stats: components["schemas"]["RatingoStatsDto"];
             externalRatings: components["schemas"]["ExternalRatingsDto"];
+            /**
+             * @example show
+             * @enum {string}
+             */
+            type: "show";
             showProgress?: components["schemas"]["ShowProgressDto"] | null;
             card?: components["schemas"]["CardMetaDto"];
         };
@@ -2735,12 +2769,6 @@ export interface components {
              */
             type: "warning" | "release" | "quality" | "popularity" | "general";
             /**
-             * @description Message key for i18n lookup on client (details.verdict.show.*)
-             * @example strongRatings
-             * @enum {string|null}
-             */
-            messageKey: "cancelled" | "poorRatings" | "belowAverage" | "criticsLoved" | "strongRatings" | "decentRatings" | "longRunning" | "trendingNow" | "risingHype" | "earlyReviews" | "mixedReviews" | null;
-            /**
              * @description Additional context to display with verdict
              * @example IMDb: 8.2
              */
@@ -2751,6 +2779,12 @@ export interface components {
              * @enum {string}
              */
             hintKey: "newEpisodes" | "afterAllEpisodes" | "whenOnStreaming" | "notifyNewEpisode" | "general" | "forLater" | "notifyRelease" | "decideToWatch";
+            /**
+             * @description Message key for i18n lookup on client (details.verdict.show.*)
+             * @example strongRatings
+             * @enum {string|null}
+             */
+            messageKey: "cancelled" | "poorRatings" | "belowAverage" | "criticsLoved" | "strongRatings" | "decentRatings" | "longRunning" | "trendingNow" | "risingHype" | "earlyReviews" | "mixedReviews" | null;
         };
         ShowStatusHintDto: {
             /**
@@ -2849,7 +2883,7 @@ export interface components {
             /** @example 8.5 */
             rating: number;
             /**
-             * @description If true, this TMDB item already exists in local DB
+             * @description If true, this item exists in local DB
              * @example false
              */
             isImported: boolean;
@@ -2999,6 +3033,17 @@ export interface components {
         PaginatedMeUserMediaResponseDto: {
             data: components["schemas"]["MeUserMediaListItemDto"][];
             meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        BatchEpisodeIdsDto: {
+            /**
+             * @description Array of episode UUIDs to mark as watched/unwatched
+             * @example [
+             *       "uuid-1",
+             *       "uuid-2",
+             *       "uuid-3"
+             *     ]
+             */
+            episodeIds: string[];
         };
         SeasonProgressDto: {
             /**
@@ -6390,6 +6435,92 @@ export interface operations {
                         data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
                     };
                 };
+            };
+        };
+    };
+    EpisodeProgressController_markBatchWatched: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchEpisodeIdsDto"];
+            };
+        };
+        responses: {
+            /** @description Episodes marked as watched */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid episode IDs or episodes from different shows */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description First episode not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    EpisodeProgressController_markBatchUnwatched: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchEpisodeIdsDto"];
+            };
+        };
+        responses: {
+            /** @description Episodes marked as unwatched */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid episode IDs or episodes from different shows */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description First episode not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

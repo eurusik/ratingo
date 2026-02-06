@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { SavedItemsService } from '../../user-actions/application/saved-items.service';
@@ -19,8 +19,11 @@ describe('EpisodeProgressService', () => {
   const mockEpisodeProgressRepo: jest.Mocked<IEpisodeProgressRepository> = {
     markWatched: jest.fn(),
     markUnwatched: jest.fn(),
+    markManyWatched: jest.fn(),
+    markManyUnwatched: jest.fn(),
     getWatchedEpisodeIds: jest.fn(),
     getShowProgress: jest.fn(),
+    countDistinctShowsForEpisodes: jest.fn(),
     getEpisodeMediaInfo: jest.fn(),
   };
 
@@ -54,6 +57,8 @@ describe('EpisodeProgressService', () => {
 
     service = module.get(EpisodeProgressService);
     jest.clearAllMocks();
+    // Default: all episodes belong to one show
+    mockEpisodeProgressRepo.countDistinctShowsForEpisodes.mockResolvedValue(1);
   });
 
   describe('markWatched', () => {
@@ -224,6 +229,113 @@ describe('EpisodeProgressService', () => {
     });
   });
 
+  describe('markBatchWatched', () => {
+    it('should throw NotFoundException when first episode not found', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(null);
+
+      await expect(service.markBatchWatched('user-1', ['non-existent'])).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should call markManyWatched with all episode IDs', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+        { seasonNumber: 1, watchedCount: 3, totalCount: 10, watchedEpisodeIds: [] },
+      ]);
+      mockUserMediaService.getState.mockResolvedValue(null);
+
+      await service.markBatchWatched('user-1', ['ep-1', 'ep-2', 'ep-3']);
+
+      expect(mockEpisodeProgressRepo.markManyWatched).toHaveBeenCalledWith('user-1', [
+        'ep-1',
+        'ep-2',
+        'ep-3',
+      ]);
+    });
+
+    it('should run state transition logic only once for the batch', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+        { seasonNumber: 1, watchedCount: 3, totalCount: 10, watchedEpisodeIds: [] },
+      ]);
+      mockUserMediaService.getState.mockResolvedValue(null);
+
+      await service.markBatchWatched('user-1', ['ep-1', 'ep-2', 'ep-3']);
+
+      expect(mockEpisodeProgressRepo.getShowProgress).toHaveBeenCalledTimes(1);
+      expect(mockUserMediaService.getState).toHaveBeenCalledTimes(1);
+    });
+
+    it('should auto-set to watching when no previous state', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+        { seasonNumber: 1, watchedCount: 5, totalCount: 10, watchedEpisodeIds: [] },
+      ]);
+      mockUserMediaService.getState.mockResolvedValue(null);
+
+      await service.markBatchWatched('user-1', ['ep-1', 'ep-2']);
+
+      expect(mockUserMediaService.setState).toHaveBeenCalledWith({
+        userId: 'user-1',
+        mediaItemId: 'media-1',
+        state: USER_MEDIA_STATE.WATCHING,
+      });
+    });
+
+    it('should auto-complete when all episodes watched', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+        { seasonNumber: 1, watchedCount: 10, totalCount: 10, watchedEpisodeIds: [] },
+      ]);
+      mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.WATCHING });
+
+      await service.markBatchWatched('user-1', ['ep-1', 'ep-2']);
+
+      expect(mockUserMediaService.setState).toHaveBeenCalledWith({
+        userId: 'user-1',
+        mediaItemId: 'media-1',
+        state: USER_MEDIA_STATE.COMPLETED,
+      });
+    });
+
+    it('should NOT change state when paused (unless all watched)', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+        { seasonNumber: 1, watchedCount: 5, totalCount: 10, watchedEpisodeIds: [] },
+      ]);
+      mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.PAUSED });
+
+      await service.markBatchWatched('user-1', ['ep-1', 'ep-2']);
+
+      expect(mockUserMediaService.setState).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when episodes belong to different shows', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.countDistinctShowsForEpisodes.mockResolvedValue(2);
+
+      await expect(service.markBatchWatched('user-1', ['ep-1', 'ep-2'])).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(mockEpisodeProgressRepo.markManyWatched).not.toHaveBeenCalled();
+    });
+
+    it('should skip cross-show check for single episode', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+        { seasonNumber: 1, watchedCount: 1, totalCount: 10, watchedEpisodeIds: [] },
+      ]);
+      mockUserMediaService.getState.mockResolvedValue(null);
+
+      await service.markBatchWatched('user-1', ['ep-1']);
+
+      expect(mockEpisodeProgressRepo.countDistinctShowsForEpisodes).not.toHaveBeenCalled();
+      expect(mockEpisodeProgressRepo.markManyWatched).toHaveBeenCalled();
+    });
+  });
+
   describe('markUnwatched', () => {
     it('should mark episode as unwatched', async () => {
       mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
@@ -312,6 +424,73 @@ describe('EpisodeProgressService', () => {
 
         expect(mockUserMediaService.setState).not.toHaveBeenCalled();
         expect(mockUserMediaService.deleteState).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('markBatchUnwatched', () => {
+    it('should call markManyUnwatched with all episode IDs', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+        { seasonNumber: 1, watchedCount: 5, totalCount: 10, watchedEpisodeIds: [] },
+      ]);
+      mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.WATCHING });
+
+      await service.markBatchUnwatched('user-1', ['ep-1', 'ep-2', 'ep-3']);
+
+      expect(mockEpisodeProgressRepo.markManyUnwatched).toHaveBeenCalledWith('user-1', [
+        'ep-1',
+        'ep-2',
+        'ep-3',
+      ]);
+    });
+
+    it('should throw NotFoundException when first episode not found', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(null);
+
+      await expect(service.markBatchUnwatched('user-1', ['non-existent'])).rejects.toThrow(
+        NotFoundException,
+      );
+
+      expect(mockEpisodeProgressRepo.markManyUnwatched).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when episodes belong to different shows', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.countDistinctShowsForEpisodes.mockResolvedValue(2);
+
+      await expect(service.markBatchUnwatched('user-1', ['ep-1', 'ep-2'])).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(mockEpisodeProgressRepo.markManyUnwatched).not.toHaveBeenCalled();
+    });
+
+    it('should delete state when all episodes unmarked', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+        { seasonNumber: 1, watchedCount: 0, totalCount: 10, watchedEpisodeIds: [] },
+      ]);
+      mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.WATCHING });
+
+      await service.markBatchUnwatched('user-1', ['ep-1', 'ep-2']);
+
+      expect(mockUserMediaService.deleteState).toHaveBeenCalledWith('user-1', 'media-1');
+    });
+
+    it('should revert completed to watching when some episodes remain', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+        { seasonNumber: 1, watchedCount: 5, totalCount: 10, watchedEpisodeIds: [] },
+      ]);
+      mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.COMPLETED });
+
+      await service.markBatchUnwatched('user-1', ['ep-1', 'ep-2']);
+
+      expect(mockUserMediaService.setState).toHaveBeenCalledWith({
+        userId: 'user-1',
+        mediaItemId: 'media-1',
+        state: USER_MEDIA_STATE.WATCHING,
       });
     });
   });

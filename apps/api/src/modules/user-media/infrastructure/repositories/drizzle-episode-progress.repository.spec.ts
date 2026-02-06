@@ -26,10 +26,17 @@ describe('DrizzleEpisodeProgressRepository', () => {
       from: jest.fn().mockReturnThis(),
     };
 
+    const selectDistinctChain: any = {
+      from: jest.fn().mockReturnThis(),
+      where: jest.fn().mockResolvedValue([]),
+    };
+
     return {
       insert: jest.fn().mockReturnValue(chain),
       delete: jest.fn().mockReturnValue(chain),
       select: jest.fn().mockReturnValue(chain),
+      selectDistinct: jest.fn().mockReturnValue(selectDistinctChain),
+      selectDistinctChain,
       chain,
       orderByMock,
       whereMock,
@@ -79,6 +86,84 @@ describe('DrizzleEpisodeProgressRepository', () => {
       const repo = new DrizzleEpisodeProgressRepository(db as any);
 
       await expect(repo.markUnwatched('user-1', 'episode-1')).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('markManyWatched', () => {
+    it('should bulk insert episode progress records', async () => {
+      const db = makeDbMock();
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      await repo.markManyWatched('user-1', ['ep-1', 'ep-2', 'ep-3']);
+
+      expect(db.insert).toHaveBeenCalled();
+      expect(db.chain.values).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ userId: 'user-1', episodeId: 'ep-1' }),
+          expect.objectContaining({ userId: 'user-1', episodeId: 'ep-2' }),
+          expect.objectContaining({ userId: 'user-1', episodeId: 'ep-3' }),
+        ]),
+      );
+      expect(db.chain.onConflictDoNothing).toHaveBeenCalled();
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const db = makeDbMock();
+      db.chain.onConflictDoNothing.mockRejectedValue(new Error('DB error'));
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      await expect(repo.markManyWatched('user-1', ['ep-1'])).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('markManyUnwatched', () => {
+    it('should delete multiple episode progress records', async () => {
+      const db = makeDbMock();
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      await repo.markManyUnwatched('user-1', ['ep-1', 'ep-2']);
+
+      expect(db.delete).toHaveBeenCalled();
+      expect(db.chain.where).toHaveBeenCalled();
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const db = makeDbMock();
+      db.chain.where.mockRejectedValue(new Error('DB error'));
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      await expect(repo.markManyUnwatched('user-1', ['ep-1'])).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('countDistinctShowsForEpisodes', () => {
+    it('should return 0 for empty array', async () => {
+      const db = makeDbMock();
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      const result = await repo.countDistinctShowsForEpisodes([]);
+
+      expect(result).toBe(0);
+      expect(db.select).not.toHaveBeenCalled();
+    });
+
+    it('should return count of distinct shows', async () => {
+      const db = makeDbMock();
+      db.selectDistinctChain.where.mockResolvedValue([{ showId: 'show-1' }]);
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      const result = await repo.countDistinctShowsForEpisodes(['ep-1', 'ep-2']);
+
+      expect(result).toBe(1);
+      expect(db.selectDistinct).toHaveBeenCalled();
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const db = makeDbMock();
+      db.selectDistinctChain.where.mockRejectedValue(new Error('DB error'));
+      const repo = new DrizzleEpisodeProgressRepository(db as any);
+
+      await expect(repo.countDistinctShowsForEpisodes(['ep-1'])).rejects.toThrow(DatabaseException);
     });
   });
 

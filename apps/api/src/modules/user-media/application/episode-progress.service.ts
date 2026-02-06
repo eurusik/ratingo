@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { SavedItemsService } from '../../user-actions/application/saved-items.service';
 import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities';
@@ -11,13 +11,6 @@ import {
 
 import { UserMediaService } from './user-media.service';
 
-/**
- * Application service for episode progress operations.
- *
- * Coordinates between episode progress tracking and user media state.
- * When an episode is marked as watched, automatically creates/updates
- * the user_media_state record with 'watching' state.
- */
 @Injectable()
 export class EpisodeProgressService {
   private readonly logger = new Logger(EpisodeProgressService.name);
@@ -29,141 +22,143 @@ export class EpisodeProgressService {
     private readonly savedItemsService: SavedItemsService,
   ) {}
 
-  /**
-   * Marks an episode as watched and syncs user media state.
-   *
-   * @param {string} userId - User identifier
-   * @param {string} episodeId - Episode identifier
-   * @returns {Promise<void>}
-   * @throws {NotFoundException} When episode is not found
-   */
   async markWatched(userId: string, episodeId: string): Promise<void> {
-    // Get episode info to find the mediaItemId and showId
     const episodeInfo = await this.episodeProgressRepo.getEpisodeMediaInfo(episodeId);
 
     if (!episodeInfo) {
       throw new NotFoundException(`Episode ${episodeId} not found`);
     }
 
-    // Mark episode as watched
     await this.episodeProgressRepo.markWatched(userId, episodeId);
+    await this.syncStateAfterWatch(userId, episodeInfo.showId, episodeInfo.mediaItemId);
+  }
 
-    // Get show progress to check if all episodes are watched
-    const seasonProgress = await this.episodeProgressRepo.getShowProgress(
-      userId,
-      episodeInfo.showId,
-    );
+  async markBatchWatched(userId: string, episodeIds: string[]): Promise<void> {
+    const { showId, mediaItemId } = await this.validateBatchAndGetInfo(episodeIds);
+    await this.episodeProgressRepo.markManyWatched(userId, episodeIds);
+    await this.syncStateAfterWatch(userId, showId, mediaItemId);
+  }
+
+  async markUnwatched(userId: string, episodeId: string): Promise<void> {
+    const episodeInfo = await this.episodeProgressRepo.getEpisodeMediaInfo(episodeId);
+    await this.episodeProgressRepo.markUnwatched(userId, episodeId);
+    if (!episodeInfo) return;
+    await this.syncStateAfterUnwatch(userId, episodeInfo.showId, episodeInfo.mediaItemId);
+  }
+
+  async markBatchUnwatched(userId: string, episodeIds: string[]): Promise<void> {
+    const { showId, mediaItemId } = await this.validateBatchAndGetInfo(episodeIds);
+    await this.episodeProgressRepo.markManyUnwatched(userId, episodeIds);
+    await this.syncStateAfterUnwatch(userId, showId, mediaItemId);
+  }
+
+  async getShowProgress(userId: string, showId: string): Promise<SeasonProgressInfo[]> {
+    return this.episodeProgressRepo.getShowProgress(userId, showId);
+  }
+
+  private async validateBatchAndGetInfo(
+    episodeIds: string[],
+  ): Promise<{ showId: string; mediaItemId: string }> {
+    const episodeInfo = await this.episodeProgressRepo.getEpisodeMediaInfo(episodeIds[0]);
+
+    if (!episodeInfo) {
+      throw new NotFoundException(`Episode ${episodeIds[0]} not found`);
+    }
+
+    if (episodeIds.length > 1) {
+      const showCount = await this.episodeProgressRepo.countDistinctShowsForEpisodes(episodeIds);
+
+      if (showCount !== 1) {
+        throw new BadRequestException('All episodes must belong to the same show');
+      }
+    }
+
+    return { showId: episodeInfo.showId, mediaItemId: episodeInfo.mediaItemId };
+  }
+
+  /**
+   * Auto-completes if all episodes watched (even if paused),
+   * auto-starts watching if no state or planned.
+   */
+  private async syncStateAfterWatch(
+    userId: string,
+    showId: string,
+    mediaItemId: string,
+  ): Promise<void> {
+    const seasonProgress = await this.episodeProgressRepo.getShowProgress(userId, showId);
     const totalEpisodes = seasonProgress.reduce((sum, s) => sum + s.totalCount, 0);
     const watchedEpisodes = seasonProgress.reduce((sum, s) => sum + s.watchedCount, 0);
 
-    const currentState = await this.userMediaService.getState(userId, episodeInfo.mediaItemId);
+    const currentState = await this.userMediaService.getState(userId, mediaItemId);
 
-    // All episodes watched → auto-complete (even if paused)
+    // Auto-complete even if paused — this is the only state override
     if (totalEpisodes > 0 && watchedEpisodes === totalEpisodes) {
       if (currentState?.state !== USER_MEDIA_STATE.COMPLETED) {
         await this.userMediaService.setState({
           userId,
-          mediaItemId: episodeInfo.mediaItemId,
+          mediaItemId,
           state: USER_MEDIA_STATE.COMPLETED,
         });
-
         this.logger.log(
-          `Auto-set user_media_state to 'completed' for user=${userId}, media=${episodeInfo.mediaItemId} (${watchedEpisodes}/${totalEpisodes} episodes)`,
+          `Auto-set user_media_state to 'completed' for user=${userId}, media=${mediaItemId} (${watchedEpisodes}/${totalEpisodes} episodes)`,
         );
       }
       return;
     }
 
-    // If state is 'paused', do NOT auto-change to 'watching'
-    // User must explicitly resume
-    if (currentState?.state === USER_MEDIA_STATE.PAUSED) {
-      this.logger.log(
-        `Keeping user_media_state as 'paused' for user=${userId}, media=${episodeInfo.mediaItemId}`,
-      );
-      return;
-    }
+    // Paused → user must explicitly resume
+    if (currentState?.state === USER_MEDIA_STATE.PAUSED) return;
 
-    // Not all watched → set to 'watching' if needed
-    // Only auto-set to watching if:
-    // - No state exists yet, OR
-    // - Current state is 'planned' (user planned to watch, now they're actually watching)
     if (!currentState || currentState.state === USER_MEDIA_STATE.PLANNED) {
       await this.userMediaService.setState({
         userId,
-        mediaItemId: episodeInfo.mediaItemId,
+        mediaItemId,
         state: USER_MEDIA_STATE.WATCHING,
       });
 
-      // Remove from "for_later" saved list since user started watching
       await this.savedItemsService.unsaveItem(
         userId,
-        episodeInfo.mediaItemId,
+        mediaItemId,
         SAVED_ITEM_LIST.FOR_LATER,
         'auto_started_watching',
       );
 
       this.logger.log(
-        `Auto-set user_media_state to 'watching' for user=${userId}, media=${episodeInfo.mediaItemId}`,
+        `Auto-set user_media_state to 'watching' for user=${userId}, media=${mediaItemId}`,
       );
     }
   }
 
-  /**
-   * Marks an episode as unwatched.
-   *
-   * @param {string} userId - User identifier
-   * @param {string} episodeId - Episode identifier
-   * @returns {Promise<void>}
-   */
-  async markUnwatched(userId: string, episodeId: string): Promise<void> {
-    // Get episode info before unmarking
-    const episodeInfo = await this.episodeProgressRepo.getEpisodeMediaInfo(episodeId);
-
-    await this.episodeProgressRepo.markUnwatched(userId, episodeId);
-
-    if (!episodeInfo) return;
-
-    // Check remaining progress
-    const seasonProgress = await this.episodeProgressRepo.getShowProgress(
-      userId,
-      episodeInfo.showId,
-    );
+  /** Removes state if 0 watched, reverts completed → watching if some remain. */
+  private async syncStateAfterUnwatch(
+    userId: string,
+    showId: string,
+    mediaItemId: string,
+  ): Promise<void> {
+    const seasonProgress = await this.episodeProgressRepo.getShowProgress(userId, showId);
     const watchedEpisodes = seasonProgress.reduce((sum, s) => sum + s.watchedCount, 0);
 
-    const currentState = await this.userMediaService.getState(userId, episodeInfo.mediaItemId);
+    const currentState = await this.userMediaService.getState(userId, mediaItemId);
     if (!currentState) return;
 
-    // No episodes watched → remove from activity
     if (watchedEpisodes === 0) {
-      await this.userMediaService.deleteState(userId, episodeInfo.mediaItemId);
+      await this.userMediaService.deleteState(userId, mediaItemId);
       this.logger.log(
-        `Removed user_media_state for user=${userId}, media=${episodeInfo.mediaItemId} (0 episodes watched)`,
+        `Removed user_media_state for user=${userId}, media=${mediaItemId} (0 episodes watched)`,
       );
       return;
     }
 
-    // Still some watched but was completed → revert to watching
+    // Was completed but now missing episodes → revert
     if (currentState.state === USER_MEDIA_STATE.COMPLETED) {
       await this.userMediaService.setState({
         userId,
-        mediaItemId: episodeInfo.mediaItemId,
+        mediaItemId,
         state: USER_MEDIA_STATE.WATCHING,
       });
-
       this.logger.log(
-        `Reverted user_media_state from 'completed' to 'watching' for user=${userId}, media=${episodeInfo.mediaItemId}`,
+        `Reverted user_media_state from 'completed' to 'watching' for user=${userId}, media=${mediaItemId}`,
       );
     }
-  }
-
-  /**
-   * Gets progress for all seasons of a show.
-   *
-   * @param {string} userId - User identifier
-   * @param {string} showId - Show identifier (from shows table)
-   * @returns {Promise<SeasonProgressInfo[]>} Progress per season
-   */
-  async getShowProgress(userId: string, showId: string): Promise<SeasonProgressInfo[]> {
-    return this.episodeProgressRepo.getShowProgress(userId, showId);
   }
 }

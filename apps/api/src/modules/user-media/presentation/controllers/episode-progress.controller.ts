@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -9,7 +10,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -22,11 +25,9 @@ import {
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { EpisodeProgressService } from '../../application/episode-progress.service';
+import { BatchEpisodeIdsDto } from '../dto/batch-episode-ids.dto';
 import { ShowProgressDto } from '../dto/episode-progress.dto';
 
-/**
- * Controller for episode watch progress tracking.
- */
 @ApiTags('Episode Progress')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -34,16 +35,36 @@ import { ShowProgressDto } from '../dto/episode-progress.dto';
 export class EpisodeProgressController {
   constructor(private readonly episodeProgressService: EpisodeProgressService) {}
 
-  /**
-   * Marks an episode as watched.
-   *
-   * Also auto-creates/updates user_media_state with 'watching' status
-   * if no state exists or current state is 'planned'.
-   *
-   * @param {{ id: string }} user - Current user context
-   * @param {string} episodeId - Episode UUID
-   * @returns {Promise<void>}
-   */
+  @ApiBody({ type: BatchEpisodeIdsDto })
+  @ApiNoContentResponse({ description: 'Episodes marked as watched' })
+  @ApiNotFoundResponse({ description: 'First episode not found' })
+  @ApiBadRequestResponse({ description: 'Invalid episode IDs or episodes from different shows' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiOperation({ summary: 'Batch mark episodes as watched (auth: Bearer)' })
+  @Post('episodes/batch/watch')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async markBatchWatched(
+    @CurrentUser() user: { id: string },
+    @Body() body: BatchEpisodeIdsDto,
+  ): Promise<void> {
+    await this.episodeProgressService.markBatchWatched(user.id, body.episodeIds);
+  }
+
+  @ApiBody({ type: BatchEpisodeIdsDto })
+  @ApiNoContentResponse({ description: 'Episodes marked as unwatched' })
+  @ApiNotFoundResponse({ description: 'First episode not found' })
+  @ApiBadRequestResponse({ description: 'Invalid episode IDs or episodes from different shows' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiOperation({ summary: 'Batch mark episodes as unwatched (auth: Bearer)' })
+  @Post('episodes/batch/unwatch')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async markBatchUnwatched(
+    @CurrentUser() user: { id: string },
+    @Body() body: BatchEpisodeIdsDto,
+  ): Promise<void> {
+    await this.episodeProgressService.markBatchUnwatched(user.id, body.episodeIds);
+  }
+
   @ApiParam({ name: 'episodeId', type: String, description: 'Episode UUID' })
   @ApiNoContentResponse({ description: 'Episode marked as watched' })
   @ApiNotFoundResponse({ description: 'Episode not found' })
@@ -58,13 +79,6 @@ export class EpisodeProgressController {
     await this.episodeProgressService.markWatched(user.id, episodeId);
   }
 
-  /**
-   * Marks an episode as unwatched.
-   *
-   * @param {{ id: string }} user - Current user context
-   * @param {string} episodeId - Episode UUID
-   * @returns {Promise<void>}
-   */
   @ApiParam({ name: 'episodeId', type: String, description: 'Episode UUID' })
   @ApiNoContentResponse({ description: 'Episode marked as unwatched' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
@@ -78,13 +92,6 @@ export class EpisodeProgressController {
     await this.episodeProgressService.markUnwatched(user.id, episodeId);
   }
 
-  /**
-   * Gets progress for all seasons of a show.
-   *
-   * @param {{ id: string }} user - Current user context
-   * @param {string} showId - Show UUID (from shows table)
-   * @returns {Promise<ShowProgressDto>} Progress per season
-   */
   @ApiParam({ name: 'showId', type: String, description: 'Show UUID' })
   @ApiOkResponse({ description: 'Show progress', type: ShowProgressDto })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
