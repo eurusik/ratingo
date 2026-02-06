@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
@@ -38,15 +39,29 @@ export class UserMediaService {
    * @throws {BadRequestException} When `progress` is provided for `completed`/`dropped` states
    */
   async setState(data: UpsertUserMediaStateData): Promise<UserMediaState> {
+    let resolvedState = data.state;
+
+    if (resolvedState === undefined) {
+      const existing = await this.repo.findOne(data.userId, data.mediaItemId);
+      resolvedState =
+        existing?.state ??
+        (data.mediaType === MediaType.SHOW
+          ? USER_MEDIA_STATE.WATCHING
+          : USER_MEDIA_STATE.COMPLETED);
+    }
+
     if (data.progress != null) {
-      if (data.state === USER_MEDIA_STATE.COMPLETED || data.state === USER_MEDIA_STATE.DROPPED) {
+      if (
+        resolvedState === USER_MEDIA_STATE.COMPLETED ||
+        resolvedState === USER_MEDIA_STATE.DROPPED
+      ) {
         throw new BadRequestException('progress is not allowed for completed/dropped states');
       }
 
       return this.repo.upsert({ ...data, state: USER_MEDIA_STATE.WATCHING });
     }
 
-    return this.repo.upsert(data);
+    return this.repo.upsert({ ...data, state: resolvedState });
   }
 
   /**

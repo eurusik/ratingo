@@ -43,25 +43,28 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
    */
   async upsert(data: UpsertUserMediaStateData): Promise<UserMediaState> {
     try {
+      const updateSet: Record<string, unknown> = {
+        state: data.state,
+        updatedAt: new Date(),
+      };
+
+      if (data.rating !== undefined) updateSet.rating = data.rating;
+      if (data.progress !== undefined) updateSet.progress = data.progress;
+      if (data.notes !== undefined) updateSet.notes = data.notes;
+
       const [row] = await this.db
         .insert(schema.userMediaState)
         .values({
           userId: data.userId,
           mediaItemId: data.mediaItemId,
           state: data.state,
-          rating: data.rating ?? null,
-          progress: data.progress ?? null,
-          notes: data.notes ?? null,
+          ...(data.rating !== undefined && { rating: data.rating }),
+          ...(data.progress !== undefined && { progress: data.progress }),
+          ...(data.notes !== undefined && { notes: data.notes }),
         })
         .onConflictDoUpdate({
           target: [schema.userMediaState.userId, schema.userMediaState.mediaItemId],
-          set: {
-            state: data.state,
-            rating: data.rating ?? null,
-            progress: data.progress ?? null,
-            notes: data.notes ?? null,
-            updatedAt: new Date(),
-          },
+          set: updateSet,
         })
         .returning();
       return this.mapRow(row);

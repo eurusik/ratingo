@@ -34,8 +34,8 @@ export type VideoDto = components['schemas']['VideoDto'];
 export type CastMemberDto = components['schemas']['CastMemberDto'];
 export type CrewMemberDto = components['schemas']['CrewMemberDto'];
 
-// Media types
-export type MediaType = 'movie' | 'show';
+// Media types (derived from SetUserMediaStateDto in api-contract)
+export type MediaType = NonNullable<components['schemas']['SetUserMediaStateDto']['mediaType']>;
 
 // Show status (from ShowResponseDto) - includes null for unknown status
 export type ShowStatus = components['schemas']['ShowResponseDto']['status'];

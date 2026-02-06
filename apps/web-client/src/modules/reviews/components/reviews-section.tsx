@@ -12,6 +12,7 @@ import {
   useReportReview,
 } from '@/core/query';
 import { useAuth, useAuthModalStore } from '@/core/auth';
+import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import { getApiErrorCode, ErrorCode } from '@/core/api';
 import { REVIEWS_DEFAULTS, type ReviewSort, type VoteType, type ReportReason, type ReviewListResponseDto } from '@/core/api/reviews.client';
 import { useTranslation } from '@/shared/i18n';
@@ -69,6 +70,7 @@ export function ReviewsSection({ mediaItemId, className, initialData }: ReviewsS
   const totalReviews = reviewsData?.meta?.total ?? 0;
   const hasMore = reviews.length < totalReviews;
 
+  const { data: userMediaState } = useUserMediaState(mediaItemId, isAuthenticated);
   const { data: myReview } = useMyReview(mediaItemId, { enabled: isAuthenticated });
   const userHasReview = !!myReview;
   // Show form to guests too (they'll see login modal on submit)
@@ -181,6 +183,11 @@ export function ReviewsSection({ mediaItemId, className, initialData }: ReviewsS
             onSubmit={handleCreateReview}
             isSubmitting={createReview.isPending}
             isGuest={!isAuthenticated}
+            initialValues={
+              userMediaState?.rating != null
+                ? { rating: userMediaState.rating }
+                : undefined
+            }
           />
         )}
 

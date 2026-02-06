@@ -1422,5 +1422,17 @@
       "next": "Next",
       "backToList": "Back to journal"
     }
+  },
+  "rating": {
+    "title": "Your rating",
+    "description": "Drag the slider to set your rating from 0 to 100",
+    "rate": "Rate",
+    "clear": "Remove rating",
+    "save": "Save",
+    "toast": {
+      "saved": "Rating saved",
+      "cleared": "Rating removed",
+      "error": "Failed to save rating"
+    }
   }
 }

@@ -9551,6 +9551,14 @@
             ],
             "example": "watching"
           },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ],
+            "description": "Media type hint for auto-state when state is omitted"
+          },
           "rating": {
             "type": "number",
             "example": null,
@@ -9572,10 +9580,7 @@
             "example": "Rewatching with friends",
             "nullable": true
           }
-        },
-        "required": [
-          "state"
-        ]
+        }
       },
       "Function": {
         "type": "object",

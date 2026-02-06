@@ -104,9 +104,10 @@ export class UserMediaController {
       userId: user.id,
       mediaItemId,
       state: body.state,
-      rating: body.rating ?? null,
-      progress: body.progress ?? null,
-      notes: body.notes ?? null,
+      mediaType: body.mediaType,
+      ...(body.rating !== undefined && { rating: body.rating }),
+      ...(body.progress !== undefined && { progress: body.progress }),
+      ...(body.notes !== undefined && { notes: body.notes }),
     });
 
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);

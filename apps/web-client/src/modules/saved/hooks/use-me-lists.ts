@@ -6,7 +6,8 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { meListsApi, USER_MEDIA_STATE } from '@/core/api/me-lists.client';
+import { meListsApi, USER_MEDIA_STATE, type MeUserMediaListItemDto } from '@/core/api/me-lists.client';
+import type { MediaType } from '@/shared/types';
 import { queryKeys } from '@/core/query/keys';
 
 /**
@@ -108,6 +109,69 @@ export function useUserMediaState(mediaItemId: string, enabled = true) {
     queryFn: () => meListsApi.getState(mediaItemId),
     enabled: enabled && !!mediaItemId,
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
+/**
+ * Mutation hook to set a standalone rating for a media item.
+ * Uses optimistic updates to show the new rating immediately.
+ */
+export function useSetRating(mediaItemId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ rating, mediaType }: { rating: number | null; mediaType: MediaType }) =>
+      meListsApi.setRating(mediaItemId, rating, mediaType),
+
+    onMutate: async ({ rating }) => {
+      // Cancel outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.userMedia.state(mediaItemId),
+      });
+
+      // Snapshot previous value for rollback
+      const previousState = queryClient.getQueryData<MeUserMediaListItemDto | null>(
+        queryKeys.userMedia.state(mediaItemId),
+      );
+
+      // Optimistic update: patch the rating on the cached state
+      if (previousState) {
+        queryClient.setQueryData<MeUserMediaListItemDto>(
+          queryKeys.userMedia.state(mediaItemId),
+          { ...previousState, rating },
+        );
+      } else {
+        // First-time rater: create a synthetic optimistic object.
+        // The onSuccess handler will replace it with the real server response.
+        queryClient.setQueryData<MeUserMediaListItemDto>(
+          queryKeys.userMedia.state(mediaItemId),
+          { rating } as MeUserMediaListItemDto,
+        );
+      }
+
+      return { previousState };
+    },
+
+    onSuccess: (data) => {
+      // Replace with server response (source of truth)
+      queryClient.setQueryData(queryKeys.userMedia.state(mediaItemId), data);
+    },
+
+    onError: (_error, _variables, context) => {
+      // Rollback to previous state on failure
+      if (context?.previousState !== undefined) {
+        queryClient.setQueryData(
+          queryKeys.userMedia.state(mediaItemId),
+          context.previousState,
+        );
+      }
+    },
+
+    onSettled: () => {
+      // Always refetch after mutation settles to ensure consistency
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all });
+    },
   });
 }
 

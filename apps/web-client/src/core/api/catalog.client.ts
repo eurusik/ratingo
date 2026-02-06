@@ -161,9 +161,9 @@ export type ImportResultDto = components['schemas']['ImportResultDto'];
 export type ImportStatus = ImportResultDto['status'];
 
 /**
- * Media type (derived from API schema).
+ * Media type (derived from shared types, kept here for co-location with const MediaType).
  */
-export type MediaType = 'movie' | 'show';
+export type MediaType = import('@/shared/types').MediaType;
 
 /**
  * Import status constants for type-safe comparisons.

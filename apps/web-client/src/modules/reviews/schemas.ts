@@ -17,6 +17,7 @@ export type ReviewFormMode = (typeof REVIEW_FORM_MODE)[keyof typeof REVIEW_FORM_
 const MAX_CONTENT_LENGTH = 280;
 const MIN_RATING = 0;
 const MAX_RATING = 100;
+const DEFAULT_RATING = 70;
 
 /** Creates review form schema with i18n messages. */
 export function createReviewSchema(_dict: Dict) {
@@ -32,4 +33,4 @@ export function createReviewSchema(_dict: Dict) {
 
 export type ReviewFormData = z.infer<ReturnType<typeof createReviewSchema>>;
 
-export { MAX_CONTENT_LENGTH, MIN_RATING, MAX_RATING };
+export { MAX_CONTENT_LENGTH, MIN_RATING, MAX_RATING, DEFAULT_RATING };

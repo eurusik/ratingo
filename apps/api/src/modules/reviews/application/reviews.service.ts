@@ -4,6 +4,7 @@ import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../../common/constants';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { NotFoundException } from '../../../common/exceptions/not-found.exception';
+import { UserMediaService } from '../../user-media/application/user-media.service';
 import { REVIEW_LIMITS, REVIEW_SORT, type ReviewSort } from '../domain/constants/review.constants';
 import type {
   Review,
@@ -58,6 +59,7 @@ export class ReviewsService {
   constructor(
     @Inject(REVIEW_REPOSITORY)
     private readonly reviewRepo: IReviewRepository,
+    private readonly userMediaService: UserMediaService,
   ) {}
 
   /**
@@ -139,6 +141,8 @@ export class ReviewsService {
 
     this.logger.log(`User ${userId} created review ${review.id} for media ${mediaItemId}`);
 
+    void this.syncRatingToUserMedia(userId, mediaItemId, rating);
+
     return review;
   }
 
@@ -176,6 +180,10 @@ export class ReviewsService {
     const updated = await this.reviewRepo.update(reviewId, input);
 
     this.logger.log(`User ${userId} updated review ${reviewId}`);
+
+    if (payload.rating !== undefined) {
+      void this.syncRatingToUserMedia(review.userId, review.mediaItemId, payload.rating);
+    }
 
     return updated;
   }
@@ -233,5 +241,14 @@ export class ReviewsService {
     await this.reviewRepo.softDelete(reviewId);
 
     this.logger.log(`Admin force deleted review ${reviewId}`);
+  }
+
+  private syncRatingToUserMedia(userId: string, mediaItemId: string, rating: number): void {
+    this.userMediaService.setState({ userId, mediaItemId, rating }).catch((error) => {
+      this.logger.warn(
+        `Failed to sync rating to user_media_state: user=${userId}, media=${mediaItemId}`,
+        error instanceof Error ? error.message : error,
+      );
+    });
   }
 }

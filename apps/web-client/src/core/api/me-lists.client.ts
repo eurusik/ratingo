@@ -5,7 +5,8 @@
  */
 
 import type { components } from '@ratingo/api-contract';
-import { apiGet, apiPost } from './client';
+import type { MediaType } from '@/shared/types';
+import { apiGet, apiPatch, apiPost } from './client';
 
 // ============================================================================
 // Types from api-contract
@@ -13,6 +14,7 @@ import { apiGet, apiPost } from './client';
 
 export type MeUserMediaListItemDto = components['schemas']['MeUserMediaListItemDto'];
 export type PaginatedMeUserMediaResponseDto = components['schemas']['PaginatedMeUserMediaResponseDto'];
+type SetUserMediaStateDto = components['schemas']['SetUserMediaStateDto'];
 
 export type UserMediaState = MeUserMediaListItemDto['state'];
 
@@ -106,5 +108,16 @@ export const meListsApi = {
     } catch {
       return null;
     }
+  },
+
+  async setRating(
+    mediaItemId: string,
+    rating: number | null,
+    mediaType: MediaType,
+  ): Promise<MeUserMediaListItemDto> {
+    return apiPatch<MeUserMediaListItemDto>(
+      `user-media/${mediaItemId}`,
+      { rating, mediaType } satisfies Partial<SetUserMediaStateDto>,
+    );
   },
 } as const;

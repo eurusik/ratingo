@@ -7,15 +7,15 @@
 
 import { Activity, Info } from 'lucide-react';
 import { formatRating } from '@/shared/utils/format';
-import type { getDictionary } from '@/shared/i18n';
+import { useTranslation } from '@/shared/i18n';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/shared/ui/tooltip';
 
 interface RatingoScoreProps {
   score: number;
-  dict: ReturnType<typeof getDictionary>;
 }
 
-export function RatingoScore({ score, dict }: RatingoScoreProps) {
+export function RatingoScore({ score }: RatingoScoreProps) {
+  const { dict } = useTranslation();
   return (
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center gap-1.5 md:gap-2 bg-cinema-card/60 backdrop-blur-sm px-2.5 md:px-3 py-1.5 md:py-2 rounded-lg w-fit">

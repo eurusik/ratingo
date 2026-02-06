@@ -2932,7 +2932,12 @@ export interface components {
              * @example watching
              * @enum {string}
              */
-            state: "watching" | "completed" | "planned" | "dropped" | "paused";
+            state?: "watching" | "completed" | "planned" | "dropped" | "paused";
+            /**
+             * @description Media type hint for auto-state when state is omitted
+             * @enum {string}
+             */
+            mediaType?: "movie" | "show";
             /** @example null */
             rating?: number | null;
             /**

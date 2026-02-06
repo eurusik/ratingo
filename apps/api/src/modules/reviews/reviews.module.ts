@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 
 import { DatabaseModule } from '../../database/database.module';
 import { AuthModule } from '../auth/auth.module';
+import { UserMediaModule } from '../user-media/user-media.module';
 
 import { ReviewRepliesService } from './application/review-replies.service';
 import { ReviewReportsService } from './application/review-reports.service';
@@ -30,7 +31,7 @@ import { UserReviewsController } from './presentation/controllers/user-reviews.c
  * - Privacy-aware display
  */
 @Module({
-  imports: [DatabaseModule, forwardRef(() => AuthModule)],
+  imports: [DatabaseModule, forwardRef(() => AuthModule), UserMediaModule],
   providers: [
     ReviewsService,
     ReviewVotesService,

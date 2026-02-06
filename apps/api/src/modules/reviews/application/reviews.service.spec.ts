@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { NotFoundException } from '../../../common/exceptions/not-found.exception';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { UserMediaService } from '../../user-media/application/user-media.service';
 import { REVIEW_LIMITS, REVIEW_SORT } from '../domain/constants/review.constants';
 import { REVIEW_REPOSITORY } from '../domain/repositories/review.repository.interface';
 
@@ -12,6 +13,7 @@ import { ReviewsService } from './reviews.service';
 describe('ReviewsService', () => {
   let service: ReviewsService;
   let reviewRepo: any;
+  let userMediaService: any;
 
   const mockReview = {
     id: 'review-id-1',
@@ -56,8 +58,16 @@ describe('ReviewsService', () => {
       countUserReviewsToday: jest.fn().mockResolvedValue(0),
     };
 
+    userMediaService = {
+      setState: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ReviewsService, { provide: REVIEW_REPOSITORY, useValue: reviewRepo }],
+      providers: [
+        ReviewsService,
+        { provide: REVIEW_REPOSITORY, useValue: reviewRepo },
+        { provide: UserMediaService, useValue: userMediaService },
+      ],
     }).compile();
 
     service = module.get<ReviewsService>(ReviewsService);
@@ -179,6 +189,34 @@ describe('ReviewsService', () => {
       );
     });
 
+    it('should sync rating to user_media_state on create', async () => {
+      await service.create({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        content: 'Great movie!',
+        rating: 85,
+      });
+
+      expect(userMediaService.setState).toHaveBeenCalledWith({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        rating: 85,
+      });
+    });
+
+    it('should not fail review creation when rating sync fails', async () => {
+      userMediaService.setState.mockRejectedValue(new Error('DB error'));
+
+      const result = await service.create({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        content: 'Great movie!',
+        rating: 85,
+      });
+
+      expect(result).toEqual(mockReview);
+    });
+
     it('should throw RATE_LIMITED when daily limit exceeded', async () => {
       reviewRepo.countUserReviewsToday.mockResolvedValue(REVIEW_LIMITS.RATE_LIMIT_REVIEWS_PER_DAY);
 
@@ -217,6 +255,22 @@ describe('ReviewsService', () => {
       await expect(
         service.update('nonexistent', 'user-id-1', { content: 'Update' }),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should sync rating to user_media_state on update', async () => {
+      await service.update('review-id-1', 'user-id-1', { rating: 90 });
+
+      expect(userMediaService.setState).toHaveBeenCalledWith({
+        userId: 'user-id-1',
+        mediaItemId: 'media-id-1',
+        rating: 90,
+      });
+    });
+
+    it('should not sync rating when only content is updated', async () => {
+      await service.update('review-id-1', 'user-id-1', { content: 'Updated' });
+
+      expect(userMediaService.setState).not.toHaveBeenCalled();
     });
 
     it('should throw FORBIDDEN when user is not author', async () => {

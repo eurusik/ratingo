@@ -148,7 +148,8 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
           releaseDate={movie.releaseDate}
           genres={movie.genres}
           stats={movie.stats}
-          dict={dict}
+          mediaItemId={movie.id}
+          mediaType="movie"
         />
 
         <DetailsContent>

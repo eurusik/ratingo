@@ -23,7 +23,7 @@ type Availability = components['schemas']['AvailabilityDto'];
 
 export interface DetailsLayoutProps {
   /** Hero section props */
-  hero: Omit<DetailsHeroProps, 'dict'>;
+  hero: DetailsHeroProps;
   /** Overview text */
   overview?: string | null;
   /** Suitable for tags (genres) */
@@ -78,7 +78,7 @@ export function DetailsLayout({
   return (
     <main className="min-h-screen">
       {/* Hero */}
-      <DetailsHero {...hero} dict={dict} />
+      <DetailsHero {...hero} />
 
       {/* Share button (floating) */}
       <button
