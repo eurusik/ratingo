@@ -3,7 +3,7 @@
  * Provides optimistic updates for smooth UX.
  */
 
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type QueryClient } from '@tanstack/react-query';
 import { HTTPError } from 'ky';
 import {
   episodeProgressApi,
@@ -11,6 +11,26 @@ import {
   type SeasonProgressDto,
 } from '../api/episode-progress.client';
 import { queryKeys } from './keys';
+
+/**
+ * Invalidates all caches affected by episode progress changes.
+ * Used by all episode progress mutation hooks to ensure consistency.
+ */
+function invalidateEpisodeProgressCaches(queryClient: QueryClient, showId: string) {
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.episodeProgress.showProgress(showId),
+  });
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.userMedia.all,
+  });
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.meLists.history,
+  });
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.userActions.savedItems.all,
+  });
+  queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
+}
 
 /** Checks if error is a 401 Unauthorized. */
 function isUnauthorized(error: unknown): boolean {
@@ -135,24 +155,7 @@ export function useToggleEpisodeWatched(showId: string) {
     },
 
     onSettled: () => {
-      // Always refetch after mutation settles
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.episodeProgress.showProgress(showId),
-      });
-      // Invalidate user media state (for verdict CTA continuePoint)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userMedia.all,
-      });
-      // Invalidate activity lists (watching/completed may change)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.meLists.history,
-      });
-      // Invalidate saved items (for_later is auto-removed when starting to watch)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userActions.savedItems.all,
-      });
-      // Invalidate legacy saved-items queries (used by saved module)
-      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      invalidateEpisodeProgressCaches(queryClient, showId);
     },
   });
 }
@@ -221,23 +224,7 @@ export function useMarkMultipleWatched(showId: string) {
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.episodeProgress.showProgress(showId),
-      });
-      // Invalidate user media state (for verdict CTA continuePoint)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userMedia.all,
-      });
-      // Invalidate activity lists (watching/completed may change)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.meLists.history,
-      });
-      // Invalidate saved items (for_later is auto-removed when starting to watch)
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userActions.savedItems.all,
-      });
-      // Invalidate legacy saved-items queries (used by saved module)
-      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      invalidateEpisodeProgressCaches(queryClient, showId);
     },
   });
 }
@@ -298,19 +285,7 @@ export function useMarkAllEpisodesWatched(showId: string) {
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.episodeProgress.showProgress(showId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userMedia.all,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.meLists.history,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userActions.savedItems.all,
-      });
-      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      invalidateEpisodeProgressCaches(queryClient, showId);
     },
   });
 }
@@ -328,19 +303,7 @@ export function useUnmarkEpisodes(showId: string) {
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.episodeProgress.showProgress(showId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userMedia.all,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.meLists.history,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.userActions.savedItems.all,
-      });
-      queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      invalidateEpisodeProgressCaches(queryClient, showId);
     },
   });
 }

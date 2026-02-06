@@ -23,7 +23,7 @@ describe('EpisodeProgressService', () => {
     markManyUnwatched: jest.fn(),
     getWatchedEpisodeIds: jest.fn(),
     getShowProgress: jest.fn(),
-    countDistinctShowsForEpisodes: jest.fn(),
+    validateEpisodeBatch: jest.fn(),
     getEpisodeMediaInfo: jest.fn(),
   };
 
@@ -57,8 +57,10 @@ describe('EpisodeProgressService', () => {
 
     service = module.get(EpisodeProgressService);
     jest.clearAllMocks();
-    // Default: all episodes belong to one show
-    mockEpisodeProgressRepo.countDistinctShowsForEpisodes.mockResolvedValue(1);
+    // Default: all episodes belong to one show and all exist
+    mockEpisodeProgressRepo.validateEpisodeBatch.mockImplementation(async (ids: string[]) =>
+      Promise.resolve({ existingCount: ids.length, distinctShowCount: 1 }),
+    );
   });
 
   describe('markWatched', () => {
@@ -211,6 +213,15 @@ describe('EpisodeProgressService', () => {
         expect(mockUserMediaService.setState).not.toHaveBeenCalled();
       });
 
+      it('should not throw when state sync fails after single watch', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockRejectedValue(new Error('DB error'));
+
+        await expect(service.markWatched('user-1', 'ep-1')).resolves.toBeUndefined();
+
+        expect(mockEpisodeProgressRepo.markWatched).toHaveBeenCalledWith('user-1', 'ep-1');
+      });
+
       it('should auto-complete when all episodes are watched while paused', async () => {
         mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
         mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
@@ -311,9 +322,38 @@ describe('EpisodeProgressService', () => {
       expect(mockUserMediaService.setState).not.toHaveBeenCalled();
     });
 
+    it('should not throw when state sync fails after batch watch', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockRejectedValue(new Error('DB error'));
+
+      await expect(service.markBatchWatched('user-1', ['ep-1', 'ep-2'])).resolves.toBeUndefined();
+
+      expect(mockEpisodeProgressRepo.markManyWatched).toHaveBeenCalledWith('user-1', [
+        'ep-1',
+        'ep-2',
+      ]);
+    });
+
+    it('should throw BadRequestException when some episodes do not exist', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.validateEpisodeBatch.mockResolvedValue({
+        existingCount: 1,
+        distinctShowCount: 1,
+      });
+
+      await expect(service.markBatchWatched('user-1', ['ep-1', 'nonexistent-ep'])).rejects.toThrow(
+        BadRequestException,
+      );
+
+      expect(mockEpisodeProgressRepo.markManyWatched).not.toHaveBeenCalled();
+    });
+
     it('should throw BadRequestException when episodes belong to different shows', async () => {
       mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
-      mockEpisodeProgressRepo.countDistinctShowsForEpisodes.mockResolvedValue(2);
+      mockEpisodeProgressRepo.validateEpisodeBatch.mockResolvedValue({
+        existingCount: 2,
+        distinctShowCount: 2,
+      });
 
       await expect(service.markBatchWatched('user-1', ['ep-1', 'ep-2'])).rejects.toThrow(
         BadRequestException,
@@ -322,7 +362,7 @@ describe('EpisodeProgressService', () => {
       expect(mockEpisodeProgressRepo.markManyWatched).not.toHaveBeenCalled();
     });
 
-    it('should skip cross-show check for single episode', async () => {
+    it('should skip batch validation for single episode', async () => {
       mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
       mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
         { seasonNumber: 1, watchedCount: 1, totalCount: 10, watchedEpisodeIds: [] },
@@ -331,7 +371,7 @@ describe('EpisodeProgressService', () => {
 
       await service.markBatchWatched('user-1', ['ep-1']);
 
-      expect(mockEpisodeProgressRepo.countDistinctShowsForEpisodes).not.toHaveBeenCalled();
+      expect(mockEpisodeProgressRepo.validateEpisodeBatch).not.toHaveBeenCalled();
       expect(mockEpisodeProgressRepo.markManyWatched).toHaveBeenCalled();
     });
   });
@@ -356,6 +396,15 @@ describe('EpisodeProgressService', () => {
 
       expect(mockEpisodeProgressRepo.markUnwatched).toHaveBeenCalled();
       expect(mockUserMediaService.deleteState).not.toHaveBeenCalled();
+    });
+
+    it('should not throw when state sync fails after single unwatch', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockRejectedValue(new Error('DB error'));
+
+      await expect(service.markUnwatched('user-1', 'ep-1')).resolves.toBeUndefined();
+
+      expect(mockEpisodeProgressRepo.markUnwatched).toHaveBeenCalledWith('user-1', 'ep-1');
     });
 
     describe('auto-state transitions', () => {
@@ -455,9 +504,26 @@ describe('EpisodeProgressService', () => {
       expect(mockEpisodeProgressRepo.markManyUnwatched).not.toHaveBeenCalled();
     });
 
+    it('should throw BadRequestException when some episodes do not exist', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.validateEpisodeBatch.mockResolvedValue({
+        existingCount: 1,
+        distinctShowCount: 1,
+      });
+
+      await expect(
+        service.markBatchUnwatched('user-1', ['ep-1', 'nonexistent-ep']),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockEpisodeProgressRepo.markManyUnwatched).not.toHaveBeenCalled();
+    });
+
     it('should throw BadRequestException when episodes belong to different shows', async () => {
       mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
-      mockEpisodeProgressRepo.countDistinctShowsForEpisodes.mockResolvedValue(2);
+      mockEpisodeProgressRepo.validateEpisodeBatch.mockResolvedValue({
+        existingCount: 2,
+        distinctShowCount: 2,
+      });
 
       await expect(service.markBatchUnwatched('user-1', ['ep-1', 'ep-2'])).rejects.toThrow(
         BadRequestException,
@@ -492,6 +558,18 @@ describe('EpisodeProgressService', () => {
         mediaItemId: 'media-1',
         state: USER_MEDIA_STATE.WATCHING,
       });
+    });
+
+    it('should not throw when state sync fails after batch unwatch', async () => {
+      mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+      mockEpisodeProgressRepo.getShowProgress.mockRejectedValue(new Error('DB error'));
+
+      await expect(service.markBatchUnwatched('user-1', ['ep-1', 'ep-2'])).resolves.toBeUndefined();
+
+      expect(mockEpisodeProgressRepo.markManyUnwatched).toHaveBeenCalledWith('user-1', [
+        'ep-1',
+        'ep-2',
+      ]);
     });
   });
 

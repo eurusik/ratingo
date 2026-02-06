@@ -30,26 +30,60 @@ export class EpisodeProgressService {
     }
 
     await this.episodeProgressRepo.markWatched(userId, episodeId);
-    await this.syncStateAfterWatch(userId, episodeInfo.showId, episodeInfo.mediaItemId);
+
+    try {
+      await this.syncStateAfterWatch(userId, episodeInfo.showId, episodeInfo.mediaItemId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to sync state after watch: user=${userId}, media=${episodeInfo.mediaItemId}`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   async markBatchWatched(userId: string, episodeIds: string[]): Promise<void> {
-    const { showId, mediaItemId } = await this.validateBatchAndGetInfo(episodeIds);
-    await this.episodeProgressRepo.markManyWatched(userId, episodeIds);
-    await this.syncStateAfterWatch(userId, showId, mediaItemId);
+    const uniqueIds = [...new Set(episodeIds)];
+    const { showId, mediaItemId } = await this.validateBatchAndGetInfo(uniqueIds);
+    await this.episodeProgressRepo.markManyWatched(userId, uniqueIds);
+
+    try {
+      await this.syncStateAfterWatch(userId, showId, mediaItemId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to sync state after batch watch: user=${userId}, media=${mediaItemId}`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   async markUnwatched(userId: string, episodeId: string): Promise<void> {
     const episodeInfo = await this.episodeProgressRepo.getEpisodeMediaInfo(episodeId);
     await this.episodeProgressRepo.markUnwatched(userId, episodeId);
     if (!episodeInfo) return;
-    await this.syncStateAfterUnwatch(userId, episodeInfo.showId, episodeInfo.mediaItemId);
+
+    try {
+      await this.syncStateAfterUnwatch(userId, episodeInfo.showId, episodeInfo.mediaItemId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to sync state after unwatch: user=${userId}, media=${episodeInfo.mediaItemId}`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   async markBatchUnwatched(userId: string, episodeIds: string[]): Promise<void> {
-    const { showId, mediaItemId } = await this.validateBatchAndGetInfo(episodeIds);
-    await this.episodeProgressRepo.markManyUnwatched(userId, episodeIds);
-    await this.syncStateAfterUnwatch(userId, showId, mediaItemId);
+    const uniqueIds = [...new Set(episodeIds)];
+    const { showId, mediaItemId } = await this.validateBatchAndGetInfo(uniqueIds);
+    await this.episodeProgressRepo.markManyUnwatched(userId, uniqueIds);
+
+    try {
+      await this.syncStateAfterUnwatch(userId, showId, mediaItemId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to sync state after batch unwatch: user=${userId}, media=${mediaItemId}`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   async getShowProgress(userId: string, showId: string): Promise<SeasonProgressInfo[]> {
@@ -66,9 +100,16 @@ export class EpisodeProgressService {
     }
 
     if (episodeIds.length > 1) {
-      const showCount = await this.episodeProgressRepo.countDistinctShowsForEpisodes(episodeIds);
+      const { existingCount, distinctShowCount } =
+        await this.episodeProgressRepo.validateEpisodeBatch(episodeIds);
 
-      if (showCount !== 1) {
+      if (existingCount !== episodeIds.length) {
+        throw new BadRequestException(
+          `Some episodes were not found (requested ${episodeIds.length}, found ${existingCount})`,
+        );
+      }
+
+      if (distinctShowCount !== 1) {
         throw new BadRequestException('All episodes must belong to the same show');
       }
     }
