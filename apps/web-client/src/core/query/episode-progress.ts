@@ -169,10 +169,7 @@ export function useMarkMultipleWatched(showId: string) {
 
   return useMutation({
     mutationFn: async (variables: MarkMultipleWatchedVariables) => {
-      // Mark all episodes in parallel
-      await Promise.all(
-        variables.episodeIds.map((episodeId) => episodeProgressApi.markWatched(episodeId)),
-      );
+      await episodeProgressApi.markBatchWatched(variables.episodeIds);
     },
 
     onMutate: async (variables) => {
@@ -245,18 +242,6 @@ export function useMarkMultipleWatched(showId: string) {
   });
 }
 
-const BATCH_SIZE = 20;
-
-async function processInBatches<T>(
-  items: T[],
-  processor: (item: T) => Promise<void>,
-): Promise<void> {
-  for (let i = 0; i < items.length; i += BATCH_SIZE) {
-    const batch = items.slice(i, i + BATCH_SIZE);
-    await Promise.all(batch.map(processor));
-  }
-}
-
 /**
  * Marks ALL episodes of a show as watched.
  * Returns previous state for undo functionality.
@@ -270,7 +255,7 @@ export function useMarkAllEpisodesWatched(showId: string) {
       variables.episodesBySeasonNumber.forEach((ids) => {
         allEpisodeIds.push(...ids);
       });
-      await processInBatches(allEpisodeIds, (id) => episodeProgressApi.markWatched(id));
+      await episodeProgressApi.markBatchWatched(allEpisodeIds);
     },
 
     onMutate: async (variables) => {
@@ -339,7 +324,7 @@ export function useUnmarkEpisodes(showId: string) {
   return useMutation({
     mutationFn: async (episodeIdsToUnmark: string[]) => {
       if (episodeIdsToUnmark.length === 0) return;
-      await processInBatches(episodeIdsToUnmark, (id) => episodeProgressApi.markUnwatched(id));
+      await episodeProgressApi.markBatchUnwatched(episodeIdsToUnmark);
     },
 
     onSettled: () => {

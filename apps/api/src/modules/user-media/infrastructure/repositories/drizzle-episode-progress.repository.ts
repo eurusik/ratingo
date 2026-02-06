@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -12,9 +12,6 @@ import {
   type SeasonProgressInfo,
 } from '../../domain/repositories/episode-progress.repository.interface';
 
-/**
- * Drizzle implementation of episode progress repository.
- */
 @Injectable()
 export class DrizzleEpisodeProgressRepository implements IEpisodeProgressRepository {
   private readonly logger = new Logger(DrizzleEpisodeProgressRepository.name);
@@ -24,9 +21,6 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
     private readonly db: PostgresJsDatabase<typeof schema>,
   ) {}
 
-  /**
-   * Marks an episode as watched.
-   */
   async markWatched(userId: string, episodeId: string): Promise<void> {
     try {
       await this.db
@@ -46,9 +40,6 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
     }
   }
 
-  /**
-   * Marks an episode as unwatched.
-   */
   async markUnwatched(userId: string, episodeId: string): Promise<void> {
     try {
       await this.db
@@ -68,9 +59,48 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
     }
   }
 
-  /**
-   * Gets watched episode IDs for a show.
-   */
+  async markManyWatched(userId: string, episodeIds: string[]): Promise<void> {
+    if (episodeIds.length === 0) return;
+    try {
+      await this.db
+        .insert(schema.userEpisodeProgress)
+        .values(
+          episodeIds.map((episodeId) => ({
+            userId,
+            episodeId,
+            watchedAt: new Date(),
+          })),
+        )
+        .onConflictDoNothing();
+    } catch (error) {
+      this.logger.error(`markManyWatched failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to mark episodes as watched', {
+        userId,
+        count: episodeIds.length,
+      });
+    }
+  }
+
+  async markManyUnwatched(userId: string, episodeIds: string[]): Promise<void> {
+    if (episodeIds.length === 0) return;
+    try {
+      await this.db
+        .delete(schema.userEpisodeProgress)
+        .where(
+          and(
+            eq(schema.userEpisodeProgress.userId, userId),
+            inArray(schema.userEpisodeProgress.episodeId, episodeIds),
+          ),
+        );
+    } catch (error) {
+      this.logger.error(`markManyUnwatched failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to mark episodes as unwatched', {
+        userId,
+        count: episodeIds.length,
+      });
+    }
+  }
+
   async getWatchedEpisodeIds(userId: string, showId: string): Promise<string[]> {
     try {
       const rows = await this.db
@@ -93,12 +123,9 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
     }
   }
 
-  /**
-   * Gets progress for all seasons of a show.
-   */
   async getShowProgress(userId: string, showId: string): Promise<SeasonProgressInfo[]> {
     try {
-      // Get all seasons with episode counts and watched counts in one query
+      // Single query: all episodes with watched flag via correlated subquery
       const rows = await this.db
         .select({
           seasonNumber: schema.seasons.number,
@@ -116,7 +143,6 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
         .where(eq(schema.seasons.showId, showId))
         .orderBy(schema.seasons.number, schema.episodes.number);
 
-      // Group by season
       const seasonMap = new Map<number, { total: number; watched: number; watchedIds: string[] }>();
 
       for (const row of rows) {
@@ -133,7 +159,6 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
         seasonMap.set(row.seasonNumber, existing);
       }
 
-      // Convert to array
       const result: SeasonProgressInfo[] = [];
       for (const [seasonNumber, data] of seasonMap) {
         result.push({
@@ -154,9 +179,23 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
     }
   }
 
-  /**
-   * Gets episode media info (showId, mediaItemId, season/episode numbers).
-   */
+  async countDistinctShowsForEpisodes(episodeIds: string[]): Promise<number> {
+    if (episodeIds.length === 0) return 0;
+    try {
+      const rows = await this.db
+        .selectDistinct({ showId: schema.episodes.showId })
+        .from(schema.episodes)
+        .where(inArray(schema.episodes.id, episodeIds));
+
+      return rows.length;
+    } catch (error) {
+      this.logger.error(`countDistinctShowsForEpisodes failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to count distinct shows for episodes', {
+        count: episodeIds.length,
+      });
+    }
+  }
+
   async getEpisodeMediaInfo(episodeId: string): Promise<EpisodeMediaInfo | null> {
     try {
       const rows = await this.db

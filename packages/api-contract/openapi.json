@@ -2424,6 +2424,84 @@
         ]
       }
     },
+    "/api/user-media/episodes/batch/watch": {
+      "post": {
+        "operationId": "EpisodeProgressController_markBatchWatched",
+        "summary": "Batch mark episodes as watched (auth: Bearer)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchEpisodeIdsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Episodes marked as watched"
+          },
+          "400": {
+            "description": "Invalid episode IDs or episodes from different shows"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "First episode not found"
+          }
+        },
+        "tags": [
+          "Episode Progress"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/user-media/episodes/batch/unwatch": {
+      "post": {
+        "operationId": "EpisodeProgressController_markBatchUnwatched",
+        "summary": "Batch mark episodes as unwatched (auth: Bearer)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchEpisodeIdsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Episodes marked as unwatched"
+          },
+          "400": {
+            "description": "Invalid episode IDs or episodes from different shows"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "First episode not found"
+          }
+        },
+        "tags": [
+          "Episode Progress"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/user-media/episodes/{episodeId}/watch": {
       "post": {
         "operationId": "EpisodeProgressController_markWatched",
@@ -8367,12 +8445,6 @@
             "example": "quality",
             "description": "Verdict type for UI styling"
           },
-          "messageKey": {
-            "type": "string",
-            "example": "strongRatings",
-            "nullable": true,
-            "description": "Message key for i18n lookup on client (details.verdict.movie.*)"
-          },
           "context": {
             "type": "string",
             "example": "IMDb: 6.3",
@@ -8393,12 +8465,18 @@
             ],
             "example": "forLater",
             "description": "Hint key for CTA suggestions"
+          },
+          "messageKey": {
+            "type": "string",
+            "example": "strongRatings",
+            "nullable": true,
+            "description": "Message key for i18n lookup on client (details.verdict.movie.*)"
           }
         },
         "required": [
           "type",
-          "messageKey",
-          "hintKey"
+          "hintKey",
+          "messageKey"
         ]
       },
       "MovieResponseDto": {
@@ -8634,13 +8712,6 @@
           "mediaItemId": {
             "type": "string"
           },
-          "type": {
-            "type": "string",
-            "example": "show",
-            "enum": [
-              "show"
-            ]
-          },
           "slug": {
             "type": "string"
           },
@@ -8692,6 +8763,13 @@
           "externalRatings": {
             "$ref": "#/components/schemas/ExternalRatingsDto"
           },
+          "type": {
+            "type": "string",
+            "example": "show",
+            "enum": [
+              "show"
+            ]
+          },
           "showProgress": {
             "nullable": true,
             "allOf": [
@@ -8707,13 +8785,13 @@
         "required": [
           "id",
           "mediaItemId",
-          "type",
           "slug",
           "title",
           "isNew",
           "isClassic",
           "stats",
-          "externalRatings"
+          "externalRatings",
+          "type"
         ]
       },
       "TrendingShowsResponseDto": {
@@ -8992,25 +9070,6 @@
             "example": "quality",
             "description": "Verdict type for UI styling"
           },
-          "messageKey": {
-            "type": "string",
-            "enum": [
-              "cancelled",
-              "poorRatings",
-              "belowAverage",
-              "criticsLoved",
-              "strongRatings",
-              "decentRatings",
-              "longRunning",
-              "trendingNow",
-              "risingHype",
-              "earlyReviews",
-              "mixedReviews"
-            ],
-            "example": "strongRatings",
-            "nullable": true,
-            "description": "Message key for i18n lookup on client (details.verdict.show.*)"
-          },
           "context": {
             "type": "string",
             "example": "IMDb: 8.2",
@@ -9031,12 +9090,31 @@
             ],
             "example": "forLater",
             "description": "Hint key for CTA suggestions"
+          },
+          "messageKey": {
+            "type": "string",
+            "enum": [
+              "cancelled",
+              "poorRatings",
+              "belowAverage",
+              "criticsLoved",
+              "strongRatings",
+              "decentRatings",
+              "longRunning",
+              "trendingNow",
+              "risingHype",
+              "earlyReviews",
+              "mixedReviews"
+            ],
+            "example": "strongRatings",
+            "nullable": true,
+            "description": "Message key for i18n lookup on client (details.verdict.show.*)"
           }
         },
         "required": [
           "type",
-          "messageKey",
-          "hintKey"
+          "hintKey",
+          "messageKey"
         ]
       },
       "ShowStatusHintDto": {
@@ -9331,7 +9409,7 @@
           "isImported": {
             "type": "boolean",
             "example": false,
-            "description": "If true, this TMDB item already exists in local DB"
+            "description": "If true, this item exists in local DB"
           }
         },
         "required": [
@@ -9692,6 +9770,28 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "BatchEpisodeIdsDto": {
+        "type": "object",
+        "properties": {
+          "episodeIds": {
+            "description": "Array of episode UUIDs to mark as watched/unwatched",
+            "example": [
+              "uuid-1",
+              "uuid-2",
+              "uuid-3"
+            ],
+            "minItems": 1,
+            "maxItems": 200,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "episodeIds"
         ]
       },
       "SeasonProgressDto": {

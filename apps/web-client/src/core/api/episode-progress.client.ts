@@ -13,6 +13,7 @@ import { apiGet, apiPost, apiDelete } from './client';
 
 export type SeasonProgressDto = components['schemas']['SeasonProgressDto'];
 export type ShowProgressDto = components['schemas']['ShowProgressDto'];
+type BatchEpisodeIdsDto = components['schemas']['BatchEpisodeIdsDto'];
 
 // ============================================================================
 // API Client
@@ -37,6 +38,26 @@ export const episodeProgressApi = {
    */
   async markUnwatched(episodeId: string): Promise<void> {
     return apiDelete<void>(`user-media/episodes/${episodeId}/watch`);
+  },
+
+  /**
+   * Marks multiple episodes as watched in a single batch request.
+   *
+   * @param episodeIds - Array of episode UUIDs
+   * @returns void (204 No Content)
+   */
+  async markBatchWatched(episodeIds: string[]): Promise<void> {
+    return apiPost<void>('user-media/episodes/batch/watch', { episodeIds } satisfies BatchEpisodeIdsDto);
+  },
+
+  /**
+   * Marks multiple episodes as unwatched in a single batch request.
+   *
+   * @param episodeIds - Array of episode UUIDs
+   * @returns void (204 No Content)
+   */
+  async markBatchUnwatched(episodeIds: string[]): Promise<void> {
+    return apiPost<void>('user-media/episodes/batch/unwatch', { episodeIds } satisfies BatchEpisodeIdsDto);
   },
 
   /**

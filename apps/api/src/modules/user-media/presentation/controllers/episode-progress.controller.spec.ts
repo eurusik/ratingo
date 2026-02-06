@@ -8,6 +8,8 @@ describe('EpisodeProgressController', () => {
   const service = {
     markWatched: jest.fn(),
     markUnwatched: jest.fn(),
+    markBatchWatched: jest.fn(),
+    markBatchUnwatched: jest.fn(),
     getShowProgress: jest.fn(),
   };
 
@@ -19,6 +21,29 @@ describe('EpisodeProgressController', () => {
 
     controller = module.get(EpisodeProgressController);
     jest.clearAllMocks();
+  });
+
+  describe('markBatchWatched', () => {
+    it('should call service.markBatchWatched with user id and episode ids', async () => {
+      service.markBatchWatched.mockResolvedValue(undefined);
+
+      await controller.markBatchWatched(
+        { id: 'user-123' },
+        { episodeIds: ['ep-1', 'ep-2', 'ep-3'] },
+      );
+
+      expect(service.markBatchWatched).toHaveBeenCalledWith('user-123', ['ep-1', 'ep-2', 'ep-3']);
+    });
+  });
+
+  describe('markBatchUnwatched', () => {
+    it('should call service.markBatchUnwatched with user id and episode ids', async () => {
+      service.markBatchUnwatched.mockResolvedValue(undefined);
+
+      await controller.markBatchUnwatched({ id: 'user-123' }, { episodeIds: ['ep-1', 'ep-2'] });
+
+      expect(service.markBatchUnwatched).toHaveBeenCalledWith('user-123', ['ep-1', 'ep-2']);
+    });
   });
 
   describe('markWatched', () => {
