@@ -124,13 +124,12 @@ export function useSetRating(mediaItemId: string) {
     },
 
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all });
+      // Backend syncs standalone rating → review rating
       queryClient.invalidateQueries({
         queryKey: queryKeys.reviews.myReview(mediaItemId),
       });
       queryClient.invalidateQueries({
-        queryKey: [...queryKeys.reviews.all, 'media', mediaItemId],
+        queryKey: queryKeys.reviews.mediaBase(mediaItemId),
       });
     },
   });
