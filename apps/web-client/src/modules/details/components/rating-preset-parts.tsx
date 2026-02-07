@@ -148,7 +148,6 @@ interface FineTuneSliderProps {
   label: string;
   onValueChange: (v: number[]) => void;
   onValueCommit: (v: number[]) => void;
-  onExited: () => void;
 }
 
 export function FineTuneSlider({
@@ -160,30 +159,30 @@ export function FineTuneSlider({
   label,
   onValueChange,
   onValueCommit,
-  onExited,
 }: FineTuneSliderProps) {
   return (
     <div
       className={cn(
-        'hidden md:flex items-center gap-3 max-w-xs transition-all duration-200 ease-out',
-        visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none',
+        'hidden md:grid transition-all duration-200 ease-out',
+        visible ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0 mt-0',
       )}
-      onTransitionEnd={() => {
-        if (!visible) onExited();
-      }}
     >
-      <span className="text-[10px] text-cinema-text-muted whitespace-nowrap">{label}</span>
-      <Slider
-        value={[value]}
-        onValueChange={onValueChange}
-        onValueCommit={onValueCommit}
-        min={min}
-        max={max}
-        step={1}
-        disabled={disabled}
-        aria-label={label}
-        className="w-full"
-      />
+      <div className={cn('overflow-hidden', !visible && 'pointer-events-none')}>
+        <div className="flex items-center gap-3 max-w-xs py-0.5">
+          <span className="text-[10px] text-cinema-text-muted whitespace-nowrap">{label}</span>
+          <Slider
+            value={[value]}
+            onValueChange={onValueChange}
+            onValueCommit={onValueCommit}
+            min={min}
+            max={max}
+            step={1}
+            disabled={disabled}
+            aria-label={label}
+            className="w-full"
+          />
+        </div>
+      </div>
     </div>
   );
 }

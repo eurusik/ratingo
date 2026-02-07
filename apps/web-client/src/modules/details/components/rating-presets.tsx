@@ -42,7 +42,6 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
   const sliderValue = sliderOverride ?? currentRating ?? 0;
 
   const [showSlider, setShowSlider] = useState(false);
-  const [sliderMounted, setSliderMounted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -85,7 +84,6 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
 
   function openSlider() {
     setShowSlider(true);
-    setSliderMounted(true);
     scheduleHide();
   }
 
@@ -142,14 +140,16 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
   };
 
   const handleRatedBadgeClick = () => {
-    setDrawerOpen(true);
-    setShowSlider((prev) => {
-      if (!prev) {
-        setSliderMounted(true);
-        scheduleHide();
+    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+    if (isDesktop) {
+      if (showSlider) {
+        setShowSlider(false);
+      } else {
+        openSlider();
       }
-      return !prev;
-    });
+    } else {
+      setDrawerOpen(true);
+    }
   };
 
   const handleMobileRateClick = () => {
@@ -172,7 +172,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
           {dict.rating.title}
         </span>
 
-        <div className="space-y-2">
+        <div>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -212,19 +212,16 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
             />
           </div>
 
-          {sliderMounted ? (
-            <FineTuneSlider
-              visible={showSlider}
-              value={sliderValue}
-              min={activePreset.min}
-              max={activePreset.max}
-              disabled={isPending}
-              label={dict.rating.finetune}
-              onValueChange={handleSliderChange}
-              onValueCommit={handleSliderCommit}
-              onExited={() => setSliderMounted(false)}
-            />
-          ) : null}
+          <FineTuneSlider
+            visible={showSlider}
+            value={sliderValue}
+            min={activePreset.min}
+            max={activePreset.max}
+            disabled={isPending}
+            label={dict.rating.finetune}
+            onValueChange={handleSliderChange}
+            onValueCommit={handleSliderCommit}
+          />
 
           <RatingDrawer
             open={drawerOpen}
