@@ -133,13 +133,25 @@ export default {
   					transform: 'scale(2.5)',
   					opacity: '0'
   				}
+  			},
+  			'score-pulse': {
+  				'0%': { transform: 'scale(1)' },
+  				'50%': { transform: 'scale(1.08)' },
+  				'100%': { transform: 'scale(1)' }
+  			},
+  			'score-commit': {
+  				'0%': { transform: 'scale(1)' },
+  				'40%': { transform: 'scale(1.15)' },
+  				'100%': { transform: 'scale(1)' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
   			'vote-pop': 'vote-pop 0.3s ease-out',
-  			'vote-burst': 'vote-burst 0.4s ease-out forwards'
+  			'vote-burst': 'vote-burst 0.4s ease-out forwards',
+  			'score-pulse': 'score-pulse 120ms ease-out',
+  			'score-commit': 'score-commit 200ms ease-out'
   		}
   	}
   },

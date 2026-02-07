@@ -35,7 +35,6 @@ export { NotFoundView } from './not-found-view';
 
 // User rating
 export { UserRatingButton } from './user-rating-button';
-export { RatingDialog } from './rating-dialog';
 
 // Atomic components for Hero section
 export { RatingBadge } from './rating-badge';

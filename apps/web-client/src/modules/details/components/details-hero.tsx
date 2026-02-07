@@ -83,7 +83,7 @@ export function DetailsHero({
               </p>
 
               {/* Ratingo score + User rating */}
-              <div className="flex items-start gap-3 md:gap-4 flex-wrap">
+              <div className="space-y-3">
                 {rating != null && <RatingoScore score={rating} />}
                 {mediaItemId && mediaType && (
                   <UserRatingButton mediaItemId={mediaItemId} mediaType={mediaType} />

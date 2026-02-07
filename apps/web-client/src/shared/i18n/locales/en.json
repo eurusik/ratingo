@@ -1425,14 +1425,20 @@
   },
   "rating": {
     "title": "Your rating",
-    "description": "Drag the slider to set your rating from 0 to 100",
-    "rate": "Rate",
-    "clear": "Remove rating",
-    "save": "Save",
+    "rate": "How was it?",
+    "clear": "Clear",
+    "finetune": "Fine-tune?",
+    "prompt": "How did you like it?",
     "toast": {
-      "saved": "Rating saved",
-      "cleared": "Rating removed",
+      "saved": "{emoji} {label} — {score}",
+      "cleared": "Rating cleared",
       "error": "Failed to save rating"
+    },
+    "presets": {
+      "bad": "Bad",
+      "okay": "Okay",
+      "good": "Liked it",
+      "top": "Top"
     }
   }
 }
