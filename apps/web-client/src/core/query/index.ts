@@ -1,15 +1,13 @@
 export { getQueryClient } from './client';
 export { queryKeys } from './keys';
 export { useTrendingShows, useShowDetails, useShowCalendar, useProviders } from './hooks';
+export { useSaveStatus, useSaveItem, useUnsaveItem } from './saved-items';
 export {
-  useSaveStatus,
-  useSaveItem,
-  useUnsaveItem,
   useSubscriptionStatus,
   useSubscribe,
   useUnsubscribe,
   SUBSCRIPTION_TRIGGER,
-} from './user-actions';
+} from './subscriptions';
 export {
   usePolicies,
   useActivePolicy,
@@ -57,3 +55,9 @@ export {
   useMarkAllEpisodesWatched,
   useUnmarkEpisodes,
 } from './episode-progress';
+export {
+  useNotifications,
+  useUnreadNotificationCount,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+} from './notifications';

@@ -20,7 +20,7 @@ import {
   type ReportReason,
 } from '../api/reviews.client';
 import { queryKeys } from './keys';
-import { isUnauthorized } from './utils';
+import { retryUnlessUnauthorized } from './utils';
 
 /**
  * Invalidates all caches affected by review mutations.
@@ -180,10 +180,7 @@ export function useMyReview(
     queryKey: queryKeys.reviews.myReview(mediaItemId),
     queryFn: () => reviewsApi.getMyReviewForMedia(mediaItemId),
     staleTime: 1000 * 60 * 5,
-    retry: (failureCount, error) => {
-      if (isUnauthorized(error)) return false;
-      return failureCount < 2;
-    },
+    retry: retryUnlessUnauthorized,
     ...options,
   });
 }
