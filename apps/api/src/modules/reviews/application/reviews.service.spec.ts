@@ -328,6 +328,43 @@ describe('ReviewsService', () => {
     });
   });
 
+  describe('syncRatingToReview', () => {
+    it('should update review rating when review exists and rating differs', async () => {
+      reviewRepo.findByUserAndMedia.mockResolvedValue({ ...mockReview, rating: 70 });
+      reviewRepo.update.mockResolvedValue({ ...mockReview, rating: 90 });
+
+      await service.syncRatingToReview('user-id-1', 'media-id-1', 90);
+
+      expect(reviewRepo.findByUserAndMedia).toHaveBeenCalledWith('user-id-1', 'media-id-1');
+      expect(reviewRepo.update).toHaveBeenCalledWith('review-id-1', { rating: 90 });
+    });
+
+    it('should no-op when no review exists', async () => {
+      reviewRepo.findByUserAndMedia.mockResolvedValue(null);
+
+      await service.syncRatingToReview('user-id-1', 'media-id-1', 90);
+
+      expect(reviewRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should no-op when review rating already matches', async () => {
+      reviewRepo.findByUserAndMedia.mockResolvedValue({ ...mockReview, rating: 85 });
+
+      await service.syncRatingToReview('user-id-1', 'media-id-1', 85);
+
+      expect(reviewRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('should handle rating 0 correctly', async () => {
+      reviewRepo.findByUserAndMedia.mockResolvedValue({ ...mockReview, rating: 50 });
+      reviewRepo.update.mockResolvedValue({ ...mockReview, rating: 0 });
+
+      await service.syncRatingToReview('user-id-1', 'media-id-1', 0);
+
+      expect(reviewRepo.update).toHaveBeenCalledWith('review-id-1', { rating: 0 });
+    });
+  });
+
   describe('hardDelete', () => {
     it('should hard delete review (admin)', async () => {
       await service.hardDelete('review-id-1');

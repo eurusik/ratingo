@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 
 import { MediaType } from '../../../common/enums/media-type.enum';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
+import { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';
 
 import { UserMediaService } from './user-media.service';
 
@@ -19,11 +20,15 @@ describe('UserMediaService', () => {
     enrichUserMedia: jest.fn((items: any[]) => items),
   };
 
+  const eventEmitter = {
+    emit: jest.fn(),
+  };
+
   let service: UserMediaService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new UserMediaService(repo as any, cards as any);
+    service = new UserMediaService(repo as any, cards as any, eventEmitter as any);
   });
 
   it('setState should delegate to repo.upsert', async () => {
@@ -256,8 +261,132 @@ describe('UserMediaService', () => {
     expect(result).toEqual([{ id: 's1', mediaItemId: 'm1' }]);
   });
 
+  describe('rating changed event (setState -> event)', () => {
+    it('should emit event when rating is set via setState', async () => {
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 85,
+      } as any);
+
+      await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 85,
+      });
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        UserMediaRatingChangedEvent.eventName,
+        expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 85 }),
+      );
+    });
+
+    it('should not emit event when only state changes (no rating)', async () => {
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.COMPLETED,
+      } as any);
+
+      await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.COMPLETED,
+        rating: null,
+        progress: null,
+        notes: null,
+      });
+
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('should not emit event when rating is undefined', async () => {
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+      } as any);
+
+      await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.WATCHING,
+      });
+
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('should not emit event when called via syncRating (loop prevention)', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 85,
+      } as any);
+
+      await service.syncRating('u1', 'm1', 85);
+
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('should emit event for rating 0 (falsy edge case)', async () => {
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.COMPLETED,
+        rating: 0,
+      } as any);
+
+      await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.COMPLETED,
+        rating: 0,
+      });
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        UserMediaRatingChangedEvent.eventName,
+        expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 0 }),
+      );
+    });
+
+    it('should not emit event when upsert fails', async () => {
+      repo.upsert.mockRejectedValue(new Error('DB error'));
+
+      await expect(
+        service.setState({
+          userId: 'u1',
+          mediaItemId: 'm1',
+          state: USER_MEDIA_STATE.WATCHING,
+          rating: 85,
+        }),
+      ).rejects.toThrow('DB error');
+
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('should emit event when rating is set with progress', async () => {
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 75,
+      } as any);
+
+      await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 75,
+        progress: { seasons: { 1: 3 } },
+      });
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        UserMediaRatingChangedEvent.eventName,
+        expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 75 }),
+      );
+    });
+  });
+
   describe('syncRating', () => {
-    it('should delegate to setState with userId, mediaItemId and rating', async () => {
+    it('should upsert directly without emitting events', async () => {
       repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
       repo.upsert.mockResolvedValue({
         id: 's1',
@@ -270,9 +399,10 @@ describe('UserMediaService', () => {
       expect(repo.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 85 }),
       );
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
-    it('should forward mediaType to setState', async () => {
+    it('should default to watching for shows when no existing state', async () => {
       repo.findOne.mockResolvedValue(null);
       repo.upsert.mockResolvedValue({
         id: 's1',

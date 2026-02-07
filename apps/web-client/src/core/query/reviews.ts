@@ -133,6 +133,11 @@ export function useCreateReview() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.reviews.myReview(variables.mediaItemId),
       });
+
+      // Sync standalone rating: backend propagates review rating to user-media state
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userMedia.state(variables.mediaItemId),
+      });
     },
   });
 }
@@ -155,6 +160,11 @@ export function useUpdateReview(mediaItemId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.reviews.myReview(mediaItemId),
       });
+
+      // Sync standalone rating: backend propagates review rating to user-media state
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userMedia.state(mediaItemId),
+      });
     },
   });
 }
@@ -176,6 +186,11 @@ export function useDeleteReview(mediaItemId: string) {
       queryClient.invalidateQueries({ queryKey: baseKey });
       queryClient.invalidateQueries({
         queryKey: queryKeys.reviews.myReview(mediaItemId),
+      });
+
+      // Sync standalone rating: backend may clear or update user-media state on review deletion
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userMedia.state(mediaItemId),
       });
     },
   });

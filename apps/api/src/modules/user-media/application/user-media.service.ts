@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -8,6 +9,7 @@ import { CardEnrichmentService } from '../../shared/cards/application/card-enric
 import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
 import { USER_MEDIA_STATE_ERRORS } from '../domain/constants/user-media-state-errors.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
+import { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';
 import {
   type IUserMediaStateRepository,
   type ListWithMediaOptions,
@@ -27,6 +29,7 @@ export class UserMediaService implements IRatingSyncPort {
     @Inject(USER_MEDIA_STATE_REPOSITORY)
     private readonly repo: IUserMediaStateRepository,
     private readonly cards: CardEnrichmentService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -58,15 +61,28 @@ export class UserMediaService implements IRatingSyncPort {
         throw new BadRequestException(USER_MEDIA_STATE_ERRORS.PROGRESS_NOT_ALLOWED);
       }
 
-      return this.repo.upsert({ ...data, state: USER_MEDIA_STATE.WATCHING });
+      const result = await this.repo.upsert({ ...data, state: USER_MEDIA_STATE.WATCHING });
+      if (data.rating != null) {
+        this.emitRatingChanged(data.userId, data.mediaItemId, data.rating);
+      }
+      return result;
     }
 
-    return this.repo.upsert({ ...data, state: resolvedState });
+    const result = await this.repo.upsert({ ...data, state: resolvedState });
+
+    if (data.rating != null) {
+      this.emitRatingChanged(data.userId, data.mediaItemId, data.rating);
+    }
+
+    return result;
   }
 
   /**
    * Syncs a rating from an external aggregate (e.g. reviews).
    * Implements IRatingSyncPort.
+   *
+   * Bypasses setState() to avoid emitting events — the source aggregate
+   * (reviews) already has the correct rating.
    *
    * @param mediaType - When provided, allows the correct default state
    *   to be chosen for first-time entries (`watching` for shows,
@@ -78,7 +94,12 @@ export class UserMediaService implements IRatingSyncPort {
     rating: number,
     mediaType?: MediaType,
   ): Promise<void> {
-    await this.setState({ userId, mediaItemId, rating }, mediaType);
+    const existing = await this.repo.findOne(userId, mediaItemId);
+    const resolvedState =
+      existing?.state ??
+      (mediaType === MediaType.SHOW ? USER_MEDIA_STATE.WATCHING : USER_MEDIA_STATE.COMPLETED);
+
+    await this.repo.upsert({ userId, mediaItemId, rating, state: resolvedState });
   }
 
   /**
@@ -333,5 +354,12 @@ export class UserMediaService implements IRatingSyncPort {
    */
   async countPausedWithMedia(userId: string): Promise<number> {
     return this.repo.countWithMedia(userId, { states: [USER_MEDIA_STATE.PAUSED] });
+  }
+
+  private emitRatingChanged(userId: string, mediaItemId: string, rating: number): void {
+    this.eventEmitter.emit(
+      UserMediaRatingChangedEvent.eventName,
+      new UserMediaRatingChangedEvent(userId, mediaItemId, rating),
+    );
   }
 }

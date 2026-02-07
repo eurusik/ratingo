@@ -247,6 +247,25 @@ export class ReviewsService {
     this.logger.log(`Admin force deleted review ${reviewId}`);
   }
 
+  /**
+   * Syncs a rating from user-media state to the review aggregate.
+   *
+   * Called by UserMediaRatingChangedListener via domain event.
+   * No-op when no review exists or the rating already matches.
+   */
+  async syncRatingToReview(userId: string, mediaItemId: string, rating: number): Promise<void> {
+    const review = await this.reviewRepo.findByUserAndMedia(userId, mediaItemId);
+
+    if (!review || review.rating === rating) {
+      return;
+    }
+
+    await this.reviewRepo.update(review.id, { rating });
+    this.logger.log(
+      `Synced rating ${rating} to review ${review.id} for user=${userId}, media=${mediaItemId}`,
+    );
+  }
+
   private async trySyncRating(
     userId: string,
     mediaItemId: string,

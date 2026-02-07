@@ -171,6 +171,14 @@ export function useSetRating(mediaItemId: string) {
       // Always refetch after mutation settles to ensure consistency
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all });
+
+      // Sync review cache: backend may propagate rating to review.rating
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.reviews.myReview(mediaItemId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...queryKeys.reviews.all, 'media', mediaItemId],
+      });
     },
   });
 }

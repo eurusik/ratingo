@@ -1,0 +1,14 @@
+/**
+ * Domain event emitted when a user changes a standalone rating.
+ *
+ * Pure domain class — zero NestJS/infrastructure dependencies.
+ */
+export class UserMediaRatingChangedEvent {
+  static readonly eventName = 'user-media.rating-changed';
+
+  constructor(
+    public readonly userId: string,
+    public readonly mediaItemId: string,
+    public readonly rating: number,
+  ) {}
+}

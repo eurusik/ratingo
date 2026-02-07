@@ -4,6 +4,7 @@ import { DatabaseModule } from '../../database/database.module';
 import { AuthModule } from '../auth/auth.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 
+import { UserMediaRatingChangedListener } from './application/listeners/user-media-rating-changed.listener';
 import { ReviewRepliesService } from './application/review-replies.service';
 import { ReviewReportsService } from './application/review-reports.service';
 import { ReviewVotesService } from './application/review-votes.service';
@@ -37,6 +38,7 @@ import { UserReviewsController } from './presentation/controllers/user-reviews.c
     ReviewVotesService,
     ReviewRepliesService,
     ReviewReportsService,
+    UserMediaRatingChangedListener,
     {
       provide: REVIEW_REPOSITORY,
       useClass: DrizzleReviewRepository,
