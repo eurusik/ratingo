@@ -100,15 +100,17 @@ export class UserMediaController {
     @Param('mediaItemId') mediaItemId: string,
     @Body() body: SetUserMediaStateDto,
   ) {
-    await this.userMediaService.setState({
-      userId: user.id,
-      mediaItemId,
-      state: body.state,
-      mediaType: body.mediaType,
-      ...(body.rating !== undefined && { rating: body.rating }),
-      ...(body.progress !== undefined && { progress: body.progress }),
-      ...(body.notes !== undefined && { notes: body.notes }),
-    });
+    await this.userMediaService.setState(
+      {
+        userId: user.id,
+        mediaItemId,
+        state: body.state,
+        ...(body.rating !== undefined && { rating: body.rating }),
+        ...(body.progress !== undefined && { progress: body.progress }),
+        ...(body.notes !== undefined && { notes: body.notes }),
+      },
+      body.mediaType,
+    );
 
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);
   }

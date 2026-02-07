@@ -146,12 +146,7 @@ describe('UserMediaService', () => {
         rating: 85,
       } as any);
 
-      await service.setState({
-        userId: 'u1',
-        mediaItemId: 'm1',
-        mediaType: MediaType.MOVIE,
-        rating: 85,
-      });
+      await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: 85 }, MediaType.MOVIE);
 
       expect(repo.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ state: USER_MEDIA_STATE.COMPLETED, rating: 85 }),
@@ -166,12 +161,7 @@ describe('UserMediaService', () => {
         rating: 70,
       } as any);
 
-      await service.setState({
-        userId: 'u1',
-        mediaItemId: 'm1',
-        mediaType: MediaType.SHOW,
-        rating: 70,
-      });
+      await service.setState({ userId: 'u1', mediaItemId: 'm1', rating: 70 }, MediaType.SHOW);
 
       expect(repo.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ state: USER_MEDIA_STATE.WATCHING, rating: 70 }),
@@ -264,6 +254,68 @@ describe('UserMediaService', () => {
 
     expect(repo.findManyByMediaIds).toHaveBeenCalledWith('u1', ['m1']);
     expect(result).toEqual([{ id: 's1', mediaItemId: 'm1' }]);
+  });
+
+  describe('syncRating', () => {
+    it('should delegate to setState with userId, mediaItemId and rating', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 85,
+      } as any);
+
+      await service.syncRating('u1', 'm1', 85);
+
+      expect(repo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 85 }),
+      );
+    });
+
+    it('should forward mediaType to setState', async () => {
+      repo.findOne.mockResolvedValue(null);
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 70,
+      } as any);
+
+      await service.syncRating('u1', 'm1', 70, MediaType.SHOW);
+
+      expect(repo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ state: USER_MEDIA_STATE.WATCHING, rating: 70 }),
+      );
+    });
+
+    it('should handle rating 0 (falsy edge case)', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.COMPLETED } as any);
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.COMPLETED,
+        rating: 0,
+      } as any);
+
+      await service.syncRating('u1', 'm1', 0);
+
+      expect(repo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 0 }),
+      );
+    });
+
+    it('should default to completed for movies when no existing state', async () => {
+      repo.findOne.mockResolvedValue(null);
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.COMPLETED,
+        rating: 90,
+      } as any);
+
+      await service.syncRating('u1', 'm1', 90, MediaType.MOVIE);
+
+      expect(repo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ state: USER_MEDIA_STATE.COMPLETED, rating: 90 }),
+      );
+    });
   });
 
   describe('pauseMedia', () => {

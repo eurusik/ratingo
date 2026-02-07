@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 
 import { DatabaseModule } from '../../database/database.module';
 import { AuthModule } from '../auth/auth.module';
+import { RATING_SYNC_PORT } from '../reviews/domain/ports/rating-sync.port';
 import { CardsModule } from '../shared/cards/cards.module';
 import { UserActionsModule } from '../user-actions/user-actions.module';
 
@@ -33,8 +34,17 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
       provide: EPISODE_PROGRESS_REPOSITORY,
       useClass: DrizzleEpisodeProgressRepository,
     },
+    {
+      provide: RATING_SYNC_PORT,
+      useExisting: UserMediaService,
+    },
   ],
   controllers: [UserMediaController, MeListsController, EpisodeProgressController],
-  exports: [UserMediaService, USER_MEDIA_STATE_REPOSITORY, EPISODE_PROGRESS_REPOSITORY],
+  exports: [
+    UserMediaService,
+    RATING_SYNC_PORT,
+    USER_MEDIA_STATE_REPOSITORY,
+    EPISODE_PROGRESS_REPOSITORY,
+  ],
 })
 export class UserMediaModule {}

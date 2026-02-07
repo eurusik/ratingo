@@ -1,7 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import {
   IsBoolean,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -11,6 +12,7 @@ import {
   Min,
 } from 'class-validator';
 
+import { MediaType } from '../../../../common/enums/media-type.enum';
 import { REVIEW_LIMITS } from '../../domain/constants/review.constants';
 
 /**
@@ -53,4 +55,15 @@ export class CreateReviewDto {
   @IsOptional()
   @IsBoolean()
   hasSpoiler?: boolean;
+
+  @ApiPropertyOptional({
+    enum: MediaType,
+    example: MediaType.MOVIE,
+    description:
+      'Media type hint. When provided, allows the correct default user-media state ' +
+      'to be chosen for first-time entries (watching for shows, completed for movies).',
+  })
+  @IsOptional()
+  @IsEnum(MediaType)
+  mediaType?: MediaType;
 }

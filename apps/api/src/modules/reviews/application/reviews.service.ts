@@ -2,9 +2,9 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../../common/constants';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { type MediaType } from '../../../common/enums/media-type.enum';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { NotFoundException } from '../../../common/exceptions/not-found.exception';
-import { UserMediaService } from '../../user-media/application/user-media.service';
 import { REVIEW_LIMITS, REVIEW_SORT, type ReviewSort } from '../domain/constants/review.constants';
 import type {
   Review,
@@ -12,6 +12,7 @@ import type {
   CreateReviewInput,
   UpdateReviewInput,
 } from '../domain/entities/review.entity';
+import { RATING_SYNC_PORT, type IRatingSyncPort } from '../domain/ports/rating-sync.port';
 import {
   REVIEW_REPOSITORY,
   type IReviewRepository,
@@ -27,6 +28,8 @@ export interface CreateReviewPayload {
   content: string;
   rating: number;
   hasSpoiler?: boolean;
+  /** Optional media type hint for correct default user-media state. */
+  mediaType?: MediaType;
 }
 
 /**
@@ -59,7 +62,8 @@ export class ReviewsService {
   constructor(
     @Inject(REVIEW_REPOSITORY)
     private readonly reviewRepo: IReviewRepository,
-    private readonly userMediaService: UserMediaService,
+    @Inject(RATING_SYNC_PORT)
+    private readonly ratingSync: IRatingSyncPort,
   ) {}
 
   /**
@@ -105,7 +109,7 @@ export class ReviewsService {
    * Enforces one review per user per media item and rate limiting.
    */
   async create(payload: CreateReviewPayload): Promise<Review> {
-    const { userId, mediaItemId, content, rating, hasSpoiler } = payload;
+    const { userId, mediaItemId, content, rating, hasSpoiler, mediaType } = payload;
 
     // Check if user already has a review for this media
     const existing = await this.reviewRepo.findByUserAndMedia(userId, mediaItemId);
@@ -141,7 +145,7 @@ export class ReviewsService {
 
     this.logger.log(`User ${userId} created review ${review.id} for media ${mediaItemId}`);
 
-    void this.syncRatingToUserMedia(userId, mediaItemId, rating);
+    await this.trySyncRating(userId, mediaItemId, rating, mediaType);
 
     return review;
   }
@@ -182,7 +186,7 @@ export class ReviewsService {
     this.logger.log(`User ${userId} updated review ${reviewId}`);
 
     if (payload.rating !== undefined) {
-      void this.syncRatingToUserMedia(review.userId, review.mediaItemId, payload.rating);
+      await this.trySyncRating(review.userId, review.mediaItemId, payload.rating);
     }
 
     return updated;
@@ -243,12 +247,19 @@ export class ReviewsService {
     this.logger.log(`Admin force deleted review ${reviewId}`);
   }
 
-  private syncRatingToUserMedia(userId: string, mediaItemId: string, rating: number): void {
-    this.userMediaService.setState({ userId, mediaItemId, rating }).catch((error) => {
+  private async trySyncRating(
+    userId: string,
+    mediaItemId: string,
+    rating: number,
+    mediaType?: MediaType,
+  ): Promise<void> {
+    try {
+      await this.ratingSync.syncRating(userId, mediaItemId, rating, mediaType);
+    } catch (error) {
       this.logger.warn(
         `Failed to sync rating to user_media_state: user=${userId}, media=${mediaItemId}`,
         error instanceof Error ? error.message : error,
       );
-    });
+    }
   }
 }

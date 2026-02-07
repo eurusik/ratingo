@@ -12,7 +12,7 @@ import type { MediaType } from '@/shared/types';
 import { formatYear } from '@/shared/utils/format';
 import { HeroBackdrop } from './hero-backdrop';
 import { RatingoScore } from './ratingo-score';
-import { UserRatingButton } from './user-rating-button';
+import { RatingPresets } from './rating-presets';
 
 export interface DetailsHeroProps {
   title: string;
@@ -86,7 +86,7 @@ export function DetailsHero({
               <div className="space-y-3">
                 {rating != null && <RatingoScore score={rating} />}
                 {mediaItemId && mediaType && (
-                  <UserRatingButton mediaItemId={mediaItemId} mediaType={mediaType} />
+                  <RatingPresets mediaItemId={mediaItemId} mediaType={mediaType} />
                 )}
               </div>
             </div>

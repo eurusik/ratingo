@@ -51,11 +51,10 @@ describe('UserMediaController', () => {
 
     const result = await controller.setState({ id: 'u1' }, 'm1', body as any);
 
-    expect(userMediaService.setState).toHaveBeenCalledWith({
-      userId: 'u1',
-      mediaItemId: 'm1',
-      state: USER_MEDIA_STATE.WATCHING,
-    });
+    expect(userMediaService.setState).toHaveBeenCalledWith(
+      { userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.WATCHING },
+      undefined,
+    );
     expect(userMediaService.getStateWithMedia).toHaveBeenCalledWith('u1', 'm1');
     expect(result).toEqual({ id: 's1', mediaSummary: { poster: null } });
   });
@@ -76,14 +75,17 @@ describe('UserMediaController', () => {
 
     await controller.setState({ id: 'u1' }, 'm1', body as any);
 
-    expect(userMediaService.setState).toHaveBeenCalledWith({
-      userId: 'u1',
-      mediaItemId: 'm1',
-      state: USER_MEDIA_STATE.COMPLETED,
-      rating: 85,
-      progress: null,
-      notes: 'Great show',
-    });
+    expect(userMediaService.setState).toHaveBeenCalledWith(
+      {
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.COMPLETED,
+        rating: 85,
+        progress: null,
+        notes: 'Great show',
+      },
+      undefined,
+    );
   });
 
   it('list should parse limit/offset and call service.listWithMedia', async () => {

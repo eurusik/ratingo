@@ -3,8 +3,10 @@ import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common'
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 
+import type { IRatingSyncPort } from '../../reviews/domain/ports/rating-sync.port';
 import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
+import { USER_MEDIA_STATE_ERRORS } from '../domain/constants/user-media-state-errors.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
 import {
   type IUserMediaStateRepository,
@@ -18,7 +20,7 @@ import {
  * Application service for user media state use cases.
  */
 @Injectable()
-export class UserMediaService {
+export class UserMediaService implements IRatingSyncPort {
   private readonly logger = new Logger(UserMediaService.name);
 
   constructor(
@@ -38,16 +40,14 @@ export class UserMediaService {
    * @returns {Promise<UserMediaState>} Persisted state
    * @throws {BadRequestException} When `progress` is provided for `completed`/`dropped` states
    */
-  async setState(data: UpsertUserMediaStateData): Promise<UserMediaState> {
+  async setState(data: UpsertUserMediaStateData, mediaType?: MediaType): Promise<UserMediaState> {
     let resolvedState = data.state;
 
     if (resolvedState === undefined) {
       const existing = await this.repo.findOne(data.userId, data.mediaItemId);
       resolvedState =
         existing?.state ??
-        (data.mediaType === MediaType.SHOW
-          ? USER_MEDIA_STATE.WATCHING
-          : USER_MEDIA_STATE.COMPLETED);
+        (mediaType === MediaType.SHOW ? USER_MEDIA_STATE.WATCHING : USER_MEDIA_STATE.COMPLETED);
     }
 
     if (data.progress != null) {
@@ -55,13 +55,30 @@ export class UserMediaService {
         resolvedState === USER_MEDIA_STATE.COMPLETED ||
         resolvedState === USER_MEDIA_STATE.DROPPED
       ) {
-        throw new BadRequestException('progress is not allowed for completed/dropped states');
+        throw new BadRequestException(USER_MEDIA_STATE_ERRORS.PROGRESS_NOT_ALLOWED);
       }
 
       return this.repo.upsert({ ...data, state: USER_MEDIA_STATE.WATCHING });
     }
 
     return this.repo.upsert({ ...data, state: resolvedState });
+  }
+
+  /**
+   * Syncs a rating from an external aggregate (e.g. reviews).
+   * Implements IRatingSyncPort.
+   *
+   * @param mediaType - When provided, allows the correct default state
+   *   to be chosen for first-time entries (`watching` for shows,
+   *   `completed` for movies).
+   */
+  async syncRating(
+    userId: string,
+    mediaItemId: string,
+    rating: number,
+    mediaType?: MediaType,
+  ): Promise<void> {
+    await this.setState({ userId, mediaItemId, rating }, mediaType);
   }
 
   /**
@@ -253,11 +270,11 @@ export class UserMediaService {
     const currentState = await this.repo.findOne(userId, mediaItemId);
 
     if (!currentState) {
-      throw new BadRequestException('Cannot pause: no media state found');
+      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_PAUSE_NO_STATE);
     }
 
     if (currentState.state !== USER_MEDIA_STATE.WATCHING) {
-      throw new BadRequestException('Cannot pause: item is not currently being watched');
+      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_PAUSE_NOT_WATCHING);
     }
 
     return this.repo.upsert({
@@ -279,11 +296,11 @@ export class UserMediaService {
     const currentState = await this.repo.findOne(userId, mediaItemId);
 
     if (!currentState) {
-      throw new BadRequestException('Cannot resume: no media state found');
+      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_RESUME_NO_STATE);
     }
 
     if (currentState.state !== USER_MEDIA_STATE.PAUSED) {
-      throw new BadRequestException('Cannot resume: item is not paused');
+      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_RESUME_NOT_PAUSED);
     }
 
     return this.repo.upsert({

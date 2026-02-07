@@ -1428,7 +1428,7 @@
     "rate": "Як тобі?",
     "clear": "Прибрати",
     "finetune": "Уточнити?",
-    "prompt": "Як тобі серіал?",
+    "prompt": "Як тобі?",
     "toast": {
       "saved": "{emoji} {label} — {score}",
       "cleared": "Оцінку прибрано",

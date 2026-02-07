@@ -61,7 +61,6 @@ export interface UpsertUserMediaStateData {
   userId: string;
   mediaItemId: string;
   state?: UserMediaState['state'];
-  mediaType?: MediaType;
   rating?: number | null;
   progress?: {
     seasons?: Record<number, number>;
