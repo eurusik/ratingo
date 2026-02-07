@@ -4,13 +4,13 @@
  */
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type QueryClient } from '@tanstack/react-query';
-import { HTTPError } from 'ky';
 import {
   episodeProgressApi,
   type ShowProgressDto,
   type SeasonProgressDto,
 } from '../api/episode-progress.client';
 import { queryKeys } from './keys';
+import { isUnauthorized } from './utils';
 
 /**
  * Invalidates all caches affected by episode progress changes.
@@ -30,11 +30,6 @@ function invalidateEpisodeProgressCaches(queryClient: QueryClient, showId: strin
     queryKey: queryKeys.userActions.savedItems.all,
   });
   queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
-}
-
-/** Checks if error is a 401 Unauthorized. */
-function isUnauthorized(error: unknown): boolean {
-  return error instanceof HTTPError && error.response.status === 401;
 }
 
 // ============================================================================

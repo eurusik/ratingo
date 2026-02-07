@@ -197,6 +197,8 @@ export const queryKeys = {
   /** Reviews queries. */
   reviews: {
     all: ['reviews'] as const,
+    mediaBase: (mediaItemId: string) =>
+      [...queryKeys.reviews.all, 'media', mediaItemId] as const,
     forMedia: (mediaItemId: string, sort?: string, limit?: number, offset?: number) =>
       [
         ...queryKeys.reviews.all,

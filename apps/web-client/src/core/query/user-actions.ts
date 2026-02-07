@@ -4,7 +4,6 @@
  */
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
-import { HTTPError } from 'ky';
 import {
   userActionsApi,
   type MediaSaveStatusDto,
@@ -14,11 +13,7 @@ import {
 } from '../api';
 import { queryKeys } from './keys';
 import { updateBatchCaches } from '../saved-status/saved-status-provider';
-
-/** Checks if error is a 401 Unauthorized. */
-function isUnauthorized(error: unknown): boolean {
-  return error instanceof HTTPError && error.response.status === 401;
-}
+import { isUnauthorized } from './utils';
 
 // ============================================================================
 // Constants (derived from api-contract types)
