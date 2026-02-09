@@ -7,6 +7,7 @@ import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 import { Slider } from '@/shared/ui';
 import type { MediaType } from '@/shared/types';
+import { Skeleton } from '@/shared/ui';
 import { useUserMediaState, useSetRating } from '@/modules/saved/hooks/use-me-lists';
 import { getRatingColor } from '@/modules/reviews';
 import { RATING_PRESETS, findPresetByScore, type RatingPresetId } from '../constants/rating-presets';
@@ -29,9 +30,9 @@ interface RatingPresetsProps {
 
 export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
   const { dict } = useTranslation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { openLogin } = useAuthModalStore();
-  const { data: userMediaState } = useUserMediaState(mediaItemId, isAuthenticated);
+  const { data: userMediaState, isFetching } = useUserMediaState(mediaItemId, isAuthenticated);
   const { mutateAsync: setRating, isPending } = useSetRating(mediaItemId);
 
   const currentRating = userMediaState?.rating ?? null;
@@ -270,6 +271,22 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
           </RatingDrawer>
         </div>
       </div>
+    );
+  }
+
+  // --- Skeleton while auth or rating state is resolving ---
+
+  if (isAuthLoading || (isAuthenticated && isFetching && !userMediaState)) {
+    return (
+      <>
+        <Skeleton className="h-9 w-28 rounded-lg md:hidden" />
+        <div className="hidden md:flex gap-2">
+          <Skeleton className="h-8 w-20 rounded-lg" />
+          <Skeleton className="h-8 w-16 rounded-lg" />
+          <Skeleton className="h-8 w-28 rounded-lg" />
+          <Skeleton className="h-8 w-16 rounded-lg" />
+        </div>
+      </>
     );
   }
 

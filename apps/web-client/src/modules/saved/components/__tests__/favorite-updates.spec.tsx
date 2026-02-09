@@ -4,6 +4,7 @@
 
 import { render, screen } from '@testing-library/react';
 import type { FavoriteUpdateItem } from '@/core/api/me-lists.client';
+import { useAuth } from '@/core/auth';
 import { FavoriteUpdates } from '../favorite-updates';
 
 /* ------------------------------------------------------------------ */
@@ -78,7 +79,6 @@ function makeEpisode(overrides: Record<string, unknown> = {}) {
 describe('FavoriteUpdates', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    const { useAuth } = require('@/core/auth');
     (useAuth as jest.Mock).mockReturnValue({ isAuthenticated: true });
   });
 
@@ -136,7 +136,6 @@ describe('FavoriteUpdates', () => {
   });
 
   it('returns null when not authenticated', () => {
-    const { useAuth } = require('@/core/auth');
     (useAuth as jest.Mock).mockReturnValue({ isAuthenticated: false });
 
     mockUseFavoriteUpdates.mockReturnValue({

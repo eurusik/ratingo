@@ -10,7 +10,7 @@ import type { MeListSort } from '../../hooks/use-me-lists';
 /*  Mocks                                                             */
 /* ------------------------------------------------------------------ */
 
-const mockDict = {
+const fullDict = {
   activity: {
     sort: {
       label: 'Sorting',
@@ -20,6 +20,8 @@ const mockDict = {
     },
   },
 };
+
+let mockDict: Record<string, unknown> = fullDict;
 
 jest.mock('@/shared/i18n', () => ({
   useTranslation: () => ({ dict: mockDict }),
@@ -67,6 +69,7 @@ describe('ListSortSelect', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockDict = fullDict;
   });
 
   it('renders all three sort options', () => {
@@ -85,13 +88,8 @@ describe('ListSortSelect', () => {
   });
 
   it('uses Ukrainian fallback when dict is empty', () => {
-    jest.resetModules();
-    jest.doMock('@/shared/i18n', () => ({
-      useTranslation: () => ({ dict: {} }),
-    }));
-
-    const { ListSortSelect: TestComponent } = require('../list-sort-select');
-    render(<TestComponent value="recent" onChange={mockOnChange} />);
+    mockDict = {};
+    render(<ListSortSelect value="recent" onChange={mockOnChange} />);
 
     const trigger = screen.getByRole('button');
     expect(trigger).toHaveAttribute('aria-label', 'Сортування');
@@ -106,13 +104,8 @@ describe('ListSortSelect', () => {
   });
 
   it('renders Ukrainian fallback labels when translations missing', () => {
-    jest.resetModules();
-    jest.doMock('@/shared/i18n', () => ({
-      useTranslation: () => ({ dict: {} }),
-    }));
-
-    const { ListSortSelect: TestComponent } = require('../list-sort-select');
-    render(<TestComponent value="recent" onChange={mockOnChange} />);
+    mockDict = {};
+    render(<ListSortSelect value="recent" onChange={mockOnChange} />);
 
     expect(screen.getByTestId('option-recent')).toHaveTextContent('Нещодавні');
     expect(screen.getByTestId('option-rating')).toHaveTextContent('За оцінкою');
