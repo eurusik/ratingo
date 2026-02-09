@@ -5,13 +5,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { catalogApi } from '@/core/api';
-import { getCategoryConfig, CATALOG_SORT_OPTIONS, type CatalogSort } from '@/modules/browse';
+import { getCategoryConfig, getSortOptions, type CatalogSort, type CategoryConfig } from '@/modules/browse';
 
-function validateSort(value: string | null): CatalogSort | undefined {
+function validateSort(value: string | null, config: CategoryConfig): CatalogSort | undefined {
   if (!value) return undefined;
-  return (CATALOG_SORT_OPTIONS as readonly string[]).includes(value)
-    ? (value as CatalogSort)
-    : undefined;
+  const allowed = getSortOptions(config) as readonly string[];
+  return allowed.includes(value) ? (value as CatalogSort) : undefined;
 }
 
 export async function GET(
@@ -28,7 +27,7 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || String(config.pageSize), 10);
-  const sort = validateSort(searchParams.get('sort'));
+  const sort = validateSort(searchParams.get('sort'), config);
   const offset = (page - 1) * limit;
 
   try {

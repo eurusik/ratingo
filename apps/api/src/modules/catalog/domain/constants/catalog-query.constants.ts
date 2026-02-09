@@ -11,6 +11,7 @@ export const CATALOG_SORT = {
   POPULARITY: 'popularity',
   RATINGO: 'ratingo',
   RELEASE_DATE: 'releaseDate',
+  LAST_AIR_DATE: 'lastAirDate',
   TMDB_POPULARITY: 'tmdbPopularity',
 } as const;
 export const CATALOG_SORT_VALUES = Object.values(CATALOG_SORT);

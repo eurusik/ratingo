@@ -10,6 +10,7 @@ import { getDictionary, getByPath } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
 import {
   getCategoryConfig,
+  getSortOptions,
   getValidCategorySlugs,
   categorySupportsFilters,
   categoryHasPoolSelector,
@@ -126,8 +127,11 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
   }
 
   const page = Math.max(1, parseInt(pageParam || '1', 10));
+  const sortOptions = getSortOptions(config);
+  const validSort =
+    sort && (sortOptions as readonly string[]).includes(sort) ? sort : undefined;
   const { items, total, hasMore } = await fetchInitialData(category as BrowseCategory, page, {
-    sort,
+    sort: validSort,
   });
 
   const dict = getDictionary('uk');
@@ -168,6 +172,7 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
 
             {supportsFilters && (
               <BrowseFilters
+                sortOptions={sortOptions}
                 labels={{
                   sort: dict.browse.filters.sort,
                   sortOptions: dict.browse.filters.sortOptions,
@@ -190,11 +195,11 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
             {/* Client-side infinite scroll */}
             {hasMore && (
               <BrowseInfiniteList
-                key={`${category}-${sort || 'trending'}`}
+                key={`${category}-${validSort || 'trending'}`}
                 category={category as BrowseCategory}
                 initialPage={page}
                 pageSize={config.pageSize}
-                sort={sort}
+                sort={validSort}
                 loadingText={dict.browse.loading}
               />
             )}

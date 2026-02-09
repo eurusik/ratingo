@@ -15,11 +15,12 @@ describe('catalog-query.constants', () => {
       expect(CATALOG_SORT.POPULARITY).toBe('popularity');
       expect(CATALOG_SORT.RATINGO).toBe('ratingo');
       expect(CATALOG_SORT.RELEASE_DATE).toBe('releaseDate');
+      expect(CATALOG_SORT.LAST_AIR_DATE).toBe('lastAirDate');
       expect(CATALOG_SORT.TMDB_POPULARITY).toBe('tmdbPopularity');
     });
 
-    it('has exactly 5 sort options', () => {
-      expect(Object.keys(CATALOG_SORT)).toHaveLength(5);
+    it('has exactly 6 sort options', () => {
+      expect(Object.keys(CATALOG_SORT)).toHaveLength(6);
     });
   });
 
@@ -29,6 +30,7 @@ describe('catalog-query.constants', () => {
       expect(CATALOG_SORT_VALUES).toContain('popularity');
       expect(CATALOG_SORT_VALUES).toContain('ratingo');
       expect(CATALOG_SORT_VALUES).toContain('releaseDate');
+      expect(CATALOG_SORT_VALUES).toContain('lastAirDate');
       expect(CATALOG_SORT_VALUES).toContain('tmdbPopularity');
     });
 

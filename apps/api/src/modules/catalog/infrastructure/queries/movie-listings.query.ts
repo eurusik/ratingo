@@ -364,7 +364,7 @@ export class MovieListingsQuery {
     if (sort === 'ratingo') {
       return [sql`${schema.mediaStats.ratingoScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
     }
-    if (sort === 'releaseDate') {
+    if (sort === 'releaseDate' || sort === 'lastAirDate') {
       return [
         sql`${schema.mediaItems.releaseDate} ${dir} ${nullsLast}`,
         sql`${schema.mediaItems.id} desc`,

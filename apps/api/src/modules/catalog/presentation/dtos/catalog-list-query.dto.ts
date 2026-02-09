@@ -52,7 +52,7 @@ export class CatalogListQueryDto {
     enum: CATALOG_SORT_VALUES,
     default: CATALOG_SORT.TRENDING,
     description:
-      'trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore',
+      'trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate)',
   })
   @IsOptional()
   @IsIn(CATALOG_SORT_VALUES)
