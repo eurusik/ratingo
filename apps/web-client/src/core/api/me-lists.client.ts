@@ -129,6 +129,8 @@ export const meListsApi = {
    * @returns Map of mediaItemId → rating (0-100), only includes rated items
    */
   async getBatchRatings(mediaItemIds: string[]): Promise<Record<string, number>> {
+    if (mediaItemIds.length === 0) return {};
+
     const ids = mediaItemIds.join(',');
     const result = await apiGet<BatchRatingsResponse>('user-media/batch-ratings', {
       searchParams: { ids } as Record<string, string>,

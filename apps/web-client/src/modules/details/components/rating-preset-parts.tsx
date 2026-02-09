@@ -162,6 +162,7 @@ export function FineTuneSlider({
 }: FineTuneSliderProps) {
   return (
     <div
+      aria-hidden={!visible}
       className={cn(
         'hidden md:grid transition-all duration-200 ease-out',
         visible ? 'grid-rows-[1fr] opacity-100 mt-2' : 'grid-rows-[0fr] opacity-0 mt-0',
@@ -177,7 +178,7 @@ export function FineTuneSlider({
             min={min}
             max={max}
             step={1}
-            disabled={disabled}
+            disabled={disabled || !visible}
             aria-label={label}
             className="w-full"
           />

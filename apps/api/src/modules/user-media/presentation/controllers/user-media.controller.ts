@@ -138,7 +138,7 @@ export class UserMediaController {
       {
         userId: user.id,
         mediaItemId,
-        state: body.state,
+        ...(body.state !== undefined && { state: body.state }),
         ...(body.rating !== undefined && { rating: body.rating }),
         ...(body.progress !== undefined && { progress: body.progress }),
         ...(body.notes !== undefined && { notes: body.notes }),

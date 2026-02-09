@@ -260,7 +260,7 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     }
   }
 
-  async listFavoriteUpdates(): Promise<any[]> {
+  async listFavoriteUpdates(_userId: string, _options: any): Promise<any[]> {
     return [];
   }
 }

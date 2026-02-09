@@ -97,6 +97,11 @@ export class UserMediaService implements IRatingSyncPort {
     mediaType?: MediaType,
   ): Promise<void> {
     const existing = await this.repo.findOne(userId, mediaItemId);
+
+    if (!existing && rating === null) {
+      return;
+    }
+
     const resolvedState = this.resolveDefaultState(existing, mediaType);
 
     await this.repo.upsert({ userId, mediaItemId, rating, state: resolvedState });

@@ -1,5 +1,11 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
@@ -246,6 +252,7 @@ export class MeListsController {
   @Get('favorites/updates')
   @ApiOperation({ summary: 'Updates for my favorite shows (auth: Bearer)' })
   @ApiOkResponse({ type: FavoriteUpdatesResponseDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   async favoriteUpdates(@CurrentUser() user: { id: string }): Promise<FavoriteUpdatesResponseDto> {
     const data = await this.meListsService.getFavoriteUpdates(user.id);
     return { data };
