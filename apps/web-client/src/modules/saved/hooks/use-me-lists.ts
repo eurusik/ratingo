@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { meListsApi, USER_MEDIA_STATE, type MeListSort, type MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import type { MediaType } from '@/shared/types';
 import { queryKeys } from '@/core/query/keys';
@@ -15,7 +15,8 @@ function useHistoryBase(sort?: MeListSort, enabled = true) {
     queryKey: queryKeys.meLists.history(sort),
     queryFn: () => meListsApi.getHistory(sort ? { sort } : undefined),
     enabled,
-    staleTime: STALE_5_MIN
+    staleTime: STALE_5_MIN,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -58,7 +59,8 @@ export function usePaused(sort?: MeListSort, enabled = true) {
     queryKey: queryKeys.meLists.paused(sort),
     queryFn: () => meListsApi.getPaused(sort ? { sort } : undefined),
     enabled,
-    staleTime: STALE_5_MIN
+    staleTime: STALE_5_MIN,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -120,10 +122,12 @@ export function useSetRating(mediaItemId: string) {
         queryKeys.userMedia.state(mediaItemId),
       );
 
-      queryClient.setQueryData<MeUserMediaListItemDto>(
-        queryKeys.userMedia.state(mediaItemId),
-        previousState ? { ...previousState, rating } : ({ rating } as MeUserMediaListItemDto),
-      );
+      if (previousState) {
+        queryClient.setQueryData<MeUserMediaListItemDto>(
+          queryKeys.userMedia.state(mediaItemId),
+          { ...previousState, rating },
+        );
+      }
 
       return { previousState };
     },
@@ -152,6 +156,10 @@ export function useSetRating(mediaItemId: string) {
       // Refresh batch ratings so badges update immediately
       queryClient.invalidateQueries({
         queryKey: queryKeys.userMedia.batchRatingsAll,
+      });
+      // Rating changes may affect favorite updates (e.g. new show becomes favorite)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.meLists.favoriteUpdates,
       });
     },
   });

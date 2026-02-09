@@ -6177,7 +6177,7 @@ export interface operations {
     UserMediaController_batchRatings: {
         parameters: {
             query: {
-                /** @description Comma-separated media item UUIDs */
+                /** @description Comma-separated media item UUIDs (max 100) */
                 ids: string;
             };
             header?: never;

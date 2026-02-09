@@ -1,7 +1,7 @@
 'use client';
 
 import { useUserRatingContext } from '@/core/user-rating';
-import { RatingBadge } from '@/modules/saved/components/rating-badge';
+import { UserRatingBadge } from '@/shared/components/user-rating-badge';
 
 interface CardUserRatingProps {
   mediaItemId: string;
@@ -18,5 +18,5 @@ export function CardUserRating({ mediaItemId }: CardUserRatingProps) {
   const rating = context.getRating(mediaItemId);
   if (rating == null) return null;
 
-  return <RatingBadge rating={rating} className="absolute bottom-2 left-2 z-10" />;
+  return <UserRatingBadge rating={rating} className="absolute bottom-2 left-2 z-10" />;
 }

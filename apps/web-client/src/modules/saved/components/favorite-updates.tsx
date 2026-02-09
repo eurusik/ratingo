@@ -8,9 +8,14 @@ import { Skeleton } from '@/shared/ui';
 import { useAuth } from '@/core/auth';
 import { formatRelativeDate } from '@/shared/utils/format';
 import type { FavoriteUpdateItem, EpisodeInfo } from '@/core/api/me-lists.client';
-import { RatingBadge } from './rating-badge';
+import { UserRatingBadge } from '@/shared/components/user-rating-badge';
 import { useFavoriteUpdates } from '../hooks/use-me-lists';
 
+/**
+ * Formats episode label using S1E5 notation.
+ * This is intentionally not localized — S/E notation is universally recognized
+ * and widely used on Ukrainian streaming platforms (e.g. Megogo, Sweet.tv).
+ */
 function formatEpisodeLabel(ep: EpisodeInfo): string {
   return `S${ep.seasonNumber}E${ep.episodeNumber}`;
 }
@@ -41,7 +46,7 @@ function FavoriteUpdateCard({ item, index }: FavoriteUpdateCardProps) {
             sizes="200px"
             loading={index < 3 ? 'eager' : 'lazy'}
           />
-          <RatingBadge rating={rating} className="absolute bottom-2 left-2" />
+          <UserRatingBadge rating={rating} className="absolute bottom-2 left-2" />
         </div>
       ) : (
         <div className="aspect-[2/3] w-full bg-cinema-card flex items-center justify-center text-gray-500">
@@ -90,7 +95,7 @@ export function FavoriteUpdates() {
   if (items.length === 0) {
     return (
       <p className="text-sm text-gray-400 mb-8">
-        {dict.activity?.favoriteUpdates?.empty ?? 'Rate shows to see updates here'}
+        {dict.activity?.favoriteUpdates?.empty ?? 'Оціни серіали, щоб бачити оновлення тут'}
       </p>
     );
   }
@@ -98,12 +103,12 @@ export function FavoriteUpdates() {
   return (
     <div className="space-y-3 mb-8">
       <h3 className="text-lg font-semibold text-white">
-        {dict.activity?.favoriteUpdates?.title ?? 'Updates for your favorites'}
+        {dict.activity?.favoriteUpdates?.title ?? 'Оновлення для твоїх улюблених'}
       </h3>
       <div
         className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-white/10"
         role="region"
-        aria-label={dict.activity?.favoriteUpdates?.title ?? 'Updates for your favorites'}
+        aria-label={dict.activity?.favoriteUpdates?.title ?? 'Оновлення для твоїх улюблених'}
         tabIndex={0}
       >
         {items.map((item, index) => (

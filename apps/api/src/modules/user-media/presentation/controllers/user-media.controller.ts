@@ -50,12 +50,6 @@ export class UserMediaController {
    * @param {BatchRatingsQueryDto} query - Comma-separated media item IDs
    * @returns {Promise<BatchRatingsResponseDto>} Map of mediaItemId → rating
    */
-  @ApiQuery({
-    name: 'ids',
-    required: true,
-    type: String,
-    description: 'Comma-separated media item UUIDs',
-  })
   @ApiOkResponse({ description: 'Batch ratings', type: BatchRatingsResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid UUIDs or empty list' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })

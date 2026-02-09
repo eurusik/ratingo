@@ -25,6 +25,9 @@ import {
   type UpsertUserMediaStateData,
 } from '../../domain/repositories/user-media-state.repository.interface';
 
+/** Season number 0 is used for "Specials" — we exclude them from episode queries. */
+const SPECIALS_SEASON_NUMBER = 0;
+
 /**
  * Drizzle implementation of user media state repository.
  */
@@ -667,7 +670,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
               inArray(schema.episodes.showId, showIds),
               isNotNull(schema.episodes.airDate),
               lte(schema.episodes.airDate, now),
-              gt(schema.seasons.number, 0),
+              gt(schema.seasons.number, SPECIALS_SEASON_NUMBER),
             ),
           )
           .orderBy(
@@ -692,7 +695,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
               inArray(schema.episodes.showId, showIds),
               isNotNull(schema.episodes.airDate),
               gt(schema.episodes.airDate, now),
-              gt(schema.seasons.number, 0),
+              gt(schema.seasons.number, SPECIALS_SEASON_NUMBER),
             ),
           )
           .orderBy(
@@ -718,10 +721,11 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           (next?.airDate && next.airDate <= futureDate);
 
         if (!hasRecentOrUpcoming) continue;
+        if (row.rating == null) continue;
 
         results.push({
           mediaItemId: row.mediaItemId,
-          rating: row.rating ?? 0,
+          rating: row.rating,
           mediaSummary: this.mapMediaSummary(row.media),
           latestEpisode: latest
             ? {
