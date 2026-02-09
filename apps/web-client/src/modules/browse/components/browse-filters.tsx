@@ -32,10 +32,13 @@ export function BrowseFilters({ sortOptions = CATALOG_SORT_OPTIONS, labels }: Br
   const searchParams = useSearchParams();
 
   const rawSort = searchParams.get('sort');
+  const fallbackSort = (sortOptions as readonly string[]).includes(DEFAULT_CATALOG_SORT)
+    ? DEFAULT_CATALOG_SORT
+    : sortOptions[0];
   const currentSort =
     rawSort && (sortOptions as readonly string[]).includes(rawSort)
       ? (rawSort as CatalogSort)
-      : DEFAULT_CATALOG_SORT;
+      : fallbackSort;
 
   const updateParams = useCallback(
     (key: string, value: string | null) => {

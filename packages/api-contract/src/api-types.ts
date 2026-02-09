@@ -5627,7 +5627,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate) */
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
                 sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
@@ -5672,7 +5672,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate) */
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
                 sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
@@ -5717,7 +5717,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate) */
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
                 sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
@@ -5762,7 +5762,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate) */
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
                 sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
@@ -5809,7 +5809,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate) */
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
                 sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
@@ -5881,7 +5881,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate) */
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
                 sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */
@@ -5926,7 +5926,7 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
-                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate) */
+                /** @description trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = theatrical release date (movies) / first air date (shows); lastAirDate = most recent episode air date (shows; for movies behaves like releaseDate) */
                 sort?: "trending" | "popularity" | "ratingo" | "releaseDate" | "lastAirDate" | "tmdbPopularity";
                 order?: "asc" | "desc";
                 /** @description Comma-separated genre slugs (OR logic), e.g. "komediya,zhakhy" */

@@ -127,8 +127,9 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
   }
 
   const page = Math.max(1, parseInt(pageParam || '1', 10));
+  const sortOptions = getSortOptions(config);
   const validSort =
-    sort && (getSortOptions(config) as readonly string[]).includes(sort) ? sort : undefined;
+    sort && (sortOptions as readonly string[]).includes(sort) ? sort : undefined;
   const { items, total, hasMore } = await fetchInitialData(category as BrowseCategory, page, {
     sort: validSort,
   });
@@ -171,7 +172,7 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
 
             {supportsFilters && (
               <BrowseFilters
-                sortOptions={getSortOptions(config)}
+                sortOptions={sortOptions}
                 labels={{
                   sort: dict.browse.filters.sort,
                   sortOptions: dict.browse.filters.sortOptions,

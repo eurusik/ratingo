@@ -545,6 +545,92 @@ describe('MovieListingsQuery', () => {
     });
   });
 
+  describe('sort options', () => {
+    it('should handle lastAirDate sort (falls back to releaseDate for movies)', async () => {
+      const movies = [
+        {
+          id: 'sorted-movie',
+          mediaItemId: 'mid-sorted',
+          tmdbId: 600,
+          title: 'Sorted Movie',
+          slug: 'sorted-movie',
+          overview: 'A sorted movie',
+          ingestionStatus: 'ready',
+          posterPath: '/p.jpg',
+          backdropPath: '/b.jpg',
+          popularity: 80,
+          releaseDate: new Date('2024-06-01'),
+          theatricalReleaseDate: new Date('2024-06-01'),
+          digitalReleaseDate: null,
+          runtime: 120,
+          ratingoScore: 75,
+          qualityScore: 70,
+          popularityScore: 0.8,
+          watchersCount: 100,
+          totalWatchers: 500,
+          rating: 7.5,
+          voteCount: 2000,
+        },
+      ];
+
+      const genres = [{ mediaItemId: 'mid-sorted', id: 'g1', name: 'Action', slug: 'action' }];
+
+      setup([movies, [{ total: 1 }], genres]);
+
+      // lastAirDate should not throw and should produce valid results
+      const res = await query.execute('now_playing', {
+        limit: 10,
+        offset: 0,
+        sort: 'lastAirDate',
+        order: 'desc',
+      });
+
+      expect(res).toHaveLength(1);
+      expect(res[0].title).toBe('Sorted Movie');
+    });
+
+    it('should handle releaseDate sort', async () => {
+      const movies = [
+        {
+          id: 'date-sorted',
+          mediaItemId: 'mid-date',
+          tmdbId: 601,
+          title: 'Date Sorted',
+          slug: 'date-sorted',
+          overview: '',
+          ingestionStatus: 'ready',
+          posterPath: '/p.jpg',
+          backdropPath: '/b.jpg',
+          popularity: 60,
+          releaseDate: new Date('2024-03-01'),
+          theatricalReleaseDate: new Date('2024-03-01'),
+          digitalReleaseDate: null,
+          runtime: 100,
+          ratingoScore: 60,
+          qualityScore: 55,
+          popularityScore: 0.6,
+          watchersCount: 50,
+          totalWatchers: 200,
+          rating: 7,
+          voteCount: 1000,
+        },
+      ];
+
+      const genres = [{ mediaItemId: 'mid-date', id: 'g1', name: 'Drama', slug: 'drama' }];
+
+      setup([movies, [{ total: 1 }], genres]);
+
+      const res = await query.execute('new_releases', {
+        limit: 10,
+        sort: 'releaseDate',
+        order: 'asc',
+      });
+
+      expect(res).toHaveLength(1);
+      expect(res[0].title).toBe('Date Sorted');
+    });
+  });
+
   describe('context filtering for eligibility', () => {
     it('should use CATALOG context for eligibility JOIN to prevent duplicates', async () => {
       // This test documents the context filter behavior
