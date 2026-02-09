@@ -260,6 +260,8 @@ export class ReviewsService {
       return;
     }
 
+    // IMPORTANT: Call repo.update directly, NOT this.update(), to avoid
+    // re-triggering trySyncRating → syncRating → setState → emit event loop.
     await this.reviewRepo.update(review.id, { rating });
     this.logger.log(
       `Synced rating ${rating} to review ${review.id} for user=${userId}, media=${mediaItemId}`,

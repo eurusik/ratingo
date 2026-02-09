@@ -30,7 +30,7 @@ jest.mock('@/core/auth', () => ({
 jest.mock('@/shared/i18n', () => ({
   useTranslation: () => ({
     dict: {
-      rating: {
+      userRating: {
         title: 'Your rating',
         rate: 'How was it?',
         clear: 'Clear',

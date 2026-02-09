@@ -1437,7 +1437,7 @@
       "backToList": "Back to journal"
     }
   },
-  "rating": {
+  "userRating": {
     "title": "Your rating",
     "rate": "How was it?",
     "clear": "Clear",

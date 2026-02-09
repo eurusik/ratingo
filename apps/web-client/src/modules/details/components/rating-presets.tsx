@@ -50,8 +50,8 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
   const animTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const scoreRef = useRef<HTMLSpanElement>(null);
 
-  const presetLabels = dict.rating.presets as Record<RatingPresetId, string>;
-  const { guard } = useMutationGuard(dict.rating.toast.error);
+  const presetLabels = dict.userRating.presets as Record<RatingPresetId, string>;
+  const { guard } = useMutationGuard(dict.userRating.toast.error);
 
   const hideSlider = useCallback(() => setShowSlider(false), []);
   const { schedule: scheduleHide, cancel: cancelHide, isDraggingRef } = useAutoHideTimer(hideSlider);
@@ -61,7 +61,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
   function showRatingToast(score: number, presetId: RatingPresetId) {
     const preset = RATING_PRESETS.find((p) => p.id === presetId)!;
     toast.success(
-      dict.rating.toast.saved
+      dict.userRating.toast.saved
         .replace('{emoji}', preset.emoji)
         .replace('{label}', presetLabels[presetId])
         .replace('{score}', String(score)),
@@ -136,7 +136,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
 
     guard(async () => {
       await setRating({ rating: null, mediaType });
-      toast.success(dict.rating.toast.cleared);
+      toast.success(dict.userRating.toast.cleared);
     });
   };
 
@@ -170,7 +170,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
     return (
       <div className="space-y-1">
         <span className="text-[10px] md:text-xs text-cinema-text-muted">
-          {dict.rating.title}
+          {dict.userRating.title}
         </span>
 
         <div>
@@ -178,7 +178,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
             <button
               type="button"
               key={animationKey}
-              aria-label={dict.rating.finetune}
+              aria-label={dict.userRating.finetune}
               onClick={handleRatedBadgeClick}
               className={cn(
                 'relative flex items-center gap-2 cursor-pointer',
@@ -208,7 +208,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
             <ClearButton
               onClick={handleClear}
               disabled={isPending}
-              label={dict.rating.clear}
+              label={dict.userRating.clear}
               className="text-xs"
             />
           </div>
@@ -219,7 +219,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
             min={activePreset.min}
             max={activePreset.max}
             disabled={isPending}
-            label={dict.rating.finetune}
+            label={dict.userRating.finetune}
             onValueChange={handleSliderChange}
             onValueCommit={handleSliderCommit}
           />
@@ -227,8 +227,8 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
           <RatingDrawer
             open={drawerOpen}
             onOpenChange={setDrawerOpen}
-            title={dict.rating.prompt}
-            description={dict.rating.title}
+            title={dict.userRating.prompt}
+            description={dict.userRating.title}
           >
             <div className="px-4 pb-6 space-y-4">
               <div className="flex flex-col gap-2">
@@ -241,7 +241,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
                 />
               </div>
               <div className="space-y-1 px-1">
-                <span className="text-xs text-cinema-text-muted">{dict.rating.finetune}</span>
+                <span className="text-xs text-cinema-text-muted">{dict.userRating.finetune}</span>
                 <Slider
                   value={[sliderValue]}
                   onValueChange={(v) => setSliderOverride(v[0])}
@@ -250,7 +250,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
                   max={activePreset.max}
                   step={1}
                   disabled={isPending}
-                  aria-label={dict.rating.finetune}
+                  aria-label={dict.userRating.finetune}
                   className="w-full"
                 />
                 <div className="flex items-center justify-between text-xs text-cinema-text-muted tabular-nums">
@@ -264,7 +264,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
               <ClearButton
                 onClick={handleClear}
                 disabled={isPending}
-                label={dict.rating.clear}
+                label={dict.userRating.clear}
                 className="justify-center w-full py-2 text-sm"
               />
             </div>
@@ -304,14 +304,14 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
         )}
       >
         <span aria-hidden="true">🙂</span>
-        <span>{dict.rating.rate}</span>
+        <span>{dict.userRating.rate}</span>
       </button>
 
       <RatingDrawer
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
-        title={dict.rating.prompt}
-        description={dict.rating.title}
+        title={dict.userRating.prompt}
+        description={dict.userRating.title}
       >
         <div className="px-4 pb-6">
           <div className="flex flex-col gap-2">

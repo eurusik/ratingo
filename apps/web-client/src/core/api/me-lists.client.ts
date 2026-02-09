@@ -6,6 +6,7 @@
 
 import type { components } from '@ratingo/api-contract';
 import type { MediaType } from '@/shared/types';
+import { HTTPError } from 'ky';
 import { apiGet, apiPatch, apiPost } from './client';
 
 // ============================================================================
@@ -113,8 +114,11 @@ export const meListsApi = {
   async getState(mediaItemId: string): Promise<MeUserMediaListItemDto | null> {
     try {
       return await apiGet<MeUserMediaListItemDto>(`user-media/${mediaItemId}`);
-    } catch {
-      return null;
+    } catch (error) {
+      if (error instanceof HTTPError && error.response.status === 404) {
+        return null;
+      }
+      throw error;
     }
   },
 

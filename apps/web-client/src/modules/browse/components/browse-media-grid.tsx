@@ -12,8 +12,8 @@ interface BrowseMediaGridProps {
 }
 
 /**
- * Client wrapper for browse pages that provides SavedStatusProvider and UserRatingProvider.
- * Batch fetches save status and user ratings for all cards in a single request each.
+ * Client wrapper for browse pages that provides SavedStatusProvider.
+ * Batch fetches save status for all cards in a single request.
  */
 export function BrowseMediaGrid({ items, locale = 'uk', className = '' }: BrowseMediaGridProps) {
   const mediaItemIds = useMemo(() => items.map((item) => item.id), [items]);

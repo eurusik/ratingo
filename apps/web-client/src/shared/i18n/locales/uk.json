@@ -1437,7 +1437,7 @@
       "backToList": "До журналу"
     }
   },
-  "rating": {
+  "userRating": {
     "title": "Ваша оцінка",
     "rate": "Як тобі?",
     "clear": "Прибрати",
