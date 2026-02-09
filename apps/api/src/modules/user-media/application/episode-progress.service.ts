@@ -86,6 +86,10 @@ export class EpisodeProgressService {
   private async validateBatchAndGetInfo(
     episodeIds: string[],
   ): Promise<{ showId: string; mediaItemId: string }> {
+    if (episodeIds.length === 0) {
+      throw new BadRequestException(EPISODE_PROGRESS_ERRORS.EMPTY_BATCH);
+    }
+
     const episodeInfo = await this.episodeProgressRepo.getEpisodeMediaInfo(episodeIds[0]);
 
     if (!episodeInfo) {

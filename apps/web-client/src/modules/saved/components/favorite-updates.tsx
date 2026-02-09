@@ -56,8 +56,13 @@ function FavoriteUpdateCard({ item, index }: FavoriteUpdateCardProps) {
           />
         </div>
       ) : (
-        <div className="aspect-[2/3] w-full bg-cinema-card flex items-center justify-center text-gray-500">
+        <div className="relative aspect-[2/3] w-full bg-cinema-card flex items-center justify-center text-gray-500">
           <Star className="w-8 h-8" />
+          <UserRatingBadge
+            rating={rating}
+            label={dict.card.yourRating.replace('{rating}', String(rating))}
+            className="absolute bottom-2 left-2"
+          />
         </div>
       )}
       <div className="p-3 space-y-1">

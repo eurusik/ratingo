@@ -5,6 +5,7 @@ export const MAX_BATCH_EPISODE_IDS = 200;
  * Error messages for episode progress operations.
  */
 export const EPISODE_PROGRESS_ERRORS = {
+  EMPTY_BATCH: 'Episode list cannot be empty',
   NOT_FOUND: (id: string) => `Episode ${id} not found`,
   PARTIAL_NOT_FOUND: (requested: number, found: number) =>
     `Some episodes were not found (requested ${requested}, found ${found})`,
