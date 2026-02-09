@@ -28,6 +28,16 @@ interface RatingPresetsProps {
   mediaType: MediaType;
 }
 
+/**
+ * Render rating UI for a media item with preset buttons, a fine-tune slider, and a mobile drawer.
+ *
+ * Provides authentication-aware preset selection, optimistic UI updates, vote animations,
+ * auto-hiding fine-tune slider, and guarded mutations with toast feedback.
+ *
+ * @param mediaItemId - ID of the media item whose rating is being managed
+ * @param mediaType - Media type used when persisting rating changes
+ * @returns The rating controls and associated drawer/slider JSX for displaying and updating the user's rating for the specified media item
+ */
 export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
   const { dict } = useTranslation();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();

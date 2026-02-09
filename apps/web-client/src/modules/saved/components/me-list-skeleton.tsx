@@ -1,8 +1,11 @@
 import { Skeleton } from '@/shared/ui';
 
 /**
- * Loading skeleton for me-list pages (history, watchlist, paused).
- * Renders a 6-card grid with poster + text placeholders.
+ * Render the loading skeleton grid for "me-list" pages (history, watchlist, paused).
+ *
+ * Displays six skeleton cards; each card shows a poster placeholder and three text placeholders.
+ *
+ * @returns The React element representing the six-item loading skeleton grid.
  */
 export function MeListSkeleton() {
   return (

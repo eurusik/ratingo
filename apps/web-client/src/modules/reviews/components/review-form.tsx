@@ -26,6 +26,16 @@ interface ReviewFormProps {
   className?: string;
 }
 
+/**
+ * Render a review form with rating, content textarea, spoiler toggle, character counter, and submit button.
+ *
+ * @param onSubmit - Callback invoked with the form data when the form is submitted
+ * @param initialValues - Optional partial values to prefill the form fields (content, rating, hasSpoiler)
+ * @param mode - Form mode that controls submit button label and behaviour (create or update)
+ * @param isGuest - When true, show guest-specific rating label and wording
+ * @param className - Additional CSS classes applied to the root form element
+ * @returns The rendered review form JSX element
+ */
 export function ReviewForm({
   onSubmit,
   isSubmitting = false,

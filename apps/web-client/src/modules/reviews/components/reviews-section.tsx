@@ -38,6 +38,15 @@ interface ReviewsSectionProps {
 
 const SORT_VALUES: ReviewSort[] = ['newest', 'oldest', 'most_liked'];
 
+/**
+ * Render the reviews section for a media item, including the review form, list of reviews,
+ * sorting controls, load-more behavior, voting/unvoting, and review reporting UI.
+ *
+ * @param mediaItemId - Identifier of the media item whose reviews are shown
+ * @param className - Optional container className applied to the root section
+ * @param initialData - Optional initial reviews payload used to hydrate the list when sort and limit match defaults
+ * @returns The ReviewsSection JSX element
+ */
 export function ReviewsSection({ mediaItemId, className, initialData }: ReviewsSectionProps) {
   const { dict } = useTranslation();
   const { isAuthenticated, user } = useAuth();

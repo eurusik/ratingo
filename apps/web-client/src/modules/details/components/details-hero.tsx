@@ -26,6 +26,24 @@ export interface DetailsHeroProps {
   mediaType?: MediaType;
 }
 
+/**
+ * Renders the media details hero section with backdrop, poster, title, meta, and rating UI.
+ *
+ * Displays the poster and backdrop (when provided), the title and optional original title,
+ * the release year and genres, the aggregated Ratingo score (when available), and user
+ * rating presets when both `mediaItemId` and `mediaType` are supplied.
+ *
+ * @param title - Primary title of the media
+ * @param originalTitle - Original title (shown when present and different from `title`)
+ * @param poster - Optional poster image set used for the poster display
+ * @param backdrop - Optional backdrop image set used for the hero background
+ * @param releaseDate - Release date string (ISO or parseable) used to derive the release year
+ * @param genres - Optional list of genres to render in the meta line
+ * @param stats - Optional statistics object; `stats.qualityScore` is used to render the Ratingo score
+ * @param mediaItemId - Optional identifier for the media item; required alongside `mediaType` to show rating presets
+ * @param mediaType - Optional media type; required alongside `mediaItemId` to show rating presets
+ * @returns The JSX element for the details hero section
+ */
 export function DetailsHero({
   title,
   originalTitle,

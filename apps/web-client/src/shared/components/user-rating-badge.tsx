@@ -10,8 +10,12 @@ interface UserRatingBadgeProps {
 }
 
 /**
- * Compact badge showing user's personal rating with ownership signal.
- * User icon distinguishes it from system badges (trending, rank).
+ * Render a compact badge that displays a user's rating with an ownership icon and an emoji.
+ *
+ * @param rating - The user's numeric rating to display.
+ * @param label - Optional accessible label used for the element's title and aria-label (e.g., "Your rating: 85").
+ * @param className - Optional additional CSS classes to apply to the badge container.
+ * @returns The badge as a JSX element; the emoji reflects the rating preset when available, otherwise `⭐`.
  */
 export function UserRatingBadge({ rating, label, className }: UserRatingBadgeProps) {
   const preset = findPresetByScore(rating);

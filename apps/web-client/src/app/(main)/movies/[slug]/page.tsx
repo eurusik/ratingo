@@ -108,6 +108,16 @@ function enrichMovieDetails(movie: MovieDetailsDto): EnrichedMovieDetails {
   };
 }
 
+/**
+ * Render the movie details page for a given route slug by fetching, enriching, and composing all detail sections.
+ *
+ * The page fetches movie data by `slug`, enriches it with UI fields, loads initial reviews, resolves any verdict
+ * message using the Ukrainian dictionary, and composes the hero, verdict, signals, overview, trailers, release,
+ * cast/crew, providers, and reviews sections. If the movie cannot be fetched, renders a not-found view.
+ *
+ * @param props - Component props containing `params`, a Promise that resolves to an object with a `slug` string.
+ * @returns The rendered movie details page element or a not-found view when the movie is not found.
+ */
 export default async function MovieDetailsPage({ params }: MovieDetailsPageProps) {
   const { slug } = await params;
   const dict = getDictionary('uk');

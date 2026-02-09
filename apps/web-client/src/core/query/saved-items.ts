@@ -13,6 +13,12 @@ const SAVED_ITEM_LIST: { FOR_LATER: SavedItemList; CONSIDERING: SavedItemList } 
   CONSIDERING: 'considering',
 };
 
+/**
+ * Update the cached save status for a media item and refresh related cached entries.
+ *
+ * @param mediaItemId - ID of the media item whose status will be updated in cache
+ * @param status - The new save status to store for the media item
+ */
 function setSaveStatus(queryClient: QueryClient, mediaItemId: string, status: MediaSaveStatusDto) {
   queryClient.setQueryData<MediaSaveStatusDto>(
     queryKeys.userActions.savedItems.status(mediaItemId),
@@ -21,6 +27,11 @@ function setSaveStatus(queryClient: QueryClient, mediaItemId: string, status: Me
   updateBatchCaches(queryClient, mediaItemId, status);
 }
 
+/**
+ * Invalidate cached saved-item list queries to force refetching fresh lists.
+ *
+ * Invalidates the `userActions.savedItems.all` list query (`...['list']`) and the `savedItems.all` query.
+ */
 function invalidateSavedItemLists(queryClient: QueryClient) {
   queryClient.invalidateQueries({
     queryKey: [...queryKeys.userActions.savedItems.all, 'list'],
@@ -28,6 +39,15 @@ function invalidateSavedItemLists(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
 }
 
+/**
+ * Fetches and caches the save status for a given media item.
+ *
+ * The query is cached for five minutes by default and uses `retryUnlessUnauthorized` for retry behavior.
+ *
+ * @param mediaItemId - The ID of the media item to fetch the save status for
+ * @param options - Optional react-query options to customize the query; `queryKey` and `queryFn` cannot be overridden
+ * @returns The query result containing the media item's save status
+ */
 export function useSaveStatus(
   mediaItemId: string,
   options?: Omit<UseQueryOptions<MediaSaveStatusDto>, 'queryKey' | 'queryFn'>,
@@ -48,6 +68,15 @@ interface SaveItemVariables {
   reasonKey?: string;
 }
 
+/**
+ * Creates a react-query mutation for saving a media item with optimistic cache updates.
+ *
+ * The mutation calls the save API, writes an optimistic save status for the given list into the cache,
+ * updates related batch caches, rolls back to the previous status on error, and invalidates the item's
+ * save-status query and saved-item lists as appropriate.
+ *
+ * @returns The configured mutation object that performs the save operation and manages optimistic cache updates, rollback, and invalidation of related queries.
+ */
 export function useSaveItem() {
   const queryClient = useQueryClient();
 
@@ -102,6 +131,14 @@ interface UnsaveItemVariables {
   context?: string;
 }
 
+/**
+ * Creates a mutation hook to remove a media item from a saved list while applying optimistic cache updates.
+ *
+ * The mutation updates the cached save status for the affected media item optimistically (clearing the flag for the specified list),
+ * persists the change via the API, reverts to the previous cached status on error, and invalidates the item's status and saved-item lists as needed.
+ *
+ * @returns A react-query mutation object that accepts `UnsaveItemVariables` to perform the unsave operation and manages optimistic cache updates and invalidation.
+ */
 export function useUnsaveItem() {
   const queryClient = useQueryClient();
 

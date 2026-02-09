@@ -17,6 +17,12 @@ export const SUBSCRIPTION_TRIGGER: {
   ON_STREAMING: 'on_streaming',
 };
 
+/**
+ * Builds a MediaSubscriptionStatusDto from an array of subscription trigger identifiers.
+ *
+ * @param triggers - Array of subscription trigger identifiers (e.g. `release`, `new_season`, `on_streaming`)
+ * @returns An object containing the original `triggers` array and boolean flags (`hasRelease`, `hasNewSeason`, `hasOnStreaming`) indicating which triggers are present
+ */
 function buildSubscriptionStatus(triggers: string[]): MediaSubscriptionStatusDto {
   return {
     triggers,
@@ -26,6 +32,13 @@ function buildSubscriptionStatus(triggers: string[]): MediaSubscriptionStatusDto
   };
 }
 
+/**
+ * Provides a hook that fetches and caches the subscription status for a given media item.
+ *
+ * @param mediaItemId - The identifier of the media item whose subscription status should be fetched.
+ * @param options - Optional React Query options to customize the query; `queryKey` and `queryFn` are overridden by the hook.
+ * @returns The query result containing the media item's subscription status as a `MediaSubscriptionStatusDto`.
+ */
 export function useSubscriptionStatus(
   mediaItemId: string,
   options?: Omit<UseQueryOptions<MediaSubscriptionStatusDto>, 'queryKey' | 'queryFn'>,
@@ -46,6 +59,13 @@ interface SubscribeVariables {
   reasonKey?: string;
 }
 
+/**
+ * Creates a mutation hook to subscribe to a media item for a specific trigger, performing optimistic cache updates and rollback on error.
+ *
+ * The mutation will optimistically add the requested trigger to the cached subscription status, replace the cached status with the server response on success, and restore the previous cached status if the mutation fails.
+ *
+ * @returns A React Query mutation result that resolves to the updated `MediaSubscriptionStatusDto` on success and exposes mutation lifecycle methods and state.
+ */
 export function useSubscribe() {
   const queryClient = useQueryClient();
 
@@ -93,6 +113,13 @@ interface UnsubscribeVariables {
   context?: string;
 }
 
+/**
+ * Creates a React Query mutation for unsubscribing a trigger from a media item's subscription status.
+ *
+ * Optimistically removes the specified trigger from the cached subscription status, replaces the cache with the server-provided status on success, and restores the previous cache if the mutation errors.
+ *
+ * @returns A mutation result that executes the unsubscribe request and yields the updated `MediaSubscriptionStatusDto` on success.
+ */
 export function useUnsubscribe() {
   const queryClient = useQueryClient();
 

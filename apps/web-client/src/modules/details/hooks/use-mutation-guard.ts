@@ -2,8 +2,12 @@ import { useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
 /**
- * Wraps an async action with a ref-based concurrency guard and error toast.
- * Prevents double-clicks and centralizes the try/catch/finally pattern.
+ * Provides a concurrency guard for async actions and shows an error toast on failure.
+ *
+ * @param errorMessage - Message displayed in a toast when the wrapped action throws
+ * @returns An object with `guard` and `isMutating`:
+ *  - `guard`: executes the provided async action only if no mutation is in progress
+ *  - `isMutating`: a ref whose `current` is `true` while a guarded action is running and `false` otherwise
  */
 export function useMutationGuard(errorMessage: string) {
   const mutatingRef = useRef(false);

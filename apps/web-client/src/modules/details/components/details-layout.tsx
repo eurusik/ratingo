@@ -48,6 +48,23 @@ export interface DetailsLayoutProps {
   breadcrumb?: string;
 }
 
+/**
+ * Renders the shared details page layout for a movie or show, including hero, overview, trailers, cast/crew, and provider sections.
+ *
+ * @param hero - Props forwarded to the DetailsHero component to render the page hero.
+ * @param overview - Optional overview/summary text displayed in the overview section.
+ * @param suitableFor - Optional list of genre or tag strings rendered as "suitable for" badges.
+ * @param verdictSlot - Optional slot for a type-specific verdict UI rendered after the tags.
+ * @param videos - Optional list of video objects used by the trailers carousel.
+ * @param primaryTrailerKey - Optional video key used to select the primary trailer shown in the carousel.
+ * @param typeSpecificSlot - Optional slot for a type-specific section (e.g., release or status) rendered before cast/crew.
+ * @param cast - Optional array of cast members shown in the cast carousel.
+ * @param crew - Optional array of crew members shown in the crew carousel.
+ * @param availability - Optional availability/provider DTO used by the ProvidersList ("where to watch") section.
+ * @param dict - Localization dictionary used for section titles and labels.
+ * @param breadcrumb - Optional breadcrumb text; when present sets header context on mount and clears it on unmount.
+ * @returns The composed React element for the details page layout.
+ */
 export function DetailsLayout({
   hero,
   overview,

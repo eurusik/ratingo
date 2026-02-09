@@ -34,6 +34,14 @@ function getTabFromParam(param: string | null): TabValue {
   return DEFAULT_TAB;
 }
 
+/**
+ * Render the Activity page content with Watching, Paused, and History tabs, handling loading and authentication states.
+ *
+ * Displays a skeleton while auth state is loading, an authenticated prompt when the user is not signed in, and the tabbed
+ * activity UI (Watchlist + FavoriteUpdates, PausedList, HistoryList) for authenticated users.
+ *
+ * @returns The component's React element showing the loading skeleton, login prompt, or tabbed activity interface.
+ */
 function ActivityPageContent() {
   const { dict } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();

@@ -9,8 +9,10 @@ interface CardUserRatingProps {
 }
 
 /**
- * Shows user's emoji rating badge on media cards.
- * Gracefully returns null when no rating or no provider context.
+ * Render the user's emoji rating badge for a media card when a rating exists.
+ *
+ * @param mediaItemId - The media item id used to look up the user's rating
+ * @returns The `UserRatingBadge` element for the media item if a rating exists, `null` otherwise
  */
 export function CardUserRating({ mediaItemId }: CardUserRatingProps) {
   const { dict } = useTranslation();

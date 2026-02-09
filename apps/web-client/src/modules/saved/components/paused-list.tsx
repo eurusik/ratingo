@@ -12,6 +12,11 @@ import { EmptyState } from './empty-state';
 import { ListSortSelect } from './list-sort-select';
 import { MeListSkeleton } from './me-list-skeleton';
 
+/**
+ * Render a list of the user's paused media with a sort control, handling loading and empty states.
+ *
+ * @returns A React element that displays a loading skeleton while data is fetching, an empty-state message when no paused items exist, or a responsive grid of paused media cards with a sort selector.
+ */
 export function PausedList() {
   const { dict } = useTranslation();
   const [sort, setSort] = useState<MeListSort>('recent');

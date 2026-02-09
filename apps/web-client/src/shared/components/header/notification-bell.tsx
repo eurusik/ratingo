@@ -19,6 +19,15 @@ import {
 } from '@/core/query';
 import { useAuth } from '@/core/auth';
 
+/**
+ * Render a notification bell popover in the header.
+ *
+ * Displays a bell button with an unread badge, a popover listing recent notifications
+ * (up to 5), controls to mark individual notifications as read and to mark all as read,
+ * and a link to view all notifications. The component renders nothing when the user is not authenticated.
+ *
+ * @returns The notification bell popover UI or `null` when the user is not authenticated.
+ */
 export function NotificationBell() {
   const { dict } = useTranslation();
   const { isAuthenticated } = useAuth();

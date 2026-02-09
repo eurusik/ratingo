@@ -21,8 +21,15 @@ interface UserRatingProviderProps {
 }
 
 /**
- * Provider that batch-fetches user ratings for multiple media items.
- * Mirrors SavedStatusProvider pattern.
+ * Provides a context that batch-fetches and exposes the current user's ratings for the given media items.
+ *
+ * The provider deduplicates and ignores falsy IDs, fetches ratings only when the user is authenticated and there
+ * is at least one ID, and caches results for a short period. The context value exposes `getRating(mediaItemId)`,
+ * `isLoading`, `error`, and `invalidate()`.
+ *
+ * @param mediaItemIds - Array of media item IDs to fetch ratings for; duplicates and falsy values are removed.
+ * @param children - React children that will receive the user ratings context.
+ * @returns A context provider element that supplies user rating utilities to descendant components.
  */
 export function UserRatingProvider({ mediaItemIds, children }: UserRatingProviderProps) {
   const { isAuthenticated } = useAuth();
@@ -57,6 +64,11 @@ export function UserRatingProvider({ mediaItemIds, children }: UserRatingProvide
   return <UserRatingContext.Provider value={value}>{children}</UserRatingContext.Provider>;
 }
 
+/**
+ * Accesses the current user rating context value.
+ *
+ * @returns The current `UserRatingContextValue`, or `null` if no `UserRatingProvider` is mounted.
+ */
 export function useUserRatingContext(): UserRatingContextValue | null {
   return useContext(UserRatingContext);
 }

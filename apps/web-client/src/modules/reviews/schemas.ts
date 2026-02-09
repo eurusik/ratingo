@@ -19,7 +19,15 @@ const MIN_RATING = 0;
 const MAX_RATING = 100;
 const DEFAULT_RATING = 70;
 
-/** Creates review form schema with i18n messages. */
+/**
+ * Create a Zod schema for validating review form data.
+ *
+ * @param _dict - Localization dictionary parameter accepted for i18n compatibility; currently not used by the schema.
+ * @returns A Zod object schema validating:
+ *  - `content`: string with minimum length 1 and maximum length `MAX_CONTENT_LENGTH`,
+ *  - `rating`: number between `MIN_RATING` and `MAX_RATING`,
+ *  - `hasSpoiler`: boolean
+ */
 export function createReviewSchema(_dict: Dict) {
   return z.object({
     content: z

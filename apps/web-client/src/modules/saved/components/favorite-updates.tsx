@@ -16,6 +16,13 @@ interface FavoriteUpdateCardProps {
   index: number;
 }
 
+/**
+ * Render a card for a single favorite update showing poster (or placeholder), user rating, title, and a contextual event label with optional relative air date.
+ *
+ * @param item - The favorite update data to display (media summary, rating, latest/next episode).
+ * @param index - Zero-based position of the card in the list; used to determine image loading priority.
+ * @returns The JSX element representing the favorite update card.
+ */
 function FavoriteUpdateCard({ item, index }: FavoriteUpdateCardProps) {
   const locale = useLocale();
   const { dict } = useTranslation();
@@ -82,6 +89,13 @@ function FavoriteUpdateCard({ item, index }: FavoriteUpdateCardProps) {
   );
 }
 
+/**
+ * Render the favorite updates section: a titled, horizontally scrollable list of favorite media updates for the authenticated user.
+ *
+ * Renders a loading skeleton while updates are being fetched and a localized empty message when no items are available.
+ *
+ * @returns A React element containing the favorite updates section, or `null` if the user is not authenticated.
+ */
 export function FavoriteUpdates() {
   const { dict } = useTranslation();
   const { isAuthenticated } = useAuth();

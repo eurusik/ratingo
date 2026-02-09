@@ -12,6 +12,14 @@ import { EmptyState } from './empty-state';
 import { ListSortSelect } from './list-sort-select';
 import { MeListSkeleton } from './me-list-skeleton';
 
+/**
+ * Render the user's watch history with sorting, loading, and empty-state handling.
+ *
+ * Shows a loading skeleton while data is being fetched, an empty-state message when there are no history items,
+ * and otherwise a right-aligned sort control plus a responsive grid of history item cards.
+ *
+ * @returns A React element that displays either the loading skeleton, the empty-state UI, or a sortable grid of history items.
+ */
 export function HistoryList() {
   const { dict } = useTranslation();
   const [sort, setSort] = useState<MeListSort>('recent');

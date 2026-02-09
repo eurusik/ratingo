@@ -11,8 +11,11 @@ interface MediaCardsWithStatusProps {
 }
 
 /**
- * Client wrapper that provides SavedStatusProvider and UserRatingProvider for media cards.
- * Prefetches save status and user ratings for all cards in a single batch request each.
+ * Wraps children with SavedStatusProvider and UserRatingProvider to prefetch saved status and user ratings for the given media items.
+ *
+ * @param mediaItemIds - Array of media item IDs to prefetch save status and user ratings for.
+ * @param children - React nodes to render inside the providers.
+ * @returns The provided children wrapped by SavedStatusProvider and UserRatingProvider.
  */
 export function MediaCardsWithStatus({ mediaItemIds, children }: MediaCardsWithStatusProps) {
   return (

@@ -39,8 +39,10 @@ export interface MediaCardServerProps {
 }
 
 /**
- * SSR-safe minimalist media card component.
+ * Renders a server-safe, minimalist media card for a movie or show.
  *
+ * @param props - Configuration for the card including identifiers (id, slug), content type, title, optional poster, ratings/stats, progress, releaseDate, display badges/rank, locale, and optional list context
+ * @returns A JSX element representing the media card layout
  */
 export function MediaCardServer(props: MediaCardServerProps) {
   const {

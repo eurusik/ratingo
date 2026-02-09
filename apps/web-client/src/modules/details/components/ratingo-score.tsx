@@ -14,6 +14,12 @@ interface RatingoScoreProps {
   score: number;
 }
 
+/**
+ * Display a compact "Ratingo" badge showing a formatted score with an informational tooltip and a short subtitle.
+ *
+ * @param score - The numeric rating value to display inside the badge
+ * @returns A JSX element rendering the Ratingo badge, an info tooltip explaining the rating, and a subtitle
+ */
 export function RatingoScore({ score }: RatingoScoreProps) {
   const { dict } = useTranslation();
   return (

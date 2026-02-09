@@ -118,6 +118,16 @@ function enrichShowDetails(show: ShowDetailsDto): EnrichedShowDetails {
   };
 }
 
+/**
+ * Render the show details page for the provided route slug.
+ *
+ * Fetches the show data, enriches it with UI-friendly fields, loads initial reviews,
+ * derives verdict and status hint text from the localization dictionary, and returns
+ * the composed details page (or a not-found view when the show cannot be loaded).
+ *
+ * @param params - A promise resolving to route parameters containing `slug`.
+ * @returns The rendered details page for the show, or a not-found view when the show is missing.
+ */
 export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) {
   const { slug } = await params;
   const dict = getDictionary('uk');

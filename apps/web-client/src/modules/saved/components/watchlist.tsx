@@ -12,6 +12,15 @@ import { EmptyState } from './empty-state';
 import { ListSortSelect } from './list-sort-select';
 import { MeListSkeleton } from './me-list-skeleton';
 
+/**
+ * Render the user's watchlist UI with loading, empty, and populated states and a sort control.
+ *
+ * Shows a loading skeleton while data is being fetched. If there are no watched items, displays
+ * an empty-state panel with localized title/description (with Ukrainian fallbacks). When items are
+ * available, renders a top-right sort selector and a responsive grid of item cards.
+ *
+ * @returns A React element containing the watchlist interface (loading skeleton, empty state, or sorted grid of items).
+ */
 export function Watchlist() {
   const { dict } = useTranslation();
   const [sort, setSort] = useState<MeListSort>('recent');
