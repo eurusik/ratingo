@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { useTranslation } from '@/shared/i18n';
@@ -49,6 +49,8 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
 
   const animTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const scoreRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => () => clearTimeout(animTimerRef.current), []);
 
   const presetLabels = dict.userRating.presets as Record<RatingPresetId, string>;
   const { guard } = useMutationGuard(dict.userRating.toast.error);

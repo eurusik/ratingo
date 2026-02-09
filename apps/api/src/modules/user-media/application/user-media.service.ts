@@ -15,7 +15,7 @@ import {
   type ListWithMediaOptions,
   USER_MEDIA_STATE_REPOSITORY,
   type UserMediaStats,
-  type UpsertUserMediaStateData,
+  type SetUserMediaStateInput,
 } from '../domain/repositories/user-media-state.repository.interface';
 
 /**
@@ -39,19 +39,18 @@ export class UserMediaService implements IRatingSyncPort {
    * - If `progress` is provided, the persisted state is always `watching`.
    * - If `progress` is provided with `completed` or `dropped`, the request is rejected.
    *
-   * @param {UpsertUserMediaStateData} data - Upsert payload
+   * @param {SetUserMediaStateInput} data - Upsert payload
    * @returns {Promise<UserMediaState>} Persisted state
    * @throws {BadRequestException} When `progress` is provided for `completed`/`dropped` states
    */
-  async setState(data: UpsertUserMediaStateData, mediaType?: MediaType): Promise<UserMediaState> {
-    let resolvedState = data.state;
+  async setState(data: SetUserMediaStateInput, mediaType?: MediaType): Promise<UserMediaState> {
+    const existing = await this.repo.findOne(data.userId, data.mediaItemId);
 
-    if (resolvedState === undefined) {
-      const existing = await this.repo.findOne(data.userId, data.mediaItemId);
-      resolvedState =
-        existing?.state ??
-        (mediaType === MediaType.SHOW ? USER_MEDIA_STATE.WATCHING : USER_MEDIA_STATE.COMPLETED);
+    if (data.rating === null && !data.state && !data.progress && !existing) {
+      return null as unknown as UserMediaState;
     }
+
+    const resolvedState = data.state ?? this.resolveDefaultState(existing, mediaType);
 
     if (data.progress != null) {
       if (
@@ -63,7 +62,7 @@ export class UserMediaService implements IRatingSyncPort {
 
       const result = await this.repo.upsert({ ...data, state: USER_MEDIA_STATE.WATCHING });
       if (data.rating != null) {
-        this.emitRatingChanged(data.userId, data.mediaItemId, data.rating);
+        await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating);
       }
       return result;
     }
@@ -71,7 +70,7 @@ export class UserMediaService implements IRatingSyncPort {
     const result = await this.repo.upsert({ ...data, state: resolvedState });
 
     if (data.rating != null) {
-      this.emitRatingChanged(data.userId, data.mediaItemId, data.rating);
+      await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating);
     }
 
     return result;
@@ -95,9 +94,7 @@ export class UserMediaService implements IRatingSyncPort {
     mediaType?: MediaType,
   ): Promise<void> {
     const existing = await this.repo.findOne(userId, mediaItemId);
-    const resolvedState =
-      existing?.state ??
-      (mediaType === MediaType.SHOW ? USER_MEDIA_STATE.WATCHING : USER_MEDIA_STATE.COMPLETED);
+    const resolvedState = this.resolveDefaultState(existing, mediaType);
 
     await this.repo.upsert({ userId, mediaItemId, rating, state: resolvedState });
   }
@@ -356,8 +353,22 @@ export class UserMediaService implements IRatingSyncPort {
     return this.repo.countWithMedia(userId, { states: [USER_MEDIA_STATE.PAUSED] });
   }
 
-  private emitRatingChanged(userId: string, mediaItemId: string, rating: number): void {
-    this.eventEmitter.emit(
+  private resolveDefaultState(
+    existing: UserMediaState | null,
+    mediaType?: MediaType,
+  ): UserMediaState['state'] {
+    return (
+      existing?.state ??
+      (mediaType === MediaType.SHOW ? USER_MEDIA_STATE.WATCHING : USER_MEDIA_STATE.COMPLETED)
+    );
+  }
+
+  private async emitRatingChanged(
+    userId: string,
+    mediaItemId: string,
+    rating: number,
+  ): Promise<void> {
+    await this.eventEmitter.emitAsync(
       UserMediaRatingChangedEvent.eventName,
       new UserMediaRatingChangedEvent(userId, mediaItemId, rating),
     );

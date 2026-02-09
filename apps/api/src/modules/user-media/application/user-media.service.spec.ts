@@ -22,6 +22,7 @@ describe('UserMediaService', () => {
 
   const eventEmitter = {
     emit: jest.fn(),
+    emitAsync: jest.fn().mockResolvedValue([]),
   };
 
   let service: UserMediaService;
@@ -276,7 +277,7 @@ describe('UserMediaService', () => {
         rating: 85,
       });
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
         UserMediaRatingChangedEvent.eventName,
         expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 85 }),
       );
@@ -297,7 +298,7 @@ describe('UserMediaService', () => {
         notes: null,
       });
 
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
 
     it('should not emit event when rating is undefined', async () => {
@@ -312,7 +313,7 @@ describe('UserMediaService', () => {
         state: USER_MEDIA_STATE.WATCHING,
       });
 
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
 
     it('should not emit event when called via syncRating (loop prevention)', async () => {
@@ -325,7 +326,7 @@ describe('UserMediaService', () => {
 
       await service.syncRating('u1', 'm1', 85);
 
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
 
     it('should emit event for rating 0 (falsy edge case)', async () => {
@@ -342,7 +343,7 @@ describe('UserMediaService', () => {
         rating: 0,
       });
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
         UserMediaRatingChangedEvent.eventName,
         expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 0 }),
       );
@@ -360,7 +361,7 @@ describe('UserMediaService', () => {
         }),
       ).rejects.toThrow('DB error');
 
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
 
     it('should emit event when rating is set with progress', async () => {
@@ -378,7 +379,7 @@ describe('UserMediaService', () => {
         progress: { seasons: { 1: 3 } },
       });
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith(
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
         UserMediaRatingChangedEvent.eventName,
         expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 75 }),
       );
@@ -399,7 +400,7 @@ describe('UserMediaService', () => {
       expect(repo.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 85 }),
       );
-      expect(eventEmitter.emit).not.toHaveBeenCalled();
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
 
     it('should default to watching for shows when no existing state', async () => {

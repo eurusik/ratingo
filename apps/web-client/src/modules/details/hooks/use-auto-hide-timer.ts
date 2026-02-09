@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 const AUTO_HIDE_MS = 3000;
 
@@ -9,6 +9,8 @@ const AUTO_HIDE_MS = 3000;
 export function useAutoHideTimer(onHide: () => void) {
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isDraggingRef = useRef(false);
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
 
   const schedule = useCallback(() => {
     clearTimeout(timerRef.current);

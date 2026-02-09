@@ -55,12 +55,26 @@ export interface ListWithMediaOptions {
 }
 
 /**
- * Defines payload for upserting a user media state.
+ * Service-level input — state is optional (resolved by the service).
+ */
+export interface SetUserMediaStateInput {
+  userId: string;
+  mediaItemId: string;
+  state?: UserMediaState['state'];
+  rating?: number | null;
+  progress?: {
+    seasons?: Record<number, number>;
+  } | null;
+  notes?: string | null;
+}
+
+/**
+ * Repository-level payload — state is required (DB column is NOT NULL).
  */
 export interface UpsertUserMediaStateData {
   userId: string;
   mediaItemId: string;
-  state?: UserMediaState['state'];
+  state: UserMediaState['state'];
   rating?: number | null;
   progress?: {
     seasons?: Record<number, number>;
