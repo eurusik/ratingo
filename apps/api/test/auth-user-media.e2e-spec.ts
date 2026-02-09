@@ -259,6 +259,10 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
       this.states.splice(index, 1);
     }
   }
+
+  async listFavoriteUpdates(_userId: string, _options: any): Promise<any[]> {
+    return [];
+  }
 }
 
 describe('User Media e2e', () => {

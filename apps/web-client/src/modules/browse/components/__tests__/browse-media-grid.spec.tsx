@@ -97,4 +97,5 @@ describe('BrowseMediaGrid', () => {
 
     expect(mockGetBatchSaveStatus).toHaveBeenCalledWith(['movie-1', 'movie-2', 'show-1']);
   });
+
 });

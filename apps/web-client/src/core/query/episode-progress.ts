@@ -4,13 +4,13 @@
  */
 
 import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type QueryClient } from '@tanstack/react-query';
-import { HTTPError } from 'ky';
 import {
   episodeProgressApi,
   type ShowProgressDto,
   type SeasonProgressDto,
 } from '../api/episode-progress.client';
 import { queryKeys } from './keys';
+import { retryUnlessUnauthorized } from './utils';
 
 /**
  * Invalidates all caches affected by episode progress changes.
@@ -24,7 +24,7 @@ function invalidateEpisodeProgressCaches(queryClient: QueryClient, showId: strin
     queryKey: queryKeys.userMedia.all,
   });
   queryClient.invalidateQueries({
-    queryKey: queryKeys.meLists.history,
+    queryKey: queryKeys.meLists.historyAll,
   });
   queryClient.invalidateQueries({
     queryKey: queryKeys.userActions.savedItems.all,
@@ -32,22 +32,10 @@ function invalidateEpisodeProgressCaches(queryClient: QueryClient, showId: strin
   queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
 }
 
-/** Checks if error is a 401 Unauthorized. */
-function isUnauthorized(error: unknown): boolean {
-  return error instanceof HTTPError && error.response.status === 401;
-}
-
 // ============================================================================
 // Query Hooks
 // ============================================================================
 
-/**
- * Fetches watch progress for all seasons of a show.
- *
- * @param showId - Show UUID
- * @param options - Additional query options
- * @returns Query result with season progress
- */
 export function useShowProgress(
   showId: string | undefined,
   options?: Omit<UseQueryOptions<ShowProgressDto>, 'queryKey' | 'queryFn'>,
@@ -57,10 +45,7 @@ export function useShowProgress(
     queryFn: () => episodeProgressApi.getShowProgress(showId!),
     enabled: !!showId,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: (failureCount, error) => {
-      if (isUnauthorized(error)) return false;
-      return failureCount < 2;
-    },
+    retry: retryUnlessUnauthorized,
     ...options,
   });
 }
@@ -85,12 +70,6 @@ interface MarkAllEpisodesVariables {
   episodesBySeasonNumber: Map<number, string[]>;
 }
 
-/**
- * Toggles episode watched status with optimistic updates.
- *
- * @param showId - Show UUID for cache invalidation
- * @returns Mutation with toggle function
- */
 export function useToggleEpisodeWatched(showId: string) {
   const queryClient = useQueryClient();
 
@@ -160,13 +139,6 @@ export function useToggleEpisodeWatched(showId: string) {
   });
 }
 
-/**
- * Marks multiple episodes as watched with optimistic updates.
- * Used for "mark previous episodes" feature.
- *
- * @param showId - Show UUID for cache invalidation
- * @returns Mutation with bulk mark function
- */
 export function useMarkMultipleWatched(showId: string) {
   const queryClient = useQueryClient();
 
@@ -229,10 +201,6 @@ export function useMarkMultipleWatched(showId: string) {
   });
 }
 
-/**
- * Marks ALL episodes of a show as watched.
- * Returns previous state for undo functionality.
- */
 export function useMarkAllEpisodesWatched(showId: string) {
   const queryClient = useQueryClient();
 
@@ -290,9 +258,6 @@ export function useMarkAllEpisodesWatched(showId: string) {
   });
 }
 
-/**
- * Unmarks episodes (for undo). Accepts episode IDs directly to avoid race conditions.
- */
 export function useUnmarkEpisodes(showId: string) {
   const queryClient = useQueryClient();
 

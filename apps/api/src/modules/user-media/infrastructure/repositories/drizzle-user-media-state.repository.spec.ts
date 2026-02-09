@@ -4,6 +4,7 @@ import { ImageMapper } from '../../../../common/mappers/image.mapper';
 describe('DrizzleUserMediaStateRepository', () => {
   const posterPath = '/poster.jpg';
   const expectedPoster = ImageMapper.toPoster(posterPath);
+  const mockQuery = { execute: jest.fn() } as any;
 
   const rows = [
     {
@@ -80,7 +81,7 @@ describe('DrizzleUserMediaStateRepository', () => {
   };
 
   it('listWithMedia should map poster via ImageMapper and omit posterPath', async () => {
-    const repo = new DrizzleUserMediaStateRepository(makeDbMock() as any);
+    const repo = new DrizzleUserMediaStateRepository(makeDbMock() as any, mockQuery);
     (repo as any).mapRow = jest.fn((state) => state);
 
     const result = await repo.listWithMedia('u1', 10, 0);
@@ -92,7 +93,7 @@ describe('DrizzleUserMediaStateRepository', () => {
 
   it('findOneWithMedia should map poster and return null when not found', async () => {
     const dbMock = makeDbMock();
-    const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+    const repo = new DrizzleUserMediaStateRepository(dbMock as any, mockQuery);
     (repo as any).mapRow = jest.fn((state) => state);
 
     const found = await repo.findOneWithMedia('u1', 'm1');
@@ -107,7 +108,7 @@ describe('DrizzleUserMediaStateRepository', () => {
 
   it('listWithMedia should respect sort=rating (orderBy has 2 args)', async () => {
     const dbMock = makeDbMock();
-    const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+    const repo = new DrizzleUserMediaStateRepository(dbMock as any, mockQuery);
     (repo as any).mapRow = jest.fn((state) => state);
 
     await repo.listWithMedia('u1', 10, 0, { sort: 'rating' } as any);
@@ -119,7 +120,7 @@ describe('DrizzleUserMediaStateRepository', () => {
 
   it('listWithMedia should respect sort=recent (orderBy has 1 arg)', async () => {
     const dbMock = makeDbMock();
-    const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+    const repo = new DrizzleUserMediaStateRepository(dbMock as any, mockQuery);
     (repo as any).mapRow = jest.fn((state) => state);
 
     await repo.listWithMedia('u1', 10, 0, { sort: 'recent' } as any);
@@ -131,7 +132,7 @@ describe('DrizzleUserMediaStateRepository', () => {
 
   it('listWithMedia should accept ratedOnly and states options (smoke)', async () => {
     const dbMock = makeDbMock();
-    const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+    const repo = new DrizzleUserMediaStateRepository(dbMock as any, mockQuery);
     (repo as any).mapRow = jest.fn((state) => state);
 
     const result = await repo.listWithMedia('u1', 10, 0, {
@@ -147,7 +148,7 @@ describe('DrizzleUserMediaStateRepository', () => {
 
   it('findManyByMediaIds should return empty without querying DB when ids empty', async () => {
     const dbMock = makeDbMock();
-    const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+    const repo = new DrizzleUserMediaStateRepository(dbMock as any, mockQuery);
 
     const result = await repo.findManyByMediaIds('u1', []);
     expect(result).toEqual([]);
@@ -157,7 +158,7 @@ describe('DrizzleUserMediaStateRepository', () => {
   describe('findOneWithMedia - continuePoint and progressSummary', () => {
     it('should return continuePoint when show has watched episodes', async () => {
       const dbMock = makeDbMock(rowsWithProgress);
-      const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+      const repo = new DrizzleUserMediaStateRepository(dbMock as any, mockQuery);
       (repo as any).mapRow = jest.fn((state) => state);
 
       const result = await repo.findOneWithMedia('u1', 'm1');
@@ -167,7 +168,7 @@ describe('DrizzleUserMediaStateRepository', () => {
 
     it('should return progressSummary when show has episodes', async () => {
       const dbMock = makeDbMock(rowsWithProgress);
-      const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+      const repo = new DrizzleUserMediaStateRepository(dbMock as any, mockQuery);
       (repo as any).mapRow = jest.fn((state) => state);
 
       const result = await repo.findOneWithMedia('u1', 'm1');
@@ -183,7 +184,7 @@ describe('DrizzleUserMediaStateRepository', () => {
         },
       ];
       const dbMock = makeDbMock(rowsWithNullProgress);
-      const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+      const repo = new DrizzleUserMediaStateRepository(dbMock as any, mockQuery);
       (repo as any).mapRow = jest.fn((state) => state);
 
       const result = await repo.findOneWithMedia('u1', 'm1');
@@ -201,7 +202,7 @@ describe('DrizzleUserMediaStateRepository', () => {
         },
       ];
       const dbMock = makeDbMock(movieRows);
-      const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+      const repo = new DrizzleUserMediaStateRepository(dbMock as any, mockQuery);
       (repo as any).mapRow = jest.fn((state) => state);
 
       const result = await repo.findOneWithMedia('u1', 'm1');
@@ -218,12 +219,26 @@ describe('DrizzleUserMediaStateRepository', () => {
       const chain = dbMock.select();
       chain.offset = jest.fn().mockResolvedValue(rowsWithProgress);
 
-      const repo = new DrizzleUserMediaStateRepository(dbMock as any);
+      const repo = new DrizzleUserMediaStateRepository(dbMock as any, mockQuery);
       (repo as any).mapRow = jest.fn((state) => state);
 
       const result = await repo.listWithMedia('u1', 10, 0);
 
       expect(result[0].progressSummary).toEqual({ watched: 5, total: 42 });
+    });
+  });
+
+  describe('listFavoriteUpdates', () => {
+    it('should delegate to FavoriteUpdatesQuery', async () => {
+      const expected = [{ mediaItemId: 'm1', rating: 85 }];
+      const queryMock = { execute: jest.fn().mockResolvedValue(expected) };
+      const repo = new DrizzleUserMediaStateRepository({} as any, queryMock as any);
+
+      const opts = { ratingThreshold: 60, daysBack: 14, daysAhead: 30, limit: 10 };
+      const result = await repo.listFavoriteUpdates('u1', opts);
+
+      expect(queryMock.execute).toHaveBeenCalledWith('u1', opts);
+      expect(result).toBe(expected);
     });
   });
 });

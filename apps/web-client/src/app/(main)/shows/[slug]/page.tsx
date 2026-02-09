@@ -161,7 +161,8 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
           releaseDate={show.releaseDate}
           genres={show.genres}
           stats={show.stats}
-          dict={dict}
+          mediaItemId={show.id}
+          mediaType="show"
         />
 
         <DetailsContent>

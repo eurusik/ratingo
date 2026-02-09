@@ -1,7 +1,3 @@
-/**
- * Saved module hooks exports.
- */
-
 export {
   useSavedForLater,
   useSavedConsidering,
@@ -9,4 +5,4 @@ export {
   useUnsaveItem,
 } from './use-saved-items';
 export { useSubscriptions, useSubscribe, useUnsubscribe } from './use-subscriptions';
-export { useWatching, useCompleted, useWatchlist, useHistory } from './use-me-lists';
+export { useWatching, useCompleted, useSetRating, useUserMediaState } from './use-me-lists';

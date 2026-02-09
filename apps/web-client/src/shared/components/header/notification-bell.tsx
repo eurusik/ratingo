@@ -16,7 +16,7 @@ import {
   useNotifications,
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
-} from '@/core/query/user-actions';
+} from '@/core/query';
 import { useAuth } from '@/core/auth';
 
 export function NotificationBell() {

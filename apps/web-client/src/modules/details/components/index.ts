@@ -33,6 +33,9 @@ export {
 export { OverviewExpandable } from './overview-expandable';
 export { NotFoundView } from './not-found-view';
 
+// User rating
+export { RatingPresets } from './rating-presets';
+
 // Atomic components for Hero section
 export { RatingBadge } from './rating-badge';
 export { RatingoScore } from './ratingo-score';

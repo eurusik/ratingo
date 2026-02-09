@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UserMediaController } from './user-media.controller';
+
+import { USER_MEDIA_STATE } from '../../domain/entities/user-media-state.entity';
 import { UserMediaService } from '../../application/user-media.service';
+
+import { UserMediaController } from './user-media.controller';
 
 describe('UserMediaController', () => {
   let controller: UserMediaController;
@@ -9,6 +12,7 @@ describe('UserMediaController', () => {
     setState: jest.fn(),
     listWithMedia: jest.fn(),
     listContinueWithMedia: jest.fn(),
+    findMany: jest.fn(),
     pauseMedia: jest.fn(),
     resumeMedia: jest.fn(),
   };
@@ -32,7 +36,7 @@ describe('UserMediaController', () => {
     expect(result).toEqual({ id: 's1' });
   });
 
-  it('setState should upsert with null fallbacks and return updated state with media', async () => {
+  it('setState should only pass explicitly provided fields to service', async () => {
     userMediaService.setState.mockResolvedValue({ id: 's1' } as any);
     userMediaService.getStateWithMedia.mockResolvedValue({
       id: 's1',
@@ -40,7 +44,7 @@ describe('UserMediaController', () => {
     } as any);
 
     const body = {
-      state: 'watching',
+      state: USER_MEDIA_STATE.WATCHING,
       rating: undefined,
       progress: undefined,
       notes: undefined,
@@ -48,16 +52,54 @@ describe('UserMediaController', () => {
 
     const result = await controller.setState({ id: 'u1' }, 'm1', body as any);
 
-    expect(userMediaService.setState).toHaveBeenCalledWith({
-      userId: 'u1',
-      mediaItemId: 'm1',
-      state: 'watching',
-      rating: null,
-      progress: null,
-      notes: null,
-    });
+    expect(userMediaService.setState).toHaveBeenCalledWith(
+      { userId: 'u1', mediaItemId: 'm1', state: USER_MEDIA_STATE.WATCHING },
+      undefined,
+    );
     expect(userMediaService.getStateWithMedia).toHaveBeenCalledWith('u1', 'm1');
     expect(result).toEqual({ id: 's1', mediaSummary: { poster: null } });
+  });
+
+  it('setState should pass rating/progress/notes when explicitly provided', async () => {
+    userMediaService.setState.mockResolvedValue({ id: 's1' } as any);
+    userMediaService.getStateWithMedia.mockResolvedValue({
+      id: 's1',
+      mediaSummary: { poster: null },
+    } as any);
+
+    const body = {
+      state: USER_MEDIA_STATE.COMPLETED,
+      rating: 85,
+      progress: null,
+      notes: 'Great show',
+    };
+
+    await controller.setState({ id: 'u1' }, 'm1', body as any);
+
+    expect(userMediaService.setState).toHaveBeenCalledWith(
+      {
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.COMPLETED,
+        rating: 85,
+        progress: null,
+        notes: 'Great show',
+      },
+      undefined,
+    );
+  });
+
+  it('setState should handle null return from service (clearing non-existent rating)', async () => {
+    userMediaService.setState.mockResolvedValue(null);
+    userMediaService.getStateWithMedia.mockResolvedValue(null);
+
+    const body = { rating: null };
+
+    const result = await controller.setState({ id: 'u1' }, 'm1', body as any);
+
+    expect(userMediaService.setState).toHaveBeenCalled();
+    expect(userMediaService.getStateWithMedia).toHaveBeenCalledWith('u1', 'm1');
+    expect(result).toBeNull();
   });
 
   it('list should parse limit/offset and call service.listWithMedia', async () => {
@@ -78,12 +120,40 @@ describe('UserMediaController', () => {
     expect(result).toEqual([{ id: 's1' }]);
   });
 
+  describe('batchRatings', () => {
+    it('should pass pre-validated IDs to service and return ratings map', async () => {
+      const ids = ['550e8400-e29b-41d4-a716-446655440000', '7c9e6679-7425-40de-944b-e07fc1f90ae7'];
+      userMediaService.findMany.mockResolvedValue([
+        { mediaItemId: ids[0], rating: 85 },
+        { mediaItemId: ids[1], rating: null },
+      ] as any);
+
+      const result = await controller.batchRatings({ id: 'u1' }, { ids } as any);
+
+      expect(userMediaService.findMany).toHaveBeenCalledWith('u1', ids);
+      expect(result).toEqual({ ratings: { [ids[0]]: 85 } });
+    });
+
+    it('should return empty ratings when service returns no states', async () => {
+      userMediaService.findMany.mockResolvedValue([]);
+
+      const result = await controller.batchRatings({ id: 'u1' }, {
+        ids: ['550e8400-e29b-41d4-a716-446655440000'],
+      } as any);
+
+      expect(result).toEqual({ ratings: {} });
+    });
+  });
+
   describe('pauseMedia', () => {
     it('should pause media and return updated state with media', async () => {
-      userMediaService.pauseMedia.mockResolvedValue({ id: 's1', state: 'paused' } as any);
+      userMediaService.pauseMedia.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.PAUSED,
+      } as any);
       userMediaService.getStateWithMedia.mockResolvedValue({
         id: 's1',
-        state: 'paused',
+        state: USER_MEDIA_STATE.PAUSED,
         mediaSummary: { poster: null },
       } as any);
 
@@ -93,7 +163,7 @@ describe('UserMediaController', () => {
       expect(userMediaService.getStateWithMedia).toHaveBeenCalledWith('u1', 'm1');
       expect(result).toEqual({
         id: 's1',
-        state: 'paused',
+        state: USER_MEDIA_STATE.PAUSED,
         mediaSummary: { poster: null },
       });
     });
@@ -101,10 +171,13 @@ describe('UserMediaController', () => {
 
   describe('resumeMedia', () => {
     it('should resume media and return updated state with media', async () => {
-      userMediaService.resumeMedia.mockResolvedValue({ id: 's1', state: 'watching' } as any);
+      userMediaService.resumeMedia.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+      } as any);
       userMediaService.getStateWithMedia.mockResolvedValue({
         id: 's1',
-        state: 'watching',
+        state: USER_MEDIA_STATE.WATCHING,
         mediaSummary: { poster: null },
       } as any);
 
@@ -114,7 +187,7 @@ describe('UserMediaController', () => {
       expect(userMediaService.getStateWithMedia).toHaveBeenCalledWith('u1', 'm1');
       expect(result).toEqual({
         id: 's1',
-        state: 'watching',
+        state: USER_MEDIA_STATE.WATCHING,
         mediaSummary: { poster: null },
       });
     });

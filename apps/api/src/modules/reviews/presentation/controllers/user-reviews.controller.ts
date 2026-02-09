@@ -70,6 +70,7 @@ export class UserReviewsController {
       content: body.content,
       rating: body.rating,
       hasSpoiler: body.hasSpoiler,
+      mediaType: body.mediaType,
     });
 
     return this.toMutationResponse(review);

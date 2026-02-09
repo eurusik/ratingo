@@ -312,6 +312,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-media/batch-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Batch fetch user ratings (auth: Bearer) */
+        get: operations["UserMediaController_batchRatings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user-media/continue": {
         parameters: {
             query?: never;
@@ -475,6 +492,23 @@ export interface paths {
         };
         /** My paused items (auth: Bearer) */
         get: operations["MeListsController_paused"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/favorites/updates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Updates for my favorite shows (auth: Bearer) */
+        get: operations["MeListsController_favoriteUpdates"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2927,12 +2961,30 @@ export interface components {
             data: components["schemas"]["ProviderDto"][];
             meta: components["schemas"]["OffsetPaginationMetaDto"];
         };
+        BatchRatingsResponseDto: {
+            /**
+             * @description Map of mediaItemId to user rating (0-100). Only includes items with ratings.
+             * @example {
+             *       "uuid-1": 85,
+             *       "uuid-2": 60
+             *     }
+             */
+            ratings: {
+                [key: string]: number;
+            };
+        };
         SetUserMediaStateDto: {
             /**
+             * @description Watch state. When omitted, preserves existing state or defaults to "completed" for movies / "watching" for shows.
              * @example watching
              * @enum {string}
              */
-            state: "watching" | "completed" | "planned" | "dropped" | "paused";
+            state?: "watching" | "completed" | "planned" | "dropped" | "paused";
+            /**
+             * @description Media type hint for auto-state resolution. Only accepted when state is omitted; ignored otherwise.
+             * @enum {string}
+             */
+            mediaType?: "movie" | "show";
             /** @example null */
             rating?: number | null;
             /**
@@ -3034,13 +3086,57 @@ export interface components {
             data: components["schemas"]["MeUserMediaListItemDto"][];
             meta: components["schemas"]["OffsetPaginationMetaDto"];
         };
+        EpisodeInfoDto: {
+            /**
+             * @description Season number
+             * @example 2
+             */
+            seasonNumber: number;
+            /**
+             * @description Episode number
+             * @example 5
+             */
+            episodeNumber: number;
+            /**
+             * @description Episode title
+             * @example The Winds of Winter
+             */
+            title?: string | null;
+            /**
+             * Format: date-time
+             * @description Air date
+             */
+            airDate?: string | null;
+            /**
+             * @description True when multiple episodes aired on the same date (e.g. Netflix full-season drop)
+             * @example false
+             */
+            isBatchRelease: boolean;
+        };
+        FavoriteUpdateItemDto: {
+            /** @description Media item ID */
+            mediaItemId: string;
+            /**
+             * @description User rating (0-100)
+             * @example 85
+             */
+            rating: number;
+            mediaSummary: components["schemas"]["MeUserMediaSummaryDto"];
+            /** @description Most recent aired episode */
+            latestEpisode?: components["schemas"]["EpisodeInfoDto"] | null;
+            /** @description Next upcoming episode */
+            nextEpisode?: components["schemas"]["EpisodeInfoDto"] | null;
+        };
+        FavoriteUpdatesResponseDto: {
+            data: components["schemas"]["FavoriteUpdateItemDto"][];
+        };
         BatchEpisodeIdsDto: {
             /**
              * @description Array of episode UUIDs to mark as watched/unwatched
              * @example [
-             *       "uuid-1",
-             *       "uuid-2",
-             *       "uuid-3"
+             *       "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+             *       "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+             *       "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f"
              *     ]
              */
             episodeIds: string[];
@@ -5307,6 +5403,12 @@ export interface components {
              * @example false
              */
             hasSpoiler: boolean;
+            /**
+             * @description Media type hint. When provided, allows the correct default user-media state to be chosen for first-time entries (watching for shows, completed for movies).
+             * @example movie
+             * @enum {string}
+             */
+            mediaType?: "movie" | "show";
         };
         ReviewMutationResponseDto: {
             /** @example 123e4567-e89b-12d3-a456-426614174000 */
@@ -6077,6 +6179,47 @@ export interface operations {
             };
         };
     };
+    UserMediaController_batchRatings: {
+        parameters: {
+            query: {
+                /** @description Comma-separated media item UUIDs (max 100) */
+                ids: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Batch ratings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["BatchRatingsResponseDto"];
+                    };
+                };
+            };
+            /** @description Invalid UUIDs or empty list */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     UserMediaController_listContinue: {
         parameters: {
             query?: {
@@ -6435,6 +6578,36 @@ export interface operations {
                         data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
                     };
                 };
+            };
+        };
+    };
+    MeListsController_favoriteUpdates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["FavoriteUpdatesResponseDto"];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

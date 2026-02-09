@@ -27,6 +27,7 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { UserMediaService } from '../../application/user-media.service';
+import { BatchRatingsQueryDto, BatchRatingsResponseDto } from '../dto/batch-ratings.dto';
 import { SetUserMediaStateDto } from '../dto/set-user-media-state.dto';
 import { UserMediaStateDto } from '../dto/user-media-state.dto';
 
@@ -39,6 +40,36 @@ import { UserMediaStateDto } from '../dto/user-media-state.dto';
 @Controller('user-media')
 export class UserMediaController {
   constructor(private readonly userMediaService: UserMediaService) {}
+
+  /**
+   * Batch-fetches user ratings for multiple media items.
+   *
+   * Returns only items that have a non-null rating.
+   *
+   * @param {{ id: string }} user - Current user context
+   * @param {BatchRatingsQueryDto} query - Comma-separated media item IDs
+   * @returns {Promise<BatchRatingsResponseDto>} Map of mediaItemId → rating
+   */
+  @ApiOkResponse({ description: 'Batch ratings', type: BatchRatingsResponseDto })
+  @ApiBadRequestResponse({ description: 'Invalid UUIDs or empty list' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiOperation({ summary: 'Batch fetch user ratings (auth: Bearer)' })
+  @Get('batch-ratings')
+  async batchRatings(
+    @CurrentUser() user: { id: string },
+    @Query() query: BatchRatingsQueryDto,
+  ): Promise<BatchRatingsResponseDto> {
+    const states = await this.userMediaService.findMany(user.id, query.ids);
+
+    const ratings: Record<string, number> = {};
+    for (const state of states) {
+      if (state.rating != null) {
+        ratings[state.mediaItemId] = state.rating;
+      }
+    }
+
+    return { ratings };
+  }
 
   /**
    * Lists "Continue" items for the current user.
@@ -84,6 +115,9 @@ export class UserMediaController {
   /**
    * Sets state for a media item (upsert).
    *
+   * When setState returns null (e.g. clearing a rating that never existed),
+   * falls back to fetching the current state. Returns null when no state exists at all.
+   *
    * @param {string} mediaItemId - Media item identifier
    * @param {SetUserMediaStateDto} body - Upsert payload
    * @returns {Promise<any>} Updated state with media summary
@@ -100,14 +134,17 @@ export class UserMediaController {
     @Param('mediaItemId') mediaItemId: string,
     @Body() body: SetUserMediaStateDto,
   ) {
-    await this.userMediaService.setState({
-      userId: user.id,
-      mediaItemId,
-      state: body.state,
-      rating: body.rating ?? null,
-      progress: body.progress ?? null,
-      notes: body.notes ?? null,
-    });
+    await this.userMediaService.setState(
+      {
+        userId: user.id,
+        mediaItemId,
+        ...(body.state !== undefined && { state: body.state }),
+        ...(body.rating !== undefined && { rating: body.rating }),
+        ...(body.progress !== undefined && { progress: body.progress }),
+        ...(body.notes !== undefined && { notes: body.notes }),
+      },
+      body.mediaType,
+    );
 
     return this.userMediaService.getStateWithMedia(user.id, mediaItemId);
   }

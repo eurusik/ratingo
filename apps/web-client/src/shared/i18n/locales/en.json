@@ -142,7 +142,8 @@
       "released": "Released",
       "ofEpisodes": "of"
     },
-    "noPoster": "No poster"
+    "noPoster": "No poster",
+    "yourRating": "Your rating: {rating}"
   },
   "rating": {
     "imdb": "IMDb",
@@ -695,6 +696,19 @@
         "title": "History is empty",
         "description": "You haven't watched anything yet"
       }
+    },
+    "sort": {
+      "label": "Sort order",
+      "recent": "Recent",
+      "rating": "By rating",
+      "releaseDate": "By release date"
+    },
+    "favoriteUpdates": {
+      "title": "What's new in your shows",
+      "empty": "Rate shows to see updates here",
+      "newEpisode": "New episode",
+      "newSeason": "New season",
+      "nextEpisode": "Next episode"
     },
     "toast": {
       "addedToWatching": "Added to Watching",
@@ -1421,6 +1435,24 @@
       "previous": "Previous",
       "next": "Next",
       "backToList": "Back to journal"
+    }
+  },
+  "userRating": {
+    "title": "Your rating",
+    "rate": "How was it?",
+    "clear": "Clear",
+    "finetune": "Fine-tune?",
+    "prompt": "How did you like it?",
+    "toast": {
+      "saved": "{emoji} {label} — {score}",
+      "cleared": "Rating cleared",
+      "error": "Failed to save rating"
+    },
+    "presets": {
+      "bad": "Bad",
+      "okay": "Okay",
+      "good": "Liked it",
+      "top": "Top"
     }
   }
 }

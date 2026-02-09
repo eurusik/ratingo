@@ -55,7 +55,21 @@ export interface ListWithMediaOptions {
 }
 
 /**
- * Defines payload for upserting a user media state.
+ * Service-level input — state is optional (resolved by the service).
+ */
+export interface SetUserMediaStateInput {
+  userId: string;
+  mediaItemId: string;
+  state?: UserMediaState['state'];
+  rating?: number | null;
+  progress?: {
+    seasons?: Record<number, number>;
+  } | null;
+  notes?: string | null;
+}
+
+/**
+ * Repository-level payload — state is required (DB column is NOT NULL).
  */
 export interface UpsertUserMediaStateData {
   userId: string;
@@ -75,6 +89,39 @@ export interface UserMediaStats {
   moviesRated: number;
   showsRated: number;
   watchlistCount: number;
+}
+
+/**
+ * Options for favorite updates query.
+ */
+export interface FavoriteUpdatesOptions {
+  ratingThreshold: number;
+  daysBack: number;
+  daysAhead: number;
+  limit: number;
+}
+
+/**
+ * Episode info attached to a favorite update.
+ */
+export interface EpisodeInfo {
+  seasonNumber: number;
+  episodeNumber: number;
+  title: string | null;
+  airDate: Date | null;
+  /** True when multiple episodes share the same air date (e.g. Netflix full-season drop). */
+  isBatchRelease: boolean;
+}
+
+/**
+ * A single item in the "Updates for Your Favorites" section.
+ */
+export interface FavoriteUpdateItem {
+  mediaItemId: string;
+  rating: number;
+  mediaSummary: UserMediaSummary;
+  latestEpisode: EpisodeInfo | null;
+  nextEpisode: EpisodeInfo | null;
 }
 
 /**
@@ -212,4 +259,16 @@ export interface IUserMediaStateRepository {
    * @returns {Promise<number>} Total continue items
    */
   countContinueWithMedia(userId: string): Promise<number>;
+
+  /**
+   * Lists highly-rated shows with recent or upcoming episodes.
+   *
+   * @param {string} userId - User identifier
+   * @param {FavoriteUpdatesOptions} options - Query options
+   * @returns {Promise<FavoriteUpdateItem[]>} Favorite update items
+   */
+  listFavoriteUpdates(
+    userId: string,
+    options: FavoriteUpdatesOptions,
+  ): Promise<FavoriteUpdateItem[]>;
 }

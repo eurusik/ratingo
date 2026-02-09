@@ -47,6 +47,7 @@ describe('MeListsController', () => {
       getHistory: jest.fn(),
       getActivity: jest.fn(),
       getPaused: jest.fn(),
+      getFavoriteUpdates: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -382,6 +383,49 @@ describe('MeListsController', () => {
       expect(result.data).toEqual([]);
       expect(result.meta.total).toBe(0);
       expect(result.meta.hasMore).toBe(false);
+    });
+  });
+
+  describe('favoriteUpdates', () => {
+    it('should call meListsService.getFavoriteUpdates with correct user ID and wrap in data', async () => {
+      const mockUpdates = [
+        {
+          mediaItemId: 'media-1',
+          rating: 85,
+          mediaSummary: {
+            id: 'media-1',
+            type: MediaType.SHOW,
+            title: 'Test Show',
+            slug: 'test-show',
+            poster: null,
+            releaseDate: new Date('2023-01-01'),
+          },
+          latestEpisode: {
+            seasonNumber: 2,
+            episodeNumber: 5,
+            title: 'Episode 5',
+            airDate: new Date('2023-06-01'),
+            isBatchRelease: false,
+          },
+          nextEpisode: null,
+        },
+      ];
+
+      meListsService.getFavoriteUpdates.mockResolvedValue(mockUpdates);
+
+      const result = await controller.favoriteUpdates(mockUser);
+
+      expect(meListsService.getFavoriteUpdates).toHaveBeenCalledWith('user-1');
+      expect(result).toEqual({ data: mockUpdates });
+    });
+
+    it('should return empty data array when no updates exist', async () => {
+      meListsService.getFavoriteUpdates.mockResolvedValue([]);
+
+      const result = await controller.favoriteUpdates(mockUser);
+
+      expect(meListsService.getFavoriteUpdates).toHaveBeenCalledWith('user-1');
+      expect(result).toEqual({ data: [] });
     });
   });
 

@@ -1,29 +1,35 @@
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
+import { MediaType } from '@/common/enums/media-type.enum';
 
 import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
+import { USER_MEDIA_STATE_ERRORS } from '../domain/constants/user-media-state-errors.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
+import { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';
+import type { IRatingSyncPort } from '../domain/ports/rating-sync.port';
 import {
   type IUserMediaStateRepository,
   type ListWithMediaOptions,
   USER_MEDIA_STATE_REPOSITORY,
   type UserMediaStats,
-  type UpsertUserMediaStateData,
+  type SetUserMediaStateInput,
 } from '../domain/repositories/user-media-state.repository.interface';
 
 /**
  * Application service for user media state use cases.
  */
 @Injectable()
-export class UserMediaService {
+export class UserMediaService implements IRatingSyncPort {
   private readonly logger = new Logger(UserMediaService.name);
 
   constructor(
     @Inject(USER_MEDIA_STATE_REPOSITORY)
     private readonly repo: IUserMediaStateRepository,
     private readonly cards: CardEnrichmentService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -33,20 +39,72 @@ export class UserMediaService {
    * - If `progress` is provided, the persisted state is always `watching`.
    * - If `progress` is provided with `completed` or `dropped`, the request is rejected.
    *
-   * @param {UpsertUserMediaStateData} data - Upsert payload
-   * @returns {Promise<UserMediaState>} Persisted state
+   * @param {SetUserMediaStateInput} data - Upsert payload
+   * @returns {Promise<UserMediaState | null>} Persisted state, or null if clearing a non-existent rating
    * @throws {BadRequestException} When `progress` is provided for `completed`/`dropped` states
    */
-  async setState(data: UpsertUserMediaStateData): Promise<UserMediaState> {
-    if (data.progress != null) {
-      if (data.state === USER_MEDIA_STATE.COMPLETED || data.state === USER_MEDIA_STATE.DROPPED) {
-        throw new BadRequestException('progress is not allowed for completed/dropped states');
-      }
+  async setState(
+    data: SetUserMediaStateInput,
+    mediaType?: MediaType,
+  ): Promise<UserMediaState | null> {
+    const existing = await this.repo.findOne(data.userId, data.mediaItemId);
 
-      return this.repo.upsert({ ...data, state: USER_MEDIA_STATE.WATCHING });
+    if (data.rating === null && !data.state && !data.progress && !existing) {
+      return null;
     }
 
-    return this.repo.upsert(data);
+    const resolvedState = data.state ?? this.resolveDefaultState(existing, mediaType);
+
+    if (data.progress != null) {
+      if (
+        resolvedState === USER_MEDIA_STATE.COMPLETED ||
+        resolvedState === USER_MEDIA_STATE.DROPPED
+      ) {
+        throw new BadRequestException(USER_MEDIA_STATE_ERRORS.PROGRESS_NOT_ALLOWED);
+      }
+
+      const result = await this.repo.upsert({ ...data, state: USER_MEDIA_STATE.WATCHING });
+      if (data.rating !== undefined) {
+        await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating ?? null);
+      }
+      return result;
+    }
+
+    const result = await this.repo.upsert({ ...data, state: resolvedState });
+
+    if (data.rating !== undefined) {
+      await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating ?? null);
+    }
+
+    return result;
+  }
+
+  /**
+   * Syncs a rating from an external aggregate (e.g. reviews).
+   * Implements IRatingSyncPort.
+   *
+   * Bypasses setState() to avoid emitting events — the source aggregate
+   * (reviews) already has the correct rating.
+   *
+   * @param mediaType - When provided, allows the correct default state
+   *   to be chosen for first-time entries (`watching` for shows,
+   *   `completed` for movies).
+   */
+  async syncRating(
+    userId: string,
+    mediaItemId: string,
+    rating: number | null,
+    mediaType?: MediaType,
+  ): Promise<void> {
+    const existing = await this.repo.findOne(userId, mediaItemId);
+
+    if (!existing && rating === null) {
+      return;
+    }
+
+    const resolvedState = this.resolveDefaultState(existing, mediaType);
+
+    await this.repo.upsert({ userId, mediaItemId, rating, state: resolvedState });
   }
 
   /**
@@ -238,11 +296,11 @@ export class UserMediaService {
     const currentState = await this.repo.findOne(userId, mediaItemId);
 
     if (!currentState) {
-      throw new BadRequestException('Cannot pause: no media state found');
+      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_PAUSE_NO_STATE);
     }
 
     if (currentState.state !== USER_MEDIA_STATE.WATCHING) {
-      throw new BadRequestException('Cannot pause: item is not currently being watched');
+      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_PAUSE_NOT_WATCHING);
     }
 
     return this.repo.upsert({
@@ -264,11 +322,11 @@ export class UserMediaService {
     const currentState = await this.repo.findOne(userId, mediaItemId);
 
     if (!currentState) {
-      throw new BadRequestException('Cannot resume: no media state found');
+      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_RESUME_NO_STATE);
     }
 
     if (currentState.state !== USER_MEDIA_STATE.PAUSED) {
-      throw new BadRequestException('Cannot resume: item is not paused');
+      throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_RESUME_NOT_PAUSED);
     }
 
     return this.repo.upsert({
@@ -301,5 +359,33 @@ export class UserMediaService {
    */
   async countPausedWithMedia(userId: string): Promise<number> {
     return this.repo.countWithMedia(userId, { states: [USER_MEDIA_STATE.PAUSED] });
+  }
+
+  private resolveDefaultState(
+    existing: UserMediaState | null,
+    mediaType?: MediaType,
+  ): UserMediaState['state'] {
+    return (
+      existing?.state ??
+      (mediaType === MediaType.SHOW ? USER_MEDIA_STATE.WATCHING : USER_MEDIA_STATE.COMPLETED)
+    );
+  }
+
+  private async emitRatingChanged(
+    userId: string,
+    mediaItemId: string,
+    rating: number | null,
+  ): Promise<void> {
+    try {
+      await this.eventEmitter.emitAsync(
+        UserMediaRatingChangedEvent.eventName,
+        new UserMediaRatingChangedEvent(userId, mediaItemId, rating),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to emit rating changed event: user=${userId}, media=${mediaItemId}`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 }

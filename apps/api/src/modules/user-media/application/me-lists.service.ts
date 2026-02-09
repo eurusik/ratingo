@@ -1,12 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
+import {
+  FAVORITE_UPDATES_DAYS_AHEAD,
+  FAVORITE_UPDATES_DAYS_BACK,
+  FAVORITE_UPDATES_LIMIT,
+  FAVORITE_UPDATES_RATING_THRESHOLD,
+} from '../domain/constants/favorite-updates.constants';
 import {
   USER_MEDIA_HISTORY_STATES,
   USER_MEDIA_STATE,
   USER_MEDIA_WATCHLIST_STATES,
 } from '../domain/entities/user-media-state.entity';
 import {
+  type FavoriteUpdateItem,
+  type IUserMediaStateRepository,
   USER_MEDIA_LIST_SORT,
+  USER_MEDIA_STATE_REPOSITORY,
   type UserMediaListSort,
 } from '../domain/repositories/user-media-state.repository.interface';
 
@@ -17,7 +26,11 @@ import { UserMediaService } from './user-media.service';
  */
 @Injectable()
 export class MeListsService {
-  constructor(private readonly userMediaService: UserMediaService) {}
+  constructor(
+    private readonly userMediaService: UserMediaService,
+    @Inject(USER_MEDIA_STATE_REPOSITORY)
+    private readonly repo: IUserMediaStateRepository,
+  ) {}
 
   /**
    * Gets rated items for the current user.
@@ -119,5 +132,24 @@ export class MeListsService {
     ]);
 
     return { total, data };
+  }
+
+  /**
+   * Gets updates for user's highly-rated shows.
+   *
+   * Accesses the repository directly instead of delegating through UserMediaService
+   * because this query is a specialized, read-only aggregation that does not share
+   * filtering/sorting logic with the standard list methods exposed by UserMediaService.
+   *
+   * @param {string} userId - User identifier
+   * @returns {Promise<FavoriteUpdateItem[]>} Shows with recent/upcoming episodes
+   */
+  async getFavoriteUpdates(userId: string): Promise<FavoriteUpdateItem[]> {
+    return this.repo.listFavoriteUpdates(userId, {
+      ratingThreshold: FAVORITE_UPDATES_RATING_THRESHOLD,
+      daysBack: FAVORITE_UPDATES_DAYS_BACK,
+      daysAhead: FAVORITE_UPDATES_DAYS_AHEAD,
+      limit: FAVORITE_UPDATES_LIMIT,
+    });
   }
 }

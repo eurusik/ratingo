@@ -138,6 +138,10 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   async delete(): Promise<void> {
     // no-op
   }
+
+  async listFavoriteUpdates(_userId: string, _options: any): Promise<any[]> {
+    return [];
+  }
 }
 
 class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {

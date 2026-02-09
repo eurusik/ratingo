@@ -2,6 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 import * as Joi from 'joi';
@@ -135,6 +136,7 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
         };
       },
     }),
+    EventEmitterModule.forRoot(),
     DatabaseModule,
     ClockModule,
     CatalogModule,

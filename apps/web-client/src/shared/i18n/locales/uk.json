@@ -142,7 +142,8 @@
       "released": "Вийшло",
       "ofEpisodes": "з"
     },
-    "noPoster": "Без постера"
+    "noPoster": "Без постера",
+    "yourRating": "Ваша оцінка: {rating}"
   },
   "rating": {
     "imdb": "IMDb",
@@ -695,6 +696,19 @@
         "title": "Історія порожня",
         "description": "Ви ще нічого не переглянули"
       }
+    },
+    "sort": {
+      "label": "Порядок сортування",
+      "recent": "Нещодавні",
+      "rating": "За оцінкою",
+      "releaseDate": "За датою виходу"
+    },
+    "favoriteUpdates": {
+      "title": "Що нового у твоїх серіалах",
+      "empty": "Оціни серіали, щоб бачити оновлення тут",
+      "newEpisode": "Новий епізод",
+      "newSeason": "Новий сезон",
+      "nextEpisode": "Наступний епізод"
     },
     "toast": {
       "addedToWatching": "Додано до «Дивлюсь»",
@@ -1421,6 +1435,24 @@
       "previous": "Попередня",
       "next": "Наступна",
       "backToList": "До журналу"
+    }
+  },
+  "userRating": {
+    "title": "Ваша оцінка",
+    "rate": "Як тобі?",
+    "clear": "Прибрати",
+    "finetune": "Уточнити?",
+    "prompt": "Як тобі?",
+    "toast": {
+      "saved": "{emoji} {label} — {score}",
+      "cleared": "Оцінку прибрано",
+      "error": "Не вдалося зберегти оцінку"
+    },
+    "presets": {
+      "bad": "Фігня",
+      "okay": "Норм",
+      "good": "Сподобалось",
+      "top": "Топ"
     }
   }
 }

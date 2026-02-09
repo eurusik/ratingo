@@ -10,7 +10,7 @@ import { Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { Watchlist, HistoryList, PausedList } from '@/modules/saved';
+import { Watchlist, HistoryList, PausedList, FavoriteUpdates } from '@/modules/saved';
 import { USER_MEDIA_STATE } from '@/core/api';
 
 /**
@@ -85,6 +85,7 @@ function ActivityPageContent() {
 
           <TabsContent value={TAB_VALUES.WATCHING} className="mt-0">
             <Watchlist />
+            <FavoriteUpdates />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.PAUSED} className="mt-0">

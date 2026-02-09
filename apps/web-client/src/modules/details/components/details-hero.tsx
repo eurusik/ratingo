@@ -8,10 +8,11 @@
 
 import Image from 'next/image';
 import type { Genre, ImageSet, Stats } from '../types';
+import type { MediaType } from '@/shared/types';
 import { formatYear } from '@/shared/utils/format';
-import type { getDictionary } from '@/shared/i18n';
 import { HeroBackdrop } from './hero-backdrop';
 import { RatingoScore } from './ratingo-score';
+import { RatingPresets } from './rating-presets';
 
 export interface DetailsHeroProps {
   title: string;
@@ -21,7 +22,8 @@ export interface DetailsHeroProps {
   releaseDate: string;
   genres?: Genre[] | null;
   stats?: Stats | null;
-  dict: ReturnType<typeof getDictionary>;
+  mediaItemId?: string;
+  mediaType?: MediaType;
 }
 
 export function DetailsHero({
@@ -32,7 +34,8 @@ export function DetailsHero({
   releaseDate,
   genres,
   stats,
-  dict,
+  mediaItemId,
+  mediaType,
 }: DetailsHeroProps) {
   const rating = stats?.qualityScore;
 
@@ -79,8 +82,13 @@ export function DetailsHero({
                 {genres && genres.length > 0 && ` • ${genres.map((g) => g.name).join(', ')}`}
               </p>
 
-              {/* Ratingo score with label and subtitle */}
-              {rating != null && <RatingoScore score={rating} dict={dict} />}
+              {/* Ratingo score + User rating */}
+              <div className="space-y-3">
+                {rating != null && <RatingoScore score={rating} />}
+                {mediaItemId && mediaType && (
+                  <RatingPresets mediaItemId={mediaItemId} mediaType={mediaType} />
+                )}
+              </div>
             </div>
           </div>
         </div>

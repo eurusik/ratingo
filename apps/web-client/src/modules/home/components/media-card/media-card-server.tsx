@@ -18,6 +18,7 @@ import { CardPoster } from './card-poster';
 import { CardRating } from './card-rating';
 import { CardBadge, RankBadge, badgeLabelKeys } from './card-badge';
 import { CardBookmark } from './card-cta';
+import { CardUserRating } from './card-user-rating';
 
 /** Props for MediaCardServer - minimalist view props. */
 export interface MediaCardServerProps {
@@ -78,6 +79,7 @@ export function MediaCardServer(props: MediaCardServerProps) {
           position="top-right"
         />
       ) : null}
+      <CardUserRating mediaItemId={id} />
     </CardPoster>
   );
 

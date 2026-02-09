@@ -2,8 +2,13 @@ import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../../common/constants';
 import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { type MediaType } from '../../../common/enums/media-type.enum';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { NotFoundException } from '../../../common/exceptions/not-found.exception';
+import {
+  RATING_SYNC_PORT,
+  type IRatingSyncPort,
+} from '../../user-media/domain/ports/rating-sync.port';
 import { REVIEW_LIMITS, REVIEW_SORT, type ReviewSort } from '../domain/constants/review.constants';
 import type {
   Review,
@@ -26,6 +31,8 @@ export interface CreateReviewPayload {
   content: string;
   rating: number;
   hasSpoiler?: boolean;
+  /** Optional media type hint for correct default user-media state. */
+  mediaType?: MediaType;
 }
 
 /**
@@ -58,6 +65,8 @@ export class ReviewsService {
   constructor(
     @Inject(REVIEW_REPOSITORY)
     private readonly reviewRepo: IReviewRepository,
+    @Inject(RATING_SYNC_PORT)
+    private readonly ratingSync: IRatingSyncPort,
   ) {}
 
   /**
@@ -103,7 +112,7 @@ export class ReviewsService {
    * Enforces one review per user per media item and rate limiting.
    */
   async create(payload: CreateReviewPayload): Promise<Review> {
-    const { userId, mediaItemId, content, rating, hasSpoiler } = payload;
+    const { userId, mediaItemId, content, rating, hasSpoiler, mediaType } = payload;
 
     // Check if user already has a review for this media
     const existing = await this.reviewRepo.findByUserAndMedia(userId, mediaItemId);
@@ -138,6 +147,8 @@ export class ReviewsService {
     const review = await this.reviewRepo.create(input);
 
     this.logger.log(`User ${userId} created review ${review.id} for media ${mediaItemId}`);
+
+    await this.trySyncRating(userId, mediaItemId, rating, mediaType);
 
     return review;
   }
@@ -176,6 +187,12 @@ export class ReviewsService {
     const updated = await this.reviewRepo.update(reviewId, input);
 
     this.logger.log(`User ${userId} updated review ${reviewId}`);
+
+    if (payload.rating !== undefined) {
+      // mediaType not available on update — syncRating defaults to 'completed'
+      // if no user_media_state exists yet (rare: user usually has state before review)
+      await this.trySyncRating(review.userId, review.mediaItemId, payload.rating);
+    }
 
     return updated;
   }
@@ -233,5 +250,51 @@ export class ReviewsService {
     await this.reviewRepo.softDelete(reviewId);
 
     this.logger.log(`Admin force deleted review ${reviewId}`);
+  }
+
+  /**
+   * Syncs a rating from user-media state to the review aggregate.
+   *
+   * Called by UserMediaRatingChangedListener via domain event.
+   * No-op when rating is null (cleared), no review exists, or the rating already matches.
+   */
+  async syncRatingToReview(
+    userId: string,
+    mediaItemId: string,
+    rating: number | null,
+  ): Promise<void> {
+    // Skip sync when rating is cleared — reviews always require a numeric rating
+    if (rating === null) {
+      return;
+    }
+
+    const review = await this.reviewRepo.findByUserAndMedia(userId, mediaItemId);
+
+    if (!review || review.rating === rating) {
+      return;
+    }
+
+    // IMPORTANT: Call repo.update directly, NOT this.update(), to avoid
+    // re-triggering trySyncRating → syncRating → setState → emit event loop.
+    await this.reviewRepo.update(review.id, { rating });
+    this.logger.log(
+      `Synced rating ${rating} to review ${review.id} for user=${userId}, media=${mediaItemId}`,
+    );
+  }
+
+  private async trySyncRating(
+    userId: string,
+    mediaItemId: string,
+    rating: number,
+    mediaType?: MediaType,
+  ): Promise<void> {
+    try {
+      await this.ratingSync.syncRating(userId, mediaItemId, rating, mediaType);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to sync rating to user_media_state: user=${userId}, media=${mediaItemId}`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 }

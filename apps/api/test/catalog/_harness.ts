@@ -24,6 +24,8 @@ import {
   IUserMediaStateRepository,
   USER_MEDIA_STATE_REPOSITORY,
   UpsertUserMediaStateData,
+  type FavoriteUpdatesOptions,
+  type FavoriteUpdateItem,
 } from '../../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
 import { UserMediaState } from '../../src/modules/user-media/domain/entities/user-media-state.entity';
 import { MediaType } from '../../src/common/enums/media-type.enum';
@@ -234,6 +236,13 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     if (index !== -1) {
       this.states.splice(index, 1);
     }
+  }
+
+  async listFavoriteUpdates(
+    _userId: string,
+    _options: FavoriteUpdatesOptions,
+  ): Promise<FavoriteUpdateItem[]> {
+    return [];
   }
 }
 

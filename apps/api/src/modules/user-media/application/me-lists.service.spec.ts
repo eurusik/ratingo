@@ -1,7 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MeListsService } from './me-lists.service';
 import { UserMediaService } from './user-media.service';
-import { USER_MEDIA_LIST_SORT } from '../domain/repositories/user-media-state.repository.interface';
+import {
+  FAVORITE_UPDATES_DAYS_AHEAD,
+  FAVORITE_UPDATES_DAYS_BACK,
+  FAVORITE_UPDATES_LIMIT,
+  FAVORITE_UPDATES_RATING_THRESHOLD,
+} from '../domain/constants/favorite-updates.constants';
+import {
+  USER_MEDIA_LIST_SORT,
+  USER_MEDIA_STATE_REPOSITORY,
+} from '../domain/repositories/user-media-state.repository.interface';
 import {
   USER_MEDIA_HISTORY_STATES,
   USER_MEDIA_WATCHLIST_STATES,
@@ -19,6 +28,7 @@ const mockCard: CardMeta = {
 describe('MeListsService', () => {
   let service: MeListsService;
   let userMediaService: jest.Mocked<UserMediaService>;
+  let mockRepo: { listFavoriteUpdates: jest.Mock };
 
   beforeEach(async () => {
     const mockUserMediaService = {
@@ -28,12 +38,20 @@ describe('MeListsService', () => {
       listActivityWithMedia: jest.fn(),
     };
 
+    mockRepo = {
+      listFavoriteUpdates: jest.fn().mockResolvedValue([]),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MeListsService,
         {
           provide: UserMediaService,
           useValue: mockUserMediaService,
+        },
+        {
+          provide: USER_MEDIA_STATE_REPOSITORY,
+          useValue: mockRepo,
         },
       ],
     }).compile();
@@ -506,6 +524,62 @@ describe('MeListsService', () => {
       const result = await service.getPaused(userId, limit, offset);
 
       expect(result).toEqual({ total: 0, data: [] });
+    });
+  });
+
+  describe('getFavoriteUpdates', () => {
+    it('should pass named constants to repo.listFavoriteUpdates', async () => {
+      const userId = 'user-1';
+      mockRepo.listFavoriteUpdates.mockResolvedValue([]);
+
+      await service.getFavoriteUpdates(userId);
+
+      expect(mockRepo.listFavoriteUpdates).toHaveBeenCalledWith(userId, {
+        ratingThreshold: FAVORITE_UPDATES_RATING_THRESHOLD,
+        daysBack: FAVORITE_UPDATES_DAYS_BACK,
+        daysAhead: FAVORITE_UPDATES_DAYS_AHEAD,
+        limit: FAVORITE_UPDATES_LIMIT,
+      });
+    });
+
+    it('should return result from repository as-is', async () => {
+      const userId = 'user-1';
+      const mockItems = [
+        {
+          mediaItemId: 'media-1',
+          rating: 80,
+          mediaSummary: {
+            id: 'media-1',
+            type: MediaType.SHOW,
+            title: 'Great Show',
+            slug: 'great-show',
+            poster: null,
+            releaseDate: new Date(),
+          },
+          latestEpisode: {
+            seasonNumber: 2,
+            episodeNumber: 5,
+            title: 'Episode 5',
+            airDate: new Date(),
+            isBatchRelease: false,
+          },
+          nextEpisode: null,
+        },
+      ];
+      mockRepo.listFavoriteUpdates.mockResolvedValue(mockItems);
+
+      const result = await service.getFavoriteUpdates(userId);
+
+      expect(result).toBe(mockItems);
+    });
+
+    it('should return empty array when repository returns empty', async () => {
+      const userId = 'user-1';
+      mockRepo.listFavoriteUpdates.mockResolvedValue([]);
+
+      const result = await service.getFavoriteUpdates(userId);
+
+      expect(result).toEqual([]);
     });
   });
 });

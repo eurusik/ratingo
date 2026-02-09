@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { SavedItemsService } from '../../user-actions/application/saved-items.service';
 import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities';
+import { UNSAVE_CONTEXT } from '../domain/constants/episode-progress.constants';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
 import {
   EPISODE_PROGRESS_REPOSITORY,
@@ -103,7 +104,7 @@ describe('EpisodeProgressService', () => {
           'user-1',
           'media-1',
           SAVED_ITEM_LIST.FOR_LATER,
-          'auto_started_watching',
+          UNSAVE_CONTEXT.AUTO_STARTED_WATCHING,
         );
       });
 
@@ -125,7 +126,7 @@ describe('EpisodeProgressService', () => {
           'user-1',
           'media-1',
           SAVED_ITEM_LIST.FOR_LATER,
-          'auto_started_watching',
+          UNSAVE_CONTEXT.AUTO_STARTED_WATCHING,
         );
       });
 

@@ -14,6 +14,8 @@ import { type UserMediaState } from '../../domain/entities/user-media-state.enti
 import { USER_MEDIA_STATE } from '../../domain/entities/user-media-state.entity';
 import {
   type ContinuePoint,
+  type FavoriteUpdateItem,
+  type FavoriteUpdatesOptions,
   type IUserMediaStateRepository,
   type ListWithMediaOptions,
   type ProgressSummary,
@@ -22,6 +24,7 @@ import {
   type UserMediaSummary,
   type UpsertUserMediaStateData,
 } from '../../domain/repositories/user-media-state.repository.interface';
+import { FavoriteUpdatesQuery } from '../queries/favorite-updates.query';
 
 /**
  * Drizzle implementation of user media state repository.
@@ -33,6 +36,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly favoriteUpdatesQuery: FavoriteUpdatesQuery,
   ) {}
 
   /**
@@ -43,25 +47,28 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
    */
   async upsert(data: UpsertUserMediaStateData): Promise<UserMediaState> {
     try {
+      const updateSet: Record<string, unknown> = {
+        state: data.state,
+        updatedAt: new Date(),
+      };
+
+      if (data.rating !== undefined) updateSet.rating = data.rating;
+      if (data.progress !== undefined) updateSet.progress = data.progress;
+      if (data.notes !== undefined) updateSet.notes = data.notes;
+
       const [row] = await this.db
         .insert(schema.userMediaState)
         .values({
           userId: data.userId,
           mediaItemId: data.mediaItemId,
           state: data.state,
-          rating: data.rating ?? null,
-          progress: data.progress ?? null,
-          notes: data.notes ?? null,
+          ...(data.rating !== undefined && { rating: data.rating }),
+          ...(data.progress !== undefined && { progress: data.progress }),
+          ...(data.notes !== undefined && { notes: data.notes }),
         })
         .onConflictDoUpdate({
           target: [schema.userMediaState.userId, schema.userMediaState.mediaItemId],
-          set: {
-            state: data.state,
-            rating: data.rating ?? null,
-            progress: data.progress ?? null,
-            notes: data.notes ?? null,
-            updatedAt: new Date(),
-          },
+          set: updateSet,
         })
         .returning();
       return this.mapRow(row);
@@ -157,7 +164,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
         .select({
           moviesRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.MOVIE} and ${schema.userMediaState.rating} is not null)`,
           showsRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.SHOW} and ${schema.userMediaState.rating} is not null)`,
-          watchlistCount: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.userMediaState.state} = 'planned')`,
+          watchlistCount: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.userMediaState.state} = ${USER_MEDIA_STATE.PLANNED})`,
         })
         .from(schema.userMediaState)
         .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
@@ -599,6 +606,17 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
         mediaItemId,
       });
     }
+  }
+
+  /**
+   * Lists highly-rated shows with recent or upcoming episodes.
+   * Delegates to dedicated FavoriteUpdatesQuery for complex multi-step logic.
+   */
+  async listFavoriteUpdates(
+    userId: string,
+    options: FavoriteUpdatesOptions,
+  ): Promise<FavoriteUpdateItem[]> {
+    return this.favoriteUpdatesQuery.execute(userId, options);
   }
 
   private mapRow(row: typeof schema.userMediaState.$inferSelect): UserMediaState {

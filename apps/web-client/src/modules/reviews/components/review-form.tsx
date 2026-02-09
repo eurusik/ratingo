@@ -1,21 +1,21 @@
 'use client';
 
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Send, AlertTriangle } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
-import { Button, Slider, Checkbox, Textarea } from '@/shared/ui';
+import { Button, Checkbox, Textarea } from '@/shared/ui';
 import {
   createReviewSchema,
   type ReviewFormData,
   type ReviewFormMode,
   REVIEW_FORM_MODE,
   MAX_CONTENT_LENGTH,
-  MIN_RATING,
-  MAX_RATING,
+  DEFAULT_RATING,
 } from '../schemas';
+import { RatingSlider } from './rating-slider';
 
 interface ReviewFormProps {
   onSubmit: (data: ReviewFormData) => void;
@@ -38,24 +38,34 @@ export function ReviewForm({
 
   const schema = useMemo(() => createReviewSchema(dict), [dict]);
 
+  const userTouchedRating = useRef(false);
+
   const {
     control,
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isValid },
   } = useForm<ReviewFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       content: initialValues?.content ?? '',
-      rating: initialValues?.rating ?? 70,
+      rating: initialValues?.rating ?? DEFAULT_RATING,
       hasSpoiler: initialValues?.hasSpoiler ?? false,
     },
     mode: 'onChange',
   });
 
+  // Sync rating when initialValues loads asynchronously (e.g. userMediaState),
+  // but only if the user hasn't manually touched the rating slider yet.
+  useEffect(() => {
+    if (initialValues?.rating != null && !userTouchedRating.current) {
+      setValue('rating', initialValues.rating);
+    }
+  }, [initialValues?.rating, setValue]);
+
   const content = watch('content');
-  const rating = watch('rating');
   const charactersRemaining = MAX_CONTENT_LENGTH - content.length;
   const hasContent = content.trim().length > 0;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -69,37 +79,6 @@ export function ReviewForm({
     }
   }, [content]);
 
-  const currentLabel = useMemo(() => {
-    const labels = dict.reviews.form.ratingLabels;
-    if (rating >= 85) return labels.excellent;
-    if (rating >= 70) return labels.good;
-    if (rating >= 50) return labels.okay;
-    if (rating >= 30) return labels.meh;
-    return labels.bad;
-  }, [rating, dict.reviews.form.ratingLabels]);
-
-  const [isLabelAnimating, setIsLabelAnimating] = useState(false);
-  const [displayedLabel, setDisplayedLabel] = useState(currentLabel);
-
-  useEffect(() => {
-    if (currentLabel !== displayedLabel) {
-      setIsLabelAnimating(true);
-      const timeout = setTimeout(() => {
-        setDisplayedLabel(currentLabel);
-        setIsLabelAnimating(false);
-      }, 150);
-      return () => clearTimeout(timeout);
-    }
-  }, [currentLabel, displayedLabel]);
-
-  const getRatingColor = (value: number) => {
-    if (value >= 85) return 'text-green-500';
-    if (value >= 70) return 'text-lime-500';
-    if (value >= 50) return 'text-yellow-500';
-    if (value >= 30) return 'text-orange-500';
-    return 'text-red-500';
-  };
-
   // Merge register with ref for textarea
   const { ref: registerRef, ...registerRest } = register('content');
 
@@ -112,37 +91,20 @@ export function ReviewForm({
 
       {/* Rating slider */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm text-cinema-text-muted">
-            {isGuest ? dict.reviews.form.ratingGuest : dict.reviews.form.rating}
-          </label>
-          <div className="flex items-center gap-1.5">
-            <span className={cn('text-lg font-bold', getRatingColor(rating))}>
-              {rating}
-            </span>
-            <span className="text-cinema-text-disabled">·</span>
-            <span
-              className={cn(
-                'text-sm text-cinema-text-muted transition-all duration-150',
-                isLabelAnimating ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0',
-              )}
-            >
-              {displayedLabel}
-            </span>
-          </div>
-        </div>
+        <label className="text-sm text-cinema-text-muted block mb-2">
+          {isGuest ? dict.reviews.form.ratingGuest : dict.reviews.form.rating}
+        </label>
         <Controller
           name="rating"
           control={control}
           render={({ field }) => (
-            <Slider
-              value={[field.value]}
-              onValueChange={(values) => field.onChange(values[0])}
-              min={MIN_RATING}
-              max={MAX_RATING}
-              step={1}
+            <RatingSlider
+              value={field.value}
+              onChange={(val) => {
+                userTouchedRating.current = true;
+                field.onChange(val);
+              }}
               disabled={isSubmitting}
-              className="w-full"
             />
           )}
         />
