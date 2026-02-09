@@ -561,6 +561,7 @@ describe('MeListsService', () => {
             episodeNumber: 5,
             title: 'Episode 5',
             airDate: new Date(),
+            isBatchRelease: false,
           },
           nextEpisode: null,
         },

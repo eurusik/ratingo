@@ -405,6 +405,7 @@ describe('MeListsController', () => {
             episodeNumber: 5,
             title: 'Episode 5',
             airDate: new Date('2023-06-01'),
+            isBatchRelease: false,
           },
           nextEpisode: null,
         },

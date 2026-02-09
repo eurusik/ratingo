@@ -11,6 +11,7 @@ import { MeListsService } from './application/me-lists.service';
 import { UserMediaService } from './application/user-media.service';
 import { EPISODE_PROGRESS_REPOSITORY } from './domain/repositories/episode-progress.repository.interface';
 import { USER_MEDIA_STATE_REPOSITORY } from './domain/repositories/user-media-state.repository.interface';
+import { FavoriteUpdatesQuery } from './infrastructure/queries/favorite-updates.query';
 import { DrizzleEpisodeProgressRepository } from './infrastructure/repositories/drizzle-episode-progress.repository';
 import { DrizzleUserMediaStateRepository } from './infrastructure/repositories/drizzle-user-media-state.repository';
 import { EpisodeProgressController } from './presentation/controllers/episode-progress.controller';
@@ -26,6 +27,7 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     UserMediaService,
     MeListsService,
     EpisodeProgressService,
+    FavoriteUpdatesQuery,
     {
       provide: USER_MEDIA_STATE_REPOSITORY,
       useClass: DrizzleUserMediaStateRepository,

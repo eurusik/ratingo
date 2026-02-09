@@ -142,7 +142,8 @@
       "released": "Released",
       "ofEpisodes": "of"
     },
-    "noPoster": "No poster"
+    "noPoster": "No poster",
+    "yourRating": "Your rating: {rating}"
   },
   "rating": {
     "imdb": "IMDb",
@@ -703,8 +704,11 @@
       "releaseDate": "By release date"
     },
     "favoriteUpdates": {
-      "title": "Updates for your favorites",
-      "empty": "Rate shows to see updates here"
+      "title": "What's new in your shows",
+      "empty": "Rate shows to see updates here",
+      "newEpisode": "New episode",
+      "newSeason": "New season",
+      "nextEpisode": "Next episode"
     },
     "toast": {
       "addedToWatching": "Added to Watching",

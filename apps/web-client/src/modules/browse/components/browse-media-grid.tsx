@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { SavedStatusProvider } from '@/core/saved-status';
-import { UserRatingProvider } from '@/core/user-rating';
 import { MediaCardServer, type MediaCardServerProps } from '@/modules/home';
 import type { Locale } from '@/shared/i18n';
 
@@ -25,15 +24,13 @@ export function BrowseMediaGrid({ items, locale = 'uk', className = '' }: Browse
 
   return (
     <SavedStatusProvider mediaItemIds={mediaItemIds}>
-      <UserRatingProvider mediaItemIds={mediaItemIds}>
-        <div
-          className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 ${className}`}
-        >
-          {items.map((item) => (
-            <MediaCardServer key={item.id} {...item} locale={locale} />
-          ))}
-        </div>
-      </UserRatingProvider>
+      <div
+        className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 ${className}`}
+      >
+        {items.map((item) => (
+          <MediaCardServer key={item.id} {...item} locale={locale} />
+        ))}
+      </div>
     </SavedStatusProvider>
   );
 }

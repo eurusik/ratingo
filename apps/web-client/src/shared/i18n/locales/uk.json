@@ -142,7 +142,8 @@
       "released": "Вийшло",
       "ofEpisodes": "з"
     },
-    "noPoster": "Без постера"
+    "noPoster": "Без постера",
+    "yourRating": "Ваша оцінка: {rating}"
   },
   "rating": {
     "imdb": "IMDb",
@@ -703,8 +704,11 @@
       "releaseDate": "За датою виходу"
     },
     "favoriteUpdates": {
-      "title": "Оновлення для твоїх улюблених",
-      "empty": "Оціни серіали, щоб бачити оновлення тут"
+      "title": "Що нового у твоїх серіалах",
+      "empty": "Оціни серіали, щоб бачити оновлення тут",
+      "newEpisode": "Новий епізод",
+      "newSeason": "Новий сезон",
+      "nextEpisode": "Наступний епізод"
     },
     "toast": {
       "addedToWatching": "Додано до «Дивлюсь»",

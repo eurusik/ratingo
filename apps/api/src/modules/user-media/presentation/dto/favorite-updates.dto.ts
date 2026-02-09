@@ -21,6 +21,13 @@ export class EpisodeInfoDto {
 
   @ApiPropertyOptional({ description: 'Air date', nullable: true })
   airDate!: Date | null;
+
+  @ApiProperty({
+    description:
+      'True when multiple episodes aired on the same date (e.g. Netflix full-season drop)',
+    example: false,
+  })
+  isBatchRelease!: boolean;
 }
 
 /**

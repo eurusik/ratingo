@@ -9922,11 +9922,17 @@
             "type": "string",
             "description": "Air date",
             "nullable": true
+          },
+          "isBatchRelease": {
+            "type": "boolean",
+            "description": "True when multiple episodes aired on the same date (e.g. Netflix full-season drop)",
+            "example": false
           }
         },
         "required": [
           "seasonNumber",
-          "episodeNumber"
+          "episodeNumber",
+          "isBatchRelease"
         ]
       },
       "FavoriteUpdateItemDto": {

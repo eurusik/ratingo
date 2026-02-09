@@ -70,8 +70,6 @@ function ActivityPageContent() {
       <div className="container mx-auto px-4">
         <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.activity.title}</h1>
 
-        <FavoriteUpdates />
-
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value={TAB_VALUES.WATCHING} className="data-[state=active]:bg-cinema-elevated">
@@ -87,6 +85,7 @@ function ActivityPageContent() {
 
           <TabsContent value={TAB_VALUES.WATCHING} className="mt-0">
             <Watchlist />
+            <FavoriteUpdates />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.PAUSED} className="mt-0">

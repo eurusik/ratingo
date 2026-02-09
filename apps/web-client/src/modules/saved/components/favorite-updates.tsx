@@ -7,18 +7,9 @@ import { useTranslation, useLocale } from '@/shared/i18n';
 import { Skeleton } from '@/shared/ui';
 import { useAuth } from '@/core/auth';
 import { formatRelativeDate } from '@/shared/utils/format';
-import type { FavoriteUpdateItem, EpisodeInfo } from '@/core/api/me-lists.client';
+import type { FavoriteUpdateItem } from '@/core/api/me-lists.client';
 import { UserRatingBadge } from '@/shared/components/user-rating-badge';
 import { useFavoriteUpdates } from '../hooks/use-me-lists';
-
-/**
- * Formats episode label using S1E5 notation.
- * This is intentionally not localized — S/E notation is universally recognized
- * and widely used on Ukrainian streaming platforms (e.g. Megogo, Sweet.tv).
- */
-function formatEpisodeLabel(ep: EpisodeInfo): string {
-  return `S${ep.seasonNumber}E${ep.episodeNumber}`;
-}
 
 interface FavoriteUpdateCardProps {
   item: FavoriteUpdateItem;
@@ -27,10 +18,22 @@ interface FavoriteUpdateCardProps {
 
 function FavoriteUpdateCard({ item, index }: FavoriteUpdateCardProps) {
   const locale = useLocale();
+  const { dict } = useTranslation();
   const { mediaSummary, rating, latestEpisode, nextEpisode } = item;
   const poster = mediaSummary.poster as Record<string, string> | null;
   const posterUrl = poster?.medium ?? poster?.small ?? null;
+
+  const isUpcoming = nextEpisode != null;
   const episodeToShow = nextEpisode ?? latestEpisode;
+
+  const isBatch = episodeToShow?.isBatchRelease ?? false;
+
+  const eventLabel = isUpcoming
+    ? (dict.activity?.favoriteUpdates?.nextEpisode ?? 'Наступний епізод')
+    : isBatch
+      ? (dict.activity?.favoriteUpdates?.newSeason ?? 'Новий сезон')
+      : (dict.activity?.favoriteUpdates?.newEpisode ?? 'Новий епізод');
+
   return (
     <Link
       href={mediaSummary.type === 'movie' ? `/movies/${mediaSummary.slug}` : `/shows/${mediaSummary.slug}`}
@@ -46,7 +49,11 @@ function FavoriteUpdateCard({ item, index }: FavoriteUpdateCardProps) {
             sizes="200px"
             loading={index < 3 ? 'eager' : 'lazy'}
           />
-          <UserRatingBadge rating={rating} className="absolute bottom-2 left-2" />
+          <UserRatingBadge
+            rating={rating}
+            label={(dict.card?.yourRating ?? 'Ваша оцінка: {rating}').replace('{rating}', String(rating))}
+            className="absolute bottom-2 left-2"
+          />
         </div>
       ) : (
         <div className="aspect-[2/3] w-full bg-cinema-card flex items-center justify-center text-gray-500">
@@ -57,10 +64,10 @@ function FavoriteUpdateCard({ item, index }: FavoriteUpdateCardProps) {
         <h4 className="text-sm font-medium text-white truncate">{mediaSummary.title}</h4>
         {episodeToShow && (
           <p className="text-xs text-gray-400">
-            {formatEpisodeLabel(episodeToShow)}{' '}
+            {eventLabel}
             {episodeToShow.airDate && (
               <span className="text-gray-500">
-                {formatRelativeDate(episodeToShow.airDate, locale).text}
+                {' • '}{formatRelativeDate(episodeToShow.airDate, locale).text}
               </span>
             )}
           </p>
@@ -101,14 +108,14 @@ export function FavoriteUpdates() {
   }
 
   return (
-    <div className="space-y-3 mb-8">
+    <div className="space-y-3 mt-10 pt-8 border-t border-white/5">
       <h3 className="text-lg font-semibold text-white">
-        {dict.activity?.favoriteUpdates?.title ?? 'Оновлення для твоїх улюблених'}
+        {dict.activity?.favoriteUpdates?.title ?? 'Що нового у твоїх серіалах'}
       </h3>
       <div
         className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-white/10"
         role="region"
-        aria-label={dict.activity?.favoriteUpdates?.title ?? 'Оновлення для твоїх улюблених'}
+        aria-label={dict.activity?.favoriteUpdates?.title ?? 'Що нового у твоїх серіалах'}
         tabIndex={0}
       >
         {items.map((item, index) => (

@@ -3107,6 +3107,11 @@ export interface components {
              * @description Air date
              */
             airDate?: string | null;
+            /**
+             * @description True when multiple episodes aired on the same date (e.g. Netflix full-season drop)
+             * @example false
+             */
+            isBatchRelease: boolean;
         };
         FavoriteUpdateItemDto: {
             /** @description Media item ID */

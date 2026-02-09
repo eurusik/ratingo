@@ -95,6 +95,8 @@ export interface EpisodeInfo {
   episodeNumber: number;
   title: string | null;
   airDate: Date | null;
+  /** True when multiple episodes share the same air date (e.g. Netflix full-season drop). */
+  isBatchRelease: boolean;
 }
 
 /**

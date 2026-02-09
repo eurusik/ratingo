@@ -1,9 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, desc, eq, gt, gte, inArray, isNotNull, lte, or, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, or, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-import { DEFAULT_PAGE_SIZE, MS_PER_DAY } from '@/common/constants';
+import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -24,9 +24,7 @@ import {
   type UserMediaSummary,
   type UpsertUserMediaStateData,
 } from '../../domain/repositories/user-media-state.repository.interface';
-
-/** Season number 0 is used for "Specials" — we exclude them from episode queries. */
-const SPECIALS_SEASON_NUMBER = 0;
+import { FavoriteUpdatesQuery } from '../queries/favorite-updates.query';
 
 /**
  * Drizzle implementation of user media state repository.
@@ -38,6 +36,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
+    private readonly favoriteUpdatesQuery: FavoriteUpdatesQuery,
   ) {}
 
   /**
@@ -611,151 +610,13 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
 
   /**
    * Lists highly-rated shows with recent or upcoming episodes.
+   * Delegates to dedicated FavoriteUpdatesQuery for complex multi-step logic.
    */
   async listFavoriteUpdates(
     userId: string,
     options: FavoriteUpdatesOptions,
   ): Promise<FavoriteUpdateItem[]> {
-    try {
-      const now = new Date();
-      const pastDate = new Date(now.getTime() - options.daysBack * MS_PER_DAY);
-      const futureDate = new Date(now.getTime() + options.daysAhead * MS_PER_DAY);
-
-      // Step 1: Get base shows with ratings
-      const baseRows = await this.db
-        .select({
-          mediaItemId: schema.userMediaState.mediaItemId,
-          rating: schema.userMediaState.rating,
-          showId: schema.shows.id,
-          media: {
-            id: schema.mediaItems.id,
-            type: schema.mediaItems.type,
-            title: schema.mediaItems.title,
-            slug: schema.mediaItems.slug,
-            posterPath: schema.mediaItems.posterPath,
-            releaseDate: schema.mediaItems.releaseDate,
-          },
-        })
-        .from(schema.userMediaState)
-        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-        .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-        .where(
-          and(
-            eq(schema.userMediaState.userId, userId),
-            gte(schema.userMediaState.rating, options.ratingThreshold),
-            eq(schema.mediaItems.type, MediaType.SHOW),
-          ),
-        )
-        .orderBy(desc(schema.userMediaState.rating))
-        .limit(options.limit * 2); // fetch extra, filter below
-
-      if (baseRows.length === 0) return [];
-
-      // Step 2: For each show, fetch latest + next episodes
-      const showIds = baseRows.map((r) => r.showId);
-
-      const [latestEpisodes, nextEpisodes] = await Promise.all([
-        this.db
-          .selectDistinctOn([schema.episodes.showId], {
-            showId: schema.episodes.showId,
-            seasonNumber: schema.seasons.number,
-            episodeNumber: schema.episodes.number,
-            title: schema.episodes.title,
-            airDate: schema.episodes.airDate,
-          })
-          .from(schema.episodes)
-          .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
-          .where(
-            and(
-              inArray(schema.episodes.showId, showIds),
-              isNotNull(schema.episodes.airDate),
-              lte(schema.episodes.airDate, now),
-              gt(schema.seasons.number, SPECIALS_SEASON_NUMBER),
-            ),
-          )
-          .orderBy(
-            schema.episodes.showId,
-            desc(schema.episodes.airDate),
-            desc(schema.seasons.number),
-            desc(schema.episodes.number),
-          ),
-
-        this.db
-          .selectDistinctOn([schema.episodes.showId], {
-            showId: schema.episodes.showId,
-            seasonNumber: schema.seasons.number,
-            episodeNumber: schema.episodes.number,
-            title: schema.episodes.title,
-            airDate: schema.episodes.airDate,
-          })
-          .from(schema.episodes)
-          .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
-          .where(
-            and(
-              inArray(schema.episodes.showId, showIds),
-              isNotNull(schema.episodes.airDate),
-              gt(schema.episodes.airDate, now),
-              gt(schema.seasons.number, SPECIALS_SEASON_NUMBER),
-            ),
-          )
-          .orderBy(
-            schema.episodes.showId,
-            schema.episodes.airDate,
-            schema.seasons.number,
-            schema.episodes.number,
-          ),
-      ]);
-
-      const latestMap = new Map(latestEpisodes.map((e) => [e.showId, e]));
-      const nextMap = new Map(nextEpisodes.map((e) => [e.showId, e]));
-
-      // Step 3: Filter to shows that have episodes in the date range, merge results
-      const results: FavoriteUpdateItem[] = [];
-      for (const row of baseRows) {
-        const latest = latestMap.get(row.showId);
-        const next = nextMap.get(row.showId);
-
-        // Must have at least one episode in the date range
-        const hasRecentOrUpcoming =
-          (latest?.airDate && latest.airDate >= pastDate) ||
-          (next?.airDate && next.airDate <= futureDate);
-
-        if (!hasRecentOrUpcoming) continue;
-        if (row.rating == null) continue;
-
-        results.push({
-          mediaItemId: row.mediaItemId,
-          rating: row.rating,
-          mediaSummary: this.mapMediaSummary(row.media),
-          latestEpisode: latest
-            ? {
-                seasonNumber: latest.seasonNumber,
-                episodeNumber: latest.episodeNumber,
-                title: latest.title,
-                airDate: latest.airDate,
-              }
-            : null,
-          nextEpisode: next
-            ? {
-                seasonNumber: next.seasonNumber,
-                episodeNumber: next.episodeNumber,
-                title: next.title,
-                airDate: next.airDate,
-              }
-            : null,
-        });
-
-        if (results.length >= options.limit) break;
-      }
-
-      return results;
-    } catch (error) {
-      this.logger.error(
-        `listFavoriteUpdates failed for user ${userId}: ${error.message}`,
-        error.stack,
-      );
-      throw new DatabaseException('Failed to list favorite updates', error, { userId });
-    }
+    return this.favoriteUpdatesQuery.execute(userId, options);
   }
 
   private mapRow(row: typeof schema.userMediaState.$inferSelect): UserMediaState {
