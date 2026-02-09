@@ -10,7 +10,7 @@ import { Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { Watchlist, HistoryList, PausedList } from '@/modules/saved';
+import { Watchlist, HistoryList, PausedList, FavoriteUpdates } from '@/modules/saved';
 import { USER_MEDIA_STATE } from '@/core/api';
 
 /**
@@ -69,6 +69,8 @@ function ActivityPageContent() {
     <div className="min-h-screen pt-24 pb-12">
       <div className="container mx-auto px-4">
         <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.activity.title}</h1>
+
+        <FavoriteUpdates />
 
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 flex-wrap h-auto gap-1 p-1">

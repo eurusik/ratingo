@@ -13,6 +13,12 @@ jest.mock('@/core/api/user-actions.client', () => ({
   },
 }));
 
+jest.mock('@/core/api/me-lists.client', () => ({
+  meListsApi: {
+    getBatchRatings: jest.fn().mockResolvedValue({}),
+  },
+}));
+
 jest.mock('@/modules/home', () => ({
   MediaCardServer: ({ id, title }: { id: string; title: string }) => (
     <div data-testid={`card-${id}`}>{title}</div>
@@ -96,5 +102,19 @@ describe('BrowseMediaGrid', () => {
     });
 
     expect(mockGetBatchSaveStatus).toHaveBeenCalledWith(['movie-1', 'movie-2', 'show-1']);
+  });
+
+  it('fetches batch ratings for all items', async () => {
+    const { meListsApi } = await import('@/core/api/me-lists.client');
+    const mockGetBatchRatings = meListsApi.getBatchRatings as jest.Mock;
+    mockGetBatchRatings.mockClear();
+
+    renderWithQueryClient(<BrowseMediaGrid items={mockItems} />, queryClient);
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+
+    expect(mockGetBatchRatings).toHaveBeenCalledWith(['movie-1', 'movie-2', 'show-1']);
   });
 });

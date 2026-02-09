@@ -4,31 +4,21 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useTranslation } from '@/shared/i18n';
-import { Skeleton } from '@/shared/ui';
-import { useCompleted } from '../hooks/use-me-lists';
+import { useCompleted, type MeListSort } from '../hooks/use-me-lists';
 import { MeListItemCard } from './me-list-item-card';
 import { EmptyState } from './empty-state';
+import { ListSortSelect } from './list-sort-select';
+import { MeListSkeleton } from './me-list-skeleton';
 
 export function HistoryList() {
   const { dict } = useTranslation();
-  const { data, isLoading } = useCompleted();
+  const [sort, setSort] = useState<MeListSort>('recent');
+  const { data, isLoading } = useCompleted(sort);
 
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex gap-3 p-3 rounded-lg bg-cinema-card/50">
-            <Skeleton className="w-16 h-24 rounded-md shrink-0" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-5 w-20 rounded-full" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+    return <MeListSkeleton />;
   }
 
   const items = data?.data ?? [];
@@ -44,10 +34,15 @@ export function HistoryList() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {items.map((item) => (
-        <MeListItemCard key={item.id} item={item} />
-      ))}
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <ListSortSelect value={sort} onChange={setSort} />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.map((item) => (
+          <MeListItemCard key={item.id} item={item} />
+        ))}
+      </div>
     </div>
   );
 }

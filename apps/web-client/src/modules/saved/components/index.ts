@@ -11,3 +11,6 @@ export { MeListItemCard } from './me-list-item-card';
 export { Watchlist } from './watchlist';
 export { HistoryList } from './history-list';
 export { PausedList } from './paused-list';
+export { FavoriteUpdates } from './favorite-updates';
+export { MeListSkeleton } from './me-list-skeleton';
+export { RatingBadge } from './rating-badge';

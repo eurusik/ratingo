@@ -27,6 +27,7 @@ import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { UserMediaService } from '../../application/user-media.service';
+import { BatchRatingsQueryDto, BatchRatingsResponseDto } from '../dto/batch-ratings.dto';
 import { SetUserMediaStateDto } from '../dto/set-user-media-state.dto';
 import { UserMediaStateDto } from '../dto/user-media-state.dto';
 
@@ -39,6 +40,42 @@ import { UserMediaStateDto } from '../dto/user-media-state.dto';
 @Controller('user-media')
 export class UserMediaController {
   constructor(private readonly userMediaService: UserMediaService) {}
+
+  /**
+   * Batch-fetches user ratings for multiple media items.
+   *
+   * Returns only items that have a non-null rating.
+   *
+   * @param {{ id: string }} user - Current user context
+   * @param {BatchRatingsQueryDto} query - Comma-separated media item IDs
+   * @returns {Promise<BatchRatingsResponseDto>} Map of mediaItemId → rating
+   */
+  @ApiQuery({
+    name: 'ids',
+    required: true,
+    type: String,
+    description: 'Comma-separated media item UUIDs',
+  })
+  @ApiOkResponse({ description: 'Batch ratings', type: BatchRatingsResponseDto })
+  @ApiBadRequestResponse({ description: 'Invalid UUIDs or empty list' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiOperation({ summary: 'Batch fetch user ratings (auth: Bearer)' })
+  @Get('batch-ratings')
+  async batchRatings(
+    @CurrentUser() user: { id: string },
+    @Query() query: BatchRatingsQueryDto,
+  ): Promise<BatchRatingsResponseDto> {
+    const states = await this.userMediaService.findMany(user.id, query.ids);
+
+    const ratings: Record<string, number> = {};
+    for (const state of states) {
+      if (state.rating != null) {
+        ratings[state.mediaItemId] = state.rating;
+      }
+    }
+
+    return { ratings };
+  }
 
   /**
    * Lists "Continue" items for the current user.

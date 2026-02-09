@@ -24,7 +24,7 @@ function invalidateEpisodeProgressCaches(queryClient: QueryClient, showId: strin
     queryKey: queryKeys.userMedia.all,
   });
   queryClient.invalidateQueries({
-    queryKey: queryKeys.meLists.history,
+    queryKey: queryKeys.meLists.historyAll,
   });
   queryClient.invalidateQueries({
     queryKey: queryKeys.userActions.savedItems.all,

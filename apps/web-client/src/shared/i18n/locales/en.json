@@ -696,6 +696,16 @@
         "description": "You haven't watched anything yet"
       }
     },
+    "sort": {
+      "label": "Sort order",
+      "recent": "Recent",
+      "rating": "By rating",
+      "releaseDate": "By release date"
+    },
+    "favoriteUpdates": {
+      "title": "Updates for your favorites",
+      "empty": "Rate shows to see updates here"
+    },
     "toast": {
       "addedToWatching": "Added to Watching",
       "completed": "Show marked as completed",

@@ -12,6 +12,7 @@ describe('UserMediaController', () => {
     setState: jest.fn(),
     listWithMedia: jest.fn(),
     listContinueWithMedia: jest.fn(),
+    findMany: jest.fn(),
     pauseMedia: jest.fn(),
     resumeMedia: jest.fn(),
   };
@@ -104,6 +105,31 @@ describe('UserMediaController', () => {
 
     expect(userMediaService.listContinueWithMedia).toHaveBeenCalledWith('u1', 10, 5);
     expect(result).toEqual([{ id: 's1' }]);
+  });
+
+  describe('batchRatings', () => {
+    it('should pass pre-validated IDs to service and return ratings map', async () => {
+      const ids = ['550e8400-e29b-41d4-a716-446655440000', '7c9e6679-7425-40de-944b-e07fc1f90ae7'];
+      userMediaService.findMany.mockResolvedValue([
+        { mediaItemId: ids[0], rating: 85 },
+        { mediaItemId: ids[1], rating: null },
+      ] as any);
+
+      const result = await controller.batchRatings({ id: 'u1' }, { ids } as any);
+
+      expect(userMediaService.findMany).toHaveBeenCalledWith('u1', ids);
+      expect(result).toEqual({ ratings: { [ids[0]]: 85 } });
+    });
+
+    it('should return empty ratings when service returns no states', async () => {
+      userMediaService.findMany.mockResolvedValue([]);
+
+      const result = await controller.batchRatings({ id: 'u1' }, {
+        ids: ['550e8400-e29b-41d4-a716-446655440000'],
+      } as any);
+
+      expect(result).toEqual({ ratings: {} });
+    });
   });
 
   describe('pauseMedia', () => {

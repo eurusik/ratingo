@@ -1681,6 +1681,65 @@
         ]
       }
     },
+    "/api/user-media/batch-ratings": {
+      "get": {
+        "operationId": "UserMediaController_batchRatings",
+        "summary": "Batch fetch user ratings (auth: Bearer)",
+        "parameters": [
+          {
+            "name": "ids",
+            "required": true,
+            "in": "query",
+            "description": "Comma-separated media item UUIDs",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000,7c9e6679-7425-40de-944b-e07fc1f90ae7",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch ratings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/BatchRatingsResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid UUIDs or empty list"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "User Media"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/user-media/continue": {
       "get": {
         "operationId": "UserMediaController_listContinue",
@@ -2407,6 +2466,48 @@
                     },
                     "data": {
                       "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/favorites/updates": {
+      "get": {
+        "operationId": "MeListsController_favoriteUpdates",
+        "summary": "Updates for my favorite shows (auth: Bearer)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/FavoriteUpdatesResponseDto"
                     }
                   }
                 }
@@ -9537,6 +9638,25 @@
           "meta"
         ]
       },
+      "BatchRatingsResponseDto": {
+        "type": "object",
+        "properties": {
+          "ratings": {
+            "type": "object",
+            "description": "Map of mediaItemId to user rating (0-100). Only includes items with ratings.",
+            "example": {
+              "uuid-1": 85,
+              "uuid-2": 60
+            },
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "ratings"
+        ]
+      },
       "SetUserMediaStateDto": {
         "type": "object",
         "properties": {
@@ -9549,7 +9669,8 @@
               "dropped",
               "paused"
             ],
-            "example": "watching"
+            "example": "watching",
+            "description": "Watch state. When omitted, preserves existing state or defaults to \"completed\" for movies / \"watching\" for shows."
           },
           "mediaType": {
             "type": "string",
@@ -9557,7 +9678,7 @@
               "movie",
               "show"
             ],
-            "description": "Media type hint for auto-state when state is omitted"
+            "description": "Media type hint for auto-state resolution. Only accepted when state is omitted; ignored otherwise."
           },
           "rating": {
             "type": "number",
@@ -9777,15 +9898,100 @@
           "meta"
         ]
       },
+      "EpisodeInfoDto": {
+        "type": "object",
+        "properties": {
+          "seasonNumber": {
+            "type": "number",
+            "description": "Season number",
+            "example": 2
+          },
+          "episodeNumber": {
+            "type": "number",
+            "description": "Episode number",
+            "example": 5
+          },
+          "title": {
+            "type": "string",
+            "description": "Episode title",
+            "example": "The Winds of Winter",
+            "nullable": true
+          },
+          "airDate": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Air date",
+            "nullable": true
+          }
+        },
+        "required": [
+          "seasonNumber",
+          "episodeNumber"
+        ]
+      },
+      "FavoriteUpdateItemDto": {
+        "type": "object",
+        "properties": {
+          "mediaItemId": {
+            "type": "string",
+            "description": "Media item ID"
+          },
+          "rating": {
+            "type": "number",
+            "description": "User rating (0-100)",
+            "example": 85
+          },
+          "mediaSummary": {
+            "$ref": "#/components/schemas/MeUserMediaSummaryDto"
+          },
+          "latestEpisode": {
+            "nullable": true,
+            "description": "Most recent aired episode",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EpisodeInfoDto"
+              }
+            ]
+          },
+          "nextEpisode": {
+            "nullable": true,
+            "description": "Next upcoming episode",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EpisodeInfoDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "mediaItemId",
+          "rating",
+          "mediaSummary"
+        ]
+      },
+      "FavoriteUpdatesResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FavoriteUpdateItemDto"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
       "BatchEpisodeIdsDto": {
         "type": "object",
         "properties": {
           "episodeIds": {
             "description": "Array of episode UUIDs to mark as watched/unwatched",
             "example": [
-              "uuid-1",
-              "uuid-2",
-              "uuid-3"
+              "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+              "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+              "c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f"
             ],
             "minItems": 1,
             "maxItems": 200,
@@ -13831,6 +14037,15 @@
             "example": false,
             "default": false,
             "description": "Whether the review contains spoilers"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "movie",
+              "show"
+            ],
+            "example": "movie",
+            "description": "Media type hint. When provided, allows the correct default user-media state to be chosen for first-time entries (watching for shows, completed for movies)."
           }
         },
         "required": [

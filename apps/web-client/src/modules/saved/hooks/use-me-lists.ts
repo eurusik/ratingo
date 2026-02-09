@@ -1,53 +1,62 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { meListsApi, USER_MEDIA_STATE, type MeUserMediaListItemDto } from '@/core/api/me-lists.client';
+import { meListsApi, USER_MEDIA_STATE, type MeListSort, type MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import type { MediaType } from '@/shared/types';
 import { queryKeys } from '@/core/query/keys';
 
+export type { MeListSort } from '@/core/api/me-lists.client';
+
 const STALE_5_MIN = 1000 * 60 * 5;
 
-function useHistoryBase(enabled = true) {
+function useHistoryBase(sort?: MeListSort, enabled = true) {
   return useQuery({
-    queryKey: queryKeys.meLists.history,
-    queryFn: () => meListsApi.getHistory(),
+    queryKey: queryKeys.meLists.history(sort),
+    queryFn: () => meListsApi.getHistory(sort ? { sort } : undefined),
     enabled,
     staleTime: STALE_5_MIN
   });
 }
 
-export function useWatching(enabled = true) {
-  const query = useHistoryBase(enabled);
+export function useWatching(sort?: MeListSort, enabled = true) {
+  const query = useHistoryBase(sort, enabled);
 
-  return {
-    ...query,
-    data: query.data
-      ? {
-          ...query.data,
-          data: query.data.data.filter((item) => item.state === USER_MEDIA_STATE.WATCHING),
-        }
-      : undefined,
-  };
+  const data = useMemo(
+    () =>
+      query.data
+        ? {
+            ...query.data,
+            data: query.data.data.filter((item) => item.state === USER_MEDIA_STATE.WATCHING),
+          }
+        : undefined,
+    [query.data],
+  );
+
+  return { ...query, data };
 }
 
-export function useCompleted(enabled = true) {
-  const query = useHistoryBase(enabled);
+export function useCompleted(sort?: MeListSort, enabled = true) {
+  const query = useHistoryBase(sort, enabled);
 
-  return {
-    ...query,
-    data: query.data
-      ? {
-          ...query.data,
-          data: query.data.data.filter((item) => item.state === USER_MEDIA_STATE.COMPLETED),
-        }
-      : undefined,
-  };
+  const data = useMemo(
+    () =>
+      query.data
+        ? {
+            ...query.data,
+            data: query.data.data.filter((item) => item.state === USER_MEDIA_STATE.COMPLETED),
+          }
+        : undefined,
+    [query.data],
+  );
+
+  return { ...query, data };
 }
 
-export function usePaused(enabled = true) {
+export function usePaused(sort?: MeListSort, enabled = true) {
   return useQuery({
-    queryKey: queryKeys.meLists.paused,
-    queryFn: () => meListsApi.getPaused(),
+    queryKey: queryKeys.meLists.paused(sort),
+    queryFn: () => meListsApi.getPaused(sort ? { sort } : undefined),
     enabled,
     staleTime: STALE_5_MIN
   });
@@ -59,8 +68,8 @@ export function usePauseMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.pauseMedia(mediaItemId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.history });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.paused });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
     },
   });
 }
@@ -71,9 +80,18 @@ export function useResumeMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.resumeMedia(mediaItemId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.history });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.paused });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
     },
+  });
+}
+
+export function useFavoriteUpdates(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.meLists.favoriteUpdates,
+    queryFn: () => meListsApi.getFavoriteUpdates(),
+    enabled,
+    staleTime: STALE_5_MIN
   });
 }
 
@@ -131,7 +149,10 @@ export function useSetRating(mediaItemId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.reviews.mediaBase(mediaItemId),
       });
+      // Refresh batch ratings so badges update immediately
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userMedia.batchRatingsAll,
+      });
     },
   });
 }
-

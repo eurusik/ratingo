@@ -29,10 +29,18 @@ export const USER_MEDIA_STATE = {
   PAUSED: 'paused',
 } as const satisfies Record<string, UserMediaState>;
 
+export type EpisodeInfo = components['schemas']['EpisodeInfoDto'];
+export type FavoriteUpdateItem = components['schemas']['FavoriteUpdateItemDto'];
+export type FavoriteUpdatesResponse = components['schemas']['FavoriteUpdatesResponseDto'];
+export type BatchRatingsResponse = components['schemas']['BatchRatingsResponseDto'];
+
+/** Sort values match the API contract query parameter. */
+export type MeListSort = 'recent' | 'rating' | 'releaseDate';
+
 export interface MeListsParams {
   limit?: number;
   offset?: number;
-  sort?: 'recent' | 'rating' | 'releaseDate';
+  sort?: MeListSort;
 }
 
 // ============================================================================
@@ -108,6 +116,29 @@ export const meListsApi = {
     } catch {
       return null;
     }
+  },
+
+  /**
+   * Batch fetch user ratings for multiple media items.
+   *
+   * @param mediaItemIds - Array of media item IDs
+   * @returns Map of mediaItemId → rating (0-100), only includes rated items
+   */
+  async getBatchRatings(mediaItemIds: string[]): Promise<Record<string, number>> {
+    const ids = mediaItemIds.join(',');
+    const result = await apiGet<BatchRatingsResponse>('user-media/batch-ratings', {
+      searchParams: { ids } as Record<string, string>,
+    });
+    return result.ratings;
+  },
+
+  /**
+   * Get updates for user's highly-rated shows.
+   *
+   * @returns Shows rated >= 60 with recent or upcoming episodes
+   */
+  async getFavoriteUpdates(): Promise<FavoriteUpdatesResponse> {
+    return apiGet<FavoriteUpdatesResponse>('me/favorites/updates');
   },
 
   async setRating(

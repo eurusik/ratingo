@@ -9,6 +9,7 @@ import { CurrentUser } from '../../../auth/infrastructure/decorators/current-use
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { MeListsService } from '../../application/me-lists.service';
 import { type UserMediaState } from '../../domain/entities/user-media-state.entity';
+import { FavoriteUpdatesResponseDto } from '../dto/favorite-updates.dto';
 import {
   MeUserMediaListQueryDto,
   type MeUserMediaListItemDto,
@@ -232,5 +233,21 @@ export class MeListsController {
         hasMore: offset + items.length < total,
       },
     };
+  }
+
+  /**
+   * Gets updates for user's highly-rated shows.
+   *
+   * Returns shows rated >= 60 that have recent or upcoming episodes.
+   *
+   * @param {{ id: string }} user - Current user context
+   * @returns {Promise<FavoriteUpdatesResponseDto>} Shows with episode updates
+   */
+  @Get('favorites/updates')
+  @ApiOperation({ summary: 'Updates for my favorite shows (auth: Bearer)' })
+  @ApiOkResponse({ type: FavoriteUpdatesResponseDto })
+  async favoriteUpdates(@CurrentUser() user: { id: string }): Promise<FavoriteUpdatesResponseDto> {
+    const data = await this.meListsService.getFavoriteUpdates(user.id);
+    return { data };
   }
 }

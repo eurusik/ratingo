@@ -78,6 +78,37 @@ export interface UserMediaStats {
 }
 
 /**
+ * Options for favorite updates query.
+ */
+export interface FavoriteUpdatesOptions {
+  ratingThreshold: number;
+  daysBack: number;
+  daysAhead: number;
+  limit: number;
+}
+
+/**
+ * Episode info attached to a favorite update.
+ */
+export interface EpisodeInfo {
+  seasonNumber: number;
+  episodeNumber: number;
+  title: string | null;
+  airDate: Date | null;
+}
+
+/**
+ * A single item in the "Updates for Your Favorites" section.
+ */
+export interface FavoriteUpdateItem {
+  mediaItemId: string;
+  rating: number;
+  mediaSummary: UserMediaSummary;
+  latestEpisode: EpisodeInfo | null;
+  nextEpisode: EpisodeInfo | null;
+}
+
+/**
  * Repository contract for user-media state operations.
  */
 export interface IUserMediaStateRepository {
@@ -212,4 +243,16 @@ export interface IUserMediaStateRepository {
    * @returns {Promise<number>} Total continue items
    */
   countContinueWithMedia(userId: string): Promise<number>;
+
+  /**
+   * Lists highly-rated shows with recent or upcoming episodes.
+   *
+   * @param {string} userId - User identifier
+   * @param {FavoriteUpdatesOptions} options - Query options
+   * @returns {Promise<FavoriteUpdateItem[]>} Favorite update items
+   */
+  listFavoriteUpdates(
+    userId: string,
+    options: FavoriteUpdatesOptions,
+  ): Promise<FavoriteUpdateItem[]>;
 }

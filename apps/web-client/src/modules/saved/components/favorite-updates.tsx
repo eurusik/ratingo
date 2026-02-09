@@ -1,0 +1,115 @@
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { Star } from 'lucide-react';
+import { useTranslation, useLocale } from '@/shared/i18n';
+import { Skeleton } from '@/shared/ui';
+import { useAuth } from '@/core/auth';
+import { formatRelativeDate } from '@/shared/utils/format';
+import type { FavoriteUpdateItem, EpisodeInfo } from '@/core/api/me-lists.client';
+import { RatingBadge } from './rating-badge';
+import { useFavoriteUpdates } from '../hooks/use-me-lists';
+
+function formatEpisodeLabel(ep: EpisodeInfo): string {
+  return `S${ep.seasonNumber}E${ep.episodeNumber}`;
+}
+
+interface FavoriteUpdateCardProps {
+  item: FavoriteUpdateItem;
+  index: number;
+}
+
+function FavoriteUpdateCard({ item, index }: FavoriteUpdateCardProps) {
+  const locale = useLocale();
+  const { mediaSummary, rating, latestEpisode, nextEpisode } = item;
+  const poster = mediaSummary.poster as Record<string, string> | null;
+  const posterUrl = poster?.medium ?? poster?.small ?? null;
+  const episodeToShow = nextEpisode ?? latestEpisode;
+  return (
+    <Link
+      href={mediaSummary.type === 'movie' ? `/movies/${mediaSummary.slug}` : `/shows/${mediaSummary.slug}`}
+      className="flex-shrink-0 w-[200px] rounded-lg bg-cinema-card/50 border border-white/5 overflow-hidden hover:border-white/15 transition-colors"
+    >
+      {posterUrl ? (
+        <div className="relative aspect-[2/3] w-full">
+          <Image
+            src={posterUrl}
+            alt={mediaSummary.title}
+            fill
+            className="object-cover"
+            sizes="200px"
+            loading={index < 3 ? 'eager' : 'lazy'}
+          />
+          <RatingBadge rating={rating} className="absolute bottom-2 left-2" />
+        </div>
+      ) : (
+        <div className="aspect-[2/3] w-full bg-cinema-card flex items-center justify-center text-gray-500">
+          <Star className="w-8 h-8" />
+        </div>
+      )}
+      <div className="p-3 space-y-1">
+        <h4 className="text-sm font-medium text-white truncate">{mediaSummary.title}</h4>
+        {episodeToShow && (
+          <p className="text-xs text-gray-400">
+            {formatEpisodeLabel(episodeToShow)}{' '}
+            {episodeToShow.airDate && (
+              <span className="text-gray-500">
+                {formatRelativeDate(episodeToShow.airDate, locale).text}
+              </span>
+            )}
+          </p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+export function FavoriteUpdates() {
+  const { dict } = useTranslation();
+  const { isAuthenticated } = useAuth();
+  const { data, isLoading } = useFavoriteUpdates(isAuthenticated);
+
+  if (!isAuthenticated) return null;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3 mb-8">
+        <Skeleton className="h-6 w-64" />
+        <div className="flex gap-4 overflow-hidden">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="w-[200px] h-[340px] rounded-lg shrink-0" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const items = data?.data ?? [];
+
+  if (items.length === 0) {
+    return (
+      <p className="text-sm text-gray-400 mb-8">
+        {dict.activity?.favoriteUpdates?.empty ?? 'Rate shows to see updates here'}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-3 mb-8">
+      <h3 className="text-lg font-semibold text-white">
+        {dict.activity?.favoriteUpdates?.title ?? 'Updates for your favorites'}
+      </h3>
+      <div
+        className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-white/10"
+        role="region"
+        aria-label={dict.activity?.favoriteUpdates?.title ?? 'Updates for your favorites'}
+        tabIndex={0}
+      >
+        {items.map((item, index) => (
+          <FavoriteUpdateCard key={item.mediaItemId} item={item} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+}

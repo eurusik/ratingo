@@ -85,6 +85,9 @@ export const queryKeys = {
   userMedia: {
     all: ['user-media'] as const,
     state: (mediaId: string) => [...queryKeys.userMedia.all, 'state', mediaId] as const,
+    batchRatingsAll: ['user-media', 'batch-ratings'] as const,
+    batchRatings: (hash: string) =>
+      [...queryKeys.userMedia.all, 'batch-ratings', hash] as const,
     myRatings: (limit?: number, offset?: number) =>
       [...queryKeys.userMedia.all, 'my-ratings', limit ?? null, offset ?? null] as const,
     myWatchlist: (limit?: number, offset?: number) =>
@@ -101,9 +104,13 @@ export const queryKeys = {
   meLists: {
     all: ['me-lists'] as const,
     activity: ['me-lists', 'activity'] as const,
-    history: ['me-lists', 'history'] as const,
-    watchlist: ['me-lists', 'watchlist'] as const,
-    paused: ['me-lists', 'paused'] as const,
+    favoriteUpdates: ['me-lists', 'favorite-updates'] as const,
+    historyAll: ['me-lists', 'history'] as const,
+    history: (sort?: string) => ['me-lists', 'history', sort ?? null] as const,
+    watchlistAll: ['me-lists', 'watchlist'] as const,
+    watchlist: (sort?: string) => ['me-lists', 'watchlist', sort ?? null] as const,
+    pausedAll: ['me-lists', 'paused'] as const,
+    paused: (sort?: string) => ['me-lists', 'paused', sort ?? null] as const,
   },
 
   /** Public user queries. */
