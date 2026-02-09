@@ -75,32 +75,36 @@ export class FavoriteUpdatesQuery {
   }
 
   private async fetchBaseShows(userId: string, options: FavoriteUpdatesOptions) {
-    return this.db
-      .select({
-        mediaItemId: schema.userMediaState.mediaItemId,
-        rating: schema.userMediaState.rating,
-        showId: schema.shows.id,
-        media: {
-          id: schema.mediaItems.id,
-          type: schema.mediaItems.type,
-          title: schema.mediaItems.title,
-          slug: schema.mediaItems.slug,
-          posterPath: schema.mediaItems.posterPath,
-          releaseDate: schema.mediaItems.releaseDate,
-        },
-      })
-      .from(schema.userMediaState)
-      .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-      .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
-      .where(
-        and(
-          eq(schema.userMediaState.userId, userId),
-          gte(schema.userMediaState.rating, options.ratingThreshold),
-          eq(schema.mediaItems.type, MediaType.SHOW),
-        ),
-      )
-      .orderBy(desc(schema.userMediaState.rating))
-      .limit(options.limit * 2);
+    return (
+      this.db
+        .select({
+          mediaItemId: schema.userMediaState.mediaItemId,
+          rating: schema.userMediaState.rating,
+          showId: schema.shows.id,
+          media: {
+            id: schema.mediaItems.id,
+            type: schema.mediaItems.type,
+            title: schema.mediaItems.title,
+            slug: schema.mediaItems.slug,
+            posterPath: schema.mediaItems.posterPath,
+            releaseDate: schema.mediaItems.releaseDate,
+          },
+        })
+        .from(schema.userMediaState)
+        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+        .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+        .where(
+          and(
+            eq(schema.userMediaState.userId, userId),
+            gte(schema.userMediaState.rating, options.ratingThreshold),
+            eq(schema.mediaItems.type, MediaType.SHOW),
+          ),
+        )
+        .orderBy(desc(schema.userMediaState.rating))
+        // Over-fetch 2x because in-memory filtering (hasRecentOrUpcoming) may
+        // discard rows that lack qualifying episodes. Result may be < limit.
+        .limit(options.limit * 2)
+    );
   }
 
   private async fetchEpisodes(showIds: string[], now: Date) {

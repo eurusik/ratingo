@@ -168,6 +168,10 @@ describe('useSaveItem', () => {
       expect(screen.getByTestId('is-for-later').textContent).toBe('false');
     });
 
+    // After mutation fires, onSettled invalidates status query triggering a refetch.
+    // Ensure the refetch returns the same server state as the mutation response.
+    mockGetSaveStatus.mockResolvedValue({ isForLater: true, isConsidering: true });
+
     await act(async () => {
       screen.getByTestId('save-for-later').click();
     });
@@ -314,7 +318,7 @@ describe('useUnsaveItem', () => {
     await waitFor(() => {
       expect(invalidateSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          queryKey: queryKeys.userActions.savedItems.all,
+          queryKey: [...queryKeys.userActions.savedItems.all, 'list'],
         }),
       );
       expect(invalidateSpy).toHaveBeenCalledWith(

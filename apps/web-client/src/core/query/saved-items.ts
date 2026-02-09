@@ -23,11 +23,7 @@ function setSaveStatus(queryClient: QueryClient, mediaItemId: string, status: Me
 
 function invalidateSavedItemLists(queryClient: QueryClient) {
   queryClient.invalidateQueries({
-    queryKey: queryKeys.userActions.savedItems.all,
-    predicate: (query) => {
-      const key = query.queryKey;
-      return Array.isArray(key) && key.includes('list');
-    },
+    queryKey: [...queryKeys.userActions.savedItems.all, 'list'],
   });
   queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
 }
@@ -91,6 +87,12 @@ export function useSaveItem() {
         setSaveStatus(queryClient, variables.mediaItemId, context.previousStatus);
       }
     },
+
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.savedItems.status(variables.mediaItemId),
+      });
+    },
   });
 }
 
@@ -140,6 +142,12 @@ export function useUnsaveItem() {
       if (context?.previousStatus) {
         setSaveStatus(queryClient, variables.mediaItemId, context.previousStatus);
       }
+    },
+
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.userActions.savedItems.status(variables.mediaItemId),
+      });
     },
   });
 }

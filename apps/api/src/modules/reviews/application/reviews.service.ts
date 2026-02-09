@@ -5,6 +5,10 @@ import { ErrorCode } from '../../../common/enums/error-code.enum';
 import { type MediaType } from '../../../common/enums/media-type.enum';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { NotFoundException } from '../../../common/exceptions/not-found.exception';
+import {
+  RATING_SYNC_PORT,
+  type IRatingSyncPort,
+} from '../../user-media/domain/ports/rating-sync.port';
 import { REVIEW_LIMITS, REVIEW_SORT, type ReviewSort } from '../domain/constants/review.constants';
 import type {
   Review,
@@ -12,7 +16,6 @@ import type {
   CreateReviewInput,
   UpdateReviewInput,
 } from '../domain/entities/review.entity';
-import { RATING_SYNC_PORT, type IRatingSyncPort } from '../domain/ports/rating-sync.port';
 import {
   REVIEW_REPOSITORY,
   type IReviewRepository,
@@ -186,6 +189,8 @@ export class ReviewsService {
     this.logger.log(`User ${userId} updated review ${reviewId}`);
 
     if (payload.rating !== undefined) {
+      // mediaType not available on update — syncRating defaults to 'completed'
+      // if no user_media_state exists yet (rare: user usually has state before review)
       await this.trySyncRating(review.userId, review.mediaItemId, payload.rating);
     }
 
@@ -251,9 +256,18 @@ export class ReviewsService {
    * Syncs a rating from user-media state to the review aggregate.
    *
    * Called by UserMediaRatingChangedListener via domain event.
-   * No-op when no review exists or the rating already matches.
+   * No-op when rating is null (cleared), no review exists, or the rating already matches.
    */
-  async syncRatingToReview(userId: string, mediaItemId: string, rating: number): Promise<void> {
+  async syncRatingToReview(
+    userId: string,
+    mediaItemId: string,
+    rating: number | null,
+  ): Promise<void> {
+    // Skip sync when rating is cleared — reviews always require a numeric rating
+    if (rating === null) {
+      return;
+    }
+
     const review = await this.reviewRepo.findByUserAndMedia(userId, mediaItemId);
 
     if (!review || review.rating === rating) {

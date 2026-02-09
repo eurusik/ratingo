@@ -29,10 +29,10 @@ function FavoriteUpdateCard({ item, index }: FavoriteUpdateCardProps) {
   const isBatch = episodeToShow?.isBatchRelease ?? false;
 
   const eventLabel = isUpcoming
-    ? (dict.activity?.favoriteUpdates?.nextEpisode ?? 'Наступний епізод')
+    ? dict.activity.favoriteUpdates.nextEpisode
     : isBatch
-      ? (dict.activity?.favoriteUpdates?.newSeason ?? 'Новий сезон')
-      : (dict.activity?.favoriteUpdates?.newEpisode ?? 'Новий епізод');
+      ? dict.activity.favoriteUpdates.newSeason
+      : dict.activity.favoriteUpdates.newEpisode;
 
   return (
     <Link
@@ -51,7 +51,7 @@ function FavoriteUpdateCard({ item, index }: FavoriteUpdateCardProps) {
           />
           <UserRatingBadge
             rating={rating}
-            label={(dict.card?.yourRating ?? 'Ваша оцінка: {rating}').replace('{rating}', String(rating))}
+            label={dict.card.yourRating.replace('{rating}', String(rating))}
             className="absolute bottom-2 left-2"
           />
         </div>
@@ -102,7 +102,7 @@ export function FavoriteUpdates() {
   if (items.length === 0) {
     return (
       <p className="text-sm text-gray-400 mb-8">
-        {dict.activity?.favoriteUpdates?.empty ?? 'Оціни серіали, щоб бачити оновлення тут'}
+        {dict.activity.favoriteUpdates.empty}
       </p>
     );
   }
@@ -110,12 +110,12 @@ export function FavoriteUpdates() {
   return (
     <div className="space-y-3 mt-10 pt-8 border-t border-white/5">
       <h3 className="text-lg font-semibold text-white">
-        {dict.activity?.favoriteUpdates?.title ?? 'Що нового у твоїх серіалах'}
+        {dict.activity.favoriteUpdates.title}
       </h3>
       <div
         className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-white/10"
         role="region"
-        aria-label={dict.activity?.favoriteUpdates?.title ?? 'Що нового у твоїх серіалах'}
+        aria-label={dict.activity.favoriteUpdates.title}
         tabIndex={0}
       >
         {items.map((item, index) => (

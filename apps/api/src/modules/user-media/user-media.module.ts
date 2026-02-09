@@ -2,13 +2,13 @@ import { Module, forwardRef } from '@nestjs/common';
 
 import { DatabaseModule } from '../../database/database.module';
 import { AuthModule } from '../auth/auth.module';
-import { RATING_SYNC_PORT } from '../reviews/domain/ports/rating-sync.port';
 import { CardsModule } from '../shared/cards/cards.module';
 import { UserActionsModule } from '../user-actions/user-actions.module';
 
 import { EpisodeProgressService } from './application/episode-progress.service';
 import { MeListsService } from './application/me-lists.service';
 import { UserMediaService } from './application/user-media.service';
+import { RATING_SYNC_PORT } from './domain/ports/rating-sync.port';
 import { EPISODE_PROGRESS_REPOSITORY } from './domain/repositories/episode-progress.repository.interface';
 import { USER_MEDIA_STATE_REPOSITORY } from './domain/repositories/user-media-state.repository.interface';
 import { FavoriteUpdatesQuery } from './infrastructure/queries/favorite-updates.query';

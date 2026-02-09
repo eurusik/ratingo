@@ -3,8 +3,8 @@ import { type MediaType } from '../../../../common/enums/media-type.enum';
 /**
  * Port for syncing rating to the user-media state aggregate.
  *
- * Defined in the reviews domain so that ReviewsService can depend
- * on an abstraction without coupling to user-media internals.
+ * Owned by user-media domain. ReviewsService depends on this abstraction
+ * without coupling to user-media internals.
  *
  * The optional `mediaType` allows the implementing adapter to pick
  * the correct default state (`watching` for shows, `completed` for
@@ -14,7 +14,7 @@ export interface IRatingSyncPort {
   syncRating(
     userId: string,
     mediaItemId: string,
-    rating: number,
+    rating: number | null,
     mediaType?: MediaType,
   ): Promise<void>;
 }

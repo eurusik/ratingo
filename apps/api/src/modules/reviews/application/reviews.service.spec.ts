@@ -8,7 +8,7 @@ import { MediaType } from '../../../common/enums/media-type.enum';
 import { REVIEW_LIMITS, REVIEW_SORT } from '../domain/constants/review.constants';
 import { REVIEW_REPOSITORY } from '../domain/repositories/review.repository.interface';
 
-import { RATING_SYNC_PORT } from '../domain/ports/rating-sync.port';
+import { RATING_SYNC_PORT } from '../../user-media/domain/ports/rating-sync.port';
 
 import { ReviewsService } from './reviews.service';
 
@@ -362,6 +362,13 @@ describe('ReviewsService', () => {
       await service.syncRatingToReview('user-id-1', 'media-id-1', 0);
 
       expect(reviewRepo.update).toHaveBeenCalledWith('review-id-1', { rating: 0 });
+    });
+
+    it('should no-op when rating is null (cleared)', async () => {
+      await service.syncRatingToReview('user-id-1', 'media-id-1', null);
+
+      expect(reviewRepo.findByUserAndMedia).not.toHaveBeenCalled();
+      expect(reviewRepo.update).not.toHaveBeenCalled();
     });
   });
 

@@ -16,7 +16,22 @@ jest.mock('@/core/auth', () => ({
 }));
 
 jest.mock('@/shared/i18n', () => ({
-  useTranslation: () => ({ dict: {} }),
+  useTranslation: () => ({
+    dict: {
+      activity: {
+        favoriteUpdates: {
+          title: 'Що нового у твоїх серіалах',
+          empty: 'Оціни серіали, щоб бачити оновлення тут',
+          nextEpisode: 'Наступний епізод',
+          newEpisode: 'Новий епізод',
+          newSeason: 'Новий сезон',
+        },
+      },
+      card: {
+        yourRating: 'Ваша оцінка: {rating}',
+      },
+    },
+  }),
   useLocale: () => 'uk',
 }));
 

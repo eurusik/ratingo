@@ -86,16 +86,16 @@ function removeVote(review: ReviewResponseDto): ReviewResponseDto {
 
 type PreviousQueries = [unknown, ReviewListResponseDto | undefined][];
 
-function createOptimisticVoteHandlers(
+function createOptimisticVoteHandlers<TVariables>(
   queryClient: QueryClient,
   mediaItemId: string,
-  createUpdater: (variables: unknown) => ReviewUpdater,
-  getReviewId: (variables: unknown) => string,
+  createUpdater: (variables: TVariables) => ReviewUpdater,
+  getReviewId: (variables: TVariables) => string,
 ) {
   const baseKey = queryKeys.reviews.mediaBase(mediaItemId);
 
   return {
-    onMutate: async (variables: unknown) => {
+    onMutate: async (variables: TVariables) => {
       await queryClient.cancelQueries({ queryKey: baseKey });
 
       const previousQueries = queryClient.getQueriesData<ReviewListResponseDto>({
@@ -123,7 +123,7 @@ function createOptimisticVoteHandlers(
 
     onError: (
       _error: unknown,
-      _variables: unknown,
+      _variables: TVariables,
       context?: { previousQueries?: PreviousQueries },
     ) => {
       context?.previousQueries?.forEach(([queryKey, data]) => {
@@ -226,11 +226,11 @@ interface VoteVariables {
 export function useVoteReview(mediaItemId: string) {
   const queryClient = useQueryClient();
 
-  const handlers = createOptimisticVoteHandlers(
+  const handlers = createOptimisticVoteHandlers<VoteVariables>(
     queryClient,
     mediaItemId,
-    (variables) => applyVote((variables as VoteVariables).voteType),
-    (variables) => (variables as VoteVariables).reviewId,
+    (variables) => applyVote(variables.voteType),
+    (variables) => variables.reviewId,
   );
 
   return useMutation({
@@ -243,11 +243,11 @@ export function useVoteReview(mediaItemId: string) {
 export function useUnvoteReview(mediaItemId: string) {
   const queryClient = useQueryClient();
 
-  const handlers = createOptimisticVoteHandlers(
+  const handlers = createOptimisticVoteHandlers<string>(
     queryClient,
     mediaItemId,
     () => removeVote,
-    (variables) => variables as string,
+    (variables) => variables,
   );
 
   return useMutation({

@@ -4,12 +4,12 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 import { MediaType } from '@/common/enums/media-type.enum';
 
-import type { IRatingSyncPort } from '../../reviews/domain/ports/rating-sync.port';
 import { CardEnrichmentService } from '../../shared/cards/application/card-enrichment.service';
 import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
 import { USER_MEDIA_STATE_ERRORS } from '../domain/constants/user-media-state-errors.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
 import { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';
+import type { IRatingSyncPort } from '../domain/ports/rating-sync.port';
 import {
   type IUserMediaStateRepository,
   type ListWithMediaOptions,
@@ -40,14 +40,17 @@ export class UserMediaService implements IRatingSyncPort {
    * - If `progress` is provided with `completed` or `dropped`, the request is rejected.
    *
    * @param {SetUserMediaStateInput} data - Upsert payload
-   * @returns {Promise<UserMediaState>} Persisted state
+   * @returns {Promise<UserMediaState | null>} Persisted state, or null if clearing a non-existent rating
    * @throws {BadRequestException} When `progress` is provided for `completed`/`dropped` states
    */
-  async setState(data: SetUserMediaStateInput, mediaType?: MediaType): Promise<UserMediaState> {
+  async setState(
+    data: SetUserMediaStateInput,
+    mediaType?: MediaType,
+  ): Promise<UserMediaState | null> {
     const existing = await this.repo.findOne(data.userId, data.mediaItemId);
 
     if (data.rating === null && !data.state && !data.progress && !existing) {
-      return null as unknown as UserMediaState;
+      return null;
     }
 
     const resolvedState = data.state ?? this.resolveDefaultState(existing, mediaType);
@@ -61,16 +64,16 @@ export class UserMediaService implements IRatingSyncPort {
       }
 
       const result = await this.repo.upsert({ ...data, state: USER_MEDIA_STATE.WATCHING });
-      if (data.rating != null) {
-        await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating);
+      if (data.rating !== undefined) {
+        await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating ?? null);
       }
       return result;
     }
 
     const result = await this.repo.upsert({ ...data, state: resolvedState });
 
-    if (data.rating != null) {
-      await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating);
+    if (data.rating !== undefined) {
+      await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating ?? null);
     }
 
     return result;
@@ -90,7 +93,7 @@ export class UserMediaService implements IRatingSyncPort {
   async syncRating(
     userId: string,
     mediaItemId: string,
-    rating: number,
+    rating: number | null,
     mediaType?: MediaType,
   ): Promise<void> {
     const existing = await this.repo.findOne(userId, mediaItemId);
@@ -366,11 +369,18 @@ export class UserMediaService implements IRatingSyncPort {
   private async emitRatingChanged(
     userId: string,
     mediaItemId: string,
-    rating: number,
+    rating: number | null,
   ): Promise<void> {
-    await this.eventEmitter.emitAsync(
-      UserMediaRatingChangedEvent.eventName,
-      new UserMediaRatingChangedEvent(userId, mediaItemId, rating),
-    );
+    try {
+      await this.eventEmitter.emitAsync(
+        UserMediaRatingChangedEvent.eventName,
+        new UserMediaRatingChangedEvent(userId, mediaItemId, rating),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to emit rating changed event: user=${userId}, media=${mediaItemId}`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 }

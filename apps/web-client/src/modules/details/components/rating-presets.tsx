@@ -110,23 +110,24 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
     });
   };
 
-  const handleSliderChange = (v: number[]) => {
+  const handleSliderChange = ([score]: number[]) => {
     isDraggingRef.current = true;
     cancelHide();
-    setSliderOverride(v[0]);
+    setSliderOverride(score);
     triggerScoreAnimation('animate-score-pulse');
   };
 
-  const handleSliderCommit = (v: number[]) => {
+  const handleSliderCommit = ([score]: number[]) => {
     isDraggingRef.current = false;
-    if (!activePreset) return;
+    const committedPreset = findPresetByScore(score);
+    if (!committedPreset) return;
 
     triggerScoreAnimation('animate-score-commit');
     scheduleHide();
 
     guard(async () => {
-      await setRating({ rating: v[0], mediaType });
-      showRatingToast(v[0], activePreset.id);
+      await setRating({ rating: score, mediaType });
+      showRatingToast(score, committedPreset.id);
       setSliderOverride(null);
     });
   };
@@ -218,8 +219,8 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
           <FineTuneSlider
             visible={showSlider}
             value={sliderValue}
-            min={activePreset.min}
-            max={activePreset.max}
+            min={displayPreset.min}
+            max={displayPreset.max}
             disabled={isPending}
             label={dict.userRating.finetune}
             onValueChange={handleSliderChange}
@@ -246,21 +247,21 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
                 <span className="text-xs text-cinema-text-muted">{dict.userRating.finetune}</span>
                 <Slider
                   value={[sliderValue]}
-                  onValueChange={(v) => setSliderOverride(v[0])}
+                  onValueChange={([score]) => setSliderOverride(score)}
                   onValueCommit={handleSliderCommit}
-                  min={activePreset.min}
-                  max={activePreset.max}
+                  min={displayPreset.min}
+                  max={displayPreset.max}
                   step={1}
                   disabled={isPending}
                   aria-label={dict.userRating.finetune}
                   className="w-full"
                 />
                 <div className="flex items-center justify-between text-xs text-cinema-text-muted tabular-nums">
-                  <span>{activePreset.min}</span>
+                  <span>{displayPreset.min}</span>
                   <span className={cn('text-sm font-bold', getRatingColor(sliderValue))}>
                     {sliderValue}
                   </span>
-                  <span>{activePreset.max}</span>
+                  <span>{displayPreset.max}</span>
                 </div>
               </div>
               <ClearButton

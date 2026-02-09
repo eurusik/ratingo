@@ -18,6 +18,7 @@ export function UserRatingBadge({ rating, label, className }: UserRatingBadgePro
 
   return (
     <div
+      role="status"
       className={cn(
         'flex items-center gap-1 px-1.5 py-0.5 rounded-full',
         'bg-black/50 border border-white/20 backdrop-blur-sm',

@@ -89,6 +89,19 @@ describe('UserMediaController', () => {
     );
   });
 
+  it('setState should handle null return from service (clearing non-existent rating)', async () => {
+    userMediaService.setState.mockResolvedValue(null);
+    userMediaService.getStateWithMedia.mockResolvedValue(null);
+
+    const body = { rating: null };
+
+    const result = await controller.setState({ id: 'u1' }, 'm1', body as any);
+
+    expect(userMediaService.setState).toHaveBeenCalled();
+    expect(userMediaService.getStateWithMedia).toHaveBeenCalledWith('u1', 'm1');
+    expect(result).toBeNull();
+  });
+
   it('list should parse limit/offset and call service.listWithMedia', async () => {
     userMediaService.listWithMedia.mockResolvedValue([{ id: 's1' }] as any);
 

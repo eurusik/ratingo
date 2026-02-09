@@ -115,6 +115,9 @@ export class UserMediaController {
   /**
    * Sets state for a media item (upsert).
    *
+   * When setState returns null (e.g. clearing a rating that never existed),
+   * falls back to fetching the current state. Returns null when no state exists at all.
+   *
    * @param {string} mediaItemId - Media item identifier
    * @param {SetUserMediaStateDto} body - Upsert payload
    * @returns {Promise<any>} Updated state with media summary

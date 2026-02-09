@@ -211,6 +211,19 @@ describe('UserMediaService', () => {
         expect.objectContaining({ state: USER_MEDIA_STATE.WATCHING, rating: null }),
       );
     });
+
+    it('should return null when clearing rating with no existing state', async () => {
+      repo.findOne.mockResolvedValue(null);
+
+      const result = await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        rating: null,
+      });
+
+      expect(result).toBeNull();
+      expect(repo.upsert).not.toHaveBeenCalled();
+    });
   });
 
   it('setState should allow paused state without progress', async () => {
@@ -283,7 +296,7 @@ describe('UserMediaService', () => {
       );
     });
 
-    it('should not emit event when only state changes (no rating)', async () => {
+    it('should not emit event when only state changes (rating not provided)', async () => {
       repo.upsert.mockResolvedValue({
         id: 's1',
         state: USER_MEDIA_STATE.COMPLETED,
@@ -293,7 +306,6 @@ describe('UserMediaService', () => {
         userId: 'u1',
         mediaItemId: 'm1',
         state: USER_MEDIA_STATE.COMPLETED,
-        rating: null,
         progress: null,
         notes: null,
       });
@@ -349,6 +361,26 @@ describe('UserMediaService', () => {
       );
     });
 
+    it('should emit event when rating is cleared (null) with existing state', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: null,
+      } as any);
+
+      await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        rating: null,
+      });
+
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(
+        UserMediaRatingChangedEvent.eventName,
+        expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: null }),
+      );
+    });
+
     it('should not emit event when upsert fails', async () => {
       repo.upsert.mockRejectedValue(new Error('DB error'));
 
@@ -383,6 +415,24 @@ describe('UserMediaService', () => {
         UserMediaRatingChangedEvent.eventName,
         expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: 75 }),
       );
+    });
+
+    it('should swallow emitAsync errors without failing setState', async () => {
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 85,
+      } as any);
+      eventEmitter.emitAsync.mockRejectedValue(new Error('Event bus failure'));
+
+      const result = await service.setState({
+        userId: 'u1',
+        mediaItemId: 'm1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: 85,
+      });
+
+      expect(result).toEqual(expect.objectContaining({ id: 's1' }));
     });
   });
 
@@ -446,6 +496,22 @@ describe('UserMediaService', () => {
       expect(repo.upsert).toHaveBeenCalledWith(
         expect.objectContaining({ state: USER_MEDIA_STATE.COMPLETED, rating: 90 }),
       );
+    });
+
+    it('should accept null rating', async () => {
+      repo.findOne.mockResolvedValue({ id: 's1', state: USER_MEDIA_STATE.WATCHING } as any);
+      repo.upsert.mockResolvedValue({
+        id: 's1',
+        state: USER_MEDIA_STATE.WATCHING,
+        rating: null,
+      } as any);
+
+      await service.syncRating('u1', 'm1', null);
+
+      expect(repo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: 'u1', mediaItemId: 'm1', rating: null }),
+      );
+      expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
     });
   });
 

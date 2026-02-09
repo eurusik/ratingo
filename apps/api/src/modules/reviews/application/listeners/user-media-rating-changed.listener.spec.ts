@@ -36,4 +36,12 @@ describe('UserMediaRatingChangedListener', () => {
 
     expect(reviewsService.syncRatingToReview).toHaveBeenCalledWith('u1', 'm1', 0);
   });
+
+  it('should handle null rating (cleared)', async () => {
+    const event = new UserMediaRatingChangedEvent('u1', 'm1', null);
+
+    await listener.handleRatingChanged(event);
+
+    expect(reviewsService.syncRatingToReview).toHaveBeenCalledWith('u1', 'm1', null);
+  });
 });
