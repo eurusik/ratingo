@@ -32,7 +32,7 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate)",
             "schema": {
               "default": "trending",
               "enum": [
@@ -40,6 +40,7 @@
                 "popularity",
                 "ratingo",
                 "releaseDate",
+                "lastAirDate",
                 "tmdbPopularity"
               ],
               "type": "string"
@@ -205,7 +206,7 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate)",
             "schema": {
               "default": "trending",
               "enum": [
@@ -213,6 +214,7 @@
                 "popularity",
                 "ratingo",
                 "releaseDate",
+                "lastAirDate",
                 "tmdbPopularity"
               ],
               "type": "string"
@@ -378,7 +380,7 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate)",
             "schema": {
               "default": "trending",
               "enum": [
@@ -386,6 +388,7 @@
                 "popularity",
                 "ratingo",
                 "releaseDate",
+                "lastAirDate",
                 "tmdbPopularity"
               ],
               "type": "string"
@@ -551,7 +554,7 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate)",
             "schema": {
               "default": "trending",
               "enum": [
@@ -559,6 +562,7 @@
                 "popularity",
                 "ratingo",
                 "releaseDate",
+                "lastAirDate",
                 "tmdbPopularity"
               ],
               "type": "string"
@@ -733,7 +737,7 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate)",
             "schema": {
               "default": "trending",
               "enum": [
@@ -741,6 +745,7 @@
                 "popularity",
                 "ratingo",
                 "releaseDate",
+                "lastAirDate",
                 "tmdbPopularity"
               ],
               "type": "string"
@@ -962,7 +967,7 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate)",
             "schema": {
               "default": "trending",
               "enum": [
@@ -970,6 +975,7 @@
                 "popularity",
                 "ratingo",
                 "releaseDate",
+                "lastAirDate",
                 "tmdbPopularity"
               ],
               "type": "string"
@@ -1135,7 +1141,7 @@
             "name": "sort",
             "required": false,
             "in": "query",
-            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore",
+            "description": "trending = TMDB trending order; popularity = aggregated popularity_score; tmdbPopularity = raw TMDB popularity; ratingo = ratingoScore; releaseDate = premiere/theatrical release date; lastAirDate = most recent episode air date (shows only, falls back to releaseDate)",
             "schema": {
               "default": "trending",
               "enum": [
@@ -1143,6 +1149,7 @@
                 "popularity",
                 "ratingo",
                 "releaseDate",
+                "lastAirDate",
                 "tmdbPopularity"
               ],
               "type": "string"

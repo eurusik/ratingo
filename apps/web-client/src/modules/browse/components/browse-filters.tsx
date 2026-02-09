@@ -18,6 +18,7 @@ import {
 import { CATALOG_SORT_OPTIONS, DEFAULT_CATALOG_SORT, type CatalogSort } from '../config';
 
 interface BrowseFiltersProps {
+  sortOptions?: readonly CatalogSort[];
   labels: {
     sort: string;
     sortOptions: Record<CatalogSort, string>;
@@ -25,12 +26,16 @@ interface BrowseFiltersProps {
   };
 }
 
-export function BrowseFilters({ labels }: BrowseFiltersProps) {
+export function BrowseFilters({ sortOptions = CATALOG_SORT_OPTIONS, labels }: BrowseFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const currentSort = (searchParams.get('sort') as CatalogSort) || DEFAULT_CATALOG_SORT;
+  const rawSort = searchParams.get('sort');
+  const currentSort =
+    rawSort && (sortOptions as readonly string[]).includes(rawSort)
+      ? (rawSort as CatalogSort)
+      : DEFAULT_CATALOG_SORT;
 
   const updateParams = useCallback(
     (key: string, value: string | null) => {
@@ -58,12 +63,12 @@ export function BrowseFilters({ labels }: BrowseFiltersProps) {
   return (
     <div className="flex items-center gap-2">
       <Select value={currentSort} onValueChange={handleSortChange}>
-        <SelectTrigger className="w-[160px] bg-cinema-card border-cinema-borderSoft">
+        <SelectTrigger className="w-[160px] bg-cinema-card border-cinema-borderSoft cursor-pointer">
           <SelectValue placeholder={labels.sort} />
         </SelectTrigger>
         <SelectContent className="bg-cinema-card border-cinema-borderSoft">
-          {CATALOG_SORT_OPTIONS.map((option) => (
-            <SelectItem key={option} value={option}>
+          {sortOptions.map((option) => (
+            <SelectItem key={option} value={option} className="cursor-pointer">
               {labels.sortOptions[option]}
             </SelectItem>
           ))}

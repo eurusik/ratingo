@@ -27,10 +27,18 @@ export interface PaginationParams {
 export type ListContext = 'home' | 'catalog';
 
 /**
- * Trending shows query params.
+ * All sort options accepted by the backend catalog API.
  */
+export type CatalogSortParam =
+  | 'trending'
+  | 'ratingo'
+  | 'popularity'
+  | 'releaseDate'
+  | 'lastAirDate'
+  | 'tmdbPopularity';
+
 export interface TrendingShowsParams extends PaginationParams {
-  sort?: 'trending' | 'rating' | 'popularity';
+  sort?: CatalogSortParam;
   context?: ListContext;
 }
 
@@ -38,7 +46,7 @@ export interface TrendingShowsParams extends PaginationParams {
  * Trending movies query params.
  */
 export interface TrendingMoviesParams extends PaginationParams {
-  sort?: 'trending' | 'rating' | 'popularity';
+  sort?: CatalogSortParam;
   context?: ListContext;
 }
 

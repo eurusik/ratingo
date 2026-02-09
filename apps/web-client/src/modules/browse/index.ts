@@ -12,6 +12,7 @@ export {
   CATALOG_SORT_OPTIONS,
   DEFAULT_CATALOG_SORT,
   getCategoryConfig,
+  getSortOptions,
   getValidCategorySlugs,
   buildBrowseUrl,
   categorySupportsFilters,

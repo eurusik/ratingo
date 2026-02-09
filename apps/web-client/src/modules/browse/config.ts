@@ -29,13 +29,27 @@ export type PoolType = 'trending' | 'popular';
 export const CATALOG_SORT = {
   RATINGO: 'ratingo',
   RELEASE_DATE: 'releaseDate',
+  LAST_AIR_DATE: 'lastAirDate',
 } as const;
 
 export type CatalogSort = (typeof CATALOG_SORT)[keyof typeof CATALOG_SORT];
 
 export const CATALOG_SORT_OPTIONS = [CATALOG_SORT.RATINGO, CATALOG_SORT.RELEASE_DATE] as const;
 
+export const SHOW_SORT_OPTIONS = [
+  CATALOG_SORT.RATINGO,
+  CATALOG_SORT.RELEASE_DATE,
+  CATALOG_SORT.LAST_AIR_DATE,
+] as const;
+
 export const DEFAULT_CATALOG_SORT = CATALOG_SORT.RATINGO;
+
+/**
+ * Get sort options for a category (shows get extra "last air date" option).
+ */
+export function getSortOptions(config: CategoryConfig): readonly CatalogSort[] {
+  return config.mediaType === 'show' ? SHOW_SORT_OPTIONS : CATALOG_SORT_OPTIONS;
+}
 
 export interface CategoryConfig {
   /** URL slug */

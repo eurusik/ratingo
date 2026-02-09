@@ -19,6 +19,7 @@ import {
  * - trending: composite formula (ratingo + popularity + watchers + tmdb)
  * - ratingo: sort by ratingoScore
  * - releaseDate: sort by releaseDate with createdAt fallback
+ * - lastAirDate: falls back to releaseDate behavior (movies have no episode air dates)
  * - tmdbPopularity: sort by raw TMDB popularity
  * - popularity (default): sort by aggregated popularityScore
  *
@@ -52,7 +53,9 @@ export function buildMovieSortOrder(sort: CatalogSort, order: SortOrder): SQL[] 
     return [sql`${schema.mediaStats.ratingoScore} ${dir}`, sql`${schema.mediaItems.id} desc`];
   }
 
-  if (sort === CATALOG_SORT.RELEASE_DATE) {
+  if (sort === CATALOG_SORT.RELEASE_DATE || sort === CATALOG_SORT.LAST_AIR_DATE) {
+    // Movies don't have episode air dates, so lastAirDate falls back to
+    // releaseDate behavior: COALESCE(release_date, created_at).
     return [
       sql`COALESCE(${schema.mediaItems.releaseDate}, ${schema.mediaItems.createdAt}) ${dir} ${nullsLast}`,
       sql`${schema.mediaItems.id} desc`,
@@ -72,7 +75,7 @@ export function buildMovieSortOrder(sort: CatalogSort, order: SortOrder): SQL[] 
  *
  * Key differences from movies:
  * - Uses SHOW_TRENDING_WEIGHTS (higher watchers weight for ongoing engagement)
- * - releaseDate uses last_air_date (recent episodes) over release_date (premiere)
+ * - Has lastAirDate sort (last episode air date) not available for movies
  *
  * Note: Returns a single SQL expression (not array) for use with raw SQL queries.
  * The tiebreaker (mi.id DESC) is included in the expression.
@@ -107,8 +110,12 @@ export function buildShowSortOrder(sort: CatalogSort, order: SortOrder): SQL {
   }
 
   if (sort === CATALOG_SORT.RELEASE_DATE) {
-    // For shows: prioritize last_air_date (recent episodes) over release_date (premiere)
-    // Fallback to created_at for incomplete data
+    // Sort by premiere date (release_date), not last episode air date
+    return sql`COALESCE(mi.release_date, mi.created_at) ${dir} NULLS LAST, mi.id DESC`;
+  }
+
+  if (sort === CATALOG_SORT.LAST_AIR_DATE) {
+    // Sort by most recent episode air date (shows only)
     return sql`COALESCE(s.last_air_date, mi.release_date, mi.created_at) ${dir} NULLS LAST, mi.id DESC`;
   }
 
