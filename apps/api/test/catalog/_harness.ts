@@ -235,6 +235,10 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
       this.states.splice(index, 1);
     }
   }
+
+  async listFavoriteUpdates(): Promise<any[]> {
+    return [];
+  }
 }
 
 class FakeMediaRepository {

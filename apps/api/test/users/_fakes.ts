@@ -276,6 +276,10 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
       this.states.splice(index, 1);
     }
   }
+
+  async listFavoriteUpdates(): Promise<any[]> {
+    return [];
+  }
 }
 
 export class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {
