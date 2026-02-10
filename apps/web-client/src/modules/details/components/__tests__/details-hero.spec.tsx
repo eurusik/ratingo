@@ -37,9 +37,16 @@ jest.mock('../ratingo-score', () => ({
 }));
 
 jest.mock('../community-rating', () => ({
-  CommunityRating: (props: { averageRating: number; ratingCount: number }) => (
+  CommunityRating: (props: {
+    averageRating: number;
+    ratingCount: number;
+    recentRaters?: Array<{ userId: string; username: string; avatarUrl: string | null }>;
+  }) => (
     <div data-testid="community-rating">
       {props.averageRating} / {props.ratingCount}
+      {props.recentRaters && (
+        <span data-testid="community-rating-raters">{props.recentRaters.length}</span>
+      )}
     </div>
   ),
 }));
@@ -113,5 +120,26 @@ describe('DetailsHero — CommunityRating integration', () => {
     render(<DetailsHero {...BASE_PROPS} stats={null} />);
 
     expect(screen.queryByTestId('community-rating')).not.toBeInTheDocument();
+  });
+
+  it('passes recentRaters from stats to CommunityRating', () => {
+    const raters = [
+      { userId: 'u1', username: 'alice', avatarUrl: null },
+      { userId: 'u2', username: 'bob', avatarUrl: 'https://example.com/bob.jpg' },
+    ];
+
+    render(
+      <DetailsHero
+        {...BASE_PROPS}
+        stats={{
+          qualityScore: 80,
+          communityAverageRating: 75,
+          communityRatingCount: 42,
+          recentRaters: raters,
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId('community-rating-raters')).toHaveTextContent('2');
   });
 });

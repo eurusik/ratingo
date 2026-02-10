@@ -1751,6 +1751,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats/reconcile-community-ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reconcile community ratings
+         * @description Aggregates all user ratings and updates community_average_rating / community_rating_count in media_stats.
+         */
+        post: operations["StatsController_reconcileCommunityRatings"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/home/hero": {
         parameters: {
             query?: never;
@@ -2247,6 +2267,14 @@ export interface components {
              */
             original: string;
         };
+        RecentRaterDto: {
+            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            userId: string;
+            /** @example john_doe */
+            username: string;
+            /** @example https://example.com/avatar.jpg */
+            avatarUrl: string | null;
+        };
         RatingoStatsDto: {
             /**
              * @description Composite Ratingo Score (0-100)
@@ -2283,6 +2311,8 @@ export interface components {
              * @example 1240
              */
             communityRatingCount?: number | null;
+            /** @description Up to 3 most recent public raters */
+            recentRaters?: components["schemas"]["RecentRaterDto"][];
         };
         ExternalRatingItemDto: {
             /** @example 8.8 */
@@ -8607,6 +8637,23 @@ export interface operations {
                 /** @description Number of items per batch */
                 batchSize?: number;
             };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StatsController_reconcileCommunityRatings: {
+        parameters: {
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;

@@ -12,6 +12,7 @@ import { type ShowDetails } from '../../domain/repositories/show.repository.inte
 import {
   GenreQuery,
   WatchOffersQuery,
+  RecentRatersQuery,
   SHOW_DETAILS_SELECT_FIELDS,
   type ShowDetailsQueryRow,
   mapShowDetails,
@@ -34,6 +35,7 @@ export class ShowDetailsQuery {
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly genreQuery: GenreQuery,
     private readonly watchOffersQuery: WatchOffersQuery,
+    private readonly recentRatersQuery: RecentRatersQuery,
   ) {}
 
   /**
@@ -66,14 +68,15 @@ export class ShowDetailsQuery {
       if (result.length === 0) return null;
       const show = result[0] as ShowDetailsQueryRow;
 
-      // Fetch genres, seasons, and watch offers in parallel
-      const [genres, seasons, watchOffers] = await Promise.all([
+      // Fetch genres, seasons, watch offers, and recent raters in parallel
+      const [genres, seasons, watchOffers, recentRaters] = await Promise.all([
         this.genreQuery.fetchForMediaItem(show.id),
         show.showId ? this.fetchSeasons(show.showId) : Promise.resolve([]),
         this.watchOffersQuery.fetchForMediaItem(show.id),
+        this.recentRatersQuery.fetchForMediaItem(show.id),
       ]);
 
-      return mapShowDetails(show, genres, seasons, watchOffers);
+      return mapShowDetails(show, genres, seasons, watchOffers, recentRaters);
     } catch (error) {
       this.logger.error(`Failed to find show by slug ${slug}: ${error.message}`, error.stack);
       throw new DatabaseException(`Failed to fetch show ${slug}`, { originalError: error.message });

@@ -5,7 +5,7 @@ import {
   type ShowDetails,
   type SeasonInfo,
 } from '../../../domain/repositories/show.repository.interface';
-import { type GenreInfo } from '../../../domain/types/common.types';
+import { type GenreInfo, type RecentRater } from '../../../domain/types/common.types';
 import { CreditsMapper } from '../../mappers/credits.mapper';
 import {
   MediaWatchOffersMapper,
@@ -110,6 +110,7 @@ export function mapShowDetails(
   genres: GenreInfo[],
   seasons: SeasonInfo[],
   watchOffers: WatchOfferRow[],
+  recentRaters: RecentRater[],
 ): ShowDetails {
   return {
     id: row.id,
@@ -137,7 +138,7 @@ export function mapShowDetails(
     lastAirDate: row.lastAirDate,
     nextAirDate: row.nextAirDate,
 
-    stats: mapRatingoStats(row),
+    stats: { ...mapRatingoStats(row), recentRaters },
     externalRatings: mapExternalRatings(row),
 
     genres,

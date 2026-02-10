@@ -6105,6 +6105,27 @@
         ]
       }
     },
+    "/api/stats/reconcile-community-ratings": {
+      "post": {
+        "operationId": "StatsController_reconcileCommunityRatings",
+        "summary": "Reconcile community ratings",
+        "description": "Aggregates all user ratings and updates community_average_rating / community_rating_count in media_stats.",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Service: Stats"
+        ]
+      }
+    },
     "/api/home/hero": {
       "get": {
         "operationId": "HomeController_getHero",
@@ -7802,6 +7823,29 @@
           "original"
         ]
       },
+      "RecentRaterDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "username": {
+            "type": "string",
+            "example": "john_doe"
+          },
+          "avatarUrl": {
+            "type": "string",
+            "example": "https://example.com/avatar.jpg",
+            "nullable": true
+          }
+        },
+        "required": [
+          "userId",
+          "username",
+          "avatarUrl"
+        ]
+      },
       "RatingoStatsDto": {
         "type": "object",
         "properties": {
@@ -7846,6 +7890,13 @@
             "example": 1240,
             "description": "Number of community ratings",
             "nullable": true
+          },
+          "recentRaters": {
+            "description": "Up to 3 most recent public raters",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecentRaterDto"
+            }
           }
         }
       },

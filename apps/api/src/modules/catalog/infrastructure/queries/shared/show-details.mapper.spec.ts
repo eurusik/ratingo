@@ -86,7 +86,7 @@ describe('show-details.mapper', () => {
     it('should map a complete row to ShowDetails', () => {
       const row = createMockRow();
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.id).toBe('show-123');
       expect(result.showId).toBe('sh-123');
@@ -101,7 +101,7 @@ describe('show-details.mapper', () => {
     it('should call ImageMapper for poster and backdrop', () => {
       const row = createMockRow();
 
-      mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(mockImageMapper.toPoster).toHaveBeenCalledWith('/poster.jpg');
       expect(mockImageMapper.toBackdrop).toHaveBeenCalledWith('/backdrop.jpg');
@@ -110,7 +110,7 @@ describe('show-details.mapper', () => {
     it('should call CreditsMapper.toDto with credits', () => {
       const row = createMockRow();
 
-      mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(mockCreditsMapper.toDto).toHaveBeenCalledWith({ cast: [] });
     });
@@ -118,7 +118,7 @@ describe('show-details.mapper', () => {
     it('should call MediaWatchOffersMapper.toAvailability', () => {
       const row = createMockRow();
 
-      mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(mockMediaWatchOffersMapper.toAvailability).toHaveBeenCalledWith(mockWatchOffers, {});
     });
@@ -126,7 +126,7 @@ describe('show-details.mapper', () => {
     it('should map show-specific fields correctly', () => {
       const row = createMockRow();
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.totalSeasons).toBe(3);
       expect(result.totalEpisodes).toBe(30);
@@ -138,7 +138,7 @@ describe('show-details.mapper', () => {
     it('should map stats correctly', () => {
       const row = createMockRow();
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.stats).toEqual({
         ratingoScore: 82,
@@ -148,13 +148,14 @@ describe('show-details.mapper', () => {
         totalWatchers: 10000,
         communityAverageRating: 75.2,
         communityRatingCount: 123,
+        recentRaters: [],
       });
     });
 
     it('should map TMDB ratings correctly', () => {
       const row = createMockRow();
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.externalRatings.tmdb).toEqual({
         rating: 8.5,
@@ -165,7 +166,7 @@ describe('show-details.mapper', () => {
     it('should map IMDB ratings when available', () => {
       const row = createMockRow({ ratingImdb: 8.0, voteCountImdb: 1500 });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.externalRatings.imdb).toEqual({
         rating: 8.0,
@@ -176,7 +177,7 @@ describe('show-details.mapper', () => {
     it('should return null for IMDB ratings when not available', () => {
       const row = createMockRow({ ratingImdb: null, voteCountImdb: null });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.externalRatings.imdb).toBeNull();
     });
@@ -184,7 +185,7 @@ describe('show-details.mapper', () => {
     it('should map Trakt ratings when available', () => {
       const row = createMockRow({ ratingTrakt: 8.2, voteCountTrakt: 1200 });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.externalRatings.trakt).toEqual({
         rating: 8.2,
@@ -195,7 +196,7 @@ describe('show-details.mapper', () => {
     it('should return null for Trakt ratings when not available', () => {
       const row = createMockRow({ ratingTrakt: null, voteCountTrakt: null });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.externalRatings.trakt).toBeNull();
     });
@@ -203,7 +204,7 @@ describe('show-details.mapper', () => {
     it('should map Metacritic rating when available', () => {
       const row = createMockRow({ ratingMetacritic: 75 });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.externalRatings.metacritic).toEqual({ rating: 75 });
     });
@@ -211,7 +212,7 @@ describe('show-details.mapper', () => {
     it('should return null for Metacritic rating when not available', () => {
       const row = createMockRow({ ratingMetacritic: null });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.externalRatings.metacritic).toBeNull();
     });
@@ -219,7 +220,7 @@ describe('show-details.mapper', () => {
     it('should map Rotten Tomatoes rating when available', () => {
       const row = createMockRow({ ratingRottenTomatoes: 85 });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.externalRatings.rottenTomatoes).toEqual({ rating: 85 });
     });
@@ -227,7 +228,7 @@ describe('show-details.mapper', () => {
     it('should return null for Rotten Tomatoes rating when not available', () => {
       const row = createMockRow({ ratingRottenTomatoes: null });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.externalRatings.rottenTomatoes).toBeNull();
     });
@@ -235,7 +236,7 @@ describe('show-details.mapper', () => {
     it('should extract primary trailer from videos array', () => {
       const row = createMockRow({ videos: [{ key: 'trailer1' }, { key: 'trailer2' }] });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.primaryTrailer).toEqual({ key: 'trailer1' });
     });
@@ -243,7 +244,7 @@ describe('show-details.mapper', () => {
     it('should return null for primary trailer when videos is empty', () => {
       const row = createMockRow({ videos: [] });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.primaryTrailer).toBeNull();
     });
@@ -251,7 +252,7 @@ describe('show-details.mapper', () => {
     it('should return null for primary trailer when videos is null', () => {
       const row = createMockRow({ videos: null });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.primaryTrailer).toBeNull();
     });
@@ -259,7 +260,7 @@ describe('show-details.mapper', () => {
     it('should include genres in result', () => {
       const row = createMockRow();
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.genres).toHaveLength(2);
       expect(result.genres[0].name).toBe('Drama');
@@ -269,7 +270,7 @@ describe('show-details.mapper', () => {
     it('should include seasons in result', () => {
       const row = createMockRow();
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.seasons).toHaveLength(2);
       expect(result.seasons[0].number).toBe(1);
@@ -287,7 +288,7 @@ describe('show-details.mapper', () => {
         communityRatingCount: null,
       });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.stats).toEqual({
         ratingoScore: null,
@@ -297,6 +298,7 @@ describe('show-details.mapper', () => {
         totalWatchers: null,
         communityAverageRating: null,
         communityRatingCount: null,
+        recentRaters: [],
       });
     });
 
@@ -309,7 +311,7 @@ describe('show-details.mapper', () => {
         nextAirDate: null,
       });
 
-      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, []);
 
       expect(result.totalSeasons).toBeNull();
       expect(result.totalEpisodes).toBeNull();

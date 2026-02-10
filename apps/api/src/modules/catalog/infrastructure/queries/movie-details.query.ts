@@ -15,6 +15,7 @@ import {
   type MovieDetailsQueryRow,
   mapMovieDetails,
   WatchOffersQuery,
+  RecentRatersQuery,
 } from './shared';
 
 /**
@@ -34,6 +35,7 @@ export class MovieDetailsQuery {
     private readonly db: PostgresJsDatabase<typeof schema>,
     private readonly genreQuery: GenreQuery,
     private readonly watchOffersQuery: WatchOffersQuery,
+    private readonly recentRatersQuery: RecentRatersQuery,
   ) {}
 
   /**
@@ -66,13 +68,14 @@ export class MovieDetailsQuery {
       if (result.length === 0) return null;
       const movie = result[0] as MovieDetailsQueryRow;
 
-      // Fetch genres and watch offers in parallel
-      const [genres, watchOffers] = await Promise.all([
+      // Fetch genres, watch offers, and recent raters in parallel
+      const [genres, watchOffers, recentRaters] = await Promise.all([
         this.genreQuery.fetchForMediaItem(movie.id),
         this.watchOffersQuery.fetchForMediaItem(movie.id),
+        this.recentRatersQuery.fetchForMediaItem(movie.id),
       ]);
 
-      return mapMovieDetails(movie, genres, watchOffers);
+      return mapMovieDetails(movie, genres, watchOffers, recentRaters);
     } catch (error) {
       this.logger.error(`Failed to find movie by slug ${slug}: ${error.message}`, error.stack);
       throw new DatabaseException(`Failed to fetch movie ${slug}`, {
