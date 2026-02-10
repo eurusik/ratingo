@@ -12,8 +12,8 @@
     "home": "Go home"
   },
   "announcement": {
-    "tracking": {
-      "message": "Never lose track of your shows — Ratingo helps you easily track what you watch",
+    "communityRating": {
+      "message": "Rate shows without writing reviews",
       "cta": "Learn more"
     },
     "closeLabel": "Close announcement"
