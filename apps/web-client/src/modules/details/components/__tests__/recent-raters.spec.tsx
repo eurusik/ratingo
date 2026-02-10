@@ -92,4 +92,53 @@ describe('RecentRaters', () => {
     expect(img).toHaveAttribute('src', 'https://example.com/avatar.jpg');
     expect(img).toHaveAttribute('alt', 'user1');
   });
+
+  // =========================================================================
+  // Overflow indicator (+N)
+  // =========================================================================
+
+  describe('overflow indicator', () => {
+    it('shows +N when totalCount exceeds 3 visible avatars', () => {
+      render(
+        <RecentRaters
+          raters={[makeRater(1), makeRater(2), makeRater(3)]}
+          totalCount={42}
+        />,
+      );
+
+      expect(screen.getAllByTestId('avatar')).toHaveLength(3);
+      expect(screen.getByText('+39')).toBeInTheDocument();
+    });
+
+    it('caps overflow display at +99 for large counts', () => {
+      render(
+        <RecentRaters
+          raters={[makeRater(1), makeRater(2), makeRater(3)]}
+          totalCount={500}
+        />,
+      );
+
+      expect(screen.getByText('+99')).toBeInTheDocument();
+      expect(screen.queryByText('+497')).not.toBeInTheDocument();
+    });
+
+    it('does not show overflow when totalCount equals raters length', () => {
+      render(
+        <RecentRaters
+          raters={[makeRater(1), makeRater(2)]}
+          totalCount={2}
+        />,
+      );
+
+      expect(screen.queryByText(/\+/)).not.toBeInTheDocument();
+    });
+
+    it('does not show overflow when totalCount is not provided and raters <= 3', () => {
+      render(
+        <RecentRaters raters={[makeRater(1), makeRater(2), makeRater(3)]} />,
+      );
+
+      expect(screen.queryByText(/\+/)).not.toBeInTheDocument();
+    });
+  });
 });

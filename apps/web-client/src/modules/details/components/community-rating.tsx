@@ -42,7 +42,7 @@ export function CommunityRating({ averageRating, ratingCount, recentRaters }: Co
           {ratingCount} {pluralize(ratingCount, dict.details.communityRating.ratings)}
         </span>
       </div>
-      <RecentRaters raters={recentRaters ?? []} />
+      <RecentRaters raters={recentRaters ?? []} totalCount={ratingCount} />
     </div>
   );
 }
