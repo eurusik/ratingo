@@ -24,6 +24,8 @@ export const moviesFixture: MovieWithMedia[] = [
       popularityScore: 0.9,
       liveWatchers: null,
       totalWatchers: null,
+      communityAverageRating: null,
+      communityRatingCount: null,
     },
     externalRatings: {
       tmdb: { rating: 7, voteCount: 100 },
@@ -56,6 +58,8 @@ export const moviesFixture: MovieWithMedia[] = [
       popularityScore: 0.6,
       liveWatchers: null,
       totalWatchers: null,
+      communityAverageRating: null,
+      communityRatingCount: null,
     },
     externalRatings: {
       tmdb: { rating: 6.5, voteCount: 50 },
@@ -88,6 +92,8 @@ export const moviesFixture: MovieWithMedia[] = [
       popularityScore: 0.4,
       liveWatchers: null,
       totalWatchers: null,
+      communityAverageRating: null,
+      communityRatingCount: null,
     },
     externalRatings: {
       tmdb: { rating: 9.1, voteCount: 1000 },
@@ -123,6 +129,8 @@ export const moviesFixture: MovieWithMedia[] = [
       popularityScore: 0.2,
       liveWatchers: null,
       totalWatchers: null,
+      communityAverageRating: null,
+      communityRatingCount: null,
     },
     externalRatings: {
       tmdb: { rating: 4.1, voteCount: 5 },
