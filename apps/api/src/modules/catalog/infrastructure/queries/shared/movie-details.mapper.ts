@@ -53,6 +53,8 @@ export interface MovieDetailsQueryRow {
   popularityScore: number | null;
   watchersCount: number | null;
   totalWatchers: number | null;
+  communityAverageRating: number | null;
+  communityRatingCount: number | null;
 }
 
 /**
@@ -78,6 +80,8 @@ export function mapRatingoStats(row: MovieDetailsQueryRow) {
     popularityScore: row.popularityScore,
     liveWatchers: row.watchersCount,
     totalWatchers: row.totalWatchers,
+    communityAverageRating: row.communityAverageRating,
+    communityRatingCount: row.communityRatingCount,
   };
 }
 

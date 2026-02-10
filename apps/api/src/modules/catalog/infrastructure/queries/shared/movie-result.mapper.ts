@@ -40,6 +40,8 @@ export class MovieResultMapper {
         popularityScore: row.popularityScore,
         liveWatchers: row.watchersCount,
         totalWatchers: row.totalWatchers,
+        communityAverageRating: null,
+        communityRatingCount: null,
       },
       externalRatings: {
         tmdb: { rating: row.rating, voteCount: row.voteCount },

@@ -62,6 +62,8 @@ describe('movie-details.mapper', () => {
     popularityScore: 0.9,
     watchersCount: 100,
     totalWatchers: 500,
+    communityAverageRating: 78.5,
+    communityRatingCount: 42,
     ...overrides,
   });
 
@@ -105,6 +107,8 @@ describe('movie-details.mapper', () => {
         popularityScore: 0.9,
         liveWatchers: 100,
         totalWatchers: 500,
+        communityAverageRating: 78.5,
+        communityRatingCount: 42,
       });
     });
 
@@ -115,6 +119,8 @@ describe('movie-details.mapper', () => {
         popularityScore: null,
         watchersCount: null,
         totalWatchers: null,
+        communityAverageRating: null,
+        communityRatingCount: null,
       });
       const result = mapRatingoStats(row);
 
@@ -124,6 +130,8 @@ describe('movie-details.mapper', () => {
         popularityScore: null,
         liveWatchers: null,
         totalWatchers: null,
+        communityAverageRating: null,
+        communityRatingCount: null,
       });
     });
   });

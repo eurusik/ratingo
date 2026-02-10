@@ -39,6 +39,7 @@ export { RatingPresets } from './rating-presets';
 // Atomic components for Hero section
 export { RatingBadge } from './rating-badge';
 export { RatingoScore } from './ratingo-score';
+export { CommunityRating } from './community-rating';
 export { QualityBadge } from './quality-badge';
 export { PopularityBadge } from './popularity-badge';
 export { QuickPitchScroll } from './quick-pitch-scroll';

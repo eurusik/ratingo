@@ -45,12 +45,14 @@ export const SHOW_DETAILS_SELECT_FIELDS = {
   nextAirDate: schema.shows.nextAirDate,
   showId: schema.shows.id,
 
-  // Stats (5)
+  // Stats (7)
   ratingoScore: schema.mediaStats.ratingoScore,
   qualityScore: schema.mediaStats.qualityScore,
   popularityScore: schema.mediaStats.popularityScore,
   watchersCount: schema.mediaStats.watchersCount,
   totalWatchers: schema.mediaStats.totalWatchers,
+  communityAverageRating: schema.mediaStats.communityAverageRating,
+  communityRatingCount: schema.mediaStats.communityRatingCount,
 } as const;
 
 /**

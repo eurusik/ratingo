@@ -227,6 +227,14 @@
     "watchingNow": "interested now",
     "totalWatchers": "watched overall",
     "ratingSubtitle": "Aggregated quality score",
+    "communityRating": {
+      "label": "Community Rating",
+      "ratings": {
+        "one": "rating",
+        "few": "ratings",
+        "many": "ratings"
+      }
+    },
     "ratingTooltip": {
       "title": "Ratingo rating",
       "subtitle": "Quality × Relevance",

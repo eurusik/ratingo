@@ -14,7 +14,7 @@ import {
 
 /**
  * Raw row type from show details query.
- * Explicit types for all 32 fields to ensure type safety.
+ * Explicit types for all 34 fields to ensure type safety.
  */
 export interface ShowDetailsQueryRow {
   // Core media item fields (15)
@@ -50,12 +50,14 @@ export interface ShowDetailsQueryRow {
   nextAirDate: Date | null;
   showId: string;
 
-  // Stats (5)
+  // Stats (7)
   ratingoScore: number | null;
   qualityScore: number | null;
   popularityScore: number | null;
   watchersCount: number | null;
   totalWatchers: number | null;
+  communityAverageRating: number | null;
+  communityRatingCount: number | null;
 }
 
 /**
@@ -81,6 +83,8 @@ function mapRatingoStats(row: ShowDetailsQueryRow) {
     popularityScore: row.popularityScore,
     liveWatchers: row.watchersCount,
     totalWatchers: row.totalWatchers,
+    communityAverageRating: row.communityAverageRating,
+    communityRatingCount: row.communityRatingCount,
   };
 }
 

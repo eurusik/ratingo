@@ -6,6 +6,7 @@ import {
   StatsBackfillService,
   StatsQueryService,
 } from '../../application/services';
+import { CommunityRatingService } from '../../application/services/community-rating.service';
 import { getQueueToken } from '@nestjs/bullmq';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 import { StatsNotFoundException } from '@/common/exceptions';
@@ -14,6 +15,7 @@ describe('StatsController', () => {
   let controller: StatsController;
   let statsQueryService: jest.Mocked<StatsQueryService>;
   let dropOffService: jest.Mocked<DropOffService>;
+  let communityRatingService: jest.Mocked<CommunityRatingService>;
   let mockQueue: any;
 
   beforeEach(async () => {
@@ -34,6 +36,10 @@ describe('StatsController', () => {
       getAnalysis: jest.fn(),
     };
 
+    const mockCommunityRatingService = {
+      reconcileAll: jest.fn().mockResolvedValue({ updated: 0, reset: 0 }),
+    };
+
     mockQueue = {
       add: jest.fn().mockResolvedValue({ id: 'job-123' }),
     };
@@ -45,6 +51,7 @@ describe('StatsController', () => {
         { provide: ScoreRecalculationService, useValue: mockScoreRecalculationService },
         { provide: StatsBackfillService, useValue: mockStatsBackfillService },
         { provide: DropOffService, useValue: mockDropOffService },
+        { provide: CommunityRatingService, useValue: mockCommunityRatingService },
         { provide: getQueueToken(STATS_QUEUE), useValue: mockQueue },
       ],
     }).compile();
@@ -52,6 +59,7 @@ describe('StatsController', () => {
     controller = module.get<StatsController>(StatsController);
     statsQueryService = module.get(StatsQueryService);
     dropOffService = module.get(DropOffService);
+    communityRatingService = module.get(CommunityRatingService);
   });
 
   describe('syncTrendingStats', () => {
@@ -174,6 +182,33 @@ describe('StatsController', () => {
       expect(result).toEqual({
         message: 'No drop-off analysis available. Run POST /stats/drop-off/analyze/{tmdbId} first.',
         tmdbId: 12345,
+      });
+    });
+  });
+
+  describe('reconcileCommunityRatings', () => {
+    it('should call communityRatingService.reconcileAll and return result', async () => {
+      communityRatingService.reconcileAll.mockResolvedValue({ updated: 5, reset: 2 });
+
+      const result = await controller.reconcileCommunityRatings();
+
+      expect(result).toEqual({
+        message: 'Community ratings reconciliation complete',
+        updated: 5,
+        reset: 2,
+      });
+      expect(communityRatingService.reconcileAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return zero counts when nothing to reconcile', async () => {
+      communityRatingService.reconcileAll.mockResolvedValue({ updated: 0, reset: 0 });
+
+      const result = await controller.reconcileCommunityRatings();
+
+      expect(result).toEqual({
+        message: 'Community ratings reconciliation complete',
+        updated: 0,
+        reset: 0,
       });
     });
   });

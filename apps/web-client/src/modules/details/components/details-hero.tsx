@@ -12,6 +12,7 @@ import type { MediaType } from '@/shared/types';
 import { formatYear } from '@/shared/utils/format';
 import { HeroBackdrop } from './hero-backdrop';
 import { RatingoScore } from './ratingo-score';
+import { CommunityRating } from './community-rating';
 import { RatingPresets } from './rating-presets';
 
 export interface DetailsHeroProps {
@@ -85,6 +86,12 @@ export function DetailsHero({
               {/* Ratingo score + User rating */}
               <div className="space-y-3">
                 {rating != null && <RatingoScore score={rating} />}
+                {stats?.communityAverageRating != null && stats?.communityRatingCount != null && (
+                  <CommunityRating
+                    averageRating={stats.communityAverageRating}
+                    ratingCount={stats.communityRatingCount}
+                  />
+                )}
                 {mediaItemId && mediaType && (
                   <RatingPresets mediaItemId={mediaItemId} mediaType={mediaType} />
                 )}

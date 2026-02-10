@@ -7834,6 +7834,18 @@
             "example": 6423,
             "description": "Total unique watchers all time",
             "nullable": true
+          },
+          "communityAverageRating": {
+            "type": "number",
+            "example": 78.5,
+            "description": "Community average rating (0-100 scale)",
+            "nullable": true
+          },
+          "communityRatingCount": {
+            "type": "number",
+            "example": 1240,
+            "description": "Number of community ratings",
+            "nullable": true
           }
         }
       },

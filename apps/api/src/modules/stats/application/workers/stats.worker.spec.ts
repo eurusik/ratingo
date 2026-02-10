@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StatsWorker } from './stats.worker';
+import { CommunityRatingService } from '../services/community-rating.service';
 import { DropOffService, StatsBackfillService, TrendingSyncService } from '../services';
 import { STATS_JOBS } from '../../stats.constants';
 import { Job } from 'bullmq';
@@ -9,6 +10,7 @@ describe('StatsWorker', () => {
   let trendingSyncService: any;
   let statsBackfillService: any;
   let dropOffService: any;
+  let communityRatingService: any;
 
   beforeEach(async () => {
     trendingSyncService = {
@@ -24,12 +26,18 @@ describe('StatsWorker', () => {
       analyzeAllShows: jest.fn(),
     };
 
+    communityRatingService = {
+      recalculateForMediaItem: jest.fn(),
+      reconcileAll: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StatsWorker,
         { provide: TrendingSyncService, useValue: trendingSyncService },
         { provide: StatsBackfillService, useValue: statsBackfillService },
         { provide: DropOffService, useValue: dropOffService },
+        { provide: CommunityRatingService, useValue: communityRatingService },
       ],
     }).compile();
 
@@ -71,6 +79,13 @@ describe('StatsWorker', () => {
       const job = { name: STATS_JOBS.ANALYZE_DROP_OFF, data: {}, id: '5' } as Job;
       await worker.process(job);
       expect(dropOffService.analyzeAllShows).toHaveBeenCalledWith(50);
+    });
+
+    it('should process RECONCILE_COMMUNITY_RATINGS job', async () => {
+      communityRatingService.reconcileAll.mockResolvedValue({ updated: 10, reset: 0 });
+      const job = { name: STATS_JOBS.RECONCILE_COMMUNITY_RATINGS, data: {}, id: '8' } as Job;
+      await worker.process(job);
+      expect(communityRatingService.reconcileAll).toHaveBeenCalled();
     });
 
     it('should log warning for unknown job type', async () => {

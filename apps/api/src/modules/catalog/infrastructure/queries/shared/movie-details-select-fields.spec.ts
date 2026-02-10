@@ -44,14 +44,16 @@ describe('MOVIE_DETAILS_SELECT_FIELDS', () => {
         'popularityScore',
         'watchersCount',
         'totalWatchers',
+        'communityAverageRating',
+        'communityRatingCount',
       ];
 
       expect(selectFieldKeys).toEqual(expectedKeys.sort());
     });
 
-    it('should have exactly 32 fields', () => {
+    it('should have exactly 34 fields', () => {
       const fieldCount = Object.keys(MOVIE_DETAILS_SELECT_FIELDS).length;
-      expect(fieldCount).toBe(32);
+      expect(fieldCount).toBe(34);
     });
   });
 
@@ -117,6 +119,8 @@ describe('MOVIE_DETAILS_SELECT_FIELDS', () => {
         'popularityScore',
         'watchersCount',
         'totalWatchers',
+        'communityAverageRating',
+        'communityRatingCount',
       ];
 
       statsFields.forEach((field) => {

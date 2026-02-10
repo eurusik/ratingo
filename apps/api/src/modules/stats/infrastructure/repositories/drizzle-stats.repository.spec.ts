@@ -123,7 +123,14 @@ describe('DrizzleStatsRepository', () => {
   describe('findByMediaItemId', () => {
     it('should return stats if found', async () => {
       const mockResult = [
-        { mediaItemId: 'media-1', watchersCount: 100, trendingRank: 5, popularity24h: 50 },
+        {
+          mediaItemId: 'media-1',
+          watchersCount: 100,
+          trendingRank: 5,
+          popularity24h: 50,
+          communityAverageRating: 75.5,
+          communityRatingCount: 10,
+        },
       ];
       const mockDb = createMockDb({ resolveWith: mockResult });
 
@@ -140,6 +147,8 @@ describe('DrizzleStatsRepository', () => {
         watchersCount: 100,
         trendingRank: 5,
         popularity24h: 50,
+        communityAverageRating: 75.5,
+        communityRatingCount: 10,
       });
     });
 
@@ -159,7 +168,14 @@ describe('DrizzleStatsRepository', () => {
 
     it('should handle null values gracefully', async () => {
       const mockResult = [
-        { mediaItemId: 'media-1', watchersCount: null, trendingRank: null, popularity24h: null },
+        {
+          mediaItemId: 'media-1',
+          watchersCount: null,
+          trendingRank: null,
+          popularity24h: null,
+          communityAverageRating: null,
+          communityRatingCount: null,
+        },
       ];
       const mockDb = createMockDb({ resolveWith: mockResult });
 
@@ -176,6 +192,8 @@ describe('DrizzleStatsRepository', () => {
         watchersCount: 0,
         trendingRank: undefined,
         popularity24h: undefined,
+        communityAverageRating: undefined,
+        communityRatingCount: undefined,
       });
     });
 
@@ -195,7 +213,14 @@ describe('DrizzleStatsRepository', () => {
   describe('findByTmdbId', () => {
     it('should return stats if found', async () => {
       const mockResult = [
-        { mediaItemId: 'media-1', watchersCount: 200, trendingRank: 3, popularity24h: 80 },
+        {
+          mediaItemId: 'media-1',
+          watchersCount: 200,
+          trendingRank: 3,
+          popularity24h: 80,
+          communityAverageRating: 80,
+          communityRatingCount: 15,
+        },
       ];
       const mockDb = createMockDb({ resolveWith: mockResult });
 
@@ -212,6 +237,8 @@ describe('DrizzleStatsRepository', () => {
         watchersCount: 200,
         trendingRank: 3,
         popularity24h: 80,
+        communityAverageRating: 80,
+        communityRatingCount: 15,
       });
       expect(mockDb.select).toHaveBeenCalled();
     });
@@ -269,6 +296,37 @@ describe('DrizzleStatsRepository', () => {
       repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
 
       await expect(repository.updateTotalWatchers('media-1', 5000)).rejects.toThrow(
+        DatabaseException,
+      );
+    });
+  });
+
+  describe('updateCommunityRating', () => {
+    it('should upsert community rating successfully', async () => {
+      const mockDb = createMockDb();
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      await repository.updateCommunityRating('media-1', 42, 15);
+
+      // Should use INSERT ... ON CONFLICT (upsert pattern)
+      expect(mockDb.insert).toHaveBeenCalled();
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const mockDb = createMockDb({ rejectWith: new Error('DB Error') });
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      await expect(repository.updateCommunityRating('media-1', 42, 15)).rejects.toThrow(
         DatabaseException,
       );
     });

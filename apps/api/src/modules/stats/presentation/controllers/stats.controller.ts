@@ -13,6 +13,7 @@ import {
   StatsBackfillService,
   StatsQueryService,
 } from '../../application/services';
+import { CommunityRatingService } from '../../application/services/community-rating.service';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 import {
   BackfillTotalWatchersQueryDto,
@@ -43,6 +44,7 @@ export class StatsController {
     private readonly scoreRecalculationService: ScoreRecalculationService,
     private readonly statsBackfillService: StatsBackfillService,
     private readonly dropOffService: DropOffService,
+    private readonly communityRatingService: CommunityRatingService,
     @InjectQueue(STATS_QUEUE) private readonly statsQueue: Queue,
   ) {}
 
@@ -292,6 +294,26 @@ export class StatsController {
     return {
       message: `Score recalculation complete`,
       total: result.total,
+    };
+  }
+
+  // === COMMUNITY RATINGS ===
+
+  @Post('reconcile-community-ratings')
+  @ApiBearerAuth()
+  @UseGuards(AdminJwtGuard)
+  @ApiTags('Service: Stats')
+  @ApiOperation({
+    summary: 'Reconcile community ratings',
+    description:
+      'Aggregates all user ratings and updates community_average_rating / community_rating_count in media_stats.',
+  })
+  async reconcileCommunityRatings() {
+    const result = await this.communityRatingService.reconcileAll();
+
+    return {
+      message: 'Community ratings reconciliation complete',
+      ...result,
     };
   }
 }

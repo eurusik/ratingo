@@ -81,6 +81,8 @@ export class ShowResultMapper {
         popularityScore: row.popularity_score,
         liveWatchers: row.watchers_count,
         totalWatchers: row.total_watchers,
+        communityAverageRating: null,
+        communityRatingCount: null,
       },
       externalRatings: {
         tmdb: { rating: row.rating, voteCount: row.vote_count },

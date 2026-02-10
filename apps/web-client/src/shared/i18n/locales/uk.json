@@ -227,6 +227,14 @@
     "watchingNow": "цікавляться зараз",
     "totalWatchers": "дивились загалом",
     "ratingSubtitle": "Агрегована оцінка якості",
+    "communityRating": {
+      "label": "Оцінка спільноти",
+      "ratings": {
+        "one": "оцінка",
+        "few": "оцінки",
+        "many": "оцінок"
+      }
+    },
     "ratingTooltip": {
       "title": "Ratingo рейтинг",
       "subtitle": "Якість × Актуальність",

@@ -6,6 +6,7 @@ import { IngestionModule } from '../ingestion/ingestion.module';
 import { DropOffAnalyzerModule } from '../shared/drop-off-analyzer';
 import { ScoreCalculatorModule } from '../shared/score-calculator';
 
+import { CommunityRatingChangedListener } from './application/listeners/community-rating-changed.listener';
 import {
   DropOffService,
   ScoreRecalculationService,
@@ -13,8 +14,11 @@ import {
   StatsQueryService,
   TrendingSyncService,
 } from './application/services';
+import { CommunityRatingService } from './application/services/community-rating.service';
 import { StatsWorker } from './application/workers/stats.worker';
+import { COMMUNITY_RATING_AGGREGATION_PORT } from './domain/ports/community-rating-aggregation.port';
 import { STATS_REPOSITORY } from './domain/repositories/stats.repository.interface';
+import { CommunityRatingAggregationQuery } from './infrastructure/queries/community-rating-aggregation.query';
 import { DrizzleStatsRepository } from './infrastructure/repositories/drizzle-stats.repository';
 import { StatsController } from './presentation/controllers/stats.controller';
 import { STATS_QUEUE } from './stats.constants';
@@ -45,10 +49,16 @@ import { STATS_QUEUE } from './stats.constants';
     StatsBackfillService,
     StatsQueryService,
     DropOffService,
+    CommunityRatingService,
+    CommunityRatingChangedListener,
     StatsWorker,
     {
       provide: STATS_REPOSITORY,
       useClass: DrizzleStatsRepository,
+    },
+    {
+      provide: COMMUNITY_RATING_AGGREGATION_PORT,
+      useClass: CommunityRatingAggregationQuery,
     },
   ],
   exports: [TrendingSyncService, StatsQueryService, DropOffService, STATS_REPOSITORY],

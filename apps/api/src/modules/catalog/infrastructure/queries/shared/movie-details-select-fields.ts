@@ -51,6 +51,8 @@ export const MOVIE_DETAILS_SELECT_FIELDS = {
   popularityScore: schema.mediaStats.popularityScore,
   watchersCount: schema.mediaStats.watchersCount,
   totalWatchers: schema.mediaStats.totalWatchers,
+  communityAverageRating: schema.mediaStats.communityAverageRating,
+  communityRatingCount: schema.mediaStats.communityRatingCount,
 } as const;
 
 /**

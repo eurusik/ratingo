@@ -7,6 +7,7 @@ import { DEFAULT_BATCH_SIZE, MAX_PAGE_SIZE } from '../../../../common/constants'
 import { WORKER_CONFIG } from '../../../../config/queue.config';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 import { DropOffService, StatsBackfillService, TrendingSyncService } from '../services';
+import { CommunityRatingService } from '../services/community-rating.service';
 
 /**
  * Background worker for processing stats-related jobs.
@@ -25,6 +26,7 @@ export class StatsWorker extends WorkerHost {
     private readonly trendingSyncService: TrendingSyncService,
     private readonly statsBackfillService: StatsBackfillService,
     private readonly dropOffService: DropOffService,
+    private readonly communityRatingService: CommunityRatingService,
   ) {
     super();
   }
@@ -63,6 +65,10 @@ export class StatsWorker extends WorkerHost {
 
         case STATS_JOBS.BACKFILL_WATCHERS_CHUNK:
           await this.processBackfillChunk(job);
+          break;
+
+        case STATS_JOBS.RECONCILE_COMMUNITY_RATINGS:
+          await this.communityRatingService.reconcileAll();
           break;
 
         default:
