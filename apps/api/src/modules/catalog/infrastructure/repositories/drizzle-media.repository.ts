@@ -312,7 +312,13 @@ export class DrizzleMediaRepository implements IMediaRepository {
    * @throws {DatabaseException} If database transaction fails
    */
   async upsert(media: NormalizedMedia): Promise<void> {
-    const slug = await this.resolveSlug(media.type, media.slug, media.externalIds.tmdbId);
+    let slug: string;
+    try {
+      slug = await this.resolveSlug(media.type, media.slug, media.externalIds.tmdbId);
+    } catch (error) {
+      this.handleUpsertError(error, media);
+      return; // handleUpsertError always throws, but TS needs explicit return
+    }
 
     try {
       await this.upsertWithSlug(media, slug);

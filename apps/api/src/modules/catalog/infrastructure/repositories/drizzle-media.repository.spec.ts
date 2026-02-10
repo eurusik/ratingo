@@ -610,6 +610,20 @@ describe('DrizzleMediaRepository', () => {
         DatabaseException,
       );
     });
+
+    it('should throw DatabaseException when resolveSlug SELECT fails', async () => {
+      const selectChain = createThenable([], new Error('Connection refused'));
+      const mockDb = {
+        select: jest.fn().mockReturnValue(selectChain),
+        transaction: jest.fn(),
+      };
+      repository = await buildUpsertRepo(mockDb);
+
+      await expect(repository.upsert(baseMedia as NormalizedMedia)).rejects.toThrow(
+        DatabaseException,
+      );
+      expect(mockDb.transaction).not.toHaveBeenCalled();
+    });
   });
 
   describe('findEligibleForTrending', () => {
