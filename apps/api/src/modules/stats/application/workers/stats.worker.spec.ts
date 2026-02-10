@@ -82,7 +82,7 @@ describe('StatsWorker', () => {
     });
 
     it('should process RECONCILE_COMMUNITY_RATINGS job', async () => {
-      communityRatingService.reconcileAll.mockResolvedValue({ updated: 10 });
+      communityRatingService.reconcileAll.mockResolvedValue({ updated: 10, reset: 0 });
       const job = { name: STATS_JOBS.RECONCILE_COMMUNITY_RATINGS, data: {}, id: '8' } as Job;
       await worker.process(job);
       expect(communityRatingService.reconcileAll).toHaveBeenCalled();

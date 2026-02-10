@@ -55,11 +55,12 @@ export class CommunityRatingService {
 
   /**
    * Reconciles community ratings for all media items that have user ratings.
+   * Also resets stale ratings for items whose ratings were all deleted.
    * Intended for periodic batch reconciliation via background job.
    *
-   * @returns Object with the number of items updated
+   * @returns Object with the number of items updated and reset
    */
-  async reconcileAll(): Promise<{ updated: number }> {
+  async reconcileAll(): Promise<{ updated: number; reset: number }> {
     const allAggregations = await this.aggregationPort.aggregateAll();
 
     const stats = Array.from(allAggregations.entries()).map(([mediaItemId, agg]) => ({
@@ -72,7 +73,20 @@ export class CommunityRatingService {
       await this.statsRepository.bulkUpsert(stats);
     }
 
+    // Reset stale community ratings for items that no longer have any user ratings
+    const existingIds = await this.aggregationPort.findMediaItemIdsWithCommunityRatings();
+    const freshIds = new Set(allAggregations.keys());
+    const staleIds = existingIds.filter((id) => !freshIds.has(id));
+
+    for (const id of staleIds) {
+      await this.statsRepository.updateCommunityRating(id, 0, 0);
+    }
+
+    if (staleIds.length > 0) {
+      this.logger.log(`Reset stale community ratings for ${staleIds.length} media items`);
+    }
+
     this.logger.log(`Reconciled community ratings for ${stats.length} media items`);
-    return { updated: stats.length };
+    return { updated: stats.length, reset: staleIds.length };
   }
 }

@@ -20,6 +20,7 @@ describe('CommunityRatingService', () => {
     const mockAggregationPort: jest.Mocked<ICommunityRatingAggregationPort> = {
       aggregateForMediaItem: jest.fn(),
       aggregateAll: jest.fn(),
+      findMediaItemIdsWithCommunityRatings: jest.fn().mockResolvedValue([]),
     };
 
     const mockStatsRepository: jest.Mocked<IStatsRepository> = {
@@ -108,7 +109,7 @@ describe('CommunityRatingService', () => {
 
       const result = await service.reconcileAll();
 
-      expect(result).toEqual({ updated: 0 });
+      expect(result).toEqual({ updated: 0, reset: 0 });
       expect(statsRepository.bulkUpsert).not.toHaveBeenCalled();
     });
 
@@ -119,10 +120,15 @@ describe('CommunityRatingService', () => {
         ['media-3', { averageRating: 92, ratingCount: 100 }],
       ]);
       aggregationPort.aggregateAll.mockResolvedValue(aggregations);
+      aggregationPort.findMediaItemIdsWithCommunityRatings.mockResolvedValue([
+        'media-1',
+        'media-2',
+        'media-3',
+      ]);
 
       const result = await service.reconcileAll();
 
-      expect(result).toEqual({ updated: 3 });
+      expect(result).toEqual({ updated: 3, reset: 0 });
       expect(statsRepository.bulkUpsert).toHaveBeenCalledWith([
         { mediaItemId: 'media-1', communityAverageRating: 85.56, communityRatingCount: 20 },
         { mediaItemId: 'media-2', communityAverageRating: 60.12, communityRatingCount: 5 },
@@ -133,12 +139,41 @@ describe('CommunityRatingService', () => {
     it('should round averages to 2 decimal places in bulk', async () => {
       const aggregations = new Map([['media-1', { averageRating: 33.3333333, ratingCount: 3 }]]);
       aggregationPort.aggregateAll.mockResolvedValue(aggregations);
+      aggregationPort.findMediaItemIdsWithCommunityRatings.mockResolvedValue(['media-1']);
 
       await service.reconcileAll();
 
       expect(statsRepository.bulkUpsert).toHaveBeenCalledWith([
         { mediaItemId: 'media-1', communityAverageRating: 33.33, communityRatingCount: 3 },
       ]);
+    });
+
+    it('should reset stale community ratings for items with no remaining user ratings', async () => {
+      const aggregations = new Map([['media-1', { averageRating: 80, ratingCount: 5 }]]);
+      aggregationPort.aggregateAll.mockResolvedValue(aggregations);
+      aggregationPort.findMediaItemIdsWithCommunityRatings.mockResolvedValue([
+        'media-1',
+        'media-stale-1',
+        'media-stale-2',
+      ]);
+
+      const result = await service.reconcileAll();
+
+      expect(result).toEqual({ updated: 1, reset: 2 });
+      expect(statsRepository.updateCommunityRating).toHaveBeenCalledWith('media-stale-1', 0, 0);
+      expect(statsRepository.updateCommunityRating).toHaveBeenCalledWith('media-stale-2', 0, 0);
+      expect(statsRepository.updateCommunityRating).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not reset any ratings when all existing items have fresh ratings', async () => {
+      const aggregations = new Map([['media-1', { averageRating: 70, ratingCount: 3 }]]);
+      aggregationPort.aggregateAll.mockResolvedValue(aggregations);
+      aggregationPort.findMediaItemIdsWithCommunityRatings.mockResolvedValue(['media-1']);
+
+      const result = await service.reconcileAll();
+
+      expect(result).toEqual({ updated: 1, reset: 0 });
+      expect(statsRepository.updateCommunityRating).not.toHaveBeenCalled();
     });
   });
 });

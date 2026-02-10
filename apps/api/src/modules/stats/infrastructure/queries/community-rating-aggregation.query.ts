@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { isNotNull, eq, sql } from 'drizzle-orm';
+import { and, gt, isNotNull, eq, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { withDbError } from '@/common/utils/db-error.utils';
@@ -40,8 +40,12 @@ export class CommunityRatingAggregationQuery implements ICommunityRatingAggregat
             ratingCount: sql<number>`COUNT(${schema.userMediaState.rating})::int`,
           })
           .from(schema.userMediaState)
-          .where(eq(schema.userMediaState.mediaItemId, mediaItemId))
-          .having(sql`COUNT(${schema.userMediaState.rating}) > 0`);
+          .where(
+            and(
+              eq(schema.userMediaState.mediaItemId, mediaItemId),
+              isNotNull(schema.userMediaState.rating),
+            ),
+          );
 
         if (!result.length || result[0].ratingCount === 0) {
           return null;
@@ -82,6 +86,20 @@ export class CommunityRatingAggregationQuery implements ICommunityRatingAggregat
         }
       }
       return map;
+    });
+  }
+
+  /**
+   * Returns IDs of media items that currently have non-zero community ratings in media_stats.
+   */
+  async findMediaItemIdsWithCommunityRatings(): Promise<string[]> {
+    return withDbError('find media items with community ratings', this.logger, async () => {
+      const rows = await this.db
+        .select({ mediaItemId: schema.mediaStats.mediaItemId })
+        .from(schema.mediaStats)
+        .where(gt(schema.mediaStats.communityRatingCount, 0));
+
+      return rows.map((row) => row.mediaItemId);
     });
   }
 }

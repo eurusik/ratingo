@@ -15,6 +15,7 @@ describe('StatsController', () => {
   let controller: StatsController;
   let statsQueryService: jest.Mocked<StatsQueryService>;
   let dropOffService: jest.Mocked<DropOffService>;
+  let communityRatingService: jest.Mocked<CommunityRatingService>;
   let mockQueue: any;
 
   beforeEach(async () => {
@@ -36,7 +37,7 @@ describe('StatsController', () => {
     };
 
     const mockCommunityRatingService = {
-      reconcileAll: jest.fn().mockResolvedValue({ updated: 0 }),
+      reconcileAll: jest.fn().mockResolvedValue({ updated: 0, reset: 0 }),
     };
 
     mockQueue = {
@@ -58,6 +59,7 @@ describe('StatsController', () => {
     controller = module.get<StatsController>(StatsController);
     statsQueryService = module.get(StatsQueryService);
     dropOffService = module.get(DropOffService);
+    communityRatingService = module.get(CommunityRatingService);
   });
 
   describe('syncTrendingStats', () => {
@@ -180,6 +182,33 @@ describe('StatsController', () => {
       expect(result).toEqual({
         message: 'No drop-off analysis available. Run POST /stats/drop-off/analyze/{tmdbId} first.',
         tmdbId: 12345,
+      });
+    });
+  });
+
+  describe('reconcileCommunityRatings', () => {
+    it('should call communityRatingService.reconcileAll and return result', async () => {
+      communityRatingService.reconcileAll.mockResolvedValue({ updated: 5, reset: 2 });
+
+      const result = await controller.reconcileCommunityRatings();
+
+      expect(result).toEqual({
+        message: 'Community ratings reconciliation complete',
+        updated: 5,
+        reset: 2,
+      });
+      expect(communityRatingService.reconcileAll).toHaveBeenCalledTimes(1);
+    });
+
+    it('should return zero counts when nothing to reconcile', async () => {
+      communityRatingService.reconcileAll.mockResolvedValue({ updated: 0, reset: 0 });
+
+      const result = await controller.reconcileCommunityRatings();
+
+      expect(result).toEqual({
+        message: 'Community ratings reconciliation complete',
+        updated: 0,
+        reset: 0,
       });
     });
   });

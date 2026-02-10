@@ -27,4 +27,12 @@ export interface ICommunityRatingAggregationPort {
    * @returns Map of mediaItemId to aggregation result
    */
   aggregateAll(): Promise<Map<string, CommunityRatingAggregation>>;
+
+  /**
+   * Returns IDs of media items that currently have non-zero community ratings in media_stats.
+   * Used to detect stale ratings that should be reset during reconciliation.
+   *
+   * @returns Array of media item UUIDs
+   */
+  findMediaItemIdsWithCommunityRatings(): Promise<string[]>;
 }
