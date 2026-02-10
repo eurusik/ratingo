@@ -99,7 +99,7 @@ describe('movie-details.mapper', () => {
   describe('mapRatingoStats', () => {
     it('should map all stats fields', () => {
       const row = createMockRow();
-      const result = mapRatingoStats(row);
+      const result = mapRatingoStats(row, []);
 
       expect(result).toEqual({
         ratingoScore: 0.85,
@@ -109,6 +109,7 @@ describe('movie-details.mapper', () => {
         totalWatchers: 500,
         communityAverageRating: 78.5,
         communityRatingCount: 42,
+        recentRaters: [],
       });
     });
 
@@ -122,7 +123,7 @@ describe('movie-details.mapper', () => {
         communityAverageRating: null,
         communityRatingCount: null,
       });
-      const result = mapRatingoStats(row);
+      const result = mapRatingoStats(row, []);
 
       expect(result).toEqual({
         ratingoScore: null,
@@ -132,6 +133,7 @@ describe('movie-details.mapper', () => {
         totalWatchers: null,
         communityAverageRating: null,
         communityRatingCount: null,
+        recentRaters: [],
       });
     });
   });
@@ -252,6 +254,18 @@ describe('movie-details.mapper', () => {
         watchOffers,
         row.watchProvidersRaw,
       );
+    });
+
+    it('should include non-empty recentRaters in stats', () => {
+      const row = createMockRow();
+      const recentRaters = [
+        { userId: 'u1', username: 'alice', avatarUrl: 'https://example.com/alice.jpg' },
+        { userId: 'u2', username: 'bob', avatarUrl: null },
+      ];
+      const result = mapMovieDetails(row, genres, watchOffers, recentRaters);
+
+      expect(result.stats.recentRaters).toEqual(recentRaters);
+      expect(result.stats.recentRaters).toHaveLength(2);
     });
   });
 });

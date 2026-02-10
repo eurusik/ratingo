@@ -319,6 +319,19 @@ describe('show-details.mapper', () => {
       expect(result.lastAirDate).toBeNull();
       expect(result.nextAirDate).toBeNull();
     });
+
+    it('should include non-empty recentRaters in stats', () => {
+      const row = createMockRow();
+      const recentRaters = [
+        { userId: 'u1', username: 'alice', avatarUrl: 'https://example.com/alice.jpg' },
+        { userId: 'u2', username: 'bob', avatarUrl: null },
+      ];
+
+      const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers, recentRaters);
+
+      expect(result.stats.recentRaters).toEqual(recentRaters);
+      expect(result.stats.recentRaters).toHaveLength(2);
+    });
   });
 
   describe('ShowDetailsQueryRow', () => {

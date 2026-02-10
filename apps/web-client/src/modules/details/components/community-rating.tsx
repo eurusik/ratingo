@@ -5,16 +5,19 @@
 
 'use client';
 
+import type { components } from '@ratingo/api-contract';
 import { Star } from 'lucide-react';
 import { formatRating, pluralize } from '@/shared/utils';
 import { useTranslation } from '@/shared/i18n';
 import { COMMUNITY_RATING_MIN_THRESHOLD } from '../constants/community-rating';
 import { RecentRaters } from './recent-raters';
 
+type RecentRaterDto = components['schemas']['RecentRaterDto'];
+
 interface CommunityRatingProps {
   averageRating: number;
   ratingCount: number;
-  recentRaters?: Array<{ userId: string; username: string; avatarUrl: string | null }>;
+  recentRaters?: RecentRaterDto[];
 }
 
 export function CommunityRating({ averageRating, ratingCount, recentRaters }: CommunityRatingProps) {

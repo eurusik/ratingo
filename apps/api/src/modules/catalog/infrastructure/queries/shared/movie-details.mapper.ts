@@ -73,7 +73,7 @@ export function mapExternalRatings(row: MovieDetailsQueryRow) {
 /**
  * Maps Ratingo stats from raw row to structured RatingoStats object.
  */
-export function mapRatingoStats(row: MovieDetailsQueryRow) {
+export function mapRatingoStats(row: MovieDetailsQueryRow, recentRaters: RecentRater[]) {
   return {
     ratingoScore: row.ratingoScore,
     qualityScore: row.qualityScore,
@@ -82,6 +82,7 @@ export function mapRatingoStats(row: MovieDetailsQueryRow) {
     totalWatchers: row.totalWatchers,
     communityAverageRating: row.communityAverageRating,
     communityRatingCount: row.communityRatingCount,
+    recentRaters,
   };
 }
 
@@ -133,7 +134,7 @@ export function mapMovieDetails(
     theatricalReleaseDate: row.theatricalReleaseDate ?? null,
     digitalReleaseDate: row.digitalReleaseDate ?? null,
 
-    stats: { ...mapRatingoStats(row), recentRaters },
+    stats: mapRatingoStats(row, recentRaters),
     externalRatings: mapExternalRatings(row),
 
     genres,

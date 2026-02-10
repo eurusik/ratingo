@@ -162,13 +162,13 @@ describe('CommunityRating', () => {
       expect(screen.getByTestId('recent-raters')).toBeInTheDocument();
     });
 
-    it('does NOT render RecentRaters when recentRaters is undefined', () => {
+    it('passes empty array to RecentRaters when recentRaters is undefined', () => {
       render(<CommunityRating averageRating={80} ratingCount={10} />);
 
       expect(screen.getByTestId('recent-raters')).toHaveTextContent('0');
     });
 
-    it('does NOT render RecentRaters when recentRaters is empty array', () => {
+    it('passes empty array to RecentRaters when recentRaters is empty', () => {
       render(
         <CommunityRating
           averageRating={80}
