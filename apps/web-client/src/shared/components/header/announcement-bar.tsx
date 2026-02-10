@@ -31,9 +31,9 @@ const ANNOUNCEMENT_BAR_HEIGHT = 40; // px, matches py-1.5 + button height
  * `i18nKey` references the key in locales/uk.json and locales/en.json under "announcement".
  */
 const CURRENT_ANNOUNCEMENT = {
-  id: 'v2-tracking-2025-01',
-  i18nKey: 'tracking' as const,
-  href: '/journal/bilshe-ne-zahubyshsya-v-seriyakh' as Route,
+  id: 'v3-community-rating-2025-02',
+  i18nKey: 'communityRating' as const,
+  href: '/journal/u-ratingo-zyavylas-otsinka-spilnoty' as Route,
 };
 
 // Context to share announcement visibility with Header
@@ -121,7 +121,7 @@ export function AnnouncementBarProvider({
         >
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-center gap-3 py-1.5 text-sm">
-              <Bell className="h-4 w-4 shrink-0 text-cinema-400" aria-hidden="true" />
+              <Bell className="h-4 w-4 shrink-0 text-cinema-400 origin-top motion-safe:animate-bell-ring" aria-hidden="true" />
 
               <p className="truncate font-medium">{texts.message}</p>
 

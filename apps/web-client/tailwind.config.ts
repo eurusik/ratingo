@@ -143,6 +143,17 @@ export default {
   				'0%': { transform: 'scale(1)' },
   				'40%': { transform: 'scale(1.15)' },
   				'100%': { transform: 'scale(1)' }
+  			},
+  			'bell-ring': {
+  				'0%': { transform: 'rotate(0deg)' },
+  				'10%': { transform: 'rotate(14deg)' },
+  				'20%': { transform: 'rotate(-12deg)' },
+  				'30%': { transform: 'rotate(10deg)' },
+  				'40%': { transform: 'rotate(-8deg)' },
+  				'50%': { transform: 'rotate(6deg)' },
+  				'60%': { transform: 'rotate(-4deg)' },
+  				'70%': { transform: 'rotate(2deg)' },
+  				'80%, 100%': { transform: 'rotate(0deg)' }
   			}
   		},
   		animation: {
@@ -151,7 +162,8 @@ export default {
   			'vote-pop': 'vote-pop 0.3s ease-out',
   			'vote-burst': 'vote-burst 0.4s ease-out forwards',
   			'score-pulse': 'score-pulse 120ms ease-out',
-  			'score-commit': 'score-commit 200ms ease-out'
+  			'score-commit': 'score-commit 200ms ease-out',
+  			'bell-ring': 'bell-ring 0.8s ease-in-out 1s 2'
   		}
   	}
   },
