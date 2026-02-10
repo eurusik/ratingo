@@ -51,7 +51,6 @@ import { STATS_QUEUE } from './stats.constants';
     DropOffService,
     CommunityRatingService,
     CommunityRatingChangedListener,
-    CommunityRatingAggregationQuery,
     StatsWorker,
     {
       provide: STATS_REPOSITORY,

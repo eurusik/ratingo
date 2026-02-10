@@ -129,6 +129,8 @@ export class DrizzleStatsRepository implements IStatsRepository {
           watchersCount: result[0].watchersCount ?? 0,
           trendingRank: result[0].trendingRank ?? undefined,
           popularity24h: result[0].popularity24h ?? undefined,
+          communityAverageRating: result[0].communityAverageRating ?? undefined,
+          communityRatingCount: result[0].communityRatingCount ?? undefined,
         };
       },
       { mediaItemId },
@@ -146,6 +148,8 @@ export class DrizzleStatsRepository implements IStatsRepository {
             watchersCount: schema.mediaStats.watchersCount,
             trendingRank: schema.mediaStats.trendingRank,
             popularity24h: schema.mediaStats.popularity24h,
+            communityAverageRating: schema.mediaStats.communityAverageRating,
+            communityRatingCount: schema.mediaStats.communityRatingCount,
           })
           .from(schema.mediaStats)
           .innerJoin(schema.mediaItems, eq(schema.mediaStats.mediaItemId, schema.mediaItems.id))
@@ -159,6 +163,8 @@ export class DrizzleStatsRepository implements IStatsRepository {
           watchersCount: result[0].watchersCount ?? 0,
           trendingRank: result[0].trendingRank ?? undefined,
           popularity24h: result[0].popularity24h ?? undefined,
+          communityAverageRating: result[0].communityAverageRating ?? undefined,
+          communityRatingCount: result[0].communityRatingCount ?? undefined,
         };
       },
       { tmdbId },

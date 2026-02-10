@@ -229,7 +229,11 @@
     "ratingSubtitle": "Aggregated quality score",
     "communityRating": {
       "label": "Community Rating",
-      "ratings": "ratings"
+      "ratings": {
+        "one": "rating",
+        "few": "ratings",
+        "many": "ratings"
+      }
     },
     "ratingTooltip": {
       "title": "Ratingo rating",

@@ -6,7 +6,7 @@
 'use client';
 
 import { Star } from 'lucide-react';
-import { formatRating } from '@/shared/utils/format';
+import { formatRating, pluralize } from '@/shared/utils';
 import { useTranslation } from '@/shared/i18n';
 import { COMMUNITY_RATING_MIN_THRESHOLD } from '../constants/community-rating';
 
@@ -33,7 +33,7 @@ export function CommunityRating({ averageRating, ratingCount }: CommunityRatingP
       </span>
       <span className="text-cinema-text-muted/50 text-[10px]">&middot;</span>
       <span className="text-[10px] text-cinema-text-muted/70">
-        {ratingCount} {dict.details.communityRating.ratings}
+        {ratingCount} {pluralize(ratingCount, dict.details.communityRating.ratings)}
       </span>
     </div>
   );

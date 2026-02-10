@@ -160,9 +160,10 @@ describe('CommunityRatingService', () => {
       const result = await service.reconcileAll();
 
       expect(result).toEqual({ updated: 1, reset: 2 });
-      expect(statsRepository.updateCommunityRating).toHaveBeenCalledWith('media-stale-1', 0, 0);
-      expect(statsRepository.updateCommunityRating).toHaveBeenCalledWith('media-stale-2', 0, 0);
-      expect(statsRepository.updateCommunityRating).toHaveBeenCalledTimes(2);
+      expect(statsRepository.bulkUpsert).toHaveBeenCalledWith([
+        { mediaItemId: 'media-stale-1', communityAverageRating: 0, communityRatingCount: 0 },
+        { mediaItemId: 'media-stale-2', communityAverageRating: 0, communityRatingCount: 0 },
+      ]);
     });
 
     it('should not reset any ratings when all existing items have fresh ratings', async () => {
@@ -173,7 +174,8 @@ describe('CommunityRatingService', () => {
       const result = await service.reconcileAll();
 
       expect(result).toEqual({ updated: 1, reset: 0 });
-      expect(statsRepository.updateCommunityRating).not.toHaveBeenCalled();
+      // bulkUpsert called only once (for fresh items), no second call for stale resets
+      expect(statsRepository.bulkUpsert).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -14,7 +14,7 @@ import {
 
 /**
  * Raw row type from show details query.
- * Explicit types for all 32 fields to ensure type safety.
+ * Explicit types for all 34 fields to ensure type safety.
  */
 export interface ShowDetailsQueryRow {
   // Core media item fields (15)

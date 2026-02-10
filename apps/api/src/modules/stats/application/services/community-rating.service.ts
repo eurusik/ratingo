@@ -78,11 +78,14 @@ export class CommunityRatingService {
     const freshIds = new Set(allAggregations.keys());
     const staleIds = existingIds.filter((id) => !freshIds.has(id));
 
-    for (const id of staleIds) {
-      await this.statsRepository.updateCommunityRating(id, 0, 0);
-    }
-
     if (staleIds.length > 0) {
+      await this.statsRepository.bulkUpsert(
+        staleIds.map((mediaItemId) => ({
+          mediaItemId,
+          communityAverageRating: 0,
+          communityRatingCount: 0,
+        })),
+      );
       this.logger.log(`Reset stale community ratings for ${staleIds.length} media items`);
     }
 

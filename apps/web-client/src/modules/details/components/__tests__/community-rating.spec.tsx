@@ -19,7 +19,11 @@ jest.mock('@/shared/i18n', () => ({
       details: {
         communityRating: {
           label: 'Community Rating',
-          ratings: 'ratings',
+          ratings: {
+            one: 'rating',
+            few: 'ratings',
+            many: 'ratings',
+          },
         },
       },
     },
