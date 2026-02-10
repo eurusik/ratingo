@@ -39,6 +39,15 @@ export interface ExternalRatings {
 }
 
 /**
+ * A user who recently rated a media item (public profile only).
+ */
+export interface RecentRater {
+  userId: string;
+  username: string;
+  avatarUrl: string | null;
+}
+
+/**
  * Ratingo stats for media items.
  */
 export interface RatingoStats {
@@ -49,6 +58,7 @@ export interface RatingoStats {
   totalWatchers: number | null;
   communityAverageRating: number | null;
   communityRatingCount: number | null;
+  recentRaters?: RecentRater[];
 }
 
 /**

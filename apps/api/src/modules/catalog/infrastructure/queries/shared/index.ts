@@ -22,3 +22,4 @@ export * from './media-item-result.mapper';
 export * from './corrupted-watchers-conditions.builder';
 export * from './snapshot-conditions.builder';
 export * from './hero-candidates-conditions.builder';
+export * from './recent-raters.query';

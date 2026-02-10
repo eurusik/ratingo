@@ -48,7 +48,16 @@ describe('MovieDetailsQuery', () => {
       }),
     };
 
-    query = new MovieDetailsQuery(db as any, mockGenreQuery as any, mockWatchOffersQuery as any);
+    const mockRecentRatersQuery = {
+      fetchForMediaItem: jest.fn().mockResolvedValue([]),
+    };
+
+    query = new MovieDetailsQuery(
+      db as any,
+      mockGenreQuery as any,
+      mockWatchOffersQuery as any,
+      mockRecentRatersQuery as any,
+    );
   };
 
   // Simple thenable chain for select/from/where/innerJoin/leftJoin/limit

@@ -5,7 +5,7 @@ import {
   type ShowDetails,
   type SeasonInfo,
 } from '../../../domain/repositories/show.repository.interface';
-import { type GenreInfo } from '../../../domain/types/common.types';
+import { type GenreInfo, type RecentRater } from '../../../domain/types/common.types';
 import { CreditsMapper } from '../../mappers/credits.mapper';
 import {
   MediaWatchOffersMapper,
@@ -76,7 +76,7 @@ function mapExternalRatings(row: ShowDetailsQueryRow) {
 /**
  * Maps Ratingo stats from raw row to structured RatingoStats object.
  */
-function mapRatingoStats(row: ShowDetailsQueryRow) {
+function mapRatingoStats(row: ShowDetailsQueryRow, recentRaters: RecentRater[]) {
   return {
     ratingoScore: row.ratingoScore,
     qualityScore: row.qualityScore,
@@ -85,6 +85,7 @@ function mapRatingoStats(row: ShowDetailsQueryRow) {
     totalWatchers: row.totalWatchers,
     communityAverageRating: row.communityAverageRating,
     communityRatingCount: row.communityRatingCount,
+    recentRaters,
   };
 }
 
@@ -110,6 +111,7 @@ export function mapShowDetails(
   genres: GenreInfo[],
   seasons: SeasonInfo[],
   watchOffers: WatchOfferRow[],
+  recentRaters: RecentRater[],
 ): ShowDetails {
   return {
     id: row.id,
@@ -137,7 +139,7 @@ export function mapShowDetails(
     lastAirDate: row.lastAirDate,
     nextAirDate: row.nextAirDate,
 
-    stats: mapRatingoStats(row),
+    stats: mapRatingoStats(row, recentRaters),
     externalRatings: mapExternalRatings(row),
 
     genres,

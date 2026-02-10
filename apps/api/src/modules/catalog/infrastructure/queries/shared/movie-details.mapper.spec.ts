@@ -99,7 +99,7 @@ describe('movie-details.mapper', () => {
   describe('mapRatingoStats', () => {
     it('should map all stats fields', () => {
       const row = createMockRow();
-      const result = mapRatingoStats(row);
+      const result = mapRatingoStats(row, []);
 
       expect(result).toEqual({
         ratingoScore: 0.85,
@@ -109,6 +109,7 @@ describe('movie-details.mapper', () => {
         totalWatchers: 500,
         communityAverageRating: 78.5,
         communityRatingCount: 42,
+        recentRaters: [],
       });
     });
 
@@ -122,7 +123,7 @@ describe('movie-details.mapper', () => {
         communityAverageRating: null,
         communityRatingCount: null,
       });
-      const result = mapRatingoStats(row);
+      const result = mapRatingoStats(row, []);
 
       expect(result).toEqual({
         ratingoScore: null,
@@ -132,6 +133,7 @@ describe('movie-details.mapper', () => {
         totalWatchers: null,
         communityAverageRating: null,
         communityRatingCount: null,
+        recentRaters: [],
       });
     });
   });
@@ -146,7 +148,7 @@ describe('movie-details.mapper', () => {
 
     it('should map complete movie details', () => {
       const row = createMockRow();
-      const result = mapMovieDetails(row, genres, watchOffers);
+      const result = mapMovieDetails(row, genres, watchOffers, []);
 
       expect(result.id).toBe('m1');
       expect(result.tmdbId).toBe(101);
@@ -164,21 +166,21 @@ describe('movie-details.mapper', () => {
 
     it('should extract primary trailer from videos', () => {
       const row = createMockRow({ videos: [{ key: 'trailer1' }, { key: 'trailer2' }] });
-      const result = mapMovieDetails(row, genres, watchOffers);
+      const result = mapMovieDetails(row, genres, watchOffers, []);
 
       expect(result.primaryTrailer).toEqual({ key: 'trailer1' });
     });
 
     it('should handle empty videos array', () => {
       const row = createMockRow({ videos: [] });
-      const result = mapMovieDetails(row, genres, watchOffers);
+      const result = mapMovieDetails(row, genres, watchOffers, []);
 
       expect(result.primaryTrailer).toBeNull();
     });
 
     it('should handle null videos', () => {
       const row = createMockRow({ videos: null });
-      const result = mapMovieDetails(row, genres, watchOffers);
+      const result = mapMovieDetails(row, genres, watchOffers, []);
 
       expect(result.primaryTrailer).toBeNull();
     });
@@ -186,7 +188,7 @@ describe('movie-details.mapper', () => {
     it('should use releaseDate when available', () => {
       const releaseDate = new Date('2024-01-01');
       const row = createMockRow({ releaseDate });
-      const result = mapMovieDetails(row, genres, watchOffers);
+      const result = mapMovieDetails(row, genres, watchOffers, []);
 
       expect(result.releaseDate).toEqual(releaseDate);
     });
@@ -194,14 +196,14 @@ describe('movie-details.mapper', () => {
     it('should fallback to theatricalReleaseDate when releaseDate is null', () => {
       const theatricalReleaseDate = new Date('2024-01-15');
       const row = createMockRow({ releaseDate: null, theatricalReleaseDate });
-      const result = mapMovieDetails(row, genres, watchOffers);
+      const result = mapMovieDetails(row, genres, watchOffers, []);
 
       expect(result.releaseDate).toEqual(theatricalReleaseDate);
     });
 
     it('should return null releaseDate when both are null', () => {
       const row = createMockRow({ releaseDate: null, theatricalReleaseDate: null });
-      const result = mapMovieDetails(row, genres, watchOffers);
+      const result = mapMovieDetails(row, genres, watchOffers, []);
 
       expect(result.releaseDate).toBeNull();
     });
@@ -217,7 +219,7 @@ describe('movie-details.mapper', () => {
         theatricalReleaseDate: null,
         digitalReleaseDate: null,
       });
-      const result = mapMovieDetails(row, genres, watchOffers);
+      const result = mapMovieDetails(row, genres, watchOffers, []);
 
       expect(result.originalTitle).toBeNull();
       expect(result.overview).toBeNull();
@@ -231,7 +233,7 @@ describe('movie-details.mapper', () => {
 
     it('should call ImageMapper for poster and backdrop', () => {
       const row = createMockRow();
-      mapMovieDetails(row, genres, watchOffers);
+      mapMovieDetails(row, genres, watchOffers, []);
 
       expect(ImageMapper.toPoster).toHaveBeenCalledWith('/poster.jpg');
       expect(ImageMapper.toBackdrop).toHaveBeenCalledWith('/backdrop.jpg');
@@ -239,19 +241,31 @@ describe('movie-details.mapper', () => {
 
     it('should call CreditsMapper.toDto', () => {
       const row = createMockRow();
-      mapMovieDetails(row, genres, watchOffers);
+      mapMovieDetails(row, genres, watchOffers, []);
 
       expect(CreditsMapper.toDto).toHaveBeenCalledWith(row.credits);
     });
 
     it('should call MediaWatchOffersMapper.toAvailability', () => {
       const row = createMockRow();
-      mapMovieDetails(row, genres, watchOffers);
+      mapMovieDetails(row, genres, watchOffers, []);
 
       expect(MediaWatchOffersMapper.toAvailability).toHaveBeenCalledWith(
         watchOffers,
         row.watchProvidersRaw,
       );
+    });
+
+    it('should include non-empty recentRaters in stats', () => {
+      const row = createMockRow();
+      const recentRaters = [
+        { userId: 'u1', username: 'alice', avatarUrl: 'https://example.com/alice.jpg' },
+        { userId: 'u2', username: 'bob', avatarUrl: null },
+      ];
+      const result = mapMovieDetails(row, genres, watchOffers, recentRaters);
+
+      expect(result.stats.recentRaters).toEqual(recentRaters);
+      expect(result.stats.recentRaters).toHaveLength(2);
     });
   });
 });

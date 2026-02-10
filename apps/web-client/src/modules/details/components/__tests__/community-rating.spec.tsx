@@ -13,6 +13,12 @@ import { COMMUNITY_RATING_MIN_THRESHOLD } from '../../constants/community-rating
 // Mocks
 // ---------------------------------------------------------------------------
 
+jest.mock('../recent-raters', () => ({
+  RecentRaters: (props: { raters: unknown[] }) => (
+    <div data-testid="recent-raters">{props.raters.length}</div>
+  ),
+}));
+
 jest.mock('@/shared/i18n', () => ({
   useTranslation: () => ({
     dict: {
@@ -134,6 +140,44 @@ describe('CommunityRating', () => {
 
       const svg = container.querySelector('svg');
       expect(svg).toBeInTheDocument();
+    });
+  });
+
+  // =========================================================================
+  // RecentRaters integration
+  // =========================================================================
+
+  describe('RecentRaters integration', () => {
+    it('renders RecentRaters when recentRaters prop is provided', () => {
+      render(
+        <CommunityRating
+          averageRating={80}
+          ratingCount={10}
+          recentRaters={[
+            { userId: 'u1', username: 'alice', avatarUrl: null },
+          ]}
+        />,
+      );
+
+      expect(screen.getByTestId('recent-raters')).toBeInTheDocument();
+    });
+
+    it('passes empty array to RecentRaters when recentRaters is undefined', () => {
+      render(<CommunityRating averageRating={80} ratingCount={10} />);
+
+      expect(screen.getByTestId('recent-raters')).toHaveTextContent('0');
+    });
+
+    it('passes empty array to RecentRaters when recentRaters is empty', () => {
+      render(
+        <CommunityRating
+          averageRating={80}
+          ratingCount={10}
+          recentRaters={[]}
+        />,
+      );
+
+      expect(screen.getByTestId('recent-raters')).toHaveTextContent('0');
     });
   });
 });

@@ -90,6 +90,7 @@ export function DetailsHero({
                   <CommunityRating
                     averageRating={stats.communityAverageRating}
                     ratingCount={stats.communityRatingCount}
+                    recentRaters={stats.recentRaters}
                   />
                 )}
                 {mediaItemId && mediaType && (

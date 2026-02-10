@@ -64,7 +64,16 @@ describe('ShowDetailsQuery', () => {
       }),
     };
 
-    query = new ShowDetailsQuery(db as any, mockGenreQuery as any, mockWatchOffersQuery as any);
+    const mockRecentRatersQuery = {
+      fetchForMediaItem: jest.fn().mockResolvedValue([]),
+    };
+
+    query = new ShowDetailsQuery(
+      db as any,
+      mockGenreQuery as any,
+      mockWatchOffersQuery as any,
+      mockRecentRatersQuery as any,
+    );
   };
 
   it('should map show details with genres and seasons', async () => {

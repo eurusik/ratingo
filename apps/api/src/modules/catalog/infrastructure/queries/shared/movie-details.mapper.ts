@@ -2,7 +2,7 @@ import { type IngestionStatus } from '../../../../../common/enums/ingestion-stat
 import { type MovieStatus } from '../../../../../common/enums/movie-status.enum';
 import { ImageMapper } from '../../../../../common/mappers/image.mapper';
 import { type MovieDetails } from '../../../domain/repositories/movie.repository.interface';
-import { type GenreInfo } from '../../../domain/types/common.types';
+import { type GenreInfo, type RecentRater } from '../../../domain/types/common.types';
 import { CreditsMapper } from '../../mappers/credits.mapper';
 import {
   MediaWatchOffersMapper,
@@ -73,7 +73,7 @@ export function mapExternalRatings(row: MovieDetailsQueryRow) {
 /**
  * Maps Ratingo stats from raw row to structured RatingoStats object.
  */
-export function mapRatingoStats(row: MovieDetailsQueryRow) {
+export function mapRatingoStats(row: MovieDetailsQueryRow, recentRaters: RecentRater[]) {
   return {
     ratingoScore: row.ratingoScore,
     qualityScore: row.qualityScore,
@@ -82,6 +82,7 @@ export function mapRatingoStats(row: MovieDetailsQueryRow) {
     totalWatchers: row.totalWatchers,
     communityAverageRating: row.communityAverageRating,
     communityRatingCount: row.communityRatingCount,
+    recentRaters,
   };
 }
 
@@ -105,6 +106,7 @@ export function mapMovieDetails(
   row: MovieDetailsQueryRow,
   genres: GenreInfo[],
   watchOffers: WatchOfferRow[],
+  recentRaters: RecentRater[],
 ): MovieDetails {
   return {
     id: row.id,
@@ -132,7 +134,7 @@ export function mapMovieDetails(
     theatricalReleaseDate: row.theatricalReleaseDate ?? null,
     digitalReleaseDate: row.digitalReleaseDate ?? null,
 
-    stats: mapRatingoStats(row),
+    stats: mapRatingoStats(row, recentRaters),
     externalRatings: mapExternalRatings(row),
 
     genres,

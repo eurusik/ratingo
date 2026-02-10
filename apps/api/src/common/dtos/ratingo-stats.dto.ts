@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { RecentRaterDto } from './recent-rater.dto';
+
 /**
  * Ratingo platform statistics DTO.
  * Used across modules for displaying platform-specific metrics.
@@ -60,4 +62,11 @@ export class RatingoStatsDto {
     nullable: true,
   })
   communityRatingCount?: number | null;
+
+  @ApiProperty({
+    type: [RecentRaterDto],
+    required: false,
+    description: 'Up to 3 most recent public raters',
+  })
+  recentRaters?: RecentRaterDto[];
 }
