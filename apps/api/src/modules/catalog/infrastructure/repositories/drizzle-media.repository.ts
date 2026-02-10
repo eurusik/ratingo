@@ -178,7 +178,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           target: [schema.mediaItems.type, schema.mediaItems.tmdbId], // Composite key: type + tmdb_id
           set: {
             title: payload.title,
-            slug: payload.slug,
+            // slug intentionally omitted: preserve collision-resolved slugs (e.g., "sandwich-200")
             ingestionStatus: payload.ingestionStatus,
             updatedAt: new Date(),
           },
@@ -306,19 +306,28 @@ export class DrizzleMediaRepository implements IMediaRepository {
    * Performs a full transactional upsert of a media item.
    * Updates base table, type-specific details, and syncs genres.
    *
-   * Handles slug collision by retrying with unique slug (appends tmdbId).
+   * Proactively resolves slug collisions before INSERT to avoid PG errors.
+   * Keeps catch-and-retry as safety net for race conditions.
    *
    * @throws {DatabaseException} If database transaction fails
    */
   async upsert(media: NormalizedMedia): Promise<void> {
+    const slug = await this.resolveSlug(media.type, media.slug, media.externalIds.tmdbId);
+
     try {
-      await this.upsertWithSlug(media, media.slug);
+      await this.upsertWithSlug(media, slug);
     } catch (error: unknown) {
-      // Check if it's a slug collision - retry with unique slug
+      // Safety net for race conditions: another process took the slug between check and INSERT
       if (isSlugCollision(error, DB_CONSTRAINT.MEDIA_TYPE_SLUG)) {
-        const retrySlug = createRetrySlug(media.slug, media.externalIds.tmdbId);
+        const retrySlug = createRetrySlug(slug, media.externalIds.tmdbId);
+
+        // Guard: if retry produces the same slug, we can't recover
+        if (retrySlug === slug) {
+          this.handleUpsertError(error, media);
+        }
+
         this.logger.warn(
-          `Slug collision for "${media.slug}", retrying with "${retrySlug}" (tmdbId: ${media.externalIds.tmdbId})`,
+          `Slug collision race condition for "${slug}", retrying with "${retrySlug}" (tmdbId: ${media.externalIds.tmdbId})`,
         );
         await this.upsertWithSlug(media, retrySlug);
         return;
@@ -327,6 +336,36 @@ export class DrizzleMediaRepository implements IMediaRepository {
       // Not a slug collision - handle as regular error
       this.handleUpsertError(error, media);
     }
+  }
+
+  /**
+   * Proactively checks if slug is taken by a different media item.
+   * Returns unique slug (with tmdbId suffix) if collision detected, original slug otherwise.
+   */
+  private async resolveSlug(
+    type: MediaType,
+    slug: string | undefined,
+    tmdbId: number,
+  ): Promise<string> {
+    if (!slug) return createRetrySlug(undefined, tmdbId);
+
+    const existing = await this.db
+      .select({ tmdbId: schema.mediaItems.tmdbId })
+      .from(schema.mediaItems)
+      .where(and(eq(schema.mediaItems.type, type), eq(schema.mediaItems.slug, slug)))
+      .limit(1);
+
+    // Slug is free, or belongs to the same item (re-sync)
+    if (!existing[0] || existing[0].tmdbId === tmdbId) {
+      return slug;
+    }
+
+    // Slug taken by different item — use unique slug
+    const uniqueSlug = generateUniqueSlug(slug, tmdbId);
+    this.logger.log(
+      `Slug "${slug}" taken by tmdbId ${existing[0].tmdbId}, using "${uniqueSlug}" for tmdbId ${tmdbId}`,
+    );
+    return uniqueSlug;
   }
 
   /**
