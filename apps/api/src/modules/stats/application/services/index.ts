@@ -1,3 +1,4 @@
+export { CommunityRatingService } from './community-rating.service';
 export { DropOffService } from './drop-off.service';
 export { ScoreRecalculationService } from './score-recalculation.service';
 export { StatsBackfillService } from './stats-backfill.service';

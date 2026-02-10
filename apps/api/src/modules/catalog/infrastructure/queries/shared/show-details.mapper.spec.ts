@@ -65,6 +65,8 @@ describe('show-details.mapper', () => {
     popularityScore: 85,
     watchersCount: 500,
     totalWatchers: 10000,
+    communityAverageRating: 75.2,
+    communityRatingCount: 123,
     ...overrides,
   });
 
@@ -144,6 +146,8 @@ describe('show-details.mapper', () => {
         popularityScore: 85,
         liveWatchers: 500,
         totalWatchers: 10000,
+        communityAverageRating: 75.2,
+        communityRatingCount: 123,
       });
     });
 
@@ -279,6 +283,8 @@ describe('show-details.mapper', () => {
         popularityScore: null,
         watchersCount: null,
         totalWatchers: null,
+        communityAverageRating: null,
+        communityRatingCount: null,
       });
 
       const result = mapShowDetails(row, mockGenres, mockSeasons, mockWatchOffers);
@@ -289,6 +295,8 @@ describe('show-details.mapper', () => {
         popularityScore: null,
         liveWatchers: null,
         totalWatchers: null,
+        communityAverageRating: null,
+        communityRatingCount: null,
       });
     });
 
@@ -347,6 +355,8 @@ describe('show-details.mapper', () => {
         popularityScore: null,
         watchersCount: null,
         totalWatchers: null,
+        communityAverageRating: null,
+        communityRatingCount: null,
       };
 
       expect(mockRow.id).toBe('test-id');

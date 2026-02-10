@@ -99,6 +99,13 @@
       "when": 1768930461185,
       "tag": "0013_pale_manta",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1770710139694,
+      "tag": "0014_happy_genesis",
+      "breakpoints": true
     }
   ]
 }

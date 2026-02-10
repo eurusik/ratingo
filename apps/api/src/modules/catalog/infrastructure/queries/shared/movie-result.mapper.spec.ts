@@ -68,6 +68,8 @@ describe('MovieResultMapper', () => {
         popularityScore: 70,
         liveWatchers: 1000,
         totalWatchers: 50000,
+        communityAverageRating: null,
+        communityRatingCount: null,
       });
     });
 

@@ -189,6 +189,8 @@ describe('ShowResultMapper', () => {
         popularityScore: 85,
         liveWatchers: 500,
         totalWatchers: 10000,
+        communityAverageRating: null,
+        communityRatingCount: null,
       });
     });
 
@@ -337,6 +339,8 @@ describe('ShowResultMapper', () => {
         popularityScore: null,
         liveWatchers: null,
         totalWatchers: null,
+        communityAverageRating: null,
+        communityRatingCount: null,
       });
     });
   });

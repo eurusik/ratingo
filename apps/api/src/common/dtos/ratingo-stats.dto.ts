@@ -44,4 +44,20 @@ export class RatingoStatsDto {
     nullable: true,
   })
   totalWatchers?: number | null;
+
+  @ApiProperty({
+    example: 78.5,
+    description: 'Community average rating (0-100 scale)',
+    required: false,
+    nullable: true,
+  })
+  communityAverageRating?: number | null;
+
+  @ApiProperty({
+    example: 1240,
+    description: 'Number of community ratings',
+    required: false,
+    nullable: true,
+  })
+  communityRatingCount?: number | null;
 }

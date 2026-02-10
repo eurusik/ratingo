@@ -2273,6 +2273,16 @@ export interface components {
              * @example 6423
              */
             totalWatchers?: number | null;
+            /**
+             * @description Community average rating (0-100 scale)
+             * @example 78.5
+             */
+            communityAverageRating?: number | null;
+            /**
+             * @description Number of community ratings
+             * @example 1240
+             */
+            communityRatingCount?: number | null;
         };
         ExternalRatingItemDto: {
             /** @example 8.8 */

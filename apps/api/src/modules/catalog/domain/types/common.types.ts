@@ -47,6 +47,8 @@ export interface RatingoStats {
   popularityScore: number | null;
   liveWatchers: number | null;
   totalWatchers: number | null;
+  communityAverageRating: number | null;
+  communityRatingCount: number | null;
 }
 
 /**

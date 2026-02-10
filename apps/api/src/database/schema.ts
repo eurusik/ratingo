@@ -218,6 +218,10 @@ export const mediaStats = pgTable(
     popularityScore: doublePrecision('popularity_score'), // Popularity-based component
     freshnessScore: doublePrecision('freshness_score'), // Time-based component
 
+    // Community ratings (aggregated from user_media_state)
+    communityAverageRating: doublePrecision('community_average_rating'),
+    communityRatingCount: integer('community_rating_count').default(0),
+
     // Timestamps
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

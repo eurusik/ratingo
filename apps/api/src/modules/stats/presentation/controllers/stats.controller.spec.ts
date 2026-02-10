@@ -6,6 +6,7 @@ import {
   StatsBackfillService,
   StatsQueryService,
 } from '../../application/services';
+import { CommunityRatingService } from '../../application/services/community-rating.service';
 import { getQueueToken } from '@nestjs/bullmq';
 import { STATS_QUEUE, STATS_JOBS } from '../../stats.constants';
 import { StatsNotFoundException } from '@/common/exceptions';
@@ -34,6 +35,10 @@ describe('StatsController', () => {
       getAnalysis: jest.fn(),
     };
 
+    const mockCommunityRatingService = {
+      reconcileAll: jest.fn().mockResolvedValue({ updated: 0 }),
+    };
+
     mockQueue = {
       add: jest.fn().mockResolvedValue({ id: 'job-123' }),
     };
@@ -45,6 +50,7 @@ describe('StatsController', () => {
         { provide: ScoreRecalculationService, useValue: mockScoreRecalculationService },
         { provide: StatsBackfillService, useValue: mockStatsBackfillService },
         { provide: DropOffService, useValue: mockDropOffService },
+        { provide: CommunityRatingService, useValue: mockCommunityRatingService },
         { provide: getQueueToken(STATS_QUEUE), useValue: mockQueue },
       ],
     }).compile();

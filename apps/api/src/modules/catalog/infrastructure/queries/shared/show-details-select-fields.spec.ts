@@ -3,10 +3,10 @@ import { SHOW_DETAILS_SELECT_FIELDS } from './show-details-select-fields';
 
 describe('SHOW_DETAILS_SELECT_FIELDS', () => {
   describe('Field count validation', () => {
-    it('should have exactly 32 fields', () => {
+    it('should have exactly 34 fields', () => {
       const fieldCount = Object.keys(SHOW_DETAILS_SELECT_FIELDS).length;
-      // 15 core + 6 external ratings + 6 show-specific + 5 stats = 32
-      expect(fieldCount).toBe(32);
+      // 15 core + 6 external ratings + 6 show-specific + 7 stats = 34
+      expect(fieldCount).toBe(34);
     });
   });
 
@@ -68,16 +68,18 @@ describe('SHOW_DETAILS_SELECT_FIELDS', () => {
       }
     });
 
-    it('should include all stats fields (5)', () => {
+    it('should include all stats fields (7)', () => {
       const statsFields: (keyof typeof SHOW_DETAILS_SELECT_FIELDS)[] = [
         'ratingoScore',
         'qualityScore',
         'popularityScore',
         'watchersCount',
         'totalWatchers',
+        'communityAverageRating',
+        'communityRatingCount',
       ];
 
-      expect(statsFields).toHaveLength(5);
+      expect(statsFields).toHaveLength(7);
       for (const field of statsFields) {
         expect(SHOW_DETAILS_SELECT_FIELDS).toHaveProperty(field);
       }
@@ -129,6 +131,8 @@ describe('SHOW_DETAILS_SELECT_FIELDS', () => {
         'popularityScore',
         'watchersCount',
         'totalWatchers',
+        'communityAverageRating',
+        'communityRatingCount',
       ];
 
       expect(selectFieldKeys.sort()).toEqual(expectedKeys.sort());

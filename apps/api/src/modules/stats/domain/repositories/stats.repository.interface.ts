@@ -24,6 +24,10 @@ export interface MediaStatsData {
   popularityScore?: number;
   /** Freshness/recency component score (0-1) */
   freshnessScore?: number;
+  /** Community average rating (0-100 scale, aggregated from user ratings) */
+  communityAverageRating?: number;
+  /** Number of community ratings */
+  communityRatingCount?: number;
 }
 
 /**
@@ -86,4 +90,19 @@ export interface IStatsRepository {
    * @returns {Promise<void>} Nothing
    */
   updateWatchersCount(mediaItemId: string, watchersCount: number): Promise<void>;
+
+  /**
+   * Upserts community rating fields for a media item.
+   * Creates the stats row if it doesn't exist.
+   *
+   * @param {string} mediaItemId - Internal UUID of the media item
+   * @param {number} averageRating - The community average rating (0-100)
+   * @param {number} ratingCount - The number of community ratings
+   * @returns {Promise<void>} Nothing
+   */
+  updateCommunityRating(
+    mediaItemId: string,
+    averageRating: number,
+    ratingCount: number,
+  ): Promise<void>;
 }

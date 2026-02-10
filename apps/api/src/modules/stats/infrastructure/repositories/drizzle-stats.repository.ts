@@ -41,6 +41,8 @@ export class DrizzleStatsRepository implements IStatsRepository {
             qualityScore: stats.qualityScore,
             popularityScore: stats.popularityScore,
             freshnessScore: stats.freshnessScore,
+            communityAverageRating: stats.communityAverageRating,
+            communityRatingCount: stats.communityRatingCount,
             updatedAt: new Date(),
           })
           .onConflictDoUpdate({
@@ -53,6 +55,8 @@ export class DrizzleStatsRepository implements IStatsRepository {
               qualityScore: stats.qualityScore,
               popularityScore: stats.popularityScore,
               freshnessScore: stats.freshnessScore,
+              communityAverageRating: stats.communityAverageRating,
+              communityRatingCount: stats.communityRatingCount,
               updatedAt: new Date(),
             },
           });
@@ -78,6 +82,8 @@ export class DrizzleStatsRepository implements IStatsRepository {
           qualityScore: stat.qualityScore,
           popularityScore: stat.popularityScore,
           freshnessScore: stat.freshnessScore,
+          communityAverageRating: stat.communityAverageRating,
+          communityRatingCount: stat.communityRatingCount,
           updatedAt: now,
         }));
 
@@ -95,6 +101,8 @@ export class DrizzleStatsRepository implements IStatsRepository {
               qualityScore: sql`COALESCE(excluded.quality_score, media_stats.quality_score)`,
               popularityScore: sql`COALESCE(excluded.popularity_score, media_stats.popularity_score)`,
               freshnessScore: sql`COALESCE(excluded.freshness_score, media_stats.freshness_score)`,
+              communityAverageRating: sql`COALESCE(excluded.community_average_rating, media_stats.community_average_rating)`,
+              communityRatingCount: sql`COALESCE(excluded.community_rating_count, media_stats.community_rating_count)`,
               updatedAt: sql`excluded.updated_at`,
             },
           });
@@ -212,6 +220,41 @@ export class DrizzleStatsRepository implements IStatsRepository {
           });
       },
       { mediaItemId, watchersCount },
+    );
+  }
+
+  /**
+   * Upserts community rating fields for a media item.
+   * Creates the stats row if it doesn't exist.
+   * Uses INSERT ON CONFLICT to handle missing rows.
+   */
+  async updateCommunityRating(
+    mediaItemId: string,
+    averageRating: number,
+    ratingCount: number,
+  ): Promise<void> {
+    return withDbError(
+      'upsert community rating',
+      this.logger,
+      async () => {
+        await this.db
+          .insert(schema.mediaStats)
+          .values({
+            mediaItemId,
+            communityAverageRating: averageRating,
+            communityRatingCount: ratingCount,
+            updatedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: schema.mediaStats.mediaItemId,
+            set: {
+              communityAverageRating: averageRating,
+              communityRatingCount: ratingCount,
+              updatedAt: new Date(),
+            },
+          });
+      },
+      { mediaItemId, averageRating, ratingCount },
     );
   }
 }
