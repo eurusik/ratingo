@@ -13,6 +13,7 @@ import omdbConfig from './config/omdb.config';
 import tmdbConfig from './config/tmdb.config';
 import traktConfig from './config/trakt.config';
 import { DatabaseModule } from './database/database.module';
+import { HealthController } from './health.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { HomeModule } from './modules/home/home.module';
@@ -151,7 +152,7 @@ const DURATION_RE = /^\d+\s*(ms|s|m|h|d)$/i;
     JournalModule,
     ReviewsModule,
   ],
-  controllers: [],
+  controllers: [HealthController],
   providers: [
     // Global rate limiting guard with real IP extraction (Cloudflare/proxy support)
     {
