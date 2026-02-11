@@ -5,6 +5,7 @@ const nextConfig = {
   // CDN stale-while-revalidate: serve stale for 1 hour max (default is 1 year)
   expireTime: 3600,
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
