@@ -741,13 +741,8 @@
       "unread": "Непрочитані",
       "all": "Усі"
     },
-    "actions": {
-      "open": "Відкрити",
-      "markRead": "Прочитати"
-    },
     "context": {
-      "season": "Сезон {number}",
-      "release": "Реліз: {date}"
+      "season": "Сезон {number}"
     },
     "emptyState": {
       "allRead": "Все прочитано!",
@@ -757,7 +752,6 @@
       "browseShows": "Серіали",
       "browseMovies": "Фільми"
     },
-    "loadMore": "Завантажити ще",
     "events": {
       "newSeason": "Вийшов новий сезон",
       "newEpisode": "Вийшов новий епізод",

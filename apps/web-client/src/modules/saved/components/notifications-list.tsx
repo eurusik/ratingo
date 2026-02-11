@@ -60,26 +60,28 @@ export function NotificationsList() {
   const unreadCount = data?.unreadCount ?? 0;
 
   const handleMarkAllAsRead = () => {
-    const queryKey = queryKeys.userActions.notifications.list(
-      readFilter === 'unread' ? true : null,
-    );
-
-    // Snapshot for rollback
-    const previous = queryClient.getQueryData(queryKey);
-
-    // Optimistic update
-    queryClient.setQueryData(queryKey, (old: unknown) => {
-      if (!old || typeof old !== 'object') return old;
-      const typed = old as { data: { isRead: boolean }[]; unreadCount: number };
-      return {
-        ...typed,
-        unreadCount: 0,
-        data: typed.data.map((n) => ({ ...n, isRead: true })),
-      };
-    });
-
-    // Also optimistically update unread count query
+    const limit = 20; // Must match useNotificationsPage default
+    const unreadKey = queryKeys.userActions.notifications.list(true, limit);
+    const allKey = queryKeys.userActions.notifications.list(null, limit);
     const unreadCountKey = queryKeys.userActions.notifications.unreadCount();
+
+    // Snapshots for rollback
+    const previousUnread = queryClient.getQueryData(unreadKey);
+    const previousAll = queryClient.getQueryData(allKey);
+    const previousUnreadCount = queryClient.getQueryData(unreadCountKey);
+
+    // Optimistic update — both filter caches
+    for (const key of [unreadKey, allKey]) {
+      queryClient.setQueryData(key, (old: unknown) => {
+        if (!old || typeof old !== 'object') return old;
+        const typed = old as { data: { isRead: boolean }[]; unreadCount: number };
+        return {
+          ...typed,
+          unreadCount: 0,
+          data: typed.data.map((n) => ({ ...n, isRead: true })),
+        };
+      });
+    }
     queryClient.setQueryData(unreadCountKey, () => ({ count: 0 }));
 
     // Clear any pending undo timeout
@@ -99,7 +101,10 @@ export function NotificationsList() {
             clearTimeout(undoTimeoutRef.current);
             undoTimeoutRef.current = null;
           }
-          queryClient.setQueryData(queryKey, previous);
+          // Restore all snapshots
+          queryClient.setQueryData(unreadKey, previousUnread);
+          queryClient.setQueryData(allKey, previousAll);
+          queryClient.setQueryData(unreadCountKey, previousUnreadCount);
           queryClient.invalidateQueries({ queryKey: queryKeys.userActions.notifications.all });
         },
       },
@@ -142,7 +147,6 @@ export function NotificationsList() {
             size="sm"
             className="h-8 px-2 text-xs text-cinema-text-muted hover:text-white"
             onClick={handleMarkAllAsRead}
-            disabled={markAllAsRead.isPending}
           >
             <CheckCheck className="h-3.5 w-3.5 mr-1" />
             {dict.notifications.markAllRead}

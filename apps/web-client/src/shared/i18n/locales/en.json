@@ -741,13 +741,8 @@
       "unread": "Unread",
       "all": "All"
     },
-    "actions": {
-      "open": "Open",
-      "markRead": "Mark read"
-    },
     "context": {
-      "season": "Season {number}",
-      "release": "Release: {date}"
+      "season": "Season {number}"
     },
     "emptyState": {
       "allRead": "All caught up!",
@@ -757,7 +752,6 @@
       "browseShows": "Shows",
       "browseMovies": "Movies"
     },
-    "loadMore": "Load more",
     "events": {
       "newSeason": "New season released",
       "newEpisode": "New episode released",

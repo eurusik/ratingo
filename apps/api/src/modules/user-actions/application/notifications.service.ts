@@ -35,11 +35,11 @@ export class NotificationsService {
     total: number;
     hasMore: boolean;
   }> {
-    const [data, unreadCount, total] = await Promise.all([
+    const [data, total] = await Promise.all([
       this.notificationRepo.listWithMedia(userId, limit, offset, unread),
-      this.notificationRepo.countUnread(userId),
       this.notificationRepo.countTotal(userId, unread),
     ]);
+    const unreadCount = unread === true ? total : await this.notificationRepo.countUnread(userId);
     return { data, unreadCount, total, hasMore: offset + data.length < total };
   }
 

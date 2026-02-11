@@ -32,7 +32,7 @@ export function NotificationsEmptyState({ variant }: NotificationsEmptyStateProp
       <div className="w-20 h-20 rounded-full bg-cinema-elevated/30 border border-cinema-border/50 flex items-center justify-center mb-6">
         <Icon className="w-10 h-10 text-cinema-text-muted" />
       </div>
-      <h3 className="text-xl font-medium text-cinema-text-primary mb-3">{title}</h3>
+      <h2 className="text-xl font-medium text-cinema-text-primary mb-3">{title}</h2>
       <p className="text-base text-cinema-text-muted max-w-md leading-relaxed">{description}</p>
 
       {variant === 'all-read' && (

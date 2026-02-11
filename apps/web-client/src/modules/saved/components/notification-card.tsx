@@ -8,22 +8,13 @@
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { Route } from 'next';
+import type { components } from '@ratingo/api-contract';
 import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 
-interface NotificationCardProps {
-  trigger: string;
-  payload: { seasonNumber?: number; episodeKey?: string; airDate?: string } | null;
-  isRead: boolean;
-  createdAt: string;
-  mediaSummary: {
-    id: string;
-    type: string;
-    title: string;
-    slug: string;
-    poster: { small: string; medium: string; large: string } | null;
-  };
-}
+type NotificationItem = components['schemas']['NotificationItemDto'];
+
+interface NotificationCardProps extends Omit<NotificationItem, 'id'> {}
 
 const TRIGGER_DOT: Record<string, string> = {
   new_season: 'bg-green-400',
@@ -33,19 +24,22 @@ const TRIGGER_DOT: Record<string, string> = {
   status_changed: 'bg-slate-400',
 };
 
-function formatRelativeTime(dateString: string): string {
+function formatRelativeTime(dateString: string, locale: string): string {
   const now = Date.now();
   const diff = now - new Date(dateString).getTime();
-  const minutes = Math.floor(diff / 60_000);
+  const seconds = Math.floor(diff / 1000);
 
-  if (minutes < 1) return 'щойно';
-  if (minutes < 60) return `${minutes} хв тому`;
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+
+  if (seconds < 60) return rtf.format(-seconds, 'second');
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return rtf.format(-minutes, 'minute');
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} год тому`;
+  if (hours < 24) return rtf.format(-hours, 'hour');
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days} дн тому`;
+  if (days < 7) return rtf.format(-days, 'day');
 
-  return new Date(dateString).toLocaleDateString('uk-UA', {
+  return new Date(dateString).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
   });
@@ -58,7 +52,7 @@ export function NotificationCard({
   createdAt,
   mediaSummary,
 }: NotificationCardProps) {
-  const { dict } = useTranslation();
+  const { dict, locale } = useTranslation();
   const router = useRouter();
 
   const triggerLabel =
@@ -87,7 +81,7 @@ export function NotificationCard({
   }
 
   const airDate = payload?.airDate
-    ? new Date(payload.airDate).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })
+    ? new Date(payload.airDate).toLocaleDateString(locale, { day: 'numeric', month: 'long' })
     : null;
 
   const handleCardClick = (e: React.MouseEvent) => {
@@ -135,12 +129,13 @@ export function NotificationCard({
             {mediaSummary.title}
           </p>
           <span className="text-xs text-cinema-text-muted shrink-0 mt-0.5">
-            {formatRelativeTime(createdAt)}
+            {formatRelativeTime(createdAt, locale)}
           </span>
         </div>
 
         <p className="flex items-center gap-1.5 text-xs text-cinema-text-muted mt-1">
           <span
+            aria-hidden="true"
             className={cn(
               'w-2 h-2 rounded-full shrink-0',
               TRIGGER_DOT[trigger] ?? 'bg-cinema-text-muted',

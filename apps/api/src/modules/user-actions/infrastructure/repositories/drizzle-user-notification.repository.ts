@@ -106,7 +106,7 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
           eq(schema.userNotifications.userId, userId),
           isNull(schema.mediaItems.deletedAt),
         ];
-        if (unread) {
+        if (unread === true) {
           conditions.push(eq(schema.userNotifications.isRead, false));
         }
 
@@ -171,20 +171,28 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
 
   /**
    * Counts total notifications (optionally filtered by unread).
+   * Joins mediaItems to exclude notifications for deleted media, matching listWithMedia.
    */
   async countTotal(userId: string, unread?: boolean): Promise<number> {
     return withDbError(
       'count total notifications',
       this.logger,
       async () => {
-        const conditions = [eq(schema.userNotifications.userId, userId)];
-        if (unread) {
+        const conditions = [
+          eq(schema.userNotifications.userId, userId),
+          isNull(schema.mediaItems.deletedAt),
+        ];
+        if (unread === true) {
           conditions.push(eq(schema.userNotifications.isRead, false));
         }
 
         const [row] = await this.db
           .select({ count: sql<number>`count(*)` })
           .from(schema.userNotifications)
+          .innerJoin(
+            schema.mediaItems,
+            eq(schema.mediaItems.id, schema.userNotifications.mediaItemId),
+          )
           .where(and(...conditions));
         return Number(row?.count ?? 0);
       },
