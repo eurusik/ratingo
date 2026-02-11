@@ -734,7 +734,30 @@
     "empty": "No new notifications",
     "viewAll": "View all",
     "markAllRead": "Mark all read",
+    "subtitle": "New seasons, episodes and releases from your subscriptions",
     "markedAllRead": "All notifications marked as read",
+    "undo": "Undo",
+    "filters": {
+      "unread": "Unread",
+      "all": "All"
+    },
+    "actions": {
+      "open": "Open",
+      "markRead": "Mark read"
+    },
+    "context": {
+      "season": "Season {number}",
+      "release": "Release: {date}"
+    },
+    "emptyState": {
+      "allRead": "All caught up!",
+      "allReadDescription": "No new notifications. We'll let you know when something comes up",
+      "noNotifications": "Nothing here yet",
+      "noNotificationsDescription": "Subscribe to shows and movies — Ratingo will notify you about new episodes, seasons, and releases",
+      "browseShows": "Shows",
+      "browseMovies": "Movies"
+    },
+    "loadMore": "Load more",
     "events": {
       "newSeason": "New season released",
       "newEpisode": "New episode released",

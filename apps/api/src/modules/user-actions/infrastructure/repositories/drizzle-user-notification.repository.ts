@@ -96,11 +96,20 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
     userId: string,
     limit = DEFAULT_PAGE_SIZE,
     offset = 0,
+    unread?: boolean,
   ): Promise<NotificationWithMedia[]> {
     return withDbError(
       'list notifications',
       this.logger,
       async () => {
+        const conditions = [
+          eq(schema.userNotifications.userId, userId),
+          isNull(schema.mediaItems.deletedAt),
+        ];
+        if (unread) {
+          conditions.push(eq(schema.userNotifications.isRead, false));
+        }
+
         const rows = await this.db
           .select({
             notification: schema.userNotifications,
@@ -117,9 +126,7 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
             schema.mediaItems,
             eq(schema.mediaItems.id, schema.userNotifications.mediaItemId),
           )
-          .where(
-            and(eq(schema.userNotifications.userId, userId), isNull(schema.mediaItems.deletedAt)),
-          )
+          .where(and(...conditions))
           .orderBy(desc(schema.userNotifications.createdAt))
           .limit(limit)
           .offset(offset);
@@ -135,7 +142,7 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
           },
         }));
       },
-      { userId, limit, offset },
+      { userId, limit, offset, unread },
     );
   }
 
@@ -159,6 +166,29 @@ export class DrizzleUserNotificationRepository implements IUserNotificationRepos
         return Number(row?.count ?? 0);
       },
       { userId },
+    );
+  }
+
+  /**
+   * Counts total notifications (optionally filtered by unread).
+   */
+  async countTotal(userId: string, unread?: boolean): Promise<number> {
+    return withDbError(
+      'count total notifications',
+      this.logger,
+      async () => {
+        const conditions = [eq(schema.userNotifications.userId, userId)];
+        if (unread) {
+          conditions.push(eq(schema.userNotifications.isRead, false));
+        }
+
+        const [row] = await this.db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.userNotifications)
+          .where(and(...conditions));
+        return Number(row?.count ?? 0);
+      },
+      { userId, unread },
     );
   }
 

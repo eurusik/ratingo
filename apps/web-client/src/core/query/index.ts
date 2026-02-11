@@ -60,4 +60,5 @@ export {
   useUnreadNotificationCount,
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
+  useNotificationsPage,
 } from './notifications';

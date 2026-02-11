@@ -13,3 +13,6 @@ export { HistoryList } from './history-list';
 export { PausedList } from './paused-list';
 export { FavoriteUpdates } from './favorite-updates';
 export { MeListSkeleton } from './me-list-skeleton';
+export { NotificationsList } from './notifications-list';
+export { NotificationCard } from './notification-card';
+export { NotificationsEmptyState } from './notifications-empty-state';

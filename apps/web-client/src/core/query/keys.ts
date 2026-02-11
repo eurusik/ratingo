@@ -160,10 +160,11 @@ export const queryKeys = {
     },
     notifications: {
       all: ['user-actions', 'notifications'] as const,
-      list: (limit?: number, offset?: number) =>
+      list: (unread?: boolean | null, limit?: number, offset?: number) =>
         [
           ...queryKeys.userActions.notifications.all,
           'list',
+          unread ?? null,
           limit ?? null,
           offset ?? null,
         ] as const,

@@ -9,19 +9,13 @@ import {
   ParseUUIDPipe,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiOkResponse,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiOkResponse, ApiParam } from '@nestjs/swagger';
 
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
 import { NotificationsService } from '../../application/notifications.service';
 import {
+  NotificationListQueryDto,
   NotificationListResponseDto,
   UnreadCountResponseDto,
   MarkReadResponseDto,
@@ -42,18 +36,16 @@ export class NotificationsController {
    */
   @Get()
   @ApiOperation({ summary: 'List notifications (auth: Bearer)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'offset', required: false, type: Number })
   @ApiOkResponse({ type: NotificationListResponseDto })
   async list(
     @CurrentUser() user: { id: string },
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query() query: NotificationListQueryDto,
   ): Promise<NotificationListResponseDto> {
     const result = await this.notificationsService.listWithMedia(
       user.id,
-      limit ? parseInt(limit, 10) : undefined,
-      offset ? parseInt(offset, 10) : undefined,
+      query.limit,
+      query.offset,
+      query.unread,
     );
     return {
       data: result.data.map((n) => ({
@@ -65,6 +57,8 @@ export class NotificationsController {
         mediaSummary: n.mediaSummary,
       })),
       unreadCount: result.unreadCount,
+      total: result.total,
+      hasMore: result.hasMore,
     };
   }
 

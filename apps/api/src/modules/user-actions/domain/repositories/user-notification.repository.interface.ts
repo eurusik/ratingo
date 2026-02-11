@@ -52,7 +52,17 @@ export interface IUserNotificationRepository {
   /**
    * Lists notifications with media summary.
    */
-  listWithMedia(userId: string, limit?: number, offset?: number): Promise<NotificationWithMedia[]>;
+  listWithMedia(
+    userId: string,
+    limit?: number,
+    offset?: number,
+    unread?: boolean,
+  ): Promise<NotificationWithMedia[]>;
+
+  /**
+   * Counts total notifications (optionally filtered by unread).
+   */
+  countTotal(userId: string, unread?: boolean): Promise<number>;
 
   /**
    * Counts unread notifications.

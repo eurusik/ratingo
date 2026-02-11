@@ -734,7 +734,30 @@
     "empty": "Немає нових сповіщень",
     "viewAll": "Перейти до всіх",
     "markAllRead": "Прочитати всі",
+    "subtitle": "Нові сезони, епізоди та релізи ваших підписок",
     "markedAllRead": "Всі сповіщення прочитані",
+    "undo": "Скасувати",
+    "filters": {
+      "unread": "Непрочитані",
+      "all": "Усі"
+    },
+    "actions": {
+      "open": "Відкрити",
+      "markRead": "Прочитати"
+    },
+    "context": {
+      "season": "Сезон {number}",
+      "release": "Реліз: {date}"
+    },
+    "emptyState": {
+      "allRead": "Все прочитано!",
+      "allReadDescription": "Нових сповіщень немає. Ми повідомимо, коли зʼявиться щось цікаве",
+      "noNotifications": "Поки тут порожньо",
+      "noNotificationsDescription": "Підпишіться на серіали та фільми — Ratingo повідомить про нові епізоди, сезони та релізи",
+      "browseShows": "Серіали",
+      "browseMovies": "Фільми"
+    },
+    "loadMore": "Завантажити ще",
     "events": {
       "newSeason": "Вийшов новий сезон",
       "newEpisode": "Вийшов новий епізод",

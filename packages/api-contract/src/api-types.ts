@@ -2268,11 +2268,20 @@ export interface components {
             original: string;
         };
         RecentRaterDto: {
-            /** @example 123e4567-e89b-12d3-a456-426614174000 */
+            /**
+             * @description Unique user identifier
+             * @example 123e4567-e89b-12d3-a456-426614174000
+             */
             userId: string;
-            /** @example john_doe */
+            /**
+             * @description Public username of the rater
+             * @example john_doe
+             */
             username: string;
-            /** @example https://example.com/avatar.jpg */
+            /**
+             * @description URL of the user avatar image
+             * @example https://example.com/avatar.jpg
+             */
             avatarUrl: string | null;
         };
         RatingoStatsDto: {
@@ -3410,6 +3419,10 @@ export interface components {
             data: components["schemas"]["NotificationItemDto"][];
             /** @example 5 */
             unreadCount: number;
+            /** @example 42 */
+            total: number;
+            /** @example true */
+            hasMore: boolean;
         };
         UnreadCountResponseDto: {
             /** @example 5 */
@@ -7310,6 +7323,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                /** @description Filter by unread only */
+                unread?: boolean;
             };
             header?: never;
             path?: never;

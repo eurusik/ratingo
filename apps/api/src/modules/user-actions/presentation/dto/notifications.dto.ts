@@ -1,4 +1,20 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsOptional } from 'class-validator';
+
+import { OffsetPaginationQueryDto } from '../../../../common/dtos/pagination.dto';
+
+/**
+ * Query parameters for notification list endpoint.
+ */
+export class NotificationListQueryDto extends OffsetPaginationQueryDto {
+  @ApiPropertyOptional({ description: 'Filter by unread only' })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  unread?: boolean;
+}
 
 /**
  * Poster URLs for different sizes.
@@ -83,6 +99,12 @@ export class NotificationListResponseDto {
 
   @ApiProperty({ example: 5 })
   unreadCount: number;
+
+  @ApiProperty({ example: 42 })
+  total: number;
+
+  @ApiProperty({ example: true })
+  hasMore: boolean;
 }
 
 /**
