@@ -121,6 +121,11 @@ describe('Notification Flow Integration', () => {
       countUnread: jest.fn().mockImplementation(async (uid) => {
         return notifications.filter((n) => n.userId === uid && !n.isRead).length;
       }),
+      countTotal: jest.fn().mockImplementation(async (uid, unread) => {
+        const filtered = notifications.filter((n) => n.userId === uid);
+        if (unread === true) return filtered.filter((n) => !n.isRead).length;
+        return filtered.length;
+      }),
       markAsRead: jest.fn(),
       markAllAsRead: jest.fn(),
     };

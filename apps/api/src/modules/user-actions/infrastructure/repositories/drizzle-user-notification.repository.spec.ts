@@ -248,6 +248,51 @@ describe('DrizzleUserNotificationRepository', () => {
     });
   });
 
+  describe('countTotal', () => {
+    it('should return count of total notifications', async () => {
+      const selectChain = createSelectChain([{ count: 10 }]);
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await repository.countTotal('user-1');
+
+      expect(result).toBe(10);
+    });
+
+    it('should call innerJoin to filter deleted media', async () => {
+      const selectChain = createSelectChain([{ count: 10 }]);
+      mockDb.select.mockReturnValue(selectChain);
+
+      await repository.countTotal('user-1');
+
+      expect(selectChain.innerJoin).toHaveBeenCalled();
+    });
+
+    it('should return 0 when no notifications', async () => {
+      const selectChain = createSelectChain([{ count: 0 }]);
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await repository.countTotal('user-1');
+
+      expect(result).toBe(0);
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const selectChain = createSelectChain([], true);
+      mockDb.select.mockReturnValue(selectChain);
+
+      await expect(repository.countTotal('user-1')).rejects.toThrow(DatabaseException);
+    });
+
+    it('should add unread filter when unread is true', async () => {
+      const selectChain = createSelectChain([{ count: 3 }]);
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await repository.countTotal('user-1', true);
+
+      expect(result).toBe(3);
+    });
+  });
+
   describe('markAsRead - single notification', () => {
     it('should mark notification as read and return true', async () => {
       const updateChain = createUpdateChain([{ id: 'notif-1' }]);

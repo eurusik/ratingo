@@ -9,7 +9,9 @@ import {
   useUnreadNotificationCount,
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
+  useNotificationsPage,
 } from '../notifications';
+import type { UseNotificationsPageOptions } from '../notifications';
 import { queryKeys } from '../keys';
 
 jest.mock('@/core/api', () => ({
@@ -80,6 +82,17 @@ function MarkAllReadConsumer() {
     <div>
       <span data-testid="mutation-status">{mutation.status}</span>
       <button data-testid="mark-all-read" onClick={() => mutation.mutate()} />
+    </div>
+  );
+}
+
+function NotificationsPageConsumer({ options = {} }: { options?: UseNotificationsPageOptions }) {
+  const query = useNotificationsPage(options);
+
+  return (
+    <div>
+      <span data-testid="status">{query.status}</span>
+      <span data-testid="data">{JSON.stringify(query.data ?? null)}</span>
     </div>
   );
 }
@@ -190,12 +203,7 @@ describe('useMarkNotificationAsRead', () => {
     expect(mockMarkAsRead).toHaveBeenCalledWith('notification-1');
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: queryKeys.userActions.notifications.list(),
-      }),
-    );
-    expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        queryKey: queryKeys.userActions.notifications.unreadCount(),
+        queryKey: queryKeys.userActions.notifications.all,
       }),
     );
 
@@ -232,15 +240,67 @@ describe('useMarkAllNotificationsAsRead', () => {
     expect(mockMarkAllAsRead).toHaveBeenCalled();
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: queryKeys.userActions.notifications.list(),
-      }),
-    );
-    expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        queryKey: queryKeys.userActions.notifications.unreadCount(),
+        queryKey: queryKeys.userActions.notifications.all,
       }),
     );
 
     invalidateSpy.mockRestore();
+  });
+});
+
+describe('useNotificationsPage', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = createQueryClient();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it('fetches notifications with default options', async () => {
+    const mockData = { notifications: [{ id: '1' }], unreadCount: 1 };
+    mockListNotifications.mockResolvedValue(mockData);
+
+    renderWithClient(<NotificationsPageConsumer />, queryClient);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status').textContent).toBe('success');
+    });
+
+    expect(mockListNotifications).toHaveBeenCalledWith({ limit: 20 });
+    expect(screen.getByTestId('data').textContent).toBe(JSON.stringify(mockData));
+  });
+
+  it('passes unread filter to API when specified', async () => {
+    const mockData = { notifications: [{ id: '2' }], unreadCount: 1 };
+    mockListNotifications.mockResolvedValue(mockData);
+
+    renderWithClient(
+      <NotificationsPageConsumer options={{ unread: true }} />,
+      queryClient,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status').textContent).toBe('success');
+    });
+
+    expect(mockListNotifications).toHaveBeenCalledWith({ limit: 20, unread: true });
+  });
+
+  it('does not fetch when disabled', async () => {
+    renderWithClient(
+      <NotificationsPageConsumer options={{ enabled: false }} />,
+      queryClient,
+    );
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(mockListNotifications).not.toHaveBeenCalled();
+    expect(screen.getByTestId('status').textContent).toBe('pending');
   });
 });

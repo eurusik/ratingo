@@ -40,29 +40,52 @@ describe('NotificationsController', () => {
   });
 
   describe('list', () => {
-    it('should return notifications with unread count', async () => {
+    it('should return notifications with unread count, total, and hasMore', async () => {
       notificationsService.listWithMedia.mockResolvedValue({
         data: [mockNotification],
         unreadCount: 1,
+        total: 5,
+        hasMore: true,
       });
 
-      const result = await controller.list(mockUser, '10', '0');
+      const result = await controller.list(mockUser, { limit: 10, offset: 0 });
 
       expect(result.data).toHaveLength(1);
       expect(result.data[0].id).toBe('notif-1');
       expect(result.data[0].trigger).toBe('new_season');
       expect(result.data[0].createdAt).toBe('2025-01-15T10:00:00.000Z');
       expect(result.unreadCount).toBe(1);
-      expect(notificationsService.listWithMedia).toHaveBeenCalledWith('user-123', 10, 0);
+      expect(result.total).toBe(5);
+      expect(result.hasMore).toBe(true);
+      expect(notificationsService.listWithMedia).toHaveBeenCalledWith('user-123', 10, 0, undefined);
+    });
+
+    it('should pass unread filter to service', async () => {
+      notificationsService.listWithMedia.mockResolvedValue({
+        data: [],
+        unreadCount: 0,
+        total: 0,
+        hasMore: false,
+      });
+
+      await controller.list(mockUser, { limit: 20, offset: 0, unread: true });
+
+      expect(notificationsService.listWithMedia).toHaveBeenCalledWith('user-123', 20, 0, true);
     });
 
     it('should use default pagination when not provided', async () => {
-      notificationsService.listWithMedia.mockResolvedValue({ data: [], unreadCount: 0 });
+      notificationsService.listWithMedia.mockResolvedValue({
+        data: [],
+        unreadCount: 0,
+        total: 0,
+        hasMore: false,
+      });
 
-      await controller.list(mockUser);
+      await controller.list(mockUser, {});
 
       expect(notificationsService.listWithMedia).toHaveBeenCalledWith(
         'user-123',
+        undefined,
         undefined,
         undefined,
       );
