@@ -56,6 +56,53 @@ describe('DrizzleStatsRepository', () => {
       expect(mockDb.insert).toHaveBeenCalled();
     });
 
+    it('should map undefined optional fields to null to prevent Drizzle default substitution', async () => {
+      const mockDb = createMockDb();
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      // Simulate trending sync: only watchersCount provided, community fields omitted
+      await repository.upsert({ mediaItemId: 'media-1', watchersCount: 42 });
+
+      const thenable = mockDb.insert.mock.results[0].value;
+      const valuesArg = thenable.values.mock.calls[0][0];
+
+      expect(valuesArg.communityRatingCount).toBeNull();
+      expect(valuesArg.communityAverageRating).toBeNull();
+      expect(valuesArg.trendingRank).toBeNull();
+      expect(valuesArg.popularity24h).toBeNull();
+      expect(valuesArg.ratingoScore).toBeNull();
+      // Explicitly provided value should pass through unchanged
+      expect(valuesArg.watchersCount).toBe(42);
+    });
+
+    it('should pass explicit zero through unchanged', async () => {
+      const mockDb = createMockDb();
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      // Simulate community rating reset: explicit 0 should NOT become null
+      await repository.upsert({
+        mediaItemId: 'media-1',
+        communityAverageRating: 0,
+        communityRatingCount: 0,
+      });
+
+      const thenable = mockDb.insert.mock.results[0].value;
+      const valuesArg = thenable.values.mock.calls[0][0];
+
+      expect(valuesArg.communityRatingCount).toBe(0);
+      expect(valuesArg.communityAverageRating).toBe(0);
+    });
+
     it('should throw DatabaseException on error', async () => {
       const mockDb = createMockDb({ rejectWith: new Error('DB Error') });
 
@@ -89,6 +136,55 @@ describe('DrizzleStatsRepository', () => {
 
       // Should use single batch INSERT instead of N individual inserts
       expect(mockDb.insert).toHaveBeenCalledTimes(1);
+    });
+
+    it('should map undefined optional fields to null to prevent Drizzle default substitution', async () => {
+      const mockDb = createMockDb();
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      // Simulate trending sync: only watchersCount and scores provided,
+      // communityRatingCount is undefined (should NOT become 0)
+      await repository.bulkUpsert([
+        { mediaItemId: 'media-1', watchersCount: 42, ratingoScore: 85 },
+      ]);
+
+      const thenable = mockDb.insert.mock.results[0].value;
+      const valuesArg = thenable.values.mock.calls[0][0];
+
+      expect(valuesArg[0].communityRatingCount).toBeNull();
+      expect(valuesArg[0].communityAverageRating).toBeNull();
+      expect(valuesArg[0].trendingRank).toBeNull();
+      expect(valuesArg[0].popularity24h).toBeNull();
+      expect(valuesArg[0].freshnessScore).toBeNull();
+      // Explicitly provided values should pass through unchanged
+      expect(valuesArg[0].watchersCount).toBe(42);
+      expect(valuesArg[0].ratingoScore).toBe(85);
+    });
+
+    it('should pass explicit zero through unchanged', async () => {
+      const mockDb = createMockDb();
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [DrizzleStatsRepository, { provide: DATABASE_CONNECTION, useValue: mockDb }],
+      }).compile();
+
+      repository = module.get<DrizzleStatsRepository>(DrizzleStatsRepository);
+
+      // Simulate community rating stale reset: explicit 0 should NOT become null
+      await repository.bulkUpsert([
+        { mediaItemId: 'media-1', communityAverageRating: 0, communityRatingCount: 0 },
+      ]);
+
+      const thenable = mockDb.insert.mock.results[0].value;
+      const valuesArg = thenable.values.mock.calls[0][0];
+
+      expect(valuesArg[0].communityRatingCount).toBe(0);
+      expect(valuesArg[0].communityAverageRating).toBe(0);
     });
 
     it('should return early if array is empty', async () => {
