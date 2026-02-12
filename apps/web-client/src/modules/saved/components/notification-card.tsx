@@ -14,7 +14,7 @@ import { cn } from '@/shared/utils';
 
 type NotificationItem = components['schemas']['NotificationItemDto'];
 
-interface NotificationCardProps extends Omit<NotificationItem, 'id'> {}
+type NotificationCardProps = Omit<NotificationItem, 'id'>;
 
 const TRIGGER_DOT: Record<string, string> = {
   new_season: 'bg-green-400',

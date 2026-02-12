@@ -794,7 +794,9 @@
       "privateProfileNote": "Your profile is hidden from other users",
       "showHistory": "Show watch history",
       "showRatings": "Show my ratings",
-      "allowFollowers": "Allow followers"
+      "allowFollowers": "Allow followers",
+      "autoSubscribeOnWatch": "Auto-subscribe on watch",
+      "autoSubscribeOnWatchHint": "Automatically subscribe to show updates when you start watching"
     },
     "security": {
       "title": "Change Password",

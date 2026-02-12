@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { SavedItemsService } from '../../user-actions/application/saved-items.service';
+import { SubscriptionsService } from '../../user-actions/application/subscriptions.service';
 import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities';
 import {
   EPISODE_PROGRESS_ERRORS,
@@ -24,6 +25,7 @@ export class EpisodeProgressService {
     private readonly episodeProgressRepo: IEpisodeProgressRepository,
     private readonly userMediaService: UserMediaService,
     private readonly savedItemsService: SavedItemsService,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   async markWatched(userId: string, episodeId: string): Promise<void> {
@@ -141,11 +143,15 @@ export class EpisodeProgressService {
           `Auto-set user_media_state to 'completed' for user=${userId}, media=${mediaItemId} (${watchedEpisodes}/${totalEpisodes} episodes)`,
         );
       }
+      await this.tryAutoSubscribe(userId, mediaItemId);
       return;
     }
 
     // Paused → user must explicitly resume
     if (currentState?.state === USER_MEDIA_STATE.PAUSED) return;
+
+    // Auto-subscribe for every non-paused watch event (idempotent)
+    await this.tryAutoSubscribe(userId, mediaItemId);
 
     if (!currentState || currentState.state === USER_MEDIA_STATE.PLANNED) {
       await this.userMediaService.setState({
@@ -163,6 +169,21 @@ export class EpisodeProgressService {
 
       this.logger.log(
         `Auto-set user_media_state to 'watching' for user=${userId}, media=${mediaItemId}`,
+      );
+    }
+  }
+
+  /**
+   * Attempts to auto-subscribe the user to new_season / new_episode
+   * notifications for the show. Failures are logged and swallowed.
+   */
+  private async tryAutoSubscribe(userId: string, mediaItemId: string): Promise<void> {
+    try {
+      await this.subscriptionsService.autoSubscribeForShow(userId, mediaItemId);
+    } catch (error) {
+      this.logger.warn(
+        `Auto-subscribe failed: user=${userId}, media=${mediaItemId}`,
+        error instanceof Error ? error.message : error,
       );
     }
   }

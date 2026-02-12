@@ -445,6 +445,7 @@ export const users = pgTable('users', {
   showWatchHistory: boolean('show_watch_history').default(true),
   showRatings: boolean('show_ratings').default(true),
   allowFollowers: boolean('allow_followers').default(true),
+  autoSubscribeOnWatch: boolean('auto_subscribe_on_watch').default(true),
   role: userRoleEnum('role').default('user'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

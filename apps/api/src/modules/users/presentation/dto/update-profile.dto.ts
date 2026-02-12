@@ -69,4 +69,13 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsBoolean()
   allowFollowers?: boolean;
+
+  /**
+   * Whether to auto-subscribe to new_season/new_episode notifications
+   * when the user starts watching a show.
+   */
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  autoSubscribeOnWatch?: boolean;
 }

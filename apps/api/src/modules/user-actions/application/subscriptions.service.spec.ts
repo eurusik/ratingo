@@ -228,4 +228,78 @@ describe('SubscriptionsService', () => {
       expect(subscriptionRepo.listActiveWithMedia).toHaveBeenCalledWith('user-id-1', 20, 0);
     });
   });
+
+  describe('autoSubscribeForShow', () => {
+    it('should subscribe to new_season and new_episode when preference is enabled', async () => {
+      // Mock user query: autoSubscribeOnWatch = true
+      mockDb.limit.mockResolvedValueOnce([{ autoSubscribeOnWatch: true }]);
+      // No existing subscriptions
+      subscriptionRepo.findActiveTriggersForMedia.mockResolvedValueOnce([]);
+
+      await service.autoSubscribeForShow('user-id-1', 'media-id-1');
+
+      expect(subscriptionRepo.upsert).toHaveBeenCalledTimes(2);
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-id-1',
+          mediaItemId: 'media-id-1',
+          trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
+        }),
+      );
+      expect(subscriptionRepo.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-id-1',
+          mediaItemId: 'media-id-1',
+          trigger: SUBSCRIPTION_TRIGGER.NEW_EPISODE,
+        }),
+      );
+    });
+
+    it('should skip when user preference is disabled', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ autoSubscribeOnWatch: false }]);
+
+      await service.autoSubscribeForShow('user-id-1', 'media-id-1');
+
+      expect(subscriptionRepo.findActiveTriggersForMedia).not.toHaveBeenCalled();
+      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should skip when user is not found', async () => {
+      mockDb.limit.mockResolvedValueOnce([]);
+
+      await service.autoSubscribeForShow('user-id-1', 'media-id-1');
+
+      expect(subscriptionRepo.findActiveTriggersForMedia).not.toHaveBeenCalled();
+      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+    });
+
+    it('should not duplicate already active subscriptions', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ autoSubscribeOnWatch: true }]);
+      subscriptionRepo.findActiveTriggersForMedia.mockResolvedValueOnce([
+        SUBSCRIPTION_TRIGGER.NEW_SEASON,
+      ]);
+
+      await service.autoSubscribeForShow('user-id-1', 'media-id-1');
+
+      // Should only subscribe to new_episode (new_season already active)
+      expect(subscriptionRepo.upsert).toHaveBeenCalledTimes(1);
+      expect(actionRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: { trigger: SUBSCRIPTION_TRIGGER.NEW_EPISODE },
+        }),
+      );
+    });
+
+    it('should not subscribe when both triggers already active', async () => {
+      mockDb.limit.mockResolvedValueOnce([{ autoSubscribeOnWatch: true }]);
+      subscriptionRepo.findActiveTriggersForMedia.mockResolvedValueOnce([
+        SUBSCRIPTION_TRIGGER.NEW_SEASON,
+        SUBSCRIPTION_TRIGGER.NEW_EPISODE,
+      ]);
+
+      await service.autoSubscribeForShow('user-id-1', 'media-id-1');
+
+      expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
+    });
+  });
 });

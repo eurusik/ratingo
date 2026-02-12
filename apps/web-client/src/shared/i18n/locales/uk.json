@@ -794,7 +794,9 @@
       "privateProfileNote": "Ваш профіль прихований від інших користувачів",
       "showHistory": "Показувати історію переглядів",
       "showRatings": "Показувати мої оцінки",
-      "allowFollowers": "Дозволити підписки"
+      "allowFollowers": "Дозволити підписки",
+      "autoSubscribeOnWatch": "Автопідписка при перегляді",
+      "autoSubscribeOnWatchHint": "Автоматично підписуватись на оновлення серіалів, які ви почали дивитись"
     },
     "security": {
       "title": "Зміна пароля",

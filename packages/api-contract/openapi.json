@@ -10403,6 +10403,10 @@
           "allowFollowers": {
             "type": "boolean",
             "example": true
+          },
+          "autoSubscribeOnWatch": {
+            "type": "boolean",
+            "example": true
           }
         }
       },

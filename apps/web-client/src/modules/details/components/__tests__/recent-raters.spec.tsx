@@ -47,8 +47,7 @@ describe('RecentRaters', () => {
   });
 
   it('returns null when raters is undefined', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { container } = render(<RecentRaters raters={undefined as any} />);
+    const { container } = render(<RecentRaters raters={undefined as never} />);
 
     expect(container.firstChild).toBeNull();
   });

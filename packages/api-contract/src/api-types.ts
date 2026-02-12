@@ -3325,6 +3325,8 @@ export interface components {
             showRatings?: boolean;
             /** @example true */
             allowFollowers?: boolean;
+            /** @example true */
+            autoSubscribeOnWatch?: boolean;
         };
         ChangePasswordDto: {
             /** @example OldPass123 */

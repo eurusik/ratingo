@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { SavedItemsService } from '../../user-actions/application/saved-items.service';
+import { SubscriptionsService } from '../../user-actions/application/subscriptions.service';
 import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities';
 import { UNSAVE_CONTEXT } from '../domain/constants/episode-progress.constants';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
@@ -38,6 +39,10 @@ describe('EpisodeProgressService', () => {
     unsaveItem: jest.fn(),
   };
 
+  const mockSubscriptionsService = {
+    autoSubscribeForShow: jest.fn().mockResolvedValue(undefined),
+  };
+
   const episodeInfo: EpisodeMediaInfo = {
     episodeId: 'ep-1',
     showId: 'show-1',
@@ -53,6 +58,7 @@ describe('EpisodeProgressService', () => {
         { provide: EPISODE_PROGRESS_REPOSITORY, useValue: mockEpisodeProgressRepo },
         { provide: UserMediaService, useValue: mockUserMediaService },
         { provide: SavedItemsService, useValue: mockSavedItemsService },
+        { provide: SubscriptionsService, useValue: mockSubscriptionsService },
       ],
     }).compile();
 
@@ -127,6 +133,90 @@ describe('EpisodeProgressService', () => {
           'media-1',
           SAVED_ITEM_LIST.FOR_LATER,
           UNSAVE_CONTEXT.AUTO_STARTED_WATCHING,
+        );
+      });
+
+      it('should call auto-subscribe when state transitions to watching (no previous state)', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 1, totalCount: 10, watchedEpisodeIds: ['ep-1'] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue(null);
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockSubscriptionsService.autoSubscribeForShow).toHaveBeenCalledWith(
+          'user-1',
+          'media-1',
+        );
+      });
+
+      it('should call auto-subscribe when state transitions from planned to watching', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 1, totalCount: 10, watchedEpisodeIds: ['ep-1'] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.PLANNED });
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockSubscriptionsService.autoSubscribeForShow).toHaveBeenCalledWith(
+          'user-1',
+          'media-1',
+        );
+      });
+
+      it('should not throw when auto-subscribe fails', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 1, totalCount: 10, watchedEpisodeIds: ['ep-1'] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue(null);
+        mockSubscriptionsService.autoSubscribeForShow.mockRejectedValue(new Error('Sub error'));
+
+        await expect(service.markWatched('user-1', 'ep-1')).resolves.toBeUndefined();
+        expect(mockEpisodeProgressRepo.markWatched).toHaveBeenCalledWith('user-1', 'ep-1');
+      });
+
+      it('should call auto-subscribe when user completes show (last episode)', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 10, totalCount: 10, watchedEpisodeIds: [] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.WATCHING });
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockSubscriptionsService.autoSubscribeForShow).toHaveBeenCalledWith(
+          'user-1',
+          'media-1',
+        );
+      });
+
+      it('should NOT call auto-subscribe when user is paused', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 5, totalCount: 10, watchedEpisodeIds: [] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.PAUSED });
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockSubscriptionsService.autoSubscribeForShow).not.toHaveBeenCalled();
+      });
+
+      it('should call auto-subscribe when already watching', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 5, totalCount: 10, watchedEpisodeIds: [] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.WATCHING });
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockSubscriptionsService.autoSubscribeForShow).toHaveBeenCalledWith(
+          'user-1',
+          'media-1',
         );
       });
 

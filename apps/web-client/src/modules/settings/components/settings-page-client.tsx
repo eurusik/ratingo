@@ -49,7 +49,7 @@ export function SettingsPageClient({ user, initialTab = 'profile' }: SettingsPag
   };
 
   const handlePrivacyUpdate = async (
-    field: 'isProfilePublic' | 'showWatchHistory' | 'showRatings' | 'allowFollowers',
+    field: 'isProfilePublic' | 'showWatchHistory' | 'showRatings' | 'allowFollowers' | 'autoSubscribeOnWatch',
     value: boolean,
   ) => {
     await updateProfile.mutateAsync({

@@ -223,4 +223,32 @@ export class SubscriptionsService {
     ]);
     return { total, data };
   }
+
+  /**
+   * Auto-subscribes a user to new_season and new_episode notifications
+   * for a show, respecting the user's `autoSubscribeOnWatch` preference.
+   *
+   * Skips triggers that are already active to avoid duplicates.
+   *
+   * @param {string} userId - User identifier
+   * @param {string} mediaItemId - Media item identifier
+   */
+  async autoSubscribeForShow(userId: string, mediaItemId: string): Promise<void> {
+    const [user] = await this.db
+      .select({ autoSubscribeOnWatch: schema.users.autoSubscribeOnWatch })
+      .from(schema.users)
+      .where(eq(schema.users.id, userId))
+      .limit(1);
+
+    if (!user?.autoSubscribeOnWatch) return;
+
+    const existing = await this.subscriptionRepo.findActiveTriggersForMedia(userId, mediaItemId);
+
+    const triggers = [SUBSCRIPTION_TRIGGER.NEW_SEASON, SUBSCRIPTION_TRIGGER.NEW_EPISODE] as const;
+    for (const trigger of triggers) {
+      if (!existing.includes(trigger)) {
+        await this.subscribe({ userId, mediaItemId, trigger, context: 'auto-watch' });
+      }
+    }
+  }
 }
