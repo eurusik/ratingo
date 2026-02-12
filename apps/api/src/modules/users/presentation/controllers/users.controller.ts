@@ -83,6 +83,7 @@ export class UsersController {
       showWatchHistory: body.showWatchHistory,
       showRatings: body.showRatings,
       allowFollowers: body.allowFollowers,
+      autoSubscribeOnWatch: body.autoSubscribeOnWatch,
     });
     const { passwordHash: _passwordHash, ...safe } = updated;
     return safe;

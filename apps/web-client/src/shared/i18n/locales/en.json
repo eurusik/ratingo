@@ -737,6 +737,7 @@
     "subtitle": "New seasons, episodes and releases from your subscriptions",
     "markedAllRead": "All notifications marked as read",
     "undo": "Undo",
+    "error": "Failed to load notifications",
     "filters": {
       "unread": "Unread",
       "all": "All"

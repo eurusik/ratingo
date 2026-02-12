@@ -44,22 +44,29 @@ export function NotificationsList() {
   const [readFilter, setReadFilter] = useState<'unread' | 'all'>('unread');
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
-    };
-  }, []);
-
-  const { data, isLoading } = useNotificationsPage({
-    unread: readFilter === 'unread' ? true : undefined,
+  const { data, isLoading, isError } = useNotificationsPage({
+    ...(readFilter === 'unread' && { unread: true }),
     enabled: isAuthenticated,
   });
   const markAllAsRead = useMarkAllNotificationsAsRead();
+  const markAllAsReadRef = useRef(markAllAsRead.mutate);
+  markAllAsReadRef.current = markAllAsRead.mutate;
+
+  useEffect(() => {
+    return () => {
+      if (undoTimeoutRef.current) {
+        clearTimeout(undoTimeoutRef.current);
+        markAllAsReadRef.current();
+      }
+    };
+  }, []);
 
   const notifications = data?.data ?? [];
   const unreadCount = data?.unreadCount ?? 0;
 
   const handleMarkAllAsRead = () => {
+    if (undoTimeoutRef.current) return;
+
     const limit = 20; // Must match useNotificationsPage default
     const unreadKey = queryKeys.userActions.notifications.list(true, limit);
     const allKey = queryKeys.userActions.notifications.list(null, limit);
@@ -155,7 +162,11 @@ export function NotificationsList() {
       </div>
 
       {/* Content */}
-      {isLoading ? (
+      {isError ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <p className="text-cinema-text-muted text-sm">{dict.notifications.error}</p>
+        </div>
+      ) : isLoading ? (
         <NotificationsListSkeleton />
       ) : notifications.length === 0 ? (
         <NotificationsEmptyState

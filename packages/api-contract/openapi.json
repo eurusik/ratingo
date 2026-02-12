@@ -10227,13 +10227,18 @@
           "allowFollowers": {
             "type": "boolean",
             "example": true
+          },
+          "autoSubscribeOnWatch": {
+            "type": "boolean",
+            "example": true
           }
         },
         "required": [
           "isProfilePublic",
           "showWatchHistory",
           "showRatings",
-          "allowFollowers"
+          "allowFollowers",
+          "autoSubscribeOnWatch"
         ]
       },
       "ProfileDto": {

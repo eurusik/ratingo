@@ -3256,6 +3256,8 @@ export interface components {
             showRatings: boolean;
             /** @example true */
             allowFollowers: boolean;
+            /** @example true */
+            autoSubscribeOnWatch: boolean;
         };
         ProfileDto: {
             /** @example Люблю жахи та sci-fi */

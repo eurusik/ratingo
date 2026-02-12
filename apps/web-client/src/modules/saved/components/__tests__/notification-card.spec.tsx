@@ -35,8 +35,9 @@ jest.mock('next/image', () => ({
   default: ({ fill, ...props }: Record<string, unknown>) => <img {...props} />,
 }));
 
-jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn() }),
+jest.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ children, ...props }: Record<string, unknown>) => <a {...props}>{children as React.ReactNode}</a>,
 }));
 
 /* ------------------------------------------------------------------ */
@@ -118,6 +119,28 @@ describe('NotificationCard', () => {
 
     const card = container.firstElementChild;
     expect(card?.className).toContain('border-l-blue-500');
+  });
+
+  it('links to /shows/{slug} for show notifications', () => {
+    const props = makeProps({
+      mediaSummary: { id: 'show-1', type: 'show', title: 'Breaking Bad', slug: 'breaking-bad', poster: null },
+    });
+
+    render(<NotificationCard {...props} />);
+
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/shows/breaking-bad');
+  });
+
+  it('links to /movies/{slug} for movie notifications', () => {
+    const props = makeProps({
+      mediaSummary: { id: 'movie-1', type: 'movie', title: 'Inception', slug: 'inception', poster: null },
+    });
+
+    render(<NotificationCard {...props} />);
+
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('href', '/movies/inception');
   });
 
   it('renders relative time', () => {

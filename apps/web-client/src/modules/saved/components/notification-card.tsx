@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import type { Route } from 'next';
 import type { components } from '@ratingo/api-contract';
@@ -24,12 +24,23 @@ const TRIGGER_DOT: Record<string, string> = {
   status_changed: 'bg-slate-400',
 };
 
+const rtfCache = new Map<string, Intl.RelativeTimeFormat>();
+
+function getRelativeTimeFormatter(locale: string): Intl.RelativeTimeFormat {
+  let rtf = rtfCache.get(locale);
+  if (!rtf) {
+    rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    rtfCache.set(locale, rtf);
+  }
+  return rtf;
+}
+
 function formatRelativeTime(dateString: string, locale: string): string {
   const now = Date.now();
   const diff = now - new Date(dateString).getTime();
   const seconds = Math.floor(diff / 1000);
 
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  const rtf = getRelativeTimeFormatter(locale);
 
   if (seconds < 60) return rtf.format(-seconds, 'second');
   const minutes = Math.floor(seconds / 60);
@@ -53,7 +64,6 @@ export function NotificationCard({
   mediaSummary,
 }: NotificationCardProps) {
   const { dict, locale } = useTranslation();
-  const router = useRouter();
 
   const triggerLabel =
     {
@@ -84,21 +94,9 @@ export function NotificationCard({
     ? new Date(payload.airDate).toLocaleDateString(locale, { day: 'numeric', month: 'long' })
     : null;
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('button')) return;
-    router.push(href);
-  };
-
   return (
-    <div
-      role="link"
-      tabIndex={0}
-      onClick={handleCardClick}
-      onKeyDown={(e) =>
-        e.key === 'Enter' &&
-        !(e.target as HTMLElement).closest('button') &&
-        router.push(href)
-      }
+    <Link
+      href={href}
       className={cn(
         'group flex items-start gap-3 p-3 rounded-xl bg-cinema-card/50 border border-cinema-border/10 hover:bg-cinema-elevated/50 hover:border-cinema-border/30 transition-colors cursor-pointer',
         !isRead && 'border-l-2 border-l-blue-500',
@@ -150,6 +148,6 @@ export function NotificationCard({
           </p>
         )}
       </div>
-    </div>
+    </Link>
   );
 }

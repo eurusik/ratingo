@@ -260,7 +260,7 @@ describe('SubscriptionsService', () => {
 
       await service.autoSubscribeForShow('user-id-1', 'media-id-1');
 
-      expect(subscriptionRepo.findActiveTriggersForMedia).not.toHaveBeenCalled();
+      // findActiveTriggersForMedia may be called (parallel fetch) but no subscriptions created
       expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
     });
 
@@ -269,7 +269,7 @@ describe('SubscriptionsService', () => {
 
       await service.autoSubscribeForShow('user-id-1', 'media-id-1');
 
-      expect(subscriptionRepo.findActiveTriggersForMedia).not.toHaveBeenCalled();
+      // findActiveTriggersForMedia may be called (parallel fetch) but no subscriptions created
       expect(subscriptionRepo.upsert).not.toHaveBeenCalled();
     });
 

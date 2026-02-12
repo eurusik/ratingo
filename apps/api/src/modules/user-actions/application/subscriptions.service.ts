@@ -234,15 +234,16 @@ export class SubscriptionsService {
    * @param {string} mediaItemId - Media item identifier
    */
   async autoSubscribeForShow(userId: string, mediaItemId: string): Promise<void> {
-    const [user] = await this.db
-      .select({ autoSubscribeOnWatch: schema.users.autoSubscribeOnWatch })
-      .from(schema.users)
-      .where(eq(schema.users.id, userId))
-      .limit(1);
+    const [[user], existing] = await Promise.all([
+      this.db
+        .select({ autoSubscribeOnWatch: schema.users.autoSubscribeOnWatch })
+        .from(schema.users)
+        .where(eq(schema.users.id, userId))
+        .limit(1),
+      this.subscriptionRepo.findActiveTriggersForMedia(userId, mediaItemId),
+    ]);
 
     if (!user?.autoSubscribeOnWatch) return;
-
-    const existing = await this.subscriptionRepo.findActiveTriggersForMedia(userId, mediaItemId);
 
     const triggers = [SUBSCRIPTION_TRIGGER.NEW_SEASON, SUBSCRIPTION_TRIGGER.NEW_EPISODE] as const;
     for (const trigger of triggers) {

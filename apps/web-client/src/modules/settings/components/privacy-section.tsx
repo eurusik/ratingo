@@ -11,7 +11,7 @@ import type { MeDto } from '@/core/api';
 import type { components } from '@ratingo/api-contract';
 
 type PrivacyDto = components['schemas']['PrivacyDto'];
-type PrivacyField = keyof PrivacyDto | 'autoSubscribeOnWatch';
+type PrivacyField = keyof PrivacyDto;
 
 export type { PrivacyField };
 
@@ -78,10 +78,7 @@ export function PrivacySection({ user, onUpdate }: PrivacySectionProps) {
     showWatchHistory: user.profile.privacy?.showWatchHistory ?? false,
     showRatings: user.profile.privacy?.showRatings ?? true,
     allowFollowers: user.profile.privacy?.allowFollowers ?? true,
-    autoSubscribeOnWatch:
-      (user as Record<string, unknown>).autoSubscribeOnWatch as boolean ??
-      (user.profile as Record<string, unknown>)?.autoSubscribeOnWatch as boolean ??
-      true,
+    autoSubscribeOnWatch: user.profile.privacy?.autoSubscribeOnWatch ?? true,
   });
 
   const handleToggle = async (field: PrivacyField, value: boolean) => {

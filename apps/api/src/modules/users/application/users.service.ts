@@ -166,6 +166,7 @@ export class UsersService {
       showWatchHistory?: boolean;
       showRatings?: boolean;
       allowFollowers?: boolean;
+      autoSubscribeOnWatch?: boolean;
     },
   ): Promise<User> {
     return this.usersRepository.updateProfile(id, payload);

@@ -231,6 +231,15 @@ describe('DrizzleUserNotificationRepository', () => {
       expect(result).toBe(5);
     });
 
+    it('should call innerJoin to filter deleted media', async () => {
+      const selectChain = createSelectChain([{ count: 5 }]);
+      mockDb.select.mockReturnValue(selectChain);
+
+      await repository.countUnread('user-1');
+
+      expect(selectChain.innerJoin).toHaveBeenCalled();
+    });
+
     it('should return 0 when no unread', async () => {
       const selectChain = createSelectChain([{ count: 0 }]);
       mockDb.select.mockReturnValue(selectChain);
