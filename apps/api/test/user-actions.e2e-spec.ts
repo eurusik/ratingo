@@ -89,6 +89,7 @@ class InMemoryUsersRepository implements IUsersRepository {
       showWatchHistory: data.showWatchHistory ?? true,
       showRatings: data.showRatings ?? true,
       allowFollowers: data.allowFollowers ?? true,
+      autoSubscribeOnWatch: data.autoSubscribeOnWatch ?? true,
       role: (data.role as User['role']) ?? 'user',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -424,6 +425,18 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
   async findTrackedShowTmdbIds(): Promise<number[]> {
     // In-memory stub: returns empty array (no real media items to track)
     return [];
+  }
+
+  async atomicNotifyNewEpisode(): Promise<any[]> {
+    return [];
+  }
+
+  async atomicNotifyNewSeason(): Promise<any[]> {
+    return [];
+  }
+
+  async deactivateForEndedShow(): Promise<number> {
+    return 0;
   }
 }
 

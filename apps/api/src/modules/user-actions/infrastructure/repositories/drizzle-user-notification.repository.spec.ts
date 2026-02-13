@@ -231,6 +231,15 @@ describe('DrizzleUserNotificationRepository', () => {
       expect(result).toBe(5);
     });
 
+    it('should call innerJoin to filter deleted media', async () => {
+      const selectChain = createSelectChain([{ count: 5 }]);
+      mockDb.select.mockReturnValue(selectChain);
+
+      await repository.countUnread('user-1');
+
+      expect(selectChain.innerJoin).toHaveBeenCalled();
+    });
+
     it('should return 0 when no unread', async () => {
       const selectChain = createSelectChain([{ count: 0 }]);
       mockDb.select.mockReturnValue(selectChain);
@@ -245,6 +254,51 @@ describe('DrizzleUserNotificationRepository', () => {
       mockDb.select.mockReturnValue(selectChain);
 
       await expect(repository.countUnread('user-1')).rejects.toThrow(DatabaseException);
+    });
+  });
+
+  describe('countTotal', () => {
+    it('should return count of total notifications', async () => {
+      const selectChain = createSelectChain([{ count: 10 }]);
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await repository.countTotal('user-1');
+
+      expect(result).toBe(10);
+    });
+
+    it('should call innerJoin to filter deleted media', async () => {
+      const selectChain = createSelectChain([{ count: 10 }]);
+      mockDb.select.mockReturnValue(selectChain);
+
+      await repository.countTotal('user-1');
+
+      expect(selectChain.innerJoin).toHaveBeenCalled();
+    });
+
+    it('should return 0 when no notifications', async () => {
+      const selectChain = createSelectChain([{ count: 0 }]);
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await repository.countTotal('user-1');
+
+      expect(result).toBe(0);
+    });
+
+    it('should throw DatabaseException on error', async () => {
+      const selectChain = createSelectChain([], true);
+      mockDb.select.mockReturnValue(selectChain);
+
+      await expect(repository.countTotal('user-1')).rejects.toThrow(DatabaseException);
+    });
+
+    it('should add unread filter when unread is true', async () => {
+      const selectChain = createSelectChain([{ count: 3 }]);
+      mockDb.select.mockReturnValue(selectChain);
+
+      const result = await repository.countTotal('user-1', true);
+
+      expect(result).toBe(3);
     });
   });
 

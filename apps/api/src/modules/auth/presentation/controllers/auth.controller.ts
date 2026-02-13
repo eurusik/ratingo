@@ -184,6 +184,7 @@ export class AuthController {
           showWatchHistory: dbUser.showWatchHistory,
           showRatings: dbUser.showRatings,
           allowFollowers: dbUser.allowFollowers,
+          autoSubscribeOnWatch: dbUser.autoSubscribeOnWatch,
         },
       },
       stats,

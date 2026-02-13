@@ -12,6 +12,9 @@ class PrivacyDto {
 
   @ApiProperty({ example: true })
   allowFollowers!: boolean;
+
+  @ApiProperty({ example: true })
+  autoSubscribeOnWatch!: boolean;
 }
 
 class ProfileDto {

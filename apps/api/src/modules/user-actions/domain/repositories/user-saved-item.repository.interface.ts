@@ -1,5 +1,5 @@
-import { type ImageDto } from '../../../../common/dtos/image.dto';
 import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type ImageData } from '../../../../common/types/media.types';
 import { type UserSavedItem, type SavedItemList } from '../entities/user-saved-item.entity';
 
 /**
@@ -26,7 +26,7 @@ export interface SavedItemWithMedia extends UserSavedItem {
     type: MediaType;
     title: string;
     slug: string;
-    poster: ImageDto | null;
+    poster: ImageData | null;
     releaseDate?: Date | null;
   };
   /**

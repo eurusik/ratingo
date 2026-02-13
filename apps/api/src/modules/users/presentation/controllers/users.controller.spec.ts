@@ -74,6 +74,7 @@ describe('UsersController', () => {
       showWatchHistory: false,
       showRatings: true,
       allowFollowers: true,
+      autoSubscribeOnWatch: true,
       passwordHash: 'hashed',
       role: 'user',
       createdAt: new Date('2025-01-01'),
@@ -92,6 +93,7 @@ describe('UsersController', () => {
       showWatchHistory: false,
       showRatings: true,
       allowFollowers: true,
+      autoSubscribeOnWatch: true,
     };
 
     const result = await controller.updateProfile({ id: 'u1' }, dto as any);
@@ -110,6 +112,7 @@ describe('UsersController', () => {
       showWatchHistory: false,
       showRatings: true,
       allowFollowers: true,
+      autoSubscribeOnWatch: true,
     });
   });
 
@@ -151,6 +154,7 @@ describe('UsersController', () => {
       showWatchHistory: undefined,
       showRatings: undefined,
       allowFollowers: undefined,
+      autoSubscribeOnWatch: undefined,
     });
   });
 

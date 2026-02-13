@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import { parseSeasonFromEpisodeKey } from '../../domain/interfaces/show-sync-diff.interface';
 import { TrackedSyncService } from './tracked-sync.service';
 import { SyncMediaService } from './sync-media.service';
 
@@ -34,13 +35,6 @@ describe('TrackedSyncService', () => {
   });
 
   describe('parseSeasonFromEpisodeKey', () => {
-    // Access private method for testing
-    const parseSeasonFromEpisodeKey = (key: string | null): number | null => {
-      if (!key) return null;
-      const match = key.match(/^S(\d+)E\d+$/i);
-      return match ? parseInt(match[1], 10) : null;
-    };
-
     it('should parse season from valid episode key', () => {
       expect(parseSeasonFromEpisodeKey('S2E5')).toBe(2);
       expect(parseSeasonFromEpisodeKey('S10E1')).toBe(10);
@@ -60,110 +54,119 @@ describe('TrackedSyncService', () => {
     });
   });
 
-  describe('calculateDiff - new season detection', () => {
-    it('should detect new season based on aired episodes, not totalSeasons', () => {
-      // This tests the core fix: new_season should trigger when
-      // lastEpisodeKey changes to a new season, not when totalSeasons increases
-
-      const before = {
-        mediaItemId: 'media-1',
-        status: 'Returning Series',
-        totalSeasons: 3, // TMDB shows 3 seasons announced
-        nextAirDate: null,
-        lastEpisodeKey: 'S2E10', // But only 2 seasons have aired
-      };
-
-      const after = {
-        mediaItemId: 'media-1',
-        status: 'Returning Series',
-        totalSeasons: 3, // Still 3 (no change in announced)
-        nextAirDate: new Date('2025-03-01'),
-        lastEpisodeKey: 'S3E1', // Season 3 episode 1 aired!
-      };
-
-      // Access private method via any cast
-      const diff = (service as any).calculateDiff(12345, before, after);
-
-      expect(diff.hasChanges).toBe(true);
-      expect(diff.changes.newSeason).toBeDefined();
-      expect(diff.changes.newSeason.seasonNumber).toBe(3);
-    });
-
-    it('should NOT trigger new season when only totalSeasons increases', () => {
-      // totalSeasons increased (announcement) but no new episodes aired
-      const before = {
+  describe('buildCurrentStateDiff', () => {
+    it('should report current aired episode and season', () => {
+      const snapshot = {
         mediaItemId: 'media-1',
         status: 'Returning Series',
         totalSeasons: 2,
-        nextAirDate: null,
-        lastEpisodeKey: 'S2E10',
-      };
-
-      const after = {
-        mediaItemId: 'media-1',
-        status: 'Returning Series',
-        totalSeasons: 3, // Season 3 announced!
-        nextAirDate: new Date('2025-06-01'),
-        lastEpisodeKey: 'S2E10', // But still no new episodes
-      };
-
-      const diff = (service as any).calculateDiff(12345, before, after);
-
-      // Should NOT trigger new_season notification
-      expect(diff.changes.newSeason).toBeUndefined();
-    });
-
-    it('should detect new episode within same season', () => {
-      const before = {
-        mediaItemId: 'media-1',
-        status: 'Returning Series',
-        totalSeasons: 2,
-        nextAirDate: null,
+        nextAirDate: new Date('2025-03-15'),
         lastEpisodeKey: 'S2E5',
+        lastEpisodeAirDate: new Date('2025-03-01'),
       };
 
-      const after = {
-        mediaItemId: 'media-1',
-        status: 'Returning Series',
-        totalSeasons: 2,
-        nextAirDate: null,
-        lastEpisodeKey: 'S2E6', // New episode in same season
-      };
-
-      const diff = (service as any).calculateDiff(12345, before, after);
+      const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
 
       expect(diff.hasChanges).toBe(true);
-      expect(diff.changes.newEpisode).toBeDefined();
-      expect(diff.changes.newEpisode.season).toBe(2);
-      expect(diff.changes.newEpisode.episode).toBe(6);
-      // Should NOT trigger new_season (same season)
+      expect(diff.changes.newEpisode).toEqual({
+        season: 2,
+        episode: 5,
+        airDate: '2025-03-01',
+        key: 'S2E5',
+      });
+      expect(diff.changes.newSeason).toEqual({
+        seasonNumber: 2,
+        airDate: '2025-03-01',
+        key: '2',
+      });
+      expect(diff.changes.statusChanged).toBeUndefined();
+    });
+
+    it('should set hasChanges=false when no aired episodes', () => {
+      const snapshot = {
+        mediaItemId: 'media-1',
+        status: 'Returning Series',
+        totalSeasons: 1,
+        nextAirDate: new Date('2025-06-01'),
+        lastEpisodeKey: null,
+        lastEpisodeAirDate: null,
+      };
+
+      const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
+
+      expect(diff.hasChanges).toBe(false);
+      expect(diff.changes.newEpisode).toBeUndefined();
       expect(diff.changes.newSeason).toBeUndefined();
     });
 
     it('should detect status change', () => {
-      const before = {
-        mediaItemId: 'media-1',
-        status: 'Returning Series',
-        totalSeasons: 5,
-        nextAirDate: null,
-        lastEpisodeKey: 'S5E10',
-      };
-
-      const after = {
+      const snapshot = {
         mediaItemId: 'media-1',
         status: 'Ended',
         totalSeasons: 5,
         nextAirDate: null,
         lastEpisodeKey: 'S5E10',
+        lastEpisodeAirDate: new Date('2025-01-20'),
       };
 
-      const diff = (service as any).calculateDiff(12345, before, after);
+      const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
 
       expect(diff.hasChanges).toBe(true);
       expect(diff.changes.statusChanged).toEqual({
         from: 'Returning Series',
         to: 'Ended',
       });
+    });
+
+    it('should not report status change when unchanged', () => {
+      const snapshot = {
+        mediaItemId: 'media-1',
+        status: 'Returning Series',
+        totalSeasons: 2,
+        nextAirDate: null,
+        lastEpisodeKey: 'S2E5',
+        lastEpisodeAirDate: new Date('2025-02-10'),
+      };
+
+      const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
+
+      expect(diff.changes.statusChanged).toBeUndefined();
+    });
+
+    it('should report status change even without aired episodes', () => {
+      const snapshot = {
+        mediaItemId: 'media-1',
+        status: 'Canceled',
+        totalSeasons: 1,
+        nextAirDate: null,
+        lastEpisodeKey: null,
+        lastEpisodeAirDate: null,
+      };
+
+      const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
+
+      expect(diff.hasChanges).toBe(true);
+      expect(diff.changes.statusChanged).toEqual({
+        from: 'Returning Series',
+        to: 'Canceled',
+      });
+      expect(diff.changes.newEpisode).toBeUndefined();
+    });
+
+    it('should include tmdbId and mediaItemId in diff', () => {
+      const snapshot = {
+        mediaItemId: 'media-42',
+        status: 'Returning Series',
+        totalSeasons: 1,
+        nextAirDate: null,
+        lastEpisodeKey: 'S1E1',
+        lastEpisodeAirDate: new Date('2025-01-05'),
+      };
+
+      const diff = (service as any).buildCurrentStateDiff(99999, snapshot, 'Returning Series');
+
+      expect(diff.tmdbId).toBe(99999);
+      expect(diff.mediaItemId).toBe('media-42');
     });
   });
 });

@@ -3494,6 +3494,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "default": 20,
               "type": "number"
             }
           },
@@ -3502,7 +3503,17 @@
             "required": false,
             "in": "query",
             "schema": {
+              "default": 0,
               "type": "number"
+            }
+          },
+          {
+            "name": "unread",
+            "required": false,
+            "in": "query",
+            "description": "Filter by unread only",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -7828,16 +7839,19 @@
         "properties": {
           "userId": {
             "type": "string",
-            "example": "123e4567-e89b-12d3-a456-426614174000"
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "description": "Unique user identifier"
           },
           "username": {
             "type": "string",
-            "example": "john_doe"
+            "example": "john_doe",
+            "description": "Public username of the rater"
           },
           "avatarUrl": {
             "type": "string",
             "example": "https://example.com/avatar.jpg",
-            "nullable": true
+            "nullable": true,
+            "description": "URL of the user avatar image"
           }
         },
         "required": [
@@ -10213,13 +10227,18 @@
           "allowFollowers": {
             "type": "boolean",
             "example": true
+          },
+          "autoSubscribeOnWatch": {
+            "type": "boolean",
+            "example": true
           }
         },
         "required": [
           "isProfilePublic",
           "showWatchHistory",
           "showRatings",
-          "allowFollowers"
+          "allowFollowers",
+          "autoSubscribeOnWatch"
         ]
       },
       "ProfileDto": {
@@ -10387,6 +10406,10 @@
             "example": true
           },
           "allowFollowers": {
+            "type": "boolean",
+            "example": true
+          },
+          "autoSubscribeOnWatch": {
             "type": "boolean",
             "example": true
           }
@@ -10571,28 +10594,6 @@
           }
         }
       },
-      "PosterDto": {
-        "type": "object",
-        "properties": {
-          "small": {
-            "type": "string",
-            "example": "https://image.tmdb.org/t/p/w92/poster.jpg"
-          },
-          "medium": {
-            "type": "string",
-            "example": "https://image.tmdb.org/t/p/w185/poster.jpg"
-          },
-          "large": {
-            "type": "string",
-            "example": "https://image.tmdb.org/t/p/w500/poster.jpg"
-          }
-        },
-        "required": [
-          "small",
-          "medium",
-          "large"
-        ]
-      },
       "NotificationMediaSummaryDto": {
         "type": "object",
         "properties": {
@@ -10620,7 +10621,7 @@
             "nullable": true,
             "allOf": [
               {
-                "$ref": "#/components/schemas/PosterDto"
+                "$ref": "#/components/schemas/ImageDto"
               }
             ]
           }
@@ -10692,11 +10693,21 @@
           "unreadCount": {
             "type": "number",
             "example": 5
+          },
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "hasMore": {
+            "type": "boolean",
+            "example": true
           }
         },
         "required": [
           "data",
-          "unreadCount"
+          "unreadCount",
+          "total",
+          "hasMore"
         ]
       },
       "UnreadCountResponseDto": {

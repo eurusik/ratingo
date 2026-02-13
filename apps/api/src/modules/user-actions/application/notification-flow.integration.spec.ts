@@ -10,7 +10,8 @@ import { NotificationsService } from './notifications.service';
 import { USER_SUBSCRIPTION_REPOSITORY } from '../domain/repositories/user-subscription.repository.interface';
 import { USER_MEDIA_ACTION_REPOSITORY } from '../domain/repositories/user-media-action.repository.interface';
 import { USER_NOTIFICATION_REPOSITORY } from '../domain/repositories/user-notification.repository.interface';
-import { DATABASE_CONNECTION } from '../../../database/database.module';
+import { SHOW_STATE_PORT } from '../domain/ports/show-state.port';
+import { USER_PREFERENCE_PORT } from '../domain/ports/user-preference.port';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 import type { ShowSyncDiff } from '../../ingestion/public';
 
@@ -24,9 +25,6 @@ describe('Notification Flow Integration', () => {
   const notifications: any[] = [];
   const actions: any[] = [];
 
-  // Track dedup markers updates
-  let lastUpdateCall: any = null;
-
   const userId = 'user-123';
   const mediaItemId = 'media-456';
 
@@ -35,7 +33,6 @@ describe('Notification Flow Integration', () => {
     subscriptions.clear();
     notifications.length = 0;
     actions.length = 0;
-    lastUpdateCall = null;
 
     // Mock subscription repository
     const subscriptionRepo = {
@@ -67,6 +64,53 @@ describe('Notification Flow Integration', () => {
       findActiveTriggersForMedia: jest.fn(),
       listActiveWithMedia: jest.fn(),
       countActive: jest.fn(),
+      atomicNotifyNewEpisode: jest
+        .fn()
+        .mockImplementation(async (mid: string, episodeKey: string) => {
+          const results: any[] = [];
+          for (const [key, sub] of subscriptions) {
+            if (
+              sub.mediaItemId === mid &&
+              sub.isActive &&
+              sub.trigger === SUBSCRIPTION_TRIGGER.NEW_EPISODE &&
+              sub.lastNotifiedEpisodeKey !== episodeKey
+            ) {
+              sub.lastNotifiedEpisodeKey = episodeKey;
+              subscriptions.set(key, sub);
+              results.push({ id: sub.id, userId: sub.userId, mediaItemId: sub.mediaItemId });
+            }
+          }
+          return results;
+        }),
+      atomicNotifyNewSeason: jest
+        .fn()
+        .mockImplementation(async (mid: string, seasonNumber: number) => {
+          const results: any[] = [];
+          for (const [key, sub] of subscriptions) {
+            if (
+              sub.mediaItemId === mid &&
+              sub.isActive &&
+              sub.trigger === SUBSCRIPTION_TRIGGER.NEW_SEASON &&
+              (sub.lastNotifiedSeasonNumber === null || sub.lastNotifiedSeasonNumber < seasonNumber)
+            ) {
+              sub.lastNotifiedSeasonNumber = seasonNumber;
+              subscriptions.set(key, sub);
+              results.push({ id: sub.id, userId: sub.userId, mediaItemId: sub.mediaItemId });
+            }
+          }
+          return results;
+        }),
+      deactivateForEndedShow: jest.fn().mockResolvedValue(0),
+    };
+
+    // Mock show state port (current aired state: S2E10)
+    const showStatePort = {
+      getLastAiredEpisodeKey: jest.fn().mockResolvedValue('S2E10'),
+    };
+
+    // Mock user preference port
+    const userPreferencePort = {
+      getAutoSubscribeOnWatch: jest.fn().mockResolvedValue(false),
     };
 
     // Mock action repository
@@ -121,48 +165,13 @@ describe('Notification Flow Integration', () => {
       countUnread: jest.fn().mockImplementation(async (uid) => {
         return notifications.filter((n) => n.userId === uid && !n.isRead).length;
       }),
+      countTotal: jest.fn().mockImplementation(async (uid, unread) => {
+        const filtered = notifications.filter((n) => n.userId === uid);
+        if (unread === true) return filtered.filter((n) => !n.isRead).length;
+        return filtered.length;
+      }),
       markAsRead: jest.fn(),
       markAllAsRead: jest.fn(),
-    };
-
-    // Mock DB for SubscriptionsService.getShowCurrentState
-    const mockDb = {
-      select: jest.fn().mockReturnThis(),
-      from: jest.fn().mockReturnThis(),
-      innerJoin: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue([
-        { seasonNumber: 2, episodeNumber: 10 }, // Current aired state: S2E10
-      ]),
-      // For SubscriptionTriggerService
-      update: jest.fn().mockImplementation(() => {
-        const setFn = jest.fn().mockImplementation((data) => {
-          lastUpdateCall = data;
-          return {
-            set: setFn,
-            where: jest.fn().mockReturnThis(),
-            returning: jest.fn().mockImplementation(() => {
-              // Return subscriptions that match the update criteria
-              const matchingSubs = Array.from(subscriptions.values()).filter(
-                (s) => s.mediaItemId === mediaItemId && s.isActive,
-              );
-              return Promise.resolve(
-                matchingSubs.map((s) => ({
-                  id: s.id,
-                  userId: s.userId,
-                  mediaItemId: s.mediaItemId,
-                })),
-              );
-            }),
-          };
-        });
-        return {
-          set: setFn,
-          where: jest.fn().mockReturnThis(),
-          returning: jest.fn().mockResolvedValue([]),
-        };
-      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -173,7 +182,8 @@ describe('Notification Flow Integration', () => {
         { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: subscriptionRepo },
         { provide: USER_MEDIA_ACTION_REPOSITORY, useValue: actionRepo },
         { provide: USER_NOTIFICATION_REPOSITORY, useValue: notificationRepo },
-        { provide: DATABASE_CONNECTION, useValue: mockDb },
+        { provide: SHOW_STATE_PORT, useValue: showStatePort },
+        { provide: USER_PREFERENCE_PORT, useValue: userPreferencePort },
       ],
     }).compile();
 

@@ -9,6 +9,7 @@ import { CARD_LIST_CONTEXT } from '../../shared/cards/domain/card.constants';
 import { USER_MEDIA_STATE_ERRORS } from '../domain/constants/user-media-state-errors.constants';
 import { USER_MEDIA_STATE, type UserMediaState } from '../domain/entities/user-media-state.entity';
 import { UserMediaRatingChangedEvent } from '../domain/events/user-media-rating-changed.event';
+import { UserMediaStateChangedEvent } from '../domain/events/user-media-state-changed.event';
 import type { IRatingSyncPort } from '../domain/ports/rating-sync.port';
 import {
   type IUserMediaStateRepository,
@@ -67,6 +68,14 @@ export class UserMediaService implements IRatingSyncPort {
       if (data.rating !== undefined) {
         await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating ?? null);
       }
+      if (USER_MEDIA_STATE.WATCHING !== existing?.state) {
+        await this.emitStateChanged(
+          data.userId,
+          data.mediaItemId,
+          USER_MEDIA_STATE.WATCHING,
+          existing?.state ?? null,
+        );
+      }
       return result;
     }
 
@@ -74,6 +83,15 @@ export class UserMediaService implements IRatingSyncPort {
 
     if (data.rating !== undefined) {
       await this.emitRatingChanged(data.userId, data.mediaItemId, data.rating ?? null);
+    }
+
+    if (resolvedState !== existing?.state) {
+      await this.emitStateChanged(
+        data.userId,
+        data.mediaItemId,
+        resolvedState,
+        existing?.state ?? null,
+      );
     }
 
     return result;
@@ -369,6 +387,25 @@ export class UserMediaService implements IRatingSyncPort {
       existing?.state ??
       (mediaType === MediaType.SHOW ? USER_MEDIA_STATE.WATCHING : USER_MEDIA_STATE.COMPLETED)
     );
+  }
+
+  private async emitStateChanged(
+    userId: string,
+    mediaItemId: string,
+    newState: string,
+    previousState: string | null,
+  ): Promise<void> {
+    try {
+      await this.eventEmitter.emitAsync(
+        UserMediaStateChangedEvent.eventName,
+        new UserMediaStateChangedEvent(userId, mediaItemId, newState, previousState),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to emit state changed event: user=${userId}, media=${mediaItemId}`,
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   private async emitRatingChanged(

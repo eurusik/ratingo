@@ -28,12 +28,19 @@ export class NotificationsService {
     userId: string,
     limit = DEFAULT_PAGE_SIZE,
     offset = 0,
-  ): Promise<{ data: NotificationWithMedia[]; unreadCount: number }> {
-    const [data, unreadCount] = await Promise.all([
-      this.notificationRepo.listWithMedia(userId, limit, offset),
-      this.notificationRepo.countUnread(userId),
+    unread?: boolean,
+  ): Promise<{
+    data: NotificationWithMedia[];
+    unreadCount: number;
+    total: number;
+    hasMore: boolean;
+  }> {
+    const [data, total] = await Promise.all([
+      this.notificationRepo.listWithMedia(userId, limit, offset, unread),
+      this.notificationRepo.countTotal(userId, unread),
     ]);
-    return { data, unreadCount };
+    const unreadCount = unread === true ? total : await this.notificationRepo.countUnread(userId);
+    return { data, unreadCount, total, hasMore: offset + data.length < total };
   }
 
   /**

@@ -73,11 +73,12 @@ export function PrivacySection({ user, onUpdate }: PrivacySectionProps) {
   const [updatingField, setUpdatingField] = useState<PrivacyField | null>(null);
 
   // Local state for optimistic updates
-  const [localValues, setLocalValues] = useState({
+  const [localValues, setLocalValues] = useState<Record<PrivacyField, boolean>>({
     isProfilePublic: user.profile.privacy?.isProfilePublic ?? true,
     showWatchHistory: user.profile.privacy?.showWatchHistory ?? false,
     showRatings: user.profile.privacy?.showRatings ?? true,
     allowFollowers: user.profile.privacy?.allowFollowers ?? true,
+    autoSubscribeOnWatch: user.profile.privacy?.autoSubscribeOnWatch ?? true,
   });
 
   const handleToggle = async (field: PrivacyField, value: boolean) => {
@@ -106,6 +107,11 @@ export function PrivacySection({ user, onUpdate }: PrivacySectionProps) {
     { id: 'showWatchHistory', label: dict.settings.privacy.showHistory },
     { id: 'showRatings', label: dict.settings.privacy.showRatings },
     { id: 'allowFollowers', label: dict.settings.privacy.allowFollowers },
+    {
+      id: 'autoSubscribeOnWatch',
+      label: dict.settings.privacy.autoSubscribeOnWatch,
+      description: dict.settings.privacy.autoSubscribeOnWatchHint,
+    },
   ];
 
   return (

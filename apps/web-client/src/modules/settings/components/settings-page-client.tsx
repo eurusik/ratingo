@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from '@/shared/i18n';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import type { MeDto } from '@/core/api';
+import type { components } from '@ratingo/api-contract';
 import { ProfileSection } from './profile-section';
 import { PrivacySection } from './privacy-section';
 import { SecuritySection } from './security-section';
@@ -49,7 +50,7 @@ export function SettingsPageClient({ user, initialTab = 'profile' }: SettingsPag
   };
 
   const handlePrivacyUpdate = async (
-    field: 'isProfilePublic' | 'showWatchHistory' | 'showRatings' | 'allowFollowers',
+    field: keyof components['schemas']['PrivacyDto'],
     value: boolean,
   ) => {
     await updateProfile.mutateAsync({

@@ -175,6 +175,8 @@ export class DrizzleUsersRepository implements IUsersRepository {
           updatePayload.showWatchHistory = data.showWatchHistory;
         if (data.showRatings !== undefined) updatePayload.showRatings = data.showRatings;
         if (data.allowFollowers !== undefined) updatePayload.allowFollowers = data.allowFollowers;
+        if (data.autoSubscribeOnWatch !== undefined)
+          updatePayload.autoSubscribeOnWatch = data.autoSubscribeOnWatch;
 
         const [row] = await this.db
           .update(schema.users)
@@ -248,6 +250,7 @@ export class DrizzleUsersRepository implements IUsersRepository {
       showWatchHistory: row.showWatchHistory,
       showRatings: row.showRatings,
       allowFollowers: row.allowFollowers,
+      autoSubscribeOnWatch: row.autoSubscribeOnWatch,
       role: row.role as User['role'],
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,

@@ -1,5 +1,5 @@
-import { type ImageDto } from '../../../../common/dtos/image.dto';
 import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type ImageData } from '../../../../common/types/media.types';
 import {
   type UserSubscription,
   type SubscriptionTrigger,
@@ -33,9 +33,18 @@ export interface SubscriptionWithMedia extends UserSubscription {
     type: MediaType;
     title: string;
     slug: string;
-    poster: ImageDto | null;
+    poster: ImageData | null;
     releaseDate?: Date | null;
   };
+}
+
+/**
+ * Subscription identified by atomic dedup UPDATE (returned from notify methods).
+ */
+export interface NotifiedSubscription {
+  id: string;
+  userId: string;
+  mediaItemId: string;
 }
 
 /**
@@ -120,4 +129,22 @@ export interface IUserSubscriptionRepository {
    * @returns {Promise<number[]>} Array of TMDB IDs
    */
   findTrackedShowTmdbIds(): Promise<number[]>;
+
+  /**
+   * Atomically updates dedup marker and returns subscriptions to notify.
+   * Only updates rows where the episode key differs (or is null).
+   */
+  atomicNotifyNewEpisode(mediaItemId: string, episodeKey: string): Promise<NotifiedSubscription[]>;
+
+  /**
+   * Atomically updates dedup marker and returns subscriptions to notify.
+   * Only updates rows where the season number is lower (or null).
+   */
+  atomicNotifyNewSeason(mediaItemId: string, seasonNumber: number): Promise<NotifiedSubscription[]>;
+
+  /**
+   * Deactivates all new_season/new_episode subscriptions for a show
+   * that has ended or been canceled.
+   */
+  deactivateForEndedShow(mediaItemId: string): Promise<number>;
 }

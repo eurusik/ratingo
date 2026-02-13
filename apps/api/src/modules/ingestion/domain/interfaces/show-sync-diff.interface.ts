@@ -99,3 +99,12 @@ export function formatDateToIso(date: Date | null | undefined): string | null {
   if (!date) return null;
   return date.toISOString().split('T')[0];
 }
+
+/**
+ * Parses season number from episode key (e.g., 'S2E5' -> 2).
+ */
+export function parseSeasonFromEpisodeKey(key: string | null): number | null {
+  if (!key) return null;
+  const match = key.match(/^S(\d+)E\d+$/i);
+  return match ? parseInt(match[1], 10) : null;
+}

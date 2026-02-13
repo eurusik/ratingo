@@ -83,6 +83,7 @@ class InMemoryUsersRepository implements IUsersRepository {
       showWatchHistory: data.showWatchHistory ?? true,
       showRatings: data.showRatings ?? true,
       allowFollowers: data.allowFollowers ?? true,
+      autoSubscribeOnWatch: data.autoSubscribeOnWatch ?? true,
       role: (data.role as User['role']) ?? 'user',
     } as User;
     this.users.push(user);
@@ -334,6 +335,7 @@ describe('Google OAuth e2e', () => {
         showWatchHistory: true,
         showRatings: true,
         allowFollowers: true,
+        autoSubscribeOnWatch: true,
         role: 'user',
       });
 
@@ -400,6 +402,7 @@ describe('Google OAuth e2e', () => {
         showWatchHistory: true,
         showRatings: true,
         allowFollowers: true,
+        autoSubscribeOnWatch: true,
         role: 'user',
       });
 
@@ -436,6 +439,7 @@ describe('Google OAuth e2e', () => {
         showWatchHistory: true,
         showRatings: true,
         allowFollowers: true,
+        autoSubscribeOnWatch: true,
         role: 'user',
       });
 

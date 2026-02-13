@@ -17,6 +17,7 @@ export interface User {
   showWatchHistory: boolean;
   showRatings: boolean;
   allowFollowers: boolean;
+  autoSubscribeOnWatch: boolean;
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;

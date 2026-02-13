@@ -49,6 +49,10 @@ export interface ListParams {
   offset?: number;
 }
 
+export interface NotificationListParams extends ListParams {
+  unread?: boolean;
+}
+
 export interface SaveItemParams {
   mediaItemId: string;
   list: SavedItemList;
@@ -225,9 +229,9 @@ export const userActionsApi = {
    * @param params - Pagination parameters
    * @returns Notifications with unread count
    */
-  async listNotifications(params?: ListParams): Promise<NotificationListResponseDto> {
+  async listNotifications(params?: NotificationListParams): Promise<NotificationListResponseDto> {
     return apiGet<NotificationListResponseDto>('me/notifications', {
-      searchParams: params as Record<string, string | number>,
+      searchParams: params as Record<string, string | number | boolean>,
     });
   },
 

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, isNotNull, lte } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
@@ -16,20 +16,21 @@ import {
 
 import { SyncMediaService } from './sync-media.service';
 
-/**
- * Snapshot of show state before/after sync for diff calculation.
- */
 interface ShowSnapshot {
   mediaItemId: string;
   status: string | null;
   totalSeasons: number | null;
   nextAirDate: Date | null;
-  lastEpisodeKey: string | null; // 'S2E5' format
+  lastEpisodeKey: string | null; // 'S2E5' format — last AIRED episode
+  lastEpisodeAirDate: Date | null;
 }
 
 /**
- * Service for syncing tracked shows with diff detection.
- * Used by the tracked sync job to detect changes and trigger notifications.
+ * Service for syncing tracked shows with change detection.
+ *
+ * Reports the current aired state as the diff. The downstream
+ * SubscriptionTriggerService handles dedup via atomic UPDATE conditions
+ * (lastNotifiedEpisodeKey, lastNotifiedSeasonNumber).
  */
 @Injectable()
 export class TrackedSyncService {
@@ -42,50 +43,50 @@ export class TrackedSyncService {
   ) {}
 
   /**
-   * Syncs a show and returns what changed.
-   *
-   * @param tmdbId - TMDB ID of the show
-   * @returns ShowSyncDiff with detected changes
+   * Reports the current aired state as a diff instead of comparing
+   * before/after snapshots (which always returns 0 when trending sync
+   * already updated the DB). Dedup markers handle the rest.
    */
   async syncShowWithDiff(tmdbId: number): Promise<ShowSyncDiff> {
-    // 1. Get current state before sync
-    const beforeSnapshot = await this.getShowSnapshot(tmdbId);
-
-    if (!beforeSnapshot) {
-      // Show doesn't exist yet, sync it and return empty diff
-      await this.syncMediaService.syncShow(tmdbId);
-      const afterSnapshot = await this.getShowSnapshot(tmdbId);
-
-      if (!afterSnapshot) {
-        this.logger.warn(`Show ${tmdbId} not found after sync`);
-        return createEmptyDiff(tmdbId, '');
-      }
-
-      // New show - no diff to report
-      return createEmptyDiff(tmdbId, afterSnapshot.mediaItemId);
-    }
-
-    // 2. Sync the show
+    const beforeStatus = await this.getShowStatus(tmdbId);
     await this.syncMediaService.syncShow(tmdbId);
+    const snapshot = await this.getShowSnapshot(tmdbId);
 
-    // 3. Get new state after sync
-    const afterSnapshot = await this.getShowSnapshot(tmdbId);
-
-    if (!afterSnapshot) {
-      this.logger.warn(`Show ${tmdbId} disappeared after sync`);
-      return createEmptyDiff(tmdbId, beforeSnapshot.mediaItemId);
+    if (!snapshot) {
+      if (!beforeStatus) {
+        this.logger.warn(`Show ${tmdbId} not found after sync`);
+      }
+      return createEmptyDiff(tmdbId, beforeStatus?.mediaItemId ?? '');
     }
 
-    // 4. Calculate diff
-    return this.calculateDiff(tmdbId, beforeSnapshot, afterSnapshot);
+    return this.buildCurrentStateDiff(tmdbId, snapshot, beforeStatus?.status ?? null);
   }
 
-  /**
-   * Gets current show state snapshot for diff calculation.
-   */
+  private async getShowStatus(
+    tmdbId: number,
+  ): Promise<{ mediaItemId: string; status: string | null } | null> {
+    try {
+      const result = await this.db
+        .select({
+          mediaItemId: schema.mediaItems.id,
+          status: schema.shows.status,
+        })
+        .from(schema.mediaItems)
+        .innerJoin(schema.shows, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+        .where(
+          and(eq(schema.mediaItems.tmdbId, tmdbId), eq(schema.mediaItems.type, MediaType.SHOW)),
+        )
+        .limit(1);
+
+      return result.length > 0 ? result[0] : null;
+    } catch (error) {
+      this.logger.warn(`Failed to get show status for tmdbId=${tmdbId}: ${error.message}`);
+      return null;
+    }
+  }
+
   private async getShowSnapshot(tmdbId: number): Promise<ShowSnapshot | null> {
     try {
-      // Get show basic info
       const showResult = await this.db
         .select({
           mediaItemId: schema.mediaItems.id,
@@ -106,24 +107,32 @@ export class TrackedSyncService {
 
       const show = showResult[0];
 
-      // Get last episode (highest season + episode number)
       const lastEpisodeResult = await this.db
         .select({
           seasonNumber: schema.seasons.number,
           episodeNumber: schema.episodes.number,
+          airDate: schema.episodes.airDate,
         })
         .from(schema.episodes)
         .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
         .innerJoin(schema.shows, eq(schema.shows.id, schema.seasons.showId))
         .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.shows.mediaItemId))
-        .where(eq(schema.mediaItems.tmdbId, tmdbId))
+        .where(
+          and(
+            eq(schema.mediaItems.tmdbId, tmdbId),
+            isNotNull(schema.episodes.airDate),
+            lte(schema.episodes.airDate, new Date()),
+          ),
+        )
         .orderBy(desc(schema.seasons.number), desc(schema.episodes.number))
         .limit(1);
 
       let lastEpisodeKey: string | null = null;
+      let lastEpisodeAirDate: Date | null = null;
       if (lastEpisodeResult.length > 0) {
         const ep = lastEpisodeResult[0];
         lastEpisodeKey = formatEpisodeKey(ep.seasonNumber, ep.episodeNumber);
+        lastEpisodeAirDate = ep.airDate;
       }
 
       return {
@@ -132,6 +141,7 @@ export class TrackedSyncService {
         totalSeasons: show.totalSeasons,
         nextAirDate: show.nextAirDate,
         lastEpisodeKey,
+        lastEpisodeAirDate,
       };
     } catch (error) {
       this.logger.error(`Failed to get show snapshot for ${tmdbId}: ${error.message}`);
@@ -139,84 +149,57 @@ export class TrackedSyncService {
     }
   }
 
-  /**
-   * Calculates diff between before and after snapshots.
-   */
-  private calculateDiff(tmdbId: number, before: ShowSnapshot, after: ShowSnapshot): ShowSyncDiff {
+  private buildCurrentStateDiff(
+    tmdbId: number,
+    snapshot: ShowSnapshot,
+    previousStatus: string | null,
+  ): ShowSyncDiff {
     const diff: ShowSyncDiff = {
       tmdbId,
-      mediaItemId: after.mediaItemId,
+      mediaItemId: snapshot.mediaItemId,
       hasChanges: false,
       changes: {},
     };
 
-    // Parse season numbers from lastEpisodeKey (aired seasons, not totalSeasons)
-    const beforeAiredSeason = this.parseSeasonFromEpisodeKey(before.lastEpisodeKey);
-    const afterAiredSeason = this.parseSeasonFromEpisodeKey(after.lastEpisodeKey);
-
-    // Check for new season (based on aired episodes, not totalSeasons)
-    if (afterAiredSeason !== null && afterAiredSeason > (beforeAiredSeason ?? 0)) {
-      diff.hasChanges = true;
-      diff.changes.newSeason = {
-        seasonNumber: afterAiredSeason,
-        airDate: formatDateToIso(after.nextAirDate) ?? new Date().toISOString().split('T')[0],
-        key: formatSeasonKey(afterAiredSeason),
-      };
-      this.logger.log(`Detected new season ${afterAiredSeason} for show ${tmdbId}`);
-    }
-
-    // Check for new episode
-    if (
-      after.lastEpisodeKey !== null &&
-      before.lastEpisodeKey !== null &&
-      after.lastEpisodeKey !== before.lastEpisodeKey
-    ) {
-      // Parse episode key to get season/episode numbers
-      const match = after.lastEpisodeKey.match(/S(\d+)E(\d+)/);
+    if (snapshot.lastEpisodeKey) {
+      const match = snapshot.lastEpisodeKey.match(/^S(\d+)E(\d+)$/i);
       if (match) {
+        const seasonNumber = parseInt(match[1], 10);
+        const episodeNumber = parseInt(match[2], 10);
+
+        const airDate =
+          formatDateToIso(snapshot.lastEpisodeAirDate) ??
+          formatDateToIso(snapshot.nextAirDate) ??
+          new Date().toISOString().split('T')[0];
+
         diff.hasChanges = true;
         diff.changes.newEpisode = {
-          season: parseInt(match[1], 10),
-          episode: parseInt(match[2], 10),
-          airDate: formatDateToIso(after.nextAirDate) ?? new Date().toISOString().split('T')[0],
-          key: after.lastEpisodeKey,
+          season: seasonNumber,
+          episode: episodeNumber,
+          airDate,
+          key: snapshot.lastEpisodeKey,
         };
-        this.logger.log(`Detected new episode ${after.lastEpisodeKey} for show ${tmdbId}`);
+
+        diff.changes.newSeason = {
+          seasonNumber,
+          airDate,
+          key: formatSeasonKey(seasonNumber),
+        };
       }
     }
 
-    // Check for status change
-    if (before.status !== after.status && after.status !== null) {
+    // Status change: still use before/after comparison (sync may update status from TMDB)
+    if (previousStatus !== snapshot.status && snapshot.status !== null) {
       diff.hasChanges = true;
       diff.changes.statusChanged = {
-        from: before.status,
-        to: after.status,
+        from: previousStatus,
+        to: snapshot.status,
       };
       this.logger.log(
-        `Detected status change for show ${tmdbId}: ${before.status} -> ${after.status}`,
+        `Detected status change for show ${tmdbId}: ${previousStatus} -> ${snapshot.status}`,
       );
     }
 
-    // Check for next air date change (informational only)
-    const beforeDate = formatDateToIso(before.nextAirDate);
-    const afterDate = formatDateToIso(after.nextAirDate);
-    if (beforeDate !== afterDate) {
-      diff.changes.nextAirDateChanged = {
-        from: beforeDate,
-        to: afterDate,
-      };
-      // Note: This doesn't set hasChanges as it's informational only
-    }
-
     return diff;
-  }
-
-  /**
-   * Parses season number from episode key (e.g., 'S2E5' -> 2).
-   */
-  private parseSeasonFromEpisodeKey(key: string | null): number | null {
-    if (!key) return null;
-    const match = key.match(/^S(\d+)E\d+$/i);
-    return match ? parseInt(match[1], 10) : null;
   }
 }

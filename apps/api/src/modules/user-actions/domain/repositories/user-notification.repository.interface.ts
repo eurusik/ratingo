@@ -1,5 +1,5 @@
-import { type ImageDto } from '../../../../common/dtos/image.dto';
 import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type ImageData } from '../../../../common/types/media.types';
 import {
   type UserNotification,
   type NotificationPayload,
@@ -31,7 +31,7 @@ export interface NotificationWithMedia extends UserNotification {
     type: MediaType;
     title: string;
     slug: string;
-    poster: ImageDto | null;
+    poster: ImageData | null;
   };
 }
 
@@ -52,7 +52,17 @@ export interface IUserNotificationRepository {
   /**
    * Lists notifications with media summary.
    */
-  listWithMedia(userId: string, limit?: number, offset?: number): Promise<NotificationWithMedia[]>;
+  listWithMedia(
+    userId: string,
+    limit?: number,
+    offset?: number,
+    unread?: boolean,
+  ): Promise<NotificationWithMedia[]>;
+
+  /**
+   * Counts total notifications (optionally filtered by unread).
+   */
+  countTotal(userId: string, unread?: boolean): Promise<number>;
 
   /**
    * Counts unread notifications.

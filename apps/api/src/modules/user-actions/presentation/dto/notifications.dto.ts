@@ -1,17 +1,20 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsOptional } from 'class-validator';
+
+import { ImageDto } from '../../../../common/dtos/image.dto';
+import { OffsetPaginationQueryDto } from '../../../../common/dtos/pagination.dto';
 
 /**
- * Poster URLs for different sizes.
+ * Query parameters for notification list endpoint.
  */
-export class PosterDto {
-  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w92/poster.jpg' })
-  small: string;
-
-  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w185/poster.jpg' })
-  medium: string;
-
-  @ApiProperty({ example: 'https://image.tmdb.org/t/p/w500/poster.jpg' })
-  large: string;
+export class NotificationListQueryDto extends OffsetPaginationQueryDto {
+  @ApiPropertyOptional({ description: 'Filter by unread only' })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  unread?: boolean;
 }
 
 /**
@@ -30,8 +33,8 @@ export class NotificationMediaSummaryDto {
   @ApiProperty({ example: 'breaking-bad' })
   slug: string;
 
-  @ApiProperty({ type: PosterDto, nullable: true })
-  poster: { small: string; medium: string; large: string } | null;
+  @ApiProperty({ type: ImageDto, nullable: true })
+  poster: ImageDto | null;
 }
 
 /**
@@ -83,6 +86,12 @@ export class NotificationListResponseDto {
 
   @ApiProperty({ example: 5 })
   unreadCount: number;
+
+  @ApiProperty({ example: 42 })
+  total: number;
+
+  @ApiProperty({ example: true })
+  hasMore: boolean;
 }
 
 /**

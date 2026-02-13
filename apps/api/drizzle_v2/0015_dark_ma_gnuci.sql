@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "auto_subscribe_on_watch" boolean DEFAULT true;

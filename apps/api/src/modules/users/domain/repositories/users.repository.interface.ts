@@ -41,6 +41,7 @@ export interface UpdateUserProfileData {
   showWatchHistory?: boolean;
   showRatings?: boolean;
   allowFollowers?: boolean;
+  autoSubscribeOnWatch?: boolean;
 }
 
 /**

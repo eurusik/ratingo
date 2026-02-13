@@ -136,7 +136,7 @@ export function NotificationBell() {
         </div>
 
         <div className="p-2 border-t border-cinema-borderSoft">
-          <Link href={'/saved?tab=notifications' as Route}>
+          <Link href={'/notifications' as Route}>
             <Button variant="ghost" className="w-full text-sm text-cinema-text-muted hover:text-white">
               {dict.notifications.viewAll}
             </Button>
