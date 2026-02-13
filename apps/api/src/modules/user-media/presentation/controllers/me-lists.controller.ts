@@ -242,6 +242,43 @@ export class MeListsController {
   }
 
   /**
+   * Gets current user's dropped items.
+   *
+   * @param {{ id: string }} user - Current user context
+   * @param {MeUserMediaListQueryDto} query - Pagination and sorting query
+   * @returns {Promise<PaginatedMeUserMediaResponseDto>} Paginated dropped items list
+   */
+  @Get('dropped')
+  @ApiOperation({ summary: 'My dropped items (auth: Bearer)' })
+  @ApiOkResponse({ type: PaginatedMeUserMediaResponseDto })
+  async dropped(
+    @CurrentUser() user: { id: string },
+    @Query() query: MeUserMediaListQueryDto,
+  ): Promise<PaginatedMeUserMediaResponseDto> {
+    const limit = query.limit ?? DEFAULT_PAGE_SIZE;
+    const offset = query.offset ?? 0;
+    const { total, data } = await this.meListsService.getDropped(
+      user.id,
+      limit,
+      offset,
+      query.sort,
+    );
+
+    const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));
+
+    return {
+      data: items,
+      meta: {
+        count: items.length,
+        total,
+        limit,
+        offset,
+        hasMore: offset + items.length < total,
+      },
+    };
+  }
+
+  /**
    * Gets updates for user's highly-rated shows.
    *
    * Returns shows rated >= 60 that have recent or upcoming episodes.

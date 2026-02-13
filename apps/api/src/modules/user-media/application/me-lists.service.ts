@@ -135,6 +135,27 @@ export class MeListsService {
   }
 
   /**
+   * Gets dropped items for the current user.
+   *
+   * @param {string} userId - User identifier
+   * @param {number} limit - Page size
+   * @param {number} offset - Offset
+   * @param {UserMediaListSort} sort - Sort order
+   * @returns {Promise<{ total: number; data: any }>} Total count and page items
+   */
+  async getDropped(userId: string, limit: number, offset: number, sort?: UserMediaListSort) {
+    const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
+    const options = { states: [USER_MEDIA_STATE.DROPPED], sort: effectiveSort };
+
+    const [total, data] = await Promise.all([
+      this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.DROPPED] }),
+      this.userMediaService.listWithMedia(userId, limit, offset, options),
+    ]);
+
+    return { total, data };
+  }
+
+  /**
    * Gets updates for user's highly-rated shows.
    *
    * Accesses the repository directly instead of delegating through UserMediaService

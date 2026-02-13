@@ -86,6 +86,18 @@ export const meListsApi = {
   },
 
   /**
+   * Get user's dropped items.
+   *
+   * @param params - Pagination and sorting parameters
+   * @returns Paginated dropped items
+   */
+  async getDropped(params?: MeListsParams): Promise<PaginatedMeUserMediaResponseDto> {
+    return apiGet<PaginatedMeUserMediaResponseDto>('me/dropped', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
    * Pause a media item.
    *
    * @param mediaItemId - Media item ID to pause
@@ -103,6 +115,30 @@ export const meListsApi = {
    */
   async resumeMedia(mediaItemId: string): Promise<MeUserMediaListItemDto> {
     return apiPost<MeUserMediaListItemDto>(`user-media/${mediaItemId}/resume`);
+  },
+
+  /**
+   * Drop a media item.
+   *
+   * @param mediaItemId - Media item ID to drop
+   * @returns Updated user media state
+   */
+  async dropMedia(mediaItemId: string): Promise<MeUserMediaListItemDto> {
+    return apiPatch<MeUserMediaListItemDto>(`user-media/${mediaItemId}`, {
+      state: 'dropped',
+    } satisfies Partial<SetUserMediaStateDto>);
+  },
+
+  /**
+   * Restore a dropped media item back to watching.
+   *
+   * @param mediaItemId - Media item ID to restore
+   * @returns Updated user media state
+   */
+  async restoreMedia(mediaItemId: string): Promise<MeUserMediaListItemDto> {
+    return apiPatch<MeUserMediaListItemDto>(`user-media/${mediaItemId}`, {
+      state: 'watching',
+    } satisfies Partial<SetUserMediaStateDto>);
   },
 
   /**

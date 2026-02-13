@@ -60,8 +60,27 @@ describe('Notification Flow Integration', () => {
         subscriptions.set(key, sub);
         return sub;
       }),
-      deactivate: jest.fn(),
-      findActiveTriggersForMedia: jest.fn(),
+      deactivate: jest
+        .fn()
+        .mockImplementation(async (uid: string, mid: string, trigger: string) => {
+          const key = `${uid}-${mid}-${trigger}`;
+          const sub = subscriptions.get(key);
+          if (sub?.isActive) {
+            sub.isActive = false;
+            subscriptions.set(key, sub);
+            return true;
+          }
+          return false;
+        }),
+      findActiveTriggersForMedia: jest.fn().mockImplementation(async (uid: string, mid: string) => {
+        const triggers: string[] = [];
+        for (const [, sub] of subscriptions) {
+          if (sub.userId === uid && sub.mediaItemId === mid && sub.isActive) {
+            triggers.push(sub.trigger);
+          }
+        }
+        return triggers;
+      }),
       listActiveWithMedia: jest.fn(),
       countActive: jest.fn(),
       atomicNotifyNewEpisode: jest
@@ -362,6 +381,102 @@ describe('Notification Flow Integration', () => {
       // Verify: No new notifications (dedup worked)
       const { data: data2 } = await notificationsService.listWithMedia(userId);
       expect(data2).toHaveLength(1); // Still 1
+    });
+  });
+
+  describe('Drop → Restore → Resubscribe cycle', () => {
+    it('should receive notifications after drop and restore when auto-subscribe enabled', async () => {
+      // Step 1: User subscribes manually
+      await subscriptionsService.subscribe({
+        userId,
+        mediaItemId,
+        trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
+        context: 'show-page',
+      });
+
+      // Verify active subscription
+      const activeBefore = await subscriptionsService.getActiveTriggersForMedia(
+        userId,
+        mediaItemId,
+      );
+      expect(activeBefore).toContain(SUBSCRIPTION_TRIGGER.NEW_SEASON);
+
+      // Step 2: User drops the show → unsubscribe (simulates AutoUnsubscribeOnDropListener)
+      const deactivated = await subscriptionsService.unsubscribe(
+        userId,
+        mediaItemId,
+        SUBSCRIPTION_TRIGGER.NEW_SEASON,
+        'auto-dropped',
+      );
+      expect(deactivated).toBe(true);
+
+      // Verify subscription is inactive
+      const activeAfterDrop = await subscriptionsService.getActiveTriggersForMedia(
+        userId,
+        mediaItemId,
+      );
+      expect(activeAfterDrop).not.toContain(SUBSCRIPTION_TRIGGER.NEW_SEASON);
+
+      // Step 3: Sync while dropped — no notification
+      const diff: ShowSyncDiff = {
+        tmdbId: 12345,
+        mediaItemId,
+        hasChanges: true,
+        changes: {
+          newSeason: { seasonNumber: 3, airDate: '2025-03-01', key: '3' },
+        },
+      };
+      const eventsWhileDropped = await triggerService.handleShowDiff(diff);
+      expect(eventsWhileDropped).toHaveLength(0);
+
+      // Step 4: User restores → autoSubscribeForShow (simulates AutoResubscribeOnRestoreListener)
+      // Enable auto-subscribe preference for this user
+      const userPrefPort = (subscriptionsService as any).userPreferencePort;
+      userPrefPort.getAutoSubscribeOnWatch.mockResolvedValue(true);
+
+      await subscriptionsService.autoSubscribeForShow(userId, mediaItemId);
+
+      // Verify resubscribed
+      const activeAfterRestore = await subscriptionsService.getActiveTriggersForMedia(
+        userId,
+        mediaItemId,
+      );
+      expect(activeAfterRestore).toContain(SUBSCRIPTION_TRIGGER.NEW_SEASON);
+
+      // Step 5: New season sync → notification arrives
+      const diff2: ShowSyncDiff = {
+        tmdbId: 12345,
+        mediaItemId,
+        hasChanges: true,
+        changes: {
+          newSeason: { seasonNumber: 4, airDate: '2025-06-01', key: '4' },
+        },
+      };
+      const eventsAfterRestore = await triggerService.handleShowDiff(diff2);
+      expect(eventsAfterRestore).toHaveLength(1);
+      expect(eventsAfterRestore[0].payload.seasonNumber).toBe(4);
+    });
+
+    it('should NOT resubscribe when auto-subscribe preference is disabled', async () => {
+      // Step 1: Subscribe manually, then drop
+      await subscriptionsService.subscribe({
+        userId,
+        mediaItemId,
+        trigger: SUBSCRIPTION_TRIGGER.NEW_SEASON,
+      });
+      await subscriptionsService.unsubscribe(
+        userId,
+        mediaItemId,
+        SUBSCRIPTION_TRIGGER.NEW_SEASON,
+        'auto-dropped',
+      );
+
+      // Step 2: Restore with auto-subscribe OFF (default mock)
+      await subscriptionsService.autoSubscribeForShow(userId, mediaItemId);
+
+      // Verify: Still no active subscription
+      const active = await subscriptionsService.getActiveTriggersForMedia(userId, mediaItemId);
+      expect(active).not.toContain(SUBSCRIPTION_TRIGGER.NEW_SEASON);
     });
   });
 });

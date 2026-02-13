@@ -500,6 +500,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/dropped": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My dropped items (auth: Bearer) */
+        get: operations["MeListsController_dropped"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/favorites/updates": {
         parameters: {
             query?: never;
@@ -6604,6 +6621,33 @@ export interface operations {
         };
     };
     MeListsController_paused: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    MeListsController_dropped: {
         parameters: {
             query?: {
                 limit?: number;
