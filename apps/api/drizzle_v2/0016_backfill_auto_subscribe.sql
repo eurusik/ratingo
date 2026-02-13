@@ -21,5 +21,4 @@ WHERE ums.state IN ('watching', 'completed')
     WHERE us.user_id = ums.user_id
       AND us.media_item_id = ums.media_item_id
       AND us.trigger = t.trigger
-      AND us.is_active = true
   );

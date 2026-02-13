@@ -78,7 +78,8 @@ export class TrackedSyncService {
         .limit(1);
 
       return result.length > 0 ? result[0] : null;
-    } catch {
+    } catch (error) {
+      this.logger.warn(`Failed to get show status for tmdbId=${tmdbId}: ${error.message}`);
       return null;
     }
   }

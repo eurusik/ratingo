@@ -89,7 +89,7 @@ export function NotificationsList() {
         };
       });
     }
-    queryClient.setQueryData(unreadCountKey, () => ({ count: 0 }));
+    queryClient.setQueryData(unreadCountKey, () => ({ unreadCount: 0 }));
 
     // Clear any pending undo timeout
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);

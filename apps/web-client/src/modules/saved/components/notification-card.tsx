@@ -91,7 +91,11 @@ export function NotificationCard({
   }
 
   const airDate = payload?.airDate
-    ? new Date(payload.airDate).toLocaleDateString(locale, { day: 'numeric', month: 'long' })
+    ? new Date(`${payload.airDate}T00:00:00Z`).toLocaleDateString(locale, {
+        day: 'numeric',
+        month: 'long',
+        timeZone: 'UTC',
+      })
     : null;
 
   return (
