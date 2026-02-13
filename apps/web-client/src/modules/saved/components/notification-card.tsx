@@ -98,9 +98,8 @@ export function NotificationCard({
     <Link
       href={href}
       className={cn(
-        'group flex items-start gap-3 p-3 rounded-xl bg-cinema-card/50 border border-cinema-border/10 hover:bg-cinema-elevated/50 hover:border-cinema-border/30 transition-colors cursor-pointer',
-        !isRead && 'border-l-2 border-l-blue-500',
-        isRead && 'border-l-2 border-l-transparent',
+        'group flex items-start gap-3 p-3 rounded-xl border border-cinema-border/10 hover:bg-cinema-elevated/50 hover:border-cinema-border/30 transition-colors cursor-pointer',
+        !isRead ? 'bg-cinema-elevated/30' : 'bg-cinema-card/50',
       )}
     >
       {/* Poster */}

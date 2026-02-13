@@ -118,7 +118,7 @@ describe('NotificationCard', () => {
     const { container } = render(<NotificationCard {...props} />);
 
     const card = container.firstElementChild;
-    expect(card?.className).toContain('border-l-blue-500');
+    expect(card?.className).toContain('bg-cinema-elevated/30');
   });
 
   it('links to /shows/{slug} for show notifications', () => {
