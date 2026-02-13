@@ -12,6 +12,9 @@ async function getAuthHeaders(page: Page) {
   const token = await page.evaluate(() =>
     localStorage.getItem('ratingo_access_token'),
   );
+  if (!token) {
+    throw new Error('Missing ratingo_access_token in storage state');
+  }
   return { Authorization: `Bearer ${token}` };
 }
 

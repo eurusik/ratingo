@@ -15,17 +15,16 @@ test.describe('Settings — Privacy', () => {
     await settings.navigate();
     await settings.goToPrivacyTab();
 
-    if (await settings.autoSubscribeToggle.isVisible()) {
-      const initial = await settings.getAutoSubscribeState();
+    await expect(settings.autoSubscribeToggle).toBeVisible();
+    const initial = await settings.getAutoSubscribeState();
 
-      await settings.toggleAutoSubscribe();
-      const toggled = await settings.getAutoSubscribeState();
-      expect(toggled).not.toBe(initial);
+    await settings.toggleAutoSubscribe();
+    const toggled = await settings.getAutoSubscribeState();
+    expect(toggled).not.toBe(initial);
 
-      // Restore
-      await settings.toggleAutoSubscribe();
-      const restored = await settings.getAutoSubscribeState();
-      expect(restored).toBe(initial);
-    }
+    // Restore
+    await settings.toggleAutoSubscribe();
+    const restored = await settings.getAutoSubscribeState();
+    expect(restored).toBe(initial);
   });
 });

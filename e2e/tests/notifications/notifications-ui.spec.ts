@@ -16,9 +16,7 @@ test.describe('Notifications — UI', () => {
     await page.waitForLoadState('networkidle');
 
     const bellLink = page.locator('a[href="/notifications"]');
-    if (await bellLink.isVisible()) {
-      await expect(bellLink).toBeVisible();
-    }
+    await expect(bellLink).toBeVisible();
   });
 
   test('notification cards link to media pages', async ({ page }) => {
