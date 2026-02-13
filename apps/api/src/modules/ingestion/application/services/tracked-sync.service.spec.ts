@@ -60,8 +60,9 @@ describe('TrackedSyncService', () => {
         mediaItemId: 'media-1',
         status: 'Returning Series',
         totalSeasons: 2,
-        nextAirDate: new Date('2025-03-01'),
+        nextAirDate: new Date('2025-03-15'),
         lastEpisodeKey: 'S2E5',
+        lastEpisodeAirDate: new Date('2025-03-01'),
       };
 
       const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
@@ -88,6 +89,7 @@ describe('TrackedSyncService', () => {
         totalSeasons: 1,
         nextAirDate: new Date('2025-06-01'),
         lastEpisodeKey: null,
+        lastEpisodeAirDate: null,
       };
 
       const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
@@ -104,6 +106,7 @@ describe('TrackedSyncService', () => {
         totalSeasons: 5,
         nextAirDate: null,
         lastEpisodeKey: 'S5E10',
+        lastEpisodeAirDate: new Date('2025-01-20'),
       };
 
       const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
@@ -122,6 +125,7 @@ describe('TrackedSyncService', () => {
         totalSeasons: 2,
         nextAirDate: null,
         lastEpisodeKey: 'S2E5',
+        lastEpisodeAirDate: new Date('2025-02-10'),
       };
 
       const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
@@ -136,6 +140,7 @@ describe('TrackedSyncService', () => {
         totalSeasons: 1,
         nextAirDate: null,
         lastEpisodeKey: null,
+        lastEpisodeAirDate: null,
       };
 
       const diff = (service as any).buildCurrentStateDiff(12345, snapshot, 'Returning Series');
@@ -155,6 +160,7 @@ describe('TrackedSyncService', () => {
         totalSeasons: 1,
         nextAirDate: null,
         lastEpisodeKey: 'S1E1',
+        lastEpisodeAirDate: new Date('2025-01-05'),
       };
 
       const diff = (service as any).buildCurrentStateDiff(99999, snapshot, 'Returning Series');

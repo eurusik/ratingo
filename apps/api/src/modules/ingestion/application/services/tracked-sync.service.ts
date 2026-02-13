@@ -22,6 +22,7 @@ interface ShowSnapshot {
   totalSeasons: number | null;
   nextAirDate: Date | null;
   lastEpisodeKey: string | null; // 'S2E5' format — last AIRED episode
+  lastEpisodeAirDate: Date | null;
 }
 
 /**
@@ -110,6 +111,7 @@ export class TrackedSyncService {
         .select({
           seasonNumber: schema.seasons.number,
           episodeNumber: schema.episodes.number,
+          airDate: schema.episodes.airDate,
         })
         .from(schema.episodes)
         .innerJoin(schema.seasons, eq(schema.seasons.id, schema.episodes.seasonId))
@@ -126,9 +128,11 @@ export class TrackedSyncService {
         .limit(1);
 
       let lastEpisodeKey: string | null = null;
+      let lastEpisodeAirDate: Date | null = null;
       if (lastEpisodeResult.length > 0) {
         const ep = lastEpisodeResult[0];
         lastEpisodeKey = formatEpisodeKey(ep.seasonNumber, ep.episodeNumber);
+        lastEpisodeAirDate = ep.airDate;
       }
 
       return {
@@ -137,6 +141,7 @@ export class TrackedSyncService {
         totalSeasons: show.totalSeasons,
         nextAirDate: show.nextAirDate,
         lastEpisodeKey,
+        lastEpisodeAirDate,
       };
     } catch (error) {
       this.logger.error(`Failed to get show snapshot for ${tmdbId}: ${error.message}`);
@@ -162,17 +167,22 @@ export class TrackedSyncService {
         const seasonNumber = parseInt(match[1], 10);
         const episodeNumber = parseInt(match[2], 10);
 
+        const airDate =
+          formatDateToIso(snapshot.lastEpisodeAirDate) ??
+          formatDateToIso(snapshot.nextAirDate) ??
+          new Date().toISOString().split('T')[0];
+
         diff.hasChanges = true;
         diff.changes.newEpisode = {
           season: seasonNumber,
           episode: episodeNumber,
-          airDate: formatDateToIso(snapshot.nextAirDate) ?? new Date().toISOString().split('T')[0],
+          airDate,
           key: snapshot.lastEpisodeKey,
         };
 
         diff.changes.newSeason = {
           seasonNumber,
-          airDate: formatDateToIso(snapshot.nextAirDate) ?? new Date().toISOString().split('T')[0],
+          airDate,
           key: formatSeasonKey(seasonNumber),
         };
       }
