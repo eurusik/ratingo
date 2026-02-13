@@ -426,6 +426,18 @@ class InMemorySubscriptionRepository implements IUserSubscriptionRepository {
     // In-memory stub: returns empty array (no real media items to track)
     return [];
   }
+
+  async atomicNotifyNewEpisode(): Promise<any[]> {
+    return [];
+  }
+
+  async atomicNotifyNewSeason(): Promise<any[]> {
+    return [];
+  }
+
+  async deactivateForEndedShow(): Promise<number> {
+    return 0;
+  }
 }
 
 describe('User Actions E2E', () => {
