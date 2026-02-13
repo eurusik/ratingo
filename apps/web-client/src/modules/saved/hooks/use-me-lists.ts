@@ -64,6 +64,16 @@ export function usePaused(sort?: MeListSort, enabled = true) {
   });
 }
 
+export function useDropped(sort?: MeListSort, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.meLists.dropped(sort),
+    queryFn: () => meListsApi.getDropped(sort ? { sort } : undefined),
+    enabled,
+    staleTime: STALE_5_MIN,
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function usePauseMedia() {
   const queryClient = useQueryClient();
 
@@ -84,6 +94,35 @@ export function useResumeMedia() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+    },
+  });
+}
+
+export function useDropMedia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (mediaItemId: string) => meListsApi.dropMedia(mediaItemId),
+    onSuccess: (_data, mediaItemId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
+    },
+  });
+}
+
+export function useRestoreMedia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (mediaItemId: string) => meListsApi.restoreMedia(mediaItemId),
+    onSuccess: (_data, mediaItemId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
     },
   });
 }

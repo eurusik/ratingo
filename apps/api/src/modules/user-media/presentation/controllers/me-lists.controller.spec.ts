@@ -47,6 +47,7 @@ describe('MeListsController', () => {
       getHistory: jest.fn(),
       getActivity: jest.fn(),
       getPaused: jest.fn(),
+      getDropped: jest.fn(),
       getFavoriteUpdates: jest.fn(),
     };
 
@@ -379,6 +380,66 @@ describe('MeListsController', () => {
       meListsService.getPaused.mockResolvedValue(mockServiceResponse);
 
       const result = await controller.paused(mockUser, query);
+
+      expect(result.data).toEqual([]);
+      expect(result.meta.total).toBe(0);
+      expect(result.meta.hasMore).toBe(false);
+    });
+  });
+
+  describe('dropped', () => {
+    it('should return paginated dropped list', async () => {
+      const query = { limit: 10, offset: 0, sort: USER_MEDIA_LIST_SORT.RECENT };
+      const mockDroppedItem = {
+        ...mockUserMediaWithSummary,
+        state: 'dropped' as const,
+        progress: { seasons: { 1: 5 } },
+      };
+      const mockServiceResponse = {
+        total: 3,
+        data: [mockDroppedItem],
+      };
+
+      meListsService.getDropped.mockResolvedValue(mockServiceResponse);
+
+      const result = await controller.dropped(mockUser, query);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].state).toBe('dropped');
+      expect(result.meta).toEqual({
+        count: 1,
+        total: 3,
+        limit: 10,
+        offset: 0,
+        hasMore: true,
+      });
+
+      expect(meListsService.getDropped).toHaveBeenCalledWith(
+        'user-1',
+        10,
+        0,
+        USER_MEDIA_LIST_SORT.RECENT,
+      );
+    });
+
+    it('should use default pagination values', async () => {
+      const query = {};
+      const mockServiceResponse = { total: 0, data: [] };
+
+      meListsService.getDropped.mockResolvedValue(mockServiceResponse);
+
+      await controller.dropped(mockUser, query);
+
+      expect(meListsService.getDropped).toHaveBeenCalledWith('user-1', 20, 0, undefined);
+    });
+
+    it('should handle empty dropped list', async () => {
+      const query = { limit: 10, offset: 0 };
+      const mockServiceResponse = { total: 0, data: [] };
+
+      meListsService.getDropped.mockResolvedValue(mockServiceResponse);
+
+      const result = await controller.dropped(mockUser, query);
 
       expect(result.data).toEqual([]);
       expect(result.meta.total).toBe(0);

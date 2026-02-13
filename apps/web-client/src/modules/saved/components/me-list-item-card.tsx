@@ -5,16 +5,27 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import Image from 'next/image';
-import { Play, CheckCircle, XCircle, Pause, Clock } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Pause, Clock, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/shared/utils';
 import { useTranslation } from '@/shared/i18n';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/shared/ui';
 import type { MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import { USER_MEDIA_STATE } from '@/core/api/me-lists.client';
-import { usePauseMedia, useResumeMedia } from '../hooks/use-me-lists';
+import { usePauseMedia, useResumeMedia, useDropMedia, useRestoreMedia } from '../hooks/use-me-lists';
 
 type UserMediaState = MeUserMediaListItemDto['state'];
 
@@ -64,6 +75,9 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
   const media = item.mediaSummary;
   const pauseMutation = usePauseMedia();
   const resumeMutation = useResumeMedia();
+  const [showDropConfirm, setShowDropConfirm] = useState(false);
+  const dropMutation = useDropMedia();
+  const restoreMutation = useRestoreMedia();
 
   if (!media) return null;
 
@@ -83,7 +97,12 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
 
   const canPause = item.state === USER_MEDIA_STATE.WATCHING;
   const canResume = item.state === USER_MEDIA_STATE.PAUSED;
-  const hasAction = canPause || canResume;
+  const canDrop =
+    item.state === USER_MEDIA_STATE.WATCHING ||
+    item.state === USER_MEDIA_STATE.PAUSED ||
+    item.state === USER_MEDIA_STATE.PLANNED;
+  const canRestore = item.state === USER_MEDIA_STATE.DROPPED;
+  const hasAction = canPause || canResume || canDrop || canRestore;
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't navigate if clicking on a button
@@ -101,7 +120,7 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
         toast.success(dict.activity?.toast?.paused ?? 'Поставлено на паузу');
       },
       onError: () => {
-        toast.error('Помилка');
+        toast.error(dict.common?.error ?? 'Помилка');
       },
     });
   };
@@ -114,7 +133,39 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
         toast.success(dict.activity?.toast?.resumed ?? 'Продовжено перегляд');
       },
       onError: () => {
-        toast.error('Помилка');
+        toast.error(dict.common?.error ?? 'Помилка');
+      },
+    });
+  };
+
+  const handleDropClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDropConfirm(true);
+  };
+
+  const handleDropConfirm = () => {
+    dropMutation.mutate(item.mediaItemId, {
+      onSuccess: () => {
+        toast.success(dict.activity?.toast?.dropped ?? 'Покинуто');
+        setShowDropConfirm(false);
+      },
+      onError: () => {
+        toast.error(dict.common?.error ?? 'Помилка');
+        setShowDropConfirm(false);
+      },
+    });
+  };
+
+  const handleRestore = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    restoreMutation.mutate(item.mediaItemId, {
+      onSuccess: () => {
+        toast.success(dict.activity?.toast?.restored ?? 'Повернено до списку');
+      },
+      onError: () => {
+        toast.error(dict.common?.error ?? 'Помилка');
       },
     });
   };
@@ -172,7 +223,7 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
 
         {/* Action layer - only show if there's an action */}
         {hasAction && (
-          <div className="flex items-center justify-end mt-3">
+          <div className="flex items-center justify-end gap-2 mt-3">
             {canPause && (
               <button
                 onClick={handlePause}
@@ -194,9 +245,55 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
                 {dict.saved?.actions?.resume ?? 'Продовжити'}
               </button>
             )}
+
+            {canDrop && (
+              <button
+                onClick={handleDropClick}
+                disabled={dropMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                {dict.saved?.actions?.drop ?? 'Покинути'}
+              </button>
+            )}
+
+            {canRestore && (
+              <button
+                onClick={handleRestore}
+                disabled={restoreMutation.isPending}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {dict.saved?.actions?.restore ?? 'Повернути'}
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      <AlertDialog open={showDropConfirm} onOpenChange={setShowDropConfirm}>
+        <AlertDialogContent className="bg-cinema-card border-cinema-borderSoft">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-cinema-text-primary">
+              {dict.saved?.dropConfirm?.title ?? 'Покинути перегляд?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-cinema-text-muted">
+              {dict.saved?.dropConfirm?.message ?? 'Підписки на сповіщення будуть скасовані.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-cinema-elevated text-cinema-text-secondary hover:bg-cinema-border hover:text-cinema-text-primary">
+              {dict.common?.cancel ?? 'Скасувати'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDropConfirm}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {dict.saved?.actions?.drop ?? 'Покинути'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

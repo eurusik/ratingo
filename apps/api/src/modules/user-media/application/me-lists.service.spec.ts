@@ -527,6 +527,82 @@ describe('MeListsService', () => {
     });
   });
 
+  describe('getDropped', () => {
+    it('should get dropped items with total count', async () => {
+      const userId = 'user-1';
+      const limit = 10;
+      const offset = 0;
+      const sort = USER_MEDIA_LIST_SORT.RECENT;
+
+      const mockTotal = 5;
+      const mockData = [
+        {
+          id: '1',
+          userId: 'user-1',
+          mediaItemId: 'media-1',
+          state: USER_MEDIA_STATE.DROPPED,
+          rating: null,
+          progress: { seasons: { 1: 5 } },
+          notes: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          mediaSummary: {
+            id: 'media-1',
+            type: MediaType.SHOW,
+            title: 'Dropped Show',
+            slug: 'dropped-show',
+            poster: null,
+            releaseDate: new Date(),
+            card: mockCard,
+          },
+        },
+      ];
+
+      userMediaService.countWithMedia.mockResolvedValue(mockTotal);
+      userMediaService.listWithMedia.mockResolvedValue(mockData);
+
+      const result = await service.getDropped(userId, limit, offset, sort);
+
+      expect(result).toEqual({ total: mockTotal, data: mockData });
+      expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, {
+        states: [USER_MEDIA_STATE.DROPPED],
+      });
+      expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
+        states: [USER_MEDIA_STATE.DROPPED],
+        sort,
+      });
+    });
+
+    it('should use default sort when not provided', async () => {
+      const userId = 'user-1';
+      const limit = 10;
+      const offset = 0;
+
+      userMediaService.countWithMedia.mockResolvedValue(0);
+      userMediaService.listWithMedia.mockResolvedValue([]);
+
+      await service.getDropped(userId, limit, offset);
+
+      expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
+        states: [USER_MEDIA_STATE.DROPPED],
+        sort: USER_MEDIA_LIST_SORT.RECENT,
+      });
+    });
+
+    it('should handle empty dropped list', async () => {
+      const userId = 'user-1';
+      const limit = 10;
+      const offset = 0;
+
+      userMediaService.countWithMedia.mockResolvedValue(0);
+      userMediaService.listWithMedia.mockResolvedValue([]);
+
+      const result = await service.getDropped(userId, limit, offset);
+
+      expect(result).toEqual({ total: 0, data: [] });
+    });
+  });
+
   describe('getFavoriteUpdates', () => {
     it('should pass named constants to repo.listFavoriteUpdates', async () => {
       const userId = 'user-1';

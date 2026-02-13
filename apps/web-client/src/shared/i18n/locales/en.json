@@ -626,7 +626,13 @@
       "subscribe": "Notify",
       "unsubscribe": "Unsubscribe",
       "pause": "Pause",
-      "resume": "Resume"
+      "resume": "Resume",
+      "drop": "Drop",
+      "restore": "Restore"
+    },
+    "dropConfirm": {
+      "title": "Drop this show?",
+      "message": "Notification subscriptions will be cancelled."
     },
     "toast": {
       "saved": "Saved",
@@ -691,6 +697,7 @@
     "tabs": {
       "watching": "Watching",
       "paused": "Paused",
+      "dropped": "Dropped",
       "history": "Completed"
     },
     "empty": {
@@ -701,6 +708,10 @@
       "paused": {
         "title": "No paused content",
         "description": "Pause a show if you want to come back to it later"
+      },
+      "dropped": {
+        "title": "No dropped content",
+        "description": "Content you've dropped will appear here"
       },
       "history": {
         "title": "History is empty",
@@ -726,7 +737,9 @@
       "backToWatching": "Back to Watching",
       "removedFromActivity": "Removed from activity",
       "paused": "Paused",
-      "resumed": "Resumed watching"
+      "resumed": "Resumed watching",
+      "dropped": "Dropped",
+      "restored": "Restored to watchlist"
     }
   },
   "notifications": {

@@ -3,6 +3,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { DatabaseModule } from '../../database/database.module';
 import { AuthModule } from '../auth/auth.module';
 
+import { AutoResubscribeOnRestoreListener } from './application/listeners/auto-resubscribe-on-restore.listener';
 import { AutoUnsubscribeOnDropListener } from './application/listeners/auto-unsubscribe-on-drop.listener';
 import { NotificationsService } from './application/notifications.service';
 import { SavedItemsService } from './application/saved-items.service';
@@ -41,6 +42,7 @@ import { SubscriptionsController } from './presentation/controllers/subscription
     SubscriptionsService,
     SubscriptionTriggerService,
     AutoUnsubscribeOnDropListener,
+    AutoResubscribeOnRestoreListener,
     {
       provide: USER_MEDIA_ACTION_REPOSITORY,
       useClass: DrizzleUserMediaActionRepository,

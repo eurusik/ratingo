@@ -8,8 +8,11 @@ import {
   useWatching,
   useCompleted,
   usePaused,
+  useDropped,
   usePauseMedia,
   useResumeMedia,
+  useDropMedia,
+  useRestoreMedia,
   useFavoriteUpdates,
   useUserMediaState,
   useSetRating,
@@ -20,8 +23,11 @@ jest.mock('@/core/api/me-lists.client', () => ({
   meListsApi: {
     getHistory: jest.fn(),
     getPaused: jest.fn(),
+    getDropped: jest.fn(),
     pauseMedia: jest.fn(),
     resumeMedia: jest.fn(),
+    dropMedia: jest.fn(),
+    restoreMedia: jest.fn(),
     getFavoriteUpdates: jest.fn(),
     getState: jest.fn(),
     setRating: jest.fn(),
@@ -39,8 +45,11 @@ import { meListsApi } from '@/core/api/me-lists.client';
 
 const mockGetHistory = meListsApi.getHistory as jest.Mock;
 const mockGetPaused = meListsApi.getPaused as jest.Mock;
+const mockGetDropped = meListsApi.getDropped as jest.Mock;
 const mockPauseMedia = meListsApi.pauseMedia as jest.Mock;
 const mockResumeMedia = meListsApi.resumeMedia as jest.Mock;
+const mockDropMedia = meListsApi.dropMedia as jest.Mock;
+const mockRestoreMedia = meListsApi.restoreMedia as jest.Mock;
 const mockGetFavoriteUpdates = meListsApi.getFavoriteUpdates as jest.Mock;
 const mockGetState = meListsApi.getState as jest.Mock;
 const mockSetRating = meListsApi.setRating as jest.Mock;
@@ -106,6 +115,17 @@ function CompletedConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 're
 
 function PausedConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 'releaseDate'; enabled?: boolean }) {
   const query = usePaused(sort, enabled);
+
+  return (
+    <div>
+      <span data-testid="status">{query.status}</span>
+      <span data-testid="data">{JSON.stringify(query.data ?? null)}</span>
+    </div>
+  );
+}
+
+function DroppedConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 'releaseDate'; enabled?: boolean }) {
+  const query = useDropped(sort, enabled);
 
   return (
     <div>
@@ -187,6 +207,34 @@ function ResumeMediaConsumer() {
       <span data-testid="mutation-status">{mutation.status}</span>
       <button
         data-testid="resume"
+        onClick={() => mutation.mutate(MEDIA_ITEM_ID)}
+      />
+    </div>
+  );
+}
+
+function DropMediaConsumer() {
+  const mutation = useDropMedia();
+
+  return (
+    <div>
+      <span data-testid="mutation-status">{mutation.status}</span>
+      <button
+        data-testid="drop"
+        onClick={() => mutation.mutate(MEDIA_ITEM_ID)}
+      />
+    </div>
+  );
+}
+
+function RestoreMediaConsumer() {
+  const mutation = useRestoreMedia();
+
+  return (
+    <div>
+      <span data-testid="mutation-status">{mutation.status}</span>
+      <button
+        data-testid="restore"
         onClick={() => mutation.mutate(MEDIA_ITEM_ID)}
       />
     </div>
@@ -467,6 +515,70 @@ describe('usePaused', () => {
     });
 
     expect(mockGetPaused).not.toHaveBeenCalled();
+    expect(screen.getByTestId('status').textContent).toBe('pending');
+  });
+});
+
+describe('useDropped', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = createQueryClient();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it('fetches dropped items', async () => {
+    const items = [
+      makeHistoryItem({ mediaItemId: 'd1', state: 'dropped' }),
+    ];
+    mockGetDropped.mockResolvedValue(makeHistoryResponse(items));
+
+    renderWithClient(<DroppedConsumer />, queryClient);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status').textContent).toBe('success');
+    });
+
+    const data = JSON.parse(screen.getByTestId('data').textContent!);
+    expect(data.data).toHaveLength(1);
+  });
+
+  it('passes sort parameter to the API call', async () => {
+    mockGetDropped.mockResolvedValue(makeHistoryResponse([]));
+
+    renderWithClient(<DroppedConsumer sort="recent" />, queryClient);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status').textContent).toBe('success');
+    });
+
+    expect(mockGetDropped).toHaveBeenCalledWith({ sort: 'recent' });
+  });
+
+  it('calls API without sort param when sort is undefined', async () => {
+    mockGetDropped.mockResolvedValue(makeHistoryResponse([]));
+
+    renderWithClient(<DroppedConsumer />, queryClient);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status').textContent).toBe('success');
+    });
+
+    expect(mockGetDropped).toHaveBeenCalledWith(undefined);
+  });
+
+  it('does not fetch when enabled is false', async () => {
+    renderWithClient(<DroppedConsumer enabled={false} />, queryClient);
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(mockGetDropped).not.toHaveBeenCalled();
     expect(screen.getByTestId('status').textContent).toBe('pending');
   });
 });
@@ -952,6 +1064,173 @@ describe('useResumeMedia', () => {
 
     await act(async () => {
       screen.getByTestId('resume').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mutation-status').textContent).toBe('error');
+    });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+
+    invalidateSpy.mockRestore();
+  });
+});
+
+describe('useDropMedia', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = createQueryClient();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it('calls dropMedia API with the mediaItemId', async () => {
+    mockDropMedia.mockResolvedValue(makeHistoryItem({ state: 'dropped' }));
+
+    renderWithClient(<DropMediaConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('drop').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mutation-status').textContent).toBe('success');
+    });
+
+    expect(mockDropMedia).toHaveBeenCalledWith(MEDIA_ITEM_ID);
+  });
+
+  it('invalidates historyAll, pausedAll, watchlistAll, and droppedAll on success', async () => {
+    mockDropMedia.mockResolvedValue(makeHistoryItem({ state: 'dropped' }));
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    renderWithClient(<DropMediaConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('drop').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mutation-status').textContent).toBe('success');
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.meLists.historyAll,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.meLists.pausedAll,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.meLists.watchlistAll,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.meLists.droppedAll,
+      }),
+    );
+
+    invalidateSpy.mockRestore();
+  });
+
+  it('does not invalidate caches on error', async () => {
+    mockDropMedia.mockRejectedValue(new Error('server error'));
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    renderWithClient(<DropMediaConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('drop').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mutation-status').textContent).toBe('error');
+    });
+
+    expect(invalidateSpy).not.toHaveBeenCalled();
+
+    invalidateSpy.mockRestore();
+  });
+});
+
+describe('useRestoreMedia', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = createQueryClient();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it('calls restoreMedia API with the mediaItemId', async () => {
+    mockRestoreMedia.mockResolvedValue(makeHistoryItem({ state: 'watching' }));
+
+    renderWithClient(<RestoreMediaConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('restore').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mutation-status').textContent).toBe('success');
+    });
+
+    expect(mockRestoreMedia).toHaveBeenCalledWith(MEDIA_ITEM_ID);
+  });
+
+  it('invalidates historyAll, watchlistAll, and droppedAll on success', async () => {
+    mockRestoreMedia.mockResolvedValue(makeHistoryItem({ state: 'watching' }));
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    renderWithClient(<RestoreMediaConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('restore').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mutation-status').textContent).toBe('success');
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.meLists.historyAll,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.meLists.watchlistAll,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.meLists.droppedAll,
+      }),
+    );
+
+    invalidateSpy.mockRestore();
+  });
+
+  it('does not invalidate caches on error', async () => {
+    mockRestoreMedia.mockRejectedValue(new Error('server error'));
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    renderWithClient(<RestoreMediaConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('restore').click();
     });
 
     await waitFor(() => {

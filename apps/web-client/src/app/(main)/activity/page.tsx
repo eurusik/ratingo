@@ -10,7 +10,7 @@ import { Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { Watchlist, HistoryList, PausedList, FavoriteUpdates } from '@/modules/saved';
+import { Watchlist, HistoryList, PausedList, DroppedList, FavoriteUpdates } from '@/modules/saved';
 import { USER_MEDIA_STATE } from '@/core/api';
 
 /**
@@ -21,6 +21,7 @@ import { USER_MEDIA_STATE } from '@/core/api';
 const TAB_VALUES = {
   WATCHING: USER_MEDIA_STATE.WATCHING,
   PAUSED: USER_MEDIA_STATE.PAUSED,
+  DROPPED: USER_MEDIA_STATE.DROPPED,
   HISTORY: 'history',
 } as const;
 
@@ -30,6 +31,7 @@ const DEFAULT_TAB = TAB_VALUES.WATCHING;
 
 function getTabFromParam(param: string | null): TabValue {
   if (param === TAB_VALUES.PAUSED) return TAB_VALUES.PAUSED;
+  if (param === TAB_VALUES.DROPPED) return TAB_VALUES.DROPPED;
   if (param === TAB_VALUES.HISTORY) return TAB_VALUES.HISTORY;
   return DEFAULT_TAB;
 }
@@ -78,6 +80,9 @@ function ActivityPageContent() {
             <TabsTrigger value={TAB_VALUES.PAUSED} className="data-[state=active]:bg-cinema-elevated">
               {dict.activity.tabs.paused}
             </TabsTrigger>
+            <TabsTrigger value={TAB_VALUES.DROPPED} className="data-[state=active]:bg-cinema-elevated">
+              {dict.activity.tabs.dropped}
+            </TabsTrigger>
             <TabsTrigger value={TAB_VALUES.HISTORY} className="data-[state=active]:bg-cinema-elevated">
               {dict.activity.tabs.history}
             </TabsTrigger>
@@ -90,6 +95,10 @@ function ActivityPageContent() {
 
           <TabsContent value={TAB_VALUES.PAUSED} className="mt-0">
             <PausedList />
+          </TabsContent>
+
+          <TabsContent value={TAB_VALUES.DROPPED} className="mt-0">
+            <DroppedList />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.HISTORY} className="mt-0">

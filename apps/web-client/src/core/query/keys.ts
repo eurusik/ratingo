@@ -111,6 +111,8 @@ export const queryKeys = {
     watchlist: (sort?: string) => ['me-lists', 'watchlist', sort ?? null] as const,
     pausedAll: ['me-lists', 'paused'] as const,
     paused: (sort?: string) => ['me-lists', 'paused', sort ?? null] as const,
+    droppedAll: ['me-lists', 'dropped'] as const,
+    dropped: (sort?: string) => ['me-lists', 'dropped', sort ?? null] as const,
   },
 
   /** Public user queries. */
