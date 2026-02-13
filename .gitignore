@@ -81,3 +81,11 @@ docs/sync-trending.md
 .agents/
 .claude/
 .env*.local
+
+# =============================================================================
+# PLAYWRIGHT E2E
+# =============================================================================
+e2e/.auth/
+e2e/test-results/
+playwright-report/
+playwright/.cache/
