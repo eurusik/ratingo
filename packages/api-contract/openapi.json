@@ -10594,28 +10594,6 @@
           }
         }
       },
-      "PosterDto": {
-        "type": "object",
-        "properties": {
-          "small": {
-            "type": "string",
-            "example": "https://image.tmdb.org/t/p/w92/poster.jpg"
-          },
-          "medium": {
-            "type": "string",
-            "example": "https://image.tmdb.org/t/p/w185/poster.jpg"
-          },
-          "large": {
-            "type": "string",
-            "example": "https://image.tmdb.org/t/p/w500/poster.jpg"
-          }
-        },
-        "required": [
-          "small",
-          "medium",
-          "large"
-        ]
-      },
       "NotificationMediaSummaryDto": {
         "type": "object",
         "properties": {
@@ -10643,7 +10621,7 @@
             "nullable": true,
             "allOf": [
               {
-                "$ref": "#/components/schemas/PosterDto"
+                "$ref": "#/components/schemas/ImageDto"
               }
             ]
           }

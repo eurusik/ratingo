@@ -191,10 +191,4 @@ export class TrackedSyncService {
 
     return diff;
   }
-
-  private parseSeasonFromEpisodeKey(key: string | null): number | null {
-    if (!key) return null;
-    const match = key.match(/^S(\d+)E\d+$/i);
-    return match ? parseInt(match[1], 10) : null;
-  }
 }

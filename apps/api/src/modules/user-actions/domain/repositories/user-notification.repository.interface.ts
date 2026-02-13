@@ -1,5 +1,5 @@
-import { type ImageDto } from '../../../../common/dtos/image.dto';
 import { type MediaType } from '../../../../common/enums/media-type.enum';
+import { type ImageData } from '../../../../common/types/media.types';
 import {
   type UserNotification,
   type NotificationPayload,
@@ -31,7 +31,7 @@ export interface NotificationWithMedia extends UserNotification {
     type: MediaType;
     title: string;
     slug: string;
-    poster: ImageDto | null;
+    poster: ImageData | null;
   };
 }
 

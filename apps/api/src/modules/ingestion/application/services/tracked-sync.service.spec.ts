@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
+import { parseSeasonFromEpisodeKey } from '../../domain/interfaces/show-sync-diff.interface';
 import { TrackedSyncService } from './tracked-sync.service';
 import { SyncMediaService } from './sync-media.service';
 
@@ -34,13 +35,6 @@ describe('TrackedSyncService', () => {
   });
 
   describe('parseSeasonFromEpisodeKey', () => {
-    // Access private method for testing
-    const parseSeasonFromEpisodeKey = (key: string | null): number | null => {
-      if (!key) return null;
-      const match = key.match(/^S(\d+)E\d+$/i);
-      return match ? parseInt(match[1], 10) : null;
-    };
-
     it('should parse season from valid episode key', () => {
       expect(parseSeasonFromEpisodeKey('S2E5')).toBe(2);
       expect(parseSeasonFromEpisodeKey('S10E1')).toBe(10);

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, desc, eq, sql, isNull, inArray } from 'drizzle-orm';
+import { and, desc, eq, sql, isNull, inArray, or, ne, lt } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
@@ -14,11 +14,13 @@ import * as schema from '../../../../database/schema';
 import {
   type UserSubscription,
   type SubscriptionTrigger,
+  SUBSCRIPTION_TRIGGER,
 } from '../../domain/entities/user-subscription.entity';
 import {
   type IUserSubscriptionRepository,
   type UpsertSubscriptionData,
   type SubscriptionWithMedia,
+  type NotifiedSubscription,
 } from '../../domain/repositories/user-subscription.repository.interface';
 
 /**
@@ -326,6 +328,102 @@ export class DrizzleUserSubscriptionRepository implements IUserSubscriptionRepos
     } catch (error) {
       this.logger.error(`findTrackedShowTmdbIds failed: ${error.message}`, error.stack);
       throw new DatabaseException('Failed to find tracked show TMDB IDs');
+    }
+  }
+
+  async atomicNotifyNewEpisode(
+    mediaItemId: string,
+    episodeKey: string,
+  ): Promise<NotifiedSubscription[]> {
+    try {
+      return await this.db
+        .update(schema.userSubscriptions)
+        .set({
+          lastNotifiedEpisodeKey: episodeKey,
+          lastNotifiedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+            eq(schema.userSubscriptions.trigger, SUBSCRIPTION_TRIGGER.NEW_EPISODE),
+            eq(schema.userSubscriptions.isActive, true),
+            or(
+              isNull(schema.userSubscriptions.lastNotifiedEpisodeKey),
+              ne(schema.userSubscriptions.lastNotifiedEpisodeKey, episodeKey),
+            ),
+          ),
+        )
+        .returning({
+          id: schema.userSubscriptions.id,
+          userId: schema.userSubscriptions.userId,
+          mediaItemId: schema.userSubscriptions.mediaItemId,
+        });
+    } catch (error) {
+      this.logger.error(`atomicNotifyNewEpisode failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to atomically notify new episode', { mediaItemId });
+    }
+  }
+
+  async atomicNotifyNewSeason(
+    mediaItemId: string,
+    seasonNumber: number,
+  ): Promise<NotifiedSubscription[]> {
+    try {
+      return await this.db
+        .update(schema.userSubscriptions)
+        .set({
+          lastNotifiedSeasonNumber: seasonNumber,
+          lastNotifiedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+            eq(schema.userSubscriptions.trigger, SUBSCRIPTION_TRIGGER.NEW_SEASON),
+            eq(schema.userSubscriptions.isActive, true),
+            or(
+              isNull(schema.userSubscriptions.lastNotifiedSeasonNumber),
+              lt(schema.userSubscriptions.lastNotifiedSeasonNumber, seasonNumber),
+            ),
+          ),
+        )
+        .returning({
+          id: schema.userSubscriptions.id,
+          userId: schema.userSubscriptions.userId,
+          mediaItemId: schema.userSubscriptions.mediaItemId,
+        });
+    } catch (error) {
+      this.logger.error(`atomicNotifyNewSeason failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to atomically notify new season', { mediaItemId });
+    }
+  }
+
+  async deactivateForEndedShow(mediaItemId: string): Promise<number> {
+    try {
+      const result = await this.db
+        .update(schema.userSubscriptions)
+        .set({
+          isActive: false,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.userSubscriptions.mediaItemId, mediaItemId),
+            eq(schema.userSubscriptions.isActive, true),
+            inArray(schema.userSubscriptions.trigger, [
+              SUBSCRIPTION_TRIGGER.NEW_SEASON,
+              SUBSCRIPTION_TRIGGER.NEW_EPISODE,
+            ]),
+          ),
+        )
+        .returning({ id: schema.userSubscriptions.id });
+      return result.length;
+    } catch (error) {
+      this.logger.error(`deactivateForEndedShow failed: ${error.message}`, error.stack);
+      throw new DatabaseException('Failed to deactivate subscriptions for ended show', {
+        mediaItemId,
+      });
     }
   }
 

@@ -43,6 +43,7 @@ export {
   formatEpisodeKey,
   formatSeasonKey,
   formatDateToIso,
+  parseSeasonFromEpisodeKey,
 } from '../domain/interfaces/show-sync-diff.interface';
 
 // Constants

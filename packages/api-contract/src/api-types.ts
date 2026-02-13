@@ -3382,14 +3382,6 @@ export interface components {
             /** @example 2025-01-15 */
             airDate?: string;
         };
-        PosterDto: {
-            /** @example https://image.tmdb.org/t/p/w92/poster.jpg */
-            small: string;
-            /** @example https://image.tmdb.org/t/p/w185/poster.jpg */
-            medium: string;
-            /** @example https://image.tmdb.org/t/p/w500/poster.jpg */
-            large: string;
-        };
         NotificationMediaSummaryDto: {
             /** @example uuid-123 */
             id: string;
@@ -3402,7 +3394,7 @@ export interface components {
             title: string;
             /** @example breaking-bad */
             slug: string;
-            poster: components["schemas"]["PosterDto"] | null;
+            poster: components["schemas"]["ImageDto"] | null;
         };
         NotificationItemDto: {
             /** @example uuid-123 */
