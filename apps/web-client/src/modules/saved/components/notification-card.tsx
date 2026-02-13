@@ -36,8 +36,11 @@ function getRelativeTimeFormatter(locale: string): Intl.RelativeTimeFormat {
 }
 
 function formatRelativeTime(dateString: string, locale: string): string {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '—';
+
   const now = Date.now();
-  const diff = now - new Date(dateString).getTime();
+  const diff = now - date.getTime();
   const seconds = Math.floor(diff / 1000);
 
   const rtf = getRelativeTimeFormatter(locale);
@@ -50,7 +53,7 @@ function formatRelativeTime(dateString: string, locale: string): string {
   const days = Math.floor(hours / 24);
   if (days < 7) return rtf.format(-days, 'day');
 
-  return new Date(dateString).toLocaleDateString(locale, {
+  return date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
   });

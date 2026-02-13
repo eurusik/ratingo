@@ -157,7 +157,7 @@ export class TrackedSyncService {
     };
 
     if (snapshot.lastEpisodeKey) {
-      const match = snapshot.lastEpisodeKey.match(/S(\d+)E(\d+)/);
+      const match = snapshot.lastEpisodeKey.match(/^S(\d+)E(\d+)$/i);
       if (match) {
         const seasonNumber = parseInt(match[1], 10);
         const episodeNumber = parseInt(match[2], 10);
