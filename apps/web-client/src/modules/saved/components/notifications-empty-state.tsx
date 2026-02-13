@@ -35,22 +35,14 @@ export function NotificationsEmptyState({ variant }: NotificationsEmptyStateProp
       <h2 className="text-xl font-medium text-cinema-text-primary mb-3">{title}</h2>
       <p className="text-base text-cinema-text-muted max-w-md leading-relaxed">{description}</p>
 
-      {variant === 'all-read' && (
-        <Button asChild variant="ghost" className="mt-4 text-cinema-text-muted">
-          <Link href={'/shows' as Route}>{dict.notifications.emptyState.browseShows}</Link>
+      <div className="flex gap-3 mt-4">
+        <Button asChild variant="outline">
+          <Link href={'/browse/shows' as Route}>{dict.notifications.emptyState.browseShows}</Link>
         </Button>
-      )}
-
-      {variant === 'no-notifications' && (
-        <div className="flex gap-3 mt-4">
-          <Button asChild variant="outline">
-            <Link href={'/shows' as Route}>{dict.notifications.emptyState.browseShows}</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href={'/movies' as Route}>{dict.notifications.emptyState.browseMovies}</Link>
-          </Button>
-        </div>
-      )}
+        <Button asChild variant="outline">
+          <Link href={'/browse/movies' as Route}>{dict.notifications.emptyState.browseMovies}</Link>
+        </Button>
+      </div>
     </div>
   );
 }

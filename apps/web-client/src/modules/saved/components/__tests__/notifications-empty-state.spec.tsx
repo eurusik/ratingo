@@ -56,23 +56,16 @@ describe('NotificationsEmptyState', () => {
     expect(heading).toHaveTextContent('Немає сповіщень');
   });
 
-  it('shows browse shows link for all-read variant', () => {
-    render(<NotificationsEmptyState variant="all-read" />);
+  it.each(['all-read', 'no-notifications'] as const)(
+    'shows browse links for %s variant',
+    (variant) => {
+      render(<NotificationsEmptyState variant={variant} />);
 
-    const link = screen.getByRole('link', { name: 'Серіали' });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/shows');
-  });
+      const showsLink = screen.getByRole('link', { name: 'Серіали' });
+      expect(showsLink).toHaveAttribute('href', '/browse/shows');
 
-  it('shows both browse links for no-notifications variant', () => {
-    render(<NotificationsEmptyState variant="no-notifications" />);
-
-    const showsLink = screen.getByRole('link', { name: 'Серіали' });
-    expect(showsLink).toBeInTheDocument();
-    expect(showsLink).toHaveAttribute('href', '/shows');
-
-    const moviesLink = screen.getByRole('link', { name: 'Фільми' });
-    expect(moviesLink).toBeInTheDocument();
-    expect(moviesLink).toHaveAttribute('href', '/movies');
-  });
+      const moviesLink = screen.getByRole('link', { name: 'Фільми' });
+      expect(moviesLink).toHaveAttribute('href', '/browse/movies');
+    },
+  );
 });
