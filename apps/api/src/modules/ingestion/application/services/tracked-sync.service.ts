@@ -16,9 +16,6 @@ import {
 
 import { SyncMediaService } from './sync-media.service';
 
-/**
- * Snapshot of show state after sync for notification detection.
- */
 interface ShowSnapshot {
   mediaItemId: string;
   status: string | null;
@@ -45,20 +42,13 @@ export class TrackedSyncService {
   ) {}
 
   /**
-   * Syncs a show and returns the current aired state as a diff.
-   *
-   * Instead of comparing before/after snapshots (which fails when
-   * trending sync already updated the DB), we report the current
-   * aired state and let dedup markers handle the rest.
+   * Reports the current aired state as a diff instead of comparing
+   * before/after snapshots (which always returns 0 when trending sync
+   * already updated the DB). Dedup markers handle the rest.
    */
   async syncShowWithDiff(tmdbId: number): Promise<ShowSyncDiff> {
-    // 1. Read status before sync (for status change detection)
     const beforeStatus = await this.getShowStatus(tmdbId);
-
-    // 2. Sync the show from TMDB
     await this.syncMediaService.syncShow(tmdbId);
-
-    // 3. Get current aired state after sync
     const snapshot = await this.getShowSnapshot(tmdbId);
 
     if (!snapshot) {
@@ -68,13 +58,9 @@ export class TrackedSyncService {
       return createEmptyDiff(tmdbId, beforeStatus?.mediaItemId ?? '');
     }
 
-    // 4. Build diff from current aired state
     return this.buildCurrentStateDiff(tmdbId, snapshot, beforeStatus?.status ?? null);
   }
 
-  /**
-   * Gets the show's current status (lightweight, before sync).
-   */
   private async getShowStatus(
     tmdbId: number,
   ): Promise<{ mediaItemId: string; status: string | null } | null> {
@@ -97,9 +83,6 @@ export class TrackedSyncService {
     }
   }
 
-  /**
-   * Gets current show state snapshot with only aired episodes.
-   */
   private async getShowSnapshot(tmdbId: number): Promise<ShowSnapshot | null> {
     try {
       const showResult = await this.db
@@ -122,7 +105,6 @@ export class TrackedSyncService {
 
       const show = showResult[0];
 
-      // Get last aired episode (exclude future episodes from TMDB schedule)
       const lastEpisodeResult = await this.db
         .select({
           seasonNumber: schema.seasons.number,
@@ -161,13 +143,6 @@ export class TrackedSyncService {
     }
   }
 
-  /**
-   * Builds a diff from the current aired state.
-   *
-   * Always reports the current last aired episode/season so that
-   * SubscriptionTriggerService can compare against dedup markers.
-   * Status change is detected via before/after comparison.
-   */
   private buildCurrentStateDiff(
     tmdbId: number,
     snapshot: ShowSnapshot,
@@ -180,7 +155,6 @@ export class TrackedSyncService {
       changes: {},
     };
 
-    // Report current aired episode (dedup in SubscriptionTriggerService handles the rest)
     if (snapshot.lastEpisodeKey) {
       const match = snapshot.lastEpisodeKey.match(/S(\d+)E(\d+)/);
       if (match) {
@@ -218,9 +192,6 @@ export class TrackedSyncService {
     return diff;
   }
 
-  /**
-   * Parses season number from episode key (e.g., 'S2E5' -> 2).
-   */
   private parseSeasonFromEpisodeKey(key: string | null): number | null {
     if (!key) return null;
     const match = key.match(/^S(\d+)E\d+$/i);
