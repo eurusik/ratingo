@@ -16,6 +16,10 @@
       "message": "Rate shows without writing reviews",
       "cta": "Learn more"
     },
+    "notifications": {
+      "message": "No more \"wait, it's already out?\"",
+      "cta": "Learn more"
+    },
     "closeLabel": "Close announcement"
   },
   "search": {

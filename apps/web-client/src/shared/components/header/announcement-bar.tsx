@@ -22,7 +22,7 @@ import { cn } from '@/shared/utils';
 import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 
-const STORAGE_KEY = 'ratingo:dismissed-announcements';
+const STORAGE_KEY = 'ratingo:dismissed-announcements-v2';
 const ANNOUNCEMENT_BAR_HEIGHT = 40; // px, matches py-1.5 + button height
 
 /**
@@ -31,9 +31,9 @@ const ANNOUNCEMENT_BAR_HEIGHT = 40; // px, matches py-1.5 + button height
  * `i18nKey` references the key in locales/uk.json and locales/en.json under "announcement".
  */
 const CURRENT_ANNOUNCEMENT = {
-  id: 'v3-community-rating-2025-02',
-  i18nKey: 'communityRating' as const,
-  href: '/journal/u-ratingo-zyavylas-otsinka-spilnoty' as Route,
+  id: 'v4-notifications-2025-02',
+  i18nKey: 'notifications' as const,
+  href: '/journal/spovishchennya-v-ratingo-bilshe-ne-propusty-novi-seriyi' as Route,
 };
 
 // Context to share announcement visibility with Header
