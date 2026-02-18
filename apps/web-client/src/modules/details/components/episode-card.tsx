@@ -88,7 +88,7 @@ export function EpisodeCard({
   return (
     <div
       className={cn(
-        'group flex items-center gap-4 py-3 pl-1 border-b border-cinema-borderSoft/30 last:border-b-0',
+        'group flex items-center gap-4 py-2 sm:py-3 pl-1 border-b border-cinema-borderSoft/30 last:border-b-0',
         upcoming && 'opacity-60',
       )}
     >
@@ -129,7 +129,7 @@ export function EpisodeCard({
       <div
         onClick={handleClick}
         className={cn(
-          'relative flex items-center gap-3 flex-1 min-w-0 py-1 -my-1 pl-1 pr-3 rounded-xl transition-colors',
+          'relative flex items-center gap-2 sm:gap-3 flex-1 min-w-0 py-1 -my-1 pl-1 pr-3 rounded-xl transition-colors',
           isClickable && [
             'cursor-pointer',
             'hover:bg-white/[0.03]',
@@ -150,7 +150,7 @@ export function EpisodeCard({
         }
       >
         {/* Episode thumbnail */}
-        <div className="relative flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden bg-cinema-elevated">
+        <div className="relative flex-shrink-0 hidden sm:block w-28 h-16 rounded-lg overflow-hidden bg-cinema-elevated">
           {resolveMediaImageUrl(episode.stillPath, IMAGE_SIZES.W300) ? (
             <Image
               src={resolveMediaImageUrl(episode.stillPath, IMAGE_SIZES.W300)!}
@@ -176,19 +176,28 @@ export function EpisodeCard({
         {/* Episode info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-cinema-text-primary">
+            <span className="text-sm font-medium text-cinema-text-primary line-clamp-1">
               {episode.number}. {title}
             </span>
           </div>
-          <div className="flex items-center gap-2 mt-1 text-xs text-cinema-text-muted">
+          <div className="flex items-center gap-2 mt-1 text-xs text-cinema-text-muted whitespace-nowrap overflow-hidden">
             {episode.airDate && <span>{formatDate(episode.airDate)}</span>}
             {episode.airDate && runtime && <span className="text-cinema-text-disabled">·</span>}
             {runtime && <span>{runtime}</span>}
+            {episode.voteAverage != null && (
+              <>
+                <span className="text-cinema-text-disabled sm:hidden">·</span>
+                <span className="sm:hidden">
+                  {episode.voteAverage.toFixed(1)}{' '}
+                  <span className="text-[9px] uppercase tracking-[0.12em] opacity-50">TVMaze</span>
+                </span>
+              </>
+            )}
           </div>
         </div>
 
         {episode.voteAverage != null && (
-          <ScorePill rating={episode.voteAverage} className="flex-shrink-0" />
+          <ScorePill rating={episode.voteAverage} className="hidden sm:inline-flex flex-shrink-0" />
         )}
       </div>
     </div>
