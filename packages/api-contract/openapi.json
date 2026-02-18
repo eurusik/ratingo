@@ -9274,6 +9274,11 @@
             "type": "string",
             "example": "/path/to/still.jpg",
             "nullable": true
+          },
+          "voteAverage": {
+            "type": "number",
+            "example": 8.5,
+            "nullable": true
           }
         },
         "required": [

@@ -110,6 +110,7 @@ export class ShowDetailsQuery {
           airDate: schema.episodes.airDate,
           runtime: schema.episodes.runtime,
           stillPath: schema.episodes.stillPath,
+          voteAverage: schema.episodes.voteAverage,
         })
         .from(schema.episodes)
         .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))

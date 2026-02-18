@@ -11,6 +11,7 @@ import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
 import { formatDate } from '@/shared/utils/format';
 import { cn, resolveMediaImageUrl, IMAGE_SIZES } from '@/shared/utils';
+import { ScorePill } from '@/shared/components/score-pill';
 import { EpisodeCheckbox } from './episode-checkbox';
 import { MarkWatchedPopover } from './mark-watched-popover';
 
@@ -185,6 +186,10 @@ export function EpisodeCard({
             {runtime && <span>{runtime}</span>}
           </div>
         </div>
+
+        {episode.voteAverage != null && (
+          <ScorePill rating={episode.voteAverage} className="flex-shrink-0" />
+        )}
       </div>
     </div>
   );

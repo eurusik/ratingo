@@ -126,6 +126,7 @@ export interface EpisodeInfo {
   airDate: Date | null;
   runtime: number | null;
   stillPath: string | null;
+  voteAverage: number | null;
 }
 
 /**
