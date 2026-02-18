@@ -43,6 +43,7 @@ describe('TvMazeAdapter', () => {
             airstamp: '2023-01-01T20:00:00+00:00',
             runtime: 60,
             image: { original: 'http://image.com/1.jpg' },
+            rating: { average: 8.5 },
           },
         ],
       });
@@ -59,7 +60,7 @@ describe('TvMazeAdapter', () => {
         airDate: new Date('2023-01-01T20:00:00+00:00'),
         runtime: 60,
         stillPath: 'http://image.com/1.jpg',
-        rating: null,
+        rating: 8.5,
       });
     });
 
@@ -112,6 +113,7 @@ describe('TvMazeAdapter', () => {
             airstamp: '2024-10-01T20:00:00+00:00',
             runtime: 45,
             image: null,
+            rating: { average: 7.0 },
           },
         ],
       });
@@ -128,7 +130,7 @@ describe('TvMazeAdapter', () => {
         airDate: new Date('2024-10-01T20:00:00+00:00'),
         runtime: 45,
         stillPath: null,
-        rating: null,
+        rating: 7.0,
       });
     });
 
@@ -140,6 +142,46 @@ describe('TvMazeAdapter', () => {
 
       const result = await adapter.getEpisodesByShowName('NonexistentShow12345');
       expect(result).toEqual([]);
+    });
+
+    it('should map null and missing rating to null', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 86953, name: 'Test' }),
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            id: 1,
+            season: 1,
+            number: 1,
+            name: 'Ep1',
+            summary: null,
+            airstamp: null,
+            runtime: null,
+            image: null,
+            rating: { average: null },
+          },
+          {
+            id: 2,
+            season: 1,
+            number: 2,
+            name: 'Ep2',
+            summary: null,
+            airstamp: null,
+            runtime: null,
+            image: null,
+          },
+        ],
+      });
+
+      const result = await adapter.getEpisodesByShowName('Test');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].rating).toBeNull();
+      expect(result[1].rating).toBeNull();
     });
 
     it('should return empty array on API error', async () => {

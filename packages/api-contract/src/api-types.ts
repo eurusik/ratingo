@@ -2847,6 +2847,8 @@ export interface components {
             runtime?: number | null;
             /** @example /path/to/still.jpg */
             stillPath?: string | null;
+            /** @example 8.5 */
+            voteAverage?: number | null;
         };
         SeasonDto: {
             /** @example 1 */

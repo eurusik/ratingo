@@ -29,6 +29,9 @@ export class EpisodeDto {
 
   @ApiProperty({ example: '/path/to/still.jpg', required: false, nullable: true })
   stillPath: string | null;
+
+  @ApiProperty({ example: 8.5, required: false, nullable: true })
+  voteAverage: number | null;
 }
 
 export class SeasonDto {
