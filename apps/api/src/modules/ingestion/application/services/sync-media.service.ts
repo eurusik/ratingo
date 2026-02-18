@@ -46,8 +46,8 @@ export interface MediaStubResult {
  * Fetches data from TMDB, Trakt, OMDb, TVMaze, merges metadata,
  * calculates Ratingo scores, and persists to database.
  *
- * Pipeline: fetchBaseMedia → enrichWithTvMaze → attachExternalRatings →
- * applyTrending → calculateScores → classifyMedia → persist → evaluateCatalog
+ * Pipeline: fetchBaseMedia → enrichWithTvMaze → enrichWithTmdbEpisodes (fallback) →
+ * attachExternalRatings → applyTrending → calculateScores → classifyMedia → persist → evaluateCatalog
  */
 @Injectable()
 export class SyncMediaService {
@@ -132,7 +132,10 @@ export class SyncMediaService {
       if (!baseMedia) return;
 
       // Step 2: Enrich with TVMaze (shows only)
-      const enrichedMedia = await this.enrichWithTvMaze(baseMedia, type, logPrefix);
+      let enrichedMedia = await this.enrichWithTvMaze(baseMedia, type, logPrefix);
+
+      // Step 2b: TMDB episode fallback (when TVMaze has no data)
+      enrichedMedia = await this.enrichWithTmdbEpisodes(enrichedMedia, type, logPrefix);
 
       // Step 3: Attach external ratings
       const withRatings = await this.attachExternalRatings(enrichedMedia, tmdbId, type);
@@ -202,6 +205,71 @@ export class SyncMediaService {
       return await this.tvMazeEnrichment.enrich(media);
     } catch (err) {
       this.logger.warn(`${logPrefix} TVMaze enrichment failed: ${err.message}`);
+      return media;
+    }
+  }
+
+  /** Fetches episodes from TMDB for seasons left empty after TVMaze enrichment. */
+  private async enrichWithTmdbEpisodes(
+    media: NormalizedMedia,
+    type: MediaType,
+    logPrefix: string,
+  ): Promise<NormalizedMedia> {
+    if (type !== MediaType.SHOW) return media;
+
+    const seasons = media.details?.seasons;
+    if (!seasons?.length) return media;
+
+    const emptySeasons = seasons.filter((s) => s.episodes.length === 0 && s.number > 0);
+    if (emptySeasons.length === 0) return media;
+
+    const { tmdbId } = media.externalIds;
+
+    try {
+      const updatedSeasons = await Promise.all(
+        seasons.map(async (season) => {
+          if (season.episodes.length > 0 || season.number === 0) return season;
+
+          const episodes = await this.tmdbAdapter.getSeasonEpisodes(tmdbId, season.number);
+          if (episodes.length === 0) return season;
+
+          return { ...season, episodes, episodeCount: episodes.length };
+        }),
+      );
+
+      const allEpisodes = updatedSeasons.flatMap((s) => s.episodes);
+      const now = new Date();
+      const aired = allEpisodes.filter((e) => e.airDate && e.airDate <= now);
+      const future = allEpisodes.filter((e) => e.airDate && e.airDate > now);
+
+      const lastAirDate = aired.length
+        ? aired.reduce((latest, e) =>
+            e.airDate!.getTime() > latest.airDate!.getTime() ? e : latest,
+          ).airDate!
+        : null;
+      const nextAirDate = future.length
+        ? future.reduce((earliest, e) =>
+            e.airDate!.getTime() < earliest.airDate!.getTime() ? e : earliest,
+          ).airDate!
+        : null;
+
+      this.logger.debug(
+        `${logPrefix} TMDB episode fallback: filled ${emptySeasons.length} season(s)`,
+      );
+
+      return {
+        ...media,
+        details: {
+          ...media.details,
+          seasons: updatedSeasons,
+          // TMDB is lower priority than TVMaze for air dates.
+          // Existing value (set by TVMaze) takes precedence — only use TMDB if nothing else available.
+          lastAirDate: media.details?.lastAirDate ?? lastAirDate,
+          nextAirDate: media.details?.nextAirDate ?? nextAirDate,
+        },
+      };
+    } catch (err) {
+      this.logger.warn(`${logPrefix} TMDB episode fallback failed: ${(err as Error).message}`);
       return media;
     }
   }

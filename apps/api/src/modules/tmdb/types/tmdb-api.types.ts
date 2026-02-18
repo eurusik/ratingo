@@ -196,6 +196,29 @@ export interface TmdbShowResponse extends TmdbBaseResponse {
 }
 
 /**
+ * Episode object from TMDB season detail endpoint
+ */
+export interface TmdbEpisode {
+  id: number;
+  episode_number: number;
+  name: string;
+  overview: string | null;
+  air_date: string | null;
+  runtime: number | null;
+  still_path: string | null;
+  vote_average: number;
+}
+
+/**
+ * TMDB season detail response (/tv/{id}/season/{num})
+ */
+export interface TmdbSeasonDetailResponse {
+  id: number;
+  season_number: number;
+  episodes: TmdbEpisode[];
+}
+
+/**
  * Union type for TMDB API responses
  */
 export type TmdbMediaResponse = TmdbMovieResponse | TmdbShowResponse;

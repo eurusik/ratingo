@@ -48,6 +48,7 @@ describe('SyncMediaService', () => {
       getMovie: jest.fn(),
       getShow: jest.fn(),
       getTrending: jest.fn(),
+      getSeasonEpisodes: jest.fn().mockResolvedValue([]),
     };
 
     const mockTraktAdapter = {
@@ -424,6 +425,116 @@ describe('SyncMediaService', () => {
 
       // Should not throw, should just skip TVMaze
       expect(mediaRepository.upsert).toHaveBeenCalled();
+    });
+  });
+
+  describe('TMDB episode fallback', () => {
+    const mockShowWithEmptyEpisodes: any = {
+      ...mockMedia,
+      type: MediaType.SHOW,
+      title: 'Тиха Нава',
+      slug: 'tykha-nava',
+      details: {
+        seasons: [{ number: 1, name: 'Сезон 1', tmdbId: 101, episodeCount: 8, episodes: [] }],
+      },
+    };
+
+    beforeEach(() => {
+      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+    });
+
+    it('should fill episodes from TMDB when TVMaze returns empty', async () => {
+      tmdbAdapter.getShow.mockResolvedValue({ ...mockShowWithEmptyEpisodes });
+      // TVMaze returns media unchanged (no episodes)
+      tvMazeEnrichment.enrich.mockResolvedValue({ ...mockShowWithEmptyEpisodes });
+
+      const tmdbEpisodes = [
+        {
+          tmdbId: 1001,
+          number: 1,
+          title: 'Серія 1',
+          airDate: new Date('2026-01-15'),
+          runtime: 50,
+          overview: null,
+          stillPath: null,
+          rating: 7.5,
+        },
+        {
+          tmdbId: 1002,
+          number: 2,
+          title: 'Серія 2',
+          airDate: new Date('2026-01-15'),
+          runtime: 57,
+          overview: null,
+          stillPath: null,
+          rating: 8.0,
+        },
+      ];
+      tmdbAdapter.getSeasonEpisodes.mockResolvedValue(tmdbEpisodes);
+
+      await service.syncShow(310537);
+
+      expect(tmdbAdapter.getSeasonEpisodes).toHaveBeenCalledWith(550, 1);
+      expect(mediaRepository.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          details: expect.objectContaining({
+            seasons: expect.arrayContaining([
+              expect.objectContaining({
+                episodes: tmdbEpisodes,
+                episodeCount: 2,
+              }),
+            ]),
+          }),
+        }),
+      );
+    });
+
+    it('should skip fallback when TVMaze already populated episodes', async () => {
+      const showWithEpisodes = {
+        ...mockShowWithEmptyEpisodes,
+        details: {
+          seasons: [
+            {
+              number: 1,
+              name: 'Сезон 1',
+              tmdbId: 101,
+              episodeCount: 2,
+              episodes: [
+                { number: 1, title: 'Ep 1', airDate: new Date('2026-01-15') },
+                { number: 2, title: 'Ep 2', airDate: new Date('2026-01-15') },
+              ],
+            },
+          ],
+        },
+      };
+
+      tmdbAdapter.getShow.mockResolvedValue({ ...mockShowWithEmptyEpisodes });
+      tvMazeEnrichment.enrich.mockResolvedValue(showWithEpisodes);
+
+      await service.syncShow(310537);
+
+      expect(tmdbAdapter.getSeasonEpisodes).not.toHaveBeenCalled();
+    });
+
+    it('should handle TMDB fallback failure gracefully', async () => {
+      tmdbAdapter.getShow.mockResolvedValue({ ...mockShowWithEmptyEpisodes });
+      tvMazeEnrichment.enrich.mockResolvedValue({ ...mockShowWithEmptyEpisodes });
+      tmdbAdapter.getSeasonEpisodes.mockRejectedValue(new Error('TMDB error'));
+
+      await service.syncShow(310537);
+
+      // Should still persist (with empty episodes)
+      expect(mediaRepository.upsert).toHaveBeenCalled();
+    });
+
+    it('should not call fallback for movies', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+
+      await service.syncMovie(550);
+
+      expect(tmdbAdapter.getSeasonEpisodes).not.toHaveBeenCalled();
     });
   });
 

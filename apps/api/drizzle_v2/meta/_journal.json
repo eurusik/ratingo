@@ -127,6 +127,13 @@
       "when": 1770987023000,
       "tag": "0017_backfill_dedup_markers",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1771282800000,
+      "tag": "0018_enable_pg_trgm",
+      "breakpoints": true
     }
   ]
 }
