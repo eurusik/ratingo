@@ -25,6 +25,7 @@ interface TvMazeEpisodeResponse {
   airstamp: string | null;
   runtime: number | null;
   image: { original: string; medium: string } | null;
+  rating: { average: number | null } | null;
 }
 
 /**
@@ -96,7 +97,7 @@ export class TvMazeAdapter {
       airDate: ep.airstamp ? new Date(ep.airstamp) : null,
       runtime: ep.runtime,
       stillPath: ep.image?.original || null,
-      rating: null,
+      rating: ep.rating?.average ?? null,
     };
   }
 
