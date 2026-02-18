@@ -10,6 +10,9 @@ import {
   type TvMazeEpisode,
 } from '../../infrastructure/adapters/tvmaze/tvmaze.adapter';
 
+/** Maximum year difference allowed when matching shows by name search. */
+const MAX_YEAR_TOLERANCE = 1;
+
 /**
  * Enriches show metadata with TVMaze episode data.
  *
@@ -25,16 +28,14 @@ export class TvMazeEnrichmentService {
 
   /**
    * Enriches show with TVMaze episode data.
+   * Tries IMDb ID lookup first, then falls back to name search.
    *
-   * @param media - Show to enrich (must have imdbId in externalIds)
+   * @param media - Show to enrich
    * @returns Enriched media with merged seasons and nextAirDate
    */
   async enrich(media: NormalizedMedia): Promise<NormalizedMedia> {
-    const imdbId = media.externalIds?.imdbId;
-    if (!imdbId) return media;
-
     try {
-      const episodes = await this.tvMazeAdapter.getEpisodesByImdbId(imdbId);
+      const episodes = await this.fetchEpisodes(media);
       if (episodes.length === 0) return media;
 
       const mergedSeasons = this.mergeSeasons(episodes, media.details?.seasons);
@@ -52,9 +53,53 @@ export class TvMazeEnrichmentService {
         },
       };
     } catch (err) {
-      this.logger.warn(`TVMaze enrichment failed for ${imdbId}: ${err.message}`);
+      this.logger.warn(
+        `TVMaze enrichment failed for ${media.externalIds?.imdbId ?? media.title}: ${(err as Error).message}`,
+      );
       return media;
     }
+  }
+
+  /**
+   * Fetches episodes from TVMaze: first by IMDb ID, then by show name.
+   */
+  private async fetchEpisodes(media: NormalizedMedia): Promise<TvMazeEpisode[]> {
+    const imdbId = media.externalIds?.imdbId;
+
+    if (imdbId) {
+      const episodes = await this.tvMazeAdapter.getEpisodesByImdbId(imdbId);
+      if (episodes.length > 0) return episodes;
+    }
+
+    // Fallback: search by original title, then localized title (deduplicated)
+    const namesToTry = [...new Set([media.originalTitle, media.title].filter(Boolean))] as string[];
+
+    for (const name of namesToTry) {
+      const episodes = await this.tvMazeAdapter.getEpisodesByShowName(name);
+      if (episodes.length > 0) {
+        // Validate year match to prevent wrong show association
+        const tmdbYear = media.releaseDate?.getFullYear();
+        const firstEpisodeYear = episodes[0]?.airDate?.getFullYear();
+
+        if (tmdbYear && firstEpisodeYear) {
+          const yearDiff = Math.abs(tmdbYear - firstEpisodeYear);
+          if (yearDiff > MAX_YEAR_TOLERANCE) {
+            this.logger.warn(
+              `TVMaze name match rejected: year mismatch tmdb=${tmdbYear} tvmaze=${firstEpisodeYear} for "${name}" (imdbId=${imdbId ?? 'none'})`,
+            );
+            continue; // Try next name
+          }
+        }
+
+        // Accepted — log for monitoring
+        this.logger.log(
+          `TVMaze name search fallback matched "${name}" (year=${firstEpisodeYear}, imdbId=${imdbId ?? 'none'})`,
+        );
+        return episodes;
+      }
+    }
+
+    return [];
   }
 
   /** Merges TVMaze episodes with TMDB season metadata. */
@@ -117,20 +162,23 @@ export class TvMazeEnrichmentService {
   /** Finds next air date from future episodes. */
   private findNextAirDate(episodes: TvMazeEpisode[]): Date | null {
     const now = new Date();
-    const future = episodes
-      .filter((e) => e.airDate && e.airDate > now)
-      .sort((a, b) => a.airDate!.getTime() - b.airDate!.getTime());
+    const future = episodes.filter((e) => e.airDate && e.airDate > now);
 
-    return future.length > 0 ? future[0].airDate! : null;
+    return future.length > 0
+      ? future.reduce((earliest, e) =>
+          e.airDate!.getTime() < earliest.airDate!.getTime() ? e : earliest,
+        ).airDate!
+      : null;
   }
 
   /** Finds last air date from already-aired episodes. */
   private findLastAirDate(episodes: TvMazeEpisode[]): Date | null {
     const now = new Date();
-    const aired = episodes
-      .filter((e) => e.airDate && e.airDate <= now)
-      .sort((a, b) => b.airDate!.getTime() - a.airDate!.getTime());
+    const aired = episodes.filter((e) => e.airDate && e.airDate <= now);
 
-    return aired.length > 0 ? aired[0].airDate! : null;
+    return aired.length > 0
+      ? aired.reduce((latest, e) => (e.airDate!.getTime() > latest.airDate!.getTime() ? e : latest))
+          .airDate!
+      : null;
   }
 }

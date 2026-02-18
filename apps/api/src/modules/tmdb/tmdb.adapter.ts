@@ -15,10 +15,14 @@ import {
   HttpError,
 } from '../../common/http/resilient-http.client';
 import tmdbConfig from '../../config/tmdb.config';
-import { type MetadataProviderPort, type NormalizedMedia } from '../ingestion/public';
+import {
+  type MetadataProviderPort,
+  type NormalizedMedia,
+  type NormalizedEpisode,
+} from '../ingestion/public';
 
 import { TmdbMapper } from './mappers/tmdb.mapper';
-import type { TmdbMediaResponse } from './types/tmdb-api.types';
+import type { TmdbMediaResponse, TmdbSeasonDetailResponse } from './types/tmdb-api.types';
 
 /**
  * TMDB-specific retry configuration.
@@ -312,6 +316,43 @@ export class TmdbAdapter implements MetadataProviderPort {
     );
 
     return ids;
+  }
+
+  /**
+   * Fetches episodes for a specific season from TMDB.
+   * Used as fallback when TVMaze has no data for the show.
+   * Returns empty array on 404.
+   */
+  public async getSeasonEpisodes(
+    tmdbId: number,
+    seasonNumber: number,
+  ): Promise<NormalizedEpisode[]> {
+    try {
+      const data = await this.fetch<TmdbSeasonDetailResponse>(
+        `/tv/${tmdbId}/season/${seasonNumber}`,
+      );
+
+      if (!Array.isArray(data.episodes)) return [];
+
+      return data.episodes.map((ep) => ({
+        tmdbId: ep.id,
+        number: ep.episode_number,
+        title: ep.name,
+        overview: ep.overview || null,
+        airDate: ep.air_date ? new Date(ep.air_date) : null,
+        runtime: ep.runtime ?? null,
+        stillPath: ep.still_path || null,
+        rating: ep.vote_average > 0 ? ep.vote_average : null,
+      }));
+    } catch (error) {
+      if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
+        return [];
+      }
+      this.logger.warn(
+        `TMDB getSeasonEpisodes error for show ${tmdbId} S${seasonNumber}: ${(error as Error).message}`,
+      );
+      return [];
+    }
   }
 
   /**

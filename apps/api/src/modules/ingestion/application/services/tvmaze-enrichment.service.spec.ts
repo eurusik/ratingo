@@ -11,6 +11,7 @@ describe('TvMazeEnrichmentService', () => {
   const mockShow: NormalizedMedia = {
     type: MediaType.SHOW,
     title: 'Test Show',
+    originalTitle: 'Test Show Original',
     slug: 'test-show',
     externalIds: { tmdbId: 1000, imdbId: 'tt1234567' },
     popularity: 100,
@@ -27,6 +28,7 @@ describe('TvMazeEnrichmentService', () => {
   beforeEach(async () => {
     const mockTvMazeAdapter = {
       getEpisodesByImdbId: jest.fn(),
+      getEpisodesByShowName: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -38,17 +40,23 @@ describe('TvMazeEnrichmentService', () => {
   });
 
   describe('enrich', () => {
-    it('should return media unchanged if no imdbId', async () => {
-      const mediaWithoutImdb = { ...mockShow, externalIds: { tmdbId: 1000 } };
+    it('should skip IMDb lookup and try name search when no imdbId', async () => {
+      const mediaWithoutImdb = {
+        ...mockShow,
+        externalIds: { tmdbId: 1000 },
+      };
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([]);
 
       const result = await service.enrich(mediaWithoutImdb);
 
       expect(result).toEqual(mediaWithoutImdb);
       expect(tvMazeAdapter.getEpisodesByImdbId).not.toHaveBeenCalled();
+      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalled();
     });
 
     it('should return media unchanged if TVMaze returns no episodes', async () => {
       tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([]);
 
       const result = await service.enrich(mockShow);
 
@@ -269,6 +277,200 @@ describe('TvMazeEnrichmentService', () => {
       const result = await service.enrich(mockShow);
 
       expect(result).toEqual(mockShow);
+    });
+
+    it('should fallback to name search when IMDb lookup returns empty', async () => {
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Name Fallback Ep',
+          airDate: new Date('2024-01-01'),
+          runtime: 45,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich(mockShow);
+
+      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledWith('Test Show Original');
+      expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
+      expect(result.details?.seasons?.[0].episodes[0].title).toBe('Name Fallback Ep');
+    });
+
+    it('should try originalTitle first, then title for name search', async () => {
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValueOnce([]); // originalTitle miss
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValueOnce([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Found by title',
+          airDate: new Date('2024-01-01'),
+          runtime: 45,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich(mockShow);
+
+      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledTimes(2);
+      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenNthCalledWith(1, 'Test Show Original');
+      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenNthCalledWith(2, 'Test Show');
+      expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
+    });
+
+    it('should enrich via name search when no imdbId but show found by name', async () => {
+      const mediaWithoutImdb = {
+        ...mockShow,
+        originalTitle: null,
+        externalIds: { tmdbId: 1000 },
+      };
+
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Ep via name',
+          airDate: new Date('2024-05-01'),
+          runtime: 50,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich(mediaWithoutImdb);
+
+      expect(tvMazeAdapter.getEpisodesByImdbId).not.toHaveBeenCalled();
+      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledWith('Test Show');
+      expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
+    });
+
+    it('should reject name match when year difference > 1', async () => {
+      const showFrom2020 = {
+        ...mockShow,
+        releaseDate: new Date('2020-01-01'),
+      };
+
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Episode 1',
+          airDate: new Date('2023-01-01'), // 3 years later - should reject
+          runtime: 45,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich(showFrom2020);
+
+      // Should reject and return unchanged
+      expect(result).toEqual(showFrom2020);
+      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledTimes(2); // Tried both names
+    });
+
+    it('should accept name match when year difference <= 1', async () => {
+      const showFrom2024 = {
+        ...mockShow,
+        releaseDate: new Date('2024-01-01'),
+      };
+
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Episode 1',
+          airDate: new Date('2024-10-01'), // Same year - should accept
+          runtime: 45,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich(showFrom2024);
+
+      expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
+      expect(result.details?.seasons?.[0].episodes[0].title).toBe('Episode 1');
+    });
+
+    it('should skip year validation when releaseDate missing', async () => {
+      const showWithoutReleaseDate = {
+        ...mockShow,
+        releaseDate: null,
+      };
+
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Episode 1',
+          airDate: new Date('2024-01-01'),
+          runtime: 45,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich(showWithoutReleaseDate);
+
+      // Should accept without year check
+      expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
+    });
+
+    it('should skip year validation when episode airDate missing', async () => {
+      const showFrom2024 = {
+        ...mockShow,
+        releaseDate: new Date('2024-01-01'),
+      };
+
+      tvMazeAdapter.getEpisodesByImdbId.mockResolvedValue([]);
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([
+        {
+          seasonNumber: 1,
+          number: 1,
+          title: 'Episode 1',
+          airDate: null, // No air date
+          runtime: 45,
+          overview: null,
+          stillPath: null,
+          rating: null,
+        },
+      ]);
+
+      const result = await service.enrich(showFrom2024);
+
+      // Should accept without year check
+      expect(result.details?.seasons?.[0].episodes).toHaveLength(1);
+    });
+
+    it('should deduplicate when originalTitle equals title', async () => {
+      const mediaWithSameNames = {
+        ...mockShow,
+        originalTitle: 'Test Show',
+        title: 'Test Show',
+        externalIds: { tmdbId: 1000 },
+      };
+
+      tvMazeAdapter.getEpisodesByShowName.mockResolvedValue([]);
+
+      await service.enrich(mediaWithSameNames);
+
+      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledTimes(1);
+      expect(tvMazeAdapter.getEpisodesByShowName).toHaveBeenCalledWith('Test Show');
     });
   });
 });

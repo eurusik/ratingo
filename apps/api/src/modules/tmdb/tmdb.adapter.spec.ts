@@ -610,6 +610,105 @@ describe('TmdbAdapter', () => {
     });
   });
 
+  describe('getSeasonEpisodes', () => {
+    it('should fetch and map episodes for a season', async () => {
+      const mockSeasonData = {
+        id: 100,
+        season_number: 1,
+        episodes: [
+          {
+            id: 1001,
+            episode_number: 1,
+            name: 'Серія 1',
+            overview: 'First episode',
+            air_date: '2026-01-15',
+            runtime: 50,
+            still_path: '/still1.jpg',
+            vote_average: 7.5,
+          },
+          {
+            id: 1002,
+            episode_number: 2,
+            name: 'Серія 2',
+            overview: null,
+            air_date: '2026-01-15',
+            runtime: 57,
+            still_path: null,
+            vote_average: 0,
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockSeasonData),
+      });
+
+      const result = await adapter.getSeasonEpisodes(310537, 1);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual({
+        tmdbId: 1001,
+        number: 1,
+        title: 'Серія 1',
+        overview: 'First episode',
+        airDate: new Date('2026-01-15'),
+        runtime: 50,
+        stillPath: '/still1.jpg',
+        rating: 7.5,
+      });
+      expect(result[1]).toEqual({
+        tmdbId: 1002,
+        number: 2,
+        title: 'Серія 2',
+        overview: null,
+        airDate: new Date('2026-01-15'),
+        runtime: 57,
+        stillPath: null,
+        rating: null,
+      });
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/tv/310537/season/1'),
+        expect.anything(),
+      );
+    });
+
+    it('should return empty array on 404', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+      });
+
+      const result = await adapter.getSeasonEpisodes(999999, 1);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty array on API error', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+      });
+
+      const result = await adapter.getSeasonEpisodes(310537, 1);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty array when episodes array is missing', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: 100, season_number: 1 }),
+      });
+
+      const result = await adapter.getSeasonEpisodes(310537, 1);
+
+      expect(result).toEqual([]);
+    });
+  });
+
   describe('error handling', () => {
     it('should handle network errors', async () => {
       mockFetch.mockRejectedValue(new Error('Network error'));

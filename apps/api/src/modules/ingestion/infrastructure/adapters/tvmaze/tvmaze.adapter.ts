@@ -67,16 +67,7 @@ export class TvMazeAdapter {
 
       if (!Array.isArray(episodes)) return [];
 
-      return episodes.map((ep) => ({
-        seasonNumber: ep.season,
-        number: ep.number,
-        title: ep.name,
-        overview: ep.summary ? ep.summary.replace(/<[^>]*>/g, '') : null, // Strip HTML tags
-        airDate: ep.airstamp ? new Date(ep.airstamp) : null,
-        runtime: ep.runtime,
-        stillPath: ep.image?.original || null,
-        rating: null,
-      }));
+      return episodes.map((ep) => this.mapEpisode(ep));
     } catch (error) {
       // 404 is common for new shows or shows not in TVMaze
       if (
@@ -87,6 +78,58 @@ export class TvMazeAdapter {
       }
       this.logger.warn(
         `Failed to sync episodes from TVMaze for ${imdbId}: ${(error as Error).message}`,
+      );
+      return [];
+    }
+  }
+
+  /**
+   * Maps TVMaze episode response to normalized episode model.
+   * Strips HTML tags from summary and normalizes fields.
+   */
+  private mapEpisode(ep: TvMazeEpisodeResponse): TvMazeEpisode {
+    return {
+      seasonNumber: ep.season,
+      number: ep.number,
+      title: ep.name,
+      overview: ep.summary ? ep.summary.replace(/<[^>]*>/g, '').trim() : null,
+      airDate: ep.airstamp ? new Date(ep.airstamp) : null,
+      runtime: ep.runtime,
+      stillPath: ep.image?.original || null,
+      rating: null,
+    };
+  }
+
+  /**
+   * Fetches episodes from TVMaze using show name search.
+   * Uses single search endpoint for best match, then fetches episodes.
+   * Intended as fallback when IMDb lookup is unavailable.
+   *
+   * @param {string} showName - Show name to search for
+   * @returns {Promise<TvMazeEpisode[]>} Episodes list
+   */
+  async getEpisodesByShowName(showName: string): Promise<TvMazeEpisode[]> {
+    try {
+      const show = await this.fetch<TvMazeShow | null>(
+        `/singlesearch/shows?q=${encodeURIComponent(showName)}`,
+      );
+
+      if (!show || !show.id) return [];
+
+      const episodes = await this.fetch<TvMazeEpisodeResponse[]>(`/shows/${show.id}/episodes`);
+
+      if (!Array.isArray(episodes)) return [];
+
+      return episodes.map((ep) => this.mapEpisode(ep));
+    } catch (error) {
+      if (
+        error instanceof TvMazeApiException &&
+        error.details?.statusCode === HttpStatus.NOT_FOUND
+      ) {
+        return [];
+      }
+      this.logger.warn(
+        `Failed to search TVMaze by name "${showName}": ${(error as Error).message}`,
       );
       return [];
     }

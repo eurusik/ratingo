@@ -92,4 +92,64 @@ describe('TvMazeAdapter', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('getEpisodesByShowName', () => {
+    it('should return episodes when show is found by name', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 86953, name: 'Тиха Нава' }),
+      });
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => [
+          {
+            id: 1,
+            season: 1,
+            number: 1,
+            name: 'Episode 1',
+            summary: '<p>First</p>',
+            airstamp: '2024-10-01T20:00:00+00:00',
+            runtime: 45,
+            image: null,
+          },
+        ],
+      });
+
+      const result = await adapter.getEpisodesByShowName('Тиха Нава');
+
+      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/singlesearch/shows?q='));
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        seasonNumber: 1,
+        number: 1,
+        title: 'Episode 1',
+        overview: 'First',
+        airDate: new Date('2024-10-01T20:00:00+00:00'),
+        runtime: 45,
+        stillPath: null,
+        rating: null,
+      });
+    });
+
+    it('should return empty array when no show matches the name', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      });
+
+      const result = await adapter.getEpisodesByShowName('NonexistentShow12345');
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty array on API error', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      });
+
+      const result = await adapter.getEpisodesByShowName('Test');
+      expect(result).toEqual([]);
+    });
+  });
 });
