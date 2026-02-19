@@ -6,6 +6,7 @@
 
 'use client';
 
+import { useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { Flame, Film, Search, Play, Bookmark } from 'lucide-react';
 import { useAuth, useAuthModalStore } from '@/core/auth';
@@ -21,13 +22,13 @@ export function MobileDock() {
   const openSearch = useSearchDialogStore((s) => s.open);
 
   /** Returns true if navigation should proceed, false if blocked by auth guard. */
-  const requireAuth = (): boolean => {
+  const requireAuth = useCallback((): boolean => {
     if (!isAuthenticated) {
       openLogin();
       return false;
     }
     return true;
-  };
+  }, [isAuthenticated, openLogin]);
 
   return (
     <nav

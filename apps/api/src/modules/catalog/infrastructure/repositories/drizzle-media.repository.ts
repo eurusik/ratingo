@@ -698,8 +698,9 @@ export class DrizzleMediaRepository implements IMediaRepository {
           desc(schema.mediaItems.popularity),
         )
         .limit(limit);
-    } catch (error) {
-      this.logger.error(`Failed to search media for "${query}": ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to search media for "${query}": ${message}`);
       return [];
     }
   }

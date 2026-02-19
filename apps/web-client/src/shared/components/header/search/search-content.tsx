@@ -82,7 +82,7 @@ export function SearchContent({ search, listClassName }: SearchContentProps) {
                 posterUrl={item.poster?.small}
                 slug={item.slug}
                 isLocal
-                onSelect={() => handleSelect(item.slug!, item.type as MediaType)}
+                onSelect={() => item.slug && handleSelect(item.slug, item.type as MediaType)}
               />
             ))}
           </CommandGroup>
