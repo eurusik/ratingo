@@ -31,7 +31,7 @@ const dockItemVariants = cva(
 interface MobileDockItemProps {
   icon: LucideIcon;
   label: string;
-  href?: Route;
+  href?: string;
   isActive: boolean;
   /** Fires instead of navigation. Used for actions like opening search dialog. */
   onClick?: () => void;
@@ -73,7 +73,7 @@ export function MobileDockItem({
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
       if (onBeforeNavigate()) {
-        router.push(href);
+        router.push(href as Route);
       }
     };
     return (
@@ -86,7 +86,7 @@ export function MobileDockItem({
   // Plain navigation items
   if (href) {
     return (
-      <Link href={href} className={dockItemVariants({ state })}>
+      <Link href={href as Route} className={dockItemVariants({ state })}>
         {content}
       </Link>
     );
