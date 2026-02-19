@@ -17,7 +17,7 @@ export default function SettingsPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-24 pb-12">
+      <div className="min-h-screen pt-8 md:pt-24 pb-6 md:pb-12">
         <div className="container max-w-xl mx-auto px-4">
           <Skeleton className="h-8 w-32 mb-4" />
           <Skeleton className="h-10 w-64 mb-8" />
@@ -33,7 +33,7 @@ export default function SettingsPage() {
   // Not authenticated
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen pt-24 pb-12">
+      <div className="min-h-screen pt-8 md:pt-24 pb-6 md:pb-12">
         <div className="container max-w-xl mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <h1 className="text-2xl font-bold text-cinema-text-primary mb-4">{dict.settings.title}</h1>
