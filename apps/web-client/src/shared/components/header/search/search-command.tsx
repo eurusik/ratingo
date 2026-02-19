@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search } from 'lucide-react';
 
 import { Button } from '@/shared/ui';
@@ -24,6 +24,12 @@ import { SearchContent } from './search-content';
  * mismatch: useIsMobile returns false during SSR, which would render Dialog on
  * mobile and then swap to Drawer after the effect fires. Since search starts
  * closed this has zero visual impact.
+ *
+ * On mobile, drawer height is captured in pixels from window.innerHeight at
+ * open-time (before the iOS keyboard appears). This prevents the drawer from
+ * resizing when the keyboard slides in — viewport-based units (vh/dvh/svh)
+ * all recalculate on iOS Safari when the address bar collapses or the
+ * keyboard appears.
  */
 export function SearchCommand() {
   const { dict } = useTranslation();
@@ -33,6 +39,14 @@ export function SearchCommand() {
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // Capture 70% of viewport in pixels when drawer opens (before keyboard).
+  const drawerHeight = useRef<number | null>(null);
+  useEffect(() => {
+    if (open && isMobile) {
+      drawerHeight.current = Math.round(window.innerHeight * 0.7);
+    }
+  }, [open, isMobile]);
 
   return (
     <>
@@ -67,7 +81,10 @@ export function SearchCommand() {
           {/* Mobile: bottom sheet Drawer */}
           {isMobile && (
             <Drawer open={open} onOpenChange={setOpen}>
-              <DrawerContent className="h-[70vh] pb-[env(safe-area-inset-bottom)] [&>div:first-child]:hidden">
+              <DrawerContent
+                style={{ height: drawerHeight.current ?? undefined }}
+                className="pb-[env(safe-area-inset-bottom)] [&>div:first-child]:hidden"
+              >
                 <DrawerTitle className="sr-only">{dict.search.placeholder}</DrawerTitle>
                 <DrawerDescription className="sr-only">{dict.search.hint}</DrawerDescription>
                 <SearchContent
