@@ -67,7 +67,7 @@ export function SearchCommand() {
           {/* Mobile: bottom sheet Drawer */}
           {isMobile && (
             <Drawer open={open} onOpenChange={setOpen}>
-              <DrawerContent className="h-[70dvh] pb-[env(safe-area-inset-bottom)] [&>div:first-child]:hidden">
+              <DrawerContent className="h-[70vh] pb-[env(safe-area-inset-bottom)] [&>div:first-child]:hidden">
                 <DrawerTitle className="sr-only">{dict.search.placeholder}</DrawerTitle>
                 <DrawerDescription className="sr-only">{dict.search.hint}</DrawerDescription>
                 <SearchContent
