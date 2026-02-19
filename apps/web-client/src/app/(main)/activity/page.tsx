@@ -73,7 +73,7 @@ function ActivityPageContent() {
         <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.activity.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 flex-wrap h-auto gap-1 p-1">
+          <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 h-auto gap-1 p-1 overflow-x-auto flex-nowrap scrollbar-hide">
             <TabsTrigger value={TAB_VALUES.WATCHING} className="data-[state=active]:bg-cinema-elevated">
               {dict.activity.tabs.watching}
             </TabsTrigger>

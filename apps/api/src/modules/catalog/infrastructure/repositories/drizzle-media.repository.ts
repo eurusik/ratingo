@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { eq, inArray, sql, and, desc, gt, gte, lt, isNull, isNotNull } from 'drizzle-orm';
+import { eq, inArray, sql, and, desc, gt, gte, lt, isNull, isNotNull, exists } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DB_CONSTRAINT } from '../../../../common/constants/database.constants';
@@ -663,15 +663,22 @@ export class DrizzleMediaRepository implements IMediaRepository {
           ingestionStatus: schema.mediaItems.ingestionStatus,
         })
         .from(schema.mediaItems)
-        .innerJoin(
-          schema.mediaCatalogEvaluations,
-          eq(schema.mediaItems.id, schema.mediaCatalogEvaluations.mediaItemId),
-        )
         .where(
           and(
             sql`${schema.mediaItems.deletedAt} IS NULL`,
-            // Eligibility filter: only show ELIGIBLE items
-            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+            // Eligibility filter: EXISTS avoids row multiplication from multiple policy versions
+            exists(
+              this.db
+                .select({ one: sql`1` })
+                .from(schema.mediaCatalogEvaluations)
+                .where(
+                  and(
+                    eq(schema.mediaCatalogEvaluations.mediaItemId, schema.mediaItems.id),
+                    eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+                    eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
+                  ),
+                ),
+            ),
             // Ready filter: only show items with ready ingestion status
             eq(schema.mediaItems.ingestionStatus, IngestionStatus.READY),
             sql`(
@@ -691,8 +698,9 @@ export class DrizzleMediaRepository implements IMediaRepository {
           desc(schema.mediaItems.popularity),
         )
         .limit(limit);
-    } catch (error) {
-      this.logger.error(`Failed to search media for "${query}": ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Failed to search media for "${query}": ${message}`);
       return [];
     }
   }

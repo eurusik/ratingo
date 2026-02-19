@@ -5,3 +5,4 @@ export { ScorePill } from './score-pill';
 export { UserRatingBadge } from './user-rating-badge';
 export * from './header';
 export * from './footer';
+export * from './mobile-dock';

@@ -5,6 +5,7 @@
 'use client';
 
 import { useAnnouncementBar } from '@/shared/components';
+import { MOBILE_DOCK_HEIGHT_PX } from '@/shared/components/mobile-dock';
 
 interface MainContentProps {
   children: React.ReactNode;
@@ -16,5 +17,9 @@ export function MainContent({ children }: MainContentProps) {
   // Base header height is 64px (h-16), plus announcement bar if visible
   const paddingTop = 64 + announcementHeight;
 
-  return <main style={{ paddingTop }}>{children}</main>;
+  return (
+    <main style={{ paddingTop, paddingBottom: MOBILE_DOCK_HEIGHT_PX }} className="md:!pb-0">
+      {children}
+    </main>
+  );
 }
