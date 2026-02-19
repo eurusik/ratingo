@@ -1,40 +1,29 @@
 'use client';
 
-import { Search, Loader2 } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 import { Button } from '@/shared/ui';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
 import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandSeparator,
-} from '@/shared/ui';
+  Drawer,
+  DrawerContent,
+  DrawerTitle,
+  DrawerDescription,
+} from '@/shared/ui/drawer';
 import { useTranslation } from '@/shared/i18n';
-import { MediaType } from '@/core/api/catalog.client';
+import { useIsMobile } from '@/shared/hooks/use-mobile';
 import { useSearch } from './use-search';
-import { SearchResultItem } from './search-result-item';
+import { SearchContent } from './search-content';
 
 /**
- * Search command dialog with keyboard shortcut (Cmd+K).
- * Displays local catalog results and TMDB results for import.
+ * Search command with keyboard shortcut (Cmd+K).
+ * Desktop: centered Dialog. Mobile: bottom sheet Drawer (~70% height).
  */
 export function SearchCommand() {
   const { dict } = useTranslation();
-  const {
-    open,
-    setOpen,
-    query,
-    setQuery,
-    debouncedQuery,
-    data,
-    isLoading,
-    hasResults,
-    handleSelect,
-    handleImport,
-    importingTmdbId,
-  } = useSearch();
+  const isMobile = useIsMobile();
+  const search = useSearch();
+  const { open, setOpen } = search;
 
   return (
     <>
@@ -52,83 +41,30 @@ export function SearchCommand() {
         </kbd>
       </Button>
 
-      {/* Dialog */}
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput
-          placeholder={dict.search.placeholder}
-          value={query}
-          onValueChange={setQuery}
-        />
-        <CommandList>
-          {/* Loading */}
-          {isLoading && debouncedQuery.length >= 2 && (
-            <div className="flex items-center justify-center py-6">
-              <Loader2 className="h-5 w-5 animate-spin text-cinema-text-muted" />
-            </div>
-          )}
+      {/* Desktop: centered Dialog */}
+      {!isMobile && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="overflow-hidden p-0 gap-0">
+            <DialogTitle className="sr-only">{dict.search.placeholder}</DialogTitle>
+            <DialogDescription className="sr-only">{dict.search.hint}</DialogDescription>
+            <SearchContent search={search} />
+          </DialogContent>
+        </Dialog>
+      )}
 
-          {/* No results */}
-          {!isLoading && debouncedQuery.length >= 2 && !hasResults && (
-            <CommandEmpty>{dict.search.noResults}</CommandEmpty>
-          )}
-
-          {/* Hint */}
-          {debouncedQuery.length < 2 && (
-            <div className="py-6 text-center text-sm text-cinema-text-muted">{dict.search.hint}</div>
-          )}
-
-          {/* Local results */}
-          {data?.local && data.local.length > 0 && (
-            <CommandGroup heading={dict.search.inCatalog}>
-              {data.local.map((item) => (
-                <SearchResultItem
-                  key={`local-${item.tmdbId}`}
-                  tmdbId={item.tmdbId}
-                  title={item.title}
-                  type={item.type}
-                  year={item.year}
-                  rating={item.rating}
-                  posterUrl={item.poster?.small}
-                  slug={item.slug}
-                  isLocal
-                  onSelect={() => handleSelect(item.slug!, item.type as MediaType)}
-                />
-              ))}
-            </CommandGroup>
-          )}
-
-          {/* TMDB results */}
-          {data?.tmdb && data.tmdb.length > 0 && (
-            <>
-              {data?.local && data.local.length > 0 && <CommandSeparator />}
-              <CommandGroup heading={dict.search.fromTmdb}>
-                {data.tmdb.slice(0, 5).map((item) => (
-                  <SearchResultItem
-                    key={`tmdb-${item.tmdbId}`}
-                    tmdbId={item.tmdbId}
-                    title={item.title}
-                    type={item.type}
-                    year={item.year}
-                    posterUrl={item.poster?.small}
-                    isLocal={false}
-                    isImporting={importingTmdbId === item.tmdbId}
-                    notImportedLabel={dict.search.notImported}
-                    onSelect={() =>
-                      handleImport(
-                        item.tmdbId,
-                        item.type as MediaType,
-                        item.title,
-                        item.poster?.small,
-                        item.year ?? undefined,
-                      )
-                    }
-                  />
-                ))}
-              </CommandGroup>
-            </>
-          )}
-        </CommandList>
-      </CommandDialog>
+      {/* Mobile: bottom sheet Drawer */}
+      {isMobile && (
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerContent className="h-[70dvh] pb-[env(safe-area-inset-bottom)] [&>div:first-child]:hidden">
+            <DrawerTitle className="sr-only">{dict.search.placeholder}</DrawerTitle>
+            <DrawerDescription className="sr-only">{dict.search.hint}</DrawerDescription>
+            <SearchContent
+              search={search}
+              listClassName="max-h-none flex-1 overflow-y-auto"
+            />
+          </DrawerContent>
+        </Drawer>
+      )}
     </>
   );
 }

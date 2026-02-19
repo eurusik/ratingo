@@ -16,5 +16,9 @@ export function MainContent({ children }: MainContentProps) {
   // Base header height is 64px (h-16), plus announcement bar if visible
   const paddingTop = 64 + announcementHeight;
 
-  return <main style={{ paddingTop }}>{children}</main>;
+  return (
+    <main style={{ paddingTop }} className="pb-[72px] md:pb-0">
+      {children}
+    </main>
+  );
 }

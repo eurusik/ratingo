@@ -7,12 +7,14 @@ import { useDebounce } from 'use-debounce';
 
 import { catalogApi, ImportStatus, MediaType } from '@/core/api/catalog.client';
 import { queryKeys } from '@/core/query/keys';
+import { useSearchDialogStore } from '@/shared/stores/search-dialog.store';
 
 /**
  * Hook for search dialog state and logic.
  */
 export function useSearch() {
-  const [open, setOpen] = useState(false);
+  const open = useSearchDialogStore((s) => s.isOpen);
+  const setOpen = useSearchDialogStore((s) => s.setOpen);
   const [query, setQuery] = useState('');
   const [debouncedQuery] = useDebounce(query, 300);
   const router = useRouter();
@@ -22,7 +24,7 @@ export function useSearch() {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((o) => !o);
+        useSearchDialogStore.getState().toggle();
       }
     };
     document.addEventListener('keydown', down);

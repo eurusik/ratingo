@@ -7,6 +7,7 @@ import {
   HeaderContextProvider,
   Footer,
   AnnouncementBarProvider,
+  MobileDock,
 } from '@/shared/components';
 import { GlobalAuthModal } from '@/modules/auth';
 import { MainContent } from './main-content';
@@ -22,6 +23,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <Header />
         <MainContent>{children}</MainContent>
         <Footer />
+        <MobileDock />
         <GlobalAuthModal />
       </HeaderContextProvider>
     </AnnouncementBarProvider>
