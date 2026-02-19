@@ -277,6 +277,10 @@ describe('DrizzleMediaRepository', () => {
       // The repository delegates limit enforcement to the DB; we assert the
       // resolved rows are returned as-is without further slicing.
       expect(result).toHaveLength(5);
+
+      // Verify .limit() was called with the correct parameter
+      const selectChain = db.select.mock.results[0].value;
+      expect(selectChain.limit).toHaveBeenCalledWith(5);
     });
   });
 

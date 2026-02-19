@@ -11,7 +11,7 @@ import {
   CommandSeparator,
 } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
-import { MediaType } from '@/core/api/catalog.client';
+import type { MediaType } from '@/shared/types';
 import type { useSearch } from './use-search';
 import { SearchResultItem } from './search-result-item';
 
