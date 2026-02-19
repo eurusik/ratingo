@@ -59,7 +59,7 @@ export function SettingsPageClient({ user, initialTab = 'profile' }: SettingsPag
   };
 
   return (
-    <div className="container max-w-xl mx-auto pt-8 md:pt-24 pb-4 md:pb-8 px-4">
+    <div className="container max-w-xl mx-auto pt-8 md:pt-16 pb-4 md:pb-8 px-4">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-cinema-text-primary">{dict.settings.title}</h1>

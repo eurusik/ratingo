@@ -35,7 +35,7 @@ function SavedPageContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-8 md:pt-24 pb-6 md:pb-12">
+      <div className="min-h-screen pt-8 md:pt-16 pb-6 md:pb-12">
         <div className="container mx-auto px-4">
           <div className="h-8 w-48 bg-cinema-elevated rounded animate-pulse mb-8" />
           <div className="h-10 w-96 bg-cinema-elevated rounded animate-pulse" />
@@ -46,7 +46,7 @@ function SavedPageContent() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen pt-8 md:pt-24 pb-6 md:pb-12">
+      <div className="min-h-screen pt-8 md:pt-16 pb-6 md:pb-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <h1 className="text-2xl font-bold text-cinema-text-primary mb-4">{dict.saved.title}</h1>
@@ -58,7 +58,7 @@ function SavedPageContent() {
   }
 
   return (
-    <div className="min-h-screen pt-8 md:pt-24 pb-6 md:pb-12">
+    <div className="min-h-screen pt-8 md:pt-16 pb-6 md:pb-12">
       <div className="container mx-auto px-4">
         <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.saved.title}</h1>
 
@@ -89,7 +89,7 @@ export default function SavedPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen pt-8 md:pt-24 pb-6 md:pb-12">
+        <div className="min-h-screen pt-8 md:pt-16 pb-6 md:pb-12">
           <div className="container mx-auto px-4">
             <div className="h-8 w-48 bg-cinema-elevated rounded animate-pulse mb-8" />
           </div>
