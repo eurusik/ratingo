@@ -47,6 +47,7 @@ export function SearchContent({ search, listClassName }: SearchContentProps) {
         placeholder={dict.search.placeholder}
         value={query}
         onValueChange={setQuery}
+        className="text-base"
       />
       <CommandList className={listClassName}>
         {/* Loading */}

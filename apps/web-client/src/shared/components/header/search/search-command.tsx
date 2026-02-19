@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 
 import { Button } from '@/shared/ui';
@@ -25,11 +25,10 @@ import { SearchContent } from './search-content';
  * mobile and then swap to Drawer after the effect fires. Since search starts
  * closed this has zero visual impact.
  *
- * On mobile, drawer height is captured in pixels from window.innerHeight at
- * open-time (before the iOS keyboard appears). This prevents the drawer from
- * resizing when the keyboard slides in — viewport-based units (vh/dvh/svh)
- * all recalculate on iOS Safari when the address bar collapses or the
- * keyboard appears.
+ * iOS keyboard fix: repositionInputs={false} disables Vaul's built-in input
+ * repositioning that causes the drawer to grow when the keyboard appears.
+ * Drawer height is locked in pixels (via useState) captured at open-time,
+ * before the keyboard slides in, so no viewport unit can recalculate.
  */
 export function SearchCommand() {
   const { dict } = useTranslation();
@@ -40,11 +39,15 @@ export function SearchCommand() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Capture 70% of viewport in pixels when drawer opens (before keyboard).
-  const drawerHeight = useRef<number | null>(null);
+  // Lock drawer height in pixels at open-time (before iOS keyboard).
+  // useState (not useRef) so the value triggers a re-render.
+  const [drawerHeight, setDrawerHeight] = useState<number | undefined>(undefined);
   useEffect(() => {
     if (open && isMobile) {
-      drawerHeight.current = Math.round(window.innerHeight * 0.7);
+      setDrawerHeight(Math.round(window.innerHeight * 0.7));
+    }
+    if (!open) {
+      setDrawerHeight(undefined);
     }
   }, [open, isMobile]);
 
@@ -80,10 +83,10 @@ export function SearchCommand() {
 
           {/* Mobile: bottom sheet Drawer */}
           {isMobile && (
-            <Drawer open={open} onOpenChange={setOpen}>
+            <Drawer open={open} onOpenChange={setOpen} repositionInputs={false}>
               <DrawerContent
-                style={{ height: drawerHeight.current ?? undefined }}
-                className="pb-[env(safe-area-inset-bottom)] [&>div:first-child]:hidden"
+                style={drawerHeight ? { height: drawerHeight } : undefined}
+                className="h-[70dvh] pb-[env(safe-area-inset-bottom)] [&>div:first-child]:hidden"
               >
                 <DrawerTitle className="sr-only">{dict.search.placeholder}</DrawerTitle>
                 <DrawerDescription className="sr-only">{dict.search.hint}</DrawerDescription>
