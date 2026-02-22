@@ -17,4 +17,6 @@ export default registerAs('auth', () => ({
   frontendUrl: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3002',
   // Cron pattern for OAuth exchange codes cleanup (default: daily at 3:00 AM UTC)
   exchangeCodeCleanupCron: process.env.OAUTH_EXCHANGE_CLEANUP_CRON || '0 3 * * *',
+  // Whether running in production mode (used for secure cookies, etc.)
+  isProduction: process.env.NODE_ENV === 'production',
 }));

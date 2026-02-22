@@ -4,8 +4,10 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   UseGuards,
+  UseFilters,
   NotFoundException,
   Req,
   Res,
@@ -32,19 +34,23 @@ import authConfig from '../../../../config/auth.config';
 import googleConfig from '../../../../config/google.config';
 import { UserMediaService } from '../../../user-media/application/user-media.service';
 import { UsersService } from '../../../users/application/users.service';
+import { type User } from '../../../users/domain/entities/user.entity';
 import { AuthService } from '../../application/auth.service';
 import { HTTP_REDIRECT_FOUND } from '../../auth.constants';
+import { type GoogleUserPayload } from '../../domain/types';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
 import { GoogleAuthGuard } from '../../infrastructure/guards/google-auth.guard';
 import { JwtAuthGuard } from '../../infrastructure/guards/jwt-auth.guard';
 import { LocalAuthGuard } from '../../infrastructure/guards/local-auth.guard';
-import { type GoogleUserPayload } from '../../infrastructure/strategies/google.strategy';
 import { AuthTokensDto } from '../dto/auth-tokens.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
 import { ExchangeCodeDto } from '../dto/exchange-code.dto';
 import { LoginDto } from '../dto/login.dto';
 import { MeDto } from '../dto/me.dto';
 import { RefreshDto } from '../dto/refresh.dto';
 import { RegisterDto } from '../dto/register.dto';
+import { OAuthExceptionFilter } from '../filters/oauth-exception.filter';
+import { MeMapper } from '../mappers/me.mapper';
 
 function getHeader(req: FastifyRequest, name: string): string | null {
   const v = req.headers[name.toLowerCase()];
@@ -73,6 +79,7 @@ function extractClientMeta(req: FastifyRequest): { userAgent: string | null; ip:
  * Handles register, login, refresh, logout, and OAuth flows.
  */
 @ApiTags('Auth')
+@UseFilters(OAuthExceptionFilter)
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -94,7 +101,7 @@ export class AuthController {
   @ApiBody({ type: RegisterDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
   @ApiTooManyRequestsResponse({ description: 'Too many registration attempts' })
-  async register(@Body() body: RegisterDto, @Req() req: FastifyRequest) {
+  async register(@Body() body: RegisterDto, @Req() req: FastifyRequest): Promise<AuthTokensDto> {
     const clientMeta = extractClientMeta(req);
     const tokens = await this.authService.register(
       body.email,
@@ -107,6 +114,8 @@ export class AuthController {
 
   /**
    * Authenticates user with email/password.
+   * LocalStrategy validates credentials and sets the full User on req.user.
+   * This method simply issues tokens for the already-validated user.
    */
   @UseGuards(LocalAuthGuard)
   @Post('login')
@@ -117,10 +126,9 @@ export class AuthController {
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
   @ApiTooManyRequestsResponse({ description: 'Too many login attempts' })
-  async login(@Body() body: LoginDto, @Req() req: FastifyRequest) {
+  async login(@CurrentUser() user: User, @Req() req: FastifyRequest): Promise<AuthTokensDto> {
     const clientMeta = extractClientMeta(req);
-    const tokens = await this.authService.login(body.email, body.password, clientMeta);
-    return tokens;
+    return this.authService.loginValidatedUser(user, clientMeta);
   }
 
   /**
@@ -132,7 +140,7 @@ export class AuthController {
   @ApiBody({ type: RefreshDto })
   @ApiOkResponse({ description: 'Tokens pair', type: AuthTokensDto })
   @ApiTooManyRequestsResponse({ description: 'Too many refresh attempts' })
-  async refresh(@Body() body: RefreshDto, @Req() req: FastifyRequest) {
+  async refresh(@Body() body: RefreshDto, @Req() req: FastifyRequest): Promise<AuthTokensDto> {
     const clientMeta = extractClientMeta(req);
     return this.authService.refresh(body.refreshToken, clientMeta);
   }
@@ -145,9 +153,30 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout (revoke refresh tokens)' })
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async logout(@CurrentUser() user: { id: string }) {
+  async logout(@CurrentUser() user: { id: string }): Promise<void> {
     await this.authService.logout(user.id);
     return;
+  }
+
+  /**
+   * Changes current user password.
+   *
+   * @param {{ id: string }} user - Current user context
+   * @param {ChangePasswordDto} body - Password change payload
+   * @returns {Promise<void>} Nothing
+   */
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Change current user password' })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Password changed successfully' })
+  @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
+  @Patch('password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(
+    @CurrentUser() user: { id: string },
+    @Body() body: ChangePasswordDto,
+  ): Promise<void> {
+    await this.authService.changePassword(user.id, body.currentPassword, body.newPassword);
   }
 
   /**
@@ -167,28 +196,7 @@ export class AuthController {
 
     const stats = await this.userMediaService.getStats(dbUser.id);
 
-    return {
-      id: dbUser.id,
-      email: dbUser.email,
-      username: dbUser.username,
-      avatarUrl: dbUser.avatarUrl,
-      role: dbUser.role as MeDto['role'],
-      profile: {
-        bio: dbUser.bio,
-        location: dbUser.location,
-        website: dbUser.website,
-        preferredLanguage: dbUser.preferredLanguage,
-        preferredRegion: dbUser.preferredRegion,
-        privacy: {
-          isProfilePublic: dbUser.isProfilePublic,
-          showWatchHistory: dbUser.showWatchHistory,
-          showRatings: dbUser.showRatings,
-          allowFollowers: dbUser.allowFollowers,
-          autoSubscribeOnWatch: dbUser.autoSubscribeOnWatch,
-        },
-      },
-      stats,
-    };
+    return MeMapper.toDto(dbUser, stats);
   }
 
   /**

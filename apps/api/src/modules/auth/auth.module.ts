@@ -1,6 +1,5 @@
 import { Module, forwardRef, type Provider } from '@nestjs/common';
 import { ConfigModule, ConfigService, type ConfigType } from '@nestjs/config';
-import { APP_FILTER } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ScheduleModule } from '@nestjs/schedule';
 
@@ -59,7 +58,7 @@ const googleStrategyProvider: Provider = {
         signOptions: { expiresIn: configService.get<string>('auth.accessTokenTtl') },
       }),
     }),
-    forwardRef(() => UsersModule),
+    UsersModule,
     forwardRef(() => UserMediaModule),
     DatabaseModule,
   ],
@@ -71,10 +70,6 @@ const googleStrategyProvider: Provider = {
     GoogleAuthGuard,
     OAuthExceptionFilter,
     CleanupExchangeCodesJob,
-    {
-      provide: APP_FILTER,
-      useClass: OAuthExceptionFilter,
-    },
     {
       provide: PASSWORD_HASHER,
       useClass: BcryptPasswordHasher,

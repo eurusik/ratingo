@@ -13,6 +13,7 @@ describe('GoogleAuthGuard - returnTo Validation', () => {
 
   const authConfig = {
     stateSecret: 'test-state-secret-that-is-long-enough',
+    isProduction: false,
   };
 
   beforeEach(() => {

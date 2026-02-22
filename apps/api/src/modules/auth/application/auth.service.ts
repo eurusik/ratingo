@@ -36,32 +36,13 @@ import {
   REFRESH_TOKENS_REPOSITORY,
 } from '../domain/repositories/refresh-tokens.repository.interface';
 import { type PasswordHasher, PASSWORD_HASHER } from '../domain/services/password-hasher.interface';
-import { type GoogleUserPayload } from '../infrastructure/strategies/google.strategy';
-
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
-
-/**
- * Client metadata for token binding.
- */
-export interface ClientMeta {
-  userAgent: string | null;
-  ip: string | null;
-}
-
-interface JwtPayload {
-  sub: string;
-  email: string;
-  role: User['role'];
-}
-
-interface RefreshPayload {
-  sub: string;
-  jti: string;
-  type: 'refresh';
-}
+import {
+  type AuthTokens,
+  type ClientMeta,
+  type JwtPayload,
+  type RefreshPayload,
+  type GoogleUserPayload,
+} from '../domain/types';
 
 /**
  * Application service for authentication use cases.
@@ -115,6 +96,8 @@ export class AuthService {
   /**
    * Authenticates user with email/password.
    *
+   * @deprecated Use {@link loginValidatedUser} after LocalStrategy validation instead.
+   * Kept for backward compatibility; will be removed in a future cleanup.
    * @throws {UnauthorizedException} When credentials are invalid
    */
   async login(email: string, password: string, clientMeta?: ClientMeta): Promise<AuthTokens> {
@@ -126,6 +109,15 @@ export class AuthService {
     if (!match) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    return this.issueTokens(user, clientMeta);
+  }
+
+  /**
+   * Issues tokens for an already-validated user.
+   * Used after LocalStrategy has verified credentials, avoiding duplicate
+   * DB queries and bcrypt comparisons.
+   */
+  async loginValidatedUser(user: User, clientMeta?: ClientMeta): Promise<AuthTokens> {
     return this.issueTokens(user, clientMeta);
   }
 

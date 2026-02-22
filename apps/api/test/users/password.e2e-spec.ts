@@ -20,7 +20,7 @@ describe('Users password e2e', () => {
     const newPassword = 'Anoth3rS3cure';
 
     await ctx
-      .patch(`${ctx.usersBase}/me/password`, accessToken)
+      .patch(`${ctx.authBase}/password`, accessToken)
       .send({ currentPassword: password, newPassword })
       .expect(204);
 
@@ -31,14 +31,14 @@ describe('Users password e2e', () => {
 
   it('change password: validation and 401 without auth', async () => {
     await ctx
-      .patch(`${ctx.usersBase}/me/password`)
+      .patch(`${ctx.authBase}/password`)
       .send({ currentPassword: 'a', newPassword: 'b' })
       .expect(401);
 
     const { accessToken } = await ctx.registerAndLogin();
 
     await ctx
-      .patch(`${ctx.usersBase}/me/password`, accessToken)
+      .patch(`${ctx.authBase}/password`, accessToken)
       .send({ currentPassword: 'short', newPassword: 'short' })
       .expect(400);
   });
@@ -47,7 +47,7 @@ describe('Users password e2e', () => {
     const { accessToken, password } = await ctx.registerAndLogin();
 
     await ctx
-      .patch(`${ctx.usersBase}/me/password`, accessToken)
+      .patch(`${ctx.authBase}/password`, accessToken)
       .send({ currentPassword: password, newPassword: 'Anoth3rS3cure', extra: true })
       .expect(400);
   });
@@ -56,7 +56,7 @@ describe('Users password e2e', () => {
     const { accessToken } = await ctx.registerAndLogin();
 
     await ctx
-      .patch(`${ctx.usersBase}/me/password`, accessToken)
+      .patch(`${ctx.authBase}/password`, accessToken)
       .send({ currentPassword: 'WrongPass123', newPassword: 'Anoth3rS3cure' })
       .expect(401);
   });

@@ -13,6 +13,7 @@ import { AuthGuard, type IAuthModuleOptions } from '@nestjs/passport';
 
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 
+import { MS_PER_SECOND } from '../../../../common/constants';
 import authConfig from '../../../../config/auth.config';
 import googleConfig from '../../../../config/google.config';
 import {
@@ -27,8 +28,8 @@ import {
   OAuthErrorCode,
   RETURN_TO_PATTERN,
 } from '../../auth.constants';
-import { type OAuthStatePayload } from '../types/oauth.types';
-// Import for module augmentation side effects
+import { type OAuthStatePayload } from '../../domain/types';
+// Import for module augmentation side effects (Fastify request extension)
 import '../types/oauth.types';
 
 /**
@@ -56,9 +57,6 @@ type ReplyWithCookies = FastifyReply & {
 type RequestWithCookies = FastifyRequest & {
   cookies?: Record<string, string>;
 };
-
-/** Milliseconds per second (for cookie maxAge conversion) */
-const MS_PER_SECOND = 1000;
 
 /**
  * Guard for Google OAuth with CSRF protection via signed state cookie.
@@ -230,7 +228,7 @@ export class GoogleAuthGuard extends AuthGuard('google') {
   }
 
   private setStateCookie(res: FastifyReply, state: string): void {
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd = this.authCfg.isProduction;
     (res as ReplyWithCookies).setCookie(OAUTH_STATE_COOKIE, state, {
       httpOnly: true,
       sameSite: 'lax',

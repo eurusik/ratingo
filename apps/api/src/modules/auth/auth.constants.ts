@@ -2,10 +2,7 @@
  * OAuth-related constants for authentication module.
  */
 
-// Time conversion constants
-const MS_PER_SECOND = 1000;
-const SECONDS_PER_MINUTE = 60;
-const MS_PER_MINUTE = SECONDS_PER_MINUTE * MS_PER_SECOND;
+import { MS_PER_MINUTE } from '../../common/constants';
 
 /** Cookie name for OAuth state */
 export const OAUTH_STATE_COOKIE = 'oauth_state';
