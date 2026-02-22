@@ -11,8 +11,6 @@ export interface AuthMocks {
     createUser: jest.Mock;
     getById: jest.Mock;
     updatePassword: jest.Mock;
-    getByGoogleId: jest.Mock;
-    linkGoogleId: jest.Mock;
     updateProfile: jest.Mock;
   };
   jwtService: Pick<JwtService, 'signAsync' | 'verifyAsync'>;
@@ -31,6 +29,14 @@ export interface AuthMocks {
     create: jest.Mock;
     consumeCode: jest.Mock;
     cleanupExpired: jest.Mock;
+  };
+  oauthAccountsRepository: {
+    findByProviderAccount: jest.Mock;
+    findByUserId: jest.Mock;
+    findByUserAndProvider: jest.Mock;
+    create: jest.Mock;
+    deleteByUserAndProvider: jest.Mock;
+    countByUserId: jest.Mock;
   };
   config: {
     accessTokenSecret: string;
@@ -55,8 +61,6 @@ export function createAuthMocks(): AuthMocks {
       createUser: jest.fn(),
       getById: jest.fn(),
       updatePassword: jest.fn(),
-      getByGoogleId: jest.fn(),
-      linkGoogleId: jest.fn(),
       updateProfile: jest.fn(),
     },
     jwtService: {
@@ -78,6 +82,14 @@ export function createAuthMocks(): AuthMocks {
       create: jest.fn(),
       consumeCode: jest.fn(),
       cleanupExpired: jest.fn(),
+    },
+    oauthAccountsRepository: {
+      findByProviderAccount: jest.fn(),
+      findByUserId: jest.fn(),
+      findByUserAndProvider: jest.fn(),
+      create: jest.fn(),
+      deleteByUserAndProvider: jest.fn(),
+      countByUserId: jest.fn(),
     },
     config: {
       accessTokenSecret: 'access-secret',
@@ -103,5 +115,6 @@ export function createAuthService(mocks: AuthMocks): AuthService {
     mocks.passwordHasher as any,
     mocks.refreshTokensRepository as any,
     mocks.exchangeCodesRepository as any,
+    mocks.oauthAccountsRepository as any,
   );
 }

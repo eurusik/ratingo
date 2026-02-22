@@ -3,13 +3,24 @@
  */
 
 import type { components } from '@ratingo/api-contract';
-import { apiGet, apiPost } from './client';
+import { apiGet, apiPost, apiDelete } from './client';
 
 /** Auth tokens response. */
 export type AuthTokensDto = components['schemas']['AuthTokensDto'];
 
-/** Current user response. */
-export type MeDto = components['schemas']['MeDto'];
+/**
+ * Current user response.
+ *
+ * Augments the generated contract type with fields that exist on the backend
+ * MeDto but haven't been regenerated in the contract yet (hasPassword, linkedProviders).
+ * TODO: Remove augmentation after running `npm run contracts:update`.
+ */
+export type MeDto = components['schemas']['MeDto'] & {
+  /** Whether the user has a password set (false for OAuth-only accounts). */
+  hasPassword: boolean;
+  /** List of linked OAuth provider names (e.g. ['google']). */
+  linkedProviders: string[];
+};
 
 /** Login request payload. */
 export type LoginDto = components['schemas']['LoginDto'];
@@ -30,6 +41,9 @@ export interface ExchangeCodeDto {
 /** Auth configuration response. */
 export interface AuthConfigDto {
   google: {
+    enabled: boolean;
+  };
+  facebook: {
     enabled: boolean;
   };
 }
@@ -81,5 +95,10 @@ export const authApi = {
    */
   async getAuthConfig(): Promise<AuthConfigDto> {
     return apiGet<AuthConfigDto>('auth/config');
+  },
+
+  /** Unlinks an OAuth provider from the current user. */
+  async unlinkProvider(provider: string): Promise<void> {
+    return apiDelete<void>(`auth/providers/${provider}`);
   },
 } as const;

@@ -12,8 +12,6 @@ describe('AuthService - Exchange Code Property Tests', () => {
     createUser: jest.fn(),
     getById: jest.fn(),
     updatePassword: jest.fn(),
-    getByGoogleId: jest.fn(),
-    linkGoogleId: jest.fn(),
     updateProfile: jest.fn(),
   };
 
@@ -68,6 +66,7 @@ describe('AuthService - Exchange Code Property Tests', () => {
       passwordHasher as any,
       refreshTokensRepository as any,
       exchangeCodesRepository as any,
+      {} as any,
     );
 
     // Default mock for token issuance

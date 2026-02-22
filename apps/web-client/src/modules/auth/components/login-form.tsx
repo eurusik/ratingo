@@ -14,6 +14,7 @@ import { Button, Input, Label, Alert, AlertDescription } from '@/shared/ui';
 import { createLoginSchema, type LoginFormData } from '../schemas';
 import { cn } from '@/shared/utils';
 import { GoogleButton } from './google-button';
+import { FacebookButton } from './facebook-button';
 
 interface LoginFormProps {
   /** Callback after successful login. */
@@ -52,6 +53,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, returnTo }: LoginForm
   return (
     <div className="space-y-4">
       <GoogleButton returnTo={returnTo} mode="login" />
+      <FacebookButton returnTo={returnTo} mode="login" />
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">

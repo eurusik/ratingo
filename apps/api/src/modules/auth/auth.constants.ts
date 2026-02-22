@@ -77,3 +77,27 @@ export const GoogleOAuthParams = {
   ACCESS_TYPE: 'offline',
   PROMPT: 'select_account',
 } as const;
+
+/** Facebook OAuth authorization URL */
+export const FACEBOOK_AUTH_URL = 'https://www.facebook.com/v19.0/dialog/oauth';
+
+/** OAuth cookie path for Facebook auth endpoints */
+export const FACEBOOK_AUTH_COOKIE_PATH = '/api/auth';
+
+/** Facebook OAuth scopes */
+export const FACEBOOK_OAUTH_SCOPES = 'email';
+
+/**
+ * Facebook OAuth error responses from provider.
+ */
+export const FacebookOAuthError = {
+  ACCESS_DENIED: 'access_denied',
+} as const;
+
+/**
+ * Facebook OAuth request parameters.
+ */
+export const FacebookOAuthParams = {
+  RESPONSE_TYPE: 'code',
+  DISPLAY: 'popup',
+} as const;

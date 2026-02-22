@@ -1,7 +1,13 @@
-import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { DatabaseException } from '../../../common/exceptions/database.exception';
 import { ConsumeCodeFailureReason } from '../domain/repositories/exchange-codes.repository.interface';
+import { type OAuthUserPayload } from '../domain/types';
 import { type AuthMocks, createAuthMocks, createAuthService } from '../../../../test/auth/_mocks';
 
 describe('AuthService', () => {
@@ -423,12 +429,13 @@ describe('AuthService - Username Generation', () => {
   });
 });
 
-describe('AuthService - Account Resolution (loginWithGoogle)', () => {
+describe('AuthService - Account Resolution (loginWithOAuth)', () => {
   let mocks: AuthMocks;
   let service: AuthService;
 
-  const mockGooglePayload = {
-    googleId: 'google-123',
+  const mockOAuthPayload = {
+    provider: 'google' as const,
+    providerAccountId: 'google-123',
     email: 'user@example.com',
     name: 'John Doe',
     picture: 'https://example.com/photo.jpg',
@@ -446,43 +453,61 @@ describe('AuthService - Account Resolution (loginWithGoogle)', () => {
     mocks.refreshTokensRepository.issue.mockResolvedValue({ id: 'jti' });
   });
 
-  it('should find user by googleId and return tokens', async () => {
+  it('should find user by provider+providerAccountId and return tokens', async () => {
     const existingUser = {
       id: 'u1',
       email: 'user@example.com',
-      googleId: 'google-123',
       role: 'user',
     };
-    mocks.usersService.getByGoogleId.mockResolvedValue(existingUser);
+    mocks.oauthAccountsRepository.findByProviderAccount.mockResolvedValue({
+      userId: 'u1',
+      provider: 'google',
+      providerAccountId: 'google-123',
+    });
+    mocks.usersService.getById.mockResolvedValue(existingUser);
 
-    const result = await service.loginWithGoogle(mockGooglePayload);
+    const result = await service.loginWithOAuth(mockOAuthPayload);
 
-    expect(mocks.usersService.getByGoogleId).toHaveBeenCalledWith('google-123');
+    expect(mocks.oauthAccountsRepository.findByProviderAccount).toHaveBeenCalledWith(
+      'google',
+      'google-123',
+    );
     expect(mocks.usersService.getByEmail).not.toHaveBeenCalled();
-    expect(mocks.usersService.linkGoogleId).not.toHaveBeenCalled();
     expect(result.user).toEqual(existingUser);
     expect(result.tokens).toEqual({ accessToken: 'access-token', refreshToken: 'refresh-token' });
   });
 
-  it('should find user by email and link googleId', async () => {
+  it('should find user by email and auto-link provider', async () => {
     const existingUser = {
       id: 'u1',
       email: 'user@example.com',
-      googleId: null,
       avatarUrl: null,
       role: 'user',
     };
-    const updatedUser = { ...existingUser, googleId: 'google-123' };
+    const updatedUser = {
+      ...existingUser,
+      avatarUrl: 'https://example.com/photo.jpg',
+    };
 
-    mocks.usersService.getByGoogleId.mockResolvedValue(null);
+    mocks.oauthAccountsRepository.findByProviderAccount.mockResolvedValue(null);
     mocks.usersService.getByEmail.mockResolvedValue(existingUser);
     mocks.usersService.getById.mockResolvedValue(updatedUser);
 
-    const result = await service.loginWithGoogle(mockGooglePayload);
+    const result = await service.loginWithOAuth(mockOAuthPayload);
 
-    expect(mocks.usersService.getByGoogleId).toHaveBeenCalledWith('google-123');
+    expect(mocks.oauthAccountsRepository.findByProviderAccount).toHaveBeenCalledWith(
+      'google',
+      'google-123',
+    );
     expect(mocks.usersService.getByEmail).toHaveBeenCalledWith('user@example.com');
-    expect(mocks.usersService.linkGoogleId).toHaveBeenCalledWith('u1', 'google-123');
+    expect(mocks.oauthAccountsRepository.create).toHaveBeenCalledWith({
+      userId: 'u1',
+      provider: 'google',
+      providerAccountId: 'google-123',
+      email: 'user@example.com',
+      displayName: 'John Doe',
+      avatarUrl: 'https://example.com/photo.jpg',
+    });
     expect(mocks.usersService.updateProfile).toHaveBeenCalledWith('u1', {
       avatarUrl: 'https://example.com/photo.jpg',
     });
@@ -493,46 +518,58 @@ describe('AuthService - Account Resolution (loginWithGoogle)', () => {
     const existingUser = {
       id: 'u1',
       email: 'user@example.com',
-      googleId: null,
       avatarUrl: 'https://existing-avatar.com/photo.jpg',
       role: 'user',
     };
-    const updatedUser = { ...existingUser, googleId: 'google-123' };
 
-    mocks.usersService.getByGoogleId.mockResolvedValue(null);
+    mocks.oauthAccountsRepository.findByProviderAccount.mockResolvedValue(null);
     mocks.usersService.getByEmail.mockResolvedValue(existingUser);
-    mocks.usersService.getById.mockResolvedValue(updatedUser);
 
-    await service.loginWithGoogle(mockGooglePayload);
+    await service.loginWithOAuth(mockOAuthPayload);
 
-    expect(mocks.usersService.linkGoogleId).toHaveBeenCalledWith('u1', 'google-123');
+    expect(mocks.oauthAccountsRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        provider: 'google',
+        providerAccountId: 'google-123',
+      }),
+    );
     expect(mocks.usersService.updateProfile).not.toHaveBeenCalled();
   });
 
-  it('should create new user when not found by googleId or email', async () => {
+  it('should create new user when not found by provider or email', async () => {
     const newUser = {
       id: 'u-new',
       email: 'user@example.com',
       username: 'john_doe',
-      googleId: 'google-123',
       avatarUrl: 'https://example.com/photo.jpg',
       role: 'user',
     };
 
-    mocks.usersService.getByGoogleId.mockResolvedValue(null);
+    mocks.oauthAccountsRepository.findByProviderAccount.mockResolvedValue(null);
     mocks.usersService.getByEmail.mockResolvedValue(null);
     mocks.usersService.getByUsername.mockResolvedValue(null);
     mocks.usersService.createUser.mockResolvedValue(newUser);
 
-    const result = await service.loginWithGoogle(mockGooglePayload);
+    const result = await service.loginWithOAuth(mockOAuthPayload);
 
-    expect(mocks.usersService.getByGoogleId).toHaveBeenCalledWith('google-123');
+    expect(mocks.oauthAccountsRepository.findByProviderAccount).toHaveBeenCalledWith(
+      'google',
+      'google-123',
+    );
     expect(mocks.usersService.getByEmail).toHaveBeenCalledWith('user@example.com');
     expect(mocks.usersService.createUser).toHaveBeenCalledWith({
       email: 'user@example.com',
       username: 'john_doe',
       passwordHash: null,
-      googleId: 'google-123',
+      avatarUrl: 'https://example.com/photo.jpg',
+    });
+    expect(mocks.oauthAccountsRepository.create).toHaveBeenCalledWith({
+      userId: 'u-new',
+      provider: 'google',
+      providerAccountId: 'google-123',
+      email: 'user@example.com',
+      displayName: 'John Doe',
       avatarUrl: 'https://example.com/photo.jpg',
     });
     expect(result.user).toEqual(newUser);
@@ -739,5 +776,177 @@ describe('AuthService - Exchange Code', () => {
         UnauthorizedException,
       );
     });
+  });
+});
+
+describe('AuthService - linkOAuthAccount', () => {
+  let mocks: AuthMocks;
+  let service: AuthService;
+
+  const oauthPayload: OAuthUserPayload = {
+    provider: 'google',
+    providerAccountId: 'google-123',
+    email: 'user@gmail.com',
+    name: 'John Doe',
+    picture: 'https://avatar.url/photo.jpg',
+  };
+
+  beforeEach(() => {
+    mocks = createAuthMocks();
+    service = createAuthService(mocks);
+  });
+
+  it('should create oauth link for user', async () => {
+    mocks.oauthAccountsRepository.findByProviderAccount.mockResolvedValue(null);
+    mocks.oauthAccountsRepository.findByUserAndProvider.mockResolvedValue(null);
+    const createdAccount = {
+      id: 'oa1',
+      userId: 'u1',
+      provider: 'google',
+      providerAccountId: 'google-123',
+      email: 'user@gmail.com',
+      displayName: 'John Doe',
+      avatarUrl: 'https://avatar.url/photo.jpg',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    mocks.oauthAccountsRepository.create.mockResolvedValue(createdAccount);
+
+    const result = await service.linkOAuthAccount('u1', oauthPayload);
+
+    expect(result).toEqual(createdAccount);
+    expect(mocks.oauthAccountsRepository.create).toHaveBeenCalledWith({
+      userId: 'u1',
+      provider: 'google',
+      providerAccountId: 'google-123',
+      email: 'user@gmail.com',
+      displayName: 'John Doe',
+      avatarUrl: 'https://avatar.url/photo.jpg',
+    });
+  });
+
+  it('should throw ConflictException when provider account is already linked to same user', async () => {
+    mocks.oauthAccountsRepository.findByProviderAccount.mockResolvedValue({ userId: 'u1' });
+
+    await expect(service.linkOAuthAccount('u1', oauthPayload)).rejects.toThrow(ConflictException);
+    expect(mocks.oauthAccountsRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('should throw ConflictException when provider account is linked to another user', async () => {
+    mocks.oauthAccountsRepository.findByProviderAccount.mockResolvedValue({
+      userId: 'other-user',
+    });
+
+    await expect(service.linkOAuthAccount('u1', oauthPayload)).rejects.toThrow(ConflictException);
+    expect(mocks.oauthAccountsRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('should throw ConflictException when user already has different account from same provider', async () => {
+    mocks.oauthAccountsRepository.findByProviderAccount.mockResolvedValue(null);
+    mocks.oauthAccountsRepository.findByUserAndProvider.mockResolvedValue({ id: 'existing-link' });
+
+    await expect(service.linkOAuthAccount('u1', oauthPayload)).rejects.toThrow(ConflictException);
+    expect(mocks.oauthAccountsRepository.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('AuthService - unlinkOAuthAccount', () => {
+  let mocks: AuthMocks;
+  let service: AuthService;
+
+  beforeEach(() => {
+    mocks = createAuthMocks();
+    service = createAuthService(mocks);
+  });
+
+  it('should unlink provider when user has password', async () => {
+    mocks.usersService.getById.mockResolvedValue({ id: 'u1', passwordHash: 'hash' });
+    mocks.oauthAccountsRepository.countByUserId.mockResolvedValue(1);
+    mocks.oauthAccountsRepository.deleteByUserAndProvider.mockResolvedValue(true);
+
+    await service.unlinkOAuthAccount('u1', 'google' as any);
+
+    expect(mocks.oauthAccountsRepository.deleteByUserAndProvider).toHaveBeenCalledWith(
+      'u1',
+      'google',
+    );
+  });
+
+  it('should unlink provider when user has multiple OAuth accounts but no password', async () => {
+    mocks.usersService.getById.mockResolvedValue({ id: 'u1', passwordHash: null });
+    mocks.oauthAccountsRepository.countByUserId.mockResolvedValue(2);
+    mocks.oauthAccountsRepository.deleteByUserAndProvider.mockResolvedValue(true);
+
+    await service.unlinkOAuthAccount('u1', 'google' as any);
+
+    expect(mocks.oauthAccountsRepository.deleteByUserAndProvider).toHaveBeenCalled();
+  });
+
+  it('should throw ForbiddenException when unlinking last auth method', async () => {
+    mocks.usersService.getById.mockResolvedValue({ id: 'u1', passwordHash: null });
+    mocks.oauthAccountsRepository.countByUserId.mockResolvedValue(1);
+
+    await expect(service.unlinkOAuthAccount('u1', 'google' as any)).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(mocks.oauthAccountsRepository.deleteByUserAndProvider).not.toHaveBeenCalled();
+  });
+
+  it('should throw NotFoundException when user not found', async () => {
+    mocks.usersService.getById.mockResolvedValue(null);
+
+    await expect(service.unlinkOAuthAccount('u1', 'google' as any)).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('should throw NotFoundException when provider not linked', async () => {
+    mocks.usersService.getById.mockResolvedValue({ id: 'u1', passwordHash: 'hash' });
+    mocks.oauthAccountsRepository.countByUserId.mockResolvedValue(0);
+    mocks.oauthAccountsRepository.deleteByUserAndProvider.mockResolvedValue(false);
+
+    await expect(service.unlinkOAuthAccount('u1', 'google' as any)).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+});
+
+describe('AuthService - getLinkedAccounts', () => {
+  let mocks: AuthMocks;
+  let service: AuthService;
+
+  beforeEach(() => {
+    mocks = createAuthMocks();
+    service = createAuthService(mocks);
+  });
+
+  it('should return oauth accounts for user', async () => {
+    const accounts = [
+      {
+        id: 'oa1',
+        userId: 'u1',
+        provider: 'google',
+        providerAccountId: 'g1',
+        email: 'a@b.com',
+        displayName: null,
+        avatarUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+    mocks.oauthAccountsRepository.findByUserId.mockResolvedValue(accounts);
+
+    const result = await service.getLinkedAccounts('u1');
+
+    expect(result).toEqual(accounts);
+    expect(mocks.oauthAccountsRepository.findByUserId).toHaveBeenCalledWith('u1');
+  });
+
+  it('should return empty array when no accounts linked', async () => {
+    mocks.oauthAccountsRepository.findByUserId.mockResolvedValue([]);
+
+    const result = await service.getLinkedAccounts('u1');
+
+    expect(result).toEqual([]);
   });
 });

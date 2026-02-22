@@ -14,13 +14,15 @@ interface UserStats {
  * Maps domain User entity and stats to MeDto for the /auth/me endpoint.
  */
 export class MeMapper {
-  static toDto(user: User, stats: UserStats): MeDto {
+  static toDto(user: User, stats: UserStats, linkedProviders: string[]): MeDto {
     return {
       id: user.id,
       email: user.email,
       username: user.username,
       avatarUrl: user.avatarUrl,
       role: user.role as MeDto['role'],
+      hasPassword: !!user.passwordHash,
+      linkedProviders,
       profile: {
         bio: user.bio,
         location: user.location,

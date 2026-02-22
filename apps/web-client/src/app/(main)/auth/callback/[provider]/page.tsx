@@ -1,19 +1,27 @@
 /**
- * Google OAuth callback page.
+ * Dynamic OAuth callback page.
  *
- * Handles the OAuth redirect from Google, exchanges the one-time code
- * for tokens, and redirects the user to their destination.
+ * Handles the OAuth redirect from any supported provider (Google, Facebook, etc.),
+ * exchanges the one-time code for tokens, and redirects the user to their destination.
  */
 
 'use client';
 
 import { useEffect, useState, useCallback, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams, notFound } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { tokenStorage } from '@/core/auth';
 import { authApi } from '@/core/api';
 import { Button } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
+
+/** Supported OAuth providers. */
+const SUPPORTED_PROVIDERS = ['google', 'facebook'] as const;
+type SupportedProvider = (typeof SUPPORTED_PROVIDERS)[number];
+
+function isSupportedProvider(value: string): value is SupportedProvider {
+  return (SUPPORTED_PROVIDERS as readonly string[]).includes(value);
+}
 
 /** Error code to i18n key mapping. */
 const errorCodeToKey: Record<string, string> = {
@@ -42,7 +50,7 @@ function validateReturnTo(returnTo: string | null): string {
  * Inner component that uses useSearchParams.
  * Wrapped in Suspense boundary in the main export.
  */
-function GoogleCallbackContent() {
+function OAuthCallbackContent({ provider }: { provider: SupportedProvider }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { dict } = useTranslation();
@@ -89,7 +97,7 @@ function GoogleCallbackContent() {
       // Store tokens
       tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
 
-      // Redirect to destination — AuthProvider will fetch user on mount
+      // Redirect to destination -- AuthProvider will fetch user on mount
       window.location.href = returnTo;
     } catch (err) {
       // Extract error code from ApiError
@@ -137,13 +145,21 @@ function GoogleCallbackContent() {
 }
 
 /**
- * Google OAuth callback page.
+ * Dynamic OAuth callback page.
  *
- * Processes the OAuth redirect, exchanges the one-time code for tokens,
- * and redirects the user to their destination.
+ * Processes the OAuth redirect for any supported provider, exchanges the
+ * one-time code for tokens, and redirects the user to their destination.
+ *
+ * Supported providers: google, facebook.
+ * Returns 404 for unsupported provider slugs.
  */
-export default function GoogleCallbackPage() {
+export default function OAuthCallbackPage() {
+  const params = useParams<{ provider: string }>();
   const { dict } = useTranslation();
+
+  if (!isSupportedProvider(params.provider)) {
+    notFound();
+  }
 
   return (
     <Suspense
@@ -154,7 +170,7 @@ export default function GoogleCallbackPage() {
         </div>
       }
     >
-      <GoogleCallbackContent />
+      <OAuthCallbackContent provider={params.provider} />
     </Suspense>
   );
 }

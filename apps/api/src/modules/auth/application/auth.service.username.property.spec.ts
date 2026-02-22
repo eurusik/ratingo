@@ -10,8 +10,6 @@ describe('AuthService - Username Generation Property Tests', () => {
     createUser: jest.fn(),
     getById: jest.fn(),
     updatePassword: jest.fn(),
-    getByGoogleId: jest.fn(),
-    linkGoogleId: jest.fn(),
     updateProfile: jest.fn(),
   };
 
@@ -60,6 +58,7 @@ describe('AuthService - Username Generation Property Tests', () => {
       passwordHasher as any,
       refreshTokensRepository as any,
       exchangeCodesRepository as any,
+      {} as any,
     );
   });
 

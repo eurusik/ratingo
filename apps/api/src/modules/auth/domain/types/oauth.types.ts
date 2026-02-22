@@ -1,8 +1,11 @@
+import { type OAuthProvider } from './oauth-provider';
+
 /**
- * User payload extracted from Google profile after successful OAuth.
+ * Unified user payload extracted from any OAuth provider after successful auth.
  */
-export interface GoogleUserPayload {
-  googleId: string;
+export interface OAuthUserPayload {
+  provider: OAuthProvider;
+  providerAccountId: string;
   email: string;
   name: string;
   picture: string | null;
@@ -18,4 +21,10 @@ export interface OAuthStatePayload {
   returnTo: string;
   /** Expiration timestamp (ms) */
   exp: number;
+  /** OAuth provider for this flow (optional during migration, required in BaseOAuthGuard) */
+  provider?: OAuthProvider;
+  /** Flow mode: login/register or link to existing account */
+  mode?: 'login' | 'link';
+  /** User ID when mode is 'link' (set from JWT before redirect) */
+  linkUserId?: string;
 }

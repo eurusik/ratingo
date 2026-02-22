@@ -10,8 +10,6 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
     createUser: jest.fn(),
     getById: jest.fn(),
     updatePassword: jest.fn(),
-    getByGoogleId: jest.fn(),
-    linkGoogleId: jest.fn(),
     updateProfile: jest.fn(),
   };
 
@@ -37,6 +35,15 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
     create: jest.fn(),
     consumeCode: jest.fn(),
     cleanupExpired: jest.fn(),
+  };
+
+  const oauthAccountsRepository = {
+    findByProviderAccount: jest.fn(),
+    findByUserId: jest.fn(),
+    findByUserAndProvider: jest.fn(),
+    create: jest.fn(),
+    deleteByUserAndProvider: jest.fn(),
+    countByUserId: jest.fn(),
   };
 
   const config = {
@@ -78,6 +85,7 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
       passwordHasher as any,
       refreshTokensRepository as any,
       exchangeCodesRepository as any,
+      oauthAccountsRepository as any,
     );
   });
 
@@ -88,7 +96,7 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
     const roleArb = fc.constantFrom('user', 'admin');
     const usernameArb = fc.stringMatching(/^[a-z][a-z0-9_]{2,19}$/);
 
-    it('should issue tokens with same payload structure for Google and password auth', async () => {
+    it('should issue tokens with same payload structure for OAuth and password auth', async () => {
       await fc.assert(
         fc.asyncProperty(
           userIdArb,
@@ -105,7 +113,6 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
               role,
               username,
               passwordHash: 'hashed-password',
-              googleId: null,
               avatarUrl: null,
             };
 
@@ -117,32 +124,38 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
             await service.login(email, 'password123');
             const passwordPayload = capturedAccessPayloads[0];
 
-            // Reset for Google login
+            // Reset for OAuth login
             capturedAccessPayloads = [];
-            usersService.getByGoogleId.mockResolvedValue(user);
+            oauthAccountsRepository.findByProviderAccount.mockResolvedValue({
+              userId,
+              provider: 'google',
+              providerAccountId: 'google-123',
+            });
+            usersService.getById.mockResolvedValue(user);
 
-            // Google login
-            await service.loginWithGoogle({
-              googleId: 'google-123',
+            // OAuth login
+            await service.loginWithOAuth({
+              provider: 'google',
+              providerAccountId: 'google-123',
               email,
               name: 'Test User',
               picture: null,
             });
-            const googlePayload = capturedAccessPayloads[0];
+            const oauthPayload = capturedAccessPayloads[0];
 
             // Both payloads should have the same structure
             expect(passwordPayload).toHaveProperty('sub');
             expect(passwordPayload).toHaveProperty('email');
             expect(passwordPayload).toHaveProperty('role');
 
-            expect(googlePayload).toHaveProperty('sub');
-            expect(googlePayload).toHaveProperty('email');
-            expect(googlePayload).toHaveProperty('role');
+            expect(oauthPayload).toHaveProperty('sub');
+            expect(oauthPayload).toHaveProperty('email');
+            expect(oauthPayload).toHaveProperty('role');
 
             // Values should match for the same user
-            expect(googlePayload.sub).toBe(passwordPayload.sub);
-            expect(googlePayload.email).toBe(passwordPayload.email);
-            expect(googlePayload.role).toBe(passwordPayload.role);
+            expect(oauthPayload.sub).toBe(passwordPayload.sub);
+            expect(oauthPayload.email).toBe(passwordPayload.email);
+            expect(oauthPayload.role).toBe(passwordPayload.role);
           },
         ),
         { numRuns: 50 },
@@ -161,14 +174,19 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
             role,
             username: 'testuser',
             passwordHash: null,
-            googleId: 'google-123',
             avatarUrl: null,
           };
 
-          usersService.getByGoogleId.mockResolvedValue(user);
+          oauthAccountsRepository.findByProviderAccount.mockResolvedValue({
+            userId,
+            provider: 'google',
+            providerAccountId: 'google-123',
+          });
+          usersService.getById.mockResolvedValue(user);
 
-          await service.loginWithGoogle({
-            googleId: 'google-123',
+          await service.loginWithOAuth({
+            provider: 'google',
+            providerAccountId: 'google-123',
             email,
             name: 'Test User',
             picture: null,
@@ -184,7 +202,7 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
           // No extra sensitive fields should be included
           expect(payload).not.toHaveProperty('password');
           expect(payload).not.toHaveProperty('passwordHash');
-          expect(payload).not.toHaveProperty('googleId');
+          expect(payload).not.toHaveProperty('providerAccountId');
         }),
         { numRuns: 50 },
       );
@@ -202,14 +220,19 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
             role: 'user',
             username: 'testuser',
             passwordHash: null,
-            googleId: 'google-123',
             avatarUrl: null,
           };
 
-          usersService.getByGoogleId.mockResolvedValue(user);
+          oauthAccountsRepository.findByProviderAccount.mockResolvedValue({
+            userId,
+            provider: 'google',
+            providerAccountId: 'google-123',
+          });
+          usersService.getById.mockResolvedValue(user);
 
-          await service.loginWithGoogle({
-            googleId: 'google-123',
+          await service.loginWithOAuth({
+            provider: 'google',
+            providerAccountId: 'google-123',
             email,
             name: 'Test User',
             picture: null,
@@ -244,14 +267,19 @@ describe('AuthService - JWT Payload Consistency Property Tests', () => {
             role: 'user',
             username: 'testuser',
             passwordHash: null,
-            googleId: 'google-123',
             avatarUrl: null,
           };
 
-          usersService.getByGoogleId.mockResolvedValue(user);
+          oauthAccountsRepository.findByProviderAccount.mockResolvedValue({
+            userId,
+            provider: 'google',
+            providerAccountId: 'google-123',
+          });
+          usersService.getById.mockResolvedValue(user);
 
-          await service.loginWithGoogle({
-            googleId: 'google-123',
+          await service.loginWithOAuth({
+            provider: 'google',
+            providerAccountId: 'google-123',
             email,
             name: 'Test User',
             picture: null,

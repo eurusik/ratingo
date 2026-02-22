@@ -12,7 +12,6 @@ export interface CreateUserData {
   email: string;
   username: string;
   passwordHash: string | null;
-  googleId?: string | null;
   avatarUrl?: string | null;
   bio?: string | null;
   location?: string | null;
@@ -23,6 +22,7 @@ export interface CreateUserData {
   showWatchHistory?: boolean;
   showRatings?: boolean;
   allowFollowers?: boolean;
+  autoSubscribeOnWatch?: boolean;
   role?: 'user' | 'admin';
 }
 
@@ -73,14 +73,6 @@ export interface IUsersRepository {
   findByUsername(username: string): Promise<User | null>;
 
   /**
-   * Finds a user by Google ID.
-   *
-   * @param {string} googleId - Google ID from OAuth
-   * @returns {Promise<User | null>} User or null
-   */
-  findByGoogleId(googleId: string): Promise<User | null>;
-
-  /**
    * Creates a new user.
    *
    * @param {CreateUserData} data - New user payload
@@ -105,13 +97,4 @@ export interface IUsersRepository {
    * @returns {Promise<void>} Nothing
    */
   updatePassword(id: string, passwordHash: string): Promise<void>;
-
-  /**
-   * Links a Google ID to an existing user account.
-   *
-   * @param {string} id - User id
-   * @param {string} googleId - Google ID to link
-   * @returns {Promise<User>} Updated user
-   */
-  linkGoogleId(id: string, googleId: string): Promise<User>;
 }

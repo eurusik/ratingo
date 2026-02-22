@@ -7,7 +7,6 @@ describe('MeMapper', () => {
     email: 'user@example.com',
     username: 'ratingo_fan',
     passwordHash: 'hashed',
-    googleId: 'google-123',
     avatarUrl: 'https://cdn.ratingo/avatar.png',
     bio: 'Film lover',
     location: 'Kyiv',
@@ -30,18 +29,22 @@ describe('MeMapper', () => {
     watchlistCount: 42,
   };
 
+  const sampleLinkedProviders = ['google'];
+
   it('should map all top-level fields correctly', () => {
-    const dto = MeMapper.toDto(sampleUser, sampleStats);
+    const dto = MeMapper.toDto(sampleUser, sampleStats, sampleLinkedProviders);
 
     expect(dto.id).toBe('u1');
     expect(dto.email).toBe('user@example.com');
     expect(dto.username).toBe('ratingo_fan');
     expect(dto.avatarUrl).toBe('https://cdn.ratingo/avatar.png');
     expect(dto.role).toBe('user');
+    expect(dto.hasPassword).toBe(true);
+    expect(dto.linkedProviders).toEqual(['google']);
   });
 
   it('should map profile fields correctly', () => {
-    const dto = MeMapper.toDto(sampleUser, sampleStats);
+    const dto = MeMapper.toDto(sampleUser, sampleStats, sampleLinkedProviders);
 
     expect(dto.profile).toEqual({
       bio: 'Film lover',
@@ -60,7 +63,7 @@ describe('MeMapper', () => {
   });
 
   it('should pass stats through as-is', () => {
-    const dto = MeMapper.toDto(sampleUser, sampleStats);
+    const dto = MeMapper.toDto(sampleUser, sampleStats, sampleLinkedProviders);
 
     expect(dto.stats).toEqual(sampleStats);
   });
@@ -76,7 +79,7 @@ describe('MeMapper', () => {
       preferredRegion: null,
     };
 
-    const dto = MeMapper.toDto(userWithNulls, sampleStats);
+    const dto = MeMapper.toDto(userWithNulls, sampleStats, sampleLinkedProviders);
 
     expect(dto.avatarUrl).toBeNull();
     expect(dto.profile.bio).toBeNull();
@@ -89,17 +92,38 @@ describe('MeMapper', () => {
   it('should map admin role correctly', () => {
     const adminUser: User = { ...sampleUser, role: 'admin' };
 
-    const dto = MeMapper.toDto(adminUser, sampleStats);
+    const dto = MeMapper.toDto(adminUser, sampleStats, sampleLinkedProviders);
 
     expect(dto.role).toBe('admin');
   });
 
-  it('should not leak sensitive fields (passwordHash, googleId, timestamps)', () => {
-    const dto = MeMapper.toDto(sampleUser, sampleStats);
+  it('should not leak sensitive fields (passwordHash, timestamps)', () => {
+    const dto = MeMapper.toDto(sampleUser, sampleStats, sampleLinkedProviders);
 
     expect(dto).not.toHaveProperty('passwordHash');
-    expect(dto).not.toHaveProperty('googleId');
     expect(dto).not.toHaveProperty('createdAt');
     expect(dto).not.toHaveProperty('updatedAt');
+  });
+
+  it('should set hasPassword to false for OAuth-only user (no password)', () => {
+    const oauthOnlyUser: User = { ...sampleUser, passwordHash: null };
+
+    const dto = MeMapper.toDto(oauthOnlyUser, sampleStats, ['google']);
+
+    expect(dto.hasPassword).toBe(false);
+    expect(dto.linkedProviders).toEqual(['google']);
+  });
+
+  it('should return empty linkedProviders when no OAuth accounts exist', () => {
+    const dto = MeMapper.toDto(sampleUser, sampleStats, []);
+
+    expect(dto.hasPassword).toBe(true);
+    expect(dto.linkedProviders).toEqual([]);
+  });
+
+  it('should return multiple linked providers', () => {
+    const dto = MeMapper.toDto(sampleUser, sampleStats, ['google', 'github']);
+
+    expect(dto.linkedProviders).toEqual(['google', 'github']);
   });
 });

@@ -6,7 +6,7 @@ import { Strategy, type Profile as GoogleProfile } from 'passport-google-oauth20
 
 import googleConfig from '../../../../config/google.config';
 import { OAuthErrorCode } from '../../auth.constants';
-import { type GoogleUserPayload } from '../../domain/types';
+import { OAUTH_PROVIDER, type OAuthUserPayload } from '../../domain/types';
 
 /**
  * Passport strategy for Google OAuth 2.0 authorization code flow.
@@ -40,7 +40,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     accessToken: string,
     refreshToken: string,
     profile: GoogleProfile,
-  ): Promise<GoogleUserPayload> {
+  ): Promise<OAuthUserPayload> {
     const email = profile.emails?.[0]?.value;
     // email_verified is more reliably found in _json than in emails array
     const emailVerified = (profile._json as { email_verified?: boolean })?.email_verified === true;
@@ -54,7 +54,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     }
 
     return {
-      googleId: profile.id,
+      provider: OAUTH_PROVIDER.GOOGLE,
+      providerAccountId: profile.id,
       email,
       name: profile.displayName || '',
       picture: profile.photos?.[0]?.value ?? null,

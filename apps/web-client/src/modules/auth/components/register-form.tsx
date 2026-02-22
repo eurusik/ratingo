@@ -14,6 +14,7 @@ import { Button, Input, Label, Alert, AlertDescription } from '@/shared/ui';
 import { createRegisterSchema, type RegisterFormData } from '../schemas';
 import { cn } from '@/shared/utils';
 import { GoogleButton } from './google-button';
+import { FacebookButton } from './facebook-button';
 
 interface RegisterFormProps {
   /** Callback after successful registration. */
@@ -56,6 +57,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
   return (
     <div className="space-y-4">
       <GoogleButton returnTo={returnTo} mode="register" />
+      <FacebookButton returnTo={returnTo} mode="register" />
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">

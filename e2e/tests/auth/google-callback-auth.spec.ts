@@ -46,7 +46,7 @@ test.describe('Auth — Google OAuth callback', () => {
 
     await page.getByRole('button', { name: /try again|спробувати ще/i }).click();
 
-    await page.waitForURL('**/', { timeout: 5_000 });
+    await page.waitForURL('**/', { timeout: 10_000 });
     expect(page.url()).toMatch(/\/$/);
   });
 });

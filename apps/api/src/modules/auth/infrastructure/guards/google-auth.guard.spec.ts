@@ -99,7 +99,7 @@ describe('GoogleAuthGuard - returnTo Validation', () => {
 
   describe('handleRequest', () => {
     it('should return user when provided', () => {
-      const user = { googleId: 'g123', email: 'test@example.com' };
+      const user = { id: 'u1', email: 'test@example.com' };
       const result = guard.handleRequest(null, user, undefined);
       expect(result).toEqual(user);
     });

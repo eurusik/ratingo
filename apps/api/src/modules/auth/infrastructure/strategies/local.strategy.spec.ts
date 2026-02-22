@@ -13,7 +13,6 @@ describe('LocalStrategy', () => {
     email: 'user@example.com',
     username: 'testuser',
     passwordHash: 'hashed-password',
-    googleId: null,
     avatarUrl: null,
     bio: null,
     location: null,
@@ -48,7 +47,6 @@ describe('LocalStrategy', () => {
     expect(result.role).toBe('user');
     expect(result.username).toBe('testuser');
     expect(result.passwordHash).toBe('hashed-password');
-    expect(result.googleId).toBeNull();
     expect(result.avatarUrl).toBeNull();
     expect(result.createdAt).toBeInstanceOf(Date);
     expect(result.updatedAt).toBeInstanceOf(Date);

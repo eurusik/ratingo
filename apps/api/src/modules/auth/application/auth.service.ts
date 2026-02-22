@@ -4,6 +4,8 @@ import {
   Injectable,
   ConflictException,
   ForbiddenException,
+  InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
   Logger,
   Inject,
@@ -27,11 +29,16 @@ import {
   USERNAME_RANDOM_BYTES,
   BASE_36,
 } from '../auth.constants';
+import { type OAuthAccount } from '../domain/entities/oauth-account.entity';
 import {
   type IExchangeCodesRepository,
   EXCHANGE_CODES_REPOSITORY,
   ConsumeCodeFailureReason,
 } from '../domain/repositories/exchange-codes.repository.interface';
+import {
+  type IOAuthAccountsRepository,
+  OAUTH_ACCOUNTS_REPOSITORY,
+} from '../domain/repositories/oauth-accounts.repository.interface';
 import {
   type IRefreshTokensRepository,
   REFRESH_TOKENS_REPOSITORY,
@@ -41,8 +48,9 @@ import {
   type AuthTokens,
   type ClientMeta,
   type JwtPayload,
+  type OAuthProvider,
   type RefreshPayload,
-  type GoogleUserPayload,
+  type OAuthUserPayload,
 } from '../domain/types';
 
 /**
@@ -63,6 +71,8 @@ export class AuthService {
     private readonly refreshTokensRepository: IRefreshTokensRepository,
     @Inject(EXCHANGE_CODES_REPOSITORY)
     private readonly exchangeCodesRepository: IExchangeCodesRepository,
+    @Inject(OAUTH_ACCOUNTS_REPOSITORY)
+    private readonly oauthAccountsRepository: IOAuthAccountsRepository,
   ) {}
 
   /**
@@ -123,44 +133,68 @@ export class AuthService {
   }
 
   /**
-   * Authenticates user via Google OAuth.
-   * Resolves account by: googleId → email (link) → create new.
+   * Authenticates user via OAuth (any provider).
+   * Resolves account by: provider+providerAccountId → email (auto-link) → create new.
    */
-  async loginWithGoogle(
-    payload: GoogleUserPayload,
+  async loginWithOAuth(
+    payload: OAuthUserPayload,
     clientMeta?: ClientMeta,
   ): Promise<{ user: User; tokens: AuthTokens }> {
-    // 1. Find by googleId
-    let user = await this.usersService.getByGoogleId(payload.googleId);
+    // 1. Find by provider + providerAccountId in oauth_accounts
+    const existingLink = await this.oauthAccountsRepository.findByProviderAccount(
+      payload.provider,
+      payload.providerAccountId,
+    );
 
-    // 2. Find by email and link googleId
+    let user: User | null = null;
+
+    if (existingLink) {
+      user = await this.usersService.getById(existingLink.userId);
+    }
+
+    // 2. Find by email and auto-link new provider
     if (!user) {
       user = await this.usersService.getByEmail(payload.email);
       if (user) {
-        await this.usersService.linkGoogleId(user.id, payload.googleId);
+        // Auto-link this provider to existing account
+        await this.oauthAccountsRepository.create({
+          userId: user.id,
+          provider: payload.provider,
+          providerAccountId: payload.providerAccountId,
+          email: payload.email,
+          displayName: payload.name || null,
+          avatarUrl: payload.picture,
+        });
         // Set avatarUrl only if currently null
         if (!user.avatarUrl && payload.picture) {
           await this.usersService.updateProfile(user.id, { avatarUrl: payload.picture });
+          user = await this.usersService.getById(user.id);
         }
-        // Refresh user data after updates
-        user = await this.usersService.getById(user.id);
       }
     }
 
-    // 3. Create new user
+    // 3. Create new user + link provider
     if (!user) {
       const username = await this.generateUniqueUsername(payload.name, payload.email);
       user = await this.usersService.createUser({
         email: payload.email,
         username,
         passwordHash: null,
-        googleId: payload.googleId,
+        avatarUrl: payload.picture,
+      });
+      await this.oauthAccountsRepository.create({
+        userId: user.id,
+        provider: payload.provider,
+        providerAccountId: payload.providerAccountId,
+        email: payload.email,
+        displayName: payload.name || null,
         avatarUrl: payload.picture,
       });
     }
 
-    // Issue tokens using existing method - applies same token rotation
-    // and reuse detection as password-authenticated users
+    if (!user) {
+      throw new InternalServerErrorException('Failed to resolve user for OAuth login');
+    }
     const tokens = await this.issueTokens(user, clientMeta);
     return { user, tokens };
   }
@@ -223,6 +257,88 @@ export class AuthService {
     t.end();
 
     return tokens;
+  }
+
+  /**
+   * Returns list of OAuth provider names linked to the user.
+   */
+  async getLinkedProviders(userId: string): Promise<string[]> {
+    const accounts = await this.oauthAccountsRepository.findByUserId(userId);
+    return accounts.map((a) => a.provider);
+  }
+
+  /**
+   * Links an OAuth provider to an existing user account.
+   *
+   * @throws {ConflictException} When provider account is already linked to another user
+   * @throws {ConflictException} When user already has this provider linked
+   */
+  async linkOAuthAccount(userId: string, payload: OAuthUserPayload): Promise<OAuthAccount> {
+    // 1. Check if this provider+providerAccountId is already linked to ANY user
+    const existingByProvider = await this.oauthAccountsRepository.findByProviderAccount(
+      payload.provider,
+      payload.providerAccountId,
+    );
+    if (existingByProvider) {
+      if (existingByProvider.userId === userId) {
+        throw new ConflictException('This provider account is already linked to your account');
+      }
+      throw new ConflictException('This provider account is already linked to another user');
+    }
+
+    // 2. Check if user already has a different account from same provider
+    const existingForUser = await this.oauthAccountsRepository.findByUserAndProvider(
+      userId,
+      payload.provider,
+    );
+    if (existingForUser) {
+      throw new ConflictException('You already have a different account from this provider linked');
+    }
+
+    // 3. Create the link
+    return this.oauthAccountsRepository.create({
+      userId,
+      provider: payload.provider,
+      providerAccountId: payload.providerAccountId,
+      email: payload.email,
+      displayName: payload.name || null,
+      avatarUrl: payload.picture,
+    });
+  }
+
+  /**
+   * Unlinks an OAuth provider from a user account.
+   * Prevents unlinking the last authentication method.
+   *
+   * @throws {NotFoundException} When user not found or provider not linked
+   * @throws {ForbiddenException} When this would remove the last auth method
+   */
+  async unlinkOAuthAccount(userId: string, provider: OAuthProvider): Promise<void> {
+    const user = await this.usersService.getById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const oauthCount = await this.oauthAccountsRepository.countByUserId(userId);
+
+    // Prevent unlinking last auth method (no password + only 1 OAuth)
+    if (!user.passwordHash && oauthCount <= 1) {
+      throw new ForbiddenException(
+        'Cannot unlink last authentication method. Set a password first.',
+      );
+    }
+
+    const deleted = await this.oauthAccountsRepository.deleteByUserAndProvider(userId, provider);
+    if (!deleted) {
+      throw new NotFoundException('Provider not linked to this account');
+    }
+  }
+
+  /**
+   * Returns detailed OAuth account links for the user (for settings page).
+   */
+  async getLinkedAccounts(userId: string): Promise<OAuthAccount[]> {
+    return this.oauthAccountsRepository.findByUserId(userId);
   }
 
   /**

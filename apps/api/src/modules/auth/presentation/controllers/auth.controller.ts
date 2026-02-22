@@ -1,11 +1,14 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
   Post,
+  UnauthorizedException,
   UseGuards,
   UseFilters,
   NotFoundException,
@@ -15,8 +18,10 @@ import {
   Inject,
 } from '@nestjs/common';
 import { type ConfigType } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import {
   ApiBearerAuth,
+  ApiExcludeEndpoint,
   ApiForbiddenResponse,
   ApiOkResponse,
   ApiTags,
@@ -32,24 +37,29 @@ import { Throttle } from '@nestjs/throttler';
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 
 import authConfig from '../../../../config/auth.config';
+import facebookConfig from '../../../../config/facebook.config';
 import googleConfig from '../../../../config/google.config';
 import { UserMediaService } from '../../../user-media/application/user-media.service';
 import { UsersService } from '../../../users/application/users.service';
 import { type User } from '../../../users/domain/entities/user.entity';
 import { AuthService } from '../../application/auth.service';
 import { HTTP_REDIRECT_FOUND } from '../../auth.constants';
-import { type GoogleUserPayload } from '../../domain/types';
+import { type OAuthProvider, type OAuthUserPayload } from '../../domain/types';
 import { CurrentUser } from '../../infrastructure/decorators/current-user.decorator';
+import { FacebookAuthGuard } from '../../infrastructure/guards/facebook-auth.guard';
 import { GoogleAuthGuard } from '../../infrastructure/guards/google-auth.guard';
 import { JwtAuthGuard } from '../../infrastructure/guards/jwt-auth.guard';
 import { LocalAuthGuard } from '../../infrastructure/guards/local-auth.guard';
+import { AuthConfigDto } from '../dto/auth-config.dto';
 import { AuthTokensDto } from '../dto/auth-tokens.dto';
 import { ChangePasswordDto } from '../dto/change-password.dto';
 import { ExchangeCodeDto } from '../dto/exchange-code.dto';
+import { LinkedAccountDto } from '../dto/linked-account.dto';
 import { LoginDto } from '../dto/login.dto';
 import { MeDto } from '../dto/me.dto';
 import { RefreshDto } from '../dto/refresh.dto';
 import { RegisterDto } from '../dto/register.dto';
+import { UnlinkProviderParamDto } from '../dto/unlink-provider-param.dto';
 import { OAuthExceptionFilter } from '../filters/oauth-exception.filter';
 import { MeMapper } from '../mappers/me.mapper';
 
@@ -87,8 +97,13 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
     private readonly userMediaService: UserMediaService,
+    private readonly googleAuthGuard: GoogleAuthGuard,
+    private readonly facebookAuthGuard: FacebookAuthGuard,
+    private readonly jwtService: JwtService,
     @Inject(googleConfig.KEY)
     private readonly googleCfg: ConfigType<typeof googleConfig>,
+    @Inject(facebookConfig.KEY)
+    private readonly facebookCfg: ConfigType<typeof facebookConfig>,
     @Inject(authConfig.KEY)
     private readonly authCfg: ConfigType<typeof authConfig>,
   ) {}
@@ -196,9 +211,12 @@ export class AuthController {
       throw new NotFoundException('User not found');
     }
 
-    const stats = await this.userMediaService.getStats(dbUser.id);
+    const [stats, linkedProviders] = await Promise.all([
+      this.userMediaService.getStats(dbUser.id),
+      this.authService.getLinkedProviders(dbUser.id),
+    ]);
 
-    return MeMapper.toDto(dbUser, stats);
+    return MeMapper.toDto(dbUser, stats, linkedProviders);
   }
 
   /**
@@ -219,22 +237,78 @@ export class AuthController {
    */
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  @ApiOperation({ summary: 'Google OAuth callback' })
-  @ApiResponse({ status: 302, description: 'Redirect to frontend with exchange code' })
+  @ApiExcludeEndpoint()
   async googleCallback(
-    @CurrentUser() googleUser: GoogleUserPayload,
+    @CurrentUser() oauthUser: OAuthUserPayload,
     @Req() req: FastifyRequest,
     @Res({ passthrough: false }) res: FastifyReply,
   ): Promise<void> {
-    const clientMeta = extractClientMeta(req);
-    const { user } = await this.authService.loginWithGoogle(googleUser, clientMeta);
-    const code = await this.authService.generateExchangeCode(user.id, clientMeta);
+    await this.handleOAuthCallback(oauthUser, req, res);
+  }
 
-    // Extract returnTo from decoded state payload (set by guard after validation)
-    const returnTo = req.oauthStatePayload?.returnTo || '/';
+  /**
+   * Initiates Facebook OAuth flow. Redirects to Facebook consent screen.
+   */
+  @Get('facebook')
+  @UseGuards(FacebookAuthGuard)
+  @ApiOperation({ summary: 'Initiate Facebook OAuth flow' })
+  @ApiQuery({ name: 'returnTo', required: false, description: 'URL to redirect after auth' })
+  @ApiResponse({ status: 302, description: 'Redirect to Facebook' })
+  facebookAuth(@Query('returnTo') _returnTo?: string) {
+    // Guard handles redirect to Facebook
+    // returnTo is validated and stored in state by FacebookAuthGuard
+  }
+
+  /**
+   * Facebook OAuth callback. Issues tokens via one-time code.
+   */
+  @Get('facebook/callback')
+  @UseGuards(FacebookAuthGuard)
+  @ApiExcludeEndpoint()
+  async facebookCallback(
+    @CurrentUser() oauthUser: OAuthUserPayload,
+    @Req() req: FastifyRequest,
+    @Res({ passthrough: false }) res: FastifyReply,
+  ): Promise<void> {
+    await this.handleOAuthCallback(oauthUser, req, res);
+  }
+
+  /**
+   * Shared handler for OAuth callbacks (used by all providers).
+   */
+  private async handleOAuthCallback(
+    oauthUser: OAuthUserPayload,
+    req: FastifyRequest,
+    res: FastifyReply,
+  ): Promise<void> {
+    const statePayload = req.oauthStatePayload;
     const { frontendUrl } = this.authCfg;
 
-    const redirectUrl = `${frontendUrl}/auth/callback/google?code=${encodeURIComponent(code)}&returnTo=${encodeURIComponent(returnTo)}`;
+    // Link mode: attach provider to existing user, redirect to settings
+    if (statePayload?.mode === 'link' && statePayload.linkUserId) {
+      const returnTo = statePayload.returnTo || '/settings';
+      const provider = statePayload.provider || oauthUser.provider;
+      try {
+        await this.authService.linkOAuthAccount(statePayload.linkUserId, oauthUser);
+        await res.redirect(HTTP_REDIRECT_FOUND, `${frontendUrl}${returnTo}?linked=${provider}`);
+      } catch {
+        await res.redirect(
+          HTTP_REDIRECT_FOUND,
+          `${frontendUrl}${returnTo}?linkError=ALREADY_LINKED&provider=${provider}`,
+        );
+      }
+      return;
+    }
+
+    // Login mode (existing logic)
+    const clientMeta = extractClientMeta(req);
+    const { user } = await this.authService.loginWithOAuth(oauthUser, clientMeta);
+    const code = await this.authService.generateExchangeCode(user.id, clientMeta);
+
+    const returnTo = statePayload?.returnTo || '/';
+    const provider = statePayload?.provider || oauthUser.provider;
+
+    const redirectUrl = `${frontendUrl}/auth/callback/${provider}?code=${encodeURIComponent(code)}&returnTo=${encodeURIComponent(returnTo)}`;
     await res.redirect(HTTP_REDIRECT_FOUND, redirectUrl);
   }
 
@@ -258,27 +332,108 @@ export class AuthController {
   }
 
   /**
+   * Initiates OAuth link flow for Google. Requires access token as query param.
+   */
+  @Get('link/google')
+  @ApiOperation({ summary: 'Link Google account to current user' })
+  @ApiQuery({ name: 'token', required: true, description: 'Access token' })
+  @ApiQuery({ name: 'returnTo', required: false })
+  @ApiResponse({ status: 302, description: 'Redirect to Google' })
+  @ApiExcludeEndpoint()
+  async linkGoogle(
+    @Query('token') token: string,
+    @Query('returnTo') returnTo: string | undefined,
+    @Res({ passthrough: false }) res: FastifyReply,
+  ): Promise<void> {
+    const userId = await this.verifyTokenFromQuery(token);
+    const signedState = this.googleAuthGuard.buildSignedStateForLink(userId, returnTo);
+    this.googleAuthGuard.setStateCookie(res, signedState);
+    const authUrl = this.googleAuthGuard.buildAuthUrl(signedState);
+    await res.redirect(HTTP_REDIRECT_FOUND, authUrl);
+  }
+
+  /**
+   * Initiates OAuth link flow for Facebook. Requires access token as query param.
+   */
+  @Get('link/facebook')
+  @ApiOperation({ summary: 'Link Facebook account to current user' })
+  @ApiQuery({ name: 'token', required: true, description: 'Access token' })
+  @ApiQuery({ name: 'returnTo', required: false })
+  @ApiResponse({ status: 302, description: 'Redirect to Facebook' })
+  @ApiExcludeEndpoint()
+  async linkFacebook(
+    @Query('token') token: string,
+    @Query('returnTo') returnTo: string | undefined,
+    @Res({ passthrough: false }) res: FastifyReply,
+  ): Promise<void> {
+    const userId = await this.verifyTokenFromQuery(token);
+    const signedState = this.facebookAuthGuard.buildSignedStateForLink(userId, returnTo);
+    this.facebookAuthGuard.setStateCookie(res, signedState);
+    const authUrl = this.facebookAuthGuard.buildAuthUrl(signedState);
+    await res.redirect(HTTP_REDIRECT_FOUND, authUrl);
+  }
+
+  /**
+   * Returns detailed list of linked OAuth accounts for settings page.
+   */
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('providers')
+  @ApiOperation({ summary: 'Get linked OAuth providers' })
+  @ApiOkResponse({ description: 'Linked accounts', type: [LinkedAccountDto] })
+  async getLinkedAccounts(@CurrentUser() user: { id: string }): Promise<LinkedAccountDto[]> {
+    const accounts = await this.authService.getLinkedAccounts(user.id);
+    return accounts.map((a) => ({
+      provider: a.provider,
+      email: a.email,
+      displayName: a.displayName,
+      linkedAt: a.createdAt.toISOString(),
+    }));
+  }
+
+  /**
+   * Unlinks an OAuth provider from the current user's account.
+   */
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Delete('providers/:provider')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Unlink OAuth provider' })
+  @ApiResponse({ status: 204, description: 'Provider unlinked' })
+  @ApiForbiddenResponse({ description: 'Cannot unlink last authentication method' })
+  async unlinkProvider(
+    @CurrentUser() user: { id: string },
+    @Param() params: UnlinkProviderParamDto,
+  ): Promise<void> {
+    await this.authService.unlinkOAuthAccount(user.id, params.provider as OAuthProvider);
+  }
+
+  /**
    * Returns auth configuration (enabled OAuth providers).
    */
   @Get('config')
   @ApiOperation({ summary: 'Get auth configuration' })
-  @ApiOkResponse({
-    description: 'Auth configuration',
-    schema: {
-      type: 'object',
-      properties: {
-        google: {
-          type: 'object',
-          properties: {
-            enabled: { type: 'boolean' },
-          },
-        },
-      },
-    },
-  })
-  getConfig() {
+  @ApiOkResponse({ description: 'Auth configuration', type: AuthConfigDto })
+  getConfig(): AuthConfigDto {
     return {
       google: { enabled: this.googleCfg.enabled },
+      facebook: { enabled: this.facebookCfg.enabled },
     };
+  }
+
+  /**
+   * Verifies access token from query parameter (used for link initiation where
+   * browser navigation can't send Authorization headers).
+   */
+  private async verifyTokenFromQuery(token: string): Promise<string> {
+    if (!token) {
+      throw new UnauthorizedException('Access token is required');
+    }
+    try {
+      const payload = await this.jwtService.verifyAsync<{ sub: string }>(token);
+      return payload.sub;
+    } catch {
+      throw new UnauthorizedException('Invalid or expired access token');
+    }
   }
 }

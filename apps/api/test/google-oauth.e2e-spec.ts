@@ -25,6 +25,13 @@ import {
   ConsumeCodeResult,
   ConsumeCodeFailureReason,
 } from '../src/modules/auth/domain/repositories/exchange-codes.repository.interface';
+import {
+  IOAuthAccountsRepository,
+  OAUTH_ACCOUNTS_REPOSITORY,
+  CreateOAuthAccountData,
+} from '../src/modules/auth/domain/repositories/oauth-accounts.repository.interface';
+import { OAuthAccount } from '../src/modules/auth/domain/entities/oauth-account.entity';
+import { OAuthProvider } from '../src/modules/auth/domain/types/oauth-provider';
 import { User } from '../src/modules/users/domain/entities/user.entity';
 import { RefreshToken } from '../src/modules/auth/domain/entities/refresh-token.entity';
 import { DATABASE_CONNECTION } from '../src/database/database.module';
@@ -54,19 +61,6 @@ class InMemoryUsersRepository implements IUsersRepository {
     return this.users.find((u) => u.username === username) ?? null;
   }
 
-  async findByGoogleId(googleId: string): Promise<User | null> {
-    return this.users.find((u) => u.googleId === googleId) ?? null;
-  }
-
-  async linkGoogleId(userId: string, googleId: string): Promise<User> {
-    const user = this.users.find((u) => u.id === userId);
-    if (user) {
-      user.googleId = googleId;
-      return user;
-    }
-    throw new Error('User not found');
-  }
-
   async create(data: UserData): Promise<User> {
     const user: User = {
       ...data,
@@ -74,7 +68,6 @@ class InMemoryUsersRepository implements IUsersRepository {
       createdAt: new Date(),
       updatedAt: new Date(),
       passwordHash: data.passwordHash,
-      googleId: data.googleId ?? null,
       avatarUrl: data.avatarUrl ?? null,
       bio: data.bio ?? null,
       location: data.location ?? null,
@@ -241,15 +234,76 @@ class InMemoryExchangeCodesRepository implements IExchangeCodesRepository {
   }
 }
 
+class InMemoryOAuthAccountsRepository implements IOAuthAccountsRepository {
+  private accounts: OAuthAccount[] = [];
+
+  async findByProviderAccount(
+    provider: OAuthProvider,
+    providerAccountId: string,
+  ): Promise<OAuthAccount | null> {
+    return (
+      this.accounts.find(
+        (a) => a.provider === provider && a.providerAccountId === providerAccountId,
+      ) ?? null
+    );
+  }
+
+  async findByUserId(userId: string): Promise<OAuthAccount[]> {
+    return this.accounts.filter((a) => a.userId === userId);
+  }
+
+  async findByUserAndProvider(
+    userId: string,
+    provider: OAuthProvider,
+  ): Promise<OAuthAccount | null> {
+    return this.accounts.find((a) => a.userId === userId && a.provider === provider) ?? null;
+  }
+
+  async create(data: CreateOAuthAccountData): Promise<OAuthAccount> {
+    const account: OAuthAccount = {
+      id: `oauth-${this.accounts.length + 1}`,
+      userId: data.userId,
+      provider: data.provider,
+      providerAccountId: data.providerAccountId,
+      email: data.email,
+      displayName: data.displayName,
+      avatarUrl: data.avatarUrl,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.accounts.push(account);
+    return account;
+  }
+
+  async deleteByUserAndProvider(userId: string, provider: OAuthProvider): Promise<boolean> {
+    const idx = this.accounts.findIndex((a) => a.userId === userId && a.provider === provider);
+    if (idx >= 0) {
+      this.accounts.splice(idx, 1);
+      return true;
+    }
+    return false;
+  }
+
+  async countByUserId(userId: string): Promise<number> {
+    return this.accounts.filter((a) => a.userId === userId).length;
+  }
+
+  clear(): void {
+    this.accounts = [];
+  }
+}
+
 describe('Google OAuth e2e', () => {
   let app: INestApplication;
   let usersRepo: InMemoryUsersRepository;
   let exchangeCodesRepo: InMemoryExchangeCodesRepository;
+  let oauthAccountsRepo: InMemoryOAuthAccountsRepository;
   const baseUrl = '/api/auth';
 
   beforeAll(async () => {
     usersRepo = new InMemoryUsersRepository();
     exchangeCodesRepo = new InMemoryExchangeCodesRepository();
+    oauthAccountsRepo = new InMemoryOAuthAccountsRepository();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
@@ -269,6 +323,8 @@ describe('Google OAuth e2e', () => {
       .useClass(InMemoryRefreshTokensRepository)
       .overrideProvider(EXCHANGE_CODES_REPOSITORY)
       .useValue(exchangeCodesRepo)
+      .overrideProvider(OAUTH_ACCOUNTS_REPOSITORY)
+      .useValue(oauthAccountsRepo)
       .overrideProvider(USER_MEDIA_STATE_REPOSITORY)
       .useClass(InMemoryUserMediaRepository)
       .overrideProvider(DATABASE_CONNECTION)
@@ -298,6 +354,7 @@ describe('Google OAuth e2e', () => {
   beforeEach(() => {
     usersRepo.clear();
     exchangeCodesRepo.clear();
+    oauthAccountsRepo.clear();
   });
 
   describe('GET /auth/config', () => {
@@ -327,7 +384,6 @@ describe('Google OAuth e2e', () => {
         email: 'test@example.com',
         username: 'testuser',
         passwordHash: null,
-        googleId: 'google-123',
         avatarUrl: null,
         bio: null,
         location: null,
@@ -394,7 +450,6 @@ describe('Google OAuth e2e', () => {
         email: 'reuse-test@example.com',
         username: 'reusetest',
         passwordHash: null,
-        googleId: 'google-reuse-123',
         avatarUrl: null,
         bio: null,
         location: null,
@@ -431,7 +486,6 @@ describe('Google OAuth e2e', () => {
         email: 'expired-test@example.com',
         username: 'expiredtest',
         passwordHash: null,
-        googleId: 'google-expired-123',
         avatarUrl: null,
         bio: null,
         location: null,
@@ -638,21 +692,25 @@ describe('Google OAuth e2e', () => {
       authService = app.get(AuthService);
     });
 
-    it('should complete full OAuth flow: loginWithGoogle -> generateExchangeCode -> exchange -> tokens', async () => {
+    it('should complete full OAuth flow: loginWithOAuth -> generateExchangeCode -> exchange -> tokens', async () => {
       // Simulate what happens after GoogleAuthGuard validates the user:
-      // 1. AuthService.loginWithGoogle() is called with the Google user payload
-      const googlePayload = {
-        googleId: 'google-flow-123',
+      // 1. AuthService.loginWithOAuth() is called with the OAuth user payload
+      const oauthPayload = {
+        provider: 'google' as const,
+        providerAccountId: 'google-flow-123',
         email: 'googleflow@test.com',
         name: 'Google Flow User',
         picture: 'https://example.com/avatar.jpg',
       };
 
-      const { user, tokens: loginTokens } = await authService.loginWithGoogle(googlePayload);
+      const { user, tokens: loginTokens } = await authService.loginWithOAuth(oauthPayload);
       expect(user).toBeDefined();
       expect(user.email).toBe('googleflow@test.com');
-      expect(user.googleId).toBe('google-flow-123');
-      // loginWithGoogle returns tokens directly, but the controller uses exchange codes instead
+      // Verify Google account is linked via oauth_accounts table
+      const oauthLink = await oauthAccountsRepo.findByProviderAccount('google', 'google-flow-123');
+      expect(oauthLink).not.toBeNull();
+      expect(oauthLink!.userId).toBe(user.id);
+      // loginWithOAuth returns tokens directly, but the controller uses exchange codes instead
       expect(loginTokens.accessToken).toBeDefined();
 
       // 2. Controller generates an exchange code (simulating googleCallback)
@@ -681,18 +739,25 @@ describe('Google OAuth e2e', () => {
     });
 
     it('should create new user with generated username for Google OAuth', async () => {
-      const googlePayload = {
-        googleId: 'google-new-user-456',
+      const oauthPayload = {
+        provider: 'google' as const,
+        providerAccountId: 'google-new-user-456',
         email: 'newgoogle@test.com',
         name: 'New Google User',
         picture: null,
       };
 
-      const { user } = await authService.loginWithGoogle(googlePayload);
+      const { user } = await authService.loginWithOAuth(oauthPayload);
 
       expect(user).toBeDefined();
       expect(user.email).toBe('newgoogle@test.com');
-      expect(user.googleId).toBe('google-new-user-456');
+      // Verify Google account is linked via oauth_accounts table
+      const oauthLink = await oauthAccountsRepo.findByProviderAccount(
+        'google',
+        'google-new-user-456',
+      );
+      expect(oauthLink).not.toBeNull();
+      expect(oauthLink!.userId).toBe(user.id);
       // Username should be auto-generated from the name
       expect(user.username).toBeTruthy();
       expect(user.username.length).toBeGreaterThanOrEqual(3);
@@ -701,19 +766,20 @@ describe('Google OAuth e2e', () => {
     });
 
     it('should return same user on subsequent Google logins', async () => {
-      const googlePayload = {
-        googleId: 'google-returning-789',
+      const oauthPayload = {
+        provider: 'google' as const,
+        providerAccountId: 'google-returning-789',
         email: 'returning@test.com',
         name: 'Returning User',
         picture: 'https://example.com/pic.jpg',
       };
 
       // First login - creates user
-      const first = await authService.loginWithGoogle(googlePayload);
+      const first = await authService.loginWithOAuth(oauthPayload);
       const firstUserId = first.user.id;
 
       // Second login - returns same user
-      const second = await authService.loginWithGoogle(googlePayload);
+      const second = await authService.loginWithOAuth(oauthPayload);
       expect(second.user.id).toBe(firstUserId);
       expect(second.user.email).toBe('returning@test.com');
     });
@@ -735,23 +801,25 @@ describe('Google OAuth e2e', () => {
 
       const userBefore = await usersRepo.findByEmail('link-test@test.com');
       expect(userBefore).not.toBeNull();
-      expect(userBefore!.googleId).toBeNull();
       expect(userBefore!.passwordHash).not.toBeNull();
 
       // 2. Simulate Google login with the same email
-      const googlePayload = {
-        googleId: 'google-link-999',
+      const oauthPayload = {
+        provider: 'google' as const,
+        providerAccountId: 'google-link-999',
         email: 'link-test@test.com',
         name: 'Link Test',
         picture: 'https://example.com/linked-avatar.jpg',
       };
 
-      const { user: linkedUser } = await authService.loginWithGoogle(googlePayload);
+      const { user: linkedUser } = await authService.loginWithOAuth(oauthPayload);
 
-      // 3. Verify the accounts are linked
+      // 3. Verify the accounts are linked via oauth_accounts table
       expect(linkedUser.id).toBe(userBefore!.id);
-      expect(linkedUser.googleId).toBe('google-link-999');
       expect(linkedUser.email).toBe('link-test@test.com');
+      const oauthLink = await oauthAccountsRepo.findByProviderAccount('google', 'google-link-999');
+      expect(oauthLink).not.toBeNull();
+      expect(oauthLink!.userId).toBe(linkedUser.id);
 
       // 4. Verify original password login still works
       const loginRes = await request(app.getHttpServer())
@@ -774,8 +842,9 @@ describe('Google OAuth e2e', () => {
       expect(userBefore!.avatarUrl).toBeNull();
 
       // 2. Link Google account with a picture
-      const { user: linkedUser } = await authService.loginWithGoogle({
-        googleId: 'google-avatar-111',
+      const { user: linkedUser } = await authService.loginWithOAuth({
+        provider: 'google' as const,
+        providerAccountId: 'google-avatar-111',
         email: 'avatar-link@test.com',
         name: 'Avatar Link',
         picture: 'https://example.com/google-pic.jpg',
@@ -786,19 +855,26 @@ describe('Google OAuth e2e', () => {
     });
 
     it('should create new user for unknown Google email', async () => {
-      const googlePayload = {
-        googleId: 'google-brand-new-222',
+      const oauthPayload = {
+        provider: 'google' as const,
+        providerAccountId: 'google-brand-new-222',
         email: 'brandnew@test.com',
         name: 'Brand New',
         picture: null,
       };
 
-      const { user } = await authService.loginWithGoogle(googlePayload);
+      const { user } = await authService.loginWithOAuth(oauthPayload);
 
       expect(user).toBeDefined();
       expect(user.email).toBe('brandnew@test.com');
-      expect(user.googleId).toBe('google-brand-new-222');
       expect(user.passwordHash).toBeNull();
+      // Verify Google account is linked via oauth_accounts table
+      const oauthLink = await oauthAccountsRepo.findByProviderAccount(
+        'google',
+        'google-brand-new-222',
+      );
+      expect(oauthLink).not.toBeNull();
+      expect(oauthLink!.userId).toBe(user.id);
 
       // Verify the new user can get tokens via exchange code flow
       const code = await authService.generateExchangeCode(user.id);
@@ -811,25 +887,31 @@ describe('Google OAuth e2e', () => {
       expect(res.body.data).toHaveProperty('accessToken');
     });
 
-    it('should find user by googleId on subsequent logins after linking', async () => {
+    it('should find user by OAuth account on subsequent logins after linking', async () => {
       // 1. Register with email/password
       await request(app.getHttpServer())
         .post(`${baseUrl}/register`)
         .send({ email: 'find-by-gid@test.com', username: 'findbygid', password: 'Password123' })
         .expect(201);
 
-      // 2. First Google login - links account
-      const googlePayload = {
-        googleId: 'google-findme-333',
+      // 2. First Google login - links account via oauth_accounts table
+      const oauthPayload = {
+        provider: 'google' as const,
+        providerAccountId: 'google-findme-333',
         email: 'find-by-gid@test.com',
         name: 'Find By GID',
         picture: null,
       };
-      const { user: firstLogin } = await authService.loginWithGoogle(googlePayload);
-      expect(firstLogin.googleId).toBe('google-findme-333');
+      const { user: firstLogin } = await authService.loginWithOAuth(oauthPayload);
+      const oauthLink = await oauthAccountsRepo.findByProviderAccount(
+        'google',
+        'google-findme-333',
+      );
+      expect(oauthLink).not.toBeNull();
+      expect(oauthLink!.userId).toBe(firstLogin.id);
 
-      // 3. Second Google login - should find by googleId (not by email)
-      const { user: secondLogin } = await authService.loginWithGoogle(googlePayload);
+      // 3. Second Google login - should find by provider account (not by email)
+      const { user: secondLogin } = await authService.loginWithOAuth(oauthPayload);
       expect(secondLogin.id).toBe(firstLogin.id);
     });
   });
