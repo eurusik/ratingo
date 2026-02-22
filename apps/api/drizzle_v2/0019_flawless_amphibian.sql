@@ -16,4 +16,9 @@ CREATE UNIQUE INDEX "oauth_accounts_provider_account_uniq" ON "oauth_accounts" U
 CREATE UNIQUE INDEX "oauth_accounts_user_provider_uniq" ON "oauth_accounts" USING btree ("user_id","provider");--> statement-breakpoint
 CREATE INDEX "oauth_accounts_user_idx" ON "oauth_accounts" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "oauth_accounts_provider_idx" ON "oauth_accounts" USING btree ("provider");--> statement-breakpoint
+INSERT INTO "oauth_accounts" ("user_id", "provider", "provider_account_id", "email", "display_name", "avatar_url")
+SELECT "id", 'google', "google_id", "email", "username", "avatar_url"
+FROM "users"
+WHERE "google_id" IS NOT NULL
+ON CONFLICT DO NOTHING;--> statement-breakpoint
 ALTER TABLE "users" DROP COLUMN "google_id";
