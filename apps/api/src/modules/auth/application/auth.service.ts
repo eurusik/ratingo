@@ -3,6 +3,7 @@ import { randomUUID, randomBytes, createHmac } from 'crypto';
 import {
   Injectable,
   ConflictException,
+  ForbiddenException,
   UnauthorizedException,
   Logger,
   Inject,
@@ -269,7 +270,7 @@ export class AuthService {
   /**
    * Changes user password after verifying current password.
    *
-   * @throws {UnauthorizedException} When current password is invalid
+   * @throws {ForbiddenException} When current password is invalid
    */
   async changePassword(
     userId: string,
@@ -278,12 +279,12 @@ export class AuthService {
   ): Promise<void> {
     const user = await this.usersService.getById(userId);
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new ForbiddenException('Invalid credentials');
     }
 
     const match = await this.passwordHasher.compare(currentPassword, user.passwordHash);
     if (!match) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new ForbiddenException('Invalid credentials');
     }
 
     const newHash = await this.passwordHasher.hash(newPassword);

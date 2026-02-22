@@ -14,7 +14,7 @@ export class AuthPage extends BasePage {
     super(page);
     this.signInButton = getSignInButton(page);
     this.dialog = getAuthDialog(page);
-    this.errorAlert = this.dialog.locator('[role="alert"]');
+    this.errorAlert = this.dialog.locator('[data-testid="form-error"]');
   }
 
   async navigate() {
@@ -89,6 +89,6 @@ export class AuthPage extends BasePage {
 
   /** Returns field-level validation error elements inside the dialog. */
   get fieldErrors(): Locator {
-    return this.dialog.locator('.text-xs.text-red-400');
+    return this.dialog.locator('[data-testid$="-error"]');
   }
 }

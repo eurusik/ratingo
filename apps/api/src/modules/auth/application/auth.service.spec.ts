@@ -1,4 +1,4 @@
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { DatabaseException } from '../../../common/exceptions/database.exception';
 import { ConsumeCodeFailureReason } from '../domain/repositories/exchange-codes.repository.interface';
@@ -567,19 +567,19 @@ describe('AuthService - changePassword', () => {
     expect(mocks.usersService.updatePassword).toHaveBeenCalledWith('u1', 'new-hash');
   });
 
-  it('should throw UnauthorizedException when user not found', async () => {
+  it('should throw ForbiddenException when user not found', async () => {
     mocks.usersService.getById.mockResolvedValue(null);
 
     await expect(
       service.changePassword('u-missing', 'OldPass123', 'NewPass456'),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    ).rejects.toBeInstanceOf(ForbiddenException);
 
     expect(mocks.passwordHasher.compare).not.toHaveBeenCalled();
     expect(mocks.passwordHasher.hash).not.toHaveBeenCalled();
     expect(mocks.usersService.updatePassword).not.toHaveBeenCalled();
   });
 
-  it('should throw UnauthorizedException when user has no passwordHash (OAuth-only user)', async () => {
+  it('should throw ForbiddenException when user has no passwordHash (OAuth-only user)', async () => {
     mocks.usersService.getById.mockResolvedValue({
       id: 'u1',
       email: 'user@example.com',
@@ -588,7 +588,7 @@ describe('AuthService - changePassword', () => {
     });
 
     await expect(service.changePassword('u1', 'OldPass123', 'NewPass456')).rejects.toBeInstanceOf(
-      UnauthorizedException,
+      ForbiddenException,
     );
 
     expect(mocks.passwordHasher.compare).not.toHaveBeenCalled();
@@ -596,7 +596,7 @@ describe('AuthService - changePassword', () => {
     expect(mocks.usersService.updatePassword).not.toHaveBeenCalled();
   });
 
-  it('should throw UnauthorizedException when current password is wrong', async () => {
+  it('should throw ForbiddenException when current password is wrong', async () => {
     mocks.usersService.getById.mockResolvedValue({
       id: 'u1',
       email: 'user@example.com',
@@ -606,7 +606,7 @@ describe('AuthService - changePassword', () => {
     mocks.passwordHasher.compare.mockResolvedValue(false);
 
     await expect(service.changePassword('u1', 'WrongPass1', 'NewPass456')).rejects.toBeInstanceOf(
-      UnauthorizedException,
+      ForbiddenException,
     );
 
     expect(mocks.passwordHasher.hash).not.toHaveBeenCalled();

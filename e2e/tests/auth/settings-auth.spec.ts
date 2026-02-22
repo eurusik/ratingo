@@ -44,13 +44,9 @@ test.describe('Auth — Settings & logout', () => {
     });
     await settings.submitChangePassword();
 
-    // Expect error message (inline or alert)
-    const errorVisible = await page
-      .locator('[role="alert"], .text-red-400, .text-destructive')
-      .first()
-      .isVisible({ timeout: 5_000 })
-      .catch(() => false);
-    expect(errorVisible).toBeTruthy();
+    await expect(
+      page.locator('[data-testid="currentPassword-error"]'),
+    ).toBeVisible({ timeout: 5_000 });
   });
 
   test('short new password shows validation error', async ({ page }) => {
@@ -69,12 +65,9 @@ test.describe('Auth — Settings & logout', () => {
     });
     await settings.submitChangePassword();
 
-    const errorVisible = await page
-      .locator('.text-red-400, .text-destructive, .text-xs.text-red-400')
-      .first()
-      .isVisible({ timeout: 3_000 })
-      .catch(() => false);
-    expect(errorVisible).toBeTruthy();
+    await expect(
+      page.locator('[data-testid="newPassword-error"]'),
+    ).toBeVisible({ timeout: 3_000 });
   });
 
   test('logout clears tokens and shows sign-in button', async ({ page }) => {

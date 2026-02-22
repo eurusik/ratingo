@@ -23,13 +23,20 @@ export class SettingsPage extends BasePage {
   async goToPrivacyTab() {
     if (await this.privacyTab.isVisible()) {
       await this.privacyTab.click();
-      await this.page.waitForTimeout(500);
+      await this.autoSubscribeToggle.waitFor({ state: 'visible', timeout: 5_000 });
     }
   }
 
   async toggleAutoSubscribe() {
+    const currentState = await this.autoSubscribeToggle.getAttribute('aria-checked');
     await this.autoSubscribeToggle.click();
-    await this.page.waitForTimeout(1000);
+    // Wait for the toggle state to actually change
+    const expectedState = currentState === 'true' ? 'false' : 'true';
+    await this.page.waitForFunction(
+      ({ id, expected }) => document.getElementById(id)?.getAttribute('aria-checked') === expected,
+      { id: 'autoSubscribeOnWatch', expected: expectedState },
+      { timeout: 5_000 },
+    );
   }
 
   async getAutoSubscribeState(): Promise<string | null> {
@@ -40,7 +47,7 @@ export class SettingsPage extends BasePage {
 
   async goToSecurityTab() {
     await this.securityTab.click();
-    await this.page.waitForTimeout(300);
+    await this.page.locator('#currentPassword').waitFor({ state: 'visible', timeout: 5_000 });
   }
 
   async fillChangePasswordForm(data: {

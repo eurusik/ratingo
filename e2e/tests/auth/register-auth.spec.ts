@@ -6,21 +6,21 @@ const UNIQUE_EMAIL = () => `e2e+${Date.now()}@ratingo.test`;
 const UNIQUE_USERNAME = () => `e2euser${Date.now()}`;
 const VALID_PASSWORD = 'TestPass99';
 
+let auth: AuthPage;
+
+test.beforeEach(async ({ page }) => {
+  auth = new AuthPage(page);
+  await auth.navigate();
+  await auth.openLoginModal();
+  await auth.switchToRegister();
+});
+
 test.describe('Auth — Register flow', () => {
-  test('switching to register shows register title', async ({ page }) => {
-    const auth = new AuthPage(page);
-    await auth.navigate();
-    await auth.openLoginModal();
-    await auth.switchToRegister();
+  test('register form shows register title', async () => {
     await expect(auth.registerTitle).toBeVisible();
   });
 
   test('successful registration closes modal and stores tokens', async ({ page }) => {
-    const auth = new AuthPage(page);
-    await auth.navigate();
-    await auth.openLoginModal();
-    await auth.switchToRegister();
-
     await auth.fillRegisterForm({
       email: UNIQUE_EMAIL(),
       username: UNIQUE_USERNAME(),
@@ -38,22 +38,12 @@ test.describe('Auth — Register flow', () => {
     expect(accessToken).toBeTruthy();
   });
 
-  test('empty fields show validation errors', async ({ page }) => {
-    const auth = new AuthPage(page);
-    await auth.navigate();
-    await auth.openLoginModal();
-    await auth.switchToRegister();
+  test('empty fields show validation errors', async () => {
     await auth.submit();
-
     await expect(auth.fieldErrors.first()).toBeVisible({ timeout: 3_000 });
   });
 
-  test('password mismatch shows validation error', async ({ page }) => {
-    const auth = new AuthPage(page);
-    await auth.navigate();
-    await auth.openLoginModal();
-    await auth.switchToRegister();
-
+  test('password mismatch shows validation error', async () => {
     await auth.fillRegisterForm({
       email: UNIQUE_EMAIL(),
       username: UNIQUE_USERNAME(),
@@ -65,12 +55,7 @@ test.describe('Auth — Register flow', () => {
     await expect(auth.fieldErrors.first()).toBeVisible({ timeout: 3_000 });
   });
 
-  test('existing email shows API error alert', async ({ page }) => {
-    const auth = new AuthPage(page);
-    await auth.navigate();
-    await auth.openLoginModal();
-    await auth.switchToRegister();
-
+  test('existing email shows API error alert', async () => {
     await auth.fillRegisterForm({
       email: TEST_EMAIL,
       username: UNIQUE_USERNAME(),
@@ -83,12 +68,7 @@ test.describe('Auth — Register flow', () => {
     await expect(auth.dialog).toBeVisible(); // modal stays open
   });
 
-  test('short username shows validation error', async ({ page }) => {
-    const auth = new AuthPage(page);
-    await auth.navigate();
-    await auth.openLoginModal();
-    await auth.switchToRegister();
-
+  test('short username shows validation error', async () => {
     await auth.fillRegisterForm({
       email: UNIQUE_EMAIL(),
       username: 'ab',

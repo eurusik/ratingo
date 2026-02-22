@@ -17,6 +17,7 @@ import {
 import { type ConfigType } from '@nestjs/config';
 import {
   ApiBearerAuth,
+  ApiForbiddenResponse,
   ApiOkResponse,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -169,7 +170,8 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Change current user password' })
   @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Password changed successfully' })
-  @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
+  @ApiUnauthorizedResponse({ description: 'Not authenticated' })
+  @ApiForbiddenResponse({ description: 'Invalid current password' })
   @Patch('password')
   @HttpCode(HttpStatus.NO_CONTENT)
   async changePassword(

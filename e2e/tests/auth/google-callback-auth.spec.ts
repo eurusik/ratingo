@@ -35,36 +35,16 @@ test.describe('Auth — Google OAuth callback', () => {
     const base = new BasePage(page);
     await base.goto(`${CALLBACK_URL}?error=OAUTH_CANCELLED`);
 
-    const tryAgainButton = page.getByRole('button', {
-      name: /try again|спробувати ще/i,
-    });
-    // Could also be a link styled as button
-    const tryAgainLink = page.getByRole('link', {
-      name: /try again|спробувати ще/i,
-    });
-
-    const buttonVisible = await tryAgainButton.isVisible().catch(() => false);
-    const linkVisible = await tryAgainLink.isVisible().catch(() => false);
-    expect(buttonVisible || linkVisible).toBeTruthy();
+    await expect(
+      page.getByRole('button', { name: /try again|спробувати ще/i }),
+    ).toBeVisible({ timeout: 5_000 });
   });
 
   test('try again navigates to home page', async ({ page }) => {
     const base = new BasePage(page);
     await base.goto(`${CALLBACK_URL}?error=OAUTH_CANCELLED`);
 
-    // Click whichever element is the "Try again" action
-    const tryAgainButton = page.getByRole('button', {
-      name: /try again|спробувати ще/i,
-    });
-    const tryAgainLink = page.getByRole('link', {
-      name: /try again|спробувати ще/i,
-    });
-
-    if (await tryAgainButton.isVisible().catch(() => false)) {
-      await tryAgainButton.click();
-    } else {
-      await tryAgainLink.click();
-    }
+    await page.getByRole('button', { name: /try again|спробувати ще/i }).click();
 
     await page.waitForURL('**/', { timeout: 5_000 });
     expect(page.url()).toMatch(/\/$/);
