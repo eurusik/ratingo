@@ -5,7 +5,7 @@ import { getSecurityTab } from '../../helpers/i18n.helpers';
 import { TEST_EMAIL, TEST_PASSWORD } from '../../fixtures/test-data';
 
 test.describe('Auth — OAuth account link/unlink callbacks', () => {
-  test('should show success banner when ?linked=google is in URL', async ({ page }) => {
+  test('should show success toast when ?linked=google is in URL', async ({ page }) => {
     const auth = new AuthPage(page);
     await auth.navigate();
     await auth.login(TEST_EMAIL, TEST_PASSWORD);
@@ -17,14 +17,14 @@ test.describe('Auth — OAuth account link/unlink callbacks', () => {
     const securityTab = getSecurityTab(page);
     await expect(securityTab).toHaveAttribute('data-state', 'active', { timeout: 5_000 });
 
-    // Success alert should be visible with provider name
-    const successAlert = page.locator('[role="alert"]').filter({
+    // Sonner toast should appear with provider name
+    const toast = page.locator('[data-sonner-toast]').filter({
       hasText: /successfully connected google|google успішно підключено/i,
     });
-    await expect(successAlert).toBeVisible({ timeout: 5_000 });
+    await expect(toast).toBeVisible({ timeout: 5_000 });
   });
 
-  test('should show error banner when ?linkError=ALREADY_LINKED is in URL', async ({ page }) => {
+  test('should show error toast when ?linkError=ALREADY_LINKED is in URL', async ({ page }) => {
     const auth = new AuthPage(page);
     await auth.navigate();
     await auth.login(TEST_EMAIL, TEST_PASSWORD);
@@ -36,11 +36,11 @@ test.describe('Auth — OAuth account link/unlink callbacks', () => {
     const securityTab = getSecurityTab(page);
     await expect(securityTab).toHaveAttribute('data-state', 'active', { timeout: 5_000 });
 
-    // Error alert should be visible
-    const errorAlert = page.locator('[role="alert"]').filter({
+    // Sonner error toast should appear
+    const toast = page.locator('[data-sonner-toast][data-type="error"]').filter({
       hasText: /failed to disconnect|не вдалося відключити/i,
     });
-    await expect(errorAlert).toBeVisible({ timeout: 5_000 });
+    await expect(toast).toBeVisible({ timeout: 5_000 });
   });
 
   test('should clean URL params after showing notification', async ({ page }) => {
@@ -51,7 +51,7 @@ test.describe('Auth — OAuth account link/unlink callbacks', () => {
     const settings = new SettingsPage(page);
     await settings.goto('/settings?linked=google');
 
-    // Wait for URL to be cleaned (router.replace removes query params)
+    // Wait for URL to be cleaned
     await page.waitForURL('**/settings', { timeout: 5_000 });
     expect(page.url()).toMatch(/\/settings$/);
   });

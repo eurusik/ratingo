@@ -12,7 +12,16 @@ import { Loader2 } from 'lucide-react';
 import { useAuth, tokenStorage } from '@/core/auth';
 import { getApiUrl } from '@/core/config';
 import { useTranslation } from '@/shared/i18n';
-import { Button } from '@/shared/ui';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  Button,
+} from '@/shared/ui';
 
 import { useUnlinkAccount } from '../hooks';
 
@@ -136,25 +145,31 @@ export function ConnectedAccountsSection() {
         })}
       </div>
 
-      {confirmProvider && (
-        <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4">
-          <p className="mb-3 text-sm text-cinema-text-primary">{t.confirmDisconnect}</p>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => setConfirmProvider(null)}>
+      <AlertDialog open={!!confirmProvider} onOpenChange={(open) => !open && setConfirmProvider(null)}>
+        <AlertDialogContent className="border-cinema-border bg-cinema-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-cinema-text-primary">
+              {t.confirmDisconnect}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-cinema-text-muted">
+              {t.confirmDisconnectDescription}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-cinema-border bg-cinema-elevated text-cinema-text-primary hover:bg-cinema-elevated/80">
               {t.cancel}
-            </Button>
+            </AlertDialogCancel>
             <Button
-              size="sm"
               variant="destructive"
-              onClick={() => handleUnlink(confirmProvider)}
+              onClick={() => confirmProvider && handleUnlink(confirmProvider)}
               disabled={unlinkMutation.isPending}
             >
               {unlinkMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t.disconnect}
             </Button>
-          </div>
-        </div>
-      )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>

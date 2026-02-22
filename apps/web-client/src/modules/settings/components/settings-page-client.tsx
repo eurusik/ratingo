@@ -4,12 +4,11 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-import { CheckCircle, AlertCircle, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useTranslation } from '@/shared/i18n';
-import { Alert, AlertDescription } from '@/shared/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import type { MeDto } from '@/core/api';
 import type { components } from '@ratingo/api-contract';
@@ -42,18 +41,28 @@ export function SettingsPageClient({
   linkNotification,
 }: SettingsPageClientProps) {
   const { dict } = useTranslation();
+  const t = dict.settings.connectedAccounts;
   const [activeTab, setActiveTab] = useState(initialTab);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [notification, setNotification] = useState(linkNotification);
+  const toastShown = useRef(false);
 
   const updateProfile = useUpdateProfile();
 
-  // Auto-dismiss notification after 5 seconds
+  // Show toast once on mount for OAuth link result
   useEffect(() => {
-    if (!notification) return;
-    const timer = setTimeout(() => setNotification(undefined), 5000);
-    return () => clearTimeout(timer);
-  }, [notification]);
+    if (!linkNotification || toastShown.current) return;
+    toastShown.current = true;
+
+    const provider = linkNotification.provider
+      ? linkNotification.provider.charAt(0).toUpperCase() + linkNotification.provider.slice(1)
+      : '';
+
+    if (linkNotification.type === 'success') {
+      toast.success(t.linkSuccess.replace('{provider}', provider));
+    } else {
+      toast.error(t.linkError);
+    }
+  }, [linkNotification, t]);
 
   // Handle unsaved changes warning
   useEffect(() => {
@@ -71,7 +80,6 @@ export function SettingsPageClient({
 
   const handleProfileSuccess = () => {
     setHasUnsavedChanges(false);
-    // Could show toast here
   };
 
   const handlePrivacyUpdate = async (
@@ -82,11 +90,6 @@ export function SettingsPageClient({
       [field]: value,
     });
   };
-
-  const t = dict.settings.connectedAccounts;
-  const capitalizedProvider = notification?.provider
-    ? notification.provider.charAt(0).toUpperCase() + notification.provider.slice(1)
-    : '';
 
   return (
     <div className="container max-w-xl mx-auto pt-24 pb-8 px-4">
@@ -118,36 +121,6 @@ export function SettingsPageClient({
         </TabsContent>
 
         <TabsContent value="security" className="mt-0 space-y-6">
-          {notification && (
-            <Alert
-              variant={notification.type === 'success' ? 'default' : 'destructive'}
-              className={
-                notification.type === 'success'
-                  ? 'border-green-500/30 bg-green-500/10 text-green-400'
-                  : undefined
-              }
-            >
-              {notification.type === 'success' ? (
-                <CheckCircle className="h-4 w-4" />
-              ) : (
-                <AlertCircle className="h-4 w-4" />
-              )}
-              <AlertDescription className="flex items-center justify-between">
-                <span>
-                  {notification.type === 'success'
-                    ? t.linkSuccess.replace('{provider}', capitalizedProvider)
-                    : t.linkError}
-                </span>
-                <button
-                  onClick={() => setNotification(undefined)}
-                  className="ml-2 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
-                  aria-label="Close"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </AlertDescription>
-            </Alert>
-          )}
           <ConnectedAccountsSection />
           <SecuritySection />
         </TabsContent>
