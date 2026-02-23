@@ -119,6 +119,8 @@ export interface NormalizedMedia {
   type: MediaType;
   title: string;
   originalTitle?: string | null;
+  /** Alternative/alias titles for improved search (from TMDB alternative_titles) */
+  alternativeTitles?: string[];
   overview?: string | null;
 
   ingestionStatus?: IngestionStatus;

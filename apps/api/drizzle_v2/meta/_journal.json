@@ -141,6 +141,13 @@
       "when": 1771789728875,
       "tag": "0019_flawless_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1772006400000,
+      "tag": "0020_add_alternative_titles",
+      "breakpoints": true
     }
   ]
 }

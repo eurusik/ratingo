@@ -16,6 +16,8 @@ interface SearchResultItemProps {
   isLocal: boolean;
   isImporting?: boolean;
   notImportedLabel?: string;
+  matchedAlternativeTitle?: string | null;
+  alsoKnownAsLabel?: string;
   onSelect: () => void;
 }
 
@@ -32,6 +34,8 @@ export function SearchResultItem({
   isLocal,
   isImporting,
   notImportedLabel,
+  matchedAlternativeTitle,
+  alsoKnownAsLabel,
   onSelect,
 }: SearchResultItemProps) {
   const TypeIcon = type === 'movie' ? Film : Tv;
@@ -39,7 +43,7 @@ export function SearchResultItem({
   return (
     <CommandItem
       key={`${isLocal ? 'local' : 'tmdb'}-${tmdbId}`}
-      value={`${title} ${year ?? ''} ${isLocal ? '' : 'tmdb'}`}
+      value={`${title} ${matchedAlternativeTitle ?? ''} ${year ?? ''} ${isLocal ? '' : 'tmdb'}`}
       onSelect={onSelect}
       disabled={isImporting}
       className="gap-3 py-2 cursor-pointer"
@@ -62,6 +66,11 @@ export function SearchResultItem({
       {/* Info */}
       <div className="flex flex-col gap-0.5 min-w-0 flex-1">
         <span className={`truncate ${isLocal ? 'font-medium' : ''}`}>{title}</span>
+        {matchedAlternativeTitle && (
+          <span className="text-xs text-cinema-text-muted truncate">
+            {alsoKnownAsLabel} {matchedAlternativeTitle}
+          </span>
+        )}
         <span className="text-xs text-cinema-text-muted flex items-center gap-1.5">
           <TypeIcon className="h-3 w-3" />
           {year && year > 0 && <span>{year}</span>}

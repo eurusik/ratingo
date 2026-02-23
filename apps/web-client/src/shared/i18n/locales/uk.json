@@ -32,7 +32,8 @@
     "noResults": "Нічого не знайдено",
     "inCatalog": "У каталозі",
     "fromTmdb": "Ще не додано",
-    "notImported": "клікни щоб додати"
+    "notImported": "клікни щоб додати",
+    "alsoKnownAs": "також:"
   },
   "import": {
     "importing": "Додаємо...",

@@ -32,7 +32,8 @@
     "noResults": "Nothing found",
     "inCatalog": "In catalog",
     "fromTmdb": "Not yet added",
-    "notImported": "click to add"
+    "notImported": "click to add",
+    "alsoKnownAs": "also:"
   },
   "import": {
     "importing": "Adding...",

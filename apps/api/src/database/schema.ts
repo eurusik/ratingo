@@ -121,6 +121,7 @@ export const mediaItems = pgTable(
     // Basic Info
     title: text('title').notNull(),
     originalTitle: text('original_title'),
+    alternativeTitles: text('alternative_titles').array(),
     slug: text('slug').notNull(), // Unique per type, not globally
     overview: text('overview'),
 
@@ -165,7 +166,7 @@ export const mediaItems = pgTable(
 
     // Full Text Search Vector (auto-generated)
     searchVector: tsvector('search_vector').generatedAlwaysAs(
-      sql`to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(original_title, '') || ' ' || coalesce(overview, ''))`,
+      sql`to_tsvector('simple', coalesce(title, '') || ' ' || coalesce(original_title, '') || ' ' || coalesce(overview, '') || ' ' || coalesce(immutable_array_to_string(alternative_titles, ' '), ''))`,
     ),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

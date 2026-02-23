@@ -14,10 +14,12 @@ import {
   type WatchProvidersMap,
   type WatchProvider,
 } from '../../ingestion/public';
+import { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '../constants/alt-title.constants';
 import {
   type TmdbMediaResponse,
   type TmdbMovieResponse,
   type TmdbShowResponse,
+  type TmdbAlternativeTitle,
   type TmdbCastMember,
   type TmdbCrewMember,
   type TmdbCreator,
@@ -50,6 +52,9 @@ export class TmdbMapper {
   static toDomain(data: TmdbMediaResponse, type: MediaType): NormalizedMedia | null {
     const isMovie = type === MediaType.MOVIE;
     const title = isMovie ? (data as TmdbMovieResponse).title : (data as TmdbShowResponse).name;
+    const originalTitle = isMovie
+      ? (data as TmdbMovieResponse).original_title
+      : (data as TmdbShowResponse).original_name;
 
     // Only title is required - overview can be empty
     // This ensures we don't lose originCountries/originalLanguage for items without localized overview
@@ -66,10 +71,8 @@ export class TmdbMapper {
           null,
       },
       type,
-      title: isMovie ? (data as TmdbMovieResponse).title : (data as TmdbShowResponse).name,
-      originalTitle: isMovie
-        ? (data as TmdbMovieResponse).original_title
-        : (data as TmdbShowResponse).original_name,
+      title,
+      originalTitle,
       overview: data.overview || null,
       slug: generateSlug(
         isMovie ? (data as TmdbMovieResponse).title : (data as TmdbShowResponse).name,
@@ -115,6 +118,7 @@ export class TmdbMapper {
       videos: this.extractVideos(data),
       credits: this.extractCredits(data, type),
       watchProvidersRaw: this.extractProviders(data),
+      alternativeTitles: this.extractAlternativeTitles(data, type, title, originalTitle),
 
       details: {},
     };
@@ -152,6 +156,57 @@ export class TmdbMapper {
       strict: true,
       locale: 'uk',
     });
+  }
+
+  /**
+   * Extracts alternative titles from TMDB API response.
+   * Filters by relevant countries (UA, US, RU, GB + origin country),
+   * deduplicates against primary title/originalTitle, caps at MAX_ALT_TITLES.
+   */
+  static extractAlternativeTitles(
+    data: TmdbMediaResponse,
+    type: MediaType,
+    title: string,
+    originalTitle: string | null,
+  ): string[] {
+    const isMovie = type === MediaType.MOVIE;
+    const altTitlesData = data.alternative_titles;
+    if (!altTitlesData) return [];
+
+    // Movies use { titles: [...] }, Shows use { results: [...] }
+    const rawTitles: TmdbAlternativeTitle[] = isMovie
+      ? altTitlesData.titles || []
+      : altTitlesData.results || [];
+
+    if (rawTitles.length === 0) return [];
+
+    // Include origin country titles
+    const originCountries = isMovie
+      ? (data as TmdbMovieResponse).production_countries?.map((c) => c.iso_3166_1) || []
+      : (data as TmdbShowResponse).origin_country || [];
+
+    const allowedCountries = new Set([...ALT_TITLE_COUNTRIES, ...originCountries]);
+
+    // Deduplicate against primary title and original_title
+    const existingTitles = new Set(
+      [title, originalTitle].filter(Boolean).map((t) => t!.toLowerCase().trim()),
+    );
+
+    const result: string[] = [];
+    const seen = new Set<string>();
+
+    for (const entry of rawTitles) {
+      if (!allowedCountries.has(entry.iso_3166_1)) continue;
+      const normalized = entry.title?.trim();
+      if (!normalized) continue;
+      const lower = normalized.toLowerCase();
+      if (existingTitles.has(lower) || seen.has(lower)) continue;
+      seen.add(lower);
+      result.push(normalized);
+      if (result.length >= MAX_ALT_TITLES) break;
+    }
+
+    return result;
   }
 
   /**

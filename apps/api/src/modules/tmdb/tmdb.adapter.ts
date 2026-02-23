@@ -102,7 +102,7 @@ export class TmdbAdapter implements MetadataProviderPort {
   public async getMovie(tmdbId: number): Promise<NormalizedMedia | null> {
     try {
       const data = await this.fetch<TmdbMediaResponse>(`/movie/${tmdbId}`, {
-        append_to_response: 'credits,videos,release_dates,watch/providers',
+        append_to_response: 'credits,videos,release_dates,watch/providers,alternative_titles',
         include_video_language: 'uk,en',
       });
       const result = TmdbMapper.toDomain(data, MediaType.MOVIE);
@@ -139,6 +139,7 @@ export class TmdbAdapter implements MetadataProviderPort {
           // Preserve origin metadata even in fallback path
           originCountries: movieData.production_countries?.map((c) => c.iso_3166_1) || null,
           originalLanguage: data.original_language || null,
+          alternativeTitles: [],
         } as NormalizedMedia;
       }
       return result;
@@ -159,7 +160,8 @@ export class TmdbAdapter implements MetadataProviderPort {
   public async getShow(tmdbId: number): Promise<NormalizedMedia | null> {
     try {
       const data = await this.fetch<TmdbMediaResponse>(`/tv/${tmdbId}`, {
-        append_to_response: 'external_ids,aggregate_credits,videos,content_ratings,watch/providers',
+        append_to_response:
+          'external_ids,aggregate_credits,videos,content_ratings,watch/providers,alternative_titles',
         include_video_language: 'uk,en',
       });
       const result = TmdbMapper.toDomain(data, MediaType.SHOW);
@@ -191,6 +193,7 @@ export class TmdbAdapter implements MetadataProviderPort {
           // Preserve origin metadata even in fallback path
           originCountries: showData.origin_country || null,
           originalLanguage: data.original_language || null,
+          alternativeTitles: [],
         } as NormalizedMedia;
       }
       return result;
