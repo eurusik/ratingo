@@ -21,7 +21,6 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { authApi, type MeDto, type LoginDto, type RegisterDto } from '../api/auth.client';
 import { tokenStorage } from './token-storage';
-import { refreshTokens } from './refresh';
 import { setTokenGetter } from '../api/client';
 import { scheduleProactiveRefresh, cancelProactiveRefresh } from './proactive-refresh';
 import {
@@ -145,21 +144,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     try {
+      // The afterResponse hook in client.ts transparently handles
+      // 401 → refresh → retry. If me() throws, refresh already failed.
       const me = await authApi.me();
       setUser(me);
       scheduleProactiveRefresh();
     } catch {
-      // Token invalid or expired, try refresh
-      try {
-        await refreshTokens();
-        const me = await authApi.me();
-        setUser(me);
-        scheduleProactiveRefresh();
-      } catch {
-        // Refresh failed, clear tokens
-        tokenStorage.clearTokens();
-        setUser(null);
-      }
+      // afterResponse hook already attempted refresh and failed,
+      // tokens are already cleared by auth:unauthorized event
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
