@@ -42,7 +42,7 @@ export function SearchContent({ search, listClassName }: SearchContentProps) {
   } = search;
 
   return (
-    <Command className={CMDK_CLASSES}>
+    <Command shouldFilter={false} className={CMDK_CLASSES}>
       <CommandInput
         placeholder={dict.search.placeholder}
         value={query}
@@ -106,6 +106,8 @@ export function SearchContent({ search, listClassName }: SearchContentProps) {
                   isLocal={false}
                   isImporting={importingTmdbId === item.tmdbId}
                   notImportedLabel={dict.search.notImported}
+                  matchedAlternativeTitle={item.matchedAlternativeTitle}
+                  alsoKnownAsLabel={dict.search.alsoKnownAs}
                   onSelect={() =>
                     handleImport(
                       item.tmdbId,

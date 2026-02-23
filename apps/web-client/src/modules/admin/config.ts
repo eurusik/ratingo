@@ -48,6 +48,12 @@ export const ADMIN_NAVIGATION: NavigationItem[] = [
         href: '/admin/providers',
         permissions: ['admin.providers.read'],
       },
+      {
+        id: 'backfill',
+        label: 'Бекфіл',
+        href: '/admin/backfill',
+        permissions: ['admin.backfill.read'],
+      },
     ],
   },
   {

@@ -22,6 +22,7 @@ interface BaseSearchResultItem {
   year: number | null;
   posterPath: string | null;
   rating: number;
+  alternativeTitles: string[] | null;
 }
 
 /**

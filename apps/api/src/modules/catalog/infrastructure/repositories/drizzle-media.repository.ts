@@ -141,6 +141,23 @@ export class DrizzleMediaRepository implements IMediaRepository {
   }
 
   /**
+   * Updates only the alternative_titles column for a media item.
+   */
+  async updateAlternativeTitles(id: string, titles: string[] | null): Promise<void> {
+    return withDbError(
+      'update alternative titles',
+      this.logger,
+      async () => {
+        await this.db
+          .update(schema.mediaItems)
+          .set({ alternativeTitles: titles, updatedAt: new Date() })
+          .where(eq(schema.mediaItems.id, id));
+      },
+      { id, titleCount: titles?.length ?? 0 },
+    );
+  }
+
+  /**
    * Inserts a minimal stub media item (media_items only).
    * If exists, returns existing id/slug without failing.
    *
@@ -577,6 +594,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           .select({
             id: schema.mediaItems.id,
             tmdbId: schema.mediaItems.tmdbId,
+            alternativeTitles: schema.mediaItems.alternativeTitles,
           })
           .from(schema.mediaItems)
           .where(inArray(schema.mediaItems.tmdbId, tmdbIds));

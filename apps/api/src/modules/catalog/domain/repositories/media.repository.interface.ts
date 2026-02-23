@@ -31,6 +31,7 @@ export interface MediaScoreData {
 export interface MediaWithTmdbId {
   id: string;
   tmdbId: number;
+  alternativeTitles: string[] | null;
 }
 
 /**
@@ -100,6 +101,15 @@ export interface IMediaRepository {
   updateIngestionStatus(tmdbId: number, status: IngestionStatus): Promise<void>;
 
   /**
+   * Updates only the alternative_titles column for a media item.
+   *
+   * @param {string} id - Media item ID
+   * @param {string[] | null} titles - Alternative titles or null
+   * @returns {Promise<void>} Nothing
+   */
+  updateAlternativeTitles(id: string, titles: string[] | null): Promise<void>;
+
+  /**
    * Retrieves media data needed for score calculation.
    *
    * @param {string} id - Media item id
@@ -109,10 +119,9 @@ export interface IMediaRepository {
 
   /**
    * Batch: Retrieves multiple media items by TMDB IDs.
-   * Returns a map of tmdbId -> { id, tmdbId }
    *
    * @param {number[]} tmdbIds - TMDB IDs
-   * @returns {Promise<MediaWithTmdbId[]>} Mappings list
+   * @returns {Promise<MediaWithTmdbId[]>} Mappings list with id, tmdbId, alternativeTitles
    */
   findManyByTmdbIds(tmdbIds: number[]): Promise<MediaWithTmdbId[]>;
 

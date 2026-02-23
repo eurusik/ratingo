@@ -14,6 +14,7 @@ import { StatsModule } from '../stats/stats.module';
 import { TmdbModule } from '../tmdb/public';
 import { UserActionsModule } from '../user-actions/user-actions.module';
 
+import { BackfillAltTitlesPipeline } from './application/pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from './application/pipelines/backfill-imdb.pipeline';
 import { NewReleasesPipeline } from './application/pipelines/new-releases.pipeline';
 import { NowPlayingPipeline } from './application/pipelines/now-playing.pipeline';
@@ -102,6 +103,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     NowPlayingPipeline,
     NewReleasesPipeline,
     BackfillImdbPipeline,
+    BackfillAltTitlesPipeline,
   ],
   exports: [SyncMediaService, TRAKT_RATINGS_PORT, TRAKT_LISTS_PORT, SnapshotsService],
 })

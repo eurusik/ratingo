@@ -17,6 +17,7 @@ export {
   usePreparePolicy,
   usePromoteRun,
   useCancelRun,
+  useBackfillAltTitles,
 } from './admin';
 export {
   adminProvidersKeys,

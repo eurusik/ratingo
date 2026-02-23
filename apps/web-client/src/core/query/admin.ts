@@ -291,3 +291,21 @@ export function useCreatePolicy() {
     },
   });
 }
+
+// ============================================================================
+// Ingestion / Backfill mutations
+// ============================================================================
+
+/**
+ * Mutation hook for backfilling alternative titles.
+ *
+ * Queues a BullMQ job that fetches missing alt titles from TMDB
+ * for all media items. Fire-and-forget — no cache invalidation needed.
+ *
+ * @returns Mutation object with backfill job info on success
+ */
+export function useBackfillAltTitles() {
+  return useMutation({
+    mutationFn: (params?: { force?: boolean }) => adminApi.backfillAltTitles(params?.force),
+  });
+}

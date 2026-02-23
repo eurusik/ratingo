@@ -77,6 +77,13 @@ export type PoliciesListDto = components['schemas']['PoliciesListDto'];
 export type RunsListDto = components['schemas']['RunsListDto'];
 
 // ============================================================================
+// Backfill types (generated from API contract)
+// ============================================================================
+
+/** Response from backfill endpoints (ingestion controller). */
+export type BackfillJobDto = components['schemas']['IngestionJobResponseDto'];
+
+// ============================================================================
 // Status constants and helpers
 // ============================================================================
 
@@ -245,6 +252,26 @@ export class AdminApiClient {
   async getRunDiff(runId: string, sampleSize = 50): Promise<DiffReportDto> {
     return apiGet<DiffReportDto>(`admin/catalog-policies/runs/${runId}/diff`, {
       searchParams: { sampleSize },
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Ingestion / Backfill
+  // -------------------------------------------------------------------------
+
+  /**
+   * Queues backfill job for items missing alternative titles.
+   *
+   * Fetches alt titles from TMDB for all media items that don't have them yet.
+   * One-time operation; future syncs populate alt titles automatically.
+   *
+   * @param force - When true, bypasses daily dedup and runs immediately
+   * @returns Backfill job info with jobId and status
+   */
+  async backfillAltTitles(force?: boolean): Promise<BackfillJobDto> {
+    const searchParams = force ? { force: 'true' } : undefined;
+    return apiPost<BackfillJobDto>('ingestion/backfill/alt-titles', undefined, {
+      searchParams,
     });
   }
 }

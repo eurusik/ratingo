@@ -4,7 +4,7 @@ import * as React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
-import { Menu, FileText, Play, Tv, Newspaper, LayoutDashboard, Plug, Shield, Flag } from 'lucide-react';
+import { Menu, FileText, Play, Tv, Newspaper, LayoutDashboard, Plug, Shield, Flag, Database } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { NavigationItem } from '../../types';
 import { Button } from '@/shared/ui/button';
@@ -29,6 +29,7 @@ const iconMap: Record<string, React.ReactNode> = {
   runs: <Play className="h-4 w-4" />,
   reports: <Flag className="h-4 w-4" />,
   providers: <Tv className="h-4 w-4" />,
+  backfill: <Database className="h-4 w-4" />,
   journal: <Newspaper className="h-4 w-4" />,
 };
 
@@ -43,6 +44,7 @@ const labelMap: Record<string, string> = {
   runs: 'admin.navigation.runs',
   reports: 'admin.navigation.reports',
   providers: 'admin.navigation.providers',
+  backfill: 'admin.navigation.backfill',
   journal: 'admin.navigation.journal',
 };
 

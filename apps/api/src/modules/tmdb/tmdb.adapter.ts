@@ -22,7 +22,11 @@ import {
 } from '../ingestion/public';
 
 import { TmdbMapper } from './mappers/tmdb.mapper';
-import type { TmdbMediaResponse, TmdbSeasonDetailResponse } from './types/tmdb-api.types';
+import type {
+  TmdbAlternativeTitle,
+  TmdbMediaResponse,
+  TmdbSeasonDetailResponse,
+} from './types/tmdb-api.types';
 
 /**
  * TMDB-specific retry configuration.
@@ -203,6 +207,35 @@ export class TmdbAdapter implements MetadataProviderPort {
         return null;
       }
       this.logger.error(`TMDB getShow error for ${tmdbId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetches only alternative titles for a media item from TMDB.
+   * Uses dedicated lightweight endpoints (no credits/videos/providers).
+   * Returns empty array on 404.
+   */
+  public async getAlternativeTitles(
+    tmdbId: number,
+    type: MediaType,
+  ): Promise<TmdbAlternativeTitle[]> {
+    const endpoint =
+      type === MediaType.MOVIE
+        ? `/movie/${tmdbId}/alternative_titles`
+        : `/tv/${tmdbId}/alternative_titles`;
+
+    try {
+      const data = await this.fetch<{
+        titles?: TmdbAlternativeTitle[];
+        results?: TmdbAlternativeTitle[];
+      }>(endpoint, {}, { skipLanguage: true });
+
+      return data.titles || data.results || [];
+    } catch (error) {
+      if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
+        return [];
+      }
       throw error;
     }
   }

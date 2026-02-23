@@ -39,6 +39,11 @@ export enum IngestionJob {
   BACKFILL_IMDB_DISPATCHER = 'backfill-imdb-dispatcher',
   /** Item job: re-syncs a single show to fetch IMDb ID */
   BACKFILL_IMDB_ITEM = 'backfill-imdb-item',
+
+  /** Dispatcher job: finds items without alternative titles and queues TMDB fetch */
+  BACKFILL_ALT_TITLES_DISPATCHER = 'backfill-alt-titles-dispatcher',
+  /** Item job: fetches alternative titles from TMDB for a single item */
+  BACKFILL_ALT_TITLES_ITEM = 'backfill-alt-titles-item',
 }
 
 /**
@@ -126,3 +131,8 @@ export const JOB_DEDUPE_CHECK_CONCURRENCY = 50;
  * Max seasons to fetch for drop-off analysis.
  */
 export const MAX_SEASONS_FOR_ANALYSIS = 10;
+
+/**
+ * Batch size for alternative titles backfill dispatcher pagination.
+ */
+export const BACKFILL_ALT_TITLES_BATCH_SIZE = 100;
