@@ -5,6 +5,7 @@
  */
 
 import { HTTPError } from 'ky';
+import { ErrorCode } from './error-codes';
 
 /** Structure of API error response from backend. */
 export interface ApiErrorDetail {
@@ -45,6 +46,43 @@ export class ApiError extends Error {
   static fromResponse(error: ApiErrorDetail): ApiError {
     return new ApiError(error.code, error.statusCode, error.message, error.details);
   }
+}
+
+/** Auth error messages from i18n dict. */
+export interface AuthErrorMessages {
+  invalidCredentials: string;
+  emailAlreadyExists: string;
+  usernameTaken: string;
+  tooManyRequests: string;
+  unknownError: string;
+}
+
+/**
+ * Maps API errors to user-friendly i18n messages for auth forms.
+ *
+ * @param error - Caught error from API call
+ * @param messages - Auth error messages from `dict.auth.errors`
+ * @returns User-friendly error message
+ */
+export function mapAuthError(error: unknown, messages: AuthErrorMessages): string {
+  if (error instanceof ApiError) {
+    if (error.code === ErrorCode.UNAUTHORIZED) {
+      return messages.invalidCredentials;
+    }
+
+    if (error.statusCode === 409) {
+      // Relies on backend message text — ideally backend should use distinct error codes
+      const msg = error.message.toLowerCase();
+      if (msg.includes('email')) return messages.emailAlreadyExists;
+      if (msg.includes('username')) return messages.usernameTaken;
+    }
+
+    if (error.code === ErrorCode.RATE_LIMITED) {
+      return messages.tooManyRequests;
+    }
+  }
+
+  return messages.unknownError;
 }
 
 /**

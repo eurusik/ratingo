@@ -1,17 +1,17 @@
 /**
  * Google Sign-In button component.
  *
- * Fetches OAuth configuration on mount and conditionally renders
- * based on whether Google OAuth is enabled.
+ * Uses shared auth config query — no duplicate requests
+ * when rendered alongside FacebookButton.
  */
 
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Button } from '@/shared/ui';
 import { getApiUrl } from '@/core/config';
-import { authApi } from '@/core/api';
 import { useTranslation } from '@/shared/i18n';
+import { cn } from '@/shared/utils';
+import { useAuthConfig } from '../hooks';
 
 /** Google "G" logo icon following brand guidelines. */
 function GoogleIcon({ className }: { className?: string }) {
@@ -56,17 +56,9 @@ interface GoogleButtonProps {
  */
 export function GoogleButton({ returnTo, mode = 'login', className }: GoogleButtonProps) {
   const { dict } = useTranslation();
-  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const { data: config } = useAuthConfig();
 
-  useEffect(() => {
-    authApi
-      .getAuthConfig()
-      .then((config) => setEnabled(config.google?.enabled ?? false))
-      .catch(() => setEnabled(false));
-  }, []);
-
-  // Don't render while loading or if disabled
-  if (enabled === null || enabled === false) {
+  if (!config?.google?.enabled) {
     return null;
   }
 
@@ -81,7 +73,7 @@ export function GoogleButton({ returnTo, mode = 'login', className }: GoogleButt
     <Button
       type="button"
       variant="outline"
-      className={`w-full bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-gray-700 ${className ?? ''}`}
+      className={cn('w-full bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-gray-700', className)}
       onClick={handleClick}
     >
       <GoogleIcon className="w-5 h-5" />

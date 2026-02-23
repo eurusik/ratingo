@@ -69,6 +69,19 @@ function createClient(): KyInstance {
           }
         },
       ],
+      beforeError: [
+        async (error) => {
+          try {
+            const body = (await error.response.clone().json()) as { error?: ApiErrorDetail };
+            if (body?.error?.code) {
+              throw ApiError.fromResponse(body.error);
+            }
+          } catch (e) {
+            if (e instanceof ApiError) throw e;
+          }
+          return error;
+        },
+      ],
       afterResponse: [
         async (request, _options, response) => {
           // Skip handling in SSR

@@ -7,11 +7,14 @@ import type { getDictionary } from '@/shared/i18n';
 
 type Dict = ReturnType<typeof getDictionary>;
 
+/** Must match backend PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/ */
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
 /** Creates login form schema with i18n messages. */
 export function createLoginSchema(dict: Dict) {
   return z.object({
     email: z.string().email(dict.auth.validation.emailInvalid),
-    password: z.string().min(6, dict.auth.validation.passwordMin),
+    password: z.string().min(1, dict.auth.validation.passwordRequired),
   });
 }
 
@@ -25,7 +28,10 @@ export function createRegisterSchema(dict: Dict) {
         .min(3, dict.auth.validation.usernameMin)
         .max(20, dict.auth.validation.usernameMax)
         .regex(/^[a-zA-Z0-9_]+$/, dict.auth.validation.usernameFormat),
-      password: z.string().min(6, dict.auth.validation.passwordMin),
+      password: z
+        .string()
+        .min(8, dict.auth.validation.passwordMin)
+        .regex(PASSWORD_REGEX, dict.auth.validation.passwordFormat),
       confirmPassword: z.string(),
     })
     .refine((data) => data.password === data.confirmPassword, {

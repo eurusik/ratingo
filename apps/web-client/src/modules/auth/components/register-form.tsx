@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/core/auth';
+import { mapAuthError } from '@/core/api/error';
 import { useTranslation } from '@/shared/i18n';
 import { Button, Input, Label, Alert, AlertDescription } from '@/shared/ui';
 import { createRegisterSchema, type RegisterFormData } from '../schemas';
@@ -38,6 +39,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(schema),
+    defaultValues: { email: '', username: '', password: '', confirmPassword: '' },
   });
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -50,7 +52,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin, returnTo }: RegisterF
       });
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : dict.auth.errors.registerFailed);
+      setError(mapAuthError(err, dict.auth.errors));
     }
   };
 

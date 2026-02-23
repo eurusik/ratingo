@@ -209,15 +209,20 @@
     },
     "validation": {
       "emailInvalid": "Невірний формат email",
-      "passwordMin": "Мінімум 6 символів",
+      "passwordRequired": "Введіть пароль",
+      "passwordMin": "Мінімум 8 символів",
+      "passwordFormat": "Мінімум 1 велика, 1 мала літера та 1 цифра",
       "usernameMin": "Мінімум 3 символи",
       "usernameMax": "Максимум 20 символів",
       "usernameFormat": "Тільки латинські букви, цифри та _",
       "passwordMismatch": "Паролі не співпадають"
     },
     "errors": {
-      "loginFailed": "Помилка входу",
-      "registerFailed": "Помилка реєстрації"
+      "invalidCredentials": "Невірний email або пароль",
+      "emailAlreadyExists": "Цей email вже зареєстрований",
+      "usernameTaken": "Це імʼя вже зайнято",
+      "tooManyRequests": "Забагато спроб. Спробуйте пізніше",
+      "unknownError": "Щось пішло не так. Спробуйте ще"
     }
   },
   "nav": {

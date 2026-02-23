@@ -1,17 +1,17 @@
 /**
  * Facebook Sign-In button component.
  *
- * Fetches OAuth configuration on mount and conditionally renders
- * based on whether Facebook OAuth is enabled.
+ * Uses shared auth config query — no duplicate requests
+ * when rendered alongside GoogleButton.
  */
 
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Button } from '@/shared/ui';
 import { getApiUrl } from '@/core/config';
-import { authApi } from '@/core/api';
 import { useTranslation } from '@/shared/i18n';
+import { cn } from '@/shared/utils';
+import { useAuthConfig } from '../hooks';
 
 /** Facebook "f" logo icon following brand guidelines. */
 function FacebookIcon({ className }: { className?: string }) {
@@ -44,17 +44,9 @@ interface FacebookButtonProps {
  */
 export function FacebookButton({ returnTo, mode = 'login', className }: FacebookButtonProps) {
   const { dict } = useTranslation();
-  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const { data: config } = useAuthConfig();
 
-  useEffect(() => {
-    authApi
-      .getAuthConfig()
-      .then((config) => setEnabled(config.facebook?.enabled ?? false))
-      .catch(() => setEnabled(false));
-  }, []);
-
-  // Don't render while loading or if disabled
-  if (enabled === null || enabled === false) {
+  if (!config?.facebook?.enabled) {
     return null;
   }
 
@@ -69,7 +61,7 @@ export function FacebookButton({ returnTo, mode = 'login', className }: Facebook
     <Button
       type="button"
       variant="outline"
-      className={`w-full bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-gray-700 ${className ?? ''}`}
+      className={cn('w-full bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:text-gray-700', className)}
       onClick={handleClick}
     >
       <FacebookIcon className="w-5 h-5" />

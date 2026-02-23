@@ -209,15 +209,20 @@
     },
     "validation": {
       "emailInvalid": "Invalid email format",
-      "passwordMin": "Minimum 6 characters",
+      "passwordRequired": "Enter your password",
+      "passwordMin": "Minimum 8 characters",
+      "passwordFormat": "At least 1 uppercase, 1 lowercase and 1 digit",
       "usernameMin": "Minimum 3 characters",
       "usernameMax": "Maximum 20 characters",
       "usernameFormat": "Only letters, numbers and _",
       "passwordMismatch": "Passwords don't match"
     },
     "errors": {
-      "loginFailed": "Login failed",
-      "registerFailed": "Registration failed"
+      "invalidCredentials": "Wrong email or password",
+      "emailAlreadyExists": "This email is already registered",
+      "usernameTaken": "This username is already taken",
+      "tooManyRequests": "Too many attempts. Try again later",
+      "unknownError": "Something went wrong. Try again"
     }
   },
   "nav": {
