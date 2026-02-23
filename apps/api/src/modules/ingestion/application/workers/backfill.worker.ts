@@ -1,0 +1,69 @@
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Logger } from '@nestjs/common';
+
+import { type Job } from 'bullmq';
+
+import { type MediaType } from '@/common/enums/media-type.enum';
+import { WORKER_CONFIG } from '@/config/queue.config';
+
+import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
+import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
+import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
+
+/**
+ * High-throughput worker for backfill item jobs (TMDB-only, no Trakt).
+ *
+ * Separated from SyncWorker so backfill jobs bypass the Trakt rate limiter.
+ * Concurrency: 15 jobs in parallel — TMDB allows ~40 req/s, each job makes 1 call.
+ */
+@Processor(BACKFILL_QUEUE, {
+  concurrency: 15,
+  lockDuration: WORKER_CONFIG.backfill.lockDuration,
+  limiter: WORKER_CONFIG.backfill.limiter,
+})
+export class BackfillWorker extends WorkerHost {
+  private readonly logger = new Logger(BackfillWorker.name);
+
+  constructor(
+    private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
+    private readonly backfillImdbPipeline: BackfillImdbPipeline,
+  ) {
+    super();
+  }
+
+  async process(
+    job: Job<{
+      tmdbId?: number;
+      type?: MediaType;
+      mediaItemId?: string;
+      title?: string;
+      originalTitle?: string | null;
+    }>,
+  ): Promise<void> {
+    this.logger.debug(`[job:${job.id}] Processing ${job.name}`);
+    try {
+      switch (job.name) {
+        case IngestionJob.BACKFILL_ALT_TITLES_ITEM:
+          await this.backfillAltTitlesPipeline.processItem({
+            mediaItemId: job.data.mediaItemId!,
+            tmdbId: job.data.tmdbId!,
+            type: job.data.type!,
+            title: job.data.title!,
+            originalTitle: job.data.originalTitle ?? null,
+          });
+          break;
+
+        case IngestionJob.BACKFILL_IMDB_ITEM:
+          await this.backfillImdbPipeline.processItem(job.data.tmdbId!, job.id ?? 'unknown');
+          break;
+
+        default:
+          this.logger.warn(`Unknown backfill job type: ${job.name}`);
+      }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(`[job:${job.id}] Failed: ${err.message}`, err.stack);
+      throw error;
+    }
+  }
+}

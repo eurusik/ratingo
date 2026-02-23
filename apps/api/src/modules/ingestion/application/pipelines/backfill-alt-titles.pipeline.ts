@@ -14,7 +14,7 @@ import { ALT_TITLE_COUNTRIES, MAX_ALT_TITLES } from '../../../tmdb/public';
 import { TmdbAdapter } from '../../../tmdb/public';
 import {
   BACKFILL_ALT_TITLES_BATCH_SIZE,
-  INGESTION_QUEUE,
+  BACKFILL_QUEUE,
   IngestionJob,
 } from '../../ingestion.constants';
 
@@ -34,7 +34,7 @@ export class BackfillAltTitlesPipeline {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
-    @InjectQueue(INGESTION_QUEUE)
+    @InjectQueue(BACKFILL_QUEUE)
     private readonly queue: Queue,
     private readonly tmdbAdapter: TmdbAdapter,
     @Inject(MEDIA_REPOSITORY)

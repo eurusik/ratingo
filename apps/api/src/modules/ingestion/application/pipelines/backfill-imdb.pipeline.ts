@@ -9,7 +9,7 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
+import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { SyncMediaService } from '../services/sync-media.service';
 
 /**
@@ -34,7 +34,7 @@ export class BackfillImdbPipeline {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
-    @InjectQueue(INGESTION_QUEUE)
+    @InjectQueue(BACKFILL_QUEUE)
     private readonly queue: Queue,
     private readonly syncService: SyncMediaService,
   ) {}

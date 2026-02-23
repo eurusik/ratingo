@@ -1,7 +1,13 @@
 /**
- * Queue name for ingestion tasks.
+ * Queue name for ingestion tasks (Trakt/OMDb/TVMaze — rate-limited).
  */
 export const INGESTION_QUEUE = 'ingestion';
+
+/**
+ * Queue name for backfill tasks (TMDB-only — high throughput).
+ * Separated from ingestion queue to avoid Trakt rate limiter bottleneck.
+ */
+export const BACKFILL_QUEUE = 'backfill';
 
 /**
  * Job names for ingestion queue.

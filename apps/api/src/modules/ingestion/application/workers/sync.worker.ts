@@ -144,22 +144,12 @@ export class SyncWorker extends WorkerHost {
         case IngestionJob.BACKFILL_IMDB_DISPATCHER:
           await this.backfillImdbPipeline.dispatch();
           break;
-        case IngestionJob.BACKFILL_IMDB_ITEM:
-          await this.backfillImdbPipeline.processItem(job.data.tmdbId!, jid);
-          break;
+        // Note: BACKFILL_IMDB_ITEM and BACKFILL_ALT_TITLES_ITEM are handled
+        // by BackfillWorker on the dedicated backfill queue (higher throughput).
 
-        // Alternative titles backfill pipeline
+        // Alternative titles backfill dispatcher (stays here — single job)
         case IngestionJob.BACKFILL_ALT_TITLES_DISPATCHER:
           await this.backfillAltTitlesPipeline.dispatch();
-          break;
-        case IngestionJob.BACKFILL_ALT_TITLES_ITEM:
-          await this.backfillAltTitlesPipeline.processItem({
-            mediaItemId: job.data.mediaItemId!,
-            tmdbId: job.data.tmdbId!,
-            type: job.data.type!,
-            title: job.data.title!,
-            originalTitle: job.data.originalTitle ?? null,
-          });
           break;
 
         default:
