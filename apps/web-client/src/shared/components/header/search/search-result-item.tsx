@@ -43,7 +43,7 @@ export function SearchResultItem({
   return (
     <CommandItem
       key={`${isLocal ? 'local' : 'tmdb'}-${tmdbId}`}
-      value={`${isLocal ? 'local' : 'tmdb'}-${tmdbId}`}
+      value={`${title} ${matchedAlternativeTitle ?? ''} ${year ?? ''} ${isLocal ? '' : 'tmdb'}`}
       onSelect={onSelect}
       disabled={isImporting}
       className="gap-3 py-2 cursor-pointer"
