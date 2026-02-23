@@ -656,6 +656,7 @@ export class DrizzleMediaRepository implements IMediaRepository {
           type: schema.mediaItems.type,
           title: schema.mediaItems.title,
           originalTitle: schema.mediaItems.originalTitle,
+          alternativeTitles: schema.mediaItems.alternativeTitles,
           slug: schema.mediaItems.slug,
           posterPath: schema.mediaItems.posterPath,
           rating: schema.mediaItems.rating,
@@ -686,6 +687,10 @@ export class DrizzleMediaRepository implements IMediaRepository {
               OR ${schema.mediaItems.originalTitle} ILIKE ${likePattern}
               OR ${schema.mediaItems.title} % ${searchTerm}
               OR ${schema.mediaItems.originalTitle} % ${searchTerm}
+              OR EXISTS (
+                SELECT 1 FROM unnest(${schema.mediaItems.alternativeTitles}) AS alt
+                WHERE alt ILIKE ${likePattern} OR alt % ${searchTerm}
+              )
             )`,
           ),
         )
@@ -693,7 +698,8 @@ export class DrizzleMediaRepository implements IMediaRepository {
           // Order by similarity score (higher = better match)
           sql`GREATEST(
             similarity(${schema.mediaItems.title}, ${searchTerm}),
-            similarity(COALESCE(${schema.mediaItems.originalTitle}, ''), ${searchTerm})
+            similarity(COALESCE(${schema.mediaItems.originalTitle}, ''), ${searchTerm}),
+            COALESCE((SELECT MAX(similarity(alt, ${searchTerm})) FROM unnest(${schema.mediaItems.alternativeTitles}) AS alt), 0)
           ) DESC`,
           desc(schema.mediaItems.popularity),
         )

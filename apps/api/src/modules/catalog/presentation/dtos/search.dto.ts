@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { ImageDto } from '@/common/dtos/image.dto';
 import { MediaType } from '@/common/enums/media-type.enum';
@@ -42,6 +42,13 @@ export class SearchItemDto {
     description: 'If true, this item exists in local DB',
   })
   isImported: boolean;
+
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description: 'Alternative title that matched the search query',
+  })
+  matchedAlternativeTitle?: string | null;
 }
 
 export class SearchResponseDto {

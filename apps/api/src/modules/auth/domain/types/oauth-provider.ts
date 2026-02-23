@@ -5,7 +5,6 @@
 export const OAUTH_PROVIDER = {
   GOOGLE: 'google',
   FACEBOOK: 'facebook',
-  APPLE: 'apple',
 } as const;
 
 export type OAuthProvider = (typeof OAUTH_PROVIDER)[keyof typeof OAUTH_PROVIDER];

@@ -87,6 +87,154 @@ describe('TmdbMapper', () => {
     },
   };
 
+  describe('extractAlternativeTitles', () => {
+    it('should return empty array when no alternative_titles data', () => {
+      const data = { ...mockMovie, alternative_titles: undefined };
+      const result = TmdbMapper.extractAlternativeTitles(
+        data,
+        MediaType.MOVIE,
+        'Fight Club',
+        'Fight Club',
+      );
+      expect(result).toEqual([]);
+    });
+
+    it('should filter by allowed countries (UA, US, RU, GB + origin)', () => {
+      const data = {
+        ...mockMovie,
+        alternative_titles: {
+          titles: [
+            { iso_3166_1: 'UA', title: 'Бійцівський клуб', type: '' },
+            { iso_3166_1: 'JP', title: 'ファイト・クラブ', type: '' },
+            { iso_3166_1: 'RU', title: 'Бойцовский клуб', type: '' },
+            { iso_3166_1: 'DE', title: 'Fight Club', type: '' },
+          ],
+        },
+      };
+      const result = TmdbMapper.extractAlternativeTitles(
+        data,
+        MediaType.MOVIE,
+        'Fight Club',
+        'Fight Club',
+      );
+      expect(result).toEqual(['Бійцівський клуб', 'Бойцовский клуб']);
+    });
+
+    it('should include origin country titles dynamically', () => {
+      const data = {
+        ...mockMovie,
+        production_countries: [{ iso_3166_1: 'KR', name: 'South Korea' }],
+        alternative_titles: {
+          titles: [
+            { iso_3166_1: 'KR', title: '파이트 클럽', type: '' },
+            { iso_3166_1: 'JP', title: 'ファイト', type: '' },
+          ],
+        },
+      };
+      const result = TmdbMapper.extractAlternativeTitles(
+        data,
+        MediaType.MOVIE,
+        'Fight Club',
+        'Fight Club',
+      );
+      expect(result).toEqual(['파이트 클럽']);
+    });
+
+    it('should deduplicate against primary title and originalTitle', () => {
+      const data = {
+        ...mockMovie,
+        alternative_titles: {
+          titles: [
+            { iso_3166_1: 'US', title: 'Fight Club', type: '' },
+            { iso_3166_1: 'UA', title: 'Бійцівський клуб', type: '' },
+          ],
+        },
+      };
+      const result = TmdbMapper.extractAlternativeTitles(
+        data,
+        MediaType.MOVIE,
+        'Fight Club',
+        'Fight Club',
+      );
+      expect(result).toEqual(['Бійцівський клуб']);
+    });
+
+    it('should deduplicate case-insensitively', () => {
+      const data = {
+        ...mockMovie,
+        alternative_titles: {
+          titles: [
+            { iso_3166_1: 'US', title: 'fight club', type: '' },
+            { iso_3166_1: 'GB', title: 'FIGHT CLUB', type: '' },
+            { iso_3166_1: 'UA', title: 'Бійцівський клуб', type: '' },
+          ],
+        },
+      };
+      const result = TmdbMapper.extractAlternativeTitles(
+        data,
+        MediaType.MOVIE,
+        'Fight Club',
+        'Fight Club',
+      );
+      expect(result).toEqual(['Бійцівський клуб']);
+    });
+
+    it('should cap at MAX_ALT_TITLES (20)', () => {
+      const titles = Array.from({ length: 30 }, (_, i) => ({
+        iso_3166_1: 'UA',
+        title: `Alt Title ${i}`,
+        type: '',
+      }));
+      const data = {
+        ...mockMovie,
+        alternative_titles: { titles },
+      };
+      const result = TmdbMapper.extractAlternativeTitles(
+        data,
+        MediaType.MOVIE,
+        'Fight Club',
+        'Fight Club',
+      );
+      expect(result).toHaveLength(20);
+    });
+
+    it('should use results array for TV shows', () => {
+      const data = {
+        ...mockShow,
+        alternative_titles: {
+          results: [{ iso_3166_1: 'UA', title: 'Пуститися берега', type: '' }],
+        },
+      };
+      const result = TmdbMapper.extractAlternativeTitles(
+        data,
+        MediaType.SHOW,
+        'Breaking Bad',
+        'Breaking Bad',
+      );
+      expect(result).toEqual(['Пуститися берега']);
+    });
+
+    it('should skip empty/whitespace titles', () => {
+      const data = {
+        ...mockMovie,
+        alternative_titles: {
+          titles: [
+            { iso_3166_1: 'UA', title: '', type: '' },
+            { iso_3166_1: 'UA', title: '   ', type: '' },
+            { iso_3166_1: 'UA', title: 'Real Title', type: '' },
+          ],
+        },
+      };
+      const result = TmdbMapper.extractAlternativeTitles(
+        data,
+        MediaType.MOVIE,
+        'Fight Club',
+        'Fight Club',
+      );
+      expect(result).toEqual(['Real Title']);
+    });
+  });
+
   describe('toDomain', () => {
     it('should map a movie correctly', () => {
       const result = TmdbMapper.toDomain(mockMovie, MediaType.MOVIE);

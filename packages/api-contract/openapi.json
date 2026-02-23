@@ -2983,6 +2983,42 @@
         ]
       }
     },
+    "/api/auth/password": {
+      "patch": {
+        "operationId": "AuthController_changePassword",
+        "summary": "Change current user password",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Password changed successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Invalid current password"
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/auth/me": {
       "get": {
         "operationId": "AuthController_me",
@@ -3053,14 +3089,24 @@
         ]
       }
     },
-    "/api/auth/google/callback": {
+    "/api/auth/facebook": {
       "get": {
-        "operationId": "AuthController_googleCallback",
-        "summary": "Google OAuth callback",
-        "parameters": [],
+        "operationId": "AuthController_facebookAuth",
+        "summary": "Initiate Facebook OAuth flow",
+        "parameters": [
+          {
+            "name": "returnTo",
+            "required": false,
+            "in": "query",
+            "description": "URL to redirect after auth",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "302": {
-            "description": "Redirect to frontend with exchange code"
+            "description": "Redirect to Facebook"
           }
         },
         "tags": [
@@ -3121,6 +3167,89 @@
         ]
       }
     },
+    "/api/auth/providers": {
+      "get": {
+        "operationId": "AuthController_getLinkedAccounts",
+        "summary": "Get linked OAuth providers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Linked accounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LinkedAccountDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/providers/{provider}": {
+      "delete": {
+        "operationId": "AuthController_unlinkProvider",
+        "summary": "Unlink OAuth provider",
+        "parameters": [
+          {
+            "name": "provider",
+            "required": true,
+            "in": "path",
+            "description": "OAuth provider to unlink",
+            "schema": {
+              "example": "google",
+              "enum": [
+                "google",
+                "facebook"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Provider unlinked"
+          },
+          "403": {
+            "description": "Cannot unlink last authentication method"
+          }
+        },
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/auth/config": {
       "get": {
         "operationId": "AuthController_getConfig",
@@ -3145,17 +3274,7 @@
                       ]
                     },
                     "data": {
-                      "type": "object",
-                      "properties": {
-                        "google": {
-                          "type": "object",
-                          "properties": {
-                            "enabled": {
-                              "type": "boolean"
-                            }
-                          }
-                        }
-                      }
+                      "$ref": "#/components/schemas/AuthConfigDto"
                     }
                   }
                 }
@@ -3197,36 +3316,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateProfileDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "401": {
-            "description": "Unauthorized"
-          }
-        },
-        "tags": [
-          "Users"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/api/users/me/password": {
-      "patch": {
-        "operationId": "UsersController_changePassword",
-        "summary": "Change current user password (auth: Bearer)",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangePasswordDto"
               }
             }
           }
@@ -9678,6 +9767,11 @@
             "type": "boolean",
             "example": false,
             "description": "If true, this item exists in local DB"
+          },
+          "matchedAlternativeTitle": {
+            "type": "string",
+            "nullable": true,
+            "description": "Alternative title that matched the search query"
           }
         },
         "required": [
@@ -10289,6 +10383,23 @@
           "refreshToken"
         ]
       },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "example": "OldPass123"
+          },
+          "newPassword": {
+            "type": "string",
+            "example": "NewPass456"
+          }
+        },
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
+      },
       "PrivacyDto": {
         "type": "object",
         "properties": {
@@ -10415,6 +10526,20 @@
           "profile": {
             "$ref": "#/components/schemas/ProfileDto"
           },
+          "hasPassword": {
+            "type": "boolean",
+            "description": "Whether the user has a password set (false for OAuth-only accounts)"
+          },
+          "linkedProviders": {
+            "description": "List of linked OAuth provider names",
+            "example": [
+              "google"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "stats": {
             "$ref": "#/components/schemas/StatsDto"
           }
@@ -10426,6 +10551,8 @@
           "avatarUrl",
           "role",
           "profile",
+          "hasPassword",
+          "linkedProviders",
           "stats"
         ]
       },
@@ -10440,6 +10567,75 @@
         },
         "required": [
           "code"
+        ]
+      },
+      "LinkedAccountDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "google",
+            "description": "OAuth provider name"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@gmail.com",
+            "nullable": true,
+            "description": "Email from OAuth provider"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "John Doe",
+            "nullable": true,
+            "description": "Display name from OAuth provider"
+          },
+          "linkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-01-15T10:30:00.000Z",
+            "description": "When the account was linked"
+          }
+        },
+        "required": [
+          "provider",
+          "linkedAt"
+        ]
+      },
+      "ProviderConfigDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether this OAuth provider is enabled"
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "AuthConfigDto": {
+        "type": "object",
+        "properties": {
+          "google": {
+            "description": "Google OAuth configuration",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProviderConfigDto"
+              }
+            ]
+          },
+          "facebook": {
+            "description": "Facebook OAuth configuration",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProviderConfigDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "google",
+          "facebook"
         ]
       },
       "UpdateProfileDto": {
@@ -10494,23 +10690,6 @@
             "example": true
           }
         }
-      },
-      "ChangePasswordDto": {
-        "type": "object",
-        "properties": {
-          "currentPassword": {
-            "type": "string",
-            "example": "OldPass123"
-          },
-          "newPassword": {
-            "type": "string",
-            "example": "NewPass456"
-          }
-        },
-        "required": [
-          "currentPassword",
-          "newPassword"
-        ]
       },
       "CreateAvatarUploadUrlDto": {
         "type": "object",

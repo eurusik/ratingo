@@ -21,6 +21,7 @@ export class MediaItemPersistenceMapper {
       imdbId: media.externalIds.imdbId || null,
       title: media.title || media.originalTitle || `Untitled ${media.externalIds.tmdbId}`,
       originalTitle: media.originalTitle,
+      alternativeTitles: media.alternativeTitles?.length ? media.alternativeTitles : null,
       slug,
       overview: media.overview || null,
       ingestionStatus: media.ingestionStatus,
@@ -98,6 +99,9 @@ export class MediaItemPersistenceMapper {
       ...(media.overview !== undefined && { overview: media.overview }),
       ...(media.originCountries !== undefined && { originCountries: media.originCountries }),
       ...(media.originalLanguage !== undefined && { originalLanguage: media.originalLanguage }),
+      ...(media.alternativeTitles !== undefined && {
+        alternativeTitles: media.alternativeTitles?.length ? media.alternativeTitles : null,
+      }),
     };
 
     // Filter out undefined values

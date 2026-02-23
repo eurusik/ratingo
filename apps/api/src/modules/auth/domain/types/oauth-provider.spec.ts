@@ -8,11 +8,10 @@ describe('OAuthProvider', () => {
     it('should contain expected providers', () => {
       expect(OAUTH_PROVIDER.GOOGLE).toBe('google');
       expect(OAUTH_PROVIDER.FACEBOOK).toBe('facebook');
-      expect(OAUTH_PROVIDER.APPLE).toBe('apple');
     });
 
     it('should be a frozen-like const object', () => {
-      expect(Object.keys(OAUTH_PROVIDER)).toHaveLength(3);
+      expect(Object.keys(OAUTH_PROVIDER)).toHaveLength(2);
     });
   });
 
@@ -25,14 +24,14 @@ describe('OAuthProvider', () => {
       expect(isOAuthProvider('')).toBe(false);
     });
 
-    it.each(['Google', 'GOOGLE', 'Facebook', 'FACEBOOK', 'Apple', 'APPLE'])(
+    it.each(['Google', 'GOOGLE', 'Facebook', 'FACEBOOK'])(
       'should reject case-mismatched provider "%s"',
       (value) => {
         expect(isOAuthProvider(value)).toBe(false);
       },
     );
 
-    it.each(['github', 'twitter', 'linkedin', 'microsoft'])(
+    it.each(['apple', 'github', 'twitter', 'linkedin', 'microsoft'])(
       'should reject unsupported provider "%s"',
       (value) => {
         expect(isOAuthProvider(value)).toBe(false);

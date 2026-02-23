@@ -34,6 +34,7 @@ describe('SearchMapper', () => {
         tmdbId: 603,
         title: 'The Matrix',
         originalTitle: 'The Matrix',
+        alternativeTitles: null,
         year: 1999,
         posterPath: '/poster.jpg',
         rating: 8.7,
@@ -66,6 +67,7 @@ describe('SearchMapper', () => {
         },
         rating: 8.7,
         isImported: true,
+        matchedAlternativeTitle: null,
       });
     });
 
@@ -106,6 +108,7 @@ describe('SearchMapper', () => {
         },
         rating: 9.3,
         isImported: false,
+        matchedAlternativeTitle: null,
       });
     });
 
@@ -118,6 +121,7 @@ describe('SearchMapper', () => {
         tmdbId: 999,
         title: 'No Poster Movie',
         originalTitle: null,
+        alternativeTitles: null,
         year: null,
         posterPath: null,
         rating: 0,
@@ -148,6 +152,7 @@ describe('SearchMapper', () => {
             tmdbId: 272,
             title: 'Batman Begins',
             originalTitle: 'Batman Begins',
+            alternativeTitles: null,
             year: 2005,
             posterPath: '/batman1.jpg',
             rating: 8.2,
@@ -175,6 +180,108 @@ describe('SearchMapper', () => {
       expect(result.tmdb).toHaveLength(1);
       expect(result.local[0].isImported).toBe(true);
       expect(result.tmdb[0].isImported).toBe(false);
+    });
+
+    it('should set matchedAlternativeTitle when alt title matches query', () => {
+      const localItem: LocalSearchResultItem = {
+        source: SEARCH_SOURCE.LOCAL,
+        type: MediaType.SHOW,
+        id: 'uuid-456',
+        slug: 'invincible',
+        tmdbId: 95557,
+        title: 'НЕПЕРЕМОЖНИЙ',
+        originalTitle: 'Invincible',
+        alternativeTitles: ['Невразливий', 'Невколупний'],
+        year: 2021,
+        posterPath: '/invincible.jpg',
+        rating: 8.5,
+      };
+
+      const input: HybridSearchResult = {
+        query: 'Невразливий',
+        local: [localItem],
+        tmdb: [],
+      };
+
+      const result = SearchMapper.toResponseDto(input);
+
+      expect(result.local[0].matchedAlternativeTitle).toBe('Невразливий');
+    });
+
+    it('should match via reverse containment (query contains alt title)', () => {
+      const localItem: LocalSearchResultItem = {
+        source: SEARCH_SOURCE.LOCAL,
+        type: MediaType.SHOW,
+        id: 'uuid-456',
+        slug: 'invincible',
+        tmdbId: 95557,
+        title: 'НЕПЕРЕМОЖНИЙ',
+        originalTitle: 'Invincible',
+        alternativeTitles: ['Невразливий', 'Невколупний'],
+        year: 2021,
+        posterPath: '/invincible.jpg',
+        rating: 8.5,
+      };
+
+      const input: HybridSearchResult = {
+        query: 'Невразливий серіал',
+        local: [localItem],
+        tmdb: [],
+      };
+
+      const result = SearchMapper.toResponseDto(input);
+
+      expect(result.local[0].matchedAlternativeTitle).toBe('Невразливий');
+    });
+
+    it('should set matchedAlternativeTitle to null for TMDB results', () => {
+      const input: HybridSearchResult = {
+        query: 'test',
+        local: [],
+        tmdb: [
+          {
+            source: SEARCH_SOURCE.TMDB,
+            type: MediaType.MOVIE,
+            tmdbId: 123,
+            title: 'Test Movie',
+            originalTitle: 'Test Movie',
+            year: 2024,
+            posterPath: null,
+            rating: 7,
+            isImported: false,
+          },
+        ],
+      };
+
+      const result = SearchMapper.toResponseDto(input);
+
+      expect(result.tmdb[0].matchedAlternativeTitle).toBeNull();
+    });
+
+    it('should set matchedAlternativeTitle to null when no alt title matches', () => {
+      const localItem: LocalSearchResultItem = {
+        source: SEARCH_SOURCE.LOCAL,
+        type: MediaType.SHOW,
+        id: 'uuid-456',
+        slug: 'invincible',
+        tmdbId: 95557,
+        title: 'НЕПЕРЕМОЖНИЙ',
+        originalTitle: 'Invincible',
+        alternativeTitles: ['Невразливий', 'Невколупний'],
+        year: 2021,
+        posterPath: '/invincible.jpg',
+        rating: 8.5,
+      };
+
+      const input: HybridSearchResult = {
+        query: 'НЕПЕРЕМОЖНИЙ',
+        local: [localItem],
+        tmdb: [],
+      };
+
+      const result = SearchMapper.toResponseDto(input);
+
+      expect(result.local[0].matchedAlternativeTitle).toBeNull();
     });
   });
 });

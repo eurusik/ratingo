@@ -128,6 +128,15 @@ export interface TmdbCreator {
 }
 
 /**
+ * Alternative title entry from TMDB API
+ */
+export interface TmdbAlternativeTitle {
+  iso_3166_1: string;
+  title: string;
+  type: string;
+}
+
+/**
  * External IDs from TMDB API
  */
 export interface TmdbExternalIds {
@@ -158,6 +167,10 @@ export interface TmdbBaseResponse {
   external_ids?: TmdbExternalIds;
   'watch/providers'?: {
     results: Record<string, TmdbWatchProviderRegion>;
+  };
+  alternative_titles?: {
+    titles?: TmdbAlternativeTitle[]; // Movies
+    results?: TmdbAlternativeTitle[]; // TV Shows
   };
 }
 

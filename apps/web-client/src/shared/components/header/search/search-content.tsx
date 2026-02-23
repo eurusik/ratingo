@@ -82,6 +82,8 @@ export function SearchContent({ search, listClassName }: SearchContentProps) {
                 posterUrl={item.poster?.small}
                 slug={item.slug}
                 isLocal
+                matchedAlternativeTitle={item.matchedAlternativeTitle}
+                alsoKnownAsLabel={dict.search.alsoKnownAs}
                 onSelect={() => item.slug && handleSelect(item.slug, item.type as MediaType)}
               />
             ))}

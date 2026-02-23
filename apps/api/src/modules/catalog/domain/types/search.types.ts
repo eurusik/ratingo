@@ -31,6 +31,7 @@ export interface LocalSearchResultItem extends BaseSearchResultItem {
   source: typeof SEARCH_SOURCE.LOCAL;
   id: string;
   slug: string;
+  alternativeTitles: string[] | null;
 }
 
 /**

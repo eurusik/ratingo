@@ -55,6 +55,7 @@ export class CatalogSearchService {
         tmdbId: r.tmdbId,
         title: r.title,
         originalTitle: r.originalTitle,
+        alternativeTitles: r.alternativeTitles,
         year: r.releaseDate ? new Date(r.releaseDate).getFullYear() || null : null,
         posterPath: r.posterPath,
         rating: r.rating || 0,

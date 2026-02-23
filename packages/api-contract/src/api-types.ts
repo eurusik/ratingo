@@ -671,6 +671,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change current user password */
+        patch: operations["AuthController_changePassword"];
+        trace?: never;
+    };
     "/api/auth/me": {
         parameters: {
             query?: never;
@@ -705,15 +722,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/auth/google/callback": {
+    "/api/auth/facebook": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Google OAuth callback */
-        get: operations["AuthController_googleCallback"];
+        /** Initiate Facebook OAuth flow */
+        get: operations["AuthController_facebookAuth"];
         put?: never;
         post?: never;
         delete?: never;
@@ -734,6 +751,40 @@ export interface paths {
         /** Exchange one-time code for tokens */
         post: operations["AuthController_exchangeCode"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get linked OAuth providers */
+        get: operations["AuthController_getLinkedAccounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/providers/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unlink OAuth provider */
+        delete: operations["AuthController_unlinkProvider"];
         options?: never;
         head?: never;
         patch?: never;
@@ -772,23 +823,6 @@ export interface paths {
         head?: never;
         /** Update current user profile (auth: Bearer) */
         patch: operations["UsersController_updateProfile"];
-        trace?: never;
-    };
-    "/api/users/me/password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Change current user password (auth: Bearer) */
-        patch: operations["UsersController_changePassword"];
         trace?: never;
     };
     "/api/users/me/avatar/upload-url": {
@@ -2989,6 +3023,8 @@ export interface components {
              * @example false
              */
             isImported: boolean;
+            /** @description Alternative title that matched the search query */
+            matchedAlternativeTitle?: string | null;
         };
         SearchResponseDto: {
             query: string;
@@ -3266,6 +3302,12 @@ export interface components {
             /** @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... */
             refreshToken: string;
         };
+        ChangePasswordDto: {
+            /** @example OldPass123 */
+            currentPassword: string;
+            /** @example NewPass456 */
+            newPassword: string;
+        };
         PrivacyDto: {
             /** @example true */
             isProfilePublic: boolean;
@@ -3314,6 +3356,15 @@ export interface components {
              */
             role: "user" | "admin";
             profile: components["schemas"]["ProfileDto"];
+            /** @description Whether the user has a password set (false for OAuth-only accounts) */
+            hasPassword: boolean;
+            /**
+             * @description List of linked OAuth provider names
+             * @example [
+             *       "google"
+             *     ]
+             */
+            linkedProviders: string[];
             stats: components["schemas"]["StatsDto"];
         };
         ExchangeCodeDto: {
@@ -3322,6 +3373,39 @@ export interface components {
              * @example abc123xyz...
              */
             code: string;
+        };
+        LinkedAccountDto: {
+            /**
+             * @description OAuth provider name
+             * @example google
+             */
+            provider: string;
+            /**
+             * @description Email from OAuth provider
+             * @example user@gmail.com
+             */
+            email?: string | null;
+            /**
+             * @description Display name from OAuth provider
+             * @example John Doe
+             */
+            displayName?: string | null;
+            /**
+             * Format: date-time
+             * @description When the account was linked
+             * @example 2025-01-15T10:30:00.000Z
+             */
+            linkedAt: string;
+        };
+        ProviderConfigDto: {
+            /** @description Whether this OAuth provider is enabled */
+            enabled: boolean;
+        };
+        AuthConfigDto: {
+            /** @description Google OAuth configuration */
+            google: components["schemas"]["ProviderConfigDto"];
+            /** @description Facebook OAuth configuration */
+            facebook: components["schemas"]["ProviderConfigDto"];
         };
         UpdateProfileDto: {
             /** @example ratingo_fan */
@@ -3348,12 +3432,6 @@ export interface components {
             allowFollowers?: boolean;
             /** @example true */
             autoSubscribeOnWatch?: boolean;
-        };
-        ChangePasswordDto: {
-            /** @example OldPass123 */
-            currentPassword: string;
-            /** @example NewPass456 */
-            newPassword: string;
         };
         CreateAvatarUploadUrlDto: {
             /** @enum {string} */
@@ -7018,6 +7096,42 @@ export interface operations {
             };
         };
     };
+    AuthController_changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordDto"];
+            };
+        };
+        responses: {
+            /** @description Password changed successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid current password */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AuthController_me: {
         parameters: {
             query?: never;
@@ -7070,16 +7184,19 @@ export interface operations {
             };
         };
     };
-    AuthController_googleCallback: {
+    AuthController_facebookAuth: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description URL to redirect after auth */
+                returnTo?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Redirect to frontend with exchange code */
+            /** @description Redirect to Facebook */
             302: {
                 headers: {
                     [name: string]: unknown;
@@ -7130,6 +7247,58 @@ export interface operations {
             };
         };
     };
+    AuthController_getLinkedAccounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Linked accounts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["LinkedAccountDto"][];
+                    };
+                };
+            };
+        };
+    };
+    AuthController_unlinkProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description OAuth provider to unlink */
+                provider: "google" | "facebook";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Provider unlinked */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cannot unlink last authentication method */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AuthController_getConfig: {
         parameters: {
             query?: never;
@@ -7148,11 +7317,7 @@ export interface operations {
                     "application/json": {
                         /** @enum {boolean} */
                         success: true;
-                        data: {
-                            google?: {
-                                enabled?: boolean;
-                            };
-                        };
+                        data: components["schemas"]["AuthConfigDto"];
                     };
                 };
             };
@@ -7186,28 +7351,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateProfileDto"];
-            };
-        };
-        responses: {
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    UsersController_changePassword: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangePasswordDto"];
             };
         };
         responses: {

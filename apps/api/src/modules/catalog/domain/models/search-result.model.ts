@@ -9,6 +9,7 @@ export interface LocalSearchResult {
   type: MediaType;
   title: string;
   originalTitle: string | null;
+  alternativeTitles: string[] | null;
   slug: string;
   posterPath: string | null;
   rating: number;
