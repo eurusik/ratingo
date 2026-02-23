@@ -242,7 +242,7 @@ export class TmdbAdapter implements MetadataProviderPort {
   }
 
   /**
-   * Fetches only external IDs (IMDb, TVDb) for a media item.
+   * Fetches only external IDs (IMDb) for a media item.
    * Lightweight: single TMDB call, no credits/videos/providers.
    * Returns null on 404.
    */

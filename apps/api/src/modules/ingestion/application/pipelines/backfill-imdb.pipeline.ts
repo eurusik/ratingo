@@ -110,7 +110,7 @@ export class BackfillImdbPipeline {
     await this.db
       .update(schema.mediaItems)
       .set({ imdbId: result.imdbId })
-      .where(eq(schema.mediaItems.tmdbId, tmdbId));
+      .where(and(eq(schema.mediaItems.tmdbId, tmdbId), eq(schema.mediaItems.type, MediaType.SHOW)));
 
     this.logger.debug(`[${jobId}] Updated imdbId for tmdbId=${tmdbId} → ${result.imdbId}`);
   }
