@@ -1,10 +1,13 @@
 import {
   ConflictException,
   ForbiddenException,
+  HttpStatus,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { AppException } from '../../../common/exceptions/app.exception';
 import { DatabaseException } from '../../../common/exceptions/database.exception';
 import { ConsumeCodeFailureReason } from '../domain/repositories/exchange-codes.repository.interface';
 import { type OAuthUserPayload } from '../domain/types';
@@ -57,25 +60,31 @@ describe('AuthService', () => {
     expect(result).toEqual({ accessToken: 'access-token', refreshToken: 'refresh-token' });
   });
 
-  it('register: should throw ConflictException when email already in use', async () => {
+  it('register: should throw AppException with EMAIL_ALREADY_EXISTS when email taken', async () => {
     mocks.usersService.getByEmail.mockResolvedValue({ id: 'u1' });
 
-    await expect(
-      service.register('user@example.com', 'ratingo_fan', 'S3curePassw0rd'),
-    ).rejects.toBeInstanceOf(ConflictException);
+    const error = await service
+      .register('user@example.com', 'ratingo_fan', 'S3curePassw0rd')
+      .catch((e) => e);
 
+    expect(error).toBeInstanceOf(AppException);
+    expect(error.code).toBe(ErrorCode.EMAIL_ALREADY_EXISTS);
+    expect(error.getStatus()).toBe(HttpStatus.CONFLICT);
     expect(mocks.usersService.getByUsername).not.toHaveBeenCalled();
     expect(mocks.usersService.createUser).not.toHaveBeenCalled();
   });
 
-  it('register: should throw ConflictException when username already in use', async () => {
+  it('register: should throw AppException with USERNAME_ALREADY_EXISTS when username taken', async () => {
     mocks.usersService.getByEmail.mockResolvedValue(null);
     mocks.usersService.getByUsername.mockResolvedValue({ id: 'u2' });
 
-    await expect(
-      service.register('user@example.com', 'ratingo_fan', 'S3curePassw0rd'),
-    ).rejects.toBeInstanceOf(ConflictException);
+    const error = await service
+      .register('user@example.com', 'ratingo_fan', 'S3curePassw0rd')
+      .catch((e) => e);
 
+    expect(error).toBeInstanceOf(AppException);
+    expect(error.code).toBe(ErrorCode.USERNAME_ALREADY_EXISTS);
+    expect(error.getStatus()).toBe(HttpStatus.CONFLICT);
     expect(mocks.usersService.createUser).not.toHaveBeenCalled();
   });
 

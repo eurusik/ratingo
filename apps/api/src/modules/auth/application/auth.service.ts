@@ -4,6 +4,7 @@ import {
   Injectable,
   ConflictException,
   ForbiddenException,
+  HttpStatus,
   InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
@@ -14,6 +15,8 @@ import { type ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
 import { MS_PER_SECOND, MS_PER_MINUTE, MS_PER_HOUR, MS_PER_DAY } from '../../../common/constants';
+import { ErrorCode } from '../../../common/enums/error-code.enum';
+import { AppException } from '../../../common/exceptions/app.exception';
 import { DevTiming } from '../../../common/utils/dev-timing';
 import authConfig from '../../../config/auth.config';
 import { UsersService } from '../../users/application/users.service';
@@ -78,7 +81,7 @@ export class AuthService {
   /**
    * Registers a new user and issues tokens.
    *
-   * @throws {ConflictException} When email or username already in use
+   * @throws {AppException} EMAIL_ALREADY_EXISTS or USERNAME_ALREADY_EXISTS
    */
   async register(
     email: string,
@@ -88,11 +91,19 @@ export class AuthService {
   ): Promise<AuthTokens> {
     const existing = await this.usersService.getByEmail(email);
     if (existing) {
-      throw new ConflictException('Email already in use');
+      throw new AppException(
+        ErrorCode.EMAIL_ALREADY_EXISTS,
+        'Email already in use',
+        HttpStatus.CONFLICT,
+      );
     }
     const usernameTaken = await this.usersService.getByUsername(username);
     if (usernameTaken) {
-      throw new ConflictException('Username already in use');
+      throw new AppException(
+        ErrorCode.USERNAME_ALREADY_EXISTS,
+        'Username already in use',
+        HttpStatus.CONFLICT,
+      );
     }
 
     const passwordHash = await this.passwordHasher.hash(password);

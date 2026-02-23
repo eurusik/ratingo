@@ -70,11 +70,12 @@ export function mapAuthError(error: unknown, messages: AuthErrorMessages): strin
       return messages.invalidCredentials;
     }
 
-    if (error.statusCode === 409) {
-      // Relies on backend message text — ideally backend should use distinct error codes
-      const msg = error.message.toLowerCase();
-      if (msg.includes('email')) return messages.emailAlreadyExists;
-      if (msg.includes('username')) return messages.usernameTaken;
+    if (error.code === ErrorCode.EMAIL_ALREADY_EXISTS) {
+      return messages.emailAlreadyExists;
+    }
+
+    if (error.code === ErrorCode.USERNAME_ALREADY_EXISTS) {
+      return messages.usernameTaken;
     }
 
     if (error.code === ErrorCode.RATE_LIMITED) {

@@ -14,6 +14,7 @@ import { cn } from '@/shared/utils';
 import { createPasswordSchema, type PasswordFormData } from '../schemas';
 import { useChangePassword } from '../hooks';
 import { ApiError } from '@/core/api';
+import { ErrorCode } from '@/core/api/error-codes';
 
 /**
  * Password change form with validation.
@@ -55,7 +56,7 @@ export function SecuritySection() {
 
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      if (err instanceof ApiError && err.statusCode === 403) {
+      if (err instanceof ApiError && err.code === ErrorCode.FORBIDDEN) {
         setError('currentPassword', {
           message: dict.settings.errors.wrongPassword,
         });
