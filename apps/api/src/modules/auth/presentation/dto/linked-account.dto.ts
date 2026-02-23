@@ -21,6 +21,10 @@ export class LinkedAccountDto {
   })
   displayName: string | null;
 
-  @ApiProperty({ example: '2025-01-15T10:30:00.000Z', description: 'When the account was linked' })
+  @ApiProperty({
+    format: 'date-time',
+    example: '2025-01-15T10:30:00.000Z',
+    description: 'When the account was linked',
+  })
   linkedAt: string;
 }

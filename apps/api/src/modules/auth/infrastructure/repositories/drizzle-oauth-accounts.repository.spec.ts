@@ -110,7 +110,7 @@ describe('DrizzleOAuthAccountsRepository', () => {
       selectChain.where.mockResolvedValueOnce([]);
       const repo = new DrizzleOAuthAccountsRepository(db);
 
-      const result = await repo.findByUserAndProvider('u-1', 'apple');
+      const result = await repo.findByUserAndProvider('u-1', 'facebook');
 
       expect(result).toBeNull();
     });
@@ -170,7 +170,7 @@ describe('DrizzleOAuthAccountsRepository', () => {
       db._deleteWhereResult.returning.mockResolvedValueOnce([]);
       const repo = new DrizzleOAuthAccountsRepository(db);
 
-      const result = await repo.deleteByUserAndProvider('u-1', 'apple');
+      const result = await repo.deleteByUserAndProvider('u-1', 'facebook');
 
       expect(result).toBe(false);
     });

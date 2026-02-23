@@ -533,7 +533,7 @@ export const oauthAccounts = pgTable(
     userId: uuid('user_id')
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
-    /** Provider identifier: 'google', 'facebook', 'apple' */
+    /** Provider identifier: 'google', 'facebook' */
     provider: text('provider').notNull(),
     /** Provider-specific user ID (e.g., Google sub, Facebook ID) */
     providerAccountId: text('provider_account_id').notNull(),

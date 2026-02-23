@@ -3391,6 +3391,7 @@ export interface components {
              */
             displayName?: string | null;
             /**
+             * Format: date-time
              * @description When the account was linked
              * @example 2025-01-15T10:30:00.000Z
              */
@@ -7276,7 +7277,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description OAuth provider to unlink */
-                provider: "google" | "facebook" | "apple";
+                provider: "google" | "facebook";
             };
             cookie?: never;
         };

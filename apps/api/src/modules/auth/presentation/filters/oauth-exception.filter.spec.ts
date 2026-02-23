@@ -393,20 +393,6 @@ describe('OAuthExceptionFilter', () => {
       );
     });
 
-    it('should extract apple from /auth/apple/callback', () => {
-      const exception = new UnauthorizedException('OAUTH_STATE_INVALID');
-      const request = createMockRequest({
-        url: '/auth/apple/callback',
-        oauthStatePayload: undefined,
-      });
-      const reply = createMockReply();
-      const host = createMockHost(request, reply);
-
-      filter.catch(exception, host);
-
-      expect(reply.redirect).toHaveBeenCalledWith(expect.stringContaining('/auth/callback/apple?'));
-    });
-
     it('should return null for unknown provider /api/auth/unknown', () => {
       const exception = new UnauthorizedException('OAUTH_CANCELLED');
       const request = createMockRequest({
