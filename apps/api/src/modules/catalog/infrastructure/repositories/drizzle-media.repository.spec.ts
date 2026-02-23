@@ -164,11 +164,13 @@ describe('DrizzleMediaRepository', () => {
     });
 
     it('should return list for ids', async () => {
-      const module = await setup({ resolveSelect: [{ id: 'm1', tmdbId: 1 }] });
+      const module = await setup({
+        resolveSelect: [{ id: 'm1', tmdbId: 1, alternativeTitles: null }],
+      });
       repository = module.get(DrizzleMediaRepository);
 
       const result = await repository.findManyByTmdbIds([1]);
-      expect(result).toEqual([{ id: 'm1', tmdbId: 1 }]);
+      expect(result).toEqual([{ id: 'm1', tmdbId: 1, alternativeTitles: null }]);
       expect(db.select).toHaveBeenCalled();
     });
 

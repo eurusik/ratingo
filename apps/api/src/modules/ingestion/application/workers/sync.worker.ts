@@ -7,6 +7,7 @@ import { type MediaType } from '@/common/enums/media-type.enum';
 import { WORKER_CONFIG } from '@/config/queue.config';
 
 import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
+import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
 import { NewReleasesPipeline } from '../pipelines/new-releases.pipeline';
 import { NowPlayingPipeline } from '../pipelines/now-playing.pipeline';
@@ -43,6 +44,7 @@ export class SyncWorker extends WorkerHost {
     private readonly nowPlayingPipeline: NowPlayingPipeline,
     private readonly newReleasesPipeline: NewReleasesPipeline,
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
+    private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
   ) {
     super();
   }
@@ -76,6 +78,8 @@ export class SyncWorker extends WorkerHost {
         limit?: number;
         window?: string;
         mediaItemId?: string;
+        title?: string;
+        originalTitle?: string | null;
         dayId?: string;
       },
       unknown,
@@ -142,6 +146,20 @@ export class SyncWorker extends WorkerHost {
           break;
         case IngestionJob.BACKFILL_IMDB_ITEM:
           await this.backfillImdbPipeline.processItem(job.data.tmdbId!, jid);
+          break;
+
+        // Alternative titles backfill pipeline
+        case IngestionJob.BACKFILL_ALT_TITLES_DISPATCHER:
+          await this.backfillAltTitlesPipeline.dispatch();
+          break;
+        case IngestionJob.BACKFILL_ALT_TITLES_ITEM:
+          await this.backfillAltTitlesPipeline.processItem({
+            mediaItemId: job.data.mediaItemId!,
+            tmdbId: job.data.tmdbId!,
+            type: job.data.type!,
+            title: job.data.title!,
+            originalTitle: job.data.originalTitle ?? null,
+          });
           break;
 
         default:

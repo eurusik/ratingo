@@ -1290,6 +1290,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ingestion/backfill/alt-titles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backfill alternative titles from TMDB
+         * @description Finds all media items with missing alternative titles and fetches them from TMDB. Uses dedicated lightweight TMDB endpoints — no Trakt, OMDb, or TVMaze calls. One-time operation; future syncs populate alt titles automatically.
+         */
+        post: operations["IngestionController_backfillAltTitles"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/catalog-policies": {
         parameters: {
             query?: never;
@@ -8068,6 +8088,25 @@ export interface operations {
         };
     };
     IngestionController_backfillImdb: {
+        parameters: {
+            query: {
+                force: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    IngestionController_backfillAltTitles: {
         parameters: {
             query: {
                 force: string;

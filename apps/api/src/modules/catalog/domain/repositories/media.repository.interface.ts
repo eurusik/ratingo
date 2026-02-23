@@ -31,6 +31,7 @@ export interface MediaScoreData {
 export interface MediaWithTmdbId {
   id: string;
   tmdbId: number;
+  alternativeTitles: string[] | null;
 }
 
 /**
@@ -98,6 +99,15 @@ export interface IMediaRepository {
    * @returns {Promise<void>} Nothing
    */
   updateIngestionStatus(tmdbId: number, status: IngestionStatus): Promise<void>;
+
+  /**
+   * Updates only the alternative_titles column for a media item.
+   *
+   * @param {string} id - Media item ID
+   * @param {string[] | null} titles - Alternative titles or null
+   * @returns {Promise<void>} Nothing
+   */
+  updateAlternativeTitles(id: string, titles: string[] | null): Promise<void>;
 
   /**
    * Retrieves media data needed for score calculation.

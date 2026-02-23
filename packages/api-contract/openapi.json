@@ -4811,6 +4811,36 @@
         ]
       }
     },
+    "/api/ingestion/backfill/alt-titles": {
+      "post": {
+        "operationId": "IngestionController_backfillAltTitles",
+        "summary": "Backfill alternative titles from TMDB",
+        "description": "Finds all media items with missing alternative titles and fetches them from TMDB. Uses dedicated lightweight TMDB endpoints — no Trakt, OMDb, or TVMaze calls. One-time operation; future syncs populate alt titles automatically.",
+        "parameters": [
+          {
+            "name": "force",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Service: Ingestion"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/admin/catalog-policies": {
       "get": {
         "operationId": "PolicyController_getPolicies",

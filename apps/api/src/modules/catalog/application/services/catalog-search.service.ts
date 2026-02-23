@@ -71,18 +71,27 @@ export class CatalogSearchService {
         ? await this.mediaRepository.findManyByTmdbIds(tmdbIdsToCheck)
         : [];
       const importedTmdbIds = new Set(importedItems.map((item) => item.tmdbId));
+      const altTitlesByTmdbId = new Map(
+        importedItems
+          .filter((item) => item.alternativeTitles?.length)
+          .map((item) => [item.tmdbId, item.alternativeTitles!]),
+      );
 
-      const tmdb: TmdbSearchResultItem[] = filteredTmdb.map((r) => ({
-        source: SEARCH_SOURCE.TMDB,
-        type: r.type,
-        tmdbId: r.externalIds.tmdbId,
-        title: r.title,
-        originalTitle: r.originalTitle,
-        year: r.releaseDate ? new Date(r.releaseDate).getFullYear() || null : null,
-        posterPath: r.posterPath,
-        rating: r.rating || 0,
-        isImported: importedTmdbIds.has(r.externalIds.tmdbId),
-      }));
+      const tmdb: TmdbSearchResultItem[] = filteredTmdb
+        .map((r) => ({
+          source: SEARCH_SOURCE.TMDB,
+          type: r.type,
+          tmdbId: r.externalIds.tmdbId,
+          title: r.title,
+          originalTitle: r.originalTitle,
+          year: r.releaseDate ? new Date(r.releaseDate).getFullYear() || null : null,
+          posterPath: r.posterPath,
+          rating: r.rating || 0,
+          isImported: importedTmdbIds.has(r.externalIds.tmdbId),
+          alternativeTitles: altTitlesByTmdbId.get(r.externalIds.tmdbId) ?? null,
+        }))
+        // Boost items enriched with our alt titles to the top
+        .sort((a, b) => (b.alternativeTitles ? 1 : 0) - (a.alternativeTitles ? 1 : 0));
 
       return { query, local, tmdb };
     } catch (error) {

@@ -891,7 +891,8 @@
       "runs": "Runs",
       "reports": "Reports",
       "providers": "Providers",
-      "journal": "Journal"
+      "journal": "Journal",
+      "backfill": "Backfill"
     },
     "policies": {
       "title": "Catalog Policies",
@@ -1347,6 +1348,20 @@
         "updateError": "Failed to update mapping",
         "deleteSuccess": "Mapping deleted",
         "deleteError": "Failed to delete mapping"
+      }
+    },
+    "backfill": {
+      "title": "Backfill Operations",
+      "description": "One-time data backfill jobs for media metadata enrichment.",
+      "altTitles": {
+        "title": "Alternative Titles",
+        "description": "Fetch missing alternative titles from TMDB for all media items. Uses lightweight TMDB endpoints only.",
+        "button": "Run Backfill",
+        "confirmTitle": "Backfill Alternative Titles",
+        "confirmDescription": "This will queue a background job to fetch missing alternative titles from TMDB for all media items. The job runs with force=true, bypassing daily dedup. Continue?",
+        "confirmButton": "Run Backfill",
+        "success": "Alt titles backfill queued (jobId: {jobId})",
+        "error": "Failed to queue alt titles backfill"
       }
     },
     "common": {

@@ -12,7 +12,7 @@ import {
   BadRequestException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiOkResponse, ApiQuery } from '@nestjs/swagger';
 
 import { type Queue } from 'bullmq';
 
@@ -156,6 +156,31 @@ export class IngestionController {
     description:
       'Syncs trending content from TMDB using dispatcher pattern. Queues page jobs for movies and shows. With syncStats=true (default), also updates Trakt stats after ingestion.',
   })
+  @ApiQuery({
+    name: 'pages',
+    required: false,
+    type: String,
+    description: 'Number of pages to fetch (dispatcher mode)',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: String,
+    description: 'Single page number (legacy mode)',
+  })
+  @ApiQuery({
+    name: 'syncStats',
+    required: false,
+    type: String,
+    description: 'Sync Trakt stats after ingestion (default: true)',
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    type: String,
+    description: 'Media type filter (movie or show)',
+  })
+  @ApiQuery({ name: 'force', required: false, type: String, description: 'Bypass dedupe' })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncTrending(
     @Query('pages') pagesQuery?: string,
@@ -321,6 +346,18 @@ export class IngestionController {
     summary: 'Trigger daily watchers snapshots sync',
     description: 'Updates daily watcher counts for all media items from Trakt.',
   })
+  @ApiQuery({
+    name: 'region',
+    required: false,
+    type: String,
+    description: 'Region code for snapshots',
+  })
+  @ApiQuery({
+    name: 'force',
+    required: false,
+    type: String,
+    description: 'Bypass daily deduplication',
+  })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncSnapshots(@Query('region') region?: string, @Query('force') force?: string) {
     const normalizedRegionValue = normalizeRegion(region);
@@ -358,6 +395,12 @@ export class IngestionController {
     summary: 'Trigger tracked shows sync',
     description:
       'Syncs shows that have active subscriptions. Detects new episodes/seasons and triggers notifications.',
+  })
+  @ApiQuery({
+    name: 'force',
+    required: false,
+    type: String,
+    description: 'Bypass hourly deduplication',
   })
   @HttpCode(HttpStatus.ACCEPTED)
   async syncTrackedShows(@Query('force') force?: string) {
@@ -397,6 +440,12 @@ export class IngestionController {
       'Trakt stats (watchers, ratings) and OMDb ratings (IMDb, Rotten Tomatoes, Metacritic). ' +
       'Use when shows were imported before external_ids fetching was implemented.',
   })
+  @ApiQuery({
+    name: 'force',
+    required: false,
+    type: String,
+    description: 'Bypass daily deduplication',
+  })
   @HttpCode(HttpStatus.ACCEPTED)
   async backfillImdb(@Query('force') force?: string) {
     const isForce = force === 'true';
@@ -410,6 +459,45 @@ export class IngestionController {
       status: 'queued',
       jobId: job.id,
       jobType: IngestionJob.BACKFILL_IMDB_DISPATCHER,
+      force: isForce,
+    };
+  }
+
+  /**
+   * Queues backfill job for items missing alternative titles.
+   * Uses lightweight TMDB endpoints (no Trakt/OMDb/TVMaze calls).
+   */
+  @Post('backfill/alt-titles')
+  @ApiOperation({
+    summary: 'Backfill alternative titles from TMDB',
+    description:
+      'Finds all media items with missing alternative titles and fetches them from TMDB. ' +
+      'Uses dedicated lightweight TMDB endpoints — no Trakt, OMDb, or TVMaze calls. ' +
+      'One-time operation; future syncs populate alt titles automatically.',
+  })
+  @ApiQuery({
+    name: 'force',
+    required: false,
+    type: String,
+    description: 'Re-fetch alt titles for items that already have them',
+  })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async backfillAltTitles(@Query('force') force?: string) {
+    const isForce = force === 'true';
+    const today = formatUtcDayId();
+    const window = isForce ? Date.now().toString() : today;
+    const jobId = `backfill_alt_titles_${window}`;
+
+    const job = await this.ingestionQueue.add(
+      IngestionJob.BACKFILL_ALT_TITLES_DISPATCHER,
+      {},
+      { jobId },
+    );
+
+    return {
+      status: 'queued',
+      jobId: job.id,
+      jobType: IngestionJob.BACKFILL_ALT_TITLES_DISPATCHER,
       force: isForce,
     };
   }

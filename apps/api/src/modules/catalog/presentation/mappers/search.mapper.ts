@@ -16,7 +16,7 @@ export class SearchMapper {
     return {
       query,
       local: result.local.map((item) => SearchMapper.toLocalItemDto(item, query)),
-      tmdb: result.tmdb.map(SearchMapper.toTmdbItemDto),
+      tmdb: result.tmdb.map((item) => SearchMapper.toTmdbItemDto(item, query)),
     };
   }
 
@@ -38,7 +38,7 @@ export class SearchMapper {
     };
   }
 
-  private static toTmdbItemDto(item: TmdbSearchResultItem): SearchItemDto {
+  private static toTmdbItemDto(item: TmdbSearchResultItem, query: string): SearchItemDto {
     return {
       source: item.source,
       type: item.type,
@@ -49,7 +49,11 @@ export class SearchMapper {
       poster: ImageMapper.toPoster(item.posterPath),
       rating: item.rating,
       isImported: item.isImported,
-      matchedAlternativeTitle: null,
+      matchedAlternativeTitle:
+        SearchMapper.findMatchedAltTitle(item.alternativeTitles, query) ??
+        (SearchMapper.queryMatchesTitle(query, item.title, item.originalTitle)
+          ? SearchMapper.findComplementaryTitle(item.alternativeTitles, item.title)
+          : null),
     };
   }
 
@@ -79,5 +83,54 @@ export class SearchMapper {
     if (reverseMatch) return reverseMatch;
 
     return null;
+  }
+
+  /**
+   * Checks whether the search query matches the primary title or originalTitle
+   * via case-insensitive substring match (either direction).
+   * Used to gate complementary title lookup for TMDB results — we only show
+   * a complementary alt title when the item was matched by its own title,
+   * not when TMDB returned it via its own relevance engine.
+   */
+  private static queryMatchesTitle(
+    query: string,
+    title: string,
+    originalTitle: string | null,
+  ): boolean {
+    const lowerQuery = query.toLowerCase().trim();
+    if (!lowerQuery) return false;
+
+    const lowerTitle = title.toLowerCase().trim();
+    if (lowerTitle.includes(lowerQuery) || lowerQuery.includes(lowerTitle)) return true;
+
+    if (originalTitle) {
+      const lowerOriginal = originalTitle.toLowerCase().trim();
+      if (lowerOriginal.includes(lowerQuery) || lowerQuery.includes(lowerOriginal)) return true;
+    }
+
+    return false;
+  }
+
+  /** Matches Latin-script characters (Basic Latin + Extended). */
+  private static readonly LATIN_RE = /[a-z\u00C0-\u024F]/i;
+
+  /**
+   * When the primary title matched the query directly, picks the best
+   * alternative title that differs from the primary title.
+   * Prefers Latin-script titles (English, Spanish, etc.) over Cyrillic/CJK
+   * so that Ukrainian users see the international name.
+   */
+  private static findComplementaryTitle(
+    alternativeTitles: string[] | null,
+    title: string,
+  ): string | null {
+    if (!alternativeTitles?.length) return null;
+
+    const lowerTitle = title.toLowerCase().trim();
+    const candidates = alternativeTitles.filter((alt) => alt.toLowerCase().trim() !== lowerTitle);
+    if (!candidates.length) return null;
+
+    // Prefer Latin-script title (most useful for Ukrainian audience)
+    return candidates.find((alt) => SearchMapper.LATIN_RE.test(alt)) ?? candidates[0];
   }
 }
