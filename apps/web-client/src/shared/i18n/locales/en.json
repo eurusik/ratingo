@@ -20,6 +20,10 @@
       "message": "No more \"wait, it's already out?\"",
       "cta": "Learn more"
     },
+    "socialLogin": {
+      "message": "Less passwords — more cinema",
+      "cta": "Learn more"
+    },
     "closeLabel": "Close announcement"
   },
   "search": {

@@ -31,9 +31,9 @@ const ANNOUNCEMENT_BAR_HEIGHT = 40; // px, matches py-1.5 + button height
  * `i18nKey` references the key in locales/uk.json and locales/en.json under "announcement".
  */
 const CURRENT_ANNOUNCEMENT = {
-  id: 'v4-notifications-2025-02',
-  i18nKey: 'notifications' as const,
-  href: '/journal/spovishchennya-v-ratingo-bilshe-ne-propusty-novi-seriyi' as Route,
+  id: 'v5-social-login-2026-02',
+  i18nKey: 'socialLogin' as const,
+  href: '/journal/uviyty-v-ratingo-shche-prostishe' as Route,
 };
 
 // Context to share announcement visibility with Header
