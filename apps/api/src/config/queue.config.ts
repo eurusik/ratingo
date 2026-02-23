@@ -55,7 +55,7 @@ export const WORKER_CONFIG = {
 
   /**
    * Backfill queue worker config.
-   * Jobs: backfill-alt-titles-item, backfill-imdb-item (TMDB-only, no Trakt).
+   * Jobs: backfill-alt-titles-item, backfill-imdb-item (TMDB-only — no Trakt/OMDb/TVMaze).
    * Duration: 200-2000ms (single TMDB API call + DB update)
    *
    * Higher throughput than ingestion: TMDB allows ~40 req/s.

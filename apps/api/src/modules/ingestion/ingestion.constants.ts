@@ -10,6 +10,17 @@ export const INGESTION_QUEUE = 'ingestion';
 export const BACKFILL_QUEUE = 'backfill';
 
 /**
+ * Shared default job options for both ingestion and backfill queues.
+ * Backfill queue overrides `removeOnComplete` for higher observability.
+ */
+export const DEFAULT_INGESTION_JOB_OPTIONS = {
+  attempts: 3,
+  backoff: { type: 'exponential' as const, delay: 2000 },
+  removeOnComplete: 100,
+  removeOnFail: 50,
+} as const;
+
+/**
  * Job names for ingestion queue.
  * Used by Producer (Controller) and Consumer (Worker).
  */
@@ -43,12 +54,12 @@ export enum IngestionJob {
 
   /** Dispatcher job: finds shows without IMDb ID and queues re-sync */
   BACKFILL_IMDB_DISPATCHER = 'backfill-imdb-dispatcher',
-  /** Item job: re-syncs a single show to fetch IMDb ID */
+  /** Item job: fetches external IDs from TMDB for a single show. @queue backfill */
   BACKFILL_IMDB_ITEM = 'backfill-imdb-item',
 
   /** Dispatcher job: finds items without alternative titles and queues TMDB fetch */
   BACKFILL_ALT_TITLES_DISPATCHER = 'backfill-alt-titles-dispatcher',
-  /** Item job: fetches alternative titles from TMDB for a single item */
+  /** Item job: fetches alternative titles from TMDB for a single item. @queue backfill */
   BACKFILL_ALT_TITLES_ITEM = 'backfill-alt-titles-item',
 }
 
