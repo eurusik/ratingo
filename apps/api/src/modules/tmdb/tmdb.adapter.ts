@@ -25,6 +25,7 @@ import { TmdbMapper } from './mappers/tmdb.mapper';
 import type {
   TmdbAlternativeTitle,
   TmdbMediaResponse,
+  TmdbMovieResponse,
   TmdbSeasonDetailResponse,
 } from './types/tmdb-api.types';
 
@@ -235,6 +236,38 @@ export class TmdbAdapter implements MetadataProviderPort {
     } catch (error) {
       if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
         return [];
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Fetches only external IDs (IMDb) for a media item.
+   * Lightweight: single TMDB call, no credits/videos/providers.
+   * Returns null on 404.
+   */
+  public async getExternalIds(
+    tmdbId: number,
+    type: MediaType,
+  ): Promise<{ imdbId: string | null } | null> {
+    const prefix = type === MediaType.MOVIE ? 'movie' : 'tv';
+    const endpoint = `/${prefix}/${tmdbId}`;
+
+    try {
+      const data = await this.fetch<TmdbMediaResponse>(endpoint, {
+        append_to_response: 'external_ids',
+      });
+
+      const imdbId =
+        data.external_ids?.imdb_id ||
+        (type === MediaType.MOVIE ? (data as TmdbMovieResponse).imdb_id : null) ||
+        null;
+
+      return { imdbId };
+    } catch (error) {
+      if (error instanceof TmdbApiException && error.details?.statusCode === HttpStatus.NOT_FOUND) {
+        this.logger.warn(`TMDB ${prefix} ${tmdbId} not found (404)`);
+        return null;
       }
       throw error;
     }

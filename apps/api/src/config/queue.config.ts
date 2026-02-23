@@ -54,6 +54,22 @@ export const WORKER_CONFIG = {
   },
 
   /**
+   * Backfill queue worker config.
+   * Jobs: backfill-alt-titles-item, backfill-imdb-item (TMDB-only — no Trakt/OMDb/TVMaze).
+   * Duration: 200-2000ms (single TMDB API call + DB update)
+   *
+   * Higher throughput than ingestion: TMDB allows ~40 req/s.
+   * 15 concurrent jobs × ~300ms avg = ~50 req/s → capped by limiter at 600/min.
+   */
+  backfill: {
+    lockDuration: 30_000, // 30 seconds (short jobs)
+    limiter: {
+      max: 600, // 600 jobs per minute (~10/sec, well within TMDB 40/sec)
+      duration: 60_000,
+    },
+  },
+
+  /**
    * Catalog policy queue worker config.
    * Jobs: re-evaluate-all, evaluate-catalog-item, watchdog
    * Duration: 100ms-30s (policy evaluation + DB writes)

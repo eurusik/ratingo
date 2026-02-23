@@ -27,6 +27,7 @@ import { SnapshotsService } from './application/services/snapshots.service';
 import { SyncMediaService } from './application/services/sync-media.service';
 import { TrackedSyncService } from './application/services/tracked-sync.service';
 import { TvMazeEnrichmentService } from './application/services/tvmaze-enrichment.service';
+import { BackfillWorker } from './application/workers/backfill.worker';
 import { SyncWorker } from './application/workers/sync.worker';
 import { TRAKT_LISTS_PORT } from './domain/ports/trakt-lists.port';
 import { TRAKT_RATINGS_PORT } from './domain/ports/trakt-ratings.port';
@@ -36,7 +37,11 @@ import { TraktListsAdapter } from './infrastructure/adapters/trakt/trakt-lists.a
 import { TraktRatingsAdapter } from './infrastructure/adapters/trakt/trakt-ratings.adapter';
 import { TvMazeAdapter } from './infrastructure/adapters/tvmaze/tvmaze.adapter';
 import { SnapshotsRepository } from './infrastructure/repositories/snapshots.repository';
-import { INGESTION_QUEUE } from './ingestion.constants';
+import {
+  BACKFILL_QUEUE,
+  DEFAULT_INGESTION_JOB_OPTIONS,
+  INGESTION_QUEUE,
+} from './ingestion.constants';
 import { IngestionController } from './presentation/controllers/ingestion.controller';
 
 /**
@@ -57,14 +62,13 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     ConfigModule.forFeature(schedulerConfig),
     BullModule.registerQueue({
       name: INGESTION_QUEUE,
+      defaultJobOptions: DEFAULT_INGESTION_JOB_OPTIONS,
+    }),
+    BullModule.registerQueue({
+      name: BACKFILL_QUEUE,
       defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 2000,
-        },
-        removeOnComplete: 100,
-        removeOnFail: 50,
+        ...DEFAULT_INGESTION_JOB_OPTIONS,
+        removeOnComplete: { age: 3600, count: 1000 }, // higher for fast queue observability
       },
     }),
   ],
@@ -94,6 +98,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     SyncMediaService,
     TrackedSyncService,
     SyncWorker,
+    BackfillWorker,
     SnapshotsService,
     IngestionSchedulerService,
     // Pipeline classes

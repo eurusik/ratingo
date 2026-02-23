@@ -9,8 +9,8 @@ import { MediaType } from '@/common/enums/media-type.enum';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 
-import { INGESTION_QUEUE, IngestionJob } from '../../ingestion.constants';
-import { SyncMediaService } from '../services/sync-media.service';
+import { TmdbAdapter } from '../../../tmdb/public';
+import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
 
 /**
  * Batch size for backfill dispatcher pagination.
@@ -25,7 +25,9 @@ const BACKFILL_BATCH_SIZE = 100;
  *
  * This pipeline:
  * 1. Dispatcher: finds all shows with NULL imdb_id and queues item jobs
- * 2. Item job: re-syncs the show via SyncMediaService (which now fetches external_ids)
+ * 2. Item job: fetches external IDs from TMDB (single API call) + direct DB update
+ *
+ * TMDB-only: no Trakt/OMDb/TVMaze calls. Safe for high-throughput backfill queue.
  */
 @Injectable()
 export class BackfillImdbPipeline {
@@ -34,9 +36,9 @@ export class BackfillImdbPipeline {
   constructor(
     @Inject(DATABASE_CONNECTION)
     private readonly db: PostgresJsDatabase<typeof schema>,
-    @InjectQueue(INGESTION_QUEUE)
+    @InjectQueue(BACKFILL_QUEUE)
     private readonly queue: Queue,
-    private readonly syncService: SyncMediaService,
+    private readonly tmdbAdapter: TmdbAdapter,
   ) {}
 
   /**
@@ -95,9 +97,21 @@ export class BackfillImdbPipeline {
   }
 
   /**
-   * Item job: re-syncs a single show to fetch IMDb ID and OMDb ratings.
+   * Item job: fetches external IDs from TMDB and updates the DB directly.
+   * TMDB-only — single API call, no Trakt/OMDb/TVMaze.
    */
   async processItem(tmdbId: number, jobId: string): Promise<void> {
-    await this.syncService.syncShow(tmdbId, undefined, jobId);
+    const result = await this.tmdbAdapter.getExternalIds(tmdbId, MediaType.SHOW);
+    if (!result?.imdbId) {
+      this.logger.debug(`[${jobId}] No IMDb ID found for tmdbId=${tmdbId}`);
+      return;
+    }
+
+    await this.db
+      .update(schema.mediaItems)
+      .set({ imdbId: result.imdbId })
+      .where(and(eq(schema.mediaItems.tmdbId, tmdbId), eq(schema.mediaItems.type, MediaType.SHOW)));
+
+    this.logger.debug(`[${jobId}] Updated imdbId for tmdbId=${tmdbId} → ${result.imdbId}`);
   }
 }
