@@ -116,10 +116,7 @@ export class BackfillAltTitlesPipeline {
 
     const filtered = this.filterAlternativeTitles(rawTitles, data.title, data.originalTitle);
 
-    await this.mediaRepository.updateAlternativeTitles(
-      data.mediaItemId,
-      filtered.length > 0 ? filtered : [],
-    );
+    await this.mediaRepository.updateAlternativeTitles(data.mediaItemId, filtered);
   }
 
   /**

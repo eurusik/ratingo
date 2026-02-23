@@ -119,10 +119,9 @@ export interface IMediaRepository {
 
   /**
    * Batch: Retrieves multiple media items by TMDB IDs.
-   * Returns a map of tmdbId -> { id, tmdbId }
    *
    * @param {number[]} tmdbIds - TMDB IDs
-   * @returns {Promise<MediaWithTmdbId[]>} Mappings list
+   * @returns {Promise<MediaWithTmdbId[]>} Mappings list with id, tmdbId, alternativeTitles
    */
   findManyByTmdbIds(tmdbIds: number[]): Promise<MediaWithTmdbId[]>;
 

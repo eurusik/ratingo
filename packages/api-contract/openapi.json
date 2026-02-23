@@ -4556,40 +4556,45 @@
         "parameters": [
           {
             "name": "pages",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Number of pages to fetch (dispatcher mode)",
             "schema": {
               "type": "string"
             }
           },
           {
             "name": "page",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Single page number (legacy mode)",
             "schema": {
               "type": "string"
             }
           },
           {
             "name": "syncStats",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Sync Trakt stats after ingestion (default: true)",
             "schema": {
               "type": "string"
             }
           },
           {
             "name": "type",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Media type filter (movie or show)",
             "schema": {
               "type": "string"
             }
           },
           {
             "name": "force",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Bypass dedupe",
             "schema": {
               "type": "string"
             }
@@ -4721,16 +4726,18 @@
         "parameters": [
           {
             "name": "region",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Region code for snapshots",
             "schema": {
               "type": "string"
             }
           },
           {
             "name": "force",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Bypass daily deduplication",
             "schema": {
               "type": "string"
             }
@@ -4759,8 +4766,9 @@
         "parameters": [
           {
             "name": "force",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Bypass hourly deduplication",
             "schema": {
               "type": "string"
             }
@@ -4789,16 +4797,39 @@
         "parameters": [
           {
             "name": "force",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Bypass daily deduplication",
             "schema": {
               "type": "string"
             }
           }
         ],
         "responses": {
-          "202": {
-            "description": ""
+          "200": {
+            "description": "Backfill job queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/IngestionJobResponseDto"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -4819,16 +4850,39 @@
         "parameters": [
           {
             "name": "force",
-            "required": true,
+            "required": false,
             "in": "query",
+            "description": "Re-fetch alt titles for items that already have them",
             "schema": {
               "type": "string"
             }
           }
         ],
         "responses": {
-          "202": {
-            "description": ""
+          "200": {
+            "description": "Backfill job queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/IngestionJobResponseDto"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -11555,6 +11609,33 @@
             "default": false
           }
         }
+      },
+      "IngestionJobResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "queued"
+          },
+          "jobId": {
+            "type": "string",
+            "example": "backfill_alt_titles_20260223"
+          },
+          "jobType": {
+            "type": "string",
+            "example": "BACKFILL_ALT_TITLES_DISPATCHER"
+          },
+          "force": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "status",
+          "jobId",
+          "jobType",
+          "force"
+        ]
       },
       "PolicyDto": {
         "type": "object",

@@ -306,7 +306,6 @@ export function useCreatePolicy() {
  */
 export function useBackfillAltTitles() {
   return useMutation({
-    mutationFn: (params?: { force?: boolean }) =>
-      adminApi.backfillAltTitles(params?.force),
+    mutationFn: (params?: { force?: boolean }) => adminApi.backfillAltTitles(params?.force),
   });
 }

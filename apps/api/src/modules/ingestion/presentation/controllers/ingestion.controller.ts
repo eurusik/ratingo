@@ -32,7 +32,13 @@ import {
   TRENDING_DEFAULT_PAGES,
   TMDB_TRENDING_PAGE_SIZE,
 } from '../../ingestion.constants';
-import { SyncDto, SyncTrendingDto, SyncNowPlayingDto, SyncNewReleasesDto } from '../dto';
+import {
+  IngestionJobResponseDto,
+  SyncDto,
+  SyncTrendingDto,
+  SyncNowPlayingDto,
+  SyncNewReleasesDto,
+} from '../dto';
 
 /**
  * Triggers ingestion processes.
@@ -446,6 +452,7 @@ export class IngestionController {
     type: String,
     description: 'Bypass daily deduplication',
   })
+  @ApiOkResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
   @HttpCode(HttpStatus.ACCEPTED)
   async backfillImdb(@Query('force') force?: string) {
     const isForce = force === 'true';
@@ -481,6 +488,7 @@ export class IngestionController {
     type: String,
     description: 'Re-fetch alt titles for items that already have them',
   })
+  @ApiOkResponse({ type: IngestionJobResponseDto, description: 'Backfill job queued' })
   @HttpCode(HttpStatus.ACCEPTED)
   async backfillAltTitles(@Query('force') force?: string) {
     const isForce = force === 'true';

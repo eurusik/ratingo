@@ -101,11 +101,16 @@ export class SearchMapper {
     if (!lowerQuery) return false;
 
     const lowerTitle = title.toLowerCase().trim();
-    if (lowerTitle.includes(lowerQuery) || lowerQuery.includes(lowerTitle)) return true;
+    if (lowerTitle && (lowerTitle.includes(lowerQuery) || lowerQuery.includes(lowerTitle)))
+      return true;
 
     if (originalTitle) {
       const lowerOriginal = originalTitle.toLowerCase().trim();
-      if (lowerOriginal.includes(lowerQuery) || lowerQuery.includes(lowerOriginal)) return true;
+      if (
+        lowerOriginal &&
+        (lowerOriginal.includes(lowerQuery) || lowerQuery.includes(lowerOriginal))
+      )
+        return true;
     }
 
     return false;

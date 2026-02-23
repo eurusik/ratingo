@@ -22,6 +22,7 @@ interface BaseSearchResultItem {
   year: number | null;
   posterPath: string | null;
   rating: number;
+  alternativeTitles: string[] | null;
 }
 
 /**
@@ -31,7 +32,6 @@ export interface LocalSearchResultItem extends BaseSearchResultItem {
   source: typeof SEARCH_SOURCE.LOCAL;
   id: string;
   slug: string;
-  alternativeTitles: string[] | null;
 }
 
 /**
@@ -40,7 +40,6 @@ export interface LocalSearchResultItem extends BaseSearchResultItem {
 export interface TmdbSearchResultItem extends BaseSearchResultItem {
   source: typeof SEARCH_SOURCE.TMDB;
   isImported: boolean;
-  alternativeTitles: string[] | null;
 }
 
 /**

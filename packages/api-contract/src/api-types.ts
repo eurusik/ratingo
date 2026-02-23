@@ -3856,6 +3856,16 @@ export interface components {
              */
             force: boolean;
         };
+        IngestionJobResponseDto: {
+            /** @example queued */
+            status: string;
+            /** @example backfill_alt_titles_20260223 */
+            jobId: string;
+            /** @example BACKFILL_ALT_TITLES_DISPATCHER */
+            jobType: string;
+            /** @example false */
+            force: boolean;
+        };
         PolicyDto: {
             /**
              * @description Policy ID
@@ -7960,12 +7970,17 @@ export interface operations {
     };
     IngestionController_syncTrending: {
         parameters: {
-            query: {
-                pages: string;
-                page: string;
-                syncStats: string;
-                type: string;
-                force: string;
+            query?: {
+                /** @description Number of pages to fetch (dispatcher mode) */
+                pages?: string;
+                /** @description Single page number (legacy mode) */
+                page?: string;
+                /** @description Sync Trakt stats after ingestion (default: true) */
+                syncStats?: string;
+                /** @description Media type filter (movie or show) */
+                type?: string;
+                /** @description Bypass dedupe */
+                force?: string;
             };
             header?: never;
             path?: never;
@@ -8050,9 +8065,11 @@ export interface operations {
     };
     IngestionController_syncSnapshots: {
         parameters: {
-            query: {
-                region: string;
-                force: string;
+            query?: {
+                /** @description Region code for snapshots */
+                region?: string;
+                /** @description Bypass daily deduplication */
+                force?: string;
             };
             header?: never;
             path?: never;
@@ -8070,8 +8087,9 @@ export interface operations {
     };
     IngestionController_syncTrackedShows: {
         parameters: {
-            query: {
-                force: string;
+            query?: {
+                /** @description Bypass hourly deduplication */
+                force?: string;
             };
             header?: never;
             path?: never;
@@ -8089,8 +8107,9 @@ export interface operations {
     };
     IngestionController_backfillImdb: {
         parameters: {
-            query: {
-                force: string;
+            query?: {
+                /** @description Bypass daily deduplication */
+                force?: string;
             };
             header?: never;
             path?: never;
@@ -8098,18 +8117,26 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            202: {
+            /** @description Backfill job queued */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["IngestionJobResponseDto"];
+                    };
+                };
             };
         };
     };
     IngestionController_backfillAltTitles: {
         parameters: {
-            query: {
-                force: string;
+            query?: {
+                /** @description Re-fetch alt titles for items that already have them */
+                force?: string;
             };
             header?: never;
             path?: never;
@@ -8117,11 +8144,18 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            202: {
+            /** @description Backfill job queued */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["IngestionJobResponseDto"];
+                    };
+                };
             };
         };
     };

@@ -30,6 +30,8 @@ export default function BackfillPage() {
           ? error.message
           : (altTitles.error ?? 'Failed to queue alt titles backfill'),
       );
+    } finally {
+      setAltTitlesDialogOpen(false);
     }
   };
 

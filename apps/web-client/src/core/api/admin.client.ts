@@ -77,16 +77,11 @@ export type PoliciesListDto = components['schemas']['PoliciesListDto'];
 export type RunsListDto = components['schemas']['RunsListDto'];
 
 // ============================================================================
-// Backfill types (not generated — matches backend response inline shape)
+// Backfill types (generated from API contract)
 // ============================================================================
 
 /** Response from backfill endpoints (ingestion controller). */
-export interface BackfillJobDto {
-  status: string;
-  jobId: string;
-  jobType: string;
-  force: boolean;
-}
+export type BackfillJobDto = components['schemas']['IngestionJobResponseDto'];
 
 // ============================================================================
 // Status constants and helpers
