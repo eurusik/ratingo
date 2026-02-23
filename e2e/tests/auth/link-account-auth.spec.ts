@@ -38,7 +38,7 @@ test.describe('Auth — OAuth account link/unlink callbacks', () => {
 
     // Sonner error toast should appear
     const toast = page.locator('[data-sonner-toast][data-type="error"]').filter({
-      hasText: /failed to disconnect|не вдалося відключити/i,
+      hasText: /failed to connect|не вдалося підключити/i,
     });
     await expect(toast).toBeVisible({ timeout: 5_000 });
   });

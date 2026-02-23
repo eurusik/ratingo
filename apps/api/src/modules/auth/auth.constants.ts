@@ -79,7 +79,7 @@ export const GoogleOAuthParams = {
 } as const;
 
 /** Facebook OAuth authorization URL */
-export const FACEBOOK_AUTH_URL = 'https://www.facebook.com/v19.0/dialog/oauth';
+export const FACEBOOK_AUTH_URL = 'https://www.facebook.com/v24.0/dialog/oauth';
 
 /** OAuth cookie path for Facebook auth endpoints */
 export const FACEBOOK_AUTH_COOKIE_PATH = '/api/auth';

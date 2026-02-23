@@ -93,7 +93,7 @@ export function ConnectedAccountsSection() {
       await unlinkMutation.mutateAsync(provider);
       setConfirmProvider(null);
     } catch {
-      setError(t.linkError);
+      setError(t.unlinkError);
     }
   };
 

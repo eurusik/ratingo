@@ -26,6 +26,7 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
       callbackURL: config.callbackUrl,
       profileFields: ['id', 'displayName', 'emails', 'photos'],
       scope: ['email'],
+      graphAPIVersion: 'v24.0',
       // State is managed manually via signed httpOnly cookie in FacebookAuthGuard
       state: false,
     });

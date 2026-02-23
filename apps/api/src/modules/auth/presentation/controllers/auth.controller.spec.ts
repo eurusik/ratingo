@@ -80,7 +80,7 @@ function createFacebookAuthGuardMock() {
     setStateCookie: jest.fn(),
     buildAuthUrl: jest
       .fn()
-      .mockReturnValue('https://www.facebook.com/v19.0/dialog/oauth?state=signed-facebook-state'),
+      .mockReturnValue('https://www.facebook.com/v24.0/dialog/oauth?state=signed-facebook-state'),
   };
 }
 
@@ -564,7 +564,7 @@ describe('AuthController.linkFacebook', () => {
     expect(facebookGuard.buildAuthUrl).toHaveBeenCalledWith('signed-facebook-state');
     expect(mockRes.redirect).toHaveBeenCalledWith(
       302,
-      'https://www.facebook.com/v19.0/dialog/oauth?state=signed-facebook-state',
+      'https://www.facebook.com/v24.0/dialog/oauth?state=signed-facebook-state',
     );
   });
 
@@ -715,6 +715,22 @@ describe('AuthController.handleOAuthCallback - link mode', () => {
     expect(mockRes.redirect).toHaveBeenCalledWith(
       302,
       `${frontendUrl}/settings?linkError=ALREADY_LINKED&provider=google`,
+    );
+  });
+
+  it('should redirect with ?linkError=LINK_FAILED on unexpected error', async () => {
+    authService.linkOAuthAccount.mockRejectedValue(new Error('Database connection lost'));
+    const mockRes = createMockReply();
+
+    await callOAuthCallback(
+      defaultOAuthUser,
+      { mode: 'link', linkUserId: 'user-123', provider: 'google', returnTo: '/settings' },
+      mockRes,
+    );
+
+    expect(mockRes.redirect).toHaveBeenCalledWith(
+      302,
+      `${frontendUrl}/settings?linkError=LINK_FAILED&provider=google`,
     );
   });
 

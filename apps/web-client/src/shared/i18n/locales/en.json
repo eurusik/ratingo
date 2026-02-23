@@ -865,7 +865,8 @@
       "confirmDisconnect": "Disconnect account?",
       "confirmDisconnectDescription": "You will no longer be able to sign in with this provider. You can reconnect it later.",
       "lastMethod": "Cannot disconnect last sign-in method",
-      "linkError": "Failed to disconnect account",
+      "linkError": "Failed to connect account",
+      "unlinkError": "Failed to disconnect account",
       "linkSuccess": "Successfully connected {provider}",
       "cancel": "Cancel"
     }

@@ -13,6 +13,7 @@ import { DATABASE_CONNECTION } from '../src/database/database.module';
 import { AuthModule } from '../src/modules/auth/auth.module';
 import { REFRESH_TOKENS_REPOSITORY } from '../src/modules/auth/domain/repositories/refresh-tokens.repository.interface';
 import { EXCHANGE_CODES_REPOSITORY } from '../src/modules/auth/domain/repositories/exchange-codes.repository.interface';
+import { OAUTH_ACCOUNTS_REPOSITORY } from '../src/modules/auth/domain/repositories/oauth-accounts.repository.interface';
 import { USER_MEDIA_STATE_REPOSITORY } from '../src/modules/user-media/domain/repositories/user-media-state.repository.interface';
 import { USERS_REPOSITORY } from '../src/modules/users/domain/repositories/users.repository.interface';
 import { UsersModule } from '../src/modules/users/users.module';
@@ -88,6 +89,8 @@ async function createThrottledApp(): Promise<INestApplication> {
     .useClass(InMemoryUserMediaRepository)
     .overrideProvider(EXCHANGE_CODES_REPOSITORY)
     .useClass(InMemoryExchangeCodesRepository)
+    .overrideProvider(OAUTH_ACCOUNTS_REPOSITORY)
+    .useValue({})
     .overrideProvider(DATABASE_CONNECTION)
     .useValue({})
     .compile();

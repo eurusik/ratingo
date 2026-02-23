@@ -1,10 +1,12 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   Patch,
   Post,
@@ -93,6 +95,8 @@ function extractClientMeta(req: FastifyRequest): { userAgent: string | null; ip:
 @UseFilters(OAuthExceptionFilter)
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
@@ -291,10 +295,16 @@ export class AuthController {
       try {
         await this.authService.linkOAuthAccount(statePayload.linkUserId, oauthUser);
         await res.redirect(HTTP_REDIRECT_FOUND, `${frontendUrl}${returnTo}?linked=${provider}`);
-      } catch {
+      } catch (error) {
+        const errorCode = error instanceof ConflictException ? 'ALREADY_LINKED' : 'LINK_FAILED';
+        if (!(error instanceof ConflictException)) {
+          this.logger.error(
+            `Failed to link OAuth account: ${error instanceof Error ? error.message : error}`,
+          );
+        }
         await res.redirect(
           HTTP_REDIRECT_FOUND,
-          `${frontendUrl}${returnTo}?linkError=ALREADY_LINKED&provider=${provider}`,
+          `${frontendUrl}${returnTo}?linkError=${errorCode}&provider=${provider}`,
         );
       }
       return;
