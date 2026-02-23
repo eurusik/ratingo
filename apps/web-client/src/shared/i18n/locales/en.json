@@ -184,6 +184,10 @@
       "signIn": "Sign in with Google",
       "signUp": "Sign up with Google"
     },
+    "facebook": {
+      "signIn": "Sign in with Facebook",
+      "signUp": "Sign up with Facebook"
+    },
     "oauth": {
       "completing": "Completing sign in...",
       "loading": "Loading...",
@@ -851,7 +855,21 @@
       "cancel": "Cancel",
       "confirm": "Confirm"
     },
-    "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?"
+    "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?",
+    "connectedAccounts": {
+      "title": "Connected Accounts",
+      "description": "Connect social accounts for quicker sign-in",
+      "connected": "Connected",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "confirmDisconnect": "Disconnect account?",
+      "confirmDisconnectDescription": "You will no longer be able to sign in with this provider. You can reconnect it later.",
+      "lastMethod": "Cannot disconnect last sign-in method",
+      "linkError": "Failed to connect account",
+      "unlinkError": "Failed to disconnect account",
+      "linkSuccess": "Successfully connected {provider}",
+      "cancel": "Cancel"
+    }
   },
   "admin": {
     "navigation": {

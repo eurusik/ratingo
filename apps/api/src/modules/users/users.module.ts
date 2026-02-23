@@ -1,7 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 
 import { DatabaseModule } from '../../database/database.module';
-import { AuthModule } from '../auth/auth.module';
 import { UserMediaModule } from '../user-media/user-media.module';
 
 import { AvatarUploadService } from './application/avatar-upload.service';
@@ -18,7 +17,7 @@ import { UsersController } from './presentation/controllers/users.controller';
  * Wires Users domain and application services.
  */
 @Module({
-  imports: [DatabaseModule, forwardRef(() => AuthModule), forwardRef(() => UserMediaModule)],
+  imports: [DatabaseModule, forwardRef(() => UserMediaModule)],
   providers: [
     UsersService,
     PublicUserMediaService,

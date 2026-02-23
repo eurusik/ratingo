@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, gt, isNull, lt, or, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
+import { MS_PER_HOUR } from '../../../../common/constants';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
@@ -16,12 +17,6 @@ import {
   type ExchangeCodeRecord,
   type IExchangeCodesRepository,
 } from '../../domain/repositories/exchange-codes.repository.interface';
-
-// Time conversion constants
-const MS_PER_SECOND = 1000;
-const SECONDS_PER_MINUTE = 60;
-const MINUTES_PER_HOUR = 60;
-const MS_PER_HOUR = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * MS_PER_SECOND;
 
 /**
  * Drizzle implementation for OAuth exchange code storage.

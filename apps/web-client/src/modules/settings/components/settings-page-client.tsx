@@ -4,7 +4,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+import { toast } from 'sonner';
+
 import { useTranslation } from '@/shared/i18n';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import type { MeDto } from '@/core/api';
@@ -12,23 +15,54 @@ import type { components } from '@ratingo/api-contract';
 import { ProfileSection } from './profile-section';
 import { PrivacySection } from './privacy-section';
 import { SecuritySection } from './security-section';
+import { ConnectedAccountsSection } from './connected-accounts-section';
 import { useUpdateProfile } from '../hooks';
+
+/** Notification from OAuth link callback redirect. */
+export interface LinkNotification {
+  type: 'success' | 'error';
+  provider: string;
+  code?: string;
+}
 
 interface SettingsPageClientProps {
   user: MeDto;
   initialTab?: 'profile' | 'privacy' | 'security';
+  linkNotification?: LinkNotification;
 }
 
 /**
  * Settings page with tabs for Profile, Privacy, and Security.
  * Unsaved changes warning for Profile/Security only.
  */
-export function SettingsPageClient({ user, initialTab = 'profile' }: SettingsPageClientProps) {
+export function SettingsPageClient({
+  user,
+  initialTab = 'profile',
+  linkNotification,
+}: SettingsPageClientProps) {
   const { dict } = useTranslation();
+  const t = dict.settings.connectedAccounts;
   const [activeTab, setActiveTab] = useState(initialTab);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const toastShown = useRef(false);
 
   const updateProfile = useUpdateProfile();
+
+  // Show toast once on mount for OAuth link result
+  useEffect(() => {
+    if (!linkNotification || toastShown.current) return;
+    toastShown.current = true;
+
+    const provider = linkNotification.provider
+      ? linkNotification.provider.charAt(0).toUpperCase() + linkNotification.provider.slice(1)
+      : '';
+
+    if (linkNotification.type === 'success') {
+      toast.success(t.linkSuccess.replace('{provider}', provider));
+    } else {
+      toast.error(t.linkError);
+    }
+  }, [linkNotification, t]);
 
   // Handle unsaved changes warning
   useEffect(() => {
@@ -46,7 +80,6 @@ export function SettingsPageClient({ user, initialTab = 'profile' }: SettingsPag
 
   const handleProfileSuccess = () => {
     setHasUnsavedChanges(false);
-    // Could show toast here
   };
 
   const handlePrivacyUpdate = async (
@@ -88,6 +121,7 @@ export function SettingsPageClient({ user, initialTab = 'profile' }: SettingsPag
         </TabsContent>
 
         <TabsContent value="security" className="mt-0 space-y-6">
+          <ConnectedAccountsSection />
           <SecuritySection />
         </TabsContent>
       </Tabs>

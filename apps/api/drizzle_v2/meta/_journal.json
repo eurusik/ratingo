@@ -134,6 +134,13 @@
       "when": 1771282800000,
       "tag": "0018_enable_pg_trgm",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1771789728875,
+      "tag": "0019_flawless_amphibian",
+      "breakpoints": true
     }
   ]
 }

@@ -59,26 +59,12 @@ class InMemoryUsersRepository implements IUsersRepository {
     return this.users.find((u) => u.username === username) ?? null;
   }
 
-  async findByGoogleId(googleId: string): Promise<User | null> {
-    return this.users.find((u) => u.googleId === googleId) ?? null;
-  }
-
-  async linkGoogleId(userId: string, googleId: string): Promise<User> {
-    const user = this.users.find((u) => u.id === userId);
-    if (user) {
-      user.googleId = googleId;
-      return user;
-    }
-    throw new Error('User not found');
-  }
-
   async create(data: any): Promise<User> {
     const user: User = {
       id: `user-${this.users.length + 1}`,
       email: data.email,
       username: data.username,
       passwordHash: data.passwordHash,
-      googleId: data.googleId ?? null,
       avatarUrl: data.avatarUrl ?? null,
       bio: data.bio ?? null,
       location: data.location ?? null,

@@ -70,6 +70,18 @@ export class MeDto {
   @ApiProperty({ type: ProfileDto })
   profile!: ProfileDto;
 
+  @ApiProperty({
+    description: 'Whether the user has a password set (false for OAuth-only accounts)',
+  })
+  hasPassword!: boolean;
+
+  @ApiProperty({
+    description: 'List of linked OAuth provider names',
+    example: ['google'],
+    type: [String],
+  })
+  linkedProviders!: string[];
+
   @ApiProperty({ type: StatsDto })
   stats!: StatsDto;
 }

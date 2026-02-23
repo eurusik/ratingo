@@ -434,7 +434,6 @@ export const users = pgTable('users', {
   email: text('email').unique().notNull(),
   username: text('username').unique().notNull(),
   passwordHash: text('password_hash'),
-  googleId: text('google_id').unique(),
   avatarUrl: text('avatar_url'),
   bio: text('bio'),
   location: text('location'),
@@ -520,6 +519,51 @@ export const oauthExchangeCodes = pgTable(
     expiresIdx: index('oauth_exchange_codes_expires_idx').on(t.expiresAt),
   }),
 );
+
+/**
+ * OAUTH ACCOUNTS (Multi-provider link table)
+ * One user can have multiple OAuth providers linked.
+ * Part of auth aggregate — managed by auth module's repository.
+ */
+export const oauthAccounts = pgTable(
+  'oauth_accounts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    /** Provider identifier: 'google', 'facebook', 'apple' */
+    provider: text('provider').notNull(),
+    /** Provider-specific user ID (e.g., Google sub, Facebook ID) */
+    providerAccountId: text('provider_account_id').notNull(),
+    /** Email from this OAuth provider (for conflict detection) */
+    email: text('email'),
+    /** Display name from provider profile */
+    displayName: text('display_name'),
+    /** Avatar URL from provider profile */
+    avatarUrl: text('avatar_url'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    /** Each provider account can only be linked to one user */
+    providerAccountUniq: uniqueIndex('oauth_accounts_provider_account_uniq').on(
+      t.provider,
+      t.providerAccountId,
+    ),
+    /** Each user can have only one account per provider */
+    userProviderUniq: uniqueIndex('oauth_accounts_user_provider_uniq').on(t.userId, t.provider),
+    userIdx: index('oauth_accounts_user_idx').on(t.userId),
+    providerIdx: index('oauth_accounts_provider_idx').on(t.provider),
+  }),
+);
+
+export const oauthAccountsRelations = relations(oauthAccounts, ({ one }) => ({
+  user: one(users, {
+    fields: [oauthAccounts.userId],
+    references: [users.id],
+  }),
+}));
 
 // --- RELATIONS ---
 

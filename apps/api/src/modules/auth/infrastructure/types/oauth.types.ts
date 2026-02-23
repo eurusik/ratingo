@@ -1,14 +1,6 @@
-/**
- * OAuth state payload stored in signed cookie during OAuth flow.
- */
-export interface OAuthStatePayload {
-  /** Random nonce for uniqueness */
-  nonce: string;
-  /** URL to redirect after successful auth */
-  returnTo: string;
-  /** Expiration timestamp (ms) */
-  exp: number;
-}
+import { type OAuthStatePayload } from '../../domain/types';
+
+export type { OAuthStatePayload } from '../../domain/types';
 
 // Module augmentation for Fastify
 declare module 'fastify' {

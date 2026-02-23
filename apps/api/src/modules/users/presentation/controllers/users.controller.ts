@@ -17,10 +17,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { AuthService } from '../../../auth/application/auth.service';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard';
-import { ChangePasswordDto } from '../../../auth/presentation/dto/change-password.dto';
 import { AvatarUploadService } from '../../application/avatar-upload.service';
 import { UsersService } from '../../application/users.service';
 import { AvatarUploadUrlDto, CreateAvatarUploadUrlDto } from '../dto/avatar-upload.dto';
@@ -36,7 +34,6 @@ import { UpdateProfileDto } from '../dto/update-profile.dto';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly authService: AuthService,
     private readonly avatarUploadService: AvatarUploadService,
   ) {}
 
@@ -87,27 +84,6 @@ export class UsersController {
     });
     const { passwordHash: _passwordHash, ...safe } = updated;
     return safe;
-  }
-
-  /**
-   * Changes current user password.
-   *
-   * @param {{ id: string } | null} user - Current user context
-   * @param {ChangePasswordDto} body - Password change payload
-   * @returns {Promise<void>} Nothing
-   * @throws {UnauthorizedException} When request is unauthenticated
-   */
-  @ApiOperation({ summary: 'Change current user password (auth: Bearer)' })
-  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  @Patch('me/password')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async changePassword(
-    @CurrentUser() user: { id: string } | null,
-    @Body() body: ChangePasswordDto,
-  ) {
-    if (!user) throw new UnauthorizedException();
-    await this.authService.changePassword(user.id, body.currentPassword, body.newPassword);
-    return;
   }
 
   /**

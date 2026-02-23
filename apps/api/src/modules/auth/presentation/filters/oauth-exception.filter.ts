@@ -12,6 +12,7 @@ import { type ConfigType } from '@nestjs/config';
 import { type FastifyReply, type FastifyRequest } from 'fastify';
 
 import authConfig from '../../../../config/auth.config';
+import { isOAuthProvider } from '../../domain/types';
 
 /**
  * OAuth error codes that should trigger a redirect to frontend.
@@ -58,7 +59,12 @@ export class OAuthExceptionFilter implements ExceptionFilter {
     // Handle redirect errors (OAuth flow errors)
     if (REDIRECT_ERROR_CODES.has(errorCode)) {
       const { frontendUrl } = this.authCfg;
-      const redirectUrl = `${frontendUrl}/auth/callback/google?error=${encodeURIComponent(errorCode)}`;
+      // Determine provider from state payload or infer from URL path
+      const provider =
+        (request as any).oauthStatePayload?.provider ||
+        this.inferProviderFromUrl(request.url) ||
+        'google';
+      const redirectUrl = `${frontendUrl}/auth/callback/${provider}?error=${encodeURIComponent(errorCode)}`;
       void response.redirect(redirectUrl);
       return;
     }
@@ -100,12 +106,21 @@ export class OAuthExceptionFilter implements ExceptionFilter {
     return 'UNKNOWN_ERROR';
   }
 
+  private inferProviderFromUrl(url: string): string | null {
+    // Extract provider from URL path: /api/auth/{provider}/callback or /api/auth/{provider}
+    const match = /\/auth\/([a-z]+)/.exec(url);
+    if (match && isOAuthProvider(match[1])) {
+      return match[1];
+    }
+    return null;
+  }
+
   private getErrorMessage(code: string): string {
     const messages: Record<string, string> = {
       OAUTH_CANCELLED: 'Sign in was cancelled',
       OAUTH_STATE_INVALID: 'Security validation failed, please try again',
-      OAUTH_PROVIDER_ERROR: 'Google sign in failed',
-      OAUTH_EMAIL_NOT_VERIFIED: 'Please verify your Google email first',
+      OAUTH_PROVIDER_ERROR: 'OAuth sign in failed',
+      OAUTH_EMAIL_NOT_VERIFIED: 'Please verify your email first',
       OAUTH_EXCHANGE_EXPIRED: 'Session expired, please try again',
       OAUTH_EXCHANGE_USED: 'Session already used, please try again',
     };

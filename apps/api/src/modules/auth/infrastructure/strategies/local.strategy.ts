@@ -4,6 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
 
 import { UsersService } from '../../../users/application/users.service';
+import { type User } from '../../../users/domain/entities/user.entity';
 import {
   type PasswordHasher,
   PASSWORD_HASHER,
@@ -11,6 +12,8 @@ import {
 
 /**
  * Local strategy for email/password login.
+ * Validates credentials and sets the full User on req.user
+ * so downstream handlers can skip re-validation.
  */
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -23,16 +26,14 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   }
 
   /**
-   * Validates credentials and returns user payload.
+   * Validates credentials and returns the full User entity.
+   * The returned value is set on `req.user` by Passport.
    *
    * @param {string} email - User email
    * @param {string} password - Plain password
-   * @returns {Promise<{ id: string; email: string; role: string }>} Minimal user info
+   * @returns {Promise<User>} Validated user entity
    */
-  async validate(
-    email: string,
-    password: string,
-  ): Promise<{ id: string; email: string; role: string }> {
+  async validate(email: string, password: string): Promise<User> {
     const user = await this.usersService.getByEmail(email);
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
@@ -43,6 +44,6 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return { id: user.id, email: user.email, role: user.role };
+    return user;
   }
 }

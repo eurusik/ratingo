@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { IsString, MinLength } from 'class-validator';
+import { IsString, MinLength, MaxLength, Matches } from 'class-validator';
+
+import { PASSWORD_REGEX, PASSWORD_MESSAGE } from '../validators/password.constants';
 
 /**
  * Change password payload.
@@ -20,5 +22,7 @@ export class ChangePasswordDto {
   @ApiProperty({ example: 'NewPass456' })
   @IsString()
   @MinLength(8)
+  @MaxLength(128)
+  @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
   newPassword: string;
 }

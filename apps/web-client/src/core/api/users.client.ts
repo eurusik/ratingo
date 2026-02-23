@@ -19,7 +19,7 @@ export const usersApi = {
 
   /** Changes current user password. */
   async changePassword(data: ChangePasswordDto): Promise<void> {
-    return apiPatch<void>('users/me/password', data);
+    return apiPatch<void>('auth/password', data);
   },
 
   /** Creates presigned URL for avatar upload. */

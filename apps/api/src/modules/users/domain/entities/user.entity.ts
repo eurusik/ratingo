@@ -6,7 +6,6 @@ export interface User {
   email: string;
   username: string;
   passwordHash: string | null;
-  googleId: string | null;
   avatarUrl: string | null;
   bio: string | null;
   location: string | null;
@@ -35,13 +34,3 @@ export const USER_ROLE = {
  * User role union.
  */
 export type UserRole = (typeof USER_ROLE)[keyof typeof USER_ROLE];
-
-// Keep legacy compatibility with existing shape
-/**
- * Legacy user shape used for backward compatibility.
- */
-export interface UserLegacy extends Omit<User, 'role' | 'googleId'> {
-  role: 'user' | 'admin';
-  createdAt: Date;
-  updatedAt: Date;
-}

@@ -14,6 +14,7 @@ import { Button, Input, Label, Alert, AlertDescription } from '@/shared/ui';
 import { createLoginSchema, type LoginFormData } from '../schemas';
 import { cn } from '@/shared/utils';
 import { GoogleButton } from './google-button';
+import { FacebookButton } from './facebook-button';
 
 interface LoginFormProps {
   /** Callback after successful login. */
@@ -52,6 +53,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, returnTo }: LoginForm
   return (
     <div className="space-y-4">
       <GoogleButton returnTo={returnTo} mode="login" />
+      <FacebookButton returnTo={returnTo} mode="login" />
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
@@ -78,7 +80,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, returnTo }: LoginForm
             )}
             {...register('email')}
           />
-          {errors.email && <p className="text-xs text-red-400">{errors.email.message}</p>}
+          {errors.email && <p data-testid="email-error" className="text-xs text-red-400">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
@@ -96,11 +98,11 @@ export function LoginForm({ onSuccess, onSwitchToRegister, returnTo }: LoginForm
             )}
             {...register('password')}
           />
-          {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
+          {errors.password && <p data-testid="password-error" className="text-xs text-red-400">{errors.password.message}</p>}
         </div>
 
         {error && (
-          <Alert variant="destructive" className="bg-red-500/10 border-red-500/20">
+          <Alert data-testid="form-error" variant="destructive" className="bg-red-500/10 border-red-500/20">
             <AlertDescription className="text-red-400">{error}</AlertDescription>
           </Alert>
         )}

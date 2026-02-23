@@ -2,10 +2,7 @@
  * OAuth-related constants for authentication module.
  */
 
-// Time conversion constants
-const MS_PER_SECOND = 1000;
-const SECONDS_PER_MINUTE = 60;
-const MS_PER_MINUTE = SECONDS_PER_MINUTE * MS_PER_SECOND;
+import { MS_PER_MINUTE } from '../../common/constants';
 
 /** Cookie name for OAuth state */
 export const OAUTH_STATE_COOKIE = 'oauth_state';
@@ -79,4 +76,28 @@ export const GoogleOAuthParams = {
   RESPONSE_TYPE: 'code',
   ACCESS_TYPE: 'offline',
   PROMPT: 'select_account',
+} as const;
+
+/** Facebook OAuth authorization URL */
+export const FACEBOOK_AUTH_URL = 'https://www.facebook.com/v24.0/dialog/oauth';
+
+/** OAuth cookie path for Facebook auth endpoints */
+export const FACEBOOK_AUTH_COOKIE_PATH = '/api/auth';
+
+/** Facebook OAuth scopes */
+export const FACEBOOK_OAUTH_SCOPES = 'email';
+
+/**
+ * Facebook OAuth error responses from provider.
+ */
+export const FacebookOAuthError = {
+  ACCESS_DENIED: 'access_denied',
+} as const;
+
+/**
+ * Facebook OAuth request parameters.
+ */
+export const FacebookOAuthParams = {
+  RESPONSE_TYPE: 'code',
+  DISPLAY: 'popup',
 } as const;

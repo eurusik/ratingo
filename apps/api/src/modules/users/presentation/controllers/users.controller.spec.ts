@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from '../../application/users.service';
-import { AuthService } from '../../../auth/application/auth.service';
 import { AvatarUploadService } from '../../application/avatar-upload.service';
 
 describe('UsersController', () => {
@@ -9,9 +8,6 @@ describe('UsersController', () => {
   const usersService = {
     getById: jest.fn(),
     updateProfile: jest.fn(),
-  };
-  const authService = {
-    changePassword: jest.fn(),
   };
   const avatarUploadService = {
     createUploadUrl: jest.fn(),
@@ -22,7 +18,6 @@ describe('UsersController', () => {
       controllers: [UsersController],
       providers: [
         { provide: UsersService, useValue: usersService },
-        { provide: AuthService, useValue: authService },
         { provide: AvatarUploadService, useValue: avatarUploadService },
       ],
     }).compile();
@@ -156,17 +151,6 @@ describe('UsersController', () => {
       allowFollowers: undefined,
       autoSubscribeOnWatch: undefined,
     });
-  });
-
-  it('should delegate changePassword to authService', async () => {
-    authService.changePassword.mockResolvedValue(undefined);
-
-    await controller.changePassword({ id: 'u1' }, {
-      currentPassword: 'old',
-      newPassword: 'new',
-    } as any);
-
-    expect(authService.changePassword).toHaveBeenCalledWith('u1', 'old', 'new');
   });
 
   it('should delegate avatar upload url creation to AvatarUploadService', async () => {

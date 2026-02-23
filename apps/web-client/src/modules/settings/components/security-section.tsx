@@ -14,6 +14,7 @@ import { cn } from '@/shared/utils';
 import { createPasswordSchema, type PasswordFormData } from '../schemas';
 import { useChangePassword } from '../hooks';
 import { ApiError } from '@/core/api';
+import { HTTPError } from 'ky';
 
 /**
  * Password change form with validation.
@@ -56,7 +57,11 @@ export function SecuritySection() {
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       // Handle wrong password (403) - inline only
-      if (err instanceof ApiError && err.statusCode === 403) {
+      const isForbidden =
+        (err instanceof ApiError && err.statusCode === 403) ||
+        (err instanceof HTTPError && err.response.status === 403);
+
+      if (isForbidden) {
         setError('currentPassword', {
           message: dict.settings.errors.wrongPassword,
         });
@@ -90,7 +95,7 @@ export function SecuritySection() {
               {...register('currentPassword')}
             />
             {errors.currentPassword && (
-              <p className="text-xs text-red-400">{errors.currentPassword.message}</p>
+              <p data-testid="currentPassword-error" className="text-xs text-red-400">{errors.currentPassword.message}</p>
             )}
           </div>
 
@@ -110,7 +115,7 @@ export function SecuritySection() {
               {...register('newPassword')}
             />
             {errors.newPassword && (
-              <p className="text-xs text-red-400">{errors.newPassword.message}</p>
+              <p data-testid="newPassword-error" className="text-xs text-red-400">{errors.newPassword.message}</p>
             )}
           </div>
 
@@ -130,20 +135,20 @@ export function SecuritySection() {
               {...register('confirmPassword')}
             />
             {errors.confirmPassword && (
-              <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>
+              <p data-testid="confirmPassword-error" className="text-xs text-red-400">{errors.confirmPassword.message}</p>
             )}
           </div>
 
           {/* Root error (other errors) */}
           {errors.root && (
-            <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-md p-3">
+            <div data-testid="form-error" className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-md p-3">
               {errors.root.message}
             </div>
           )}
 
           {/* Success message */}
           {successMessage && (
-            <div className="text-sm text-green-400 bg-green-500/10 border border-green-500/20 rounded-md p-3">
+            <div data-testid="form-success" className="text-sm text-green-400 bg-green-500/10 border border-green-500/20 rounded-md p-3">
               {successMessage}
             </div>
           )}
