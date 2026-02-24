@@ -15,6 +15,27 @@ type Spark = {
   life: number;
 };
 
+type Debris = {
+  shape: Graphics;
+  vx: number;
+  vy: number;
+  vr: number;
+  life: number;
+  maxLife: number;
+  drag: number;
+  spinDamp: number;
+};
+
+type SmokeCloud = {
+  shape: Graphics;
+  vx: number;
+  vy: number;
+  grow: number;
+  life: number;
+  maxLife: number;
+  alphaBase: number;
+};
+
 type RarityVisualProfile = {
   ribbon: number;
   overlayTint: number;
@@ -22,15 +43,20 @@ type RarityVisualProfile = {
   medalStroke: number;
   sparkPrimary: number;
   sparkSecondary: number;
+  debrisColor: number;
+  smokeColor: number;
   titleColor: number;
   labelColor: number;
   durationMs: number;
   flashAlpha: number;
   vignette: number;
   sparkCount: number;
+  debrisCount: number;
+  smokeCount: number;
   settleScale: number;
   entryOffsetY: number;
   shakePx: number;
+  cameraPunch: number;
   shockwave: boolean;
   doubleBurst: boolean;
 };
@@ -43,15 +69,20 @@ const RARITY_VISUAL: Record<FxRarity, RarityVisualProfile> = {
     medalStroke: 0xb6aa90,
     sparkPrimary: 0xc9d1dc,
     sparkSecondary: 0x8ab2d4,
+    debrisColor: 0x4b515c,
+    smokeColor: 0x72809a,
     titleColor: 0xe5e9ef,
     labelColor: 0xc2cbd8,
     durationMs: 1050,
     flashAlpha: 0.09,
     vignette: 0.12,
     sparkCount: 6,
+    debrisCount: 4,
+    smokeCount: 5,
     settleScale: 1.03,
     entryOffsetY: 18,
     shakePx: 0,
+    cameraPunch: 0,
     shockwave: false,
     doubleBurst: false,
   },
@@ -62,15 +93,20 @@ const RARITY_VISUAL: Record<FxRarity, RarityVisualProfile> = {
     medalStroke: 0xb8d8ef,
     sparkPrimary: 0xaed9ff,
     sparkSecondary: 0xe2d3a0,
+    debrisColor: 0x566070,
+    smokeColor: 0x7a8ea8,
     titleColor: 0xeaf3ff,
     labelColor: 0xc8def7,
     durationMs: 1550,
     flashAlpha: 0.24,
     vignette: 0.28,
     sparkCount: 18,
+    debrisCount: 10,
+    smokeCount: 12,
     settleScale: 1.1,
     entryOffsetY: 28,
     shakePx: 0.8,
+    cameraPunch: 1.3,
     shockwave: false,
     doubleBurst: false,
   },
@@ -81,15 +117,20 @@ const RARITY_VISUAL: Record<FxRarity, RarityVisualProfile> = {
     medalStroke: 0xe7d9ff,
     sparkPrimary: 0xd8c7ff,
     sparkSecondary: 0x8fd1ff,
+    debrisColor: 0x6a5a87,
+    smokeColor: 0x7b74ad,
     titleColor: 0xf2eaff,
     labelColor: 0xd8caef,
     durationMs: 1850,
     flashAlpha: 0.32,
     vignette: 0.38,
     sparkCount: 30,
+    debrisCount: 22,
+    smokeCount: 20,
     settleScale: 1.13,
     entryOffsetY: 40,
     shakePx: 1.6,
+    cameraPunch: 2.8,
     shockwave: true,
     doubleBurst: false,
   },
@@ -100,15 +141,20 @@ const RARITY_VISUAL: Record<FxRarity, RarityVisualProfile> = {
     medalStroke: 0xffe6a2,
     sparkPrimary: 0xffd56b,
     sparkSecondary: 0xfff4c9,
+    debrisColor: 0x8d6a2c,
+    smokeColor: 0x9b8a64,
     titleColor: 0xfff0bf,
     labelColor: 0xf5d98f,
     durationMs: 2150,
     flashAlpha: 0.48,
     vignette: 0.5,
     sparkCount: 44,
+    debrisCount: 32,
+    smokeCount: 28,
     settleScale: 1.18,
     entryOffsetY: 56,
     shakePx: 2.6,
+    cameraPunch: 4.6,
     shockwave: true,
     doubleBurst: true,
   },
@@ -120,6 +166,10 @@ function clamp(value: number, min: number, max: number): number {
 
 function lerp(from: number, to: number, t: number): number {
   return from + (to - from) * t;
+}
+
+function randomRange(min: number, max: number): number {
+  return Math.random() * (max - min) + min;
 }
 
 function easeOutCubic(t: number): number {
@@ -144,13 +194,17 @@ export class PixiFxRenderer implements FxRenderer {
 
     const rarity = event.rarity ?? 'common';
     const profile = RARITY_VISUAL[rarity];
-    const liteFactor = options.mode === 'lite' || options.reducedMotion ? 0.55 : 1;
-    const durationMs = Math.round(profile.durationMs * (options.mode === 'lite' || options.reducedMotion ? 0.75 : 1));
+    const isLite = options.mode === 'lite' || options.reducedMotion;
+    const liteFactor = isLite ? 0.55 : 1;
+    const durationMs = Math.round(profile.durationMs * (isLite ? 0.78 : 1));
     const flashAlpha = profile.flashAlpha * liteFactor;
-    const vignetteTarget = profile.vignette * (options.mode === 'lite' || options.reducedMotion ? 0.5 : 1);
+    const vignetteTarget = profile.vignette * (isLite ? 0.5 : 1);
     const sparkCount = Math.max(2, Math.round(profile.sparkCount * liteFactor));
-    const shockwaveEnabled = profile.shockwave && options.mode === 'epic' && !options.reducedMotion;
+    const debrisCount = Math.max(1, Math.round(profile.debrisCount * liteFactor));
+    const smokeCount = Math.max(2, Math.round(profile.smokeCount * liteFactor));
+    const shockwaveEnabled = profile.shockwave && options.mode === 'epic' && !isLite;
     const shakePx = profile.shakePx * liteFactor;
+    const cameraPunch = profile.cameraPunch * liteFactor;
 
     const width = this.app.screen.width;
     const height = this.app.screen.height;
@@ -160,6 +214,9 @@ export class PixiFxRenderer implements FxRenderer {
 
     const root = new Container();
     this.app.stage.addChild(root);
+
+    const cameraRig = new Container();
+    root.addChild(cameraRig);
 
     const tint = new Graphics();
     tint.beginFill(profile.overlayTint, 0);
@@ -180,6 +237,9 @@ export class PixiFxRenderer implements FxRenderer {
     flash.endFill();
     root.addChild(flash);
 
+    const smokeContainer = new Container();
+    cameraRig.addChild(smokeContainer);
+
     const shockwave = new Graphics();
     if (shockwaveEnabled) {
       shockwave.lineStyle(5, profile.sparkSecondary, 0.8);
@@ -187,7 +247,7 @@ export class PixiFxRenderer implements FxRenderer {
       shockwave.x = centerX;
       shockwave.y = medalY;
       shockwave.alpha = 0;
-      root.addChild(shockwave);
+      cameraRig.addChild(shockwave);
     }
 
     const shockwave2 = new Graphics();
@@ -197,7 +257,7 @@ export class PixiFxRenderer implements FxRenderer {
       shockwave2.x = centerX;
       shockwave2.y = medalY;
       shockwave2.alpha = 0;
-      root.addChild(shockwave2);
+      cameraRig.addChild(shockwave2);
     }
 
     const aura = new Graphics();
@@ -209,7 +269,7 @@ export class PixiFxRenderer implements FxRenderer {
       aura.x = centerX;
       aura.y = medalY;
       aura.alpha = 0;
-      root.addChild(aura);
+      cameraRig.addChild(aura);
     }
 
     const medalRoot = new Container();
@@ -217,7 +277,7 @@ export class PixiFxRenderer implements FxRenderer {
     medalRoot.y = medalY;
     medalRoot.alpha = 0;
     medalRoot.scale.set(0.62);
-    root.addChild(medalRoot);
+    cameraRig.addChild(medalRoot);
 
     const ribbon = new Graphics();
     ribbon.beginFill(profile.ribbon, 0.95);
@@ -301,42 +361,110 @@ export class PixiFxRenderer implements FxRenderer {
     medalRoot.addChild(subtitle);
 
     const sparks: Spark[] = [];
-    const createBurst = (count: number, spread = 1) => {
-      for (let i = 0; i < count; i++) {
-      const spark = new Graphics();
-      const radius = Math.random() * (rarity === 'legendary' ? 4.5 : 3.1) + 1.1;
-      spark.beginFill(Math.random() > 0.35 ? profile.sparkPrimary : profile.sparkSecondary, 0.95);
-      spark.drawCircle(0, 0, radius);
-      spark.endFill();
-      spark.x = centerX + (Math.random() - 0.5) * 8;
-      spark.y = medalY + (Math.random() - 0.5) * 8;
-      root.addChild(spark);
+    const debris: Debris[] = [];
+    const smokeClouds: SmokeCloud[] = [];
 
-      const angle = (Math.PI * 2 * i) / sparkCount + Math.random() * 0.3;
-      const baseSpeed = rarity === 'legendary' ? 5.4 : rarity === 'epic' ? 4.8 : 3.6;
-      const speed = (Math.random() * baseSpeed + 1.9) * liteFactor * spread;
-      sparks.push({
-        shape: spark,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 1.6,
-        life: 0,
-      });
-    }
+    const createSmokeField = (count: number) => {
+      for (let i = 0; i < count; i++) {
+        const cloud = new Graphics();
+        const radius = randomRange(rarity === 'legendary' ? 28 : 18, rarity === 'legendary' ? 70 : 46);
+        cloud.beginFill(profile.smokeColor, randomRange(0.08, 0.22) * (isLite ? 0.6 : 1));
+        cloud.drawCircle(0, 0, radius);
+        cloud.endFill();
+        cloud.blendMode = BLEND_MODES.NORMAL;
+        cloud.x = centerX + randomRange(-95, 95);
+        cloud.y = medalY + randomRange(20, 140);
+        cloud.scale.set(randomRange(0.65, 1.1));
+        smokeContainer.addChild(cloud);
+
+        smokeClouds.push({
+          shape: cloud,
+          vx: randomRange(-0.35, 0.35) * liteFactor,
+          vy: randomRange(-0.95, -0.22) * liteFactor,
+          grow: randomRange(0.002, 0.01) * liteFactor,
+          life: randomRange(0, 14),
+          maxLife: randomRange(48, 96),
+          alphaBase: cloud.alpha,
+        });
+      }
     };
 
+    const createBurst = (count: number, spread = 1) => {
+      for (let i = 0; i < count; i++) {
+        const spark = new Graphics();
+        const radius = Math.random() * (rarity === 'legendary' ? 4.5 : 3.1) + 1.1;
+        spark.beginFill(Math.random() > 0.35 ? profile.sparkPrimary : profile.sparkSecondary, 0.95);
+        spark.drawCircle(0, 0, radius);
+        spark.endFill();
+        spark.x = centerX + (Math.random() - 0.5) * 8;
+        spark.y = medalY + (Math.random() - 0.5) * 8;
+        cameraRig.addChild(spark);
+
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
+        const baseSpeed = rarity === 'legendary' ? 5.4 : rarity === 'epic' ? 4.8 : 3.6;
+        const speed = (Math.random() * baseSpeed + 1.9) * liteFactor * spread;
+        sparks.push({
+          shape: spark,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - randomRange(1.3, 2.2),
+          life: 0,
+        });
+      }
+
+      const debrisSpawn = Math.max(1, Math.round(debrisCount * spread * 0.7));
+      for (let i = 0; i < debrisSpawn; i++) {
+        const chunk = new Graphics();
+        const size = randomRange(2.5, rarity === 'legendary' ? 8.8 : 6.6);
+        chunk.beginFill(profile.debrisColor, randomRange(0.65, 0.95));
+        if (Math.random() > 0.5) {
+          chunk.drawRoundedRect(-size * 0.45, -size * 0.3, size, size * randomRange(0.35, 0.78), 1.2);
+        } else {
+          chunk.drawPolygon([
+            -size * 0.45, -size * 0.25,
+            size * 0.42, -size * 0.28,
+            size * 0.15, size * 0.4,
+            -size * 0.36, size * 0.35,
+          ]);
+        }
+        chunk.endFill();
+        chunk.x = centerX + randomRange(-10, 10);
+        chunk.y = medalY + randomRange(-6, 7);
+        chunk.rotation = randomRange(0, Math.PI * 2);
+        cameraRig.addChild(chunk);
+
+        const angle = randomRange(-Math.PI * 0.9, Math.PI * 0.1);
+        const speed = randomRange(2.8, rarity === 'legendary' ? 8.6 : 6.1) * spread * liteFactor;
+        debris.push({
+          shape: chunk,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - randomRange(1.8, 3.4),
+          vr: randomRange(-0.35, 0.35),
+          life: 0,
+          maxLife: randomRange(38, 96),
+          drag: randomRange(0.94, 0.975),
+          spinDamp: randomRange(0.95, 0.985),
+        });
+      }
+    };
+
+    createSmokeField(smokeCount);
     createBurst(sparkCount);
     let didSecondBurst = false;
 
     const app = this.app;
     const start = performance.now();
+    let lastFrame = start;
     await new Promise<void>((resolve) => {
       const tick = () => {
         if (!this.app) {
+          app.ticker.remove(tick);
           resolve();
           return;
         }
 
         const elapsed = performance.now() - start;
+        const deltaFrames = Math.min(2.5, (performance.now() - lastFrame) / 16.6667);
+        lastFrame = performance.now();
         const t = clamp(elapsed / durationMs, 0, 1);
 
         const revealT = clamp(elapsed / 260, 0, 1);
@@ -344,7 +472,9 @@ export class PixiFxRenderer implements FxRenderer {
         const sweepT = clamp((elapsed - 260) / 480, 0, 1);
         const fadeOutT = clamp((elapsed - (durationMs - 360)) / 360, 0, 1);
 
-        tint.alpha = lerp(0, rarity === 'legendary' ? 0.22 : rarity === 'epic' ? 0.12 : 0.05, revealT) * (1 - fadeOutT);
+        tint.alpha =
+          lerp(0, rarity === 'legendary' ? 0.22 : rarity === 'epic' ? 0.12 : 0.05, revealT) *
+          (1 - fadeOutT);
         vignette.alpha = lerp(0, vignetteTarget, easeOutCubic(revealT)) * (1 - fadeOutT);
         flash.alpha = flashAlpha * (1 - easeOutCubic(clamp(elapsed / 180, 0, 1))) * (1 - fadeOutT);
         if (profile.doubleBurst && elapsed > 250 && elapsed < 420) {
@@ -361,6 +491,14 @@ export class PixiFxRenderer implements FxRenderer {
 
         glowSweep.alpha = sweepT < 1 ? 0.75 * Math.sin(Math.PI * sweepT) : 0;
         glowSweep.x = lerp(-180, 180, easeInOutCubic(sweepT));
+
+        if (cameraPunch > 0) {
+          const punchDecay = 1 - clamp((elapsed - 35) / 420, 0, 1);
+          cameraRig.x =
+            Math.sin(elapsed / 15.5) * cameraPunch * punchDecay +
+            Math.cos(elapsed / 23) * cameraPunch * 0.2 * punchDecay;
+          cameraRig.y = Math.cos(elapsed / 17.5) * cameraPunch * 0.65 * punchDecay;
+        }
 
         if (shockwaveEnabled) {
           const shockT = clamp((elapsed - 120) / 620, 0, 1);
@@ -385,12 +523,35 @@ export class PixiFxRenderer implements FxRenderer {
 
         const sparkFade = clamp((elapsed - 120) / 650, 0, 1);
         for (const spark of sparks) {
-          spark.life += 0.018;
-          spark.shape.x += spark.vx;
-          spark.shape.y += spark.vy;
-          spark.vy += 0.045;
+          spark.life += 0.02 * deltaFrames;
+          spark.shape.x += spark.vx * deltaFrames;
+          spark.shape.y += spark.vy * deltaFrames;
+          spark.vy += 0.048 * deltaFrames;
           spark.shape.alpha = (1 - sparkFade) * (1 - spark.life * 0.65);
           spark.shape.scale.set(1 + spark.life * 0.35);
+        }
+
+        for (const chunk of debris) {
+          chunk.life += deltaFrames;
+          chunk.shape.x += chunk.vx * deltaFrames;
+          chunk.shape.y += chunk.vy * deltaFrames;
+          chunk.vy += 0.18 * deltaFrames;
+          chunk.vx *= Math.pow(chunk.drag, deltaFrames);
+          chunk.shape.rotation += chunk.vr * deltaFrames;
+          chunk.vr *= Math.pow(chunk.spinDamp, deltaFrames);
+
+          const lifeT = clamp(chunk.life / chunk.maxLife, 0, 1);
+          chunk.shape.alpha = (1 - lifeT) * (1 - fadeOutT) * 0.95;
+        }
+
+        for (const smoke of smokeClouds) {
+          smoke.life += deltaFrames;
+          smoke.shape.x += smoke.vx * deltaFrames;
+          smoke.shape.y += smoke.vy * deltaFrames;
+          smoke.shape.scale.set(smoke.shape.scale.x + smoke.grow * deltaFrames);
+
+          const lifeT = clamp(smoke.life / smoke.maxLife, 0, 1);
+          smoke.shape.alpha = smoke.alphaBase * (1 - lifeT) * (1 - fadeOutT * 0.8);
         }
 
         if (profile.doubleBurst && !didSecondBurst && elapsed > 260) {
