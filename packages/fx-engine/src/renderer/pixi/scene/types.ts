@@ -22,8 +22,13 @@ export interface AchievementCardNodes {
   coldShadow: Graphics;
   keyLight: Graphics;
   glowSweep: Graphics;
+  ribbonWidth: number;
+  effectWidth: number;
+  effectHeight: number;
   label: Text;
+  titleGlow: Text;
   title: Text;
+  subtitleGlow: Text;
   subtitle: Text;
   titleGhostR: Text;
   titleGhostC: Text;

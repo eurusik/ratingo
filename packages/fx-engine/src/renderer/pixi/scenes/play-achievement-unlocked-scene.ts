@@ -11,6 +11,33 @@ import { createAchievementCard } from '../scene/create-achievement-card';
 import { createAchievementMask } from '../scene/create-achievement-mask';
 import { createBackdropLayers } from '../scene/create-backdrop-layers';
 
+interface LightingOverrides {
+  veilAlpha?: number;
+  shadowAlpha?: number;
+  keyLightBase?: number;
+  keyLightImpact?: number;
+  keyLightWindowMs?: number;
+}
+
+function asLightingOverrides(event: FxEvent): LightingOverrides {
+  const metadata = event.metadata;
+  if (!metadata || typeof metadata !== 'object') return {};
+  const lighting = (metadata as { lighting?: unknown }).lighting;
+  if (!lighting || typeof lighting !== 'object') return {};
+
+  const source = lighting as Record<string, unknown>;
+  const asNumber = (value: unknown): number | undefined =>
+    typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+
+  return {
+    veilAlpha: asNumber(source.veilAlpha),
+    shadowAlpha: asNumber(source.shadowAlpha),
+    keyLightBase: asNumber(source.keyLightBase),
+    keyLightImpact: asNumber(source.keyLightImpact),
+    keyLightWindowMs: asNumber(source.keyLightWindowMs),
+  };
+}
+
 export async function playAchievementUnlockedScene(
   app: Application,
   event: FxEvent,
@@ -37,7 +64,12 @@ export async function playAchievementUnlockedScene(
   const shockwaveEnabled = profile.shockwave && options.mode === 'epic' && !isLite;
   const shakePx = profile.shakePx * liteFactor;
   const cameraPunch = profile.cameraPunch * liteFactor;
-  const focusVeilTarget = 0.42;
+  const lighting = asLightingOverrides(event);
+  const focusVeilTarget = clamp(lighting.veilAlpha ?? 0.42, 0, 0.72);
+  const shadowStrength = clamp(lighting.shadowAlpha ?? 0.46, 0, 0.65);
+  const keyLightBase = clamp(lighting.keyLightBase ?? 0.18, 0, 0.5);
+  const keyLightImpactStrength = clamp(lighting.keyLightImpact ?? 0.34, 0, 0.6);
+  const keyLightWindowMs = clamp(lighting.keyLightWindowMs ?? 60, 24, 240);
   const focusInDurationMs = 90;
   const focusOutDurationMs = 120;
   const focusOutStartMs = Math.max(
@@ -50,10 +82,6 @@ export async function playAchievementUnlockedScene(
   const centerX = width / 2;
   const centerY = height / 2;
   const medalY = centerY - Math.min(64, height * 0.08);
-  const glitchBlockWidth = Math.min(width * 0.7, 900);
-  const glitchBlockHeight = Math.min(height * 0.5, 420);
-  const glitchBlockX = centerX - glitchBlockWidth / 2;
-  const glitchBlockY = medalY - Math.min(170, height * 0.24);
 
   const root = new Container();
   app.stage.addChild(root);
@@ -78,9 +106,15 @@ export async function playAchievementUnlockedScene(
     event,
     profile,
     rarity,
+    viewportWidth: width,
     centerX,
     medalY,
   });
+
+  const glitchBlockWidth = Math.min(card.effectWidth, width - 72);
+  const glitchBlockHeight = Math.min(card.effectHeight, height * 0.5);
+  const glitchBlockX = centerX - glitchBlockWidth / 2;
+  const glitchBlockY = medalY - Math.min(170, height * 0.24);
 
   const achievementMask = createAchievementMask({
     cameraRig,
@@ -263,19 +297,45 @@ export async function playAchievementUnlockedScene(
       const subtitleRevealOffset = (1 - subtitleRevealEase) * 10;
       const shadowReveal = easeOutCubic(clamp(elapsed / 150, 0, 1));
       const shadowTail = 1 - tailFadeT * 0.24;
-      const impactWindowMs = 78;
-      const impactT = clamp((elapsed - timeline.attackEndMs) / impactWindowMs, 0, 1);
+      const impactT = clamp((elapsed - timeline.attackEndMs) / keyLightWindowMs, 0, 1);
       const keyLightImpact = Math.sin(Math.PI * impactT);
+      const shadowImpactT = clamp((elapsed - timeline.attackEndMs + 18) / 96, 0, 1);
+      const shadowImpact = Math.sin(Math.PI * shadowImpactT);
+      const keyLightSweepT = clamp(
+        (elapsed - timeline.sweepStartMs) / Math.max(1, timeline.sweepDurationMs * 0.64),
+        0,
+        1,
+      );
 
-      card.coldShadow.alpha = 0.34 * shadowReveal * shadowTail * (1 - fadeOutT) * hardDisappear;
-      card.coldShadow.y = 22 + (1 - shadowReveal) * 6;
-      card.coldShadow.scale.set(0.96 + shadowReveal * 0.04, 0.94 + shadowReveal * 0.06);
+      card.coldShadow.alpha =
+        shadowStrength *
+        (0.78 + shadowImpact * 0.22) *
+        shadowReveal *
+        shadowTail *
+        (1 - fadeOutT) *
+        hardDisappear;
+      card.coldShadow.y = 24 + (1 - shadowReveal) * 14 + shadowImpact * 5;
+      card.coldShadow.scale.set(
+        0.9 + shadowReveal * 0.14 + shadowImpact * 0.08,
+        0.82 + shadowReveal * 0.18 - shadowImpact * 0.06,
+      );
       card.keyLight.alpha =
-        (0.12 * shadowReveal + keyLightImpact * 0.22) * (1 - fadeOutT) * hardDisappear;
+        (keyLightBase * shadowReveal + keyLightImpact * keyLightImpactStrength) *
+        (1 - fadeOutT) *
+        hardDisappear;
+      card.keyLight.x = lerp(-26, 18, easeInOutCubic(keyLightSweepT));
+      card.keyLight.scale.set(0.94 + shadowReveal * 0.12 + keyLightImpact * 0.06, 1);
 
       card.label.alpha = 0.9 * (1 - fadeOutT) * tailTextFade * hardDisappear;
       card.label.scale.set(1);
       card.title.y = 126 + titleRevealOffset;
+      card.titleGlow.y = card.title.y;
+      card.titleGlow.alpha =
+        (signalState.inSignalCut ? 0.34 : 0.3 + Math.sin(elapsed / 170) * 0.04) *
+        (1 - fadeOutT) *
+        tailTextFade *
+        textRevealEase *
+        hardDisappear;
       card.title.alpha =
         (signalState.inSignalCut ? 0.92 : 0.9 + Math.sin(elapsed / 160) * 0.06) *
         (1 - fadeOutT) *
@@ -285,6 +345,14 @@ export async function playAchievementUnlockedScene(
       card.title.scale.set(0.94 + textRevealEase * 0.06);
 
       card.subtitle.y = 154 + subtitleRevealOffset;
+      card.subtitleGlow.y = card.subtitle.y;
+      card.subtitleGlow.alpha = card.subtitle.text
+        ? (signalState.inSignalCut ? 0.24 : 0.21 + Math.sin(elapsed / 210) * 0.03) *
+          (1 - fadeOutT) *
+          tailTextFade *
+          subtitleRevealEase *
+          hardDisappear
+        : 0;
       card.subtitle.alpha = card.subtitle.text
         ? (signalState.inSignalCut ? 0.76 : 0.75 + Math.sin(elapsed / 190) * 0.08) *
           (1 - fadeOutT) *
