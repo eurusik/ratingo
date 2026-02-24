@@ -39,7 +39,7 @@ export function createBackdropLayers(input: CreateBackdropLayersInput): Backdrop
 
   const scanline = new Graphics();
   for (let y = 0; y < input.height; y += 4) {
-    const alpha = (y / 4) % 2 === 0 ? 0.028 : 0.012;
+    const alpha = (y / 4) % 2 === 0 ? 0.02 : 0.008;
     scanline.beginFill(0x000000, alpha);
     scanline.drawRect(0, y, input.width, 2);
     scanline.endFill();
@@ -49,7 +49,7 @@ export function createBackdropLayers(input: CreateBackdropLayersInput): Backdrop
 
   const noiseDots = new Graphics();
   for (let i = 0; i < 170; i++) {
-    noiseDots.beginFill(Math.random() > 0.58 ? 0xc7b994 : 0x6a6a6a, randomRange(0.01, 0.06));
+    noiseDots.beginFill(Math.random() > 0.58 ? 0x95a1b1 : 0x5c6472, randomRange(0.006, 0.03));
     noiseDots.drawRect(
       randomRange(0, input.width),
       randomRange(0, input.height),
@@ -62,7 +62,7 @@ export function createBackdropLayers(input: CreateBackdropLayersInput): Backdrop
   input.root.addChild(noiseDots);
 
   const flash = new Graphics();
-  flash.beginFill(0xf5f4ea, 0);
+  flash.beginFill(0xe3ebf3, 0);
   flash.drawRect(0, 0, input.width, input.height);
   flash.endFill();
   input.root.addChild(flash);
@@ -118,7 +118,7 @@ export function createBackdropLayers(input: CreateBackdropLayersInput): Backdrop
   let aura: Graphics | undefined;
   if (input.rarity === 'epic' || input.rarity === 'legendary') {
     const node = new Graphics();
-    node.beginFill(input.profile.sparkSecondary, input.rarity === 'legendary' ? 0.18 : 0.12);
+    node.beginFill(input.profile.sparkSecondary, input.rarity === 'legendary' ? 0.13 : 0.09);
     node.drawCircle(0, 0, input.rarity === 'legendary' ? 110 : 90);
     node.endFill();
     node.blendMode = BLEND_MODES.ADD;

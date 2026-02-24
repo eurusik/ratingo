@@ -31,7 +31,7 @@ function iconNodeToSvg(iconNode: LucideIconNode, strokeHex: string): string {
     })
     .join('');
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${ICON_VIEWBOX_SIZE}" height="${ICON_VIEWBOX_SIZE}" viewBox="0 0 ${ICON_VIEWBOX_SIZE} ${ICON_VIEWBOX_SIZE}" fill="none" stroke="${strokeHex}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision">${nodes}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${ICON_VIEWBOX_SIZE}" height="${ICON_VIEWBOX_SIZE}" viewBox="0 0 ${ICON_VIEWBOX_SIZE} ${ICON_VIEWBOX_SIZE}" fill="none" stroke="${strokeHex}" stroke-width="2.05" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision">${nodes}</svg>`;
 }
 
 function getIconTexture(iconKey: IconKey, strokeHex: string): Texture {
@@ -66,12 +66,12 @@ function resolveIconKey(rarity: FxRarity, icon?: string): IconKey {
 
 export function createIconSprite(rarity: FxRarity, icon?: string): Sprite {
   const iconKey = resolveIconKey(rarity, icon);
-  const texture = getIconTexture(iconKey, '#1f1f1f');
+  const texture = getIconTexture(iconKey, '#20242b');
   const sprite = new Sprite(texture);
   sprite.anchor.set(0.5);
   sprite.y = -2;
   sprite.roundPixels = true;
-  const iconSize = rarity === 'legendary' ? 50 : rarity === 'epic' ? 48 : 44;
+  const iconSize = rarity === 'legendary' ? 46 : rarity === 'epic' ? 44 : 40;
   sprite.width = iconSize;
   sprite.height = iconSize;
   return sprite;

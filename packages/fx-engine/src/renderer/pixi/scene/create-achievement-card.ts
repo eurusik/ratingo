@@ -15,8 +15,8 @@ interface CreateAchievementCardInput {
 }
 
 export function createAchievementCard(input: CreateAchievementCardInput): AchievementCardNodes {
-  const ribbonWidth = Math.max(260, Math.min(360, input.viewportWidth - 112));
-  const ribbonHeight = 80;
+  const ribbonWidth = Math.max(248, Math.min(344, input.viewportWidth - 124));
+  const ribbonHeight = 68;
   const ribbonX = -ribbonWidth / 2;
   const labelBaseY = 88;
   const titleBaseY = 126;
@@ -30,28 +30,28 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
 
   const coldShadow = new Graphics();
   coldShadow.beginFill(0x000000, 1);
-  coldShadow.drawRoundedRect(ribbonX - 16, 6, ribbonWidth + 32, 178, 38);
+  coldShadow.drawRoundedRect(ribbonX - 12, 8, ribbonWidth + 24, 166, 30);
   coldShadow.endFill();
   coldShadow.beginFill(0x000000, 0.8);
-  coldShadow.drawRoundedRect(ribbonX - 26, -2, ribbonWidth + 52, 196, 46);
+  coldShadow.drawRoundedRect(ribbonX - 20, 0, ribbonWidth + 40, 182, 36);
   coldShadow.endFill();
-  coldShadow.y = 30;
+  coldShadow.y = 26;
   coldShadow.blendMode = BLEND_MODES.MULTIPLY;
   coldShadow.alpha = 0;
   medalRoot.addChild(coldShadow);
 
   const ribbon = new Graphics();
-  ribbon.beginFill(input.profile.ribbon, 0.95);
-  ribbon.drawRoundedRect(ribbonX, -40, ribbonWidth, ribbonHeight, 22);
+  ribbon.beginFill(input.profile.ribbon, 0.99);
+  ribbon.drawRoundedRect(ribbonX, -34, ribbonWidth, ribbonHeight, 14);
   ribbon.endFill();
   medalRoot.addChild(ribbon);
 
   const keyLight = new Graphics();
-  keyLight.beginFill(0x79b6f0, 0.66);
-  keyLight.drawRoundedRect(ribbonX - 10, -48, ribbonWidth + 20, 40, 18);
+  keyLight.beginFill(0x4ea1ff, 0.28);
+  keyLight.drawRoundedRect(ribbonX - 8, -42, ribbonWidth + 16, 32, 12);
   keyLight.endFill();
-  keyLight.beginFill(0xe6f3ff, 0.46);
-  keyLight.drawRoundedRect(ribbonX + 34, -41, ribbonWidth - 68, 24, 11);
+  keyLight.beginFill(0xd8e8f7, 0.16);
+  keyLight.drawRoundedRect(ribbonX + 30, -38, ribbonWidth - 60, 20, 8);
   keyLight.endFill();
   keyLight.blendMode = BLEND_MODES.ADD;
   keyLight.alpha = 0;
@@ -59,18 +59,18 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
 
   const medal = new Graphics();
   medal.beginFill(input.profile.medalFill, 1);
-  medal.drawCircle(0, 0, 62);
+  medal.drawCircle(0, 0, 56);
   medal.endFill();
-  medal.lineStyle(5, input.profile.medalStroke, 0.95);
-  medal.drawCircle(0, 0, 58);
+  medal.lineStyle(3, input.profile.medalStroke, 0.92);
+  medal.drawCircle(0, 0, 53);
   medalRoot.addChild(medal);
 
   const iconSprite = createIconSprite(input.rarity, input.event.icon);
   medalRoot.addChild(iconSprite);
 
   const glowSweep = new Graphics();
-  glowSweep.beginFill(0xd9ccb0, 0.13);
-  glowSweep.drawRoundedRect(-34, -70, 68, 140, 14);
+  glowSweep.beginFill(0xc7d3df, 0.08);
+  glowSweep.drawRoundedRect(-28, -62, 56, 124, 10);
   glowSweep.endFill();
   glowSweep.rotation = -0.45;
   glowSweep.blendMode = BLEND_MODES.ADD;
@@ -97,12 +97,12 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
 
   const title = new Text(input.event.title, {
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-    fontSize: input.rarity === 'legendary' ? 28 : input.rarity === 'epic' ? 30 : 26,
-    fontWeight: '800',
+    fontSize: input.rarity === 'legendary' ? 26 : input.rarity === 'epic' ? 28 : 24,
+    fontWeight: '700',
     fill: input.profile.titleColor,
     align: 'center',
     stroke: '#000000',
-    strokeThickness: 2,
+    strokeThickness: 1.5,
     wordWrap: true,
     wordWrapWidth: Math.min(520, ribbonWidth + 110),
   });
@@ -111,8 +111,8 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
 
   const titleGlow = new Text(input.event.title, {
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-    fontSize: input.rarity === 'legendary' ? 28 : input.rarity === 'epic' ? 30 : 26,
-    fontWeight: '800',
+    fontSize: input.rarity === 'legendary' ? 26 : input.rarity === 'epic' ? 28 : 24,
+    fontWeight: '700',
     fill: input.profile.titleColor,
     align: 'center',
     wordWrap: true,
@@ -121,16 +121,16 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
   titleGlow.anchor.set(0.5);
   titleGlow.y = titleBaseY;
   titleGlow.alpha = 0;
-  titleGlow.filters = [new BlurFilter(7)];
+  titleGlow.filters = [new BlurFilter(6)];
   titleGlow.blendMode = BLEND_MODES.SCREEN;
   medalRoot.addChild(titleGlow);
   medalRoot.addChild(title);
 
   const titleGhostR = new Text(input.event.title, {
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-    fontSize: input.rarity === 'legendary' ? 28 : input.rarity === 'epic' ? 30 : 26,
-    fontWeight: '800',
-    fill: 0xff4f4f,
+    fontSize: input.rarity === 'legendary' ? 26 : input.rarity === 'epic' ? 28 : 24,
+    fontWeight: '700',
+    fill: 0xc38e8e,
     align: 'center',
     wordWrap: true,
     wordWrapWidth: Math.min(520, ribbonWidth + 110),
@@ -142,9 +142,9 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
 
   const titleGhostC = new Text(input.event.title, {
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-    fontSize: input.rarity === 'legendary' ? 28 : input.rarity === 'epic' ? 30 : 26,
-    fontWeight: '800',
-    fill: 0x63d9ff,
+    fontSize: input.rarity === 'legendary' ? 26 : input.rarity === 'epic' ? 28 : 24,
+    fontWeight: '700',
+    fill: 0x84afc2,
     align: 'center',
     wordWrap: true,
     wordWrapWidth: Math.min(520, ribbonWidth + 110),
@@ -156,9 +156,9 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
 
   const subtitle = new Text(input.event.subtitle ?? '', {
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    fill: 0xb8bfcd,
+    fill: 0xc3cad7,
     align: 'center',
     stroke: '#000000',
     strokeThickness: 1,
@@ -172,9 +172,9 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
 
   const subtitleGlow = new Text(input.event.subtitle ?? '', {
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    fill: 0xd3dae6,
+    fill: 0xe0e6ef,
     align: 'center',
     wordWrap: true,
     wordWrapWidth: Math.min(520, ribbonWidth + 90),
@@ -182,7 +182,7 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
   subtitleGlow.anchor.set(0.5);
   subtitleGlow.y = subtitleBaseY;
   subtitleGlow.alpha = 0;
-  subtitleGlow.filters = [new BlurFilter(5)];
+  subtitleGlow.filters = [new BlurFilter(4)];
   subtitleGlow.blendMode = BLEND_MODES.SCREEN;
   medalRoot.addChild(subtitleGlow);
   medalRoot.addChild(subtitle);
@@ -192,7 +192,7 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 1.8,
-    fill: 0xff5d5d,
+    fill: 0xbc9292,
     align: 'center',
   });
   labelGhostR.anchor.set(0.5);
@@ -205,7 +205,7 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 1.8,
-    fill: 0x6fd7ff,
+    fill: 0x86adc0,
     align: 'center',
   });
   labelGhostC.anchor.set(0.5);
@@ -214,16 +214,16 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
   medalRoot.addChild(labelGhostC);
 
   const shadowTopInner = 6;
-  const shadowTopOuter = -2;
-  const shadowBottom = subtitleBaseY + subtitle.height / 2 + 50;
-  const shadowInnerHeight = Math.max(156, shadowBottom - shadowTopInner);
-  const shadowOuterHeight = Math.max(172, shadowBottom + 18 - shadowTopOuter);
+  const shadowTopOuter = 0;
+  const shadowBottom = subtitleBaseY + subtitle.height / 2 + 34;
+  const shadowInnerHeight = Math.max(136, shadowBottom - shadowTopInner);
+  const shadowOuterHeight = Math.max(148, shadowBottom + 12 - shadowTopOuter);
   coldShadow.clear();
   coldShadow.beginFill(0x000000, 1);
-  coldShadow.drawRoundedRect(ribbonX - 16, shadowTopInner, ribbonWidth + 32, shadowInnerHeight, 38);
+  coldShadow.drawRoundedRect(ribbonX - 12, shadowTopInner, ribbonWidth + 24, shadowInnerHeight, 30);
   coldShadow.endFill();
   coldShadow.beginFill(0x000000, 0.8);
-  coldShadow.drawRoundedRect(ribbonX - 26, shadowTopOuter, ribbonWidth + 52, shadowOuterHeight, 46);
+  coldShadow.drawRoundedRect(ribbonX - 20, shadowTopOuter, ribbonWidth + 40, shadowOuterHeight, 36);
   coldShadow.endFill();
 
   return {
@@ -232,8 +232,8 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
     keyLight,
     glowSweep,
     ribbonWidth,
-    effectWidth: ribbonWidth + 96,
-    effectHeight: Math.max(260, shadowOuterHeight + coldShadow.y + 24),
+    effectWidth: ribbonWidth + 80,
+    effectHeight: Math.max(240, shadowOuterHeight + coldShadow.y + 18),
     labelBaseY,
     titleBaseY,
     subtitleBaseY,
