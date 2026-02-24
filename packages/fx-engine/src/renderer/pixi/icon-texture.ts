@@ -17,6 +17,8 @@ const ICON_NODES: Record<IconKey, LucideIconNode> = {
 };
 
 const ICON_TEXTURE_CACHE = new Map<string, Texture>();
+const ICON_VIEWBOX_SIZE = 24;
+const ICON_TEXTURE_SIZE = 96;
 
 function iconNodeToSvg(iconNode: LucideIconNode, strokeHex: string): string {
   const nodes = iconNode
@@ -29,7 +31,7 @@ function iconNodeToSvg(iconNode: LucideIconNode, strokeHex: string): string {
     })
     .join('');
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${strokeHex}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">${nodes}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${ICON_VIEWBOX_SIZE}" height="${ICON_VIEWBOX_SIZE}" viewBox="0 0 ${ICON_VIEWBOX_SIZE} ${ICON_VIEWBOX_SIZE}" fill="none" stroke="${strokeHex}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision">${nodes}</svg>`;
 }
 
 function getIconTexture(iconKey: IconKey, strokeHex: string): Texture {
@@ -38,7 +40,13 @@ function getIconTexture(iconKey: IconKey, strokeHex: string): Texture {
   if (cached) return cached;
 
   const svg = iconNodeToSvg(ICON_NODES[iconKey], strokeHex);
-  const texture = Texture.from(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`);
+  const texture = Texture.from(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`, {
+    resourceOptions: {
+      autoLoad: true,
+      width: ICON_TEXTURE_SIZE,
+      height: ICON_TEXTURE_SIZE,
+    },
+  });
   ICON_TEXTURE_CACHE.set(cacheKey, texture);
   return texture;
 }
@@ -62,6 +70,7 @@ export function createIconSprite(rarity: FxRarity, icon?: string): Sprite {
   const sprite = new Sprite(texture);
   sprite.anchor.set(0.5);
   sprite.y = -2;
+  sprite.roundPixels = true;
   const iconSize = rarity === 'legendary' ? 50 : rarity === 'epic' ? 48 : 44;
   sprite.width = iconSize;
   sprite.height = iconSize;
