@@ -5,11 +5,20 @@ export { FxSceneRegistry, createDefaultSceneRegistry } from './scenes/registry';
 export type {
   AchievementFxEvent,
   FxController,
+  FxEvent,
+  FxEventType,
   FxAudioService,
   FxMode,
   FxRarity,
   FxRenderOptions,
   FxRenderer,
+  RankPromotedFxEvent,
+  WeaponUnlockedFxEvent,
 } from './types';
 export type { FxEngineConfig } from './engine';
-export type { FxSceneDefinition, FxSceneEvent, FxSceneId } from './scenes/contracts';
+export type {
+  BuiltinFxSceneId,
+  FxSceneDefinition,
+  FxSceneEvent,
+  FxSceneId,
+} from './scenes/contracts';

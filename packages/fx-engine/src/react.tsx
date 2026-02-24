@@ -13,7 +13,7 @@ import {
 import { FxEngine } from './engine';
 import { noopAudio, noopRenderer } from './noop';
 import { createWebFxEngine } from './create-web-fx-engine';
-import type { AchievementFxEvent, FxController, FxMode } from './types';
+import type { FxController, FxEvent, FxMode } from './types';
 
 interface FxProviderProps {
   children: ReactNode;
@@ -90,7 +90,7 @@ export function FxProvider({
 
   const api = useMemo<FxController>(
     () => ({
-      showAchievement: (event: AchievementFxEvent) => engineRef.current.showAchievement(event),
+      showAchievement: (event: FxEvent) => engineRef.current.showAchievement(event),
       setMode: (next: FxMode) => setMode(next),
       setSafeMoment: (value: boolean) => engineRef.current.setSafeMoment(value),
       unlockAudio: () => engineRef.current.unlockAudio(),

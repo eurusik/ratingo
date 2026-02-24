@@ -1,4 +1,4 @@
-import type { FxRenderOptions, FxRenderer } from '../types';
+import type { FxEvent, FxRenderOptions, FxRenderer } from '../types';
 import type { FxSceneEvent } from './contracts';
 
 export async function renderScene(
@@ -8,11 +8,12 @@ export async function renderScene(
 ): Promise<void> {
   switch (scene.sceneId) {
     case 'achievement.unlocked':
+    case 'rank.promoted':
+    case 'weapon.unlocked':
       await renderer.playAchievement(scene.payload, options);
       return;
     default: {
-      const unsupportedScene: never = scene.sceneId;
-      throw new Error(`Unsupported scene: ${unsupportedScene as string}`);
+      await renderer.playAchievement(scene.payload as FxEvent, options);
     }
   }
 }

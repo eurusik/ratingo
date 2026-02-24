@@ -1,4 +1,4 @@
-import type { AchievementFxEvent, FxAudioService, FxMode, FxRarity, FxRenderer } from './types';
+import type { FxAudioService, FxEvent, FxMode, FxRarity, FxRenderer } from './types';
 import {
   buildDedupeKey,
   createSummaryAchievement,
@@ -6,7 +6,7 @@ import {
   shouldDropByEpicCooldown,
   shouldMergeQueue,
 } from './core/policy/fx-policies';
-import type { FxSceneEvent } from './scenes/contracts';
+import type { FxSceneDefinition, FxSceneEvent, FxSceneId } from './scenes/contracts';
 import { FxSceneRegistry, createDefaultSceneRegistry } from './scenes/registry';
 import { renderScene } from './scenes/runtime';
 
@@ -75,7 +75,11 @@ export class FxEngine {
     this.audio.unlock();
   }
 
-  showAchievement(event: AchievementFxEvent): void {
+  registerScene<TSceneId extends FxSceneId>(scene: FxSceneDefinition<TSceneId>): void {
+    this.sceneRegistry.register(scene);
+  }
+
+  showAchievement(event: FxEvent): void {
     if (this.mode === 'off') return;
 
     const rarity: FxRarity = event.rarity ?? 'common';

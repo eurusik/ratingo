@@ -1,14 +1,16 @@
-import type { AchievementFxEvent, FxRarity } from '../../types';
+import type { FxEvent, FxRarity } from '../../types';
 import type { FxSceneDefinition } from '../contracts';
 
 export const achievementUnlockedScene: FxSceneDefinition<'achievement.unlocked'> = {
   id: 'achievement.unlocked',
-  supports: () => true,
-  create: (event: AchievementFxEvent, rarity: FxRarity) => ({
+  priority: -100,
+  supports: (event: FxEvent) => !event.type || event.type === 'achievement.unlocked',
+  create: (event: FxEvent, rarity: FxRarity) => ({
     sceneId: 'achievement.unlocked',
     rarity,
     payload: {
       ...event,
+      type: 'achievement.unlocked',
       rarity,
     },
   }),
