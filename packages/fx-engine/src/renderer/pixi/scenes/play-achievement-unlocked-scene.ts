@@ -136,6 +136,17 @@ export async function playAchievementUnlockedScene(
       const revealT = clamp(elapsed / timeline.attackEndMs, 0, 1);
       const settleT = clamp((elapsed - timeline.settleStartMs) / timeline.settleDurationMs, 0, 1);
       const sweepT = clamp((elapsed - timeline.sweepStartMs) / timeline.sweepDurationMs, 0, 1);
+      const textRevealT = clamp(
+        (elapsed - timeline.textRevealStartMs) / timeline.textRevealDurationMs,
+        0,
+        1,
+      );
+      const subtitleRevealT = clamp(
+        (elapsed - (timeline.textRevealStartMs + timeline.subtitleRevealLagMs)) /
+          timeline.textRevealDurationMs,
+        0,
+        1,
+      );
       const fadeOutT = clamp((elapsed - timeline.fadeStartMs) / timeline.fadeDurationMs, 0, 1);
       const tailFadeT = clamp(
         (elapsed - timeline.tailStartMs) / Math.max(1, durationMs - timeline.tailStartMs),
@@ -234,27 +245,41 @@ export async function playAchievementUnlockedScene(
 
       const tailTextFade = 1 - tailFadeT * 0.32;
       const hardDisappear = 1 - signalState.disappearEase;
+      const textRevealEase = easeOutCubic(textRevealT);
+      const subtitleRevealEase = easeOutCubic(subtitleRevealT);
+      const titleRevealOffset = (1 - textRevealEase) * 14;
+      const subtitleRevealOffset = (1 - subtitleRevealEase) * 10;
 
       card.label.alpha = 0.9 * (1 - fadeOutT) * tailTextFade * hardDisappear;
+      card.label.scale.set(1);
+      card.title.y = 126 + titleRevealOffset;
       card.title.alpha =
         (signalState.inSignalCut ? 0.92 : 0.9 + Math.sin(elapsed / 160) * 0.06) *
         (1 - fadeOutT) *
         tailTextFade *
+        textRevealEase *
         hardDisappear;
+      card.title.scale.set(0.94 + textRevealEase * 0.06);
+
+      card.subtitle.y = 154 + subtitleRevealOffset;
       card.subtitle.alpha = card.subtitle.text
         ? (signalState.inSignalCut ? 0.76 : 0.75 + Math.sin(elapsed / 190) * 0.08) *
           (1 - fadeOutT) *
           tailTextFade *
+          subtitleRevealEase *
           hardDisappear
         : 0;
+      card.subtitle.scale.set(0.96 + subtitleRevealEase * 0.04);
 
       const rgbSplit = signalState.signalStrength * 7;
-      card.titleGhostR.alpha = signalState.signalStrength * 0.78 * (1 - fadeOutT) * hardDisappear;
-      card.titleGhostC.alpha = signalState.signalStrength * 0.78 * (1 - fadeOutT) * hardDisappear;
+      card.titleGhostR.alpha =
+        signalState.signalStrength * 0.78 * (1 - fadeOutT) * textRevealEase * hardDisappear;
+      card.titleGhostC.alpha =
+        signalState.signalStrength * 0.78 * (1 - fadeOutT) * textRevealEase * hardDisappear;
       card.titleGhostR.x = -rgbSplit - signalState.signalSpikeC * 2;
       card.titleGhostC.x = rgbSplit + signalState.signalSpikeB * 2;
-      card.titleGhostR.y = 126 + signalState.signalSpikeB * 0.8;
-      card.titleGhostC.y = 126 - signalState.signalSpikeC * 0.8;
+      card.titleGhostR.y = 126 + titleRevealOffset + signalState.signalSpikeB * 0.8;
+      card.titleGhostC.y = 126 + titleRevealOffset - signalState.signalSpikeC * 0.8;
 
       card.labelGhostR.alpha = signalState.signalStrength * 0.62 * (1 - fadeOutT) * hardDisappear;
       card.labelGhostC.alpha = signalState.signalStrength * 0.62 * (1 - fadeOutT) * hardDisappear;

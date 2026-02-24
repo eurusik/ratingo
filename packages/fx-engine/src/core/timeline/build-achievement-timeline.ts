@@ -18,6 +18,9 @@ const AUDIO_TIMELINE = {
   shock2StartMs: 790,
   shock2DurationMs: 360,
   preSignalLeadMs: 170,
+  textRevealStartMs: 920,
+  textRevealDurationMs: 280,
+  subtitleRevealLagMs: 90,
 } as const;
 
 export interface TimelineInput {
@@ -49,6 +52,9 @@ export interface AchievementTimeline {
   shock2StartMs: number;
   shock2DurationMs: number;
   preSignalLeadMs: number;
+  textRevealStartMs: number;
+  textRevealDurationMs: number;
+  subtitleRevealLagMs: number;
 }
 
 export function buildAchievementTimeline(input: TimelineInput): AchievementTimeline {
@@ -118,5 +124,10 @@ export function buildAchievementTimeline(input: TimelineInput): AchievementTimel
       ? fromAudio(AUDIO_TIMELINE.shock2DurationMs)
       : input.durationMs * 0.22,
     preSignalLeadMs: useAudioTimeline ? fromAudio(AUDIO_TIMELINE.preSignalLeadMs) : 90,
+    textRevealStartMs: useAudioTimeline ? fromAudio(AUDIO_TIMELINE.textRevealStartMs) : input.durationMs * 0.24,
+    textRevealDurationMs: useAudioTimeline
+      ? fromAudio(AUDIO_TIMELINE.textRevealDurationMs)
+      : Math.min(320, input.durationMs * 0.26),
+    subtitleRevealLagMs: useAudioTimeline ? fromAudio(AUDIO_TIMELINE.subtitleRevealLagMs) : 80,
   };
 }
