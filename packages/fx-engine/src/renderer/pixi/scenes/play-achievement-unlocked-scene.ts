@@ -295,14 +295,20 @@ export async function playAchievementUnlockedScene(
       const subtitleRevealEase = easeOutCubic(subtitleRevealT);
       const titleRevealOffset = (1 - textRevealEase) * 14;
       const subtitleRevealOffset = (1 - subtitleRevealEase) * 10;
-      const shadowReveal = easeOutCubic(clamp(elapsed / 150, 0, 1));
+      const shadowReveal = textRevealEase;
       const shadowTail = 1 - tailFadeT * 0.24;
       const impactT = clamp((elapsed - timeline.attackEndMs) / keyLightWindowMs, 0, 1);
       const keyLightImpact = Math.sin(Math.PI * impactT);
       const shadowImpactT = clamp((elapsed - timeline.attackEndMs + 18) / 96, 0, 1);
       const shadowImpact = Math.sin(Math.PI * shadowImpactT);
+      const keyLightReveal = clamp(
+        (elapsed - timeline.textRevealStartMs + 42) / Math.max(1, timeline.textRevealDurationMs),
+        0,
+        1,
+      );
       const keyLightSweepT = clamp(
-        (elapsed - timeline.sweepStartMs) / Math.max(1, timeline.sweepDurationMs * 0.64),
+        (elapsed - Math.max(timeline.sweepStartMs, timeline.textRevealStartMs - 36)) /
+          Math.max(1, timeline.sweepDurationMs * 0.58),
         0,
         1,
       );
@@ -320,7 +326,7 @@ export async function playAchievementUnlockedScene(
         0.82 + shadowReveal * 0.18 - shadowImpact * 0.06,
       );
       card.keyLight.alpha =
-        (keyLightBase * shadowReveal + keyLightImpact * keyLightImpactStrength) *
+        (keyLightBase * shadowReveal + keyLightImpact * keyLightImpactStrength * keyLightReveal) *
         (1 - fadeOutT) *
         hardDisappear;
       card.keyLight.x = lerp(-26, 18, easeInOutCubic(keyLightSweepT));
@@ -328,7 +334,8 @@ export async function playAchievementUnlockedScene(
 
       card.label.alpha = 0.9 * (1 - fadeOutT) * tailTextFade * hardDisappear;
       card.label.scale.set(1);
-      card.title.y = 126 + titleRevealOffset;
+      card.label.y = card.labelBaseY;
+      card.title.y = card.titleBaseY + titleRevealOffset;
       card.titleGlow.y = card.title.y;
       card.titleGlow.alpha =
         (signalState.inSignalCut ? 0.34 : 0.3 + Math.sin(elapsed / 170) * 0.04) *
@@ -344,7 +351,7 @@ export async function playAchievementUnlockedScene(
         hardDisappear;
       card.title.scale.set(0.94 + textRevealEase * 0.06);
 
-      card.subtitle.y = 154 + subtitleRevealOffset;
+      card.subtitle.y = card.subtitleBaseY + subtitleRevealOffset;
       card.subtitleGlow.y = card.subtitle.y;
       card.subtitleGlow.alpha = card.subtitle.text
         ? (signalState.inSignalCut ? 0.24 : 0.21 + Math.sin(elapsed / 210) * 0.03) *
@@ -369,15 +376,15 @@ export async function playAchievementUnlockedScene(
         signalState.signalStrength * 0.78 * (1 - fadeOutT) * textRevealEase * hardDisappear;
       card.titleGhostR.x = -rgbSplit - signalState.signalSpikeC * 2;
       card.titleGhostC.x = rgbSplit + signalState.signalSpikeB * 2;
-      card.titleGhostR.y = 126 + titleRevealOffset + signalState.signalSpikeB * 0.8;
-      card.titleGhostC.y = 126 + titleRevealOffset - signalState.signalSpikeC * 0.8;
+      card.titleGhostR.y = card.titleBaseY + titleRevealOffset + signalState.signalSpikeB * 0.8;
+      card.titleGhostC.y = card.titleBaseY + titleRevealOffset - signalState.signalSpikeC * 0.8;
 
       card.labelGhostR.alpha = signalState.signalStrength * 0.62 * (1 - fadeOutT) * hardDisappear;
       card.labelGhostC.alpha = signalState.signalStrength * 0.62 * (1 - fadeOutT) * hardDisappear;
       card.labelGhostR.x = -rgbSplit * 0.74;
       card.labelGhostC.x = rgbSplit * 0.74;
-      card.labelGhostR.y = 88 + signalState.signalSpikeB * 0.5;
-      card.labelGhostC.y = 88 - signalState.signalSpikeC * 0.5;
+      card.labelGhostR.y = card.labelBaseY + signalState.signalSpikeB * 0.5;
+      card.labelGhostC.y = card.labelBaseY - signalState.signalSpikeC * 0.5;
 
       signalGlitchPlugin.update({
         elapsedMs: elapsed,

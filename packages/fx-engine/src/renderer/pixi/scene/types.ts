@@ -25,6 +25,9 @@ export interface AchievementCardNodes {
   ribbonWidth: number;
   effectWidth: number;
   effectHeight: number;
+  labelBaseY: number;
+  titleBaseY: number;
+  subtitleBaseY: number;
   label: Text;
   titleGlow: Text;
   title: Text;
