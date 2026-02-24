@@ -13,6 +13,7 @@ export interface AchievementFxEvent {
 export interface FxRenderOptions {
   mode: FxMode;
   reducedMotion: boolean;
+  durationMs?: number;
 }
 
 export interface FxRenderer {
@@ -22,7 +23,7 @@ export interface FxRenderer {
 
 export interface FxAudioService {
   unlock(): void;
-  playSting(rarity: FxRarity, mode: FxMode): void;
+  playSting(rarity: FxRarity, mode: FxMode): number;
   dispose(): void;
 }
 

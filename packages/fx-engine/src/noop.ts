@@ -7,6 +7,8 @@ export const noopRenderer: FxRenderer = {
 
 export const noopAudio: FxAudioService = {
   unlock() {},
-  playSting(_rarity: FxRarity, _mode: FxMode) {},
+  playSting(_rarity: FxRarity, _mode: FxMode) {
+    return 0;
+  },
   dispose() {},
 };

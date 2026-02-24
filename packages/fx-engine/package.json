@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@pixi/sound": "^5.2.2",
+    "lucide-react": "^0.553.0",
     "pixi.js": "^7.4.3"
   },
   "peerDependencies": {

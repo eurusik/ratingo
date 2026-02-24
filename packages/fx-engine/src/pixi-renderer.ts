@@ -3,10 +3,16 @@ import {
   BLEND_MODES,
   Container,
   Graphics,
+  Sprite,
+  Texture,
   Text,
   TextStyle,
 } from 'pixi.js';
 import type { AchievementFxEvent, FxRarity, FxRenderOptions, FxRenderer } from './types';
+import { __iconNode as starIconNode } from 'lucide-react/dist/esm/icons/star.js';
+import { __iconNode as shieldIconNode } from 'lucide-react/dist/esm/icons/shield.js';
+import { __iconNode as ribbonIconNode } from 'lucide-react/dist/esm/icons/ribbon.js';
+import { __iconNode as trophyIconNode } from 'lucide-react/dist/esm/icons/trophy.js';
 
 type Spark = {
   shape: Graphics;
@@ -35,6 +41,20 @@ type SmokeCloud = {
   maxLife: number;
   alphaBase: number;
 };
+
+type LucideIconNode = [string, Record<string, string | number>][];
+
+type IconKey = 'star' | 'shield' | 'ribbon' | 'trophy';
+
+const ICON_NODES: Record<IconKey, LucideIconNode> = {
+  star: starIconNode as LucideIconNode,
+  shield: shieldIconNode as LucideIconNode,
+  ribbon: ribbonIconNode as LucideIconNode,
+  trophy: trophyIconNode as LucideIconNode,
+};
+
+const ICON_TEXTURE_CACHE = new Map<string, Texture>();
+const AUDIO_REFERENCE_MS = 4729;
 
 type RarityVisualProfile = {
   ribbon: number;
@@ -73,7 +93,7 @@ const RARITY_VISUAL: Record<FxRarity, RarityVisualProfile> = {
     smokeColor: 0x72809a,
     titleColor: 0xe5e9ef,
     labelColor: 0xc2cbd8,
-    durationMs: 1050,
+    durationMs: 900,
     flashAlpha: 0.09,
     vignette: 0.12,
     sparkCount: 6,
@@ -97,7 +117,7 @@ const RARITY_VISUAL: Record<FxRarity, RarityVisualProfile> = {
     smokeColor: 0x7a8ea8,
     titleColor: 0xeaf3ff,
     labelColor: 0xc8def7,
-    durationMs: 1550,
+    durationMs: 1100,
     flashAlpha: 0.24,
     vignette: 0.28,
     sparkCount: 18,
@@ -121,7 +141,7 @@ const RARITY_VISUAL: Record<FxRarity, RarityVisualProfile> = {
     smokeColor: 0x7b74ad,
     titleColor: 0xf2eaff,
     labelColor: 0xd8caef,
-    durationMs: 1850,
+    durationMs: 1300,
     flashAlpha: 0.32,
     vignette: 0.38,
     sparkCount: 30,
@@ -135,18 +155,18 @@ const RARITY_VISUAL: Record<FxRarity, RarityVisualProfile> = {
     doubleBurst: false,
   },
   legendary: {
-    ribbon: 0x4f3a1f,
-    overlayTint: 0x926219,
-    medalFill: 0xb68d2c,
-    medalStroke: 0xffe6a2,
-    sparkPrimary: 0xffd56b,
-    sparkSecondary: 0xfff4c9,
+    ribbon: 0x4a4334,
+    overlayTint: 0x5f553a,
+    medalFill: 0x8d7a4c,
+    medalStroke: 0xd8c690,
+    sparkPrimary: 0xd7bd79,
+    sparkSecondary: 0xe6dbb6,
     debrisColor: 0x8d6a2c,
     smokeColor: 0x9b8a64,
-    titleColor: 0xfff0bf,
-    labelColor: 0xf5d98f,
-    durationMs: 2150,
-    flashAlpha: 0.48,
+    titleColor: 0xdfd1a8,
+    labelColor: 0xc2b286,
+    durationMs: 1450,
+    flashAlpha: 0.34,
     vignette: 0.5,
     sparkCount: 44,
     debrisCount: 32,
@@ -172,12 +192,62 @@ function randomRange(min: number, max: number): number {
   return Math.random() * (max - min) + min;
 }
 
+function resolveIconKey(rarity: FxRarity, icon?: string): IconKey {
+  const token = (icon ?? '').toLowerCase();
+  if (token.includes('trophy') || token.includes('cup')) return 'trophy';
+  if (token.includes('shield')) return 'shield';
+  if (token.includes('ribbon') || token.includes('medal')) return 'ribbon';
+  if (token.includes('star')) return 'star';
+
+  if (rarity === 'legendary') return 'trophy';
+  if (rarity === 'epic') return 'ribbon';
+  if (rarity === 'rare') return 'shield';
+  return 'star';
+}
+
+function iconNodeToSvg(iconNode: LucideIconNode, strokeHex: string): string {
+  const nodes = iconNode
+    .map(([tag, attrs]) => {
+      const attrsString = Object.entries(attrs)
+        .filter(([key]) => key !== 'key')
+        .map(([key, value]) => `${key}="${String(value)}"`)
+        .join(' ');
+      return `<${tag} ${attrsString} />`;
+    })
+    .join('');
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${strokeHex}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">${nodes}</svg>`;
+}
+
+function getIconTexture(iconKey: IconKey, strokeHex: string): Texture {
+  const cacheKey = `${iconKey}:${strokeHex}`;
+  const cached = ICON_TEXTURE_CACHE.get(cacheKey);
+  if (cached) return cached;
+
+  const svg = iconNodeToSvg(ICON_NODES[iconKey], strokeHex);
+  const texture = Texture.from(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`);
+  ICON_TEXTURE_CACHE.set(cacheKey, texture);
+  return texture;
+}
+
 function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3);
 }
 
 function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function impactSpike(t: number, start: number, end: number): number {
+  if (t <= start || t >= end) return 0;
+  const mid = (start + end) * 0.5;
+  if (t <= mid) return (t - start) / Math.max(0.0001, mid - start);
+  return (end - t) / Math.max(0.0001, end - mid);
+}
+
+function hash01(seed: number): number {
+  const value = Math.sin(seed * 127.1) * 43758.5453123;
+  return value - Math.floor(value);
 }
 
 export class PixiFxRenderer implements FxRenderer {
@@ -196,7 +266,31 @@ export class PixiFxRenderer implements FxRenderer {
     const profile = RARITY_VISUAL[rarity];
     const isLite = options.mode === 'lite' || options.reducedMotion;
     const liteFactor = isLite ? 0.55 : 1;
-    const durationMs = Math.round(profile.durationMs * (isLite ? 0.78 : 1));
+    const externalDurationMs = options.durationMs && options.durationMs > 0 ? options.durationMs : null;
+    const durationMs = Math.round(externalDurationMs ?? profile.durationMs);
+    const useAudioTimeline = externalDurationMs !== null && durationMs > 1800;
+    const audioScale = durationMs / AUDIO_REFERENCE_MS;
+    const fromAudio = (ms: number) => Math.round(ms * audioScale);
+
+    const attackEndMs = useAudioTimeline ? fromAudio(760) : Math.min(180, durationMs * 0.16);
+    const settleStartMs = useAudioTimeline ? fromAudio(520) : durationMs * 0.09;
+    const settleDurationMs = useAudioTimeline ? fromAudio(340) : Math.min(300, durationMs * 0.2);
+    const sweepStartMs = useAudioTimeline ? fromAudio(560) : durationMs * 0.15;
+    const sweepDurationMs = useAudioTimeline ? fromAudio(460) : Math.min(320, durationMs * 0.24);
+    const tailStartMs = useAudioTimeline ? fromAudio(3120) : durationMs * 0.7;
+    const signalDurationMs = useAudioTimeline
+      ? fromAudio(220)
+      : Math.min(300, Math.max(180, durationMs * 0.2));
+    const signalCutStartMs = Math.max(0, durationMs - signalDurationMs);
+    const fadeDurationMs = useAudioTimeline ? fromAudio(70) : Math.min(110, durationMs * 0.075);
+    const fadeStartMs = Math.max(0, durationMs - fadeDurationMs);
+    const secondFlashStartMs = useAudioTimeline ? fromAudio(730) : durationMs * 0.25;
+    const secondFlashEndMs = useAudioTimeline ? fromAudio(980) : durationMs * 0.4;
+    const secondBurstMs = useAudioTimeline ? fromAudio(840) : durationMs * 0.24;
+    const shockStartMs = useAudioTimeline ? fromAudio(510) : durationMs * 0.07;
+    const shockDurationMs = useAudioTimeline ? fromAudio(430) : durationMs * 0.18;
+    const shock2StartMs = useAudioTimeline ? fromAudio(830) : durationMs * 0.18;
+    const shock2DurationMs = useAudioTimeline ? fromAudio(440) : durationMs * 0.22;
     const flashAlpha = profile.flashAlpha * liteFactor;
     const vignetteTarget = profile.vignette * (isLite ? 0.5 : 1);
     const sparkCount = Math.max(2, Math.round(profile.sparkCount * liteFactor));
@@ -211,12 +305,23 @@ export class PixiFxRenderer implements FxRenderer {
     const centerX = width / 2;
     const centerY = height / 2;
     const medalY = centerY - Math.min(64, height * 0.08);
+    const glitchBlockWidth = Math.min(width * 0.7, 900);
+    const glitchBlockHeight = Math.min(height * 0.5, 420);
+    const glitchBlockX = centerX - glitchBlockWidth / 2;
+    const glitchBlockY = medalY - Math.min(170, height * 0.24);
 
     const root = new Container();
     this.app.stage.addChild(root);
 
     const cameraRig = new Container();
     root.addChild(cameraRig);
+
+    const glitchMask = new Graphics();
+    glitchMask.beginFill(0xffffff, 1);
+    glitchMask.drawRoundedRect(glitchBlockX, glitchBlockY, glitchBlockWidth, glitchBlockHeight, 28);
+    glitchMask.endFill();
+    glitchMask.visible = false;
+    root.addChild(glitchMask);
 
     const tint = new Graphics();
     tint.beginFill(profile.overlayTint, 0);
@@ -231,11 +336,57 @@ export class PixiFxRenderer implements FxRenderer {
     vignette.endFill();
     root.addChild(vignette);
 
+    const scanline = new Graphics();
+    for (let y = 0; y < height; y += 4) {
+      const alpha = (y / 4) % 2 === 0 ? 0.028 : 0.012;
+      scanline.beginFill(0x000000, alpha);
+      scanline.drawRect(0, y, width, 2);
+      scanline.endFill();
+    }
+    scanline.alpha = 0;
+    scanline.mask = glitchMask;
+    root.addChild(scanline);
+
+    const noiseDots = new Graphics();
+    for (let i = 0; i < 170; i++) {
+      noiseDots.beginFill(Math.random() > 0.58 ? 0xc7b994 : 0x6a6a6a, randomRange(0.01, 0.06));
+      noiseDots.drawRect(randomRange(0, width), randomRange(0, height), randomRange(0.8, 2), randomRange(0.8, 2));
+      noiseDots.endFill();
+    }
+    noiseDots.alpha = 0;
+    noiseDots.mask = glitchMask;
+    root.addChild(noiseDots);
+
     const flash = new Graphics();
     flash.beginFill(0xf5f4ea, 0);
     flash.drawRect(0, 0, width, height);
     flash.endFill();
     root.addChild(flash);
+
+    const glitchBands = new Graphics();
+    glitchBands.alpha = 0;
+    glitchBands.mask = glitchMask;
+    root.addChild(glitchBands);
+
+    const interferenceStrips = new Graphics();
+    interferenceStrips.alpha = 0;
+    interferenceStrips.mask = glitchMask;
+    interferenceStrips.blendMode = BLEND_MODES.NORMAL;
+    root.addChild(interferenceStrips);
+
+    const signalStatic = new Graphics();
+    signalStatic.alpha = 0;
+    signalStatic.mask = glitchMask;
+    signalStatic.blendMode = BLEND_MODES.NORMAL;
+    root.addChild(signalStatic);
+
+    const cutPulse = new Graphics();
+    cutPulse.beginFill(0x000000, 1);
+    cutPulse.drawRect(0, 0, width, height);
+    cutPulse.endFill();
+    cutPulse.alpha = 0;
+    cutPulse.mask = glitchMask;
+    root.addChild(cutPulse);
 
     const smokeContainer = new Container();
     cameraRig.addChild(smokeContainer);
@@ -293,18 +444,18 @@ export class PixiFxRenderer implements FxRenderer {
     medal.drawCircle(0, 0, 58);
     medalRoot.addChild(medal);
 
-    const iconText = new Text(event.icon ?? '★', {
-      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-      fontSize: 42,
-      fontWeight: '700',
-      fill: 0x1a1a1a,
-    });
-    iconText.anchor.set(0.5);
-    iconText.y = -2;
-    medalRoot.addChild(iconText);
+    const iconKey = resolveIconKey(rarity, event.icon);
+    const iconTexture = getIconTexture(iconKey, '#1f1f1f');
+    const iconSprite = new Sprite(iconTexture);
+    iconSprite.anchor.set(0.5);
+    iconSprite.y = -2;
+    const iconSize = rarity === 'legendary' ? 50 : rarity === 'epic' ? 48 : 44;
+    iconSprite.width = iconSize;
+    iconSprite.height = iconSize;
+    medalRoot.addChild(iconSprite);
 
     const glowSweep = new Graphics();
-    glowSweep.beginFill(0xffffff, 0.2);
+    glowSweep.beginFill(0xd9ccb0, 0.13);
     glowSweep.drawRoundedRect(-34, -70, 68, 140, 14);
     glowSweep.endFill();
     glowSweep.rotation = -0.45;
@@ -324,14 +475,14 @@ export class PixiFxRenderer implements FxRenderer {
       dropShadowBlur: 12,
       dropShadowDistance: 0,
     });
-    const label = new Text(`${rarity.toUpperCase()} UNLOCKED`, labelStyle);
+    const label = new Text(rarity === 'legendary' ? 'PROMOTION UNLOCKED' : `${rarity.toUpperCase()} UNLOCKED`, labelStyle);
     label.anchor.set(0.5);
     label.y = 88;
     medalRoot.addChild(label);
 
     const title = new Text(event.title, {
       fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-      fontSize: rarity === 'legendary' ? 32 : rarity === 'epic' ? 30 : 26,
+      fontSize: rarity === 'legendary' ? 28 : rarity === 'epic' ? 30 : 26,
       fontWeight: '800',
       fill: profile.titleColor,
       align: 'center',
@@ -344,11 +495,35 @@ export class PixiFxRenderer implements FxRenderer {
     title.y = 126;
     medalRoot.addChild(title);
 
+    const titleGhostR = new Text(event.title, {
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+      fontSize: rarity === 'legendary' ? 28 : rarity === 'epic' ? 30 : 26,
+      fontWeight: '800',
+      fill: 0xff4f4f,
+      align: 'center',
+    });
+    titleGhostR.anchor.set(0.5);
+    titleGhostR.y = 126;
+    titleGhostR.alpha = 0;
+    medalRoot.addChild(titleGhostR);
+
+    const titleGhostC = new Text(event.title, {
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+      fontSize: rarity === 'legendary' ? 28 : rarity === 'epic' ? 30 : 26,
+      fontWeight: '800',
+      fill: 0x63d9ff,
+      align: 'center',
+    });
+    titleGhostC.anchor.set(0.5);
+    titleGhostC.y = 126;
+    titleGhostC.alpha = 0;
+    medalRoot.addChild(titleGhostC);
+
     const subtitle = new Text(event.subtitle ?? '', {
       fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: '600',
-      fill: 0xbdc6d2,
+      fill: 0xa0a5b0,
       align: 'center',
       dropShadow: true,
       dropShadowColor: '#000000',
@@ -359,6 +534,82 @@ export class PixiFxRenderer implements FxRenderer {
     subtitle.y = 154;
     subtitle.alpha = event.subtitle ? 0.95 : 0;
     medalRoot.addChild(subtitle);
+
+    const achievementMask = new Container();
+    achievementMask.x = centerX;
+    achievementMask.y = medalY;
+    achievementMask.scale.set(0.62);
+    achievementMask.alpha = 0.001;
+    cameraRig.addChild(achievementMask);
+
+    const maskRibbon = new Graphics();
+    maskRibbon.beginFill(0xffffff, 1);
+    maskRibbon.drawRoundedRect(-180, -40, 360, 80, 22);
+    maskRibbon.endFill();
+    achievementMask.addChild(maskRibbon);
+
+    const maskMedal = new Graphics();
+    maskMedal.beginFill(0xffffff, 1);
+    maskMedal.drawCircle(0, 0, 64);
+    maskMedal.endFill();
+    achievementMask.addChild(maskMedal);
+
+    const maskLabel = new Graphics();
+    const labelMaskWidth = Math.max(180, label.width + 24);
+    maskLabel.beginFill(0xffffff, 1);
+    maskLabel.drawRoundedRect(-labelMaskWidth / 2, 76, labelMaskWidth, 22, 8);
+    maskLabel.endFill();
+    achievementMask.addChild(maskLabel);
+
+    const maskTitle = new Graphics();
+    const titleMaskWidth = Math.max(220, title.width + 28);
+    maskTitle.beginFill(0xffffff, 1);
+    maskTitle.drawRoundedRect(-titleMaskWidth / 2, 104, titleMaskWidth, 40, 10);
+    maskTitle.endFill();
+    achievementMask.addChild(maskTitle);
+
+    if (subtitle.text) {
+      const maskSubtitle = new Graphics();
+      const subtitleMaskWidth = Math.max(170, subtitle.width + 26);
+      maskSubtitle.beginFill(0xffffff, 1);
+      maskSubtitle.drawRoundedRect(-subtitleMaskWidth / 2, 146, subtitleMaskWidth, 24, 8);
+      maskSubtitle.endFill();
+      achievementMask.addChild(maskSubtitle);
+    }
+
+    // Glitch effects dissolve the achievement silhouette.
+    scanline.mask = achievementMask;
+    noiseDots.mask = achievementMask;
+    glitchBands.mask = achievementMask;
+    interferenceStrips.mask = achievementMask;
+    signalStatic.mask = achievementMask;
+    cutPulse.mask = achievementMask;
+
+    const labelGhostR = new Text(label.text, {
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+      fontSize: 14,
+      fontWeight: '700',
+      letterSpacing: 1.8,
+      fill: 0xff5d5d,
+      align: 'center',
+    });
+    labelGhostR.anchor.set(0.5);
+    labelGhostR.y = 88;
+    labelGhostR.alpha = 0;
+    medalRoot.addChild(labelGhostR);
+
+    const labelGhostC = new Text(label.text, {
+      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+      fontSize: 14,
+      fontWeight: '700',
+      letterSpacing: 1.8,
+      fill: 0x6fd7ff,
+      align: 'center',
+    });
+    labelGhostC.anchor.set(0.5);
+    labelGhostC.y = 88;
+    labelGhostC.alpha = 0;
+    medalRoot.addChild(labelGhostC);
 
     const sparks: Spark[] = [];
     const debris: Debris[] = [];
@@ -467,29 +718,85 @@ export class PixiFxRenderer implements FxRenderer {
         lastFrame = performance.now();
         const t = clamp(elapsed / durationMs, 0, 1);
 
-        const revealT = clamp(elapsed / 260, 0, 1);
-        const settleT = clamp((elapsed - 160) / 240, 0, 1);
-        const sweepT = clamp((elapsed - 260) / 480, 0, 1);
-        const fadeOutT = clamp((elapsed - (durationMs - 360)) / 360, 0, 1);
+        const revealT = clamp(elapsed / attackEndMs, 0, 1);
+        const settleT = clamp((elapsed - settleStartMs) / settleDurationMs, 0, 1);
+        const sweepT = clamp((elapsed - sweepStartMs) / sweepDurationMs, 0, 1);
+        const fadeOutT = clamp((elapsed - fadeStartMs) / fadeDurationMs, 0, 1);
+        const signalCutT = clamp((elapsed - signalCutStartMs) / signalDurationMs, 0, 1);
+        const preSignalLeadMs = useAudioTimeline ? fromAudio(110) : 90;
+        const preSignalT = clamp((elapsed - (signalCutStartMs - preSignalLeadMs)) / preSignalLeadMs, 0, 1);
+        const inSignalCut = signalCutT > 0.01;
+        const tailFadeT = clamp((elapsed - tailStartMs) / Math.max(1, durationMs - tailStartMs), 0, 1);
+
+        const signalSpikeA = impactSpike(signalCutT, 0.02, 0.1);
+        const signalSpikeB = impactSpike(signalCutT, 0.14, 0.28);
+        const signalSpikeC = impactSpike(signalCutT, 0.34, 0.52);
+        const signalSpikeD = impactSpike(signalCutT, 0.62, 0.82);
+        const signalBase = inSignalCut ? 0.08 * (1 - signalCutT * 0.65) : 0;
+        const signalStrength = clamp(
+          Math.max(
+            signalSpikeA * 0.9,
+            signalSpikeB * 1.02,
+            signalSpikeC * 1.08,
+            signalSpikeD * 1.5,
+          ) + signalBase,
+          0,
+          1.6,
+        );
+        const disappearT = clamp((signalCutT - 0.7) / 0.3, 0, 1);
+        const disappearEase = easeOutCubic(disappearT);
+        const signalRush = inSignalCut
+          ? Math.sin((elapsed - signalCutStartMs) * 0.55) * 0.5 + 0.5
+          : 0;
+        const signalNoiseFloor = inSignalCut
+          ? 0.11 + signalRush * 0.05
+          : 0.018 + preSignalT * 0.045;
 
         tint.alpha =
-          lerp(0, rarity === 'legendary' ? 0.22 : rarity === 'epic' ? 0.12 : 0.05, revealT) *
+          lerp(0, rarity === 'legendary' ? 0.12 : rarity === 'epic' ? 0.1 : 0.04, revealT) *
           (1 - fadeOutT);
+        tint.alpha += inSignalCut ? signalStrength * (0.02 + signalRush * 0.03) : 0;
         vignette.alpha = lerp(0, vignetteTarget, easeOutCubic(revealT)) * (1 - fadeOutT);
-        flash.alpha = flashAlpha * (1 - easeOutCubic(clamp(elapsed / 180, 0, 1))) * (1 - fadeOutT);
-        if (profile.doubleBurst && elapsed > 250 && elapsed < 420) {
-          flash.alpha += 0.14 * Math.sin(((elapsed - 250) / 170) * Math.PI);
+        scanline.alpha = (signalNoiseFloor * 1.15 + signalStrength * 0.64) * (1 - fadeOutT);
+        noiseDots.alpha = (signalNoiseFloor * 1.1 + signalStrength * 0.56) * (1 - fadeOutT);
+        if (inSignalCut) {
+          const roll = elapsed - signalCutStartMs;
+          scanline.y = ((roll * 0.95) % 7) - 3.5;
+          noiseDots.x = Math.sin(roll * 1.4) * 3.2;
+        } else {
+          scanline.y = 0;
+          noiseDots.x = 0;
+        }
+        flash.alpha =
+          flashAlpha *
+          (1 - easeOutCubic(clamp(elapsed / Math.max(120, attackEndMs * 0.85), 0, 1))) *
+          (1 - fadeOutT);
+        if (profile.doubleBurst && elapsed > secondFlashStartMs && elapsed < secondFlashEndMs) {
+          flash.alpha += 0.08 * Math.sin(((elapsed - secondFlashStartMs) / (secondFlashEndMs - secondFlashStartMs)) * Math.PI);
         }
 
-        medalRoot.alpha = lerp(0, 1, easeOutCubic(revealT)) * (1 - fadeOutT);
+        medalRoot.alpha =
+          lerp(0, 1, easeOutCubic(revealT)) *
+          (1 - fadeOutT) *
+          (1 - tailFadeT * 0.24) *
+          (1 - disappearEase);
         const peakScale = profile.settleScale;
-        const settleScale =
+        const baseScale =
           settleT > 0 ? lerp(peakScale, 1, easeOutCubic(settleT)) : lerp(0.62, peakScale, revealT);
-        medalRoot.scale.set(settleScale);
+        const tearScaleX = 1 + signalStrength * 0.011;
+        medalRoot.scale.set(baseScale * tearScaleX, baseScale);
         medalRoot.y = lerp(medalY + profile.entryOffsetY, medalY, easeOutCubic(revealT));
-        medalRoot.x = centerX + Math.sin(elapsed / 45) * shakePx * (1 - revealT) * (1 - fadeOutT);
+        const signalKickX =
+          -6.5 * signalSpikeA + 5.2 * signalSpikeB - 3.8 * signalSpikeC + 2.7 * signalSpikeD;
+        medalRoot.x =
+          centerX +
+          Math.sin(elapsed / 45) * shakePx * (1 - revealT) * (1 - fadeOutT) +
+          signalKickX;
+        achievementMask.x = medalRoot.x;
+        achievementMask.y = medalRoot.y;
+        achievementMask.scale.set(medalRoot.scale.x, medalRoot.scale.y);
 
-        glowSweep.alpha = sweepT < 1 ? 0.75 * Math.sin(Math.PI * sweepT) : 0;
+        glowSweep.alpha = sweepT < 1 ? 0.46 * Math.sin(Math.PI * sweepT) : 0;
         glowSweep.x = lerp(-180, 180, easeInOutCubic(sweepT));
 
         if (cameraPunch > 0) {
@@ -498,30 +805,165 @@ export class PixiFxRenderer implements FxRenderer {
             Math.sin(elapsed / 15.5) * cameraPunch * punchDecay +
             Math.cos(elapsed / 23) * cameraPunch * 0.2 * punchDecay;
           cameraRig.y = Math.cos(elapsed / 17.5) * cameraPunch * 0.65 * punchDecay;
+          if (inSignalCut) {
+            cameraRig.x *= 0.15;
+            cameraRig.y *= 0.15;
+          }
         }
 
         if (shockwaveEnabled) {
-          const shockT = clamp((elapsed - 120) / 620, 0, 1);
+          const shockT = clamp((elapsed - shockStartMs) / shockDurationMs, 0, 1);
           shockwave.alpha = 0.8 * (1 - shockT) * (1 - fadeOutT);
           shockwave.scale.set(1 + shockT * 2.4);
         }
         if (shockwaveEnabled && profile.doubleBurst) {
-          const shock2T = clamp((elapsed - 300) / 700, 0, 1);
+          const shock2T = clamp((elapsed - shock2StartMs) / shock2DurationMs, 0, 1);
           shockwave2.alpha = 0.7 * (1 - shock2T) * (1 - fadeOutT);
           shockwave2.scale.set(1 + shock2T * 2.9);
         }
         if (rarity === 'epic' || rarity === 'legendary') {
           aura.alpha = (0.35 + Math.sin(elapsed / 120) * 0.1) * (1 - fadeOutT);
-          aura.scale.set(1 + Math.sin(elapsed / 140) * (rarity === 'legendary' ? 0.08 : 0.05));
+          const auraPulse = Math.sin(elapsed / 140) * (rarity === 'legendary' ? 0.08 : 0.05);
+          aura.scale.set(inSignalCut ? 1 : 1 + auraPulse);
         }
 
-        label.alpha = 0.9 * (1 - fadeOutT);
-        title.alpha = (0.92 + Math.sin(elapsed / 140) * 0.08) * (1 - fadeOutT);
+        const tailTextFade = 1 - tailFadeT * 0.32;
+        const hardDisappear = 1 - disappearEase;
+        label.alpha = 0.9 * (1 - fadeOutT) * tailTextFade * hardDisappear;
+        title.alpha =
+          (inSignalCut ? 0.92 : 0.9 + Math.sin(elapsed / 160) * 0.06) *
+          (1 - fadeOutT) *
+          tailTextFade *
+          hardDisappear;
         subtitle.alpha = subtitle.text
-          ? (0.75 + Math.sin(elapsed / 190) * 0.08) * (1 - fadeOutT)
+          ? (inSignalCut ? 0.76 : 0.75 + Math.sin(elapsed / 190) * 0.08) *
+            (1 - fadeOutT) *
+            tailTextFade *
+            hardDisappear
           : 0;
 
-        const sparkFade = clamp((elapsed - 120) / 650, 0, 1);
+        const rgbSplit = signalStrength * 7;
+        titleGhostR.alpha = signalStrength * 0.78 * (1 - fadeOutT) * hardDisappear;
+        titleGhostC.alpha = signalStrength * 0.78 * (1 - fadeOutT) * hardDisappear;
+        titleGhostR.x = -rgbSplit - signalSpikeC * 2;
+        titleGhostC.x = rgbSplit + signalSpikeB * 2;
+        titleGhostR.y = 126 + signalSpikeB * 0.8;
+        titleGhostC.y = 126 - signalSpikeC * 0.8;
+
+        labelGhostR.alpha = signalStrength * 0.62 * (1 - fadeOutT) * hardDisappear;
+        labelGhostC.alpha = signalStrength * 0.62 * (1 - fadeOutT) * hardDisappear;
+        labelGhostR.x = -rgbSplit * 0.74;
+        labelGhostC.x = rgbSplit * 0.74;
+        labelGhostR.y = 88 + signalSpikeB * 0.5;
+        labelGhostC.y = 88 - signalSpikeC * 0.5;
+
+        interferenceStrips.clear();
+        interferenceStrips.alpha = 0;
+        if (signalStrength > 0.03 || preSignalT > 0.2) {
+          const stripFrame = Math.floor((elapsed - signalCutStartMs) / 7);
+          const stripCount = Math.max(12, Math.round(14 + signalStrength * 26 + preSignalT * 14));
+          const primeY = glitchBlockY + (0.18 + hash01(stripFrame * 17 + 3) * 0.64) * glitchBlockHeight;
+          const primeH = lerp(8, 22, hash01(stripFrame * 17 + 4));
+          const primeShift = lerp(-30, 30, hash01(stripFrame * 17 + 5));
+          interferenceStrips.beginFill(0xffffff, 0.52 + signalStrength * 0.2);
+          interferenceStrips.drawRect(glitchBlockX + primeShift, primeY, glitchBlockWidth, primeH);
+          interferenceStrips.endFill();
+          interferenceStrips.beginFill(0x000000, 0.38 + signalStrength * 0.16);
+          interferenceStrips.drawRect(glitchBlockX - primeShift * 0.6, primeY + primeH * 0.55, glitchBlockWidth, primeH * 0.5);
+          interferenceStrips.endFill();
+          for (let i = 0; i < stripCount; i++) {
+            const seed = stripFrame * 211 + i * 31;
+            const y = glitchBlockY + hash01(seed + 1) * glitchBlockHeight;
+            const h = lerp(1.1, 6.2, hash01(seed + 2));
+            const w = lerp(glitchBlockWidth * 0.55, glitchBlockWidth, hash01(seed + 3));
+            const dir = hash01(seed + 4) > 0.5 ? 1 : -1;
+            const xJitter = dir * lerp(6, 34, hash01(seed + 5));
+            const x = glitchBlockX + (glitchBlockWidth - w) / 2 + xJitter;
+            const colorPick = hash01(seed + 6);
+            const color =
+              colorPick > 0.82 ? 0xffffff : colorPick > 0.63 ? 0xa7d4ff : colorPick > 0.44 ? 0xffe4b8 : 0x000000;
+            const alpha = lerp(0.2, 0.58, hash01(seed + 7)) * (0.45 + signalStrength * 0.95);
+            interferenceStrips.beginFill(color, alpha);
+            interferenceStrips.drawRect(x, y, w, h);
+            interferenceStrips.endFill();
+          }
+          interferenceStrips.alpha =
+            Math.min(1, 0.56 + signalStrength * 0.95 + preSignalT * 0.3) *
+            (1 - fadeOutT * 0.1);
+        }
+
+        signalStatic.clear();
+        signalStatic.alpha = 0;
+        if (signalStrength > 0.03 || preSignalT > 0.35) {
+          const staticFrame = Math.floor((elapsed - signalCutStartMs) / 7);
+          const preBoost = preSignalT > 0 ? preSignalT * 26 : 0;
+          const staticCount = Math.max(90, Math.round(110 + signalStrength * 220 + preBoost));
+          for (let i = 0; i < staticCount; i++) {
+            const seed = staticFrame * 131 + i * 17;
+            const stripe = hash01(seed + 1) > 0.58;
+            const x = glitchBlockX + hash01(seed + 2) * glitchBlockWidth;
+            const y = glitchBlockY + hash01(seed + 3) * glitchBlockHeight;
+            const w = stripe
+              ? lerp(glitchBlockWidth * 0.25, glitchBlockWidth * 0.98, hash01(seed + 4))
+              : lerp(1.2, 9.5, hash01(seed + 4));
+            const h = stripe
+              ? lerp(1.2, 5.6, hash01(seed + 5))
+              : lerp(0.9, 2.8, hash01(seed + 5));
+            const colorRoll = hash01(seed + 6);
+            const color =
+              colorRoll > 0.86 ? 0xffffff : colorRoll > 0.68 ? 0xa7d4ff : colorRoll > 0.48 ? 0x000000 : 0xffdca8;
+            const alpha = lerp(0.28, 0.82, hash01(seed + 7)) * (0.58 + signalStrength * 0.78);
+            signalStatic.beginFill(color, alpha);
+            signalStatic.drawRect(x, y, Math.min(w, glitchBlockWidth), h);
+            signalStatic.endFill();
+          }
+          signalStatic.alpha =
+            Math.min(1, 0.54 + signalStrength * 0.98 + preSignalT * 0.18) *
+            (1 - fadeOutT * 0.16) *
+            (1 - disappearEase * 0.15);
+          if (!inSignalCut) {
+            signalStatic.alpha += preSignalT * 0.18;
+          }
+        }
+
+        glitchBands.alpha = signalStrength * (1 - fadeOutT * 0.12);
+        glitchBands.clear();
+        if (signalStrength > 0.03) {
+          const glitchFrame = Math.floor((elapsed - signalCutStartMs) / 8);
+          const bandCount = Math.max(2, Math.round(3 + signalStrength * 6));
+          const majorSeed = glitchFrame * 53 + 7;
+          const majorBandY = glitchBlockY + hash01(majorSeed + 1) * glitchBlockHeight;
+          const majorBandH = lerp(6, 18, hash01(majorSeed + 2));
+          const majorBandX = glitchBlockX + lerp(-18, 18, hash01(majorSeed + 3));
+          const majorBandAlpha = 0.16 + signalStrength * 0.22;
+          const majorBandColor = hash01(majorSeed + 4) > 0.5 ? 0xffffff : 0xa7d4ff;
+          glitchBands.beginFill(majorBandColor, majorBandAlpha);
+          glitchBands.drawRect(majorBandX, majorBandY, glitchBlockWidth, majorBandH);
+          glitchBands.endFill();
+
+          for (let i = 0; i < bandCount; i++) {
+            const seed = glitchFrame * 37 + i * 19;
+            const bandY = glitchBlockY + hash01(seed + 1) * glitchBlockHeight;
+            const bandH = lerp(3, 8.5, hash01(seed + 2));
+            const bandW = lerp(glitchBlockWidth * 0.62, glitchBlockWidth * 0.98, hash01(seed + 3));
+            const bandX =
+              glitchBlockX +
+              (glitchBlockWidth - bandW) / 2 +
+              signalKickX * lerp(0.18, 0.86, hash01(seed + 4)) +
+              lerp(-6, 6, hash01(seed + 5));
+            const alpha = lerp(0.08, 0.24, hash01(seed + 6)) * (0.42 + signalStrength * 0.82);
+            const color = hash01(seed + 7) > 0.66 ? 0xa7d4ff : 0xffffff;
+            glitchBands.beginFill(color, alpha);
+            glitchBands.drawRect(bandX, bandY, bandW, bandH);
+            glitchBands.endFill();
+          }
+        }
+
+        const blackoutA = impactSpike(signalCutT, 0.54, 0.72);
+        const blackoutB = impactSpike(signalCutT, 0.78, 1);
+        cutPulse.alpha = Math.max(blackoutA * 0.85, blackoutB);
+
+        const sparkFade = clamp((elapsed - shockStartMs) / (durationMs * 0.36), 0, 1);
         for (const spark of sparks) {
           spark.life += 0.02 * deltaFrames;
           spark.shape.x += spark.vx * deltaFrames;
@@ -554,7 +996,7 @@ export class PixiFxRenderer implements FxRenderer {
           smoke.shape.alpha = smoke.alphaBase * (1 - lifeT) * (1 - fadeOutT * 0.8);
         }
 
-        if (profile.doubleBurst && !didSecondBurst && elapsed > 260) {
+        if (profile.doubleBurst && !didSecondBurst && elapsed > secondBurstMs) {
           didSecondBurst = true;
           createBurst(Math.max(6, Math.round(sparkCount * 0.45)), 1.2);
         }

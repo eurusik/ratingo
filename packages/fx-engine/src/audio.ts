@@ -1,62 +1,105 @@
+import { sound } from '@pixi/sound';
 import type { FxAudioService, FxMode, FxRarity } from './types';
 
-const RARITY_PROFILE: Record<FxRarity, { base: number; peak: number; gain: number }> = {
-  common: { base: 180, peak: 260, gain: 0.05 },
-  rare: { base: 210, peak: 340, gain: 0.065 },
-  epic: { base: 240, peak: 420, gain: 0.08 },
-  legendary: { base: 260, peak: 480, gain: 0.09 },
+const LEVELUP_ALIAS = 'fx-levelup';
+const LEVELUP_SOUND_URL = '/sounds/levelup.wav';
+const DEFAULT_SOUND_DURATION_MS = 4729;
+
+const RARITY_VOLUME: Record<FxRarity, number> = {
+  common: 0.42,
+  rare: 0.5,
+  epic: 0.62,
+  legendary: 0.72,
+};
+
+type MaybeWebAudioContext = {
+  audioContext?: AudioContext;
+  playEmptySound?: () => void;
 };
 
 export class WebAudioFxService implements FxAudioService {
-  private audioContext: AudioContext | null = null;
   private unlocked = false;
+  private initialized = false;
+  private loading = false;
+  private durationMs = DEFAULT_SOUND_DURATION_MS;
 
   unlock(): void {
     if (typeof window === 'undefined') return;
-    if (!this.audioContext) {
-      const Ctx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!Ctx) return;
-      this.audioContext = new Ctx();
-    }
+    this.ensureSound();
 
-    if (this.audioContext.state === 'suspended') {
-      void this.audioContext.resume();
+    const ctx = sound.context as MaybeWebAudioContext;
+    if (ctx.audioContext?.state === 'suspended') {
+      void ctx.audioContext.resume();
+    }
+    if (typeof ctx.playEmptySound === 'function') {
+      ctx.playEmptySound();
     }
 
     this.unlocked = true;
   }
 
-  playSting(rarity: FxRarity, mode: FxMode): void {
-    if (mode === 'off') return;
+  playSting(rarity: FxRarity, mode: FxMode): number {
+    if (mode === 'off') return 0;
+
     this.unlock();
-    if (!this.audioContext || !this.unlocked) return;
+    this.ensureSound();
+    if (!this.initialized || !sound.exists(LEVELUP_ALIAS)) {
+      return this.durationMs;
+    }
 
-    const profile = RARITY_PROFILE[rarity];
-    const gainValue = mode === 'lite' ? profile.gain * 0.7 : profile.gain;
-    const startAt = this.audioContext.currentTime + 0.005;
-    const duration = mode === 'lite' ? 0.22 : 0.34;
+    const playbackRate = mode === 'lite' ? 1.08 : 1;
+    const volume = mode === 'lite' ? RARITY_VOLUME[rarity] * 0.75 : RARITY_VOLUME[rarity];
 
-    const oscillator = this.audioContext.createOscillator();
-    oscillator.type = 'triangle';
-    oscillator.frequency.setValueAtTime(profile.base, startAt);
-    oscillator.frequency.exponentialRampToValueAtTime(profile.peak, startAt + duration * 0.5);
-    oscillator.frequency.exponentialRampToValueAtTime(profile.base * 0.88, startAt + duration);
+    sound.stop(LEVELUP_ALIAS);
+    sound.play(LEVELUP_ALIAS, {
+      speed: playbackRate,
+      volume,
+      singleInstance: true,
+    });
 
-    const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(0.0001, startAt);
-    gain.gain.exponentialRampToValueAtTime(gainValue, startAt + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-
-    oscillator.connect(gain);
-    gain.connect(this.audioContext.destination);
-    oscillator.start(startAt);
-    oscillator.stop(startAt + duration + 0.02);
+    this.refreshDuration();
+    return Math.round(this.durationMs / playbackRate);
   }
 
   dispose(): void {
-    if (!this.audioContext) return;
-    void this.audioContext.close();
-    this.audioContext = null;
+    if (sound.exists(LEVELUP_ALIAS)) {
+      sound.stop(LEVELUP_ALIAS);
+      sound.remove(LEVELUP_ALIAS);
+    }
     this.unlocked = false;
+    this.initialized = false;
+    this.loading = false;
+  }
+
+  private ensureSound(): void {
+    if (this.loading || this.initialized) return;
+
+    if (sound.exists(LEVELUP_ALIAS)) {
+      this.initialized = true;
+      this.refreshDuration();
+      return;
+    }
+
+    this.loading = true;
+    sound.add(LEVELUP_ALIAS, {
+      url: LEVELUP_SOUND_URL,
+      preload: true,
+      loaded: (err) => {
+        this.loading = false;
+        this.initialized = sound.exists(LEVELUP_ALIAS);
+        if (err) {
+          this.initialized = false;
+        }
+        if (this.initialized) {
+          this.refreshDuration();
+        }
+      },
+    });
+  }
+
+  private refreshDuration(): void {
+    const seconds = sound.duration(LEVELUP_ALIAS);
+    if (!Number.isFinite(seconds) || seconds <= 0) return;
+    this.durationMs = Math.round(seconds * 1000);
   }
 }

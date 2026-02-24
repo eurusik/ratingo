@@ -26,7 +26,7 @@ function DemoControls() {
       title: rarity === 'legendary' ? 'Legendary Unlocked' : `${rarity.toUpperCase()} unlocked`,
       subtitle: 'Battlefield-style cinematic popup',
       rarity,
-      icon: rarity === 'legendary' ? '🏆' : '★',
+      icon: rarity,
     });
   };
 

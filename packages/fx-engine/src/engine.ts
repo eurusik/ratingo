@@ -113,10 +113,11 @@ export class FxEngine {
 
     this.playing = true;
     try {
-      this.audio.playSting(next.rarity, this.mode);
+      const durationMs = this.audio.playSting(next.rarity, this.mode);
       await this.renderer.playAchievement(next, {
         mode: this.mode,
         reducedMotion: this.reducedMotion,
+        durationMs,
       });
     } finally {
       this.playing = false;
