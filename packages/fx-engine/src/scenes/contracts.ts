@@ -1,6 +1,7 @@
 import type {
   AchievementFxEvent,
   FxEvent,
+  FxPayloadSchema,
   FxRarity,
   RankPromotedFxEvent,
   WeaponUnlockedFxEvent,
@@ -15,15 +16,22 @@ export interface FxScenePayloadMap {
 export type BuiltinFxSceneId = keyof FxScenePayloadMap;
 export type FxSceneId = BuiltinFxSceneId | (string & {});
 
-export interface FxSceneEvent<TSceneId extends FxSceneId = FxSceneId> {
+export interface FxSceneEvent<
+  TSceneId extends FxSceneId = FxSceneId,
+  TPayload extends FxEvent = TSceneId extends BuiltinFxSceneId ? FxScenePayloadMap[TSceneId] : FxEvent,
+> {
   sceneId: TSceneId;
   rarity: FxRarity;
-  payload: TSceneId extends BuiltinFxSceneId ? FxScenePayloadMap[TSceneId] : FxEvent;
+  payload: TPayload;
 }
 
-export interface FxSceneDefinition<TSceneId extends FxSceneId = FxSceneId> {
+export interface FxSceneDefinition<
+  TSceneId extends FxSceneId = FxSceneId,
+  TPayload extends FxEvent = TSceneId extends BuiltinFxSceneId ? FxScenePayloadMap[TSceneId] : FxEvent,
+> {
   id: TSceneId;
   priority?: number;
   supports(event: FxEvent): boolean;
-  create(event: FxEvent, rarity: FxRarity): FxSceneEvent<TSceneId>;
+  create(event: FxEvent, rarity: FxRarity): FxSceneEvent<TSceneId, TPayload>;
+  schema?: FxPayloadSchema<TPayload>;
 }

@@ -1,9 +1,11 @@
 import type { FxEvent, FxRarity } from '../../types';
+import { weaponUnlockedPayloadSchema } from './payload-schemas';
 import type { FxSceneDefinition } from '../contracts';
 
 export const weaponUnlockedScene: FxSceneDefinition<'weapon.unlocked'> = {
   id: 'weapon.unlocked',
   priority: 20,
+  schema: weaponUnlockedPayloadSchema,
   supports: (event: FxEvent) => event.type === 'weapon.unlocked',
   create: (event: FxEvent, rarity: FxRarity) => ({
     sceneId: 'weapon.unlocked',

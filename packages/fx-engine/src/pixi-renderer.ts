@@ -1,12 +1,30 @@
 import { Application } from 'pixi.js';
-import { playAchievementUnlockedScene } from './renderer/pixi/scenes/play-achievement-unlocked-scene';
-import type { FxEvent, FxRenderOptions, FxRenderer } from './types';
+import type { FxEvent, FxPayloadSchema, FxRenderOptions, FxRenderer, FxScenePlayer } from './types';
+
+const DEFAULT_SCENE_ID = 'achievement.unlocked';
+
+interface RegisteredScenePlayer {
+  player: FxScenePlayer;
+  schema?: FxPayloadSchema;
+}
 
 export class PixiFxRenderer implements FxRenderer {
   private app: Application | null = null;
   private disabled = false;
+  private readonly scenePlayers = new Map<string, RegisteredScenePlayer>();
 
   constructor(private readonly host: HTMLElement) {}
+
+  registerScenePlayer<TPayload extends FxEvent = FxEvent>(
+    sceneId: string,
+    player: FxScenePlayer<TPayload>,
+    schema?: FxPayloadSchema<TPayload>,
+  ): void {
+    this.scenePlayers.set(sceneId, {
+      player: player as FxScenePlayer,
+      schema: schema as FxPayloadSchema | undefined,
+    });
+  }
 
   async playAchievement(event: FxEvent, options: FxRenderOptions): Promise<void> {
     if (this.disabled || options.mode === 'off') return;
@@ -14,7 +32,12 @@ export class PixiFxRenderer implements FxRenderer {
     const ready = this.ensureApp();
     if (!ready || !this.app) return;
 
-    await playAchievementUnlockedScene(this.app, event, options);
+    const sceneId = this.resolveSceneId(event);
+    const registration =
+      this.scenePlayers.get(sceneId) ?? this.scenePlayers.get(DEFAULT_SCENE_ID);
+    if (!registration) return;
+    if (registration.schema && !registration.schema(event)) return;
+    await registration.player(event, options, { app: this.app });
   }
 
   dispose(): void {
@@ -63,5 +86,12 @@ export class PixiFxRenderer implements FxRenderer {
       this.disabled = true;
       return false;
     }
+  }
+
+  private resolveSceneId(event: FxEvent): string {
+    const metadataSceneId = event.metadata?.__sceneId;
+    if (typeof metadataSceneId === 'string') return metadataSceneId;
+    if (typeof event.type === 'string') return event.type;
+    return DEFAULT_SCENE_ID;
   }
 }

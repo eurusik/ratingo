@@ -1,4 +1,14 @@
-import type { FxAudioService, FxEvent, FxMode, FxRarity, FxRenderer } from './types';
+import type {
+  FxAudioService,
+  FxEvent,
+  FxMode,
+  FxPayloadSchema,
+  FxRarity,
+  FxRenderer,
+  FxSceneManifest,
+  FxScenePlayer,
+  FxSceneRegistration,
+} from './types';
 import {
   buildDedupeKey,
   createSummaryAchievement,
@@ -6,8 +16,8 @@ import {
   shouldDropByEpicCooldown,
   shouldMergeQueue,
 } from './core/policy/fx-policies';
-import type { FxSceneDefinition, FxSceneEvent, FxSceneId } from './scenes/contracts';
-import { FxSceneRegistry, createDefaultSceneRegistry } from './scenes/registry';
+import type { FxSceneDefinition, FxSceneEvent } from './scenes/contracts';
+import { FxSceneRegistry, createSceneRegistry } from './scenes/registry';
 import { renderScene } from './scenes/runtime';
 
 const DEFAULT_DEDUPE_WINDOW_MS = 2000;
@@ -53,7 +63,7 @@ export class FxEngine {
     this.dedupeWindowMs = config.dedupeWindowMs ?? DEFAULT_DEDUPE_WINDOW_MS;
     this.epicCooldownMs = config.epicCooldownMs ?? DEFAULT_EPIC_COOLDOWN_MS;
     this.summaryThreshold = config.summaryThreshold ?? DEFAULT_SUMMARY_THRESHOLD;
-    this.sceneRegistry = config.sceneRegistry ?? createDefaultSceneRegistry();
+    this.sceneRegistry = config.sceneRegistry ?? createSceneRegistry();
   }
 
   setMode(mode: FxMode): void {
@@ -75,8 +85,22 @@ export class FxEngine {
     this.audio.unlock();
   }
 
-  registerScene<TSceneId extends FxSceneId>(scene: FxSceneDefinition<TSceneId>): void {
-    this.sceneRegistry.register(scene);
+  registerScenePlayer<TPayload extends FxEvent = FxEvent>(
+    sceneId: string,
+    player: FxScenePlayer<TPayload>,
+    schema?: FxPayloadSchema<TPayload>,
+  ): void {
+    this.renderer.registerScenePlayer?.(sceneId, player, schema);
+  }
+
+  registerScene<TPayload extends FxEvent = FxEvent>(scene: FxSceneRegistration<TPayload>): void {
+    this.sceneRegistry.register(scene as FxSceneDefinition<string, TPayload>);
+  }
+
+  registerManifest<TPayload extends FxEvent = FxEvent>(manifest: FxSceneManifest<TPayload>): void {
+    this.registerScene(manifest);
+    if (!manifest.player) return;
+    this.registerScenePlayer(manifest.id, manifest.player, manifest.schema);
   }
 
   showAchievement(event: FxEvent): void {
@@ -98,7 +122,19 @@ export class FxEngine {
     }
 
     const scene = this.sceneRegistry.resolve(event, rarity);
-    this.queue.push({ scene, queuedAt: now });
+    if (!scene) return;
+
+    const queuedScene: FxSceneEvent = {
+      ...scene,
+      payload: {
+        ...scene.payload,
+        metadata: {
+          ...(scene.payload.metadata ?? {}),
+          __sceneId: scene.sceneId,
+        },
+      },
+    };
+    this.queue.push({ scene: queuedScene, queuedAt: now });
     void this.drain();
   }
 
@@ -115,8 +151,10 @@ export class FxEngine {
       this.queue = [];
       const summary = createSummaryAchievement(mergedCount);
       const summaryRarity: FxRarity = summary.rarity ?? 'rare';
+      const scene = this.sceneRegistry.resolve(summary, summaryRarity);
+      if (!scene) return null;
       return {
-        scene: this.sceneRegistry.resolve(summary, summaryRarity),
+        scene,
         queuedAt: Date.now(),
       };
     }

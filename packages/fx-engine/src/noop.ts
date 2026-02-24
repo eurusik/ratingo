@@ -1,7 +1,21 @@
-import type { FxAudioService, FxMode, FxRarity, FxRenderer, AchievementFxEvent, FxRenderOptions } from './types';
+import type {
+  FxAudioService,
+  FxEvent,
+  FxMode,
+  FxPayloadSchema,
+  FxRarity,
+  FxRenderer,
+  FxRenderOptions,
+  FxScenePlayer,
+} from './types';
 
 export const noopRenderer: FxRenderer = {
-  async playAchievement(_event: AchievementFxEvent, _options: FxRenderOptions): Promise<void> {},
+  async playAchievement(_event: FxEvent, _options: FxRenderOptions): Promise<void> {},
+  registerScenePlayer<TPayload extends FxEvent = FxEvent>(
+    _sceneId: string,
+    _player: FxScenePlayer<TPayload>,
+    _schema?: FxPayloadSchema<TPayload>,
+  ): void {},
   dispose() {},
 };
 

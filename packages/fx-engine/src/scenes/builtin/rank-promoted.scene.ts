@@ -1,9 +1,11 @@
 import type { FxEvent, FxRarity } from '../../types';
+import { rankPromotedPayloadSchema } from './payload-schemas';
 import type { FxSceneDefinition } from '../contracts';
 
 export const rankPromotedScene: FxSceneDefinition<'rank.promoted'> = {
   id: 'rank.promoted',
   priority: 20,
+  schema: rankPromotedPayloadSchema,
   supports: (event: FxEvent) => event.type === 'rank.promoted',
   create: (event: FxEvent, rarity: FxRarity) => ({
     sceneId: 'rank.promoted',

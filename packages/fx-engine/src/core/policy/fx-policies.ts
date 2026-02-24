@@ -1,7 +1,8 @@
-import type { AchievementFxEvent, FxRarity } from '../../types';
+import type { FxEvent, FxRarity } from '../../types';
 
-export function buildDedupeKey(event: AchievementFxEvent, rarity: FxRarity): string {
-  return event.id ?? `${event.title.toLowerCase()}::${rarity}`;
+export function buildDedupeKey(event: FxEvent, rarity: FxRarity): string {
+  const eventType = typeof event.type === 'string' ? event.type : 'achievement.unlocked';
+  return event.id ?? `${eventType}::${event.title.toLowerCase()}::${rarity}`;
 }
 
 export function shouldDropByDedupe(lastSeenMs: number | undefined, nowMs: number, windowMs: number): boolean {
@@ -24,8 +25,9 @@ export function shouldMergeQueue(queueLength: number, summaryThreshold: number):
   return queueLength >= summaryThreshold;
 }
 
-export function createSummaryAchievement(queueLength: number): AchievementFxEvent {
+export function createSummaryAchievement(queueLength: number): FxEvent {
   return {
+    type: 'achievement.unlocked',
     title: `+${queueLength} achievements`,
     subtitle: 'Unlocked in a row',
     rarity: 'rare',

@@ -15,7 +15,18 @@ describe('fx-policies', () => {
 
   it('builds fallback dedupe key from title and rarity', () => {
     const key = buildDedupeKey({ title: 'Rank Up' }, 'legendary');
-    expect(key).toBe('rank up::legendary');
+    expect(key).toBe('achievement.unlocked::rank up::legendary');
+  });
+
+  it('includes event type in fallback dedupe key', () => {
+    const key = buildDedupeKey(
+      {
+        type: 'weapon.unlocked',
+        title: 'Rank Up',
+      },
+      'legendary',
+    );
+    expect(key).toBe('weapon.unlocked::rank up::legendary');
   });
 
   it('drops duplicate events inside dedupe window', () => {
@@ -38,6 +49,7 @@ describe('fx-policies', () => {
 
   it('creates summary achievement with expected shape', () => {
     expect(createSummaryAchievement(3)).toEqual({
+      type: 'achievement.unlocked',
       title: '+3 achievements',
       subtitle: 'Unlocked in a row',
       rarity: 'rare',

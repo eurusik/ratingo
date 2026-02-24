@@ -26,9 +26,10 @@ describe('buildAchievementTimeline', () => {
     });
 
     expect(timeline.useAudioTimeline).toBe(true);
-    expect(timeline.attackEndMs).toBe(760);
-    expect(timeline.signalDurationMs).toBe(220);
-    expect(timeline.fadeDurationMs).toBe(70);
+    expect(timeline.attackEndMs).toBe(660);
+    expect(timeline.signalDurationMs).toBe(540);
+    expect(timeline.fadeDurationMs).toBe(90);
+    expect(timeline.preSignalLeadMs).toBe(170);
     expect(timeline.signalCutStartMs).toBe(timeline.durationMs - timeline.signalDurationMs);
   });
 

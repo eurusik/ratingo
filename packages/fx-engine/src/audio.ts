@@ -5,6 +5,7 @@ const LEVELUP_ALIAS = 'fx-levelup';
 const LEVELUP_MP3_URL = '/sounds/levelup.mp3';
 const LEVELUP_WAV_URL = '/sounds/levelup.wav';
 const DEFAULT_SOUND_DURATION_MS = 4729;
+const MASTER_VOLUME = 0.5;
 
 const RARITY_VOLUME: Record<FxRarity, number> = {
   common: 0.42,
@@ -18,12 +19,24 @@ type MaybeWebAudioContext = {
   playEmptySound?: () => void;
 };
 
+interface PendingPlay {
+  rarity: FxRarity;
+  mode: FxMode;
+}
+
 export class WebAudioFxService implements FxAudioService {
   private unlocked = false;
   private initialized = false;
   private loading = false;
   private durationMs = DEFAULT_SOUND_DURATION_MS;
   private selectedUrl: string | null = null;
+  private pendingPlay: PendingPlay | null = null;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      this.ensureSound();
+    }
+  }
 
   unlock(): void {
     if (typeof window === 'undefined') return;
@@ -45,19 +58,13 @@ export class WebAudioFxService implements FxAudioService {
 
     this.unlock();
     this.ensureSound();
+    const playbackRate = mode === 'lite' ? 1.08 : 1;
     if (!this.initialized || !sound.exists(LEVELUP_ALIAS)) {
-      return this.durationMs;
+      this.pendingPlay = { rarity, mode };
+      return Math.round(this.durationMs / playbackRate);
     }
 
-    const playbackRate = mode === 'lite' ? 1.08 : 1;
-    const volume = mode === 'lite' ? RARITY_VOLUME[rarity] * 0.75 : RARITY_VOLUME[rarity];
-
-    sound.stop(LEVELUP_ALIAS);
-    sound.play(LEVELUP_ALIAS, {
-      speed: playbackRate,
-      volume,
-      singleInstance: true,
-    });
+    this.playNow(rarity, mode);
 
     this.refreshDuration();
     return Math.round(this.durationMs / playbackRate);
@@ -71,6 +78,7 @@ export class WebAudioFxService implements FxAudioService {
     this.unlocked = false;
     this.initialized = false;
     this.loading = false;
+    this.pendingPlay = null;
   }
 
   private ensureSound(): void {
@@ -113,8 +121,29 @@ export class WebAudioFxService implements FxAudioService {
         this.initialized = !err && sound.exists(LEVELUP_ALIAS);
         if (this.initialized) {
           this.refreshDuration();
+          this.flushPendingPlay();
         }
       },
+    });
+  }
+
+  private flushPendingPlay(): void {
+    if (!this.pendingPlay || !this.unlocked) return;
+    const next = this.pendingPlay;
+    this.pendingPlay = null;
+    this.playNow(next.rarity, next.mode);
+  }
+
+  private playNow(rarity: FxRarity, mode: FxMode): void {
+    const playbackRate = mode === 'lite' ? 1.08 : 1;
+    const baseVolume = mode === 'lite' ? RARITY_VOLUME[rarity] * 0.75 : RARITY_VOLUME[rarity];
+    const volume = baseVolume * MASTER_VOLUME;
+
+    sound.stop(LEVELUP_ALIAS);
+    sound.play(LEVELUP_ALIAS, {
+      speed: playbackRate,
+      volume,
+      singleInstance: true,
     });
   }
 

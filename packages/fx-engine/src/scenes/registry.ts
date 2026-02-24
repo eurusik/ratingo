@@ -1,7 +1,5 @@
 import type { FxEvent, FxRarity } from '../types';
-import { achievementUnlockedScene } from './builtin/achievement-unlocked.scene';
-import { rankPromotedScene } from './builtin/rank-promoted.scene';
-import { weaponUnlockedScene } from './builtin/weapon-unlocked.scene';
+import { registerBuiltinScenes } from './builtin/register-builtin-scenes';
 import type { FxSceneDefinition, FxSceneEvent, FxSceneId } from './contracts';
 
 export class FxSceneRegistry {
@@ -14,25 +12,28 @@ export class FxSceneRegistry {
     this.scenes.set(scene.id, scene);
   }
 
-  resolve(event: FxEvent, rarity: FxRarity): FxSceneEvent {
+  resolve(event: FxEvent, rarity: FxRarity): FxSceneEvent | null {
     const sortedScenes = Array.from(this.scenes.values()).sort(
       (left, right) => (right.priority ?? 0) - (left.priority ?? 0),
     );
 
     for (const scene of sortedScenes) {
-      if (scene.supports(event)) {
-        return scene.create(event, rarity);
-      }
+      if (!scene.supports(event)) continue;
+      const nextScene = scene.create(event, rarity);
+      if (scene.schema && !scene.schema(nextScene.payload)) continue;
+      return nextScene;
     }
 
-    return achievementUnlockedScene.create(event, rarity);
+    return null;
   }
 }
 
+export function createSceneRegistry(): FxSceneRegistry {
+  return new FxSceneRegistry();
+}
+
 export function createDefaultSceneRegistry(): FxSceneRegistry {
-  const registry = new FxSceneRegistry();
-  registry.register(rankPromotedScene);
-  registry.register(weaponUnlockedScene);
-  registry.register(achievementUnlockedScene);
+  const registry = createSceneRegistry();
+  registerBuiltinScenes(registry);
   return registry;
 }

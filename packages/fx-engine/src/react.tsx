@@ -13,7 +13,16 @@ import {
 import { FxEngine } from './engine';
 import { noopAudio, noopRenderer } from './noop';
 import { createWebFxEngine } from './create-web-fx-engine';
-import type { FxController, FxEvent, FxMode } from './types';
+import type {
+  FxController,
+  FxEvent,
+  FxMode,
+  FxPayloadSchema,
+  FxPreset,
+  FxSceneManifest,
+  FxScenePlayer,
+  FxSceneRegistration,
+} from './types';
 
 interface FxProviderProps {
   children: ReactNode;
@@ -22,6 +31,7 @@ interface FxProviderProps {
   respectReducedMotion?: boolean;
   epicCooldownMs?: number;
   dedupeWindowMs?: number;
+  preset?: FxPreset;
 }
 
 const FxContext = createContext<FxController | null>(null);
@@ -33,6 +43,7 @@ export function FxProvider({
   respectReducedMotion = true,
   epicCooldownMs,
   dedupeWindowMs,
+  preset = 'ratingo-default',
 }: FxProviderProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<FxEngine>(new FxEngine(noopRenderer, noopAudio));
@@ -49,6 +60,7 @@ export function FxProvider({
       reducedMotion: initialReducedMotion,
       epicCooldownMs,
       dedupeWindowMs,
+      preset,
     });
 
     engineRef.current = engine;
@@ -81,7 +93,14 @@ export function FxProvider({
       engine.dispose();
       engineRef.current = new FxEngine(noopRenderer, noopAudio);
     };
-  }, [defaultMode, initialSafeMoment, respectReducedMotion, epicCooldownMs, dedupeWindowMs]);
+  }, [
+    defaultMode,
+    initialSafeMoment,
+    respectReducedMotion,
+    epicCooldownMs,
+    dedupeWindowMs,
+    preset,
+  ]);
 
   const setMode = useCallback((next: FxMode) => {
     setModeState(next);
@@ -90,10 +109,31 @@ export function FxProvider({
 
   const api = useMemo<FxController>(
     () => ({
-      showAchievement: (event: FxEvent) => engineRef.current.showAchievement(event),
-      setMode: (next: FxMode) => setMode(next),
-      setSafeMoment: (value: boolean) => engineRef.current.setSafeMoment(value),
-      unlockAudio: () => engineRef.current.unlockAudio(),
+      showAchievement(event: FxEvent) {
+        engineRef.current.showAchievement(event);
+      },
+      registerScene<TPayload extends FxEvent = FxEvent>(scene: FxSceneRegistration<TPayload>) {
+        engineRef.current.registerScene(scene);
+      },
+      registerScenePlayer<TPayload extends FxEvent = FxEvent>(
+        sceneId: string,
+        player: FxScenePlayer<TPayload>,
+        schema?: FxPayloadSchema<TPayload>,
+      ) {
+        engineRef.current.registerScenePlayer(sceneId, player, schema);
+      },
+      registerManifest<TPayload extends FxEvent = FxEvent>(manifest: FxSceneManifest<TPayload>) {
+        engineRef.current.registerManifest(manifest);
+      },
+      setMode(next: FxMode) {
+        setMode(next);
+      },
+      setSafeMoment(value: boolean) {
+        engineRef.current.setSafeMoment(value);
+      },
+      unlockAudio() {
+        engineRef.current.unlockAudio();
+      },
     }),
     [setMode],
   );
@@ -122,6 +162,9 @@ export function FxProvider({
 
 const noopController: FxController = {
   showAchievement() {},
+  registerScene() {},
+  registerScenePlayer() {},
+  registerManifest() {},
   setMode() {},
   setSafeMoment() {},
   unlockAudio() {},

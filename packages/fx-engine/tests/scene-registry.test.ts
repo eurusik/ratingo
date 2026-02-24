@@ -1,5 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
-import type { AchievementFxEvent } from '../src/types';
+import type { AchievementFxEvent, FxEvent } from '../src/types';
 import type { FxSceneDefinition } from '../src/scenes/contracts';
 import { FxSceneRegistry, createDefaultSceneRegistry } from '../src/scenes/registry';
 
@@ -22,6 +22,10 @@ describe('FxSceneRegistry', () => {
       'rare',
     );
 
+    expect(rankScene).not.toBeNull();
+    expect(weaponScene).not.toBeNull();
+    if (!rankScene || !weaponScene) return;
+
     expect(rankScene.sceneId).toBe('rank.promoted');
     expect(weaponScene.sceneId).toBe('weapon.unlocked');
   });
@@ -31,6 +35,8 @@ describe('FxSceneRegistry', () => {
     const event: AchievementFxEvent = { title: 'Rank Up' };
 
     const scene = registry.resolve(event, 'epic');
+    expect(scene).not.toBeNull();
+    if (!scene) return;
 
     expect(scene.sceneId).toBe('achievement.unlocked');
     expect(scene.rarity).toBe('epic');
@@ -61,6 +67,8 @@ describe('FxSceneRegistry', () => {
       },
       'legendary',
     );
+    expect(scene).not.toBeNull();
+    if (!scene) return;
 
     expect(scene.payload.title).toBe('SPECIAL Rank Up');
     expect(scene.payload.rarity).toBe('legendary');
@@ -85,8 +93,43 @@ describe('FxSceneRegistry', () => {
 
     registry.register(customScene);
     const scene = registry.resolve({ title: 'Fallback Candidate' }, 'common');
+    expect(scene).not.toBeNull();
+    if (!scene) return;
 
     expect(scene.sceneId).toBe('custom.special');
     expect(scene.payload.title).toBe('CUSTOM Fallback Candidate');
+  });
+
+  it('returns null when no scene supports event', () => {
+    const registry = new FxSceneRegistry();
+    const scene = registry.resolve({ title: 'No mapping' }, 'common');
+    expect(scene).toBeNull();
+  });
+
+  it('falls back when custom schema rejects payload', () => {
+    const registry = createDefaultSceneRegistry();
+
+    registry.register({
+      id: 'custom.invalid-schema',
+      priority: 90,
+      supports: () => true,
+      schema: (_payload): _payload is FxEvent => false,
+      create: (event, rarity) => ({
+        sceneId: 'custom.invalid-schema',
+        rarity,
+        payload: {
+          ...event,
+          title: `BROKEN ${event.title}`,
+          rarity,
+        },
+      }),
+    });
+
+    const scene = registry.resolve({ title: 'Rank Up' }, 'rare');
+    expect(scene).not.toBeNull();
+    if (!scene) return;
+
+    expect(scene.sceneId).toBe('achievement.unlocked');
+    expect(scene.payload.title).toBe('Rank Up');
   });
 });
