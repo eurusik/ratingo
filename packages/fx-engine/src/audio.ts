@@ -10,25 +10,6 @@ const DEFAULT_SOUND_SOURCE = {
   wav: '/sounds/levelup.wav',
 } as const;
 
-const RARITY_SOUND_SOURCE: Record<FxRarity, { mp3: string; wav: string }> = {
-  common: {
-    mp3: '/sounds/levelup-common.mp3',
-    wav: '/sounds/levelup-common.wav',
-  },
-  rare: {
-    mp3: '/sounds/levelup-rare.mp3',
-    wav: '/sounds/levelup-rare.wav',
-  },
-  epic: {
-    mp3: '/sounds/levelup-epic.mp3',
-    wav: '/sounds/levelup-epic.wav',
-  },
-  legendary: {
-    mp3: '/sounds/levelup-legendary.mp3',
-    wav: '/sounds/levelup-legendary.wav',
-  },
-};
-
 const RARITY_VOLUME: Record<FxRarity, number> = {
   common: 0.42,
   rare: 0.5,
@@ -38,9 +19,9 @@ const RARITY_VOLUME: Record<FxRarity, number> = {
 
 const RARITY_PLAYBACK_RATE: Record<FxRarity, number> = {
   common: 0.98,
-  rare: 1,
-  epic: 1.03,
-  legendary: 1.06,
+  rare: 0.97,
+  epic: 0.95,
+  legendary: 0.93,
 };
 
 type MaybeWebAudioContext = {
@@ -64,40 +45,18 @@ interface SoundSlot {
 }
 
 export class WebAudioFxService implements FxAudioService {
+  private destroyed = false;
   private unlocked = false;
   private preferredExt: 'mp3' | 'wav';
   private readonly defaultSlot: SoundSlot;
-  private readonly raritySlots: Record<FxRarity, SoundSlot>;
 
   constructor() {
     this.preferredExt = this.resolvePreferredExtension();
     this.defaultSlot = this.createSlot(DEFAULT_ALIAS, this.buildSourceUrls(DEFAULT_SOUND_SOURCE));
-    this.raritySlots = {
-      common: this.createSlot(
-        'fx-levelup-common',
-        this.buildSourceUrls(RARITY_SOUND_SOURCE.common, DEFAULT_SOUND_SOURCE),
-      ),
-      rare: this.createSlot(
-        'fx-levelup-rare',
-        this.buildSourceUrls(RARITY_SOUND_SOURCE.rare, DEFAULT_SOUND_SOURCE),
-      ),
-      epic: this.createSlot(
-        'fx-levelup-epic',
-        this.buildSourceUrls(RARITY_SOUND_SOURCE.epic, DEFAULT_SOUND_SOURCE),
-      ),
-      legendary: this.createSlot(
-        'fx-levelup-legendary',
-        this.buildSourceUrls(RARITY_SOUND_SOURCE.legendary, DEFAULT_SOUND_SOURCE),
-      ),
-    };
-
-    if (typeof window !== 'undefined') {
-      this.ensureSlot(this.defaultSlot);
-    }
   }
 
   unlock(): void {
-    if (typeof window === 'undefined') return;
+    if (this.destroyed || typeof window === 'undefined') return;
     this.ensureSlot(this.defaultSlot);
 
     const ctx = sound.context as MaybeWebAudioContext;
@@ -113,16 +72,14 @@ export class WebAudioFxService implements FxAudioService {
   }
 
   playSting(rarity: FxRarity, mode: FxMode): number {
-    if (mode === 'off') return 0;
+    if (this.destroyed || mode === 'off') return 0;
 
     this.unlock();
 
-    const raritySlot = this.raritySlots[rarity];
     this.ensureSlot(this.defaultSlot);
-    this.ensureSlot(raritySlot);
 
     const playbackRate = RARITY_PLAYBACK_RATE[rarity];
-    const activeSlot = this.resolveActiveSlot(raritySlot);
+    const activeSlot = this.resolveActiveSlot();
 
     if (!activeSlot) {
       this.defaultSlot.pendingPlay = { rarity, mode };
@@ -134,36 +91,22 @@ export class WebAudioFxService implements FxAudioService {
   }
 
   dispose(): void {
+    this.destroyed = true;
     this.disposeSlot(this.defaultSlot);
-    for (const slot of Object.values(this.raritySlots)) {
-      this.disposeSlot(slot);
-    }
     this.unlocked = false;
   }
 
-  private resolveActiveSlot(raritySlot: SoundSlot): SoundSlot | null {
-    if (raritySlot.initialized && sound.exists(raritySlot.alias)) {
-      return raritySlot;
-    }
+  private resolveActiveSlot(): SoundSlot | null {
     if (this.defaultSlot.initialized && sound.exists(this.defaultSlot.alias)) {
       return this.defaultSlot;
     }
     return null;
   }
 
-  private buildSourceUrls(
-    primary: { mp3: string; wav: string },
-    fallback?: { mp3: string; wav: string },
-  ): string[] {
+  private buildSourceUrls(primary: { mp3: string; wav: string }): string[] {
     const primaryOrdered =
       this.preferredExt === 'wav' ? [primary.wav, primary.mp3] : [primary.mp3, primary.wav];
-    if (!fallback) {
-      return primaryOrdered;
-    }
-
-    const fallbackOrdered =
-      this.preferredExt === 'wav' ? [fallback.wav, fallback.mp3] : [fallback.mp3, fallback.wav];
-    return [...new Set([...primaryOrdered, ...fallbackOrdered])];
+    return primaryOrdered;
   }
 
   private createSlot(alias: string, urls: string[]): SoundSlot {
@@ -179,6 +122,7 @@ export class WebAudioFxService implements FxAudioService {
   }
 
   private ensureSlot(slot: SoundSlot): void {
+    if (this.destroyed) return;
     if (slot.loading || slot.initialized || slot.unavailable) return;
 
     if (sound.exists(slot.alias)) {
@@ -189,34 +133,41 @@ export class WebAudioFxService implements FxAudioService {
     }
 
     slot.loading = true;
-    this.loadSlot(slot, 0);
+    this.loadSlot(slot);
   }
 
-  private loadSlot(slot: SoundSlot, urlIndex: number): void {
-    if (urlIndex >= slot.urls.length) {
+  private loadSlot(slot: SoundSlot): void {
+    if (this.destroyed) return;
+    const [url] = slot.urls;
+    if (!url) {
       slot.loading = false;
       slot.unavailable = true;
-      this.flushPending(this.defaultSlot);
+      slot.pendingPlay = null;
       return;
     }
 
-    const url = slot.urls[urlIndex];
     sound.add(slot.alias, {
       url,
       preload: true,
       loaded: (err) => {
+        if (this.destroyed) {
+          slot.loading = false;
+          slot.pendingPlay = null;
+          return;
+        }
+
         if (err) {
-          if (sound.exists(slot.alias)) {
-            sound.remove(slot.alias);
-          }
-          this.loadSlot(slot, urlIndex + 1);
+          slot.loading = false;
+          slot.unavailable = true;
+          slot.pendingPlay = null;
           return;
         }
 
         slot.loading = false;
         slot.initialized = sound.exists(slot.alias);
         if (!slot.initialized) {
-          this.loadSlot(slot, urlIndex + 1);
+          slot.unavailable = true;
+          slot.pendingPlay = null;
           return;
         }
 
@@ -230,7 +181,7 @@ export class WebAudioFxService implements FxAudioService {
     if (!slot.pendingPlay || !this.unlocked) return;
     const pending = slot.pendingPlay;
     slot.pendingPlay = null;
-    const activeSlot = slot.initialized ? slot : this.resolveActiveSlot(this.raritySlots[pending.rarity]);
+    const activeSlot = slot.initialized ? slot : this.resolveActiveSlot();
     if (!activeSlot) return;
     this.playSlot(activeSlot, pending.rarity, pending.mode);
   }
@@ -257,6 +208,14 @@ export class WebAudioFxService implements FxAudioService {
   }
 
   private disposeSlot(slot: SoundSlot): void {
+    if (slot.loading) {
+      slot.pendingPlay = null;
+      slot.initialized = false;
+      slot.unavailable = true;
+      slot.durationMs = DEFAULT_SOUND_DURATION_MS;
+      return;
+    }
+
     if (sound.exists(slot.alias)) {
       sound.stop(slot.alias);
       sound.remove(slot.alias);
