@@ -24,7 +24,7 @@ const nextConfig = {
       },
     ],
   },
-  transpilePackages: ['@ratingo/api-contract'],
+  transpilePackages: ['@ratingo/api-contract', '@ratingo/fx-engine'],
 };
 
 module.exports = nextConfig;

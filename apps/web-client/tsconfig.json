@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@ratingo/api-contract": ["../../packages/api-contract/src/index.ts"]
+      "@ratingo/api-contract": ["../../packages/api-contract/src/index.ts"],
+      "@ratingo/fx-engine": ["../../packages/fx-engine/src/index.ts"]
     }
   },
   "include": [
