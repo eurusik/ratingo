@@ -6,6 +6,9 @@ import {
   shouldDropByEpicCooldown,
   shouldMergeQueue,
 } from './core/policy/fx-policies';
+import type { FxSceneEvent } from './scenes/contracts';
+import { FxSceneRegistry, createDefaultSceneRegistry } from './scenes/registry';
+import { renderScene } from './scenes/runtime';
 
 const DEFAULT_DEDUPE_WINDOW_MS = 2000;
 const DEFAULT_EPIC_COOLDOWN_MS = 30_000;
@@ -18,10 +21,11 @@ export interface FxEngineConfig {
   dedupeWindowMs?: number;
   epicCooldownMs?: number;
   summaryThreshold?: number;
+  sceneRegistry?: FxSceneRegistry;
 }
 
-interface QueueItem extends AchievementFxEvent {
-  rarity: FxRarity;
+interface QueueItem {
+  scene: FxSceneEvent;
   queuedAt: number;
 }
 
@@ -36,6 +40,7 @@ export class FxEngine {
   private dedupeWindowMs: number;
   private epicCooldownMs: number;
   private summaryThreshold: number;
+  private sceneRegistry: FxSceneRegistry;
 
   constructor(
     private readonly renderer: FxRenderer,
@@ -48,6 +53,7 @@ export class FxEngine {
     this.dedupeWindowMs = config.dedupeWindowMs ?? DEFAULT_DEDUPE_WINDOW_MS;
     this.epicCooldownMs = config.epicCooldownMs ?? DEFAULT_EPIC_COOLDOWN_MS;
     this.summaryThreshold = config.summaryThreshold ?? DEFAULT_SUMMARY_THRESHOLD;
+    this.sceneRegistry = config.sceneRegistry ?? createDefaultSceneRegistry();
   }
 
   setMode(mode: FxMode): void {
@@ -87,7 +93,8 @@ export class FxEngine {
       this.lastEpicAt = now;
     }
 
-    this.queue.push({ ...event, rarity, queuedAt: now });
+    const scene = this.sceneRegistry.resolve(event, rarity);
+    this.queue.push({ scene, queuedAt: now });
     void this.drain();
   }
 
@@ -103,10 +110,9 @@ export class FxEngine {
       const mergedCount = this.queue.length;
       this.queue = [];
       const summary = createSummaryAchievement(mergedCount);
+      const summaryRarity: FxRarity = summary.rarity ?? 'rare';
       return {
-        title: summary.title,
-        subtitle: summary.subtitle,
-        rarity: 'rare',
+        scene: this.sceneRegistry.resolve(summary, summaryRarity),
         queuedAt: Date.now(),
       };
     }
@@ -121,8 +127,8 @@ export class FxEngine {
 
     this.playing = true;
     try {
-      const durationMs = this.audio.playSting(next.rarity, this.mode);
-      await this.renderer.playAchievement(next, {
+      const durationMs = this.audio.playSting(next.scene.rarity, this.mode);
+      await renderScene(this.renderer, next.scene, {
         mode: this.mode,
         reducedMotion: this.reducedMotion,
         durationMs,
