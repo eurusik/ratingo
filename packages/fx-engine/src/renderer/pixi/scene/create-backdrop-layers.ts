@@ -17,6 +17,13 @@ interface CreateBackdropLayersInput {
 }
 
 export function createBackdropLayers(input: CreateBackdropLayersInput): BackdropLayers {
+  const focusVeil = new Graphics();
+  focusVeil.beginFill(0x02060e, 1);
+  focusVeil.drawRect(0, 0, input.width, input.height);
+  focusVeil.endFill();
+  focusVeil.alpha = 0;
+  input.root.addChildAt(focusVeil, 0);
+
   const tint = new Graphics();
   tint.beginFill(input.profile.overlayTint, 0);
   tint.drawRect(0, 0, input.width, input.height);
@@ -123,6 +130,7 @@ export function createBackdropLayers(input: CreateBackdropLayersInput): Backdrop
   }
 
   return {
+    focusVeil,
     tint,
     vignette,
     scanline,

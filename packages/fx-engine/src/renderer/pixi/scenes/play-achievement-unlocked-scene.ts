@@ -37,6 +37,13 @@ export async function playAchievementUnlockedScene(
   const shockwaveEnabled = profile.shockwave && options.mode === 'epic' && !isLite;
   const shakePx = profile.shakePx * liteFactor;
   const cameraPunch = profile.cameraPunch * liteFactor;
+  const focusVeilTarget = 0.42;
+  const focusInDurationMs = 90;
+  const focusOutDurationMs = 120;
+  const focusOutStartMs = Math.max(
+    focusInDurationMs,
+    Math.min(timeline.fadeStartMs + 12, durationMs - focusOutDurationMs),
+  );
 
   const width = app.screen.width;
   const height = app.screen.height;
@@ -153,6 +160,8 @@ export async function playAchievementUnlockedScene(
         0,
         1,
       );
+      const focusInT = clamp(elapsed / focusInDurationMs, 0, 1);
+      const focusOutT = clamp((elapsed - focusOutStartMs) / focusOutDurationMs, 0, 1);
 
       const signalState = computeSignalState({
         elapsedMs: elapsed,
@@ -160,6 +169,10 @@ export async function playAchievementUnlockedScene(
         signalDurationMs: timeline.signalDurationMs,
         preSignalLeadMs: timeline.preSignalLeadMs,
       });
+      const hardDisappear = 1 - signalState.disappearEase;
+
+      layers.focusVeil.alpha =
+        focusVeilTarget * easeOutCubic(focusInT) * (1 - focusOutT) * hardDisappear;
 
       layers.tint.alpha =
         lerp(0, rarity === 'legendary' ? 0.12 : rarity === 'epic' ? 0.1 : 0.04, revealT) *
@@ -244,11 +257,21 @@ export async function playAchievementUnlockedScene(
       }
 
       const tailTextFade = 1 - tailFadeT * 0.32;
-      const hardDisappear = 1 - signalState.disappearEase;
       const textRevealEase = easeOutCubic(textRevealT);
       const subtitleRevealEase = easeOutCubic(subtitleRevealT);
       const titleRevealOffset = (1 - textRevealEase) * 14;
       const subtitleRevealOffset = (1 - subtitleRevealEase) * 10;
+      const shadowReveal = easeOutCubic(clamp(elapsed / 150, 0, 1));
+      const shadowTail = 1 - tailFadeT * 0.24;
+      const impactWindowMs = 78;
+      const impactT = clamp((elapsed - timeline.attackEndMs) / impactWindowMs, 0, 1);
+      const keyLightImpact = Math.sin(Math.PI * impactT);
+
+      card.coldShadow.alpha = 0.34 * shadowReveal * shadowTail * (1 - fadeOutT) * hardDisappear;
+      card.coldShadow.y = 22 + (1 - shadowReveal) * 6;
+      card.coldShadow.scale.set(0.96 + shadowReveal * 0.04, 0.94 + shadowReveal * 0.06);
+      card.keyLight.alpha =
+        (0.12 * shadowReveal + keyLightImpact * 0.22) * (1 - fadeOutT) * hardDisappear;
 
       card.label.alpha = 0.9 * (1 - fadeOutT) * tailTextFade * hardDisappear;
       card.label.scale.set(1);

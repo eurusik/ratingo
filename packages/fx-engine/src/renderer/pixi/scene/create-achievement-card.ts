@@ -21,6 +21,28 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
   medalRoot.scale.set(0.62);
   input.cameraRig.addChild(medalRoot);
 
+  const coldShadow = new Graphics();
+  coldShadow.beginFill(0x020813, 1);
+  coldShadow.drawRoundedRect(-214, -12, 428, 214, 48);
+  coldShadow.endFill();
+  coldShadow.beginFill(0x020813, 0.6);
+  coldShadow.drawRoundedRect(-236, -24, 472, 244, 58);
+  coldShadow.endFill();
+  coldShadow.y = 22;
+  coldShadow.alpha = 0;
+  medalRoot.addChild(coldShadow);
+
+  const keyLight = new Graphics();
+  keyLight.beginFill(0x8ebbe8, 0.42);
+  keyLight.drawRoundedRect(-176, -74, 352, 54, 20);
+  keyLight.endFill();
+  keyLight.beginFill(0xd9ecff, 0.25);
+  keyLight.drawRoundedRect(-140, -62, 280, 30, 14);
+  keyLight.endFill();
+  keyLight.blendMode = BLEND_MODES.ADD;
+  keyLight.alpha = 0;
+  medalRoot.addChild(keyLight);
+
   const ribbon = new Graphics();
   ribbon.beginFill(input.profile.ribbon, 0.95);
   ribbon.drawRoundedRect(-180, -40, 360, 80, 22);
@@ -58,6 +80,8 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
     dropShadowColor: '#000000',
     dropShadowBlur: 12,
     dropShadowDistance: 0,
+    stroke: '#000000',
+    strokeThickness: 1,
   });
   const label = new Text(
     input.rarity === 'legendary' ? 'PROMOTION UNLOCKED' : `${input.rarity.toUpperCase()} UNLOCKED`,
@@ -75,8 +99,10 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
     align: 'center',
     dropShadow: true,
     dropShadowColor: '#000000',
-    dropShadowBlur: 20,
+    dropShadowBlur: 26,
     dropShadowDistance: 0,
+    stroke: '#000000',
+    strokeThickness: 2,
   });
   title.anchor.set(0.5);
   title.y = 126;
@@ -110,12 +136,14 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     fontSize: 14,
     fontWeight: '600',
-    fill: 0xa0a5b0,
+    fill: 0xb8bfcd,
     align: 'center',
     dropShadow: true,
     dropShadowColor: '#000000',
-    dropShadowBlur: 10,
+    dropShadowBlur: 12,
     dropShadowDistance: 0,
+    stroke: '#000000',
+    strokeThickness: 1,
   });
   subtitle.anchor.set(0.5);
   subtitle.y = 154;
@@ -150,6 +178,8 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
 
   return {
     medalRoot,
+    coldShadow,
+    keyLight,
     glowSweep,
     label,
     title,

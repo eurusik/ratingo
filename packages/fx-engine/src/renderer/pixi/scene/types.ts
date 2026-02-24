@@ -1,6 +1,7 @@
 import type { Container, Graphics, Text } from 'pixi.js';
 
 export interface BackdropLayers {
+  focusVeil: Graphics;
   tint: Graphics;
   vignette: Graphics;
   scanline: Graphics;
@@ -18,6 +19,8 @@ export interface BackdropLayers {
 
 export interface AchievementCardNodes {
   medalRoot: Container;
+  coldShadow: Graphics;
+  keyLight: Graphics;
   glowSweep: Graphics;
   label: Text;
   title: Text;
