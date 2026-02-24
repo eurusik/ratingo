@@ -1,10 +1,17 @@
 import type { AchievementFxEvent, FxAudioService, FxMode, FxRarity, FxRenderer } from './types';
+import {
+  buildDedupeKey,
+  createSummaryAchievement,
+  shouldDropByDedupe,
+  shouldDropByEpicCooldown,
+  shouldMergeQueue,
+} from './core/policy/fx-policies';
 
 const DEFAULT_DEDUPE_WINDOW_MS = 2000;
 const DEFAULT_EPIC_COOLDOWN_MS = 30_000;
 const DEFAULT_SUMMARY_THRESHOLD = 4;
 
-interface EngineConfig {
+export interface FxEngineConfig {
   mode?: FxMode;
   safeMoment?: boolean;
   reducedMotion?: boolean;
@@ -33,7 +40,7 @@ export class FxEngine {
   constructor(
     private readonly renderer: FxRenderer,
     private readonly audio: FxAudioService,
-    config: EngineConfig = {},
+    config: FxEngineConfig = {},
   ) {
     this.mode = config.mode ?? 'epic';
     this.safeMoment = config.safeMoment ?? true;
@@ -67,11 +74,11 @@ export class FxEngine {
 
     const rarity: FxRarity = event.rarity ?? 'common';
     const now = Date.now();
-    const dedupeKey = event.id ?? `${event.title.toLowerCase()}::${rarity}`;
+    const dedupeKey = buildDedupeKey(event, rarity);
     const lastSeen = this.dedupeMap.get(dedupeKey) ?? 0;
 
-    if (now - lastSeen < this.dedupeWindowMs) return;
-    if ((rarity === 'epic' || rarity === 'legendary') && now - this.lastEpicAt < this.epicCooldownMs) {
+    if (shouldDropByDedupe(lastSeen, now, this.dedupeWindowMs)) return;
+    if (shouldDropByEpicCooldown(rarity, now, this.lastEpicAt, this.epicCooldownMs)) {
       return;
     }
 
@@ -92,12 +99,13 @@ export class FxEngine {
 
   private takeNext(): QueueItem | null {
     if (this.queue.length === 0) return null;
-    if (this.queue.length >= this.summaryThreshold) {
+    if (shouldMergeQueue(this.queue.length, this.summaryThreshold)) {
       const mergedCount = this.queue.length;
       this.queue = [];
+      const summary = createSummaryAchievement(mergedCount);
       return {
-        title: `+${mergedCount} achievements`,
-        subtitle: 'Unlocked in a row',
+        title: summary.title,
+        subtitle: summary.subtitle,
         rarity: 'rare',
         queuedAt: Date.now(),
       };

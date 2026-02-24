@@ -1,0 +1,125 @@
+import type { FxRarity } from '../../types';
+
+export type RarityVisualProfile = {
+  ribbon: number;
+  overlayTint: number;
+  medalFill: number;
+  medalStroke: number;
+  sparkPrimary: number;
+  sparkSecondary: number;
+  debrisColor: number;
+  smokeColor: number;
+  titleColor: number;
+  labelColor: number;
+  durationMs: number;
+  flashAlpha: number;
+  vignette: number;
+  sparkCount: number;
+  debrisCount: number;
+  smokeCount: number;
+  settleScale: number;
+  entryOffsetY: number;
+  shakePx: number;
+  cameraPunch: number;
+  shockwave: boolean;
+  doubleBurst: boolean;
+};
+
+export const RARITY_VISUAL: Record<FxRarity, RarityVisualProfile> = {
+  common: {
+    ribbon: 0x34424f,
+    overlayTint: 0x5e7a93,
+    medalFill: 0x7b7464,
+    medalStroke: 0xb6aa90,
+    sparkPrimary: 0xc9d1dc,
+    sparkSecondary: 0x8ab2d4,
+    debrisColor: 0x4b515c,
+    smokeColor: 0x72809a,
+    titleColor: 0xe5e9ef,
+    labelColor: 0xc2cbd8,
+    durationMs: 900,
+    flashAlpha: 0.09,
+    vignette: 0.12,
+    sparkCount: 6,
+    debrisCount: 4,
+    smokeCount: 5,
+    settleScale: 1.03,
+    entryOffsetY: 18,
+    shakePx: 0,
+    cameraPunch: 0,
+    shockwave: false,
+    doubleBurst: false,
+  },
+  rare: {
+    ribbon: 0x2f4e63,
+    overlayTint: 0x3d6f9e,
+    medalFill: 0x748a9b,
+    medalStroke: 0xb8d8ef,
+    sparkPrimary: 0xaed9ff,
+    sparkSecondary: 0xe2d3a0,
+    debrisColor: 0x566070,
+    smokeColor: 0x7a8ea8,
+    titleColor: 0xeaf3ff,
+    labelColor: 0xc8def7,
+    durationMs: 1100,
+    flashAlpha: 0.24,
+    vignette: 0.28,
+    sparkCount: 18,
+    debrisCount: 10,
+    smokeCount: 12,
+    settleScale: 1.1,
+    entryOffsetY: 28,
+    shakePx: 0.8,
+    cameraPunch: 1.3,
+    shockwave: false,
+    doubleBurst: false,
+  },
+  epic: {
+    ribbon: 0x3b355f,
+    overlayTint: 0x5e3f9f,
+    medalFill: 0x9e8dcb,
+    medalStroke: 0xe7d9ff,
+    sparkPrimary: 0xd8c7ff,
+    sparkSecondary: 0x8fd1ff,
+    debrisColor: 0x6a5a87,
+    smokeColor: 0x7b74ad,
+    titleColor: 0xf2eaff,
+    labelColor: 0xd8caef,
+    durationMs: 1300,
+    flashAlpha: 0.32,
+    vignette: 0.38,
+    sparkCount: 30,
+    debrisCount: 22,
+    smokeCount: 20,
+    settleScale: 1.13,
+    entryOffsetY: 40,
+    shakePx: 1.6,
+    cameraPunch: 2.8,
+    shockwave: true,
+    doubleBurst: false,
+  },
+  legendary: {
+    ribbon: 0x4a4334,
+    overlayTint: 0x5f553a,
+    medalFill: 0x8d7a4c,
+    medalStroke: 0xd8c690,
+    sparkPrimary: 0xd7bd79,
+    sparkSecondary: 0xe6dbb6,
+    debrisColor: 0x8d6a2c,
+    smokeColor: 0x9b8a64,
+    titleColor: 0xdfd1a8,
+    labelColor: 0xc2b286,
+    durationMs: 1450,
+    flashAlpha: 0.34,
+    vignette: 0.5,
+    sparkCount: 44,
+    debrisCount: 32,
+    smokeCount: 28,
+    settleScale: 1.18,
+    entryOffsetY: 56,
+    shakePx: 2.6,
+    cameraPunch: 4.6,
+    shockwave: true,
+    doubleBurst: true,
+  },
+};

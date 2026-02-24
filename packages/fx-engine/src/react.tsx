@@ -10,10 +10,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { WebAudioFxService } from './audio';
 import { FxEngine } from './engine';
 import { noopAudio, noopRenderer } from './noop';
-import { PixiFxRenderer } from './pixi-renderer';
+import { createWebFxEngine } from './create-web-fx-engine';
 import type { AchievementFxEvent, FxController, FxMode } from './types';
 
 interface FxProviderProps {
@@ -42,11 +41,9 @@ export function FxProvider({
   useEffect(() => {
     if (!hostRef.current) return;
 
-    const renderer = new PixiFxRenderer(hostRef.current);
-    const audio = new WebAudioFxService();
     const initialReducedMotion =
       respectReducedMotion && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const engine = new FxEngine(renderer, audio, {
+    const engine = createWebFxEngine(hostRef.current, {
       mode: defaultMode,
       safeMoment: initialSafeMoment,
       reducedMotion: initialReducedMotion,
