@@ -42,15 +42,24 @@ const MAX_OFFSET_DAYS = 28;
  * @example
  * formatWeekRange('2024-02-19', 7, 'uk') // "19 лют — 25 лют"
  */
+const UK_MONTHS_SHORT = [
+  'січ', 'лют', 'бер', 'квіт', 'трав', 'черв',
+  'лип', 'серп', 'вер', 'жовт', 'лист', 'груд',
+] as const;
+
+const EN_MONTHS_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+] as const;
+
 function formatWeekRange(startDate: string, days: number, locale: Locale): string {
   const start = new Date(startDate + 'T00:00:00');
   const end = new Date(startDate + 'T00:00:00');
   end.setDate(end.getDate() + days - 1);
 
-  const loc = locale === 'uk' ? 'uk-UA' : 'en-US';
-  const fmt: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-
-  return `${start.toLocaleDateString(loc, fmt)} — ${end.toLocaleDateString(loc, fmt)}`;
+  const months = locale === 'uk' ? UK_MONTHS_SHORT : EN_MONTHS_SHORT;
+  const fmt = (d: Date) => `${d.getDate()} ${months[d.getMonth()]}`;
+  return `${fmt(start)} — ${fmt(end)}`;
 }
 
 /**
