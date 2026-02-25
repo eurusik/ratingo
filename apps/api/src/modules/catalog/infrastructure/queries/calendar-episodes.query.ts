@@ -6,13 +6,15 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
+import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
 import { type CalendarEpisode } from '../../domain/repositories/show.repository.interface';
 
 /**
  * Fetches episodes airing within a date range for calendar view.
  *
- * Joins episodes with seasons, shows, and media items to provide
- * complete episode information for the global release calendar.
+ * Only includes shows that are ELIGIBLE under the active catalog policy,
+ * filtering out content irrelevant to the target audience (e.g. CJK-only,
+ * blocked languages/countries).
  *
  * @throws {DatabaseException} When database query fails
  */
@@ -53,6 +55,16 @@ export class CalendarEpisodesQuery {
         .innerJoin(schema.seasons, eq(schema.episodes.seasonId, schema.seasons.id))
         .innerJoin(schema.shows, eq(schema.episodes.showId, schema.shows.id))
         .innerJoin(schema.mediaItems, eq(schema.shows.mediaItemId, schema.mediaItems.id))
+        .innerJoin(schema.catalogPolicies, eq(schema.catalogPolicies.isActive, true))
+        .innerJoin(
+          schema.mediaCatalogEvaluations,
+          and(
+            eq(schema.mediaCatalogEvaluations.mediaItemId, schema.mediaItems.id),
+            eq(schema.mediaCatalogEvaluations.policyVersion, schema.catalogPolicies.version),
+            eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
+            eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
+          ),
+        )
         .where(and(gte(schema.episodes.airDate, startDate), lte(schema.episodes.airDate, endDate)))
         .orderBy(asc(schema.episodes.airDate));
 

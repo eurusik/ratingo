@@ -1,6 +1,7 @@
 /**
  * Fixed bottom navigation dock for mobile screens.
- * Provides 1-tap access to Shows, Movies, Search, Activity, and Saved.
+ * Provides 1-tap access to Shows, Movies, Search, and Saved.
+ * 4th slot: Calendar for guests, Activity for authenticated users.
  * Hidden on md+ breakpoints via CSS (no hydration mismatch).
  */
 
@@ -8,7 +9,7 @@
 
 import { useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { Flame, Film, Search, Play, Bookmark } from 'lucide-react';
+import { Flame, Film, Search, Play, Bookmark, CalendarDays } from 'lucide-react';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { useSearchDialogStore } from '@/shared/stores/search-dialog.store';
 import { useTranslation } from '@/shared/i18n';
@@ -54,13 +55,21 @@ export function MobileDock() {
           onClick={openSearch}
           isActive={false}
         />
-        <MobileDockItem
-          icon={Play}
-          label={dict.auth.activity}
-          href="/activity"
-          isActive={pathname.startsWith('/activity')}
-          onBeforeNavigate={requireAuth}
-        />
+        {isAuthenticated ? (
+          <MobileDockItem
+            icon={Play}
+            label={dict.auth.activity}
+            href="/activity"
+            isActive={pathname.startsWith('/activity')}
+          />
+        ) : (
+          <MobileDockItem
+            icon={CalendarDays}
+            label={dict.nav.calendar}
+            href="/calendar"
+            isActive={pathname.startsWith('/calendar')}
+          />
+        )}
         <MobileDockItem
           icon={Bookmark}
           label={dict.auth.saved}

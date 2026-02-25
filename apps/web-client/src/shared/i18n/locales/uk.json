@@ -232,7 +232,8 @@
     "shows": "Серіали",
     "search": "Пошук",
     "watchlist": "Мій список",
-    "airings": "Надходження"
+    "airings": "Надходження",
+    "calendar": "Календар"
   },
   "details": {
     "backToHome": "Назад",
@@ -1507,6 +1508,23 @@
         "empty": "Публікацій ще немає",
         "uploadingImage": "Завантаження зображення..."
     }
+  },
+  "calendar": {
+    "title": "Календар серій",
+    "subtitle": "Розклад виходу нових серій",
+    "description": "Розклад виходу нових серій серіалів — дізнайтесь, коли виходять нові епізоди",
+    "thisWeek": "Цей тиждень",
+    "noEpisodes": "Немає нових серій",
+    "noEpisodesWeek": "На цьому тижні немає запланованих серій",
+    "tryAnotherWeek": "Спробуйте інший тиждень",
+    "today": "Сьогодні",
+    "minutes": "{min} хв",
+    "viewAll": "Календар серій",
+    "showMoreShows": "Ще {count}",
+    "showMoreShowsOne": "серіал",
+    "showMoreShowsFew": "серіали",
+    "showMoreShowsMany": "серіалів",
+    "collapse": "Згорнути"
   },
   "journal": {
     "title": "Журнал",
