@@ -1,7 +1,7 @@
 /**
  * Fixed bottom navigation dock for mobile screens.
- * Provides 1-tap access to Shows, Movies, Search, and Saved.
- * 4th slot: Calendar for guests, Activity for authenticated users.
+ * Provides 1-tap access to Shows, Movies, Search, Calendar/Activity, and Saved.
+ * 4th slot: Calendar for guests; Activity for authenticated users.
  * Hidden on md+ breakpoints via CSS (no hydration mismatch).
  */
 

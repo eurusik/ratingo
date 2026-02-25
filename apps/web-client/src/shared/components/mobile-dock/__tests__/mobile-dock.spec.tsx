@@ -237,6 +237,17 @@ describe('MobileDock', () => {
 
       expect(screen.getByText('Календар')).toHaveClass('font-medium');
     });
+
+    it('no tab is active when authenticated user visits /calendar path', () => {
+      mockUsePathname.mockReturnValue('/calendar');
+      mockIsAuthenticated = true;
+      render(<MobileDock />);
+
+      expect(screen.getByText('Серіали')).not.toHaveClass('font-medium');
+      expect(screen.getByText('Фільми')).not.toHaveClass('font-medium');
+      expect(screen.getByText('Активність')).not.toHaveClass('font-medium');
+      expect(screen.getByText('Збережене')).not.toHaveClass('font-medium');
+    });
   });
 
   /* ---- Search tab ---- */
