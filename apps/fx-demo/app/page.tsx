@@ -14,6 +14,8 @@ import { demoScanImpactSceneId, playScanImpactScene } from './scenes/play-scan-i
 import { demoTerminalFeedSceneId, playTerminalFeedScene } from './scenes/play-terminal-feed-scene';
 
 const DEMO_MODES: FxMode[] = ['off', 'lite', 'epic'];
+const QUICK_TRIGGER_MODES: readonly FxMode[] = ['lite', 'epic'];
+const QUICK_TRIGGER_RARITIES: readonly FxRarity[] = ['common', 'rare', 'epic', 'legendary'];
 
 type DemoSceneKind = 'default' | 'scan' | 'terminal';
 type AudioPresetKey = 'neutral' | 'sharp' | 'heavy' | 'test' | 'prestige';
@@ -90,6 +92,13 @@ const SCENE_LABELS: Record<DemoSceneKind, string> = {
   default: 'Classic Medal',
   scan: 'Scan Impact',
   terminal: 'Terminal Feed',
+};
+
+const QUICK_ICON_BY_RARITY: Record<FxRarity, FxIconInput> = {
+  common: { type: 'builtin', key: 'star' },
+  rare: { type: 'builtin', key: 'shield' },
+  epic: { type: 'builtin', key: 'ribbon' },
+  legendary: { type: 'builtin', key: 'trophy' },
 };
 
 const SCENE_CASES: DemoCase[] = [
@@ -325,17 +334,23 @@ function DemoControls() {
   }, [fx]);
 
   const runDemoCase = (demoCase: DemoCase) => {
-    const metadata =
-      demoCase.scene === 'default'
-        ? undefined
-        : {
-            demoScene:
-              demoCase.scene === 'scan'
-                ? demoScanImpactSceneId
-                : demoCase.scene === 'terminal'
-                  ? demoTerminalFeedSceneId
-                  : undefined,
-          };
+    const metadata: Record<string, unknown> = {};
+    const disableSignalGlitch =
+      demoCase.audioPreset === 'test' || demoCase.audioPreset === 'prestige';
+
+    if (demoCase.scene !== 'default') {
+      metadata.demoScene =
+        demoCase.scene === 'scan'
+          ? demoScanImpactSceneId
+          : demoCase.scene === 'terminal'
+            ? demoTerminalFeedSceneId
+            : undefined;
+    }
+    if (disableSignalGlitch) {
+      metadata.fx = { disableSignalGlitch: true };
+    }
+
+    const finalMetadata = Object.keys(metadata).length > 0 ? metadata : undefined;
 
     fx.showAchievement({
       id: `case-${demoCase.id}-${Date.now()}`,
@@ -344,7 +359,7 @@ function DemoControls() {
       rarity: demoCase.rarity,
       icon: demoCase.icon,
       audio: AUDIO_PRESETS[demoCase.audioPreset].hints,
-      metadata,
+      metadata: finalMetadata,
     });
 
     setLastRun({
@@ -359,6 +374,28 @@ function DemoControls() {
   const runBatch = (cases: DemoCase[]) => {
     cases.forEach((demoCase, index) => {
       window.setTimeout(() => runDemoCase(demoCase), index * 420);
+    });
+  };
+
+  const runQuickModeRarity = (targetMode: FxMode, rarity: FxRarity) => {
+    setMode(targetMode);
+    fx.setMode(targetMode);
+
+    fx.showAchievement({
+      id: `quick-${targetMode}-${rarity}-${Date.now()}`,
+      title: `${rarity.toUpperCase()} unlocked`,
+      subtitle: `Quick trigger: ${targetMode} mode`,
+      rarity,
+      icon: QUICK_ICON_BY_RARITY[rarity],
+      audio: AUDIO_PRESETS.neutral.hints,
+    });
+
+    setLastRun({
+      caseName: `Quick: ${targetMode}/${rarity}`,
+      scene: 'default',
+      audioPreset: 'neutral',
+      rarity,
+      startedAt: new Date().toLocaleTimeString(),
     });
   };
 
@@ -436,6 +473,27 @@ function DemoControls() {
             ) : (
               <>Last run: none</>
             )}
+          </div>
+
+          <div className="controlGroup">
+            <span className="controlLabel">Quick mode x rarity</span>
+            {QUICK_TRIGGER_MODES.map((targetMode) => (
+              <div key={targetMode} className="quickMatrixRow">
+                <span className="metaTag quickMatrixMode">mode: {targetMode}</span>
+                <div className="pillRow">
+                  {QUICK_TRIGGER_RARITIES.map((rarity) => (
+                    <button
+                      key={`${targetMode}-${rarity}`}
+                      type="button"
+                      className="btn"
+                      onClick={() => runQuickModeRarity(targetMode, rarity)}
+                    >
+                      {rarity}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 

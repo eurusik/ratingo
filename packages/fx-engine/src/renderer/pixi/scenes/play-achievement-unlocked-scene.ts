@@ -2,7 +2,7 @@ import { Application, Container, type DisplayObject } from 'pixi.js';
 import { RARITY_VISUAL } from '../../../core/config/rarity-profile';
 import { easeInOutCubic, easeOutCubic } from '../../../core/math/easing';
 import { clamp, lerp } from '../../../core/math/scalars';
-import { computeSignalState } from '../../../core/timeline/compute-signal-state';
+import { computeSignalState, type SignalState } from '../../../core/timeline/compute-signal-state';
 import { buildAchievementTimeline } from '../../../core/timeline/build-achievement-timeline';
 import type { FxEvent, FxRenderOptions, FxScenePlayerContext } from '../../../types';
 import { ParticlesPlugin } from '../plugins/particles-plugin';
@@ -17,6 +17,11 @@ interface LightingOverrides {
   keyLightBase?: number;
   keyLightImpact?: number;
   keyLightWindowMs?: number;
+}
+
+interface FxSceneOverrides {
+  disableSignalGlitch?: boolean;
+  glitchGain?: number;
 }
 
 type PixiAchievementSceneContext = FxScenePlayerContext<Application, DisplayObject>;
@@ -40,6 +45,58 @@ function asLightingOverrides(event: FxEvent): LightingOverrides {
   };
 }
 
+function asFxSceneOverrides(event: FxEvent): FxSceneOverrides {
+  const metadata = event.metadata;
+  if (!metadata || typeof metadata !== 'object') return {};
+  const fx = (metadata as { fx?: unknown }).fx;
+  if (!fx || typeof fx !== 'object') return {};
+
+  const source = fx as Record<string, unknown>;
+  const asNumber = (value: unknown): number | undefined =>
+    typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+
+  return {
+    disableSignalGlitch:
+      typeof source.disableSignalGlitch === 'boolean' ? source.disableSignalGlitch : undefined,
+    glitchGain: asNumber(source.glitchGain),
+  };
+}
+
+function scaleSignalState(signalState: SignalState, gain: number): SignalState {
+  if (gain >= 0.999) return signalState;
+  if (gain <= 0.001) {
+    return {
+      signalCutT: 0,
+      preSignalT: 0,
+      inSignalCut: false,
+      signalSpikeA: 0,
+      signalSpikeB: 0,
+      signalSpikeC: 0,
+      signalSpikeD: 0,
+      signalStrength: 0,
+      disappearEase: 0,
+      signalRush: 0,
+      signalNoiseFloor: 0,
+      signalKickX: 0,
+    };
+  }
+
+  return {
+    signalCutT: signalState.signalCutT,
+    preSignalT: signalState.preSignalT * gain,
+    inSignalCut: signalState.inSignalCut && gain > 0.05,
+    signalSpikeA: signalState.signalSpikeA * gain,
+    signalSpikeB: signalState.signalSpikeB * gain,
+    signalSpikeC: signalState.signalSpikeC * gain,
+    signalSpikeD: signalState.signalSpikeD * gain,
+    signalStrength: signalState.signalStrength * gain,
+    disappearEase: signalState.disappearEase * gain,
+    signalRush: signalState.signalRush * gain,
+    signalNoiseFloor: signalState.signalNoiseFloor * gain,
+    signalKickX: signalState.signalKickX * gain,
+  };
+}
+
 export async function playAchievementUnlockedScene(
   app: Application,
   event: FxEvent,
@@ -52,21 +109,35 @@ export async function playAchievementUnlockedScene(
   const timeline = buildAchievementTimeline({
     durationMs: Math.round(externalDurationMs ?? profile.durationMs),
     mode: options.mode,
+    rarity,
     reducedMotion: options.reducedMotion,
     hasExternalDuration: externalDurationMs !== null,
   });
 
   const isLite = timeline.isLite;
-  const liteFactor = isLite ? 0.55 : 1;
+  const isEpicMode = options.mode === 'epic' && !isLite;
+  const particleCountScale = isLite ? 0.38 : isEpicMode ? 1.22 : 1;
+  const particleMotionScale = isLite ? 0.72 : isEpicMode ? 1.08 : 1;
+  const particleAlphaScale = isLite ? 0.74 : isEpicMode ? 1.06 : 1;
+  const impactScale = isLite ? 0.55 : isEpicMode ? 1.06 : 1;
   const durationMs = timeline.durationMs;
-  const flashAlpha = profile.flashAlpha * liteFactor;
+  const flashAlpha = profile.flashAlpha * impactScale;
   const vignetteTarget = profile.vignette * (isLite ? 0.5 : 1);
-  const sparkCount = Math.max(2, Math.round(profile.sparkCount * liteFactor));
-  const debrisCount = Math.max(1, Math.round(profile.debrisCount * liteFactor));
-  const smokeCount = Math.max(2, Math.round(profile.smokeCount * liteFactor));
-  const shockwaveEnabled = profile.shockwave && options.mode === 'epic' && !isLite;
-  const shakePx = profile.shakePx * liteFactor;
-  const cameraPunch = profile.cameraPunch * liteFactor;
+  const sparkCount = Math.max(2, Math.round(profile.sparkCount * particleCountScale));
+  const debrisCount = Math.max(1, Math.round(profile.debrisCount * particleCountScale));
+  const smokeCount = Math.max(2, Math.round(profile.smokeCount * particleCountScale));
+  const shockwaveEnabled = profile.shockwave && isEpicMode;
+  const shakePx = profile.shakePx * impactScale;
+  const cameraPunch = profile.cameraPunch * impactScale;
+  const sceneFx = asFxSceneOverrides(event);
+  const profileGlitchGain = profile.glitchGain * (isLite ? 0.72 : 1);
+  const glitchGain = clamp(
+    (sceneFx.disableSignalGlitch ? 0 : 1) *
+      (sceneFx.glitchGain ?? profileGlitchGain),
+    0,
+    1,
+  );
+  const hasSignalGlitch = glitchGain > 0.01;
   const lighting = asLightingOverrides(event);
   const focusVeilTarget = clamp(lighting.veilAlpha ?? 0.5, 0, 0.78);
   const shadowStrength = clamp(lighting.shadowAlpha ?? 0.5, 0, 0.68);
@@ -128,7 +199,7 @@ export async function playAchievementUnlockedScene(
   const cpuCores = typeof navigator === 'undefined' ? 8 : (navigator.hardwareConcurrency ?? 8);
   const isLowEndDevice = cpuCores <= 4;
   const areaScale = clamp((960 * 540) / Math.max(1, viewportArea), 0.7, 1);
-  const baseDensity = isLite ? 0.62 : isLowEndDevice ? 0.74 : 0.88;
+  const baseDensity = isLite ? 0.58 : isLowEndDevice ? 0.72 : 0.86;
   const glitchDensity = clamp(baseDensity * areaScale, 0.48, 0.9);
   const redrawIntervalMs = isLite ? 26 : isLowEndDevice ? 22 : 16;
 
@@ -154,7 +225,8 @@ export async function playAchievementUnlockedScene(
     medalY,
     rarity,
     profile,
-    liteFactor,
+    motionScale: particleMotionScale,
+    alphaScale: particleAlphaScale,
     sparkCount,
     debrisCount,
     smokeCount,
@@ -163,27 +235,29 @@ export async function playAchievementUnlockedScene(
     durationMs,
   });
 
-  const signalGlitchPlugin = new SignalGlitchPlugin({
-    scanline: layers.scanline,
-    noiseDots: layers.noiseDots,
-    glitchBands: layers.glitchBands,
-    interferenceStrips: layers.interferenceStrips,
-    signalStatic: layers.signalStatic,
-    cutPulse: layers.cutPulse,
-    bounds: {
-      x: glitchBlockX,
-      y: glitchBlockY,
-      width: glitchBlockWidth,
-      height: glitchBlockHeight,
-    },
-    signalCutStartMs: timeline.signalCutStartMs,
-    performance: {
-      redrawIntervalMs,
-      stripDensity: clamp(glitchDensity * 0.9, 0.45, 0.9),
-      staticDensity: clamp(glitchDensity * 0.8, 0.42, 0.85),
-      bandDensity: clamp(glitchDensity * 0.95, 0.48, 0.92),
-    },
-  });
+  const signalGlitchPlugin = hasSignalGlitch
+    ? new SignalGlitchPlugin({
+        scanline: layers.scanline,
+        noiseDots: layers.noiseDots,
+        glitchBands: layers.glitchBands,
+        interferenceStrips: layers.interferenceStrips,
+        signalStatic: layers.signalStatic,
+        cutPulse: layers.cutPulse,
+        bounds: {
+          x: glitchBlockX,
+          y: glitchBlockY,
+          width: glitchBlockWidth,
+          height: glitchBlockHeight,
+        },
+        signalCutStartMs: timeline.signalCutStartMs,
+        performance: {
+          redrawIntervalMs,
+          stripDensity: clamp(glitchDensity * (0.82 + glitchGain * 0.18), 0.32, 0.9),
+          staticDensity: clamp(glitchDensity * (0.72 + glitchGain * 0.22), 0.28, 0.85),
+          bandDensity: clamp(glitchDensity * (0.78 + glitchGain * 0.24), 0.34, 0.92),
+        },
+      })
+    : null;
 
   const start = performance.now();
   let lastFrame = start;
@@ -245,12 +319,13 @@ export async function playAchievementUnlockedScene(
       const focusInT = clamp(elapsed / focusInDurationMs, 0, 1);
       const focusOutT = clamp((elapsed - focusOutStartMs) / focusOutDurationMs, 0, 1);
 
-      const signalState = computeSignalState({
+      const rawSignalState = computeSignalState({
         elapsedMs: elapsed,
         signalCutStartMs: timeline.signalCutStartMs,
         signalDurationMs: timeline.signalDurationMs,
         preSignalLeadMs: timeline.preSignalLeadMs,
       });
+      const signalState = scaleSignalState(rawSignalState, glitchGain);
       const hardDisappear = 1 - signalState.disappearEase;
 
       layers.focusVeil.alpha =
@@ -434,7 +509,7 @@ export async function playAchievementUnlockedScene(
       card.labelGhostR.y = card.labelBaseY + signalState.signalSpikeB * 0.5;
       card.labelGhostC.y = card.labelBaseY - signalState.signalSpikeC * 0.5;
 
-      signalGlitchPlugin.update({
+      signalGlitchPlugin?.update({
         elapsedMs: elapsed,
         fadeOutT,
         signalState,

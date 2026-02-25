@@ -60,10 +60,10 @@ export async function createAchievementCard(
   medalRoot.addChild(ribbon);
 
   const keyLight = new Graphics();
-  keyLight.beginFill(0x4ea1ff, 0.28);
+  keyLight.beginFill(input.profile.sparkSecondary, 0.24);
   keyLight.drawRoundedRect(ribbonX - 8, -42, ribbonWidth + 16, 32, 12);
   keyLight.endFill();
-  keyLight.beginFill(0xd8e8f7, 0.16);
+  keyLight.beginFill(input.profile.sparkPrimary, 0.14);
   keyLight.drawRoundedRect(ribbonX + 30, -38, ribbonWidth - 60, 20, 8);
   keyLight.endFill();
   keyLight.blendMode = BLEND_MODES.ADD;
@@ -147,7 +147,7 @@ export async function createAchievementCard(
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     fontSize: input.rarity === 'legendary' ? 26 : input.rarity === 'epic' ? 28 : 24,
     fontWeight: '700',
-    fill: 0xc38e8e,
+    fill: input.profile.sparkSecondary,
     align: 'center',
     wordWrap: true,
     wordWrapWidth: Math.min(520, ribbonWidth + 110),
@@ -161,7 +161,7 @@ export async function createAchievementCard(
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     fontSize: input.rarity === 'legendary' ? 26 : input.rarity === 'epic' ? 28 : 24,
     fontWeight: '700',
-    fill: 0x84afc2,
+    fill: input.profile.sparkPrimary,
     align: 'center',
     wordWrap: true,
     wordWrapWidth: Math.min(520, ribbonWidth + 110),
@@ -175,7 +175,7 @@ export async function createAchievementCard(
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     fontSize: 13,
     fontWeight: '600',
-    fill: 0xc3cad7,
+    fill: input.profile.labelColor,
     align: 'center',
     stroke: '#000000',
     strokeThickness: 1,
@@ -191,7 +191,7 @@ export async function createAchievementCard(
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     fontSize: 13,
     fontWeight: '600',
-    fill: 0xe0e6ef,
+    fill: input.profile.titleColor,
     align: 'center',
     wordWrap: true,
     wordWrapWidth: Math.min(520, ribbonWidth + 90),
@@ -209,7 +209,7 @@ export async function createAchievementCard(
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 1.8,
-    fill: 0xbc9292,
+    fill: input.profile.sparkSecondary,
     align: 'center',
   });
   labelGhostR.anchor.set(0.5);
@@ -222,7 +222,7 @@ export async function createAchievementCard(
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 1.8,
-    fill: 0x86adc0,
+    fill: input.profile.sparkPrimary,
     align: 'center',
   });
   labelGhostC.anchor.set(0.5);

@@ -9,20 +9,13 @@ import type {
 
 const DEFAULT_ALIAS = 'fx-levelup-default';
 const DEFAULT_SOUND_DURATION_MS = 4729;
-const MASTER_VOLUME = 0.5;
+const MASTER_VOLUME = 0.35;
 const MAX_DYNAMIC_SLOTS = 8;
 
 const DEFAULT_SOUND_SOURCE = {
   mp3: '/sounds/levelup.mp3',
   wav: '/sounds/levelup.wav',
 } as const;
-
-const RARITY_VOLUME: Record<FxRarity, number> = {
-  common: 0.42,
-  rare: 0.5,
-  epic: 0.62,
-  legendary: 0.72,
-};
 
 const RARITY_PLAYBACK_RATE: Record<FxRarity, number> = {
   common: 0.98,
@@ -340,14 +333,12 @@ export class WebAudioFxService implements FxAudioService {
   private playSlot(
     slot: SoundSlot,
     rarity: FxRarity,
-    mode: FxMode,
+    _mode: FxMode,
     sound: PixiSoundLike,
     audioHints?: FxAudioHints,
   ): void {
     const playbackRate = this.resolvePlaybackRate(rarity, audioHints);
-    const baseVolume = mode === 'lite' ? RARITY_VOLUME[rarity] * 0.75 : RARITY_VOLUME[rarity];
-    const hintVolumeMultiplier = this.resolveMultiplier(audioHints?.volumeMultiplier, 1, 0, 2);
-    const volume = this.clamp(baseVolume * MASTER_VOLUME * hintVolumeMultiplier, 0, 1);
+    const volume = MASTER_VOLUME;
 
     sound.stop(slot.alias);
     sound.play(slot.alias, {
