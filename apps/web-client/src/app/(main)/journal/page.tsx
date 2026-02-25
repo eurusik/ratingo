@@ -12,7 +12,7 @@ import { JournalPageClient } from './client';
 const dict = getDictionary('uk');
 
 export const metadata: Metadata = {
-  title: `${dict.journal.title} | Ratingo`,
+  title: dict.journal.title,
   description: dict.journal.description,
 };
 

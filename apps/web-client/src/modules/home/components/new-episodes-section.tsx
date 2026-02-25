@@ -74,14 +74,15 @@ function EpisodeCard({ item, locale }: { item: NewEpisodeShowItem; locale: Local
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-white truncate group-hover:text-blue-400 transition-colors">
+        <h3 className="text-sm font-bold text-white truncate group-hover:text-blue-400 transition-colors">
           {item.title}
         </h3>
-        <p className="text-xs text-cinema-text-muted truncate">
-          <span className="text-emerald-500/80 font-medium">{episodeLabel}</span>
-          <span className="mx-1.5 text-cinema-text-disabled">·</span>
-          <span className={FRESHNESS_COLORS[relativeDate.freshness]}>{relativeDate.text}</span>
-        </p>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 shrink-0">
+            {episodeLabel}
+          </span>
+          <span className={cn('text-xs', FRESHNESS_COLORS[relativeDate.freshness])}>{relativeDate.text}</span>
+        </div>
       </div>
     </Link>
   );
@@ -109,11 +110,17 @@ export function NewEpisodesSection({ items, locale = 'uk', className }: NewEpiso
   return (
     <section className={cn('mt-10', className)}>
       {/* Header */}
-      <div className="mb-3">
+      <div className="mb-3 flex items-center justify-between">
         <h2 className="text-base font-semibold text-white flex items-center gap-2">
           <Tv className="w-4 h-4 text-blue-400" />
           {dict.home.sections.newEpisodes}
         </h2>
+        <Link
+          href="/calendar"
+          className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          {dict.calendar.viewAll} →
+        </Link>
       </div>
 
       {/* Row grid: 1 → 2 → 3 → 4 cols by breakpoint */}
