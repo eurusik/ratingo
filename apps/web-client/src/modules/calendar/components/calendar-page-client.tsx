@@ -11,7 +11,6 @@
 import { useMemo, useState } from 'react';
 
 import { useShowCalendar } from '@/core/query';
-import type { CalendarResponseDto } from '@/core/api';
 import type { components } from '@ratingo/api-contract';
 import { getDictionary, type Locale } from '@/shared/i18n';
 
@@ -19,6 +18,8 @@ import { CalendarWeekNav } from './calendar-week-nav';
 import { CalendarDayGroup, type CalendarEpisode } from './calendar-day-group';
 import { CalendarSkeleton } from './calendar-skeleton';
 import { CalendarEmptyState } from './calendar-empty-state';
+
+type CalendarResponseDto = components['schemas']['CalendarResponseDto'];
 
 export interface CalendarPageClientProps {
   initialData: CalendarResponseDto | null;
