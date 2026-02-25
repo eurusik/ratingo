@@ -1,11 +1,3 @@
-/**
- * Tests for MobileDock and MobileDockItem components.
- *
- * Covers: tab rendering, active state detection, search dialog trigger,
- * auth guard behaviour (unauthenticated blocks navigation, authenticated
- * allows it), and MobileDockItem rendering modes (button / anchor / Link).
- */
-
 import { render, screen, fireEvent } from '@testing-library/react';
 
 /* ------------------------------------------------------------------ */
@@ -37,14 +29,11 @@ jest.mock('next/link', () => ({
   ),
 }));
 
-// Lucide icons — render a simple svg stub so we can assert SVG presence
-// without depending on icon internals.
 jest.mock('lucide-react', () => ({
   Flame: () => <svg data-testid="icon-flame" />,
   Film: () => <svg data-testid="icon-film" />,
   Search: () => <svg data-testid="icon-search" />,
   Play: () => <svg data-testid="icon-play" />,
-  Bookmark: () => <svg data-testid="icon-bookmark" />,
   CalendarDays: () => <svg data-testid="icon-calendar" />,
 }));
 
@@ -53,7 +42,6 @@ let mockIsAuthenticated = false;
 
 jest.mock('@/core/auth', () => ({
   useAuth: () => ({ isAuthenticated: mockIsAuthenticated }),
-  // useAuthModalStore is called with a selector: useAuthModalStore(s => s.openLogin)
   useAuthModalStore: (selector: (s: { openLogin: () => void }) => unknown) =>
     selector({ openLogin: mockOpenLogin }),
 }));
@@ -61,14 +49,13 @@ jest.mock('@/core/auth', () => ({
 const mockOpenSearch = jest.fn();
 
 jest.mock('@/shared/stores/search-dialog.store', () => ({
-  // useSearchDialogStore is called with a selector: useSearchDialogStore(s => s.open)
   useSearchDialogStore: (selector: (s: { open: () => void }) => unknown) =>
     selector({ open: mockOpenSearch }),
 }));
 
 const mockDict = {
   nav: { shows: 'Серіали', movies: 'Фільми', search: 'Пошук', calendar: 'Календар' },
-  auth: { activity: 'Активність', saved: 'Збережене' },
+  auth: { activity: 'Активність' },
 };
 
 jest.mock('@/shared/i18n', () => ({
@@ -96,28 +83,25 @@ describe('MobileDock', () => {
   /* ---- Rendering ---- */
 
   describe('rendering', () => {
-    it('renders 5 items for guest: Shows, Movies, Search, Calendar, Saved', () => {
-      mockIsAuthenticated = false;
+    it('renders 5 items: Shows, Movies, Search, Calendar, Activity', () => {
       render(<MobileDock />);
 
       expect(screen.getByText('Серіали')).toBeInTheDocument();
       expect(screen.getByText('Фільми')).toBeInTheDocument();
       expect(screen.getByText('Пошук')).toBeInTheDocument();
       expect(screen.getByText('Календар')).toBeInTheDocument();
-      expect(screen.getByText('Збережене')).toBeInTheDocument();
-      expect(screen.queryByText('Активність')).not.toBeInTheDocument();
+      expect(screen.getByText('Активність')).toBeInTheDocument();
     });
 
-    it('renders 5 items for authenticated: Shows, Movies, Search, Activity, Saved', () => {
+    it('renders same 5 items for authenticated users', () => {
       mockIsAuthenticated = true;
       render(<MobileDock />);
 
       expect(screen.getByText('Серіали')).toBeInTheDocument();
       expect(screen.getByText('Фільми')).toBeInTheDocument();
       expect(screen.getByText('Пошук')).toBeInTheDocument();
+      expect(screen.getByText('Календар')).toBeInTheDocument();
       expect(screen.getByText('Активність')).toBeInTheDocument();
-      expect(screen.getByText('Збережене')).toBeInTheDocument();
-      expect(screen.queryByText('Календар')).not.toBeInTheDocument();
     });
 
     it('renders nav landmark with accessible label', () => {
@@ -128,28 +112,14 @@ describe('MobileDock', () => {
       ).toBeInTheDocument();
     });
 
-    it('renders guest dock icons (calendar instead of play)', () => {
-      mockIsAuthenticated = false;
+    it('renders all dock icons', () => {
       render(<MobileDock />);
 
       expect(screen.getByTestId('icon-flame')).toBeInTheDocument();
       expect(screen.getByTestId('icon-film')).toBeInTheDocument();
       expect(screen.getByTestId('icon-search')).toBeInTheDocument();
       expect(screen.getByTestId('icon-calendar')).toBeInTheDocument();
-      expect(screen.getByTestId('icon-bookmark')).toBeInTheDocument();
-      expect(screen.queryByTestId('icon-play')).not.toBeInTheDocument();
-    });
-
-    it('renders authenticated dock icons (play instead of calendar)', () => {
-      mockIsAuthenticated = true;
-      render(<MobileDock />);
-
-      expect(screen.getByTestId('icon-flame')).toBeInTheDocument();
-      expect(screen.getByTestId('icon-film')).toBeInTheDocument();
-      expect(screen.getByTestId('icon-search')).toBeInTheDocument();
       expect(screen.getByTestId('icon-play')).toBeInTheDocument();
-      expect(screen.getByTestId('icon-bookmark')).toBeInTheDocument();
-      expect(screen.queryByTestId('icon-calendar')).not.toBeInTheDocument();
     });
 
     it('has md:hidden CSS class for mobile-only visibility', () => {
@@ -167,9 +137,7 @@ describe('MobileDock', () => {
       mockUsePathname.mockReturnValue('/browse/shows-trending');
       render(<MobileDock />);
 
-      // The active item uses font-medium on its label span
-      const label = screen.getByText('Серіали');
-      expect(label).toHaveClass('font-medium');
+      expect(screen.getByText('Серіали')).toHaveClass('font-medium');
     });
 
     it('marks Shows tab active for any /browse/shows sub-path', () => {
@@ -216,7 +184,7 @@ describe('MobileDock', () => {
       expect(screen.getByText('Серіали')).not.toHaveClass('font-medium');
       expect(screen.getByText('Фільми')).not.toHaveClass('font-medium');
       expect(screen.getByText('Календар')).not.toHaveClass('font-medium');
-      expect(screen.getByText('Збережене')).not.toHaveClass('font-medium');
+      expect(screen.getByText('Активність')).not.toHaveClass('font-medium');
     });
 
     it('no tab is active on the home page (authenticated)', () => {
@@ -226,27 +194,23 @@ describe('MobileDock', () => {
 
       expect(screen.getByText('Серіали')).not.toHaveClass('font-medium');
       expect(screen.getByText('Фільми')).not.toHaveClass('font-medium');
+      expect(screen.getByText('Календар')).not.toHaveClass('font-medium');
       expect(screen.getByText('Активність')).not.toHaveClass('font-medium');
-      expect(screen.getByText('Збережене')).not.toHaveClass('font-medium');
     });
 
-    it('marks Calendar tab active on /calendar path (guest)', () => {
+    it('marks Calendar tab active on /calendar path', () => {
       mockUsePathname.mockReturnValue('/calendar');
-      mockIsAuthenticated = false;
       render(<MobileDock />);
 
       expect(screen.getByText('Календар')).toHaveClass('font-medium');
     });
 
-    it('no tab is active when authenticated user visits /calendar path', () => {
+    it('marks Calendar tab active on /calendar path for authenticated users', () => {
       mockUsePathname.mockReturnValue('/calendar');
       mockIsAuthenticated = true;
       render(<MobileDock />);
 
-      expect(screen.getByText('Серіали')).not.toHaveClass('font-medium');
-      expect(screen.getByText('Фільми')).not.toHaveClass('font-medium');
-      expect(screen.getByText('Активність')).not.toHaveClass('font-medium');
-      expect(screen.getByText('Збережене')).not.toHaveClass('font-medium');
+      expect(screen.getByText('Календар')).toHaveClass('font-medium');
     });
   });
 
@@ -269,67 +233,46 @@ describe('MobileDock', () => {
     });
   });
 
-  /* ---- Activity tab (authenticated only) ---- */
-
-  describe('Activity tab', () => {
-    it('is not rendered for guests (Calendar shown instead)', () => {
-      mockIsAuthenticated = false;
-      render(<MobileDock />);
-
-      expect(screen.queryByText('Активність')).not.toBeInTheDocument();
-      expect(screen.getByText('Календар')).toBeInTheDocument();
-    });
-
-    it('renders as a plain link for authenticated users', () => {
-      mockIsAuthenticated = true;
-      render(<MobileDock />);
-
-      const link = screen.getByText('Активність').closest('a');
-      expect(link).toHaveAttribute('href', '/activity');
-    });
-  });
-
-  /* ---- Calendar tab (guest only) ---- */
+  /* ---- Calendar tab ---- */
 
   describe('Calendar tab', () => {
-    it('renders as a plain link for guests', () => {
-      mockIsAuthenticated = false;
+    it('renders as a plain link', () => {
       render(<MobileDock />);
 
       const link = screen.getByText('Календар').closest('a');
       expect(link).toHaveAttribute('href', '/calendar');
     });
 
-    it('is not rendered for authenticated users (Activity shown instead)', () => {
+    it('renders for authenticated users too', () => {
       mockIsAuthenticated = true;
       render(<MobileDock />);
 
-      expect(screen.queryByText('Календар')).not.toBeInTheDocument();
-      expect(screen.getByText('Активність')).toBeInTheDocument();
+      const link = screen.getByText('Календар').closest('a');
+      expect(link).toHaveAttribute('href', '/calendar');
     });
   });
 
-  /* ---- Saved tab auth guard ---- */
+  /* ---- Activity tab auth guard ---- */
 
-  describe('Saved tab', () => {
+  describe('Activity tab', () => {
     it('calls openLogin and does not navigate when user is not authenticated', () => {
       mockIsAuthenticated = false;
       render(<MobileDock />);
 
-      fireEvent.click(screen.getByText('Збережене'));
+      fireEvent.click(screen.getByText('Активність'));
 
       expect(mockOpenLogin).toHaveBeenCalledTimes(1);
       expect(mockRouterPush).not.toHaveBeenCalled();
     });
 
-    it('navigates to /saved when user is authenticated', () => {
+    it('navigates to /activity when user is authenticated', () => {
       mockIsAuthenticated = true;
       render(<MobileDock />);
 
-      fireEvent.click(screen.getByText('Збережене'));
+      fireEvent.click(screen.getByText('Активність'));
 
       expect(mockOpenLogin).not.toHaveBeenCalled();
-      expect(mockRouterPush).toHaveBeenCalledWith('/saved');
+      expect(mockRouterPush).toHaveBeenCalledWith('/activity');
     });
   });
 });
