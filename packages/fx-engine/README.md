@@ -62,6 +62,7 @@ createWebFxEngine(host: HTMLElement, config?: {
   epicCooldownMs?: number;
   summaryThreshold?: number;
   sceneRegistry?: FxSceneRegistry;
+  icons?: Record<string, FxRegisteredIconSource>;
 });
 ```
 
@@ -76,6 +77,8 @@ registerScenePlayer<TPayload extends FxEvent>(
   schema?: FxPayloadSchema<TPayload>,
 ): void;
 registerManifest<TPayload extends FxEvent>(manifest: FxSceneManifest<TPayload>): void;
+registerIcon(key: string, source: FxRegisteredIconSource): void;
+registerIcons(icons: Record<string, FxRegisteredIconSource>): void;
 setMode(mode: FxMode): void;
 setSafeMoment(value: boolean): void;
 unlockAudio(): void;
@@ -91,9 +94,49 @@ unlockAudio(): void;
   dedupeWindowMs={2000}
   epicCooldownMs={30000}
   preset="ratingo-default"
+  icons={{
+    'ratingo:streak-7': { type: 'url', url: 'https://cdn.example.com/fx/streak-7.svg' },
+  }}
 >
   {children}
 </FxProvider>
+```
+
+## Icons
+
+### Event `icon` input
+
+`icon` supports both legacy string and structured input:
+
+- `string` (legacy): e.g. `"trophy"`, `"shield"`
+- `{ type: 'library', key: 'ratingo:streak-7' }`
+- `{ type: 'builtin', key: 'star' | 'shield' | 'ribbon' | 'trophy' }`
+- `{ type: 'svg', svg: '<svg ... />', cacheKey?: string }`
+- `{ type: 'url', url: 'https://.../icon.svg', cacheKey?: string }`
+
+### Register icons in library
+
+```ts
+fx.registerIcon('ratingo:streak-7', {
+  type: 'svg',
+  svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">...</svg>',
+});
+
+fx.registerIcons({
+  'ratingo:elite': { type: 'builtin', key: 'trophy' },
+  'ratingo:raid': { type: 'url', url: 'https://cdn.example.com/fx/raid.svg' },
+});
+```
+
+### Use icon from event
+
+```ts
+fx.showAchievement({
+  type: 'achievement.unlocked',
+  title: '7-episode streak',
+  rarity: 'rare',
+  icon: { type: 'library', key: 'ratingo:streak-7' },
+});
 ```
 
 ## Recommended Way to Add a New Animation

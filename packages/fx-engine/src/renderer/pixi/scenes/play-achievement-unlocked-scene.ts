@@ -101,7 +101,7 @@ export async function playAchievementUnlockedScene(
     medalY,
   });
 
-  const card = createAchievementCard({
+  const card = await createAchievementCard({
     cameraRig,
     event,
     profile,

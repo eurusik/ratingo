@@ -47,7 +47,7 @@ describe('FxSceneRegistry', () => {
     const registry = createDefaultSceneRegistry();
     const customScene: FxSceneDefinition<'achievement.unlocked'> = {
       id: 'achievement.unlocked',
-      supports: (event) => Boolean(event.icon?.includes('special')),
+      supports: (event) => typeof event.icon === 'string' && event.icon.includes('special'),
       create: (event, rarity) => ({
         sceneId: 'achievement.unlocked',
         rarity,

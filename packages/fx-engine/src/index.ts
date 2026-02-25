@@ -8,13 +8,18 @@ export { installRatingoDefaultPreset } from './presets/ratingo-default';
 export type { FxPresetTarget, RatingoDefaultPresetOptions } from './presets/ratingo-default';
 export type {
   AchievementFxEvent,
+  FxAudioHints,
+  FxAudioSource,
+  FxBuiltinIconKey,
   FxController,
   FxEvent,
   FxEventType,
+  FxIconInput,
   FxAudioService,
   FxMode,
   FxPayloadSchema,
   FxPreset,
+  FxRegisteredIconSource,
   FxRarity,
   FxRenderOptions,
   FxRenderer,

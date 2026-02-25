@@ -4,6 +4,7 @@ import type {
   FxMode,
   FxPayloadSchema,
   FxRarity,
+  FxRegisteredIconSource,
   FxRenderer,
   FxRenderOptions,
   FxScenePlayer,
@@ -16,12 +17,14 @@ export const noopRenderer: FxRenderer = {
     _player: FxScenePlayer<TPayload>,
     _schema?: FxPayloadSchema<TPayload>,
   ): void {},
+  registerIcon(_key: string, _source: FxRegisteredIconSource): void {},
+  registerIcons(_icons: Record<string, FxRegisteredIconSource>): void {},
   dispose() {},
 };
 
 export const noopAudio: FxAudioService = {
   unlock() {},
-  playSting(_rarity: FxRarity, _mode: FxMode) {
+  playSting(_rarity: FxRarity, _mode: FxMode, _event?: FxEvent) {
     return 0;
   },
   dispose() {},

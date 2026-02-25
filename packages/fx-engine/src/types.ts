@@ -2,18 +2,59 @@ export type FxMode = 'off' | 'lite' | 'epic';
 export type FxPreset = 'none' | 'ratingo-default';
 
 export type FxRarity = 'common' | 'rare' | 'epic' | 'legendary';
+export type FxBuiltinIconKey = 'star' | 'shield' | 'ribbon' | 'trophy';
+
+export type FxDirectIconSource =
+  | {
+      type: 'builtin';
+      key: FxBuiltinIconKey;
+    }
+  | {
+      type: 'svg';
+      svg: string;
+      cacheKey?: string;
+    }
+  | {
+      type: 'url';
+      url: string;
+      cacheKey?: string;
+    };
+
+export type FxIconInput =
+  | string
+  | FxDirectIconSource
+  | {
+      type: 'library';
+      key: string;
+    };
+
+export type FxRegisteredIconSource = FxDirectIconSource;
 
 export type FxEventType =
   | 'achievement.unlocked'
   | 'rank.promoted'
   | 'weapon.unlocked';
 
+export interface FxAudioHints {
+  volumeMultiplier?: number;
+  playbackRateMultiplier?: number;
+  source?: FxAudioSource;
+}
+
+export interface FxAudioSource {
+  mp3?: string;
+  wav?: string;
+  durationMs?: number;
+  cacheKey?: string;
+}
+
 interface FxEventBase {
   id?: string;
   title: string;
   subtitle?: string;
-  icon?: string;
+  icon?: FxIconInput;
   rarity?: FxRarity;
+  audio?: FxAudioHints;
   metadata?: Record<string, unknown>;
   [key: string]: unknown;
 }
@@ -80,12 +121,14 @@ export interface FxRenderer {
     player: FxScenePlayer<TPayload>,
     schema?: FxPayloadSchema<TPayload>,
   ): void;
+  registerIcon?(key: string, source: FxRegisteredIconSource): void;
+  registerIcons?(icons: Record<string, FxRegisteredIconSource>): void;
   dispose(): void;
 }
 
 export interface FxAudioService {
   unlock(): void;
-  playSting(rarity: FxRarity, mode: FxMode): number;
+  playSting(rarity: FxRarity, mode: FxMode, event?: FxEvent): number;
   dispose(): void;
 }
 
@@ -98,6 +141,8 @@ export interface FxController {
     schema?: FxPayloadSchema<TPayload>,
   ): void;
   registerManifest<TPayload extends FxEvent = FxEvent>(manifest: FxSceneManifest<TPayload>): void;
+  registerIcon(key: string, source: FxRegisteredIconSource): void;
+  registerIcons(icons: Record<string, FxRegisteredIconSource>): void;
   setMode(mode: FxMode): void;
   setSafeMoment(value: boolean): void;
   unlockAudio(): void;

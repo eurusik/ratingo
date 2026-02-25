@@ -94,7 +94,13 @@ describe('FxEngine scene registration', () => {
     engine.showAchievement({ title: 'Flow' });
     await nextTick();
 
-    expect(audio.playSting).toHaveBeenCalledWith('common', 'epic');
+    expect(audio.playSting).toHaveBeenCalledWith(
+      'common',
+      'epic',
+      expect.objectContaining({
+        title: 'MANIFEST Flow',
+      }),
+    );
     expect(renderer.playAchievement).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'MANIFEST Flow',
@@ -139,7 +145,13 @@ describe('FxEngine scene registration', () => {
     engine.showAchievement({ title: 'Unlocked' });
     await nextTick();
 
-    expect(audio.playSting).toHaveBeenCalledWith('common', 'epic');
+    expect(audio.playSting).toHaveBeenCalledWith(
+      'common',
+      'epic',
+      expect.objectContaining({
+        title: 'CUSTOM Unlocked',
+      }),
+    );
     expect(renderer.playAchievement).toHaveBeenCalledTimes(1);
     expect(renderer.playAchievement).toHaveBeenCalledWith(
       expect.objectContaining({

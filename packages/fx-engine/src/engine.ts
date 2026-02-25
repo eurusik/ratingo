@@ -4,6 +4,7 @@ import type {
   FxMode,
   FxPayloadSchema,
   FxRarity,
+  FxRegisteredIconSource,
   FxRenderer,
   FxSceneManifest,
   FxScenePlayer,
@@ -103,6 +104,14 @@ export class FxEngine {
     this.registerScenePlayer(manifest.id, manifest.player, manifest.schema);
   }
 
+  registerIcon(key: string, source: FxRegisteredIconSource): void {
+    this.renderer.registerIcon?.(key, source);
+  }
+
+  registerIcons(icons: Record<string, FxRegisteredIconSource>): void {
+    this.renderer.registerIcons?.(icons);
+  }
+
   showAchievement(event: FxEvent): void {
     if (this.mode === 'off') return;
 
@@ -169,7 +178,7 @@ export class FxEngine {
 
     this.playing = true;
     try {
-      const durationMs = this.audio.playSting(next.scene.rarity, this.mode);
+      const durationMs = this.audio.playSting(next.scene.rarity, this.mode, next.scene.payload);
       await renderScene(this.renderer, next.scene, {
         mode: this.mode,
         reducedMotion: this.reducedMotion,

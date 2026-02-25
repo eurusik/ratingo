@@ -14,7 +14,9 @@ interface CreateAchievementCardInput {
   medalY: number;
 }
 
-export function createAchievementCard(input: CreateAchievementCardInput): AchievementCardNodes {
+export async function createAchievementCard(
+  input: CreateAchievementCardInput,
+): Promise<AchievementCardNodes> {
   const ribbonWidth = Math.max(248, Math.min(344, input.viewportWidth - 124));
   const ribbonHeight = 68;
   const ribbonX = -ribbonWidth / 2;
@@ -65,7 +67,7 @@ export function createAchievementCard(input: CreateAchievementCardInput): Achiev
   medal.drawCircle(0, 0, 53);
   medalRoot.addChild(medal);
 
-  const iconSprite = createIconSprite(input.rarity, input.event.icon);
+  const iconSprite = await createIconSprite(input.rarity, input.event.icon);
   medalRoot.addChild(iconSprite);
 
   const glowSweep = new Graphics();

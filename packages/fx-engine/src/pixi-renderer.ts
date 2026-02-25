@@ -1,5 +1,16 @@
 import { Application } from 'pixi.js';
-import type { FxEvent, FxPayloadSchema, FxRenderOptions, FxRenderer, FxScenePlayer } from './types';
+import {
+  registerIconDefinition,
+  registerIconDefinitions,
+} from './renderer/pixi/icon-texture';
+import type {
+  FxEvent,
+  FxPayloadSchema,
+  FxRegisteredIconSource,
+  FxRenderOptions,
+  FxRenderer,
+  FxScenePlayer,
+} from './types';
 
 const DEFAULT_SCENE_ID = 'achievement.unlocked';
 
@@ -24,6 +35,14 @@ export class PixiFxRenderer implements FxRenderer {
       player: player as FxScenePlayer,
       schema: schema as FxPayloadSchema | undefined,
     });
+  }
+
+  registerIcon(key: string, source: FxRegisteredIconSource): void {
+    registerIconDefinition(key, source);
+  }
+
+  registerIcons(icons: Record<string, FxRegisteredIconSource>): void {
+    registerIconDefinitions(icons);
   }
 
   async playAchievement(event: FxEvent, options: FxRenderOptions): Promise<void> {
