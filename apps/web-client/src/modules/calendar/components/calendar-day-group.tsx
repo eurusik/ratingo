@@ -172,6 +172,7 @@ export function CalendarDayGroup({
                 episodeNumber={group.episodes[0].episodeNumber}
                 title={group.episodes[0].title}
                 runtime={group.episodes[0].runtime}
+                minutesSuffix={dict.calendar.minutesSuffix}
               />
             ) : (
               <CalendarShowGroup
@@ -180,12 +181,19 @@ export function CalendarDayGroup({
                 showTitle={group.showTitle}
                 posterPath={group.posterPath}
                 episodes={group.episodes}
+                minutesSuffix={dict.calendar.minutesSuffix}
+                episodeForms={{
+                  one: dict.calendar.episodeOne,
+                  few: dict.calendar.episodeFew,
+                  many: dict.calendar.episodeMany,
+                }}
               />
             ),
           )}
 
           {hasMore && !isExpanded && (
             <button
+              type="button"
               onClick={() => setIsExpanded(true)}
               className="w-full py-2 text-sm text-cinema-text-secondary hover:text-white transition-colors"
             >
@@ -195,6 +203,7 @@ export function CalendarDayGroup({
 
           {hasMore && isExpanded && (
             <button
+              type="button"
               onClick={() => setIsExpanded(false)}
               className="w-full py-2 text-sm text-cinema-text-secondary hover:text-white transition-colors"
             >

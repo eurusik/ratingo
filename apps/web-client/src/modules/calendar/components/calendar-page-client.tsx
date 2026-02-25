@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react';
 import { useShowCalendar } from '@/core/query';
 import type { CalendarResponseDto } from '@/core/api';
 import type { components } from '@ratingo/api-contract';
+import { getDictionary, type Locale } from '@/shared/i18n';
 
 import { CalendarWeekNav } from './calendar-week-nav';
 import { CalendarDayGroup, type CalendarEpisode } from './calendar-day-group';
@@ -23,6 +24,7 @@ export interface CalendarPageClientProps {
   initialData: CalendarResponseDto | null;
   /** Server-rendered today date (YYYY-MM-DD) to avoid hydration mismatch. */
   serverToday: string;
+  locale?: Locale;
 }
 
 /**
@@ -70,10 +72,11 @@ function normaliseEpisode(ep: components['schemas']['CalendarEpisodeDto']): Cale
  * week the query fetches fresh data.
  *
  * @example
- * <CalendarPageClient initialData={serverFetchedData} />
+ * <CalendarPageClient initialData={serverFetchedData} serverToday="2024-02-19" />
  */
-export function CalendarPageClient({ initialData, serverToday }: CalendarPageClientProps) {
+export function CalendarPageClient({ initialData, serverToday, locale = 'uk' }: CalendarPageClientProps) {
   const [weekOffset, setWeekOffset] = useState(0);
+  const dict = getDictionary(locale);
 
   const isCurrentWeek = weekOffset === 0;
 
@@ -111,7 +114,7 @@ export function CalendarPageClient({ initialData, serverToday }: CalendarPageCli
         onNextWeek={() => setWeekOffset((prev) => prev + 1)}
         onThisWeek={() => setWeekOffset(0)}
         today={serverToday}
-        locale="uk"
+        locale={locale}
       />
 
       {isLoading ? (
@@ -121,21 +124,24 @@ export function CalendarPageClient({ initialData, serverToday }: CalendarPageCli
       ) : isError ? (
         <div className="flex flex-col items-center justify-center py-24 gap-4">
           <p className="text-sm text-destructive text-center">
-            Не вдалося завантажити календар
+            {dict.calendar.loadError}
           </p>
           <button
             type="button"
             onClick={() => {
-              setWeekOffset(0);
-              void refetch();
+              if (weekOffset === 0) {
+                void refetch();
+              } else {
+                setWeekOffset(0);
+              }
             }}
             className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
           >
-            Спробувати знову
+            {dict.calendar.retry}
           </button>
         </div>
       ) : isEmpty ? (
-        <CalendarEmptyState locale="uk" />
+        <CalendarEmptyState locale={locale} />
       ) : data ? (
         <div className="space-y-6 mt-6">
           {data.days.map((day) => (
@@ -144,7 +150,7 @@ export function CalendarPageClient({ initialData, serverToday }: CalendarPageCli
               date={day.date}
               episodes={day.episodes.map(normaliseEpisode)}
               isToday={day.date === serverToday}
-              locale="uk"
+              locale={locale}
             />
           ))}
         </div>

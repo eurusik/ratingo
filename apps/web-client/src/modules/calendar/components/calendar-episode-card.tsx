@@ -23,6 +23,7 @@ export interface CalendarEpisodeCardProps {
   /** Episode title */
   title: string;
   runtime: number | null;
+  minutesSuffix: string;
 }
 
 /**
@@ -33,13 +34,9 @@ function formatEpisodeLabel(season: number, episode: number): string {
   return `S${season} E${episode}`;
 }
 
-/**
- * Formats runtime as a localized string.
- * Returns null when runtime is absent.
- */
-function formatRuntime(minutes: number | null): string | null {
+function formatRuntime(minutes: number | null, minutesSuffix: string): string | null {
   if (minutes == null) return null;
-  return `${minutes} хв`;
+  return `${minutes} ${minutesSuffix}`;
 }
 
 export function CalendarEpisodeCard({
@@ -50,10 +47,11 @@ export function CalendarEpisodeCard({
   episodeNumber,
   title,
   runtime,
+  minutesSuffix,
 }: CalendarEpisodeCardProps) {
   const posterUrl = resolveMediaImageUrl(posterPath, IMAGE_SIZES.W92);
   const episodeLabel = formatEpisodeLabel(seasonNumber, episodeNumber);
-  const runtimeLabel = formatRuntime(runtime);
+  const runtimeLabel = formatRuntime(runtime, minutesSuffix);
 
   return (
     <Link

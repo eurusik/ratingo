@@ -29,6 +29,8 @@ export interface CalendarShowGroupProps {
   posterPath: string | null;
   /** Episodes already sorted by season + episode number. */
   episodes: CalendarEpisode[];
+  minutesSuffix: string;
+  episodeForms: { one: string; few: string; many: string };
 }
 
 /**
@@ -38,6 +40,7 @@ export interface CalendarShowGroupProps {
  * Cross-season: S1 E10 – S2 E1
  */
 function formatEpisodeRange(episodes: CalendarEpisode[]): string {
+  if (episodes.length === 0) return '';
   const first = episodes[0];
   const last = episodes[episodes.length - 1];
   if (first.seasonNumber === last.seasonNumber) {
@@ -51,14 +54,12 @@ export function CalendarShowGroup({
   showTitle,
   posterPath,
   episodes,
+  minutesSuffix,
+  episodeForms,
 }: CalendarShowGroupProps) {
   const posterUrl = resolveMediaImageUrl(posterPath, IMAGE_SIZES.W92);
   const rangeLabel = formatEpisodeRange(episodes);
-  const countLabel = `${episodes.length} ${pluralize(episodes.length, {
-    one: 'епізод',
-    few: 'епізоди',
-    many: 'епізодів',
-  })}`;
+  const countLabel = `${episodes.length} ${pluralize(episodes.length, episodeForms)}`;
 
   const hasUsefulDetails = episodes.some(
     (ep) => !isGenericTitle(ep.title) || ep.runtime != null,
@@ -126,7 +127,7 @@ export function CalendarShowGroup({
                 {ep.runtime != null && (
                   <span className="flex items-center gap-0.5 text-xs text-cinema-text-muted shrink-0 ml-auto">
                     <Clock className="w-3 h-3" />
-                    {ep.runtime} хв
+                    {ep.runtime} {minutesSuffix}
                   </span>
                 )}
               </li>

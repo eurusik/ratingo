@@ -125,7 +125,7 @@ export function CalendarWeekNav({
           size="icon"
           onClick={onPrevWeek}
           disabled={isPrevDisabled}
-          aria-label="Попередній тиждень"
+          aria-label={dict.calendar.prevWeek}
         >
           <ChevronLeft className="w-5 h-5" />
         </Button>
@@ -156,7 +156,7 @@ export function CalendarWeekNav({
           size="icon"
           onClick={onNextWeek}
           disabled={isNextDisabled}
-          aria-label="Наступний тиждень"
+          aria-label={dict.calendar.nextWeek}
         >
           <ChevronRight className="w-5 h-5" />
         </Button>

@@ -41,7 +41,7 @@ export default async function CalendarPage() {
           <p className="text-muted-foreground mt-1 text-sm">{dict.calendar.subtitle}</p>
         </header>
 
-        <CalendarPageClient initialData={initialData} serverToday={serverToday} />
+        <CalendarPageClient initialData={initialData} serverToday={serverToday} locale="uk" />
       </div>
     </div>
   );
