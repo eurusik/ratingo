@@ -1,0 +1,192 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: radial-gradient(circle at top, #0f1a2d 0%, #030913 58%, #01050c 100%);
+  color: #dce5f0;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.card {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid rgba(153, 176, 215, 0.22);
+  border-radius: 16px;
+  background: rgba(5, 13, 25, 0.74);
+  backdrop-filter: blur(8px);
+}
+
+.title {
+  margin: 0;
+  font-size: 32px;
+}
+
+.subtitle {
+  margin-top: 10px;
+  margin-bottom: 18px;
+  color: #9daac0;
+  font-size: 17px;
+}
+
+.controlPanel {
+  border: 1px solid rgba(125, 151, 194, 0.22);
+  border-radius: 12px;
+  background: rgba(11, 21, 36, 0.68);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.controlGroup {
+  display: grid;
+  gap: 8px;
+}
+
+.controlLabel {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8da0bd;
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.runStatus {
+  font-size: 14px;
+  color: #a7b7ce;
+}
+
+.quickMatrixRow {
+  display: grid;
+  gap: 8px;
+}
+
+.quickMatrixMode {
+  width: fit-content;
+}
+
+.btn {
+  border: 1px solid rgba(153, 176, 215, 0.35);
+  background: rgba(16, 30, 52, 0.8);
+  color: #dce5f0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  transition: background-color 140ms ease;
+}
+
+.btn:hover {
+  background: rgba(28, 53, 89, 0.9);
+}
+
+.btn.active {
+  background: rgba(56, 88, 132, 0.95);
+  border-color: rgba(180, 203, 238, 0.55);
+}
+
+.btn.warn {
+  background: rgba(133, 23, 30, 0.9);
+  border-color: rgba(170, 63, 69, 0.8);
+}
+
+.showcaseSection {
+  margin-top: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 22px;
+}
+
+.sectionDescription {
+  margin: 4px 0 0;
+  color: #9aacbf;
+  font-size: 15px;
+}
+
+.caseGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.caseCard {
+  border: 1px solid rgba(129, 154, 192, 0.24);
+  border-radius: 12px;
+  background: rgba(10, 19, 34, 0.65);
+  padding: 12px;
+}
+
+.caseTitle {
+  margin: 0;
+  font-size: 18px;
+}
+
+.caseDescription {
+  margin: 6px 0 10px;
+  color: #9aacbf;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.metaTag {
+  border: 1px solid rgba(128, 154, 191, 0.26);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #bed0e6;
+  background: rgba(31, 48, 75, 0.38);
+}
+
+.runBtn {
+  width: 100%;
+}
+
+@media (min-width: 740px) {
+  .page {
+    padding: 24px;
+  }
+
+  .caseGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .caseGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@ratingo/fx-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "jest --config ./jest.config.cjs"
+  },
+  "dependencies": {
+    "@pixi/sound": "^5.2.2",
+    "lucide-react": "^0.553.0",
+    "pixi.js": "^7.4.3"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.0.0"
+  }
+}
