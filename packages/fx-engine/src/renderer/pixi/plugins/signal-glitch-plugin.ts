@@ -18,6 +18,12 @@ interface SignalGlitchPluginConfig {
   cutPulse: Graphics;
   bounds: Bounds;
   signalCutStartMs: number;
+  performance?: {
+    redrawIntervalMs?: number;
+    stripDensity?: number;
+    staticDensity?: number;
+    bandDensity?: number;
+  };
 }
 
 interface SignalGlitchFrameState {
@@ -27,7 +33,20 @@ interface SignalGlitchFrameState {
 }
 
 export class SignalGlitchPlugin {
-  constructor(private readonly config: SignalGlitchPluginConfig) {}
+  private readonly redrawIntervalMs: number;
+  private readonly stripDensity: number;
+  private readonly staticDensity: number;
+  private readonly bandDensity: number;
+  private lastInterferenceDrawMs = Number.NEGATIVE_INFINITY;
+  private lastStaticDrawMs = Number.NEGATIVE_INFINITY;
+  private lastBandsDrawMs = Number.NEGATIVE_INFINITY;
+
+  constructor(private readonly config: SignalGlitchPluginConfig) {
+    this.redrawIntervalMs = config.performance?.redrawIntervalMs ?? 18;
+    this.stripDensity = config.performance?.stripDensity ?? 0.86;
+    this.staticDensity = config.performance?.staticDensity ?? 0.8;
+    this.bandDensity = config.performance?.bandDensity ?? 0.9;
+  }
 
   update(frame: SignalGlitchFrameState): void {
     this.updateNoise(frame);
@@ -59,14 +78,27 @@ export class SignalGlitchPlugin {
   }
 
   private updateInterference(frame: SignalGlitchFrameState): void {
+    const targetAlpha =
+      Math.min(1, 0.56 + frame.signalState.signalStrength * 0.95 + frame.signalState.preSignalT * 0.3) *
+      (1 - frame.fadeOutT * 0.1);
+    if (frame.signalState.signalStrength <= 0.03 && frame.signalState.preSignalT <= 0.2) {
+      this.config.interferenceStrips.clear();
+      this.config.interferenceStrips.alpha = 0;
+      return;
+    }
+
+    const shouldRedraw = frame.elapsedMs - this.lastInterferenceDrawMs >= this.redrawIntervalMs;
+    if (!shouldRedraw) {
+      this.config.interferenceStrips.alpha = targetAlpha;
+      return;
+    }
+    this.lastInterferenceDrawMs = frame.elapsedMs;
     this.config.interferenceStrips.clear();
-    this.config.interferenceStrips.alpha = 0;
-    if (frame.signalState.signalStrength <= 0.03 && frame.signalState.preSignalT <= 0.2) return;
 
     const stripFrame = Math.floor((frame.elapsedMs - this.config.signalCutStartMs) / 7);
     const stripCount = Math.max(
-      12,
-      Math.round(14 + frame.signalState.signalStrength * 26 + frame.signalState.preSignalT * 14),
+      8,
+      Math.round((14 + frame.signalState.signalStrength * 26 + frame.signalState.preSignalT * 14) * this.stripDensity),
     );
 
     const { x, y, width, height } = this.config.bounds;
@@ -101,21 +133,34 @@ export class SignalGlitchPlugin {
       this.config.interferenceStrips.endFill();
     }
 
-    this.config.interferenceStrips.alpha =
-      Math.min(1, 0.56 + frame.signalState.signalStrength * 0.95 + frame.signalState.preSignalT * 0.3) *
-      (1 - frame.fadeOutT * 0.1);
+    this.config.interferenceStrips.alpha = targetAlpha;
   }
 
   private updateStatic(frame: SignalGlitchFrameState): void {
+    const targetAlpha =
+      Math.min(1, 0.54 + frame.signalState.signalStrength * 0.98 + frame.signalState.preSignalT * 0.18) *
+      (1 - frame.fadeOutT * 0.16) *
+      (1 - frame.signalState.disappearEase * 0.15) +
+      (frame.signalState.inSignalCut ? 0 : frame.signalState.preSignalT * 0.18);
+    if (frame.signalState.signalStrength <= 0.03 && frame.signalState.preSignalT <= 0.35) {
+      this.config.signalStatic.clear();
+      this.config.signalStatic.alpha = 0;
+      return;
+    }
+
+    const shouldRedraw = frame.elapsedMs - this.lastStaticDrawMs >= this.redrawIntervalMs;
+    if (!shouldRedraw) {
+      this.config.signalStatic.alpha = targetAlpha;
+      return;
+    }
+    this.lastStaticDrawMs = frame.elapsedMs;
     this.config.signalStatic.clear();
-    this.config.signalStatic.alpha = 0;
-    if (frame.signalState.signalStrength <= 0.03 && frame.signalState.preSignalT <= 0.35) return;
 
     const staticFrame = Math.floor((frame.elapsedMs - this.config.signalCutStartMs) / 7);
     const preBoost = frame.signalState.preSignalT > 0 ? frame.signalState.preSignalT * 26 : 0;
     const staticCount = Math.max(
-      90,
-      Math.round(110 + frame.signalState.signalStrength * 220 + preBoost),
+      56,
+      Math.round((110 + frame.signalState.signalStrength * 220 + preBoost) * this.staticDensity),
     );
     const { x, y, width, height } = this.config.bounds;
 
@@ -137,24 +182,29 @@ export class SignalGlitchPlugin {
       this.config.signalStatic.endFill();
     }
 
-    this.config.signalStatic.alpha =
-      Math.min(1, 0.54 + frame.signalState.signalStrength * 0.98 + frame.signalState.preSignalT * 0.18) *
-      (1 - frame.fadeOutT * 0.16) *
-      (1 - frame.signalState.disappearEase * 0.15);
-
-    if (!frame.signalState.inSignalCut) {
-      this.config.signalStatic.alpha += frame.signalState.preSignalT * 0.18;
-    }
+    this.config.signalStatic.alpha = targetAlpha;
   }
 
   private updateGlitchBands(frame: SignalGlitchFrameState): void {
-    this.config.glitchBands.alpha = frame.signalState.signalStrength * (1 - frame.fadeOutT * 0.12);
+    const targetAlpha = frame.signalState.signalStrength * (1 - frame.fadeOutT * 0.12);
+    if (frame.signalState.signalStrength <= 0.03) {
+      this.config.glitchBands.clear();
+      this.config.glitchBands.alpha = 0;
+      return;
+    }
+
+    const shouldRedraw = frame.elapsedMs - this.lastBandsDrawMs >= this.redrawIntervalMs;
+    if (!shouldRedraw) {
+      this.config.glitchBands.alpha = targetAlpha;
+      return;
+    }
+    this.lastBandsDrawMs = frame.elapsedMs;
+    this.config.glitchBands.alpha = targetAlpha;
     this.config.glitchBands.clear();
-    if (frame.signalState.signalStrength <= 0.03) return;
 
     const { x, y, width, height } = this.config.bounds;
     const glitchFrame = Math.floor((frame.elapsedMs - this.config.signalCutStartMs) / 8);
-    const bandCount = Math.max(2, Math.round(3 + frame.signalState.signalStrength * 6));
+    const bandCount = Math.max(2, Math.round((3 + frame.signalState.signalStrength * 6) * this.bandDensity));
     const majorSeed = glitchFrame * 53 + 7;
     const majorBandY = y + hash01(majorSeed + 1) * height;
     const majorBandH = lerp(6, 18, hash01(majorSeed + 2));

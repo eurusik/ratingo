@@ -10,6 +10,11 @@ export type FxDirectIconSource =
       key: FxBuiltinIconKey;
     }
   | {
+      type: 'lucide';
+      name: string;
+      cacheKey?: string;
+    }
+  | {
       type: 'svg';
       svg: string;
       cacheKey?: string;
@@ -83,14 +88,22 @@ export interface FxRenderOptions {
   durationMs?: number;
 }
 
-export interface FxScenePlayerContext {
-  app: unknown;
+export interface FxScenePlayerContext<TApp = unknown, TIconSprite = unknown> {
+  app: TApp;
+  abortSignal?: AbortSignal;
+  createIconSprite?: (
+    rarity: FxRarity,
+    icon?: FxIconInput,
+  ) => Promise<TIconSprite>;
 }
 
-export type FxScenePlayer<TPayload extends FxEvent = FxEvent> = (
+export type FxScenePlayer<
+  TPayload extends FxEvent = FxEvent,
+  TContext extends FxScenePlayerContext = FxScenePlayerContext,
+> = (
   event: TPayload,
   options: FxRenderOptions,
-  context: FxScenePlayerContext,
+  context: TContext,
 ) => Promise<void>;
 
 export type FxPayloadSchema<TPayload extends FxEvent = FxEvent> = (
@@ -109,16 +122,19 @@ export interface FxSceneRegistration<TPayload extends FxEvent = FxEvent> {
   schema?: FxPayloadSchema<TPayload>;
 }
 
-export interface FxSceneManifest<TPayload extends FxEvent = FxEvent>
+export interface FxSceneManifest<
+  TPayload extends FxEvent = FxEvent,
+  TContext extends FxScenePlayerContext = FxScenePlayerContext,
+>
   extends FxSceneRegistration<TPayload> {
-  player?: FxScenePlayer<TPayload>;
+  player?: FxScenePlayer<TPayload, TContext>;
 }
 
-export interface FxRenderer {
+export interface FxRenderer<TContext extends FxScenePlayerContext = FxScenePlayerContext> {
   playAchievement(event: FxEvent, options: FxRenderOptions): Promise<void>;
   registerScenePlayer?<TPayload extends FxEvent = FxEvent>(
     sceneId: string,
-    player: FxScenePlayer<TPayload>,
+    player: FxScenePlayer<TPayload, TContext>,
     schema?: FxPayloadSchema<TPayload>,
   ): void;
   registerIcon?(key: string, source: FxRegisteredIconSource): void;
@@ -132,15 +148,17 @@ export interface FxAudioService {
   dispose(): void;
 }
 
-export interface FxController {
+export interface FxController<TContext extends FxScenePlayerContext = FxScenePlayerContext> {
   showAchievement(event: FxEvent): void;
   registerScene<TPayload extends FxEvent = FxEvent>(scene: FxSceneRegistration<TPayload>): void;
   registerScenePlayer<TPayload extends FxEvent = FxEvent>(
     sceneId: string,
-    player: FxScenePlayer<TPayload>,
+    player: FxScenePlayer<TPayload, TContext>,
     schema?: FxPayloadSchema<TPayload>,
   ): void;
-  registerManifest<TPayload extends FxEvent = FxEvent>(manifest: FxSceneManifest<TPayload>): void;
+  registerManifest<TPayload extends FxEvent = FxEvent>(
+    manifest: FxSceneManifest<TPayload, TContext>,
+  ): void;
   registerIcon(key: string, source: FxRegisteredIconSource): void;
   registerIcons(icons: Record<string, FxRegisteredIconSource>): void;
   setMode(mode: FxMode): void;

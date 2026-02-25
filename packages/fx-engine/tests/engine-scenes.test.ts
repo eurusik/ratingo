@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { FxEngine } from '../src/engine';
 import type { FxAudioService, FxEvent, FxRenderer } from '../src/types';
+import { FX_INTERNAL_SCENE_ID_KEY } from '../src/runtime/internal-metadata';
 
 function nextTick(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -104,6 +105,9 @@ describe('FxEngine scene registration', () => {
     expect(renderer.playAchievement).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'MANIFEST Flow',
+        metadata: expect.objectContaining({
+          [FX_INTERNAL_SCENE_ID_KEY]: 'custom.manifest',
+        }),
       }),
       expect.objectContaining({
         durationMs: 420,
@@ -156,10 +160,72 @@ describe('FxEngine scene registration', () => {
     expect(renderer.playAchievement).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'CUSTOM Unlocked',
+        metadata: expect.objectContaining({
+          [FX_INTERNAL_SCENE_ID_KEY]: 'custom.special',
+        }),
       }),
       expect.objectContaining({
         mode: 'epic',
         durationMs: 777,
+      }),
+    );
+  });
+
+  it('preserves internal scene metadata for merged summary scene', async () => {
+    const renderer: FxRenderer = {
+      playAchievement: jest.fn(async () => undefined),
+      dispose: jest.fn(),
+    };
+    const audio: FxAudioService = {
+      unlock: jest.fn(),
+      playSting: jest.fn(() => 555),
+      dispose: jest.fn(),
+    };
+    const engine = new FxEngine(renderer, audio, {
+      mode: 'epic',
+      safeMoment: false,
+      reducedMotion: false,
+      summaryThreshold: 2,
+    });
+    engine.registerScene({
+      id: 'achievement.unlocked',
+      supports: () => true,
+      create: (event, rarity) => ({
+        sceneId: 'achievement.unlocked',
+        rarity,
+        payload: {
+          ...event,
+          rarity,
+        },
+      }),
+    });
+
+    engine.showAchievement({ title: 'A' });
+    engine.showAchievement({ title: 'B' });
+    engine.showAchievement({ title: 'C' });
+    engine.setSafeMoment(true);
+
+    await nextTick();
+
+    expect(audio.playSting).toHaveBeenCalledWith(
+      'rare',
+      'epic',
+      expect.objectContaining({
+        title: '+3 achievements',
+        metadata: expect.objectContaining({
+          [FX_INTERNAL_SCENE_ID_KEY]: 'achievement.unlocked',
+        }),
+      }),
+    );
+    expect(renderer.playAchievement).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: '+3 achievements',
+        metadata: expect.objectContaining({
+          [FX_INTERNAL_SCENE_ID_KEY]: 'achievement.unlocked',
+        }),
+      }),
+      expect.objectContaining({
+        durationMs: 555,
       }),
     );
   });

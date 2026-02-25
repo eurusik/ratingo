@@ -106,6 +106,38 @@ describe('FxSceneRegistry', () => {
     expect(scene).toBeNull();
   });
 
+  it('rebuilds priority order after late scene registration', () => {
+    const registry = new FxSceneRegistry();
+
+    registry.register({
+      id: 'custom.low',
+      priority: 1,
+      supports: () => true,
+      create: (event, rarity) => ({
+        sceneId: 'custom.low',
+        rarity,
+        payload: event,
+      }),
+    });
+
+    const before = registry.resolve({ title: 'Order' }, 'common');
+    expect(before?.sceneId).toBe('custom.low');
+
+    registry.register({
+      id: 'custom.high',
+      priority: 100,
+      supports: () => true,
+      create: (event, rarity) => ({
+        sceneId: 'custom.high',
+        rarity,
+        payload: event,
+      }),
+    });
+
+    const after = registry.resolve({ title: 'Order' }, 'common');
+    expect(after?.sceneId).toBe('custom.high');
+  });
+
   it('falls back when custom schema rejects payload', () => {
     const registry = createDefaultSceneRegistry();
 

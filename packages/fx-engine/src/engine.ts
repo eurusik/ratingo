@@ -8,6 +8,7 @@ import type {
   FxRenderer,
   FxSceneManifest,
   FxScenePlayer,
+  FxScenePlayerContext,
   FxSceneRegistration,
 } from './types';
 import {
@@ -20,6 +21,7 @@ import {
 import type { FxSceneDefinition, FxSceneEvent } from './scenes/contracts';
 import { FxSceneRegistry, createSceneRegistry } from './scenes/registry';
 import { renderScene } from './scenes/runtime';
+import { FX_INTERNAL_SCENE_ID_KEY } from './runtime/internal-metadata';
 
 const DEFAULT_DEDUPE_WINDOW_MS = 2000;
 const DEFAULT_EPIC_COOLDOWN_MS = 30_000;
@@ -40,7 +42,22 @@ interface QueueItem {
   queuedAt: number;
 }
 
-export class FxEngine {
+function withInternalSceneMetadata(scene: FxSceneEvent): FxSceneEvent {
+  return {
+    ...scene,
+    payload: {
+      ...scene.payload,
+      metadata: {
+        ...(scene.payload.metadata ?? {}),
+        [FX_INTERNAL_SCENE_ID_KEY]: scene.sceneId,
+      },
+    },
+  };
+}
+
+export class FxEngine<
+  TRendererContext extends FxScenePlayerContext = FxScenePlayerContext,
+> {
   private mode: FxMode;
   private safeMoment: boolean;
   private reducedMotion: boolean;
@@ -54,7 +71,7 @@ export class FxEngine {
   private sceneRegistry: FxSceneRegistry;
 
   constructor(
-    private readonly renderer: FxRenderer,
+    private readonly renderer: FxRenderer<TRendererContext>,
     private readonly audio: FxAudioService,
     config: FxEngineConfig = {},
   ) {
@@ -88,7 +105,7 @@ export class FxEngine {
 
   registerScenePlayer<TPayload extends FxEvent = FxEvent>(
     sceneId: string,
-    player: FxScenePlayer<TPayload>,
+    player: FxScenePlayer<TPayload, TRendererContext>,
     schema?: FxPayloadSchema<TPayload>,
   ): void {
     this.renderer.registerScenePlayer?.(sceneId, player, schema);
@@ -98,7 +115,9 @@ export class FxEngine {
     this.sceneRegistry.register(scene as FxSceneDefinition<string, TPayload>);
   }
 
-  registerManifest<TPayload extends FxEvent = FxEvent>(manifest: FxSceneManifest<TPayload>): void {
+  registerManifest<TPayload extends FxEvent = FxEvent>(
+    manifest: FxSceneManifest<TPayload, TRendererContext>,
+  ): void {
     this.registerScene(manifest);
     if (!manifest.player) return;
     this.registerScenePlayer(manifest.id, manifest.player, manifest.schema);
@@ -133,16 +152,7 @@ export class FxEngine {
     const scene = this.sceneRegistry.resolve(event, rarity);
     if (!scene) return;
 
-    const queuedScene: FxSceneEvent = {
-      ...scene,
-      payload: {
-        ...scene.payload,
-        metadata: {
-          ...(scene.payload.metadata ?? {}),
-          __sceneId: scene.sceneId,
-        },
-      },
-    };
+    const queuedScene = withInternalSceneMetadata(scene);
     this.queue.push({ scene: queuedScene, queuedAt: now });
     void this.drain();
   }
@@ -163,7 +173,7 @@ export class FxEngine {
       const scene = this.sceneRegistry.resolve(summary, summaryRarity);
       if (!scene) return null;
       return {
-        scene,
+        scene: withInternalSceneMetadata(scene),
         queuedAt: Date.now(),
       };
     }

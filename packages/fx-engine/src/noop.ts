@@ -8,19 +8,26 @@ import type {
   FxRenderer,
   FxRenderOptions,
   FxScenePlayer,
+  FxScenePlayerContext,
 } from './types';
 
-export const noopRenderer: FxRenderer = {
-  async playAchievement(_event: FxEvent, _options: FxRenderOptions): Promise<void> {},
-  registerScenePlayer<TPayload extends FxEvent = FxEvent>(
-    _sceneId: string,
-    _player: FxScenePlayer<TPayload>,
-    _schema?: FxPayloadSchema<TPayload>,
-  ): void {},
-  registerIcon(_key: string, _source: FxRegisteredIconSource): void {},
-  registerIcons(_icons: Record<string, FxRegisteredIconSource>): void {},
-  dispose() {},
-};
+export function createNoopRenderer<
+  TContext extends FxScenePlayerContext = FxScenePlayerContext,
+>(): FxRenderer<TContext> {
+  return {
+    async playAchievement(_event: FxEvent, _options: FxRenderOptions): Promise<void> {},
+    registerScenePlayer<TPayload extends FxEvent = FxEvent>(
+      _sceneId: string,
+      _player: FxScenePlayer<TPayload, TContext>,
+      _schema?: FxPayloadSchema<TPayload>,
+    ): void {},
+    registerIcon(_key: string, _source: FxRegisteredIconSource): void {},
+    registerIcons(_icons: Record<string, FxRegisteredIconSource>): void {},
+    dispose() {},
+  };
+}
+
+export const noopRenderer = createNoopRenderer();
 
 export const noopAudio: FxAudioService = {
   unlock() {},

@@ -168,6 +168,18 @@ const ICON_CASES: DemoCase[] = [
     subtitle: 'Direct SVG icon source',
   },
   {
+    id: 'icon-lucide',
+    name: 'Lucide icon (lazy)',
+    description: 'Icon source: lazy dynamic import from Lucide set.',
+    scene: 'default',
+    rarity: 'epic',
+    audioPreset: 'neutral',
+    iconSource: 'lucide:ghost',
+    icon: { type: 'lucide', name: 'ghost' },
+    title: 'Lucide Ghost',
+    subtitle: 'Lazy-loaded lucide icon source',
+  },
+  {
     id: 'icon-url',
     name: 'URL icon',
     description: 'Icon source: image loaded from /public/icons.',

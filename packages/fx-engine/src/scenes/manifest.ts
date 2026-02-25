@@ -1,8 +1,9 @@
-import type { FxEvent, FxPayloadSchema, FxSceneManifest } from '../types';
+import type { FxEvent, FxPayloadSchema, FxSceneManifest, FxScenePlayerContext } from '../types';
 
-export function defineSceneManifest<TPayload extends FxEvent>(
-  manifest: FxSceneManifest<TPayload>,
-): FxSceneManifest<TPayload> {
+export function defineSceneManifest<
+  TPayload extends FxEvent,
+  TContext extends FxScenePlayerContext = FxScenePlayerContext,
+>(manifest: FxSceneManifest<TPayload, TContext>): FxSceneManifest<TPayload, TContext> {
   return manifest;
 }
 

@@ -10,6 +10,7 @@ import type {
 const DEFAULT_ALIAS = 'fx-levelup-default';
 const DEFAULT_SOUND_DURATION_MS = 4729;
 const MASTER_VOLUME = 0.5;
+const MAX_DYNAMIC_SLOTS = 8;
 
 const DEFAULT_SOUND_SOURCE = {
   mp3: '/sounds/levelup.mp3',
@@ -69,6 +70,8 @@ interface SoundSlot {
   urls: string[];
   initialDurationMs: number;
   durationMs: number;
+  lastUsedAt: number;
+  version: number;
   initialized: boolean;
   loading: boolean;
   unavailable: boolean;
@@ -83,8 +86,10 @@ export class WebAudioFxService implements FxAudioService {
   private preferredExt: 'mp3' | 'wav';
   private readonly slots = new Map<string, SoundSlot>();
   private readonly defaultSlot: SoundSlot;
+  private readonly maxDynamicSlots: number;
 
-  constructor() {
+  constructor(maxDynamicSlots = MAX_DYNAMIC_SLOTS) {
+    this.maxDynamicSlots = maxDynamicSlots;
     this.preferredExt = this.resolvePreferredExtension();
     this.defaultSlot = this.createSlot(
       DEFAULT_ALIAS,
@@ -193,10 +198,16 @@ export class WebAudioFxService implements FxAudioService {
 
   private resolveSlotForEvent(event?: FxEvent): SoundSlot {
     const source = event?.audio?.source;
-    if (!source) return this.defaultSlot;
+    if (!source) {
+      this.touchSlot(this.defaultSlot);
+      return this.defaultSlot;
+    }
 
     const urls = this.buildSourceUrls(source);
-    if (urls.length === 0) return this.defaultSlot;
+    if (urls.length === 0) {
+      this.touchSlot(this.defaultSlot);
+      return this.defaultSlot;
+    }
 
     const key = this.resolveSourceKey(source, urls);
     const existing = this.slots.get(key);
@@ -206,12 +217,15 @@ export class WebAudioFxService implements FxAudioService {
         existing.initialDurationMs = overrideDuration;
         existing.durationMs = overrideDuration;
       }
+      this.touchSlot(existing);
       return existing;
     }
 
+    this.evictDynamicSlotIfNeeded();
     const initialDurationMs = this.normalizeDurationMs(source.durationMs) ?? DEFAULT_SOUND_DURATION_MS;
     const alias = `fx-levelup-${this.hashKey(key)}`;
     const slot = this.createSlot(key, alias, urls, initialDurationMs);
+    this.touchSlot(slot);
     this.slots.set(key, slot);
     return slot;
   }
@@ -241,6 +255,8 @@ export class WebAudioFxService implements FxAudioService {
       urls,
       initialDurationMs,
       durationMs: initialDurationMs,
+      lastUsedAt: Date.now(),
+      version: 0,
       initialized: false,
       loading: false,
       unavailable: false,
@@ -273,10 +289,18 @@ export class WebAudioFxService implements FxAudioService {
       return;
     }
 
+    const version = ++slot.version;
     sound.add(slot.alias, {
       url,
       preload: true,
       loaded: (err) => {
+        if (!this.isCurrentSlotLoad(slot, version)) {
+          slot.loading = false;
+          slot.pendingPlay = null;
+          this.cleanupAlias(sound, slot.alias);
+          return;
+        }
+
         if (this.destroyed) {
           slot.loading = false;
           slot.pendingPlay = null;
@@ -332,6 +356,7 @@ export class WebAudioFxService implements FxAudioService {
       singleInstance: true,
     });
 
+    this.touchSlot(slot);
     this.refreshDuration(slot, sound);
   }
 
@@ -357,7 +382,12 @@ export class WebAudioFxService implements FxAudioService {
   }
 
   private disposeSlot(slot: SoundSlot, sound: PixiSoundLike | null): void {
+    slot.version += 1;
+
     if (slot.loading) {
+      if (sound) {
+        this.cleanupAlias(sound, slot.alias);
+      }
       slot.pendingPlay = null;
       slot.initialized = false;
       slot.unavailable = true;
@@ -374,6 +404,36 @@ export class WebAudioFxService implements FxAudioService {
     slot.loading = false;
     slot.unavailable = false;
     slot.durationMs = slot.initialDurationMs;
+  }
+
+  private evictDynamicSlotIfNeeded(): void {
+    const dynamicSlots = Array.from(this.slots.values()).filter(
+      (slot) => slot.key !== this.defaultSlot.key,
+    );
+    if (dynamicSlots.length < this.maxDynamicSlots) return;
+
+    const candidates = dynamicSlots.filter((slot) => !slot.loading && !slot.pendingPlay);
+    if (candidates.length === 0) return;
+
+    const victim = candidates.sort((left, right) => left.lastUsedAt - right.lastUsedAt)[0];
+    if (!victim) return;
+
+    this.disposeSlot(victim, this.sound);
+    this.slots.delete(victim.key);
+  }
+
+  private touchSlot(slot: SoundSlot): void {
+    slot.lastUsedAt = Date.now();
+  }
+
+  private isCurrentSlotLoad(slot: SoundSlot, version: number): boolean {
+    return this.slots.get(slot.key) === slot && slot.version === version;
+  }
+
+  private cleanupAlias(sound: PixiSoundLike, alias: string): void {
+    if (!sound.exists(alias)) return;
+    sound.stop(alias);
+    sound.remove(alias);
   }
 
   private normalizeDurationMs(value: unknown): number | null {

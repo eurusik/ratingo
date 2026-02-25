@@ -1,7 +1,7 @@
-import { Application } from 'pixi.js';
+import { Application, type Sprite } from 'pixi.js';
 import {
-  registerIconDefinition,
-  registerIconDefinitions,
+  createIconResolver,
+  type IconResolver,
 } from './renderer/pixi/icon-texture';
 import type {
   FxEvent,
@@ -10,39 +10,46 @@ import type {
   FxRenderOptions,
   FxRenderer,
   FxScenePlayer,
+  FxScenePlayerContext,
 } from './types';
+import { FX_INTERNAL_SCENE_ID_KEY } from './runtime/internal-metadata';
 
 const DEFAULT_SCENE_ID = 'achievement.unlocked';
+export type PixiScenePlayerContext = FxScenePlayerContext<Application, Sprite>;
 
 interface RegisteredScenePlayer {
-  player: FxScenePlayer;
+  player: FxScenePlayer<FxEvent, PixiScenePlayerContext>;
   schema?: FxPayloadSchema;
 }
 
-export class PixiFxRenderer implements FxRenderer {
+export class PixiFxRenderer implements FxRenderer<PixiScenePlayerContext> {
   private app: Application | null = null;
   private disabled = false;
   private readonly scenePlayers = new Map<string, RegisteredScenePlayer>();
+  private readonly iconResolver: IconResolver;
+  private readonly activeAbortControllers = new Set<AbortController>();
 
-  constructor(private readonly host: HTMLElement) {}
+  constructor(private readonly host: HTMLElement) {
+    this.iconResolver = createIconResolver();
+  }
 
   registerScenePlayer<TPayload extends FxEvent = FxEvent>(
     sceneId: string,
-    player: FxScenePlayer<TPayload>,
+    player: FxScenePlayer<TPayload, PixiScenePlayerContext>,
     schema?: FxPayloadSchema<TPayload>,
   ): void {
     this.scenePlayers.set(sceneId, {
-      player: player as FxScenePlayer,
+      player: player as FxScenePlayer<FxEvent, PixiScenePlayerContext>,
       schema: schema as FxPayloadSchema | undefined,
     });
   }
 
   registerIcon(key: string, source: FxRegisteredIconSource): void {
-    registerIconDefinition(key, source);
+    this.iconResolver.registerIcon(key, source);
   }
 
   registerIcons(icons: Record<string, FxRegisteredIconSource>): void {
-    registerIconDefinitions(icons);
+    this.iconResolver.registerIcons(icons);
   }
 
   async playAchievement(event: FxEvent, options: FxRenderOptions): Promise<void> {
@@ -56,10 +63,25 @@ export class PixiFxRenderer implements FxRenderer {
       this.scenePlayers.get(sceneId) ?? this.scenePlayers.get(DEFAULT_SCENE_ID);
     if (!registration) return;
     if (registration.schema && !registration.schema(event)) return;
-    await registration.player(event, options, { app: this.app });
+    const abortController = new AbortController();
+    this.activeAbortControllers.add(abortController);
+    try {
+      await registration.player(event, options, {
+        app: this.app,
+        abortSignal: abortController.signal,
+        createIconSprite: (rarity, icon) => this.iconResolver.createIconSprite(rarity, icon),
+      });
+    } finally {
+      this.activeAbortControllers.delete(abortController);
+    }
   }
 
   dispose(): void {
+    for (const controller of this.activeAbortControllers) {
+      controller.abort();
+    }
+    this.activeAbortControllers.clear();
+
     if (!this.app) return;
 
     this.app.destroy(true, {
@@ -68,6 +90,7 @@ export class PixiFxRenderer implements FxRenderer {
       baseTexture: true,
     });
     this.app = null;
+    this.iconResolver.dispose();
   }
 
   private ensureApp(): boolean {
@@ -108,7 +131,7 @@ export class PixiFxRenderer implements FxRenderer {
   }
 
   private resolveSceneId(event: FxEvent): string {
-    const metadataSceneId = event.metadata?.__sceneId;
+    const metadataSceneId = event.metadata?.[FX_INTERNAL_SCENE_ID_KEY];
     if (typeof metadataSceneId === 'string') return metadataSceneId;
     if (typeof event.type === 'string') return event.type;
     return DEFAULT_SCENE_ID;

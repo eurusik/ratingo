@@ -11,8 +11,9 @@ import {
   type ReactNode,
 } from 'react';
 import { FxEngine } from './engine';
-import { noopAudio, noopRenderer } from './noop';
+import { createNoopRenderer, noopAudio } from './noop';
 import { createWebFxEngine } from './create-web-fx-engine';
+import type { PixiScenePlayerContext } from './pixi-renderer';
 import type {
   FxController,
   FxEvent,
@@ -36,7 +37,11 @@ interface FxProviderProps {
   icons?: Record<string, FxRegisteredIconSource>;
 }
 
-const FxContext = createContext<FxController | null>(null);
+interface DeferredRegistration {
+  apply(engine: FxEngine<PixiScenePlayerContext>): void;
+}
+
+const FxContext = createContext<FxController<PixiScenePlayerContext> | null>(null);
 
 export function FxProvider({
   children,
@@ -49,33 +54,27 @@ export function FxProvider({
   icons,
 }: FxProviderProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const engineRef = useRef<FxEngine>(new FxEngine(noopRenderer, noopAudio));
-  const sceneRegistryRef = useRef(new Map<string, FxSceneRegistration<FxEvent>>());
-  const scenePlayerRegistryRef = useRef(
-    new Map<
-      string,
-      {
-        player: FxScenePlayer<FxEvent>;
-        schema?: FxPayloadSchema<FxEvent>;
-      }
-    >(),
+  const engineRef = useRef<FxEngine<PixiScenePlayerContext>>(
+    new FxEngine<PixiScenePlayerContext>(createNoopRenderer<PixiScenePlayerContext>(), noopAudio),
   );
-  const manifestRegistryRef = useRef(new Map<string, FxSceneManifest<FxEvent>>());
+  const sceneRegistryRef = useRef(new Map<string, DeferredRegistration>());
+  const scenePlayerRegistryRef = useRef(new Map<string, DeferredRegistration>());
+  const manifestRegistryRef = useRef(new Map<string, DeferredRegistration>());
   const iconRegistryRef = useRef(new Map<string, FxRegisteredIconSource>());
   const [mode, setModeState] = useState<FxMode>(defaultMode);
 
-  const applyRegistrations = useCallback((engine: FxEngine) => {
+  const applyRegistrations = useCallback((engine: FxEngine<PixiScenePlayerContext>) => {
     for (const [key, source] of iconRegistryRef.current.entries()) {
       engine.registerIcon(key, source);
     }
-    for (const scene of sceneRegistryRef.current.values()) {
-      engine.registerScene(scene);
+    for (const registration of sceneRegistryRef.current.values()) {
+      registration.apply(engine);
     }
-    for (const [sceneId, registration] of scenePlayerRegistryRef.current.entries()) {
-      engine.registerScenePlayer(sceneId, registration.player, registration.schema);
+    for (const registration of scenePlayerRegistryRef.current.values()) {
+      registration.apply(engine);
     }
-    for (const manifest of manifestRegistryRef.current.values()) {
-      engine.registerManifest(manifest);
+    for (const registration of manifestRegistryRef.current.values()) {
+      registration.apply(engine);
     }
   }, []);
 
@@ -123,7 +122,10 @@ export function FxProvider({
       window.removeEventListener('pointerdown', unlock);
       window.removeEventListener('keydown', unlock);
       engine.dispose();
-      engineRef.current = new FxEngine(noopRenderer, noopAudio);
+      engineRef.current = new FxEngine<PixiScenePlayerContext>(
+        createNoopRenderer<PixiScenePlayerContext>(),
+        noopAudio,
+      );
     };
   }, [
     applyRegistrations,
@@ -141,31 +143,39 @@ export function FxProvider({
     engineRef.current.setMode(next);
   }, []);
 
-  const api = useMemo<FxController>(
+  const api = useMemo<FxController<PixiScenePlayerContext>>(
     () => ({
       showAchievement(event: FxEvent) {
         engineRef.current.showAchievement(event);
       },
       registerScene<TPayload extends FxEvent = FxEvent>(scene: FxSceneRegistration<TPayload>) {
-        sceneRegistryRef.current.set(scene.id, scene as FxSceneRegistration<FxEvent>);
+        sceneRegistryRef.current.set(scene.id, {
+          apply(engine) {
+            engine.registerScene(scene);
+          },
+        });
         engineRef.current.registerScene(scene);
       },
       registerScenePlayer<TPayload extends FxEvent = FxEvent>(
         sceneId: string,
-        player: FxScenePlayer<TPayload>,
+        player: FxScenePlayer<TPayload, PixiScenePlayerContext>,
         schema?: FxPayloadSchema<TPayload>,
       ) {
         scenePlayerRegistryRef.current.set(sceneId, {
-          player: player as FxScenePlayer<FxEvent>,
-          schema: schema as FxPayloadSchema<FxEvent> | undefined,
+          apply(engine) {
+            engine.registerScenePlayer(sceneId, player, schema);
+          },
         });
         engineRef.current.registerScenePlayer(sceneId, player, schema);
       },
-      registerManifest<TPayload extends FxEvent = FxEvent>(manifest: FxSceneManifest<TPayload>) {
-        manifestRegistryRef.current.set(
-          manifest.id,
-          manifest as unknown as FxSceneManifest<FxEvent>,
-        );
+      registerManifest<TPayload extends FxEvent = FxEvent>(
+        manifest: FxSceneManifest<TPayload, PixiScenePlayerContext>,
+      ) {
+        manifestRegistryRef.current.set(manifest.id, {
+          apply(engine) {
+            engine.registerManifest(manifest);
+          },
+        });
         engineRef.current.registerManifest(manifest);
       },
       registerIcon(key: string, source: FxRegisteredIconSource) {
@@ -213,7 +223,7 @@ export function FxProvider({
   );
 }
 
-const noopController: FxController = {
+const noopController: FxController<PixiScenePlayerContext> = {
   showAchievement() {},
   registerScene() {},
   registerScenePlayer() {},
@@ -225,6 +235,6 @@ const noopController: FxController = {
   unlockAudio() {},
 };
 
-export function useFx(): FxController {
+export function useFx(): FxController<PixiScenePlayerContext> {
   return useContext(FxContext) ?? noopController;
 }

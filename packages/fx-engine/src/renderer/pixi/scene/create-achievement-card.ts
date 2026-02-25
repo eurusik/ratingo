@@ -1,6 +1,13 @@
-import { BLEND_MODES, BlurFilter, Container, Graphics, Text, TextStyle } from 'pixi.js';
+import {
+  BLEND_MODES,
+  BlurFilter,
+  Container,
+  type DisplayObject,
+  Graphics,
+  Text,
+  TextStyle,
+} from 'pixi.js';
 import type { RarityVisualProfile } from '../../../core/config/rarity-profile';
-import { createIconSprite } from '../icon-texture';
 import type { AchievementCardNodes } from './types';
 import type { AchievementFxEvent, FxRarity } from '../../../types';
 
@@ -9,6 +16,10 @@ interface CreateAchievementCardInput {
   event: AchievementFxEvent;
   profile: RarityVisualProfile;
   rarity: FxRarity;
+  createIconSprite?: (
+    rarity: FxRarity,
+    icon?: AchievementFxEvent['icon'],
+  ) => Promise<DisplayObject>;
   viewportWidth: number;
   centerX: number;
   medalY: number;
@@ -67,8 +78,12 @@ export async function createAchievementCard(
   medal.drawCircle(0, 0, 53);
   medalRoot.addChild(medal);
 
-  const iconSprite = await createIconSprite(input.rarity, input.event.icon);
-  medalRoot.addChild(iconSprite);
+  const iconSprite = input.createIconSprite
+    ? await input.createIconSprite(input.rarity, input.event.icon)
+    : null;
+  if (iconSprite) {
+    medalRoot.addChild(iconSprite);
+  }
 
   const glowSweep = new Graphics();
   glowSweep.beginFill(0xc7d3df, 0.08);

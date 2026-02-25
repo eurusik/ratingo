@@ -1,10 +1,10 @@
-import { Application, Container } from 'pixi.js';
+import { Application, Container, type DisplayObject } from 'pixi.js';
 import { RARITY_VISUAL } from '../../../core/config/rarity-profile';
 import { easeInOutCubic, easeOutCubic } from '../../../core/math/easing';
 import { clamp, lerp } from '../../../core/math/scalars';
 import { computeSignalState } from '../../../core/timeline/compute-signal-state';
 import { buildAchievementTimeline } from '../../../core/timeline/build-achievement-timeline';
-import type { FxEvent, FxRenderOptions } from '../../../types';
+import type { FxEvent, FxRenderOptions, FxScenePlayerContext } from '../../../types';
 import { ParticlesPlugin } from '../plugins/particles-plugin';
 import { SignalGlitchPlugin } from '../plugins/signal-glitch-plugin';
 import { createAchievementCard } from '../scene/create-achievement-card';
@@ -18,6 +18,8 @@ interface LightingOverrides {
   keyLightImpact?: number;
   keyLightWindowMs?: number;
 }
+
+type PixiAchievementSceneContext = FxScenePlayerContext<Application, DisplayObject>;
 
 function asLightingOverrides(event: FxEvent): LightingOverrides {
   const metadata = event.metadata;
@@ -42,6 +44,7 @@ export async function playAchievementUnlockedScene(
   app: Application,
   event: FxEvent,
   options: FxRenderOptions,
+  context?: PixiAchievementSceneContext,
 ): Promise<void> {
   const rarity = event.rarity ?? 'common';
   const profile = RARITY_VISUAL[rarity];
@@ -106,6 +109,7 @@ export async function playAchievementUnlockedScene(
     event,
     profile,
     rarity,
+    createIconSprite: context?.createIconSprite,
     viewportWidth: width,
     centerX,
     medalY,
@@ -120,6 +124,13 @@ export async function playAchievementUnlockedScene(
   const glitchBlockHeight = Math.min(glitchBlockBottom - glitchBlockTop, height * 0.62);
   const glitchBlockX = centerX - glitchBlockWidth / 2;
   const glitchBlockY = medalY + glitchBlockTop;
+  const viewportArea = width * height;
+  const cpuCores = typeof navigator === 'undefined' ? 8 : (navigator.hardwareConcurrency ?? 8);
+  const isLowEndDevice = cpuCores <= 4;
+  const areaScale = clamp((960 * 540) / Math.max(1, viewportArea), 0.7, 1);
+  const baseDensity = isLite ? 0.62 : isLowEndDevice ? 0.74 : 0.88;
+  const glitchDensity = clamp(baseDensity * areaScale, 0.48, 0.9);
+  const redrawIntervalMs = isLite ? 26 : isLowEndDevice ? 22 : 16;
 
   const achievementMask = createAchievementMask({
     cameraRig,
@@ -166,13 +177,45 @@ export async function playAchievementUnlockedScene(
       height: glitchBlockHeight,
     },
     signalCutStartMs: timeline.signalCutStartMs,
+    performance: {
+      redrawIntervalMs,
+      stripDensity: clamp(glitchDensity * 0.9, 0.45, 0.9),
+      staticDensity: clamp(glitchDensity * 0.8, 0.42, 0.85),
+      bandDensity: clamp(glitchDensity * 0.95, 0.48, 0.92),
+    },
   });
 
   const start = performance.now();
   let lastFrame = start;
 
   await new Promise<void>((resolve) => {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      app.ticker.remove(tick);
+      if (!root.destroyed) {
+        root.destroy({ children: true });
+      }
+      if (context?.abortSignal) {
+        context.abortSignal.removeEventListener('abort', handleAbort);
+      }
+      resolve();
+    };
+    const handleAbort = () => finish();
+    if (context?.abortSignal) {
+      context.abortSignal.addEventListener('abort', handleAbort, { once: true });
+      if (context.abortSignal.aborted) {
+        finish();
+        return;
+      }
+    }
+
     const tick = () => {
+      if ((app as { destroyed?: boolean }).destroyed || context?.abortSignal?.aborted) {
+        finish();
+        return;
+      }
       const elapsed = performance.now() - start;
       const now = performance.now();
       const deltaFrames = Math.min(2.5, (now - lastFrame) / 16.6667);
@@ -404,9 +447,7 @@ export async function playAchievementUnlockedScene(
       });
 
       if (t >= 1) {
-        app.ticker.remove(tick);
-        root.destroy({ children: true });
-        resolve();
+        finish();
       }
     };
 

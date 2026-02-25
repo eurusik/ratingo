@@ -2,6 +2,7 @@ export { FxProvider, useFx } from './react';
 export { FxEngine } from './engine';
 export { createWebFxEngine } from './create-web-fx-engine';
 export type { CreateWebFxEngineConfig } from './create-web-fx-engine';
+export type { PixiScenePlayerContext } from './pixi-renderer';
 export { FxSceneRegistry, createDefaultSceneRegistry, createSceneRegistry } from './scenes/registry';
 export { definePayloadSchema, defineSceneManifest } from './scenes/manifest';
 export { installRatingoDefaultPreset } from './presets/ratingo-default';
