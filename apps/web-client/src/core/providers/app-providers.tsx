@@ -11,7 +11,7 @@ import { Toaster } from 'sonner';
 import { QueryProvider } from './query-provider';
 import { AuthProvider } from '../auth';
 import { I18nProvider, type Locale, DEFAULT_LOCALE } from '@/shared/i18n';
-import { PwaInstallListener } from '@/shared/components';
+import { PwaInstallListener, NetworkStatusListener } from '@/shared/components';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -48,6 +48,7 @@ export function AppProviders({ children, locale = DEFAULT_LOCALE }: AppProviders
               }}
             />
             <PwaInstallListener />
+            <NetworkStatusListener />
             {children}
           </AuthProvider>
         </QueryProvider>
