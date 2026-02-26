@@ -5,25 +5,17 @@ import { Search } from 'lucide-react';
 
 import { Button } from '@/shared/ui';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/shared/ui/dialog';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerTitle,
-  DrawerDescription,
-} from '@/shared/ui/drawer';
 import { useTranslation } from '@/shared/i18n';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
 import { useSearch } from './use-search';
 import { SearchContent } from './search-content';
 
 /**
- * Search command with keyboard shortcut (Cmd+K).
- * Desktop: centered Dialog. Mobile: bottom sheet Drawer (~70% height).
+ * Desktop search command with keyboard shortcut (Cmd+K).
+ * Renders trigger button + centered Dialog.
  *
- * Dialog/Drawer rendering is deferred until after mount to avoid a hydration
- * mismatch: useIsMobile returns false during SSR, which would render Dialog on
- * mobile and then swap to Drawer after the effect fires. Since search starts
- * closed this has zero visual impact.
+ * On mobile, this only renders the trigger button (hidden via parent CSS).
+ * The mobile search overlay is rendered separately by MobileSearchOverlay.
  */
 export function SearchCommand() {
   const { dict } = useTranslation();
@@ -36,7 +28,6 @@ export function SearchCommand() {
 
   return (
     <>
-      {/* Trigger button — always SSR-rendered */}
       <Button
         variant="ghost"
         size="sm"
@@ -50,34 +41,14 @@ export function SearchCommand() {
         </kbd>
       </Button>
 
-      {/* Deferred until after mount to avoid hydration mismatch */}
-      {mounted && (
-        <>
-          {/* Desktop: centered Dialog */}
-          {!isMobile && (
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogContent className="overflow-hidden p-0 gap-0">
-                <DialogTitle className="sr-only">{dict.search.placeholder}</DialogTitle>
-                <DialogDescription className="sr-only">{dict.search.hint}</DialogDescription>
-                <SearchContent search={search} />
-              </DialogContent>
-            </Dialog>
-          )}
-
-          {/* Mobile: bottom sheet Drawer */}
-          {isMobile && (
-            <Drawer open={open} onOpenChange={setOpen}>
-              <DrawerContent className="h-[70dvh] pb-[env(safe-area-inset-bottom)] [&>div:first-child]:hidden">
-                <DrawerTitle className="sr-only">{dict.search.placeholder}</DrawerTitle>
-                <DrawerDescription className="sr-only">{dict.search.hint}</DrawerDescription>
-                <SearchContent
-                  search={search}
-                  listClassName="max-h-none flex-1 overflow-y-auto"
-                />
-              </DrawerContent>
-            </Drawer>
-          )}
-        </>
+      {mounted && !isMobile && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="overflow-hidden p-0 gap-0">
+            <DialogTitle className="sr-only">{dict.search.placeholder}</DialogTitle>
+            <DialogDescription className="sr-only">{dict.search.hint}</DialogDescription>
+            <SearchContent search={search} />
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
