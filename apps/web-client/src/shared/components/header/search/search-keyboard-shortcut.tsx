@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { useSearchDialogStore } from '@/shared/stores/search-dialog.store';
 
 /**
- * Registers the Cmd+K / Ctrl+K keyboard shortcut that toggles the search dialog.
+ * Registers the Cmd+K / Ctrl+K keyboard shortcut that opens the search dialog.
  *
  * Render this component exactly once in the layout so that only a single
  * keydown listener is active at a time, regardless of how many search-related
@@ -15,9 +15,10 @@ import { useSearchDialogStore } from '@/shared/stores/search-dialog.store';
 export function SearchKeyboardShortcut() {
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      if (e.repeat) return;
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        useSearchDialogStore.getState().toggle();
+        useSearchDialogStore.getState().open();
       }
     };
     document.addEventListener('keydown', down);
