@@ -1571,5 +1571,13 @@
       "good": "Liked it",
       "top": "Top"
     }
+  },
+  "pwa": {
+    "install": "Install app",
+    "offline": "You're offline",
+    "offlineDescription": "It looks like there's no internet connection. Check your connection and try again.",
+    "retry": "Try again",
+    "share": "Share",
+    "copied": "Copied"
   }
 }

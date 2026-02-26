@@ -6,3 +6,4 @@ export { UserRatingBadge } from './user-rating-badge';
 export * from './header';
 export * from './footer';
 export * from './mobile-dock';
+export { PwaInstallListener } from './pwa-install-listener';

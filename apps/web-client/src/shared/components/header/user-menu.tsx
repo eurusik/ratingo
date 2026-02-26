@@ -7,9 +7,10 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { User, LogOut, Settings, Bookmark, Shield, Play } from 'lucide-react';
+import { User, LogOut, Settings, Bookmark, Shield, Play, Download } from 'lucide-react';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { useTranslation } from '@/shared/i18n';
+import { usePwaInstallStore } from '@/shared/stores/pwa-install.store';
 import {
   Button,
   Avatar,
@@ -27,9 +28,19 @@ export function UserMenu() {
   const { user, isAuthenticated, isLoading, isAdmin, logout } = useAuth();
   const { dict } = useTranslation();
   const openLogin = useAuthModalStore((s) => s.openLogin);
+  const { isInstallable, deferredPrompt } = usePwaInstallStore();
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    await deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      usePwaInstallStore.getState().setDeferredPrompt(null);
+    }
   };
 
   if (isLoading) {
@@ -78,6 +89,15 @@ export function UserMenu() {
             {dict.auth.settings}
           </Link>
         </DropdownMenuItem>
+        {isInstallable && (
+          <DropdownMenuItem
+            onClick={handleInstall}
+            className="text-cinema-text-secondary focus:bg-cinema-elevated focus:text-cinema-text-primary"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {dict.pwa?.install ?? 'Встановити додаток'}
+          </DropdownMenuItem>
+        )}
         {isAdmin && (
           <>
             <DropdownMenuSeparator className="bg-cinema-elevated" />
