@@ -85,10 +85,10 @@ docs/sync-trending.md
 # =============================================================================
 # PWA (Serwist — generated service worker)
 # =============================================================================
-public/sw.js
-public/sw.js.map
-public/swe-worker-*.js
-public/swe-worker-*.js.map
+**/public/sw.js
+**/public/sw.js.map
+**/public/swe-worker-*.js
+**/public/swe-worker-*.js.map
 
 # =============================================================================
 # PLAYWRIGHT E2E

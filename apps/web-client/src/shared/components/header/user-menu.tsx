@@ -7,9 +7,10 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { User, LogOut, Settings, Bookmark, Shield, Play } from 'lucide-react';
+import { User, LogOut, Settings, Bookmark, Shield, Play, Download } from 'lucide-react';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { useTranslation } from '@/shared/i18n';
+import { usePwaInstallStore } from '@/shared/stores/pwa-install.store';
 import {
   Button,
   Avatar,
@@ -27,6 +28,8 @@ export function UserMenu() {
   const { user, isAuthenticated, isLoading, isAdmin, logout } = useAuth();
   const { dict } = useTranslation();
   const openLogin = useAuthModalStore((s) => s.openLogin);
+  const isInstallable = usePwaInstallStore((s) => s.isInstallable);
+  const promptInstall = usePwaInstallStore((s) => s.promptInstall);
 
   const handleLogout = async () => {
     await logout();
@@ -78,6 +81,15 @@ export function UserMenu() {
             {dict.auth.settings}
           </Link>
         </DropdownMenuItem>
+        {isInstallable && (
+          <DropdownMenuItem
+            onClick={() => promptInstall().catch(console.error)}
+            className="text-cinema-text-secondary focus:bg-cinema-elevated focus:text-cinema-text-primary"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {dict.pwa.install}
+          </DropdownMenuItem>
+        )}
         {isAdmin && (
           <>
             <DropdownMenuSeparator className="bg-cinema-elevated" />
