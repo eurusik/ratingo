@@ -39,14 +39,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const dict = getDictionary('uk');
 
   if (!config) {
-    return { title: 'Не знайдено | Ratingo' };
+    return { title: 'Не знайдено' };
   }
 
   const title = getByPath(dict, config.titleKey);
   const description = getByPath(dict, config.descriptionKey);
 
   return {
-    title: `${title} | Ratingo`,
+    title,
     description,
     openGraph: {
       title: `${title} | Ratingo`,

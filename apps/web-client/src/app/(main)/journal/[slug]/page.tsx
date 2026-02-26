@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 
   if (!post) {
     return {
-      title: `${dict.errors.notFound} | Ratingo`,
+      title: dict.errors.notFound,
     };
   }
 
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   const description = post.metaDescription || post.excerpt;
 
   return {
-    title: `${title} | ${dict.journal.title} | Ratingo`,
+    title: `${title} | ${dict.journal.title}`,
     description,
     openGraph: {
       title,

@@ -35,6 +35,22 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'maskable',
       },
     ],
+    screenshots: [
+      {
+        src: '/screenshots/desktop.png',
+        sizes: '1920x1080',
+        type: 'image/png',
+        form_factor: 'wide',
+        label: 'Головна сторінка Ratingo на десктопі',
+      },
+      {
+        src: '/screenshots/mobile.png',
+        sizes: '390x844',
+        type: 'image/png',
+        form_factor: 'narrow',
+        label: 'Головна сторінка Ratingo на мобільному',
+      },
+    ],
     shortcuts: [
       {
         name: 'Серіали у тренді',
