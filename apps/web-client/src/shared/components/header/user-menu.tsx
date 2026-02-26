@@ -83,7 +83,7 @@ export function UserMenu() {
         </DropdownMenuItem>
         {isInstallable && (
           <DropdownMenuItem
-            onClick={promptInstall}
+            onClick={() => promptInstall().catch(console.error)}
             className="text-cinema-text-secondary focus:bg-cinema-elevated focus:text-cinema-text-primary"
           >
             <Download className="w-4 h-4 mr-2" />

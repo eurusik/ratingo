@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useSyncExternalStore } from 'react';
-import { toast } from 'sonner';
+import { useSyncExternalStore } from 'react';
 
 function subscribe(callback: () => void) {
   window.addEventListener('online', callback);
@@ -21,27 +20,8 @@ function getServerSnapshot() {
 }
 
 /**
- * Tracks online/offline status and shows toast notifications on change.
+ * Tracks browser online/offline status via useSyncExternalStore.
  */
 export function useOnlineStatus() {
-  const isOnline = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const prevRef = useRef(isOnline);
-
-  useEffect(() => {
-    if (prevRef.current === isOnline) return;
-    prevRef.current = isOnline;
-
-    if (!isOnline) {
-      toast.error('Ви офлайн', {
-        description: 'Деякі функції можуть бути недоступні',
-        duration: Infinity,
-        id: 'offline-toast',
-      });
-    } else {
-      toast.dismiss('offline-toast');
-      toast.success("З'єднання відновлено", { duration: 3000 });
-    }
-  }, [isOnline]);
-
-  return isOnline;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
