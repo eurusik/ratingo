@@ -3,9 +3,9 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/',
-    name: 'Ratingo — Найкращий контент для перегляду',
+    name: 'Ratingo — Трендові серіали та фільми',
     short_name: 'Ratingo',
-    description: 'Знаходьте найкращі фільми та серіали для перегляду',
+    description: 'Відстежуйте тренди, рейтинги та нові епізоди серіалів і фільмів',
     lang: 'uk',
     dir: 'ltr',
     start_url: '/?source=pwa',
