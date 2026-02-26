@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useDebounce } from 'use-debounce';
@@ -11,6 +11,9 @@ import { useSearchDialogStore } from '@/shared/stores/search-dialog.store';
 
 /**
  * Hook for search dialog state and logic.
+ *
+ * Note: Cmd+K keyboard shortcut is registered once by SearchKeyboardShortcut
+ * rendered in the layout. Do not add it here to avoid duplicate listeners.
  */
 export function useSearch() {
   const open = useSearchDialogStore((s) => s.isOpen);
@@ -18,18 +21,6 @@ export function useSearch() {
   const [query, setQuery] = useState('');
   const [debouncedQuery] = useDebounce(query, 300);
   const router = useRouter();
-
-  // Keyboard shortcut: Cmd+K / Ctrl+K
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        useSearchDialogStore.getState().toggle();
-      }
-    };
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
-  }, []);
 
   // Search query
   const { data, isLoading } = useQuery({

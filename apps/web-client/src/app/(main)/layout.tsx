@@ -8,6 +8,8 @@ import {
   Footer,
   AnnouncementBarProvider,
   MobileDock,
+  MobileSearchOverlay,
+  SearchKeyboardShortcut,
 } from '@/shared/components';
 import { GlobalAuthModal } from '@/modules/auth';
 import { MainContent } from './main-content';
@@ -24,6 +26,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <MainContent>{children}</MainContent>
         <Footer />
         <MobileDock />
+        <MobileSearchOverlay />
+        <SearchKeyboardShortcut />
         <GlobalAuthModal />
       </HeaderContextProvider>
     </AnnouncementBarProvider>
