@@ -14,6 +14,13 @@ export function usePwaInstall() {
   const setDeferredPrompt = usePwaInstallStore((s) => s.setDeferredPrompt);
 
   useEffect(() => {
+    // Pick up any event captured by the inline script before React hydrated.
+    const early = (window as unknown as { __pwaPrompt?: BeforeInstallPromptEvent }).__pwaPrompt;
+    if (early) {
+      setDeferredPrompt(early);
+      delete (window as unknown as { __pwaPrompt?: BeforeInstallPromptEvent }).__pwaPrompt;
+    }
+
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);

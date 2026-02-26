@@ -1574,6 +1574,9 @@
   },
   "pwa": {
     "install": "Встановити додаток",
+    "installBanner": "Додайте Ratingo на головний екран",
+    "installBannerCta": "Встановити",
+    "installBannerIos": "Через {shareIcon} додайте на Home Screen",
     "offline": "Ви офлайн",
     "offlineDescription": "Схоже, що немає з'єднання з інтернетом. Перевірте підключення та спробуйте ще раз.",
     "retry": "Спробувати знову",

@@ -6,4 +6,3 @@ export { useScrollPosition } from './use-scroll-position';
 export { useWebShare } from './use-web-share';
 export { usePwaInstall } from './use-pwa-install';
 export { useOnlineStatus } from './use-online-status';
-export { useStandaloneMode } from './use-standalone-mode';

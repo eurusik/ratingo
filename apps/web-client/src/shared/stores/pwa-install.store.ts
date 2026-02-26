@@ -14,7 +14,7 @@ interface PwaInstallState {
   deferredPrompt: BeforeInstallPromptEvent | null;
   isInstallable: boolean;
   setDeferredPrompt: (evt: BeforeInstallPromptEvent | null) => void;
-  promptInstall: () => Promise<void>;
+  promptInstall: () => Promise<'accepted' | 'dismissed'>;
 }
 
 export const usePwaInstallStore = create<PwaInstallState>((set, get) => ({
@@ -24,9 +24,10 @@ export const usePwaInstallStore = create<PwaInstallState>((set, get) => ({
     set({ deferredPrompt, isInstallable: deferredPrompt !== null }),
   promptInstall: async () => {
     const { deferredPrompt, setDeferredPrompt } = get();
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) return 'dismissed';
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') setDeferredPrompt(null);
+    return outcome;
   },
 }));

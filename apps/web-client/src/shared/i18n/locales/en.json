@@ -1574,6 +1574,9 @@
   },
   "pwa": {
     "install": "Install app",
+    "installBanner": "Add Ratingo to your home screen",
+    "installBannerCta": "Install",
+    "installBannerIos": "Tap {shareIcon} then \"Add to Home Screen\"",
     "offline": "You're offline",
     "offlineDescription": "It looks like there's no internet connection. Check your connection and try again.",
     "retry": "Try again",

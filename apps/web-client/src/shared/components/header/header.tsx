@@ -31,7 +31,10 @@ export function Header() {
 
   return (
     <header
-      style={{ top: announcementHeight }}
+      style={{
+        top: announcementHeight > 0 ? announcementHeight : 0,
+        paddingTop: announcementHeight > 0 ? undefined : 'env(safe-area-inset-top, 0px)',
+      }}
       className={cn(
         'fixed left-0 right-0 z-40',
         'transition-all duration-200',
@@ -79,9 +82,11 @@ export function Header() {
           <TrendingToggle />
         </nav>
 
-        {/* Right: Search + Notifications + Auth */}
+        {/* Right: Search (desktop only, mobile uses dock) + Notifications + Auth */}
         <div className="flex items-center gap-2">
-          <SearchCommand />
+          <div className="hidden md:block">
+            <SearchCommand />
+          </div>
           <NotificationBell />
           <UserMenu />
         </div>

@@ -14,22 +14,25 @@ export function NetworkStatusListener() {
   const isOnline = useOnlineStatus();
   const prevRef = useRef(isOnline);
   const { dict } = useTranslation();
+  const dictRef = useRef(dict);
+  dictRef.current = dict;
 
   useEffect(() => {
     if (prevRef.current === isOnline) return;
     prevRef.current = isOnline;
 
+    const d = dictRef.current;
     if (!isOnline) {
-      toast.error(dict.pwa.offline, {
-        description: dict.pwa.offlineDescription,
+      toast.error(d.pwa.offline, {
+        description: d.pwa.offlineDescription,
         duration: Infinity,
         id: 'offline-toast',
       });
     } else {
       toast.dismiss('offline-toast');
-      toast.success(dict.pwa.connectionRestored, { duration: 3000 });
+      toast.success(d.pwa.connectionRestored, { duration: 3000 });
     }
-  }, [isOnline, dict]);
+  }, [isOnline]);
 
   return null;
 }

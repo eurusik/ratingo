@@ -8,6 +8,7 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { ArrowLeft, Share2, Check } from 'lucide-react';
 import { useWebShare } from '@/shared/hooks';
+import { useTranslation } from '@/shared/i18n';
 
 interface DetailsHeaderProps {
   backLabel: string;
@@ -16,12 +17,10 @@ interface DetailsHeaderProps {
 
 export function DetailsHeader({ backLabel, shareTitle }: DetailsHeaderProps) {
   const { share, copied } = useWebShare();
+  const { dict } = useTranslation();
 
   const handleShare = () => {
-    share({
-      title: shareTitle ?? 'Ratingo',
-      url: window.location.href,
-    });
+    void share({ title: shareTitle ?? 'Ratingo', url: window.location.href });
   };
 
   return (
@@ -37,7 +36,7 @@ export function DetailsHeader({ backLabel, shareTitle }: DetailsHeaderProps) {
         <button
           onClick={handleShare}
           className="text-cinema-text-muted hover:text-white transition-colors p-2"
-          aria-label="Поділитись"
+          aria-label={dict.pwa.share}
         >
           {copied ? (
             <Check className="w-5 h-5 text-green-400" />

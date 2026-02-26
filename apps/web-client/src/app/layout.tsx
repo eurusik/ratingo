@@ -75,7 +75,6 @@ export const metadata: Metadata = {
   },
   other: {
     'mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-capable': 'yes',
   },
 };
 
@@ -94,6 +93,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="uk" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-cinema-page font-sans antialiased" suppressHydrationWarning>
+        {/* Capture beforeinstallprompt before React hydration so the event is never lost */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__pwaPrompt=null;window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__pwaPrompt=e})`,
+          }}
+        />
         <AppProviders>
           {children}
         </AppProviders>
