@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
-import { usePwaInstallStore } from '@/shared/stores/pwa-install.store';
+import { useEffect } from 'react';
+import {
+  usePwaInstallStore,
+  type BeforeInstallPromptEvent,
+} from '@/shared/stores/pwa-install.store';
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt(): Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
-
+/**
+ * Registers beforeinstallprompt and appinstalled listeners.
+ * Use `usePwaInstallStore` to read `isInstallable` and call `promptInstall`.
+ */
 export function usePwaInstall() {
-  const { deferredPrompt, isInstallable, setDeferredPrompt } = usePwaInstallStore();
+  const setDeferredPrompt = usePwaInstallStore((s) => s.setDeferredPrompt);
 
   useEffect(() => {
     const handleBeforeInstall = (e: Event) => {
@@ -27,13 +29,4 @@ export function usePwaInstall() {
       window.removeEventListener('appinstalled', handleInstalled);
     };
   }, [setDeferredPrompt]);
-
-  const promptInstall = useCallback(async () => {
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') setDeferredPrompt(null);
-  }, [deferredPrompt, setDeferredPrompt]);
-
-  return { isInstallable, promptInstall };
 }

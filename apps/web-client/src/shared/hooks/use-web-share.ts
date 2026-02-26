@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ShareData {
   title: string;
@@ -10,6 +10,11 @@ interface ShareData {
 
 export function useWebShare() {
   const [copied, setCopied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    return () => clearTimeout(timerRef.current);
+  }, []);
 
   const share = useCallback(async (data: ShareData) => {
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
@@ -24,7 +29,8 @@ export function useWebShare() {
     try {
       await navigator.clipboard.writeText(data.url);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       // Clipboard API unavailable (requires HTTPS)
     }

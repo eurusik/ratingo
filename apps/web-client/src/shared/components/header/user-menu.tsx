@@ -28,19 +28,11 @@ export function UserMenu() {
   const { user, isAuthenticated, isLoading, isAdmin, logout } = useAuth();
   const { dict } = useTranslation();
   const openLogin = useAuthModalStore((s) => s.openLogin);
-  const { isInstallable, deferredPrompt } = usePwaInstallStore();
+  const isInstallable = usePwaInstallStore((s) => s.isInstallable);
+  const promptInstall = usePwaInstallStore((s) => s.promptInstall);
 
   const handleLogout = async () => {
     await logout();
-  };
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      usePwaInstallStore.getState().setDeferredPrompt(null);
-    }
   };
 
   if (isLoading) {
@@ -91,11 +83,11 @@ export function UserMenu() {
         </DropdownMenuItem>
         {isInstallable && (
           <DropdownMenuItem
-            onClick={handleInstall}
+            onClick={promptInstall}
             className="text-cinema-text-secondary focus:bg-cinema-elevated focus:text-cinema-text-primary"
           >
             <Download className="w-4 h-4 mr-2" />
-            {dict.pwa?.install ?? 'Встановити додаток'}
+            {dict.pwa.install}
           </DropdownMenuItem>
         )}
         {isAdmin && (

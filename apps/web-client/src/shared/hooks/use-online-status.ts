@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { toast } from 'sonner';
 
 function subscribe(callback: () => void) {
@@ -25,37 +25,23 @@ function getServerSnapshot() {
  */
 export function useOnlineStatus() {
   const isOnline = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const prevRef = useRef(isOnline);
 
   useEffect(() => {
-    // Skip initial render — only react to changes
-    let initialized = false;
+    if (prevRef.current === isOnline) return;
+    prevRef.current = isOnline;
 
-    function handleOffline() {
-      if (initialized) {
-        toast.error('Ви офлайн', {
-          description: 'Деякі функції можуть бути недоступні',
-          duration: Infinity,
-          id: 'offline-toast',
-        });
-      }
+    if (!isOnline) {
+      toast.error('Ви офлайн', {
+        description: 'Деякі функції можуть бути недоступні',
+        duration: Infinity,
+        id: 'offline-toast',
+      });
+    } else {
+      toast.dismiss('offline-toast');
+      toast.success("З'єднання відновлено", { duration: 3000 });
     }
-
-    function handleOnline() {
-      if (initialized) {
-        toast.dismiss('offline-toast');
-        toast.success("З'єднання відновлено", { duration: 3000 });
-      }
-    }
-
-    window.addEventListener('offline', handleOffline);
-    window.addEventListener('online', handleOnline);
-    initialized = true;
-
-    return () => {
-      window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('online', handleOnline);
-    };
-  }, []);
+  }, [isOnline]);
 
   return isOnline;
 }
