@@ -1,12 +1,13 @@
 /**
- * History list component displaying watched items (watching/completed).
+ * History list component displaying completed items.
  */
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from '@/shared/i18n';
-import { useCompleted, type MeListSort } from '../hooks/use-me-lists';
+import { InfiniteScrollLoader } from '@/shared/components/infinite-scroll-loader';
+import { useCompleted, PAGE_SIZE, type MeListSort } from '../hooks/use-me-lists';
 import { MeListItemCard } from './me-list-item-card';
 import { EmptyState } from './empty-state';
 import { ListSortSelect } from './list-sort-select';
@@ -15,13 +16,19 @@ import { MeListSkeleton } from './me-list-skeleton';
 export function HistoryList() {
   const { dict } = useTranslation();
   const [sort, setSort] = useState<MeListSort>('recent');
-  const { data, isLoading } = useCompleted(sort);
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const { data, isLoading, isFetching } = useCompleted(sort, limit);
+
+  const handleLoadMore = useCallback(() => {
+    setLimit((prev) => prev + PAGE_SIZE);
+  }, []);
 
   if (isLoading) {
     return <MeListSkeleton />;
   }
 
   const items = data?.data ?? [];
+  const hasMore = data?.meta?.hasMore ?? false;
 
   if (items.length === 0) {
     return (
@@ -43,6 +50,12 @@ export function HistoryList() {
           <MeListItemCard key={item.id} item={item} />
         ))}
       </div>
+      <InfiniteScrollLoader
+        onLoadMore={handleLoadMore}
+        isLoading={isFetching && items.length > 0}
+        hasMore={hasMore}
+        loadingText={dict.common?.loading ?? 'Завантаження...'}
+      />
     </div>
   );
 }

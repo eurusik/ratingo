@@ -10,7 +10,8 @@
     "showMore": "Показати ще {count}",
     "back": "Назад",
     "home": "На головну",
-    "details": "Детальніше"
+    "details": "Детальніше",
+    "loadMore": "Завантажити ще"
   },
   "announcement": {
     "communityRating": {
