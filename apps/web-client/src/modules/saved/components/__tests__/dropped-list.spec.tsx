@@ -232,7 +232,7 @@ describe('DroppedList', () => {
 
     render(<DroppedList />);
 
-    expect(mockUseDropped).toHaveBeenCalledWith('recent');
+    expect(mockUseDropped).toHaveBeenCalledWith(expect.objectContaining({ sort: 'recent' }));
   });
 
   it('renders empty state when data is undefined (null response)', () => {

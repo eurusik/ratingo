@@ -17,7 +17,7 @@ export function DroppedList() {
   const { dict } = useTranslation();
   const [sort, setSort] = useState<MeListSort>('recent');
   const [limit, setLimit] = useState(PAGE_SIZE);
-  const { data, isLoading, isFetching } = useDropped(sort, limit);
+  const { data, isLoading, isFetching } = useDropped({ sort, limit });
 
   const handleSortChange = useCallback((newSort: MeListSort) => {
     setSort(newSort);

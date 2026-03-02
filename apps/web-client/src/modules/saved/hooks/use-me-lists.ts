@@ -13,7 +13,13 @@ const STALE_5_MIN = 1000 * 60 * 5;
 /** Page size for progressive loading in Activity lists. */
 export const PAGE_SIZE = 20;
 
-function useHistoryBase(sort?: MeListSort, limit = PAGE_SIZE, enabled = true) {
+interface MeListOptions {
+  sort?: MeListSort;
+  limit?: number;
+  enabled?: boolean;
+}
+
+function useHistoryBase({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   return useQuery({
     queryKey: queryKeys.meLists.history(sort, limit),
     queryFn: () => meListsApi.getHistory({ sort, limit }),
@@ -23,8 +29,8 @@ function useHistoryBase(sort?: MeListSort, limit = PAGE_SIZE, enabled = true) {
   });
 }
 
-export function useWatching(sort?: MeListSort, limit = PAGE_SIZE, enabled = true) {
-  const query = useHistoryBase(sort, limit, enabled);
+export function useWatching(options: MeListOptions = {}) {
+  const query = useHistoryBase(options);
 
   const data = useMemo(
     () =>
@@ -40,8 +46,8 @@ export function useWatching(sort?: MeListSort, limit = PAGE_SIZE, enabled = true
   return { ...query, data };
 }
 
-export function useCompleted(sort?: MeListSort, limit = PAGE_SIZE, enabled = true) {
-  const query = useHistoryBase(sort, limit, enabled);
+export function useCompleted(options: MeListOptions = {}) {
+  const query = useHistoryBase(options);
 
   const data = useMemo(
     () =>
@@ -57,7 +63,7 @@ export function useCompleted(sort?: MeListSort, limit = PAGE_SIZE, enabled = tru
   return { ...query, data };
 }
 
-export function usePaused(sort?: MeListSort, limit = PAGE_SIZE, enabled = true) {
+export function usePaused({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   return useQuery({
     queryKey: queryKeys.meLists.paused(sort, limit),
     queryFn: () => meListsApi.getPaused({ sort, limit }),
@@ -67,7 +73,7 @@ export function usePaused(sort?: MeListSort, limit = PAGE_SIZE, enabled = true) 
   });
 }
 
-export function useDropped(sort?: MeListSort, limit = PAGE_SIZE, enabled = true) {
+export function useDropped({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   return useQuery({
     queryKey: queryKeys.meLists.dropped(sort, limit),
     queryFn: () => meListsApi.getDropped({ sort, limit }),

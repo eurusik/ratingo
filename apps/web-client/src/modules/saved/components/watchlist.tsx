@@ -17,7 +17,7 @@ export function Watchlist() {
   const { dict } = useTranslation();
   const [sort, setSort] = useState<MeListSort>('recent');
   const [limit, setLimit] = useState(PAGE_SIZE);
-  const { data, isLoading, isFetching } = useWatching(sort, limit);
+  const { data, isLoading, isFetching } = useWatching({ sort, limit });
 
   const handleSortChange = useCallback((newSort: MeListSort) => {
     setSort(newSort);
