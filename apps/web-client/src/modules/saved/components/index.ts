@@ -15,3 +15,4 @@ export { DroppedList } from './dropped-list';
 export { FavoriteUpdates } from './favorite-updates';
 export { MeListSkeleton } from './me-list-skeleton';
 export { NotificationsList } from './notifications-list';
+export { ActivityEpisodeSheet } from './activity-episode-sheet';
