@@ -27,31 +27,30 @@ export function InfiniteScrollLoader({
   onLoadMore,
   isLoading,
   hasMore,
-  loadingText = 'Завантаження...',
+  loadingText = 'Loading...',
 }: InfiniteScrollLoaderProps) {
   const loaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!hasMore || isLoading) return;
 
+    const currentRef = loaderRef.current;
+    if (!currentRef) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
+          observer.unobserve(currentRef);
           onLoadMore();
         }
       },
       { threshold: 0.1, rootMargin: '100px' },
     );
 
-    const currentRef = loaderRef.current;
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
+    observer.observe(currentRef);
 
     return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
-      }
+      observer.unobserve(currentRef);
     };
   }, [hasMore, isLoading, onLoadMore]);
 

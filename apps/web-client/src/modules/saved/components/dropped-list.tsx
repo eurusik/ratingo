@@ -19,6 +19,11 @@ export function DroppedList() {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const { data, isLoading, isFetching } = useDropped(sort, limit);
 
+  const handleSortChange = useCallback((newSort: MeListSort) => {
+    setSort(newSort);
+    setLimit(PAGE_SIZE);
+  }, []);
+
   const handleLoadMore = useCallback(() => {
     setLimit((prev) => prev + PAGE_SIZE);
   }, []);
@@ -46,7 +51,7 @@ export function DroppedList() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <ListSortSelect value={sort} onChange={setSort} />
+        <ListSortSelect value={sort} onChange={handleSortChange} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {items.map((item) => (
