@@ -90,7 +90,7 @@ function makeHistoryResponse(items: Record<string, unknown>[]) {
 // -- Consumer components -----------------------------------------------------
 
 function WatchingConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 'releaseDate'; enabled?: boolean }) {
-  const query = useWatching(sort, enabled);
+  const query = useWatching({ sort, enabled });
 
   return (
     <div>
@@ -102,7 +102,7 @@ function WatchingConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 'rel
 }
 
 function CompletedConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 'releaseDate'; enabled?: boolean }) {
-  const query = useCompleted(sort, enabled);
+  const query = useCompleted({ sort, enabled });
 
   return (
     <div>
@@ -114,7 +114,7 @@ function CompletedConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 're
 }
 
 function PausedConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 'releaseDate'; enabled?: boolean }) {
-  const query = usePaused(sort, enabled);
+  const query = usePaused({ sort, enabled });
 
   return (
     <div>
@@ -125,7 +125,7 @@ function PausedConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 'relea
 }
 
 function DroppedConsumer({ sort, enabled }: { sort?: 'recent' | 'rating' | 'releaseDate'; enabled?: boolean }) {
-  const query = useDropped(sort, enabled);
+  const query = useDropped({ sort, enabled });
 
   return (
     <div>
@@ -313,10 +313,10 @@ describe('useWatching', () => {
       expect(screen.getByTestId('status').textContent).toBe('success');
     });
 
-    expect(mockGetHistory).toHaveBeenCalledWith({ sort: 'rating' });
+    expect(mockGetHistory).toHaveBeenCalledWith(expect.objectContaining({ sort: 'rating' }));
   });
 
-  it('calls API without sort param when sort is undefined', async () => {
+  it('calls API with default limit when sort is undefined', async () => {
     mockGetHistory.mockResolvedValue(makeHistoryResponse([]));
 
     renderWithClient(<WatchingConsumer />, queryClient);
@@ -325,7 +325,7 @@ describe('useWatching', () => {
       expect(screen.getByTestId('status').textContent).toBe('success');
     });
 
-    expect(mockGetHistory).toHaveBeenCalledWith(undefined);
+    expect(mockGetHistory).toHaveBeenCalledWith(expect.objectContaining({ limit: 20 }));
   });
 
   it('does not fetch when enabled is false', async () => {
@@ -397,7 +397,7 @@ describe('useCompleted', () => {
       expect(screen.getByTestId('status').textContent).toBe('success');
     });
 
-    expect(mockGetHistory).toHaveBeenCalledWith({ sort: 'releaseDate' });
+    expect(mockGetHistory).toHaveBeenCalledWith(expect.objectContaining({ sort: 'releaseDate' }));
   });
 
   it('does not fetch when enabled is false', async () => {
@@ -492,10 +492,10 @@ describe('usePaused', () => {
       expect(screen.getByTestId('status').textContent).toBe('success');
     });
 
-    expect(mockGetPaused).toHaveBeenCalledWith({ sort: 'recent' });
+    expect(mockGetPaused).toHaveBeenCalledWith(expect.objectContaining({ sort: 'recent' }));
   });
 
-  it('calls API without sort param when sort is undefined', async () => {
+  it('calls API with default limit when sort is undefined', async () => {
     mockGetPaused.mockResolvedValue(makeHistoryResponse([]));
 
     renderWithClient(<PausedConsumer />, queryClient);
@@ -504,7 +504,7 @@ describe('usePaused', () => {
       expect(screen.getByTestId('status').textContent).toBe('success');
     });
 
-    expect(mockGetPaused).toHaveBeenCalledWith(undefined);
+    expect(mockGetPaused).toHaveBeenCalledWith(expect.objectContaining({ limit: 20 }));
   });
 
   it('does not fetch when enabled is false', async () => {
@@ -556,10 +556,10 @@ describe('useDropped', () => {
       expect(screen.getByTestId('status').textContent).toBe('success');
     });
 
-    expect(mockGetDropped).toHaveBeenCalledWith({ sort: 'recent' });
+    expect(mockGetDropped).toHaveBeenCalledWith(expect.objectContaining({ sort: 'recent' }));
   });
 
-  it('calls API without sort param when sort is undefined', async () => {
+  it('calls API with default limit when sort is undefined', async () => {
     mockGetDropped.mockResolvedValue(makeHistoryResponse([]));
 
     renderWithClient(<DroppedConsumer />, queryClient);
@@ -568,7 +568,7 @@ describe('useDropped', () => {
       expect(screen.getByTestId('status').textContent).toBe('success');
     });
 
-    expect(mockGetDropped).toHaveBeenCalledWith(undefined);
+    expect(mockGetDropped).toHaveBeenCalledWith(expect.objectContaining({ limit: 20 }));
   });
 
   it('does not fetch when enabled is false', async () => {
