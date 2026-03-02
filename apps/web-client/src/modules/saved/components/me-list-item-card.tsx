@@ -26,6 +26,7 @@ import {
 import type { MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import { USER_MEDIA_STATE } from '@/core/api/me-lists.client';
 import { usePauseMedia, useResumeMedia, useDropMedia, useRestoreMedia } from '../hooks/use-me-lists';
+import { useEpisodeSheetStore } from '../stores/episode-sheet.store';
 
 type UserMediaState = MeUserMediaListItemDto['state'];
 
@@ -109,7 +110,12 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
     if ((e.target as HTMLElement).closest('button')) {
       return;
     }
-    router.push(href as Route);
+    // Shows open the episode sheet; movies navigate to details
+    if (media.type === 'show') {
+      useEpisodeSheetStore.getState().open(item);
+    } else {
+      router.push(href as Route);
+    }
   };
 
   const handlePause = (e: React.MouseEvent) => {
@@ -172,10 +178,18 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
 
   return (
     <div
-      role="link"
+      role="button"
       tabIndex={0}
       onClick={handleCardClick}
-      onKeyDown={(e) => e.key === 'Enter' && !(e.target as HTMLElement).closest('button') && router.push(href as Route)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !(e.target as HTMLElement).closest('button')) {
+          if (media.type === 'show') {
+            useEpisodeSheetStore.getState().open(item);
+          } else {
+            router.push(href as Route);
+          }
+        }
+      }}
       className="group relative flex gap-4 p-4 rounded-xl bg-cinema-card/50 hover:bg-cinema-elevated/50 transition-colors cursor-pointer"
     >
       {/* Poster */}
