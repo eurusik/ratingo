@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import { type Route } from 'next';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Bookmark, Play } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 import { useScrollPosition } from '@/shared/hooks';
@@ -15,6 +15,7 @@ import { useAnnouncementBar } from './announcement-bar';
 import { UserMenu } from './user-menu';
 import { SearchCommand } from './search';
 import { NotificationBell } from './notification-bell';
+import { HeaderNavButton } from './header-nav-button';
 import { TrendingToggle } from './trending-toggle';
 import { Logo } from './logo';
 
@@ -87,6 +88,8 @@ export function Header() {
           <div className="hidden md:block">
             <SearchCommand />
           </div>
+          <HeaderNavButton icon={Bookmark} label={dict.auth.saved} href="/saved" />
+          <HeaderNavButton icon={Play} label={dict.auth.activity} href="/activity" />
           <NotificationBell />
           <UserMenu />
         </div>
