@@ -85,4 +85,20 @@ describe('CalendarEpisodesQuery', () => {
     setup([], new Error('DB error'));
     await expect(query.execute(new Date(), new Date())).rejects.toThrow(DatabaseException);
   });
+
+  it('should add userMediaState innerJoin when userId is provided', async () => {
+    setup([[]]);
+    await query.execute(new Date('2024-05-01'), new Date('2024-05-31'), 'user-123');
+    const thenable = db.select.mock.results[0].value;
+    // 5 base joins (seasons, shows, mediaItems, catalogPolicies, evaluations) + 1 for userMediaState
+    expect(thenable.innerJoin).toHaveBeenCalledTimes(6);
+  });
+
+  it('should not add userMediaState innerJoin when userId is not provided', async () => {
+    setup([[]]);
+    await query.execute(new Date('2024-05-01'), new Date('2024-05-31'));
+    const thenable = db.select.mock.results[0].value;
+    // 5 base joins only
+    expect(thenable.innerJoin).toHaveBeenCalledTimes(5);
+  });
 });

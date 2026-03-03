@@ -1532,7 +1532,15 @@
     "showMoreShowsOne": "show",
     "showMoreShowsFew": "shows",
     "showMoreShowsMany": "shows",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "modeAll": "All",
+    "modePersonalized": "Personalized",
+    "loginRequired": "Sign in to see shows from your list",
+    "noEpisodesPersonalized": "No upcoming episodes",
+    "noEpisodesPersonalizedHint": "None of your watched shows have new episodes this week",
+    "noWatchingShows": "You're not watching any shows yet",
+    "noWatchingShowsHint": "Mark shows as 'Watching' to see their upcoming episodes here",
+    "browseCatalog": "Browse catalog"
   },
   "journal": {
     "title": "Journal",

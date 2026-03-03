@@ -48,6 +48,20 @@ describe('Query Keys Property Tests', () => {
       );
     });
 
+    it('shows.personalizedCalendar returns only primitive values', () => {
+      fc.assert(
+        fc.property(
+          fc.option(fc.string({ minLength: 1, maxLength: 20 }), { nil: undefined }),
+          fc.option(fc.integer({ min: 1, max: 30 }), { nil: undefined }),
+          (startDate, days) => {
+            const key = queryKeys.shows.personalizedCalendar(startDate, days);
+            expect(allPrimitives(key)).toBe(true);
+          },
+        ),
+        { numRuns: 100 },
+      );
+    });
+
     it('movies.trending returns only primitive values', () => {
       fc.assert(
         fc.property(
@@ -234,6 +248,18 @@ describe('Query Keys Undefined Normalization', () => {
       const key = queryKeys.shows.calendar(undefined, undefined);
       expect((key as readonly unknown[]).includes(undefined)).toBe(false);
       expect(key).toEqual(['shows', 'calendar', null, null]);
+    });
+
+    it('shows.personalizedCalendar normalizes undefined to null', () => {
+      const key = queryKeys.shows.personalizedCalendar(undefined, undefined);
+      expect((key as readonly unknown[]).includes(undefined)).toBe(false);
+      expect(key).toEqual(['shows', 'calendar', 'personalized', null, null]);
+    });
+
+    it('shows.personalizedCalendarAll is a prefix of shows.personalizedCalendar', () => {
+      const prefix = queryKeys.shows.personalizedCalendarAll;
+      const specific = queryKeys.shows.personalizedCalendar('2024-01-01', 7);
+      expect(specific.slice(0, prefix.length)).toEqual([...prefix]);
     });
 
     it('movies.trending normalizes undefined to null', () => {

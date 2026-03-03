@@ -1364,6 +1364,15 @@
             "schema": {
               "type": "number"
             }
+          },
+          {
+            "name": "personalized",
+            "required": false,
+            "in": "query",
+            "description": "When true, returns only episodes from shows the authenticated user is currently watching.",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -9407,6 +9416,10 @@
             "items": {
               "$ref": "#/components/schemas/CalendarDayDto"
             }
+          },
+          "watchingShowsCount": {
+            "type": "number",
+            "description": "Number of shows the user is currently watching. Only present when personalized=true."
           }
         },
         "required": [

@@ -1,6 +1,6 @@
 export { getQueryClient } from './client';
 export { queryKeys } from './keys';
-export { useTrendingShows, useShowDetails, useShowCalendar, useProviders } from './hooks';
+export { useTrendingShows, useShowDetails, useShowCalendar, usePersonalizedShowCalendar, useProviders } from './hooks';
 export { useSaveStatus, useSaveItem, useUnsaveItem } from './saved-items';
 export {
   useSubscriptionStatus,

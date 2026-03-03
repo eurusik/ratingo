@@ -289,13 +289,15 @@ export const catalogApi = {
    *
    * @example
    * const calendar = await catalogApi.getShowCalendar({ days: 7 });
+   * const personalized = await catalogApi.getShowCalendar({ days: 7, personalized: true });
    */
   async getShowCalendar(params?: {
     startDate?: string;
     days?: number;
+    personalized?: boolean;
   }): Promise<CalendarResponseDto> {
     return apiGet<CalendarResponseDto>('catalog/shows/calendar', {
-      searchParams: params as Record<string, string | number>,
+      searchParams: params as Record<string, string | number | boolean>,
     });
   },
 

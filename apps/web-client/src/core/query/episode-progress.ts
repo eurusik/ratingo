@@ -30,6 +30,7 @@ function invalidateEpisodeProgressCaches(queryClient: QueryClient, showId: strin
     queryKey: queryKeys.userActions.savedItems.all,
   });
   queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
+  queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
 }
 
 // ============================================================================

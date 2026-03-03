@@ -2884,6 +2884,8 @@ export interface components {
             /** @example 2024-11-08T00:00:00.000Z */
             endDate: string;
             days: components["schemas"]["CalendarDayDto"][];
+            /** @description Number of shows the user is currently watching. Only present when personalized=true. */
+            watchingShowsCount?: number;
         };
         EpisodeDto: {
             /**
@@ -6177,6 +6179,8 @@ export interface operations {
                 startDate?: string;
                 /** @description Number of days to include (default: 7). */
                 days?: number;
+                /** @description When true, returns only episodes from shows the authenticated user is currently watching. */
+                personalized?: boolean;
             };
             header?: never;
             path?: never;

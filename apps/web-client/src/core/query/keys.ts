@@ -39,6 +39,10 @@ export const queryKeys = {
     detail: (slug: string) => [...queryKeys.shows.all, 'detail', slug] as const,
     calendar: (startDate?: string, days?: number) =>
       [...queryKeys.shows.all, 'calendar', startDate ?? null, days ?? null] as const,
+    /** Prefix key that matches all personalized calendar queries regardless of date params. */
+    personalizedCalendarAll: ['shows', 'calendar', 'personalized'] as const,
+    personalizedCalendar: (startDate?: string, days?: number) =>
+      [...queryKeys.shows.all, 'calendar', 'personalized', startDate ?? null, days ?? null] as const,
   },
 
   /** Movies queries. */

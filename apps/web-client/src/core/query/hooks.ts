@@ -83,6 +83,33 @@ export function useShowCalendar(
 }
 
 /**
+ * Hook for fetching the personalized show calendar (episodes from shows the user is watching).
+ *
+ * Mirrors useShowCalendar but uses a distinct query key (includes 'personalized')
+ * and always passes personalized: true to the API.
+ *
+ * Only call this hook when the user is authenticated — the API returns 401
+ * for unauthenticated requests with personalized=true.
+ *
+ * @param params - Query parameters (startDate, days)
+ * @param options - React Query options
+ * @returns Query result with personalized calendar
+ *
+ * @example
+ * const { data: calendar } = usePersonalizedShowCalendar({ startDate: '2024-03-01', days: 7 });
+ */
+export function usePersonalizedShowCalendar(
+  params?: { startDate?: string; days?: number },
+  options?: Omit<UseQueryOptions<CalendarResponseDto>, 'queryKey' | 'queryFn'>,
+): UseQueryResult<CalendarResponseDto> {
+  return useQuery({
+    queryKey: queryKeys.shows.personalizedCalendar(params?.startDate, params?.days),
+    queryFn: () => catalogApi.getShowCalendar({ ...params, personalized: true }),
+    ...options,
+  });
+}
+
+/**
  * Gets streaming providers.
  *
  * @param {UseQueryOptions} options - Query options

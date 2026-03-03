@@ -7,12 +7,17 @@ import {
   Param,
   ParseIntPipe,
   Query,
+  UnauthorizedException,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
-import { CATALOG_DEFAULT_CALENDAR_DAYS, DEFAULT_PAGE_SIZE } from '../../../../common/constants';
+import {
+  CATALOG_DEFAULT_CALENDAR_DAYS,
+  CATALOG_MAX_CALENDAR_DAYS,
+  DEFAULT_PAGE_SIZE,
+} from '../../../../common/constants';
 import { CurrentUser } from '../../../auth/infrastructure/decorators/current-user.decorator';
 import { OptionalJwtAuthGuard } from '../../../auth/infrastructure/guards/optional-jwt-auth.guard';
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
@@ -23,6 +28,7 @@ import {
   type IShowRepository,
   SHOW_REPOSITORY,
 } from '../../domain/repositories/show.repository.interface';
+import { WatchingShowsCountQuery } from '../../infrastructure/queries/watching-shows-count.query';
 import { CalendarResponseDto } from '../dtos/calendar-response.dto';
 import { NewEpisodesResponseDto } from '../dtos/new-episodes-response.dto';
 import { ShowResponseDto } from '../dtos/show-response.dto';
@@ -46,6 +52,7 @@ export class CatalogShowsController {
     private readonly userStateEnricher: CatalogUserStateEnricher,
     private readonly cards: CardEnrichmentService,
     private readonly showDetailsService: ShowDetailsService,
+    private readonly watchingShowsCountQuery: WatchingShowsCountQuery,
   ) {}
 
   @Get('trending')
@@ -138,11 +145,20 @@ export class CatalogShowsController {
     type: Number,
     description: 'Number of days to include (default: 7).',
   })
+  @ApiQuery({
+    name: 'personalized',
+    required: false,
+    enum: ['true', 'false'],
+    description:
+      'When true, returns only episodes from shows the authenticated user is currently watching.',
+  })
   @ApiOkResponse({ type: CalendarResponseDto })
   async getCalendar(
     @Query('startDate') startDateString?: string,
     @Query('days', new DefaultValuePipe(CATALOG_DEFAULT_CALENDAR_DAYS), ParseIntPipe)
     days?: number,
+    @Query('personalized') personalized?: string,
+    @CurrentUser() user?: { id: string } | null,
   ): Promise<CalendarResponseDto> {
     const start = startDateString ? new Date(startDateString) : new Date();
     if (startDateString && Number.isNaN(start.getTime())) {
@@ -156,9 +172,29 @@ export class CatalogShowsController {
     if (daysToAdd < 0) {
       throw new BadRequestException('days must be greater than or equal to 0');
     }
+    if (daysToAdd > CATALOG_MAX_CALENDAR_DAYS) {
+      throw new BadRequestException(
+        `days must be less than or equal to ${CATALOG_MAX_CALENDAR_DAYS}`,
+      );
+    }
     end.setDate(end.getDate() + daysToAdd);
 
-    const episodes = await this.showRepository.findEpisodesByDateRange(start, end);
+    const isPersonalized = personalized === 'true';
+
+    if (isPersonalized && !user) {
+      throw new UnauthorizedException('Authentication required for personalized calendar');
+    }
+
+    const personalizedUserId = isPersonalized ? user!.id : undefined;
+
+    const [episodes, watchingShowsCount] = await Promise.all([
+      personalizedUserId
+        ? this.showRepository.findEpisodesByDateRange(start, end, { userId: personalizedUserId })
+        : this.showRepository.findEpisodesByDateRange(start, end),
+      personalizedUserId
+        ? this.watchingShowsCountQuery.execute(personalizedUserId)
+        : Promise.resolve(undefined),
+    ]);
 
     const grouped = groupEpisodesByDate(episodes);
 
@@ -166,6 +202,7 @@ export class CatalogShowsController {
       startDate: start.toISOString(),
       endDate: end.toISOString(),
       days: grouped,
+      ...(isPersonalized ? { watchingShowsCount } : {}),
     };
   }
 

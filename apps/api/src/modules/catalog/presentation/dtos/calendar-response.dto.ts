@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CalendarEpisodeDto {
   @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
@@ -52,4 +52,11 @@ export class CalendarResponseDto {
 
   @ApiProperty({ type: [CalendarDayDto] })
   days: CalendarDayDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Number of shows the user is currently watching. Only present when personalized=true.',
+    type: Number,
+  })
+  watchingShowsCount?: number;
 }
