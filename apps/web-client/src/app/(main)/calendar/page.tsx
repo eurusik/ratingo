@@ -4,10 +4,12 @@
  * Pre-fetches the current week's calendar on the server so the first paint is
  * populated. The client orchestrator takes over for week navigation.
  *
- * ISR: revalidates every 5 minutes (episode air dates change infrequently).
+ * Dynamic: reads a cookie to determine the user's preferred calendar mode so
+ * the SSR output matches the client state without a flash.
  */
 
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { getDictionary } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
 import { CalendarPageClient } from '@/modules/calendar';
@@ -19,8 +21,6 @@ export const metadata: Metadata = {
   description: dict.calendar.description,
 };
 
-export const revalidate = 300;
-
 /** Formats current date as YYYY-MM-DD using server-local time. */
 function getServerToday(): string {
   const now = new Date();
@@ -28,9 +28,16 @@ function getServerToday(): string {
 }
 
 export default async function CalendarPage() {
-  // Best-effort server pre-fetch — failures are silently swallowed so the page
-  // always renders. The client will re-fetch on mount if initialData is null.
-  const initialData = await catalogApi.getShowCalendar({ days: 7 }).catch(() => null);
+  const cookieStore = await cookies();
+  const initialMode = cookieStore.get('ratingo:calendar-mode')?.value === 'personalized'
+    ? ('personalized' as const)
+    : ('all' as const);
+
+  // Skip global calendar fetch when user prefers personalized mode — the data won't be used.
+  const initialData = initialMode === 'all'
+    ? await catalogApi.getShowCalendar({ days: 7 }).catch(() => null)
+    : null;
+
   const serverToday = getServerToday();
 
   return (
@@ -41,7 +48,12 @@ export default async function CalendarPage() {
           <p className="text-muted-foreground mt-1 text-sm">{dict.calendar.subtitle}</p>
         </header>
 
-        <CalendarPageClient initialData={initialData} serverToday={serverToday} locale="uk" />
+        <CalendarPageClient
+          initialData={initialData}
+          serverToday={serverToday}
+          locale="uk"
+          initialMode={initialMode}
+        />
       </div>
     </div>
   );
