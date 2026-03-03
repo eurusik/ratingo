@@ -29,7 +29,7 @@ function getServerToday(): string {
 
 export default async function CalendarPage() {
   const cookieStore = await cookies();
-  const initialMode = cookieStore.get('ratingo:calendar-mode')?.value === 'personalized'
+  const initialMode = cookieStore.get('ratingo-calendar-mode')?.value === 'personalized'
     ? ('personalized' as const)
     : ('all' as const);
 

@@ -198,7 +198,7 @@ function PersonalizedCalendarContent({
 // ---------------------------------------------------------------------------
 
 const CALENDAR_MODE_KEY = 'ratingo:calendar-mode';
-const CALENDAR_MODE_COOKIE = 'ratingo:calendar-mode';
+const CALENDAR_MODE_COOKIE = 'ratingo-calendar-mode';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 // ---------------------------------------------------------------------------
@@ -241,7 +241,7 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk', in
       const stored = localStorage.getItem(CALENDAR_MODE_KEY);
       if (stored === 'personalized' && mode !== 'personalized') {
         setMode('personalized');
-        document.cookie = `${CALENDAR_MODE_COOKIE}=personalized; path=/; max-age=${COOKIE_MAX_AGE}`;
+        document.cookie = `${CALENDAR_MODE_COOKIE}=personalized; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
       }
     } catch {
       // localStorage unavailable (private browsing, storage quota exceeded, etc.)
@@ -297,7 +297,7 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk', in
     } catch {
       // Silently ignore — preference won't persist but feature still works
     }
-    document.cookie = `${CALENDAR_MODE_COOKIE}=${next}; path=/; max-age=${COOKIE_MAX_AGE}`;
+    document.cookie = `${CALENDAR_MODE_COOKIE}=${next}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
   }
 
   return (
