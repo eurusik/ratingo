@@ -2884,6 +2884,8 @@ export interface components {
             /** @example 2024-11-08T00:00:00.000Z */
             endDate: string;
             days: components["schemas"]["CalendarDayDto"][];
+            /** @description Number of shows the user is currently watching. Only present when personalized=true. */
+            watchingShowsCount?: number;
         };
         EpisodeDto: {
             /**
@@ -6177,6 +6179,8 @@ export interface operations {
                 startDate?: string;
                 /** @description Number of days to include (default: 7). */
                 days?: number;
+                /** @description When true, returns only episodes from shows the authenticated user is currently watching. */
+                personalized?: "true" | "false";
             };
             header?: never;
             path?: never;
@@ -6195,6 +6199,20 @@ export interface operations {
                         data: components["schemas"]["CalendarResponseDto"];
                     };
                 };
+            };
+            /** @description days must be less than or equal to 90 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required for personalized calendar */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

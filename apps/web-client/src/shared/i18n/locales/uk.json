@@ -1534,7 +1534,15 @@
     "showMoreShowsOne": "серіал",
     "showMoreShowsFew": "серіали",
     "showMoreShowsMany": "серіалів",
-    "collapse": "Згорнути"
+    "collapse": "Згорнути",
+    "modeAll": "Всі",
+    "modePersonalized": "Персоналізований",
+    "loginRequired": "Увійдіть, щоб бачити серіали зі свого списку",
+    "noEpisodesPersonalized": "Немає запланованих серій",
+    "noEpisodesPersonalizedHint": "У ваших серіалах немає нових серій на цьому тижні",
+    "noWatchingShows": "Ви ще не дивитесь жодного серіалу",
+    "noWatchingShowsHint": "Додайте серіали зі статусом «Дивлюсь», щоб бачити їх у персональному календарі",
+    "browseCatalog": "Переглянути каталог"
   },
   "journal": {
     "title": "Журнал",

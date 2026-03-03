@@ -9,6 +9,7 @@
  */
 
 import { useQuery, type UseQueryOptions, type UseQueryResult } from '@tanstack/react-query';
+import type { components } from '@ratingo/api-contract';
 import {
   catalogApi,
   type ShowDetailsDto,
@@ -78,6 +79,33 @@ export function useShowCalendar(
   return useQuery({
     queryKey: queryKeys.shows.calendar(params?.startDate, params?.days),
     queryFn: () => catalogApi.getShowCalendar(params),
+    ...options,
+  });
+}
+
+/**
+ * Hook for fetching the personalized show calendar (episodes from shows the user is watching).
+ *
+ * Mirrors useShowCalendar but uses a distinct query key (includes 'personalized')
+ * and always passes personalized: true to the API.
+ *
+ * Only call this hook when the user is authenticated — the API returns 401
+ * for unauthenticated requests with personalized=true.
+ *
+ * @param params - Query parameters (startDate, days)
+ * @param options - React Query options
+ * @returns Query result with personalized calendar
+ *
+ * @example
+ * const { data: calendar } = usePersonalizedShowCalendar({ startDate: '2024-03-01', days: 7 });
+ */
+export function usePersonalizedShowCalendar(
+  params?: { startDate?: string; days?: number },
+  options?: Omit<UseQueryOptions<components['schemas']['CalendarResponseDto']>, 'queryKey' | 'queryFn'>,
+): UseQueryResult<components['schemas']['CalendarResponseDto']> {
+  return useQuery({
+    queryKey: queryKeys.shows.personalizedCalendar(params?.startDate, params?.days),
+    queryFn: () => catalogApi.getShowCalendar({ ...params, personalized: 'true' }),
     ...options,
   });
 }

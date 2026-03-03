@@ -7,6 +7,7 @@ import { DatabaseException } from '../../../../common/exceptions/database.except
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
 import { EligibilityStatus, EvaluationContext } from '../../../catalog-policy/public';
+import { USER_MEDIA_STATE } from '../../../user-media/domain/entities/user-media-state.entity';
 import { type CalendarEpisode } from '../../domain/repositories/show.repository.interface';
 
 /**
@@ -32,12 +33,17 @@ export class CalendarEpisodesQuery {
    *
    * @param {Date} startDate - Start of date range (inclusive)
    * @param {Date} endDate - End of date range (inclusive)
+   * @param {string | null} [userId] - When provided, filters to shows the user is currently watching
    * @returns {Promise<CalendarEpisode[]>} Episodes airing in the date range
    * @throws {DatabaseException} When database query fails
    */
-  async execute(startDate: Date, endDate: Date): Promise<CalendarEpisode[]> {
+  async execute(
+    startDate: Date,
+    endDate: Date,
+    userId?: string | null,
+  ): Promise<CalendarEpisode[]> {
     try {
-      const results = await this.db
+      const baseQuery = this.db
         .select({
           showId: schema.shows.mediaItemId,
           showSlug: schema.mediaItems.slug,
@@ -64,7 +70,20 @@ export class CalendarEpisodesQuery {
             eq(schema.mediaCatalogEvaluations.context, EvaluationContext.CATALOG),
             eq(schema.mediaCatalogEvaluations.status, EligibilityStatus.ELIGIBLE),
           ),
-        )
+        );
+
+      const withUserFilter = userId
+        ? baseQuery.innerJoin(
+            schema.userMediaState,
+            and(
+              eq(schema.userMediaState.mediaItemId, schema.mediaItems.id),
+              eq(schema.userMediaState.userId, userId),
+              eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
+            ),
+          )
+        : baseQuery;
+
+      const results = await withUserFilter
         .where(and(gte(schema.episodes.airDate, startDate), lte(schema.episodes.airDate, endDate)))
         .orderBy(asc(schema.episodes.airDate));
 

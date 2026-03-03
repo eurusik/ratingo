@@ -40,6 +40,7 @@ import { ShowDetailsQuery } from './infrastructure/queries/show-details.query';
 import { TrendingMoviesQuery } from './infrastructure/queries/trending-movies.query';
 import { TrendingShowsQuery } from './infrastructure/queries/trending-shows.query';
 import { WatchingNowMediaQuery } from './infrastructure/queries/watching-now-media.query';
+import { WatchingShowsCountQuery } from './infrastructure/queries/watching-shows-count.query';
 import { DrizzleGenreRepository } from './infrastructure/repositories/drizzle-genre.repository';
 import { DrizzleMediaRepository } from './infrastructure/repositories/drizzle-media.repository';
 import { DrizzleMovieRepository } from './infrastructure/repositories/drizzle-movie.repository';
@@ -79,6 +80,7 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
     ShowDetailsQuery,
     CalendarEpisodesQuery,
     NewEpisodesQuery,
+    WatchingShowsCountQuery,
 
     // Query Objects - Movies
     MovieDetailsQuery,

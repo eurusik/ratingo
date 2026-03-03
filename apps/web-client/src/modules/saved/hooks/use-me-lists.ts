@@ -91,6 +91,7 @@ export function usePauseMedia() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
   });
 }
@@ -103,6 +104,7 @@ export function useResumeMedia() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
   });
 }
@@ -118,6 +120,7 @@ export function useDropMedia() {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
   });
 }
@@ -132,6 +135,7 @@ export function useRestoreMedia() {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
   });
 }

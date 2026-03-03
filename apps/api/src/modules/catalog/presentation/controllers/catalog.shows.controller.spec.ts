@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { CardEnrichmentService } from '../../../shared/cards/application/card-enrichment.service';
@@ -6,6 +6,7 @@ import { CatalogUserStateEnricher } from '../../application/services/catalog-use
 import { ShowDetailsService } from '../../application/services/show-details.service';
 import { ShowNotFoundError } from '../../domain/errors';
 import { SHOW_REPOSITORY } from '../../domain/repositories/show.repository.interface';
+import { WatchingShowsCountQuery } from '../../infrastructure/queries/watching-shows-count.query';
 
 import { CatalogShowsController } from './catalog.shows.controller';
 
@@ -14,6 +15,7 @@ describe('CatalogShowsController', () => {
   let showRepository: any;
   let userStateEnricher: any;
   let showDetailsService: any;
+  let watchingShowsCountQuery: any;
 
   beforeEach(async () => {
     const mockShowRepository = {
@@ -50,6 +52,10 @@ describe('CatalogShowsController', () => {
       getBySlug: jest.fn(),
     };
 
+    const mockWatchingShowsCountQuery = {
+      execute: jest.fn().mockResolvedValue(3),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CatalogShowsController],
       providers: [
@@ -57,6 +63,7 @@ describe('CatalogShowsController', () => {
         { provide: CatalogUserStateEnricher, useValue: mockUserStateEnricher },
         { provide: CardEnrichmentService, useValue: mockCards },
         { provide: ShowDetailsService, useValue: mockShowDetailsService },
+        { provide: WatchingShowsCountQuery, useValue: mockWatchingShowsCountQuery },
       ],
     }).compile();
 
@@ -64,6 +71,7 @@ describe('CatalogShowsController', () => {
     showRepository = module.get(SHOW_REPOSITORY);
     userStateEnricher = module.get(CatalogUserStateEnricher);
     showDetailsService = module.get(ShowDetailsService);
+    watchingShowsCountQuery = module.get(WatchingShowsCountQuery);
   });
 
   describe('getTrendingShows', () => {
@@ -93,6 +101,44 @@ describe('CatalogShowsController', () => {
       expect(showRepository.findEpisodesByDateRange).toHaveBeenCalled();
       expect(result.days).toHaveLength(2);
       expect(result.days.find((d) => d.date === '2024-01-01')?.episodes).toHaveLength(2);
+    });
+
+    it('throws UnauthorizedException for personalized=true without authenticated user', async () => {
+      await expect(controller.getCalendar('2024-01-01', 7, 'true', null)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('passes userId to repository for personalized=true with authenticated user', async () => {
+      await controller.getCalendar('2024-01-01', 7, 'true', { id: 'user-abc' });
+
+      expect(showRepository.findEpisodesByDateRange).toHaveBeenCalledWith(
+        expect.any(Date),
+        expect.any(Date),
+        { userId: 'user-abc' },
+      );
+    });
+
+    it('does not filter by user when personalized is not set', async () => {
+      await controller.getCalendar('2024-01-01', 7, undefined, { id: 'user-abc' });
+
+      expect(showRepository.findEpisodesByDateRange).toHaveBeenCalledWith(
+        expect.any(Date),
+        expect.any(Date),
+      );
+    });
+
+    it('returns watchingShowsCount in response for personalized=true', async () => {
+      const result = await controller.getCalendar('2024-01-01', 7, 'true', { id: 'user-abc' });
+
+      expect(result.watchingShowsCount).toBe(3);
+    });
+
+    it('does not include watchingShowsCount for non-personalized requests', async () => {
+      const result = await controller.getCalendar('2024-01-01', 7, undefined, null);
+
+      expect(result.watchingShowsCount).toBeUndefined();
+      expect(watchingShowsCountQuery.execute).not.toHaveBeenCalled();
     });
   });
 

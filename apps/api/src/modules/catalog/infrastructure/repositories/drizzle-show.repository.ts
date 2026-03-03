@@ -202,10 +202,14 @@ export class DrizzleShowRepository implements IShowRepository {
   }
 
   /**
-   * Finds episodes airing within a date range for the global calendar.
+   * Finds episodes airing within a date range for the global or personalized calendar.
    */
-  async findEpisodesByDateRange(startDate: Date, endDate: Date): Promise<CalendarEpisode[]> {
-    return this.calendarEpisodesQuery.execute(startDate, endDate);
+  async findEpisodesByDateRange(
+    startDate: Date,
+    endDate: Date,
+    options?: { userId?: string | null },
+  ): Promise<CalendarEpisode[]> {
+    return this.calendarEpisodesQuery.execute(startDate, endDate, options?.userId);
   }
 
   /**

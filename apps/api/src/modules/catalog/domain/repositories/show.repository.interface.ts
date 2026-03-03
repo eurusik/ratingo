@@ -220,9 +220,17 @@ export interface IShowRepository {
   findNewEpisodes(days: number, limit: number): Promise<NewEpisodeItem[]>;
 
   /**
-   * Finds episodes airing within a date range for the global calendar.
+   * Finds episodes airing within a date range for the global or personalized calendar.
+   *
+   * @param startDate - Start of date range (inclusive)
+   * @param endDate - End of date range (inclusive)
+   * @param options.userId - When provided, filters to shows the user is currently watching
    */
-  findEpisodesByDateRange(startDate: Date, endDate: Date): Promise<CalendarEpisode[]>;
+  findEpisodesByDateRange(
+    startDate: Date,
+    endDate: Date,
+    options?: { userId?: string | null },
+  ): Promise<CalendarEpisode[]>;
 
   /**
    * Finds trending shows with filtering and pagination.

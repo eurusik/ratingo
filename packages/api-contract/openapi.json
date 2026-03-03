@@ -1364,6 +1364,19 @@
             "schema": {
               "type": "number"
             }
+          },
+          {
+            "name": "personalized",
+            "required": false,
+            "in": "query",
+            "description": "When true, returns only episodes from shows the authenticated user is currently watching.",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1391,6 +1404,12 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "days must be less than or equal to 90"
+          },
+          "401": {
+            "description": "Authentication required for personalized calendar"
           }
         },
         "tags": [
@@ -9407,6 +9426,10 @@
             "items": {
               "$ref": "#/components/schemas/CalendarDayDto"
             }
+          },
+          "watchingShowsCount": {
+            "type": "number",
+            "description": "Number of shows the user is currently watching. Only present when personalized=true."
           }
         },
         "required": [
