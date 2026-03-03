@@ -13,4 +13,5 @@ export {
   AnnouncementBarProvider,
   useAnnouncementBar,
 } from './announcement-bar';
+export { HeaderNavButton } from './header-nav-button';
 export type { HeaderContextValue } from './header-context';

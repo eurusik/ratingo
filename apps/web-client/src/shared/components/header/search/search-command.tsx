@@ -30,13 +30,13 @@ export function SearchCommand() {
     <>
       <Button
         variant="ghost"
-        size="sm"
         onClick={() => setOpen(true)}
-        className="gap-2 text-cinema-text-muted hover:text-cinema-text-primary hover:bg-cinema-elevated/50"
+        size="icon"
+        className="h-9 w-9 rounded-full text-cinema-text-muted hover:text-cinema-text-primary hover:bg-cinema-elevated/50 lg:h-auto lg:w-auto lg:rounded-md lg:px-3 lg:py-1.5 lg:gap-2"
       >
-        <Search className="h-4 w-4" />
-        <span className="hidden sm:inline">{dict.search.placeholder}</span>
-        <kbd className="hidden md:inline-flex h-5 select-none items-center gap-1 rounded border border-cinema-border bg-cinema-elevated px-1.5 font-mono text-[10px] font-medium text-cinema-text-muted">
+        <Search className="h-5 w-5 lg:h-4 lg:w-4" />
+        <span className="hidden lg:inline">{dict.search.placeholder}</span>
+        <kbd className="hidden lg:inline-flex h-5 select-none items-center gap-1 rounded border border-cinema-border bg-cinema-elevated px-1.5 font-mono text-[10px] font-medium text-cinema-text-muted">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>

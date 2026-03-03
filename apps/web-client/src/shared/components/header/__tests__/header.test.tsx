@@ -22,6 +22,14 @@ jest.mock('../notification-bell', () => ({
   NotificationBell: () => <div data-testid="notification-bell">Notifications</div>,
 }));
 
+jest.mock('../header-nav-button', () => ({
+  HeaderNavButton: ({ label, href }: { label: string; href: string }) => (
+    <a data-testid={`header-nav-${href.slice(1)}`} href={href}>
+      {label}
+    </a>
+  ),
+}));
+
 const renderHeader = () => {
   return render(
     <I18nProvider locale="uk">
@@ -65,6 +73,12 @@ describe('Header', () => {
       expect(screen.getByTestId('search-command')).toBeInTheDocument();
       expect(screen.getByTestId('notification-bell')).toBeInTheDocument();
       expect(screen.getByTestId('user-menu')).toBeInTheDocument();
+    });
+
+    it('renders saved and activity nav buttons', () => {
+      renderHeader();
+      expect(screen.getByTestId('header-nav-saved')).toBeInTheDocument();
+      expect(screen.getByTestId('header-nav-activity')).toBeInTheDocument();
     });
   });
 
