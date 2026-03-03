@@ -6207,6 +6207,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Authentication required for personalized calendar */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     CatalogShowsController_getShowBySlug: {

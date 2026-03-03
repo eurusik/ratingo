@@ -17,6 +17,7 @@ import {
   ApiOperation,
   ApiQuery,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import {
@@ -162,6 +163,9 @@ export class CatalogShowsController {
   @ApiBadRequestResponse({
     description: `days must be less than or equal to ${CATALOG_MAX_CALENDAR_DAYS}`,
   })
+  @ApiUnauthorizedResponse({
+    description: 'Authentication required for personalized calendar',
+  })
   async getCalendar(
     @Query('startDate') startDateString?: string,
     @Query('days', new DefaultValuePipe(CATALOG_DEFAULT_CALENDAR_DAYS), ParseIntPipe)
@@ -187,6 +191,10 @@ export class CatalogShowsController {
       );
     }
     end.setDate(end.getDate() + daysToAdd);
+
+    if (personalized !== undefined && personalized !== 'true' && personalized !== 'false') {
+      throw new BadRequestException("personalized must be 'true' or 'false'");
+    }
 
     const isPersonalized = personalized === 'true';
 

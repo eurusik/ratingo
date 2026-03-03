@@ -1407,6 +1407,9 @@
           },
           "400": {
             "description": "days must be less than or equal to 90"
+          },
+          "401": {
+            "description": "Authentication required for personalized calendar"
           }
         },
         "tags": [
