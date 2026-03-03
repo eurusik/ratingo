@@ -9,7 +9,9 @@
     "showAll": "Show all",
     "showMore": "Show {count} more",
     "back": "Back",
-    "home": "Go home"
+    "home": "Go home",
+    "details": "Details",
+    "loadMore": "Load more"
   },
   "announcement": {
     "communityRating": {

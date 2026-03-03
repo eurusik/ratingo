@@ -8,3 +8,4 @@ export * from './footer';
 export * from './mobile-dock';
 export { PwaInstallListener } from './pwa-install-listener';
 export { NetworkStatusListener } from './network-status-listener';
+export { InfiniteScrollLoader } from './infinite-scroll-loader';

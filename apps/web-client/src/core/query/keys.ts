@@ -110,13 +110,13 @@ export const queryKeys = {
     activity: ['me-lists', 'activity'] as const,
     favoriteUpdates: ['me-lists', 'favorite-updates'] as const,
     historyAll: ['me-lists', 'history'] as const,
-    history: (sort?: string) => ['me-lists', 'history', sort ?? null] as const,
+    history: (sort?: string, limit?: number) => ['me-lists', 'history', sort ?? null, limit ?? null] as const,
     watchlistAll: ['me-lists', 'watchlist'] as const,
     watchlist: (sort?: string) => ['me-lists', 'watchlist', sort ?? null] as const,
     pausedAll: ['me-lists', 'paused'] as const,
-    paused: (sort?: string) => ['me-lists', 'paused', sort ?? null] as const,
+    paused: (sort?: string, limit?: number) => ['me-lists', 'paused', sort ?? null, limit ?? null] as const,
     droppedAll: ['me-lists', 'dropped'] as const,
-    dropped: (sort?: string) => ['me-lists', 'dropped', sort ?? null] as const,
+    dropped: (sort?: string, limit?: number) => ['me-lists', 'dropped', sort ?? null, limit ?? null] as const,
   },
 
   /** Public user queries. */

@@ -10,7 +10,7 @@ import { Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { Watchlist, HistoryList, PausedList, DroppedList, FavoriteUpdates } from '@/modules/saved';
+import { Watchlist, HistoryList, PausedList, DroppedList, FavoriteUpdates, ActivityEpisodeSheet } from '@/modules/saved';
 import { USER_MEDIA_STATE } from '@/core/api';
 
 /**
@@ -105,6 +105,8 @@ function ActivityPageContent() {
             <HistoryList />
           </TabsContent>
         </Tabs>
+
+        <ActivityEpisodeSheet />
       </div>
     </div>
   );

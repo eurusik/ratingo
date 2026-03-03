@@ -10,18 +10,27 @@ export type { MeListSort } from '@/core/api/me-lists.client';
 
 const STALE_5_MIN = 1000 * 60 * 5;
 
-function useHistoryBase(sort?: MeListSort, enabled = true) {
+/** Page size for progressive loading in Activity lists. */
+export const PAGE_SIZE = 20;
+
+interface MeListOptions {
+  sort?: MeListSort;
+  limit?: number;
+  enabled?: boolean;
+}
+
+function useHistoryBase({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   return useQuery({
-    queryKey: queryKeys.meLists.history(sort),
-    queryFn: () => meListsApi.getHistory(sort ? { sort } : undefined),
+    queryKey: queryKeys.meLists.history(sort, limit),
+    queryFn: () => meListsApi.getHistory({ sort, limit }),
     enabled,
     staleTime: STALE_5_MIN,
     placeholderData: keepPreviousData,
   });
 }
 
-export function useWatching(sort?: MeListSort, enabled = true) {
-  const query = useHistoryBase(sort, enabled);
+export function useWatching(options: MeListOptions = {}) {
+  const query = useHistoryBase(options);
 
   const data = useMemo(
     () =>
@@ -37,8 +46,8 @@ export function useWatching(sort?: MeListSort, enabled = true) {
   return { ...query, data };
 }
 
-export function useCompleted(sort?: MeListSort, enabled = true) {
-  const query = useHistoryBase(sort, enabled);
+export function useCompleted(options: MeListOptions = {}) {
+  const query = useHistoryBase(options);
 
   const data = useMemo(
     () =>
@@ -54,20 +63,20 @@ export function useCompleted(sort?: MeListSort, enabled = true) {
   return { ...query, data };
 }
 
-export function usePaused(sort?: MeListSort, enabled = true) {
+export function usePaused({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   return useQuery({
-    queryKey: queryKeys.meLists.paused(sort),
-    queryFn: () => meListsApi.getPaused(sort ? { sort } : undefined),
+    queryKey: queryKeys.meLists.paused(sort, limit),
+    queryFn: () => meListsApi.getPaused({ sort, limit }),
     enabled,
     staleTime: STALE_5_MIN,
     placeholderData: keepPreviousData,
   });
 }
 
-export function useDropped(sort?: MeListSort, enabled = true) {
+export function useDropped({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   return useQuery({
-    queryKey: queryKeys.meLists.dropped(sort),
-    queryFn: () => meListsApi.getDropped(sort ? { sort } : undefined),
+    queryKey: queryKeys.meLists.dropped(sort, limit),
+    queryFn: () => meListsApi.getDropped({ sort, limit }),
     enabled,
     staleTime: STALE_5_MIN,
     placeholderData: keepPreviousData,
