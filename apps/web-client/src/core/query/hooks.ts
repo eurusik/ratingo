@@ -14,6 +14,7 @@ import {
   catalogApi,
   type ShowDetailsDto,
   type TrendingShowsDto,
+  type CalendarResponseDto,
   type ProviderDto,
 } from '../api/catalog.client';
 import { queryKeys } from './keys';
@@ -104,7 +105,7 @@ export function usePersonalizedShowCalendar(
 ): UseQueryResult<components['schemas']['CalendarResponseDto']> {
   return useQuery({
     queryKey: queryKeys.shows.personalizedCalendar(params?.startDate, params?.days),
-    queryFn: () => catalogApi.getShowCalendar({ ...params, personalized: true }),
+    queryFn: () => catalogApi.getShowCalendar({ ...params, personalized: 'true' }),
     ...options,
   });
 }
