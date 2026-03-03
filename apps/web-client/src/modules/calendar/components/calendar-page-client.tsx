@@ -31,6 +31,8 @@ export interface CalendarPageClientProps {
   /** Server-rendered today date (YYYY-MM-DD) to avoid hydration mismatch. */
   serverToday: string;
   locale?: Locale;
+  /** Server-read cookie preference — avoids flash when restoring personalized mode. */
+  initialMode?: CalendarMode;
 }
 
 /**
@@ -196,6 +198,8 @@ function PersonalizedCalendarContent({
 // ---------------------------------------------------------------------------
 
 const CALENDAR_MODE_KEY = 'ratingo:calendar-mode';
+const CALENDAR_MODE_COOKIE = 'ratingo-calendar-mode';
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 // ---------------------------------------------------------------------------
 // Main component
@@ -219,36 +223,35 @@ const CALENDAR_MODE_KEY = 'ratingo:calendar-mode';
  * Switching modes resets weekOffset to 0 to prevent stale week data from
  * appearing in the new mode.
  *
- * Mode is persisted to localStorage so the preference survives page reloads.
- * The server always renders with mode='all' to avoid hydration mismatch; the
- * stored value is read client-side in a useEffect after hydration.
+ * Mode is persisted to localStorage + cookie so the preference survives page
+ * reloads. The cookie is read server-side to SSR the correct mode without flash.
  *
  * @example
- * <CalendarPageClient initialData={serverFetchedData} serverToday="2024-02-19" />
+ * <CalendarPageClient initialData={serverFetchedData} serverToday="2024-02-19" initialMode="all" />
  */
-export function CalendarPageClient({ initialData, serverToday, locale = 'uk' }: CalendarPageClientProps) {
+export function CalendarPageClient({ initialData, serverToday, locale = 'uk', initialMode = 'all' }: CalendarPageClientProps) {
   const [weekOffset, setWeekOffset] = useState(0);
-  // Always start with 'all' on the server to avoid hydration mismatch.
-  // The stored preference is applied client-side after mount.
-  const [mode, setMode] = useState<CalendarMode>('all');
+  const [mode, setMode] = useState<CalendarMode>(initialMode);
   const [isPersonalizedLoading, setIsPersonalizedLoading] = useState(false);
 
-  // Restore persisted mode after hydration — runs only on the client.
+  // Migration: sync cookie for users who have localStorage but no cookie yet.
+  // After one visit, subsequent reloads use the cookie for flicker-free SSR.
   useEffect(() => {
     try {
       const stored = localStorage.getItem(CALENDAR_MODE_KEY);
-      if (stored === 'personalized') {
+      if (stored === 'personalized' && mode !== 'personalized') {
         setMode('personalized');
+        document.cookie = `${CALENDAR_MODE_COOKIE}=personalized; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
       }
     } catch {
       // localStorage unavailable (private browsing, storage quota exceeded, etc.)
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dict = getDictionary(locale);
 
   // useAuth is safe here: AuthProvider wraps the whole app.
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   const isCurrentWeek = weekOffset === 0;
 
@@ -294,6 +297,7 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk' }: 
     } catch {
       // Silently ignore — preference won't persist but feature still works
     }
+    document.cookie = `${CALENDAR_MODE_COOKIE}=${next}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
   }
 
   return (
@@ -317,16 +321,22 @@ export function CalendarPageClient({ initialData, serverToday, locale = 'uk' }: 
 
       {/* Personalized mode */}
       {mode === 'personalized' && (
-        isAuthenticated
+        isAuthLoading
           ? (
-            <PersonalizedCalendarContent
-              startDate={startDate}
-              serverToday={serverToday}
-              locale={locale}
-              onLoadingChange={setIsPersonalizedLoading}
-            />
+            <div className="mt-6">
+              <CalendarSkeleton />
+            </div>
           )
-          : <CalendarLoginPrompt locale={locale} />
+          : isAuthenticated
+            ? (
+              <PersonalizedCalendarContent
+                startDate={startDate}
+                serverToday={serverToday}
+                locale={locale}
+                onLoadingChange={setIsPersonalizedLoading}
+              />
+            )
+            : <CalendarLoginPrompt locale={locale} />
       )}
 
       {/* Global (all) mode */}

@@ -161,7 +161,7 @@ export class CatalogShowsController {
   })
   @ApiOkResponse({ type: CalendarResponseDto })
   @ApiBadRequestResponse({
-    description: `days must be less than or equal to ${CATALOG_MAX_CALENDAR_DAYS}`,
+    description: `Invalid query parameters (days must be <= ${CATALOG_MAX_CALENDAR_DAYS}; personalized must be 'true' or 'false')`,
   })
   @ApiUnauthorizedResponse({
     description: 'Authentication required for personalized calendar',

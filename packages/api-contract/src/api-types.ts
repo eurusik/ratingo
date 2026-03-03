@@ -6200,7 +6200,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description days must be less than or equal to 90 */
+            /** @description Invalid query parameters (days must be <= 90; personalized must be 'true' or 'false') */
             400: {
                 headers: {
                     [name: string]: unknown;

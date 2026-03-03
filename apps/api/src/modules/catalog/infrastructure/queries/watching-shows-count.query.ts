@@ -54,7 +54,7 @@ export class WatchingShowsCountQuery {
         'Failed to count watching shows',
         error instanceof Error ? error.stack : undefined,
       );
-      throw new DatabaseException('Failed to count watching shows');
+      throw new DatabaseException('Failed to count watching shows', error);
     }
   }
 }
