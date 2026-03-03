@@ -6180,7 +6180,7 @@ export interface operations {
                 /** @description Number of days to include (default: 7). */
                 days?: number;
                 /** @description When true, returns only episodes from shows the authenticated user is currently watching. */
-                personalized?: boolean;
+                personalized?: "true" | "false";
             };
             header?: never;
             path?: never;
@@ -6199,6 +6199,13 @@ export interface operations {
                         data: components["schemas"]["CalendarResponseDto"];
                     };
                 };
+            };
+            /** @description days must be less than or equal to 90 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

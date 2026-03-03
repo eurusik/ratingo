@@ -51,12 +51,10 @@ export class WatchingShowsCountQuery {
       return result?.count ?? 0;
     } catch (error) {
       this.logger.error(
-        `Failed to count watching shows for user ${userId}: ${error.message}`,
-        error.stack,
+        'Failed to count watching shows',
+        error instanceof Error ? error.stack : undefined,
       );
-      throw new DatabaseException('Failed to count watching shows', {
-        originalError: error.message,
-      });
+      throw new DatabaseException('Failed to count watching shows');
     }
   }
 }

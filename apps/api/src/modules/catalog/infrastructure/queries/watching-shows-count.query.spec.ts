@@ -8,11 +8,8 @@ const createThenable = (resolveWith: any = [], rejectWith?: Error) => {
     thenable[m] = jest.fn().mockReturnValue(thenable);
   });
 
-  if (rejectWith) {
-    thenable.then = (_res: any, rej: any) => Promise.reject(rejectWith).catch(rej);
-  } else {
-    thenable.then = (res: any) => Promise.resolve(resolveWith).then(res);
-  }
+  const terminal = rejectWith ? Promise.reject(rejectWith) : Promise.resolve(resolveWith);
+  thenable.where = jest.fn().mockReturnValue(terminal);
   return thenable;
 };
 

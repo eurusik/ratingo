@@ -132,6 +132,10 @@ function PersonalizedCalendarContent({
     onLoadingChange(isLoading);
   }, [isLoading, onLoadingChange]);
 
+  useEffect(() => {
+    return () => { onLoadingChange(false); };
+  }, [onLoadingChange]);
+
   const isEmpty = !!data && data.days.every((day) => day.episodes.length === 0);
 
   if (isLoading) {

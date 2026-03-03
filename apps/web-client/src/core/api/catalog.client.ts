@@ -8,7 +8,7 @@
  * const shows = await catalogApi.getTrendingShows({ limit: 20 });
  */
 
-import type { GetData, GetJson, GetArrayItem, components } from '@ratingo/api-contract';
+import type { GetData, GetJson, GetArrayItem, GetQuery, components } from '@ratingo/api-contract';
 import { apiGet, apiPost } from './client';
 
 /**
@@ -291,11 +291,7 @@ export const catalogApi = {
    * const calendar = await catalogApi.getShowCalendar({ days: 7 });
    * const personalized = await catalogApi.getShowCalendar({ days: 7, personalized: true });
    */
-  async getShowCalendar(params?: {
-    startDate?: string;
-    days?: number;
-    personalized?: boolean;
-  }): Promise<CalendarResponseDto> {
+  async getShowCalendar(params?: GetQuery<'/api/catalog/shows/calendar'>): Promise<CalendarResponseDto> {
     return apiGet<CalendarResponseDto>('catalog/shows/calendar', {
       searchParams: params as Record<string, string | number | boolean>,
     });

@@ -11,7 +11,13 @@ import {
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import {
   CATALOG_DEFAULT_CALENDAR_DAYS,
@@ -153,6 +159,9 @@ export class CatalogShowsController {
       'When true, returns only episodes from shows the authenticated user is currently watching.',
   })
   @ApiOkResponse({ type: CalendarResponseDto })
+  @ApiBadRequestResponse({
+    description: `days must be less than or equal to ${CATALOG_MAX_CALENDAR_DAYS}`,
+  })
   async getCalendar(
     @Query('startDate') startDateString?: string,
     @Query('days', new DefaultValuePipe(CATALOG_DEFAULT_CALENDAR_DAYS), ParseIntPipe)

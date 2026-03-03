@@ -1537,7 +1537,7 @@
     "modePersonalized": "Personalized",
     "loginRequired": "Sign in to see shows from your list",
     "noEpisodesPersonalized": "No upcoming episodes",
-    "noEpisodesPersonalizedHint": "None of your watched shows have new episodes this week",
+    "noEpisodesPersonalizedHint": "None of the shows you're watching have new episodes this week",
     "noWatchingShows": "You're not watching any shows yet",
     "noWatchingShowsHint": "Mark shows as 'Watching' to see their upcoming episodes here",
     "browseCatalog": "Browse catalog"

@@ -9,11 +9,11 @@
  */
 
 import { useQuery, type UseQueryOptions, type UseQueryResult } from '@tanstack/react-query';
+import type { components } from '@ratingo/api-contract';
 import {
   catalogApi,
   type ShowDetailsDto,
   type TrendingShowsDto,
-  type CalendarResponseDto,
   type ProviderDto,
 } from '../api/catalog.client';
 import { queryKeys } from './keys';
@@ -100,8 +100,8 @@ export function useShowCalendar(
  */
 export function usePersonalizedShowCalendar(
   params?: { startDate?: string; days?: number },
-  options?: Omit<UseQueryOptions<CalendarResponseDto>, 'queryKey' | 'queryFn'>,
-): UseQueryResult<CalendarResponseDto> {
+  options?: Omit<UseQueryOptions<components['schemas']['CalendarResponseDto']>, 'queryKey' | 'queryFn'>,
+): UseQueryResult<components['schemas']['CalendarResponseDto']> {
   return useQuery({
     queryKey: queryKeys.shows.personalizedCalendar(params?.startDate, params?.days),
     queryFn: () => catalogApi.getShowCalendar({ ...params, personalized: true }),

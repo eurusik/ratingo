@@ -1371,7 +1371,11 @@
             "in": "query",
             "description": "When true, returns only episodes from shows the authenticated user is currently watching.",
             "schema": {
-              "type": "boolean"
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
             }
           }
         ],
@@ -1400,6 +1404,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "days must be less than or equal to 90"
           }
         },
         "tags": [
