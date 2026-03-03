@@ -41,7 +41,10 @@ export function CalendarModeToggle({
 
   return (
     <Tabs value={mode} onValueChange={(v) => onModeChange(v as CalendarMode)}>
-      <TabsList className="bg-cinema-card border border-cinema-borderSoft h-auto gap-1 p-1 w-full sm:w-fit">
+      <TabsList
+        aria-label={dict.calendar.title}
+        className="bg-cinema-card border border-cinema-borderSoft h-auto gap-1 p-1 w-full sm:w-fit"
+      >
         <TabsTrigger
           value="all"
           className="data-[state=active]:bg-cinema-elevated flex-1 sm:flex-none"
