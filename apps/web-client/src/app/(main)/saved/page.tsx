@@ -63,11 +63,11 @@ function SavedPageContent() {
         <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.saved.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 h-auto gap-1 p-1 overflow-x-auto flex-nowrap scrollbar-hide">
-            <TabsTrigger value={TAB_VALUES.FOR_LATER} className="data-[state=active]:bg-cinema-elevated">
+          <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-full">
+            <TabsTrigger value={TAB_VALUES.FOR_LATER} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.saved.tabs.forLater}
             </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.CONSIDERING} className="data-[state=active]:bg-cinema-elevated">
+            <TabsTrigger value={TAB_VALUES.CONSIDERING} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.saved.tabs.considering}
             </TabsTrigger>
           </TabsList>

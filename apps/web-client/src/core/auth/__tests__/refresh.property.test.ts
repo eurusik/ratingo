@@ -17,6 +17,19 @@ import {
   broadcastRefreshFailed,
 } from '../cross-tab-sync';
 
+// Mock ApiError to prevent transitive ky (ESM) import
+jest.mock('../../api/error', () => {
+  class ApiError extends Error {
+    statusCode: number;
+    constructor(message: string, statusCode: number) {
+      super(message);
+      this.name = 'ApiError';
+      this.statusCode = statusCode;
+    }
+  }
+  return { ApiError };
+});
+
 // Mock dependencies
 jest.mock('../token-storage', () => ({
   tokenStorage: {
@@ -235,27 +248,59 @@ describe('Single-flight token refresh', () => {
   });
 
   /**
-   * Property: refreshTokens broadcasts failure on error
+   * Property: refreshTokens broadcasts failure on error (after retry)
+   *
+   * refresh.ts now retries once on transient failures (non-401/403).
+   * A generic Error triggers: attempt → 1s wait → retry → fail → broadcast failure.
+   * Uses fake timers to avoid real 1s delays.
    */
-  it('broadcasts refresh failure on error', async () => {
+  it(
+    'broadcasts refresh failure on error (retries once on transient failure)',
+    async () => {
+      _resetRefreshState();
+      jest.clearAllMocks();
+
+      mockTokenStorage.getRefreshToken.mockReturnValue('some-refresh-token');
+      mockAuthApi.refresh.mockImplementation(() => Promise.reject(new Error('Refresh failed')));
+
+      await expect(refreshTokens()).rejects.toThrow('Refresh failed');
+
+      // Should have attempted twice (initial + 1 retry after 1s delay)
+      expect(mockAuthApi.refresh).toHaveBeenCalledTimes(2);
+
+      // Should broadcast start
+      expect(mockBroadcastRefreshStart).toHaveBeenCalledTimes(1);
+
+      // Should broadcast failure
+      expect(mockBroadcastRefreshFailed).toHaveBeenCalledTimes(1);
+
+      // Should not broadcast success
+      expect(mockBroadcastRefreshSuccess).not.toHaveBeenCalled();
+    },
+    10000,
+  );
+
+  /**
+   * Property: definitive auth failure (401) does NOT retry
+   */
+  it('does not retry on definitive auth failure (401)', async () => {
+    const { ApiError } = jest.requireMock('../../api/error') as { ApiError: new (msg: string, code: number) => Error };
+
     await fc.assert(
       fc.asyncProperty(fc.string({ minLength: 1 }), async (refreshToken) => {
         _resetRefreshState();
         jest.clearAllMocks();
 
         mockTokenStorage.getRefreshToken.mockReturnValue(refreshToken);
-        mockAuthApi.refresh.mockRejectedValue(new Error('Refresh failed'));
+        mockAuthApi.refresh.mockRejectedValue(new ApiError('Unauthorized', 401));
 
-        await expect(refreshTokens()).rejects.toThrow('Refresh failed');
+        await expect(refreshTokens()).rejects.toThrow('Unauthorized');
 
-        // Should broadcast start
-        expect(mockBroadcastRefreshStart).toHaveBeenCalledTimes(1);
+        // Should have attempted only once — no retry on 401
+        expect(mockAuthApi.refresh).toHaveBeenCalledTimes(1);
 
         // Should broadcast failure
         expect(mockBroadcastRefreshFailed).toHaveBeenCalledTimes(1);
-
-        // Should not broadcast success
-        expect(mockBroadcastRefreshSuccess).not.toHaveBeenCalled();
       }),
       { numRuns: 100 },
     );

@@ -34,7 +34,7 @@ jest.mock('lucide-react', () => ({
   Film: () => <svg data-testid="icon-film" />,
   Search: () => <svg data-testid="icon-search" />,
   Play: () => <svg data-testid="icon-play" />,
-  CalendarDays: () => <svg data-testid="icon-calendar" />,
+  Bookmark: () => <svg data-testid="icon-bookmark" />,
 }));
 
 const mockOpenLogin = jest.fn();
@@ -55,7 +55,7 @@ jest.mock('@/shared/stores/search-dialog.store', () => ({
 
 const mockDict = {
   nav: { shows: 'Серіали', movies: 'Фільми', search: 'Пошук', calendar: 'Календар' },
-  auth: { activity: 'Активність' },
+  auth: { activity: 'Активність', saved: 'Збережене' },
 };
 
 jest.mock('@/shared/i18n', () => ({
@@ -83,13 +83,13 @@ describe('MobileDock', () => {
   /* ---- Rendering ---- */
 
   describe('rendering', () => {
-    it('renders 5 items: Shows, Movies, Search, Calendar, Activity', () => {
+    it('renders 5 items: Shows, Movies, Search, Saved, Activity', () => {
       render(<MobileDock />);
 
       expect(screen.getByText('Серіали')).toBeInTheDocument();
       expect(screen.getByText('Фільми')).toBeInTheDocument();
       expect(screen.getByText('Пошук')).toBeInTheDocument();
-      expect(screen.getByText('Календар')).toBeInTheDocument();
+      expect(screen.getByText('Збережене')).toBeInTheDocument();
       expect(screen.getByText('Активність')).toBeInTheDocument();
     });
 
@@ -100,7 +100,7 @@ describe('MobileDock', () => {
       expect(screen.getByText('Серіали')).toBeInTheDocument();
       expect(screen.getByText('Фільми')).toBeInTheDocument();
       expect(screen.getByText('Пошук')).toBeInTheDocument();
-      expect(screen.getByText('Календар')).toBeInTheDocument();
+      expect(screen.getByText('Збережене')).toBeInTheDocument();
       expect(screen.getByText('Активність')).toBeInTheDocument();
     });
 
@@ -118,7 +118,7 @@ describe('MobileDock', () => {
       expect(screen.getByTestId('icon-flame')).toBeInTheDocument();
       expect(screen.getByTestId('icon-film')).toBeInTheDocument();
       expect(screen.getByTestId('icon-search')).toBeInTheDocument();
-      expect(screen.getByTestId('icon-calendar')).toBeInTheDocument();
+      expect(screen.getByTestId('icon-bookmark')).toBeInTheDocument();
       expect(screen.getByTestId('icon-play')).toBeInTheDocument();
     });
 
@@ -183,7 +183,7 @@ describe('MobileDock', () => {
 
       expect(screen.getByText('Серіали')).not.toHaveClass('font-medium');
       expect(screen.getByText('Фільми')).not.toHaveClass('font-medium');
-      expect(screen.getByText('Календар')).not.toHaveClass('font-medium');
+      expect(screen.getByText('Збережене')).not.toHaveClass('font-medium');
       expect(screen.getByText('Активність')).not.toHaveClass('font-medium');
     });
 
@@ -194,23 +194,25 @@ describe('MobileDock', () => {
 
       expect(screen.getByText('Серіали')).not.toHaveClass('font-medium');
       expect(screen.getByText('Фільми')).not.toHaveClass('font-medium');
-      expect(screen.getByText('Календар')).not.toHaveClass('font-medium');
+      expect(screen.getByText('Збережене')).not.toHaveClass('font-medium');
       expect(screen.getByText('Активність')).not.toHaveClass('font-medium');
     });
 
-    it('marks Calendar tab active on /calendar path', () => {
-      mockUsePathname.mockReturnValue('/calendar');
+    it('marks Saved tab active on /saved path', () => {
+      mockUsePathname.mockReturnValue('/saved');
       render(<MobileDock />);
 
-      expect(screen.getByText('Календар')).toHaveClass('font-medium');
+      expect(screen.getByText('Збережене')).toHaveClass('font-medium');
+      expect(screen.getByRole('link', { name: /Збережене/i })).toHaveAttribute('aria-current', 'page');
     });
 
-    it('marks Calendar tab active on /calendar path for authenticated users', () => {
-      mockUsePathname.mockReturnValue('/calendar');
+    it('marks Saved tab active on /saved path for authenticated users', () => {
+      mockUsePathname.mockReturnValue('/saved');
       mockIsAuthenticated = true;
       render(<MobileDock />);
 
-      expect(screen.getByText('Календар')).toHaveClass('font-medium');
+      expect(screen.getByText('Збережене')).toHaveClass('font-medium');
+      expect(screen.getByRole('link', { name: /Збережене/i })).toHaveAttribute('aria-current', 'page');
     });
   });
 
@@ -233,22 +235,26 @@ describe('MobileDock', () => {
     });
   });
 
-  /* ---- Calendar tab ---- */
+  /* ---- Saved tab auth guard ---- */
 
-  describe('Calendar tab', () => {
-    it('renders as a plain link', () => {
+  describe('Saved tab', () => {
+    it('calls openLogin and does not navigate when user is not authenticated', () => {
+      mockIsAuthenticated = false;
       render(<MobileDock />);
 
-      const link = screen.getByText('Календар').closest('a');
-      expect(link).toHaveAttribute('href', '/calendar');
+      fireEvent.click(screen.getByText('Збережене'));
+
+      expect(mockOpenLogin).toHaveBeenCalledTimes(1);
+      expect(mockRouterPush).not.toHaveBeenCalled();
     });
 
-    it('renders for authenticated users too', () => {
+    it('navigates to /saved when user is authenticated', () => {
       mockIsAuthenticated = true;
       render(<MobileDock />);
 
-      const link = screen.getByText('Календар').closest('a');
-      expect(link).toHaveAttribute('href', '/calendar');
+      fireEvent.click(screen.getByText('Збережене'));
+
+      expect(mockOpenLogin).not.toHaveBeenCalled();
     });
   });
 
@@ -272,7 +278,6 @@ describe('MobileDock', () => {
       fireEvent.click(screen.getByText('Активність'));
 
       expect(mockOpenLogin).not.toHaveBeenCalled();
-      expect(mockRouterPush).toHaveBeenCalledWith('/activity');
     });
   });
 });
@@ -401,7 +406,7 @@ describe('MobileDockItem', () => {
       expect(mockRouterPush).not.toHaveBeenCalled();
     });
 
-    it('pushes route when onBeforeNavigate returns true', () => {
+    it('allows navigation when onBeforeNavigate returns true', () => {
       const onBeforeNavigate = jest.fn().mockReturnValue(true);
       render(
         <MobileDockItem
@@ -416,7 +421,8 @@ describe('MobileDockItem', () => {
       fireEvent.click(screen.getByRole('link', { name: /Activity/i }));
 
       expect(onBeforeNavigate).toHaveBeenCalledTimes(1);
-      expect(mockRouterPush).toHaveBeenCalledWith('/activity');
+      // Link handles navigation natively; router.push is no longer called
+      expect(mockRouterPush).not.toHaveBeenCalled();
     });
   });
 

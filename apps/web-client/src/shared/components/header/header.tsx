@@ -6,7 +6,7 @@
 
 import Link from 'next/link';
 import { type Route } from 'next';
-import { ArrowLeft, Bookmark, Play } from 'lucide-react';
+import { ArrowLeft, Bookmark, CalendarDays, Play } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/utils';
 import { useScrollPosition } from '@/shared/hooks';
@@ -90,6 +90,13 @@ export function Header() {
           </div>
           <HeaderNavButton icon={Bookmark} label={dict.auth.saved} href="/saved" />
           <HeaderNavButton icon={Play} label={dict.auth.activity} href="/activity" />
+          <HeaderNavButton
+            icon={CalendarDays}
+            label={dict.nav.calendar}
+            href="/calendar"
+            className="inline-flex md:hidden"
+            requireAuth={false}
+          />
           <NotificationBell />
           <UserMenu />
         </div>

@@ -40,7 +40,7 @@ describe('AuthService - Username Generation Property Tests', () => {
   const config = {
     accessTokenSecret: 'access-secret',
     refreshTokenSecret: 'refresh-secret',
-    accessTokenTtl: '15m',
+    accessTokenTtl: '24h',
     refreshTokenTtl: '7d',
     exchangeCodePepper: 'test-pepper',
     stateSecret: 'test-state-secret',

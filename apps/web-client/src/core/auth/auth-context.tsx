@@ -22,6 +22,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { authApi, type MeDto, type LoginDto, type RegisterDto } from '../api/auth.client';
 import { tokenStorage } from './token-storage';
 import { setTokenGetter } from '../api/client';
+import { ApiError } from '../api/error';
+import { toast } from 'sonner';
 import { scheduleProactiveRefresh, cancelProactiveRefresh } from './proactive-refresh';
 import {
   initCrossTabSync,
@@ -149,10 +151,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const me = await authApi.me();
       setUser(me);
       scheduleProactiveRefresh();
-    } catch {
-      // afterResponse hook already attempted refresh and failed,
-      // tokens are already cleared by auth:unauthorized event
-      setUser(null);
+    } catch (error) {
+      // Definitive auth failures (ApiError 401): client.ts already cleared
+      // tokens before throwing; reflect that in React state.
+      // Transient failures (network down, 5xx — including ApiError 5xx):
+      // tokens are still in storage, so keep the user logged in.
+      const isDefinitiveAuthFailure =
+        error instanceof ApiError && error.statusCode === 401;
+      if (isDefinitiveAuthFailure || !tokenStorage.hasTokens()) {
+        setUser(null);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -166,8 +174,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const handleUnauthorized = () => {
       cancelProactiveRefresh();
-      tokenStorage.clearTokens();
-      setUser(null);
+      // tokens were already cleared by client.ts before this event was fired
+      setUser((prev) => {
+        if (prev !== null) {
+          // User was actively signed in — tell them their session expired
+          toast.error('Сесія закінчилась. Увійдіть знову.');
+        }
+        return null;
+      });
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);

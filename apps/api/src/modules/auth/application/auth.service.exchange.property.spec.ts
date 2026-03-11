@@ -42,7 +42,7 @@ describe('AuthService - Exchange Code Property Tests', () => {
   const config = {
     accessTokenSecret: 'access-secret',
     refreshTokenSecret: 'refresh-secret',
-    accessTokenTtl: '15m',
+    accessTokenTtl: '24h',
     refreshTokenTtl: '7d',
     exchangeCodePepper: 'test-pepper-min-32-characters-long',
     stateSecret: 'test-state-secret',

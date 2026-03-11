@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { Flame, Film, Search, Play, CalendarDays } from 'lucide-react';
+import { Flame, Film, Search, Play, Bookmark } from 'lucide-react';
 import { useAuth, useAuthModalStore } from '@/core/auth';
 import { useSearchDialogStore } from '@/shared/stores/search-dialog.store';
 import { useTranslation } from '@/shared/i18n';
@@ -48,10 +48,11 @@ export function MobileDock() {
           isActive={false}
         />
         <MobileDockItem
-          icon={CalendarDays}
-          label={dict.nav.calendar}
-          href="/calendar"
-          isActive={pathname.startsWith('/calendar')}
+          icon={Bookmark}
+          label={dict.auth.saved}
+          href="/saved"
+          isActive={pathname.startsWith('/saved')}
+          onBeforeNavigate={requireAuth}
         />
         <MobileDockItem
           icon={Play}

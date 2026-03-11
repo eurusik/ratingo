@@ -17,6 +17,7 @@ import {
   broadcastRefreshSuccess,
   broadcastRefreshFailed,
 } from './cross-tab-sync';
+import { ApiError } from '../api/error';
 
 /**
  * Singleton promise for in-flight refresh.
@@ -25,10 +26,34 @@ import {
 let refreshPromise: Promise<AuthTokensDto> | null = null;
 
 /**
- * Performs single-flight token refresh.
+ * Returns true when the error is a definitive auth rejection from the backend
+ * (401 or 403), meaning the refresh token is no longer valid.
+ * Network failures, timeouts, and 5xx errors are NOT definitive.
+ */
+function isDefinitiveAuthFailure(error: unknown): boolean {
+  return error instanceof ApiError && (error.statusCode === 401 || error.statusCode === 403);
+}
+
+/**
+ * Performs a single refresh attempt against the backend.
+ * On success, persists the new tokens and returns them.
+ */
+async function attemptRefresh(refreshToken: string): Promise<AuthTokensDto> {
+  const tokens = await authApi.refresh({ refreshToken });
+  tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
+  broadcastRefreshSuccess(tokens.accessToken, tokens.refreshToken);
+  return tokens;
+}
+
+/**
+ * Performs single-flight token refresh with one retry for transient failures.
  *
  * If a refresh is already in progress, returns the existing promise.
  * Otherwise, initiates a new refresh request.
+ *
+ * - On success: stores new tokens and notifies other tabs.
+ * - On definitive auth failure (401/403): throws immediately (no retry).
+ * - On network/server error: waits 1 second and retries once before throwing.
  *
  * Broadcasts refresh events to other tabs for coordination.
  *
@@ -57,15 +82,18 @@ export async function refreshTokens(): Promise<AuthTokensDto> {
   // Notify other tabs that refresh is starting
   broadcastRefreshStart();
 
-  refreshPromise = authApi
-    .refresh({ refreshToken })
-    .then((tokens) => {
-      tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
-      // Notify other tabs about new tokens
-      broadcastRefreshSuccess(tokens.accessToken, tokens.refreshToken);
-      return tokens;
+  refreshPromise = attemptRefresh(refreshToken)
+    .catch(async (firstError: unknown) => {
+      // Do not retry on definitive auth failures — the token is invalid
+      if (isDefinitiveAuthFailure(firstError)) {
+        throw firstError;
+      }
+
+      // Transient failure (network error, 5xx, timeout) — retry once after 1s
+      await new Promise<void>((resolve) => setTimeout(resolve, 1000));
+      return attemptRefresh(refreshToken);
     })
-    .catch((error) => {
+    .catch((error: unknown) => {
       broadcastRefreshFailed();
       throw error;
     })
