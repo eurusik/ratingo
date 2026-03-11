@@ -152,12 +152,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(me);
       scheduleProactiveRefresh();
     } catch (error) {
-      // Transient failures (network down, 5xx): tokens are still in storage,
-      // so keep the user logged in — they can retry on next navigation.
       // Definitive auth failures (ApiError 401): client.ts already cleared
       // tokens before throwing; reflect that in React state.
-      const isTransientFailure = tokenStorage.hasTokens() && !(error instanceof ApiError);
-      if (!isTransientFailure) {
+      // Transient failures (network down, 5xx — including ApiError 5xx):
+      // tokens are still in storage, so keep the user logged in.
+      const isDefinitiveAuthFailure =
+        error instanceof ApiError && error.statusCode === 401;
+      if (isDefinitiveAuthFailure || !tokenStorage.hasTokens()) {
         setUser(null);
       }
     } finally {
