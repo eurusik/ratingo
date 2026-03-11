@@ -4,11 +4,23 @@
 
 import * as fc from 'fast-check';
 
-// Mock the API client to avoid ky import issues
+// Mock the API client and error module to avoid ky (ESM) import issues
 jest.mock('../client', () => ({
   apiPost: jest.fn(),
   apiGet: jest.fn(),
 }));
+
+jest.mock('../error', () => {
+  class ApiError extends Error {
+    statusCode: number;
+    constructor(message: string, statusCode: number) {
+      super(message);
+      this.name = 'ApiError';
+      this.statusCode = statusCode;
+    }
+  }
+  return { ApiError };
+});
 
 // Import after mocking
 import { isRefreshEndpoint } from '../../auth/refresh';

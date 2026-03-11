@@ -129,10 +129,17 @@ function createClient(): KyInstance {
 
             // Retry the request once with new token
             return ky(newRequest);
-          } catch {
-            // Refresh failed, logout
-            tokenStorage.clearTokens();
-            window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+          } catch (error) {
+            // Only clear tokens on a definitive auth rejection from the backend.
+            // Network errors or 5xx failures are transient — leave tokens intact
+            // so the user is not logged out unnecessarily.
+            if (error instanceof ApiError && error.statusCode === 401) {
+              tokenStorage.clearTokens();
+              window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+            }
+            // For all other failures (network, 5xx, etc.) return the original
+            // 401 response without clearing tokens — the user can retry on the
+            // next page load once connectivity is restored.
             return response;
           }
         },
