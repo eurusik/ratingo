@@ -133,7 +133,7 @@ function createClient(): KyInstance {
             // Only clear tokens on a definitive auth rejection from the backend.
             // Network errors or 5xx failures are transient — leave tokens intact
             // so the user is not logged out unnecessarily.
-            if (error instanceof ApiError && error.statusCode === 401) {
+            if (error instanceof ApiError && (error.statusCode === 401 || error.statusCode === 403)) {
               tokenStorage.clearTokens();
               window.dispatchEvent(new CustomEvent('auth:unauthorized'));
             }
