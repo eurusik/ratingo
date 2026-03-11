@@ -8,6 +8,7 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import Image from 'next/image';
+import { useState } from 'react';
 import { Bell, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui';
@@ -25,11 +26,13 @@ export function NotificationBell() {
   const { data, isLoading } = useNotifications(isAuthenticated);
   const markAsRead = useMarkNotificationAsRead();
   const markAllAsRead = useMarkAllNotificationsAsRead();
+  const [open, setOpen] = useState(false);
 
   const handleNotificationClick = (notificationId: string, isRead: boolean) => {
     if (!isRead) {
       markAsRead.mutate(notificationId);
     }
+    setOpen(false);
   };
 
   const handleMarkAllAsRead = () => {
@@ -49,7 +52,7 @@ export function NotificationBell() {
   const hasNotifications = notifications.length > 0;
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
@@ -136,7 +139,7 @@ export function NotificationBell() {
         </div>
 
         <div className="p-2 border-t border-cinema-borderSoft">
-          <Link href={'/notifications' as Route}>
+          <Link href={'/notifications' as Route} onClick={() => setOpen(false)}>
             <Button variant="ghost" className="w-full text-sm text-cinema-text-muted hover:text-white">
               {dict.notifications.viewAll}
             </Button>

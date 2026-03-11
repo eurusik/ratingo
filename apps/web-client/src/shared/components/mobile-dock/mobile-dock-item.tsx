@@ -13,8 +13,10 @@ import type { LucideIcon } from 'lucide-react';
 import { cva } from 'class-variance-authority';
 import { cn } from '@/shared/utils';
 
+const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-cinema-card';
+
 const dockItemVariants = cva(
-  'flex flex-col items-center justify-center h-full flex-1 min-w-0 transition-colors duration-150',
+  `flex flex-col items-center justify-center h-full flex-1 min-w-0 transition-colors duration-150 ${FOCUS_RING}`,
   {
     variants: {
       state: {
@@ -53,7 +55,7 @@ export function MobileDockItem({
   const content = (
     <>
       <Icon className="h-5 w-5" />
-      <span className={cn('text-[10px] mt-0.5 leading-tight', isActive && 'font-medium')}>
+      <span className={cn('text-[11px] mt-0.5 leading-tight', isActive && 'font-medium')}>
         {label}
       </span>
     </>
@@ -77,7 +79,7 @@ export function MobileDockItem({
       }
     };
     return (
-      <a href={href} className={dockItemVariants({ state })} onClick={handleClick}>
+      <a href={href} className={dockItemVariants({ state })} onClick={handleClick} aria-current={isActive ? 'page' : undefined}>
         {content}
       </a>
     );
@@ -86,7 +88,7 @@ export function MobileDockItem({
   // Plain navigation items
   if (href) {
     return (
-      <Link href={href as Route} className={dockItemVariants({ state })}>
+      <Link href={href as Route} className={dockItemVariants({ state })} aria-current={isActive ? 'page' : undefined}>
         {content}
       </Link>
     );

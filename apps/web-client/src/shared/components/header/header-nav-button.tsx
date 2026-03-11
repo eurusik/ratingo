@@ -12,13 +12,21 @@ interface HeaderNavButtonProps {
   icon: LucideIcon;
   label: string;
   href: string;
+  className?: string;
+  requireAuth?: boolean;
 }
 
-export function HeaderNavButton({ icon: Icon, label, href }: HeaderNavButtonProps) {
+export function HeaderNavButton({
+  icon: Icon,
+  label,
+  href,
+  className,
+  requireAuth: needsAuth = true,
+}: HeaderNavButtonProps) {
   const { isAuthenticated } = useAuth();
   const pathname = usePathname();
 
-  if (!isAuthenticated) {
+  if (needsAuth && !isAuthenticated) {
     return null;
   }
 
@@ -32,7 +40,8 @@ export function HeaderNavButton({ icon: Icon, label, href }: HeaderNavButtonProp
             variant="ghost"
             size="icon"
             className={cn(
-              'hidden md:inline-flex h-9 w-9 rounded-full transition-colors',
+              className ?? 'hidden md:inline-flex',
+              'h-9 w-9 rounded-full transition-colors',
               isActive
                 ? 'text-white'
                 : 'text-cinema-text-muted hover:text-white hover:bg-cinema-elevated',
