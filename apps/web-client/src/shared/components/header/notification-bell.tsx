@@ -8,7 +8,8 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Bell, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button, Popover, PopoverTrigger, PopoverContent } from '@/shared/ui';
@@ -27,6 +28,11 @@ export function NotificationBell() {
   const markAsRead = useMarkNotificationAsRead();
   const markAllAsRead = useMarkAllNotificationsAsRead();
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   const handleNotificationClick = (notificationId: string, isRead: boolean) => {
     if (!isRead) {

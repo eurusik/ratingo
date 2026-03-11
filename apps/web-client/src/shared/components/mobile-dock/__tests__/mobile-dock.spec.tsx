@@ -203,6 +203,7 @@ describe('MobileDock', () => {
       render(<MobileDock />);
 
       expect(screen.getByText('Збережене')).toHaveClass('font-medium');
+      expect(screen.getByRole('link', { name: /Збережене/i })).toHaveAttribute('aria-current', 'page');
     });
 
     it('marks Saved tab active on /saved path for authenticated users', () => {
@@ -211,6 +212,7 @@ describe('MobileDock', () => {
       render(<MobileDock />);
 
       expect(screen.getByText('Збережене')).toHaveClass('font-medium');
+      expect(screen.getByRole('link', { name: /Збережене/i })).toHaveAttribute('aria-current', 'page');
     });
   });
 
@@ -253,7 +255,6 @@ describe('MobileDock', () => {
       fireEvent.click(screen.getByText('Збережене'));
 
       expect(mockOpenLogin).not.toHaveBeenCalled();
-      expect(mockRouterPush).toHaveBeenCalledWith('/saved');
     });
   });
 
@@ -277,7 +278,6 @@ describe('MobileDock', () => {
       fireEvent.click(screen.getByText('Активність'));
 
       expect(mockOpenLogin).not.toHaveBeenCalled();
-      expect(mockRouterPush).toHaveBeenCalledWith('/activity');
     });
   });
 });
@@ -406,7 +406,7 @@ describe('MobileDockItem', () => {
       expect(mockRouterPush).not.toHaveBeenCalled();
     });
 
-    it('pushes route when onBeforeNavigate returns true', () => {
+    it('allows navigation when onBeforeNavigate returns true', () => {
       const onBeforeNavigate = jest.fn().mockReturnValue(true);
       render(
         <MobileDockItem
@@ -421,7 +421,8 @@ describe('MobileDockItem', () => {
       fireEvent.click(screen.getByRole('link', { name: /Activity/i }));
 
       expect(onBeforeNavigate).toHaveBeenCalledTimes(1);
-      expect(mockRouterPush).toHaveBeenCalledWith('/activity');
+      // Link handles navigation natively; router.push is no longer called
+      expect(mockRouterPush).not.toHaveBeenCalled();
     });
   });
 

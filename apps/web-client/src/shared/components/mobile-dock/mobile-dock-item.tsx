@@ -7,7 +7,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import type { LucideIcon } from 'lucide-react';
 import { cva } from 'class-variance-authority';
@@ -49,7 +48,6 @@ export function MobileDockItem({
   onClick,
   onBeforeNavigate,
 }: MobileDockItemProps) {
-  const router = useRouter();
   const state = isActive ? 'active' : 'inactive';
 
   const content = (
@@ -70,25 +68,23 @@ export function MobileDockItem({
     );
   }
 
-  // Navigation items with optional guard (e.g. auth check)
-  if (href && onBeforeNavigate) {
-    const handleClick = (e: React.MouseEvent) => {
-      e.preventDefault();
-      if (onBeforeNavigate()) {
-        router.push(href as Route);
+  // Navigation items (with optional guard)
+  if (href) {
+    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      if (!onBeforeNavigate) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      if (!onBeforeNavigate()) {
+        e.preventDefault();
       }
     };
-    return (
-      <a href={href} className={dockItemVariants({ state })} onClick={handleClick} aria-current={isActive ? 'page' : undefined}>
-        {content}
-      </a>
-    );
-  }
 
-  // Plain navigation items
-  if (href) {
     return (
-      <Link href={href as Route} className={dockItemVariants({ state })} aria-current={isActive ? 'page' : undefined}>
+      <Link
+        href={href as Route}
+        className={dockItemVariants({ state })}
+        onClick={handleClick}
+        aria-current={isActive ? 'page' : undefined}
+      >
         {content}
       </Link>
     );
