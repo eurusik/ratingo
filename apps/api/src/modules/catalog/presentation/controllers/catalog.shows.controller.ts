@@ -177,6 +177,8 @@ export class CatalogShowsController {
     if (startDateString && Number.isNaN(start.getTime())) {
       throw new BadRequestException('startDate must be a valid ISO date string');
     }
+    // Normalize to start of day (UTC) so today's episodes are not filtered out as the day progresses
+    start.setUTCHours(0, 0, 0, 0);
 
     const end = new Date(start);
     const daysToAdd =
