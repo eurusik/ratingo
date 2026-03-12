@@ -7,6 +7,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getDictionary } from '@/shared/i18n';
 import { getJournalPost } from '@/core/api/journal.server';
+import { JsonLd, createCanonical, SEO_BASE_URL } from '@/shared/utils/seo';
 import { JournalPostPageClient } from './client';
 
 // ISR: Revalidate every 10 minutes
@@ -36,6 +37,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   return {
     title: `${title} | ${dict.journal.title}`,
     description,
+    ...createCanonical(`/journal/${post.slug}`),
     openGraph: {
       title,
       description,
@@ -54,8 +56,44 @@ export default async function JournalPostPage({ params }: PageParams) {
     notFound();
   }
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Головна', item: SEO_BASE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Журнал', item: `${SEO_BASE_URL}/journal` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: `${SEO_BASE_URL}/journal/${post.slug}` },
+    ],
+  };
+
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.metaDescription ?? post.excerpt ?? undefined,
+    image: post.featuredImageUrl ?? undefined,
+    datePublished: post.publishedAt,
+    dateModified: post.updatedAt ?? post.publishedAt,
+    author: {
+      '@type': 'Organization',
+      name: 'Ratingo',
+      url: SEO_BASE_URL,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Ratingo',
+      logo: { '@type': 'ImageObject', url: `${SEO_BASE_URL}/icon.png` },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${SEO_BASE_URL}/journal/${post.slug}`,
+    },
+  };
+
   return (
     <div className="min-h-screen bg-cinema-page">
+      <JsonLd data={breadcrumbJsonLd} />
+      <JsonLd data={articleJsonLd} />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <JournalPostPageClient post={post} />
       </div>

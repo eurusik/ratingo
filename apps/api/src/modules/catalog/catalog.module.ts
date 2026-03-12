@@ -10,6 +10,7 @@ import { UserMediaModule } from '../user-media/user-media.module';
 
 import { CatalogImportService } from './application/services/catalog-import.service';
 import { CatalogSearchService } from './application/services/catalog-search.service';
+import { CatalogSitemapService } from './application/services/catalog-sitemap.service';
 import { CatalogUserStateEnricher } from './application/services/catalog-userstate-enricher.service';
 import { MovieDetailsService } from './application/services/movie-details.service';
 import { ShowDetailsService } from './application/services/show-details.service';
@@ -50,6 +51,7 @@ import { CatalogMoviesController } from './presentation/controllers/catalog.movi
 import { CatalogProvidersController } from './presentation/controllers/catalog.providers.controller';
 import { CatalogSearchController } from './presentation/controllers/catalog.search.controller';
 import { CatalogShowsController } from './presentation/controllers/catalog.shows.controller';
+import { CatalogSitemapController } from './presentation/controllers/catalog.sitemap.controller';
 
 /**
  * Catalog module.
@@ -67,10 +69,12 @@ import { CatalogShowsController } from './presentation/controllers/catalog.shows
     CatalogShowsController,
     CatalogSearchController,
     CatalogProvidersController,
+    CatalogSitemapController,
   ],
   providers: [
     CatalogSearchService,
     CatalogImportService,
+    CatalogSitemapService,
     CatalogUserStateEnricher,
     MovieDetailsService,
     ShowDetailsService,

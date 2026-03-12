@@ -11,6 +11,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { AppProviders } from '@/core/providers';
 import { GoogleAnalytics } from '@/shared/components';
 import { getDictionary } from '@/shared/i18n';
+import { JsonLd, buildOrganizationJsonLd, SEO_BASE_URL } from '@/shared/utils/seo';
 import './globals.css';
 
 const inter = Inter({
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Ratingo' }],
   creator: 'Ratingo',
   publisher: 'Ratingo',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3002'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'),
   openGraph: {
     type: 'website',
     locale: 'uk_UA',
@@ -90,6 +91,7 @@ interface RootLayoutProps {
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {
+  const baseUrl = SEO_BASE_URL;
   return (
     <html lang="uk" className={inter.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-cinema-page font-sans antialiased" suppressHydrationWarning>
@@ -99,6 +101,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             __html: `window.__pwaPrompt=null;window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__pwaPrompt=e})`,
           }}
         />
+        <JsonLd data={buildOrganizationJsonLd(baseUrl)} />
         <AppProviders>
           {children}
         </AppProviders>

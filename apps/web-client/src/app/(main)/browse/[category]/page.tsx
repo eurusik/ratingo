@@ -8,6 +8,7 @@ import type { Route } from 'next';
 import { notFound } from 'next/navigation';
 import { getDictionary, getByPath } from '@/shared/i18n';
 import { catalogApi } from '@/core/api';
+import { JsonLd, createCanonical } from '@/shared/utils/seo';
 import {
   getCategoryConfig,
   getSortOptions,
@@ -48,6 +49,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title,
     description,
+    ...createCanonical(`/browse/${category}`),
     openGraph: {
       title: `${title} | Ratingo`,
       description,
@@ -143,8 +145,30 @@ export default async function BrowsePage({ params, searchParams }: PageProps) {
   // Check if this category has pool selector
   const hasPoolSelector = categoryHasPoolSelector(config);
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ratingo.top';
+
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Головна',
+        item: baseUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: title,
+        item: `${baseUrl}/browse/${category}`,
+      },
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-cinema-page">
+      <JsonLd data={breadcrumbJsonLd} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
           <BrowsePageHeader

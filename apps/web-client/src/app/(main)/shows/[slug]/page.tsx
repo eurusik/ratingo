@@ -6,7 +6,7 @@ import { cache } from 'react';
 import type { Metadata } from 'next';
 import { Tv } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
-import { createMediaMetadata, createNotFoundMetadata } from '@/shared/utils';
+import { createMediaMetadata, createNotFoundMetadata, JsonLd } from '@/shared/utils';
 import { catalogApi, type ShowDetailsDto } from '@/core/api';
 import { getReviewsForMedia } from '@/core/api/reviews.server';
 import {
@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   if (!show) {
     return createNotFoundMetadata('show');
   }
-  return createMediaMetadata(show, { type: 'show' });
+  return createMediaMetadata(show, { type: 'show', slug });
 }
 
 interface ShowDetailsPageProps {
@@ -150,8 +150,32 @@ export default async function ShowDetailsPage({ params }: ShowDetailsPageProps) 
       ]
     : apiShow.verdict?.context || undefined;
 
+  const showJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'TVSeries',
+    name: show.title,
+    description: show.overview ?? undefined,
+    image: show.poster?.medium ?? undefined,
+    startDate: show.releaseDate || undefined,
+    endDate: show.lastAirDate ?? undefined,
+    numberOfSeasons: show.totalSeasons ?? undefined,
+    numberOfEpisodes: show.totalEpisodes ?? undefined,
+    genre: show.genres?.map((g) => g.name) ?? undefined,
+    ...(show.stats?.ratingoScore != null &&
+      show.stats.communityRatingCount != null &&
+      show.stats.communityRatingCount > 0 && {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: show.stats.ratingoScore,
+          bestRating: 100,
+          ratingCount: show.stats.communityRatingCount,
+        },
+      }),
+  };
+
   return (
     <DetailsPageClient breadcrumb={dict.browse.shows.title} backUrl="/browse/shows">
+      <JsonLd data={showJsonLd} />
       <main className="min-h-screen">
         <DetailsHero
           title={show.title}

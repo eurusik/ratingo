@@ -21,6 +21,8 @@ export interface CreateMetadataOptions {
   fallbackTitle?: string;
   /** Fallback description if media not found. */
   fallbackDescription?: string;
+  /** URL slug for canonical link generation (e.g. "breaking-bad-2008"). */
+  slug?: string;
 }
 
 /**
@@ -56,9 +58,13 @@ export function createMediaMetadata(
   // Prefer backdrop for OG image, fallback to poster
   const ogImage = backdropUrl || posterUrl;
 
+  // Build canonical URL when slug is provided
+  const canonical = options.slug ? createCanonical(`/${options.type === 'show' ? 'shows' : 'movies'}/${options.slug}`) : undefined;
+
   return {
     title,
     description,
+    ...(canonical ?? {}),
     openGraph: {
       title: `${title} | Ratingo`,
       description,
@@ -88,5 +94,60 @@ export function createNotFoundMetadata(type: 'show' | 'movie'): Metadata {
   return {
     title,
     description: title,
+  };
+}
+
+/**
+ * Canonical base URL for the site.
+ * Centralised here so all SEO helpers use the same env var.
+ */
+export const SEO_BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ratingo.top';
+
+/**
+ * Returns an `alternates.canonical` object for use in Next.js Metadata.
+ *
+ * @param path - Absolute path starting with `/` (e.g. `/shows/breaking-bad-2008`)
+ * @returns Object with `alternates.canonical` set to the full URL
+ *
+ * @example
+ * export const metadata: Metadata = {
+ *   ...createCanonical('/shows/breaking-bad-2008'),
+ * };
+ */
+export function createCanonical(path: string): { alternates: { canonical: string } } {
+  return { alternates: { canonical: `${SEO_BASE_URL}${path}` } };
+}
+
+/**
+ * Inline JSON-LD script component for structured data.
+ * Safe to use in Server Components — dangerouslySetInnerHTML is serialized on the server.
+ *
+ * `<` is escaped to `\u003c` to prevent premature `</script>` tag closure
+ * if user-generated content contains that sequence.
+ */
+export function JsonLd({ data }: { data: Record<string, unknown> }) {
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }}
+    />
+  );
+}
+
+/**
+ * Builds an Organization schema.org JSON-LD object for the root layout.
+ *
+ * @param baseUrl - The canonical base URL of the site
+ * @returns Schema.org Organization object
+ */
+export function buildOrganizationJsonLd(baseUrl: string): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Ratingo',
+    url: baseUrl,
+    logo: `${baseUrl}/icon.png`,
+    description: 'Український сервіс для відкриття стрімінгового контенту — серіали та фільми',
+    sameAs: ['https://github.com/ratingo'],
   };
 }
