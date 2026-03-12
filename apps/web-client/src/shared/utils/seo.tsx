@@ -101,7 +101,7 @@ export function createNotFoundMetadata(type: 'show' | 'movie'): Metadata {
  * Canonical base URL for the site.
  * Centralised here so all SEO helpers use the same env var.
  */
-export const SEO_BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ratingo.top';
+export const SEO_BASE_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://ratingo.top').trim().replace(/\/$/, '');
 
 /**
  * Returns an `alternates.canonical` object for use in Next.js Metadata.

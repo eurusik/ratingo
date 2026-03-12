@@ -46,6 +46,28 @@ async function fetchShowsSitemap(): Promise<SitemapItem[]> {
   }
 }
 
+/**
+ * Fetches all journal posts across all pages for sitemap generation.
+ * Paginates through all available posts (max 50 per page).
+ */
+async function fetchAllJournalPosts() {
+  const PAGE_SIZE = 50;
+  const firstPage = await journalApi.getPosts({ limit: PAGE_SIZE, page: 1 });
+  const allPosts = [...firstPage.posts];
+  const totalPages = Math.ceil(firstPage.meta.total / PAGE_SIZE);
+
+  if (totalPages > 1) {
+    const remaining = await Promise.all(
+      Array.from({ length: totalPages - 1 }, (_, i) =>
+        journalApi.getPosts({ limit: PAGE_SIZE, page: i + 2 }).then((r) => r.posts),
+      ),
+    );
+    allPosts.push(...remaining.flat());
+  }
+
+  return allPosts;
+}
+
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://ratingo.top';
 
 /**
@@ -82,10 +104,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     fetchMoviesSitemap(),
     fetchShowsSitemap(),
     // Journal posts fetched separately to preserve its own error handling pattern
-    journalApi
-      .getPosts({ limit: 100 })
-      .then((response) => {
-        journalEntries = response.posts.map((post) => ({
+    fetchAllJournalPosts()
+      .then((posts) => {
+        journalEntries = posts.map((post) => ({
           url: `${BASE_URL}/journal/${post.slug}`,
           lastModified: new Date(post.publishedAt),
           changeFrequency: 'weekly' as const,
