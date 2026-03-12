@@ -4,7 +4,7 @@
  */
 
 /** TMDB image base URL */
-export const MEDIA_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+export const MEDIA_IMAGE_BASE = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://image.tmdb.org/t/p';
 
 /** Common image sizes */
 export const IMAGE_SIZES = {

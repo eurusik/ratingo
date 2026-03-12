@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { NewEpisodeItem } from '@/core/api/catalog.client';
+import { resolveMediaImageUrl, IMAGE_SIZES } from '@/shared/utils/image';
 
 interface NewEpisodeCardProps {
   item: NewEpisodeItem;
@@ -68,7 +69,7 @@ export function NewEpisodeCard({ item, locale = 'uk' }: NewEpisodeCardProps) {
       <div className="relative w-16 h-24 flex-shrink-0 rounded-md overflow-hidden bg-cinema-elevated">
         {item.posterPath ? (
           <Image
-            src={`https://image.tmdb.org/t/p/w154${item.posterPath}`}
+            src={resolveMediaImageUrl(item.posterPath, IMAGE_SIZES.W154)!}
             alt={item.title}
             fill
             className="object-cover"

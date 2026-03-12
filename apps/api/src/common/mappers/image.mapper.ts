@@ -1,6 +1,6 @@
 import type { ImageData } from '../types';
 
-const TMDB_BASE_URL = 'https://image.tmdb.org/t/p';
+const TMDB_BASE_URL = process.env.IMAGE_PROXY_BASE_URL || 'https://image.tmdb.org/t/p';
 
 /**
  * Maps TMDB image paths to full URLs with multiple sizes.
