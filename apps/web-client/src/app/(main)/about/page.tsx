@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getDictionary } from '@/shared/i18n';
+import { createCanonical } from '@/shared/utils/seo';
 
 const dict = getDictionary('uk');
 
@@ -8,6 +9,7 @@ const GITHUB_URL = 'https://github.com/eurusik/ratingo';
 export const metadata: Metadata = {
   title: dict.about.meta.title,
   description: dict.about.meta.description,
+  ...createCanonical('/about'),
 };
 
 export default function AboutPage() {

@@ -5,6 +5,7 @@
 // Revalidate every 60 seconds to keep trending data fresh
 export const revalidate = 60;
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   MediaCardServer,
@@ -20,6 +21,15 @@ import { getDictionary } from '@/shared/i18n';
 import { LazySection } from '@/shared/components';
 import { catalogApi, type HeroData, type WatchingNowData } from '@/core/api';
 import { TrendingUp, Clapperboard, Sparkles, Film } from 'lucide-react';
+
+const _dict = getDictionary('uk');
+const _baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ratingo.top';
+
+export const metadata: Metadata = {
+  title: _dict.meta.defaultTitle,
+  description: _dict.meta.defaultDescription,
+  alternates: { canonical: _baseUrl },
+};
 
 export default async function HomePage() {
   const dict = getDictionary('uk');

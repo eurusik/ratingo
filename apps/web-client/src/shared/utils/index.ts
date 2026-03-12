@@ -11,4 +11,13 @@ export {
 } from './format';
 export { resolveMediaImageUrl, IMAGE_SIZES, MEDIA_IMAGE_BASE } from './image';
 export { pluralize } from './pluralize';
-export { createMediaMetadata, createNotFoundMetadata, type SeoMediaItem } from './seo';
+export {
+  SEO_BASE_URL,
+  createMediaMetadata,
+  createNotFoundMetadata,
+  createCanonical,
+  JsonLd,
+  buildOrganizationJsonLd,
+  type SeoMediaItem,
+  type CreateMetadataOptions,
+} from './seo';

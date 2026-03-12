@@ -7,6 +7,7 @@
 import type { Metadata } from 'next';
 import { getDictionary } from '@/shared/i18n';
 import { getJournalPosts } from '@/core/api/journal.server';
+import { createCanonical } from '@/shared/utils/seo';
 import { JournalPageClient } from './client';
 
 const dict = getDictionary('uk');
@@ -14,6 +15,7 @@ const dict = getDictionary('uk');
 export const metadata: Metadata = {
   title: dict.journal.title,
   description: dict.journal.description,
+  ...createCanonical('/journal'),
 };
 
 // ISR: Revalidate every 60 seconds

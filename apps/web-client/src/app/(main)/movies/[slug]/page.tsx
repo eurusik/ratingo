@@ -6,7 +6,7 @@
 import type { Metadata } from 'next';
 import { Film } from 'lucide-react';
 import { getDictionary } from '@/shared/i18n';
-import { createMediaMetadata, createNotFoundMetadata } from '@/shared/utils';
+import { createMediaMetadata, createNotFoundMetadata, JsonLd } from '@/shared/utils';
 import { catalogApi, type MovieDetailsDto } from '@/core/api';
 import { getReviewsForMedia } from '@/core/api/reviews.server';
 import {
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
 
   try {
     const movie = await catalogApi.getMovieBySlug(slug);
-    return createMediaMetadata(movie, { type: 'movie' });
+    return createMediaMetadata(movie, { type: 'movie', slug });
   } catch {
     return createNotFoundMetadata('movie');
   }
@@ -137,8 +137,35 @@ export default async function MovieDetailsPage({ params }: MovieDetailsPageProps
     ? dict.details.verdict.movie[verdict.messageKey as MovieVerdictMessageKey]
     : null;
 
+  const movieJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Movie',
+    name: movie.title,
+    description: movie.overview ?? undefined,
+    image: movie.poster?.medium ?? movie.backdrop?.large ?? undefined,
+    datePublished: movie.releaseDate || undefined,
+    genre: movie.genres?.map((g) => g.name) ?? undefined,
+    ...(movie.stats?.ratingoScore != null &&
+      movie.stats.communityRatingCount != null &&
+      movie.stats.communityRatingCount > 0 && {
+        aggregateRating: {
+          '@type': 'AggregateRating',
+          ratingValue: movie.stats.ratingoScore,
+          bestRating: 100,
+          ratingCount: movie.stats.communityRatingCount,
+        },
+      }),
+    director: movie.credits?.crew
+      ?.filter((c) => c.job === 'Director')
+      .map((c) => ({ '@type': 'Person', name: c.name })) ?? undefined,
+    actor: movie.credits?.cast
+      ?.slice(0, 5)
+      .map((c) => ({ '@type': 'Person', name: c.name })) ?? undefined,
+  };
+
   return (
     <DetailsPageClient breadcrumb={dict.browse.movies.title} backUrl="/browse/movies">
+      <JsonLd data={movieJsonLd} />
       <main className="min-h-screen">
         <DetailsHero
           title={movie.title}
