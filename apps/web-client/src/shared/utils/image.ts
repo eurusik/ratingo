@@ -1,12 +1,28 @@
 /**
  * Media image URL utilities.
  * Handles images from different sources (TMDB, TVMaze, etc.)
+ *
+ * Proxy: when NEXT_PUBLIC_IMAGE_PROXY_ORIGIN is set (e.g. https://img.ratingo.top),
+ * TMDB images route through {origin}/tmdb/ and TVMaze through {origin}/tvmaze/.
+ * Backend handles TMDB proxy via IMAGE_PROXY_BASE_URL env var separately.
+ * TVMaze URLs are stored as full URLs in DB and rewritten client-side only.
  */
 
-/** TMDB image base URL */
-export const MEDIA_IMAGE_BASE = 'https://image.tmdb.org/t/p';
+/** Image proxy origin (e.g. https://img.ratingo.top) */
+const IMAGE_PROXY_ORIGIN = process.env.NEXT_PUBLIC_IMAGE_PROXY_ORIGIN || null;
 
-/** Common image sizes */
+/** TMDB image base URL */
+export const MEDIA_IMAGE_BASE = IMAGE_PROXY_ORIGIN
+  ? `${IMAGE_PROXY_ORIGIN}/tmdb`
+  : 'https://image.tmdb.org/t/p';
+
+/** TVMaze image proxy */
+const TVMAZE_IMAGE_ORIGIN = 'https://static.tvmaze.com/uploads/images/';
+const TVMAZE_IMAGE_PROXY = IMAGE_PROXY_ORIGIN
+  ? `${IMAGE_PROXY_ORIGIN}/tvmaze/`
+  : null;
+
+/** Common image sizes (TMDB-specific, TVMaze images don't use size prefixes) */
 export const IMAGE_SIZES = {
   /** 92px - tiny thumbnails */
   W92: 'w92',
@@ -28,7 +44,8 @@ export const IMAGE_SIZES = {
 
 /**
  * Resolves media image URL from different sources.
- * - Full URLs (TVMaze, etc.) - returned as-is
+ * - TVMaze full URLs - rewritten to proxy if configured
+ * - Other full URLs (Railway, etc.) - returned as-is
  * - TMDB paths - prepends TMDB base URL with size
  *
  * @param path - Image path or full URL
@@ -40,7 +57,11 @@ export function resolveMediaImageUrl(
   size: string = IMAGE_SIZES.W342,
 ): string | null {
   if (!path) return null;
-  // Full URL (TVMaze, Railway, etc.) - return as-is
+  // TVMaze full URL - rewrite to proxy if configured
+  if (TVMAZE_IMAGE_PROXY && path.startsWith(TVMAZE_IMAGE_ORIGIN)) {
+    return path.replace(TVMAZE_IMAGE_ORIGIN, TVMAZE_IMAGE_PROXY);
+  }
+  // Other full URLs (Railway, etc.) - return as-is
   if (path.startsWith('http')) return path;
   // TMDB path - build full URL
   return `${MEDIA_IMAGE_BASE}/${size}${path}`;

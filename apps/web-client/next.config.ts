@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'img.ratingo.top',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'static.tvmaze.com',
         pathname: '/uploads/**',
       },

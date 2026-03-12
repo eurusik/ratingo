@@ -20,7 +20,7 @@ const serwist = new Serwist({
   navigationPreload: true,
   runtimeCaching: [
     {
-      matcher: /^https:\/\/image\.tmdb\.org\/t\/p\/.*/i,
+      matcher: /^https:\/\/(image\.tmdb\.org\/t\/p|img\.ratingo\.top\/tmdb)\/.*/i,
       handler: new CacheFirst({
         cacheName: 'tmdb-images',
         plugins: [
@@ -33,7 +33,7 @@ const serwist = new Serwist({
       }),
     },
     {
-      matcher: /^https:\/\/static\.tvmaze\.com\/.*/i,
+      matcher: /^https:\/\/(static\.tvmaze\.com|img\.ratingo\.top\/tvmaze)\/.*/i,
       handler: new CacheFirst({
         cacheName: 'tvmaze-images',
         plugins: [

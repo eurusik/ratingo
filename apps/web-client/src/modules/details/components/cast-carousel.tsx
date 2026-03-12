@@ -8,6 +8,7 @@
 import { Carousel } from '@/shared/components/carousel';
 import { useTranslation } from '@/shared/i18n';
 import { Avatar, AvatarImage, AvatarFallback } from '@/shared/ui';
+import { resolveMediaImageUrl, IMAGE_SIZES } from '@/shared/utils/image';
 import type { CastMember, CrewMember } from '../types';
 
 export interface CastCarouselProps {
@@ -24,8 +25,7 @@ function PersonAvatar({
   role: string;
 }) {
   const getProfileUrl = (path: string | null) => {
-    if (!path) return null;
-    return `https://image.tmdb.org/t/p/w185${path}`;
+    return resolveMediaImageUrl(path, IMAGE_SIZES.W185);
   };
 
   const getInitials = (name: string) => {
