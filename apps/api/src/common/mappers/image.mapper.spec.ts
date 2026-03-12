@@ -1,5 +1,10 @@
 import { ImageMapper } from './image.mapper';
 
+// Guard: ensure env var doesn't leak into tests and change expected URLs
+beforeAll(() => {
+  delete process.env.IMAGE_PROXY_BASE_URL;
+});
+
 describe('ImageMapper', () => {
   describe('toPoster', () => {
     it('should map poster path to ImageData with correct URLs', () => {

@@ -69,7 +69,7 @@ export function NewEpisodeCard({ item, locale = 'uk' }: NewEpisodeCardProps) {
       <div className="relative w-16 h-24 flex-shrink-0 rounded-md overflow-hidden bg-cinema-elevated">
         {item.posterPath ? (
           <Image
-            src={resolveMediaImageUrl(item.posterPath, IMAGE_SIZES.W154)!}
+            src={resolveMediaImageUrl(item.posterPath, IMAGE_SIZES.W154) ?? ''}
             alt={item.title}
             fill
             className="object-cover"
