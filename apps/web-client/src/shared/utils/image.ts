@@ -6,6 +6,12 @@
 /** TMDB image base URL */
 export const MEDIA_IMAGE_BASE = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://image.tmdb.org/t/p';
 
+/** TVMaze image proxy (derived from TMDB proxy base) */
+const TVMAZE_IMAGE_ORIGIN = 'https://static.tvmaze.com/uploads/images/';
+const TVMAZE_IMAGE_PROXY = process.env.NEXT_PUBLIC_IMAGE_BASE_URL
+  ? process.env.NEXT_PUBLIC_IMAGE_BASE_URL.replace('/tmdb', '/tvmaze/')
+  : null;
+
 /** Common image sizes */
 export const IMAGE_SIZES = {
   /** 92px - tiny thumbnails */
@@ -40,7 +46,11 @@ export function resolveMediaImageUrl(
   size: string = IMAGE_SIZES.W342,
 ): string | null {
   if (!path) return null;
-  // Full URL (TVMaze, Railway, etc.) - return as-is
+  // TVMaze full URL - rewrite to proxy if configured
+  if (TVMAZE_IMAGE_PROXY && path.startsWith(TVMAZE_IMAGE_ORIGIN)) {
+    return path.replace(TVMAZE_IMAGE_ORIGIN, TVMAZE_IMAGE_PROXY);
+  }
+  // Other full URLs (Railway, etc.) - return as-is
   if (path.startsWith('http')) return path;
   // TMDB path - build full URL
   return `${MEDIA_IMAGE_BASE}/${size}${path}`;

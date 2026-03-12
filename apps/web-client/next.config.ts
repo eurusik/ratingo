@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'img.ratingo.top',
-        pathname: '/tmdb/**',
+        pathname: '/**',
       },
       {
         protocol: 'https',
