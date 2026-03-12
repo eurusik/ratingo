@@ -312,6 +312,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/catalog/sitemap/movies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Movie sitemap data
+         * @description Returns slug and updatedAt for all active movies. Intended for sitemap generation.
+         */
+        get: operations["CatalogSitemapController_getMovieSitemap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/catalog/sitemap/shows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show sitemap data
+         * @description Returns slug and updatedAt for all active shows. Intended for sitemap generation.
+         */
+        get: operations["CatalogSitemapController_getShowSitemap"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user-media/batch-ratings": {
         parameters: {
             query?: never;
@@ -3086,6 +3126,15 @@ export interface components {
         ProvidersListDto: {
             data: components["schemas"]["ProviderDto"][];
             meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        SitemapItemDto: {
+            /** @description URL-friendly identifier for the media item */
+            slug: string;
+            /** @description ISO 8601 timestamp of when the item was last updated */
+            updatedAt: string;
+        };
+        SitemapResponseDto: {
+            items: components["schemas"]["SitemapItemDto"][];
         };
         BatchRatingsResponseDto: {
             /**
@@ -6368,6 +6417,52 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["ProvidersListDto"];
+                    };
+                };
+            };
+        };
+    };
+    CatalogSitemapController_getMovieSitemap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SitemapResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    CatalogSitemapController_getShowSitemap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["SitemapResponseDto"];
                     };
                 };
             };

@@ -4,19 +4,12 @@
  */
 
 import type { MetadataRoute } from 'next';
+import type { components } from '@ratingo/api-contract';
 import { journalApi } from '@/core/api/journal.client';
 import { apiGet } from '@/core/api/client';
 
-/** Single entry returned by the catalog sitemap endpoints. */
-interface SitemapItem {
-  slug: string;
-  updatedAt: string;
-}
-
-/** Response shape from GET /catalog/sitemap/movies and GET /catalog/sitemap/shows. */
-interface CatalogSitemapResponse {
-  items: SitemapItem[];
-}
+type SitemapItem = components['schemas']['SitemapItemDto'];
+type CatalogSitemapResponse = components['schemas']['SitemapResponseDto'];
 
 /**
  * Fetches movie slugs for sitemap generation.
