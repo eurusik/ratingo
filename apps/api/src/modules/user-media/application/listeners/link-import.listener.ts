@@ -2,16 +2,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 
 import { MediaSyncedEvent } from '../../../ingestion/public';
-import { SavedItemsService } from '../../../user-actions/application/saved-items.service';
-import { ACTION_CONTEXT } from '../../../user-actions/domain/entities/user-media-action.entity';
-import { SAVED_ITEM_LIST } from '../../../user-actions/domain/entities/user-saved-item.entity';
 import {
-  IMPORT_BATCH_STATUS,
   IMPORT_PENDING_FAILURE,
   IMPORT_PENDING_REPOSITORY,
   IMPORT_PENDING_STATUS,
 } from '../../domain/constants/import-pending.constants';
-import { USER_MEDIA_STATE } from '../../domain/entities/user-media-state.entity';
 import { type IImportPendingRepository } from '../../domain/repositories/import-pending.repository.interface';
 import {
   type IUserMediaStateRepository,
@@ -38,7 +33,6 @@ export class LinkImportListener {
     private readonly pendingRepo: IImportPendingRepository,
     @Inject(USER_MEDIA_STATE_REPOSITORY)
     private readonly userMediaRepo: IUserMediaStateRepository,
-    private readonly savedItemsService: SavedItemsService,
   ) {}
 
   @OnEvent(MediaSyncedEvent.eventName)
@@ -78,16 +72,6 @@ export class LinkImportListener {
           continue;
         }
 
-        if (batch.status === IMPORT_BATCH_STATUS.CANCELLED) {
-          this.logger.debug(
-            `[link] batchId=${item.batchId} is cancelled, skipping itemId=${item.id}`,
-          );
-          await this.pendingRepo.updateItemStatus(item.id, {
-            status: IMPORT_PENDING_STATUS.CANCELLED,
-          });
-          continue;
-        }
-
         // Create user_media_state using existing bulkImport (overwrite=false respects existing entries)
         await this.userMediaRepo.bulkImport(
           batch.userId,
@@ -100,22 +84,6 @@ export class LinkImportListener {
           ],
           false,
         );
-
-        if (item.state === USER_MEDIA_STATE.PLANNED) {
-          try {
-            await this.savedItemsService.saveItem({
-              userId: batch.userId,
-              mediaItemId: event.mediaItemId,
-              list: SAVED_ITEM_LIST.FOR_LATER,
-              context: ACTION_CONTEXT.IMPORT,
-            });
-          } catch (saveError) {
-            this.logger.error(
-              `[link] Non-critical: failed to save itemId=${item.id} to for_later: ${(saveError as Error).message}`,
-              (saveError as Error).stack,
-            );
-          }
-        }
 
         await this.pendingRepo.updateItemStatus(item.id, {
           status: IMPORT_PENDING_STATUS.DONE,

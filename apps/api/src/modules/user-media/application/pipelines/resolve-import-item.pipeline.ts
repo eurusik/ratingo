@@ -59,7 +59,6 @@ export class ResolveImportItemPipeline {
       IMPORT_PENDING_STATUS.DONE,
       IMPORT_PENDING_STATUS.FAILED,
       IMPORT_PENDING_STATUS.INGESTING,
-      IMPORT_PENDING_STATUS.CANCELLED,
     ];
     if (SKIP_STATUSES.includes(item.status as any)) {
       this.logger.debug(
@@ -68,16 +67,10 @@ export class ResolveImportItemPipeline {
       return;
     }
 
-    // Mark as resolving — skip if the item was cancelled between the status check and this write
-    const updated = await this.pendingRepo.updateItemStatusIfNotCancelled(pendingItemId, {
+    // Mark as resolving to prevent duplicate processing on retry
+    await this.pendingRepo.updateItemStatus(pendingItemId, {
       status: IMPORT_PENDING_STATUS.RESOLVING,
     });
-    if (!updated) {
-      this.logger.log(
-        `[item] pendingItemId=${pendingItemId} was cancelled before resolving, skipping`,
-      );
-      return;
-    }
 
     let resolved: ResolvedMedia | null = null;
 
@@ -94,22 +87,22 @@ export class ResolveImportItemPipeline {
 
     if (!resolved) {
       this.logger.debug(`[item] pendingItemId=${pendingItemId} not found in TMDB, marking failed`);
-      const markedFailed = await this.pendingRepo.updateItemStatusIfNotCancelled(pendingItemId, {
+      await this.pendingRepo.updateItemStatus(pendingItemId, {
         status: IMPORT_PENDING_STATUS.FAILED,
         failureReason: IMPORT_PENDING_FAILURE.TMDB_NOT_FOUND,
       });
-      if (!markedFailed) {
-        this.logger.log(
-          `[item] pendingItemId=${pendingItemId} was cancelled during TMDB lookup, skipping failed mark`,
-        );
-        return;
-      }
       await this.pendingRepo.updateBatchCountersAtomic(batchId);
       return;
     }
 
-    // Queue catalog ingestion BEFORE marking as INGESTING.
-    // If queue.add() fails, the item stays in RESOLVING and can be retried.
+    // Transition to ingesting and record resolved identifiers
+    await this.pendingRepo.updateItemStatus(pendingItemId, {
+      status: IMPORT_PENDING_STATUS.INGESTING,
+      resolvedTmdbId: resolved.tmdbId,
+      mediaType: resolved.type,
+    });
+
+    // Queue catalog ingestion (existing SYNC_MOVIE/SYNC_SHOW pipeline)
     const jobName = resolved.type === 'movie' ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
     const mediaTypeName = resolved.type === 'movie' ? MediaType.MOVIE : MediaType.SHOW;
 
@@ -118,14 +111,6 @@ export class ResolveImportItemPipeline {
       { tmdbId: resolved.tmdbId, type: mediaTypeName },
       { jobId: `${jobName}-${resolved.tmdbId}` },
     );
-
-    // Only transition to INGESTING after successful queue add.
-    // Skip if the item was cancelled while waiting for queue.add() to complete.
-    await this.pendingRepo.updateItemStatusIfNotCancelled(pendingItemId, {
-      status: IMPORT_PENDING_STATUS.INGESTING,
-      resolvedTmdbId: resolved.tmdbId,
-      mediaType: resolved.type,
-    });
 
     this.logger.log(
       `[item] pendingItemId=${pendingItemId} queued ${jobName} for tmdbId=${resolved.tmdbId}`,

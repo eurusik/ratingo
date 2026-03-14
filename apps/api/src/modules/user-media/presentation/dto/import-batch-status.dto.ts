@@ -43,8 +43,7 @@ export class ImportBatchStatusDto {
   @ApiProperty({
     enum: Object.values(IMPORT_BATCH_STATUS),
     example: IMPORT_BATCH_STATUS.PROCESSING,
-    description:
-      'Batch status: processing while items remain, completed when all done/failed, cancelled when user aborted',
+    description: 'Batch status: processing while items remain, completed when all done/failed',
   })
   status!: ImportBatchStatus;
 
