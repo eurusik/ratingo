@@ -37,6 +37,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react'],
+  },
   transpilePackages: ['@ratingo/api-contract', '@ratingo/fx-engine'],
   // Serwist adds webpack config for SW bundling; empty turbopack config
   // tells Next.js 16 this is intentional and allows dev to use Turbopack

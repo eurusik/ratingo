@@ -1,16 +1,35 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module, forwardRef } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
+import tmdbConfig from '../../config/tmdb.config';
 import { DatabaseModule } from '../../database/database.module';
 import { AuthModule } from '../auth/auth.module';
+import {
+  BACKFILL_QUEUE,
+  DEFAULT_INGESTION_JOB_OPTIONS,
+  INGESTION_QUEUE,
+} from '../ingestion/ingestion.constants';
 import { CardsModule } from '../shared/cards/cards.module';
 import { UserActionsModule } from '../user-actions/user-actions.module';
 
 import { EpisodeProgressService } from './application/episode-progress.service';
+import { ImportMediaService } from './application/import-media.service';
+import { ImportPendingService } from './application/import-pending.service';
+import { LinkImportListener } from './application/listeners/link-import.listener';
 import { MeListsService } from './application/me-lists.service';
+import { ResolveImportDispatcherPipeline } from './application/pipelines/resolve-import-dispatcher.pipeline';
+import { ResolveImportItemPipeline } from './application/pipelines/resolve-import-item.pipeline';
 import { UserMediaService } from './application/user-media.service';
+import { IMPORT_PENDING_REPOSITORY } from './domain/constants/import-pending.constants';
+import { MEDIA_LOOKUP_PORT } from './domain/constants/import.constants';
 import { RATING_SYNC_PORT } from './domain/ports/rating-sync.port';
+import { TMDB_RESOLVER } from './domain/ports/tmdb-resolver.port';
 import { EPISODE_PROGRESS_REPOSITORY } from './domain/repositories/episode-progress.repository.interface';
 import { USER_MEDIA_STATE_REPOSITORY } from './domain/repositories/user-media-state.repository.interface';
+import { DrizzleMediaLookupAdapter } from './infrastructure/adapters/drizzle-media-lookup.adapter';
+import { TmdbResolverAdapter } from './infrastructure/adapters/tmdb-resolver.adapter';
+import { DrizzleImportPendingRepository } from './infrastructure/drizzle-import-pending.repository';
 import { FavoriteUpdatesQuery } from './infrastructure/queries/favorite-updates.query';
 import { DrizzleEpisodeProgressRepository } from './infrastructure/repositories/drizzle-episode-progress.repository';
 import { DrizzleUserMediaStateRepository } from './infrastructure/repositories/drizzle-user-media-state.repository';
@@ -18,16 +37,35 @@ import { EpisodeProgressController } from './presentation/controllers/episode-pr
 import { MeListsController } from './presentation/controllers/me-lists.controller';
 import { UserMediaController } from './presentation/controllers/user-media.controller';
 
-/**
- * User Media module wiring.
- */
 @Module({
-  imports: [DatabaseModule, forwardRef(() => AuthModule), CardsModule, UserActionsModule],
+  imports: [
+    DatabaseModule,
+    forwardRef(() => AuthModule),
+    CardsModule,
+    UserActionsModule,
+    ConfigModule.forFeature(tmdbConfig),
+    BullModule.registerQueue({
+      name: BACKFILL_QUEUE,
+      defaultJobOptions: {
+        ...DEFAULT_INGESTION_JOB_OPTIONS,
+        removeOnComplete: { age: 3600, count: 1000 },
+      },
+    }),
+    BullModule.registerQueue({
+      name: INGESTION_QUEUE,
+      defaultJobOptions: DEFAULT_INGESTION_JOB_OPTIONS,
+    }),
+  ],
   providers: [
     UserMediaService,
     MeListsService,
     EpisodeProgressService,
+    ImportMediaService,
+    ImportPendingService,
     FavoriteUpdatesQuery,
+    LinkImportListener,
+    ResolveImportDispatcherPipeline,
+    ResolveImportItemPipeline,
     {
       provide: USER_MEDIA_STATE_REPOSITORY,
       useClass: DrizzleUserMediaStateRepository,
@@ -40,6 +78,18 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
       provide: RATING_SYNC_PORT,
       useExisting: UserMediaService,
     },
+    {
+      provide: MEDIA_LOOKUP_PORT,
+      useClass: DrizzleMediaLookupAdapter,
+    },
+    {
+      provide: IMPORT_PENDING_REPOSITORY,
+      useClass: DrizzleImportPendingRepository,
+    },
+    {
+      provide: TMDB_RESOLVER,
+      useClass: TmdbResolverAdapter,
+    },
   ],
   controllers: [UserMediaController, MeListsController, EpisodeProgressController],
   exports: [
@@ -47,6 +97,11 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     RATING_SYNC_PORT,
     USER_MEDIA_STATE_REPOSITORY,
     EPISODE_PROGRESS_REPOSITORY,
+    ImportPendingService,
+    ResolveImportDispatcherPipeline,
+    ResolveImportItemPipeline,
+    IMPORT_PENDING_REPOSITORY,
+    TMDB_RESOLVER,
   ],
 })
 export class UserMediaModule {}

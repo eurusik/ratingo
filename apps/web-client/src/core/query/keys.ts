@@ -96,6 +96,7 @@ export const queryKeys = {
       [...queryKeys.userMedia.all, 'my-ratings', limit ?? null, offset ?? null] as const,
     myWatchlist: (limit?: number, offset?: number) =>
       [...queryKeys.userMedia.all, 'my-watchlist', limit ?? null, offset ?? null] as const,
+    importBatchStatus: ['user-media', 'import-batch-status'] as const,
   },
 
   /** Episode progress queries. */
