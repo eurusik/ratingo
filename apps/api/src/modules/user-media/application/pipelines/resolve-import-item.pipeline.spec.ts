@@ -48,8 +48,6 @@ describe('ResolveImportItemPipeline', () => {
       findById: jest.fn(),
       findItemsByResolvedTmdb: jest.fn(),
       updateItemStatus: jest.fn().mockResolvedValue(undefined),
-      updateItemStatusIfNotCancelled: jest.fn().mockResolvedValue(true),
-      cancelBatch: jest.fn(),
       updateBatchCountersAtomic: jest.fn().mockResolvedValue({ id: 'batch-1' }),
     };
 
@@ -98,7 +96,7 @@ describe('ResolveImportItemPipeline', () => {
       await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
 
       // Pipeline should move it forward (here to RESOLVING again then FAILED since no IDs)
-      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenCalled();
+      expect(pendingRepo.updateItemStatus).toHaveBeenCalled();
     });
 
     it('skips item already in DONE status', async () => {
@@ -108,7 +106,6 @@ describe('ResolveImportItemPipeline', () => {
 
       await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
 
-      expect(pendingRepo.updateItemStatusIfNotCancelled).not.toHaveBeenCalled();
       expect(pendingRepo.updateItemStatus).not.toHaveBeenCalled();
       expect(ingestionQueue.add).not.toHaveBeenCalled();
     });
@@ -120,35 +117,7 @@ describe('ResolveImportItemPipeline', () => {
 
       await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
 
-      expect(pendingRepo.updateItemStatusIfNotCancelled).not.toHaveBeenCalled();
       expect(pendingRepo.updateItemStatus).not.toHaveBeenCalled();
-      expect(ingestionQueue.add).not.toHaveBeenCalled();
-    });
-
-    it('skips item already in CANCELLED status', async () => {
-      pendingRepo.findById.mockResolvedValue(
-        makePendingItem({ status: IMPORT_PENDING_STATUS.CANCELLED }),
-      );
-
-      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
-
-      expect(pendingRepo.updateItemStatusIfNotCancelled).not.toHaveBeenCalled();
-      expect(pendingRepo.updateItemStatus).not.toHaveBeenCalled();
-      expect(ingestionQueue.add).not.toHaveBeenCalled();
-    });
-
-    it('returns early when item is cancelled between status check and resolving write (race condition)', async () => {
-      const item = makePendingItem({ imdbId: 'tt0000001' });
-      pendingRepo.findById.mockResolvedValue(item);
-      // Simulate race: the conditional update returns false (item was cancelled concurrently)
-      pendingRepo.updateItemStatusIfNotCancelled.mockResolvedValue(false);
-
-      await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
-
-      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenCalledWith('item-1', {
-        status: IMPORT_PENDING_STATUS.RESOLVING,
-      });
-      expect(tmdbResolver.findByImdbId).not.toHaveBeenCalled();
       expect(ingestionQueue.add).not.toHaveBeenCalled();
     });
   });
@@ -161,13 +130,13 @@ describe('ResolveImportItemPipeline', () => {
 
       await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
 
-      // Conditional update: PENDING → RESOLVING (skips if cancelled)
-      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenCalledWith('item-1', {
+      // First update: PENDING → RESOLVING
+      expect(pendingRepo.updateItemStatus).toHaveBeenNthCalledWith(1, 'item-1', {
         status: IMPORT_PENDING_STATUS.RESOLVING,
       });
 
-      // Second update: RESOLVING → INGESTING with resolved IDs (skips if cancelled)
-      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenCalledWith('item-1', {
+      // Second update: RESOLVING → INGESTING with resolved IDs
+      expect(pendingRepo.updateItemStatus).toHaveBeenNthCalledWith(2, 'item-1', {
         status: IMPORT_PENDING_STATUS.INGESTING,
         resolvedTmdbId: 550,
         mediaType: 'movie',
@@ -265,7 +234,7 @@ describe('ResolveImportItemPipeline', () => {
 
       await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
 
-      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenCalledWith('item-1', {
+      expect(pendingRepo.updateItemStatus).toHaveBeenCalledWith('item-1', {
         status: IMPORT_PENDING_STATUS.FAILED,
         failureReason: IMPORT_PENDING_FAILURE.TMDB_NOT_FOUND,
       });
@@ -280,7 +249,7 @@ describe('ResolveImportItemPipeline', () => {
 
       await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
 
-      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenCalledWith('item-1', {
+      expect(pendingRepo.updateItemStatus).toHaveBeenCalledWith('item-1', {
         status: IMPORT_PENDING_STATUS.FAILED,
         failureReason: IMPORT_PENDING_FAILURE.TMDB_NOT_FOUND,
       });
@@ -293,7 +262,7 @@ describe('ResolveImportItemPipeline', () => {
 
       await pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' });
 
-      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenCalledWith('item-1', {
+      expect(pendingRepo.updateItemStatus).toHaveBeenCalledWith('item-1', {
         status: IMPORT_PENDING_STATUS.FAILED,
         failureReason: IMPORT_PENDING_FAILURE.TMDB_NOT_FOUND,
       });
@@ -312,12 +281,11 @@ describe('ResolveImportItemPipeline', () => {
         pipeline.execute({ pendingItemId: 'item-1', batchId: 'batch-1' }),
       ).rejects.toThrow('Network timeout');
 
-      // Item was moved to RESOLVING (via conditional write) but never marked FAILED
-      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenCalledTimes(1);
-      expect(pendingRepo.updateItemStatusIfNotCancelled).toHaveBeenCalledWith('item-1', {
+      // Item was moved to RESOLVING but never marked FAILED
+      expect(pendingRepo.updateItemStatus).toHaveBeenCalledTimes(1);
+      expect(pendingRepo.updateItemStatus).toHaveBeenCalledWith('item-1', {
         status: IMPORT_PENDING_STATUS.RESOLVING,
       });
-      expect(pendingRepo.updateItemStatus).not.toHaveBeenCalled();
       expect(pendingRepo.updateBatchCountersAtomic).not.toHaveBeenCalled();
       expect(ingestionQueue.add).not.toHaveBeenCalled();
     });

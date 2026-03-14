@@ -136,14 +136,13 @@ function reducer(state: WizardState, action: WizardAction): WizardState {
       return { ...state, isImporting: true };
 
     case 'IMPORT_DONE':
-      if (!state.isImporting) return state;
       return { ...state, step: 'result', isImporting: false, response: action.response };
 
     case 'IMPORT_ERROR':
       return { ...state, isImporting: false };
 
     case 'RESET':
-      return { ...INITIAL_STATE };
+      return INITIAL_STATE;
 
     default:
       return state;
@@ -495,14 +494,12 @@ describe('ImportWizard reducer — IMPORT_START', () => {
 
 describe('ImportWizard reducer — IMPORT_DONE', () => {
   it('transitions to result step', () => {
-    const state = stateAtPreview({ isImporting: true });
-    const next = reducer(state, { type: 'IMPORT_DONE', response: IMPORT_RESULT });
+    const next = reducer(stateAtPreview(), { type: 'IMPORT_DONE', response: IMPORT_RESULT });
     expect(next.step).toBe('result');
   });
 
   it('sets response to the provided result', () => {
-    const state = stateAtPreview({ isImporting: true });
-    const next = reducer(state, { type: 'IMPORT_DONE', response: IMPORT_RESULT });
+    const next = reducer(stateAtPreview(), { type: 'IMPORT_DONE', response: IMPORT_RESULT });
     expect(next.response).toEqual(IMPORT_RESULT);
   });
 
@@ -510,12 +507,6 @@ describe('ImportWizard reducer — IMPORT_DONE', () => {
     const state = stateAtPreview({ isImporting: true });
     const next = reducer(state, { type: 'IMPORT_DONE', response: IMPORT_RESULT });
     expect(next.isImporting).toBe(false);
-  });
-
-  it('ignores IMPORT_DONE when isImporting is false', () => {
-    const state = { ...INITIAL_STATE, step: 'preview' as WizardStep, isImporting: false };
-    const result = reducer(state, { type: 'IMPORT_DONE', response: IMPORT_RESULT });
-    expect(result).toBe(state); // same reference, no change
   });
 });
 
@@ -543,12 +534,9 @@ describe('ImportWizard reducer — RESET', () => {
     expect(next).toEqual(INITIAL_STATE);
   });
 
-  it('returns a new object reference (not the singleton)', () => {
-    const someState = stateAtPreview({ isImporting: true, overwrite: true });
-    const result1 = reducer(someState, { type: 'RESET' });
-    const result2 = reducer(someState, { type: 'RESET' });
-    expect(result1).not.toBe(result2);
-    expect(result1).toEqual(result2);
+  it('returns the INITIAL_STATE reference', () => {
+    const next = reducer(stateAtPreview(), { type: 'RESET' });
+    expect(next).toBe(INITIAL_STATE);
   });
 });
 
