@@ -3,6 +3,8 @@ import { Job } from 'bullmq';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 
+import { ResolveImportDispatcherPipeline } from '../../../user-media/application/pipelines/resolve-import-dispatcher.pipeline';
+import { ResolveImportItemPipeline } from '../../../user-media/application/pipelines/resolve-import-item.pipeline';
 import { IngestionJob } from '../../ingestion.constants';
 import { destroyTraktRateLimiter } from '../../infrastructure/adapters/trakt/base-trakt-http';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
@@ -18,6 +20,8 @@ describe('BackfillWorker', () => {
   let worker: BackfillWorker;
   let backfillAltTitlesPipeline: any;
   let backfillImdbPipeline: any;
+  let resolveImportDispatcherPipeline: any;
+  let resolveImportItemPipeline: any;
 
   beforeEach(async () => {
     backfillAltTitlesPipeline = {
@@ -28,11 +32,27 @@ describe('BackfillWorker', () => {
       processItem: jest.fn().mockResolvedValue(undefined),
     };
 
+    resolveImportDispatcherPipeline = {
+      execute: jest.fn().mockResolvedValue(undefined),
+    };
+
+    resolveImportItemPipeline = {
+      execute: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BackfillWorker,
         { provide: BackfillAltTitlesPipeline, useValue: backfillAltTitlesPipeline },
         { provide: BackfillImdbPipeline, useValue: backfillImdbPipeline },
+        {
+          provide: ResolveImportDispatcherPipeline,
+          useValue: resolveImportDispatcherPipeline,
+        },
+        {
+          provide: ResolveImportItemPipeline,
+          useValue: resolveImportItemPipeline,
+        },
       ],
     }).compile();
 

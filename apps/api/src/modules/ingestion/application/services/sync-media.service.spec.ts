@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SyncMediaService } from './sync-media.service';
 import { TvMazeEnrichmentService } from './tvmaze-enrichment.service';
 import { TmdbAdapter } from '../../../tmdb/public';
@@ -82,6 +83,10 @@ describe('SyncMediaService', () => {
       evaluateOne: jest.fn().mockResolvedValue({ status: 'eligible', reasons: [] }),
     };
 
+    const mockEventEmitter = {
+      emit: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SyncMediaService,
@@ -91,6 +96,7 @@ describe('SyncMediaService', () => {
         { provide: TvMazeEnrichmentService, useValue: mockTvMazeEnrichment },
         { provide: ScoreCalculatorService, useValue: mockScoreCalculator },
         { provide: NormalizationService, useValue: mockNormalizationService },
+        { provide: EventEmitter2, useValue: mockEventEmitter },
         { provide: MEDIA_REPOSITORY, useValue: mockMediaRepository },
         { provide: CATALOG_POLICY_EVALUATOR, useValue: mockCatalogEvaluator },
       ],
@@ -681,6 +687,70 @@ describe('SyncMediaService', () => {
       await service.syncMovie(550);
 
       expect(catalogEvaluator.evaluateOne).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('MediaSyncedEvent emission', () => {
+    let eventEmitter: jest.Mocked<{ emit: jest.Mock }>;
+
+    beforeEach(() => {
+      // Retrieve the mocked EventEmitter2 instance registered in the module
+      const { EventEmitter2: EE2 } = jest.requireActual('@nestjs/event-emitter');
+      eventEmitter = (service as any).eventEmitter;
+    });
+
+    it('should emit media.synced with correct data after successful syncMovie', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'media-123' });
+
+      await service.syncMovie(550);
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'media.synced',
+        expect.objectContaining({
+          tmdbId: 550,
+          type: 'movie',
+          mediaItemId: 'media-123',
+        }),
+      );
+    });
+
+    it('should emit media.synced with correct data after successful syncShow', async () => {
+      const mockShow = {
+        ...mockMedia,
+        type: MediaType.SHOW,
+        title: 'Test Show',
+        slug: 'test-show',
+      };
+      tmdbAdapter.getShow.mockResolvedValue(mockShow);
+      traktAdapter.getShowRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      mediaRepository.findByTmdbId.mockResolvedValue({ id: 'show-456' });
+
+      await service.syncShow(1000);
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'media.synced',
+        expect.objectContaining({
+          tmdbId: 1000,
+          type: 'show',
+          mediaItemId: 'show-456',
+        }),
+      );
+    });
+
+    it('should NOT emit media.synced when mediaItem is null after persist', async () => {
+      tmdbAdapter.getMovie.mockResolvedValue({ ...mockMedia });
+      traktAdapter.getMovieRatingsByTmdbId.mockResolvedValue(null);
+      omdbAdapter.getAggregatedRatings.mockResolvedValue(null);
+      // findByTmdbId returns null — mediaItem not found after upsert
+      mediaRepository.findByTmdbId.mockResolvedValue(null);
+
+      await service.syncMovie(550);
+
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
   });
 });
