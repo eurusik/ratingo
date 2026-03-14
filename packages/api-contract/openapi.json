@@ -1707,6 +1707,82 @@
         ]
       }
     },
+    "/api/catalog/sitemap/movies": {
+      "get": {
+        "operationId": "CatalogSitemapController_getMovieSitemap",
+        "summary": "Movie sitemap data",
+        "description": "Returns slug and updatedAt for all active movies. Intended for sitemap generation.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SitemapResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
+    "/api/catalog/sitemap/shows": {
+      "get": {
+        "operationId": "CatalogSitemapController_getShowSitemap",
+        "summary": "Show sitemap data",
+        "description": "Returns slug and updatedAt for all active shows. Intended for sitemap generation.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SitemapResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Public: Catalog"
+        ]
+      }
+    },
     "/api/user-media/batch-ratings": {
       "get": {
         "operationId": "UserMediaController_batchRatings",
@@ -1812,6 +1888,54 @@
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/UserMediaStateDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "User Media"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/user-media/import/status": {
+      "get": {
+        "operationId": "UserMediaController_getImportStatus",
+        "summary": "Get auto-ingest import batch statuses (auth: Bearer)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Import batch statuses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ImportBatchStatusDto"
                       }
                     }
                   }
@@ -2119,6 +2243,64 @@
           },
           "400": {
             "description": "Cannot resume: item is not paused"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "tags": [
+          "User Media"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/user-media/import": {
+      "post": {
+        "operationId": "UserMediaController_importMedia",
+        "summary": "Import ratings and watchlist from external source (auth: Bearer)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMediaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CsvImportResultDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or source"
           },
           "401": {
             "description": "Unauthorized"
@@ -10006,6 +10188,37 @@
           "meta"
         ]
       },
+      "SitemapItemDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly identifier for the media item"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "ISO 8601 timestamp of when the item was last updated"
+          }
+        },
+        "required": [
+          "slug",
+          "updatedAt"
+        ]
+      },
+      "SitemapResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SitemapItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
       "BatchRatingsResponseDto": {
         "type": "object",
         "properties": {
@@ -10023,6 +10236,59 @@
         },
         "required": [
           "ratings"
+        ]
+      },
+      "ImportBatchStatusDto": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "example": "uuid-here",
+            "description": "Unique batch identifier"
+          },
+          "source": {
+            "type": "string",
+            "example": "kinobaza",
+            "description": "Import source identifier"
+          },
+          "totalItems": {
+            "type": "number",
+            "example": 42,
+            "description": "Total number of not-found items submitted for auto-ingestion"
+          },
+          "completedCount": {
+            "type": "number",
+            "example": 35,
+            "description": "Number of items successfully ingested and linked"
+          },
+          "failedCount": {
+            "type": "number",
+            "example": 3,
+            "description": "Number of items that failed to resolve or ingest"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "processing",
+              "completed"
+            ],
+            "example": "processing",
+            "description": "Batch status: processing while items remain, completed when all done/failed"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2024-01-15T12:00:00.000Z",
+            "description": "ISO 8601 timestamp when the batch was created"
+          }
+        },
+        "required": [
+          "batchId",
+          "source",
+          "totalItems",
+          "completedCount",
+          "failedCount",
+          "status",
+          "createdAt"
         ]
       },
       "SetUserMediaStateDto": {
@@ -10070,6 +10336,239 @@
             "nullable": true
           }
         }
+      },
+      "ImportItemDto": {
+        "type": "object",
+        "properties": {
+          "imdbId": {
+            "type": "string",
+            "example": "tt1234567",
+            "nullable": true
+          },
+          "tmdbId": {
+            "type": "number",
+            "example": 550,
+            "nullable": true
+          },
+          "rating": {
+            "type": "number",
+            "example": 8,
+            "nullable": true,
+            "minimum": 1,
+            "maximum": 10
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "planned"
+            ],
+            "example": "completed"
+          },
+          "title": {
+            "type": "string",
+            "example": "Fight Club",
+            "nullable": true,
+            "maxLength": 200
+          },
+          "year": {
+            "type": "number",
+            "example": 1999,
+            "nullable": true
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "ImportMediaDto": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "kinobaza"
+            ],
+            "example": "kinobaza"
+          },
+          "items": {
+            "description": "Items to import (1–10000)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportItemDto"
+            }
+          },
+          "overwriteExisting": {
+            "type": "boolean",
+            "example": false,
+            "default": false,
+            "description": "Overwrite existing ratings and states. State can never be downgraded."
+          }
+        },
+        "required": [
+          "source",
+          "items"
+        ]
+      },
+      "ImportedItemDetailDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Fight Club",
+            "nullable": true
+          },
+          "mediaItemId": {
+            "type": "string",
+            "example": "uuid-here"
+          },
+          "state": {
+            "type": "string",
+            "example": "completed"
+          },
+          "rating": {
+            "type": "number",
+            "example": 80,
+            "nullable": true
+          }
+        },
+        "required": [
+          "mediaItemId",
+          "state",
+          "rating"
+        ]
+      },
+      "SkippedItemDetailDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "The Matrix",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "example": "already_exists"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "NotFoundItemDetailDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Obscure Film",
+            "nullable": true
+          },
+          "imdbId": {
+            "type": "string",
+            "example": "tt9999999",
+            "nullable": true
+          },
+          "tmdbId": {
+            "type": "number",
+            "example": 99999,
+            "nullable": true
+          }
+        }
+      },
+      "ImportDetailsDto": {
+        "type": "object",
+        "properties": {
+          "imported": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportedItemDetailDto"
+            }
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkippedItemDetailDto"
+            }
+          },
+          "notFound": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotFoundItemDetailDto"
+            }
+          }
+        },
+        "required": [
+          "imported",
+          "skipped",
+          "notFound"
+        ]
+      },
+      "PendingBatchSummaryDto": {
+        "type": "object",
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "example": "uuid-here",
+            "description": "Batch identifier for polling status"
+          },
+          "totalItems": {
+            "type": "number",
+            "example": 42,
+            "description": "Total number of items submitted for background auto-ingestion"
+          }
+        },
+        "required": [
+          "batchId",
+          "totalItems"
+        ]
+      },
+      "CsvImportResultDto": {
+        "type": "object",
+        "properties": {
+          "imported": {
+            "type": "number",
+            "example": 2743,
+            "description": "Items successfully written to the database"
+          },
+          "skipped": {
+            "type": "number",
+            "example": 52,
+            "description": "Items skipped (already exist and overwrite is false)"
+          },
+          "notFound": {
+            "type": "number",
+            "example": 135,
+            "description": "Items whose media could not be found in the catalog"
+          },
+          "durationMs": {
+            "type": "number",
+            "example": 812,
+            "description": "Wall-clock import duration in milliseconds"
+          },
+          "details": {
+            "description": "Item-level breakdown for the result summary",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportDetailsDto"
+              }
+            ]
+          },
+          "pendingBatch": {
+            "description": "Present when not-found items have been queued for background auto-ingestion. Poll GET /user-media/import/status for progress updates.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PendingBatchSummaryDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "imported",
+          "skipped",
+          "notFound",
+          "durationMs",
+          "details"
+        ]
       },
       "Function": {
         "type": "object",

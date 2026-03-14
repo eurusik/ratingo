@@ -1,7 +1,3 @@
-/**
- * History list component displaying completed items.
- */
-
 'use client';
 
 import { useState, useCallback } from 'react';
@@ -41,6 +37,9 @@ export function HistoryList() {
         type="history"
         title={dict.activity?.empty?.history?.title ?? 'Історія порожня'}
         description={dict.activity?.empty?.history?.description ?? 'Ви ще нічого не переглянули'}
+        showImportCta
+        importHint={dict.saved?.emptyState?.importHint}
+        importButtonLabel={dict.saved?.emptyState?.importButton}
       />
     );
   }

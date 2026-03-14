@@ -1,17 +1,19 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, desc, eq, inArray, isNotNull, or, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, or, sql, type SQL } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
 import { MediaType } from '../../../../common/enums/media-type.enum';
-import { DatabaseException } from '../../../../common/exceptions/database.exception';
 import { ImageMapper } from '../../../../common/mappers/image.mapper';
+import { withDbError } from '../../../../common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '../../../../database/database.module';
 import * as schema from '../../../../database/schema';
-import { type UserMediaState } from '../../domain/entities/user-media-state.entity';
-import { USER_MEDIA_STATE } from '../../domain/entities/user-media-state.entity';
+import {
+  type UserMediaState,
+  USER_MEDIA_STATE,
+} from '../../domain/entities/user-media-state.entity';
 import {
   type ContinuePoint,
   type FavoriteUpdateItem,
@@ -26,11 +28,10 @@ import {
 } from '../../domain/repositories/user-media-state.repository.interface';
 import { FavoriteUpdatesQuery } from '../queries/favorite-updates.query';
 
-/**
- * Drizzle implementation of user media state repository.
- */
 @Injectable()
 export class DrizzleUserMediaStateRepository implements IUserMediaStateRepository {
+  private static readonly BATCH_SIZE = 500;
+
   private readonly logger = new Logger(DrizzleUserMediaStateRepository.name);
 
   constructor(
@@ -39,233 +40,189 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     private readonly favoriteUpdatesQuery: FavoriteUpdatesQuery,
   ) {}
 
-  /**
-   * Upserts user media state.
-   *
-   * @param {UpsertUserMediaStateData} data - Upsert payload
-   * @returns {Promise<UserMediaState>} Persisted state
-   */
   async upsert(data: UpsertUserMediaStateData): Promise<UserMediaState> {
-    try {
-      const updateSet: Record<string, unknown> = {
-        state: data.state,
-        updatedAt: new Date(),
-      };
-
-      if (data.rating !== undefined) updateSet.rating = data.rating;
-      if (data.progress !== undefined) updateSet.progress = data.progress;
-      if (data.notes !== undefined) updateSet.notes = data.notes;
-
-      const [row] = await this.db
-        .insert(schema.userMediaState)
-        .values({
-          userId: data.userId,
-          mediaItemId: data.mediaItemId,
+    return withDbError(
+      'upsert user media state',
+      this.logger,
+      async () => {
+        const updateSet: Record<string, unknown> = {
           state: data.state,
-          ...(data.rating !== undefined && { rating: data.rating }),
-          ...(data.progress !== undefined && { progress: data.progress }),
-          ...(data.notes !== undefined && { notes: data.notes }),
-        })
-        .onConflictDoUpdate({
-          target: [schema.userMediaState.userId, schema.userMediaState.mediaItemId],
-          set: updateSet,
-        })
-        .returning();
-      return this.mapRow(row);
-    } catch (error) {
-      this.logger.error(`upsert failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to upsert user media state', {
-        userId: data.userId,
-        mediaItemId: data.mediaItemId,
-      });
-    }
+          updatedAt: new Date(),
+        };
+
+        if (data.rating !== undefined) updateSet.rating = data.rating;
+        if (data.progress !== undefined) updateSet.progress = data.progress;
+        if (data.notes !== undefined) updateSet.notes = data.notes;
+
+        const [row] = await this.db
+          .insert(schema.userMediaState)
+          .values({
+            userId: data.userId,
+            mediaItemId: data.mediaItemId,
+            state: data.state,
+            ...(data.rating !== undefined && { rating: data.rating }),
+            ...(data.progress !== undefined && { progress: data.progress }),
+            ...(data.notes !== undefined && { notes: data.notes }),
+          })
+          .onConflictDoUpdate({
+            target: [schema.userMediaState.userId, schema.userMediaState.mediaItemId],
+            set: updateSet,
+          })
+          .returning();
+        return this.mapRow(row);
+      },
+      { userId: data.userId, mediaItemId: data.mediaItemId },
+    );
   }
 
-  /**
-   * Deletes user media state.
-   *
-   * @param {string} userId - User identifier
-   * @param {string} mediaItemId - Media item identifier
-   * @returns {Promise<void>}
-   */
   async delete(userId: string, mediaItemId: string): Promise<void> {
-    try {
-      await this.db
-        .delete(schema.userMediaState)
-        .where(
-          and(
-            eq(schema.userMediaState.userId, userId),
-            eq(schema.userMediaState.mediaItemId, mediaItemId),
-          ),
-        );
-    } catch (error) {
-      this.logger.error(`delete failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to delete user media state', {
-        userId,
-        mediaItemId,
-      });
-    }
+    return withDbError(
+      'delete user media state',
+      this.logger,
+      async () => {
+        await this.db
+          .delete(schema.userMediaState)
+          .where(
+            and(
+              eq(schema.userMediaState.userId, userId),
+              eq(schema.userMediaState.mediaItemId, mediaItemId),
+            ),
+          );
+      },
+      { userId, mediaItemId },
+    );
   }
 
-  /**
-   * Lists "Continue" items with media summary.
-   *
-   * Semantics: `progress IS NOT NULL`.
-   *
-   * @param {string} userId - User identifier
-   * @param {number} limit - Page size
-   * @param {number} offset - Offset
-   * @returns {Promise<any[]>} Continue items with media summary
-   * @throws {DatabaseException} When query fails
-   */
-  async listContinueWithMedia(userId: string, limit = DEFAULT_PAGE_SIZE, offset = 0) {
-    try {
-      const rows = await this.db
-        .select({
-          state: schema.userMediaState,
-          media: {
-            id: schema.mediaItems.id,
-            type: schema.mediaItems.type,
-            title: schema.mediaItems.title,
-            slug: schema.mediaItems.slug,
-            posterPath: schema.mediaItems.posterPath,
-            releaseDate: schema.mediaItems.releaseDate,
-          },
-        })
-        .from(schema.userMediaState)
-        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-        .where(
-          and(eq(schema.userMediaState.userId, userId), isNotNull(schema.userMediaState.progress)),
-        )
-        .orderBy(desc(schema.userMediaState.updatedAt))
-        .limit(limit)
-        .offset(offset);
+  async listContinueWithMedia(
+    userId: string,
+    limit = DEFAULT_PAGE_SIZE,
+    offset = 0,
+  ): Promise<Array<UserMediaState & { mediaSummary: UserMediaSummary }>> {
+    return withDbError(
+      'list continue items with media',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({
+            state: schema.userMediaState,
+            media: {
+              id: schema.mediaItems.id,
+              type: schema.mediaItems.type,
+              title: schema.mediaItems.title,
+              slug: schema.mediaItems.slug,
+              posterPath: schema.mediaItems.posterPath,
+              releaseDate: schema.mediaItems.releaseDate,
+            },
+          })
+          .from(schema.userMediaState)
+          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+          .where(
+            and(
+              eq(schema.userMediaState.userId, userId),
+              isNotNull(schema.userMediaState.progress),
+            ),
+          )
+          .orderBy(desc(schema.userMediaState.updatedAt))
+          .limit(limit)
+          .offset(offset);
 
-      return rows.map((r) => ({
-        ...this.mapRow(r.state),
-        mediaSummary: this.mapMediaSummary(r.media),
-      }));
-    } catch (error) {
-      this.logger.error(`listContinueWithMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to list continue items with media', { userId });
-    }
+        return rows.map((r) => ({
+          ...this.mapRow(r.state),
+          mediaSummary: this.mapMediaSummary(r.media),
+        }));
+      },
+      { userId },
+    );
   }
 
-  /**
-   * Gets aggregated user media stats.
-   *
-   * @param {string} userId - User identifier
-   * @returns {Promise<UserMediaStats>} Aggregated stats
-   * @throws {DatabaseException} When query fails
-   */
   async getStats(userId: string): Promise<UserMediaStats> {
-    try {
-      const [row] = await this.db
-        .select({
-          moviesRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.MOVIE} and ${schema.userMediaState.rating} is not null)`,
-          showsRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.SHOW} and ${schema.userMediaState.rating} is not null)`,
-          watchlistCount: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.userMediaState.state} = ${USER_MEDIA_STATE.PLANNED})`,
-        })
-        .from(schema.userMediaState)
-        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-        .where(eq(schema.userMediaState.userId, userId));
+    return withDbError(
+      'fetch user media stats',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select({
+            moviesRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.MOVIE} and ${schema.userMediaState.rating} is not null)`,
+            showsRated: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.mediaItems.type} = ${MediaType.SHOW} and ${schema.userMediaState.rating} is not null)`,
+            watchlistCount: sql<number>`count(distinct ${schema.userMediaState.mediaItemId}) filter (where ${schema.userMediaState.state} = ${USER_MEDIA_STATE.PLANNED})`,
+          })
+          .from(schema.userMediaState)
+          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+          .where(eq(schema.userMediaState.userId, userId));
 
-      return {
-        moviesRated: Number(row?.moviesRated ?? 0),
-        showsRated: Number(row?.showsRated ?? 0),
-        watchlistCount: Number(row?.watchlistCount ?? 0),
-      };
-    } catch (error) {
-      this.logger.error(`getStats failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch user media stats', { userId });
-    }
+        return {
+          moviesRated: Number(row?.moviesRated ?? 0),
+          showsRated: Number(row?.showsRated ?? 0),
+          watchlistCount: Number(row?.watchlistCount ?? 0),
+        };
+      },
+      { userId },
+    );
   }
 
-  /**
-   * Finds states for a user across multiple media IDs.
-   *
-   * @param {string} userId - User identifier
-   * @param {string[]} mediaItemIds - Media item identifiers
-   * @returns {Promise<UserMediaState[]>} States
-   */
   async findManyByMediaIds(userId: string, mediaItemIds: string[]): Promise<UserMediaState[]> {
     if (!mediaItemIds.length) return [];
-    try {
-      const rows = await this.db
-        .select()
-        .from(schema.userMediaState)
-        .where(
-          and(
-            eq(schema.userMediaState.userId, userId),
-            inArray(schema.userMediaState.mediaItemId, mediaItemIds),
-          ),
-        );
-      return rows.map((r) => this.mapRow(r));
-    } catch (error) {
-      this.logger.error(`findManyByMediaIds failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch user media states by media IDs', {
-        userId,
-        mediaItemIds,
-      });
-    }
+    return withDbError(
+      'fetch user media states by media IDs',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select()
+          .from(schema.userMediaState)
+          .where(
+            and(
+              eq(schema.userMediaState.userId, userId),
+              inArray(schema.userMediaState.mediaItemId, mediaItemIds),
+            ),
+          );
+        return rows.map((r) => this.mapRow(r));
+      },
+      { userId, mediaItemIds },
+    );
   }
 
-  /**
-   * Finds state by user and media item.
-   *
-   * @param {string} userId - User identifier
-   * @param {string} mediaItemId - Media item identifier
-   * @returns {Promise<UserMediaState | null>} State or null
-   */
   async findOne(userId: string, mediaItemId: string): Promise<UserMediaState | null> {
-    try {
-      const [row] = await this.db
-        .select()
-        .from(schema.userMediaState)
-        .where(
-          and(
-            eq(schema.userMediaState.userId, userId),
-            eq(schema.userMediaState.mediaItemId, mediaItemId),
-          ),
-        );
-      return row ? this.mapRow(row) : null;
-    } catch (error) {
-      this.logger.error(`findOne failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch user media state', { userId, mediaItemId });
-    }
+    return withDbError(
+      'fetch user media state',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select()
+          .from(schema.userMediaState)
+          .where(
+            and(
+              eq(schema.userMediaState.userId, userId),
+              eq(schema.userMediaState.mediaItemId, mediaItemId),
+            ),
+          );
+        return row ? this.mapRow(row) : null;
+      },
+      { userId, mediaItemId },
+    );
   }
 
-  /**
-   * Lists states for a user.
-   *
-   * @param {string} userId - User identifier
-   * @param {number} limit - Page size
-   * @param {number} offset - Offset
-   * @returns {Promise<UserMediaState[]>} States
-   */
   async listByUser(
     userId: string,
     limit = DEFAULT_PAGE_SIZE,
     offset = 0,
   ): Promise<UserMediaState[]> {
-    try {
-      const rows = await this.db
-        .select()
-        .from(schema.userMediaState)
-        .where(eq(schema.userMediaState.userId, userId))
-        .orderBy(desc(schema.userMediaState.updatedAt))
-        .limit(limit)
-        .offset(offset);
-      return rows.map((r) => this.mapRow(r));
-    } catch (error) {
-      this.logger.error(`listByUser failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to list user media state', { userId });
-    }
+    return withDbError(
+      'list user media state',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select()
+          .from(schema.userMediaState)
+          .where(eq(schema.userMediaState.userId, userId))
+          .orderBy(desc(schema.userMediaState.updatedAt))
+          .limit(limit)
+          .offset(offset);
+        return rows.map((r) => this.mapRow(r));
+      },
+      { userId },
+    );
   }
 
-  /**
-   * Lists states with media summary.
-   */
   async listWithMedia(
     userId: string,
     limit = DEFAULT_PAGE_SIZE,
@@ -279,212 +236,192 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       }
     >
   > {
-    try {
-      const whereParts = [eq(schema.userMediaState.userId, userId)];
+    return withDbError(
+      'list user media state with media',
+      this.logger,
+      async () => {
+        const whereParts = [eq(schema.userMediaState.userId, userId)];
 
-      if (options?.ratedOnly) {
-        whereParts.push(isNotNull(schema.userMediaState.rating));
-      }
+        if (options?.ratedOnly) {
+          whereParts.push(isNotNull(schema.userMediaState.rating));
+        }
 
-      if (options?.states?.length) {
-        whereParts.push(inArray(schema.userMediaState.state, options.states));
-      }
+        if (options?.states?.length) {
+          whereParts.push(inArray(schema.userMediaState.state, options.states));
+        }
 
-      const orderBy = this.buildListOrderBy(options?.sort);
+        const orderBy = this.buildListOrderBy(options?.sort);
 
-      const rows = await this.db
-        .select({
-          state: schema.userMediaState,
-          media: {
-            id: schema.mediaItems.id,
-            type: schema.mediaItems.type,
-            title: schema.mediaItems.title,
-            slug: schema.mediaItems.slug,
-            posterPath: schema.mediaItems.posterPath,
-            releaseDate: schema.mediaItems.releaseDate,
-          },
-          progressTotal: sql<number | null>`
-            CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
-              SELECT COUNT(*)::int FROM ${schema.episodes} e
-              JOIN ${schema.seasons} s ON s.id = e.season_id
-              JOIN ${schema.shows} sh ON sh.id = s.show_id
-              WHERE sh.media_item_id = ${schema.mediaItems.id}
-              AND s.number > 0
-            ) ELSE NULL END
-          `.as('progress_total'),
-          progressWatched: sql<number | null>`
-            CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
-              SELECT COUNT(*)::int FROM ${schema.userEpisodeProgress} uep
-              JOIN ${schema.episodes} e ON e.id = uep.episode_id
-              JOIN ${schema.seasons} s ON s.id = e.season_id
-              JOIN ${schema.shows} sh ON sh.id = s.show_id
-              WHERE sh.media_item_id = ${schema.mediaItems.id}
-              AND uep.user_id = ${userId}
-              AND s.number > 0
-            ) ELSE NULL END
-          `.as('progress_watched'),
-        })
-        .from(schema.userMediaState)
-        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-        .where(and(...whereParts))
-        .orderBy(...orderBy)
-        .limit(limit)
-        .offset(offset);
+        const rows = await this.db
+          .select({
+            state: schema.userMediaState,
+            media: {
+              id: schema.mediaItems.id,
+              type: schema.mediaItems.type,
+              title: schema.mediaItems.title,
+              slug: schema.mediaItems.slug,
+              posterPath: schema.mediaItems.posterPath,
+              releaseDate: schema.mediaItems.releaseDate,
+            },
+            progressTotal: sql<number | null>`
+              CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
+                SELECT COUNT(*)::int FROM ${schema.episodes} e
+                JOIN ${schema.seasons} s ON s.id = e.season_id
+                JOIN ${schema.shows} sh ON sh.id = s.show_id
+                WHERE sh.media_item_id = ${schema.mediaItems.id}
+                AND s.number > 0
+              ) ELSE NULL END
+            `.as('progress_total'),
+            progressWatched: sql<number | null>`
+              CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
+                SELECT COUNT(*)::int FROM ${schema.userEpisodeProgress} uep
+                JOIN ${schema.episodes} e ON e.id = uep.episode_id
+                JOIN ${schema.seasons} s ON s.id = e.season_id
+                JOIN ${schema.shows} sh ON sh.id = s.show_id
+                WHERE sh.media_item_id = ${schema.mediaItems.id}
+                AND uep.user_id = ${userId}
+                AND s.number > 0
+              ) ELSE NULL END
+            `.as('progress_watched'),
+          })
+          .from(schema.userMediaState)
+          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+          .where(and(...whereParts))
+          .orderBy(...orderBy)
+          .limit(limit)
+          .offset(offset);
 
-      return rows.map((r) => ({
-        ...this.mapRow(r.state),
-        mediaSummary: this.mapMediaSummary(r.media),
-        progressSummary:
-          r.progressTotal !== null && r.progressWatched !== null
-            ? { watched: r.progressWatched, total: r.progressTotal }
-            : null,
-      }));
-    } catch (error) {
-      this.logger.error(`listWithMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to list user media state with media', { userId });
-    }
+        return rows.map((r) => ({
+          ...this.mapRow(r.state),
+          mediaSummary: this.mapMediaSummary(r.media),
+          progressSummary:
+            r.progressTotal !== null && r.progressWatched !== null
+              ? { watched: r.progressWatched, total: r.progressTotal }
+              : null,
+        }));
+      },
+      { userId },
+    );
   }
 
-  /**
-   * Counts states for listWithMedia with the same filters.
-   *
-   * @param {string} userId - User identifier
-   * @param {ListWithMediaOptions} options - Count options
-   * @returns {Promise<number>} Total count
-   * @throws {DatabaseException} When query fails
-   */
+  /** Counts with identical filters to {@link listWithMedia} — keep WHERE clauses in sync. */
   async countWithMedia(userId: string, options?: ListWithMediaOptions): Promise<number> {
-    try {
-      const whereParts = [eq(schema.userMediaState.userId, userId)];
+    return withDbError(
+      'count user media state with media',
+      this.logger,
+      async () => {
+        const whereParts = [eq(schema.userMediaState.userId, userId)];
 
-      if (options?.ratedOnly) {
-        whereParts.push(isNotNull(schema.userMediaState.rating));
-      }
+        if (options?.ratedOnly) {
+          whereParts.push(isNotNull(schema.userMediaState.rating));
+        }
 
-      if (options?.states?.length) {
-        whereParts.push(inArray(schema.userMediaState.state, options.states));
-      }
+        if (options?.states?.length) {
+          whereParts.push(inArray(schema.userMediaState.state, options.states));
+        }
 
-      const [row] = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.userMediaState)
-        .where(and(...whereParts));
+        const [row] = await this.db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.userMediaState)
+          .where(and(...whereParts));
 
-      return Number(row?.count ?? 0);
-    } catch (error) {
-      this.logger.error(`countWithMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to count user media state with media', { userId });
-    }
+        return Number(row?.count ?? 0);
+      },
+      { userId },
+    );
   }
 
-  /**
-   * Lists activity items with media summary.
-   * Semantics: state = 'watching' OR progress IS NOT NULL.
-   *
-   * @param {string} userId - User identifier
-   * @param {number} limit - Page size
-   * @param {number} offset - Offset
-   * @returns {Promise<any[]>} Activity list items
-   * @throws {DatabaseException} When query fails
-   */
-  async listActivityWithMedia(userId: string, limit = DEFAULT_PAGE_SIZE, offset = 0) {
-    try {
-      const rows = await this.db
-        .select({
-          state: schema.userMediaState,
-          media: {
-            id: schema.mediaItems.id,
-            type: schema.mediaItems.type,
-            title: schema.mediaItems.title,
-            slug: schema.mediaItems.slug,
-            posterPath: schema.mediaItems.posterPath,
-            releaseDate: schema.mediaItems.releaseDate,
-          },
-        })
-        .from(schema.userMediaState)
-        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-        .where(
-          and(
-            eq(schema.userMediaState.userId, userId),
-            or(
-              eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
-              isNotNull(schema.userMediaState.progress),
+  async listActivityWithMedia(
+    userId: string,
+    limit = DEFAULT_PAGE_SIZE,
+    offset = 0,
+  ): Promise<Array<UserMediaState & { mediaSummary: UserMediaSummary }>> {
+    return withDbError(
+      'list user media activity with media',
+      this.logger,
+      async () => {
+        const rows = await this.db
+          .select({
+            state: schema.userMediaState,
+            media: {
+              id: schema.mediaItems.id,
+              type: schema.mediaItems.type,
+              title: schema.mediaItems.title,
+              slug: schema.mediaItems.slug,
+              posterPath: schema.mediaItems.posterPath,
+              releaseDate: schema.mediaItems.releaseDate,
+            },
+          })
+          .from(schema.userMediaState)
+          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+          .where(
+            and(
+              eq(schema.userMediaState.userId, userId),
+              or(
+                eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
+                isNotNull(schema.userMediaState.progress),
+              ),
             ),
-          ),
-        )
-        .orderBy(desc(schema.userMediaState.updatedAt))
-        .limit(limit)
-        .offset(offset);
+          )
+          .orderBy(desc(schema.userMediaState.updatedAt))
+          .limit(limit)
+          .offset(offset);
 
-      return rows.map((r) => ({
-        ...this.mapRow(r.state),
-        mediaSummary: this.mapMediaSummary(r.media),
-      }));
-    } catch (error) {
-      this.logger.error(`listActivityWithMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to list user media activity with media', { userId });
-    }
+        return rows.map((r) => ({
+          ...this.mapRow(r.state),
+          mediaSummary: this.mapMediaSummary(r.media),
+        }));
+      },
+      { userId },
+    );
   }
 
-  /**
-   * Counts activity items.
-   *
-   * @param {string} userId - User identifier
-   * @returns {Promise<number>} Total activity items
-   * @throws {DatabaseException} When query fails
-   */
+  /** Counts with identical filters to {@link listActivityWithMedia} — keep WHERE clauses in sync. */
   async countActivityWithMedia(userId: string): Promise<number> {
-    try {
-      const [row] = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.userMediaState)
-        .where(
-          and(
-            eq(schema.userMediaState.userId, userId),
-            or(
-              eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
+    return withDbError(
+      'count user media activity with media',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.userMediaState)
+          .where(
+            and(
+              eq(schema.userMediaState.userId, userId),
+              or(
+                eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
+                isNotNull(schema.userMediaState.progress),
+              ),
+            ),
+          );
+        return Number(row?.count ?? 0);
+      },
+      { userId },
+    );
+  }
+
+  /** Counts with identical filters to {@link listContinueWithMedia} — keep WHERE clauses in sync. */
+  async countContinueWithMedia(userId: string): Promise<number> {
+    return withDbError(
+      'count continue items with media',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.userMediaState)
+          .where(
+            and(
+              eq(schema.userMediaState.userId, userId),
               isNotNull(schema.userMediaState.progress),
             ),
-          ),
-        );
-      return Number(row?.count ?? 0);
-    } catch (error) {
-      this.logger.error(`countActivityWithMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to count user media activity with media', { userId });
-    }
+          );
+        return Number(row?.count ?? 0);
+      },
+      { userId },
+    );
   }
 
-  /**
-   * Counts "Continue" items.
-   *
-   * Semantics: `progress IS NOT NULL`.
-   *
-   * @param {string} userId - User identifier
-   * @returns {Promise<number>} Total continue items
-   * @throws {DatabaseException} When query fails
-   */
-  async countContinueWithMedia(userId: string): Promise<number> {
-    try {
-      const [row] = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.userMediaState)
-        .where(
-          and(eq(schema.userMediaState.userId, userId), isNotNull(schema.userMediaState.progress)),
-        );
-      return Number(row?.count ?? 0);
-    } catch (error) {
-      this.logger.error(`countContinueWithMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to count continue items with media', { userId });
-    }
-  }
-
-  /**
-   * Builds order by clauses for listWithMedia.
-   *
-   * @param {ListWithMediaOptions['sort']} sort - Sort option
-   * @returns {any[]} Drizzle orderBy list
-   */
-  private buildListOrderBy(sort?: ListWithMediaOptions['sort']) {
+  private buildListOrderBy(sort?: ListWithMediaOptions['sort']): SQL[] {
     switch (sort) {
       case USER_MEDIA_LIST_SORT.RATING:
         return [desc(schema.userMediaState.rating), desc(schema.userMediaState.updatedAt)];
@@ -496,9 +433,6 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     }
   }
 
-  /**
-   * Finds a single state with media summary, progress, and continue point.
-   */
   async findOneWithMedia(
     userId: string,
     mediaItemId: string,
@@ -510,102 +444,101 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
       })
     | null
   > {
-    try {
-      const [row] = await this.db
-        .select({
-          state: schema.userMediaState,
-          media: {
-            id: schema.mediaItems.id,
-            type: schema.mediaItems.type,
-            title: schema.mediaItems.title,
-            slug: schema.mediaItems.slug,
-            posterPath: schema.mediaItems.posterPath,
-            releaseDate: schema.mediaItems.releaseDate,
-          },
-          progressTotal: sql<number | null>`
-            CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
-              SELECT COUNT(*)::int FROM ${schema.episodes} e
-              JOIN ${schema.seasons} s ON s.id = e.season_id
-              JOIN ${schema.shows} sh ON sh.id = s.show_id
-              WHERE sh.media_item_id = ${schema.mediaItems.id}
-              AND s.number > 0
-            ) ELSE NULL END
-          `.as('progress_total'),
-          progressWatched: sql<number | null>`
-            CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
-              SELECT COUNT(*)::int FROM ${schema.userEpisodeProgress} uep
-              JOIN ${schema.episodes} e ON e.id = uep.episode_id
-              JOIN ${schema.seasons} s ON s.id = e.season_id
-              JOIN ${schema.shows} sh ON sh.id = s.show_id
-              WHERE sh.media_item_id = ${schema.mediaItems.id}
-              AND uep.user_id = ${userId}
-              AND s.number > 0
-            ) ELSE NULL END
-          `.as('progress_watched'),
-          continuePoint: sql<{ season: number; episode: number } | null>`
-            CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
-              WITH last_watched AS (
-                SELECT s.number AS sn, e.number AS en
-                FROM ${schema.userEpisodeProgress} uep
+    return withDbError(
+      'fetch user media state with media',
+      this.logger,
+      async () => {
+        const [row] = await this.db
+          .select({
+            state: schema.userMediaState,
+            media: {
+              id: schema.mediaItems.id,
+              type: schema.mediaItems.type,
+              title: schema.mediaItems.title,
+              slug: schema.mediaItems.slug,
+              posterPath: schema.mediaItems.posterPath,
+              releaseDate: schema.mediaItems.releaseDate,
+            },
+            progressTotal: sql<number | null>`
+              CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
+                SELECT COUNT(*)::int FROM ${schema.episodes} e
+                JOIN ${schema.seasons} s ON s.id = e.season_id
+                JOIN ${schema.shows} sh ON sh.id = s.show_id
+                WHERE sh.media_item_id = ${schema.mediaItems.id}
+                AND s.number > 0
+              ) ELSE NULL END
+            `.as('progress_total'),
+            progressWatched: sql<number | null>`
+              CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
+                SELECT COUNT(*)::int FROM ${schema.userEpisodeProgress} uep
                 JOIN ${schema.episodes} e ON e.id = uep.episode_id
                 JOIN ${schema.seasons} s ON s.id = e.season_id
                 JOIN ${schema.shows} sh ON sh.id = s.show_id
                 WHERE sh.media_item_id = ${schema.mediaItems.id}
                 AND uep.user_id = ${userId}
-                ORDER BY s.number DESC, e.number DESC
-                LIMIT 1
-              ),
-              next_episode AS (
-                SELECT s.number AS season, e.number AS episode
-                FROM ${schema.episodes} e
-                JOIN ${schema.seasons} s ON s.id = e.season_id
-                JOIN ${schema.shows} sh ON sh.id = s.show_id
-                WHERE sh.media_item_id = ${schema.mediaItems.id}
                 AND s.number > 0
-                AND e.id NOT IN (
-                  SELECT uep.episode_id FROM ${schema.userEpisodeProgress} uep
-                  WHERE uep.user_id = ${userId}
+              ) ELSE NULL END
+            `.as('progress_watched'),
+            continuePoint: sql<{ season: number; episode: number } | null>`
+              CASE WHEN ${schema.mediaItems.type} = ${MediaType.SHOW} THEN (
+                WITH last_watched AS (
+                  SELECT s.number AS sn, e.number AS en
+                  FROM ${schema.userEpisodeProgress} uep
+                  JOIN ${schema.episodes} e ON e.id = uep.episode_id
+                  JOIN ${schema.seasons} s ON s.id = e.season_id
+                  JOIN ${schema.shows} sh ON sh.id = s.show_id
+                  WHERE sh.media_item_id = ${schema.mediaItems.id}
+                  AND uep.user_id = ${userId}
+                  ORDER BY s.number DESC, e.number DESC
+                  LIMIT 1
+                ),
+                next_episode AS (
+                  SELECT s.number AS season, e.number AS episode
+                  FROM ${schema.episodes} e
+                  JOIN ${schema.seasons} s ON s.id = e.season_id
+                  JOIN ${schema.shows} sh ON sh.id = s.show_id
+                  WHERE sh.media_item_id = ${schema.mediaItems.id}
+                  AND s.number > 0
+                  AND NOT EXISTS (
+                    SELECT 1 FROM ${schema.userEpisodeProgress} uep
+                    WHERE uep.user_id = ${userId} AND uep.episode_id = e.id
+                  )
+                  AND (
+                    NOT EXISTS (SELECT 1 FROM last_watched)
+                    OR s.number > (SELECT sn FROM last_watched)
+                    OR (s.number = (SELECT sn FROM last_watched) AND e.number > (SELECT en FROM last_watched))
+                  )
+                  ORDER BY s.number ASC, e.number ASC
+                  LIMIT 1
                 )
-                AND (
-                  NOT EXISTS (SELECT 1 FROM last_watched)
-                  OR s.number > (SELECT sn FROM last_watched)
-                  OR (s.number = (SELECT sn FROM last_watched) AND e.number > (SELECT en FROM last_watched))
-                )
-                ORDER BY s.number ASC, e.number ASC
-                LIMIT 1
-              )
-              SELECT json_build_object('season', season, 'episode', episode) FROM next_episode
-            ) ELSE NULL END
-          `.as('continue_point'),
-        })
-        .from(schema.userMediaState)
-        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-        .where(
-          and(
-            eq(schema.userMediaState.userId, userId),
-            eq(schema.userMediaState.mediaItemId, mediaItemId),
-          ),
-        )
-        .limit(1);
+                SELECT json_build_object('season', season, 'episode', episode) FROM next_episode
+              ) ELSE NULL END
+            `.as('continue_point'),
+          })
+          .from(schema.userMediaState)
+          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+          .where(
+            and(
+              eq(schema.userMediaState.userId, userId),
+              eq(schema.userMediaState.mediaItemId, mediaItemId),
+            ),
+          )
+          .limit(1);
 
-      if (!row) return null;
+        if (!row) return null;
 
-      return {
-        ...this.mapRow(row.state),
-        mediaSummary: this.mapMediaSummary(row.media),
-        progressSummary:
-          row.progressTotal !== null && row.progressWatched !== null
-            ? { watched: row.progressWatched, total: row.progressTotal }
-            : null,
-        continuePoint: row.continuePoint ?? null,
-      };
-    } catch (error) {
-      this.logger.error(`findOneWithMedia failed: ${error.message}`, error.stack);
-      throw new DatabaseException('Failed to fetch user media state with media', {
-        userId,
-        mediaItemId,
-      });
-    }
+        return {
+          ...this.mapRow(row.state),
+          mediaSummary: this.mapMediaSummary(row.media),
+          progressSummary:
+            row.progressTotal !== null && row.progressWatched !== null
+              ? { watched: row.progressWatched, total: row.progressTotal }
+              : null,
+          continuePoint: row.continuePoint ?? null,
+        };
+      },
+      { userId, mediaItemId },
+    );
   }
 
   /**
@@ -617,6 +550,93 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     options: FavoriteUpdatesOptions,
   ): Promise<FavoriteUpdateItem[]> {
     return this.favoriteUpdatesQuery.execute(userId, options);
+  }
+
+  /**
+   * Bulk upsert user media states for CSV imports.
+   *
+   * Processes in batches of {@link BATCH_SIZE} to stay within Postgres parameter limits.
+   * When `overwrite` is false: INSERT … ON CONFLICT DO NOTHING.
+   * When `overwrite` is true: ON CONFLICT UPDATE using no-downgrade state priority —
+   *   CASE/WHEN values must mirror STATE_PRIORITY in import.constants.ts; update both if states change.
+   */
+  async bulkImport(
+    userId: string,
+    items: Array<{ mediaItemId: string; state: string; rating: number | null }>,
+    overwrite: boolean,
+  ): Promise<{ imported: number; skipped: number }> {
+    let imported = 0;
+    let skipped = 0;
+
+    for (let i = 0; i < items.length; i += DrizzleUserMediaStateRepository.BATCH_SIZE) {
+      const batch = items.slice(i, i + DrizzleUserMediaStateRepository.BATCH_SIZE);
+
+      await withDbError(
+        'bulk import user media states',
+        this.logger,
+        async () => {
+          const values = batch.map((item) => ({
+            userId,
+            mediaItemId: item.mediaItemId,
+            state: item.state as (typeof schema.userMediaState.$inferInsert)['state'],
+            rating: item.rating,
+          }));
+
+          if (!overwrite) {
+            const result = await this.db
+              .insert(schema.userMediaState)
+              .values(values)
+              .onConflictDoNothing({
+                target: [schema.userMediaState.userId, schema.userMediaState.mediaItemId],
+              })
+              .returning({ id: schema.userMediaState.id });
+
+            imported += result.length;
+            skipped += batch.length - result.length;
+          } else {
+            const result = await this.db
+              .insert(schema.userMediaState)
+              .values(values)
+              .onConflictDoUpdate({
+                target: [schema.userMediaState.userId, schema.userMediaState.mediaItemId],
+                set: {
+                  // Only overwrite rating when the incoming value is not null, to avoid
+                  // destroying an existing rating when a lower-priority import has no rating.
+                  rating: sql`CASE WHEN EXCLUDED.rating IS NOT NULL THEN EXCLUDED.rating ELSE ${schema.userMediaState.rating} END`,
+                  state: sql`CASE
+                    WHEN CASE EXCLUDED.state
+                      WHEN 'planned'   THEN 1
+                      WHEN 'watching'  THEN 2
+                      WHEN 'paused'    THEN 3
+                      WHEN 'dropped'   THEN 4
+                      WHEN 'completed' THEN 5
+                      ELSE 0
+                    END > CASE ${schema.userMediaState.state}
+                      WHEN 'planned'   THEN 1
+                      WHEN 'watching'  THEN 2
+                      WHEN 'paused'    THEN 3
+                      WHEN 'dropped'   THEN 4
+                      WHEN 'completed' THEN 5
+                      ELSE 0
+                    END
+                    THEN EXCLUDED.state
+                    ELSE ${schema.userMediaState.state}
+                  END`,
+                  updatedAt: sql`NOW()`,
+                },
+              })
+              .returning({ id: schema.userMediaState.id });
+
+            // All rows result in a returned row (insert or update); we count all as imported.
+            imported += result.length;
+            skipped += batch.length - result.length;
+          }
+        },
+        { userId, batchOffset: i },
+      );
+    }
+
+    return { imported, skipped };
   }
 
   private mapRow(row: typeof schema.userMediaState.$inferSelect): UserMediaState {

@@ -1,13 +1,13 @@
-/**
- * Empty state component for saved lists.
- */
-
-import { Bookmark, HelpCircle, Bell, ListVideo, History, Pause, XCircle } from 'lucide-react';
+import Link from 'next/link';
+import { Bookmark, HelpCircle, Bell, ListVideo, History, Pause, XCircle, Upload } from 'lucide-react';
 
 interface EmptyStateProps {
   type: 'forLater' | 'considering' | 'notifications' | 'watchlist' | 'history' | 'paused' | 'dropped';
   title: string;
   description: string;
+  showImportCta?: boolean;
+  importHint?: string;
+  importButtonLabel?: string;
 }
 
 const icons = {
@@ -20,8 +20,18 @@ const icons = {
   dropped: XCircle,
 };
 
-export function EmptyState({ type, title, description }: EmptyStateProps) {
+const IMPORT_CTA_TYPES: EmptyStateProps['type'][] = ['watchlist', 'history', 'forLater'];
+
+export function EmptyState({
+  type,
+  title,
+  description,
+  showImportCta = false,
+  importHint = 'Є оцінки на іншому сервісі?',
+  importButtonLabel = 'Імпортувати з Кінобази',
+}: EmptyStateProps) {
   const Icon = icons[type];
+  const shouldShowCta = showImportCta && IMPORT_CTA_TYPES.includes(type);
 
   return (
     <div className="flex flex-col items-center justify-center py-24 px-4 text-center min-h-[400px]">
@@ -30,6 +40,19 @@ export function EmptyState({ type, title, description }: EmptyStateProps) {
       </div>
       <h3 className="text-xl font-medium text-cinema-text-primary mb-3">{title}</h3>
       <p className="text-base text-cinema-text-muted max-w-md leading-relaxed">{description}</p>
+
+      {shouldShowCta && (
+        <div className="mt-6 flex flex-col items-center gap-2">
+          <p className="text-sm text-cinema-text-muted">{importHint}</p>
+          <Link
+            href="/settings/import"
+            className="inline-flex items-center gap-2 rounded-md border border-cinema-border bg-cinema-card px-4 py-2 text-sm font-medium text-cinema-text-primary hover:border-primary hover:bg-cinema-elevated transition-colors"
+          >
+            <Upload className="w-4 h-4" />
+            {importButtonLabel}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

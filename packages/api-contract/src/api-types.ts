@@ -386,6 +386,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-media/import/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get auto-ingest import batch statuses (auth: Bearer) */
+        get: operations["UserMediaController_getImportStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user-media/{mediaItemId}": {
         parameters: {
             query?: never;
@@ -449,6 +466,23 @@ export interface paths {
         put?: never;
         /** Resume a paused media item (auth: Bearer) */
         post: operations["UserMediaController_resumeMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-media/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import ratings and watchlist from external source (auth: Bearer) */
+        post: operations["UserMediaController_importMedia"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3148,6 +3182,44 @@ export interface components {
                 [key: string]: number;
             };
         };
+        ImportBatchStatusDto: {
+            /**
+             * @description Unique batch identifier
+             * @example uuid-here
+             */
+            batchId: string;
+            /**
+             * @description Import source identifier
+             * @example kinobaza
+             */
+            source: string;
+            /**
+             * @description Total number of not-found items submitted for auto-ingestion
+             * @example 42
+             */
+            totalItems: number;
+            /**
+             * @description Number of items successfully ingested and linked
+             * @example 35
+             */
+            completedCount: number;
+            /**
+             * @description Number of items that failed to resolve or ingest
+             * @example 3
+             */
+            failedCount: number;
+            /**
+             * @description Batch status: processing while items remain, completed when all done/failed
+             * @example processing
+             * @enum {string}
+             */
+            status: "processing" | "completed";
+            /**
+             * @description ISO 8601 timestamp when the batch was created
+             * @example 2024-01-15T12:00:00.000Z
+             */
+            createdAt: string;
+        };
         SetUserMediaStateDto: {
             /**
              * @description Watch state. When omitted, preserves existing state or defaults to "completed" for movies / "watching" for shows.
@@ -3173,6 +3245,105 @@ export interface components {
             progress?: Record<string, never>;
             /** @example Rewatching with friends */
             notes?: string | null;
+        };
+        ImportItemDto: {
+            /** @example tt1234567 */
+            imdbId?: string | null;
+            /** @example 550 */
+            tmdbId?: number | null;
+            /** @example 8 */
+            rating?: number | null;
+            /**
+             * @example completed
+             * @enum {string}
+             */
+            state: "completed" | "planned";
+            /** @example Fight Club */
+            title?: string | null;
+            /** @example 1999 */
+            year?: number | null;
+        };
+        ImportMediaDto: {
+            /**
+             * @example kinobaza
+             * @enum {string}
+             */
+            source: "kinobaza";
+            /** @description Items to import (1–10000) */
+            items: components["schemas"]["ImportItemDto"][];
+            /**
+             * @description Overwrite existing ratings and states. State can never be downgraded.
+             * @default false
+             * @example false
+             */
+            overwriteExisting: boolean;
+        };
+        ImportedItemDetailDto: {
+            /** @example Fight Club */
+            title?: string | null;
+            /** @example uuid-here */
+            mediaItemId: string;
+            /** @example completed */
+            state: string;
+            /** @example 80 */
+            rating: number | null;
+        };
+        SkippedItemDetailDto: {
+            /** @example The Matrix */
+            title?: string | null;
+            /** @example already_exists */
+            reason: string;
+        };
+        NotFoundItemDetailDto: {
+            /** @example Obscure Film */
+            title?: string | null;
+            /** @example tt9999999 */
+            imdbId?: string | null;
+            /** @example 99999 */
+            tmdbId?: number | null;
+        };
+        ImportDetailsDto: {
+            imported: components["schemas"]["ImportedItemDetailDto"][];
+            skipped: components["schemas"]["SkippedItemDetailDto"][];
+            notFound: components["schemas"]["NotFoundItemDetailDto"][];
+        };
+        PendingBatchSummaryDto: {
+            /**
+             * @description Batch identifier for polling status
+             * @example uuid-here
+             */
+            batchId: string;
+            /**
+             * @description Total number of items submitted for background auto-ingestion
+             * @example 42
+             */
+            totalItems: number;
+        };
+        CsvImportResultDto: {
+            /**
+             * @description Items successfully written to the database
+             * @example 2743
+             */
+            imported: number;
+            /**
+             * @description Items skipped (already exist and overwrite is false)
+             * @example 52
+             */
+            skipped: number;
+            /**
+             * @description Items whose media could not be found in the catalog
+             * @example 135
+             */
+            notFound: number;
+            /**
+             * @description Wall-clock import duration in milliseconds
+             * @example 812
+             */
+            durationMs: number;
+            /** @description Item-level breakdown for the result summary */
+            details: components["schemas"]["ImportDetailsDto"];
+            /** @description Present when not-found items have been queued for background auto-ingestion. Poll GET /user-media/import/status for progress updates. */
+            pendingBatch?: components["schemas"]["PendingBatchSummaryDto"];
         };
         Function: Record<string, never>;
         MeUserMediaSummaryDto: {
@@ -6545,6 +6716,37 @@ export interface operations {
             };
         };
     };
+    UserMediaController_getImportStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Import batch statuses */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["ImportBatchStatusDto"][];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     UserMediaController_getState: {
         parameters: {
             query?: never;
@@ -6720,6 +6922,48 @@ export interface operations {
                 };
             };
             /** @description Cannot resume: item is not paused */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UserMediaController_importMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportMediaDto"];
+            };
+        };
+        responses: {
+            /** @description Import result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["CsvImportResultDto"];
+                    };
+                };
+            };
+            /** @description Invalid request body or source */
             400: {
                 headers: {
                     [name: string]: unknown;

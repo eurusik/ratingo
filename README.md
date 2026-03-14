@@ -7,7 +7,7 @@
 A Ukrainian-language service that shows what the world is watching right now:\
 movies, TV shows, their ratings, where to stream them legally, and when new episodes drop.
 
-[new.ratingo.top](https://new.ratingo.top)
+[ratingo.top](https://ratingo.top)
 
 </div>
 

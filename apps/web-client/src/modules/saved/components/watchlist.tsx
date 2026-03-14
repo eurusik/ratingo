@@ -1,7 +1,3 @@
-/**
- * Watchlist component displaying watching items from user_media.
- */
-
 'use client';
 
 import { useState, useCallback } from 'react';
@@ -41,6 +37,9 @@ export function Watchlist() {
         type="watchlist"
         title={dict.activity?.empty?.watching?.title ?? 'Ще нічого не дивитесь'}
         description={dict.activity?.empty?.watching?.description ?? 'Почніть дивитись серіал і він з\'явиться тут'}
+        showImportCta
+        importHint={dict.saved?.emptyState?.importHint}
+        importButtonLabel={dict.saved?.emptyState?.importButton}
       />
     );
   }

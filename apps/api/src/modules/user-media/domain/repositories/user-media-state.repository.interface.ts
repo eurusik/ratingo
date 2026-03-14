@@ -2,9 +2,6 @@ import { type ImageDto } from '../../../../common/dtos/image.dto';
 import { type MediaType } from '../../../../common/enums/media-type.enum';
 import { type UserMediaState } from '../entities/user-media-state.entity';
 
-/**
- * Media summary attached to user media state.
- */
 export interface UserMediaSummary {
   id: string;
   type: MediaType;
@@ -14,30 +11,18 @@ export interface UserMediaSummary {
   releaseDate?: Date | null;
 }
 
-/**
- * Episode progress summary for shows.
- */
 export interface ProgressSummary {
   watched: number;
   total: number;
 }
 
-/**
- * Continue point for shows.
- */
 export interface ContinuePoint {
   season: number;
   episode: number;
 }
 
-/**
- * Injection token for user media state repository.
- */
 export const USER_MEDIA_STATE_REPOSITORY = Symbol('USER_MEDIA_STATE_REPOSITORY');
 
-/**
- * Sort options for user media lists.
- */
 export const USER_MEDIA_LIST_SORT = {
   RECENT: 'recent',
   RATING: 'rating',
@@ -45,9 +30,6 @@ export const USER_MEDIA_LIST_SORT = {
 } as const;
 export type UserMediaListSort = (typeof USER_MEDIA_LIST_SORT)[keyof typeof USER_MEDIA_LIST_SORT];
 
-/**
- * Defines filtering and sorting options for listWithMedia.
- */
 export interface ListWithMediaOptions {
   ratedOnly?: boolean;
   states?: Array<UserMediaState['state']>;
@@ -82,18 +64,12 @@ export interface UpsertUserMediaStateData {
   notes?: string | null;
 }
 
-/**
- * Aggregated stats for user profile sections.
- */
 export interface UserMediaStats {
   moviesRated: number;
   showsRated: number;
   watchlistCount: number;
 }
 
-/**
- * Options for favorite updates query.
- */
 export interface FavoriteUpdatesOptions {
   ratingThreshold: number;
   daysBack: number;
@@ -101,9 +77,6 @@ export interface FavoriteUpdatesOptions {
   limit: number;
 }
 
-/**
- * Episode info attached to a favorite update.
- */
 export interface EpisodeInfo {
   seasonNumber: number;
   episodeNumber: number;
@@ -124,66 +97,19 @@ export interface FavoriteUpdateItem {
   nextEpisode: EpisodeInfo | null;
 }
 
-/**
- * Repository contract for user-media state operations.
- */
 export interface IUserMediaStateRepository {
-  /**
-   * Upserts user media state.
-   *
-   * @param {UpsertUserMediaStateData} data - Upsert payload
-   * @returns {Promise<UserMediaState>} Persisted state
-   */
   upsert(data: UpsertUserMediaStateData): Promise<UserMediaState>;
 
-  /**
-   * Finds state for a user and media item.
-   *
-   * @param {string} userId - User identifier
-   * @param {string} mediaItemId - Media item identifier
-   * @returns {Promise<UserMediaState | null>} State or null
-   */
   findOne(userId: string, mediaItemId: string): Promise<UserMediaState | null>;
 
-  /**
-   * Deletes user media state.
-   *
-   * @param {string} userId - User identifier
-   * @param {string} mediaItemId - Media item identifier
-   * @returns {Promise<void>}
-   */
   delete(userId: string, mediaItemId: string): Promise<void>;
 
-  /**
-   * Lists states by user.
-   *
-   * @param {string} userId - User identifier
-   * @param {number} limit - Page size
-   * @param {number} offset - Offset
-   * @returns {Promise<UserMediaState[]>} States
-   */
   listByUser(userId: string, limit?: number, offset?: number): Promise<UserMediaState[]>;
 
-  /**
-   * Finds states for multiple media IDs.
-   *
-   * @param {string} userId - User identifier
-   * @param {string[]} mediaItemIds - Media item identifiers
-   * @returns {Promise<UserMediaState[]>} States
-   */
   findManyByMediaIds(userId: string, mediaItemIds: string[]): Promise<UserMediaState[]>;
 
-  /**
-   * Aggregated stats for user profile.
-   *
-   * @param {string} userId - User identifier
-   * @returns {Promise<UserMediaStats>} Aggregated stats
-   */
   getStats(userId: string): Promise<UserMediaStats>;
 
-  /**
-   * Returns user media states with attached media summary.
-   */
   listWithMedia(
     userId: string,
     limit?: number,
@@ -208,9 +134,6 @@ export interface IUserMediaStateRepository {
     offset?: number,
   ): Promise<Array<UserMediaState & { mediaSummary: UserMediaSummary }>>;
 
-  /**
-   * Returns a single state with media summary, progress, and continue point.
-   */
   findOneWithMedia(
     userId: string,
     mediaItemId: string,
@@ -223,13 +146,7 @@ export interface IUserMediaStateRepository {
     | null
   >;
 
-  /**
-   * Total count for listWithMedia with the same filters (ratedOnly, states).
-   *
-   * @param {string} userId - User identifier
-   * @param {ListWithMediaOptions} options - Filtering options
-   * @returns {Promise<number>} Total items
-   */
+  /** Counts with identical filters to {@link listWithMedia} — keep WHERE clauses in sync. */
   countWithMedia(userId: string, options?: ListWithMediaOptions): Promise<number>;
 
   /**
@@ -242,33 +159,30 @@ export interface IUserMediaStateRepository {
     offset?: number,
   ): Promise<Array<UserMediaState & { mediaSummary: UserMediaSummary }>>;
 
-  /**
-   * Counts activity items.
-   *
-   * @param {string} userId - User identifier
-   * @returns {Promise<number>} Total activity items
-   */
+  /** Counts with identical filters to {@link listActivityWithMedia} — keep WHERE clauses in sync. */
   countActivityWithMedia(userId: string): Promise<number>;
 
-  /**
-   * Counts "Continue" items.
-   *
-   * Semantics: `progress IS NOT NULL`.
-   *
-   * @param {string} userId - User identifier
-   * @returns {Promise<number>} Total continue items
-   */
+  /** Counts with identical filters to {@link listContinueWithMedia} — keep WHERE clauses in sync. */
   countContinueWithMedia(userId: string): Promise<number>;
 
-  /**
-   * Lists highly-rated shows with recent or upcoming episodes.
-   *
-   * @param {string} userId - User identifier
-   * @param {FavoriteUpdatesOptions} options - Query options
-   * @returns {Promise<FavoriteUpdateItem[]>} Favorite update items
-   */
+  /** Lists highly-rated shows with recent or upcoming episodes. */
   listFavoriteUpdates(
     userId: string,
     options: FavoriteUpdatesOptions,
   ): Promise<FavoriteUpdateItem[]>;
+
+  /**
+   * Bulk upsert user media states. Used for CSV imports.
+   *
+   * When `overwrite` is false, existing entries are left untouched (INSERT … ON CONFLICT DO NOTHING).
+   * When `overwrite` is true, the state is updated only when the incoming state has a higher
+   * priority than the existing one (no-downgrade rule) and the rating is always overwritten.
+   *
+   * Processes items in batches of 500 to stay within Postgres parameter limits.
+   */
+  bulkImport(
+    userId: string,
+    items: Array<{ mediaItemId: string; state: string; rating: number | null }>,
+    overwrite: boolean,
+  ): Promise<{ imported: number; skipped: number }>;
 }

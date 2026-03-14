@@ -268,6 +268,14 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   async listFavoriteUpdates(_userId: string, _options: any): Promise<any[]> {
     return [];
   }
+
+  async bulkImport(
+    _userId: string,
+    _items: Array<{ mediaItemId: string; state: string; rating: number | null }>,
+    _overwrite: boolean,
+  ): Promise<{ imported: number; skipped: number }> {
+    return { imported: 0, skipped: 0 };
+  }
 }
 
 export class InMemoryRefreshTokensRepository implements IRefreshTokensRepository {

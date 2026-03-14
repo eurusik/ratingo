@@ -1,7 +1,3 @@
-/**
- * List component for saved items with loading and empty states.
- */
-
 'use client';
 
 import { useTranslation } from '@/shared/i18n';
@@ -57,6 +53,9 @@ export function SavedList({ list }: SavedListProps) {
         type={emptyType}
         title={dict.saved.empty[emptyType].title}
         description={dict.saved.empty[emptyType].description}
+        showImportCta={isForLater}
+        importHint={dict.saved?.emptyState?.importHint}
+        importButtonLabel={dict.saved?.emptyState?.importButton}
       />
     );
   }
