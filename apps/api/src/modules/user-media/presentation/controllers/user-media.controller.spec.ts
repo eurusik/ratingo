@@ -26,7 +26,6 @@ describe('UserMediaController', () => {
   const importPendingService = {
     getUserBatches: jest.fn().mockResolvedValue([]),
     createPendingBatch: jest.fn(),
-    cancelBatch: jest.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -302,37 +301,6 @@ describe('UserMediaController', () => {
           items: [expect.objectContaining({ rating: null })],
         }),
       );
-    });
-  });
-
-  describe('cancelImportBatches', () => {
-    it('should call cancelBatch for each batchId and return void', async () => {
-      const batchIds = [
-        '550e8400-e29b-41d4-a716-446655440000',
-        '7c9e6679-7425-40de-944b-e07fc1f90ae7',
-      ];
-
-      await controller.cancelImportBatches({ id: 'u1' }, { batchIds } as any);
-
-      expect(importPendingService.cancelBatch).toHaveBeenCalledTimes(2);
-      expect(importPendingService.cancelBatch).toHaveBeenCalledWith('u1', batchIds[0]);
-      expect(importPendingService.cancelBatch).toHaveBeenCalledWith('u1', batchIds[1]);
-    });
-
-    it('should call cancelBatch with correct userId from token', async () => {
-      const batchIds = ['550e8400-e29b-41d4-a716-446655440000'];
-
-      await controller.cancelImportBatches({ id: 'user-xyz' }, { batchIds } as any);
-
-      expect(importPendingService.cancelBatch).toHaveBeenCalledWith('user-xyz', batchIds[0]);
-    });
-
-    it('should return undefined (204-like) when all batches cancelled', async () => {
-      const result = await controller.cancelImportBatches({ id: 'u1' }, {
-        batchIds: ['550e8400-e29b-41d4-a716-446655440000'],
-      } as any);
-
-      expect(result).toBeUndefined();
     });
   });
 

@@ -403,23 +403,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/user-media/import/cancel": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Cancel one or more import batches (auth: Bearer) */
-        post: operations["UserMediaController_cancelImportBatches"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/user-media/{mediaItemId}": {
         parameters: {
             query?: never;
@@ -3226,25 +3209,16 @@ export interface components {
              */
             failedCount: number;
             /**
-             * @description Batch status: processing while items remain, completed when all done/failed, cancelled when user aborted
+             * @description Batch status: processing while items remain, completed when all done/failed
              * @example processing
              * @enum {string}
              */
-            status: "processing" | "completed" | "cancelled";
+            status: "processing" | "completed";
             /**
              * @description ISO 8601 timestamp when the batch was created
              * @example 2024-01-15T12:00:00.000Z
              */
             createdAt: string;
-        };
-        CancelImportBatchesDto: {
-            /**
-             * @description UUIDs of the import batches to cancel
-             * @example [
-             *       "550e8400-e29b-41d4-a716-446655440000"
-             *     ]
-             */
-            batchIds: string[];
         };
         SetUserMediaStateDto: {
             /**
@@ -6766,49 +6740,6 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    UserMediaController_cancelImportBatches: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CancelImportBatchesDto"];
-            };
-        };
-        responses: {
-            /** @description Batches cancelled */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Invalid request body */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description One or more batch IDs not found */
-            404: {
                 headers: {
                     [name: string]: unknown;
                 };

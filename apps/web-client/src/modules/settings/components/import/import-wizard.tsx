@@ -4,16 +4,14 @@ import { useReducer, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/shared/i18n';
 import { SOURCE_PARSERS, type ParsedItem } from '../../utils/csv-parsers';
-import { useImportMedia, useCancelImportBatches, type ImportResult, type ImportRequest } from '../../hooks/use-import-media';
-import { useImportBatchStatus } from '../../hooks/use-import-batch-status';
-import { ImportPendingStatus } from './import-pending-status';
+import { useImportMedia, type ImportResult, type ImportRequest } from '../../hooks/use-import-media';
 import { FILE_TOO_LARGE_SENTINEL } from './import-dropzone';
 import { ImportStepper } from './import-stepper';
 import type { ImportSource } from './import-source-step';
 import { ImportUploadStep } from './import-upload-step';
 import { ImportPreviewStep } from './import-preview-step';
 import { ImportResultSummary } from './import-result-summary';
-import { BATCH_STATUS, type FileState } from './types';
+import type { FileState } from './types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -168,7 +166,6 @@ export function ImportWizard({ source }: ImportWizardProps) {
   const router = useRouter();
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
   const importMutation = useImportMedia();
-  const cancelMutation = useCancelImportBatches();
 
   // --- File processing (source-aware) ---
   const processFile = useCallback(
@@ -249,40 +246,9 @@ export function ImportWizard({ source }: ImportWizardProps) {
     }
   };
 
-  // --- Active batches check ---
-  // Only poll when on the upload step — polling is irrelevant on preview/result steps.
-  const { data: activeBatches } = useImportBatchStatus({ enabled: state.step === 'upload' });
-  const processingBatches = activeBatches?.filter((b) => b.status === BATCH_STATUS.PROCESSING) ?? [];
-  const hasProcessingBatches = processingBatches.length > 0 && state.step === 'upload';
-
-  const aggregated = hasProcessingBatches
-    ? {
-        totalItems: processingBatches.reduce((sum, b) => sum + b.totalItems, 0),
-        completedCount: processingBatches.reduce((sum, b) => sum + b.completedCount, 0),
-        failedCount: processingBatches.reduce((sum, b) => sum + b.failedCount, 0),
-      }
-    : null;
-
-  const handleCancelBatches = () => {
-    const ids = processingBatches.map((b) => b.batchId);
-    if (ids.length > 0) cancelMutation.mutate(ids);
-  };
-
   // --- Render ---
   return (
     <div className="space-y-6">
-      {hasProcessingBatches && aggregated && (
-        <ImportPendingStatus
-          totalItems={aggregated.totalItems}
-          completedCount={aggregated.completedCount}
-          failedCount={aggregated.failedCount}
-          status={BATCH_STATUS.PROCESSING}
-          labels={t.pending}
-          onCancel={handleCancelBatches}
-          isCancelling={cancelMutation.isPending}
-        />
-      )}
-
       <ImportStepper
         currentStep={state.step}
         labels={t.steps}

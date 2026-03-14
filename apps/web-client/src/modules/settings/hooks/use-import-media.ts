@@ -16,27 +16,15 @@ export function useImportMedia() {
     mutationFn: (data: ImportRequest) => userMediaApi.importMedia(data),
 
     onSuccess: () => {
-      // Mark as stale but don't refetch now — will refetch when user visits the page.
-      // Prevents empty-state flash on /activity caused by aggressive background refetch.
-      const opts = { refetchType: 'none' as const };
-      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all, ...opts });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.all, ...opts });
-      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll, ...opts });
-      queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all, ...opts });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.savedItems.all });
     },
 
     onError: (error) => {
+      console.error('[useImportMedia] Import failed:', error);
       toast.error(error.message || dict.settings.import.importFailed);
-    },
-  });
-}
-
-export function useCancelImportBatches() {
-  const queryClient = useQueryClient();
-  return useMutation<void, Error, string[]>({
-    mutationFn: (batchIds) => userMediaApi.cancelImportBatches(batchIds),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.importBatchStatus });
     },
   });
 }

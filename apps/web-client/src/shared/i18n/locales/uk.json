@@ -966,11 +966,8 @@
         "title": "Додаємо до каталогу",
         "progress": "{done} з {total} додано",
         "failed": "{count} не вдалось знайти",
-        "failedHint": "Ці назви відсутні в TMDB",
-        "completed": "Усі елементи оброблено",
-        "cancel": "Скасувати",
-        "cancelling": "Скасовую…",
-        "cancelled": "Імпорт скасовано"
+        "failedHint": "Ці фільми відсутні в TMDB",
+        "completed": "Усі елементи оброблено"
       }
     },
     "connectedAccounts": {
