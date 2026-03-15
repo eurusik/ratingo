@@ -95,14 +95,8 @@ export class ResolveImportItemPipeline {
       return;
     }
 
-    // Transition to ingesting and record resolved identifiers
-    await this.pendingRepo.updateItemStatus(pendingItemId, {
-      status: IMPORT_PENDING_STATUS.INGESTING,
-      resolvedTmdbId: resolved.tmdbId,
-      mediaType: resolved.type,
-    });
-
-    // Queue catalog ingestion (existing SYNC_MOVIE/SYNC_SHOW pipeline)
+    // Queue catalog ingestion BEFORE marking as INGESTING.
+    // If queue.add() fails, the item stays in RESOLVING and can be retried.
     const jobName = resolved.type === 'movie' ? IngestionJob.SYNC_MOVIE : IngestionJob.SYNC_SHOW;
     const mediaTypeName = resolved.type === 'movie' ? MediaType.MOVIE : MediaType.SHOW;
 
@@ -111,6 +105,13 @@ export class ResolveImportItemPipeline {
       { tmdbId: resolved.tmdbId, type: mediaTypeName },
       { jobId: `${jobName}-${resolved.tmdbId}` },
     );
+
+    // Only transition to INGESTING after successful queue add
+    await this.pendingRepo.updateItemStatus(pendingItemId, {
+      status: IMPORT_PENDING_STATUS.INGESTING,
+      resolvedTmdbId: resolved.tmdbId,
+      mediaType: resolved.type,
+    });
 
     this.logger.log(
       `[item] pendingItemId=${pendingItemId} queued ${jobName} for tmdbId=${resolved.tmdbId}`,
