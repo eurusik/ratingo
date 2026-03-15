@@ -235,8 +235,7 @@ describe('LinkImportListener', () => {
       pendingRepo.findBatchById.mockResolvedValue(null);
 
       const event = new MediaSyncedEvent(550, 'movie', 'media-uuid-1');
-      // Should not throw
-      await expect(listener.handleMediaSynced(event)).resolves.not.toThrow();
+      await listener.handleMediaSynced(event);
 
       expect(userMediaRepo.bulkImport).not.toHaveBeenCalled();
       expect(pendingRepo.updateItemStatus).not.toHaveBeenCalled();
@@ -279,8 +278,7 @@ describe('LinkImportListener', () => {
         .mockResolvedValueOnce({ imported: 1, skipped: 0 });
 
       const event = new MediaSyncedEvent(550, 'movie', 'media-uuid-1');
-      // Should not throw
-      await expect(listener.handleMediaSynced(event)).resolves.not.toThrow();
+      await listener.handleMediaSynced(event);
 
       // Second item processed successfully
       expect(pendingRepo.updateItemStatus).toHaveBeenCalledWith('item-2', {
