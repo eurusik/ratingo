@@ -73,6 +73,18 @@ export interface IImportPendingRepository {
   updateItemStatus(itemId: string, update: UpdatePendingItemInput): Promise<void>;
 
   /**
+   * Updates a pending item's status only if it has not been cancelled.
+   * Returns true if the update was applied, false if the item was already cancelled.
+   */
+  updateItemStatusIfNotCancelled(itemId: string, update: UpdatePendingItemInput): Promise<boolean>;
+
+  /**
+   * Cancels all non-terminal items in a batch and marks the batch as cancelled.
+   * Items already in DONE or FAILED state are left unchanged.
+   */
+  cancelBatch(batchId: string): Promise<void>;
+
+  /**
    * Atomic batch counter update.
    *
    * Executes a single UPDATE statement with subqueries to:

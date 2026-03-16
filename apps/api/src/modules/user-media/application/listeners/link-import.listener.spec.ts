@@ -1,5 +1,7 @@
+import { type SavedItemsService } from '../../../user-actions/application/saved-items.service';
 import { MediaSyncedEvent } from '../../../ingestion/public';
 import {
+  IMPORT_BATCH_STATUS,
   IMPORT_PENDING_FAILURE,
   IMPORT_PENDING_STATUS,
 } from '../../domain/constants/import-pending.constants';
@@ -48,6 +50,7 @@ function makePendingItem(overrides: Partial<ImportPendingItem> = {}): ImportPend
 describe('LinkImportListener', () => {
   let pendingRepo: jest.Mocked<IImportPendingRepository>;
   let userMediaRepo: jest.Mocked<Pick<IUserMediaStateRepository, 'bulkImport'>>;
+  let savedItemsService: jest.Mocked<Pick<SavedItemsService, 'saveItem'>>;
   let listener: LinkImportListener;
 
   beforeEach(() => {
@@ -61,6 +64,8 @@ describe('LinkImportListener', () => {
       findById: jest.fn(),
       findItemsByResolvedTmdb: jest.fn(),
       updateItemStatus: jest.fn().mockResolvedValue(undefined),
+      updateItemStatusIfNotCancelled: jest.fn(),
+      cancelBatch: jest.fn(),
       updateBatchCountersAtomic: jest.fn().mockResolvedValue({ id: 'batch-1' }),
     };
 
@@ -68,7 +73,15 @@ describe('LinkImportListener', () => {
       bulkImport: jest.fn().mockResolvedValue({ imported: 1, skipped: 0 }),
     };
 
-    listener = new LinkImportListener(pendingRepo as any, userMediaRepo as any);
+    savedItemsService = {
+      saveItem: jest.fn().mockResolvedValue({}),
+    };
+
+    listener = new LinkImportListener(
+      pendingRepo as any,
+      userMediaRepo as any,
+      savedItemsService as any,
+    );
   });
 
   afterEach(() => {
@@ -228,6 +241,26 @@ describe('LinkImportListener', () => {
     });
   });
 
+  describe('cancelled batch', () => {
+    it('skips linking and counter update when batch is cancelled', async () => {
+      const item = makePendingItem();
+      pendingRepo.findItemsByResolvedTmdb.mockResolvedValue([item]);
+      pendingRepo.findBatchById.mockResolvedValue(
+        makeBatch({ status: IMPORT_BATCH_STATUS.CANCELLED }),
+      );
+
+      const event = new MediaSyncedEvent(550, 'movie', 'media-uuid-1');
+      await listener.handleMediaSynced(event);
+
+      expect(userMediaRepo.bulkImport).not.toHaveBeenCalled();
+      expect(pendingRepo.updateItemStatus).toHaveBeenCalledTimes(1);
+      expect(pendingRepo.updateItemStatus).toHaveBeenCalledWith(item.id, {
+        status: IMPORT_PENDING_STATUS.CANCELLED,
+      });
+      expect(pendingRepo.updateBatchCountersAtomic).not.toHaveBeenCalled();
+    });
+  });
+
   describe('batch not found', () => {
     it('logs warning and skips item when batch does not exist', async () => {
       const item = makePendingItem();
@@ -298,6 +331,51 @@ describe('LinkImportListener', () => {
 
       // affectedBatchIds still gets the batchId from the failed item
       expect(pendingRepo.updateBatchCountersAtomic).toHaveBeenCalledWith('batch-1');
+    });
+  });
+
+  describe('planned items saved to for_later', () => {
+    it('calls saveItem with for_later and import context when item state is planned', async () => {
+      const item = makePendingItem({ state: 'planned', rating: null });
+      pendingRepo.findItemsByResolvedTmdb.mockResolvedValue([item]);
+      pendingRepo.findBatchById.mockResolvedValue(makeBatch({ userId: 'user-42' }));
+
+      const event = new MediaSyncedEvent(550, 'movie', 'media-uuid-1');
+      await listener.handleMediaSynced(event);
+
+      expect(savedItemsService.saveItem).toHaveBeenCalledWith({
+        userId: 'user-42',
+        mediaItemId: 'media-uuid-1',
+        list: 'for_later',
+        context: 'import',
+      });
+    });
+
+    it('does not call saveItem when item state is not planned', async () => {
+      const item = makePendingItem({ state: 'completed', rating: 80 });
+      pendingRepo.findItemsByResolvedTmdb.mockResolvedValue([item]);
+      pendingRepo.findBatchById.mockResolvedValue(makeBatch());
+
+      const event = new MediaSyncedEvent(550, 'movie', 'media-uuid-1');
+      await listener.handleMediaSynced(event);
+
+      expect(savedItemsService.saveItem).not.toHaveBeenCalled();
+    });
+
+    it('marks item DONE when saveItem throws (saveItem is non-critical)', async () => {
+      const item = makePendingItem({ state: 'planned' });
+      pendingRepo.findItemsByResolvedTmdb.mockResolvedValue([item]);
+      pendingRepo.findBatchById.mockResolvedValue(makeBatch());
+      savedItemsService.saveItem.mockRejectedValue(new Error('saved_items error'));
+
+      const event = new MediaSyncedEvent(550, 'movie', 'media-uuid-1');
+      await listener.handleMediaSynced(event);
+
+      // saveItem failure is isolated — user_media_state was written, so item is still DONE
+      expect(pendingRepo.updateItemStatus).toHaveBeenCalledWith('item-1', {
+        status: IMPORT_PENDING_STATUS.DONE,
+        mediaItemId: 'media-uuid-1',
+      });
     });
   });
 });

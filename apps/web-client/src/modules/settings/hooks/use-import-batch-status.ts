@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { userMediaApi, type ImportBatchStatus } from '@/core/api/user-media.client';
 import { queryKeys } from '@/core/query/keys';
+import { BATCH_STATUS } from '../components/import/types';
 
 export type { ImportBatchStatus } from '@/core/api/user-media.client';
 
@@ -19,8 +20,8 @@ export function useImportBatchStatus({ enabled = true }: UseImportBatchStatusOpt
     refetchInterval: (query) => {
       if (query.state.error) return 30_000; // back off on error
       const data = query.state.data;
-      // Stop polling when all batches are completed
-      if (data?.every((b) => b.status === 'completed')) return false;
+      // Stop polling when all batches have reached a terminal status (completed or cancelled)
+      if (data?.every((b) => b.status === BATCH_STATUS.COMPLETED || b.status === BATCH_STATUS.CANCELLED)) return false;
       return 5_000;
     },
     retry: 3,

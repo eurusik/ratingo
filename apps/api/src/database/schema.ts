@@ -464,7 +464,7 @@ export const userMediaState = pgTable(
       .notNull(),
     state: userMediaStatusEnum('state').notNull(),
     rating: integer('rating'), // 0-100 scale
-    progress: jsonb('progress').$type<Record<string, unknown> | null>().default(null),
+    progress: jsonb('progress').$type<Record<string, unknown> | null>(),
     notes: text('notes'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -1518,7 +1518,11 @@ export const userEpisodeProgressRelations = relations(userEpisodeProgress, ({ on
 // IMPORT BATCHES & PENDING ITEMS
 // ============================================================
 
-export const importBatchStatusEnum = pgEnum('import_batch_status', ['processing', 'completed']);
+export const importBatchStatusEnum = pgEnum('import_batch_status', [
+  'processing',
+  'completed',
+  'cancelled',
+]);
 
 export const importPendingStatusEnum = pgEnum('import_pending_status', [
   'pending',
@@ -1527,6 +1531,7 @@ export const importPendingStatusEnum = pgEnum('import_pending_status', [
   'linking',
   'done',
   'failed',
+  'cancelled',
 ]);
 
 /**

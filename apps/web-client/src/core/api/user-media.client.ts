@@ -14,4 +14,8 @@ export const userMediaApi = {
   async getImportStatus(): Promise<ImportBatchStatus[]> {
     return apiGet<ImportBatchStatus[]>('user-media/import/status');
   },
+
+  async cancelImportBatches(batchIds: string[]): Promise<void> {
+    return apiPost<void>('user-media/import/cancel', { batchIds });
+  },
 } as const;
