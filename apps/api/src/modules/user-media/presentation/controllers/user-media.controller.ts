@@ -32,6 +32,7 @@ import { ImportPendingService } from '../../application/import-pending.service';
 import { UserMediaService } from '../../application/user-media.service';
 import { normalizeKinobazaRating } from '../../domain/value-objects/external-rating';
 import { BatchRatingsQueryDto, BatchRatingsResponseDto } from '../dto/batch-ratings.dto';
+import { CancelImportBatchesDto } from '../dto/cancel-import-batches.dto';
 import { ImportBatchStatusDto } from '../dto/import-batch-status.dto';
 import { CsvImportResultDto, ImportMediaDto } from '../dto/import-media.dto';
 import { SetUserMediaStateDto } from '../dto/set-user-media-state.dto';
@@ -114,6 +115,33 @@ export class UserMediaController {
       status: batch.status,
       createdAt: batch.createdAt.toISOString(),
     }));
+  }
+
+  /**
+   * Cancels one or more import batches.
+   * Already-cancelled batches are silently skipped (idempotent per batch).
+   * Not-found batch IDs are silently skipped — partial success is acceptable for cancel.
+   */
+  @ApiBody({ type: CancelImportBatchesDto })
+  @ApiOkResponse({ description: 'Batches cancelled' })
+  @ApiBadRequestResponse({ description: 'Invalid request body' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiOperation({ summary: 'Cancel one or more import batches (auth: Bearer)' })
+  @Post('import/cancel')
+  @HttpCode(HttpStatus.OK)
+  async cancelImportBatches(
+    @CurrentUser() user: { id: string },
+    @Body() body: CancelImportBatchesDto,
+  ): Promise<void> {
+    const errors: string[] = [];
+    for (const batchId of body.batchIds) {
+      try {
+        await this.importPendingService.cancelBatch(user.id, batchId);
+      } catch {
+        errors.push(batchId);
+      }
+    }
+    // Don't throw — partial success is fine for cancel
   }
 
   @ApiParam({ name: 'mediaItemId', type: String, description: 'Media item UUID' })

@@ -1,3 +1,4 @@
+import { type SavedItemsService } from '../../user-actions/application/saved-items.service';
 import { type IMediaLookupPort } from '../domain/ports/media-lookup.port';
 import { type IUserMediaStateRepository } from '../domain/repositories/user-media-state.repository.interface';
 
@@ -7,7 +8,8 @@ import { ImportPendingService } from './import-pending.service';
 describe('ImportMediaService', () => {
   let mediaLookup: jest.Mocked<IMediaLookupPort>;
   let repo: jest.Mocked<Pick<IUserMediaStateRepository, 'bulkImport'>>;
-  let importPendingService: jest.Mocked<Pick<ImportPendingService, 'createPendingBatch'>>;
+  let importPendingService: jest.Mocked<Pick<ImportPendingService, 'createPendingBatches'>>;
+  let savedItemsService: jest.Mocked<Pick<SavedItemsService, 'saveItem'>>;
   let service: ImportMediaService;
 
   beforeEach(() => {
@@ -21,10 +23,19 @@ describe('ImportMediaService', () => {
     };
 
     importPendingService = {
-      createPendingBatch: jest.fn().mockResolvedValue({ id: 'batch-1', totalItems: 0 }),
+      createPendingBatches: jest.fn().mockResolvedValue([{ id: 'batch-1', totalItems: 0 }]),
     };
 
-    service = new ImportMediaService(mediaLookup as any, repo as any, importPendingService as any);
+    savedItemsService = {
+      saveItem: jest.fn().mockResolvedValue({}),
+    };
+
+    service = new ImportMediaService(
+      mediaLookup as any,
+      repo as any,
+      importPendingService as any,
+      savedItemsService as any,
+    );
   });
 
   afterEach(() => {
@@ -229,13 +240,12 @@ describe('ImportMediaService', () => {
   });
 
   describe('pending batch creation', () => {
-    it('calls createPendingBatch and sets pendingBatch in result when not-found items have identifiers', async () => {
+    it('calls createPendingBatches and sets pendingBatch in result when not-found items have identifiers', async () => {
       mediaLookup.findManyByImdbIds.mockResolvedValue([]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
-      importPendingService.createPendingBatch.mockResolvedValue({
-        id: 'batch-42',
-        totalItems: 2,
-      } as any);
+      importPendingService.createPendingBatches.mockResolvedValue([
+        { id: 'batch-42', totalItems: 2 },
+      ] as any);
 
       const result = await service.import({
         userId: 'user-1',
@@ -247,7 +257,7 @@ describe('ImportMediaService', () => {
         overwriteExisting: false,
       });
 
-      expect(importPendingService.createPendingBatch).toHaveBeenCalledWith(
+      expect(importPendingService.createPendingBatches).toHaveBeenCalledWith(
         'user-1',
         'kinobaza',
         expect.arrayContaining([
@@ -258,7 +268,7 @@ describe('ImportMediaService', () => {
       expect(result.pendingBatch).toEqual({ batchId: 'batch-42', totalItems: 2 });
     });
 
-    it('does NOT call createPendingBatch when not-found items have no identifiers', async () => {
+    it('does NOT call createPendingBatches when not-found items have no identifiers', async () => {
       mediaLookup.findManyByImdbIds.mockResolvedValue([]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
 
@@ -269,18 +279,18 @@ describe('ImportMediaService', () => {
         overwriteExisting: false,
       });
 
-      expect(importPendingService.createPendingBatch).not.toHaveBeenCalled();
+      expect(importPendingService.createPendingBatches).not.toHaveBeenCalled();
       expect(result.pendingBatch).toBeUndefined();
     });
 
-    it('import succeeds and pendingBatch is undefined when createPendingBatch throws', async () => {
+    it('import succeeds and pendingBatch is undefined when createPendingBatches throws', async () => {
       mediaLookup.findManyByImdbIds.mockResolvedValue([
         { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
       ]);
       mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
       repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0 });
-      // Second item is not found and has an identifier — triggers createPendingBatch
-      importPendingService.createPendingBatch.mockRejectedValue(new Error('DB is down'));
+      // Second item is not found and has an identifier — triggers createPendingBatches
+      importPendingService.createPendingBatches.mockRejectedValue(new Error('DB is down'));
 
       const result = await service.import({
         userId: 'user-1',
@@ -297,6 +307,146 @@ describe('ImportMediaService', () => {
       expect(result.notFound).toBe(1);
       // pendingBatch should be absent — error was swallowed
       expect(result.pendingBatch).toBeUndefined();
+    });
+
+    it('multi-batch aggregation — pendingBatch.totalItems is sum of all batch totalItems', async () => {
+      mediaLookup.findManyByImdbIds.mockResolvedValue([]);
+      mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
+      importPendingService.createPendingBatches.mockResolvedValue([
+        { id: 'batch-A', totalItems: 50 },
+        { id: 'batch-B', totalItems: 30 },
+      ] as any);
+
+      const result = await service.import({
+        userId: 'user-1',
+        source: 'kinobaza',
+        items: [
+          { imdbId: 'tt1111111', state: 'completed', title: 'Film 1' },
+          { imdbId: 'tt2222222', state: 'planned', title: 'Film 2' },
+        ],
+        overwriteExisting: false,
+      });
+
+      // totalItems must be the sum of both batches: 50 + 30 = 80
+      expect(result.pendingBatch?.totalItems).toBe(80);
+    });
+
+    it('multi-batch aggregation — pendingBatch.batchId uses the first batch id', async () => {
+      mediaLookup.findManyByImdbIds.mockResolvedValue([]);
+      mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
+      importPendingService.createPendingBatches.mockResolvedValue([
+        { id: 'first-batch', totalItems: 10 },
+        { id: 'second-batch', totalItems: 5 },
+      ] as any);
+
+      const result = await service.import({
+        userId: 'user-1',
+        source: 'kinobaza',
+        items: [{ imdbId: 'tt3333333', state: 'completed', title: 'Film 3' }],
+        overwriteExisting: false,
+      });
+
+      // batchId must reference the first batch, not the second
+      expect(result.pendingBatch?.batchId).toBe('first-batch');
+    });
+  });
+
+  describe('planned items saved to for_later', () => {
+    it('calls saveItem for each matched planned item', async () => {
+      mediaLookup.findManyByImdbIds.mockResolvedValue([
+        { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
+        { id: 'media-2', imdbId: 'tt0000002', type: 'movie' },
+      ]);
+      mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
+      repo.bulkImport.mockResolvedValue({ imported: 2, skipped: 0 });
+
+      await service.import({
+        userId: 'user-1',
+        source: 'kinobaza',
+        items: [
+          { imdbId: 'tt0000001', state: 'completed', rating: 80, title: 'Watched Film' },
+          { imdbId: 'tt0000002', state: 'planned', rating: null, title: 'Want to Watch' },
+        ],
+        overwriteExisting: false,
+      });
+
+      // Only the planned item should be saved to for_later
+      expect(savedItemsService.saveItem).toHaveBeenCalledTimes(1);
+      expect(savedItemsService.saveItem).toHaveBeenCalledWith({
+        userId: 'user-1',
+        mediaItemId: 'media-2',
+        list: 'for_later',
+        context: 'import',
+      });
+    });
+
+    it('does not call saveItem when no matched items are planned', async () => {
+      mediaLookup.findManyByImdbIds.mockResolvedValue([
+        { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
+      ]);
+      mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
+      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0 });
+
+      await service.import({
+        userId: 'user-1',
+        source: 'kinobaza',
+        items: [{ imdbId: 'tt0000001', state: 'completed', rating: 90, title: 'Already Watched' }],
+        overwriteExisting: false,
+      });
+
+      expect(savedItemsService.saveItem).not.toHaveBeenCalled();
+    });
+
+    it('import succeeds even when saveItem throws', async () => {
+      mediaLookup.findManyByImdbIds.mockResolvedValue([
+        { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
+      ]);
+      mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
+      repo.bulkImport.mockResolvedValue({ imported: 1, skipped: 0 });
+      savedItemsService.saveItem.mockRejectedValue(new Error('saved_items DB error'));
+
+      const result = await service.import({
+        userId: 'user-1',
+        source: 'kinobaza',
+        items: [{ imdbId: 'tt0000001', state: 'planned', title: 'Watchlist Film' }],
+        overwriteExisting: false,
+      });
+
+      // Core import should still succeed
+      expect(result.imported).toBe(1);
+      expect(result.skipped).toBe(0);
+    });
+
+    it('continues calling saveItem for subsequent planned items when one saveItem rejects', async () => {
+      mediaLookup.findManyByImdbIds.mockResolvedValue([
+        { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },
+        { id: 'media-2', imdbId: 'tt0000002', type: 'movie' },
+        { id: 'media-3', imdbId: 'tt0000003', type: 'movie' },
+      ]);
+      mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
+      repo.bulkImport.mockResolvedValue({ imported: 3, skipped: 0 });
+      // 2nd saveItem call rejects; 1st and 3rd succeed
+      savedItemsService.saveItem
+        .mockResolvedValueOnce({} as any)
+        .mockRejectedValueOnce(new Error('saved_items DB error'))
+        .mockResolvedValueOnce({} as any);
+
+      const result = await service.import({
+        userId: 'user-1',
+        source: 'kinobaza',
+        items: [
+          { imdbId: 'tt0000001', state: 'planned', title: 'Planned 1' },
+          { imdbId: 'tt0000002', state: 'planned', title: 'Planned 2 — will fail' },
+          { imdbId: 'tt0000003', state: 'planned', title: 'Planned 3' },
+        ],
+        overwriteExisting: false,
+      });
+
+      // All 3 saveItem calls were attempted despite the 2nd failing
+      expect(savedItemsService.saveItem).toHaveBeenCalledTimes(3);
+      // Core import is unaffected
+      expect(result.imported).toBe(3);
+      expect(result.skipped).toBe(0);
     });
   });
 });

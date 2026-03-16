@@ -1,6 +1,7 @@
 export const IMPORT_BATCH_STATUS = {
   PROCESSING: 'processing',
   COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
 } as const;
 export type ImportBatchStatus = (typeof IMPORT_BATCH_STATUS)[keyof typeof IMPORT_BATCH_STATUS];
 
@@ -11,6 +12,7 @@ export const IMPORT_PENDING_STATUS = {
   LINKING: 'linking',
   DONE: 'done',
   FAILED: 'failed',
+  CANCELLED: 'cancelled',
 } as const;
 export type ImportPendingItemStatus =
   (typeof IMPORT_PENDING_STATUS)[keyof typeof IMPORT_PENDING_STATUS];

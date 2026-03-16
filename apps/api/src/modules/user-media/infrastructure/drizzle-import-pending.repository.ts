@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, ne, notInArray, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { withDbError } from '../../../common/utils/db-error.utils';
@@ -147,7 +147,12 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
         const rows = await this.db
           .select()
           .from(schema.importBatches)
-          .where(eq(schema.importBatches.userId, userId))
+          .where(
+            and(
+              eq(schema.importBatches.userId, userId),
+              eq(schema.importBatches.status, IMPORT_BATCH_STATUS.PROCESSING),
+            ),
+          )
           .orderBy(desc(schema.importBatches.createdAt))
           .limit(limit);
         return rows.map((r) => this.mapBatch(r));
@@ -244,6 +249,72 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
     );
   }
 
+  async updateItemStatusIfNotCancelled(
+    itemId: string,
+    update: UpdatePendingItemInput,
+  ): Promise<boolean> {
+    return withDbError(
+      'update pending item status if not cancelled',
+      this.logger,
+      async () => {
+        const setValues: Record<string, unknown> = {
+          status: update.status,
+          updatedAt: new Date(),
+        };
+
+        if (update.resolvedTmdbId !== undefined) setValues.resolvedTmdbId = update.resolvedTmdbId;
+        if (update.mediaType !== undefined) setValues.mediaType = update.mediaType;
+        if (update.failureReason !== undefined) setValues.failureReason = update.failureReason;
+        if (update.mediaItemId !== undefined) setValues.mediaItemId = update.mediaItemId;
+
+        const result = await this.db
+          .update(schema.importPendingItems)
+          .set(setValues)
+          .where(
+            and(
+              eq(schema.importPendingItems.id, itemId),
+              ne(schema.importPendingItems.status, IMPORT_PENDING_STATUS.CANCELLED),
+            ),
+          )
+          .returning({ id: schema.importPendingItems.id });
+
+        return result.length > 0;
+      },
+      { itemId, status: update.status },
+    );
+  }
+
+  async cancelBatch(batchId: string): Promise<void> {
+    return withDbError(
+      'cancel import batch',
+      this.logger,
+      async () => {
+        await this.db.transaction(async (tx) => {
+          // Cancel all non-terminal items (leave DONE and FAILED untouched)
+          await tx
+            .update(schema.importPendingItems)
+            .set({ status: IMPORT_PENDING_STATUS.CANCELLED, updatedAt: new Date() })
+            .where(
+              and(
+                eq(schema.importPendingItems.batchId, batchId),
+                notInArray(schema.importPendingItems.status, [
+                  IMPORT_PENDING_STATUS.DONE,
+                  IMPORT_PENDING_STATUS.FAILED,
+                ]),
+              ),
+            );
+
+          // Mark batch as cancelled
+          await tx
+            .update(schema.importBatches)
+            .set({ status: IMPORT_BATCH_STATUS.CANCELLED, updatedAt: new Date() })
+            .where(eq(schema.importBatches.id, batchId));
+        });
+      },
+      { batchId },
+    );
+  }
+
   /**
    * Atomic batch counter update.
    *
@@ -271,13 +342,18 @@ export class DrizzleImportPendingRepository implements IImportPendingRepository 
               WHEN (
                 SELECT COUNT(*) FROM ${schema.importPendingItems}
                 WHERE batch_id = ${batchId}
-                  AND status NOT IN (${IMPORT_PENDING_STATUS.DONE}, ${IMPORT_PENDING_STATUS.FAILED})
+                  AND status NOT IN (${IMPORT_PENDING_STATUS.DONE}, ${IMPORT_PENDING_STATUS.FAILED}, ${IMPORT_PENDING_STATUS.CANCELLED})
               ) = 0 THEN ${IMPORT_BATCH_STATUS.COMPLETED}::import_batch_status
               ELSE ${IMPORT_BATCH_STATUS.PROCESSING}::import_batch_status
             END`,
             updatedAt: sql`now()`,
           })
-          .where(eq(schema.importBatches.id, batchId))
+          .where(
+            and(
+              eq(schema.importBatches.id, batchId),
+              ne(schema.importBatches.status, IMPORT_BATCH_STATUS.CANCELLED),
+            ),
+          )
           .returning();
 
         if (!row) {

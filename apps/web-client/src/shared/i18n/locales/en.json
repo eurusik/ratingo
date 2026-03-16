@@ -967,7 +967,10 @@
         "progress": "{done} of {total} added",
         "failed": "{count} could not be found",
         "failedHint": "These titles are not available on TMDB",
-        "completed": "All items have been processed"
+        "completed": "All items have been processed",
+        "cancel": "Cancel",
+        "cancelling": "Cancelling…",
+        "cancelled": "Import cancelled"
       }
     },
     "connectedAccounts": {

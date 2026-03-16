@@ -5,6 +5,7 @@ import { type Queue } from 'bullmq';
 
 import { BACKFILL_QUEUE, IngestionJob } from '../../../ingestion/ingestion.constants';
 import {
+  IMPORT_BATCH_STATUS,
   IMPORT_PENDING_REPOSITORY,
   IMPORT_PENDING_STATUS,
 } from '../../domain/constants/import-pending.constants';
@@ -39,6 +40,16 @@ export class ResolveImportDispatcherPipeline {
    */
   async execute(data: { batchId: string }): Promise<void> {
     const { batchId } = data;
+
+    const batch = await this.pendingRepo.findBatchById(batchId);
+    if (!batch) {
+      this.logger.warn(`[dispatcher] batchId=${batchId} not found, skipping`);
+      return;
+    }
+    if (batch.status === IMPORT_BATCH_STATUS.CANCELLED) {
+      this.logger.log(`[dispatcher] batchId=${batchId} is cancelled, skipping`);
+      return;
+    }
 
     const items = await this.pendingRepo.findPendingByBatchAndStatus(
       batchId,

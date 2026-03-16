@@ -8,8 +8,26 @@ import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/ui/collapsible';
 import type { ImportResult } from '@/core/api/user-media.client';
-import { useImportBatchStatus } from '../../hooks/use-import-batch-status';
+import { useImportBatchStatus, type ImportBatchStatus } from '../../hooks/use-import-batch-status';
+import { useCancelImportBatches } from '../../hooks/use-import-media';
 import { ImportPendingStatus, type ImportPendingStatusLabels } from './import-pending-status';
+import { BATCH_STATUS, type BatchStatus } from './types';
+
+function deriveStatus(
+  hasPending: boolean,
+  batches: ImportBatchStatus[],
+  loaded: boolean,
+): BatchStatus {
+  if (!hasPending) return BATCH_STATUS.COMPLETED;
+  if (!loaded) return BATCH_STATUS.PROCESSING;
+  if (batches.length === 0) return BATCH_STATUS.COMPLETED;
+  if (batches.every((b) => b.status === BATCH_STATUS.COMPLETED)) return BATCH_STATUS.COMPLETED;
+  // If any batch is cancelled and none are still processing, surface cancelled
+  const hasProcessing = batches.some((b) => b.status === BATCH_STATUS.PROCESSING);
+  const hasCancelled = batches.some((b) => b.status === BATCH_STATUS.CANCELLED);
+  if (hasCancelled && !hasProcessing) return BATCH_STATUS.CANCELLED;
+  return BATCH_STATUS.PROCESSING;
+}
 
 interface ImportResultSummaryProps {
   result: ImportResult;
@@ -44,14 +62,27 @@ export function ImportResultSummary({
   // Only poll when there is a pending batch to track
   const { data: batchStatuses } = useImportBatchStatus({ enabled: hasPendingBatch });
 
-  // Find the live status for the batch returned by this import
-  const activeBatch = hasPendingBatch
-    ? batchStatuses?.find((b) => b.batchId === pendingBatch?.batchId)
-    : undefined;
+  const cancelMutation = useCancelImportBatches();
 
-  // When batchStatuses has loaded but our batch is absent, treat as completed
-  // rather than leaving the spinner running forever (BUG F5).
-  const effectiveStatus = activeBatch?.status ?? (batchStatuses ? 'completed' : 'processing');
+  // Find the live status for the batch returned by this import
+  // Aggregate status across ALL active batches (import may create multiple batches)
+  const allBatches = batchStatuses ?? [];
+  const totalItems = hasPendingBatch
+    ? allBatches.reduce((sum, b) => sum + b.totalItems, 0) || pendingBatch!.totalItems
+    : 0;
+  const completedCount = allBatches.reduce((sum, b) => sum + b.completedCount, 0);
+  const failedCount = allBatches.reduce((sum, b) => sum + b.failedCount, 0);
+  const effectiveStatus = deriveStatus(hasPendingBatch, allBatches, batchStatuses !== undefined);
+
+  const processingBatchIds = allBatches
+    .filter((b) => b.status === BATCH_STATUS.PROCESSING)
+    .map((b) => b.batchId);
+
+  const handleCancel = () => {
+    if (processingBatchIds.length > 0) {
+      cancelMutation.mutate(processingBatchIds);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -112,11 +143,13 @@ export function ImportResultSummary({
 
       {hasPendingBatch && pendingLabels && (
         <ImportPendingStatus
-          totalItems={activeBatch?.totalItems ?? pendingBatch!.totalItems}
-          completedCount={activeBatch?.completedCount ?? 0}
-          failedCount={activeBatch?.failedCount ?? 0}
+          totalItems={totalItems}
+          completedCount={completedCount}
+          failedCount={failedCount}
           status={effectiveStatus}
           labels={pendingLabels}
+          onCancel={effectiveStatus === BATCH_STATUS.PROCESSING ? handleCancel : undefined}
+          isCancelling={cancelMutation.isPending}
         />
       )}
 

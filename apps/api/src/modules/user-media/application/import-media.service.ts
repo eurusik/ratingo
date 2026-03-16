@@ -1,11 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { SavedItemsService } from '../../user-actions/application/saved-items.service';
+import { ACTION_CONTEXT } from '../../user-actions/domain/entities/user-media-action.entity';
+import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities/user-saved-item.entity';
 import { MEDIA_LOOKUP_PORT } from '../domain/constants/import.constants';
 import {
   type ExternalMediaEntry,
   type ImportCommand,
   type ImportOutcome,
 } from '../domain/entities/external-media-entry';
+import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
 import { type IMediaLookupPort } from '../domain/ports/media-lookup.port';
 import {
   type IUserMediaStateRepository,
@@ -39,6 +43,7 @@ export class ImportMediaService {
     @Inject(USER_MEDIA_STATE_REPOSITORY)
     private readonly repo: IUserMediaStateRepository,
     private readonly importPendingService: ImportPendingService,
+    private readonly savedItemsService: SavedItemsService,
   ) {}
 
   async import(command: ImportCommand): Promise<ImportOutcome> {
@@ -69,17 +74,39 @@ export class ImportMediaService {
       dbSkipped = result.skipped;
     }
 
+    // Save planned (watchlist) items to for_later — non-critical, per-item isolation
+    for (const { entry, mediaItemId } of toImport) {
+      if (entry.state === USER_MEDIA_STATE.PLANNED) {
+        try {
+          await this.savedItemsService.saveItem({
+            userId: command.userId,
+            mediaItemId,
+            list: SAVED_ITEM_LIST.FOR_LATER,
+            context: ACTION_CONTEXT.IMPORT,
+          });
+        } catch (error) {
+          this.logger.error(
+            `Failed to save planned item to for_later: userId=${command.userId} mediaItemId=${mediaItemId}: ${(error as Error).message}`,
+            (error as Error).stack,
+          );
+        }
+      }
+    }
+
     // Queue background auto-ingestion for not-found items that have an identifier
     let pendingBatch: ImportOutcome['pendingBatch'];
     const pendingItems = notFound.filter((e) => e.imdbId || e.tmdbId);
     if (pendingItems.length > 0) {
       try {
-        const batch = await this.importPendingService.createPendingBatch(
+        const batches = await this.importPendingService.createPendingBatches(
           command.userId,
           command.source,
           pendingItems,
         );
-        pendingBatch = { batchId: batch.id, totalItems: batch.totalItems };
+        const totalItems = batches.reduce((sum, b) => sum + b.totalItems, 0);
+        if (batches.length > 0) {
+          pendingBatch = { batchId: batches[0].id, totalItems };
+        }
       } catch (error) {
         // Non-critical: log but don't fail the import
         this.logger.error(
