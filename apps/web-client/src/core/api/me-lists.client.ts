@@ -74,6 +74,21 @@ export const meListsApi = {
   },
 
   /**
+   * Get user's in-progress activity (watching state or non-null progress).
+   *
+   * Unlike /me/history which returns mixed states, this endpoint returns only
+   * items where state='watching' OR progress IS NOT NULL, sorted by updatedAt DESC.
+   *
+   * @param params - Pagination parameters (sort has no effect on this endpoint)
+   * @returns Paginated activity items
+   */
+  async getActivity(params?: Pick<MeListsParams, 'limit' | 'offset'>): Promise<PaginatedMeUserMediaResponseDto> {
+    return apiGet<PaginatedMeUserMediaResponseDto>('me/activity', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
    * Get user's paused items.
    *
    * @param params - Pagination and sorting parameters
@@ -81,6 +96,18 @@ export const meListsApi = {
    */
   async getPaused(params?: MeListsParams): Promise<PaginatedMeUserMediaResponseDto> {
     return apiGet<PaginatedMeUserMediaResponseDto>('me/paused', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Get user's ratings (completed items with ratings).
+   *
+   * @param params - Pagination and sorting parameters
+   * @returns Paginated ratings items
+   */
+  async getRatings(params?: MeListsParams): Promise<PaginatedMeUserMediaResponseDto> {
+    return apiGet<PaginatedMeUserMediaResponseDto>('me/ratings', {
       searchParams: params as Record<string, string | number>,
     });
   },

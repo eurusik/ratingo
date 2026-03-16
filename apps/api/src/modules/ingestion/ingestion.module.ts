@@ -13,6 +13,7 @@ import { ScoreCalculatorModule } from '../shared/score-calculator';
 import { StatsModule } from '../stats/stats.module';
 import { TmdbModule } from '../tmdb/public';
 import { UserActionsModule } from '../user-actions/user-actions.module';
+import { UserMediaModule } from '../user-media/user-media.module';
 
 import { BackfillAltTitlesPipeline } from './application/pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from './application/pipelines/backfill-imdb.pipeline';
@@ -55,6 +56,7 @@ import { IngestionController } from './presentation/controllers/ingestion.contro
     TmdbModule,
     forwardRef(() => StatsModule),
     forwardRef(() => UserActionsModule),
+    forwardRef(() => UserMediaModule),
     ScoreCalculatorModule,
     ConfigModule.forFeature(traktConfig),
     ConfigModule.forFeature(omdbConfig),

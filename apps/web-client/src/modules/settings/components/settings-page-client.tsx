@@ -1,12 +1,9 @@
-/**
- * Settings page client component with tabs.
- */
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
 
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 import { useTranslation } from '@/shared/i18n';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
@@ -17,6 +14,7 @@ import { PrivacySection } from './privacy-section';
 import { SecuritySection } from './security-section';
 import { ConnectedAccountsSection } from './connected-accounts-section';
 import { useUpdateProfile } from '../hooks';
+import { ImportSourceStep } from './import/import-source-step';
 
 /** Notification from OAuth link callback redirect. */
 export interface LinkNotification {
@@ -27,14 +25,11 @@ export interface LinkNotification {
 
 interface SettingsPageClientProps {
   user: MeDto;
-  initialTab?: 'profile' | 'privacy' | 'security';
+  initialTab?: 'profile' | 'privacy' | 'security' | 'data';
   linkNotification?: LinkNotification;
 }
 
-/**
- * Settings page with tabs for Profile, Privacy, and Security.
- * Unsaved changes warning for Profile/Security only.
- */
+/** Unsaved changes warning applies to Profile and Security tabs only. */
 export function SettingsPageClient({
   user,
   initialTab = 'profile',
@@ -42,13 +37,13 @@ export function SettingsPageClient({
 }: SettingsPageClientProps) {
   const { dict } = useTranslation();
   const t = dict.settings.connectedAccounts;
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState(initialTab);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const toastShown = useRef(false);
 
   const updateProfile = useUpdateProfile();
 
-  // Show toast once on mount for OAuth link result
   useEffect(() => {
     if (!linkNotification || toastShown.current) return;
     toastShown.current = true;
@@ -64,7 +59,6 @@ export function SettingsPageClient({
     }
   }, [linkNotification, t]);
 
-  // Handle unsaved changes warning
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges && (activeTab === 'profile' || activeTab === 'security')) {
@@ -93,12 +87,10 @@ export function SettingsPageClient({
 
   return (
     <div className="container max-w-xl mx-auto pt-24 pb-8 px-4">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-cinema-text-primary">{dict.settings.title}</h1>
       </div>
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
         <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6">
           <TabsTrigger value="profile" className="data-[state=active]:bg-cinema-elevated">
@@ -109,6 +101,9 @@ export function SettingsPageClient({
           </TabsTrigger>
           <TabsTrigger value="security" className="data-[state=active]:bg-cinema-elevated">
             {dict.settings.tabs.security}
+          </TabsTrigger>
+          <TabsTrigger value="data" className="data-[state=active]:bg-cinema-elevated">
+            {dict.settings.tabs.data}
           </TabsTrigger>
         </TabsList>
 
@@ -123,6 +118,17 @@ export function SettingsPageClient({
         <TabsContent value="security" className="mt-0 space-y-6">
           <ConnectedAccountsSection />
           <SecuritySection />
+        </TabsContent>
+
+        <TabsContent value="data" className="mt-0 space-y-6">
+          <ImportSourceStep
+            onSelect={(source) => router.push(`/settings/import?source=${source}` as never)}
+            labels={{
+              heading: dict.settings.import.chooseSource,
+              comingSoon: dict.settings.import.comingSoon,
+              sources: dict.settings.import.sources,
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>

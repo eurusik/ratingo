@@ -1,13 +1,9 @@
-/**
- * Watchlist component displaying watching items from user_media.
- */
-
 'use client';
 
 import { useState, useCallback } from 'react';
 import { useTranslation } from '@/shared/i18n';
 import { InfiniteScrollLoader } from '@/shared/components/infinite-scroll-loader';
-import { useWatching, PAGE_SIZE, type MeListSort } from '../hooks/use-me-lists';
+import { useWatching, PAGE_SIZE, MAX_LIST_LIMIT, type MeListSort } from '../hooks/use-me-lists';
 import { MeListItemCard } from './me-list-item-card';
 import { EmptyState } from './empty-state';
 import { ListSortSelect } from './list-sort-select';
@@ -25,7 +21,7 @@ export function Watchlist() {
   }, []);
 
   const handleLoadMore = useCallback(() => {
-    setLimit((prev) => prev + PAGE_SIZE);
+    setLimit((prev) => Math.min(prev + PAGE_SIZE, MAX_LIST_LIMIT));
   }, []);
 
   if (isLoading) {
@@ -33,7 +29,7 @@ export function Watchlist() {
   }
 
   const items = data?.data ?? [];
-  const hasMore = data?.meta?.hasMore ?? false;
+  const hasMore = (data?.meta?.hasMore ?? false) && limit < MAX_LIST_LIMIT;
 
   if (items.length === 0) {
     return (
@@ -41,6 +37,9 @@ export function Watchlist() {
         type="watchlist"
         title={dict.activity?.empty?.watching?.title ?? 'Ще нічого не дивитесь'}
         description={dict.activity?.empty?.watching?.description ?? 'Почніть дивитись серіал і він з\'явиться тут'}
+        showImportCta
+        importHint={dict.saved?.emptyState?.importHint}
+        importButtonLabel={dict.saved?.emptyState?.importButton}
       />
     );
   }

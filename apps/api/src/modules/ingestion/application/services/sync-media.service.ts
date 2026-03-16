@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { IngestionStatus } from '../../../../common/enums/ingestion-status.enum';
 import { MediaType } from '../../../../common/enums/media-type.enum';
@@ -12,6 +13,7 @@ import {
 import { NormalizationService } from '../../../provider/public';
 import { ScoreCalculatorService, type ScoreInput } from '../../../shared/score-calculator';
 import { TmdbAdapter } from '../../../tmdb/public';
+import { MediaSyncedEvent } from '../../domain/events/media-synced.event';
 import { type NormalizedMedia } from '../../domain/models/normalized-media.model';
 import { OmdbAdapter } from '../../infrastructure/adapters/omdb/omdb.adapter';
 import { TraktRatingsAdapter } from '../../infrastructure/adapters/trakt/trakt-ratings.adapter';
@@ -60,6 +62,7 @@ export class SyncMediaService {
     private readonly tvMazeEnrichment: TvMazeEnrichmentService,
     private readonly scoreCalculator: ScoreCalculatorService,
     private readonly normalizationService: NormalizationService,
+    private readonly eventEmitter: EventEmitter2,
 
     @Inject(MEDIA_REPOSITORY)
     private readonly mediaRepository: IMediaRepository,
@@ -152,12 +155,18 @@ export class SyncMediaService {
       // Step 7: Persist
       await this.persist(classified, tmdbId);
 
+      // Fetch the persisted media item once — shared across steps 8–10 to avoid redundant DB calls
+      const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId);
+
       // Step 8: Normalize watch providers
-      await this.normalizeWatchProviders(classified, logPrefix);
+      await this.normalizeWatchProviders(classified, mediaItem, logPrefix);
 
       // Step 9: Evaluate catalog eligibility (both catalog and trending contexts if applicable)
       const isTrending = trending !== undefined && trending.score > 0;
-      await this.evaluateCatalog(tmdbId, logPrefix, isTrending);
+      await this.evaluateCatalog(mediaItem, logPrefix, isTrending);
+
+      // Step 10: Emit domain event for cross-module consumers (e.g. link pending import items)
+      await this.emitMediaSynced(tmdbId, type, mediaItem, logPrefix);
 
       this.logger.log(
         `${logPrefix} Synced: ${classified.title} (Ratingo: ${((classified.ratingoScore ?? 0) * SCORE_PERCENT_MULTIPLIER).toFixed(1)})`,
@@ -369,18 +378,21 @@ export class SyncMediaService {
   }
 
   /** Normalizes watch providers and stores in media_watch_offers table. */
-  private async normalizeWatchProviders(media: NormalizedMedia, logPrefix: string): Promise<void> {
+  private async normalizeWatchProviders(
+    media: NormalizedMedia,
+    mediaItem: { id: string } | null,
+    logPrefix: string,
+  ): Promise<void> {
     if (!media.watchProvidersRaw || Object.keys(media.watchProvidersRaw).length === 0) {
       return;
     }
 
-    try {
-      const mediaItem = await this.mediaRepository.findByTmdbId(media.externalIds.tmdbId);
-      if (!mediaItem) {
-        this.logger.warn(`${logPrefix} Cannot normalize providers: media item not found`);
-        return;
-      }
+    if (!mediaItem) {
+      this.logger.warn(`${logPrefix} Cannot normalize providers: media item not found`);
+      return;
+    }
 
+    try {
       const result = await this.normalizationService.normalizeWatchProviders(
         mediaItem.id,
         media.watchProvidersRaw,
@@ -399,16 +411,14 @@ export class SyncMediaService {
 
   /** Triggers catalog eligibility evaluation if service available. */
   private async evaluateCatalog(
-    tmdbId: number,
+    mediaItem: { id: string } | null,
     logPrefix: string,
     isTrending: boolean = false,
   ): Promise<void> {
     if (!this.catalogEvaluator) return;
+    if (!mediaItem) return;
 
     try {
-      const mediaItem = await this.mediaRepository.findByTmdbId(tmdbId);
-      if (!mediaItem) return;
-
       // Always evaluate for catalog context
       await this.catalogEvaluator.evaluateOne({
         mediaItemId: mediaItem.id,
@@ -437,6 +447,39 @@ export class SyncMediaService {
       await this.mediaRepository.updateIngestionStatus(tmdbId, IngestionStatus.FAILED);
     } catch (statusError) {
       this.logger.warn(`${logPrefix} Failed to mark as failed: ${(statusError as Error).message}`);
+    }
+  }
+
+  /**
+   * Emits 'media.synced' event for cross-module consumers.
+   *
+   * Uses the pre-fetched mediaItem from processMedia to avoid a redundant DB query.
+   * Best-effort: logs warning on failure, does not rethrow.
+   */
+  private async emitMediaSynced(
+    tmdbId: number,
+    type: MediaType,
+    mediaItem: { id: string } | null,
+    logPrefix: string,
+  ): Promise<void> {
+    if (!mediaItem) {
+      this.logger.warn(`${logPrefix} Cannot emit media.synced: media item not found`);
+      return;
+    }
+
+    try {
+      const eventType = type === MediaType.MOVIE ? 'movie' : 'show';
+      this.eventEmitter.emit(
+        MediaSyncedEvent.eventName,
+        new MediaSyncedEvent(tmdbId, eventType, mediaItem.id),
+      );
+
+      this.logger.debug(
+        `${logPrefix} Emitted ${MediaSyncedEvent.eventName} mediaItemId=${mediaItem.id}`,
+      );
+    } catch (error) {
+      // Best-effort: log warning but don't fail the sync
+      this.logger.warn(`${logPrefix} Failed to emit media.synced: ${(error as Error).message}`);
     }
   }
 

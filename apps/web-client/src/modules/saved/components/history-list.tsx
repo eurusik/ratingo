@@ -1,13 +1,9 @@
-/**
- * History list component displaying completed items.
- */
-
 'use client';
 
 import { useState, useCallback } from 'react';
 import { useTranslation } from '@/shared/i18n';
 import { InfiniteScrollLoader } from '@/shared/components/infinite-scroll-loader';
-import { useCompleted, PAGE_SIZE, type MeListSort } from '../hooks/use-me-lists';
+import { useCompleted, PAGE_SIZE, MAX_LIST_LIMIT, type MeListSort } from '../hooks/use-me-lists';
 import { MeListItemCard } from './me-list-item-card';
 import { EmptyState } from './empty-state';
 import { ListSortSelect } from './list-sort-select';
@@ -25,7 +21,7 @@ export function HistoryList() {
   }, []);
 
   const handleLoadMore = useCallback(() => {
-    setLimit((prev) => prev + PAGE_SIZE);
+    setLimit((prev) => Math.min(prev + PAGE_SIZE, MAX_LIST_LIMIT));
   }, []);
 
   if (isLoading) {
@@ -33,7 +29,7 @@ export function HistoryList() {
   }
 
   const items = data?.data ?? [];
-  const hasMore = data?.meta?.hasMore ?? false;
+  const hasMore = (data?.meta?.hasMore ?? false) && limit < MAX_LIST_LIMIT;
 
   if (items.length === 0) {
     return (
@@ -41,6 +37,9 @@ export function HistoryList() {
         type="history"
         title={dict.activity?.empty?.history?.title ?? 'Історія порожня'}
         description={dict.activity?.empty?.history?.description ?? 'Ви ще нічого не переглянули'}
+        showImportCta
+        importHint={dict.saved?.emptyState?.importHint}
+        importButtonLabel={dict.saved?.emptyState?.importButton}
       />
     );
   }

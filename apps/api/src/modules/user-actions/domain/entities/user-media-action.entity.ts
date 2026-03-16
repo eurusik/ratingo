@@ -19,6 +19,7 @@ export const ACTION_CONTEXT = {
   CARD: 'card',
   DETAILS: 'details',
   HERO: 'hero',
+  IMPORT: 'import',
 } as const;
 
 export type ActionContext = (typeof ACTION_CONTEXT)[keyof typeof ACTION_CONTEXT];

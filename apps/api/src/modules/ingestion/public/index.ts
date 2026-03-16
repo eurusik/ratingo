@@ -48,3 +48,6 @@ export {
 
 // Constants
 export { INGESTION_QUEUE, IngestionJob } from '../ingestion.constants';
+
+// Domain events
+export { MediaSyncedEvent } from '../domain/events/media-synced.event';

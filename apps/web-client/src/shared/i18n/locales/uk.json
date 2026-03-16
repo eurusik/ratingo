@@ -712,6 +712,10 @@
       "steadyInterest": "Стабільний інтерес",
       "classicChoice": "Класика",
       "timelessFavorite": "Улюблена класика"
+    },
+    "emptyState": {
+      "importHint": "Є оцінки на іншому сервісі?",
+      "importButton": "Імпортувати з Кінобази"
     }
   },
   "activity": {
@@ -801,7 +805,8 @@
     "tabs": {
       "profile": "Профіль",
       "privacy": "Приватність",
-      "security": "Безпека"
+      "security": "Безпека",
+      "data": "Імпорт"
     },
     "profile": {
       "title": "Інформація профілю",
@@ -815,6 +820,10 @@
       "websitePlaceholder": "https://example.com",
       "language": "Мова",
       "region": "Регіон"
+    },
+    "data": {
+      "importCard": "Імпорт даних",
+      "importCardDesc": "Перенесіть оцінки та списки з Кінобази"
     },
     "avatar": {
       "change": "Змінити фото",
@@ -869,6 +878,101 @@
       "confirm": "Підтвердити"
     },
     "unsavedChanges": "У вас є незбережені зміни. Ви впевнені, що хочете вийти?",
+    "import": {
+      "title": "Імпорт даних",
+      "subtitle": "Перенесіть оцінки та списки з зовнішніх сервісів",
+      "howTo": "Як скачати файл з Кінобази?",
+      "howToSteps": [
+        "Зайдіть на kinobaza.com.ua",
+        "Відкрийте свій профіль → Налаштування",
+        "Натисніть «Експорт оцінок» (CSV)",
+        "Для списку перегляду — «Експорт списку»",
+        "Перетягніть завантажені файли у відповідні поля нижче"
+      ],
+      "ratingsFile": "Файл оцінок (.csv)",
+      "watchlistFile": "Файл списку перегляду (.csv)",
+      "dropHint": "Перетягніть або натисніть для вибору",
+      "recognized": "{count} розпізнано",
+      "skippedRows": "{count} рядків пропущено",
+      "overwrite": "Замінити існуючі оцінки",
+      "overwriteHint": "Якщо увімкнено, імпортовані оцінки замінять ваші поточні рейтинги",
+      "importButton": "Імпортувати {count} елементів",
+      "importing": "Імпортуємо...",
+      "done": "Імпорт завершено!",
+      "imported": "Імпортовано",
+      "skipped": "Пропущено (вже оцінені)",
+      "notFound": "Не знайдено в каталозі",
+      "goToRatings": "Перейти до моїх оцінок",
+      "importMore": "Імпортувати ще",
+      "errors": {
+        "wrongFile": "Файл не схожий на експорт з Кінобази",
+        "fileTooLarge": "Файл занадто великий (макс. 5 МБ)",
+        "onlyCsv": "Підтримуються тільки CSV файли",
+        "wrongSlot": "Цей файл містить {type}, завантажте його у відповідне поле"
+      },
+      "typeRating": "оцінка",
+      "typeWatchlist": "список",
+      "importFailed": "Не вдалося виконати імпорт. Спробуйте ще раз.",
+      "previewSummary": "Знайдено {ratings} оцінок та {watchlist} у списку перегляду",
+      "truncated": "...ще {count}",
+      "clearFile": "Очистити файл",
+      "retryFile": "Спробувати знову",
+      "dragOver": "Відпустіть для завантаження",
+      "colTitle": "Назва",
+      "colYear": "Рік",
+      "colType": "Тип",
+      "colRating": "Рейтинг",
+      "steps": {
+        "source": "Джерело",
+        "files": "Файли",
+        "preview": "Перегляд",
+        "result": "Результат"
+      },
+      "chooseSource": "Оберіть джерело імпорту",
+      "sources": {
+        "kinobaza": {
+          "name": "Кінобаза",
+          "desc": "Оцінки та список перегляду з kinobaza.com.ua"
+        },
+        "imdb": {
+          "name": "IMDB",
+          "desc": "Ваші оцінки з imdb.com"
+        },
+        "tmdb": {
+          "name": "TMDB",
+          "desc": "Оцінки з themoviedb.org"
+        },
+        "letterboxd": {
+          "name": "Letterboxd",
+          "desc": "Щоденник та список з letterboxd.com"
+        }
+      },
+      "comingSoon": "Скоро",
+      "back": "Назад",
+      "continue": "Далі",
+      "maxSizeHint": "макс.\u00a05\u00a0МБ",
+      "filterAll": "Усі",
+      "filterRatings": "Оцінки",
+      "filterWatchlist": "Список",
+      "skippedExplanation": "{count} рядків пропущено (відсутній IMDB/TMDB ідентифікатор)",
+      "confirmImport": {
+        "title": "Підтвердження імпорту",
+        "message": "Ви збираєтесь імпортувати {count} елементів.",
+        "overwriteWarning": "Існуючі оцінки будуть замінені.",
+        "confirm": "Імпортувати",
+        "cancel": "Скасувати"
+      },
+      "pending": {
+        "title": "Додаємо до каталогу",
+        "progress": "{done} з {total} додано",
+        "failed": "{count} не вдалось знайти",
+        "failedHint": "Ці назви відсутні в TMDB",
+        "completed": "Усі елементи оброблено",
+        "cancel": "Скасувати",
+        "cancelling": "Скасовую…",
+        "cancelled": "Імпорт скасовано"
+      }
+    },
     "connectedAccounts": {
       "title": "Підключені акаунти",
       "description": "Підключіть соціальні акаунти для швидшого входу",

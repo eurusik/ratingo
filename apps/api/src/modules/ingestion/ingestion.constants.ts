@@ -61,6 +61,11 @@ export enum IngestionJob {
   BACKFILL_ALT_TITLES_DISPATCHER = 'backfill-alt-titles-dispatcher',
   /** Item job: fetches alternative titles from TMDB for a single item. @queue backfill */
   BACKFILL_ALT_TITLES_ITEM = 'backfill-alt-titles-item',
+
+  /** Dispatcher job: loads pending import items for a batch and queues per-item jobs. @queue backfill */
+  RESOLVE_IMPORT_DISPATCHER = 'resolve-import-dispatcher',
+  /** Item job: resolves a single pending import item via TMDB Find API, queues SYNC_MOVIE/SYNC_SHOW. @queue backfill */
+  RESOLVE_IMPORT_ITEM = 'resolve-import-item',
 }
 
 /**

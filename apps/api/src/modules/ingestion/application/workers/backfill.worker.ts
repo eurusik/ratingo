@@ -6,6 +6,8 @@ import { type Job } from 'bullmq';
 import { type MediaType } from '@/common/enums/media-type.enum';
 import { WORKER_CONFIG } from '@/config/queue.config';
 
+import { ResolveImportDispatcherPipeline } from '../../../user-media/application/pipelines/resolve-import-dispatcher.pipeline';
+import { ResolveImportItemPipeline } from '../../../user-media/application/pipelines/resolve-import-item.pipeline';
 import { BACKFILL_QUEUE, IngestionJob } from '../../ingestion.constants';
 import { BackfillAltTitlesPipeline } from '../pipelines/backfill-alt-titles.pipeline';
 import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
@@ -15,6 +17,9 @@ import { BackfillImdbPipeline } from '../pipelines/backfill-imdb.pipeline';
  *
  * Separated from SyncWorker so backfill jobs bypass the Trakt rate limiter.
  * Concurrency: 15 jobs in parallel — TMDB allows ~40 req/s, each job makes 1 call.
+ *
+ * Also handles import resolution jobs (RESOLVE_IMPORT_DISPATCHER, RESOLVE_IMPORT_ITEM)
+ * which use TMDB-only endpoints and benefit from the same high-throughput configuration.
  */
 @Processor(BACKFILL_QUEUE, {
   concurrency: 15,
@@ -27,6 +32,8 @@ export class BackfillWorker extends WorkerHost {
   constructor(
     private readonly backfillAltTitlesPipeline: BackfillAltTitlesPipeline,
     private readonly backfillImdbPipeline: BackfillImdbPipeline,
+    private readonly resolveImportDispatcherPipeline: ResolveImportDispatcherPipeline,
+    private readonly resolveImportItemPipeline: ResolveImportItemPipeline,
   ) {
     super();
   }
@@ -38,6 +45,8 @@ export class BackfillWorker extends WorkerHost {
       mediaItemId?: string;
       title?: string;
       originalTitle?: string | null;
+      batchId?: string;
+      pendingItemId?: string;
     }>,
   ): Promise<void> {
     this.logger.debug(`[job:${job.id}] Processing ${job.name}`);
@@ -55,6 +64,17 @@ export class BackfillWorker extends WorkerHost {
 
         case IngestionJob.BACKFILL_IMDB_ITEM:
           await this.backfillImdbPipeline.processItem(job.data.tmdbId!, job.id ?? 'unknown');
+          break;
+
+        case IngestionJob.RESOLVE_IMPORT_DISPATCHER:
+          await this.resolveImportDispatcherPipeline.execute({ batchId: job.data.batchId! });
+          break;
+
+        case IngestionJob.RESOLVE_IMPORT_ITEM:
+          await this.resolveImportItemPipeline.execute({
+            pendingItemId: job.data.pendingItemId!,
+            batchId: job.data.batchId!,
+          });
           break;
 
         default:

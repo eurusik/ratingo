@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { USER_MEDIA_STATE } from '../../domain/entities/user-media-state.entity';
+import { ImportMediaService } from '../../application/import-media.service';
+import { ImportPendingService } from '../../application/import-pending.service';
 import { UserMediaService } from '../../application/user-media.service';
 
 import { UserMediaController } from './user-media.controller';
@@ -17,10 +19,24 @@ describe('UserMediaController', () => {
     resumeMedia: jest.fn(),
   };
 
+  const importMediaService = {
+    import: jest.fn(),
+  };
+
+  const importPendingService = {
+    getUserBatches: jest.fn().mockResolvedValue([]),
+    createPendingBatch: jest.fn(),
+    cancelBatch: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserMediaController],
-      providers: [{ provide: UserMediaService, useValue: userMediaService }],
+      providers: [
+        { provide: UserMediaService, useValue: userMediaService },
+        { provide: ImportMediaService, useValue: importMediaService },
+        { provide: ImportPendingService, useValue: importPendingService },
+      ],
     }).compile();
 
     controller = module.get(UserMediaController);
@@ -190,6 +206,175 @@ describe('UserMediaController', () => {
         state: USER_MEDIA_STATE.WATCHING,
         mediaSummary: { poster: null },
       });
+    });
+  });
+
+  describe('importMedia', () => {
+    it('should call importMediaService.import with normalized ratings and return result', async () => {
+      const importResult = {
+        imported: 2,
+        skipped: 0,
+        notFound: 0,
+        durationMs: 42,
+        details: { imported: [], skipped: [], notFound: [] },
+      };
+      importMediaService.import.mockResolvedValue(importResult);
+
+      const body = {
+        source: 'kinobaza',
+        items: [
+          { imdbId: 'tt0137523', rating: 8, state: 'completed', title: 'Fight Club', year: 1999 },
+          { tmdbId: 550, rating: null, state: 'planned', title: 'Film B' },
+        ],
+        overwriteExisting: false,
+      } as any;
+
+      const result = await controller.importMedia({ id: 'u1' }, body);
+
+      // rating: 8 on 1-10 scale normalizes to 80 on 0-100 scale
+      expect(importMediaService.import).toHaveBeenCalledWith({
+        userId: 'u1',
+        source: 'kinobaza',
+        items: [
+          {
+            imdbId: 'tt0137523',
+            tmdbId: undefined,
+            rating: 80,
+            state: 'completed',
+            title: 'Fight Club',
+            year: 1999,
+          },
+          {
+            imdbId: undefined,
+            tmdbId: 550,
+            rating: null,
+            state: 'planned',
+            title: 'Film B',
+            year: undefined,
+          },
+        ],
+        overwriteExisting: false,
+      });
+      expect(result).toEqual(importResult);
+    });
+
+    it('should default overwriteExisting to false when not provided', async () => {
+      importMediaService.import.mockResolvedValue({
+        imported: 1,
+        skipped: 0,
+        notFound: 0,
+        durationMs: 10,
+        details: { imported: [], skipped: [], notFound: [] },
+      });
+
+      const body = {
+        source: 'kinobaza',
+        items: [{ imdbId: 'tt0137523', state: 'completed' }],
+        overwriteExisting: undefined,
+      } as any;
+
+      await controller.importMedia({ id: 'u1' }, body);
+
+      expect(importMediaService.import).toHaveBeenCalledWith(
+        expect.objectContaining({ overwriteExisting: false }),
+      );
+    });
+
+    it('should pass null rating through as null (no normalization for null)', async () => {
+      importMediaService.import.mockResolvedValue({
+        imported: 1,
+        skipped: 0,
+        notFound: 0,
+        durationMs: 5,
+        details: { imported: [], skipped: [], notFound: [] },
+      });
+
+      const body = {
+        source: 'kinobaza',
+        items: [{ imdbId: 'tt0137523', rating: null, state: 'planned' }],
+        overwriteExisting: false,
+      } as any;
+
+      await controller.importMedia({ id: 'u1' }, body);
+
+      expect(importMediaService.import).toHaveBeenCalledWith(
+        expect.objectContaining({
+          items: [expect.objectContaining({ rating: null })],
+        }),
+      );
+    });
+  });
+
+  describe('cancelImportBatches', () => {
+    it('should call cancelBatch for each batchId and return void', async () => {
+      const batchIds = [
+        '550e8400-e29b-41d4-a716-446655440000',
+        '7c9e6679-7425-40de-944b-e07fc1f90ae7',
+      ];
+
+      await controller.cancelImportBatches({ id: 'u1' }, { batchIds } as any);
+
+      expect(importPendingService.cancelBatch).toHaveBeenCalledTimes(2);
+      expect(importPendingService.cancelBatch).toHaveBeenCalledWith('u1', batchIds[0]);
+      expect(importPendingService.cancelBatch).toHaveBeenCalledWith('u1', batchIds[1]);
+    });
+
+    it('should call cancelBatch with correct userId from token', async () => {
+      const batchIds = ['550e8400-e29b-41d4-a716-446655440000'];
+
+      await controller.cancelImportBatches({ id: 'user-xyz' }, { batchIds } as any);
+
+      expect(importPendingService.cancelBatch).toHaveBeenCalledWith('user-xyz', batchIds[0]);
+    });
+
+    it('should return undefined (204-like) when all batches cancelled', async () => {
+      const result = await controller.cancelImportBatches({ id: 'u1' }, {
+        batchIds: ['550e8400-e29b-41d4-a716-446655440000'],
+      } as any);
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('getImportStatus', () => {
+    it('should call getUserBatches and transform batches to DTOs with ISO strings', async () => {
+      const createdAt = new Date('2024-06-01T12:00:00.000Z');
+      const batches = [
+        {
+          id: 'batch-uuid-1',
+          source: 'kinobaza',
+          totalItems: 42,
+          completedCount: 35,
+          failedCount: 3,
+          status: 'processing',
+          createdAt,
+        },
+      ];
+      importPendingService.getUserBatches.mockResolvedValue(batches as any);
+
+      const result = await controller.getImportStatus({ id: 'u1' });
+
+      expect(importPendingService.getUserBatches).toHaveBeenCalledWith('u1');
+      expect(result).toEqual([
+        {
+          batchId: 'batch-uuid-1',
+          source: 'kinobaza',
+          totalItems: 42,
+          completedCount: 35,
+          failedCount: 3,
+          status: 'processing',
+          createdAt: '2024-06-01T12:00:00.000Z',
+        },
+      ]);
+    });
+
+    it('should return empty array when user has no batches', async () => {
+      importPendingService.getUserBatches.mockResolvedValue([]);
+
+      const result = await controller.getImportStatus({ id: 'u1' });
+
+      expect(importPendingService.getUserBatches).toHaveBeenCalledWith('u1');
+      expect(result).toEqual([]);
     });
   });
 });

@@ -13,6 +13,9 @@ const STALE_5_MIN = 1000 * 60 * 5;
 /** Page size for progressive loading in Activity lists. */
 export const PAGE_SIZE = 20;
 
+/** Maximum number of items that can be loaded in a single Activity list. */
+export const MAX_LIST_LIMIT = 100;
+
 interface MeListOptions {
   sort?: MeListSort;
   limit?: number;
@@ -29,31 +32,33 @@ function useHistoryBase({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptio
   });
 }
 
-export function useWatching(options: MeListOptions = {}) {
-  const query = useHistoryBase(options);
-
-  const data = useMemo(
-    () =>
-      query.data
-        ? {
-            ...query.data,
-            data: query.data.data.filter((item) => item.state === USER_MEDIA_STATE.WATCHING),
-          }
-        : undefined,
-    [query.data],
-  );
-
-  return { ...query, data };
+export function useWatching({ limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+  return useQuery({
+    queryKey: queryKeys.meLists.activity(limit),
+    queryFn: () => meListsApi.getActivity({ limit }),
+    enabled,
+    staleTime: STALE_5_MIN,
+    placeholderData: keepPreviousData,
+  });
 }
 
-export function useCompleted(options: MeListOptions = {}) {
-  const query = useHistoryBase(options);
+export function useCompleted({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+  const query = useQuery({
+    queryKey: queryKeys.meLists.ratings(sort, limit),
+    queryFn: () => meListsApi.getRatings({ sort, limit }),
+    enabled,
+    staleTime: STALE_5_MIN,
+    placeholderData: keepPreviousData,
+  });
 
   const data = useMemo(
     () =>
       query.data
         ? {
             ...query.data,
+            // Filter is intentional: /me/ratings returns ALL rated items including those
+            // still in WATCHING state (user gave a mid-watch rating). We only want
+            // fully COMPLETED items for the history list.
             data: query.data.data.filter((item) => item.state === USER_MEDIA_STATE.COMPLETED),
           }
         : undefined,
@@ -89,7 +94,9 @@ export function usePauseMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.pauseMedia(mediaItemId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
@@ -102,7 +109,9 @@ export function useResumeMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.resumeMedia(mediaItemId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
@@ -115,7 +124,9 @@ export function useDropMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.dropMedia(mediaItemId),
     onSuccess: (_data, mediaItemId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
@@ -131,7 +142,9 @@ export function useRestoreMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.restoreMedia(mediaItemId),
     onSuccess: (_data, mediaItemId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });

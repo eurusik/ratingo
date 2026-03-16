@@ -712,6 +712,10 @@
       "steadyInterest": "Steady interest",
       "classicChoice": "Classic",
       "timelessFavorite": "Timeless favorite"
+    },
+    "emptyState": {
+      "importHint": "Have ratings on another service?",
+      "importButton": "Import from Kinobaza"
     }
   },
   "activity": {
@@ -801,7 +805,8 @@
     "tabs": {
       "profile": "Profile",
       "privacy": "Privacy",
-      "security": "Security"
+      "security": "Security",
+      "data": "Import"
     },
     "profile": {
       "title": "Profile Information",
@@ -815,6 +820,10 @@
       "websitePlaceholder": "https://example.com",
       "language": "Language",
       "region": "Region"
+    },
+    "data": {
+      "importCard": "Import data",
+      "importCardDesc": "Transfer ratings and lists from Kinobaza"
     },
     "avatar": {
       "change": "Change photo",
@@ -869,6 +878,101 @@
       "confirm": "Confirm"
     },
     "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?",
+    "import": {
+      "title": "Import Data",
+      "subtitle": "Transfer your ratings and lists from external services",
+      "howTo": "How to download your file from Kinobaza?",
+      "howToSteps": [
+        "Go to kinobaza.com.ua",
+        "Open your profile → Settings",
+        "Click 'Export ratings' (CSV)",
+        "For watchlist — click 'Export list'",
+        "Drag the downloaded files into the fields below"
+      ],
+      "ratingsFile": "Ratings file (.csv)",
+      "watchlistFile": "Watchlist file (.csv)",
+      "dropHint": "Drag & drop or click to select",
+      "recognized": "{count} recognized",
+      "skippedRows": "{count} rows skipped",
+      "overwrite": "Overwrite existing ratings",
+      "overwriteHint": "When enabled, imported ratings will replace your current ratings",
+      "importButton": "Import {count} items",
+      "importing": "Importing...",
+      "done": "Import complete!",
+      "imported": "Imported",
+      "skipped": "Skipped (already rated)",
+      "notFound": "Not found in catalog",
+      "goToRatings": "Go to my ratings",
+      "importMore": "Import more",
+      "errors": {
+        "wrongFile": "File doesn't look like a Kinobaza export",
+        "fileTooLarge": "File is too large (max 5 MB)",
+        "onlyCsv": "Only CSV files are supported",
+        "wrongSlot": "This file contains {type}, please upload it to the correct field"
+      },
+      "typeRating": "rating",
+      "typeWatchlist": "watchlist",
+      "importFailed": "Import failed. Please try again.",
+      "previewSummary": "Found {ratings} ratings and {watchlist} in watchlist",
+      "truncated": "...{count} more",
+      "clearFile": "Clear file",
+      "retryFile": "Try again",
+      "dragOver": "Drop to upload",
+      "colTitle": "Title",
+      "colYear": "Year",
+      "colType": "Type",
+      "colRating": "Rating",
+      "steps": {
+        "source": "Source",
+        "files": "Files",
+        "preview": "Preview",
+        "result": "Result"
+      },
+      "chooseSource": "Choose import source",
+      "sources": {
+        "kinobaza": {
+          "name": "Kinobaza",
+          "desc": "Ratings and watchlist from kinobaza.com.ua"
+        },
+        "imdb": {
+          "name": "IMDB",
+          "desc": "Your ratings from imdb.com"
+        },
+        "tmdb": {
+          "name": "TMDB",
+          "desc": "Ratings from themoviedb.org"
+        },
+        "letterboxd": {
+          "name": "Letterboxd",
+          "desc": "Diary and watchlist from letterboxd.com"
+        }
+      },
+      "comingSoon": "Coming soon",
+      "back": "Back",
+      "continue": "Continue",
+      "maxSizeHint": "max\u00a05\u00a0MB",
+      "filterAll": "All",
+      "filterRatings": "Ratings",
+      "filterWatchlist": "Watchlist",
+      "skippedExplanation": "{count} rows skipped (no IMDB/TMDB identifier)",
+      "confirmImport": {
+        "title": "Confirm import",
+        "message": "You are about to import {count} items.",
+        "overwriteWarning": "Existing ratings will be overwritten.",
+        "confirm": "Import",
+        "cancel": "Cancel"
+      },
+      "pending": {
+        "title": "Adding to catalog",
+        "progress": "{done} of {total} added",
+        "failed": "{count} could not be found",
+        "failedHint": "These titles are not available on TMDB",
+        "completed": "All items have been processed",
+        "cancel": "Cancel",
+        "cancelling": "Cancelling…",
+        "cancelled": "Import cancelled"
+      }
+    },
     "connectedAccounts": {
       "title": "Connected Accounts",
       "description": "Connect social accounts for quicker sign-in",

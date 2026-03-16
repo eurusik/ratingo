@@ -148,6 +148,20 @@
       "when": 1772006400000,
       "tag": "0020_add_alternative_titles",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1773487713426,
+      "tag": "0021_freezing_black_tom",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1773666592512,
+      "tag": "0022_smart_hydra",
+      "breakpoints": true
     }
   ]
 }
