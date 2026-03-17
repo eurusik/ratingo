@@ -137,7 +137,26 @@ describe('CatchUpDialog', () => {
 
     it('resets selection back to all-selected when dialog re-opens', () => {
       const onOpenChange = jest.fn();
-      const { rerender } = renderDialog({ onOpenChange });
+      const onConfirm = jest.fn();
+      const stableSeasons = [buildSeason(1), buildSeason(2), buildSeason(3)];
+      const stableEpisodes = buildEpisodesMap([
+        [1, ['ep-1-1', 'ep-1-2']],
+        [2, ['ep-2-1', 'ep-2-2']],
+        [3, ['ep-3-1', 'ep-3-2']],
+      ]);
+
+      const stableProps: CatchUpDialogProps = {
+        open: true,
+        onOpenChange,
+        validSeasons: stableSeasons,
+        allEpisodesBySeasonNumber: stableEpisodes,
+        progressData: undefined,
+        dict: mockDict,
+        onConfirm,
+        isPending: false,
+      };
+
+      const { rerender } = render(<CatchUpDialog {...stableProps} />);
 
       // Uncheck season 1 row (second checkbox — first is master)
       const checkboxes = getAllCheckboxes();
@@ -146,40 +165,9 @@ describe('CatchUpDialog', () => {
       // Season 1 is now unchecked
       expect(checkboxes[1]).toHaveAttribute('aria-checked', 'false');
 
-      // Simulate close then re-open
-      rerender(
-        <CatchUpDialog
-          open={false}
-          onOpenChange={onOpenChange}
-          validSeasons={[buildSeason(1), buildSeason(2), buildSeason(3)]}
-          allEpisodesBySeasonNumber={buildEpisodesMap([
-            [1, ['ep-1-1', 'ep-1-2']],
-            [2, ['ep-2-1', 'ep-2-2']],
-            [3, ['ep-3-1', 'ep-3-2']],
-          ])}
-          progressData={undefined}
-          dict={mockDict}
-          onConfirm={jest.fn()}
-          isPending={false}
-        />,
-      );
-
-      rerender(
-        <CatchUpDialog
-          open={true}
-          onOpenChange={onOpenChange}
-          validSeasons={[buildSeason(1), buildSeason(2), buildSeason(3)]}
-          allEpisodesBySeasonNumber={buildEpisodesMap([
-            [1, ['ep-1-1', 'ep-1-2']],
-            [2, ['ep-2-1', 'ep-2-2']],
-            [3, ['ep-3-1', 'ep-3-2']],
-          ])}
-          progressData={undefined}
-          dict={mockDict}
-          onConfirm={jest.fn()}
-          isPending={false}
-        />,
-      );
+      // Simulate close then re-open — only `open` changes
+      rerender(<CatchUpDialog {...stableProps} open={false} />);
+      rerender(<CatchUpDialog {...stableProps} open />);
 
       // All checkboxes should be checked again
       const freshCheckboxes = getAllCheckboxes();

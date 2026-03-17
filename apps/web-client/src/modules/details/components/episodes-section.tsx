@@ -243,16 +243,9 @@ export function EpisodesSection({
     selectedEpisodesRef.current = toMark;
 
     try {
-      if (toUnmark.size > 0) {
-        const idsToUnmark: string[] = [];
-        toUnmark.forEach((ids) => {
-          idsToUnmark.push(...ids);
-        });
-        if (idsToUnmark.length > 0) {
-          await unmarkEpisodes.mutateAsync(idsToUnmark);
-        }
-      }
-
+      // Mark first (additive), then unmark (destructive).
+      // If unmark fails after mark succeeds, user keeps extra progress
+      // rather than losing it — a safer partial-failure outcome.
       if (toMark.size > 0) {
         let selectedLastSeason = 0;
         let selectedLastEpisode = 0;
@@ -288,11 +281,21 @@ export function EpisodesSection({
         } else {
           toast.success(message);
         }
-      } else if (toUnmark.size > 0) {
-        toast.success(dict.details.showStatus.seasonReset);
       }
 
       if (toUnmark.size > 0) {
+        const idsToUnmark: string[] = [];
+        toUnmark.forEach((ids) => {
+          idsToUnmark.push(...ids);
+        });
+        if (idsToUnmark.length > 0) {
+          await unmarkEpisodes.mutateAsync(idsToUnmark);
+        }
+
+        if (toMark.size === 0) {
+          toast.success(dict.details.showStatus.seasonReset);
+        }
+
         previousWatchedIdsRef.current = null;
         selectedEpisodesRef.current = null;
       }
