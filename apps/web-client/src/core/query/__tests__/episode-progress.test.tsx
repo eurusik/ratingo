@@ -10,6 +10,7 @@ import {
   useMarkMultipleWatched,
   useMarkAllEpisodesWatched,
   useUnmarkEpisodes,
+  useResetSeason,
 } from '../episode-progress';
 import { queryKeys } from '../keys';
 
@@ -894,6 +895,198 @@ describe('useUnmarkEpisodes', () => {
       expect.objectContaining({
         queryKey: queryKeys.episodeProgress.showProgress(SHOW_ID),
       }),
+    );
+
+    invalidateSpy.mockRestore();
+  });
+});
+
+// ============================================================================
+// useResetSeason
+// ============================================================================
+
+function ResetSeasonConsumer() {
+  const mutation = useResetSeason(SHOW_ID);
+
+  return (
+    <div>
+      <span data-testid="mutation-status">{mutation.status}</span>
+      <button
+        data-testid="reset-season"
+        onClick={() =>
+          mutation.mutate({
+            episodeIds: ['ep-1', 'ep-2', 'ep-3'],
+            seasonNumber: 1,
+          })
+        }
+      />
+    </div>
+  );
+}
+
+describe('useResetSeason', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = createQueryClient();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it('calls markBatchUnwatched with the correct episode IDs', async () => {
+    mockMarkBatchUnwatched.mockResolvedValue(undefined);
+
+    renderWithClient(<ResetSeasonConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('reset-season').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mutation-status').textContent).toBe('success');
+    });
+
+    expect(mockMarkBatchUnwatched).toHaveBeenCalledWith(['ep-1', 'ep-2', 'ep-3']);
+  });
+
+  it('optimistically sets the target season watchedCount to 0 and watchedEpisodeIds to []', async () => {
+    const initialProgress = buildProgress([
+      buildSeason(1, 8, ['ep-1', 'ep-2', 'ep-3']),
+      buildSeason(2, 6, ['ep-20']),
+    ]);
+
+    queryClient.setQueryData(
+      queryKeys.episodeProgress.showProgress(SHOW_ID),
+      initialProgress,
+    );
+
+    let resolveMutation: (value: any) => void;
+    mockMarkBatchUnwatched.mockImplementation(
+      () => new Promise((resolve) => { resolveMutation = resolve; }),
+    );
+
+    renderWithClient(<ResetSeasonConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('reset-season').click();
+    });
+
+    const optimistic = queryClient.getQueryData<ShowProgressDto>(
+      queryKeys.episodeProgress.showProgress(SHOW_ID),
+    );
+
+    expect(optimistic!.seasons[0].watchedCount).toBe(0);
+    expect(optimistic!.seasons[0].watchedEpisodeIds).toEqual([]);
+
+    await act(async () => {
+      resolveMutation!(undefined);
+    });
+  });
+
+  it('optimistic update does not modify other seasons', async () => {
+    const initialProgress = buildProgress([
+      buildSeason(1, 8, ['ep-1', 'ep-2', 'ep-3']),
+      buildSeason(2, 6, ['ep-20', 'ep-21']),
+      buildSeason(3, 10, ['ep-30']),
+    ]);
+
+    queryClient.setQueryData(
+      queryKeys.episodeProgress.showProgress(SHOW_ID),
+      initialProgress,
+    );
+
+    let resolveMutation: (value: any) => void;
+    mockMarkBatchUnwatched.mockImplementation(
+      () => new Promise((resolve) => { resolveMutation = resolve; }),
+    );
+
+    renderWithClient(<ResetSeasonConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('reset-season').click();
+    });
+
+    const optimistic = queryClient.getQueryData<ShowProgressDto>(
+      queryKeys.episodeProgress.showProgress(SHOW_ID),
+    );
+
+    // Season 2 and 3 must remain untouched
+    expect(optimistic!.seasons[1].watchedEpisodeIds).toEqual(['ep-20', 'ep-21']);
+    expect(optimistic!.seasons[1].watchedCount).toBe(2);
+    expect(optimistic!.seasons[2].watchedEpisodeIds).toEqual(['ep-30']);
+    expect(optimistic!.seasons[2].watchedCount).toBe(1);
+
+    await act(async () => {
+      resolveMutation!(undefined);
+    });
+  });
+
+  it('rolls back to previous progress on error', async () => {
+    const initialProgress = buildProgress([
+      buildSeason(1, 8, ['ep-1', 'ep-2', 'ep-3']),
+    ]);
+
+    queryClient.setQueryData(
+      queryKeys.episodeProgress.showProgress(SHOW_ID),
+      initialProgress,
+    );
+
+    mockMarkBatchUnwatched.mockRejectedValue(new Error('server error'));
+
+    renderWithClient(<ResetSeasonConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('reset-season').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mutation-status').textContent).toBe('error');
+    });
+
+    const rolledBack = queryClient.getQueryData<ShowProgressDto>(
+      queryKeys.episodeProgress.showProgress(SHOW_ID),
+    );
+
+    expect(rolledBack!.seasons[0].watchedEpisodeIds).toEqual(['ep-1', 'ep-2', 'ep-3']);
+    expect(rolledBack!.seasons[0].watchedCount).toBe(3);
+  });
+
+  it('invalidates all related caches on settled', async () => {
+    mockMarkBatchUnwatched.mockResolvedValue(undefined);
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    renderWithClient(<ResetSeasonConsumer />, queryClient);
+
+    await act(async () => {
+      screen.getByTestId('reset-season').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mutation-status').textContent).toBe('success');
+    });
+
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.episodeProgress.showProgress(SHOW_ID),
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: queryKeys.userMedia.all }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: queryKeys.meLists.historyAll }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: queryKeys.userActions.savedItems.all }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: queryKeys.savedItems.all }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: queryKeys.shows.personalizedCalendarAll }),
     );
 
     invalidateSpy.mockRestore();

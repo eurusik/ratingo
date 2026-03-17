@@ -12,6 +12,16 @@ import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
 import { formatDate } from '@/shared/utils/format';
 import { cn } from '@/shared/utils';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/shared/ui';
 import { useAuth } from '@/core/auth';
 import {
   useShowProgress,
@@ -19,6 +29,7 @@ import {
   useMarkMultipleWatched,
   useMarkAllEpisodesWatched,
   useUnmarkEpisodes,
+  useResetSeason,
 } from '@/core/query';
 import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import { CatchUpDialog } from './catch-up-dialog';
@@ -105,9 +116,11 @@ export function EpisodesSection({
   const markMultipleWatched = useMarkMultipleWatched(showId || '');
   const markAllWatched = useMarkAllEpisodesWatched(showId || '');
   const unmarkEpisodes = useUnmarkEpisodes(showId || '');
+  const resetSeason = useResetSeason(showId || '');
 
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showResetConfirmDialog, setShowResetConfirmDialog] = useState(false);
 
   // Get watched episode IDs for current season
   // Simple .find() doesn't need useMemo per rerender-simple-expression-in-memo rule
@@ -179,6 +192,7 @@ export function EpisodesSection({
   // Store previous watched IDs and selected episodes for undo
   const previousWatchedIdsRef = useRef<Map<number, string[]> | null>(null);
   const selectedEpisodesRef = useRef<Map<number, string[]> | null>(null);
+  const catchUpToastIdRef = useRef<string | number | null>(null);
 
   const handleUndo = useCallback(() => {
     const previousWatched = previousWatchedIdsRef.current;
@@ -213,22 +227,12 @@ export function EpisodesSection({
     });
   }, [unmarkEpisodes, dict]);
 
-  // Count seasons with unwatched aired episodes (for skip-dialog logic)
-  const unwatchedSeasonCount = useMemo(() => {
-    let count = 0;
-    for (const [seasonNum, episodeIds] of allEpisodesBySeasonNumber) {
-      const seasonProgress = progressData?.seasons.find((s) => s.seasonNumber === seasonNum);
-      if (!seasonProgress || seasonProgress.watchedCount < episodeIds.length) {
-        count++;
-      }
-    }
-    return count;
-  }, [allEpisodesBySeasonNumber, progressData]);
-
-  const handleCatchUpConfirm = useCallback((selectedMap: Map<number, string[]>) => {
+  const handleCatchUpConfirm = useCallback(async (
+    toMark: Map<number, string[]>,
+    toUnmark: Map<number, string[]>,
+  ) => {
     setShowConfirmDialog(false);
 
-    // Save previous state for undo
     if (progressData) {
       const prevMap = new Map<number, string[]>();
       progressData.seasons.forEach((s) => {
@@ -236,58 +240,112 @@ export function EpisodesSection({
       });
       previousWatchedIdsRef.current = prevMap;
     }
-    selectedEpisodesRef.current = selectedMap;
+    selectedEpisodesRef.current = toMark;
 
-    // Derive last aired episode from selected seasons for toast
-    let selectedLastSeason = 0;
-    let selectedLastEpisode = 0;
-    const now = Date.now();
-    for (const season of validSeasons) {
-      if (!selectedMap.has(season.number)) continue;
-      for (const ep of season.episodes || []) {
-        if (ep.airDate && new Date(ep.airDate).getTime() > now) continue;
-        selectedLastSeason = season.number;
-        selectedLastEpisode = ep.number;
-      }
-    }
+    try {
+      // Mark first (additive), then unmark (destructive).
+      // If unmark fails after mark succeeds, user keeps extra progress
+      // rather than losing it — a safer partial-failure outcome.
+      if (toMark.size > 0) {
+        let selectedLastSeason = 0;
+        let selectedLastEpisode = 0;
+        const now = Date.now();
+        for (const season of validSeasons) {
+          if (!toMark.has(season.number)) continue;
+          for (const ep of season.episodes || []) {
+            if (ep.airDate && new Date(ep.airDate).getTime() > now) continue;
+            selectedLastSeason = season.number;
+            selectedLastEpisode = ep.number;
+          }
+        }
 
-    // Check if all aired episodes are being marked
-    const selectedTotal = Array.from(selectedMap.values()).reduce((sum, ids) => sum + ids.length, 0);
-    const isFullCatchUp = selectedTotal === totalEpisodesCount && totalEpisodesCount === totalAllEpisodes;
+        const selectedTotal = Array.from(toMark.values()).reduce((sum, ids) => sum + ids.length, 0);
+        const isFullCatchUp = selectedTotal === totalEpisodesCount && totalEpisodesCount === totalAllEpisodes;
 
-    markAllWatched.mutate(
-      { episodesBySeasonNumber: selectedMap },
-      {
-        onSuccess: () => {
-          const message = isFullCatchUp
-            ? dict.details.showStatus.caughtUpAll
-            : dict.details.showStatus.caughtUp
-                .replace('{season}', String(selectedLastSeason))
-                .replace('{episode}', String(selectedLastEpisode));
+        await markAllWatched.mutateAsync({ episodesBySeasonNumber: toMark });
 
-          toast.success(message, {
+        const message = isFullCatchUp
+          ? dict.details.showStatus.caughtUpAll
+          : dict.details.showStatus.caughtUp
+              .replace('{season}', String(selectedLastSeason))
+              .replace('{episode}', String(selectedLastEpisode));
+
+        if (toUnmark.size === 0) {
+          catchUpToastIdRef.current = toast.success(message, {
             action: {
               label: dict.details.showStatus.undo,
               onClick: handleUndo,
             },
             duration: 8000,
           });
+        } else {
+          toast.success(message);
+        }
+      }
+
+      if (toUnmark.size > 0) {
+        const idsToUnmark: string[] = [];
+        toUnmark.forEach((ids) => {
+          idsToUnmark.push(...ids);
+        });
+        if (idsToUnmark.length > 0) {
+          await unmarkEpisodes.mutateAsync(idsToUnmark);
+        }
+
+        if (toMark.size === 0) {
+          toast.success(dict.details.showStatus.seasonReset);
+        }
+
+        previousWatchedIdsRef.current = null;
+        selectedEpisodesRef.current = null;
+      }
+    } catch {
+      toast.error(dict.common?.error || 'Щось пішло не так');
+    }
+  }, [progressData, validSeasons, markAllWatched, unmarkEpisodes, dict, handleUndo, totalEpisodesCount, totalAllEpisodes]);
+
+  const handleMarkAllClick = useCallback(() => {
+    if (validSeasons.length <= 1) {
+      handleCatchUpConfirm(allEpisodesBySeasonNumber, new Map());
+    } else {
+      setShowConfirmDialog(true);
+    }
+  }, [validSeasons.length, handleCatchUpConfirm, allEpisodesBySeasonNumber]);
+
+  // Snapshot episode IDs and season number at dialog-open time
+  const resetEpisodeIdsRef = useRef<string[] | null>(null);
+  const resetSeasonNumberRef = useRef<number | null>(null);
+
+  const handleResetSeasonClick = useCallback(() => {
+    resetEpisodeIdsRef.current = currentSeasonProgress?.watchedEpisodeIds?.slice() ?? null;
+    resetSeasonNumberRef.current = selectedSeason?.number ?? null;
+    setShowResetConfirmDialog(true);
+  }, [currentSeasonProgress?.watchedEpisodeIds, selectedSeason?.number]);
+
+  const handleConfirmResetSeason = useCallback(() => {
+    setShowResetConfirmDialog(false);
+    if (catchUpToastIdRef.current !== null) {
+      toast.dismiss(catchUpToastIdRef.current);
+      catchUpToastIdRef.current = null;
+    }
+    const ids = resetEpisodeIdsRef.current;
+    const seasonNumber = resetSeasonNumberRef.current;
+    resetEpisodeIdsRef.current = null;
+    resetSeasonNumberRef.current = null;
+    if (!ids || ids.length === 0 || seasonNumber === null) return;
+
+    resetSeason.mutate(
+      { episodeIds: ids, seasonNumber },
+      {
+        onSuccess: () => {
+          toast.success(dict.details.showStatus.seasonReset);
         },
         onError: () => {
           toast.error(dict.common?.error || 'Щось пішло не так');
         },
       },
     );
-  }, [progressData, validSeasons, markAllWatched, dict, handleUndo, totalEpisodesCount, totalAllEpisodes]);
-
-  const handleMarkAllClick = useCallback(() => {
-    if (unwatchedSeasonCount <= 1) {
-      // Single season or single unwatched season: skip dialog
-      handleCatchUpConfirm(allEpisodesBySeasonNumber);
-    } else {
-      setShowConfirmDialog(true);
-    }
-  }, [unwatchedSeasonCount, handleCatchUpConfirm, allEpisodesBySeasonNumber]);
+  }, [resetSeason, dict]);
 
   // Track which episode is being toggled
   const [togglingEpisodeId, setTogglingEpisodeId] = useState<string | null>(null);
@@ -500,6 +558,8 @@ export function EpisodesSection({
           totalEpisodes={totalEpisodesCount}
           onMarkAllWatched={handleMarkAllClick}
           isMarkingAll={markAllWatched.isPending}
+          onResetSeason={isAuthenticated && showId ? handleResetSeasonClick : undefined}
+          isResettingSeason={resetSeason.isPending}
         />
 
         {/* Episodes list with smooth expand/collapse animation */}
@@ -551,8 +611,36 @@ export function EpisodesSection({
         progressData={progressData}
         dict={dict}
         onConfirm={handleCatchUpConfirm}
-        isPending={markAllWatched.isPending}
+        isPending={markAllWatched.isPending || unmarkEpisodes.isPending}
       />
+
+      {/* Confirmation dialog for season reset */}
+      <AlertDialog open={showResetConfirmDialog} onOpenChange={setShowResetConfirmDialog}>
+        <AlertDialogContent className="bg-cinema-card border-cinema-borderSoft">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-cinema-text-primary">
+              {dict.details.showStatus.resetSeason}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-cinema-text-muted">
+              {(dict.details.showStatus.resetSeasonConfirm || '').replace(
+                '{season}',
+                selectedSeason?.name || `${dict.details.showStatus.season} ${selectedSeason?.number}`,
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-cinema-elevated text-cinema-text-secondary hover:bg-cinema-border hover:text-cinema-text-primary">
+              {dict.common?.cancel || 'Скасувати'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmResetSeason}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {dict.details.showStatus.resetSeason}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
