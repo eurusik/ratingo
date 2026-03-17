@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -140,8 +141,12 @@ export class UserMediaController {
     for (const batchId of body.batchIds) {
       try {
         await this.importPendingService.cancelBatch(user.id, batchId);
-      } catch {
-        failedBatchIds.push(batchId);
+      } catch (error) {
+        if (error instanceof NotFoundException) {
+          failedBatchIds.push(batchId);
+          continue;
+        }
+        throw error;
       }
     }
     return { failedBatchIds };
