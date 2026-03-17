@@ -300,13 +300,19 @@ export function EpisodesSection({
     }
   }, [unwatchedSeasonCount, handleCatchUpConfirm, allEpisodesBySeasonNumber]);
 
+  // Snapshot episode IDs at dialog-open time to prevent stale closure on season switch
+  const resetEpisodeIdsRef = useRef<string[] | null>(null);
+
   const handleResetSeasonClick = useCallback(() => {
+    resetEpisodeIdsRef.current = currentSeasonProgress?.watchedEpisodeIds?.slice() ?? null;
     setShowResetConfirmDialog(true);
-  }, []);
+  }, [currentSeasonProgress?.watchedEpisodeIds]);
 
   const handleConfirmResetSeason = useCallback(() => {
     setShowResetConfirmDialog(false);
-    const ids = currentSeasonProgress?.watchedEpisodeIds;
+    toast.dismiss(); // prevent collision with pending undo toasts
+    const ids = resetEpisodeIdsRef.current;
+    resetEpisodeIdsRef.current = null;
     if (!ids || ids.length === 0) return;
 
     unmarkEpisodes.mutate(ids, {
@@ -317,7 +323,7 @@ export function EpisodesSection({
         toast.error(dict.common?.error || 'Щось пішло не так');
       },
     });
-  }, [currentSeasonProgress?.watchedEpisodeIds, unmarkEpisodes, dict]);
+  }, [unmarkEpisodes, dict]);
 
   // Track which episode is being toggled
   const [togglingEpisodeId, setTogglingEpisodeId] = useState<string | null>(null);
@@ -530,7 +536,7 @@ export function EpisodesSection({
           totalEpisodes={totalEpisodesCount}
           onMarkAllWatched={handleMarkAllClick}
           isMarkingAll={markAllWatched.isPending}
-          onResetSeason={handleResetSeasonClick}
+          onResetSeason={isAuthenticated && showId ? handleResetSeasonClick : undefined}
           isResettingSeason={unmarkEpisodes.isPending}
         />
 
@@ -594,7 +600,10 @@ export function EpisodesSection({
               {dict.details.showStatus.resetSeason}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-cinema-text-muted">
-              {dict.details.showStatus.resetSeasonConfirm}
+              {(dict.details.showStatus.resetSeasonConfirm || '').replace(
+                '{season}',
+                selectedSeason?.name || `${dict.details.showStatus.season} ${selectedSeason?.number}`,
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

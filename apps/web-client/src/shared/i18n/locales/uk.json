@@ -348,7 +348,7 @@
       "seasonFullyWatched": "переглянуто",
       "willBeMarked": "Буде позначено: {count} {episodes}",
       "resetSeason": "Скинути сезон",
-      "resetSeasonConfirm": "Прибрати позначки перегляду для цього сезону?",
+      "resetSeasonConfirm": "Прибрати позначки перегляду для {season}?",
       "seasonReset": "Сезон скинуто",
       "caughtUp": "Ти наздогнав серіал до S{season}E{episode}",
       "caughtUpAll": "Ти переглянув весь серіал!",
