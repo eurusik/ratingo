@@ -228,18 +228,6 @@ export function EpisodesSection({
     });
   }, [unmarkEpisodes, dict]);
 
-  // Count seasons with unwatched aired episodes (for skip-dialog logic)
-  const unwatchedSeasonCount = useMemo(() => {
-    let count = 0;
-    for (const [seasonNum, episodeIds] of allEpisodesBySeasonNumber) {
-      const seasonProgress = progressData?.seasons.find((s) => s.seasonNumber === seasonNum);
-      if (!seasonProgress || seasonProgress.watchedCount < episodeIds.length) {
-        count++;
-      }
-    }
-    return count;
-  }, [allEpisodesBySeasonNumber, progressData]);
-
   const handleCatchUpConfirm = useCallback((selectedMap: Map<number, string[]>) => {
     setShowConfirmDialog(false);
 
@@ -296,13 +284,12 @@ export function EpisodesSection({
   }, [progressData, validSeasons, markAllWatched, dict, handleUndo, totalEpisodesCount, totalAllEpisodes]);
 
   const handleMarkAllClick = useCallback(() => {
-    if (unwatchedSeasonCount <= 1) {
-      // Single season or single unwatched season: skip dialog
+    if (validSeasons.length <= 1) {
       handleCatchUpConfirm(allEpisodesBySeasonNumber);
     } else {
       setShowConfirmDialog(true);
     }
-  }, [unwatchedSeasonCount, handleCatchUpConfirm, allEpisodesBySeasonNumber]);
+  }, [validSeasons.length, handleCatchUpConfirm, allEpisodesBySeasonNumber]);
 
   // Snapshot episode IDs and season number at dialog-open time
   const resetEpisodeIdsRef = useRef<string[] | null>(null);
