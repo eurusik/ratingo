@@ -22,16 +22,6 @@ interface MeListOptions {
   enabled?: boolean;
 }
 
-function useHistoryBase({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
-  return useQuery({
-    queryKey: queryKeys.meLists.history(sort, limit),
-    queryFn: () => meListsApi.getHistory({ sort, limit }),
-    enabled,
-    staleTime: STALE_5_MIN,
-    placeholderData: keepPreviousData,
-  });
-}
-
 export function useWatching({ limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   return useQuery({
     queryKey: queryKeys.meLists.activity(limit),
@@ -44,8 +34,8 @@ export function useWatching({ limit = PAGE_SIZE, enabled = true }: MeListOptions
 
 export function useCompleted({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   const query = useQuery({
-    queryKey: queryKeys.meLists.ratings(sort, limit),
-    queryFn: () => meListsApi.getRatings({ sort, limit }),
+    queryKey: queryKeys.meLists.history(sort, limit),
+    queryFn: () => meListsApi.getHistory({ sort, limit }),
     enabled,
     staleTime: STALE_5_MIN,
     placeholderData: keepPreviousData,
@@ -56,9 +46,6 @@ export function useCompleted({ sort, limit = PAGE_SIZE, enabled = true }: MeList
       query.data
         ? {
             ...query.data,
-            // Filter is intentional: /me/ratings returns ALL rated items including those
-            // still in WATCHING state (user gave a mid-watch rating). We only want
-            // fully COMPLETED items for the history list.
             data: query.data.data.filter((item) => item.state === USER_MEDIA_STATE.COMPLETED),
           }
         : undefined,
