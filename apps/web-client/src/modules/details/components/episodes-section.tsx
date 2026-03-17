@@ -23,13 +23,16 @@ import {
   AlertDialogCancel,
 } from '@/shared/ui';
 import { useAuth } from '@/core/auth';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useShowProgress,
   useToggleEpisodeWatched,
   useMarkMultipleWatched,
   useMarkAllEpisodesWatched,
   useUnmarkEpisodes,
+  queryKeys,
 } from '@/core/query';
+import type { ShowProgressDto } from '@/core/api/episode-progress.client';
 import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import { CatchUpDialog } from './catch-up-dialog';
 import { EpisodeCard } from './episode-card';
@@ -55,6 +58,7 @@ export function EpisodesSection({
   mediaItemId,
 }: EpisodesSectionProps) {
   const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: userMediaState } = useUserMediaState(mediaItemId ?? '', isAuthenticated && !!mediaItemId);
   const continueSeasonNumber = userMediaState?.continuePoint?.season;
@@ -300,20 +304,40 @@ export function EpisodesSection({
     }
   }, [unwatchedSeasonCount, handleCatchUpConfirm, allEpisodesBySeasonNumber]);
 
-  // Snapshot episode IDs at dialog-open time to prevent stale closure on season switch
+  // Snapshot episode IDs and season number at dialog-open time
   const resetEpisodeIdsRef = useRef<string[] | null>(null);
+  const resetSeasonNumberRef = useRef<number | null>(null);
 
   const handleResetSeasonClick = useCallback(() => {
     resetEpisodeIdsRef.current = currentSeasonProgress?.watchedEpisodeIds?.slice() ?? null;
+    resetSeasonNumberRef.current = selectedSeason?.number ?? null;
     setShowResetConfirmDialog(true);
-  }, [currentSeasonProgress?.watchedEpisodeIds]);
+  }, [currentSeasonProgress?.watchedEpisodeIds, selectedSeason?.number]);
 
   const handleConfirmResetSeason = useCallback(() => {
     setShowResetConfirmDialog(false);
     toast.dismiss(); // prevent collision with pending undo toasts
     const ids = resetEpisodeIdsRef.current;
+    const seasonNumber = resetSeasonNumberRef.current;
     resetEpisodeIdsRef.current = null;
-    if (!ids || ids.length === 0) return;
+    resetSeasonNumberRef.current = null;
+    if (!ids || ids.length === 0 || !showId) return;
+
+    // Optimistic update: clear watched episodes for this season immediately
+    if (seasonNumber !== null) {
+      const progressKey = queryKeys.episodeProgress.showProgress(showId);
+      const prev = queryClient.getQueryData<ShowProgressDto>(progressKey);
+      if (prev) {
+        queryClient.setQueryData<ShowProgressDto>(progressKey, {
+          ...prev,
+          seasons: prev.seasons.map((s) =>
+            s.seasonNumber === seasonNumber
+              ? { ...s, watchedCount: 0, watchedEpisodeIds: [] }
+              : s,
+          ),
+        });
+      }
+    }
 
     unmarkEpisodes.mutate(ids, {
       onSuccess: () => {
@@ -323,7 +347,7 @@ export function EpisodesSection({
         toast.error(dict.common?.error || 'Щось пішло не так');
       },
     });
-  }, [unmarkEpisodes, dict]);
+  }, [unmarkEpisodes, dict, showId, queryClient]);
 
   // Track which episode is being toggled
   const [togglingEpisodeId, setTogglingEpisodeId] = useState<string | null>(null);

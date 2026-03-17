@@ -11,12 +11,17 @@ jest.mock('@/core/auth', () => ({
 }));
 
 // Mock query hooks
+jest.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ getQueryData: jest.fn(), setQueryData: jest.fn() }),
+}));
+
 jest.mock('@/core/query', () => ({
   useShowProgress: () => ({ data: null }),
   useToggleEpisodeWatched: () => ({ mutate: jest.fn(), isPending: false }),
   useMarkMultipleWatched: () => ({ mutate: jest.fn(), isPending: false }),
   useMarkAllEpisodesWatched: () => ({ mutate: jest.fn(), isPending: false }),
   useUnmarkEpisodes: () => ({ mutate: jest.fn(), isPending: false }),
+  queryKeys: { episodeProgress: { showProgress: () => ['ep', 'show'] } },
 }));
 
 // Mock user media state hook
