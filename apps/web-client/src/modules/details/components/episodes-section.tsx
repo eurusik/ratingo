@@ -244,7 +244,9 @@ export function EpisodesSection({
     try {
       if (toUnmark.size > 0) {
         const idsToUnmark: string[] = [];
-        toUnmark.forEach((ids) => idsToUnmark.push(...ids));
+        toUnmark.forEach((ids) => {
+          idsToUnmark.push(...ids);
+        });
         if (idsToUnmark.length > 0) {
           await unmarkEpisodes.mutateAsync(idsToUnmark);
         }
@@ -274,13 +276,17 @@ export function EpisodesSection({
               .replace('{season}', String(selectedLastSeason))
               .replace('{episode}', String(selectedLastEpisode));
 
-        toast.success(message, {
-          action: {
-            label: dict.details.showStatus.undo,
-            onClick: handleUndo,
-          },
-          duration: 8000,
-        });
+        if (toUnmark.size === 0) {
+          toast.success(message, {
+            action: {
+              label: dict.details.showStatus.undo,
+              onClick: handleUndo,
+            },
+            duration: 8000,
+          });
+        } else {
+          toast.success(message);
+        }
       } else if (toUnmark.size > 0) {
         toast.success(dict.details.showStatus.seasonReset);
       }

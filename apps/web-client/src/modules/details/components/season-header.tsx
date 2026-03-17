@@ -64,11 +64,13 @@ export function SeasonHeader({
   const episodeCount = selectedSeason.episodeCount || selectedSeason.episodes?.length || 0;
   const progressTotal = totalCount ?? episodeCount;
 
+  const isNestedControl = (target: HTMLElement) =>
+    target.closest('[data-season-dropdown]') ||
+    target.closest('[data-mark-all-button]') ||
+    target.closest('[data-reset-season-button]');
+
   const handleContainerClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest('[data-season-dropdown]') || target.closest('[data-mark-all-button]') || target.closest('[data-reset-season-button]')) {
-      return;
-    }
+    if (isNestedControl(e.target as HTMLElement)) return;
     onToggleExpand();
   };
 
@@ -85,6 +87,7 @@ export function SeasonHeader({
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
+        if (isNestedControl(e.target as HTMLElement)) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onToggleExpand();
