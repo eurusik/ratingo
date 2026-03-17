@@ -1974,7 +1974,29 @@
         },
         "responses": {
           "200": {
-            "description": "Batches cancelled"
+            "description": "Cancel result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CancelImportBatchesResponseDto"
+                    }
+                  }
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid request body"
@@ -10346,6 +10368,22 @@
           "batchIds"
         ]
       },
+      "CancelImportBatchesResponseDto": {
+        "type": "object",
+        "properties": {
+          "failedBatchIds": {
+            "description": "Batch IDs that failed to cancel (not found or already terminal)",
+            "example": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "failedBatchIds"
+        ]
+      },
       "SetUserMediaStateDto": {
         "type": "object",
         "properties": {
@@ -10409,7 +10447,7 @@
             "type": "number",
             "example": 8,
             "nullable": true,
-            "minimum": 1,
+            "minimum": 0.5,
             "maximum": 10
           },
           "state": {
@@ -10443,7 +10481,8 @@
             "type": "string",
             "enum": [
               "kinobaza",
-              "imdb"
+              "imdb",
+              "tmdb"
             ],
             "example": "kinobaza"
           },

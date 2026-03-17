@@ -948,9 +948,15 @@
         },
         "tmdb": {
           "name": "TMDB",
-          "desc": "Ratings from themoviedb.org",
-          "howTo": "",
-          "howToSteps": []
+          "desc": "Ratings and watchlist from themoviedb.org",
+          "howTo": "How to export your data from TMDB?",
+          "howToSteps": [
+            "Go to themoviedb.org and sign in",
+            "Go to My Ratings (or My Watchlist)",
+            "Click ⋮ (three dots) → Export CSV",
+            "The CSV file will be sent to your email",
+            "Download and drag the file into the field below"
+          ]
         },
         "letterboxd": {
           "name": "Letterboxd",

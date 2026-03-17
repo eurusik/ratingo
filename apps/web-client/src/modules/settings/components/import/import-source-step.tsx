@@ -25,7 +25,7 @@ interface SourceConfig {
 const SOURCE_CONFIGS: SourceConfig[] = [
   { id: 'kinobaza', icon: Film, available: true },
   { id: 'imdb', icon: Clapperboard, available: true },
-  { id: 'tmdb', icon: Database, available: false },
+  { id: 'tmdb', icon: Database, available: true },
   { id: 'letterboxd', icon: Aperture, available: false },
 ];
 

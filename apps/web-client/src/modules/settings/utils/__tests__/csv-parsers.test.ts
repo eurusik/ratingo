@@ -5,6 +5,9 @@ import {
   detectImdbFileType,
   parseImdbRatings,
   parseImdbWatchlist,
+  detectTmdbFileType,
+  parseTmdbRatings,
+  parseTmdbWatchlist,
 } from '../csv-parsers';
 
 const RATINGS_CSV = `kinobazaua_id,imdb_id,themoviedb_id,my_rating,name_uk,name_en,year,created_at
@@ -216,6 +219,10 @@ describe('detectImdbFileType', () => {
     expect(detectImdbFileType(RATINGS_CSV)).toBe('unknown');
   });
 
+  it('returns "unknown" for TMDB CSV', () => {
+    expect(detectImdbFileType(TMDB_RATINGS_CSV)).toBe('unknown');
+  });
+
   it('handles BOM prefix correctly', () => {
     expect(detectImdbFileType(IMDB_RATINGS_CSV_WITH_BOM)).toBe('ratings');
   });
@@ -413,5 +420,197 @@ describe('detectImdbFileType — Windows line endings', () => {
     const csv =
       'Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors,Your Rating,Date Rated\r\n1,tt0111161,2023-01-01,2023-01-01,,Shawshank,url,movie,9.3,142,1994,Drama,2800000,1994-10-14,Darabont,10,2023-01-15';
     expect(detectImdbFileType(csv)).toBe('ratings');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// TMDB parsers
+// ---------------------------------------------------------------------------
+
+const TMDB_RATINGS_CSV = `TMDb ID,IMDb ID,Type,Name,Release Date,Season Number,Episode Number,Rating,Your Rating,Date Rated
+550,tt0137523,movie,Fight Club,1999-10-15,,,,8.5,2024-01-15
+27205,tt1375666,movie,Inception,2010-07-16,,,8.8,9.0,2024-01-20
+680,,movie,Pulp Fiction,1994-10-14,,,8.9,7.5,2024-02-01`;
+
+const TMDB_WATCHLIST_CSV = `TMDb ID,IMDb ID,Type,Name,Release Date,Season Number,Episode Number,Rating,Your Rating,Date Rated
+120,tt0120737,movie,The Lord of the Rings: The Fellowship of the Ring,2001-12-18,,,8.9,,2024-03-01
+278,tt0111161,movie,The Shawshank Redemption,1994-09-23,,,8.7,,2024-03-02`;
+
+describe('detectTmdbFileType', () => {
+  it('returns "ratings" when first data row has Your Rating populated', () => {
+    expect(detectTmdbFileType(TMDB_RATINGS_CSV)).toBe('ratings');
+  });
+
+  it('returns "watchlist" when first data row has empty Your Rating', () => {
+    expect(detectTmdbFileType(TMDB_WATCHLIST_CSV)).toBe('watchlist');
+  });
+
+  it('returns "unknown" for non-TMDB CSV', () => {
+    expect(detectTmdbFileType(WRONG_CSV)).toBe('unknown');
+  });
+
+  it('returns "unknown" for IMDB CSV', () => {
+    expect(detectTmdbFileType(IMDB_RATINGS_CSV)).toBe('unknown');
+  });
+
+  it('handles BOM prefix correctly', () => {
+    const withBom = '\uFEFF' + TMDB_RATINGS_CSV;
+    expect(detectTmdbFileType(withBom)).toBe('ratings');
+  });
+
+  it('returns "unknown" when headers exist but no data rows', () => {
+    const headersOnly =
+      'TMDb ID,IMDb ID,Type,Name,Release Date,Season Number,Episode Number,Rating,Your Rating,Date Rated';
+    expect(detectTmdbFileType(headersOnly)).toBe('unknown');
+  });
+
+  it('returns "unknown" for Kinobaza CSV', () => {
+    expect(detectTmdbFileType(RATINGS_CSV)).toBe('unknown');
+  });
+});
+
+describe('parseTmdbRatings', () => {
+  it('parses valid ratings CSV with decimal ratings', async () => {
+    const { items, skippedRows } = await parseTmdbRatings(TMDB_RATINGS_CSV);
+
+    expect(skippedRows).toBe(0);
+    expect(items).toHaveLength(3);
+
+    expect(items[0]).toMatchObject({
+      tmdbId: 550,
+      imdbId: 'tt0137523',
+      rating: 8.5,
+      state: 'completed',
+      title: 'Fight Club',
+      year: 1999,
+    });
+
+    expect(items[1]).toMatchObject({
+      tmdbId: 27205,
+      imdbId: 'tt1375666',
+      rating: 9.0,
+      state: 'completed',
+      title: 'Inception',
+      year: 2010,
+    });
+  });
+
+  it('handles row with both tmdbId and imdbId', async () => {
+    const { items } = await parseTmdbRatings(TMDB_RATINGS_CSV);
+    expect(items[0].tmdbId).toBe(550);
+    expect(items[0].imdbId).toBe('tt0137523');
+  });
+
+  it('handles row with missing imdbId', async () => {
+    const { items } = await parseTmdbRatings(TMDB_RATINGS_CSV);
+    // Row 3: empty IMDb ID
+    expect(items[2].tmdbId).toBe(680);
+    expect(items[2].imdbId).toBeUndefined();
+  });
+
+  it('all items have state "completed"', async () => {
+    const { items } = await parseTmdbRatings(TMDB_RATINGS_CSV);
+    expect(items.every((item) => item.state === 'completed')).toBe(true);
+  });
+
+  it('handles BOM prefix correctly', async () => {
+    const withBom = '\uFEFF' + TMDB_RATINGS_CSV;
+    const { items, skippedRows } = await parseTmdbRatings(withBom);
+    expect(skippedRows).toBe(0);
+    expect(items[0].tmdbId).toBe(550);
+  });
+
+  it('throws descriptive error for wrong headers', async () => {
+    await expect(parseTmdbRatings(WRONG_CSV)).rejects.toThrow(
+      /Invalid TMDB ratings file: missing column/,
+    );
+  });
+
+  it('skips rows with neither tmdbId nor imdbId', async () => {
+    const csv = `TMDb ID,IMDb ID,Type,Name,Release Date,Season Number,Episode Number,Rating,Your Rating,Date Rated
+0,,movie,No IDs,2020-01-01,,,5.0,8.0,2024-01-01`;
+    const { items, skippedRows } = await parseTmdbRatings(csv);
+    expect(skippedRows).toBe(1);
+    expect(items).toHaveLength(0);
+  });
+});
+
+describe('parseTmdbWatchlist', () => {
+  it('parses valid watchlist CSV', async () => {
+    const { items, skippedRows } = await parseTmdbWatchlist(TMDB_WATCHLIST_CSV);
+
+    expect(skippedRows).toBe(0);
+    expect(items).toHaveLength(2);
+
+    expect(items[0]).toMatchObject({
+      tmdbId: 120,
+      imdbId: 'tt0120737',
+      state: 'planned',
+      title: 'The Lord of the Rings: The Fellowship of the Ring',
+      year: 2001,
+    });
+
+    expect(items[1]).toMatchObject({
+      tmdbId: 278,
+      imdbId: 'tt0111161',
+      state: 'planned',
+      title: 'The Shawshank Redemption',
+      year: 1994,
+    });
+  });
+
+  it('all items have state "planned"', async () => {
+    const { items } = await parseTmdbWatchlist(TMDB_WATCHLIST_CSV);
+    expect(items.every((item) => item.state === 'planned')).toBe(true);
+  });
+
+  it('no rating field in watchlist items', async () => {
+    const { items } = await parseTmdbWatchlist(TMDB_WATCHLIST_CSV);
+    expect(items.every((item) => item.rating === undefined)).toBe(true);
+  });
+
+  it('handles BOM prefix correctly', async () => {
+    const withBom = '\uFEFF' + TMDB_WATCHLIST_CSV;
+    const { items } = await parseTmdbWatchlist(withBom);
+    expect(items[0].tmdbId).toBe(120);
+    expect(items[0].imdbId).toBe('tt0120737');
+  });
+});
+
+describe('parseTmdbRatings — edge cases', () => {
+  it('handles minimum TMDB rating 0.5', async () => {
+    const csv = `TMDb ID,IMDb ID,Type,Name,Release Date,Season Number,Episode Number,Rating,Your Rating,Date Rated
+550,tt0137523,movie,Fight Club,1999-10-15,,,8.9,0.5,2024-01-15`;
+    const { items } = await parseTmdbRatings(csv);
+    expect(items[0].rating).toBe(0.5);
+  });
+
+  it('handles row with only imdbId (no tmdbId)', async () => {
+    const csv = `TMDb ID,IMDb ID,Type,Name,Release Date,Season Number,Episode Number,Rating,Your Rating,Date Rated
+,tt0137523,movie,Fight Club,1999-10-15,,,8.9,8.0,2024-01-15`;
+    const { items, skippedRows } = await parseTmdbRatings(csv);
+    expect(skippedRows).toBe(0);
+    expect(items).toHaveLength(1);
+    expect(items[0].imdbId).toBe('tt0137523');
+    expect(items[0].tmdbId).toBeUndefined();
+  });
+
+  it('handles empty file (headers only)', async () => {
+    const csv = 'TMDb ID,IMDb ID,Type,Name,Release Date,Season Number,Episode Number,Rating,Your Rating,Date Rated';
+    const { items, skippedRows } = await parseTmdbRatings(csv);
+    expect(items).toHaveLength(0);
+    expect(skippedRows).toBe(0);
+  });
+
+  it('handles Windows line endings (CRLF)', () => {
+    const csv = 'TMDb ID,IMDb ID,Type,Name,Release Date,Season Number,Episode Number,Rating,Your Rating,Date Rated\r\n550,tt0137523,movie,Fight Club,1999-10-15,,,8.9,8.5,2024-01-15';
+    expect(detectTmdbFileType(csv)).toBe('ratings');
+  });
+
+  it('handles non-numeric Your Rating gracefully', async () => {
+    const csv = `TMDb ID,IMDb ID,Type,Name,Release Date,Season Number,Episode Number,Rating,Your Rating,Date Rated
+550,tt0137523,movie,Fight Club,1999-10-15,,,8.9,abc,2024-01-15`;
+    const { items } = await parseTmdbRatings(csv);
+    expect(items[0].rating).toBeUndefined();
   });
 });

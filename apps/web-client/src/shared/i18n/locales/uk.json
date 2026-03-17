@@ -948,9 +948,15 @@
         },
         "tmdb": {
           "name": "TMDB",
-          "desc": "Оцінки з themoviedb.org",
-          "howTo": "",
-          "howToSteps": []
+          "desc": "Оцінки та список перегляду з themoviedb.org",
+          "howTo": "Як скачати файл з TMDB?",
+          "howToSteps": [
+            "Зайдіть на themoviedb.org та увійдіть в акаунт",
+            "Перейдіть до My Ratings (або My Watchlist)",
+            "Натисніть ⋮ (три крапки) → Export CSV",
+            "CSV файл буде надіслано на вашу email",
+            "Завантажте файл і перетягніть його у відповідне поле нижче"
+          ]
         },
         "letterboxd": {
           "name": "Letterboxd",

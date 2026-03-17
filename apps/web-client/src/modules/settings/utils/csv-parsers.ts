@@ -1,18 +1,18 @@
 /**
- * CSV parsers for Kinobaza and IMDB export files.
+ * CSV parsers for external service export files.
  *
- * Kinobaza supports two export formats:
- * - Ratings CSV (has `my_rating` column)
- * - Watchlist CSV (no `my_rating` column)
+ * Supported sources:
+ * - Kinobaza (kinobaza.com.ua): ratings + watchlist CSVs
+ * - IMDB (imdb.com): V3 format, same headers for ratings and watchlist
+ * - TMDB (themoviedb.org): same headers for ratings, watchlist, and favorites
  *
- * IMDB V3 format uses identical headers for both ratings and watchlist exports.
- * Detection is based on whether the first data row has a non-empty `Your Rating` cell.
+ * IMDB and TMDB detection samples the first data row to check if `Your Rating` is populated.
  */
 
 export interface ParsedItem {
   imdbId?: string;
   tmdbId?: number;
-  rating?: number; // raw Kinobaza 1-10, backend will normalize
+  rating?: number; // raw source rating (0.5-10 scale), backend normalizes to 0-100
   state: 'completed' | 'planned';
   title?: string;
   year?: number;
@@ -334,6 +334,161 @@ export async function parseImdbWatchlist(csvText: string): Promise<ParseResult> 
   return { items, skippedRows };
 }
 
+// ---------------------------------------------------------------------------
+// TMDB parsers
+// ---------------------------------------------------------------------------
+
+const TMDB_REQUIRED_HEADERS = ['tmdb id', 'imdb id', 'your rating', 'name'] as const;
+
+/**
+ * Detects whether a TMDB CSV export is a ratings file or a watchlist file.
+ *
+ * TMDB uses identical column headers for both export types. Detection is based
+ * on whether the first data row has a non-empty `Your Rating` cell — the same
+ * pattern used for IMDB detection.
+ */
+export function detectTmdbFileType(csvText: string): 'ratings' | 'watchlist' | 'unknown' {
+  // Strip BOM if present
+  const text = csvText.replace(/^\uFEFF/, '');
+  const lines = text.split('\n');
+
+  const firstLine = lines[0] ?? '';
+  const headers = firstLine.split(',').map((h) => h.trim().toLowerCase().replace(/"/g, ''));
+
+  if (!headers.includes('tmdb id')) {
+    return 'unknown';
+  }
+
+  const secondLine = lines[1] ?? '';
+  if (!secondLine.trim()) {
+    // No data rows — cannot determine type; treat as unknown
+    return 'unknown';
+  }
+
+  const cells = splitCsvLine(secondLine);
+  const yourRatingIndex = headers.indexOf('your rating');
+
+  if (yourRatingIndex === -1) {
+    return 'unknown';
+  }
+
+  const yourRatingCell = cells[yourRatingIndex] ?? '';
+  return yourRatingCell !== '' ? 'ratings' : 'watchlist';
+}
+
+/** Lazy-loads papaparse for bundle efficiency. */
+export async function parseTmdbRatings(csvText: string): Promise<ParseResult> {
+  const Papa = (await import('papaparse')).default;
+
+  // Strip BOM if present
+  const text = csvText.replace(/^\uFEFF/, '');
+
+  const result = Papa.parse<Record<string, string>>(text, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (header: string) => header.trim().toLowerCase(),
+  });
+
+  const headers = result.meta.fields ?? [];
+  for (const required of TMDB_REQUIRED_HEADERS) {
+    if (!headers.includes(required)) {
+      throw new Error(
+        `Invalid TMDB ratings file: missing column "${required}". Found: ${headers.join(', ')}`,
+      );
+    }
+  }
+
+  const items: ParsedItem[] = [];
+  let skippedRows = 0;
+
+  for (const row of result.data) {
+    const tmdbRaw = row['tmdb id']?.trim() ?? '';
+    const imdbRaw = row['imdb id']?.trim() ?? '';
+    const ratingRaw = row['your rating']?.trim() ?? '';
+    const nameRaw = row['name']?.trim() ?? '';
+    const releaseDateRaw = row['release date']?.trim() ?? '';
+
+    const tmdbId = tmdbRaw ? parseInt(tmdbRaw, 10) : NaN;
+    const validTmdbId = !isNaN(tmdbId) && tmdbId !== 0 ? tmdbId : undefined;
+    const imdbId = imdbRaw.startsWith('tt') ? imdbRaw : undefined;
+
+    if (!validTmdbId && !imdbId) {
+      skippedRows++;
+      continue;
+    }
+
+    const rating = ratingRaw ? parseFloat(ratingRaw) : undefined;
+    const yearRaw = releaseDateRaw.slice(0, 4);
+    const year = yearRaw ? parseInt(yearRaw, 10) : undefined;
+
+    items.push({
+      imdbId,
+      tmdbId: validTmdbId,
+      rating: rating !== undefined && !isNaN(rating) && rating >= 0.5 && rating <= 10 ? rating : undefined,
+      state: 'completed',
+      title: nameRaw || undefined,
+      year: year !== undefined && !isNaN(year) ? year : undefined,
+    });
+  }
+
+  return { items, skippedRows };
+}
+
+/** Lazy-loads papaparse for bundle efficiency. */
+export async function parseTmdbWatchlist(csvText: string): Promise<ParseResult> {
+  const Papa = (await import('papaparse')).default;
+
+  // Strip BOM if present
+  const text = csvText.replace(/^\uFEFF/, '');
+
+  const result = Papa.parse<Record<string, string>>(text, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (header: string) => header.trim().toLowerCase(),
+  });
+
+  const headers = result.meta.fields ?? [];
+  for (const required of TMDB_REQUIRED_HEADERS) {
+    if (!headers.includes(required)) {
+      throw new Error(
+        `Invalid TMDB watchlist file: missing column "${required}". Found: ${headers.join(', ')}`,
+      );
+    }
+  }
+
+  const items: ParsedItem[] = [];
+  let skippedRows = 0;
+
+  for (const row of result.data) {
+    const tmdbRaw = row['tmdb id']?.trim() ?? '';
+    const imdbRaw = row['imdb id']?.trim() ?? '';
+    const nameRaw = row['name']?.trim() ?? '';
+    const releaseDateRaw = row['release date']?.trim() ?? '';
+
+    const tmdbId = tmdbRaw ? parseInt(tmdbRaw, 10) : NaN;
+    const validTmdbId = !isNaN(tmdbId) && tmdbId !== 0 ? tmdbId : undefined;
+    const imdbId = imdbRaw.startsWith('tt') ? imdbRaw : undefined;
+
+    if (!validTmdbId && !imdbId) {
+      skippedRows++;
+      continue;
+    }
+
+    const yearRaw = releaseDateRaw.slice(0, 4);
+    const year = yearRaw ? parseInt(yearRaw, 10) : undefined;
+
+    items.push({
+      imdbId,
+      tmdbId: validTmdbId,
+      state: 'planned',
+      title: nameRaw || undefined,
+      year: year !== undefined && !isNaN(year) ? year : undefined,
+    });
+  }
+
+  return { items, skippedRows };
+}
+
 export interface SourceParserConfig {
   /** Which file slots this source supports */
   slots: ('ratings' | 'watchlist')[];
@@ -354,5 +509,11 @@ export const SOURCE_PARSERS: Record<string, SourceParserConfig> = {
     detectFileType: detectImdbFileType,
     parseRatings: parseImdbRatings,
     parseWatchlist: parseImdbWatchlist,
+  },
+  tmdb: {
+    slots: ['ratings', 'watchlist'],
+    detectFileType: detectTmdbFileType,
+    parseRatings: parseTmdbRatings,
+    parseWatchlist: parseTmdbWatchlist,
   },
 };

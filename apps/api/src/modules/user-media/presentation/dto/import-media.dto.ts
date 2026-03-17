@@ -7,6 +7,7 @@ import {
   IsBoolean,
   IsIn,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Matches,
@@ -48,14 +49,14 @@ export class ImportItemDto {
   tmdbId?: number;
 
   /**
-   * Raw source rating on a 1-10 scale.
+   * Raw source rating on a 0.5-10 scale (supports half-star increments for TMDB).
    * The controller normalizes this to the internal 0-100 scale before passing
-   * to the service (e.g. Kinobaza 8 → internal 80).
+   * to the service (e.g. TMDB 7.5 → internal 75, Kinobaza 8 → internal 80).
    */
-  @ApiProperty({ example: 8, required: false, nullable: true, minimum: 1, maximum: 10 })
+  @ApiProperty({ example: 8, required: false, nullable: true, minimum: 0.5, maximum: 10 })
   @IsOptional()
-  @IsInt()
-  @Min(1)
+  @IsNumber({ maxDecimalPlaces: 1 })
+  @Min(0.5)
   @Max(10)
   rating?: number;
 

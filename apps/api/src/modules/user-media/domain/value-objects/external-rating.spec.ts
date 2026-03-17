@@ -34,8 +34,16 @@ describe('normalizeExternalRating', () => {
     expect(normalizeExternalRating(-Infinity)).toBeNull();
   });
 
-  it('clamps negative values below 1 to 10', () => {
-    expect(normalizeExternalRating(-5)).toBe(10);
+  it('converts 0.5 → 5 (TMDB half-star minimum)', () => {
+    expect(normalizeExternalRating(0.5)).toBe(5);
+  });
+
+  it('clamps values below 0.5 to 5', () => {
+    expect(normalizeExternalRating(0.3)).toBe(5);
+  });
+
+  it('clamps negative values below 0.5 to 5', () => {
+    expect(normalizeExternalRating(-5)).toBe(5);
   });
 
   it('clamps values above 10 to 100', () => {
