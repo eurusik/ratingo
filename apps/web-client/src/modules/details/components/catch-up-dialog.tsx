@@ -34,7 +34,10 @@ export interface CatchUpDialogProps {
   allEpisodesBySeasonNumber: Map<number, string[]>;
   progressData: ShowProgressDto | undefined;
   dict: ReturnType<typeof getDictionary>;
-  onConfirm: (selectedEpisodesBySeasonNumber: Map<number, string[]>) => void;
+  onConfirm: (
+    toMark: Map<number, string[]>,
+    toUnmark: Map<number, string[]>,
+  ) => void;
   isPending: boolean;
 }
 
@@ -76,15 +79,9 @@ export function CatchUpDialog({
       });
   }, [validSeasons, allEpisodesBySeasonNumber, progressData, dict]);
 
-  // Pre-select seasons that have unwatched episodes
+  // Pre-select all seasons that have any watched or unwatched aired episodes
   const defaultSelected = useMemo(() => {
-    const set = new Set<number>();
-    for (const row of seasonRows) {
-      if (!row.isFullyWatched) {
-        set.add(row.number);
-      }
-    }
-    return set;
+    return new Set(seasonRows.map((r) => r.number));
   }, [seasonRows]);
 
   const [selectedSeasons, setSelectedSeasons] = useState<Set<number>>(new Set());
@@ -108,51 +105,56 @@ export function CatchUpDialog({
     });
   }, []);
 
-  const selectableSeasons = useMemo(
-    () => seasonRows.filter((r) => !r.isFullyWatched),
-    [seasonRows],
-  );
-
-  const allSelected = selectableSeasons.length > 0
-    && selectableSeasons.every((r) => selectedSeasons.has(r.number));
+  const allSelected = seasonRows.length > 0
+    && seasonRows.every((r) => selectedSeasons.has(r.number));
   const someSelected = selectedSeasons.size > 0 && !allSelected;
 
   const toggleAll = useCallback(() => {
     if (allSelected) {
       setSelectedSeasons(new Set());
     } else {
-      setSelectedSeasons(new Set(selectableSeasons.map((r) => r.number)));
+      setSelectedSeasons(new Set(seasonRows.map((r) => r.number)));
     }
-  }, [allSelected, selectableSeasons]);
+  }, [allSelected, seasonRows]);
 
-  // Build lookup map for O(1) access in totalToMark
-  const seasonRowMap = useMemo(
-    () => new Map(seasonRows.map((r) => [r.number, r])),
-    [seasonRows],
-  );
-
-  // Compute total episodes that will be newly marked
-  const totalToMark = useMemo(() => {
-    let count = 0;
-    for (const seasonNum of selectedSeasons) {
-      const row = seasonRowMap.get(seasonNum);
-      if (row) {
-        count += Math.max(0, row.airedCount - row.watchedCount);
+  const { totalToMark, totalToUnmark } = useMemo(() => {
+    let toMark = 0;
+    let toUnmark = 0;
+    for (const row of seasonRows) {
+      const isSelected = selectedSeasons.has(row.number);
+      if (isSelected && !row.isFullyWatched) {
+        toMark += Math.max(0, row.airedCount - row.watchedCount);
+      } else if (!isSelected && row.isFullyWatched) {
+        toUnmark += row.watchedCount;
       }
     }
-    return count;
-  }, [selectedSeasons, seasonRowMap]);
+    return { totalToMark: toMark, totalToUnmark: toUnmark };
+  }, [selectedSeasons, seasonRows]);
 
   const handleConfirm = useCallback(() => {
-    const filtered = new Map<number, string[]>();
-    for (const seasonNum of selectedSeasons) {
-      const ids = allEpisodesBySeasonNumber.get(seasonNum);
-      if (ids) {
-        filtered.set(seasonNum, ids);
+    const toMark = new Map<number, string[]>();
+    const toUnmark = new Map<number, string[]>();
+
+    for (const row of seasonRows) {
+      const ids = allEpisodesBySeasonNumber.get(row.number);
+      if (!ids) continue;
+
+      const isSelected = selectedSeasons.has(row.number);
+
+      if (isSelected && !row.isFullyWatched) {
+        toMark.set(row.number, ids);
+      } else if (!isSelected && row.isFullyWatched) {
+        const watchedIds = progressData?.seasons.find(
+          (s) => s.seasonNumber === row.number,
+        )?.watchedEpisodeIds;
+        if (watchedIds?.length) {
+          toUnmark.set(row.number, watchedIds);
+        }
       }
     }
-    onConfirm(filtered);
-  }, [selectedSeasons, allEpisodesBySeasonNumber, onConfirm]);
+
+    onConfirm(toMark, toUnmark);
+  }, [selectedSeasons, seasonRows, allEpisodesBySeasonNumber, progressData, onConfirm]);
 
   const showStatus = dict.details.showStatus;
   const needsScroll = seasonRows.length > SCROLL_THRESHOLD;
@@ -162,7 +164,7 @@ export function CatchUpDialog({
       seasonRows={seasonRows}
       selectedSeasons={selectedSeasons}
       onToggle={toggleSeason}
-      onToggleAll={selectableSeasons.length > 1 ? toggleAll : undefined}
+      onToggleAll={seasonRows.length > 1 ? toggleAll : undefined}
       allSelected={allSelected}
       someSelected={someSelected}
       dict={dict}
@@ -195,10 +197,15 @@ export function CatchUpDialog({
           aria-live="polite"
           aria-atomic="true"
         >
-          {totalToMark > 0
-            ? showStatus.willBeMarked
-                .replace('{count}', String(totalToMark))
-                .replace('{episodes}', pluralize(totalToMark, showStatus.plurals.episode))
+          {totalToMark > 0 || totalToUnmark > 0
+            ? [
+                totalToMark > 0 && showStatus.willBeMarked
+                  .replace('{count}', String(totalToMark))
+                  .replace('{episodes}', pluralize(totalToMark, showStatus.plurals.episode)),
+                totalToUnmark > 0 && showStatus.willBeUnmarked
+                  .replace('{count}', String(totalToUnmark))
+                  .replace('{episodes}', pluralize(totalToUnmark, showStatus.plurals.episode)),
+              ].filter(Boolean).join('. ')
             : '\u00A0'}
         </p>
 
@@ -208,10 +215,10 @@ export function CatchUpDialog({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
-            disabled={isPending || selectedSeasons.size === 0}
+            disabled={isPending || (totalToMark === 0 && totalToUnmark === 0)}
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {showStatus.markAllWatched}
+            {totalToUnmark > 0 ? dict.common?.save : showStatus.markAllWatched}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -268,8 +275,7 @@ function SeasonList({
           className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-cinema-elevated/30 cursor-pointer transition-colors"
         >
           <Checkbox
-            checked={row.isFullyWatched || selectedSeasons.has(row.number)}
-            disabled={row.isFullyWatched}
+            checked={selectedSeasons.has(row.number)}
             onCheckedChange={() => onToggle(row.number)}
           />
           <div className="flex-1 min-w-0">

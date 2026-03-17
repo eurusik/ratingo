@@ -55,6 +55,7 @@ export {
   useMarkMultipleWatched,
   useMarkAllEpisodesWatched,
   useUnmarkEpisodes,
+  useResetSeason,
 } from './episode-progress';
 export {
   useNotifications,

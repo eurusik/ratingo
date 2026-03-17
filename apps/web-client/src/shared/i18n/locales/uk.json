@@ -347,6 +347,7 @@
       "selectSeasonsMessage": "Обери сезони для позначення",
       "seasonFullyWatched": "переглянуто",
       "willBeMarked": "Буде позначено: {count} {episodes}",
+      "willBeUnmarked": "Буде знято: {count} {episodes}",
       "resetSeason": "Скинути сезон",
       "resetSeasonConfirm": "Прибрати позначки перегляду для {season}?",
       "seasonReset": "Сезон скинуто",

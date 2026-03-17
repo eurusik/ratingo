@@ -23,16 +23,14 @@ import {
   AlertDialogCancel,
 } from '@/shared/ui';
 import { useAuth } from '@/core/auth';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   useShowProgress,
   useToggleEpisodeWatched,
   useMarkMultipleWatched,
   useMarkAllEpisodesWatched,
   useUnmarkEpisodes,
-  queryKeys,
+  useResetSeason,
 } from '@/core/query';
-import type { ShowProgressDto } from '@/core/api/episode-progress.client';
 import { useUserMediaState } from '@/modules/saved/hooks/use-me-lists';
 import { CatchUpDialog } from './catch-up-dialog';
 import { EpisodeCard } from './episode-card';
@@ -58,7 +56,6 @@ export function EpisodesSection({
   mediaItemId,
 }: EpisodesSectionProps) {
   const { isAuthenticated } = useAuth();
-  const queryClient = useQueryClient();
 
   const { data: userMediaState } = useUserMediaState(mediaItemId ?? '', isAuthenticated && !!mediaItemId);
   const continueSeasonNumber = userMediaState?.continuePoint?.season;
@@ -119,6 +116,7 @@ export function EpisodesSection({
   const markMultipleWatched = useMarkMultipleWatched(showId || '');
   const markAllWatched = useMarkAllEpisodesWatched(showId || '');
   const unmarkEpisodes = useUnmarkEpisodes(showId || '');
+  const resetSeason = useResetSeason(showId || '');
 
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -228,10 +226,12 @@ export function EpisodesSection({
     });
   }, [unmarkEpisodes, dict]);
 
-  const handleCatchUpConfirm = useCallback((selectedMap: Map<number, string[]>) => {
+  const handleCatchUpConfirm = useCallback(async (
+    toMark: Map<number, string[]>,
+    toUnmark: Map<number, string[]>,
+  ) => {
     setShowConfirmDialog(false);
 
-    // Save previous state for undo
     if (progressData) {
       const prevMap = new Map<number, string[]>();
       progressData.seasons.forEach((s) => {
@@ -239,53 +239,59 @@ export function EpisodesSection({
       });
       previousWatchedIdsRef.current = prevMap;
     }
-    selectedEpisodesRef.current = selectedMap;
+    selectedEpisodesRef.current = toMark;
 
-    // Derive last aired episode from selected seasons for toast
-    let selectedLastSeason = 0;
-    let selectedLastEpisode = 0;
-    const now = Date.now();
-    for (const season of validSeasons) {
-      if (!selectedMap.has(season.number)) continue;
-      for (const ep of season.episodes || []) {
-        if (ep.airDate && new Date(ep.airDate).getTime() > now) continue;
-        selectedLastSeason = season.number;
-        selectedLastEpisode = ep.number;
+    try {
+      if (toUnmark.size > 0) {
+        const idsToUnmark: string[] = [];
+        toUnmark.forEach((ids) => idsToUnmark.push(...ids));
+        if (idsToUnmark.length > 0) {
+          await unmarkEpisodes.mutateAsync(idsToUnmark);
+        }
       }
+
+      if (toMark.size > 0) {
+        let selectedLastSeason = 0;
+        let selectedLastEpisode = 0;
+        const now = Date.now();
+        for (const season of validSeasons) {
+          if (!toMark.has(season.number)) continue;
+          for (const ep of season.episodes || []) {
+            if (ep.airDate && new Date(ep.airDate).getTime() > now) continue;
+            selectedLastSeason = season.number;
+            selectedLastEpisode = ep.number;
+          }
+        }
+
+        const selectedTotal = Array.from(toMark.values()).reduce((sum, ids) => sum + ids.length, 0);
+        const isFullCatchUp = selectedTotal === totalEpisodesCount && totalEpisodesCount === totalAllEpisodes;
+
+        await markAllWatched.mutateAsync({ episodesBySeasonNumber: toMark });
+
+        const message = isFullCatchUp
+          ? dict.details.showStatus.caughtUpAll
+          : dict.details.showStatus.caughtUp
+              .replace('{season}', String(selectedLastSeason))
+              .replace('{episode}', String(selectedLastEpisode));
+
+        toast.success(message, {
+          action: {
+            label: dict.details.showStatus.undo,
+            onClick: handleUndo,
+          },
+          duration: 8000,
+        });
+      } else if (toUnmark.size > 0) {
+        toast.success(dict.details.showStatus.seasonReset);
+      }
+    } catch {
+      toast.error(dict.common?.error || 'Щось пішло не так');
     }
-
-    // Check if all aired episodes are being marked
-    const selectedTotal = Array.from(selectedMap.values()).reduce((sum, ids) => sum + ids.length, 0);
-    const isFullCatchUp = selectedTotal === totalEpisodesCount && totalEpisodesCount === totalAllEpisodes;
-
-    markAllWatched.mutate(
-      { episodesBySeasonNumber: selectedMap },
-      {
-        onSuccess: () => {
-          const message = isFullCatchUp
-            ? dict.details.showStatus.caughtUpAll
-            : dict.details.showStatus.caughtUp
-                .replace('{season}', String(selectedLastSeason))
-                .replace('{episode}', String(selectedLastEpisode));
-
-          toast.success(message, {
-            action: {
-              label: dict.details.showStatus.undo,
-              onClick: handleUndo,
-            },
-            duration: 8000,
-          });
-        },
-        onError: () => {
-          toast.error(dict.common?.error || 'Щось пішло не так');
-        },
-      },
-    );
-  }, [progressData, validSeasons, markAllWatched, dict, handleUndo, totalEpisodesCount, totalAllEpisodes]);
+  }, [progressData, validSeasons, markAllWatched, unmarkEpisodes, dict, handleUndo, totalEpisodesCount, totalAllEpisodes]);
 
   const handleMarkAllClick = useCallback(() => {
     if (validSeasons.length <= 1) {
-      handleCatchUpConfirm(allEpisodesBySeasonNumber);
+      handleCatchUpConfirm(allEpisodesBySeasonNumber, new Map());
     } else {
       setShowConfirmDialog(true);
     }
@@ -303,39 +309,25 @@ export function EpisodesSection({
 
   const handleConfirmResetSeason = useCallback(() => {
     setShowResetConfirmDialog(false);
-    toast.dismiss(); // prevent collision with pending undo toasts
+    toast.dismiss();
     const ids = resetEpisodeIdsRef.current;
     const seasonNumber = resetSeasonNumberRef.current;
     resetEpisodeIdsRef.current = null;
     resetSeasonNumberRef.current = null;
-    if (!ids || ids.length === 0 || !showId) return;
+    if (!ids || ids.length === 0 || seasonNumber === null) return;
 
-    // Optimistic update: clear watched episodes for this season immediately
-    if (seasonNumber !== null) {
-      const progressKey = queryKeys.episodeProgress.showProgress(showId);
-      queryClient.cancelQueries({ queryKey: progressKey });
-      const prev = queryClient.getQueryData<ShowProgressDto>(progressKey);
-      if (prev) {
-        queryClient.setQueryData<ShowProgressDto>(progressKey, {
-          ...prev,
-          seasons: prev.seasons.map((s) =>
-            s.seasonNumber === seasonNumber
-              ? { ...s, watchedCount: 0, watchedEpisodeIds: [] }
-              : s,
-          ),
-        });
-      }
-    }
-
-    unmarkEpisodes.mutate(ids, {
-      onSuccess: () => {
-        toast.success(dict.details.showStatus.seasonReset);
+    resetSeason.mutate(
+      { episodeIds: ids, seasonNumber },
+      {
+        onSuccess: () => {
+          toast.success(dict.details.showStatus.seasonReset);
+        },
+        onError: () => {
+          toast.error(dict.common?.error || 'Щось пішло не так');
+        },
       },
-      onError: () => {
-        toast.error(dict.common?.error || 'Щось пішло не так');
-      },
-    });
-  }, [unmarkEpisodes, dict, showId, queryClient]);
+    );
+  }, [resetSeason, dict]);
 
   // Track which episode is being toggled
   const [togglingEpisodeId, setTogglingEpisodeId] = useState<string | null>(null);
@@ -549,7 +541,7 @@ export function EpisodesSection({
           onMarkAllWatched={handleMarkAllClick}
           isMarkingAll={markAllWatched.isPending}
           onResetSeason={isAuthenticated && showId ? handleResetSeasonClick : undefined}
-          isResettingSeason={unmarkEpisodes.isPending}
+          isResettingSeason={resetSeason.isPending}
         />
 
         {/* Episodes list with smooth expand/collapse animation */}
@@ -601,7 +593,7 @@ export function EpisodesSection({
         progressData={progressData}
         dict={dict}
         onConfirm={handleCatchUpConfirm}
-        isPending={markAllWatched.isPending}
+        isPending={markAllWatched.isPending || unmarkEpisodes.isPending}
       />
 
       {/* Confirmation dialog for season reset */}

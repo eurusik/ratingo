@@ -271,3 +271,57 @@ export function useUnmarkEpisodes(showId: string) {
     },
   });
 }
+
+interface ResetSeasonVariables {
+  episodeIds: string[];
+  seasonNumber: number;
+}
+
+export function useResetSeason(showId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (variables: ResetSeasonVariables) => {
+      await episodeProgressApi.markBatchUnwatched(variables.episodeIds);
+    },
+
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.episodeProgress.showProgress(showId),
+      });
+
+      const previousProgress = queryClient.getQueryData<ShowProgressDto>(
+        queryKeys.episodeProgress.showProgress(showId),
+      );
+
+      if (previousProgress) {
+        queryClient.setQueryData<ShowProgressDto>(
+          queryKeys.episodeProgress.showProgress(showId),
+          {
+            ...previousProgress,
+            seasons: previousProgress.seasons.map((s) =>
+              s.seasonNumber === variables.seasonNumber
+                ? { ...s, watchedCount: 0, watchedEpisodeIds: [] }
+                : s,
+            ),
+          },
+        );
+      }
+
+      return { previousProgress };
+    },
+
+    onError: (_error, _variables, context) => {
+      if (context?.previousProgress) {
+        queryClient.setQueryData(
+          queryKeys.episodeProgress.showProgress(showId),
+          context.previousProgress,
+        );
+      }
+    },
+
+    onSettled: () => {
+      invalidateEpisodeProgressCaches(queryClient, showId);
+    },
+  });
+}

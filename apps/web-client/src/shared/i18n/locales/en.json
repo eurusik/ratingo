@@ -347,6 +347,7 @@
       "selectSeasonsMessage": "Choose seasons to mark as watched",
       "seasonFullyWatched": "watched",
       "willBeMarked": "Will mark: {count} {episodes}",
+      "willBeUnmarked": "Will unmark: {count} {episodes}",
       "resetSeason": "Reset season",
       "resetSeasonConfirm": "Remove watch progress for {season}?",
       "seasonReset": "Season reset",
