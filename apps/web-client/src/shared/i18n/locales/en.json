@@ -939,10 +939,10 @@
           "desc": "Ratings and watchlist from imdb.com",
           "howTo": "How to export your data from IMDB?",
           "howToSteps": [
-            "Go to imdb.com and sign in",
+            "Go to imdb.com on desktop and sign in",
             "Click your name → Your Ratings",
-            "Click ⋮ (three dots) → Export",
-            "For watchlist — Your Watchlist → ⋮ → Export",
+            "Click the Export button in the top right corner",
+            "For watchlist — Your Watchlist → Export",
             "Drag the downloaded files into the fields below"
           ]
         },
