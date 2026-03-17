@@ -192,6 +192,7 @@ export function EpisodesSection({
   // Store previous watched IDs and selected episodes for undo
   const previousWatchedIdsRef = useRef<Map<number, string[]> | null>(null);
   const selectedEpisodesRef = useRef<Map<number, string[]> | null>(null);
+  const catchUpToastIdRef = useRef<string | number | null>(null);
 
   const handleUndo = useCallback(() => {
     const previousWatched = previousWatchedIdsRef.current;
@@ -277,7 +278,7 @@ export function EpisodesSection({
               .replace('{episode}', String(selectedLastEpisode));
 
         if (toUnmark.size === 0) {
-          toast.success(message, {
+          catchUpToastIdRef.current = toast.success(message, {
             action: {
               label: dict.details.showStatus.undo,
               onClick: handleUndo,
@@ -289,6 +290,11 @@ export function EpisodesSection({
         }
       } else if (toUnmark.size > 0) {
         toast.success(dict.details.showStatus.seasonReset);
+      }
+
+      if (toUnmark.size > 0) {
+        previousWatchedIdsRef.current = null;
+        selectedEpisodesRef.current = null;
       }
     } catch {
       toast.error(dict.common?.error || 'Щось пішло не так');
@@ -315,7 +321,10 @@ export function EpisodesSection({
 
   const handleConfirmResetSeason = useCallback(() => {
     setShowResetConfirmDialog(false);
-    toast.dismiss();
+    if (catchUpToastIdRef.current !== null) {
+      toast.dismiss(catchUpToastIdRef.current);
+      catchUpToastIdRef.current = null;
+    }
     const ids = resetEpisodeIdsRef.current;
     const seasonNumber = resetSeasonNumberRef.current;
     resetEpisodeIdsRef.current = null;
