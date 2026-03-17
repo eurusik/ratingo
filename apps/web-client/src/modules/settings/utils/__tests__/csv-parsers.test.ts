@@ -334,3 +334,84 @@ describe('parseImdbWatchlist', () => {
     expect(items).toHaveLength(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// splitCsvLine — indirect tests via detectImdbFileType
+// ---------------------------------------------------------------------------
+
+describe('detectImdbFileType — quoted field handling', () => {
+  it('correctly detects ratings when Genres contain commas', () => {
+    // Genres field has commas inside quotes — naive split would misalign columns
+    const csv =
+      'Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors,Your Rating,Date Rated\n1,tt0111161,2023-01-01,2023-01-01,,Shawshank,url,movie,9.3,142,1994,"Crime, Drama, Thriller",2800000,1994-10-14,Frank Darabont,10,2023-01-15';
+    expect(detectImdbFileType(csv)).toBe('ratings');
+  });
+
+  it('correctly detects watchlist when Genres contain commas', () => {
+    const csv =
+      'Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors,Your Rating,Date Rated\n1,tt0468569,2023-06-01,2023-06-01,,Dark Knight,url,movie,9.0,152,2008,"Action, Crime, Drama, Thriller",2700000,2008-07-18,Nolan,,';
+    expect(detectImdbFileType(csv)).toBe('watchlist');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseImdbRatings — rating edge cases
+// ---------------------------------------------------------------------------
+
+describe('parseImdbRatings — rating edge cases', () => {
+  it('handles empty Your Rating as undefined', async () => {
+    const csv =
+      'Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors,Your Rating,Date Rated\n1,tt0111161,2023-01-01,2023-01-01,,Shawshank,url,movie,9.3,142,1994,Drama,2800000,1994-10-14,Darabont,,';
+    const { items } = await parseImdbRatings(csv);
+    expect(items[0].rating).toBeUndefined();
+  });
+
+  it('handles non-numeric Your Rating gracefully', async () => {
+    const csv =
+      'Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors,Your Rating,Date Rated\n1,tt0111161,2023-01-01,2023-01-01,,Shawshank,url,movie,9.3,142,1994,Drama,2800000,1994-10-14,Darabont,abc,2023-01-15';
+    const { items } = await parseImdbRatings(csv);
+    expect(items[0].rating).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseImdbRatings — empty / minimal file
+// ---------------------------------------------------------------------------
+
+describe('parseImdbRatings — empty file handling', () => {
+  it('handles file with headers but no data rows', async () => {
+    const csv =
+      'Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors,Your Rating,Date Rated';
+    const { items, skippedRows } = await parseImdbRatings(csv);
+    expect(items).toHaveLength(0);
+    expect(skippedRows).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseImdbRatings — missing title / year
+// ---------------------------------------------------------------------------
+
+describe('parseImdbRatings — missing title and year', () => {
+  it('handles missing title and year gracefully', async () => {
+    const csv =
+      'Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors,Your Rating,Date Rated\n1,tt0111161,2023-01-01,2023-01-01,,,url,movie,9.3,142,,Drama,2800000,1994-10-14,Darabont,10,2023-01-15';
+    const { items } = await parseImdbRatings(csv);
+    expect(items[0].title).toBeUndefined();
+    expect(items[0].year).toBeUndefined();
+    expect(items[0].imdbId).toBe('tt0111161');
+    expect(items[0].rating).toBe(10);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// detectImdbFileType — Windows line endings
+// ---------------------------------------------------------------------------
+
+describe('detectImdbFileType — Windows line endings', () => {
+  it('handles Windows line endings (CRLF)', () => {
+    const csv =
+      'Position,Const,Created,Modified,Description,Title,URL,Title Type,IMDb Rating,Runtime (mins),Year,Genres,Num Votes,Release Date,Directors,Your Rating,Date Rated\r\n1,tt0111161,2023-01-01,2023-01-01,,Shawshank,url,movie,9.3,142,1994,Drama,2800000,1994-10-14,Darabont,10,2023-01-15';
+    expect(detectImdbFileType(csv)).toBe('ratings');
+  });
+});

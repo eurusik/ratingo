@@ -334,6 +334,28 @@ describe('UserMediaController', () => {
 
       expect(result).toEqual({ failedBatchIds: [] });
     });
+
+    it('should return failed batchIds when cancelBatch throws NotFoundException', async () => {
+      const { NotFoundException } = await import('@nestjs/common');
+      importPendingService.cancelBatch.mockRejectedValueOnce(new NotFoundException());
+
+      const result = await controller.cancelImportBatches({ id: 'u1' }, {
+        batchIds: ['batch-1', 'batch-2'],
+      } as any);
+
+      expect(result).toEqual({ failedBatchIds: ['batch-1'] });
+      expect(importPendingService.cancelBatch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should rethrow non-NotFoundException errors', async () => {
+      importPendingService.cancelBatch.mockRejectedValueOnce(new Error('DB connection failed'));
+
+      await expect(
+        controller.cancelImportBatches({ id: 'u1' }, {
+          batchIds: ['batch-1'],
+        } as any),
+      ).rejects.toThrow('DB connection failed');
+    });
   });
 
   describe('getImportStatus', () => {

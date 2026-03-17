@@ -111,5 +111,43 @@ describe('DrizzleMediaLookupAdapter', () => {
       expect(result).toEqual([]);
       expect(mockDb.select).not.toHaveBeenCalled();
     });
+
+    it('should chunk queries when TMDB IDs exceed 500', async () => {
+      const tmdbIds = Array.from({ length: 501 }, (_, i) => i + 1);
+
+      mockDb.select.mockImplementation(() => {
+        const chain: any = {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockResolvedValue([]),
+        };
+        return chain;
+      });
+
+      const result = await adapter.findManyByTmdbIds(tmdbIds);
+
+      // Should have made 2 DB queries (500 + 1)
+      expect(mockDb.select).toHaveBeenCalledTimes(2);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('findManyByImdbIds chunking', () => {
+    it('should chunk queries when IMDB IDs exceed 500', async () => {
+      const imdbIds = Array.from({ length: 501 }, (_, i) => `tt${String(i).padStart(7, '0')}`);
+
+      mockDb.select.mockImplementation(() => {
+        const chain: any = {
+          from: jest.fn().mockReturnThis(),
+          where: jest.fn().mockResolvedValue([]),
+        };
+        return chain;
+      });
+
+      const result = await adapter.findManyByImdbIds(imdbIds);
+
+      // Should have made 2 DB queries (500 + 1)
+      expect(mockDb.select).toHaveBeenCalledTimes(2);
+      expect(result).toEqual([]);
+    });
   });
 });
