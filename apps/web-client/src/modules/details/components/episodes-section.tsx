@@ -313,6 +313,7 @@ export function EpisodesSection({
     // Optimistic update: clear watched episodes for this season immediately
     if (seasonNumber !== null) {
       const progressKey = queryKeys.episodeProgress.showProgress(showId);
+      queryClient.cancelQueries({ queryKey: progressKey });
       const prev = queryClient.getQueryData<ShowProgressDto>(progressKey);
       if (prev) {
         queryClient.setQueryData<ShowProgressDto>(progressKey, {
