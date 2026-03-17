@@ -3246,6 +3246,13 @@ export interface components {
              */
             batchIds: string[];
         };
+        CancelImportBatchesResponseDto: {
+            /**
+             * @description Batch IDs that failed to cancel (not found or already terminal)
+             * @example []
+             */
+            failedBatchIds: string[];
+        };
         SetUserMediaStateDto: {
             /**
              * @description Watch state. When omitted, preserves existing state or defaults to "completed" for movies / "watching" for shows.
@@ -3294,7 +3301,7 @@ export interface components {
              * @example kinobaza
              * @enum {string}
              */
-            source: "kinobaza" | "imdb";
+            source: "kinobaza" | "imdb" | "tmdb";
             /** @description Items to import (1–10000) */
             items: components["schemas"]["ImportItemDto"][];
             /**
@@ -6786,12 +6793,18 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Batches cancelled */
+            /** @description Cancel result */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["CancelImportBatchesResponseDto"];
+                    };
+                };
             };
             /** @description Invalid request body */
             400: {

@@ -33,7 +33,7 @@ export function useImportMedia() {
 
 export function useCancelImportBatches() {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, string[]>({
+  return useMutation<{ failedBatchIds: string[] }, Error, string[]>({
     mutationFn: (batchIds) => userMediaApi.cancelImportBatches(batchIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.importBatchStatus });
