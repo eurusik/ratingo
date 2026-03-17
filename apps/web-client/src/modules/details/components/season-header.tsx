@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ChevronDown, ChevronRight, Tv, CheckCircle2, Loader2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Tv, CheckCircle2, Loader2, RotateCcw } from 'lucide-react';
 import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
 import { cn, resolveMediaImageUrl, IMAGE_SIZES, pluralize } from '@/shared/utils';
@@ -37,6 +37,10 @@ export interface SeasonHeaderProps {
   onMarkAllWatched?: () => void;
   /** Whether mark all mutation is pending */
   isMarkingAll?: boolean;
+  /** Handler for resetting current season progress */
+  onResetSeason?: () => void;
+  /** Whether reset season mutation is pending */
+  isResettingSeason?: boolean;
 }
 
 export function SeasonHeader({
@@ -53,6 +57,8 @@ export function SeasonHeader({
   totalEpisodes = 0,
   onMarkAllWatched,
   isMarkingAll = false,
+  onResetSeason,
+  isResettingSeason = false,
 }: SeasonHeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const episodeCount = selectedSeason.episodeCount || selectedSeason.episodes?.length || 0;
@@ -60,13 +66,14 @@ export function SeasonHeader({
 
   const handleContainerClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest('[data-season-dropdown]') || target.closest('[data-mark-all-button]')) {
+    if (target.closest('[data-season-dropdown]') || target.closest('[data-mark-all-button]') || target.closest('[data-reset-season-button]')) {
       return;
     }
     onToggleExpand();
   };
 
   const showMarkAllButton = onMarkAllWatched && totalWatched < totalEpisodes;
+  const showResetButton = onResetSeason && watchedCount > 0;
 
   return (
     <div
@@ -168,6 +175,26 @@ export function SeasonHeader({
                 {dict.details.showStatus.markAllWatched}
               </Button>
             )}
+            {isExpanded && showResetButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onResetSeason();
+                }}
+                disabled={isResettingSeason}
+                className="h-auto py-1.5 px-3 text-xs text-cinema-text-muted hover:text-red-400 hover:bg-cinema-elevated/50"
+                data-reset-season-button
+              >
+                {isResettingSeason ? (
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                )}
+                {dict.details.showStatus.resetSeason}
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -195,6 +222,26 @@ export function SeasonHeader({
                 <CheckCircle2 className="w-4 h-4 mr-2" />
               )}
               {dict.details.showStatus.markAllWatched}
+            </Button>
+          )}
+          {isExpanded && showResetButton && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onResetSeason();
+              }}
+              disabled={isResettingSeason}
+              className="w-full justify-center text-cinema-text-muted hover:text-red-400"
+              data-reset-season-button
+            >
+              {isResettingSeason ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RotateCcw className="w-4 h-4 mr-2" />
+              )}
+              {dict.details.showStatus.resetSeason}
             </Button>
           )}
         </div>

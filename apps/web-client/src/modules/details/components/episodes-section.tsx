@@ -12,6 +12,16 @@ import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
 import { formatDate } from '@/shared/utils/format';
 import { cn } from '@/shared/utils';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/shared/ui';
 import { useAuth } from '@/core/auth';
 import {
   useShowProgress,
@@ -108,6 +118,7 @@ export function EpisodesSection({
 
   // Confirmation dialog state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showResetConfirmDialog, setShowResetConfirmDialog] = useState(false);
 
   // Get watched episode IDs for current season
   // Simple .find() doesn't need useMemo per rerender-simple-expression-in-memo rule
@@ -288,6 +299,25 @@ export function EpisodesSection({
       setShowConfirmDialog(true);
     }
   }, [unwatchedSeasonCount, handleCatchUpConfirm, allEpisodesBySeasonNumber]);
+
+  const handleResetSeasonClick = useCallback(() => {
+    setShowResetConfirmDialog(true);
+  }, []);
+
+  const handleConfirmResetSeason = useCallback(() => {
+    setShowResetConfirmDialog(false);
+    const ids = currentSeasonProgress?.watchedEpisodeIds;
+    if (!ids || ids.length === 0) return;
+
+    unmarkEpisodes.mutate(ids, {
+      onSuccess: () => {
+        toast.success(dict.details.showStatus.seasonReset);
+      },
+      onError: () => {
+        toast.error(dict.common?.error || 'Щось пішло не так');
+      },
+    });
+  }, [currentSeasonProgress?.watchedEpisodeIds, unmarkEpisodes, dict]);
 
   // Track which episode is being toggled
   const [togglingEpisodeId, setTogglingEpisodeId] = useState<string | null>(null);
@@ -500,6 +530,8 @@ export function EpisodesSection({
           totalEpisodes={totalEpisodesCount}
           onMarkAllWatched={handleMarkAllClick}
           isMarkingAll={markAllWatched.isPending}
+          onResetSeason={handleResetSeasonClick}
+          isResettingSeason={unmarkEpisodes.isPending}
         />
 
         {/* Episodes list with smooth expand/collapse animation */}
@@ -553,6 +585,31 @@ export function EpisodesSection({
         onConfirm={handleCatchUpConfirm}
         isPending={markAllWatched.isPending}
       />
+
+      {/* Confirmation dialog for season reset */}
+      <AlertDialog open={showResetConfirmDialog} onOpenChange={setShowResetConfirmDialog}>
+        <AlertDialogContent className="bg-cinema-card border-cinema-borderSoft">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-cinema-text-primary">
+              {dict.details.showStatus.resetSeason}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-cinema-text-muted">
+              {dict.details.showStatus.resetSeasonConfirm}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-cinema-elevated text-cinema-text-secondary hover:bg-cinema-border hover:text-cinema-text-primary">
+              {dict.common?.cancel || 'Скасувати'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmResetSeason}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {dict.details.showStatus.resetSeason}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
