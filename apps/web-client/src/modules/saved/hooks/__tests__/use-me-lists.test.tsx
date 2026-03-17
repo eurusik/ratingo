@@ -46,7 +46,7 @@ jest.mock('@/core/api/me-lists.client', () => ({
 import { meListsApi } from '@/core/api/me-lists.client';
 
 const mockGetActivity = meListsApi.getActivity as jest.Mock;
-const mockGetRatings = meListsApi.getRatings as jest.Mock;
+const mockGetHistory = meListsApi.getHistory as jest.Mock;
 const mockGetPaused = meListsApi.getPaused as jest.Mock;
 const mockGetDropped = meListsApi.getDropped as jest.Mock;
 const mockPauseMedia = meListsApi.pauseMedia as jest.Mock;
@@ -338,13 +338,13 @@ describe('useCompleted', () => {
     queryClient.clear();
   });
 
-  it('filters rated items to only completed state', async () => {
+  it('filters history items to only completed state', async () => {
     const items = [
-      makeHistoryItem({ mediaItemId: 'w1', state: 'watching', rating: 70 }),
-      makeHistoryItem({ mediaItemId: 'c1', state: 'completed', rating: 80 }),
-      makeHistoryItem({ mediaItemId: 'c2', state: 'completed', rating: 90 }),
+      makeHistoryItem({ mediaItemId: 'w1', state: 'watching' }),
+      makeHistoryItem({ mediaItemId: 'c1', state: 'completed' }),
+      makeHistoryItem({ mediaItemId: 'c2', state: 'completed' }),
     ];
-    mockGetRatings.mockResolvedValue(makeHistoryResponse(items));
+    mockGetHistory.mockResolvedValue(makeHistoryResponse(items));
 
     renderWithClient(<CompletedConsumer />, queryClient);
 
@@ -361,9 +361,9 @@ describe('useCompleted', () => {
 
   it('returns empty array when no completed items exist', async () => {
     const items = [
-      makeHistoryItem({ mediaItemId: 'w1', state: 'watching', rating: 70 }),
+      makeHistoryItem({ mediaItemId: 'w1', state: 'watching' }),
     ];
-    mockGetRatings.mockResolvedValue(makeHistoryResponse(items));
+    mockGetHistory.mockResolvedValue(makeHistoryResponse(items));
 
     renderWithClient(<CompletedConsumer />, queryClient);
 
@@ -375,7 +375,7 @@ describe('useCompleted', () => {
   });
 
   it('passes sort parameter to the API call', async () => {
-    mockGetRatings.mockResolvedValue(makeHistoryResponse([]));
+    mockGetHistory.mockResolvedValue(makeHistoryResponse([]));
 
     renderWithClient(<CompletedConsumer sort="releaseDate" />, queryClient);
 
@@ -383,7 +383,7 @@ describe('useCompleted', () => {
       expect(screen.getByTestId('status').textContent).toBe('success');
     });
 
-    expect(mockGetRatings).toHaveBeenCalledWith(expect.objectContaining({ sort: 'releaseDate' }));
+    expect(mockGetHistory).toHaveBeenCalledWith(expect.objectContaining({ sort: 'releaseDate' }));
   });
 
   it('does not fetch when enabled is false', async () => {
@@ -393,7 +393,7 @@ describe('useCompleted', () => {
       await new Promise((r) => setTimeout(r, 50));
     });
 
-    expect(mockGetRatings).not.toHaveBeenCalled();
+    expect(mockGetHistory).not.toHaveBeenCalled();
     expect(screen.getByTestId('status').textContent).toBe('pending');
   });
 });
