@@ -67,6 +67,7 @@ export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from './popove
 export { Textarea } from './textarea';
 export { Slider } from './slider';
 export { Checkbox } from './checkbox';
+export { ScrollArea, ScrollBar } from './scroll-area';
 export { RadioGroup, RadioGroupItem } from './radio-group';
 export { ToggleGroup, ToggleGroupItem } from './toggle-group';
 export {
