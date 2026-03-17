@@ -162,6 +162,13 @@
       "when": 1773666592512,
       "tag": "0022_smart_hydra",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1773732282006,
+      "tag": "0023_lonely_sinister_six",
+      "breakpoints": true
     }
   ]
 }

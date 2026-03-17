@@ -1981,9 +1981,6 @@
           },
           "401": {
             "description": "Unauthorized"
-          },
-          "404": {
-            "description": "One or more batch IDs not found"
           }
         },
         "tags": [
@@ -10445,7 +10442,8 @@
           "source": {
             "type": "string",
             "enum": [
-              "kinobaza"
+              "kinobaza",
+              "imdb"
             ],
             "example": "kinobaza"
           },

@@ -30,9 +30,12 @@ import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard
 import { ImportMediaService } from '../../application/import-media.service';
 import { ImportPendingService } from '../../application/import-pending.service';
 import { UserMediaService } from '../../application/user-media.service';
-import { normalizeKinobazaRating } from '../../domain/value-objects/external-rating';
+import { normalizeExternalRating } from '../../domain/value-objects/external-rating';
 import { BatchRatingsQueryDto, BatchRatingsResponseDto } from '../dto/batch-ratings.dto';
-import { CancelImportBatchesDto } from '../dto/cancel-import-batches.dto';
+import {
+  CancelImportBatchesDto,
+  CancelImportBatchesResponseDto,
+} from '../dto/cancel-import-batches.dto';
 import { ImportBatchStatusDto } from '../dto/import-batch-status.dto';
 import { CsvImportResultDto, ImportMediaDto } from '../dto/import-media.dto';
 import { SetUserMediaStateDto } from '../dto/set-user-media-state.dto';
@@ -123,7 +126,7 @@ export class UserMediaController {
    * Not-found batch IDs are silently skipped — partial success is acceptable for cancel.
    */
   @ApiBody({ type: CancelImportBatchesDto })
-  @ApiOkResponse({ description: 'Batches cancelled' })
+  @ApiOkResponse({ description: 'Cancel result', type: CancelImportBatchesResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid request body' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @ApiOperation({ summary: 'Cancel one or more import batches (auth: Bearer)' })
@@ -132,16 +135,16 @@ export class UserMediaController {
   async cancelImportBatches(
     @CurrentUser() user: { id: string },
     @Body() body: CancelImportBatchesDto,
-  ): Promise<void> {
-    const errors: string[] = [];
+  ): Promise<CancelImportBatchesResponseDto> {
+    const failedBatchIds: string[] = [];
     for (const batchId of body.batchIds) {
       try {
         await this.importPendingService.cancelBatch(user.id, batchId);
       } catch {
-        errors.push(batchId);
+        failedBatchIds.push(batchId);
       }
     }
-    // Don't throw — partial success is fine for cancel
+    return { failedBatchIds };
   }
 
   @ApiParam({ name: 'mediaItemId', type: String, description: 'Media item UUID' })
@@ -250,7 +253,7 @@ export class UserMediaController {
       items: body.items.map((item) => ({
         imdbId: item.imdbId,
         tmdbId: item.tmdbId,
-        rating: item.rating != null ? normalizeKinobazaRating(item.rating) : null,
+        rating: item.rating != null ? normalizeExternalRating(item.rating) : null,
         state: item.state,
         title: item.title,
         year: item.year,

@@ -1,0 +1,1 @@
+CREATE INDEX "import_batches_user_status_created_at_idx" ON "import_batches" USING btree ("user_id","status","created_at");

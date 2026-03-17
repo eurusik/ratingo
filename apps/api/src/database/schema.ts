@@ -1538,20 +1538,31 @@ export const importPendingStatusEnum = pgEnum('import_pending_status', [
  * Tracks a batch of not-found import items submitted for background auto-ingestion.
  * Created when a CSV import contains items not present in the Ratingo catalog.
  */
-export const importBatches = pgTable('import_batches', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  /** Import source identifier (e.g. 'kinobaza'). */
-  source: text('source').notNull(),
-  totalItems: integer('total_items').notNull(),
-  completedCount: integer('completed_count').notNull().default(0),
-  failedCount: integer('failed_count').notNull().default(0),
-  status: importBatchStatusEnum('status').notNull().default('processing'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const importBatches = pgTable(
+  'import_batches',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** Import source identifier (e.g. 'kinobaza'). */
+    source: text('source').notNull(),
+    totalItems: integer('total_items').notNull(),
+    completedCount: integer('completed_count').notNull().default(0),
+    failedCount: integer('failed_count').notNull().default(0),
+    status: importBatchStatusEnum('status').notNull().default('processing'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    // Supports findActiveBatchesByUser: WHERE userId = ? AND status = ? ORDER BY createdAt DESC
+    userStatusCreatedAtIdx: index('import_batches_user_status_created_at_idx').on(
+      t.userId,
+      t.status,
+      t.createdAt,
+    ),
+  }),
+);
 
 /**
  * Individual items within an import batch awaiting TMDB resolution and catalog ingestion.

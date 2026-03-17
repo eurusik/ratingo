@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { ArrayMinSize, IsArray, IsUUID } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsUUID } from 'class-validator';
 
 /**
  * Request body for POST /user-media/import/cancel.
@@ -14,6 +14,16 @@ export class CancelImportBatchesDto {
   })
   @IsArray()
   @ArrayMinSize(1)
+  @ArrayMaxSize(100)
   @IsUUID('4', { each: true })
   batchIds!: string[];
+}
+
+export class CancelImportBatchesResponseDto {
+  @ApiProperty({
+    type: [String],
+    description: 'Batch IDs that failed to cancel (not found or already terminal)',
+    example: [],
+  })
+  failedBatchIds!: string[];
 }

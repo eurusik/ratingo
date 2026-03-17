@@ -3294,7 +3294,7 @@ export interface components {
              * @example kinobaza
              * @enum {string}
              */
-            source: "kinobaza";
+            source: "kinobaza" | "imdb";
             /** @description Items to import (1–10000) */
             items: components["schemas"]["ImportItemDto"][];
             /**
@@ -6802,13 +6802,6 @@ export interface operations {
             };
             /** @description Unauthorized */
             401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description One or more batch IDs not found */
-            404: {
                 headers: {
                     [name: string]: unknown;
                 };

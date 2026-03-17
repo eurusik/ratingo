@@ -55,13 +55,13 @@ export class ResolveImportItemPipeline {
     // Idempotency guard: skip items already in a terminal state.
     // RESOLVING is intentionally NOT skipped — a transient error may leave items stuck
     // in RESOLVING, and they must be reprocessed on retry.
-    const SKIP_STATUSES = [
+    const SKIP_STATUSES: readonly string[] = [
       IMPORT_PENDING_STATUS.DONE,
       IMPORT_PENDING_STATUS.FAILED,
       IMPORT_PENDING_STATUS.INGESTING,
       IMPORT_PENDING_STATUS.CANCELLED,
     ];
-    if (SKIP_STATUSES.includes(item.status as any)) {
+    if (SKIP_STATUSES.includes(item.status)) {
       this.logger.debug(
         `[item] pendingItemId=${pendingItemId} already status=${item.status}, skipping`,
       );
