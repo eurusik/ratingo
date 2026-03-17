@@ -244,13 +244,11 @@ export function useMarkAllEpisodesWatched(showId: string) {
       return { previousProgress };
     },
 
-    onError: (_error, _variables, context) => {
-      if (context?.previousProgress) {
-        queryClient.setQueryData(
-          queryKeys.episodeProgress.showProgress(showId),
-          context.previousProgress,
-        );
-      }
+    onError: () => {
+      // Partial chunks may have already succeeded on the server,
+      // so rolling back to a stale snapshot would show incorrect state.
+      // Force refetch to get the true server state instead.
+      invalidateEpisodeProgressCaches(queryClient, showId);
     },
 
     onSettled: () => {

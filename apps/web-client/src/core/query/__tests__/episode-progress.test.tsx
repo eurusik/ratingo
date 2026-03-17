@@ -684,7 +684,7 @@ describe('useMarkAllEpisodesWatched', () => {
     });
   });
 
-  it('rolls back optimistic update on error', async () => {
+  it('invalidates cache on error instead of rolling back (partial chunks may have succeeded)', async () => {
     const initialProgress = buildProgress([
       buildSeason(1, 3, ['ep-1']),
       buildSeason(2, 2, []),
@@ -696,6 +696,7 @@ describe('useMarkAllEpisodesWatched', () => {
     );
 
     mockMarkBatchWatched.mockRejectedValue(new Error('server error'));
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
 
     renderWithClient(<MarkAllConsumer />, queryClient);
 
@@ -707,14 +708,13 @@ describe('useMarkAllEpisodesWatched', () => {
       expect(screen.getByTestId('mutation-status').textContent).toBe('error');
     });
 
-    const rolledBack = queryClient.getQueryData<ShowProgressDto>(
-      queryKeys.episodeProgress.showProgress(SHOW_ID),
+    // On error, cache is invalidated (not rolled back) because partial chunks
+    // may have already succeeded on the server.
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.episodeProgress.showProgress(SHOW_ID),
+      }),
     );
-
-    expect(rolledBack!.seasons[0].watchedEpisodeIds).toEqual(['ep-1']);
-    expect(rolledBack!.seasons[0].watchedCount).toBe(1);
-    expect(rolledBack!.seasons[1].watchedEpisodeIds).toEqual([]);
-    expect(rolledBack!.seasons[1].watchedCount).toBe(0);
   });
 
   it('invalidates all related caches on settled', async () => {

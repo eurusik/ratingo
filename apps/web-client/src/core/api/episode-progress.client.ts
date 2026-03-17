@@ -16,6 +16,22 @@ export type ShowProgressDto = components['schemas']['ShowProgressDto'];
 type BatchEpisodeIdsDto = components['schemas']['BatchEpisodeIdsDto'];
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+/** Must match MAX_BATCH_EPISODE_IDS from apps/api/.../episode-progress.constants.ts */
+const BATCH_LIMIT = 200;
+
+/** Splits an array into chunks of at most `size` elements. */
+function chunk<T>(arr: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
+
+// ============================================================================
 // API Client
 // ============================================================================
 
@@ -47,7 +63,11 @@ export const episodeProgressApi = {
    * @returns void (204 No Content)
    */
   async markBatchWatched(episodeIds: string[]): Promise<void> {
-    return apiPost<void>('user-media/episodes/batch/watch', { episodeIds } satisfies BatchEpisodeIdsDto);
+    if (episodeIds.length === 0) return;
+    const chunks = chunk(episodeIds, BATCH_LIMIT);
+    for (const batch of chunks) {
+      await apiPost<void>('user-media/episodes/batch/watch', { episodeIds: batch } satisfies BatchEpisodeIdsDto);
+    }
   },
 
   /**
@@ -57,7 +77,11 @@ export const episodeProgressApi = {
    * @returns void (204 No Content)
    */
   async markBatchUnwatched(episodeIds: string[]): Promise<void> {
-    return apiPost<void>('user-media/episodes/batch/unwatch', { episodeIds } satisfies BatchEpisodeIdsDto);
+    if (episodeIds.length === 0) return;
+    const chunks = chunk(episodeIds, BATCH_LIMIT);
+    for (const batch of chunks) {
+      await apiPost<void>('user-media/episodes/batch/unwatch', { episodeIds: batch } satisfies BatchEpisodeIdsDto);
+    }
   },
 
   /**
