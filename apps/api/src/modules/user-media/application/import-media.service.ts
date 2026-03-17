@@ -75,22 +75,26 @@ export class ImportMediaService {
     }
 
     // Save planned (watchlist) items to for_later — non-critical, per-item isolation
-    for (const { entry, mediaItemId } of toImport) {
-      if (entry.state === USER_MEDIA_STATE.PLANNED) {
-        try {
-          await this.savedItemsService.saveItem({
-            userId: command.userId,
-            mediaItemId,
-            list: SAVED_ITEM_LIST.FOR_LATER,
-            context: ACTION_CONTEXT.IMPORT,
-          });
-        } catch (error) {
-          this.logger.error(
-            `Failed to save planned item to for_later: userId=${command.userId} mediaItemId=${mediaItemId}: ${(error as Error).message}`,
-            (error as Error).stack,
-          );
-        }
-      }
+    const plannedItems = toImport.filter(({ entry }) => entry.state === USER_MEDIA_STATE.PLANNED);
+    const SAVE_CONCURRENCY = 50;
+    for (let i = 0; i < plannedItems.length; i += SAVE_CONCURRENCY) {
+      const chunk = plannedItems.slice(i, i + SAVE_CONCURRENCY);
+      await Promise.allSettled(
+        chunk.map(({ mediaItemId }) =>
+          this.savedItemsService
+            .saveItem({
+              userId: command.userId,
+              mediaItemId,
+              list: SAVED_ITEM_LIST.FOR_LATER,
+              context: ACTION_CONTEXT.IMPORT,
+            })
+            .catch((error: unknown) => {
+              this.logger.warn(
+                `Non-critical: failed to save planned item to for_later: userId=${command.userId} mediaItemId=${mediaItemId}: ${(error as Error).message}`,
+              );
+            }),
+        ),
+      );
     }
 
     // Queue background auto-ingestion for not-found items that have an identifier

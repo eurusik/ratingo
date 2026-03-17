@@ -417,6 +417,31 @@ describe('ImportMediaService', () => {
       expect(result.skipped).toBe(0);
     });
 
+    it('should process all 51 planned items across two saveItem chunks (50 + 1)', async () => {
+      const items = Array.from({ length: 51 }, (_, i) => ({
+        imdbId: `tt${String(i).padStart(7, '0')}`,
+        state: 'planned' as const,
+        title: `Movie ${i}`,
+        rating: null,
+      }));
+
+      mediaLookup.findManyByImdbIds.mockResolvedValue(
+        items.map((item, i) => ({ id: `media-${i}`, imdbId: item.imdbId, type: 'movie' })),
+      );
+      mediaLookup.findManyByTmdbIds.mockResolvedValue([]);
+      repo.bulkImport.mockResolvedValue({ imported: 51, skipped: 0 });
+
+      await service.import({
+        userId: 'user-1',
+        source: 'imdb',
+        items,
+        overwriteExisting: false,
+      });
+
+      // All 51 planned items must have had saveItem called
+      expect(savedItemsService.saveItem).toHaveBeenCalledTimes(51);
+    });
+
     it('continues calling saveItem for subsequent planned items when one saveItem rejects', async () => {
       mediaLookup.findManyByImdbIds.mockResolvedValue([
         { id: 'media-1', imdbId: 'tt0000001', type: 'movie' },

@@ -306,7 +306,7 @@ describe('UserMediaController', () => {
   });
 
   describe('cancelImportBatches', () => {
-    it('should call cancelBatch for each batchId and return void', async () => {
+    it('should call cancelBatch for each batchId', async () => {
       const batchIds = [
         '550e8400-e29b-41d4-a716-446655440000',
         '7c9e6679-7425-40de-944b-e07fc1f90ae7',
@@ -327,12 +327,34 @@ describe('UserMediaController', () => {
       expect(importPendingService.cancelBatch).toHaveBeenCalledWith('user-xyz', batchIds[0]);
     });
 
-    it('should return undefined (204-like) when all batches cancelled', async () => {
+    it('should return empty failedBatchIds when all batches cancelled', async () => {
       const result = await controller.cancelImportBatches({ id: 'u1' }, {
         batchIds: ['550e8400-e29b-41d4-a716-446655440000'],
       } as any);
 
-      expect(result).toBeUndefined();
+      expect(result).toEqual({ failedBatchIds: [] });
+    });
+
+    it('should return failed batchIds when cancelBatch throws NotFoundException', async () => {
+      const { NotFoundException } = await import('@nestjs/common');
+      importPendingService.cancelBatch.mockRejectedValueOnce(new NotFoundException());
+
+      const result = await controller.cancelImportBatches({ id: 'u1' }, {
+        batchIds: ['batch-1', 'batch-2'],
+      } as any);
+
+      expect(result).toEqual({ failedBatchIds: ['batch-1'] });
+      expect(importPendingService.cancelBatch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should rethrow non-NotFoundException errors', async () => {
+      importPendingService.cancelBatch.mockRejectedValueOnce(new Error('DB connection failed'));
+
+      await expect(
+        controller.cancelImportBatches({ id: 'u1' }, {
+          batchIds: ['batch-1'],
+        } as any),
+      ).rejects.toThrow('DB connection failed');
     });
   });
 

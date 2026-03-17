@@ -16,7 +16,11 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { IMPORT_LIMITS, IMPORT_SOURCE } from '../../domain/constants/import.constants';
+import {
+  IMPORT_LIMITS,
+  IMPORT_SOURCE,
+  type ImportSource,
+} from '../../domain/constants/import.constants';
 
 /**
  * A single item in an import request, corresponding to one CSV row.
@@ -166,11 +170,11 @@ export class CsvImportResultDto {
 
 export class ImportMediaDto {
   /**
-   * Import source identifier. Currently only "kinobaza" is supported.
+   * Import source identifier.
    */
   @ApiProperty({ enum: Object.values(IMPORT_SOURCE), example: IMPORT_SOURCE.KINOBAZA })
   @IsIn(Object.values(IMPORT_SOURCE))
-  source!: string;
+  source!: ImportSource;
 
   @ApiProperty({
     type: [ImportItemDto],

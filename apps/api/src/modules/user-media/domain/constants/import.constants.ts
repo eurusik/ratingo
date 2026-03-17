@@ -1,5 +1,6 @@
 export const IMPORT_SOURCE = {
   KINOBAZA: 'kinobaza',
+  IMDB: 'imdb',
 } as const;
 export type ImportSource = (typeof IMPORT_SOURCE)[keyof typeof IMPORT_SOURCE];
 

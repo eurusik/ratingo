@@ -881,31 +881,23 @@
     "import": {
       "title": "Import Data",
       "subtitle": "Transfer your ratings and lists from external services",
-      "howTo": "How to download your file from Kinobaza?",
-      "howToSteps": [
-        "Go to kinobaza.com.ua",
-        "Open your profile → Settings",
-        "Click 'Export ratings' (CSV)",
-        "For watchlist — click 'Export list'",
-        "Drag the downloaded files into the fields below"
-      ],
       "ratingsFile": "Ratings file (.csv)",
       "watchlistFile": "Watchlist file (.csv)",
       "dropHint": "Drag & drop or click to select",
       "recognized": "{count} recognized",
       "skippedRows": "{count} rows skipped",
-      "overwrite": "Overwrite existing ratings",
-      "overwriteHint": "When enabled, imported ratings will replace your current ratings",
+      "overwrite": "Update existing ratings",
+      "overwriteHint": "Movies already in your library will get new ratings from this import. Without this — they will be skipped.",
       "importButton": "Import {count} items",
       "importing": "Importing...",
       "done": "Import complete!",
       "imported": "Imported",
-      "skipped": "Skipped (already rated)",
+      "skipped": "Already in library",
       "notFound": "Not found in catalog",
       "goToRatings": "Go to my ratings",
       "importMore": "Import more",
       "errors": {
-        "wrongFile": "File doesn't look like a Kinobaza export",
+        "wrongFile": "File doesn't look like a {source} export",
         "fileTooLarge": "File is too large (max 5 MB)",
         "onlyCsv": "Only CSV files are supported",
         "wrongSlot": "This file contains {type}, please upload it to the correct field"
@@ -932,19 +924,39 @@
       "sources": {
         "kinobaza": {
           "name": "Kinobaza",
-          "desc": "Ratings and watchlist from kinobaza.com.ua"
+          "desc": "Ratings and watchlist from kinobaza.com.ua",
+          "howTo": "How to download your file from Kinobaza?",
+          "howToSteps": [
+            "Go to kinobaza.com.ua",
+            "Open your profile → Settings",
+            "Click 'Export ratings' (CSV)",
+            "For watchlist — click 'Export list'",
+            "Drag the downloaded files into the fields below"
+          ]
         },
         "imdb": {
           "name": "IMDB",
-          "desc": "Your ratings from imdb.com"
+          "desc": "Ratings and watchlist from imdb.com",
+          "howTo": "How to export your data from IMDB?",
+          "howToSteps": [
+            "Go to imdb.com and sign in",
+            "Click your name → Your Ratings",
+            "Click ⋮ (three dots) → Export",
+            "For watchlist — Your Watchlist → ⋮ → Export",
+            "Drag the downloaded files into the fields below"
+          ]
         },
         "tmdb": {
           "name": "TMDB",
-          "desc": "Ratings from themoviedb.org"
+          "desc": "Ratings from themoviedb.org",
+          "howTo": "",
+          "howToSteps": []
         },
         "letterboxd": {
           "name": "Letterboxd",
-          "desc": "Diary and watchlist from letterboxd.com"
+          "desc": "Diary and watchlist from letterboxd.com",
+          "howTo": "",
+          "howToSteps": []
         }
       },
       "comingSoon": "Coming soon",

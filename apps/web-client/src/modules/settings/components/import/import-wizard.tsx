@@ -54,6 +54,7 @@ type WizardAction =
 // ---------------------------------------------------------------------------
 
 const TEMPLATE_PLACEHOLDER_TYPE = '{type}';
+const TEMPLATE_PLACEHOLDER_SOURCE = '{source}';
 const SETTINGS_DATA_URL = '/settings?tab=data';
 
 const INITIAL_FILE_STATE: FileState = { status: 'idle' };
@@ -177,16 +178,18 @@ export function ImportWizard({ source }: ImportWizardProps) {
       const dispatchError = (errorMessage: string) =>
         dispatch({ type: errorType, errorMessage, fileName });
 
+      const wrongFileError = t.errors.wrongFile.replace(TEMPLATE_PLACEHOLDER_SOURCE, t.sources[source].name);
+
       if (text === FILE_TOO_LARGE_SENTINEL) return dispatchError(t.errors.fileTooLarge);
       if (!text) return dispatchError(t.errors.onlyCsv);
 
       const parser = SOURCE_PARSERS[source];
-      if (!parser) return dispatchError(t.errors.wrongFile);
+      if (!parser) return dispatchError(wrongFileError);
 
       try {
         const detectedType = parser.detectFileType(text);
 
-        if (detectedType === 'unknown') return dispatchError(t.errors.wrongFile);
+        if (detectedType === 'unknown') return dispatchError(wrongFileError);
         if (detectedType === 'watchlist' && slot === 'ratings')
           return dispatchError(t.errors.wrongSlot.replace(TEMPLATE_PLACEHOLDER_TYPE, t.typeWatchlist));
         if (detectedType === 'ratings' && slot === 'watchlist')
@@ -203,7 +206,7 @@ export function ImportWizard({ source }: ImportWizardProps) {
           fileName,
         });
       } catch (err) {
-        dispatchError(err instanceof Error ? err.message : t.errors.wrongFile);
+        dispatchError(err instanceof Error ? err.message : wrongFileError);
       }
     },
     [t, source],
@@ -220,10 +223,10 @@ export function ImportWizard({ source }: ImportWizardProps) {
   );
 
   // --- Navigation helpers ---
-  const handleBackToSettings = () => router.push(SETTINGS_DATA_URL);
+  const handleBackToSettings = useCallback(() => router.push(SETTINGS_DATA_URL), [router]);
 
   // --- Import ---
-  const handleImport = async () => {
+  const handleImport = useCallback(async () => {
     if (state.step !== 'preview' || state.isImporting || importMutation.isPending) return;
 
     dispatch({ type: 'IMPORT_START' });
@@ -247,7 +250,7 @@ export function ImportWizard({ source }: ImportWizardProps) {
     } catch {
       dispatch({ type: 'IMPORT_ERROR' });
     }
-  };
+  }, [state.step, state.isImporting, state.ratings, state.watchlist, state.overwrite, importMutation, source, dispatch]);
 
   // --- Active batches check ---
   // Only poll when on the upload step — polling is irrelevant on preview/result steps.
@@ -263,10 +266,10 @@ export function ImportWizard({ source }: ImportWizardProps) {
       }
     : null;
 
-  const handleCancelBatches = () => {
+  const handleCancelBatches = useCallback(() => {
     const ids = processingBatches.map((b) => b.batchId);
     if (ids.length > 0) cancelMutation.mutate(ids);
-  };
+  }, [processingBatches, cancelMutation]);
 
   // --- Render ---
   return (
@@ -310,8 +313,8 @@ export function ImportWizard({ source }: ImportWizardProps) {
             clearFile: t.clearFile,
             retryFile: t.retryFile,
             maxSizeHint: t.maxSizeHint,
-            howTo: t.howTo,
-            howToSteps: t.howToSteps,
+            howTo: t.sources[source].howTo,
+            howToSteps: t.sources[source].howToSteps,
             back: t.back,
             continue: t.continue,
           }}
