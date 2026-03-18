@@ -1,120 +1,83 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Ratingo — Ukrainian-language streaming content discovery service. NPM workspaces + Turborepo monorepo.
 
-## Project Overview
+## Key Rules
+- Keep domain layer pure: only interfaces, entities, constants — use injected `ClockService` instead of `Date`, constants instead of `process.env`
+- Import across modules through `module/public/` barrel exports only
+- Use `import type { components } from '@ratingo/api-contract'` for all API types on frontend
+- Run `npm run contracts:update` after any DTO or controller change
 
-Ratingo is a Ukrainian-language streaming content discovery service. Monorepo with NestJS backend, Next.js frontend, and shared TypeScript types.
+## Layout
+- `apps/api/` — NestJS + Fastify + Drizzle ORM + PostgreSQL
+- `apps/web-client/` — Next.js 16 + React 19 + TanStack Query v5
+- `packages/api-contract/` — Shared OpenAPI types (auto-generated)
 
 ## Commands
-
-### Development
 ```bash
-npm run dev:api              # Start backend (watch mode, port 3001)
-npm run dev:client           # Start frontend (port 3002)
+# Dev
+npm run dev:api                # Backend (port 3001)
+npm run dev:client             # Frontend (port 3002)
+docker-compose up              # PostgreSQL (5434) + Redis (6379)
+
+# Quality
+npm run test:api               # Backend tests (--runInBand)
+npm run test:client            # Frontend tests
+npm run lint:api:fix           # Auto-fix backend lint
+
+# Single test (from apps/api/ or apps/web-client/)
+npm test -- path/to/file.spec.ts
+npm test -- --testNamePattern="test name"
+
+# Database (from apps/api/)
+npm run db:generate            # Create migration
+npm run db:migrate             # Apply migrations
+
+# After DTO/controller changes
+npm run contracts:update       # Regenerate OpenAPI types → packages/api-contract
 ```
 
-### Build
-```bash
-npm run build:all            # Build all (turbo)
-npm run build:api            # Build backend only
-npm run build:client         # Build frontend only
-```
+## Backend Architecture
 
-### Quality
-```bash
-npm run lint:api             # Lint backend
-npm run lint:api:fix         # Auto-fix lint issues
-npm run lint:client          # Lint frontend
-npm run format               # Prettier all files
-npm run test:api             # Run backend tests (--runInBand)
-npm run test:client          # Run frontend tests
-```
-
-### Running Single Tests (from apps/api/ or apps/web-client/)
-```bash
-npm test -- path/to/file.spec.ts              # Run single test file
-npm test -- --testNamePattern="test name"     # Filter by test name
-npm run test:watch                            # Watch mode
-```
-
-### Database (from apps/api/)
-```bash
-npm run db:generate          # Create new migration
-npm run db:migrate           # Apply migrations
-npm run db:studio            # Open Drizzle Studio
-```
-
-### API Contract
-```bash
-npm run contracts:update     # Regenerate OpenAPI types (run after API changes)
-```
-
-### Local Services
-```bash
-docker-compose up            # Start PostgreSQL (5434) + Redis (6379)
-```
-
-## Architecture
-
-### Monorepo Layout
-- `apps/api/` — NestJS + Fastify + Drizzle ORM + PostgreSQL
-- `apps/web-client/` — Next.js 16 + React 19 + TanStack Query
-- `packages/api-contract/` — Shared OpenAPI types (generated from backend)
-
-### Backend Module Structure (Clean Architecture)
 Each module in `apps/api/src/modules/` follows 4 layers:
 ```
 module/
 ├── presentation/     # Controllers, DTOs, Swagger decorators
 ├── application/      # Services, workers, pipelines
-├── domain/           # Pure interfaces, entities, constants (NO Nest/Drizzle)
-└── infrastructure/   # Repositories (Drizzle), adapters (HTTP)
+├── domain/           # Pure interfaces, entities, constants
+└── infrastructure/   # Repositories (Drizzle), adapters, query objects
 ```
 
-**Critical**: Domain layer must have zero Nest/Drizzle dependencies.
+- Wrap all repository DB calls with `withDbError()`
+- Responses are auto-wrapped: `{ success: true, data }` / `{ success: false, error: { code, message } }`
 
-### Three Core Engines
-1. **Policy Engine** (`catalog-policy/domain/policy-engine.ts`) — Catalog eligibility rules
-2. **Score Calculator** (`shared/score-calculator/`) — Ratingo Score (quality + popularity + freshness)
-3. **Verdict Engine** (`shared/verdict/`) — User-facing recommendations
+### Core Engines
+1. **Policy Engine** (`catalog-policy/domain/policy-engine.ts`) — catalog eligibility
+2. **Score Calculator** (`shared/score-calculator/`) — quality 40% + popularity 30% + freshness 30%
+3. **Verdict Engine** (`shared/verdict/`) — user-facing recommendations
 
-### Key Patterns
-- Provider IDs must use `resolveCanonicalProvider()` from `ingestion/domain/constants/provider-mapping.ts`
-- Content classification via `classifyContent()` from `catalog-policy/domain/classification.service.ts`
-- All evaluation decisions must have explicit `EvaluationReason` from `catalog-policy/domain/constants/evaluation.constants.ts`
+### BullMQ
+Design all jobs as idempotent. Define job types in `*.constants.ts`.
 
-### Background Jobs (BullMQ)
-- `ingestion` queue — Movie/show import, trending sync
-- `stats-queue` — Stats sync, drop-off analysis
-- `catalog-policy-queue` — Policy evaluation (single-threaded)
+## Frontend Architecture
 
-Jobs must be idempotent. Job types defined in `*.constants.ts` files.
-
-### Frontend Structure
-```
-apps/web-client/src/
-├── app/              # Next.js App Router pages
-├── core/             # Infrastructure (api, auth, query hooks)
-├── modules/          # Feature modules (admin, auth, browse, details, home, journal, saved, settings)
-└── shared/           # Components, i18n (uk/en), ui (shadcn)
-```
-
-Types imported from `@ratingo/api-contract`.
+- **Types**: Use `import type { components } from '@ratingo/api-contract'` for all API types
+- **i18n**: Ukrainian (default) + English. Server: `getDictionary(locale)`, client: `useTranslation()` hook
+- **State**: TanStack Query (server state) + Zustand (UI state) + React Context (auth, i18n)
 
 ## Constitution
 
-The `docs/SYSTEM_MAP.md` is the source of truth. Any new entity MUST be added there before merge.
+Source of truth: @docs/SYSTEM_MAP.md — add new entities there before merge.
 
-### Forbidden Patterns
-- Matching by provider name (use canonical ID mapping)
-- Hardcoded country/language lists (use PolicyConfig in DB)
-- Silent failures (always log with reason)
-- Magic strings for reasons (use constants)
-- Direct DB calls in domain layer
+### Domain Rules
+- Resolve providers with `resolveCanonicalProvider()` from `ingestion/domain/constants/provider-mapping.ts`
+- Load country/language lists from PolicyConfig in DB
+- Log every failure with a reason
+- Use constants from `catalog-policy/domain/constants/` for all evaluation reasons
+- Classify content with `classifyContent()` from `catalog-policy/domain/classification.service.ts`
+- Attach `EvaluationReason` to every policy decision
+- Write property-based tests (fast-check) for domain logic
+- Use conventional commits (`feat:`, `fix:`, `refactor:`, etc.)
 
-### Required Patterns
-- Explicit `EvaluationReason` for every decision
-- Property-based tests (fast-check) for domain logic
-- Types from `@ratingo/api-contract` for frontend API calls
-- Conventional commits (enforced via commitlint)
+## Context Preservation
+When compacting, preserve: list of modified files, test commands, and job type definitions from `*.constants.ts`.
