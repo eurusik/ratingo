@@ -317,7 +317,7 @@ describe('useToggleEpisodeWatched', () => {
       expect.objectContaining({ queryKey: queryKeys.userMedia.all }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: queryKeys.meLists.historyAll }),
+      expect.objectContaining({ queryKey: queryKeys.meLists.all }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: queryKeys.userActions.savedItems.all }),
@@ -509,7 +509,7 @@ describe('useMarkMultipleWatched', () => {
       expect.objectContaining({ queryKey: queryKeys.userMedia.all }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: queryKeys.meLists.historyAll }),
+      expect.objectContaining({ queryKey: queryKeys.meLists.all }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: queryKeys.userActions.savedItems.all }),
@@ -741,7 +741,7 @@ describe('useMarkAllEpisodesWatched', () => {
       expect.objectContaining({ queryKey: queryKeys.userMedia.all }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: queryKeys.meLists.historyAll }),
+      expect.objectContaining({ queryKey: queryKeys.meLists.all }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: queryKeys.userActions.savedItems.all }),
@@ -841,7 +841,7 @@ describe('useUnmarkEpisodes', () => {
       expect.objectContaining({ queryKey: queryKeys.userMedia.all }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: queryKeys.meLists.historyAll }),
+      expect.objectContaining({ queryKey: queryKeys.meLists.all }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: queryKeys.userActions.savedItems.all }),
@@ -1077,7 +1077,7 @@ describe('useResetSeason', () => {
       expect.objectContaining({ queryKey: queryKeys.userMedia.all }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: queryKeys.meLists.historyAll }),
+      expect.objectContaining({ queryKey: queryKeys.meLists.all }),
     );
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: queryKeys.userActions.savedItems.all }),
