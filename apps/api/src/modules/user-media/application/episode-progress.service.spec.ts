@@ -381,6 +381,28 @@ describe('EpisodeProgressService', () => {
           state: USER_MEDIA_STATE.WATCHING,
         });
       });
+
+      it('should set caught_up when all AIRED episodes watched (future episodes excluded by repo)', async () => {
+        // Simulates: show has 30 total eps, but only 27 aired. Repo returns only aired.
+        // User watched all 27 aired → caught_up (not "watching 27/30")
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 15, totalCount: 15, watchedEpisodeIds: [] },
+          { seasonNumber: 2, watchedCount: 12, totalCount: 12, watchedEpisodeIds: [] },
+          // S2 has 3 more eps in DB but air_date > NOW() — repo excludes them
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.WATCHING });
+        mockShowStatusPort.isOngoing.mockResolvedValue(true);
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockUserMediaService.setState).toHaveBeenCalledWith({
+          userId: 'user-1',
+          mediaItemId: 'media-1',
+          state: USER_MEDIA_STATE.CAUGHT_UP,
+        });
+        expect(mockShowStatusPort.isOngoing).toHaveBeenCalledWith('show-1');
+      });
     });
   });
 
