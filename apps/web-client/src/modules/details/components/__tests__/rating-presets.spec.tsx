@@ -22,6 +22,11 @@ let mockIsAuthenticated = true;
 let mockUserMediaState: { rating: number | null } | undefined = undefined;
 let mockIsPending = false;
 
+const mockTryAutoUnsave = jest.fn().mockResolvedValue(undefined);
+jest.mock('../../hooks/use-auto-unsave-on-rating', () => ({
+  useAutoUnsaveOnRating: (_mediaItemId: string) => ({ tryAutoUnsave: mockTryAutoUnsave }),
+}));
+
 jest.mock('@/core/auth', () => ({
   useAuth: () => ({ isAuthenticated: mockIsAuthenticated }),
   useAuthModalStore: () => ({ openLogin: mockOpenLogin }),
@@ -154,6 +159,7 @@ describe('RatingPresets', () => {
     mockOpenLogin.mockReset();
     mockToastSuccess.mockReset();
     mockToastError.mockReset();
+    mockTryAutoUnsave.mockReset().mockResolvedValue(undefined);
   });
 
   afterEach(() => {

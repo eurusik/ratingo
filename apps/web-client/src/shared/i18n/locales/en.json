@@ -1701,7 +1701,9 @@
     "toast": {
       "saved": "{emoji} {label} — {score}",
       "cleared": "Rating cleared",
-      "error": "Failed to save rating"
+      "error": "Failed to save rating",
+      "removedFromSaved": "{emoji} {score} · Removed from saved",
+      "undo": "Undo"
     },
     "presets": {
       "bad": "Bad",
