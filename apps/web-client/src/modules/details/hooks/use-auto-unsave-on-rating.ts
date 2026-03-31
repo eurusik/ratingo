@@ -4,10 +4,10 @@ import { queryKeys } from '@/core/query/keys';
 import { useSaveItem, useUnsaveItem } from '@/core/query';
 import { useTranslation } from '@/shared/i18n';
 import type { MediaSaveStatusDto, SavedItemList } from '@/core/api';
-import type { MeUserMediaListItemDto } from '@/core/api/me-lists.client';
+import type { UserMediaState } from '@/core/api/me-lists.client';
 
 /** States where the user is still actively engaged — don't auto-remove. */
-const ACTIVE_STATES = new Set(['watching', 'paused']);
+const ACTIVE_STATES: ReadonlySet<UserMediaState> = new Set(['watching', 'paused']);
 
 export function useAutoUnsaveOnRating(mediaItemId: string) {
   const queryClient = useQueryClient();
@@ -15,12 +15,16 @@ export function useAutoUnsaveOnRating(mediaItemId: string) {
   const { mutateAsync: unsaveItem } = useUnsaveItem();
   const { mutateAsync: saveItem } = useSaveItem();
 
-  async function tryAutoUnsave(score: number, emoji: string) {
-    // Check user media state (already updated by setRating's onSuccess)
-    const userMediaState = queryClient.getQueryData<MeUserMediaListItemDto>(
-      queryKeys.userMedia.state(mediaItemId),
-    );
-    if (userMediaState && ACTIVE_STATES.has(userMediaState.state)) return;
+  /**
+   * @param preRatingState - user media state captured BEFORE the rating mutation,
+   *   so we see the real state, not the backend default assigned on first rating.
+   */
+  async function tryAutoUnsave(
+    score: number,
+    emoji: string,
+    preRatingState?: UserMediaState | null,
+  ) {
+    if (preRatingState && ACTIVE_STATES.has(preRatingState)) return;
 
     const saveStatus = queryClient.getQueryData<MediaSaveStatusDto>(
       queryKeys.userActions.savedItems.status(mediaItemId),

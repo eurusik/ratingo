@@ -109,7 +109,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
       await setRating({ rating: preset.score, mediaType });
       showRatingToast(preset.score, preset.id);
       setSliderOverride(null);
-      await tryAutoUnsave(preset.score, preset.emoji);
+      await tryAutoUnsave(preset.score, preset.emoji, userMediaState?.state);
     });
   };
 
@@ -133,7 +133,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
       showRatingToast(score, committedPreset.id);
       setSliderOverride(null);
       const presetData = RATING_PRESETS.find((p) => p.id === committedPreset.id)!;
-      await tryAutoUnsave(score, presetData.emoji);
+      await tryAutoUnsave(score, presetData.emoji, userMediaState?.state);
     });
   };
 

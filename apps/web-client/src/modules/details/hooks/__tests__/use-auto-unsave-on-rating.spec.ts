@@ -59,18 +59,6 @@ function seedSaveStatus(
   );
 }
 
-function seedUserMediaState(
-  queryClient: QueryClient,
-  mediaItemId: string,
-  state: string,
-) {
-  const { queryKeys } = jest.requireActual('@/core/query/keys');
-  queryClient.setQueryData(
-    queryKeys.userMedia.state(mediaItemId),
-    { state, rating: 85 },
-  );
-}
-
 function renderAutoUnsaveHook(mediaItemId: string, queryClient: QueryClient) {
   return renderHook(() => useAutoUnsaveOnRating(mediaItemId), {
     wrapper: ({ children }) =>
@@ -100,13 +88,12 @@ describe('useAutoUnsaveOnRating', () => {
   // Completed / no active state — should unsave
   // =========================================================================
 
-  it('unsaves from for_later when state is completed', async () => {
-    seedUserMediaState(queryClient, MEDIA_ID, 'completed');
+  it('unsaves from for_later when pre-rating state is completed', async () => {
     seedSaveStatus(queryClient, MEDIA_ID, { isForLater: true, isConsidering: false });
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(85, '😍');
+      await result.current.tryAutoUnsave(85, '😍', 'completed');
     });
 
     expect(mockUnsaveItem).toHaveBeenCalledWith({
@@ -124,13 +111,12 @@ describe('useAutoUnsaveOnRating', () => {
     );
   });
 
-  it('unsaves from considering when state is dropped', async () => {
-    seedUserMediaState(queryClient, MEDIA_ID, 'dropped');
+  it('unsaves from considering when pre-rating state is dropped', async () => {
     seedSaveStatus(queryClient, MEDIA_ID, { isForLater: false, isConsidering: true });
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(15, '😐');
+      await result.current.tryAutoUnsave(15, '😐', 'dropped');
     });
 
     expect(mockUnsaveItem).toHaveBeenCalledWith({
@@ -140,25 +126,34 @@ describe('useAutoUnsaveOnRating', () => {
     });
   });
 
-  it('unsaves when state is planned', async () => {
-    seedUserMediaState(queryClient, MEDIA_ID, 'planned');
+  it('unsaves when pre-rating state is planned', async () => {
     seedSaveStatus(queryClient, MEDIA_ID, { isForLater: true, isConsidering: false });
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(75, '😊');
+      await result.current.tryAutoUnsave(75, '😊', 'planned');
     });
 
     expect(mockUnsaveItem).toHaveBeenCalled();
   });
 
-  it('unsaves when no user media state in cache (e.g. first-time rating)', async () => {
-    // No userMediaState seeded — cache returns undefined
+  it('unsaves when pre-rating state is undefined (first-time rating)', async () => {
     seedSaveStatus(queryClient, MEDIA_ID, { isForLater: true, isConsidering: false });
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(85, '😍');
+      await result.current.tryAutoUnsave(85, '😍', undefined);
+    });
+
+    expect(mockUnsaveItem).toHaveBeenCalled();
+  });
+
+  it('unsaves when pre-rating state is null (no prior entry)', async () => {
+    seedSaveStatus(queryClient, MEDIA_ID, { isForLater: true, isConsidering: false });
+    const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
+
+    await act(async () => {
+      await result.current.tryAutoUnsave(85, '😍', null);
     });
 
     expect(mockUnsaveItem).toHaveBeenCalled();
@@ -168,26 +163,24 @@ describe('useAutoUnsaveOnRating', () => {
   // Active states — should NOT unsave
   // =========================================================================
 
-  it('does NOT unsave when state is watching', async () => {
-    seedUserMediaState(queryClient, MEDIA_ID, 'watching');
+  it('does NOT unsave when pre-rating state is watching', async () => {
     seedSaveStatus(queryClient, MEDIA_ID, { isForLater: true, isConsidering: false });
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(85, '😍');
+      await result.current.tryAutoUnsave(85, '😍', 'watching');
     });
 
     expect(mockUnsaveItem).not.toHaveBeenCalled();
     expect(mockToast).not.toHaveBeenCalled();
   });
 
-  it('does NOT unsave when state is paused', async () => {
-    seedUserMediaState(queryClient, MEDIA_ID, 'paused');
+  it('does NOT unsave when pre-rating state is paused', async () => {
     seedSaveStatus(queryClient, MEDIA_ID, { isForLater: true, isConsidering: false });
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(85, '😍');
+      await result.current.tryAutoUnsave(85, '😍', 'paused');
     });
 
     expect(mockUnsaveItem).not.toHaveBeenCalled();
@@ -199,12 +192,11 @@ describe('useAutoUnsaveOnRating', () => {
   // =========================================================================
 
   it('does NOT unsave when not in any saved list', async () => {
-    seedUserMediaState(queryClient, MEDIA_ID, 'completed');
     seedSaveStatus(queryClient, MEDIA_ID, { isForLater: false, isConsidering: false });
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(75, '😊');
+      await result.current.tryAutoUnsave(75, '😊', 'completed');
     });
 
     expect(mockUnsaveItem).not.toHaveBeenCalled();
@@ -216,12 +208,10 @@ describe('useAutoUnsaveOnRating', () => {
   // =========================================================================
 
   it('does NOT unsave when save status is not in cache', async () => {
-    seedUserMediaState(queryClient, MEDIA_ID, 'completed');
-    // No save status seeded
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(75, '😊');
+      await result.current.tryAutoUnsave(75, '😊', 'completed');
     });
 
     expect(mockUnsaveItem).not.toHaveBeenCalled();
@@ -233,12 +223,11 @@ describe('useAutoUnsaveOnRating', () => {
   // =========================================================================
 
   it('undo action re-saves to the original list', async () => {
-    seedUserMediaState(queryClient, MEDIA_ID, 'completed');
     seedSaveStatus(queryClient, MEDIA_ID, { isForLater: true, isConsidering: false });
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(85, '😍');
+      await result.current.tryAutoUnsave(85, '😍', 'completed');
     });
 
     const toastCall = mockToast.mock.calls[0];
@@ -260,14 +249,13 @@ describe('useAutoUnsaveOnRating', () => {
   // =========================================================================
 
   it('silently catches unsave errors without showing toast', async () => {
-    seedUserMediaState(queryClient, MEDIA_ID, 'completed');
     seedSaveStatus(queryClient, MEDIA_ID, { isForLater: true, isConsidering: false });
     mockUnsaveItem.mockRejectedValueOnce(new Error('Network error'));
 
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(85, '😍');
+      await result.current.tryAutoUnsave(85, '😍', 'completed');
     });
 
     expect(mockUnsaveItem).toHaveBeenCalled();
@@ -279,12 +267,11 @@ describe('useAutoUnsaveOnRating', () => {
   // =========================================================================
 
   it('prefers for_later when both lists are active', async () => {
-    seedUserMediaState(queryClient, MEDIA_ID, 'completed');
     seedSaveStatus(queryClient, MEDIA_ID, { isForLater: true, isConsidering: true });
     const { result } = renderAutoUnsaveHook(MEDIA_ID, queryClient);
 
     await act(async () => {
-      await result.current.tryAutoUnsave(85, '😍');
+      await result.current.tryAutoUnsave(85, '😍', 'completed');
     });
 
     expect(mockUnsaveItem).toHaveBeenCalledWith(
