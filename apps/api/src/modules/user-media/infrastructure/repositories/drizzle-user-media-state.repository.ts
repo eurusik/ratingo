@@ -359,7 +359,6 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
               eq(schema.userMediaState.userId, userId),
               or(
                 eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
-                eq(schema.userMediaState.state, USER_MEDIA_STATE.CAUGHT_UP),
                 isNotNull(schema.userMediaState.progress),
               ),
             ),
@@ -391,7 +390,6 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
               eq(schema.userMediaState.userId, userId),
               or(
                 eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
-                eq(schema.userMediaState.state, USER_MEDIA_STATE.CAUGHT_UP),
                 isNotNull(schema.userMediaState.progress),
               ),
             ),

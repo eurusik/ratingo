@@ -228,9 +228,7 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
 
   async listActivityWithMedia(userId: string, limit = 20, offset = 0): Promise<any[]> {
     let items = this.states.filter((s) => s.userId === userId);
-    items = items.filter(
-      (s) => s.state === 'watching' || s.state === 'caught_up' || s.progress !== null,
-    );
+    items = items.filter((s) => s.state === 'watching' || s.progress !== null);
     items = [...items].sort((a, b) => b.updatedAt - a.updatedAt);
     return items.slice(offset, offset + limit);
   }
@@ -244,9 +242,7 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
 
   async countActivityWithMedia(userId: string): Promise<number> {
     const items = this.states.filter(
-      (s) =>
-        s.userId === userId &&
-        (s.state === 'watching' || s.state === 'caught_up' || s.progress !== null),
+      (s) => s.userId === userId && (s.state === 'watching' || s.progress !== null),
     );
     return items.length;
   }
