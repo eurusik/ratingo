@@ -1701,7 +1701,9 @@
     "toast": {
       "saved": "{emoji} {label} — {score}",
       "cleared": "Оцінку прибрано",
-      "error": "Не вдалося зберегти оцінку"
+      "error": "Не вдалося зберегти оцінку",
+      "removedFromSaved": "{emoji} {score} · Видалено зі збереженого",
+      "undo": "Скасувати"
     },
     "presets": {
       "bad": "Фігня",

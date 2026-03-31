@@ -12,6 +12,7 @@ import { useUserMediaState, useSetRating } from '@/modules/saved/hooks/use-me-li
 import { getRatingColor } from '@/modules/reviews';
 import { RATING_PRESETS, findPresetByScore, type RatingPresetId } from '../constants/rating-presets';
 import { useMutationGuard } from '../hooks/use-mutation-guard';
+import { useAutoUnsaveOnRating } from '../hooks/use-auto-unsave-on-rating';
 import { useAutoHideTimer } from '../hooks/use-auto-hide-timer';
 import {
   type RatingPreset,
@@ -54,6 +55,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
 
   const presetLabels = dict.userRating.presets as Record<RatingPresetId, string>;
   const { guard } = useMutationGuard(dict.userRating.toast.error);
+  const { tryAutoUnsave } = useAutoUnsaveOnRating(mediaItemId);
 
   const hideSlider = useCallback(() => setShowSlider(false), []);
   const { schedule: scheduleHide, cancel: cancelHide, isDraggingRef } = useAutoHideTimer(hideSlider);
@@ -107,6 +109,7 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
       await setRating({ rating: preset.score, mediaType });
       showRatingToast(preset.score, preset.id);
       setSliderOverride(null);
+      await tryAutoUnsave(preset.score, preset.emoji);
     });
   };
 
@@ -129,6 +132,8 @@ export function RatingPresets({ mediaItemId, mediaType }: RatingPresetsProps) {
       await setRating({ rating: score, mediaType });
       showRatingToast(score, committedPreset.id);
       setSliderOverride(null);
+      const presetData = RATING_PRESETS.find((p) => p.id === committedPreset.id)!;
+      await tryAutoUnsave(score, presetData.emoji);
     });
   };
 
