@@ -206,6 +206,30 @@ describe('cards selectors', () => {
       expect(badge?.key).not.toBe(BADGE_KEY.NEW_EPISODE);
     });
 
+    it('returns NEW_EPISODE for caught_up user with hasNewEpisode', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: true,
+          userState: USER_MEDIA_STATE.CAUGHT_UP,
+          hasNewEpisode: true,
+        },
+        CARD_LIST_CONTEXT.DEFAULT,
+      );
+      expect(badge?.key).toBe(BADGE_KEY.NEW_EPISODE);
+    });
+
+    it('does NOT return NEW_EPISODE for caught_up user without hasNewEpisode', () => {
+      const badge = selectBadge(
+        {
+          hasUserEntry: true,
+          userState: USER_MEDIA_STATE.CAUGHT_UP,
+          hasNewEpisode: false,
+        },
+        CARD_LIST_CONTEXT.DEFAULT,
+      );
+      expect(badge?.key).not.toBe(BADGE_KEY.NEW_EPISODE);
+    });
+
     it('returns CONTINUE for paused user with continuePoint', () => {
       const badge = selectBadge(
         {
