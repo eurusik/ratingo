@@ -242,6 +242,39 @@ export class MeListsController {
   }
 
   /**
+   * Gets current user's caught-up items (ongoing shows with all aired episodes watched).
+   */
+  @Get('caught-up')
+  @ApiOperation({ summary: 'My caught-up items (auth: Bearer)' })
+  @ApiOkResponse({ type: PaginatedMeUserMediaResponseDto })
+  async caughtUp(
+    @CurrentUser() user: { id: string },
+    @Query() query: MeUserMediaListQueryDto,
+  ): Promise<PaginatedMeUserMediaResponseDto> {
+    const limit = query.limit ?? DEFAULT_PAGE_SIZE;
+    const offset = query.offset ?? 0;
+    const { total, data } = await this.meListsService.getCaughtUp(
+      user.id,
+      limit,
+      offset,
+      query.sort,
+    );
+
+    const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));
+
+    return {
+      data: items,
+      meta: {
+        count: items.length,
+        total,
+        limit,
+        offset,
+        hasMore: offset + items.length < total,
+      },
+    };
+  }
+
+  /**
    * Gets current user's dropped items.
    *
    * @param {{ id: string }} user - Current user context

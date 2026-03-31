@@ -6,11 +6,11 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useCallback, type MouseEvent } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { Watchlist, HistoryList, PausedList, DroppedList, FavoriteUpdates, ActivityEpisodeSheet } from '@/modules/saved';
+import { Watchlist, HistoryList, PausedList, CaughtUpList, DroppedList, FavoriteUpdates, ActivityEpisodeSheet } from '@/modules/saved';
 import { USER_MEDIA_STATE } from '@/core/api';
 
 /**
@@ -20,6 +20,7 @@ import { USER_MEDIA_STATE } from '@/core/api';
  */
 const TAB_VALUES = {
   WATCHING: USER_MEDIA_STATE.WATCHING,
+  CAUGHT_UP: USER_MEDIA_STATE.CAUGHT_UP,
   PAUSED: USER_MEDIA_STATE.PAUSED,
   DROPPED: USER_MEDIA_STATE.DROPPED,
   HISTORY: 'history',
@@ -30,6 +31,7 @@ type TabValue = (typeof TAB_VALUES)[keyof typeof TAB_VALUES];
 const DEFAULT_TAB = TAB_VALUES.WATCHING;
 
 function getTabFromParam(param: string | null): TabValue {
+  if (param === TAB_VALUES.CAUGHT_UP) return TAB_VALUES.CAUGHT_UP;
   if (param === TAB_VALUES.PAUSED) return TAB_VALUES.PAUSED;
   if (param === TAB_VALUES.DROPPED) return TAB_VALUES.DROPPED;
   if (param === TAB_VALUES.HISTORY) return TAB_VALUES.HISTORY;
@@ -42,6 +44,13 @@ function ActivityPageContent() {
   const searchParams = useSearchParams();
 
   const defaultTab = getTabFromParam(searchParams.get('tab'));
+
+  const handleTabClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
+    const trigger = (e.target as HTMLElement).closest('[role="tab"]');
+    if (trigger) {
+      trigger.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -73,24 +82,33 @@ function ActivityPageContent() {
         <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.activity.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-full">
-            <TabsTrigger value={TAB_VALUES.WATCHING} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
-              {dict.activity.tabs.watching}
-            </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.PAUSED} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
-              {dict.activity.tabs.paused}
-            </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.DROPPED} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
-              {dict.activity.tabs.dropped}
-            </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.HISTORY} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
-              {dict.activity.tabs.history}
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto scrollbar-none mb-6" onClick={handleTabClick}>
+            <TabsList className="bg-cinema-card border border-cinema-borderSoft h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-max">
+              <TabsTrigger value={TAB_VALUES.WATCHING} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+                {dict.activity.tabs.watching}
+              </TabsTrigger>
+              <TabsTrigger value={TAB_VALUES.CAUGHT_UP} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+                {dict.activity.tabs.caughtUp}
+              </TabsTrigger>
+              <TabsTrigger value={TAB_VALUES.PAUSED} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+                {dict.activity.tabs.paused}
+              </TabsTrigger>
+              <TabsTrigger value={TAB_VALUES.DROPPED} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+                {dict.activity.tabs.dropped}
+              </TabsTrigger>
+              <TabsTrigger value={TAB_VALUES.HISTORY} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+                {dict.activity.tabs.history}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value={TAB_VALUES.WATCHING} className="mt-0">
             <Watchlist />
             <FavoriteUpdates />
+          </TabsContent>
+
+          <TabsContent value={TAB_VALUES.CAUGHT_UP} className="mt-0">
+            <CaughtUpList />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.PAUSED} className="mt-0">

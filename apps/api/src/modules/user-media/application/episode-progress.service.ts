@@ -8,6 +8,7 @@ import {
   UNSAVE_CONTEXT,
 } from '../domain/constants/episode-progress.constants';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
+import { SHOW_STATUS_PORT, type IShowStatusPort } from '../domain/ports/show-status.port';
 import {
   EPISODE_PROGRESS_REPOSITORY,
   type IEpisodeProgressRepository,
@@ -23,6 +24,8 @@ export class EpisodeProgressService {
   constructor(
     @Inject(EPISODE_PROGRESS_REPOSITORY)
     private readonly episodeProgressRepo: IEpisodeProgressRepository,
+    @Inject(SHOW_STATUS_PORT)
+    private readonly showStatusPort: IShowStatusPort,
     private readonly userMediaService: UserMediaService,
     private readonly savedItemsService: SavedItemsService,
     private readonly subscriptionsService: SubscriptionsService,
@@ -131,16 +134,19 @@ export class EpisodeProgressService {
 
     const currentState = await this.userMediaService.getState(userId, mediaItemId);
 
-    // Auto-complete even if paused — this is the only state override
+    // All episodes watched — decide between caught_up (ongoing) and completed (ended)
     if (totalEpisodes > 0 && watchedEpisodes === totalEpisodes) {
-      if (currentState?.state !== USER_MEDIA_STATE.COMPLETED) {
+      const isOngoing = await this.showStatusPort.isOngoing(showId);
+      const targetState = isOngoing ? USER_MEDIA_STATE.CAUGHT_UP : USER_MEDIA_STATE.COMPLETED;
+
+      if (currentState?.state !== targetState) {
         await this.userMediaService.setState({
           userId,
           mediaItemId,
-          state: USER_MEDIA_STATE.COMPLETED,
+          state: targetState,
         });
         this.logger.log(
-          `Auto-set user_media_state to 'completed' for user=${userId}, media=${mediaItemId} (${watchedEpisodes}/${totalEpisodes} episodes)`,
+          `Auto-set user_media_state to '${targetState}' for user=${userId}, media=${mediaItemId} (${watchedEpisodes}/${totalEpisodes} episodes)`,
         );
       }
       await this.tryAutoSubscribe(userId, mediaItemId);
@@ -153,7 +159,11 @@ export class EpisodeProgressService {
     // Auto-subscribe for every non-paused watch event (idempotent)
     await this.tryAutoSubscribe(userId, mediaItemId);
 
-    if (!currentState || currentState.state === USER_MEDIA_STATE.PLANNED) {
+    if (
+      !currentState ||
+      currentState.state === USER_MEDIA_STATE.PLANNED ||
+      currentState.state === USER_MEDIA_STATE.CAUGHT_UP
+    ) {
       await this.userMediaService.setState({
         userId,
         mediaItemId,
@@ -208,15 +218,18 @@ export class EpisodeProgressService {
       return;
     }
 
-    // Was completed but now missing episodes → revert
-    if (currentState.state === USER_MEDIA_STATE.COMPLETED) {
+    // Was completed/caught_up but now missing episodes → revert to watching
+    if (
+      currentState.state === USER_MEDIA_STATE.COMPLETED ||
+      currentState.state === USER_MEDIA_STATE.CAUGHT_UP
+    ) {
       await this.userMediaService.setState({
         userId,
         mediaItemId,
         state: USER_MEDIA_STATE.WATCHING,
       });
       this.logger.log(
-        `Reverted user_media_state from 'completed' to 'watching' for user=${userId}, media=${mediaItemId}`,
+        `Reverted user_media_state from '${currentState.state}' to 'watching' for user=${userId}, media=${mediaItemId}`,
       );
     }
   }

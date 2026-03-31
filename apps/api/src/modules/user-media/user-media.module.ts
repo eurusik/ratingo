@@ -16,6 +16,7 @@ import { UserActionsModule } from '../user-actions/user-actions.module';
 import { EpisodeProgressService } from './application/episode-progress.service';
 import { ImportMediaService } from './application/import-media.service';
 import { ImportPendingService } from './application/import-pending.service';
+import { CaughtUpTransitionListener } from './application/listeners/caught-up-transition.listener';
 import { LinkImportListener } from './application/listeners/link-import.listener';
 import { MeListsService } from './application/me-lists.service';
 import { ResolveImportDispatcherPipeline } from './application/pipelines/resolve-import-dispatcher.pipeline';
@@ -24,10 +25,12 @@ import { UserMediaService } from './application/user-media.service';
 import { IMPORT_PENDING_REPOSITORY } from './domain/constants/import-pending.constants';
 import { MEDIA_LOOKUP_PORT } from './domain/constants/import.constants';
 import { RATING_SYNC_PORT } from './domain/ports/rating-sync.port';
+import { SHOW_STATUS_PORT } from './domain/ports/show-status.port';
 import { TMDB_RESOLVER } from './domain/ports/tmdb-resolver.port';
 import { EPISODE_PROGRESS_REPOSITORY } from './domain/repositories/episode-progress.repository.interface';
 import { USER_MEDIA_STATE_REPOSITORY } from './domain/repositories/user-media-state.repository.interface';
 import { DrizzleMediaLookupAdapter } from './infrastructure/adapters/drizzle-media-lookup.adapter';
+import { DrizzleShowStatusAdapter } from './infrastructure/adapters/drizzle-show-status.adapter';
 import { TmdbResolverAdapter } from './infrastructure/adapters/tmdb-resolver.adapter';
 import { DrizzleImportPendingRepository } from './infrastructure/drizzle-import-pending.repository';
 import { FavoriteUpdatesQuery } from './infrastructure/queries/favorite-updates.query';
@@ -63,6 +66,7 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     ImportMediaService,
     ImportPendingService,
     FavoriteUpdatesQuery,
+    CaughtUpTransitionListener,
     LinkImportListener,
     ResolveImportDispatcherPipeline,
     ResolveImportItemPipeline,
@@ -89,6 +93,10 @@ import { UserMediaController } from './presentation/controllers/user-media.contr
     {
       provide: TMDB_RESOLVER,
       useClass: TmdbResolverAdapter,
+    },
+    {
+      provide: SHOW_STATUS_PORT,
+      useClass: DrizzleShowStatusAdapter,
     },
   ],
   controllers: [UserMediaController, MeListsController, EpisodeProgressController],

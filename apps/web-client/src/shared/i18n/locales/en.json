@@ -645,7 +645,8 @@
       "completed": "Completed",
       "planned": "Planned",
       "dropped": "Dropped",
-      "paused": "Paused"
+      "paused": "Paused",
+      "caught_up": "Caught Up"
     },
     "actions": {
       "remove": "Remove",
@@ -728,6 +729,7 @@
     "title": "Activity",
     "tabs": {
       "watching": "Watching",
+      "caughtUp": "Caught Up",
       "paused": "Paused",
       "dropped": "Dropped",
       "history": "Completed"
@@ -736,6 +738,10 @@
       "watching": {
         "title": "Not watching anything yet",
         "description": "Start watching a show and it will appear here"
+      },
+      "caughtUp": {
+        "title": "No caught-up shows",
+        "description": "When you watch all aired episodes of an ongoing show, it will appear here"
       },
       "paused": {
         "title": "No paused content",
@@ -768,6 +774,7 @@
       "completed": "Show marked as completed",
       "backToWatching": "Back to Watching",
       "removedFromActivity": "Removed from activity",
+      "caughtUp": "Caught up — waiting for new episodes",
       "paused": "Paused",
       "resumed": "Resumed watching",
       "dropped": "Dropped",

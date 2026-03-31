@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SubscriptionTriggerService } from './subscription-trigger.service';
 import { ShowSyncDiff } from '../../ingestion/domain/interfaces/show-sync-diff.interface';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
@@ -46,6 +47,7 @@ describe('SubscriptionTriggerService', () => {
         SubscriptionTriggerService,
         { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: subscriptionRepo },
         { provide: USER_NOTIFICATION_REPOSITORY, useValue: notificationRepo },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 
@@ -209,6 +211,93 @@ describe('SubscriptionTriggerService', () => {
 
       expect(events).toHaveLength(0);
       expect(subscriptionRepo.deactivateForEndedShow).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('show.new-episode event emission', () => {
+    it('should emit event when subscriptions exist', async () => {
+      const { service: svc } = await setup({ notifiedSubs: [mockSubscription] });
+      const module = await Test.createTestingModule({
+        providers: [
+          SubscriptionTriggerService,
+          { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: subscriptionRepo },
+          { provide: USER_NOTIFICATION_REPOSITORY, useValue: notificationRepo },
+          { provide: EventEmitter2, useValue: { emit: jest.fn() } },
+        ],
+      }).compile();
+      const emitter = module.get(EventEmitter2);
+      const triggerService = module.get(SubscriptionTriggerService);
+
+      await triggerService.handleShowDiff(mockDiff);
+
+      expect(emitter.emit).toHaveBeenCalledWith('show.new-episode', {
+        mediaItemId: 'media-123',
+      });
+    });
+
+    it('should emit event even when no subscriptions are notified', async () => {
+      const module = await Test.createTestingModule({
+        providers: [
+          SubscriptionTriggerService,
+          {
+            provide: USER_SUBSCRIPTION_REPOSITORY,
+            useValue: {
+              atomicNotifyNewEpisode: jest.fn().mockResolvedValue([]),
+              atomicNotifyNewSeason: jest.fn().mockResolvedValue([]),
+              deactivateForEndedShow: jest.fn().mockResolvedValue(0),
+            },
+          },
+          {
+            provide: USER_NOTIFICATION_REPOSITORY,
+            useValue: { createMany: jest.fn().mockResolvedValue(0) },
+          },
+          { provide: EventEmitter2, useValue: { emit: jest.fn() } },
+        ],
+      }).compile();
+      const emitter = module.get(EventEmitter2);
+      const triggerService = module.get(SubscriptionTriggerService);
+
+      await triggerService.handleShowDiff(mockDiff);
+
+      expect(emitter.emit).toHaveBeenCalledWith('show.new-episode', {
+        mediaItemId: 'media-123',
+      });
+    });
+
+    it('should NOT emit event when diff has no newEpisode', async () => {
+      const module = await Test.createTestingModule({
+        providers: [
+          SubscriptionTriggerService,
+          {
+            provide: USER_SUBSCRIPTION_REPOSITORY,
+            useValue: {
+              atomicNotifyNewEpisode: jest.fn().mockResolvedValue([]),
+              atomicNotifyNewSeason: jest.fn().mockResolvedValue([]),
+              deactivateForEndedShow: jest.fn().mockResolvedValue(0),
+            },
+          },
+          {
+            provide: USER_NOTIFICATION_REPOSITORY,
+            useValue: { createMany: jest.fn().mockResolvedValue(0) },
+          },
+          { provide: EventEmitter2, useValue: { emit: jest.fn() } },
+        ],
+      }).compile();
+      const emitter = module.get(EventEmitter2);
+      const triggerService = module.get(SubscriptionTriggerService);
+
+      const seasonOnlyDiff: ShowSyncDiff = {
+        tmdbId: 12345,
+        mediaItemId: 'media-123',
+        hasChanges: true,
+        changes: {
+          newSeason: { seasonNumber: 3, airDate: '2025-02-01', key: '3' },
+        },
+      };
+
+      await triggerService.handleShowDiff(seasonOnlyDiff);
+
+      expect(emitter.emit).not.toHaveBeenCalledWith('show.new-episode', expect.anything());
     });
   });
 

@@ -43,6 +43,7 @@ export const userMediaStatusEnum = pgEnum('user_media_status', [
   'planned',
   'dropped',
   'paused',
+  'caught_up',
 ]);
 export const ingestionStatusEnum = pgEnum('ingestion_status', ['importing', 'ready', 'failed']);
 export const eligibilityStatusEnum = pgEnum('eligibility_status', [

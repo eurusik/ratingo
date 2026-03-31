@@ -257,6 +257,14 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
   async listFavoriteUpdates(_userId: string, _options: any): Promise<any[]> {
     return [];
   }
+  async findByMediaAndState(
+    mediaItemId: string,
+    state: string,
+  ): Promise<Array<{ userId: string }>> {
+    return this.states
+      .filter((s: any) => s.mediaItemId === mediaItemId && s.state === state)
+      .map((s: any) => ({ userId: s.userId }));
+  }
   async bulkImport(
     _userId: string,
     _items: Array<{ mediaItemId: string; state: string; rating: number | null }>,

@@ -135,6 +135,21 @@ export class MeListsService {
   }
 
   /**
+   * Gets caught-up items (ongoing shows where all aired episodes are watched).
+   */
+  async getCaughtUp(userId: string, limit: number, offset: number, sort?: UserMediaListSort) {
+    const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
+    const options = { states: [USER_MEDIA_STATE.CAUGHT_UP], sort: effectiveSort };
+
+    const [total, data] = await Promise.all([
+      this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.CAUGHT_UP] }),
+      this.userMediaService.listWithMedia(userId, limit, offset, options),
+    ]);
+
+    return { total, data };
+  }
+
+  /**
    * Gets dropped items for the current user.
    *
    * @param {string} userId - User identifier

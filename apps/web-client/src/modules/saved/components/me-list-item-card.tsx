@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import Image from 'next/image';
-import { Play, CheckCircle, XCircle, Pause, Clock, RotateCcw } from 'lucide-react';
+import { Play, CheckCircle, XCircle, Pause, Clock, RotateCcw, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/shared/utils';
 import { useTranslation } from '@/shared/i18n';
@@ -68,6 +68,12 @@ const stateConfig: Record<
     colorClass: 'text-orange-400',
     bgClass: 'bg-orange-500/10',
   },
+  caught_up: {
+    icon: CheckCheck,
+    label: 'caught_up',
+    colorClass: 'text-teal-400',
+    bgClass: 'bg-teal-500/10',
+  },
 };
 
 export function MeListItemCard({ item }: MeListItemCardProps) {
@@ -96,10 +102,11 @@ export function MeListItemCard({ item }: MeListItemCardProps) {
   const total = item.progressSummary?.total ?? 0;
   const progressPercent = total > 0 ? (watched / total) * 100 : 0;
 
-  const canPause = item.state === USER_MEDIA_STATE.WATCHING;
+  const canPause = item.state === USER_MEDIA_STATE.WATCHING || item.state === USER_MEDIA_STATE.CAUGHT_UP;
   const canResume = item.state === USER_MEDIA_STATE.PAUSED;
   const canDrop =
     item.state === USER_MEDIA_STATE.WATCHING ||
+    item.state === USER_MEDIA_STATE.CAUGHT_UP ||
     item.state === USER_MEDIA_STATE.PAUSED ||
     item.state === USER_MEDIA_STATE.PLANNED;
   const canRestore = item.state === USER_MEDIA_STATE.DROPPED;

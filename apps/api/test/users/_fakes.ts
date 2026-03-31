@@ -269,6 +269,15 @@ export class InMemoryUserMediaRepository implements IUserMediaStateRepository {
     return [];
   }
 
+  async findByMediaAndState(
+    mediaItemId: string,
+    state: string,
+  ): Promise<Array<{ userId: string }>> {
+    return this.states
+      .filter((s) => s.mediaItemId === mediaItemId && s.state === state)
+      .map((s) => ({ userId: s.userId }));
+  }
+
   async bulkImport(
     _userId: string,
     _items: Array<{ mediaItemId: string; state: string; rating: number | null }>,

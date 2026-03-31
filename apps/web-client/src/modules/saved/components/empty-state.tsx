@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { Bookmark, HelpCircle, Bell, ListVideo, History, Pause, XCircle, Upload } from 'lucide-react';
+import { Bookmark, HelpCircle, Bell, ListVideo, History, Pause, XCircle, Upload, CheckCheck } from 'lucide-react';
 
 interface EmptyStateProps {
-  type: 'forLater' | 'considering' | 'notifications' | 'watchlist' | 'history' | 'paused' | 'dropped';
+  type: 'forLater' | 'considering' | 'notifications' | 'watchlist' | 'history' | 'paused' | 'dropped' | 'caughtUp';
   title: string;
   description: string;
   showImportCta?: boolean;
@@ -18,6 +18,7 @@ const icons = {
   history: History,
   paused: Pause,
   dropped: XCircle,
+  caughtUp: CheckCheck,
 };
 
 const IMPORT_CTA_TYPES: EmptyStateProps['type'][] = ['watchlist', 'history', 'forLater'];

@@ -14,6 +14,9 @@
 // Services (for cross-module use)
 export { SubscriptionTriggerService } from '../application/subscription-trigger.service';
 
+// Domain constants
+export { SHOW_EVENTS } from '../domain/constants/events.constants';
+
 // Repository interfaces and tokens
 export {
   type IUserSubscriptionRepository,

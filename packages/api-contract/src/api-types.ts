@@ -591,6 +591,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/caught-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My caught-up items (auth: Bearer) */
+        get: operations["MeListsController_caughtUp"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/dropped": {
         parameters: {
             query?: never;
@@ -2577,7 +2594,7 @@ export interface components {
              * @example watching
              * @enum {string}
              */
-            state: "watching" | "completed" | "planned" | "dropped" | "paused";
+            state: "watching" | "completed" | "planned" | "dropped" | "paused" | "caught_up";
             /**
              * @description 0-100 rating
              * @example 85
@@ -3259,7 +3276,7 @@ export interface components {
              * @example watching
              * @enum {string}
              */
-            state?: "watching" | "completed" | "planned" | "dropped" | "paused";
+            state?: "watching" | "completed" | "planned" | "dropped" | "paused" | "caught_up";
             /**
              * @description Media type hint for auto-state resolution. Only accepted when state is omitted; ignored otherwise.
              * @enum {string}
@@ -3413,7 +3430,7 @@ export interface components {
              * @example watching
              * @enum {string}
              */
-            state: "watching" | "completed" | "planned" | "dropped" | "paused";
+            state: "watching" | "completed" | "planned" | "dropped" | "paused" | "caught_up";
             /**
              * @description 0-100 rating
              * @example 85
@@ -3730,7 +3747,7 @@ export interface components {
         PublicUserMediaListItemDto: {
             id: string;
             /** @enum {string} */
-            state: "watching" | "completed" | "planned" | "dropped" | "paused";
+            state: "watching" | "completed" | "planned" | "dropped" | "paused" | "caught_up";
             /** @description 0-100 rating */
             rating: number | null;
             /** @description Arbitrary progress payload (JSON) */
@@ -7163,6 +7180,33 @@ export interface operations {
         };
     };
     MeListsController_paused: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                sort?: "recent" | "rating" | "releaseDate";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    MeListsController_caughtUp: {
         parameters: {
             query?: {
                 limit?: number;

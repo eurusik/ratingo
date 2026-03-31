@@ -7,7 +7,7 @@ import type { MediaSaveStatusDto, SavedItemList } from '@/core/api';
 import type { UserMediaState } from '@/core/api/me-lists.client';
 
 /** States where the user is still actively engaged — don't auto-remove. */
-const ACTIVE_STATES: ReadonlySet<UserMediaState> = new Set(['watching', 'paused']);
+const ACTIVE_STATES: ReadonlySet<UserMediaState> = new Set(['watching', 'paused', 'caught_up']);
 
 export function useAutoUnsaveOnRating(mediaItemId: string) {
   const queryClient = useQueryClient();

@@ -169,6 +169,13 @@
       "when": 1773732282006,
       "tag": "0023_lonely_sinister_six",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1774950228050,
+      "tag": "0024_true_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }
