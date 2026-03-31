@@ -5,7 +5,7 @@ export interface UserMediaState {
   id: string;
   userId: string;
   mediaItemId: string;
-  state: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused';
+  state: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused' | 'caught_up';
   rating: number | null;
   progress: {
     seasons?: Record<number, number>;
@@ -24,6 +24,7 @@ export const USER_MEDIA_STATE = {
   PLANNED: 'planned',
   DROPPED: 'dropped',
   PAUSED: 'paused',
+  CAUGHT_UP: 'caught_up',
 } as const;
 
 /**
@@ -43,4 +44,5 @@ export const USER_MEDIA_HISTORY_STATES: UserMediaState['state'][] = [
   USER_MEDIA_STATE.WATCHING,
   USER_MEDIA_STATE.COMPLETED,
   USER_MEDIA_STATE.PAUSED,
+  USER_MEDIA_STATE.CAUGHT_UP,
 ];

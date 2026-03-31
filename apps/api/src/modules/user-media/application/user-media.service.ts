@@ -317,7 +317,10 @@ export class UserMediaService implements IRatingSyncPort {
       throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_PAUSE_NO_STATE);
     }
 
-    if (currentState.state !== USER_MEDIA_STATE.WATCHING) {
+    if (
+      currentState.state !== USER_MEDIA_STATE.WATCHING &&
+      currentState.state !== USER_MEDIA_STATE.CAUGHT_UP
+    ) {
       throw new BadRequestException(USER_MEDIA_STATE_ERRORS.CANNOT_PAUSE_NOT_WATCHING);
     }
 

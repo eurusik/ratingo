@@ -28,6 +28,7 @@ export const USER_MEDIA_STATE = {
   PLANNED: 'planned',
   DROPPED: 'dropped',
   PAUSED: 'paused',
+  CAUGHT_UP: 'caught_up',
 } as const satisfies Record<string, UserMediaState>;
 
 export type EpisodeInfo = components['schemas']['EpisodeInfoDto'];
@@ -96,6 +97,18 @@ export const meListsApi = {
    */
   async getPaused(params?: MeListsParams): Promise<PaginatedMeUserMediaResponseDto> {
     return apiGet<PaginatedMeUserMediaResponseDto>('me/paused', {
+      searchParams: params as Record<string, string | number>,
+    });
+  },
+
+  /**
+   * Get user's caught-up items.
+   *
+   * @param params - Pagination and sorting parameters
+   * @returns Paginated caught-up items
+   */
+  async getCaughtUp(params?: MeListsParams): Promise<PaginatedMeUserMediaResponseDto> {
+    return apiGet<PaginatedMeUserMediaResponseDto>('me/caught-up', {
       searchParams: params as Record<string, string | number>,
     });
   },

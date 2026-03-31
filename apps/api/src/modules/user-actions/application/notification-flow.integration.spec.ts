@@ -4,6 +4,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SubscriptionsService } from './subscriptions.service';
 import { SubscriptionTriggerService } from './subscription-trigger.service';
 import { NotificationsService } from './notifications.service';
@@ -203,6 +204,7 @@ describe('Notification Flow Integration', () => {
         { provide: USER_NOTIFICATION_REPOSITORY, useValue: notificationRepo },
         { provide: SHOW_STATE_PORT, useValue: showStatePort },
         { provide: USER_PREFERENCE_PORT, useValue: userPreferencePort },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 

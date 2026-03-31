@@ -18,7 +18,8 @@ export const STATE_PRIORITY: Record<string, number> = {
   watching: 2,
   paused: 3,
   dropped: 4,
-  completed: 5,
+  caught_up: 5,
+  completed: 6,
 };
 
 export const MEDIA_LOOKUP_PORT = Symbol('MEDIA_LOOKUP_PORT');

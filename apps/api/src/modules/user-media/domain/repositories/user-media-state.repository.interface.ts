@@ -165,6 +165,12 @@ export interface IUserMediaStateRepository {
   /** Counts with identical filters to {@link listContinueWithMedia} — keep WHERE clauses in sync. */
   countContinueWithMedia(userId: string): Promise<number>;
 
+  /** Finds all user states for a given media item with a specific state. */
+  findByMediaAndState(
+    mediaItemId: string,
+    state: UserMediaState['state'],
+  ): Promise<Array<{ userId: string }>>;
+
   /** Lists highly-rated shows with recent or upcoming episodes. */
   listFavoriteUpdates(
     userId: string,

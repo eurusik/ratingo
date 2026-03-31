@@ -65,6 +65,16 @@ export function usePaused({ sort, limit = PAGE_SIZE, enabled = true }: MeListOpt
   });
 }
 
+export function useCaughtUp({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+  return useQuery({
+    queryKey: queryKeys.meLists.caughtUp(sort, limit),
+    queryFn: () => meListsApi.getCaughtUp({ sort, limit }),
+    enabled,
+    staleTime: STALE_5_MIN,
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function useDropped({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   return useQuery({
     queryKey: queryKeys.meLists.dropped(sort, limit),
@@ -80,11 +90,13 @@ export function usePauseMedia() {
 
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.pauseMedia(mediaItemId),
-    onSuccess: () => {
+    onSuccess: (_data, mediaItemId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
   });
@@ -95,11 +107,13 @@ export function useResumeMedia() {
 
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.resumeMedia(mediaItemId),
-    onSuccess: () => {
+    onSuccess: (_data, mediaItemId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
   });
@@ -115,6 +129,7 @@ export function useDropMedia() {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
@@ -132,6 +147,7 @@ export function useRestoreMedia() {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });

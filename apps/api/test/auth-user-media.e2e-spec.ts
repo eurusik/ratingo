@@ -209,7 +209,9 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
 
   async listActivityWithMedia(userId: string, limit = 20, offset = 0): Promise<any[]> {
     let items = this.states.filter((s) => s.userId === userId);
-    items = items.filter((s) => s.state === 'watching' || s.progress !== null);
+    items = items.filter(
+      (s) => s.state === 'watching' || s.state === 'caught_up' || s.progress !== null,
+    );
     items = [...items].sort((a, b) => (b.updatedAt as any) - (a.updatedAt as any));
     return items.slice(offset, offset + limit);
   }
@@ -223,7 +225,9 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
 
   async countActivityWithMedia(userId: string): Promise<number> {
     return this.states.filter(
-      (s) => s.userId === userId && (s.state === 'watching' || s.progress !== null),
+      (s) =>
+        s.userId === userId &&
+        (s.state === 'watching' || s.state === 'caught_up' || s.progress !== null),
     ).length;
   }
 
@@ -256,6 +260,14 @@ class InMemoryUserMediaRepository implements IUserMediaStateRepository {
 
   async listFavoriteUpdates(_userId: string, _options: any): Promise<any[]> {
     return [];
+  }
+  async findByMediaAndState(
+    mediaItemId: string,
+    state: string,
+  ): Promise<Array<{ userId: string }>> {
+    return this.states
+      .filter((s: any) => s.mediaItemId === mediaItemId && s.state === state)
+      .map((s: any) => ({ userId: s.userId }));
   }
   async bulkImport(
     _userId: string,

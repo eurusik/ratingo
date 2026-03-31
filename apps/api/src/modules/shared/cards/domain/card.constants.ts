@@ -7,6 +7,7 @@ export const CARD_USER_STATE = {
   PLANNED: 'planned',
   DROPPED: 'dropped',
   PAUSED: 'paused',
+  CAUGHT_UP: 'caught_up',
 } as const;
 
 export type CardUserState = (typeof CARD_USER_STATE)[keyof typeof CARD_USER_STATE];

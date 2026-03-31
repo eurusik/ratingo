@@ -1,7 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { ShowStatus } from '../../../common/enums/show-status.enum';
 import type { ShowSyncDiff } from '../../ingestion/public';
+import { SHOW_EVENTS } from '../domain/constants/events.constants';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
 import {
   type IUserNotificationRepository,
@@ -36,6 +38,7 @@ export class SubscriptionTriggerService {
     private readonly subscriptionRepo: IUserSubscriptionRepository,
     @Inject(USER_NOTIFICATION_REPOSITORY)
     private readonly notificationRepo: IUserNotificationRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async handleShowDiff(diff: ShowSyncDiff): Promise<SubscriptionNotificationEvent[]> {
@@ -120,6 +123,7 @@ export class SubscriptionTriggerService {
 
     if (events.length > 0) {
       this.logger.log(`New episode ${newEpisode.key}: ${events.length} subscriptions notified`);
+      this.eventEmitter.emit(SHOW_EVENTS.NEW_EPISODE, { mediaItemId: diff.mediaItemId });
     }
 
     return events;

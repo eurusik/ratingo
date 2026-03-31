@@ -16,9 +16,9 @@ export class UserMediaStateDto implements UserMediaState {
 
   @ApiProperty({
     example: 'watching',
-    enum: ['watching', 'completed', 'planned', 'dropped', 'paused'],
+    enum: ['watching', 'completed', 'planned', 'dropped', 'paused', 'caught_up'],
   })
-  state!: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused';
+  state!: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused' | 'caught_up';
 
   @ApiProperty({ example: 85, nullable: true, description: '0-100 rating' })
   rating!: number | null;

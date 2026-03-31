@@ -359,6 +359,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
               eq(schema.userMediaState.userId, userId),
               or(
                 eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
+                eq(schema.userMediaState.state, USER_MEDIA_STATE.CAUGHT_UP),
                 isNotNull(schema.userMediaState.progress),
               ),
             ),
@@ -390,6 +391,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
               eq(schema.userMediaState.userId, userId),
               or(
                 eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
+                eq(schema.userMediaState.state, USER_MEDIA_STATE.CAUGHT_UP),
                 isNotNull(schema.userMediaState.progress),
               ),
             ),
@@ -552,6 +554,27 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     return this.favoriteUpdatesQuery.execute(userId, options);
   }
 
+  async findByMediaAndState(
+    mediaItemId: string,
+    state: UserMediaState['state'],
+  ): Promise<Array<{ userId: string }>> {
+    return withDbError(
+      'find users by media and state',
+      this.logger,
+      async () =>
+        this.db
+          .select({ userId: schema.userMediaState.userId })
+          .from(schema.userMediaState)
+          .where(
+            and(
+              eq(schema.userMediaState.mediaItemId, mediaItemId),
+              eq(schema.userMediaState.state, state),
+            ),
+          ),
+      { mediaItemId, state },
+    );
+  }
+
   /**
    * Bulk upsert user media states for CSV imports.
    *
@@ -609,14 +632,16 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
                       WHEN 'watching'  THEN 2
                       WHEN 'paused'    THEN 3
                       WHEN 'dropped'   THEN 4
-                      WHEN 'completed' THEN 5
+                      WHEN 'caught_up' THEN 5
+                      WHEN 'completed' THEN 6
                       ELSE 0
                     END > CASE ${schema.userMediaState.state}
                       WHEN 'planned'   THEN 1
                       WHEN 'watching'  THEN 2
                       WHEN 'paused'    THEN 3
                       WHEN 'dropped'   THEN 4
-                      WHEN 'completed' THEN 5
+                      WHEN 'caught_up' THEN 5
+                      WHEN 'completed' THEN 6
                       ELSE 0
                     END
                     THEN EXCLUDED.state

@@ -10,7 +10,7 @@ import { Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { Watchlist, HistoryList, PausedList, DroppedList, FavoriteUpdates, ActivityEpisodeSheet } from '@/modules/saved';
+import { Watchlist, HistoryList, PausedList, CaughtUpList, DroppedList, FavoriteUpdates, ActivityEpisodeSheet } from '@/modules/saved';
 import { USER_MEDIA_STATE } from '@/core/api';
 
 /**
@@ -20,6 +20,7 @@ import { USER_MEDIA_STATE } from '@/core/api';
  */
 const TAB_VALUES = {
   WATCHING: USER_MEDIA_STATE.WATCHING,
+  CAUGHT_UP: USER_MEDIA_STATE.CAUGHT_UP,
   PAUSED: USER_MEDIA_STATE.PAUSED,
   DROPPED: USER_MEDIA_STATE.DROPPED,
   HISTORY: 'history',
@@ -30,6 +31,7 @@ type TabValue = (typeof TAB_VALUES)[keyof typeof TAB_VALUES];
 const DEFAULT_TAB = TAB_VALUES.WATCHING;
 
 function getTabFromParam(param: string | null): TabValue {
+  if (param === TAB_VALUES.CAUGHT_UP) return TAB_VALUES.CAUGHT_UP;
   if (param === TAB_VALUES.PAUSED) return TAB_VALUES.PAUSED;
   if (param === TAB_VALUES.DROPPED) return TAB_VALUES.DROPPED;
   if (param === TAB_VALUES.HISTORY) return TAB_VALUES.HISTORY;
@@ -77,6 +79,9 @@ function ActivityPageContent() {
             <TabsTrigger value={TAB_VALUES.WATCHING} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.activity.tabs.watching}
             </TabsTrigger>
+            <TabsTrigger value={TAB_VALUES.CAUGHT_UP} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+              {dict.activity.tabs.caughtUp}
+            </TabsTrigger>
             <TabsTrigger value={TAB_VALUES.PAUSED} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.activity.tabs.paused}
             </TabsTrigger>
@@ -91,6 +96,10 @@ function ActivityPageContent() {
           <TabsContent value={TAB_VALUES.WATCHING} className="mt-0">
             <Watchlist />
             <FavoriteUpdates />
+          </TabsContent>
+
+          <TabsContent value={TAB_VALUES.CAUGHT_UP} className="mt-0">
+            <CaughtUpList />
           </TabsContent>
 
           <TabsContent value={TAB_VALUES.PAUSED} className="mt-0">

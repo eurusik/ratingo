@@ -6,7 +6,7 @@ export interface UserState {
   id: string;
   userId: string;
   mediaItemId: string;
-  state: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused';
+  state: 'watching' | 'completed' | 'planned' | 'dropped' | 'paused' | 'caught_up';
   rating: number | null;
   progress: {
     seasons?: Record<number, number>;

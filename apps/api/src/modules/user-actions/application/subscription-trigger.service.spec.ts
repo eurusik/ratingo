@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SubscriptionTriggerService } from './subscription-trigger.service';
 import { ShowSyncDiff } from '../../ingestion/domain/interfaces/show-sync-diff.interface';
 import { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
@@ -46,6 +47,7 @@ describe('SubscriptionTriggerService', () => {
         SubscriptionTriggerService,
         { provide: USER_SUBSCRIPTION_REPOSITORY, useValue: subscriptionRepo },
         { provide: USER_NOTIFICATION_REPOSITORY, useValue: notificationRepo },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 

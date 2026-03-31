@@ -120,6 +120,8 @@ export const queryKeys = {
     watchlist: (sort?: string) => ['me-lists', 'watchlist', sort ?? null] as const,
     pausedAll: ['me-lists', 'paused'] as const,
     paused: (sort?: string, limit?: number) => ['me-lists', 'paused', sort ?? null, limit ?? null] as const,
+    caughtUpAll: ['me-lists', 'caught-up'] as const,
+    caughtUp: (sort?: string, limit?: number) => ['me-lists', 'caught-up', sort ?? null, limit ?? null] as const,
     droppedAll: ['me-lists', 'dropped'] as const,
     dropped: (sort?: string, limit?: number) => ['me-lists', 'dropped', sort ?? null, limit ?? null] as const,
   },

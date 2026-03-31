@@ -6,6 +6,7 @@ import { SubscriptionsService } from '../../user-actions/application/subscriptio
 import { SAVED_ITEM_LIST } from '../../user-actions/domain/entities';
 import { UNSAVE_CONTEXT } from '../domain/constants/episode-progress.constants';
 import { USER_MEDIA_STATE } from '../domain/entities/user-media-state.entity';
+import { SHOW_STATUS_PORT, type IShowStatusPort } from '../domain/ports/show-status.port';
 import {
   EPISODE_PROGRESS_REPOSITORY,
   type IEpisodeProgressRepository,
@@ -43,6 +44,10 @@ describe('EpisodeProgressService', () => {
     autoSubscribeForShow: jest.fn().mockResolvedValue(undefined),
   };
 
+  const mockShowStatusPort: jest.Mocked<IShowStatusPort> = {
+    isOngoing: jest.fn().mockResolvedValue(false),
+  };
+
   const episodeInfo: EpisodeMediaInfo = {
     episodeId: 'ep-1',
     showId: 'show-1',
@@ -56,6 +61,7 @@ describe('EpisodeProgressService', () => {
       providers: [
         EpisodeProgressService,
         { provide: EPISODE_PROGRESS_REPOSITORY, useValue: mockEpisodeProgressRepo },
+        { provide: SHOW_STATUS_PORT, useValue: mockShowStatusPort },
         { provide: UserMediaService, useValue: mockUserMediaService },
         { provide: SavedItemsService, useValue: mockSavedItemsService },
         { provide: SubscriptionsService, useValue: mockSubscriptionsService },
@@ -64,6 +70,7 @@ describe('EpisodeProgressService', () => {
 
     service = module.get(EpisodeProgressService);
     jest.clearAllMocks();
+    mockShowStatusPort.isOngoing.mockResolvedValue(false);
     // Default: all episodes belong to one show and all exist
     mockEpisodeProgressRepo.validateEpisodeBatch.mockImplementation(async (ids: string[]) =>
       Promise.resolve({ existingCount: ids.length, distinctShowCount: 1 }),
@@ -328,6 +335,52 @@ describe('EpisodeProgressService', () => {
           state: USER_MEDIA_STATE.COMPLETED,
         });
       });
+
+      it('should set caught_up when all episodes watched and show is ongoing', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 10, totalCount: 10, watchedEpisodeIds: [] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.WATCHING });
+        mockShowStatusPort.isOngoing.mockResolvedValue(true);
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockUserMediaService.setState).toHaveBeenCalledWith({
+          userId: 'user-1',
+          mediaItemId: 'media-1',
+          state: USER_MEDIA_STATE.CAUGHT_UP,
+        });
+      });
+
+      it('should NOT set caught_up when already caught_up', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 10, totalCount: 10, watchedEpisodeIds: [] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.CAUGHT_UP });
+        mockShowStatusPort.isOngoing.mockResolvedValue(true);
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockUserMediaService.setState).not.toHaveBeenCalled();
+      });
+
+      it('should transition caught_up to watching when new episodes exist and user watches one', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 8, totalCount: 10, watchedEpisodeIds: [] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.CAUGHT_UP });
+
+        await service.markWatched('user-1', 'ep-1');
+
+        expect(mockUserMediaService.setState).toHaveBeenCalledWith({
+          userId: 'user-1',
+          mediaItemId: 'media-1',
+          state: USER_MEDIA_STATE.WATCHING,
+        });
+      });
     });
   });
 
@@ -530,6 +583,22 @@ describe('EpisodeProgressService', () => {
           { seasonNumber: 1, watchedCount: 9, totalCount: 10, watchedEpisodeIds: [] },
         ]);
         mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.COMPLETED });
+
+        await service.markUnwatched('user-1', 'ep-1');
+
+        expect(mockUserMediaService.setState).toHaveBeenCalledWith({
+          userId: 'user-1',
+          mediaItemId: 'media-1',
+          state: USER_MEDIA_STATE.WATCHING,
+        });
+      });
+
+      it('should revert from "caught_up" to "watching" when episode is unmarked', async () => {
+        mockEpisodeProgressRepo.getEpisodeMediaInfo.mockResolvedValue(episodeInfo);
+        mockEpisodeProgressRepo.getShowProgress.mockResolvedValue([
+          { seasonNumber: 1, watchedCount: 9, totalCount: 10, watchedEpisodeIds: [] },
+        ]);
+        mockUserMediaService.getState.mockResolvedValue({ state: USER_MEDIA_STATE.CAUGHT_UP });
 
         await service.markUnwatched('user-1', 'ep-1');
 
