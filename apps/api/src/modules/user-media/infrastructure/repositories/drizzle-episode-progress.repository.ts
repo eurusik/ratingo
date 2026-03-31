@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { DatabaseException } from '../../../../common/exceptions/database.exception';
@@ -141,7 +141,12 @@ export class DrizzleEpisodeProgressRepository implements IEpisodeProgressReposit
         })
         .from(schema.seasons)
         .innerJoin(schema.episodes, eq(schema.episodes.seasonId, schema.seasons.id))
-        .where(eq(schema.seasons.showId, showId))
+        .where(
+          and(
+            eq(schema.seasons.showId, showId),
+            or(lte(schema.episodes.airDate, new Date()), isNull(schema.episodes.airDate)),
+          ),
+        )
         .orderBy(schema.seasons.number, schema.episodes.number);
 
       const seasonMap = new Map<number, { total: number; watched: number; watchedIds: string[] }>();
