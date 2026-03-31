@@ -123,8 +123,10 @@ export class SubscriptionTriggerService {
 
     if (events.length > 0) {
       this.logger.log(`New episode ${newEpisode.key}: ${events.length} subscriptions notified`);
-      this.eventEmitter.emit(SHOW_EVENTS.NEW_EPISODE, { mediaItemId: diff.mediaItemId });
     }
+
+    // Always emit — caught_up users may not have subscriptions
+    this.eventEmitter.emit(SHOW_EVENTS.NEW_EPISODE, { mediaItemId: diff.mediaItemId });
 
     return events;
   }
