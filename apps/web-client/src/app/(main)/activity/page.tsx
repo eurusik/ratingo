@@ -75,20 +75,20 @@ function ActivityPageContent() {
         <h1 className="text-2xl font-bold text-cinema-text-primary mb-8">{dict.activity.title}</h1>
 
         <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-full">
-            <TabsTrigger value={TAB_VALUES.WATCHING} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+          <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-full overflow-x-auto flex-nowrap">
+            <TabsTrigger value={TAB_VALUES.WATCHING} className="shrink-0 md:flex-none px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.activity.tabs.watching}
             </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.CAUGHT_UP} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+            <TabsTrigger value={TAB_VALUES.CAUGHT_UP} className="shrink-0 md:flex-none px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.activity.tabs.caughtUp}
             </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.PAUSED} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+            <TabsTrigger value={TAB_VALUES.PAUSED} className="shrink-0 md:flex-none px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.activity.tabs.paused}
             </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.DROPPED} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+            <TabsTrigger value={TAB_VALUES.DROPPED} className="shrink-0 md:flex-none px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.activity.tabs.dropped}
             </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.HISTORY} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+            <TabsTrigger value={TAB_VALUES.HISTORY} className="shrink-0 md:flex-none px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.activity.tabs.history}
             </TabsTrigger>
           </TabsList>
