@@ -123,10 +123,11 @@ export class SubscriptionTriggerService {
 
     if (events.length > 0) {
       this.logger.log(`New episode ${newEpisode.key}: ${events.length} subscriptions notified`);
+      // Emit only when atomicNotifyNewEpisode confirmed a genuinely new episode.
+      // caught_up users always have subscriptions (auto-subscribed in syncStateAfterWatch),
+      // so events.length > 0 reliably indicates a new episode, not a repeated sync.
+      this.eventEmitter.emit(SHOW_EVENTS.NEW_EPISODE, { mediaItemId: diff.mediaItemId });
     }
-
-    // Always emit — caught_up users may not have subscriptions
-    this.eventEmitter.emit(SHOW_EVENTS.NEW_EPISODE, { mediaItemId: diff.mediaItemId });
 
     return events;
   }
