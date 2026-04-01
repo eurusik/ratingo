@@ -5,9 +5,10 @@
 
 'use client';
 
-import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userActionsApi, type SavedItemList } from '@/core/api/user-actions.client';
 import type { MediaTypeFilter } from './use-me-lists';
+import { useFilterAwarePlaceholder } from './use-filter-aware-placeholder';
 
 const STALE_5_MIN = 1000 * 60 * 5;
 
@@ -18,23 +19,25 @@ const QUERY_KEYS = {
 
 export function useSavedForLater({ type = 'all', enabled = true }: { type?: MediaTypeFilter; enabled?: boolean } = {}) {
   const apiType = type === 'all' ? undefined : type;
+  const placeholderData = useFilterAwarePlaceholder(type);
   return useQuery({
     queryKey: QUERY_KEYS.forLater(apiType),
     queryFn: () => userActionsApi.listForLater({ type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
-    placeholderData: keepPreviousData,
+    placeholderData,
   });
 }
 
 export function useSavedConsidering({ type = 'all', enabled = true }: { type?: MediaTypeFilter; enabled?: boolean } = {}) {
   const apiType = type === 'all' ? undefined : type;
+  const placeholderData = useFilterAwarePlaceholder(type);
   return useQuery({
     queryKey: QUERY_KEYS.considering(apiType),
     queryFn: () => userActionsApi.listConsidering({ type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
-    placeholderData: keepPreviousData,
+    placeholderData,
   });
 }
 

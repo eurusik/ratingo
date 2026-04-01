@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo } from 'react';
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { meListsApi, USER_MEDIA_STATE, type MeListSort, type MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import type { MediaType } from '@/shared/types';
 import { queryKeys } from '@/core/query/keys';
+import { useFilterAwarePlaceholder } from './use-filter-aware-placeholder';
 
 export type { MeListSort } from '@/core/api/me-lists.client';
 
@@ -27,23 +28,25 @@ interface MeListOptions {
 
 export function useWatching({ limit = PAGE_SIZE, type = 'all', enabled = true }: MeListOptions = {}) {
   const apiType = type === 'all' ? undefined : type;
+  const placeholderData = useFilterAwarePlaceholder(type);
   return useQuery({
     queryKey: queryKeys.meLists.activity(apiType, limit),
     queryFn: () => meListsApi.getActivity({ limit, type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
-    placeholderData: keepPreviousData,
+    placeholderData,
   });
 }
 
 export function useCompleted({ sort, type = 'all', limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   const apiType = type === 'all' ? undefined : type;
+  const placeholderData = useFilterAwarePlaceholder(type, sort);
   const query = useQuery({
     queryKey: queryKeys.meLists.history(sort, apiType, limit),
     queryFn: () => meListsApi.getHistory({ sort, limit, type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
-    placeholderData: keepPreviousData,
+    placeholderData,
   });
 
   const data = useMemo(
@@ -62,34 +65,37 @@ export function useCompleted({ sort, type = 'all', limit = PAGE_SIZE, enabled = 
 
 export function usePaused({ sort, type = 'all', limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   const apiType = type === 'all' ? undefined : type;
+  const placeholderData = useFilterAwarePlaceholder(type, sort);
   return useQuery({
     queryKey: queryKeys.meLists.paused(sort, apiType, limit),
     queryFn: () => meListsApi.getPaused({ sort, limit, type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
-    placeholderData: keepPreviousData,
+    placeholderData,
   });
 }
 
 export function useCaughtUp({ sort, type = 'all', limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   const apiType = type === 'all' ? undefined : type;
+  const placeholderData = useFilterAwarePlaceholder(type, sort);
   return useQuery({
     queryKey: queryKeys.meLists.caughtUp(sort, apiType, limit),
     queryFn: () => meListsApi.getCaughtUp({ sort, limit, type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
-    placeholderData: keepPreviousData,
+    placeholderData,
   });
 }
 
 export function useDropped({ sort, type = 'all', limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
   const apiType = type === 'all' ? undefined : type;
+  const placeholderData = useFilterAwarePlaceholder(type, sort);
   return useQuery({
     queryKey: queryKeys.meLists.dropped(sort, apiType, limit),
     queryFn: () => meListsApi.getDropped({ sort, limit, type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
-    placeholderData: keepPreviousData,
+    placeholderData,
   });
 }
 
