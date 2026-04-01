@@ -97,10 +97,14 @@ describe('MeListsService', () => {
       const result = await service.getRatings(userId, limit, offset, sort);
 
       expect(result).toEqual({ total: mockTotal, data: mockData });
-      expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, { ratedOnly: true });
+      expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, {
+        ratedOnly: true,
+        type: undefined,
+      });
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         ratedOnly: true,
         sort,
+        type: undefined,
       });
     });
 
@@ -117,6 +121,7 @@ describe('MeListsService', () => {
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         ratedOnly: true,
         sort: USER_MEDIA_LIST_SORT.RECENT,
+        type: undefined,
       });
     });
 
@@ -134,6 +139,7 @@ describe('MeListsService', () => {
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         ratedOnly: true,
         sort: USER_MEDIA_LIST_SORT.RATING,
+        type: undefined,
       });
     });
 
@@ -190,10 +196,12 @@ describe('MeListsService', () => {
       expect(result).toEqual({ total: mockTotal, data: mockData });
       expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, {
         states: USER_MEDIA_WATCHLIST_STATES,
+        type: undefined,
       });
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         states: USER_MEDIA_WATCHLIST_STATES,
         sort,
+        type: undefined,
       });
     });
 
@@ -210,6 +218,7 @@ describe('MeListsService', () => {
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         states: USER_MEDIA_WATCHLIST_STATES,
         sort: USER_MEDIA_LIST_SORT.RECENT,
+        type: undefined,
       });
     });
 
@@ -227,6 +236,7 @@ describe('MeListsService', () => {
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         states: USER_MEDIA_WATCHLIST_STATES,
         sort: USER_MEDIA_LIST_SORT.RATING,
+        type: undefined,
       });
     });
 
@@ -283,10 +293,12 @@ describe('MeListsService', () => {
       expect(result).toEqual({ total: mockTotal, data: mockData });
       expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, {
         states: USER_MEDIA_HISTORY_STATES,
+        type: undefined,
       });
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         states: USER_MEDIA_HISTORY_STATES,
         sort,
+        type: undefined,
       });
     });
 
@@ -303,6 +315,7 @@ describe('MeListsService', () => {
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         states: USER_MEDIA_HISTORY_STATES,
         sort: USER_MEDIA_LIST_SORT.RECENT,
+        type: undefined,
       });
     });
 
@@ -320,6 +333,7 @@ describe('MeListsService', () => {
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         states: USER_MEDIA_HISTORY_STATES,
         sort: USER_MEDIA_LIST_SORT.RELEASE_DATE,
+        type: undefined,
       });
     });
 
@@ -334,6 +348,27 @@ describe('MeListsService', () => {
       const result = await service.getHistory(userId, limit, offset);
 
       expect(result).toEqual({ total: 0, data: [] });
+    });
+
+    it('should pass type filter to count and list methods', async () => {
+      const userId = 'user-1';
+      const limit = 10;
+      const offset = 0;
+
+      userMediaService.countWithMedia.mockResolvedValue(5);
+      userMediaService.listWithMedia.mockResolvedValue([]);
+
+      await service.getHistory(userId, limit, offset, undefined, MediaType.SHOW);
+
+      expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, {
+        states: USER_MEDIA_HISTORY_STATES,
+        type: MediaType.SHOW,
+      });
+      expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
+        states: USER_MEDIA_HISTORY_STATES,
+        sort: USER_MEDIA_LIST_SORT.RECENT,
+        type: MediaType.SHOW,
+      });
     });
 
     it('should include paused items in history (paused is part of history states)', async () => {
@@ -394,8 +429,13 @@ describe('MeListsService', () => {
       const result = await service.getActivity(userId, limit, offset);
 
       expect(result).toEqual({ total: mockTotal, data: mockData });
-      expect(userMediaService.countActivityWithMedia).toHaveBeenCalledWith(userId);
-      expect(userMediaService.listActivityWithMedia).toHaveBeenCalledWith(userId, limit, offset);
+      expect(userMediaService.countActivityWithMedia).toHaveBeenCalledWith(userId, undefined);
+      expect(userMediaService.listActivityWithMedia).toHaveBeenCalledWith(
+        userId,
+        limit,
+        offset,
+        undefined,
+      );
     });
 
     it('should handle empty activity list', async () => {
@@ -446,8 +486,32 @@ describe('MeListsService', () => {
       const result = await service.getActivity(userId, limit, offset);
 
       expect(result).toEqual({ total: mockTotal, data: mockData });
-      expect(userMediaService.countActivityWithMedia).toHaveBeenCalledWith(userId);
-      expect(userMediaService.listActivityWithMedia).toHaveBeenCalledWith(userId, limit, offset);
+      expect(userMediaService.countActivityWithMedia).toHaveBeenCalledWith(userId, undefined);
+      expect(userMediaService.listActivityWithMedia).toHaveBeenCalledWith(
+        userId,
+        limit,
+        offset,
+        undefined,
+      );
+    });
+
+    it('should pass type filter to count and list methods', async () => {
+      const userId = 'user-1';
+      const limit = 10;
+      const offset = 0;
+
+      userMediaService.countActivityWithMedia.mockResolvedValue(3);
+      userMediaService.listActivityWithMedia.mockResolvedValue([]);
+
+      await service.getActivity(userId, limit, offset, MediaType.MOVIE);
+
+      expect(userMediaService.countActivityWithMedia).toHaveBeenCalledWith(userId, MediaType.MOVIE);
+      expect(userMediaService.listActivityWithMedia).toHaveBeenCalledWith(
+        userId,
+        limit,
+        offset,
+        MediaType.MOVIE,
+      );
     });
   });
 
@@ -490,10 +554,12 @@ describe('MeListsService', () => {
       expect(result).toEqual({ total: mockTotal, data: mockData });
       expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, {
         states: [USER_MEDIA_STATE.PAUSED],
+        type: undefined,
       });
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         states: [USER_MEDIA_STATE.PAUSED],
         sort,
+        type: undefined,
       });
     });
 
@@ -510,6 +576,7 @@ describe('MeListsService', () => {
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         states: [USER_MEDIA_STATE.PAUSED],
         sort: USER_MEDIA_LIST_SORT.RECENT,
+        type: undefined,
       });
     });
 
@@ -566,10 +633,12 @@ describe('MeListsService', () => {
       expect(result).toEqual({ total: mockTotal, data: mockData });
       expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, {
         states: [USER_MEDIA_STATE.DROPPED],
+        type: undefined,
       });
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         states: [USER_MEDIA_STATE.DROPPED],
         sort,
+        type: undefined,
       });
     });
 
@@ -586,6 +655,7 @@ describe('MeListsService', () => {
       expect(userMediaService.listWithMedia).toHaveBeenCalledWith(userId, limit, offset, {
         states: [USER_MEDIA_STATE.DROPPED],
         sort: USER_MEDIA_LIST_SORT.RECENT,
+        type: undefined,
       });
     });
 

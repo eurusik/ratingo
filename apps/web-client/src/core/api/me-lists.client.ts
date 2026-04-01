@@ -43,6 +43,7 @@ export interface MeListsParams {
   limit?: number;
   offset?: number;
   sort?: MeListSort;
+  type?: MediaType;
 }
 
 // ============================================================================
@@ -83,7 +84,7 @@ export const meListsApi = {
    * @param params - Pagination parameters (sort has no effect on this endpoint)
    * @returns Paginated activity items
    */
-  async getActivity(params?: Pick<MeListsParams, 'limit' | 'offset'>): Promise<PaginatedMeUserMediaResponseDto> {
+  async getActivity(params?: Pick<MeListsParams, 'limit' | 'offset' | 'type'>): Promise<PaginatedMeUserMediaResponseDto> {
     return apiGet<PaginatedMeUserMediaResponseDto>('me/activity', {
       searchParams: params as Record<string, string | number>,
     });

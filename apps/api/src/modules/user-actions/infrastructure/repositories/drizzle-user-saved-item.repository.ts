@@ -169,6 +169,7 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
     list: SavedItemList,
     limit = DEFAULT_PAGE_SIZE,
     offset = 0,
+    type?: MediaType,
   ): Promise<SavedItemWithMedia[]> {
     try {
       // Subquery to aggregate active subscription triggers per media item
@@ -206,7 +207,13 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
           subscriptionTriggersSubquery,
           eq(subscriptionTriggersSubquery.mediaItemId, schema.userSavedItems.mediaItemId),
         )
-        .where(and(eq(schema.userSavedItems.userId, userId), eq(schema.userSavedItems.list, list)))
+        .where(
+          and(
+            eq(schema.userSavedItems.userId, userId),
+            eq(schema.userSavedItems.list, list),
+            ...(type ? [eq(schema.mediaItems.type, type)] : []),
+          ),
+        )
         .orderBy(desc(schema.userSavedItems.createdAt))
         .limit(limit)
         .offset(offset);
@@ -236,12 +243,22 @@ export class DrizzleUserSavedItemRepository implements IUserSavedItemRepository 
    * @param {SavedItemList} list - List type
    * @returns {Promise<number>} Count
    */
-  async count(userId: string, list: SavedItemList): Promise<number> {
+  async count(userId: string, list: SavedItemList, type?: MediaType): Promise<number> {
     try {
+      const whereParts = [
+        eq(schema.userSavedItems.userId, userId),
+        eq(schema.userSavedItems.list, list),
+      ];
+
+      if (type) {
+        whereParts.push(eq(schema.mediaItems.type, type));
+      }
+
       const [row] = await this.db
         .select({ count: sql<number>`count(*)` })
         .from(schema.userSavedItems)
-        .where(and(eq(schema.userSavedItems.userId, userId), eq(schema.userSavedItems.list, list)));
+        .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userSavedItems.mediaItemId))
+        .where(and(...whereParts));
       return Number(row?.count ?? 0);
     } catch (error) {
       this.logger.error(`count failed: ${error.message}`, error.stack);

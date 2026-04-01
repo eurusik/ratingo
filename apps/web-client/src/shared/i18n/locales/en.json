@@ -601,7 +601,9 @@
     "movie": "Movie",
     "show": "Show",
     "movies": "Movies",
-    "shows": "Shows"
+    "shows": "Shows",
+    "all": "All",
+    "label": "Filter by type"
   },
   "seo": {
     "notFound": {
@@ -627,6 +629,8 @@
         "title": "Nothing here yet",
         "description": "Add content you're still deciding on"
       },
+      "noMovies": "No movies",
+      "noShows": "No shows",
       "watchlist": {
         "title": "Watchlist is empty",
         "description": "Add content to your watchlist"
@@ -754,7 +758,9 @@
       "history": {
         "title": "History is empty",
         "description": "You haven't watched anything yet"
-      }
+      },
+      "noMovies": "No movies",
+      "noShows": "No shows"
     },
     "sort": {
       "label": "Sort order",

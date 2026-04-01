@@ -1,7 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
 
+import { OffsetPaginationQueryDto } from '../../../../common/dtos';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 import { SAVED_ITEM_LIST, type SavedItemList } from '../../domain/entities/user-saved-item.entity';
 
 const SAVED_ITEM_LIST_VALUES = Object.values(SAVED_ITEM_LIST);
@@ -173,4 +175,18 @@ export class BatchStatusResponseDto {
     description: 'Map of mediaItemId to save status',
   })
   statuses: Record<string, MediaSaveStatusDto>;
+}
+
+/**
+ * Query DTO for listing saved items with optional media type filter.
+ */
+export class SavedItemsListQueryDto extends OffsetPaginationQueryDto {
+  @ApiPropertyOptional({
+    required: false,
+    enum: MediaType,
+    description: 'Filter by media type',
+  })
+  @IsOptional()
+  @IsEnum(MediaType)
+  type?: MediaType;
 }

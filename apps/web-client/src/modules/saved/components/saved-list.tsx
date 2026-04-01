@@ -1,10 +1,13 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import { useTranslation } from '@/shared/i18n';
 import { Skeleton } from '@/shared/ui';
 import { useSavedForLater, useSavedConsidering, useUnsaveItem, useSaveItem } from '../hooks';
+import type { MediaTypeFilter as MediaTypeFilterValue } from '../hooks/use-me-lists';
 import { SavedItemCard } from './saved-item-card';
 import { EmptyState } from './empty-state';
+import { MediaTypeFilter } from './media-type-filter';
 
 interface SavedListProps {
   list: 'for_later' | 'considering';
@@ -13,20 +16,27 @@ interface SavedListProps {
 export function SavedList({ list }: SavedListProps) {
   const { dict } = useTranslation();
   const isForLater = list === 'for_later';
+  const [mediaType, setMediaType] = useState<MediaTypeFilterValue>('all');
 
-  const { data, isLoading } = isForLater ? useSavedForLater() : useSavedConsidering();
+  const forLaterQuery = useSavedForLater({ type: mediaType, enabled: isForLater });
+  const consideringQuery = useSavedConsidering({ type: mediaType, enabled: !isForLater });
+  const { data, isLoading } = isForLater ? forLaterQuery : consideringQuery;
 
   const unsaveMutation = useUnsaveItem();
   const saveMutation = useSaveItem();
 
-  const handleRemove = (mediaItemId: string) => {
-    unsaveMutation.mutate({ mediaItemId, list, context: 'saved-page' });
-  };
+  const handleMediaTypeChange = useCallback((value: MediaTypeFilterValue) => {
+    setMediaType(value);
+  }, []);
 
-  const handleMove = (mediaItemId: string) => {
+  const handleRemove = useCallback((mediaItemId: string) => {
+    unsaveMutation.mutate({ mediaItemId, list, context: 'saved-page' });
+  }, [unsaveMutation, list]);
+
+  const handleMove = useCallback((mediaItemId: string) => {
     const targetList = isForLater ? 'considering' : 'for_later';
     saveMutation.mutate({ mediaItemId, list: targetList, context: 'saved-page' });
-  };
+  }, [saveMutation, isForLater]);
 
   if (isLoading) {
     return (
@@ -46,7 +56,13 @@ export function SavedList({ list }: SavedListProps) {
 
   const items = data?.data ?? [];
 
-  if (items.length === 0) {
+  const emptyTitle = mediaType === 'movie'
+    ? (dict.saved?.empty?.noMovies ?? 'Немає фільмів')
+    : mediaType === 'show'
+      ? (dict.saved?.empty?.noShows ?? 'Немає серіалів')
+      : undefined;
+
+  if (items.length === 0 && mediaType === 'all') {
     const emptyType = isForLater ? 'forLater' : 'considering';
     return (
       <EmptyState
@@ -61,32 +77,39 @@ export function SavedList({ list }: SavedListProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {items.map((item) => {
-        const media = item.mediaSummary;
-        const poster = media.poster as Record<string, string> | null;
+    <div className="space-y-4">
+      <MediaTypeFilter value={mediaType} onChange={handleMediaTypeChange} />
+      {items.length === 0 && emptyTitle ? (
+        <p className="text-cinema-text-muted text-center py-16">{emptyTitle}</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((item) => {
+            const media = item.mediaSummary;
+            const poster = media.poster as Record<string, string> | null;
 
-        return (
-          <SavedItemCard
-            key={item.id}
-            id={item.id}
-            mediaItemId={item.mediaItemId}
-            title={media.title}
-            type={media.type as 'movie' | 'show'}
-            slug={media.slug}
-            posterUrl={poster?.small ?? null}
-            releaseDate={media.releaseDate}
-            reasonKey={item.reasonKey}
-            activeSubscriptionTriggers={item.activeSubscriptionTriggers}
-            onRemove={() => handleRemove(item.mediaItemId)}
-            onMove={() => handleMove(item.mediaItemId)}
-            moveLabel={
-              isForLater ? dict.saved.actions.moveToConsidering : dict.saved.actions.moveToForLater
-            }
-            isRemoving={unsaveMutation.isPending}
-          />
-        );
-      })}
+            return (
+              <SavedItemCard
+                key={item.id}
+                id={item.id}
+                mediaItemId={item.mediaItemId}
+                title={media.title}
+                type={media.type as 'movie' | 'show'}
+                slug={media.slug}
+                posterUrl={poster?.small ?? null}
+                releaseDate={media.releaseDate}
+                reasonKey={item.reasonKey}
+                activeSubscriptionTriggers={item.activeSubscriptionTriggers}
+                onRemove={() => handleRemove(item.mediaItemId)}
+                onMove={() => handleMove(item.mediaItemId)}
+                moveLabel={
+                  isForLater ? dict.saved.actions.moveToConsidering : dict.saved.actions.moveToForLater
+                }
+                isRemoving={unsaveMutation.isPending}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

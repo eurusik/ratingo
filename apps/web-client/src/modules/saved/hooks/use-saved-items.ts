@@ -7,27 +7,37 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userActionsApi, type SavedItemList } from '@/core/api/user-actions.client';
+import type { MediaTypeFilter } from './use-me-lists';
+import { useFilterAwarePlaceholder } from './use-filter-aware-placeholder';
+
+const STALE_5_MIN = 1000 * 60 * 5;
 
 const QUERY_KEYS = {
-  forLater: ['saved-items', 'for-later'] as const,
-  considering: ['saved-items', 'considering'] as const,
+  forLater: (type?: string) => ['saved-items', 'for-later', type ?? null] as const,
+  considering: (type?: string) => ['saved-items', 'considering', type ?? null] as const,
 };
 
-export function useSavedForLater(enabled = true) {
+export function useSavedForLater({ type = 'all', enabled = true }: { type?: MediaTypeFilter; enabled?: boolean } = {}) {
+  const apiType = type === 'all' ? undefined : type;
+  const placeholderData = useFilterAwarePlaceholder(type);
   return useQuery({
-    queryKey: QUERY_KEYS.forLater,
-    queryFn: () => userActionsApi.listForLater(),
+    queryKey: QUERY_KEYS.forLater(apiType),
+    queryFn: () => userActionsApi.listForLater({ type: apiType }),
     enabled,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: STALE_5_MIN,
+    placeholderData,
   });
 }
 
-export function useSavedConsidering(enabled = true) {
+export function useSavedConsidering({ type = 'all', enabled = true }: { type?: MediaTypeFilter; enabled?: boolean } = {}) {
+  const apiType = type === 'all' ? undefined : type;
+  const placeholderData = useFilterAwarePlaceholder(type);
   return useQuery({
-    queryKey: QUERY_KEYS.considering,
-    queryFn: () => userActionsApi.listConsidering(),
+    queryKey: QUERY_KEYS.considering(apiType),
+    queryFn: () => userActionsApi.listConsidering({ type: apiType }),
     enabled,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: STALE_5_MIN,
+    placeholderData,
   });
 }
 

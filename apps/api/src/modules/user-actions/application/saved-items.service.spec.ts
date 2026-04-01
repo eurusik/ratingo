@@ -4,6 +4,7 @@ import { USER_SAVED_ITEM_REPOSITORY } from '../domain/repositories/user-saved-it
 import { USER_MEDIA_ACTION_REPOSITORY } from '../domain/repositories/user-media-action.repository.interface';
 import { SAVED_ITEM_LIST } from '../domain/entities/user-saved-item.entity';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
+import { MediaType } from '../../../common/enums/media-type.enum';
 
 describe('SavedItemsService', () => {
   let service: SavedItemsService;
@@ -150,12 +151,44 @@ describe('SavedItemsService', () => {
       expect(result.total).toBe(1);
       expect(result.data).toHaveLength(1);
       expect(result.data[0].mediaSummary.title).toBe('Inception');
-      expect(savedItemRepo.count).toHaveBeenCalledWith('user-id-1', SAVED_ITEM_LIST.FOR_LATER);
+      expect(savedItemRepo.count).toHaveBeenCalledWith(
+        'user-id-1',
+        SAVED_ITEM_LIST.FOR_LATER,
+        undefined,
+      );
       expect(savedItemRepo.listWithMedia).toHaveBeenCalledWith(
         'user-id-1',
         SAVED_ITEM_LIST.FOR_LATER,
         20,
         0,
+        undefined,
+      );
+    });
+
+    it('should pass type filter to count and listWithMedia on repository', async () => {
+      savedItemRepo.count.mockResolvedValue(3);
+      savedItemRepo.listWithMedia.mockResolvedValue([]);
+
+      const result = await service.listWithMedia(
+        'user-id-1',
+        SAVED_ITEM_LIST.FOR_LATER,
+        10,
+        0,
+        MediaType.MOVIE,
+      );
+
+      expect(result.total).toBe(3);
+      expect(savedItemRepo.count).toHaveBeenCalledWith(
+        'user-id-1',
+        SAVED_ITEM_LIST.FOR_LATER,
+        MediaType.MOVIE,
+      );
+      expect(savedItemRepo.listWithMedia).toHaveBeenCalledWith(
+        'user-id-1',
+        SAVED_ITEM_LIST.FOR_LATER,
+        10,
+        0,
+        MediaType.MOVIE,
       );
     });
   });

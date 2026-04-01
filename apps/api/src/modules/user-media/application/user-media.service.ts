@@ -264,8 +264,13 @@ export class UserMediaService implements IRatingSyncPort {
    * @param {number} offset - Offset
    * @returns {Promise<any[]>} Activity list items
    */
-  async listActivityWithMedia(userId: string, limit = DEFAULT_PAGE_SIZE, offset = 0) {
-    const items = await this.repo.listActivityWithMedia(userId, limit, offset);
+  async listActivityWithMedia(
+    userId: string,
+    limit = DEFAULT_PAGE_SIZE,
+    offset = 0,
+    type?: MediaType,
+  ) {
+    const items = await this.repo.listActivityWithMedia(userId, limit, offset, type);
     return this.cards.enrichUserMedia(items);
   }
 
@@ -273,10 +278,11 @@ export class UserMediaService implements IRatingSyncPort {
    * Counts activity items.
    *
    * @param {string} userId - User identifier
+   * @param {MediaType} type - Optional media type filter
    * @returns {Promise<number>} Total activity items
    */
-  async countActivityWithMedia(userId: string): Promise<number> {
-    return this.repo.countActivityWithMedia(userId);
+  async countActivityWithMedia(userId: string, type?: MediaType): Promise<number> {
+    return this.repo.countActivityWithMedia(userId, type);
   }
 
   /**

@@ -17,7 +17,6 @@ import {
   ApiOkResponse,
   ApiCreatedResponse,
   ApiParam,
-  ApiQuery,
 } from '@nestjs/swagger';
 
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '@/common/constants';
@@ -35,6 +34,7 @@ import {
   UnsaveActionResultDto,
   BatchStatusQueryDto,
   BatchStatusResponseDto,
+  SavedItemsListQueryDto,
 } from '../dto/saved-items.dto';
 
 @ApiTags('Saved Items')
@@ -148,28 +148,23 @@ export class SavedItemsController {
    */
   @Get('for-later')
   @ApiOperation({ summary: 'List "for later" saved items (auth: Bearer)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'offset', required: false, type: Number })
   @ApiOkResponse({ type: [SavedItemWithMediaResponseDto] })
-  async listForLater(
-    @CurrentUser() user: { id: string },
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number,
-  ) {
+  async listForLater(@CurrentUser() user: { id: string }, @Query() query: SavedItemsListQueryDto) {
     const { total, data } = await this.savedItemsService.listWithMedia(
       user.id,
       SAVED_ITEM_LIST.FOR_LATER,
-      limit ?? DEFAULT_PAGE_SIZE,
-      offset ?? 0,
+      query.limit ?? DEFAULT_PAGE_SIZE,
+      query.offset ?? 0,
+      query.type,
     );
 
     return {
       data,
       meta: {
         total,
-        limit: limit ?? DEFAULT_PAGE_SIZE,
-        offset: offset ?? 0,
-        hasMore: (offset ?? 0) + data.length < total,
+        limit: query.limit ?? DEFAULT_PAGE_SIZE,
+        offset: query.offset ?? 0,
+        hasMore: (query.offset ?? 0) + data.length < total,
       },
     };
   }
@@ -179,28 +174,26 @@ export class SavedItemsController {
    */
   @Get('considering')
   @ApiOperation({ summary: 'List "considering" saved items (auth: Bearer)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'offset', required: false, type: Number })
   @ApiOkResponse({ type: [SavedItemWithMediaResponseDto] })
   async listConsidering(
     @CurrentUser() user: { id: string },
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number,
+    @Query() query: SavedItemsListQueryDto,
   ) {
     const { total, data } = await this.savedItemsService.listWithMedia(
       user.id,
       SAVED_ITEM_LIST.CONSIDERING,
-      limit ?? DEFAULT_PAGE_SIZE,
-      offset ?? 0,
+      query.limit ?? DEFAULT_PAGE_SIZE,
+      query.offset ?? 0,
+      query.type,
     );
 
     return {
       data,
       meta: {
         total,
-        limit: limit ?? DEFAULT_PAGE_SIZE,
-        offset: offset ?? 0,
-        hasMore: (offset ?? 0) + data.length < total,
+        limit: query.limit ?? DEFAULT_PAGE_SIZE,
+        offset: query.offset ?? 0,
+        hasMore: (query.offset ?? 0) + data.length < total,
       },
     };
   }

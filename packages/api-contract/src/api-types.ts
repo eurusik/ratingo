@@ -7077,6 +7077,8 @@ export interface operations {
                 limit?: number;
                 offset?: number;
                 sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
             };
             header?: never;
             path?: never;
@@ -7104,6 +7106,8 @@ export interface operations {
                 limit?: number;
                 offset?: number;
                 sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
             };
             header?: never;
             path?: never;
@@ -7131,6 +7135,8 @@ export interface operations {
                 limit?: number;
                 offset?: number;
                 sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
             };
             header?: never;
             path?: never;
@@ -7158,6 +7164,8 @@ export interface operations {
                 limit?: number;
                 offset?: number;
                 sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
             };
             header?: never;
             path?: never;
@@ -7185,6 +7193,8 @@ export interface operations {
                 limit?: number;
                 offset?: number;
                 sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
             };
             header?: never;
             path?: never;
@@ -7212,6 +7222,8 @@ export interface operations {
                 limit?: number;
                 offset?: number;
                 sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
             };
             header?: never;
             path?: never;
@@ -7239,6 +7251,8 @@ export interface operations {
                 limit?: number;
                 offset?: number;
                 sort?: "recent" | "rating" | "releaseDate";
+                /** @description Filter by media type */
+                type?: "movie" | "show";
             };
             header?: never;
             path?: never;
@@ -8227,6 +8241,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                /** @description Filter by media type */
+                type?: "movie" | "show";
             };
             header?: never;
             path?: never;
@@ -8253,6 +8269,8 @@ export interface operations {
             query?: {
                 limit?: number;
                 offset?: number;
+                /** @description Filter by media type */
+                type?: "movie" | "show";
             };
             header?: never;
             path?: never;

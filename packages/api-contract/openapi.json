@@ -2410,6 +2410,19 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2482,6 +2495,19 @@
                 "recent",
                 "rating",
                 "releaseDate"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
               ],
               "type": "string"
             }
@@ -2560,6 +2586,19 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2632,6 +2671,19 @@
                 "recent",
                 "rating",
                 "releaseDate"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
               ],
               "type": "string"
             }
@@ -2710,6 +2762,19 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2785,6 +2850,19 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2857,6 +2935,19 @@
                 "recent",
                 "rating",
                 "releaseDate"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
               ],
               "type": "string"
             }
@@ -4424,6 +4515,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "default": 20,
               "type": "number"
             }
           },
@@ -4432,7 +4524,21 @@
             "required": false,
             "in": "query",
             "schema": {
+              "default": 0,
               "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
             }
           }
         ],
@@ -4486,6 +4592,7 @@
             "required": false,
             "in": "query",
             "schema": {
+              "default": 20,
               "type": "number"
             }
           },
@@ -4494,7 +4601,21 @@
             "required": false,
             "in": "query",
             "schema": {
+              "default": 0,
               "type": "number"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by media type",
+            "schema": {
+              "enum": [
+                "movie",
+                "show"
+              ],
+              "type": "string"
             }
           }
         ],

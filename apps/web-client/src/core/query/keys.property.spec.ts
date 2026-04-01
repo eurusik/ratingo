@@ -311,9 +311,9 @@ describe('Query Keys Undefined Normalization', () => {
     });
 
     it('userActions.savedItems.list normalizes undefined to null', () => {
-      const key = queryKeys.userActions.savedItems.list('watchlist', undefined, undefined);
+      const key = queryKeys.userActions.savedItems.list('watchlist', undefined, undefined, undefined);
       expect((key as readonly unknown[]).includes(undefined)).toBe(false);
-      expect(key).toEqual(['user-actions', 'saved-items', 'list', 'watchlist', null, null]);
+      expect(key).toEqual(['user-actions', 'saved-items', 'list', 'watchlist', null, null, null]);
     });
 
     it('userActions.subscriptions.list normalizes undefined to null', () => {
