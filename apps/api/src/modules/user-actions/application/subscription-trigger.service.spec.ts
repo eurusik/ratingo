@@ -235,7 +235,7 @@ describe('SubscriptionTriggerService', () => {
       });
     });
 
-    it('should emit event even when no subscriptions are notified', async () => {
+    it('should NOT emit event when no subscriptions are notified (dedup — episode already processed)', async () => {
       const module = await Test.createTestingModule({
         providers: [
           SubscriptionTriggerService,
@@ -259,9 +259,7 @@ describe('SubscriptionTriggerService', () => {
 
       await triggerService.handleShowDiff(mockDiff);
 
-      expect(emitter.emit).toHaveBeenCalledWith('show.new-episode', {
-        mediaItemId: 'media-123',
-      });
+      expect(emitter.emit).not.toHaveBeenCalledWith('show.new-episode', expect.anything());
     });
 
     it('should NOT emit event when diff has no newEpisode', async () => {
