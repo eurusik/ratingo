@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 
+import { type MediaType } from '../../../common/enums/media-type.enum';
 import {
   FAVORITE_UPDATES_DAYS_AHEAD,
   FAVORITE_UPDATES_DAYS_BACK,
@@ -41,13 +42,20 @@ export class MeListsService {
    * @param {UserMediaListSort} sort - Sort order
    * @returns {Promise<{ total: number; data: any }>} Total count and page items
    */
-  async getRatings(userId: string, limit: number, offset: number, sort?: UserMediaListSort) {
+  async getRatings(
+    userId: string,
+    limit: number,
+    offset: number,
+    sort?: UserMediaListSort,
+    type?: MediaType,
+  ) {
     const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
     const [total, data] = await Promise.all([
-      this.userMediaService.countWithMedia(userId, { ratedOnly: true }),
+      this.userMediaService.countWithMedia(userId, { ratedOnly: true, type }),
       this.userMediaService.listWithMedia(userId, limit, offset, {
         ratedOnly: true,
         sort: effectiveSort,
+        type,
       }),
     ]);
 
@@ -63,12 +71,18 @@ export class MeListsService {
    * @param {UserMediaListSort} sort - Sort order
    * @returns {Promise<{ total: number; data: any }>} Total count and page items
    */
-  async getWatchlist(userId: string, limit: number, offset: number, sort?: UserMediaListSort) {
+  async getWatchlist(
+    userId: string,
+    limit: number,
+    offset: number,
+    sort?: UserMediaListSort,
+    type?: MediaType,
+  ) {
     const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
-    const options = { states: USER_MEDIA_WATCHLIST_STATES, sort: effectiveSort };
+    const options = { states: USER_MEDIA_WATCHLIST_STATES, sort: effectiveSort, type };
 
     const [total, data] = await Promise.all([
-      this.userMediaService.countWithMedia(userId, { states: USER_MEDIA_WATCHLIST_STATES }),
+      this.userMediaService.countWithMedia(userId, { states: USER_MEDIA_WATCHLIST_STATES, type }),
       this.userMediaService.listWithMedia(userId, limit, offset, options),
     ]);
 
@@ -84,12 +98,18 @@ export class MeListsService {
    * @param {UserMediaListSort} sort - Sort order
    * @returns {Promise<{ total: number; data: any }>} Total count and page items
    */
-  async getHistory(userId: string, limit: number, offset: number, sort?: UserMediaListSort) {
+  async getHistory(
+    userId: string,
+    limit: number,
+    offset: number,
+    sort?: UserMediaListSort,
+    type?: MediaType,
+  ) {
     const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
-    const options = { states: USER_MEDIA_HISTORY_STATES, sort: effectiveSort };
+    const options = { states: USER_MEDIA_HISTORY_STATES, sort: effectiveSort, type };
 
     const [total, data] = await Promise.all([
-      this.userMediaService.countWithMedia(userId, { states: USER_MEDIA_HISTORY_STATES }),
+      this.userMediaService.countWithMedia(userId, { states: USER_MEDIA_HISTORY_STATES, type }),
       this.userMediaService.listWithMedia(userId, limit, offset, options),
     ]);
 
@@ -104,10 +124,10 @@ export class MeListsService {
    * @param {number} offset - Offset
    * @returns {Promise<{ total: number; data: any }>} Total count and page items
    */
-  async getActivity(userId: string, limit: number, offset: number) {
+  async getActivity(userId: string, limit: number, offset: number, type?: MediaType) {
     const [total, data] = await Promise.all([
-      this.userMediaService.countActivityWithMedia(userId),
-      this.userMediaService.listActivityWithMedia(userId, limit, offset),
+      this.userMediaService.countActivityWithMedia(userId, type),
+      this.userMediaService.listActivityWithMedia(userId, limit, offset, type),
     ]);
 
     return { total, data };
@@ -122,12 +142,18 @@ export class MeListsService {
    * @param {UserMediaListSort} sort - Sort order
    * @returns {Promise<{ total: number; data: any }>} Total count and page items
    */
-  async getPaused(userId: string, limit: number, offset: number, sort?: UserMediaListSort) {
+  async getPaused(
+    userId: string,
+    limit: number,
+    offset: number,
+    sort?: UserMediaListSort,
+    type?: MediaType,
+  ) {
     const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
-    const options = { states: [USER_MEDIA_STATE.PAUSED], sort: effectiveSort };
+    const options = { states: [USER_MEDIA_STATE.PAUSED], sort: effectiveSort, type };
 
     const [total, data] = await Promise.all([
-      this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.PAUSED] }),
+      this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.PAUSED], type }),
       this.userMediaService.listWithMedia(userId, limit, offset, options),
     ]);
 
@@ -137,12 +163,18 @@ export class MeListsService {
   /**
    * Gets caught-up items (ongoing shows where all aired episodes are watched).
    */
-  async getCaughtUp(userId: string, limit: number, offset: number, sort?: UserMediaListSort) {
+  async getCaughtUp(
+    userId: string,
+    limit: number,
+    offset: number,
+    sort?: UserMediaListSort,
+    type?: MediaType,
+  ) {
     const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
-    const options = { states: [USER_MEDIA_STATE.CAUGHT_UP], sort: effectiveSort };
+    const options = { states: [USER_MEDIA_STATE.CAUGHT_UP], sort: effectiveSort, type };
 
     const [total, data] = await Promise.all([
-      this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.CAUGHT_UP] }),
+      this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.CAUGHT_UP], type }),
       this.userMediaService.listWithMedia(userId, limit, offset, options),
     ]);
 
@@ -158,12 +190,18 @@ export class MeListsService {
    * @param {UserMediaListSort} sort - Sort order
    * @returns {Promise<{ total: number; data: any }>} Total count and page items
    */
-  async getDropped(userId: string, limit: number, offset: number, sort?: UserMediaListSort) {
+  async getDropped(
+    userId: string,
+    limit: number,
+    offset: number,
+    sort?: UserMediaListSort,
+    type?: MediaType,
+  ) {
     const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
-    const options = { states: [USER_MEDIA_STATE.DROPPED], sort: effectiveSort };
+    const options = { states: [USER_MEDIA_STATE.DROPPED], sort: effectiveSort, type };
 
     const [total, data] = await Promise.all([
-      this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.DROPPED] }),
+      this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.DROPPED], type }),
       this.userMediaService.listWithMedia(userId, limit, offset, options),
     ]);
 

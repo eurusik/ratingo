@@ -87,6 +87,7 @@ export class MeListsController {
       limit,
       offset,
       query.sort,
+      query.type,
     );
 
     const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));
@@ -124,6 +125,7 @@ export class MeListsController {
       limit,
       offset,
       query.sort,
+      query.type,
     );
 
     const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));
@@ -161,6 +163,7 @@ export class MeListsController {
       limit,
       offset,
       query.sort,
+      query.type,
     );
 
     const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));
@@ -193,7 +196,12 @@ export class MeListsController {
   ): Promise<PaginatedMeUserMediaResponseDto> {
     const limit = query.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query.offset ?? 0;
-    const { total, data } = await this.meListsService.getActivity(user.id, limit, offset);
+    const { total, data } = await this.meListsService.getActivity(
+      user.id,
+      limit,
+      offset,
+      query.type,
+    );
 
     const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));
 
@@ -225,7 +233,13 @@ export class MeListsController {
   ): Promise<PaginatedMeUserMediaResponseDto> {
     const limit = query.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query.offset ?? 0;
-    const { total, data } = await this.meListsService.getPaused(user.id, limit, offset, query.sort);
+    const { total, data } = await this.meListsService.getPaused(
+      user.id,
+      limit,
+      offset,
+      query.sort,
+      query.type,
+    );
 
     const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));
 
@@ -258,6 +272,7 @@ export class MeListsController {
       limit,
       offset,
       query.sort,
+      query.type,
     );
 
     const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));
@@ -295,6 +310,7 @@ export class MeListsController {
       limit,
       offset,
       query.sort,
+      query.type,
     );
 
     const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));

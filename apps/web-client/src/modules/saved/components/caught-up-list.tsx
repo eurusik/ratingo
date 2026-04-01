@@ -1,28 +1,19 @@
 'use client';
 
-import { useState, useCallback } from 'react';
 import { useTranslation } from '@/shared/i18n';
 import { InfiniteScrollLoader } from '@/shared/components/infinite-scroll-loader';
-import { useCaughtUp, PAGE_SIZE, MAX_LIST_LIMIT, type MeListSort } from '../hooks/use-me-lists';
+import { useCaughtUp, MAX_LIST_LIMIT } from '../hooks/use-me-lists';
+import { useMeListState } from '../hooks/use-me-list-state';
 import { MeListItemCard } from './me-list-item-card';
 import { EmptyState } from './empty-state';
 import { ListSortSelect } from './list-sort-select';
+import { MediaTypeFilter } from './media-type-filter';
 import { MeListSkeleton } from './me-list-skeleton';
 
 export function CaughtUpList() {
   const { dict } = useTranslation();
-  const [sort, setSort] = useState<MeListSort>('recent');
-  const [limit, setLimit] = useState(PAGE_SIZE);
-  const { data, isLoading, isFetching } = useCaughtUp({ sort, limit });
-
-  const handleSortChange = useCallback((newSort: MeListSort) => {
-    setSort(newSort);
-    setLimit(PAGE_SIZE);
-  }, []);
-
-  const handleLoadMore = useCallback(() => {
-    setLimit((prev) => Math.min(prev + PAGE_SIZE, MAX_LIST_LIMIT));
-  }, []);
+  const { sort, mediaType, limit, handleSortChange, handleMediaTypeChange, handleLoadMore } = useMeListState();
+  const { data, isLoading, isFetching } = useCaughtUp({ sort, type: mediaType, limit });
 
   if (isLoading) {
     return <MeListSkeleton />;
@@ -31,7 +22,13 @@ export function CaughtUpList() {
   const items = data?.data ?? [];
   const hasMore = (data?.meta?.hasMore ?? false) && limit < MAX_LIST_LIMIT;
 
-  if (items.length === 0) {
+  const emptyTitle = mediaType === 'movie'
+    ? (dict.activity?.empty?.noMovies ?? 'Немає фільмів')
+    : mediaType === 'show'
+      ? (dict.activity?.empty?.noShows ?? 'Немає серіалів')
+      : undefined;
+
+  if (items.length === 0 && mediaType === 'all') {
     return (
       <EmptyState
         type="caughtUp"
@@ -46,20 +43,27 @@ export function CaughtUpList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <MediaTypeFilter value={mediaType} onChange={handleMediaTypeChange} />
         <ListSortSelect value={sort} onChange={handleSortChange} />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map((item) => (
-          <MeListItemCard key={item.id} item={item} />
-        ))}
-      </div>
-      <InfiniteScrollLoader
-        onLoadMore={handleLoadMore}
-        isLoading={isFetching && items.length > 0}
-        hasMore={hasMore}
-        loadingText={dict.common?.loading ?? 'Завантаження...'}
-      />
+      {items.length === 0 && emptyTitle ? (
+        <p className="text-cinema-text-muted text-center py-16">{emptyTitle}</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {items.map((item) => (
+              <MeListItemCard key={item.id} item={item} />
+            ))}
+          </div>
+          <InfiniteScrollLoader
+            onLoadMore={handleLoadMore}
+            isLoading={isFetching && items.length > 0}
+            hasMore={hasMore}
+            loadingText={dict.common?.loading ?? 'Завантаження...'}
+          />
+        </>
+      )}
     </div>
   );
 }

@@ -110,20 +110,20 @@ export const queryKeys = {
     all: ['me-lists'] as const,
     /** Prefix key that matches all activity queries regardless of limit. */
     activityAll: ['me-lists', 'activity'] as const,
-    activity: (limit?: number) => ['me-lists', 'activity', limit ?? null] as const,
+    activity: (type?: string, limit?: number) => ['me-lists', 'activity', type ?? null, limit ?? null] as const,
     favoriteUpdates: ['me-lists', 'favorite-updates'] as const,
     historyAll: ['me-lists', 'history'] as const,
-    history: (sort?: string, limit?: number) => ['me-lists', 'history', sort ?? null, limit ?? null] as const,
+    history: (sort?: string, type?: string, limit?: number) => ['me-lists', 'history', sort ?? null, type ?? null, limit ?? null] as const,
     ratingsAll: ['me-lists', 'ratings'] as const,
-    ratings: (sort?: string, limit?: number) => ['me-lists', 'ratings', sort ?? null, limit ?? null] as const,
+    ratings: (sort?: string, type?: string, limit?: number) => ['me-lists', 'ratings', sort ?? null, type ?? null, limit ?? null] as const,
     watchlistAll: ['me-lists', 'watchlist'] as const,
-    watchlist: (sort?: string) => ['me-lists', 'watchlist', sort ?? null] as const,
+    watchlist: (sort?: string, type?: string) => ['me-lists', 'watchlist', sort ?? null, type ?? null] as const,
     pausedAll: ['me-lists', 'paused'] as const,
-    paused: (sort?: string, limit?: number) => ['me-lists', 'paused', sort ?? null, limit ?? null] as const,
+    paused: (sort?: string, type?: string, limit?: number) => ['me-lists', 'paused', sort ?? null, type ?? null, limit ?? null] as const,
     caughtUpAll: ['me-lists', 'caught-up'] as const,
-    caughtUp: (sort?: string, limit?: number) => ['me-lists', 'caught-up', sort ?? null, limit ?? null] as const,
+    caughtUp: (sort?: string, type?: string, limit?: number) => ['me-lists', 'caught-up', sort ?? null, type ?? null, limit ?? null] as const,
     droppedAll: ['me-lists', 'dropped'] as const,
-    dropped: (sort?: string, limit?: number) => ['me-lists', 'dropped', sort ?? null, limit ?? null] as const,
+    dropped: (sort?: string, type?: string, limit?: number) => ['me-lists', 'dropped', sort ?? null, type ?? null, limit ?? null] as const,
   },
 
   /** Public user queries. */
@@ -150,11 +150,12 @@ export const queryKeys = {
         [...queryKeys.userActions.savedItems.all, 'status', mediaItemId] as const,
       batch: (mediaIdsHash: string) =>
         [...queryKeys.userActions.savedItems.all, 'batch', mediaIdsHash] as const,
-      list: (list: string, limit?: number, offset?: number) =>
+      list: (list: string, type?: string, limit?: number, offset?: number) =>
         [
           ...queryKeys.userActions.savedItems.all,
           'list',
           list,
+          type ?? null,
           limit ?? null,
           offset ?? null,
         ] as const,

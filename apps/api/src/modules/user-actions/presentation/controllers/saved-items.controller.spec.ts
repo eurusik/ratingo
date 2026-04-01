@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SavedItemsController } from './saved-items.controller';
 import { SavedItemsService } from '../../application/saved-items.service';
 import { SAVED_ITEM_LIST } from '../../domain/entities/user-saved-item.entity';
+import { MediaType } from '../../../../common/enums/media-type.enum';
 
 describe('SavedItemsController', () => {
   let controller: SavedItemsController;
@@ -112,7 +113,7 @@ describe('SavedItemsController', () => {
 
   describe('listForLater', () => {
     it('should return paginated for_later items', async () => {
-      const result = await controller.listForLater(mockUser, 20, 0);
+      const result = await controller.listForLater(mockUser, { limit: 20, offset: 0 });
 
       expect(result.data).toHaveLength(1);
       expect(result.meta.total).toBe(1);
@@ -122,17 +123,33 @@ describe('SavedItemsController', () => {
         SAVED_ITEM_LIST.FOR_LATER,
         20,
         0,
+        undefined,
       );
     });
 
     it('should use default pagination values', async () => {
-      await controller.listForLater(mockUser);
+      await controller.listForLater(mockUser, {});
 
       expect(service.listWithMedia).toHaveBeenCalledWith(
         'user-id-1',
         SAVED_ITEM_LIST.FOR_LATER,
         20,
         0,
+        undefined,
+      );
+    });
+
+    it('should pass type query param to service', async () => {
+      service.listWithMedia.mockResolvedValue({ total: 2, data: [] });
+
+      await controller.listForLater(mockUser, { limit: 10, offset: 0, type: MediaType.MOVIE });
+
+      expect(service.listWithMedia).toHaveBeenCalledWith(
+        'user-id-1',
+        SAVED_ITEM_LIST.FOR_LATER,
+        10,
+        0,
+        MediaType.MOVIE,
       );
     });
   });
@@ -141,7 +158,7 @@ describe('SavedItemsController', () => {
     it('should return paginated considering items', async () => {
       service.listWithMedia.mockResolvedValue({ total: 0, data: [] });
 
-      const result = await controller.listConsidering(mockUser, 10, 5);
+      const result = await controller.listConsidering(mockUser, { limit: 10, offset: 5 });
 
       expect(result.data).toHaveLength(0);
       expect(result.meta.total).toBe(0);
@@ -150,6 +167,21 @@ describe('SavedItemsController', () => {
         SAVED_ITEM_LIST.CONSIDERING,
         10,
         5,
+        undefined,
+      );
+    });
+
+    it('should pass type query param to service', async () => {
+      service.listWithMedia.mockResolvedValue({ total: 1, data: [] });
+
+      await controller.listConsidering(mockUser, { limit: 10, offset: 0, type: MediaType.SHOW });
+
+      expect(service.listWithMedia).toHaveBeenCalledWith(
+        'user-id-1',
+        SAVED_ITEM_LIST.CONSIDERING,
+        10,
+        0,
+        MediaType.SHOW,
       );
     });
   });

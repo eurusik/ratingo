@@ -117,6 +117,8 @@ jest.mock('@/shared/ui', () => ({
   SelectValue: () => <span />,
   SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SelectItem: ({ children }: { children: React.ReactNode; value: string }) => <div>{children}</div>,
+  ToggleGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ToggleGroupItem: ({ children }: { children: React.ReactNode; value: string }) => <button>{children}</button>,
 }));
 
 const mockUseDropped = jest.fn();
@@ -126,6 +128,18 @@ jest.mock('../../hooks/use-me-lists', () => ({
   useResumeMedia: () => ({ mutate: jest.fn(), isPending: false }),
   useDropMedia: () => ({ mutate: jest.fn(), isPending: false }),
   useRestoreMedia: () => ({ mutate: jest.fn(), isPending: false }),
+  MAX_LIST_LIMIT: 100,
+}));
+
+jest.mock('../../hooks/use-me-list-state', () => ({
+  useMeListState: () => ({
+    sort: 'recent',
+    mediaType: 'all',
+    limit: 20,
+    handleSortChange: jest.fn(),
+    handleMediaTypeChange: jest.fn(),
+    handleLoadMore: jest.fn(),
+  }),
 }));
 
 /* ------------------------------------------------------------------ */
@@ -232,7 +246,7 @@ describe('DroppedList', () => {
 
     render(<DroppedList />);
 
-    expect(mockUseDropped).toHaveBeenCalledWith(expect.objectContaining({ sort: 'recent' }));
+    expect(mockUseDropped).toHaveBeenCalledWith(expect.objectContaining({ sort: 'recent', type: 'all' }));
   });
 
   it('renders empty state when data is undefined (null response)', () => {

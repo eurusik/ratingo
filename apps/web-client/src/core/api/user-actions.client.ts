@@ -47,6 +47,7 @@ export interface PaginatedResponse<T> {
 export interface ListParams {
   limit?: number;
   offset?: number;
+  type?: 'movie' | 'show';
 }
 
 export interface NotificationListParams extends ListParams {

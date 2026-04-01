@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 
 import { DEFAULT_PAGE_SIZE } from '@/common/constants';
 
+import { type MediaType } from '../../../common/enums/media-type.enum';
 import { type UserSavedItem, type SavedItemList, SAVED_ITEM_LIST } from '../domain/entities';
 import { USER_MEDIA_ACTION } from '../domain/entities/user-media-action.entity';
 import {
@@ -135,10 +136,11 @@ export class SavedItemsService {
     list: SavedItemList,
     limit = DEFAULT_PAGE_SIZE,
     offset = 0,
+    type?: MediaType,
   ): Promise<{ total: number; data: SavedItemWithMedia[] }> {
     const [total, data] = await Promise.all([
-      this.savedItemRepo.count(userId, list),
-      this.savedItemRepo.listWithMedia(userId, list, limit, offset),
+      this.savedItemRepo.count(userId, list, type),
+      this.savedItemRepo.listWithMedia(userId, list, limit, offset, type),
     ]);
     return { total, data };
   }

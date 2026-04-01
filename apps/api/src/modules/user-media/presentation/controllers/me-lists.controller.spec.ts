@@ -107,6 +107,7 @@ describe('MeListsController', () => {
         10,
         0,
         USER_MEDIA_LIST_SORT.RECENT,
+        undefined,
       );
     });
 
@@ -118,7 +119,7 @@ describe('MeListsController', () => {
 
       await controller.ratings(mockUser, query);
 
-      expect(meListsService.getRatings).toHaveBeenCalledWith('user-1', 20, 0, undefined);
+      expect(meListsService.getRatings).toHaveBeenCalledWith('user-1', 20, 0, undefined, undefined);
     });
 
     it('should calculate hasMore correctly when no more items', async () => {
@@ -168,6 +169,7 @@ describe('MeListsController', () => {
         15,
         5,
         USER_MEDIA_LIST_SORT.RELEASE_DATE,
+        undefined,
       );
     });
 
@@ -192,7 +194,13 @@ describe('MeListsController', () => {
 
       await controller.watchlist(mockUser, query);
 
-      expect(meListsService.getWatchlist).toHaveBeenCalledWith('user-1', 20, 0, undefined);
+      expect(meListsService.getWatchlist).toHaveBeenCalledWith(
+        'user-1',
+        20,
+        0,
+        undefined,
+        undefined,
+      );
     });
 
     it('should calculate hasMore correctly for watchlist', async () => {
@@ -236,6 +244,7 @@ describe('MeListsController', () => {
         5,
         10,
         USER_MEDIA_LIST_SORT.RATING,
+        undefined,
       );
     });
 
@@ -247,7 +256,7 @@ describe('MeListsController', () => {
 
       await controller.history(mockUser, query);
 
-      expect(meListsService.getHistory).toHaveBeenCalledWith('user-1', 20, 0, undefined);
+      expect(meListsService.getHistory).toHaveBeenCalledWith('user-1', 20, 0, undefined, undefined);
     });
 
     it('should handle large history dataset', async () => {
@@ -287,7 +296,7 @@ describe('MeListsController', () => {
         hasMore: true,
       });
 
-      expect(meListsService.getActivity).toHaveBeenCalledWith('user-1', 8, 0);
+      expect(meListsService.getActivity).toHaveBeenCalledWith('user-1', 8, 0, undefined);
     });
 
     it('should not pass sort parameter to activity service', async () => {
@@ -299,7 +308,7 @@ describe('MeListsController', () => {
       await controller.activity(mockUser, query);
 
       // Activity endpoint doesn't support sorting, so sort should not be passed
-      expect(meListsService.getActivity).toHaveBeenCalledWith('user-1', 20, 0);
+      expect(meListsService.getActivity).toHaveBeenCalledWith('user-1', 20, 0, undefined);
     });
 
     it('should use default pagination for activity', async () => {
@@ -310,7 +319,7 @@ describe('MeListsController', () => {
 
       await controller.activity(mockUser, query);
 
-      expect(meListsService.getActivity).toHaveBeenCalledWith('user-1', 20, 0);
+      expect(meListsService.getActivity).toHaveBeenCalledWith('user-1', 20, 0, undefined);
     });
 
     it('should handle empty activity', async () => {
@@ -324,6 +333,17 @@ describe('MeListsController', () => {
       expect(result.data).toEqual([]);
       expect(result.meta.hasMore).toBe(false);
       expect(result.meta.total).toBe(0);
+    });
+
+    it('should pass type query param to service', async () => {
+      const query = { limit: 10, offset: 0, type: MediaType.MOVIE };
+      const mockServiceResponse = { total: 2, data: [] };
+
+      meListsService.getActivity.mockResolvedValue(mockServiceResponse);
+
+      await controller.activity(mockUser, query);
+
+      expect(meListsService.getActivity).toHaveBeenCalledWith('user-1', 10, 0, MediaType.MOVIE);
     });
   });
 
@@ -359,6 +379,7 @@ describe('MeListsController', () => {
         10,
         0,
         USER_MEDIA_LIST_SORT.RECENT,
+        undefined,
       );
     });
 
@@ -370,7 +391,7 @@ describe('MeListsController', () => {
 
       await controller.paused(mockUser, query);
 
-      expect(meListsService.getPaused).toHaveBeenCalledWith('user-1', 20, 0, undefined);
+      expect(meListsService.getPaused).toHaveBeenCalledWith('user-1', 20, 0, undefined, undefined);
     });
 
     it('should handle empty paused list', async () => {
@@ -419,6 +440,7 @@ describe('MeListsController', () => {
         10,
         0,
         USER_MEDIA_LIST_SORT.RECENT,
+        undefined,
       );
     });
 
@@ -430,7 +452,7 @@ describe('MeListsController', () => {
 
       await controller.dropped(mockUser, query);
 
-      expect(meListsService.getDropped).toHaveBeenCalledWith('user-1', 20, 0, undefined);
+      expect(meListsService.getDropped).toHaveBeenCalledWith('user-1', 20, 0, undefined, undefined);
     });
 
     it('should handle empty dropped list', async () => {

@@ -16,26 +16,31 @@ export const PAGE_SIZE = 20;
 /** Maximum number of items that can be loaded in a single Activity list. */
 export const MAX_LIST_LIMIT = 100;
 
+export type MediaTypeFilter = 'all' | 'movie' | 'show';
+
 interface MeListOptions {
   sort?: MeListSort;
+  type?: MediaTypeFilter;
   limit?: number;
   enabled?: boolean;
 }
 
-export function useWatching({ limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+export function useWatching({ limit = PAGE_SIZE, type = 'all', enabled = true }: MeListOptions = {}) {
+  const apiType = type === 'all' ? undefined : type;
   return useQuery({
-    queryKey: queryKeys.meLists.activity(limit),
-    queryFn: () => meListsApi.getActivity({ limit }),
+    queryKey: queryKeys.meLists.activity(apiType, limit),
+    queryFn: () => meListsApi.getActivity({ limit, type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
     placeholderData: keepPreviousData,
   });
 }
 
-export function useCompleted({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+export function useCompleted({ sort, type = 'all', limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+  const apiType = type === 'all' ? undefined : type;
   const query = useQuery({
-    queryKey: queryKeys.meLists.history(sort, limit),
-    queryFn: () => meListsApi.getHistory({ sort, limit }),
+    queryKey: queryKeys.meLists.history(sort, apiType, limit),
+    queryFn: () => meListsApi.getHistory({ sort, limit, type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
     placeholderData: keepPreviousData,
@@ -55,30 +60,33 @@ export function useCompleted({ sort, limit = PAGE_SIZE, enabled = true }: MeList
   return { ...query, data };
 }
 
-export function usePaused({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+export function usePaused({ sort, type = 'all', limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+  const apiType = type === 'all' ? undefined : type;
   return useQuery({
-    queryKey: queryKeys.meLists.paused(sort, limit),
-    queryFn: () => meListsApi.getPaused({ sort, limit }),
+    queryKey: queryKeys.meLists.paused(sort, apiType, limit),
+    queryFn: () => meListsApi.getPaused({ sort, limit, type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
     placeholderData: keepPreviousData,
   });
 }
 
-export function useCaughtUp({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+export function useCaughtUp({ sort, type = 'all', limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+  const apiType = type === 'all' ? undefined : type;
   return useQuery({
-    queryKey: queryKeys.meLists.caughtUp(sort, limit),
-    queryFn: () => meListsApi.getCaughtUp({ sort, limit }),
+    queryKey: queryKeys.meLists.caughtUp(sort, apiType, limit),
+    queryFn: () => meListsApi.getCaughtUp({ sort, limit, type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
     placeholderData: keepPreviousData,
   });
 }
 
-export function useDropped({ sort, limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+export function useDropped({ sort, type = 'all', limit = PAGE_SIZE, enabled = true }: MeListOptions = {}) {
+  const apiType = type === 'all' ? undefined : type;
   return useQuery({
-    queryKey: queryKeys.meLists.dropped(sort, limit),
-    queryFn: () => meListsApi.getDropped({ sort, limit }),
+    queryKey: queryKeys.meLists.dropped(sort, apiType, limit),
+    queryFn: () => meListsApi.getDropped({ sort, limit, type: apiType }),
     enabled,
     staleTime: STALE_5_MIN,
     placeholderData: keepPreviousData,

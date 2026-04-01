@@ -34,6 +34,7 @@ export interface ListWithMediaOptions {
   ratedOnly?: boolean;
   states?: Array<UserMediaState['state']>;
   sort?: UserMediaListSort;
+  type?: MediaType;
 }
 
 /**
@@ -157,10 +158,11 @@ export interface IUserMediaStateRepository {
     userId: string,
     limit?: number,
     offset?: number,
+    type?: MediaType,
   ): Promise<Array<UserMediaState & { mediaSummary: UserMediaSummary }>>;
 
   /** Counts with identical filters to {@link listActivityWithMedia} — keep WHERE clauses in sync. */
-  countActivityWithMedia(userId: string): Promise<number>;
+  countActivityWithMedia(userId: string, type?: MediaType): Promise<number>;
 
   /** Counts with identical filters to {@link listContinueWithMedia} — keep WHERE clauses in sync. */
   countContinueWithMedia(userId: string): Promise<number>;

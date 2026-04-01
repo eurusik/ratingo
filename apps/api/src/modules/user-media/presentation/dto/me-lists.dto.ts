@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-import { IsIn, IsOptional } from 'class-validator';
+import { IsEnum, IsIn, IsOptional } from 'class-validator';
 
 import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../../common/dtos';
 import { type ImageDto } from '../../../../common/dtos/image.dto';
@@ -52,6 +52,18 @@ export class MeUserMediaListQueryDto extends OffsetPaginationQueryDto {
   @IsOptional()
   @IsIn(ME_USER_MEDIA_LIST_SORT_VALUES)
   sort?: UserMediaListSort = USER_MEDIA_LIST_SORT.RECENT;
+
+  /**
+   * Filters by media type (movie or show).
+   */
+  @ApiPropertyOptional({
+    required: false,
+    enum: [MediaType.MOVIE, MediaType.SHOW],
+    description: 'Filter by media type',
+  })
+  @IsOptional()
+  @IsEnum(MediaType)
+  type?: MediaType;
 }
 
 /**

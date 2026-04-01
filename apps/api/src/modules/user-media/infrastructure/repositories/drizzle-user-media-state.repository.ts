@@ -250,6 +250,10 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           whereParts.push(inArray(schema.userMediaState.state, options.states));
         }
 
+        if (options?.type) {
+          whereParts.push(eq(schema.mediaItems.type, options.type));
+        }
+
         const orderBy = this.buildListOrderBy(options?.sort);
 
         const rows = await this.db
@@ -320,9 +324,14 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           whereParts.push(inArray(schema.userMediaState.state, options.states));
         }
 
+        if (options?.type) {
+          whereParts.push(eq(schema.mediaItems.type, options.type));
+        }
+
         const [row] = await this.db
           .select({ count: sql<number>`count(*)` })
           .from(schema.userMediaState)
+          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
           .where(and(...whereParts));
 
         return Number(row?.count ?? 0);
@@ -335,11 +344,24 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
     userId: string,
     limit = DEFAULT_PAGE_SIZE,
     offset = 0,
+    type?: MediaType,
   ): Promise<Array<UserMediaState & { mediaSummary: UserMediaSummary }>> {
     return withDbError(
       'list user media activity with media',
       this.logger,
       async () => {
+        const whereParts = [
+          eq(schema.userMediaState.userId, userId),
+          or(
+            eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
+            isNotNull(schema.userMediaState.progress),
+          )!,
+        ];
+
+        if (type) {
+          whereParts.push(eq(schema.mediaItems.type, type));
+        }
+
         const rows = await this.db
           .select({
             state: schema.userMediaState,
@@ -354,15 +376,7 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
           })
           .from(schema.userMediaState)
           .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
-          .where(
-            and(
-              eq(schema.userMediaState.userId, userId),
-              or(
-                eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
-                isNotNull(schema.userMediaState.progress),
-              ),
-            ),
-          )
+          .where(and(...whereParts))
           .orderBy(desc(schema.userMediaState.updatedAt))
           .limit(limit)
           .offset(offset);
@@ -377,23 +391,28 @@ export class DrizzleUserMediaStateRepository implements IUserMediaStateRepositor
   }
 
   /** Counts with identical filters to {@link listActivityWithMedia} — keep WHERE clauses in sync. */
-  async countActivityWithMedia(userId: string): Promise<number> {
+  async countActivityWithMedia(userId: string, type?: MediaType): Promise<number> {
     return withDbError(
       'count user media activity with media',
       this.logger,
       async () => {
+        const whereParts = [
+          eq(schema.userMediaState.userId, userId),
+          or(
+            eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
+            isNotNull(schema.userMediaState.progress),
+          )!,
+        ];
+
+        if (type) {
+          whereParts.push(eq(schema.mediaItems.type, type));
+        }
+
         const [row] = await this.db
           .select({ count: sql<number>`count(*)` })
           .from(schema.userMediaState)
-          .where(
-            and(
-              eq(schema.userMediaState.userId, userId),
-              or(
-                eq(schema.userMediaState.state, USER_MEDIA_STATE.WATCHING),
-                isNotNull(schema.userMediaState.progress),
-              ),
-            ),
-          );
+          .innerJoin(schema.mediaItems, eq(schema.mediaItems.id, schema.userMediaState.mediaItemId))
+          .where(and(...whereParts));
         return Number(row?.count ?? 0);
       },
       { userId },

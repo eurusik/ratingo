@@ -91,6 +91,7 @@ export interface IUserSavedItemRepository {
     list: SavedItemList,
     limit?: number,
     offset?: number,
+    type?: MediaType,
   ): Promise<SavedItemWithMedia[]>;
 
   /**
@@ -98,9 +99,10 @@ export interface IUserSavedItemRepository {
    *
    * @param {string} userId - User identifier
    * @param {SavedItemList} list - List type
+   * @param {MediaType} type - Optional media type filter
    * @returns {Promise<number>} Count
    */
-  count(userId: string, list: SavedItemList): Promise<number>;
+  count(userId: string, list: SavedItemList, type?: MediaType): Promise<number>;
 
   /**
    * Gets lists for multiple media items in batch.
