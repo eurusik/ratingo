@@ -10,8 +10,7 @@ import { Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent, Badge } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { SavedList } from '@/modules/saved';
-import { useListCounts } from '@/modules/saved/hooks/use-me-lists';
+import { SavedList, useListCounts } from '@/modules/saved';
 
 const TAB_VALUES = {
   FOR_LATER: 'for-later',

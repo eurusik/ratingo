@@ -10,8 +10,16 @@ import { Suspense, useCallback, type MouseEvent } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent, Badge } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { Watchlist, HistoryList, PausedList, CaughtUpList, DroppedList, FavoriteUpdates, ActivityEpisodeSheet } from '@/modules/saved';
-import { useListCounts } from '@/modules/saved/hooks/use-me-lists';
+import {
+  Watchlist,
+  HistoryList,
+  PausedList,
+  CaughtUpList,
+  DroppedList,
+  FavoriteUpdates,
+  ActivityEpisodeSheet,
+  useListCounts,
+} from '@/modules/saved';
 import { USER_MEDIA_STATE } from '@/core/api';
 
 /**

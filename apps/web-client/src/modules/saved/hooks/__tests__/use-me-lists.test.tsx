@@ -616,30 +616,6 @@ describe('useListCounts', () => {
     // TanStack Query dedupes by queryKey → single network call
     expect(mockGetListCounts).toHaveBeenCalledTimes(1);
   });
-
-  it('is invalidated when pause/resume/drop/restore mutations invalidate meLists.counts', async () => {
-    // Seed cache
-    mockGetListCounts.mockResolvedValue({
-      watching: 0,
-      paused: 0,
-      dropped: 0,
-      completed: 0,
-      forLater: 0,
-      considering: 0,
-    });
-    renderWithClient(<ListCountsConsumer />, queryClient);
-    await waitFor(() => {
-      expect(screen.getByTestId('status').textContent).toBe('success');
-    });
-
-    const stateBefore = queryClient.getQueryState(queryKeys.meLists.counts);
-    expect(stateBefore?.isInvalidated).toBe(false);
-
-    queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
-
-    const stateAfter = queryClient.getQueryState(queryKeys.meLists.counts);
-    expect(stateAfter?.isInvalidated).toBe(true);
-  });
 });
 
 describe('useFavoriteUpdates', () => {

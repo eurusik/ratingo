@@ -11120,31 +11120,38 @@
         "type": "object",
         "properties": {
           "watching": {
-            "type": "number",
+            "type": "integer",
+            "minimum": 0,
             "description": "Items with state=watching (strict, no overlap with paused/dropped)"
           },
           "paused": {
-            "type": "number",
+            "type": "integer",
+            "minimum": 0,
             "description": "Items paused by the user"
           },
           "dropped": {
-            "type": "number",
+            "type": "integer",
+            "minimum": 0,
             "description": "Items dropped by the user"
           },
           "completed": {
-            "type": "number",
+            "type": "integer",
+            "minimum": 0,
             "description": "Items the user completed watching"
           },
           "caughtUp": {
-            "type": "number",
+            "type": "integer",
+            "minimum": 0,
             "description": "Items caught up on (ongoing shows with all aired episodes watched)"
           },
           "forLater": {
-            "type": "number",
+            "type": "integer",
+            "minimum": 0,
             "description": "Saved items in the \"for later\" list"
           },
           "considering": {
-            "type": "number",
+            "type": "integer",
+            "minimum": 0,
             "description": "Saved items in the \"considering\" list"
           }
         },

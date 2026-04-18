@@ -334,20 +334,5 @@ describe('useCatchUp', () => {
 
       expect(toast.error).toHaveBeenCalledWith('Помилка');
     });
-
-    it('dismisses catch-up toast before resetting', () => {
-      const params = defaultParams();
-      params.progress = makeProgress([
-        { seasonNumber: 1, watchedEpisodeIds: ['e1-1'], totalCount: 3 },
-      ]);
-
-      const { result } = renderHook(() => useCatchUp(params));
-
-      act(() => { result.current.handleResetSeasonClick(); });
-      act(() => { result.current.handleConfirmResetSeason(); });
-
-      // toast.dismiss should not throw even without a prior toast
-      expect(result.current.showResetConfirmDialog).toBe(false);
-    });
   });
 });

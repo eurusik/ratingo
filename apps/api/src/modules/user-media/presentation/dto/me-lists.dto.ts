@@ -155,27 +155,39 @@ export class PaginatedMeUserMediaResponseDto {
  */
 export class MeListCountsResponseDto implements UserListCounts {
   @ApiProperty({
+    type: 'integer',
+    minimum: 0,
     description: 'Items with state=watching (strict, no overlap with paused/dropped)',
   })
   watching!: number;
 
-  @ApiProperty({ description: 'Items paused by the user' })
+  @ApiProperty({ type: 'integer', minimum: 0, description: 'Items paused by the user' })
   paused!: number;
 
-  @ApiProperty({ description: 'Items dropped by the user' })
+  @ApiProperty({ type: 'integer', minimum: 0, description: 'Items dropped by the user' })
   dropped!: number;
 
-  @ApiProperty({ description: 'Items the user completed watching' })
+  @ApiProperty({ type: 'integer', minimum: 0, description: 'Items the user completed watching' })
   completed!: number;
 
   @ApiProperty({
+    type: 'integer',
+    minimum: 0,
     description: 'Items caught up on (ongoing shows with all aired episodes watched)',
   })
   caughtUp!: number;
 
-  @ApiProperty({ description: 'Saved items in the "for later" list' })
+  @ApiProperty({
+    type: 'integer',
+    minimum: 0,
+    description: 'Saved items in the "for later" list',
+  })
   forLater!: number;
 
-  @ApiProperty({ description: 'Saved items in the "considering" list' })
+  @ApiProperty({
+    type: 'integer',
+    minimum: 0,
+    description: 'Saved items in the "considering" list',
+  })
   considering!: number;
 }

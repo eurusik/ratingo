@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import type { components } from '@ratingo/api-contract';
 import type { getDictionary } from '@/shared/i18n';
@@ -31,8 +31,31 @@ export function useEpisodeToggle({
 
   const [togglingEpisodeId, setTogglingEpisodeId] = useState<string | null>(null);
   const [animatingIds, setAnimatingIds] = useState<Set<string>>(new Set());
+  const clearAnimatingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const clearAnimating = useCallback(
     () => setAnimatingIds((prev) => (prev.size > 0 ? new Set() : prev)),
+    [],
+  );
+
+  const scheduleClearAnimating = useCallback(() => {
+    if (clearAnimatingTimeoutRef.current !== null) {
+      clearTimeout(clearAnimatingTimeoutRef.current);
+    }
+    clearAnimatingTimeoutRef.current = setTimeout(() => {
+      clearAnimatingTimeoutRef.current = null;
+      clearAnimating();
+    }, 350);
+  }, [clearAnimating]);
+
+  // Cancel any pending clear-animating timer when the hook unmounts so we
+  // never call setState on an unmounted component.
+  useEffect(
+    () => () => {
+      if (clearAnimatingTimeoutRef.current !== null) {
+        clearTimeout(clearAnimatingTimeoutRef.current);
+      }
+    },
     [],
   );
 
@@ -74,12 +97,20 @@ export function useEpisodeToggle({
           },
           onSettled: () => {
             setTogglingEpisodeId(null);
-            setTimeout(clearAnimating, 350);
+            scheduleClearAnimating();
           },
         },
       );
     },
-    [isAuthenticated, toggleWatched, markMultipleWatched.isPending, watchedEpisodeIds, totalProgress, dict],
+    [
+      isAuthenticated,
+      toggleWatched,
+      markMultipleWatched.isPending,
+      watchedEpisodeIds,
+      totalProgress,
+      dict,
+      scheduleClearAnimating,
+    ],
   );
 
   const handleMarkWithPrevious = useCallback(
@@ -118,12 +149,21 @@ export function useEpisodeToggle({
           },
           onSettled: () => {
             setTogglingEpisodeId(null);
-            setTimeout(clearAnimating, 350);
+            scheduleClearAnimating();
           },
         },
       );
     },
-    [isAuthenticated, markMultipleWatched, toggleWatched.isPending, episodes, watchedEpisodeIds, totalProgress, dict],
+    [
+      isAuthenticated,
+      markMultipleWatched,
+      toggleWatched.isPending,
+      episodes,
+      watchedEpisodeIds,
+      totalProgress,
+      dict,
+      scheduleClearAnimating,
+    ],
   );
 
   const getUnwatchedPreviousCount = useCallback(
