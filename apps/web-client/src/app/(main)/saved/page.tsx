@@ -7,10 +7,10 @@
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent, Badge } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { SavedList } from '@/modules/saved';
+import { SavedList, useListCounts } from '@/modules/saved';
 
 const TAB_VALUES = {
   FOR_LATER: 'for-later',
@@ -32,6 +32,10 @@ function SavedPageContent() {
   const searchParams = useSearchParams();
 
   const defaultTab = getTabFromParam(searchParams.get('tab'));
+
+  const countsQuery = useListCounts(isAuthenticated);
+  const { forLater: forLaterTotal = 0, considering: consideringTotal = 0 } =
+    countsQuery.data ?? {};
 
   if (isLoading) {
     return (
@@ -64,11 +68,13 @@ function SavedPageContent() {
 
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="bg-cinema-card border border-cinema-borderSoft mb-6 h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-full">
-            <TabsTrigger value={TAB_VALUES.FOR_LATER} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+            <TabsTrigger value={TAB_VALUES.FOR_LATER} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm gap-1.5 data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.saved.tabs.forLater}
+              {forLaterTotal > 0 && <Badge as="span" variant="count">{forLaterTotal}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value={TAB_VALUES.CONSIDERING} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+            <TabsTrigger value={TAB_VALUES.CONSIDERING} className="flex-1 md:flex-none min-w-0 px-2 md:px-3 text-[13px] md:text-sm gap-1.5 data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
               {dict.saved.tabs.considering}
+              {consideringTotal > 0 && <Badge as="span" variant="count">{consideringTotal}</Badge>}
             </TabsTrigger>
           </TabsList>
 

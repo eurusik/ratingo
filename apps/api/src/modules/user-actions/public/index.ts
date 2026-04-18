@@ -13,6 +13,7 @@
 
 // Services (for cross-module use)
 export { SubscriptionTriggerService } from '../application/subscription-trigger.service';
+export { SavedItemsService } from '../application/saved-items.service';
 
 // Domain constants
 export { SHOW_EVENTS } from '../domain/constants/events.constants';
@@ -26,6 +27,8 @@ export {
 // Entity types
 export type { SubscriptionTrigger } from '../domain/entities/user-subscription.entity';
 export { SUBSCRIPTION_TRIGGER } from '../domain/entities/user-subscription.entity';
+export type { SavedItemList } from '../domain/entities';
+export { SAVED_ITEM_LIST } from '../domain/entities';
 
 // Module
 export { UserActionsModule } from '../user-actions.module';

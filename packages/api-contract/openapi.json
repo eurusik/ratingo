@@ -2599,6 +2599,21 @@
               ],
               "type": "string"
             }
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "description": "Narrow history to a single state (must be one of HISTORY_STATES).",
+            "schema": {
+              "enum": [
+                "watching",
+                "completed",
+                "paused",
+                "caught_up"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2973,6 +2988,48 @@
                     },
                     "data": {
                       "$ref": "#/components/schemas/PaginatedMeUserMediaResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Me"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/me/lists/counts": {
+      "get": {
+        "operationId": "MeListsController_listCounts",
+        "summary": "Counts of my lists (auth: Bearer)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MeListCountsResponseDto"
                     }
                   }
                 }
@@ -11057,6 +11114,55 @@
         "required": [
           "data",
           "meta"
+        ]
+      },
+      "MeListCountsResponseDto": {
+        "type": "object",
+        "properties": {
+          "watching": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Items with state=watching (strict, no overlap with paused/dropped)"
+          },
+          "paused": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Items paused by the user"
+          },
+          "dropped": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Items dropped by the user"
+          },
+          "completed": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Items the user completed watching"
+          },
+          "caughtUp": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Items caught up on (ongoing shows with all aired episodes watched)"
+          },
+          "forLater": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Saved items in the \"for later\" list"
+          },
+          "considering": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Saved items in the \"considering\" list"
+          }
+        },
+        "required": [
+          "watching",
+          "paused",
+          "dropped",
+          "completed",
+          "caughtUp",
+          "forLater",
+          "considering"
         ]
       },
       "EpisodeInfoDto": {

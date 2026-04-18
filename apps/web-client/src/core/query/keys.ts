@@ -108,12 +108,16 @@ export const queryKeys = {
   /** Me lists queries (activity, history, paused). */
   meLists: {
     all: ['me-lists'] as const,
-    /** Prefix key that matches all activity queries regardless of limit. */
+    /** Aggregated counts for all user lists (used for tab badges). */
+    counts: ['me-lists', 'counts'] as const,
+    /** Prefix key that matches all activity queries regardless of filter/limit. */
     activityAll: ['me-lists', 'activity'] as const,
-    activity: (type?: string, limit?: number) => ['me-lists', 'activity', type ?? null, limit ?? null] as const,
+    activity: (type?: string, limit?: number) =>
+      ['me-lists', 'activity', type ?? null, limit ?? null] as const,
     favoriteUpdates: ['me-lists', 'favorite-updates'] as const,
     historyAll: ['me-lists', 'history'] as const,
-    history: (sort?: string, type?: string, limit?: number) => ['me-lists', 'history', sort ?? null, type ?? null, limit ?? null] as const,
+    history: (sort?: string, type?: string, limit?: number) =>
+      ['me-lists', 'history', sort ?? null, type ?? null, limit ?? null] as const,
     ratingsAll: ['me-lists', 'ratings'] as const,
     ratings: (sort?: string, type?: string, limit?: number) => ['me-lists', 'ratings', sort ?? null, type ?? null, limit ?? null] as const,
     watchlistAll: ['me-lists', 'watchlist'] as const,

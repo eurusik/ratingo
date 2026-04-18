@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { meListsApi, USER_MEDIA_STATE, type MeListSort, type MeUserMediaListItemDto } from '@/core/api/me-lists.client';
 import type { MediaType } from '@/shared/types';
 import { queryKeys } from '@/core/query/keys';
@@ -99,6 +99,28 @@ export function useDropped({ sort, type = 'all', limit = PAGE_SIZE, enabled = tr
   });
 }
 
+/**
+ * Fetches aggregated counts for all user lists in a single request.
+ * Used to render tab-count badges without pulling full list payloads.
+ *
+ * `keepPreviousData` avoids badge flicker (briefly showing 0) during
+ * background refetches triggered by invalidations.
+ *
+ * Note: `watching` count uses strict `state=watching` matching while the
+ * Watchlist tab list uses `/me/activity` (state OR progress), so badge
+ * and list totals may differ for shows with progress in paused/dropped
+ * state. Aligning this is a follow-up.
+ */
+export function useListCounts(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.meLists.counts,
+    queryFn: () => meListsApi.getListCounts(),
+    enabled,
+    staleTime: STALE_5_MIN,
+    placeholderData: keepPreviousData,
+  });
+}
+
 export function usePauseMedia() {
   const queryClient = useQueryClient();
 
@@ -110,6 +132,7 @@ export function usePauseMedia() {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
@@ -127,6 +150,7 @@ export function useResumeMedia() {
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
@@ -139,13 +163,13 @@ export function useDropMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.dropMedia(mediaItemId),
     onSuccess: (_data, mediaItemId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.pausedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
@@ -158,12 +182,12 @@ export function useRestoreMedia() {
   return useMutation({
     mutationFn: (mediaItemId: string) => meListsApi.restoreMedia(mediaItemId),
     onSuccess: (_data, mediaItemId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.activityAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.historyAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.ratingsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.caughtUpAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.watchlistAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.meLists.droppedAll });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
       queryClient.invalidateQueries({ queryKey: queryKeys.userMedia.state(mediaItemId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.shows.personalizedCalendarAll });
     },
@@ -188,6 +212,10 @@ export function useUserMediaState(mediaItemId: string, enabled = true) {
   });
 }
 
+// Rating does not move items between list buckets (watching/paused/dropped/
+// completed/forLater/considering), so `meLists.counts` is not invalidated.
+// Revisit if the backend ever auto-transitions state on rating (e.g. sets
+// state=completed when user rates an unrated movie).
 export function useSetRating(mediaItemId: string) {
   const queryClient = useQueryClient();
 

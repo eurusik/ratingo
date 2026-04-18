@@ -1,22 +1,29 @@
 /**
  * Activity page - user's watching progress.
- * Contains tabs: Watching, Paused, Completed (history).
+ * Contains tabs: Watching, Caught Up, Paused, Dropped, History.
  */
 
 'use client';
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, type MouseEvent } from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent, Badge } from '@/shared/ui';
 import { useTranslation } from '@/shared/i18n';
 import { useAuth } from '@/core/auth';
-import { Watchlist, HistoryList, PausedList, CaughtUpList, DroppedList, FavoriteUpdates, ActivityEpisodeSheet } from '@/modules/saved';
+import {
+  Watchlist,
+  HistoryList,
+  PausedList,
+  CaughtUpList,
+  DroppedList,
+  FavoriteUpdates,
+  ActivityEpisodeSheet,
+  useListCounts,
+} from '@/modules/saved';
 import { USER_MEDIA_STATE } from '@/core/api';
 
 /**
  * Tab identifiers for URL params and Radix UI.
- * WATCHING and PAUSED use USER_MEDIA_STATE for consistency.
- * HISTORY is a UI concept (shows completed items).
  */
 const TAB_VALUES = {
   WATCHING: USER_MEDIA_STATE.WATCHING,
@@ -52,6 +59,21 @@ function ActivityPageContent() {
     }
   }, []);
 
+  const countsQuery = useListCounts(isAuthenticated);
+  const {
+    watching: watchingTotal = 0,
+    caughtUp: caughtUpTotal = 0,
+    paused: pausedTotal = 0,
+    dropped: droppedTotal = 0,
+    completed: historyTotal = 0,
+  } = (countsQuery.data as {
+    watching?: number;
+    caughtUp?: number;
+    paused?: number;
+    dropped?: number;
+    completed?: number;
+  }) ?? {};
+
   if (isLoading) {
     return (
       <div className="min-h-screen pt-24 pb-12">
@@ -84,20 +106,25 @@ function ActivityPageContent() {
         <Tabs defaultValue={defaultTab} className="w-full">
           <div className="overflow-x-auto scrollbar-none mb-6" onClick={handleTabClick}>
             <TabsList className="bg-cinema-card border border-cinema-borderSoft h-auto gap-0.5 md:gap-1 p-1 md:w-auto w-max">
-              <TabsTrigger value={TAB_VALUES.WATCHING} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+              <TabsTrigger value={TAB_VALUES.WATCHING} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap gap-1.5 data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
                 {dict.activity.tabs.watching}
+                {watchingTotal > 0 && <Badge as="span" variant="count">{watchingTotal}</Badge>}
               </TabsTrigger>
-              <TabsTrigger value={TAB_VALUES.CAUGHT_UP} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+              <TabsTrigger value={TAB_VALUES.CAUGHT_UP} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap gap-1.5 data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
                 {dict.activity.tabs.caughtUp}
+                {caughtUpTotal > 0 && <Badge as="span" variant="count">{caughtUpTotal}</Badge>}
               </TabsTrigger>
-              <TabsTrigger value={TAB_VALUES.PAUSED} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+              <TabsTrigger value={TAB_VALUES.PAUSED} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap gap-1.5 data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
                 {dict.activity.tabs.paused}
+                {pausedTotal > 0 && <Badge as="span" variant="count">{pausedTotal}</Badge>}
               </TabsTrigger>
-              <TabsTrigger value={TAB_VALUES.DROPPED} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+              <TabsTrigger value={TAB_VALUES.DROPPED} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap gap-1.5 data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
                 {dict.activity.tabs.dropped}
+                {droppedTotal > 0 && <Badge as="span" variant="count">{droppedTotal}</Badge>}
               </TabsTrigger>
-              <TabsTrigger value={TAB_VALUES.HISTORY} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
+              <TabsTrigger value={TAB_VALUES.HISTORY} className="px-2.5 md:px-3 text-[13px] md:text-sm whitespace-nowrap gap-1.5 data-[state=active]:bg-cinema-elevated data-[state=inactive]:hover:bg-cinema-elevated/50">
                 {dict.activity.tabs.history}
+                {historyTotal > 0 && <Badge as="span" variant="count">{historyTotal}</Badge>}
               </TabsTrigger>
             </TabsList>
           </div>

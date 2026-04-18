@@ -245,6 +245,7 @@ describe('MeListsController', () => {
         10,
         USER_MEDIA_LIST_SORT.RATING,
         undefined,
+        undefined,
       );
     });
 
@@ -256,7 +257,14 @@ describe('MeListsController', () => {
 
       await controller.history(mockUser, query);
 
-      expect(meListsService.getHistory).toHaveBeenCalledWith('user-1', 20, 0, undefined, undefined);
+      expect(meListsService.getHistory).toHaveBeenCalledWith(
+        'user-1',
+        20,
+        0,
+        undefined,
+        undefined,
+        undefined,
+      );
     });
 
     it('should handle large history dataset', async () => {

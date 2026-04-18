@@ -625,6 +625,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/lists/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Counts of my lists (auth: Bearer) */
+        get: operations["MeListsController_listCounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/favorites/updates": {
         parameters: {
             query?: never;
@@ -3481,6 +3498,22 @@ export interface components {
         PaginatedMeUserMediaResponseDto: {
             data: components["schemas"]["MeUserMediaListItemDto"][];
             meta: components["schemas"]["OffsetPaginationMetaDto"];
+        };
+        MeListCountsResponseDto: {
+            /** @description Items with state=watching (strict, no overlap with paused/dropped) */
+            watching: number;
+            /** @description Items paused by the user */
+            paused: number;
+            /** @description Items dropped by the user */
+            dropped: number;
+            /** @description Items the user completed watching */
+            completed: number;
+            /** @description Items caught up on (ongoing shows with all aired episodes watched) */
+            caughtUp: number;
+            /** @description Saved items in the "for later" list */
+            forLater: number;
+            /** @description Saved items in the "considering" list */
+            considering: number;
         };
         EpisodeInfoDto: {
             /**
@@ -7137,6 +7170,8 @@ export interface operations {
                 sort?: "recent" | "rating" | "releaseDate";
                 /** @description Filter by media type */
                 type?: "movie" | "show";
+                /** @description Narrow history to a single state (must be one of HISTORY_STATES). */
+                state?: "watching" | "completed" | "paused" | "caught_up";
             };
             header?: never;
             path?: never;
@@ -7269,6 +7304,29 @@ export interface operations {
                         /** @enum {boolean} */
                         success: true;
                         data: components["schemas"]["PaginatedMeUserMediaResponseDto"];
+                    };
+                };
+            };
+        };
+    };
+    MeListsController_listCounts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        success: true;
+                        data: components["schemas"]["MeListCountsResponseDto"];
                     };
                 };
             };
