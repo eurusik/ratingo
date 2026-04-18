@@ -17,6 +17,8 @@ import { MeListsService } from '../../application/me-lists.service';
 import { type UserMediaState } from '../../domain/entities/user-media-state.entity';
 import { FavoriteUpdatesResponseDto } from '../dto/favorite-updates.dto';
 import {
+  MeHistoryListQueryDto,
+  MeListCountsResponseDto,
   MeUserMediaListQueryDto,
   type MeUserMediaListItemDto,
   PaginatedMeUserMediaResponseDto,
@@ -154,7 +156,7 @@ export class MeListsController {
   @ApiOkResponse({ type: PaginatedMeUserMediaResponseDto })
   async history(
     @CurrentUser() user: { id: string },
-    @Query() query: MeUserMediaListQueryDto,
+    @Query() query: MeHistoryListQueryDto,
   ): Promise<PaginatedMeUserMediaResponseDto> {
     const limit = query.limit ?? DEFAULT_PAGE_SIZE;
     const offset = query.offset ?? 0;
@@ -164,6 +166,7 @@ export class MeListsController {
       offset,
       query.sort,
       query.type,
+      query.state,
     );
 
     const items = (data as UserMediaWithSummary[]).map((i) => this.mapItem(i));
@@ -325,6 +328,22 @@ export class MeListsController {
         hasMore: offset + items.length < total,
       },
     };
+  }
+
+  /**
+   * Gets aggregated counts for all user lists (activity + saved).
+   *
+   * Single lightweight endpoint that replaces 6 full list-with-join fetches
+   * previously used just to render tab-count badges on /saved and /activity.
+   *
+   * @param {{ id: string }} user - Current user context
+   * @returns {Promise<MeListCountsResponseDto>} Counts for each list
+   */
+  @Get('lists/counts')
+  @ApiOperation({ summary: 'Counts of my lists (auth: Bearer)' })
+  @ApiOkResponse({ type: MeListCountsResponseDto })
+  async listCounts(@CurrentUser() user: { id: string }): Promise<MeListCountsResponseDto> {
+    return this.meListsService.getListCounts(user.id);
   }
 
   /**

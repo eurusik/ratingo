@@ -1,16 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
 
 import { type MediaType } from '../../../common/enums/media-type.enum';
+import { SAVED_ITEM_LIST, SavedItemsService } from '../../user-actions/public';
 import {
   FAVORITE_UPDATES_DAYS_AHEAD,
   FAVORITE_UPDATES_DAYS_BACK,
   FAVORITE_UPDATES_LIMIT,
   FAVORITE_UPDATES_RATING_THRESHOLD,
 } from '../domain/constants/favorite-updates.constants';
+import { type UserListCounts } from '../domain/entities/user-list-counts.entity';
 import {
   USER_MEDIA_HISTORY_STATES,
   USER_MEDIA_STATE,
   USER_MEDIA_WATCHLIST_STATES,
+  type UserMediaHistoryState,
 } from '../domain/entities/user-media-state.entity';
 import {
   type FavoriteUpdateItem,
@@ -31,6 +34,7 @@ export class MeListsService {
     private readonly userMediaService: UserMediaService,
     @Inject(USER_MEDIA_STATE_REPOSITORY)
     private readonly repo: IUserMediaStateRepository,
+    private readonly savedItemsService: SavedItemsService,
   ) {}
 
   /**
@@ -96,6 +100,9 @@ export class MeListsService {
    * @param {number} limit - Page size
    * @param {number} offset - Offset
    * @param {UserMediaListSort} sort - Sort order
+   * @param {UserMediaHistoryState} state - Narrow history to a single state
+   *   (watching, completed, or paused). DTO validation guarantees the value
+   *   belongs to HISTORY_STATES before it reaches this service.
    * @returns {Promise<{ total: number; data: any }>} Total count and page items
    */
   async getHistory(
@@ -104,12 +111,14 @@ export class MeListsService {
     offset: number,
     sort?: UserMediaListSort,
     type?: MediaType,
+    state?: UserMediaHistoryState,
   ) {
     const effectiveSort = sort ?? USER_MEDIA_LIST_SORT.RECENT;
-    const options = { states: USER_MEDIA_HISTORY_STATES, sort: effectiveSort, type };
+    const states = state ? [state] : USER_MEDIA_HISTORY_STATES;
+    const options = { states, sort: effectiveSort, type };
 
     const [total, data] = await Promise.all([
-      this.userMediaService.countWithMedia(userId, { states: USER_MEDIA_HISTORY_STATES, type }),
+      this.userMediaService.countWithMedia(userId, { states, type }),
       this.userMediaService.listWithMedia(userId, limit, offset, options),
     ]);
 
@@ -225,5 +234,32 @@ export class MeListsService {
       daysAhead: FAVORITE_UPDATES_DAYS_AHEAD,
       limit: FAVORITE_UPDATES_LIMIT,
     });
+  }
+
+  /**
+   * Gets aggregated counts for all user lists in parallel.
+   * Used to render tab badges cheaply, without fetching full list payloads.
+   *
+   * Uses strict state matching (not the "activity" OR-progress semantics),
+   * so buckets are mutually exclusive: a paused-with-progress item is counted
+   * ONLY in `paused`, never in `watching`. This keeps badge arithmetic
+   * intuitive and prevents overlap with the Paused/Dropped tabs.
+   *
+   * @param {string} userId - User identifier
+   * @returns {Promise<UserListCounts>} Counts for each list
+   */
+  async getListCounts(userId: string): Promise<UserListCounts> {
+    const [watching, paused, dropped, completed, caughtUp, forLater, considering] =
+      await Promise.all([
+        this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.WATCHING] }),
+        this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.PAUSED] }),
+        this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.DROPPED] }),
+        this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.COMPLETED] }),
+        this.userMediaService.countWithMedia(userId, { states: [USER_MEDIA_STATE.CAUGHT_UP] }),
+        this.savedItemsService.countByList(userId, SAVED_ITEM_LIST.FOR_LATER),
+        this.savedItemsService.countByList(userId, SAVED_ITEM_LIST.CONSIDERING),
+      ]);
+
+    return { watching, paused, dropped, completed, caughtUp, forLater, considering };
   }
 }

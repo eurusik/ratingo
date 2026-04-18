@@ -7,6 +7,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userActionsApi, type SavedItemList } from '@/core/api/user-actions.client';
+import { queryKeys } from '@/core/query/keys';
 import type { MediaTypeFilter } from './use-me-lists';
 import { useFilterAwarePlaceholder } from './use-filter-aware-placeholder';
 
@@ -53,6 +54,7 @@ export function useSaveItem() {
     }) => userActionsApi.saveItem(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
     },
   });
 }
@@ -65,6 +67,7 @@ export function useUnsaveItem() {
       userActionsApi.unsaveItem(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saved-items'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
     },
   });
 }

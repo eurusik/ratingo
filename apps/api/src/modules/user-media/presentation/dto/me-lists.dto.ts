@@ -6,6 +6,11 @@ import { OffsetPaginationMetaDto, OffsetPaginationQueryDto } from '../../../../c
 import { type ImageDto } from '../../../../common/dtos/image.dto';
 import { MediaType } from '../../../../common/enums/media-type.enum';
 import { CardMetaDto } from '../../../shared/cards/presentation/dtos/card-meta.dto';
+import { type UserListCounts } from '../../domain/entities/user-list-counts.entity';
+import {
+  USER_MEDIA_HISTORY_STATES,
+  type UserMediaHistoryState,
+} from '../../domain/entities/user-media-state.entity';
 import {
   USER_MEDIA_LIST_SORT,
   type UserMediaListSort,
@@ -67,6 +72,21 @@ export class MeUserMediaListQueryDto extends OffsetPaginationQueryDto {
 }
 
 /**
+ * Query DTO for the history endpoint. Allows narrowing the result to a
+ * single state within the history set (watching / completed / paused).
+ */
+export class MeHistoryListQueryDto extends MeUserMediaListQueryDto {
+  @ApiPropertyOptional({
+    required: false,
+    enum: USER_MEDIA_HISTORY_STATES,
+    description: 'Narrow history to a single state (must be one of HISTORY_STATES).',
+  })
+  @IsOptional()
+  @IsIn(USER_MEDIA_HISTORY_STATES)
+  state?: UserMediaHistoryState;
+}
+
+/**
  * Represents media summary in owner-only lists.
  */
 export class MeUserMediaSummaryDto {
@@ -123,4 +143,39 @@ export class PaginatedMeUserMediaResponseDto {
 
   @ApiProperty({ type: OffsetPaginationMetaDto })
   meta!: OffsetPaginationMetaDto;
+}
+
+/**
+ * Aggregated counts for user's lists (activity + saved).
+ * Used to render tab badges without fetching full list payloads.
+ *
+ * Shape mirrors {@link UserListCounts} from the domain layer — the class
+ * implements that interface so any shape drift between the domain model and
+ * its HTTP contract surfaces as a TypeScript error.
+ */
+export class MeListCountsResponseDto implements UserListCounts {
+  @ApiProperty({
+    description: 'Items with state=watching (strict, no overlap with paused/dropped)',
+  })
+  watching!: number;
+
+  @ApiProperty({ description: 'Items paused by the user' })
+  paused!: number;
+
+  @ApiProperty({ description: 'Items dropped by the user' })
+  dropped!: number;
+
+  @ApiProperty({ description: 'Items the user completed watching' })
+  completed!: number;
+
+  @ApiProperty({
+    description: 'Items caught up on (ongoing shows with all aired episodes watched)',
+  })
+  caughtUp!: number;
+
+  @ApiProperty({ description: 'Saved items in the "for later" list' })
+  forLater!: number;
+
+  @ApiProperty({ description: 'Saved items in the "considering" list' })
+  considering!: number;
 }

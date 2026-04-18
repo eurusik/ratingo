@@ -15,6 +15,8 @@ const badgeVariants = cva(
         destructive:
           "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
         outline: "text-foreground",
+        count:
+          "border-transparent bg-cinema-elevated/60 text-cinema-text-muted font-medium tabular-nums px-1.5 py-0 rounded text-[11px] leading-4",
       },
     },
     defaultVariants: {
@@ -24,12 +26,18 @@ const badgeVariants = cva(
 )
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+  extends React.HTMLAttributes<HTMLElement>,
+    VariantProps<typeof badgeVariants> {
+  /**
+   * Element to render. Use `"span"` when nesting inside interactive content
+   * (e.g. `<button>`, Radix `TabsTrigger`) to keep the DOM HTML5-valid.
+   */
+  as?: "div" | "span"
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant, as: Comp = "div", ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <Comp className={cn(badgeVariants({ variant }), className)} {...props} />
   )
 }
 

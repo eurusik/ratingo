@@ -38,9 +38,14 @@ export const USER_MEDIA_STATE_VALUES: UserMediaState['state'][] = Object.values(
 export const USER_MEDIA_WATCHLIST_STATES: UserMediaState['state'][] = [USER_MEDIA_STATE.PLANNED];
 
 /**
+ * Subset of user media states that are part of watch history.
+ */
+export type UserMediaHistoryState = 'watching' | 'completed' | 'paused' | 'caught_up';
+
+/**
  * Defines states that belong to watch history.
  */
-export const USER_MEDIA_HISTORY_STATES: UserMediaState['state'][] = [
+export const USER_MEDIA_HISTORY_STATES: UserMediaHistoryState[] = [
   USER_MEDIA_STATE.WATCHING,
   USER_MEDIA_STATE.COMPLETED,
   USER_MEDIA_STATE.PAUSED,

@@ -15,6 +15,7 @@ import { apiGet, apiPatch, apiPost } from './client';
 
 export type MeUserMediaListItemDto = components['schemas']['MeUserMediaListItemDto'];
 export type PaginatedMeUserMediaResponseDto = components['schemas']['PaginatedMeUserMediaResponseDto'];
+export type MeListCountsDto = components['schemas']['MeListCountsResponseDto'];
 type SetUserMediaStateDto = components['schemas']['SetUserMediaStateDto'];
 
 export type UserMediaState = MeUserMediaListItemDto['state'];
@@ -64,12 +65,15 @@ export const meListsApi = {
   },
 
   /**
-   * Get user's watch history (watching/completed items).
+   * Get user's watch history (watching/completed/paused items by default).
    *
-   * @param params - Pagination and sorting parameters
+   * @param params - Pagination and sorting parameters; `state` narrows the
+   *   result to a single history state (watching | completed | paused).
    * @returns Paginated history items
    */
-  async getHistory(params?: MeListsParams): Promise<PaginatedMeUserMediaResponseDto> {
+  async getHistory(
+    params?: MeListsParams & { state?: 'watching' | 'completed' | 'paused' },
+  ): Promise<PaginatedMeUserMediaResponseDto> {
     return apiGet<PaginatedMeUserMediaResponseDto>('me/history', {
       searchParams: params as Record<string, string | number>,
     });
@@ -136,6 +140,16 @@ export const meListsApi = {
     return apiGet<PaginatedMeUserMediaResponseDto>('me/dropped', {
       searchParams: params as Record<string, string | number>,
     });
+  },
+
+  /**
+   * Get aggregated counts for all user lists (activity + saved).
+   * Single lightweight request used to render tab-count badges.
+   *
+   * @returns Counts for each list
+   */
+  async getListCounts(): Promise<MeListCountsDto> {
+    return apiGet<MeListCountsDto>('me/lists/counts');
   },
 
   /**

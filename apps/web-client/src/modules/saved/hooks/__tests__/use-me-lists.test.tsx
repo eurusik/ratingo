@@ -9,6 +9,7 @@ import {
   useCompleted,
   usePaused,
   useDropped,
+  useListCounts,
   usePauseMedia,
   useResumeMedia,
   useDropMedia,
@@ -26,6 +27,7 @@ jest.mock('@/core/api/me-lists.client', () => ({
     getHistory: jest.fn(),
     getPaused: jest.fn(),
     getDropped: jest.fn(),
+    getListCounts: jest.fn(),
     pauseMedia: jest.fn(),
     resumeMedia: jest.fn(),
     dropMedia: jest.fn(),
@@ -49,6 +51,7 @@ const mockGetActivity = meListsApi.getActivity as jest.Mock;
 const mockGetHistory = meListsApi.getHistory as jest.Mock;
 const mockGetPaused = meListsApi.getPaused as jest.Mock;
 const mockGetDropped = meListsApi.getDropped as jest.Mock;
+const mockGetListCounts = meListsApi.getListCounts as jest.Mock;
 const mockPauseMedia = meListsApi.pauseMedia as jest.Mock;
 const mockResumeMedia = meListsApi.resumeMedia as jest.Mock;
 const mockDropMedia = meListsApi.dropMedia as jest.Mock;
@@ -258,7 +261,7 @@ describe('useWatching', () => {
     queryClient.clear();
   });
 
-  it('returns watching items from getActivity', async () => {
+  it('requests watching items from /me/activity', async () => {
     const items = [
       makeHistoryItem({ mediaItemId: 'w1', state: 'watching' }),
       makeHistoryItem({ mediaItemId: 'w2', state: 'watching' }),
@@ -278,7 +281,7 @@ describe('useWatching', () => {
     expect(data.data.every((item: { state: string }) => item.state === 'watching')).toBe(true);
   });
 
-  it('returns empty array when no watching items exist', async () => {
+  it('returns empty array when server returns no watching items', async () => {
     mockGetActivity.mockResolvedValue(makeHistoryResponse([]));
 
     renderWithClient(<WatchingConsumer />, queryClient);
@@ -523,6 +526,119 @@ describe('useDropped', () => {
 
     expect(mockGetDropped).not.toHaveBeenCalled();
     expect(screen.getByTestId('status').textContent).toBe('pending');
+  });
+});
+
+describe('useListCounts', () => {
+  let queryClient: QueryClient;
+
+  function ListCountsConsumer({ enabled = true }: { enabled?: boolean }) {
+    const query = useListCounts(enabled);
+    return (
+      <div>
+        <div data-testid="status">{query.status}</div>
+        <div data-testid="data">{JSON.stringify(query.data ?? null)}</div>
+      </div>
+    );
+  }
+
+  beforeEach(() => {
+    queryClient = createQueryClient();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it('fetches aggregated counts for all lists in a single request', async () => {
+    mockGetListCounts.mockResolvedValue({
+      watching: 3,
+      paused: 1,
+      dropped: 0,
+      completed: 42,
+      forLater: 10,
+      considering: 4,
+    });
+
+    renderWithClient(<ListCountsConsumer />, queryClient);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('status').textContent).toBe('success');
+    });
+
+    expect(mockGetListCounts).toHaveBeenCalledTimes(1);
+    const data = JSON.parse(screen.getByTestId('data').textContent!);
+    expect(data).toEqual({
+      watching: 3,
+      paused: 1,
+      dropped: 0,
+      completed: 42,
+      forLater: 10,
+      considering: 4,
+    });
+  });
+
+  it('does not fetch when enabled is false', async () => {
+    renderWithClient(<ListCountsConsumer enabled={false} />, queryClient);
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    expect(mockGetListCounts).not.toHaveBeenCalled();
+    expect(screen.getByTestId('status').textContent).toBe('pending');
+  });
+
+  it('deduplicates requests when multiple consumers mount at once', async () => {
+    mockGetListCounts.mockResolvedValue({
+      watching: 0,
+      paused: 0,
+      dropped: 0,
+      completed: 0,
+      forLater: 0,
+      considering: 0,
+    });
+
+    renderWithClient(
+      <>
+        <ListCountsConsumer />
+        <ListCountsConsumer />
+        <ListCountsConsumer />
+      </>,
+      queryClient,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId('status')[0].textContent).toBe('success');
+    });
+
+    // TanStack Query dedupes by queryKey → single network call
+    expect(mockGetListCounts).toHaveBeenCalledTimes(1);
+  });
+
+  it('is invalidated when pause/resume/drop/restore mutations invalidate meLists.counts', async () => {
+    // Seed cache
+    mockGetListCounts.mockResolvedValue({
+      watching: 0,
+      paused: 0,
+      dropped: 0,
+      completed: 0,
+      forLater: 0,
+      considering: 0,
+    });
+    renderWithClient(<ListCountsConsumer />, queryClient);
+    await waitFor(() => {
+      expect(screen.getByTestId('status').textContent).toBe('success');
+    });
+
+    const stateBefore = queryClient.getQueryState(queryKeys.meLists.counts);
+    expect(stateBefore?.isInvalidated).toBe(false);
+
+    queryClient.invalidateQueries({ queryKey: queryKeys.meLists.counts });
+
+    const stateAfter = queryClient.getQueryState(queryKeys.meLists.counts);
+    expect(stateAfter?.isInvalidated).toBe(true);
   });
 });
 
@@ -917,6 +1033,11 @@ describe('usePauseMedia', () => {
     expect(invalidateSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         queryKey: queryKeys.meLists.pausedAll,
+      }),
+    );
+    expect(invalidateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: queryKeys.meLists.counts,
       }),
     );
 

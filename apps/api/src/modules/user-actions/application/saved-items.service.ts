@@ -146,6 +146,17 @@ export class SavedItemsService {
   }
 
   /**
+   * Counts saved items in a given list for the user.
+   *
+   * @param {string} userId - User identifier
+   * @param {SavedItemList} list - List type
+   * @returns {Promise<number>} Count of saved items
+   */
+  async countByList(userId: string, list: SavedItemList): Promise<number> {
+    return this.savedItemRepo.count(userId, list);
+  }
+
+  /**
    * Gets save status for multiple media items in batch.
    *
    * @param {string} userId - User identifier

@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { SavedItemsService, SAVED_ITEM_LIST } from '../../user-actions/public';
 import { MeListsService } from './me-lists.service';
 import { UserMediaService } from './user-media.service';
 import {
@@ -28,6 +29,7 @@ const mockCard: CardMeta = {
 describe('MeListsService', () => {
   let service: MeListsService;
   let userMediaService: jest.Mocked<UserMediaService>;
+  let savedItemsService: jest.Mocked<SavedItemsService>;
   let mockRepo: { listFavoriteUpdates: jest.Mock };
 
   beforeEach(async () => {
@@ -36,6 +38,10 @@ describe('MeListsService', () => {
       listWithMedia: jest.fn(),
       countActivityWithMedia: jest.fn(),
       listActivityWithMedia: jest.fn(),
+    };
+
+    const mockSavedItemsService = {
+      countByList: jest.fn(),
     };
 
     mockRepo = {
@@ -53,11 +59,16 @@ describe('MeListsService', () => {
           provide: USER_MEDIA_STATE_REPOSITORY,
           useValue: mockRepo,
         },
+        {
+          provide: SavedItemsService,
+          useValue: mockSavedItemsService,
+        },
       ],
     }).compile();
 
     service = module.get<MeListsService>(MeListsService);
     userMediaService = module.get(UserMediaService);
+    savedItemsService = module.get(SavedItemsService);
   });
 
   describe('getRatings', () => {
@@ -389,6 +400,28 @@ describe('MeListsService', () => {
         expect.objectContaining({
           states: expect.arrayContaining([USER_MEDIA_STATE.PAUSED]),
         }),
+      );
+    });
+
+    it('should narrow states to [completed] when state=completed is provided', async () => {
+      const userId = 'user-1';
+      const limit = 10;
+      const offset = 0;
+
+      userMediaService.countWithMedia.mockResolvedValue(0);
+      userMediaService.listWithMedia.mockResolvedValue([]);
+
+      await service.getHistory(userId, limit, offset, undefined, undefined, USER_MEDIA_STATE.COMPLETED);
+
+      expect(userMediaService.countWithMedia).toHaveBeenCalledWith(userId, {
+        states: [USER_MEDIA_STATE.COMPLETED],
+        type: undefined,
+      });
+      expect(userMediaService.listWithMedia).toHaveBeenCalledWith(
+        userId,
+        limit,
+        offset,
+        expect.objectContaining({ states: [USER_MEDIA_STATE.COMPLETED] }),
       );
     });
   });
@@ -726,6 +759,85 @@ describe('MeListsService', () => {
       const result = await service.getFavoriteUpdates(userId);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('getListCounts', () => {
+    it('aggregates strict state counts from user-media and saved-items services', async () => {
+      const userId = 'user-1';
+      userMediaService.countWithMedia.mockImplementation(async (_userId, options) => {
+        if (options?.states?.includes(USER_MEDIA_STATE.WATCHING)) return 3;
+        if (options?.states?.includes(USER_MEDIA_STATE.PAUSED)) return 2;
+        if (options?.states?.includes(USER_MEDIA_STATE.DROPPED)) return 5;
+        if (options?.states?.includes(USER_MEDIA_STATE.COMPLETED)) return 42;
+        if (options?.states?.includes(USER_MEDIA_STATE.CAUGHT_UP)) return 7;
+        return 0;
+      });
+      savedItemsService.countByList.mockImplementation(async (_userId, list) => {
+        if (list === SAVED_ITEM_LIST.FOR_LATER) return 10;
+        if (list === SAVED_ITEM_LIST.CONSIDERING) return 4;
+        return 0;
+      });
+
+      const result = await service.getListCounts(userId);
+
+      expect(result).toEqual({
+        watching: 3,
+        paused: 2,
+        dropped: 5,
+        completed: 42,
+        caughtUp: 7,
+        forLater: 10,
+        considering: 4,
+      });
+
+      expect(userMediaService.countWithMedia).toHaveBeenCalledTimes(5);
+      expect(savedItemsService.countByList).toHaveBeenCalledWith(userId, SAVED_ITEM_LIST.FOR_LATER);
+      expect(savedItemsService.countByList).toHaveBeenCalledWith(
+        userId,
+        SAVED_ITEM_LIST.CONSIDERING,
+      );
+    });
+
+    it('does NOT use the activity OR-progress semantics (would double-count paused-with-progress)', async () => {
+      userMediaService.countWithMedia.mockResolvedValue(0);
+      savedItemsService.countByList.mockResolvedValue(0);
+
+      await service.getListCounts('user-1');
+
+      // Service must use strict `state=watching`, not the activity OR-semantics.
+      expect(userMediaService.countActivityWithMedia).not.toHaveBeenCalled();
+      expect(userMediaService.countWithMedia).toHaveBeenCalledWith('user-1', {
+        states: [USER_MEDIA_STATE.WATCHING],
+      });
+    });
+
+    it('returns zeros when user has no items anywhere', async () => {
+      userMediaService.countWithMedia.mockResolvedValue(0);
+      savedItemsService.countByList.mockResolvedValue(0);
+
+      const result = await service.getListCounts('user-empty');
+
+      expect(result).toEqual({
+        watching: 0,
+        paused: 0,
+        dropped: 0,
+        completed: 0,
+        caughtUp: 0,
+        forLater: 0,
+        considering: 0,
+      });
+    });
+
+    it('dispatches all queries concurrently via Promise.all', async () => {
+      userMediaService.countWithMedia.mockResolvedValue(0);
+      savedItemsService.countByList.mockResolvedValue(0);
+
+      await service.getListCounts('user-1');
+
+      // 5 state counts (watching/paused/dropped/completed/caught_up) + 2 saved-items counts.
+      expect(userMediaService.countWithMedia).toHaveBeenCalledTimes(5);
+      expect(savedItemsService.countByList).toHaveBeenCalledTimes(2);
     });
   });
 });
