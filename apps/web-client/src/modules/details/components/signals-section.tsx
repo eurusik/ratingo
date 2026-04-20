@@ -86,7 +86,10 @@ export function SignalsSection({
   const hasExternalRatings =
     externalRatings?.imdb?.rating ||
     externalRatings?.tmdb?.rating ||
-    externalRatings?.trakt?.rating;
+    externalRatings?.trakt?.rating ||
+    externalRatings?.metacritic?.rating != null ||
+    externalRatings?.rottenTomatoes?.rating != null ||
+    externalRatings?.rottenTomatoesAudience?.rating != null;
 
   if (!hasBadges && !hasActivity && !hasGenres && !hasExternalRatings) {
     return null;
@@ -172,6 +175,27 @@ export function SignalsSection({
             )}
             {externalRatings?.trakt?.rating != null && externalRatings.trakt.rating > 0 && (
               <RatingBadge source="Trakt" rating={externalRatings.trakt.rating} />
+            )}
+            {externalRatings?.metacritic?.rating != null && (
+              <RatingBadge
+                source="Metacritic"
+                rating={externalRatings.metacritic.rating}
+                isPercentage
+              />
+            )}
+            {externalRatings?.rottenTomatoes?.rating != null && (
+              <RatingBadge
+                source="RT"
+                rating={externalRatings.rottenTomatoes.rating}
+                isPercentage
+              />
+            )}
+            {externalRatings?.rottenTomatoesAudience?.rating != null && (
+              <RatingBadge
+                source="RT Audience"
+                rating={externalRatings.rottenTomatoesAudience.rating}
+                isPercentage
+              />
             )}
           </div>
         </div>

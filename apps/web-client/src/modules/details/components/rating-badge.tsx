@@ -4,7 +4,7 @@
  */
 
 interface RatingBadgeProps {
-  source: 'IMDb' | 'TMDB' | 'Trakt' | 'RT' | 'RT Audience';
+  source: 'IMDb' | 'TMDB' | 'Trakt' | 'RT' | 'RT Audience' | 'Metacritic';
   rating: number;
   isPercentage?: boolean;
 }
@@ -16,12 +16,14 @@ interface RatingBadgeProps {
 // RT (Tomatometer) stays green — matches Ratingo's existing critics-centric display.
 // RT Audience (Popcornmeter) gets orange — visually distinct and aligned with the
 // popcorn colour used on rottentomatoes.com for audience scores.
+// Metacritic gets purple — matches metacritic.com's brand colour.
 const SOURCE_CONFIG = {
   IMDb: { text: 'text-yellow-400', bg: 'bg-yellow-400/20' },
   TMDB: { text: 'text-blue-400', bg: 'bg-blue-400/20' },
   Trakt: { text: 'text-red-400', bg: 'bg-red-400/20' },
   RT: { text: 'text-green-400', bg: 'bg-green-400/20' },
   'RT Audience': { text: 'text-orange-400', bg: 'bg-orange-400/20' },
+  Metacritic: { text: 'text-purple-400', bg: 'bg-purple-400/20' },
 } as const;
 
 export function RatingBadge({ source, rating, isPercentage = false }: RatingBadgeProps) {
