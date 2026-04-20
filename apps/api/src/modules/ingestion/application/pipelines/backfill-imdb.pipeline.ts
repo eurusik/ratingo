@@ -7,6 +7,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
+import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 
@@ -70,15 +71,17 @@ export class BackfillImdbPipeline {
       const remaining = TMDB_BACKFILL_RUN_CAP - totalQueued;
       const batchSize = Math.min(BACKFILL_BATCH_SIZE, remaining);
 
-      const rows = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-        })
-        .from(schema.mediaItems)
-        .where(and(...conditions))
-        .orderBy(schema.mediaItems.id)
-        .limit(batchSize);
+      const rows = await withDbError('find IMDb backfill candidates', this.logger, () =>
+        this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+          })
+          .from(schema.mediaItems)
+          .where(and(...conditions))
+          .orderBy(schema.mediaItems.id)
+          .limit(batchSize),
+      );
 
       if (rows.length === 0) break;
 
@@ -122,10 +125,18 @@ export class BackfillImdbPipeline {
       return;
     }
 
-    await this.db
-      .update(schema.mediaItems)
-      .set({ imdbId: result.imdbId })
-      .where(and(eq(schema.mediaItems.tmdbId, tmdbId), eq(schema.mediaItems.type, MediaType.SHOW)));
+    await withDbError(
+      'persist IMDb id',
+      this.logger,
+      () =>
+        this.db
+          .update(schema.mediaItems)
+          .set({ imdbId: result.imdbId })
+          .where(
+            and(eq(schema.mediaItems.tmdbId, tmdbId), eq(schema.mediaItems.type, MediaType.SHOW)),
+          ),
+      { tmdbId, imdbId: result.imdbId },
+    );
 
     this.logger.debug(`[${jobId}] Updated imdbId for tmdbId=${tmdbId} → ${result.imdbId}`);
   }

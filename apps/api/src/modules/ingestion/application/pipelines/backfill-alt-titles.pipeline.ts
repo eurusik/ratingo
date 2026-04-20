@@ -7,6 +7,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
+import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 
@@ -66,18 +67,20 @@ export class BackfillAltTitlesPipeline {
       const remaining = TMDB_BACKFILL_RUN_CAP - totalQueued;
       const batchSize = Math.min(BACKFILL_ALT_TITLES_BATCH_SIZE, remaining);
 
-      const rows = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          type: schema.mediaItems.type,
-          title: schema.mediaItems.title,
-          originalTitle: schema.mediaItems.originalTitle,
-        })
-        .from(schema.mediaItems)
-        .where(and(...conditions))
-        .orderBy(schema.mediaItems.id)
-        .limit(batchSize);
+      const rows = await withDbError('find alt-titles backfill candidates', this.logger, () =>
+        this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+            type: schema.mediaItems.type,
+            title: schema.mediaItems.title,
+            originalTitle: schema.mediaItems.originalTitle,
+          })
+          .from(schema.mediaItems)
+          .where(and(...conditions))
+          .orderBy(schema.mediaItems.id)
+          .limit(batchSize),
+      );
 
       if (rows.length === 0) break;
 

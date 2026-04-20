@@ -7,6 +7,7 @@ import { type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 import { type MediaType } from '@/common/enums/media-type.enum';
 import { formatUtcDayId } from '@/common/utils/date.util';
+import { withDbError } from '@/common/utils/db-error.utils';
 import { DATABASE_CONNECTION } from '@/database/database.module';
 import * as schema from '@/database/schema';
 
@@ -98,16 +99,18 @@ export class BackfillMdblistRatingsPipeline {
       const remaining = MDBLIST_DAILY_BUDGET - totalQueued;
       const batchSize = Math.min(BACKFILL_MDBLIST_RATINGS_BATCH_SIZE, remaining);
 
-      const rows = await this.db
-        .select({
-          id: schema.mediaItems.id,
-          tmdbId: schema.mediaItems.tmdbId,
-          type: schema.mediaItems.type,
-        })
-        .from(schema.mediaItems)
-        .where(and(...conditions))
-        .orderBy(schema.mediaItems.id)
-        .limit(batchSize);
+      const rows = await withDbError('find MDBList backfill candidates', this.logger, () =>
+        this.db
+          .select({
+            id: schema.mediaItems.id,
+            tmdbId: schema.mediaItems.tmdbId,
+            type: schema.mediaItems.type,
+          })
+          .from(schema.mediaItems)
+          .where(and(...conditions))
+          .orderBy(schema.mediaItems.id)
+          .limit(batchSize),
+      );
 
       if (rows.length === 0) break;
 
@@ -165,11 +168,17 @@ export class BackfillMdblistRatingsPipeline {
   async processItem(data: { mediaItemId: string; tmdbId: number; type: MediaType }): Promise<void> {
     // Pre-check: skip if this row was already processed within the refresh
     // window. Saves an MDBList quota unit per redundant job.
-    const [existing] = await this.db
-      .select({ rtFetchedAt: schema.mediaItems.rtFetchedAt })
-      .from(schema.mediaItems)
-      .where(eq(schema.mediaItems.id, data.mediaItemId))
-      .limit(1);
+    const [existing] = await withDbError(
+      'read MDBList rtFetchedAt',
+      this.logger,
+      () =>
+        this.db
+          .select({ rtFetchedAt: schema.mediaItems.rtFetchedAt })
+          .from(schema.mediaItems)
+          .where(eq(schema.mediaItems.id, data.mediaItemId))
+          .limit(1),
+      { mediaItemId: data.mediaItemId, tmdbId: data.tmdbId },
+    );
 
     if (existing?.rtFetchedAt) {
       const staleBefore = new Date(Date.now() - MDBLIST_RATINGS_REFRESH_DAYS * MS_PER_DAY);
@@ -203,10 +212,16 @@ export class BackfillMdblistRatingsPipeline {
       update.updatedAt = new Date();
     }
 
-    await this.db
-      .update(schema.mediaItems)
-      .set(update)
-      .where(eq(schema.mediaItems.id, data.mediaItemId));
+    await withDbError(
+      'persist MDBList RT ratings',
+      this.logger,
+      () =>
+        this.db
+          .update(schema.mediaItems)
+          .set(update)
+          .where(eq(schema.mediaItems.id, data.mediaItemId)),
+      { mediaItemId: data.mediaItemId, tmdbId: data.tmdbId },
+    );
 
     if (wroteRatings) {
       this.logger.debug(
