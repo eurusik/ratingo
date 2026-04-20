@@ -84,6 +84,16 @@ const DEFAULT_JOBS: Omit<ScheduledJobConfig, 'enabled'>[] = [
     jobId: 'scheduled-new-releases',
     data: { region: 'UA', daysBack: 30 },
   },
+  {
+    name: 'mdblistRatings',
+    jobType: 'backfill-mdblist-ratings-dispatcher',
+    // 02:00 UTC daily — safely after MDBList's 00:00 UTC quota reset.
+    // Dispatcher caps at 900 items per run; worker drains them at 40/hour
+    // (~23h), leaving headroom before next fire.
+    pattern: '0 2 * * *',
+    jobId: 'scheduled-mdblist-ratings',
+    data: {},
+  },
 ];
 
 /**
